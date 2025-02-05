@@ -682,7 +682,6 @@
           "label": "Preferencje Motywu",
           "fields": {
             "mode": "Tryb Motywu",
-            "editor_theme": "Motyw Edytora",
             "editor_font_size": "Rozmiar Czcionki Edytora",
             "editor_font_family": "Rodzina Czcionki Edytora",
             "editor_folding_stratgy": "Automatyczne Zwijanie Kodu w Edytorze",
@@ -1068,9 +1067,7 @@
         "main": "Główne właściwości",
         "error_handlers": "Obsługa błędów",
         "tasks": "Zadania",
-        "advanced": "Zaawansowana konfiguracja",
         "finally": "Na koniec",
-        "other": "Inne właściwości",
         "optional": "Właściwości opcjonalne"
       },
       "creation": {

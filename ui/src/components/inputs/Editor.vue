@@ -83,6 +83,8 @@
 
     const MonacoEditor = defineAsyncComponent(() => import("./MonacoEditor.vue"));
 
+    import Utils from "../../utils/utils";
+
     export default {
         props: {
             modelValue: {type: String, default: ""},
@@ -139,14 +141,7 @@
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flowValidation"]),
             themeComputed() {
-                const savedEditorTheme = localStorage.getItem("editorTheme");
-                return savedEditorTheme === "syncWithSystem"
-                    ? window.matchMedia("(prefers-color-scheme: dark)").matches
-                        ? "dark"
-                        : "light"
-                    : savedEditorTheme === "light"
-                        ? "light"
-                        : "dark";
+                return Utils.getTheme();
             },
             containerClass() {
                 return [

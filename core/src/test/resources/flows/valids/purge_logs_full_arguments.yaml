@@ -1,0 +1,13 @@
+id: purge_logs_full_arguments
+namespace: io.kestra.tests
+
+tasks:
+  - id: purge_logs
+    type: io.kestra.plugin.core.log.PurgeLogs
+    endDate: "{{ now() | dateAdd(2, 'HOURS') }}"
+    startDate: "{{ now() | dateAdd(-2, 'HOURS') }}"
+    namespace: purge.namespace
+    flowId: purgeFlowId
+    logLevels:
+      - INFO
+      - ERROR

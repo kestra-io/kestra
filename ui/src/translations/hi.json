@@ -682,7 +682,6 @@
           "label": "थीम प्राथमिकताएँ",
           "fields": {
             "mode": "थीम मोड",
-            "editor_theme": "संपादक थीम",
             "editor_font_size": "संपादक फ़ॉन्ट आकार",
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_folding_stratgy": "संपादक में स्वचालित कोड फोल्डिंग",
@@ -1068,9 +1067,7 @@
         "main": "मुख्य गुणधर्म",
         "error_handlers": "त्रुटि हैंडलर",
         "tasks": "कार्य",
-        "advanced": "उन्नत कॉन्फ़िगरेशन",
         "finally": "अंत में",
-        "other": "अन्य गुण",
         "optional": "वैकल्पिक गुण"
       },
       "creation": {

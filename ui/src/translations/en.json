@@ -1125,7 +1125,7 @@
       "sections": {
         "main": "Main properties",
         "general": "General properties",
-        "other": "Other properties",
+        "optional": "Optional properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
         "error_handlers": "Error Handlers",

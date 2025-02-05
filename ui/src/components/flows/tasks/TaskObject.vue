@@ -48,7 +48,7 @@
 
             <!-- Non required properties shown collapsed-->
             <el-collapse class="collapse">
-                <el-collapse-item :title="$t('no_code.sections.advanced')">
+                <el-collapse-item :title="$t('no_code.sections.other')">
                     <el-form-item
                         :key="index"
                         :required="isRequired(key)"

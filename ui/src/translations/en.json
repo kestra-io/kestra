@@ -602,7 +602,7 @@
     "row count": "Row count",
     "encoding": "Encoding",
     "show": "Show",
-    "advanced configuration": "Advanced configuration",
+    "advanced configuration": "Other properties",
     "all executions": "All executions",
     "trigger execution id": "Trigger Execution Id",
     "triggers_state": {
@@ -1125,7 +1125,7 @@
       "sections": {
         "main": "Main properties",
         "general": "General properties",
-        "advanced": "Advanced configuration",
+        "other": "Other properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
         "error_handlers": "Error Handlers",

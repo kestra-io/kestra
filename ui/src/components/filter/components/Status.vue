@@ -1,38 +1,25 @@
 <template>
     <div class="d-flex align-items-center cursor-pointer">
-        <div :style="circle" />
-        <span v-if="label">{{ title || $filters.cap(status) }}</span>
+        <div :style class="circle" />
+        <span>{{ $filters.cap(status) }}</span>
     </div>
 </template>
 
 <script setup>
-    import {computed, defineProps} from "vue";
+    import {computed} from "vue";
 
-    const StatusRemap = {
-        "failed": "error",
-        "warn": "warning"
-    };
+    const props = defineProps({status: {type: String, required: true}});
 
-    const props = defineProps({
-        status: {
-            type: String,
-            required: true,
-            default: undefined
-        },
-        label: {
-            type: Boolean,
-            default: true
-        },
-    });
-
-    const circle = computed(() => {
-        const statusVarname = (StatusRemap[props.status.toLowerCase()] ?? props.status)?.toLowerCase();
-        return {
-            backgroundColor: `var(--ks-content-${statusVarname})`,
-            width: "6px",
-            height: "6px",
-            borderRadius: "50%",
-            marginRight: "8px",
-        };
-    });
+    const style = computed(() => ({
+        backgroundColor: `var(--ks-chart-${props.status.toLowerCase()})`,
+    }));
 </script>
+
+<style scoped lang="scss">
+.circle {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 8px;
+}
+</style>

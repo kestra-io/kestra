@@ -12,7 +12,7 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import noData from "../../assets/no_data.png"
+    import noData from "../../assets/no_data.png";
 
     const props = defineProps({text: {type: String, default: undefined}});
 
@@ -20,8 +20,8 @@
 </script>
 
 <style scoped lang="scss">
-    :deep(.el-empty__description) {
-        font-size: var(--el-font-size-small);
-        color: var(--ks-content-secondary);
-    }
+:deep(.el-empty__description) {
+    font-size: var(--el-font-size-small);
+    color: var(--ks-content-secondary);
+}
 </style>

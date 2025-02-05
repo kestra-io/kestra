@@ -682,7 +682,6 @@
           "label": "テーマ設定",
           "fields": {
             "mode": "テーマモード",
-            "editor_theme": "エディタテーマ",
             "editor_font_size": "エディタフォントサイズ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_folding_stratgy": "エディタでの自動コード折りたたみ",
@@ -1068,9 +1067,7 @@
         "main": "メインプロパティ",
         "error_handlers": "エラーハンドラー",
         "tasks": "タスク",
-        "advanced": "高度な設定",
         "finally": "最後に",
-        "other": "その他のプロパティ",
         "optional": "オプションのプロパティ"
       },
       "creation": {

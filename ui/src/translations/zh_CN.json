@@ -682,7 +682,6 @@
           "label": "主题偏好",
           "fields": {
             "mode": "主题模式",
-            "editor_theme": "编辑器主题",
             "editor_font_size": "编辑器字体大小",
             "editor_font_family": "编辑器字体家族",
             "editor_folding_stratgy": "编辑器中的自动代码折叠",
@@ -1068,9 +1067,7 @@
         "main": "主要属性",
         "error_handlers": "错误处理程序",
         "tasks": "任务",
-        "advanced": "高级配置",
         "finally": "最后",
-        "other": "其他属性",
         "optional": "可选属性"
       },
       "creation": {

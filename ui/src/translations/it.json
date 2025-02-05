@@ -682,7 +682,6 @@
           "label": "Preferenze del Tema",
           "fields": {
             "mode": "Modalità Tema",
-            "editor_theme": "Tema dell'Editor",
             "editor_font_size": "Dimensione del Font dell'Editor",
             "editor_font_family": "Famiglia del Font dell'Editor",
             "editor_folding_stratgy": "Piegatura automatica del codice nell'Editor",
@@ -1068,9 +1067,7 @@
         "main": "Proprietà principali",
         "error_handlers": "Gestori degli Errori",
         "tasks": "Attività",
-        "advanced": "Configurazione avanzata",
         "finally": "Infine",
-        "other": "Altre proprietà",
         "optional": "Proprietà opzionali"
       },
       "creation": {

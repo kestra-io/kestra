@@ -682,7 +682,6 @@
           "label": "Preferencias de Tema",
           "fields": {
             "mode": "Modo de Tema",
-            "editor_theme": "Tema del Editor",
             "editor_font_size": "Tamaño de Fuente del Editor",
             "editor_font_family": "Familia de Fuente del Editor",
             "editor_folding_stratgy": "Plegado Automático de Código en el Editor",
@@ -1068,9 +1067,7 @@
         "main": "Propiedades principales",
         "error_handlers": "Manejadores de Errores",
         "tasks": "Tareas",
-        "advanced": "Configuración avanzada",
         "finally": "Finalmente",
-        "other": "Otras propiedades",
         "optional": "Propiedades opcionales"
       },
       "creation": {

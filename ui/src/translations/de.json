@@ -682,7 +682,6 @@
           "label": "Modus-Einstellungen",
           "fields": {
             "mode": "Modus",
-            "editor_theme": "Editor-Thema",
             "editor_font_size": "Editor-Schriftgröße",
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_folding_stratgy": "Automatisch Code im Editor zusammenklappen",
@@ -1068,9 +1067,7 @@
         "main": "Haupteigenschaften",
         "error_handlers": "Fehlerbehandler",
         "tasks": "Aufgaben",
-        "advanced": "Erweiterte Konfiguration",
         "finally": "Schließlich",
-        "other": "Andere Eigenschaften",
         "optional": "Optionale Eigenschaften"
       },
       "creation": {

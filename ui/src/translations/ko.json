@@ -682,7 +682,6 @@
           "label": "테마 설정",
           "fields": {
             "mode": "테마 모드",
-            "editor_theme": "편집기 테마",
             "editor_font_size": "편집기 글꼴 크기",
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_folding_stratgy": "편집기에서 자동 코드 접기",
@@ -1068,9 +1067,7 @@
         "main": "주요 속성",
         "error_handlers": "오류 처리기",
         "tasks": "작업",
-        "advanced": "고급 구성",
         "finally": "마지막으로",
-        "other": "기타 속성",
         "optional": "선택적 속성"
       },
       "creation": {

@@ -96,7 +96,7 @@ public class PurgeLogs extends Task implements RunnableTask<PurgeLogs.Output> {
             flowService.checkAllowedNamespace(flowInfo.tenantId(), runContext.render(namespace).as(String.class).orElse(null), flowInfo.tenantId(), flowInfo.namespace());
         }
 
-        var logLevelsRendered = runContext.render(this.logLevels).asList(String.class);
+        var logLevelsRendered = runContext.render(this.logLevels).asList(Level.class);
         var renderedDate = runContext.render(startDate).as(String.class).orElse(null);
         int deleted = logService.purge(
             flowInfo.tenantId(),

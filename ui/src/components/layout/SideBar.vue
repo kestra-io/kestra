@@ -270,7 +270,7 @@
             }
 
             &:hover, body &_hover {
-                background-color: var(--ks-button-background-secondary);
+                background-color: var(--ks-button-background-secondary-hover);
             }
 
             .el-tooltip__trigger {

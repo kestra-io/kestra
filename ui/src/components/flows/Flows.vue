@@ -45,6 +45,7 @@
                 @page-changed="onPageChanged"
                 ref="dataTable"
                 :total="total"
+                :hide-top-pagination="!!namespace"
             >
                 <template #navbar>
                     <KestraFilter

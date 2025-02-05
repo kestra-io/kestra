@@ -290,7 +290,7 @@
     "template creation": "Utworzenie szablonu",
     "templates": "Szablony",
     "templates deprecated": "Szablony są przestarzałe. Proszę używać subflows. Zobacz <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sekcję migracji</a>, aby dowiedzieć się, jak migrować z szablonów do subflows.",
-    "no result": "Brak logów do tej pory",
+    "no result": "Nie ma wyników do wyświetlenia.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Szczegóły trigger",
@@ -1148,6 +1148,20 @@
         "message": "Aplikacje w Kestra Enterprise Edition umożliwiają tworzenie niestandardowych interfejsów użytkownika, które współdziałają z workflowami Kestra spoza platformy. Ta funkcja pozwala używać workflowów jako backendu dla niestandardowych aplikacji, umożliwiając użytkownikom nietechnicznym przesyłanie danych za pomocą formularzy lub wznawianie PAUSED workflowów oczekujących na zatwierdzenie."
       }
     },
-    "apps": "Aplikacje"
+    "apps": "Aplikacje",
+    "editor_shortcuts": {
+      "save_flow": "Zapisz flow",
+      "comment_uncomment": "Komentarz/Odkomentuj",
+      "duplicate_cursor": "Duplikuj kursor",
+      "uncomment": "Odkomentuj",
+      "label": "Skróty klawiaturowe",
+      "fold_unfold": "Zwiń/Rozwiń kod",
+      "comment": "Komentarz",
+      "move_line": "Przenieś linię",
+      "command_palette": "Pokaż paletę poleceń"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Wystąpił problem podczas ładowania wykonania"
+    }
   }
 }

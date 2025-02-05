@@ -8,20 +8,24 @@
         />
     </template>
     <template v-else>
-        <InputText
+        <editor
             :model-value="editorValue"
+            :navbar="false"
+            :full-height="false"
+            schema-type="flow"
+            lang="plaintext"
+            input
             @update:model-value="onInput"
-            class="w-100"
         />
     </template>
 </template>
 <script>
     import Task from "./Task";
-    import InputText from "../../../components/code/components/inputs/InputText.vue";
+    import Editor from "../../../components/inputs/Editor.vue";
 
     export default {
         mixins: [Task],
-        components: {InputText},
+        components: {Editor},
         emits: ["update:modelValue"],
         computed: {
             isValid() {

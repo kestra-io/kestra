@@ -8,12 +8,34 @@
             <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins.filter(p => !p.subGroup)" />
         </template>
         <template #content>
-            <div class="markdown" v-loading="isLoading">
-                <markdown :source="plugin.markdown" :permalink="true" />
+            <div class="plugin-doc">
+                <div class="d-flex gap-3 mb-3 align-items-center">
+                    <task-icon
+                        class="plugin-icon"
+                        :cls="$route.params.cls"
+                        only-icon
+                        :icons="icons"
+                    />
+                    <h4 class="mb-0">
+                        {{ pluginName }}
+                    </h4>
+                </div>
+                <Suspense v-loading="isLoading">
+                    <schema-to-html class="plugin-schema" :dark-mode="Utils.getTheme() === 'dark'" :schema="plugin.schema" :props-initially-expanded="true" :plugin-type="$route.params.cls">
+                        <template #markdown="{content}">
+                            <markdown font-size-var="font-size-base" :source="content" />
+                        </template>
+                    </schema-to-html>
+                </Suspense>
             </div>
         </template>
     </docs-layout>
 </template>
+
+<script setup>
+    import Utils from "../../utils/utils.js";
+    import {TaskIcon} from "@kestra-io/ui-libs";
+</script>
 
 <script>
     import RouteContext from "../../mixins/routeContext";
@@ -23,10 +45,12 @@
     import {mapState} from "vuex";
     import PluginHome from "./PluginHome.vue";
     import DocsLayout from "../docs/DocsLayout.vue";
+    import {SchemaToHtml} from "@kestra-io/ui-libs";
 
     export default {
         mixins: [RouteContext],
         components: {
+            SchemaToHtml,
             DocsLayout,
             PluginHome,
             Markdown,
@@ -34,7 +58,7 @@
             TopNavBar
         },
         computed: {
-            ...mapState("plugin", ["plugin", "plugins"]),
+            ...mapState("plugin", ["plugin", "plugins", "icons"]),
             routeInfo() {
                 return {
                     title: this.$route.params.cls ? this.$route.params.cls : this.$t("plugins.names"),
@@ -47,6 +71,10 @@
                         }
                     ]
                 }
+            },
+            pluginName() {
+                const split = this.$route.params.cls.split(".");
+                return split[split.length - 1];
             },
             pluginIsSelected() {
                 return this.plugin && this.$route.params.cls
@@ -99,3 +127,6 @@
     };
 </script>
 
+<style scoped lang="scss">
+    @import "../../styles/components/plugin-doc";
+</style>

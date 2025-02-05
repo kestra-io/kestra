@@ -1,5 +1,5 @@
 <template>
-    <el-empty :image :image-size="180">
+    <el-empty :image="noData" :image-size="180">
         <template #description>
             <span v-html="description" />
         </template>
@@ -13,6 +13,8 @@
     const {t} = useI18n({useScope: "global"});
 
     const store = useStore();
+    
+    import noData from "../../assets/no_data.png";
 
     import Dark from "../../assets/dark.png";
     import Light from "../../assets/light.png";
@@ -23,12 +25,9 @@
     const description = computed(() => props.text ?? t("no_data"));
 </script>
 
-<style lang="scss">
-.el-empty {
-    padding-top: 0;
-
-    .el-empty__description {
-        font-size: var(--el-font-size-small);
-    }
+<style scoped lang="scss">
+:deep(.el-empty__description) {
+    font-size: var(--el-font-size-small);
+    color: var(--ks-content-secondary);
 }
 </style>

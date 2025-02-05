@@ -140,6 +140,9 @@
                 default: tagsResponse => Object.fromEntries(tagsResponse.map(tag => [tag.id, tag]))
             }
         },
+        mounted() {
+            this.$store.commit("doc/setDocId", `blueprints.${this.blueprintType}`);
+        },
         data() {
             return {
                 q: undefined,

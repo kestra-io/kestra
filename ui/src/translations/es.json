@@ -290,7 +290,7 @@
     "template creation": "Creación de plantilla",
     "templates": "Plantillas",
     "templates deprecated": "Las plantillas están obsoletas. Por favor usa subflows en su lugar. Consulta la <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sección de Migraciones</a> que explica cómo puedes migrar de plantillas a subflows.",
-    "no result": "No se han emitido logs hasta ahora",
+    "no result": "No hay resultados para mostrar.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Detalles del trigger",
@@ -1148,6 +1148,20 @@
         "message": "Las aplicaciones en Kestra Enterprise Edition te permiten construir interfaces de usuario personalizadas que interactúan con los workflows de Kestra desde fuera de la plataforma. Esta función te permite usar tus workflows como un backend para aplicaciones personalizadas, permitiendo a usuarios no técnicos enviar datos a través de formularios o reanudar workflows PAUSED que esperan aprobación."
       }
     },
-    "apps": "Aplicaciones"
+    "apps": "Aplicaciones",
+    "editor_shortcuts": {
+      "save_flow": "Guardar flow",
+      "comment_uncomment": "Comentar/Descomentar",
+      "duplicate_cursor": "Duplicar cursor",
+      "uncomment": "Descomentar",
+      "label": "Atajos de teclado",
+      "fold_unfold": "Plegar/Desplegar código",
+      "comment": "Comentario",
+      "move_line": "Mover línea",
+      "command_palette": "Mostrar paleta de comandos"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Algo salió mal al cargar la ejecución."
+    }
   }
 }

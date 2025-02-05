@@ -290,7 +290,7 @@
     "template creation": "Création de template",
     "templates": "Templates",
     "templates deprecated": "Les templates sont obsolètes. Veuillez utiliser des sous-flux au lieu des templates. Consultez <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">section Migrations</a> expliquant comment vous pouvez migrer vers les sous-flux.",
-    "no result": "Aucun log émis jusqu'à présent",
+    "no result": "Il n'y a aucun résultat à afficher.",
     "trigger": "Déclencheur",
     "triggers": "Déclencheurs",
     "trigger details": "Détails du déclencheur",
@@ -1148,6 +1148,20 @@
         "message": "Les applications dans Kestra Enterprise Edition vous permettent de créer des interfaces utilisateur personnalisées qui interagissent avec les workflows Kestra depuis l'extérieur de la plateforme. Cette fonctionnalité vous permet d'utiliser vos workflows comme un backend pour des applications personnalisées, permettant aux utilisateurs non techniques de soumettre des données via des formulaires ou de reprendre des workflows PAUSED en attente d'approbation."
       }
     },
-    "apps": "Applications"
+    "apps": "Applications",
+    "editor_shortcuts": {
+      "save_flow": "Enregistrer le flow",
+      "comment_uncomment": "Commenter/Décommenter",
+      "duplicate_cursor": "Dupliquer le curseur",
+      "uncomment": "Décommenter",
+      "label": "Raccourcis clavier",
+      "fold_unfold": "Plier/Déplier le code",
+      "comment": "Commentaire",
+      "move_line": "Déplacer la ligne",
+      "command_palette": "Afficher la palette de commandes"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Une erreur s'est produite lors du chargement de l'exécution"
+    }
   }
 }

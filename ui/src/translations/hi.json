@@ -290,7 +290,7 @@
     "template creation": "template निर्माण",
     "templates": "templates",
     "templates deprecated": "templates अप्रचलित हैं। कृपया इसके बजाय subflows का उपयोग करें। यह समझाने वाला <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">माइग्रेशन अनुभाग</a> देखें कि आप टेम्पलेट्स से subflows में कैसे माइग्रेट कर सकते हैं।",
-    "no result": "अब तक कोई logs उत्पन्न नहीं हुए हैं",
+    "no result": "कोई परिणाम दिखाने के लिए नहीं हैं।",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Trigger विवरण",
@@ -1148,6 +1148,20 @@
         "message": "Kestra एंटरप्राइज एडिशन में ऐप्स आपको कस्टम UI बनाने की अनुमति देते हैं जो प्लेटफ़ॉर्म के बाहर से Kestra वर्कफ़्लोज़ के साथ इंटरैक्ट करते हैं। यह फीचर आपको अपने वर्कफ़्लोज़ को कस्टम एप्लिकेशनों के लिए बैकएंड के रूप में उपयोग करने देता है, जिससे गैर-तकनीकी उपयोगकर्ता फॉर्म के माध्यम से डेटा सबमिट कर सकते हैं या अप्रूवल की प्रतीक्षा कर रहे PAUSED वर्कफ़्लोज़ को फिर से शुरू कर सकते हैं।"
       }
     },
-    "apps": "ऐप्स"
+    "apps": "ऐप्स",
+    "editor_shortcuts": {
+      "save_flow": "फ्लो सहेजें",
+      "comment_uncomment": "टिप्पणी/अनटिप्पणी",
+      "duplicate_cursor": "कर्सर को डुप्लिकेट करें",
+      "uncomment": "अनकमेंट करें",
+      "label": "कीबोर्ड शॉर्टकट्स",
+      "fold_unfold": "कोड को फोल्ड/अनफोल्ड करें",
+      "comment": "टिप्पणी",
+      "move_line": "लाइन को स्थानांतरित करें",
+      "command_palette": "कमांड पैलेट दिखाएं"
+    },
+    "something_went_wrong": {
+      "loading_execution": "लोडिंग के दौरान कुछ गलत हो गया।"
+    }
   }
 }

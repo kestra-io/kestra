@@ -1482,7 +1482,7 @@
         text-align: center;
 
         .img {
-            background: url("../../assets/errors/kestra-error.png") no-repeat center;
+            background: url("../../assets/empty-ns-files.png") no-repeat center;
             background-size: contain;
         }
 

@@ -32,7 +32,6 @@ jobs:
               - 'ui/src/translations/**'
             backend:
             - '!ui/**'
-            - '**'
             - '!.github/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
@@ -41,11 +40,11 @@ jobs:
     needs: file-changes
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    if: "needs.file-changes.outputs.changes.ui == 'true'"
+    if: "needs.file-changes.changes.outputs.ui == 'true'"
     steps:
       - id: generate-translations
         name: Generate translations
-        if: "needs.file-changes.outputs.changes.translations == 'true'"
+        if: "needs.file-changes.changes.outputs.translations == 'true'"
         uses: ./.github/actions/action-generate-translations
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -59,13 +58,13 @@ jobs:
     needs: file-changes
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    if: needs.file-changes.outputs.changes.backend == 'true'
+    if: needs.file-changes.changes.outputs.backend == 'true'
     steps:
       - name: Backend test
         uses: ./.github/actions/action-backend-test
 
   build-artifacts:
-    if: "needs.file-changes.outputs.changes.backend == 'true' || needs.file-changes.outputs.changes.ui == 'true'"
+    if: "needs.file-changes.changes.outputs.backend == 'true' || needs.file-changes.changes.outputs.ui == 'true'"
     name: Build artifacts
     runs-on: ubuntu-latest
     steps:

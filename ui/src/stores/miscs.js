@@ -5,6 +5,7 @@ export default {
     state: {
         configs: undefined,
         contextInfoBarOpenTab: "",
+        theme: "light"
     },
     actions: {
         loadConfigs({commit}) {
@@ -39,6 +40,9 @@ export default {
         }
     },
     mutations: {
+        setTheme(state, theme) {
+            state.theme = theme
+        },
         setConfigs(state, configs) {
             state.configs = configs
         },
@@ -47,6 +51,9 @@ export default {
         }
     },
     getters: {
+        theme(state) {
+            return state.theme;
+        },
         configs(state) {
             return state.configs;
         },

@@ -290,7 +290,7 @@
     "template creation": "Creazione del template",
     "templates": "Templates",
     "templates deprecated": "I templates sono deprecati. Si prega di utilizzare i subflows. Vedi la <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sezione Migrazioni</a> che spiega come migrare dai templates ai subflows.",
-    "no result": "Nessun log emesso finora",
+    "no result": "Non ci sono risultati da mostrare.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Dettagli del trigger",
@@ -534,7 +534,7 @@
     "row count": "Conteggio righe",
     "encoding": "Codifica",
     "show": "Mostra",
-    "advanced configuration": "Configurazione avanzata",
+    "advanced configuration": "Altre proprietà",
     "all executions": "Tutte le esecuzioni",
     "trigger execution id": "Trigger Execution Id",
     "triggers_state": {
@@ -1068,19 +1068,24 @@
         "main": "Proprietà principali",
         "error_handlers": "Gestori degli Errori",
         "tasks": "Attività",
-        "advanced": "Configurazione avanzata"
+        "advanced": "Configurazione avanzata",
+        "finally": "Infine",
+        "other": "Altre proprietà",
+        "optional": "Proprietà opzionali"
       },
       "creation": {
         "select": "Seleziona una {section}",
         "tasks": "Aggiungi un task",
         "error handlers": "Aggiungi un gestore degli errori",
-        "triggers": "Aggiungi un trigger"
+        "triggers": "Aggiungi un trigger",
+        "finally": "Aggiungi un blocco finally"
       },
       "save": {
         "tasks": "Salva task",
         "triggers": "Salva trigger",
         "error handlers": "Salva gestore errori",
-        "input": "Salva input"
+        "input": "Salva input",
+        "finally": "Salva task"
       },
       "labels": {
         "no_code": "Editor Senza Codice",
@@ -1145,6 +1150,26 @@
         "message": "Le app nella Kestra Enterprise Edition ti consentono di creare interfacce utente personalizzate che interagiscono con i workflow di Kestra al di fuori della piattaforma. Questa funzionalità ti permette di utilizzare i tuoi workflow come backend per applicazioni personalizzate, consentendo agli utenti non tecnici di inviare dati tramite moduli o riprendere workflow PAUSED in attesa di approvazione."
       }
     },
-    "apps": "Applicazioni"
+    "apps": "Applicazioni",
+    "editor_shortcuts": {
+      "save_flow": "Salva flow",
+      "comment_uncomment": "Commenta/Decommenta",
+      "duplicate_cursor": "Duplica cursore",
+      "uncomment": "Decommenta",
+      "label": "Scorciatoie da tastiera",
+      "fold_unfold": "Piega/Spiega codice",
+      "comment": "Commento",
+      "move_line": "Sposta linea",
+      "command_palette": "Mostra la palette dei comandi"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Si è verificato un errore durante il caricamento dell'esecuzione"
+    },
+    "properties": {
+      "shown": "Visualizzato nella tabella",
+      "hint": "Scegli colonne visibili",
+      "hidden": "Nascosto nella Tabella",
+      "label": "Proprietà"
+    }
   }
 }

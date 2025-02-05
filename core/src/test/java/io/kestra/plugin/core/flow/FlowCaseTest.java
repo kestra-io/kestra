@@ -99,21 +99,24 @@ public class FlowCaseTest {
         assertThat(triggered.get().getState().getCurrent(), is(triggerState));
 
         if (testInherited) {
-            assertThat(triggered.get().getLabels().size(), is(5));
+            assertThat(triggered.get().getLabels().size(), is(6));
             assertThat(triggered.get().getLabels(), hasItems(
                 new Label(Label.CORRELATION_ID, execution.getId()),
                 new Label("mainFlowExecutionLabel", "execFoo"),
                 new Label("mainFlowLabel", "flowFoo"),
                 new Label("launchTaskLabel", "launchFoo"),
-                new Label("switchFlowLabel", "switchFoo")
+                new Label("switchFlowLabel", "switchFoo"),
+                new Label("overriding", "child")
             ));
         } else {
-            assertThat(triggered.get().getLabels().size(), is(3));
+            assertThat(triggered.get().getLabels().size(), is(4));
             assertThat(triggered.get().getLabels(), hasItems(
                 new Label(Label.CORRELATION_ID, execution.getId()),
                 new Label("launchTaskLabel", "launchFoo"),
-                new Label("switchFlowLabel", "switchFoo")
+                new Label("switchFlowLabel", "switchFoo"),
+                new Label("overriding", "child")
             ));
+            assertThat(triggered.get().getLabels(), not(hasItems(new Label("inherited", "label"))));
         }
     }
 }

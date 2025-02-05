@@ -336,7 +336,7 @@
     "template creation": "Template creation",
     "templates": "Templates",
     "templates deprecated": "Templates are deprecated. Please use subflows instead. See the <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Migrations section</a> explaining how you can migrate from templates to subflows.",
-    "no result": "No logs emitted so far",
+    "no result": "There are no results to be shown.",
     "empty search": "Search results are empty",
     "trigger": "Trigger",
     "triggers": "Triggers",
@@ -602,7 +602,7 @@
     "row count": "Row count",
     "encoding": "Encoding",
     "show": "Show",
-    "advanced configuration": "Advanced configuration",
+    "advanced configuration": "Other properties",
     "all executions": "All executions",
     "trigger execution id": "Trigger Execution Id",
     "triggers_state": {
@@ -821,18 +821,18 @@
         "edit": {
           "title": "Upgrade Your Namespace Management",
           "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and governance of secrets, variables and plugin defaults at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and plugin configurations remain secure and easy to maintain across different teams and projects."
-      },
+        },
         "variables": {
-        "title": "Centrally Govern Your Variables",
-        "message": "In Kestra Enterprise Edition, you can define and manage namespace-level variables to eliminate repetitive configurations across flows. These variables ensure consistency, simplify configuration updates, and can be easily referenced by any task or trigger for cleaner, more maintainable workflows."
-      },
-      "plugin-defaults": {
-        "title": "Standardize Configuration with Plugin Defaults",
-        "message": "In Kestra Enterprise Edition, you can set namespace-specific plugin defaults, reducing the need for duplicated setup in each flow. This central plugin governance enforces consistent configurations, allows secure referencing of secrets or variables, and simplifies maintenance of your workflows."
-      },
-      "secrets": {
-        "title": "Manage Secrets in a Secure Way",
-        "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
+          "title": "Centrally Govern Your Variables",
+          "message": "In Kestra Enterprise Edition, you can define and manage namespace-level variables to eliminate repetitive configurations across flows. These variables ensure consistency, simplify configuration updates, and can be easily referenced by any task or trigger for cleaner, more maintainable workflows."
+        },
+        "plugin-defaults": {
+          "title": "Standardize Configuration with Plugin Defaults",
+          "message": "In Kestra Enterprise Edition, you can set namespace-specific plugin defaults, reducing the need for duplicated setup in each flow. This central plugin governance enforces consistent configurations, allows secure referencing of secrets or variables, and simplifies maintenance of your workflows."
+        },
+        "secrets": {
+          "title": "Manage Secrets in a Secure Way",
+          "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
         },
         "audit-logs": {
           "title": "Track All Changes in One Place",
@@ -1125,10 +1125,11 @@
       "sections": {
         "main": "Main properties",
         "general": "General properties",
-        "advanced": "Advanced configuration",
+        "optional": "Optional properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
-        "error_handlers": "Error Handlers"
+        "error_handlers": "Error Handlers",
+        "finally": "Finally"
       },
       "fields": {
         "main": {
@@ -1151,15 +1152,37 @@
         "select": "Select a {section}",
         "tasks": "Add a task",
         "triggers": "Add a trigger",
-        "error handlers": "Add an error handler"
+        "error handlers": "Add an error handler",
+        "finally": "Add a finally block"
       },
       "save": {
         "tasks": "Save task",
         "triggers": "Save trigger",
         "error handlers": "Save error handler",
+        "finally": "Save task",
         "input": "Save input"
       }
     },
-    "instance": "Instance"
+    "properties": {
+      "label": "Properties",
+      "hint": "Choose Visible Columns",
+      "shown": "Shown in Table",
+      "hidden": "Hidden in Table"
+    },
+    "editor_shortcuts": {
+      "label": "Keyboard shortcuts",
+      "command_palette": "Show command palette",
+      "save_flow": "Save flow",
+      "move_line": "Move line",
+      "duplicate_cursor": "Duplicate cursor",
+      "fold_unfold": "Fold/Unfold code",
+      "comment_uncomment": "Comment/Uncomment",
+      "comment": "Comment",
+      "uncomment": "Uncomment"
+    },
+    "instance": "Instance",
+    "something_went_wrong": {
+      "loading_execution": "Something went wrong while loading the execution"
+    }
   }
 }

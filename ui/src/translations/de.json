@@ -290,7 +290,7 @@
     "template creation": "Vorlagenerstellung",
     "templates": "Vorlagen",
     "templates deprecated": "Vorlagen sind veraltet. Bitte verwenden Sie stattdessen Subflows. Siehe den <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Migrationsabschnitt</a>, der erklärt, wie Sie von Vorlagen zu Subflows migrieren können.",
-    "no result": "Keine Logs bisher ausgegeben",
+    "no result": "Es gibt keine Ergebnisse anzuzeigen.",
     "trigger": "Trigger",
     "triggers": "Trigger",
     "trigger details": "Trigger-Details",
@@ -534,7 +534,7 @@
     "row count": "Zeilenanzahl",
     "encoding": "Kodierung",
     "show": "Anzeigen",
-    "advanced configuration": "Erweiterte Konfiguration",
+    "advanced configuration": "Andere Eigenschaften",
     "all executions": "Alle Ausführungen",
     "trigger execution id": "Trigger-Ausführungs-Id",
     "triggers_state": {
@@ -1068,19 +1068,24 @@
         "main": "Haupteigenschaften",
         "error_handlers": "Fehlerbehandler",
         "tasks": "Aufgaben",
-        "advanced": "Erweiterte Konfiguration"
+        "advanced": "Erweiterte Konfiguration",
+        "finally": "Schließlich",
+        "other": "Andere Eigenschaften",
+        "optional": "Optionale Eigenschaften"
       },
       "creation": {
         "select": "Wählen Sie einen {section} aus",
         "tasks": "Aufgabe hinzufügen",
         "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
-        "triggers": "Füge einen Trigger hinzu"
+        "triggers": "Füge einen Trigger hinzu",
+        "finally": "Fügen Sie einen Finally-Block hinzu"
       },
       "save": {
         "tasks": "Aufgabe speichern",
         "triggers": "Speicher Trigger",
         "error handlers": "Fehlerbehandlungsroutine speichern",
-        "input": "Eingabe speichern"
+        "input": "Eingabe speichern",
+        "finally": "Aufgabe speichern"
       },
       "labels": {
         "no_code": "Kein Code-Editor",
@@ -1145,6 +1150,26 @@
         "message": "Apps in der Kestra Enterprise Edition ermöglichen es Ihnen, benutzerdefinierte UIs zu erstellen, die mit Kestra-Workflows außerhalb der Plattform interagieren. Diese Funktion erlaubt es Ihnen, Ihre Workflows als Backend für benutzerdefinierte Anwendungen zu nutzen, sodass nicht-technische Benutzer Daten über Formulare einreichen oder pausierte Workflows, die auf eine Genehmigung warten, fortsetzen können."
       }
     },
-    "apps": "Apps"
+    "apps": "Apps",
+    "editor_shortcuts": {
+      "save_flow": "Flow speichern",
+      "comment_uncomment": "Kommentar/Kommentar entfernen",
+      "duplicate_cursor": "Kursor duplizieren",
+      "uncomment": "Entkommentieren",
+      "label": "Tastenkombinationen",
+      "fold_unfold": "Code ein-/ausklappen",
+      "comment": "Kommentar",
+      "move_line": "Zeile verschieben",
+      "command_palette": "Befehlsübersicht anzeigen"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Beim Laden der Ausführung ist etwas schiefgelaufen."
+    },
+    "properties": {
+      "shown": "In Tabelle angezeigt",
+      "hint": "Sichtbare Spalten auswählen",
+      "hidden": "In Tabelle versteckt",
+      "label": "Eigenschaften"
+    }
   }
 }

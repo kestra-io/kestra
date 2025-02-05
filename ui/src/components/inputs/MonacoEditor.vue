@@ -8,6 +8,7 @@
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
     import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
+    import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess.js"
     import "monaco-editor/esm/vs/language/json/monaco.contribution";
     import "monaco-editor/esm/vs/basic-languages/monaco.contribution";
     import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
@@ -627,6 +628,11 @@
                     monaco.editor.addKeybindingRule({
                         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Space,
                         command: "editor.action.triggerSuggest"
+                    })
+
+                    monaco.editor.addKeybindingRule({
+                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyP,
+                        command: "editor.action.quickCommand"
                     })
 
                     this.editor = monaco.editor.create(this.$el, options);

@@ -290,7 +290,7 @@
     "template creation": "template निर्माण",
     "templates": "templates",
     "templates deprecated": "templates अप्रचलित हैं। कृपया इसके बजाय subflows का उपयोग करें। यह समझाने वाला <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">माइग्रेशन अनुभाग</a> देखें कि आप टेम्पलेट्स से subflows में कैसे माइग्रेट कर सकते हैं।",
-    "no result": "अब तक कोई logs उत्पन्न नहीं हुए हैं",
+    "no result": "कोई परिणाम दिखाने के लिए नहीं हैं।",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Trigger विवरण",
@@ -534,7 +534,7 @@
     "row count": "पंक्ति संख्या",
     "encoding": "एन्कोडिंग",
     "show": "दिखाएं",
-    "advanced configuration": "उन्नत कॉन्फ़िगरेशन",
+    "advanced configuration": "अन्य गुण",
     "all executions": "सभी निष्पादन",
     "trigger execution id": "Trigger निष्पादन Id",
     "triggers_state": {
@@ -1068,19 +1068,24 @@
         "main": "मुख्य गुणधर्म",
         "error_handlers": "त्रुटि हैंडलर",
         "tasks": "कार्य",
-        "advanced": "उन्नत कॉन्फ़िगरेशन"
+        "advanced": "उन्नत कॉन्फ़िगरेशन",
+        "finally": "अंत में",
+        "other": "अन्य गुण",
+        "optional": "वैकल्पिक गुण"
       },
       "creation": {
         "select": "किसी {section} का चयन करें",
         "tasks": "कार्य जोड़ें",
         "error handlers": "त्रुटि हैंडलर जोड़ें",
-        "triggers": "ट्रिगर जोड़ें"
+        "triggers": "ट्रिगर जोड़ें",
+        "finally": "अंत में एक finally ब्लॉक जोड़ें"
       },
       "save": {
         "tasks": "कार्य सहेजें",
         "triggers": "ट्रिगर सहेजें",
         "error handlers": "त्रुटि हैंडलर सहेजें",
-        "input": "इनपुट सहेजें"
+        "input": "इनपुट सहेजें",
+        "finally": "कार्य सहेजें"
       },
       "labels": {
         "no_code": "कोड संपादक नहीं",
@@ -1145,6 +1150,26 @@
         "message": "Kestra एंटरप्राइज एडिशन में ऐप्स आपको कस्टम UI बनाने की अनुमति देते हैं जो प्लेटफ़ॉर्म के बाहर से Kestra वर्कफ़्लोज़ के साथ इंटरैक्ट करते हैं। यह फीचर आपको अपने वर्कफ़्लोज़ को कस्टम एप्लिकेशनों के लिए बैकएंड के रूप में उपयोग करने देता है, जिससे गैर-तकनीकी उपयोगकर्ता फॉर्म के माध्यम से डेटा सबमिट कर सकते हैं या अप्रूवल की प्रतीक्षा कर रहे PAUSED वर्कफ़्लोज़ को फिर से शुरू कर सकते हैं।"
       }
     },
-    "apps": "ऐप्स"
+    "apps": "ऐप्स",
+    "editor_shortcuts": {
+      "save_flow": "फ्लो सहेजें",
+      "comment_uncomment": "टिप्पणी/अनटिप्पणी",
+      "duplicate_cursor": "कर्सर को डुप्लिकेट करें",
+      "uncomment": "अनकमेंट करें",
+      "label": "कीबोर्ड शॉर्टकट्स",
+      "fold_unfold": "कोड को फोल्ड/अनफोल्ड करें",
+      "comment": "टिप्पणी",
+      "move_line": "लाइन को स्थानांतरित करें",
+      "command_palette": "कमांड पैलेट दिखाएं"
+    },
+    "something_went_wrong": {
+      "loading_execution": "लोडिंग के दौरान कुछ गलत हो गया।"
+    },
+    "properties": {
+      "shown": "तालिका में दिखाया गया",
+      "hint": "दृश्य स्तंभ चुनें",
+      "hidden": "टेबल में छिपा हुआ",
+      "label": "गुणधर्म"
+    }
   }
 }

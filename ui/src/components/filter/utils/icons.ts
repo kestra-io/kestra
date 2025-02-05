@@ -19,6 +19,9 @@ import StateMachine from "vue-material-design-icons/StateMachine.vue";
 import TagOutline from "vue-material-design-icons/TagOutline.vue";
 import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
 import ViewDashboardEdit from "vue-material-design-icons/ViewDashboardEdit.vue";
+import TableColumn from "vue-material-design-icons/TableColumnPlusAfter.vue";
+import Eye from "vue-material-design-icons/Eye.vue";
+import EyeOff from "vue-material-design-icons/EyeOff.vue";
 import Pencil from "vue-material-design-icons/Pencil.vue";
 import Menu from "vue-material-design-icons/Menu.vue";
 
@@ -44,6 +47,9 @@ export {
     TagOutline,
     TimelineTextOutline,
     ViewDashboardEdit,
+    TableColumn,
+    Eye,
+    EyeOff,
     Pencil,
     Menu
 };

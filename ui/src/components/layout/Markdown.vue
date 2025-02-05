@@ -134,6 +134,10 @@
             }
         }
 
+        .dark & h1 img{
+            filter: invert(1);
+        }
+
         h2 {
             margin-top: 2rem;
         }

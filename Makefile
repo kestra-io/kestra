@@ -17,6 +17,8 @@ VERSION := $(shell ./gradlew properties -q | awk '/^version:/ {print $$2}')
 GIT_COMMIT := $(shell git rev-parse --short HEAD)
 GIT_BRANCH := $(shell git rev-parse --abbrev-ref HEAD)
 DATE := $(shell date --rfc-3339=seconds)
+PLUGIN_GIT_DIR ?= $(pwd)/..
+PLUGIN_JARS_DIR ?= $(pwd)/locals/plugins
 
 DOCKER_IMAGE = kestra/kestra
 DOCKER_PATH = ./
@@ -174,3 +176,72 @@ start-standalone-postgres: kill --private-start-standalone-postgres health
 
 start-standalone-local: kill --private-start-standalone-local health
 
+#checkout all plugins
+clone-plugins:
+	@echo "Using PLUGIN_GIT_DIR: $(PLUGIN_GIT_DIR)"
+	@mkdir -p "$(PLUGIN_GIT_DIR)"
+	@echo "Fetching repository list from GitHub..."
+	@REPOS=$(gh repo list kestra-io -L 1000  --json  name | jq -r  .[].name | sort | grep "^plugin-") \
+	for repo in $$REPOS; do \
+	    if [[ $$repo == plugin-* ]]; then \
+	        if [ -d "$(PLUGIN_GIT_DIR)/$$repo" ]; then \
+	            echo "Skipping: $$repo (Already cloned)"; \
+	        else \
+	            echo "Cloning: $$repo using SSH..."; \
+	            git clone "git@github.com:kestra-io/$$repo.git" "$(PLUGIN_GIT_DIR)/$$repo"; \
+	        fi; \
+	    fi; \
+	done
+	@echo "Done!"
+
+# Update all plugins jar
+build-plugins:
+	@echo "🔍 Scanning repositories in '$(PLUGIN_GIT_DIR)'..."
+	@MASTER_REPOS=(); \
+	for repo in "$(PLUGIN_GIT_DIR)"/*; do \
+	    if [ -d "$$repo/.git" ]; then \
+	        branch=$$(git -C "$$repo" rev-parse --abbrev-ref HEAD); \
+	        if [[ "$$branch" == "master" ]]; then \
+	            MASTER_REPOS+=("$$repo"); \
+	        else \
+	            echo "❌ Skipping: $$(basename "$$repo") (Not on master branch)"; \
+	        fi; \
+	    fi; \
+	done; \
+	\
+	# === STEP 2: Update Repos on Master Branch === \
+	echo "⬇️ Updating repositories on master branch..."; \
+	for repo in "$${MASTER_REPOS[@]}"; do \
+	    echo "🔄 Updating: $$(basename "$$repo")"; \
+	    git -C "$$repo" pull --rebase; \
+	done; \
+	\
+	# === STEP 3: Build with Gradle === \
+	echo "⚙️ Building repositories with Gradle..."; \
+	for repo in "$${MASTER_REPOS[@]}"; do \
+	    echo "🔨 Building: $$(basename "$$repo")"; \
+	    gradle clean build -x test shadowJar -p "$$repo"; \
+	done; \
+	\
+	# === STEP 4: Copy Latest JARs (Ignoring javadoc & sources) === \
+	echo "📦 Organizing built JARs..."; \
+	mkdir -p "$(PLUGIN_JARS_DIR)"; \
+	for repo in "$${MASTER_REPOS[@]}"; do \
+	    REPO_NAME=$$(basename "$$repo"); \
+	    \
+	    JARS=($$(find "$$repo" -type f -name "plugin-*.jar" ! -name "*-javadoc.jar" ! -name "*-sources.jar")); \
+	    if [ $${#JARS[@]} -eq 0 ]; then \
+	        echo "⚠️ Warning: No valid plugin JARs found for $$REPO_NAME"; \
+	        continue; \
+	    fi; \
+	    \
+	    for jar in "$${JARS[@]}"; do \
+	        JAR_NAME=$$(basename "$$jar"); \
+	        BASE_NAME=$$(echo "$$JAR_NAME" | sed -E 's/(-[0-9]+.*)?\.jar$$//'); \
+	        rm -f "$(PLUGIN_JARS_DIR)/$$BASE_NAME"-[0-9]*.jar; \
+	        cp "$$jar" "$(PLUGIN_JARS_DIR)/"; \
+	        echo "✅ Copied JAR: $$JAR_NAME"; \
+	    done; \
+	done; \
+	\
+	echo "🎉 Done! All master branch repos updated, built, and organized."

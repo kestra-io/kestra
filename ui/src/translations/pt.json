@@ -290,7 +290,7 @@
     "template creation": "Criação de template",
     "templates": "Templates",
     "templates deprecated": "Templates estão obsoletos. Por favor, use subflows. Veja a <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Seção de Migrações</a> explicando como você pode migrar de templates para subflows.",
-    "no result": "Nenhum log emitido até agora",
+    "no result": "Não há resultados para serem exibidos.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Detalhes do trigger",
@@ -534,7 +534,7 @@
     "row count": "Contagem de linhas",
     "encoding": "Codificação",
     "show": "Mostrar",
-    "advanced configuration": "Configuração avançada",
+    "advanced configuration": "Outras propriedades",
     "all executions": "Todas as execuções",
     "trigger execution id": "Trigger Execution Id",
     "triggers_state": {
@@ -1068,19 +1068,24 @@
         "main": "Propriedades principais",
         "error_handlers": "Manipuladores de Erros",
         "tasks": "Tarefas",
-        "advanced": "Configuração avançada"
+        "advanced": "Configuração avançada",
+        "finally": "Finalmente",
+        "other": "Outras propriedades",
+        "optional": "Propriedades opcionais"
       },
       "creation": {
         "select": "Selecione uma {section}",
         "tasks": "Adicionar uma task",
         "error handlers": "Adicionar um manipulador de erro",
-        "triggers": "Adicionar um trigger"
+        "triggers": "Adicionar um trigger",
+        "finally": "Adicionar um bloco finally"
       },
       "save": {
         "tasks": "Salvar task",
         "triggers": "Salvar trigger",
         "error handlers": "Salvar manipulador de erro",
-        "input": "Salvar input"
+        "input": "Salvar input",
+        "finally": "Salvar task"
       },
       "labels": {
         "no_code": "Editor Sem Código",
@@ -1145,6 +1150,26 @@
         "message": "As aplicações na Kestra Enterprise Edition permitem que você construa interfaces personalizadas que interagem com os workflows do Kestra fora da plataforma. Este recurso permite usar seus workflows como um backend para aplicações personalizadas, possibilitando que usuários não técnicos enviem dados através de formulários ou retomem workflows PAUSED aguardando aprovação."
       }
     },
-    "apps": "Aplicativos"
+    "apps": "Aplicativos",
+    "editor_shortcuts": {
+      "save_flow": "Salvar flow",
+      "comment_uncomment": "Comentar/Descomentar",
+      "duplicate_cursor": "Duplicar cursor",
+      "uncomment": "Descomentar",
+      "label": "Atalhos de teclado",
+      "fold_unfold": "Dobra/Desdobra código",
+      "comment": "Comentário",
+      "move_line": "Mover linha",
+      "command_palette": "Mostrar paleta de comandos"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Algo deu errado ao carregar a execução"
+    },
+    "properties": {
+      "shown": "Exibido na Tabela",
+      "hint": "Escolher Colunas Visíveis",
+      "hidden": "Oculto na Tabela",
+      "label": "Propriedades"
+    }
   }
 }

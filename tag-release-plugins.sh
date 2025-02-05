@@ -18,7 +18,8 @@
 #   ./tag-release-plugins.sh --release-version=0.20.0 
 # To release a specific plugin:
 #   ./tag-release-plugins.sh --release-version=0.20.0 plugin-kubernetes
-
+# To release specific plugins from file:
+#   ./tag-release-plugins.sh --release-version=0.20.0 --plugin-file .plugins
 #===============================================================================
 
 set -e;
@@ -40,6 +41,7 @@ usage() {
     echo
     echo "Options:"
     echo "  --release-version <version>  Specify the release version (required)."
+    echo "  --plugin-file                File containing the plugin list (default: .plugins)"
     echo "  --dry-run                    Specify to run in DRY_RUN."
     echo "  -y, --yes                    Automatically confirm prompts (non-interactive)."
     echo "  -h, --help                   Show this help message and exit."
@@ -68,6 +70,14 @@ while [[ "$#" -gt 0 ]]; do
             ;;
         --release-version=*)
             RELEASE_VERSION="${1#*=}"
+            shift
+            ;;
+        --plugin-file)
+            PLUGIN_FILE="$2"
+            shift 2
+            ;;
+        --plugin-file=*)
+            PLUGIN_FILE="${1#*=}"
             shift
             ;;
         --dry-run)
@@ -163,7 +173,7 @@ do
     git checkout "$RELEASE_BRANCH";
 
     # Update version
-    sed -i.bak "s/^version=.*/version=$RELEASE_VERSION/" ./gradle.properties
+    sed -i "s/^version=.*/version=$RELEASE_VERSION/" ./gradle.properties
     git add ./gradle.properties
     git commit -m"chore(version): update to version 'v$RELEASE_VERSION'."
     git push

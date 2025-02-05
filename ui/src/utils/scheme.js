@@ -1,4 +1,6 @@
-import Utils from "./utils";
+import {computed} from "vue";
+import {useLocalStorage} from "@vueuse/core";
+import {useTheme} from "./utils"
 
 const SCHEME = "scheme";
 const OPTIONS = Object.freeze({
@@ -108,9 +110,15 @@ export const setScheme = (value) => {
     localStorage.setItem(SCHEME, value);
 };
 
-export const getScheme = (state, type = "executions") => {
+export const getScheme = (theme, state, type = "executions") => {
     const scheme = localStorage.getItem(SCHEME) ?? "classic";
-    const theme = Utils.getTheme();
 
     return OPTIONS[scheme]?.[theme]?.[type]?.[state];
 };
+
+export const useScheme = (type = "executions") => {
+    const scheme = useLocalStorage(SCHEME, "classic");
+    const theme = useTheme();
+
+    return computed(() => OPTIONS[scheme.value]?.[theme.value]?.[type]);
+}

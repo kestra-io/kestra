@@ -77,6 +77,7 @@
             :label="t('dashboard.success_ratio')"
             :tooltip="t('dashboard.success_ratio_tooltip')"
             :value="stats.success"
+            :loading="executionsLoading"
             :redirect="{
                 name: 'executions/list',
                 query: {
@@ -93,6 +94,7 @@
             :label="t('dashboard.failure_ratio')"
             :tooltip="t('dashboard.failure_ratio_tooltip')"
             :value="stats.failed"
+            :loading="executionsLoading"
             :redirect="{
                 name: 'executions/list',
                 query: {
@@ -108,6 +110,7 @@
             :icon="FileTree"
             :label="t('flows')"
             :value="numbers.flows"
+            :loading="numbersLoading"
             :redirect="{
                 name: 'flows/list',
                 query: {scope: 'USER', size: 100, page: 1},
@@ -118,6 +121,7 @@
             :icon="LightningBolt"
             :label="t('triggers')"
             :value="numbers.triggers"
+            :loading="numbersLoading"
             :redirect="{
                 name: 'admin/triggers',
                 query: {size: 100, page: 1},
@@ -316,16 +320,21 @@
 
     const defaultNumbers = {flows: 0, triggers: 0};
     const numbers = ref({...defaultNumbers});
+    const numbersLoading = ref(false);
     const fetchNumbers = () => {
         if (props.flowId) {
             return;
         }
 
+        numbersLoading.value = true;
         store.$http
             .post(`${apiUrl(store)}/stats/summary`, mergeQuery())
             .then((response) => {
                 if (!response.data) return;
                 numbers.value = {...defaultNumbers, ...response.data};
+            })
+            .finally(() => {
+                numbersLoading.value = false;
             });
     };
 
@@ -397,7 +406,10 @@
         return queryFilter;
     }
 
+    const executionsLoading = ref(false);
     const fetchExecutions = () => {
+        executionsLoading.value = true;
+
         store.dispatch("stat/daily", mergeQuery()).then((response) => {
             const sorted = response.sort(
                 (a, b) => new Date(b.date) - new Date(a.date),
@@ -409,6 +421,8 @@
                 yesterday: sorted.at(-2),
                 today: sorted.at(-1),
             };
+        }).finally(() => {
+            executionsLoading.value = false;
         });
     };
 

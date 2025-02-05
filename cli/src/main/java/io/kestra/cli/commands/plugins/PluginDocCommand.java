@@ -1,6 +1,5 @@
 package io.kestra.cli.commands.plugins;
 
-import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.docs.DocumentationGenerator;
@@ -61,7 +60,7 @@ public class PluginDocCommand extends AbstractCommand {
                                 Files
                                     .asCharSink(
                                         file,
-                                        Charsets.UTF_8
+                                        StandardCharsets.UTF_8
                                     ).write(s.getBody());
                                 stdOut("Generate doc in: {0}", file);
 

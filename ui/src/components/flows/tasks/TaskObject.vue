@@ -48,7 +48,7 @@
 
             <!-- Non required properties shown collapsed-->
             <el-collapse class="collapse">
-                <el-collapse-item :title="$t('no_code.sections.advanced')">
+                <el-collapse-item :title="$t('no_code.sections.optional')">
                     <el-form-item
                         :key="index"
                         :required="isRequired(key)"
@@ -135,7 +135,7 @@
         emits: ["update:modelValue"],
         methods: {
             properties(requiredFields) {
-                if (this.schema) {
+                if (this.schema?.properties) {
                     const properties = Object.entries(
                         this.schema.properties,
                     ).reduce((acc, [key, value]) => {

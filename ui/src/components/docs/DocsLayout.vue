@@ -244,10 +244,7 @@
         }
 
         :deep(.doc-alert) {
-            border: 1px solid var(--ks-border-info);
-            border-radius: 4px;
-            color: var(--ks-content-info);
-            background: var(--ks-background-info);
+            padding-bottom: 1px !important;
         }
     }
 </style>

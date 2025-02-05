@@ -142,7 +142,7 @@ export const customBarLegend = {
             };
 
             const boxSpan = document.createElement("span");
-            const color = getConsistentHEXColor(item.text);
+            const color = getConsistentHEXColor(Utils.getTheme(), item.text);
             boxSpan.style.background = color;
             boxSpan.style.borderColor = "transparent";
             boxSpan.style.height = "5px";

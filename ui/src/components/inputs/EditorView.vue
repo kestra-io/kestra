@@ -130,6 +130,7 @@
         >
             <template v-if="editorViewType === 'YAML'">
                 <editor
+                    class="position-relative"
                     v-if="isCreating || openedTabs.length"
                     ref="editorDomElement"
                     @save="save"
@@ -144,7 +145,11 @@
                     @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                     :read-only="isReadOnly"
                     :navbar="false"
-                />
+                >
+                    <template #absolute>
+                        <KeyShortcuts />
+                    </template>
+                </editor>
                 <section v-else class="no-tabs-opened">
                     <div class="img" />
 
@@ -166,6 +171,7 @@
                 :flow="flowYaml"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
+                @reorder="(yaml) => handleReorder(yaml)"
                 @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
             />
         </div>
@@ -329,6 +335,7 @@
     import ValidationError from "../flows/ValidationError.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
     import SwitchView from "./SwitchView.vue";
+    import KeyShortcuts from "./KeyShortcuts.vue";
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -799,8 +806,8 @@
         }
 
         haveChange.value = true;
-        store.dispatch("core/isUnsaved", true);
-
+        if(editorViewType.value === "YAML") store.dispatch("core/isUnsaved", true);
+        
         if(!props.isCreating){
             store.commit("editor/changeOpenedTabs", {
                 action: "dirty",
@@ -939,15 +946,13 @@
     };
 
     const onUpdateMetadata = (event, shouldSave) => {
-        metadata.value = event;
-
         if(shouldSave) {
-            metadata.value = {...metadata.value, ...event};
+            metadata.value = {...metadata.value, ...(event.concurrency.limit === 0 ? {concurrency: null} : event)};
             onSaveMetadata();
             validateFlow(flowYaml.value)
 
         } else {
-            metadata.value = event;
+            metadata.value = event.concurrency.limit === 0 ?  {concurrency: null} : event;
         }
     };
 
@@ -957,6 +962,12 @@
         metadata.value = null;
         isEditMetadataOpen.value = false;
         haveChange.value = true;
+    };
+
+    const handleReorder = (yaml) => {
+        flowYaml.value = yaml;
+        haveChange.value = true;
+        save()
     };
 
     const editorUpdate = (event) => {

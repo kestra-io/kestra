@@ -290,7 +290,7 @@
     "template creation": "Utworzenie szablonu",
     "templates": "Szablony",
     "templates deprecated": "Szablony są przestarzałe. Proszę używać subflows. Zobacz <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sekcję migracji</a>, aby dowiedzieć się, jak migrować z szablonów do subflows.",
-    "no result": "Brak logów do tej pory",
+    "no result": "Nie ma wyników do wyświetlenia.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Szczegóły trigger",
@@ -534,7 +534,7 @@
     "row count": "Liczba wierszy",
     "encoding": "Kodowanie",
     "show": "Pokaż",
-    "advanced configuration": "Zaawansowana konfiguracja",
+    "advanced configuration": "Inne właściwości",
     "all executions": "Wszystkie wykonania",
     "trigger execution id": "Trigger Execution Id",
     "triggers_state": {
@@ -1068,19 +1068,24 @@
         "main": "Główne właściwości",
         "error_handlers": "Obsługa błędów",
         "tasks": "Zadania",
-        "advanced": "Zaawansowana konfiguracja"
+        "advanced": "Zaawansowana konfiguracja",
+        "finally": "Na koniec",
+        "other": "Inne właściwości",
+        "optional": "Właściwości opcjonalne"
       },
       "creation": {
         "select": "Wybierz {section}",
         "tasks": "Dodaj task",
         "error handlers": "Dodaj obsługę błędów",
-        "triggers": "Dodaj trigger"
+        "triggers": "Dodaj trigger",
+        "finally": "Dodaj blok finally"
       },
       "save": {
         "tasks": "Zapisz task",
         "triggers": "Zapisz trigger",
         "error handlers": "Zapisz obsługę błędów",
-        "input": "Zapisz input"
+        "input": "Zapisz input",
+        "finally": "Zapisz task"
       },
       "labels": {
         "no_code": "Edytor No Code",
@@ -1145,6 +1150,26 @@
         "message": "Aplikacje w Kestra Enterprise Edition umożliwiają tworzenie niestandardowych interfejsów użytkownika, które współdziałają z workflowami Kestra spoza platformy. Ta funkcja pozwala używać workflowów jako backendu dla niestandardowych aplikacji, umożliwiając użytkownikom nietechnicznym przesyłanie danych za pomocą formularzy lub wznawianie PAUSED workflowów oczekujących na zatwierdzenie."
       }
     },
-    "apps": "Aplikacje"
+    "apps": "Aplikacje",
+    "editor_shortcuts": {
+      "save_flow": "Zapisz flow",
+      "comment_uncomment": "Komentarz/Odkomentuj",
+      "duplicate_cursor": "Duplikuj kursor",
+      "uncomment": "Odkomentuj",
+      "label": "Skróty klawiaturowe",
+      "fold_unfold": "Zwiń/Rozwiń kod",
+      "comment": "Komentarz",
+      "move_line": "Przenieś linię",
+      "command_palette": "Pokaż paletę poleceń"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Wystąpił problem podczas ładowania wykonania"
+    },
+    "properties": {
+      "shown": "Wyświetlane w tabeli",
+      "hint": "Wybierz widoczne kolumny",
+      "hidden": "Ukryte w tabeli",
+      "label": "Właściwości"
+    }
   }
 }

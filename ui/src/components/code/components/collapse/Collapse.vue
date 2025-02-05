@@ -11,15 +11,22 @@
                 <Creation :section="item.title" />
             </template>
 
-            <template v-if="creation">
-                <Element
-                    v-for="(element, elementIndex) in item.elements"
-                    :key="elementIndex"
-                    :section="item.title"
-                    :element
-                    @remove-element="removeElement(item.title, elementIndex)"
-                />
-            </template>
+            <Element
+                v-for="(element, elementIndex) in item.elements"
+                :key="elementIndex"
+                :section="item.title"
+                :element
+                @remove-element="removeElement(item.title, elementIndex)"
+                @move-element="
+                    (direction: 'up' | 'down') =>
+                        moveElement(
+                            item.elements,
+                            element.id,
+                            elementIndex,
+                            direction,
+                        )
+                "
+            />
         </el-collapse-item>
     </el-collapse>
 </template>
@@ -32,7 +39,7 @@
     import Creation from "./buttons/Creation.vue";
     import Element from "./Element.vue";
 
-    const emits = defineEmits(["remove"]);
+    const emits = defineEmits(["remove", "reorder"]);
 
     const props = defineProps({
         items: {
@@ -66,6 +73,27 @@
                 });
             }
         });
+    };
+
+    import {YamlUtils as YAML_FROM_UI_LIBS} from "@kestra-io/ui-libs";
+    const moveElement = (
+        items: Record<string, any>[] | undefined,
+        elementID: string,
+        index: number,
+        direction: "up" | "down",
+    ) => {
+        if (!items || !props.flow) return;
+        if (
+            (direction === "up" && index === 0) ||
+            (direction === "down" && index === items.length - 1)
+        )
+            return;
+
+        const newIndex = direction === "up" ? index - 1 : index + 1;
+        emits(
+            "reorder",
+            YAML_FROM_UI_LIBS.swapTasks(props.flow, elementID, items[newIndex].id),
+        );
     };
 </script>
 

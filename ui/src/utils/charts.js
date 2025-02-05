@@ -30,9 +30,10 @@ export function tooltip(tooltipModel) {
     return undefined;
 }
 
-export function defaultConfig(override) {
+export function defaultConfig(override, theme) {
+    const protectedTheme = theme ?? Utils.getTheme();
     const color =
-        Utils.getTheme() === "dark" ? "#FFFFFF" : cssVariable("--bs-gray-700");
+        protectedTheme === "dark" ? "#FFFFFF" : cssVariable("--bs-gray-700");
 
     return _merge(
         {
@@ -162,19 +163,19 @@ export function backgroundFromState(state, alpha = 1) {
     return `rgba(${r},${g},${b},${alpha})`;
 }
 
-export function getConsistentHEXColor(value) {
+export function getConsistentHEXColor(theme, value) {
     // if (!value) {
     //     return "#ffffff";
     // }
 
     let hex;
 
-    hex = getScheme(value, "executions");
+    hex = getScheme(theme, value, "executions");
     if (hex) {
         return hex;
     }
 
-    hex = getScheme(value, "logs");
+    hex = getScheme(theme, value, "logs");
     if (hex) {
         return hex;
     }

@@ -4,12 +4,13 @@
 
         <el-select
             ref="select"
-            :model-value="current"
+            :model-value="currentFilters"
             value-key="label"
             :placeholder="props.placeholder ?? t('filters.label')"
             default-first-option
             allow-create
             filterable
+            :filter-method="(f) => (prefixFilter = f.toLowerCase())"
             clearable
             multiple
             placement="bottom"
@@ -20,12 +21,13 @@
             @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @remove-tag="(item) => removeItem(item)"
-            @visible-change="(visible) => dropdownClosedCallback(visible)"
+            @visible-change="(visible) => dropdownToggleCallback(visible)"
             @clear="handleClear"
             :class="{
                 refresh: buttons.refresh.shown,
                 settings: buttons.settings.shown,
                 dashboards: dashboards.shown,
+                properties: properties.shown,
             }"
             @focus="handleFocus"
             data-test-id="KestraFilter__select"
@@ -60,12 +62,13 @@
             </template>
             <template v-else-if="dropdowns.second.shown">
                 <el-option
-                    v-for="(comparator, index) in dropdowns.first.value.comparators"
+                    v-for="(comparator, index) in dropdowns.first.value
+                        .comparators"
                     :key="comparator.value"
                     :value="comparator"
                     :label="comparator.label"
                     :class="{
-                        selected: current.some(
+                        selected: currentFilters.some(
                             (c) => c.comparator === comparator,
                         ),
                     }"
@@ -75,16 +78,15 @@
             </template>
             <template v-else-if="dropdowns.third.shown">
                 <el-option
-                    v-for="(filter, index) in valueOptions"
+                    v-for="(filter, index) in prefixFilteredValueOptions"
                     :key="filter.value"
                     :value="filter"
-                    :disabled="isOptionDisabled(filter)"
                     :class="{
-                        selected: current.some((c) =>
-                            c.value.includes(filter.value),
-                        ),
+                        selected: currentFilters
+                            .at(-1)
+                            ?.value?.includes(filter.value),
                         disabled: isOptionDisabled(filter),
-                        'level-3': true
+                        'level-3': true,
                     }"
                     @click="
                         () => !isOptionDisabled(filter) && valueCallback(filter)
@@ -92,7 +94,10 @@
                     :data-test-id="`KestraFilter__value__${index}`"
                 >
                     <template v-if="filter.label.component">
-                        <component :is="filter.label.component" v-bind="filter.label.props" />
+                        <component
+                            :is="filter.label.component"
+                            v-bind="filter.label.props"
+                        />
                     </template>
                     <template v-else>
                         {{ filter.label }}
@@ -107,7 +112,8 @@
                 'me-1':
                     buttons.refresh.shown ||
                     buttons.settings.shown ||
-                    dashboards.shown,
+                    dashboards.shown ||
+                    properties.shown,
             }"
         >
             <KestraIcon :tooltip="$t('search')" placement="bottom">
@@ -117,13 +123,17 @@
                     class="rounded-0"
                 />
             </KestraIcon>
-            <Save :disabled="!current.length" :prefix="ITEMS_PREFIX" :current />
+            <Save
+                :disabled="!currentFilters.length"
+                :prefix="ITEMS_PREFIX"
+                :current="currentFilters"
+            />
         </el-button-group>
 
         <el-button-group
             v-if="buttons.refresh.shown || buttons.settings.shown"
             class="d-inline-flex ms-1"
-            :class="{'me-1': dashboards.shown}"
+            :class="{'me-1': dashboards.shown || properties.shown}"
         >
             <Refresh
                 v-if="buttons.refresh.shown"
@@ -141,14 +151,22 @@
             @dashboard="(value) => emits('dashboard', value)"
             class="ms-1"
         />
+        <Properties
+            v-if="properties.shown"
+            :columns="properties.columns"
+            :model-value="properties.displayColumns"
+            :storage-key="properties.storageKey"
+            @update-properties="(v) => emits('updateProperties', v)"
+            class="ms-1"
+        />
     </section>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed, onMounted, watch, nextTick, shallowRef} from "vue";
+    import {computed, nextTick, onMounted, ref, shallowRef, watch} from "vue";
     import {ElSelect} from "element-plus";
 
-    import {Shown, Buttons, CurrentItem} from "./utils/types";
+    import {Buttons, CurrentItem, Shown, Pair, Property} from "./utils/types";
 
     import Refresh from "../layout/RefreshButton.vue";
     import Items from "./segments/Items.vue";
@@ -156,28 +174,36 @@
     import Save from "./segments/Save.vue";
     import Settings from "./segments/Settings.vue";
     import Dashboards from "./segments/Dashboards.vue";
+    import Properties from "./segments/Properties.vue";
     import KestraIcon from "../Kicon.vue";
     import DateRange from "../layout/DateRange.vue";
-    import Status from "../../components/Status.vue";
+    import Status from "./components/Status.vue";
 
     import {Magnify} from "./utils/icons";
 
     import {useI18n} from "vue-i18n";
+    import {useStore} from "vuex";
+    import {useRoute, useRouter} from "vue-router";
+    import {useFilters} from "./composables/useFilters";
+    import action from "../../models/action.js";
+    import permission from "../../models/permission.js";
+    import {useValues} from "./composables/useValues";
+    import {decodeParams, encodeParams} from "./utils/helpers";
+
     const {t} = useI18n({useScope: "global"});
 
-    import {useStore} from "vuex";
     const store = useStore();
 
-    import {useRouter, useRoute} from "vue-router";
     const router = useRouter();
     const route = useRoute();
 
-    const emits = defineEmits(["dashboard", "input"]);
+    const emits = defineEmits(["dashboard", "input", "updateProperties"]);
     const props = defineProps({
         prefix: {type: String, default: undefined},
         include: {type: Array, default: () => []},
         values: {type: Object, default: undefined},
         decode: {type: Boolean, default: true},
+        propertiesWidth: {type: Number, default: 144},
         buttons: {
             type: Object as () => Buttons,
             default: () => ({
@@ -192,18 +218,33 @@
             type: Object as () => Shown,
             default: () => ({shown: false}),
         },
+        properties: {
+            type: Object as () => Property,
+            default: () => ({shown: false}),
+        },
         placeholder: {type: String, default: undefined},
         searchCallback: {type: Function, default: undefined},
     });
 
     const ITEMS_PREFIX = props.prefix ?? String(route.name);
 
-    import {useFilters} from "./composables/useFilters";
     const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX);
+
+    const prefixFilteredValueOptions = computed(() => {
+        if (prefixFilter.value === "") {
+            return valueOptions.value;
+        }
+        return valueOptions.value.filter((o) =>
+            o.label.toLowerCase().startsWith(prefixFilter.value),
+        );
+    });
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const updateHoveringIndex = (index) => {
-        select.value!.states.hoveringIndex = index >= 0 ? index : 0;
+        select.value!.states.hoveringIndex = undefined;
+        nextTick(() => {
+            select.value!.states.hoveringIndex = Math.max(index, 0);
+        });
     };
     const emptyLabel = ref(t("filters.empty"));
     const INITIAL_DROPDOWNS = {
@@ -239,6 +280,8 @@
         } else if (dropdowns.value.third.shown) {
             valueCallback(option);
         }
+
+        prefixFilter.value = "";
     };
 
     const getInputValue = () => select.value?.states.inputValue;
@@ -250,20 +293,20 @@
 
         if (key === "Enter") return;
 
-        if (current.value.at(-1)?.label === "user") {
+        if (currentFilters.value.at(-1)?.label === "user") {
             emits("input", getInputValue());
         }
     };
 
     const handleClear = () => {
-        current.value = [];
+        currentFilters.value = [];
         triggerSearch();
     };
 
     const activeParentFilter = ref<string | null>(null);
     const lastClickedParent = ref<string | null>(null);
     const showSubFilterDropdown = ref(false);
-    const valueOptions = ref([]);
+    const valueOptions = ref<Pair[]>([]);
     const parentValue = ref<string | null>(null);
 
     const filterCallback = (option) => {
@@ -279,7 +322,7 @@
         };
 
         // Check if parent filter already exists
-        const existingFilterIndex = current.value.findIndex(
+        const existingFilterIndex = currentFilters.value.findIndex(
             (item) => item.label === option.value.label,
         );
         if (existingFilterIndex !== -1) {
@@ -296,8 +339,11 @@
         } else {
             // If it doesn't exist, push new filter
             dropdowns.value.first = {shown: false, value: option};
-            dropdowns.value.second = {shown: true, index: current.value.length};
-            current.value.push(option.value);
+            dropdowns.value.second = {
+                shown: true,
+                index: currentFilters.value.length,
+            };
+            currentFilters.value.push(option.value);
             activeParentFilter.value = option.value.label;
             lastClickedParent.value = option.value.label;
             parentValue.value = option.value.label;
@@ -309,9 +355,9 @@
         }
     };
     const comparatorCallback = (value) => {
-        current.value[dropdowns.value.second.index].comparator = value;
+        currentFilters.value[dropdowns.value.second.index].comparator = value;
         emptyLabel.value = ["labels", "details"].includes(
-            current.value[dropdowns.value.second.index].label,
+            currentFilters.value[dropdowns.value.second.index].label,
         )
             ? t("filters.format")
             : t("filters.empty");
@@ -319,34 +365,29 @@
         dropdowns.value = {
             first: {shown: false, value: {}},
             second: {shown: false, index: -1},
-            third: {shown: true, index: current.value.length - 1},
+            third: {shown: true, index: currentFilters.value.length - 1},
         };
 
-        // Set hover index to the selected comparator for highlighting
-        const index = valueOptions.value.findIndex((o) => o.value === value.value);
-        updateHoveringIndex(index);
+        updateHoveringIndex(0);
     };
 
-    const dropdownClosedCallback = (visible) => {
+    const dropdownToggleCallback = (visible) => {
         if (!visible) {
             dropdowns.value = {...INITIAL_DROPDOWNS};
             activeParentFilter.value = null;
             lastClickedParent.value = null;
             showSubFilterDropdown.value = false;
             // If last filter item selection was not completed, remove it from array
-            if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
+            if (currentFilters.value?.at(-1)?.value?.length === 0)
+                currentFilters.value.pop();
         } else {
-            // Highlight all selected items by setting hoveringIndex to match the first selected item
-            const index = valueOptions.value.findIndex((o) => {
-                return current.value.some((c) => c.value.includes(o.value));
-            });
-            updateHoveringIndex(index);
+            updateHoveringIndex(0);
         }
     };
     const isOptionDisabled = () => {
         if (!activeParentFilter.value) return false;
 
-        const parentIndex = current.value.findIndex(
+        const parentIndex = currentFilters.value.findIndex(
             (item) => item.label === activeParentFilter.value,
         );
         if (parentIndex === -1) return false;
@@ -355,38 +396,36 @@
         // Don't do anything if the option is disabled
         if (isOptionDisabled(filter)) return;
         if (!isDate) {
-            const parentIndex = current.value.findIndex(
+            const parentIndex = currentFilters.value.findIndex(
                 (item) => item.label === parentValue.value,
             );
             if (parentIndex !== -1) {
                 if (
-                    lastClickedParent.value === "Namespace" ||
-                    lastClickedParent.value === "namespace" ||
-                    lastClickedParent.value === "Log level"
+                    ["namespace", "log level"].includes(
+                        lastClickedParent.value.toLowerCase(),
+                    )
                 ) {
-                    const values = current.value[parentIndex].value;
+                    const values = currentFilters.value[parentIndex].value;
                     const index = values.indexOf(filter.value);
 
                     if (index === -1) {
-                        current.value[parentIndex].value = [filter.value]; // Add only the filter.value
+                        currentFilters.value[parentIndex].value = [filter.value]; // Add only the filter.value
                     } else {
-                        current.value[parentIndex].value = values.filter(
+                        currentFilters.value[parentIndex].value = values.filter(
                             (value, i) => i !== index,
                         ); // remove the clicked item
                     }
                 } else {
-                    const values = current.value[parentIndex].value;
+                    const values = currentFilters.value[parentIndex].value;
                     const index = values.indexOf(filter.value);
                     if (index === -1) values.push(filter.value);
                     else values.splice(index, 1);
                 }
-                const hoverIndex = valueOptions.value.findIndex(
-                    (o) => o.value === filter.value,
-                );
-                updateHoveringIndex(hoverIndex);
             }
         } else {
-            const match = current.value.find((v) => v.label === "absolute_date");
+            const match = currentFilters.value.find(
+                (v) => v.label === "absolute_date",
+            );
             if (match) {
                 match.value = [
                     {
@@ -397,15 +436,14 @@
             }
         }
 
-        if (!current.value[dropdowns.value.third.index].comparator?.multiple) {
+        if (
+            !currentFilters.value[dropdowns.value.third.index].comparator?.multiple
+        ) {
             // If selection is not multiple, close the dropdown
             closeDropdown();
         }
         triggerSearch();
     };
-
-    import action from "../../models/action.js";
-    import permission from "../../models/permission.js";
 
     const user = computed(() => store.state.auth.user);
 
@@ -438,11 +476,10 @@
     // Load all namespaces only if that filter is included
     if (props.include.includes("namespace")) loadNamespaces();
 
-    import {useValues} from "./composables/useValues";
     const {VALUES} = useValues(ITEMS_PREFIX);
 
     const isDatePickerShown = computed(() => {
-        return current?.value?.some(
+        return currentFilters?.value?.some(
             (c) => c.label === "absolute_date" && c.comparator,
         );
     });
@@ -462,18 +499,15 @@
             break;
 
         case "state":
-            valueOptions.value = (props.values?.state || VALUES.EXECUTION_STATES).
-                map(value => {
-                    value.label = {
-                        "component": shallowRef(Status),
-                        "props": {
-                            "class": "justify-content-center",
-                            "status": value.value,
-                            "size": "small"
-                        }
-                    }
-                    return value;
-                });
+            valueOptions.value = (
+                props.values?.state || VALUES.EXECUTION_STATES
+            ).map((value) => {
+                value.label = {
+                    component: shallowRef(Status),
+                    props: {status: value.value},
+                };
+                return value;
+            });
             break;
 
         case "trigger_state":
@@ -541,39 +575,56 @@
             break;
         }
     };
-    const current = ref<CurrentItem[]>([]);
+    const currentFilters = ref<CurrentItem[]>([]);
+
+    const prefixFilter = ref("");
+
     const includedOptions = computed(() => {
         const dates = ["relative_date", "absolute_date"];
 
-        const found = current.value?.find((v) => dates.includes(v?.label));
+        const found = currentFilters.value?.find((v) => dates.includes(v?.label));
         const exclude = found ? dates.find((date) => date !== found.label) : null;
 
         return OPTIONS.filter((o) => {
             const label = o.value?.label;
-            return props.include.includes(label) && label !== exclude;
+            return (
+                props.include.includes(label) &&
+                label !== exclude &&
+                label.startsWith(prefixFilter.value)
+            );
         });
     });
 
-    const changeCallback = (v) => {
-        if (!Array.isArray(v) || !v.length) return;
+    const changeCallback = (wholeSearchContent) => {
+        if (!Array.isArray(wholeSearchContent) || !wholeSearchContent.length)
+            return;
 
-        if (typeof v.at(-1) === "string") {
-            if (["labels", "details"].includes(v.at(-2)?.label)) {
-                // Adding labels to proper filter
-                v.at(-2).value?.push(v.at(-1));
-                closeDropdown();
-                triggerSearch();
+        if (typeof wholeSearchContent.at(-1) === "string") {
+            if (
+                ["labels", "details"].includes(wholeSearchContent.at(-2)?.label) ||
+                wholeSearchContent.at(-2)?.value?.length === 0
+            ) {
+                // Adding value to preceding empty filter
+                // TODO Provide a way for user to escape infinite labels & details loop (you can never fallback to a new filter, any further text will be added as a value to the filter)
+                wholeSearchContent.at(-2)?.value?.push(wholeSearchContent.at(-1));
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
-                const index = current.value.findIndex((i) => i.label === label);
+                const index = currentFilters.value.findIndex(
+                    (i) => i.label === label,
+                );
 
-                if (index !== -1) current.value[index].value = [v.at(-1)];
-                else current.value.push({label, value: [v.at(-1)]});
-
-                triggerSearch();
-                closeDropdown();
+                if (index !== -1)
+                    currentFilters.value[index].value = [wholeSearchContent.at(-1)];
+                else
+                    currentFilters.value.push({
+                        label,
+                        value: [wholeSearchContent.at(-1)],
+                    });
             }
+
+            triggerSearch();
+            closeDropdown();
 
             triggerEnter.value = false;
         }
@@ -583,7 +634,7 @@
     };
 
     const removeItem = (value) => {
-        current.value = current.value.filter(
+        currentFilters.value = currentFilters.value.filter(
             (item) => JSON.stringify(item) !== JSON.stringify(value),
         );
 
@@ -591,22 +642,20 @@
     };
 
     const handleClickedItems = (value) => {
-        if (value) current.value = value;
+        if (value) currentFilters.value = value;
         select.value?.focus();
     };
 
-    import {encodeParams, decodeParams} from "./utils/helpers";
-
     const triggerSearch = () => {
         if (props.searchCallback) return;
-        else router.push({query: encodeParams(current.value, OPTIONS)});
+        else router.push({query: encodeParams(currentFilters.value, OPTIONS)});
     };
 
     // Include parameters from URL directly to filter
     onMounted(() => {
         if (props.decode) {
             const decodedParams = decodeParams(route.query, props.include, OPTIONS);
-            current.value = decodedParams.map((item: any) => {
+            currentFilters.value = decodedParams.map((item: any) => {
                 if (item.label === "absolute_date") {
                     return {
                         ...item,
@@ -635,7 +684,7 @@
 
         const addNamespaceFilter = (namespace) => {
             if (!props.decode || !namespace) return;
-            current.value.push({
+            currentFilters.value.push({
                 label: "namespace",
                 value: [namespace],
                 comparator: COMPARATORS.STARTS_WITH,
@@ -649,7 +698,7 @@
             addNamespaceFilter(params?.namespace);
 
             if (props.decode && params.id) {
-                current.value.push({
+                currentFilters.value.push({
                     label: "flow",
                     value: [`${params.id}`],
                     comparator: COMPARATORS.IS,
@@ -675,12 +724,12 @@
     );
 
     const handleFocus = () => {
-        if (current.value.length > 0 && lastClickedParent.value) {
-            const existingFilterIndex = current.value.findIndex(
+        if (currentFilters.value.length > 0 && lastClickedParent.value) {
+            const existingFilterIndex = currentFilters.value.findIndex(
                 (item) => item.label === lastClickedParent.value,
             );
             if (existingFilterIndex !== -1) {
-                if (!current.value[existingFilterIndex].comparator) {
+                if (!currentFilters.value[existingFilterIndex].comparator) {
                     dropdowns.value = {
                         first: {shown: false, value: {}},
                         second: {shown: true, index: existingFilterIndex},
@@ -741,7 +790,7 @@
                     const label = labelElement?.textContent;
 
                     if (label) {
-                        const existingFilterIndex = current.value.findIndex(
+                        const existingFilterIndex = currentFilters.value.findIndex(
                             (item) =>
                                 item?.label.toLowerCase() ===
                                 label
@@ -757,7 +806,10 @@
                                 .replace(/\blog\b/gi, "")
                                 .trim()
                                 .replace(/\s+/g, "_"); // Set parentValue when a filter is clicked
-                            if (!current.value[existingFilterIndex].comparator) {
+                            if (
+                                !currentFilters.value[existingFilterIndex]
+                                    .comparator
+                            ) {
                                 dropdowns.value = {
                                     first: {shown: false, value: {}},
                                     second: {
@@ -801,12 +853,20 @@ $included: 144px;
 $refresh: 104px;
 $settins: 52px;
 $dashboards: 52px;
+$properties: v-bind('props.propertiesWidth + "px"');
 
 .filters {
     @include width-available;
 
     & .el-select {
         width: 100%;
+
+        &.refresh.settings.dashboards.properties {
+            max-width: calc(
+                100% - $included - $refresh - $settins - $dashboards -
+                    #{$properties}
+            );
+        }
 
         &.refresh.settings.dashboards {
             max-width: calc(
@@ -822,8 +882,20 @@ $dashboards: 52px;
             max-width: calc(100% - $included - $settins - $dashboards);
         }
 
+        &.settings.properties {
+            max-width: calc(100% - $included - $settins - #{$properties});
+        }
+
         &.refresh.dashboards {
             max-width: calc(100% - $included - $refresh - $dashboards);
+        }
+
+        &.refresh.properties {
+            max-width: calc(100% - $included - $refresh - #{$properties});
+        }
+
+        &.dashboards.properties {
+            max-width: calc(100% - $included - $dashboards - #{$properties});
         }
 
         &.refresh {
@@ -835,7 +907,12 @@ $dashboards: 52px;
         }
 
         &.dashboards {
+            min-width: $dashboards;
             max-width: calc(100% - $included - $dashboards);
+        }
+
+        &.properties {
+            max-width: calc(100% - $included - #{$properties});
         }
     }
 
@@ -872,6 +949,7 @@ $dashboards: 52px;
 .filters-select {
     & .el-select-dropdown {
         width: auto !important;
+        max-width: 300px;
 
         &:has(.el-select-dropdown__empty) {
             width: auto !important;

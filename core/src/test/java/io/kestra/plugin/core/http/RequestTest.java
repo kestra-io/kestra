@@ -1,7 +1,6 @@
 package io.kestra.plugin.core.http;
 
 import com.devskiller.friendly_id.FriendlyId;
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.http.client.HttpClientRequestException;
 import io.kestra.core.http.client.HttpClientResponseException;
@@ -89,6 +88,28 @@ class RequestTest {
 
         assertThat(output.getUri(), is(URI.create(url)));
         assertThat(output.getHeaders().get("content-length").getFirst(), is("512789"));
+    }
+
+
+    @Test
+    void head404() throws Exception {
+        final String url = "https://bdnb-data.s3.fr-par.scw.cloud/bnb_export_metropole_sql_dump.tar.gz";
+
+        Request task = Request.builder()
+            .id(RequestTest.class.getSimpleName())
+            .type(RequestTest.class.getName())
+            .uri(Property.of(url))
+            .method(Property.of("HEAD"))
+            .build();
+
+        RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+        HttpClientResponseException exception = assertThrows(
+            HttpClientResponseException.class,
+            () -> task.run(runContext)
+        );
+
+        assertThat(exception.getResponse().getStatus().getCode(), is(404));
     }
 
     @Test
@@ -328,7 +349,7 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("world > " + IOUtils.toString(new FileInputStream(file), Charsets.UTF_8)));
+            assertThat(output.getBody(), is("world > " + IOUtils.toString(new FileInputStream(file), StandardCharsets.UTF_8)));
             assertThat(output.getCode(), is(200));
         }
     }
@@ -362,7 +383,7 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("world > " + IOUtils.toString(new FileInputStream(file), Charsets.UTF_8)));
+            assertThat(output.getBody(), is("world > " + IOUtils.toString(new FileInputStream(file), StandardCharsets.UTF_8)));
             assertThat(output.getCode(), is(200));
         }
     }

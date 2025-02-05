@@ -14,17 +14,21 @@
             size="small"
             class="border-0"
         />
+        <div class="d-flex flex-column">
+            <ChevronUp @click.prevent.stop="emits('moveElement', 'up')" />
+            <ChevronDown @click.prevent.stop="emits('moveElement', 'down')" />
+        </div>
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue";
 
-    import {DeleteOutline} from "../../utils/icons";
+    import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
-    const emits = defineEmits(["removeElement"]);
+    const emits = defineEmits(["removeElement", "moveElement"]);
 
     const props = defineProps({
         section: {type: String, required: true},

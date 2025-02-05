@@ -171,7 +171,7 @@
 
     const onSwitchTheme = () => {
         themeIsDark.value = !themeIsDark.value;
-        Utils.switchTheme(themeIsDark.value ? "dark" : "light");
+        Utils.switchTheme(store, themeIsDark.value ? "dark" : "light");
     }
 </script>
 

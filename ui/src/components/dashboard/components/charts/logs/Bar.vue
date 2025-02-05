@@ -33,10 +33,11 @@
     import {barLegend} from "../legend.js";
 
     import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
-    import {getScheme} from "../../../../../utils/scheme.js";
+    import {useScheme} from "../../../../../utils/scheme.js";
     import Logs from "../../../../../utils/logs.js";
 
     import NoData from "../../../../layout/NoData.vue";
+    import {useTheme} from "../../../../../utils/utils.js";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -47,13 +48,16 @@
         },
     });
 
+    const theme = useTheme();
+    const scheme = useScheme("logs");
+
     const parsedData = computed(() => {
         let datasets = props.data.reduce(function (accumulator, value) {
             Object.keys(value.counts).forEach(function (state) {
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
                         label: state,
-                        backgroundColor: getScheme(state, "logs"),
+                        backgroundColor: scheme.value[state],
                         yAxisID: "y",
                         data: [],
                     };
@@ -136,7 +140,7 @@
                     },
                 },
             },
-        }),
+        }, theme.value),
     );
 </script>
 

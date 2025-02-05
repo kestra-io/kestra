@@ -126,7 +126,8 @@
                     class: "menu-icon",
                 },
                 child: [{
-
+                    // here we use only one component for all bookmarks
+                    // so when one edits the bookmark, it will be updated without closing the section
                     component: () => h(BookmarkLinkList, {pages: store.state.bookmarks.pages}),
                 }]
             }] : []),
@@ -258,7 +259,7 @@
             color: var(--ks-content-primary);
             box-shadow: none;
 
-            &_active, body &_active:hover, &:hover, &.vsm--link_hover, &.vsm--link_open {
+            &_active, body &_active:hover, &.vsm--link_open, &.vsm--link_open:hover {
                 background-color: var(--ks-button-background-primary);
                 color: var(--ks-button-content-primary);
                 font-weight: normal;
@@ -269,7 +270,7 @@
             }
 
             &:hover, body &_hover {
-                background-color: var(--ks-button-background-primary);
+                background-color: var(--ks-button-background-secondary-hover);
             }
 
             .el-tooltip__trigger {

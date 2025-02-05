@@ -46,6 +46,14 @@
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
                     }"
+                    :properties-width="182"
+                    :properties="{
+                        shown: true,
+                        columns: optionalColumns,
+                        displayColumns,
+                        storageKey: 'executions'
+                    }"
+                    @update-properties="updateDisplayColumns"
                 />
             </template>
 
@@ -150,6 +158,7 @@
                     <template #default>
                         <el-table-column
                             prop="id"
+                            v-if="displayColumn('id')"
                             sortable="custom"
                             :sort-orders="['ascending', 'descending']"
                             :label="$t('id')"
@@ -247,6 +256,7 @@
 
                         <el-table-column
                             prop="flowRevision"
+                            v-if="displayColumn('revision')"
                             :label="$t('revision')"
                             class-name="shrink"
                         >
@@ -291,7 +301,12 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column column-key="action" class-name="row-action">
+                        <el-table-column 
+                            v-if="displayColumn('action')" 
+                            column-key="action" 
+                            class-name="row-action"
+                            :label="$t('actions')"
+                        >
                             <template #default="scope">
                                 <router-link
                                     :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}, query: {revision: scope.row.flowRevision}}"
@@ -460,59 +475,59 @@
                 showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_CHART)),
                 optionalColumns: [
                     {
-                        label: "start date",
+                        label: this.$t("start date"),
                         prop: "state.startDate",
                         default: true
                     },
                     {
-                        label: "end date",
+                        label: this.$t("end date"),
                         prop: "state.endDate",
                         default: true
                     },
                     {
-                        label: "duration",
+                        label: this.$t("duration"),
                         prop: "state.duration",
                         default: true
                     },
                     {
-                        label: "state",
+                        label: this.$t("state"),
                         prop: "state.current",
                         default: true
                     },
                     {
-                        label: "triggers",
-                        prop: "triggers",
-                        default: true
-                    },
-                    {
-                        label: "labels",
+                        label: this.$t("labels"),
                         prop: "labels",
                         default: true
                     },
                     {
-                        label: "inputs",
+                        label: this.$t("inputs"),
                         prop: "inputs",
                         default: false
                     },
                     {
-                        label: "namespace",
+                        label: this.$t("namespace"),
                         prop: "namespace",
                         default: true
                     },
                     {
-                        label: "flow",
+                        label: this.$t("flow"),
                         prop: "flowId",
                         default: true
                     },
                     {
-                        label: "revision",
+                        label: this.$t("revision"),
                         prop: "flowRevision",
                         default: false
                     },
                     {
-                        label: "task id",
+                        label: this.$t("task id"),
                         prop: "taskRunList.taskId",
                         default: false
+                    },
+                    {
+                        label: this.$t("actions"),
+                        prop: "action",
+                        default: true
                     }
                 ],
                 displayColumns: [],
@@ -644,6 +659,9 @@
             },
             displayColumn(column) {
                 return this.hidden ? !this.hidden.includes(column) : this.displayColumns.includes(column);
+            },
+            updateDisplayColumns(newColumns) {
+                this.displayColumns = newColumns;
             },
             onShowChartChange(value) {
                 this.showChart = value;

@@ -1,94 +1,72 @@
 <template>
     <el-row
-        v-for="(item, index) in values"
+        v-for="(element, index) in items"
         :key="'array-' + index"
         :gutter="10"
         class="w-100"
     >
-        <el-col :span="22">
-            <component
-                :is="`task-${getType(schema.items)}`"
-                :model-value="item"
-                @update:model-value="onInput(index, $event)"
-                :root="getKey(index)"
-                :schema="schema.items"
-                :definitions="definitions"
+        <el-col :span="2" class="d-flex flex-column mt-1 mb-2 reorder">
+            <ChevronUp @click.prevent.stop="moveItem(index, 'up')" />
+            <ChevronDown @click.prevent.stop="moveItem(index, 'down')" />
+        </el-col>
+        <el-col :span="20">
+            <InputText
+                :model-value="element"
+                @update:model-value="(v) => handleInput(v, index)"
                 :placeholder="$t('value')"
                 class="w-100"
             />
         </el-col>
         <el-col :span="2" class="col align-self-center delete">
-            <DeleteOutline @click="removeItem(key)" />
+            <DeleteOutline @click="removeItem(index)" />
         </el-col>
     </el-row>
-    <Add @add="addItem()" v-if="values.at(-1)" />
+    <Add @add="addItem()" />
 </template>
 
-<script setup>
-    import {DeleteOutline} from "../../code/utils/icons";
+<script setup lang="ts">
+    import {ref} from "vue";
 
+    import {DeleteOutline, ChevronUp, ChevronDown} from "../../code/utils/icons";
+
+    import InputText from "../../code/components/inputs/InputText.vue";
     import Add from "../../code/components/Add.vue";
-</script>
 
-<script>
-    import {toRaw} from "vue";
-    import Task from "./Task";
+    defineOptions({inheritAttrs: false});
 
-    export default {
-        mixins: [Task],
-        emits: ["update:modelValue"],
-        created() {
-            if (!Array.isArray(this.modelValue) && this.modelValue !== undefined) {
-                this.$emit("update:modelValue", []);
-            }
-        },
-        computed: {
-            values() {
-                if (this.modelValue === undefined) {
-                    return this.schema.default || [undefined];
-                }
+    const emits = defineEmits(["update:modelValue"]);
+    const props = defineProps({modelValue: {type: Array, default: undefined}});
 
-                return this.modelValue;
-            },
-        },
-        methods: {
-            getPropertiesValue(properties) {
-                return this.modelValue && this.modelValue[properties]
-                    ? this.modelValue[properties]
-                    : undefined;
-            },
-            onInput(index, value) {
-                const local = this.modelValue || [];
-                local[index] = value;
+    const items = ref(
+        !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
+    );
 
-                this.$emit("update:modelValue", local);
-            },
-            addItem() {
-                let local = this.modelValue || [];
-                local.push(undefined);
+    const handleInput = (value: string, index: number) => {
+        items.value[index] = value;
+        emits("update:modelValue", items.value);
+    };
 
-                // click on + when there is no items
-                if (this.modelValue === undefined) {
-                    local.push(undefined);
-                }
-
-                this.$emit("update:modelValue", local);
-            },
-            removeItem(x) {
-                let local = this.modelValue || [];
-                local.splice(x, 1);
-
-                if (local.length === 1) {
-                    let raw = toRaw(local[0]);
-
-                    if (raw === null || raw === undefined) {
-                        local = undefined;
-                    }
-                }
-
-                this.$emit("update:modelValue", local);
-            },
-        },
+    const addItem = () => {
+        items.value.push(undefined);
+        emits("update:modelValue", items.value);
+    };
+    const removeItem = (index: number) => {
+        items.value.splice(index, 1);
+        emits("update:modelValue", items.value);
+    };
+    const moveItem = (index: number, direction: "up" | "down") => {
+        if (direction === "up" && index > 0) {
+            [items.value[index - 1], items.value[index]] = [
+                items.value[index],
+                items.value[index - 1],
+            ];
+        } else if (direction === "down" && index < items.value.length - 1) {
+            [items.value[index + 1], items.value[index]] = [
+                items.value[index],
+                items.value[index + 1],
+            ];
+        }
+        emits("update:modelValue", items.value);
     };
 </script>
 

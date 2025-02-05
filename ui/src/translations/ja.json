@@ -290,7 +290,7 @@
     "template creation": "テンプレート作成",
     "templates": "テンプレート",
     "templates deprecated": "テンプレートは非推奨です。代わりにsubflowsを使用してください。テンプレートからsubflowsへの移行方法については、<a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">移行セクション</a>を参照してください。",
-    "no result": "これまでにログは出力されていません",
+    "no result": "表示する結果がありません。",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Triggerの詳細",
@@ -534,7 +534,7 @@
     "row count": "行数",
     "encoding": "エンコーディング",
     "show": "表示",
-    "advanced configuration": "詳細設定",
+    "advanced configuration": "他のプロパティ",
     "all executions": "すべての実行",
     "trigger execution id": "Trigger Execution Id",
     "triggers_state": {
@@ -1068,19 +1068,24 @@
         "main": "メインプロパティ",
         "error_handlers": "エラーハンドラー",
         "tasks": "タスク",
-        "advanced": "高度な設定"
+        "advanced": "高度な設定",
+        "finally": "最後に",
+        "other": "その他のプロパティ",
+        "optional": "オプションのプロパティ"
       },
       "creation": {
         "select": "{section}を選択してください",
         "tasks": "タスクを追加",
         "error handlers": "エラーハンドラーを追加",
-        "triggers": "トリガーを追加"
+        "triggers": "トリガーを追加",
+        "finally": "finally ブロックを追加"
       },
       "save": {
         "tasks": "タスクを保存",
         "triggers": "トリガーを保存",
         "error handlers": "エラーハンドラーを保存",
-        "input": "入力を保存"
+        "input": "入力を保存",
+        "finally": "タスクを保存"
       },
       "labels": {
         "no_code": "コードエディタなし",
@@ -1145,6 +1150,26 @@
         "message": "Kestra Enterprise Editionのアプリは、プラットフォーム外からKestraのworkflowと連携するカスタムUIを構築することを可能にします。この機能により、workflowをカスタムアプリケーションのバックエンドとして使用でき、技術的でないユーザーがフォームを通じてデータを送信したり、承認待ちのPAUSED状態のworkflowを再開したりすることができます。"
       }
     },
-    "apps": "アプリケーション"
+    "apps": "アプリケーション",
+    "editor_shortcuts": {
+      "save_flow": "フローを保存",
+      "comment_uncomment": "コメント/コメント解除",
+      "duplicate_cursor": "カーソルを複製",
+      "uncomment": "コメント解除",
+      "label": "キーボードショートカット",
+      "fold_unfold": "コードを折りたたむ/展開する",
+      "comment": "コメント",
+      "move_line": "行を移動",
+      "command_palette": "コマンドパレットを表示"
+    },
+    "something_went_wrong": {
+      "loading_execution": "実行の読み込み中に問題が発生しました。"
+    },
+    "properties": {
+      "shown": "表に表示",
+      "hint": "表示する列を選択",
+      "hidden": "テーブルに隠す",
+      "label": "プロパティ"
+    }
   }
 }

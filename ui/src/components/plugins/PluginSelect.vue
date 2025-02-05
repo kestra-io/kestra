@@ -3,7 +3,6 @@
         :model-value="modelValue"
         :placeholder="$t('no_code.creation.select', {section: section.toLowerCase().slice(0, -1)})"
         filterable
-        clearable
         @update:model-value="onInput"
     >
         <el-option

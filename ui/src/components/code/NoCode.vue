@@ -13,6 +13,7 @@
             :metadata
             @update-metadata="(k, v) => emits('updateMetadata', {[k]: v})"
             @update-task="(yaml) => emits('updateTask', yaml)"
+            @reorder="(yaml) => emits('reorder', yaml)"
             @update-documentation="(task) => emits('updateDocumentation', task)"
         />
     </div>
@@ -30,6 +31,7 @@
         "updateTask",
         "updateMetadata",
         "updateDocumentation",
+        "reorder",
     ]);
     const props = defineProps({
         flow: {type: String, required: true},

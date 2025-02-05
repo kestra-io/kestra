@@ -35,6 +35,8 @@ env:
   DOCKER_APT_PACKAGES: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
   DOCKER_PYTHON_LIBRARIES: kestra
   PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
+  # to save corepack from itself
+  COREPACK_INTEGRITY_KEYS: 0
 jobs:
   build-artifacts:
     name: Build Artifacts
@@ -45,13 +47,14 @@ jobs:
       docker-artifact-name: ${{ steps.vars.outputs.artifact }}
       plugins: ${{ steps.plugins-list.outputs.plugins }}
     steps:
-      # Checkout
-      - uses: actions/checkout@v4
+
+      - name: Checkout current ref
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Checkout GitHub Actions
-      - uses: actions/checkout@v4
+      - name: Checkout GitHub Actions
+        uses: actions/checkout@v4
         with:
           repository: kestra-io/actions
           path: actions

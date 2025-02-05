@@ -10,7 +10,6 @@
         v-else
         :is="lastBreadcumb.component.type"
         v-bind="lastBreadcumb.component.props"
-        v-on="lastBreadcumb.component.listeners"
         :model-value="lastBreadcumb.component.props.modelValue"
         @update:model-value="validateTask"
     />
@@ -126,39 +125,51 @@
             YamlUtils.parse(yaml.value).id,
         );
 
-        if (route.query.section === SECTIONS.TRIGGERS.toLowerCase()) {
-            const existingTask = YamlUtils.checkTaskAlreadyExist(
-                source,
-                CURRENT.value,
-            );
-            if (existingTask) {
-                store.dispatch("core/showMessage", {
-                    variant: "error",
-                    title: "Trigger Id already exist",
-                    message: `Trigger Id ${existingTask} already exist in the flow.`,
-                });
-                return;
-            }
+        const currentSection = route.query.section;
+        const isCreation =
+            props.creation &&
+            (!route.query.identifier || route.query.identifier === "new");
 
-            emits("updateTask", YamlUtils.insertTrigger(source, CURRENT.value));
-            CURRENT.value = null;
-        } else {
-            const action = props.creation
-                ? YamlUtils.insertTask(
+        let result;
+
+        if (isCreation) {
+            if (currentSection === "tasks") {
+                const existing = YamlUtils.checkTaskAlreadyExist(
                     source,
-                    YamlUtils.getLastTask(source),
-                    task,
-                    "after",
-                )
-                : YamlUtils.replaceTaskInDocument(
-                    source,
-                    route.query.identifier,
-                    task,
+                    CURRENT.value,
                 );
 
-            emits("updateTask", action);
+                if (existing) {
+                    store.dispatch("core/showMessage", {
+                        variant: "error",
+                        title: "Task with same ID already exist",
+                        message: `Task in ${route.query.section} block  with ID: ${existing} already exist in the flow.`,
+                    });
+                    return;
+                }
+
+                result = YamlUtils.insertTask(
+                    source,
+                    route.query.target ?? YamlUtils.getLastTask(source),
+                    task,
+                    route.query.position ?? "after",
+                );
+            } else if (currentSection === "triggers") {
+                result = YamlUtils.insertTrigger(source, CURRENT.value);
+            } else if (currentSection === "error handlers") {
+                result = YamlUtils.insertError(source, CURRENT.value);
+            } else if (currentSection === "finally") {
+                result = YamlUtils.insertFinally(source, CURRENT.value);
+            }
+        } else {
+            result = YamlUtils.replaceTaskInDocument(
+                source,
+                route.query.identifier,
+                task,
+            );
         }
 
+        emits("updateTask", result);
         store.commit("code/removeBreadcrumb", {last: true});
 
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

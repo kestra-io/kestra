@@ -143,7 +143,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
      *     protected DockerOptions docker = DockerOptions.builder().build();
      * }</pre>
      */
-    protected DockerOptions injectDefaults(RunContext runContext, @NotNull DockerOptions original) {
+    protected DockerOptions injectDefaults(RunContext runContext, @NotNull DockerOptions original) throws IllegalVariableEvaluationException {
         // FIXME to keep backward compatibility, we call the old method from the new one by default
         return injectDefaults(original);
     }

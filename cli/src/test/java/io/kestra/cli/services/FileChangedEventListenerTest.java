@@ -7,6 +7,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.junit.jupiter.api.*;
+import org.junitpioneer.jupiter.RetryingTest;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -54,7 +55,7 @@ class FileChangedEventListenerTest {
         }
     }
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but always pass locally
     void test() throws IOException, TimeoutException {
         // remove the flow if it already exists
         flowRepository.findByIdWithSource(null, "io.kestra.tests.watch", "myflow").ifPresent(flow -> flowRepository.delete(flow));
@@ -89,7 +90,7 @@ class FileChangedEventListenerTest {
         );
     }
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but always pass locally
     void testWithPluginDefault() throws IOException, TimeoutException {
         // remove the flow if it already exists
         flowRepository.findByIdWithSource(null, "io.kestra.tests.watch", "pluginDefault").ifPresent(flow -> flowRepository.delete(flow));

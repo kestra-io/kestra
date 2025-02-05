@@ -1,6 +1,5 @@
 package io.kestra.core.docs;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.conditions.Condition;
@@ -29,6 +28,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -257,7 +257,7 @@ public class DocumentationGenerator {
     public static <T> String render(String templateName, Map<String, Object> vars) throws IOException {
         String pebbleTemplate = IOUtils.toString(
             Objects.requireNonNull(DocumentationGenerator.class.getClassLoader().getResourceAsStream("docs/" + templateName + ".peb")),
-            Charsets.UTF_8
+            StandardCharsets.UTF_8
         );
 
         PebbleTemplate compiledTemplate = pebbleEngine.getLiteralTemplate(pebbleTemplate);

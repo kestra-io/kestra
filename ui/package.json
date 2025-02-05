@@ -74,7 +74,7 @@
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@eslint/js": "^9.17.0",
     "@rushstack/eslint-patch": "^1.10.4",
-    "@shikijs/markdown-it": "^2.3.0",
+    "@shikijs/markdown-it": "^2.3.1",
     "@storybook/addon-essentials": "^8.5.3",
     "@storybook/addon-interactions": "^8.5.3",
     "@storybook/addon-themes": "^8.5.3",

@@ -1184,7 +1184,8 @@
     },
     "instance": "Instance",
     "something_went_wrong": {
-      "loading_execution": "Something went wrong while loading the execution"
-    }
+        "loading_execution": "Something went wrong while loading the execution"
+    },
+    "debug": "Debug"
   }
 }

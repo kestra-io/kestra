@@ -113,6 +113,12 @@
                                     title: this.$t("error"),
                                     message: this.$t("errors.404.flow or execution"),
                                 });
+                            } else {
+                                this.$store.dispatch("core/showMessage", {
+                                    variant: "error",
+                                    title: this.$t("error"),
+                                    message: this.$t("something_went_wrong.loading_execution"),
+                                });
                             }
                         }
                     });

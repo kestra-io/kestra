@@ -1174,6 +1174,9 @@
       "comment": "Comment",
       "uncomment": "Uncomment"
     },
-    "instance": "Instance"
+    "instance": "Instance",
+    "something_went_wrong": {
+        "loading_execution": "Something went wrong while loading the execution"
+    }
   }
 }

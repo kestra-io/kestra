@@ -1159,6 +1159,9 @@
       "comment": "Комментарий",
       "move_line": "Переместить строку",
       "command_palette": "Показать палитру команд"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Произошла ошибка при загрузке выполнения"
     }
   }
 }

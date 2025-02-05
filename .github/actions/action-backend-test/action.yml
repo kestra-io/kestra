@@ -1,11 +1,18 @@
-name: 'Basic Multi-Step Action'
-description: 'A basic GitHub Action that runs multiple steps.'
+name: 'Backend Test'
 
 inputs:
-  example-input:
-    description: 'An example input'
+  google-service-account:
+    description: 'Google Service Account'
+    required: true
+  sonar-token:
+    description: 'Sonar Token'
     required: false
-    default: 'default value'
+  github-token:
+    description: 'GitHub Token'
+    required: true
+  codecov-token:
+    description: 'Codecov Token'
+    required: false
 
 runs:
   using: composite
@@ -29,7 +36,7 @@ runs:
     - name: Build with Gradle
       if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
       env:
-        GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+        GOOGLE_SERVICE_ACCOUNT: ${{ inputs.google-service-account }}
       shell: bash
       run: |
         echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
@@ -38,28 +45,28 @@ runs:
 
     # Sonar
     - name: Analyze with Sonar
-      if: ${{ env.SONAR_TOKEN != 0 }}
+      if: ${{ inputs.sonar-token != '' }}
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        SONAR_TOKEN: ${{ inputs.sonar-token }}
       shell: bash
       run: ./gradlew sonar --info
 
     # Allure check
     - name: Auth to Google Cloud
       id: auth
-      if: ${{ always() && env.GOOGLE_SERVICE_ACCOUNT != 0 }}
+      if: ${{ always() && inputs.google-service-account != '' }}
       uses: "google-github-actions/auth@v2"
       with:
-        credentials_json: "${{ secrets.GOOGLE_SERVICE_ACCOUNT }}"
+        credentials_json: "${{ inputs.google-service-account }}"
 
     - uses: rlespinasse/github-slug-action@v5
 
     - name: Publish allure report
       uses: andrcuns/allure-publish-action@v2.9.0
-      if: ${{ always() && env.GOOGLE_SERVICE_ACCOUNT != 0 }}
+      if: ${{ always() && inputs.google-service-account != '' }}
       env:
-        GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_AUTH_TOKEN: ${{ inputs.github-token }}
         JAVA_HOME: /usr/lib/jvm/default-jvm/
       with:
         storageType: gcs
@@ -72,11 +79,11 @@ runs:
 
     # Jacoco
     - name: "Set up Cloud SDK"
-      if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 }}
+      if: ${{ inputs.google-service-account != '' }}
       uses: "google-github-actions/setup-gcloud@v2"
 
     - name: "Copy jacoco files"
-      if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 }}
+      if: ${{ inputs.google-service-account != '' }}
       shell: bash
       run: |
         mv build/reports/jacoco/testCodeCoverageReport build/reports/jacoco/test/
@@ -93,4 +100,4 @@ runs:
     # Codecov
     - uses: codecov/codecov-action@v5
       with:
-        token: ${{ secrets.CODECOV_TOKEN }}
+        token: ${{ inputs.codecov-token }}

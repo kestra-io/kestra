@@ -13,6 +13,7 @@ runs:
       uses: actions/checkout@v4
       with:
         ref: ${{ github.ref_name }} # Using ref_name in case translations has committed something
+
     - name: Npm install
       shell: bash
       working-directory: ui

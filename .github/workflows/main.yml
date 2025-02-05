@@ -48,12 +48,12 @@ jobs:
       plugins: ${{ steps.plugins-list.outputs.plugins }}
     steps:
 
-      - name: Checkout current ref
+      - name: Checkout - Current ref
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Checkout GitHub Actions
+      - name: Checkout - GitHub Actions
         uses: actions/checkout@v4
         with:
           repository: kestra-io/actions
@@ -61,13 +61,14 @@ jobs:
           ref: main
 
       # Npm
-      - name: Npm install
+      - name: Setup - Npm install
         shell: bash
         working-directory: ui
         run: npm ci
 
       # Setup build
-      - uses: ./actions/.github/actions/setup-build
+      - name: Setup - Build
+        uses: ./actions/.github/actions/setup-build
         id: build
         with:
           java-enabled: true
@@ -75,7 +76,7 @@ jobs:
           caches-enabled: true
 
       # Get Plugins List
-      - name: Get Plugins List
+      - name: Plugins - Get List
         uses: ./.github/actions/plugins-list
         if: "!startsWith(github.ref, 'refs/tags/v')"
         id: plugins-list
@@ -83,7 +84,7 @@ jobs:
           plugin-version: ${{ env.PLUGIN_VERSION }}
 
       # Set Plugins List
-      - name: Set Plugin List
+      - name: Plugins - Set List
         id: plugins
         if: "!startsWith(github.ref, 'refs/tags/v')"
         run: |
@@ -95,17 +96,8 @@ jobs:
             echo "plugins=--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots $PLUGINS" >> $GITHUB_OUTPUT
           fi
 
-      # Build
-      - name: Build with Gradle
-        run: |
-          ./gradlew executableJar
-
-      - name: Copy exe to image
-        run: |
-          cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
-
       # Docker Tag
-      - name: Set up Vars
+      - name: Setup - Docker vars
         id: vars
         run: |
           TAG=${GITHUB_REF#refs/*/}
@@ -124,15 +116,24 @@ jobs:
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "artifact=docker-kestra-${TAG}" >> $GITHUB_OUTPUT
 
+      # Build
+      - name: Gradle - Build
+        run: |
+          ./gradlew executableJar
+
+      - name: Artifacts - Copy exe to image
+        run: |
+          cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
+
       # Docker setup
-      - name: Set up QEMU
+      - name: Docker - Setup QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
+      - name: Docker - Setup Buildx
         uses: docker/setup-buildx-action@v3
 
       # Docker Build
-      - name: Build & Export Docker Image
+      - name: Docker - Build & export image
         uses: docker/build-push-action@v6
         if: "!startsWith(github.ref, 'refs/tags/v')"
         with:
@@ -148,60 +149,60 @@ jobs:
           outputs: type=docker,dest=/tmp/${{ steps.vars.outputs.artifact }}.tar
 
       # Upload artifacts
-      - name: Upload JAR
+      - name: Artifacts - Upload JAR
         uses: actions/upload-artifact@v4
         with:
           name: jar
           path: build/libs/
 
-      - name: Upload Executable
+      - name: Artifacts - Upload Executable
         uses: actions/upload-artifact@v4
         with:
           name: exe
           path: build/executable/
 
-      - name: Upload Docker
+      - name: Artifacts - Upload Docker
         uses: actions/upload-artifact@v4
         if: "!startsWith(github.ref, 'refs/tags/v')"
         with:
           name: ${{ steps.vars.outputs.artifact }}
           path: /tmp/${{ steps.vars.outputs.artifact }}.tar
 
-
   check-frontend:
     name: Run frontend tests
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout - Current ref
+        uses: actions/checkout@v4
 
-      - name: Npm install
+      - name: Npm - Install
         shell: bash
         working-directory: ui
         run: npm ci
 
-      - name: Npm lint
+      - name: Npm - Lint
         uses: reviewdog/action-eslint@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           reporter: github-pr-review # Change reporter.
           workdir: "ui"
 
-      - name: Run front-end unit tests
+      - name: Npm - Run unit tests
         shell: bash
         working-directory: ui
         run: npm run test:unit
 
-      - name: Install Playwright
+      - name: Storybook - Install Playwright
         shell: bash
         working-directory: ui
         run: npx playwright install --with-deps
 
-      - name: Build Storybook
+      - name: Storybook - Build
         shell: bash
         working-directory: ui
         run: npm run build-storybook --quiet
 
-      - name: Serve Storybook and run tests
+      - name: Storybook - Run tests
         shell: bash
         working-directory: ui
         run: |
@@ -227,6 +228,7 @@ jobs:
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+
   check:
     env:
       SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -236,19 +238,22 @@ jobs:
     timeout-minutes: 60
     steps:
       # Checkout
-      - uses: actions/checkout@v4
+      - name: Checkout - Current ref
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       # Checkout GitHub Actions
-      - uses: actions/checkout@v4
+      - name: Checkout - GitHub Actions
+        uses: actions/checkout@v4
         with:
           repository: kestra-io/actions
           path: actions
           ref: main
 
       # Setup build
-      - uses: ./actions/.github/actions/setup-build
+      - name: Setup - Build
+        uses: ./actions/.github/actions/setup-build
         id: build
         with:
           java-enabled: true
@@ -257,12 +262,12 @@ jobs:
           caches-enabled: true
 
       # Services
-      - name: Build the docker-compose stack
+      - name: Setup - Start docker compose
         run: docker compose -f docker-compose-ci.yml up -d
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
 
       # Gradle check
-      - name: Build with Gradle
+      - name: Gradle - Build
         if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
         env:
           GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
@@ -271,27 +276,47 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
           ./gradlew check javadoc --parallel
 
+      # report test
+      - name: Test - Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Java Tests Report
+          reporter: java-junit
+          path: '**/build/test-results/test/TEST-*.xml'
+          list-suites: 'failed'
+          list-tests: 'failed'
+          fail-on-error: 'false'
+
       # Sonar
-      - name: Analyze with Sonar
+      - name: Test - Analyze with Sonar
         if: ${{ env.SONAR_TOKEN != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: ./gradlew sonar --info
 
-      # Allure check
-      - name: Auth to Google Cloud
+      # GCP
+      - name: GCP - Auth with unit test account
         id: auth
         if: ${{ always() && env.GOOGLE_SERVICE_ACCOUNT != 0 }}
+        continue-on-error: true
         uses: "google-github-actions/auth@v2"
         with:
           credentials_json: "${{ secrets.GOOGLE_SERVICE_ACCOUNT }}"
 
-      - uses: rlespinasse/github-slug-action@v5
+      - name: GCP - Setup Cloud SDK
+        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        uses: "google-github-actions/setup-gcloud@v2"
 
-      - name: Publish allure report
+      # Allure check
+      - name: Allure - Generate slug variables
+        uses: rlespinasse/github-slug-action@v5
+
+      - name: Allure - Publish report
         uses: andrcuns/allure-publish-action@v2.9.0
         if: ${{ always() && env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        continue-on-error: true
         env:
           GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JAVA_HOME: /usr/lib/jvm/default-jvm/
@@ -305,27 +330,26 @@ jobs:
           ignoreMissingResults: true
 
       # Jacoco
-      - name: "Set up Cloud SDK"
+      - name: Jacoco - Copy reports
         if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
-        uses: "google-github-actions/setup-gcloud@v2"
-
-      - name: "Copy jacoco files"
-        if: ${{ env.GOOGLE_SERVICE_ACCOUNT != 0 && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        continue-on-error: true
         run: |
           mv build/reports/jacoco/testCodeCoverageReport build/reports/jacoco/test/
           mv build/reports/jacoco/test/testCodeCoverageReport.xml build/reports/jacoco/test/jacocoTestReport.xml
           gsutil -m rsync -d -r  build/reports/jacoco/test/ gs://internal-kestra-host/${{ format('{0}/{1}', github.repository, 'jacoco') }}
 
-      # report test
-      - name: Test Report
-        uses: mikepenz/action-junit-report@v5
-        if: success() || failure()
-        with:
-          report_paths: "**/build/test-results/**/TEST-*.xml"
-
       # Codecov
-      - uses: codecov/codecov-action@v5
-        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+      - name: Codecov - Upload coverage reports
+        uses: codecov/codecov-action@v5
+        if: ${{ !cancelled() && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Codecov - Upload test results
+        uses: codecov/test-results-action@v1
+        if: ${{ !cancelled() && (github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '') }}
+        continue-on-error: true
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
 
@@ -343,7 +367,7 @@ jobs:
       )
     steps:
       # Download Exec
-      - name: Download executable
+      - name: Artifacts - Download executable
         uses: actions/download-artifact@v4
         if: startsWith(github.ref, 'refs/tags/v')
         with:
@@ -351,7 +375,7 @@ jobs:
           path: build/executable
 
       # GitHub Release
-      - name: Create GitHub release
+      - name: GitHub - Create release
         id: create_github_release
         uses: "marvinpinto/action-automatic-releases@latest"
         if: startsWith(github.ref, 'refs/tags/v')
@@ -363,7 +387,7 @@ jobs:
             build/executable/*
 
       # Trigger gha workflow to bump helm chart version
-      - name: trigger the Helm chart version bump
+      - name: GitHub - Trigger the Helm chart version bump
         uses: peter-evans/repository-dispatch@v3
         if: steps.create_github_release.conclusion == 'success'
         with:
@@ -401,23 +425,25 @@ jobs:
             packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
             python-libraries: kestra
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout - Current ref
+        uses: actions/checkout@v4
+
       # Docker setup
-      - name: Set up QEMU
+      - name: Docker - Setup QEMU
         uses: docker/setup-qemu-action@v3
 
-      - name: Set up Docker Buildx
+      - name: Docker - Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       # Docker Login
-      - name: Login to DockerHub
+      - name: Docker - Login to DockerHub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       # Vars
-      - name: Set image name
+      - name: Docker - Set image name
         id: vars
         run: |
           TAG=${GITHUB_REF#refs/*/}
@@ -428,18 +454,18 @@ jobs:
           fi
 
       # Build Docker Image
-      - name: Download executable
+      - name: Artifacts - Download executable
         uses: actions/download-artifact@v4
         with:
           name: exe
           path: build/executable
 
-      - name: Copy exe to image
+      - name: Docker - Copy exe to image
         run: |
           cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
 
       # Docker Build and push
-      - name: Build Docker Image
+      - name: Docker - Build image
         uses: docker/build-push-action@v6
         with:
           context: .
@@ -464,17 +490,20 @@ jobs:
         (needs.check-e2e.result == 'skipped' || needs.check-e2e.result == 'success')
       )
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout - Current ref
+        uses: actions/checkout@v4
 
       # Checkout GitHub Actions
-      - uses: actions/checkout@v4
+      - name: Checkout - GitHub Actions
+        uses: actions/checkout@v4
         with:
           repository: kestra-io/actions
           path: actions
           ref: main
 
       # Setup build
-      - uses: ./actions/.github/actions/setup-build
+      - name: Setup - Build
+        uses: ./actions/.github/actions/setup-build
         id: build
         with:
           java-enabled: true
@@ -482,7 +511,7 @@ jobs:
           caches-enabled: true
 
       # Publish
-      - name: Publish package to Sonatype
+      - name: Publish - Release package to Maven Central
         if: github.ref == 'refs/heads/develop'
         env:
           ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USER }}
@@ -496,23 +525,13 @@ jobs:
           echo "signing.password=${SONATYPE_GPG_PASSWORD}" >> ~/.gradle/gradle.properties
           echo "signing.secretKeyRingFile=${HOME}/.gradle/secring.gpg" >> ~/.gradle/gradle.properties
           echo ${SONATYPE_GPG_FILE} | base64 -d > ~/.gradle/secring.gpg
-          ./gradlew publishToSonatype
+          ./gradlew publishToSonatype ${{ startsWith(github.ref, 'refs/tags/v')  && 'closeAndReleaseSonatypeStagingRepository' || '' }}
 
-      # Release
-      - name: Release package to Maven Central
-        if: startsWith(github.ref, 'refs/tags/v')
-        env:
-          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USER }}
-          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
-          SONATYPE_GPG_KEYID: ${{ secrets.SONATYPE_GPG_KEYID }}
-          SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
-          SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE }}
-        run: |
-          echo "signing.keyId=${SONATYPE_GPG_KEYID}" > ~/.gradle/gradle.properties
-          echo "signing.password=${SONATYPE_GPG_PASSWORD}" >> ~/.gradle/gradle.properties
-          echo "signing.secretKeyRingFile=${HOME}/.gradle/secring.gpg" >> ~/.gradle/gradle.properties
-          echo ${SONATYPE_GPG_FILE} | base64 -d > ~/.gradle/secring.gpg
-          ./gradlew publishToSonatype closeAndReleaseSonatypeStagingRepository
+      # Gradle dependency
+      - name: Java - Gradle dependency graph
+        if: ${{ github.ref == 'refs/heads/develop' }}
+        uses: gradle/actions/dependency-submission@v4
+
   end:
     runs-on: ubuntu-latest
     needs:
@@ -526,7 +545,7 @@ jobs:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
       # Update
-      - name: Update internal
+      - name: Github - Update internal
         uses: benc-uk/workflow-dispatch@v1
         if: github.ref == 'refs/heads/develop' && needs.docker.result == 'success'
         with:
@@ -536,7 +555,7 @@ jobs:
           token: ${{ secrets.GH_PERSONAL_TOKEN }}
 
       # Slack
-      - name: Slack notification
+      - name: Slack - Notification
         uses: Gamesight/slack-workflow-status@master
         if: ${{ always() && env.SLACK_WEBHOOK_URL != 0 }}
         with:
@@ -545,3 +564,4 @@ jobs:
           name: GitHub Actions
           icon_emoji: ":github-actions:"
           channel: "C02DQ1A7JLR" # _int_git channel
+

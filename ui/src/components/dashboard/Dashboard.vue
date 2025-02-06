@@ -194,7 +194,7 @@
 
         <ExecutionsEmptyNextScheduled v-else class="card card-1/2" />
         <ExecutionsNamespace
-            v-if="!props.flow"
+            v-if="(props.namespace && shouldShowNamespaceExecutions) || (!props.flow && !props.namespace)"
             class="card card-1"
             :data="namespaceExecutions"
             :total="stats.total"
@@ -248,6 +248,7 @@
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
     const user = store.getters["auth/user"];
+    const shouldShowNamespaceExecutions = ref(false);
 
     const props = defineProps({
         embed: {
@@ -433,6 +434,7 @@
     const fetchNamespaceExecutions = () => {
         store.dispatch("stat/dailyGroupByNamespace", mergeQuery()).then((response) => {
             namespaceExecutions.value = response;
+            shouldShowNamespaceExecutions.value = Object.keys(response).some(key => key.includes("."));
         });
     };
 

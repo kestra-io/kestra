@@ -172,6 +172,7 @@
         values: {type: Object, default: undefined},
         decode: {type: Boolean, default: true},
         buttons: {
+            persistent: {type: Boolean, default: false}, //Add persistent property
             type: Object as () => Buttons,
             default: () => ({
                 refresh: {shown: false, callback: () => {}},
@@ -269,6 +270,7 @@
             label: option.value?.label ?? "Unknown",
             comparator: undefined,
             value: [],
+            persistent: props.persistent, //Set persistent property
         };
 
         // Check if parent filter already exists

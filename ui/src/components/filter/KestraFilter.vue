@@ -31,6 +31,16 @@
             @focus="handleFocus"
             data-test-id="KestraFilter__select"
         >
+            <!-- Custom tag rendering -->
+            <template #tag="{current}">
+                <el-tag
+                    :disable-transitions="true"
+                    :closable="!current?.persistent" 
+                    @close="() => removeItem(current)"
+                >
+                    <Label :option="current" /> 
+                </el-tag>
+            </template>
             <template #label="{value}">
                 <Label :option="value" />
             </template>
@@ -271,7 +281,9 @@
     };
 
     const handleClear = () => {
-        currentFilters.value = [];
+        currentFilters.value = currentFilters.value.filter(
+            (item) => item.persistent
+        );
         triggerSearch();
     };
 
@@ -585,6 +597,7 @@
     };
 
     const removeItem = (value) => {
+        if(value.persistent) return;
         currentFilters.value = currentFilters.value.filter(
             (item) => JSON.stringify(item) !== JSON.stringify(value),
         );

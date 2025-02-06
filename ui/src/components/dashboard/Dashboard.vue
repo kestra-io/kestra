@@ -194,7 +194,7 @@
 
         <ExecutionsEmptyNextScheduled v-else class="card card-1/2" />
         <ExecutionsNamespace
-            v-if="(props.namespace && shouldShowNamespaceExecutions) || (!props.flow && !props.namespace)"
+            v-if="!props.flow && (!props.namespace || shouldShowNamespaceExecutions)"
             class="card card-1"
             :data="namespaceExecutions"
             :total="stats.total"

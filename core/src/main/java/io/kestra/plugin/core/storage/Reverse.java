@@ -16,10 +16,7 @@ import org.apache.commons.io.Charsets;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.ReversedLinesFileReader;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -30,27 +27,29 @@ import java.nio.charset.StandardCharsets;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Reserve a file from the Kestra's internal storage, last line first."
+    title = "Reverse a file from the Kestra's internal storage, last line first."
 )
 @Plugin(
     examples = {
         @Example(
             code = {
                 "from: \"kestra://long/url/file1.txt\"",
+                "charset: \"UTF-8\"",
+                "separator: \"\\n\""
             }
-        ),
+        )
     },
-    aliases = "io.kestra.core.tasks.storages.Reverse"
+    aliases = "io.kestra.core.storages.Reverse"
 )
 public class Reverse extends Task implements RunnableTask<Reverse.Output> {
     @Schema(
-        title = "The file to be split."
+        title = "The file to be reversed"
     )
     @NotNull
     private Property<String> from;
 
     @Schema(
-        title = "The separator used to join the file into chunks. By default, it's a newline `\\n` character. If you are on Windows, you might want to use `\\r\\n` instead."
+        title = "The separator used to join lines. By default, it's a newline `\\n` character. If you are on Windows, you might want to use `\\r\\n` instead."
     )
     @Builder.Default
     private Property<String> separator = Property.of("\n");
@@ -66,32 +65,61 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
         URI from = new URI(runContext.render(this.from).as(String.class).orElseThrow());
         String extension = FileUtils.getExtension(from);
         String separator = runContext.render(this.separator).as(String.class).orElseThrow();
-        Charset charset = Charsets.toCharset(runContext.render(this.charset).as(String.class).orElseThrow());
 
-        File tempFile = runContext.workingDir().createTempFile(extension).toFile();
-
-        File originalFile = runContext.workingDir().createTempFile(extension).toFile();
-        try (OutputStream outputStream = new FileOutputStream(originalFile)) {
-            IOUtils.copyLarge(runContext.storage().getFile(from), outputStream);
+        // Validate charset
+        String charsetName = runContext.render(this.charset).as(String.class).orElseThrow();
+        if (!Charset.isSupported(charsetName)) {
+            throw new IllegalArgumentException("Unsupported charset: " + charsetName);
         }
+        Charset charset = Charset.forName(charsetName);
 
-        ReversedLinesFileReader reversedLinesFileReader = ReversedLinesFileReader.builder()
-            .setPath(originalFile.toPath())
-            .setCharset(charset)
-            .get();
+        File tempFile = null;
+        File originalFile = null;
+        try {
+            tempFile = runContext.workingDir().createTempFile(extension).toFile();
+            originalFile = runContext.workingDir().createTempFile(extension).toFile();
 
-        try (
-            BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(tempFile));
-        ) {
-            String line;
-            while ((line = reversedLinesFileReader.readLine()) != null) {
-                output.write((line + separator).getBytes(charset));
+            // Copy input file
+            try (InputStream inputStream = runContext.storage().getFile(from);
+                 OutputStream outputStream = new FileOutputStream(originalFile)) {
+                if (inputStream.available() == 0) {
+                    throw new IllegalArgumentException("Input file is empty");
+                }
+                IOUtils.copyLarge(inputStream, outputStream);
             }
-        }
 
-        return Reverse.Output.builder()
-            .uri(runContext.storage().putFile(tempFile))
-            .build();
+            // Create reader with specified charset
+            try (ReversedLinesFileReader reversedLinesFileReader = ReversedLinesFileReader.builder()
+                .setPath(originalFile.toPath())
+                .setCharset(charset)
+                .get();
+                BufferedOutputStream output = new BufferedOutputStream(new FileOutputStream(tempFile))) {
+
+                String line;
+                boolean firstLine = true;
+                while ((line = reversedLinesFileReader.readLine()) != null) {
+                    if (!firstLine) {
+                        output.write(separator.getBytes(charset));
+                    }
+                    output.write(line.getBytes(charset));
+                    firstLine = false;
+                }
+            }
+
+            return Output.builder()
+                .uri(runContext.storage().putFile(tempFile))
+                .build();
+
+        } catch (Exception e) {
+            // Clean up temporary files in case of error
+            if (tempFile != null && tempFile.exists()) {
+                tempFile.delete();
+            }
+            if (originalFile != null && originalFile.exists()) {
+                originalFile.delete();
+            }
+            throw e;
+        }
     }
 
     @Builder

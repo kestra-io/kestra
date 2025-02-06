@@ -835,6 +835,7 @@
             },
             deleteExecutions() {
                 const includeNonTerminated = ref(false);
+
                 const deleteLogs = ref(true);
                 const deleteMetrics = ref(true);
                 const deleteStorage = ref(true);
@@ -862,7 +863,7 @@
                         showIcon: true,
                         closable: false,
                         class: "custom-warning"
-                    }) : "",
+                    }) : null,
                     h(ElCheckbox, {
                         modelValue: deleteLogs.value,
                         label: this.$t("execution_deletion.logs"),

@@ -178,13 +178,6 @@
             :namespace="props.namespace"
             class="card card-1/2"
         />
-
-        <ExecutionsDoughnut
-            v-if="props.flow"
-            :data="graphData"
-            :total="stats.total"
-            class="card card-1/2"
-        />
         <ExecutionsNextScheduled
             v-else-if="isAllowedTriggers"
             :flow="props.flowId"

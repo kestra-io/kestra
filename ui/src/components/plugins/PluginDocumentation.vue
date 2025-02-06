@@ -31,7 +31,7 @@
 
 <script>
     import {mapState, mapGetters} from "vuex";
-    import intro from "../../assets/documentations/basic.md?raw"
+    import intro from "../../assets/docs/basic.md?raw"
 
     export default {
         props: {

@@ -169,7 +169,7 @@
     import YamlUtils from "../../../utils/yamlUtils.js";
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import intro from "../../../assets/markdown/dashboard_home.md?raw";
+    import intro from "../../../assets/docs/dashboard_home.md?raw";
     import Markdown from "../../layout/Markdown.vue";
     import TimeSeries from "./charts/custom/TimeSeries.vue";
     import Bar from "./charts/custom/Bar.vue";

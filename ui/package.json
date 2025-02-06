@@ -16,7 +16,7 @@
     "build-storybook": "storybook build",
     "test-storybook": "test-storybook",
     "prepare": "cd .. && husky ui/.husky && rm -f .git/hooks/*",
-    "notes": "node ./utils/generateReleaseNotes"
+    "notes": "node ./scripts/ci/generateReleaseNotes"
   },
   "dependencies": {
     "@js-joda/core": "^5.6.3",

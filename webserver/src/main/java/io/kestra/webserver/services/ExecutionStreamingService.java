@@ -120,7 +120,7 @@ public class ExecutionStreamingService {
     }
 
     @PreDestroy
-    public void shutdown() {
+    void shutdown() {
         if (queueConsumer != null) {
             queueConsumer.run();
         }

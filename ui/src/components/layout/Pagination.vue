@@ -30,7 +30,7 @@
             />
         </div>
 
-        <small class="total text-total ms-2">
+        <small class="total ms-2">
             {{ $t('Total') }}: {{ total }}
         </small>
     </div>
@@ -125,11 +125,6 @@
             @include res(xs) {
                 display: none;
             }
-        }
-
-        .text-total {
-            color: var(--ks-content-secondary);
-            font-weight: normal;
         }
 
         .total {

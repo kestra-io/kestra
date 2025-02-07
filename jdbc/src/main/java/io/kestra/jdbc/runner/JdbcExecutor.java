@@ -543,14 +543,6 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                         workerTask.getRunContext().logger().error("Unable to evaluate the runIf condition for task {}", workerTask.getTask().getId(), e);
                                     }
                                 }));
-
-
-                        }
-
-                        // worker tasks results
-                        if (!executor.getWorkerTaskResults().isEmpty()) {
-                            executor.getWorkerTaskResults()
-                                .forEach(throwConsumer(workerTaskResult -> workerTaskResultQueue.emit(workerTaskResult)));
                         }
 
                         // subflow execution results
@@ -645,26 +637,11 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 try {
                     Flow flow = flowRepository.findByExecution(current.getExecution());
 
-                    // dynamic tasks
-                    Execution newExecution = executorService.addDynamicTaskRun(
-                        current.getExecution(),
-                        flow,
-                        message
-                    );
-                    if (newExecution != null) {
-                        current = current.withExecution(newExecution, "addDynamicTaskRun");
-                    }
-
-                    TaskRun taskRun = message.getTaskRun();
-                    newExecution = current.getExecution().withTaskRun(taskRun);
-                    // If the worker task result is killed, we must check if it has a parents to also kill them if not already done.
-                    // Running flowable tasks that have child tasks running in the worker will be killed thanks to that.
-                    if (taskRun.getState().getCurrent() == State.Type.KILLED && taskRun.getParentTaskRunId() != null) {
-                        newExecution = executionService.killParentTaskruns(taskRun, newExecution);
-                    }
-                    current = current.withExecution(newExecution, "joinWorkerResult");
+                    // process worker task result
+                    executorService.addWorkerTaskResult(current, flow, message);
 
                     // send metrics on terminated
+                    TaskRun taskRun = message.getTaskRun();
                     if (taskRun.getState().isTerminated()) {
                         metricRegistry
                             .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))

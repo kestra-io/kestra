@@ -11,21 +11,21 @@ on:
 #      - develop
 #  repository_dispatch:
 #    types: [rebuild]
-  workflow_dispatch:
-    inputs:
-      skip-test:
-        description: "Skip test"
-        type: choice
-        required: true
-        default: "false"
-        options:
-          - "true"
-          - "false"
-      plugin-version:
-        description: "Plugin version"
-        required: false
-        type: string
-        default: "LATEST"
+#  workflow_dispatch:
+#    inputs:
+#      skip-test:
+#        description: "Skip test"
+#        type: choice
+#        required: true
+#        default: "false"
+#        options:
+#          - "true"
+#          - "false"
+#      plugin-version:
+#        description: "Plugin version"
+#        required: false
+#        type: string
+#        default: "LATEST"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

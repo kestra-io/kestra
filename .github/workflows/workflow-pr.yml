@@ -35,8 +35,7 @@ jobs:
             translations:
               - 'ui/src/translations/**'
             backend:
-            - '!ui/**'
-            - '!.github/**'
+              - '!{ui,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
   frontend:
@@ -52,12 +51,16 @@ jobs:
         name: Generate translations
         if: "needs.file-changes.outputs.translations == 'true'"
         uses: ./.github/actions/action-generate-translations
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
       - id: frontend-test
         name: Frontend test
         uses: ./.github/actions/action-frontend-test
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
 
   backend:
     name: 'Check Backend'
@@ -70,6 +73,11 @@ jobs:
 
       - name: Backend test
         uses: ./.github/actions/action-backend-test
+        with:
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          github-token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          google-service-account: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
 
   build-artifacts:
     if: "needs.file-changes.outputs.backend == 'true' || needs.file-changes.outputs.ui == 'true'"

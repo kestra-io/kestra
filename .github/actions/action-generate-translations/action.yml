@@ -1,6 +1,11 @@
 name: Generate Translations
 description: "Required the environment variable OPENAI_API_KEY to be set. This action will generate translations for the UI."
 
+inputs:
+    github-token:
+        description: 'GitHub Token'
+        required: true
+
 runs:
   using: composite
 
@@ -41,7 +46,7 @@ runs:
 
     - name: Check for changes and commit
       env:
-        GH_TOKEN: ${{ github.token }}
+        GH_TOKEN: ${{ inputs.github-token }}
       shell: bash
       run: |
         git add ui/src/translations/*.json

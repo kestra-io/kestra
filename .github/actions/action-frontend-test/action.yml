@@ -1,10 +1,10 @@
 name: 'Frontend Test'
 
 inputs:
-  example-input:
-    description: 'An example input'
-    required: false
-    default: 'default value'
+  github-token:
+    description: 'GitHub Token'
+    required: true
+
 
 runs:
   using: composite
@@ -22,9 +22,16 @@ runs:
     - name: Npm lint
       uses: reviewdog/action-eslint@v1
       with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ inputs.GITHUB_TOKEN }}
         reporter: github-pr-review # Change reporter.
         workdir: "ui"
+
+    - name: Npm - Run build
+      shell: bash
+      working-directory: ui
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      run: npm run build
 
     - name: Run front-end unit tests
       shell: bash

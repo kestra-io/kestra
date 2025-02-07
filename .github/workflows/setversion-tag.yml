@@ -39,22 +39,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Checkout GitHub Actions
-      - uses: actions/checkout@v4
-        with:
-          repository: kestra-io/actions
-          path: actions
-          ref: main
-
-      # Setup build
-      - uses: ./actions/.github/actions/setup-build
-        id: build
-        with:
-          java-enabled: true
-          node-enabled: true
-          python-enabled: true
-          caches-enabled: true
-
       - name: Configure Git
         run: |
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"

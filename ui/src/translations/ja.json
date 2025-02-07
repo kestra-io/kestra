@@ -799,7 +799,7 @@
       "type": "タイプ",
       "add": "新しいKey-Value",
       "update": "キー'{key}'の値を更新",
-      "duplicate": "このキーは既に存在します"
+      "duplicate": "このkeyは既に存在しています"
     },
     "expiration": "有効期限",
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",

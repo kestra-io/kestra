@@ -799,7 +799,7 @@
       "type": "유형",
       "add": "새 Key-Value",
       "update": "키 '{key}'의 값을 업데이트하세요",
-      "duplicate": "이 키는 이미 존재합니다"
+      "duplicate": "이미 존재하는 key입니다."
     },
     "expiration": "만료",
     "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",

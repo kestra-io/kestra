@@ -799,7 +799,7 @@
       "type": "Tipo",
       "add": "Novo Key-Value",
       "update": "Atualizar valor para a key '{key}'",
-      "duplicate": "Esta key já existe"
+      "duplicate": "Esta chave já existe"
     },
     "expiration": "Expiração",
     "failed to render pdf": "Falha ao renderizar a pré-visualização do PDF",

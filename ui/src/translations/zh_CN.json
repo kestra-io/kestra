@@ -799,7 +799,7 @@
       "type": "类型",
       "add": "新建键值",
       "update": "更新键 '{key}' 的值",
-      "duplicate": "此键已存在"
+      "duplicate": "此key已存在"
     },
     "expiration": "过期",
     "failed to render pdf": "渲染PDF预览失败",

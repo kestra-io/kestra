@@ -1,4 +1,4 @@
-package io.kestra.webserver.services;
+package io.kestra.core.services;
 
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueFactoryInterface;

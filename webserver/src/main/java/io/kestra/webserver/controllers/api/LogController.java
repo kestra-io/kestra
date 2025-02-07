@@ -7,7 +7,7 @@ import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
-import io.kestra.webserver.services.LogStreamingService;
+import io.kestra.core.services.LogStreamingService;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;

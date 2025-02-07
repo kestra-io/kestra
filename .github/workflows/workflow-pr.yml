@@ -61,6 +61,7 @@ jobs:
         uses: ./.github/actions/action-frontend-test
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
   backend:
     name: 'Check Backend'
@@ -80,7 +81,7 @@ jobs:
           google-service-account: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
 
   build-artifacts:
-    if: "needs.file-changes.outputs.backend == 'true' || needs.file-changes.outputs.ui == 'true'"
+    if: ${{ needs.file-changes.outputs.backend == 'true' || needs.file-changes.outputs.ui == 'true' }}
     name: Build artifacts
     runs-on: ubuntu-latest
     steps:

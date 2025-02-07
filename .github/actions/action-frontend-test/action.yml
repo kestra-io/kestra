@@ -4,6 +4,9 @@ inputs:
   github-token:
     description: 'GitHub Token'
     required: true
+  codecov-token:
+    description: 'Codecov Token'
+    required: true
 
 
 runs:
@@ -12,7 +15,7 @@ runs:
     - id: checkout
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.ref_name }} # Using ref_name in case translations has committed something
+        ref: ${{ github.ref }} # Using ref in case translations has committed something
 
     - name: Npm install
       shell: bash
@@ -22,7 +25,7 @@ runs:
     - name: Npm lint
       uses: reviewdog/action-eslint@v1
       with:
-        github_token: ${{ inputs.GITHUB_TOKEN }}
+        github_token: ${{ inputs.github-token }}
         reporter: github-pr-review # Change reporter.
         workdir: "ui"
 
@@ -30,7 +33,7 @@ runs:
       shell: bash
       working-directory: ui
       env:
-        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        CODECOV_TOKEN: ${{ inputs.codecov-token }}
       run: npm run build
 
     - name: Run front-end unit tests

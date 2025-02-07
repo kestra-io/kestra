@@ -798,7 +798,7 @@
       "name": "KV Store",
       "type": "Тип",
       "add": "Новый Key-Value",
-      "update": "Обновить значение для key '{key}'",
+      "update": "Обновить значение для ключа '{key}'",
       "duplicate": "Этот key уже существует"
     },
     "expiration": "Срок действия",

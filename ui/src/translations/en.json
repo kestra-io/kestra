@@ -314,7 +314,10 @@
           "2": "Explore blueprints to kick-start your next {kind}."
         },
         "alt": "Blueprints Icon"
-      }
+      },
+      "flows": "Flow Blueprints",
+      "apps": "App Blueprints",
+      "dashboard": "Dashboard Blueprints"
     },
     "use": "Use",
     "plugins": {

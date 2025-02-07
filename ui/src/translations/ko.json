@@ -798,7 +798,7 @@
       "name": "KV Store",
       "type": "유형",
       "add": "새 Key-Value",
-      "update": "키 '{key}'의 값을 업데이트하세요",
+      "update": "'{key}'의 값을 업데이트하십시오.",
       "duplicate": "이 키는 이미 존재합니다"
     },
     "expiration": "만료",

@@ -798,7 +798,7 @@
       "name": "KV Store",
       "type": "प्रकार",
       "add": "नया Key-Value",
-      "update": "key '{key}' के लिए value अपडेट करें",
+      "update": "कुंजी '{key}' के लिए मान अपडेट करें",
       "duplicate": "यह key पहले से मौजूद है"
     },
     "expiration": "समाप्ति",

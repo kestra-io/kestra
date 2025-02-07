@@ -798,7 +798,7 @@
       "name": "KV Store",
       "type": "Typ",
       "add": "Nowy Key-Value",
-      "update": "Zaktualizuj value dla key '{key}'",
+      "update": "Zaktualizuj wartość dla klucza '{key}'",
       "duplicate": "Ten key już istnieje"
     },
     "expiration": "Wygaśnięcie",

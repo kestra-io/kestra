@@ -268,7 +268,8 @@
       },
       "empty": "Aucun blueprint à afficher.",
       "custom": "Plans personnalisés",
-      "community": "Communauté"
+      "community": "Communauté",
+      "dashboards": "Tableau de bord Blueprints"
     },
     "use": "Utiliser",
     "plugins": {

@@ -268,7 +268,8 @@
       },
       "empty": "Keine Blueprints zum Anzeigen.",
       "custom": "Benutzerdefinierte Blueprints",
-      "community": "Gemeinschaft"
+      "community": "Gemeinschaft",
+      "dashboards": "Dashboard Blueprints"
     },
     "use": "Verwenden",
     "plugins": {

@@ -268,7 +268,8 @@
       },
       "empty": "कोई blueprints दिखाने के लिए नहीं हैं।",
       "custom": "कस्टम blueprints",
-      "community": "समुदाय"
+      "community": "समुदाय",
+      "dashboards": "डैशबोर्ड Blueprints"
     },
     "use": "उपयोग करें",
     "plugins": {

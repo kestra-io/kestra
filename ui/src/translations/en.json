@@ -317,7 +317,7 @@
       },
       "flows": "Flow Blueprints",
       "apps": "App Blueprints",
-      "dashboard": "Dashboard Blueprints"
+      "dashboards": "Dashboard Blueprints"
     },
     "use": "Use",
     "plugins": {

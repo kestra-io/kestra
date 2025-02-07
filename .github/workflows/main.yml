@@ -171,7 +171,9 @@ jobs:
   check-frontend:
     name: Run frontend tests
     runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == ''}}
     steps:
+      # Setup
       - name: Checkout - Current ref
         uses: actions/checkout@v4
 
@@ -184,14 +186,16 @@ jobs:
         uses: reviewdog/action-eslint@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          reporter: github-pr-review # Change reporter.
+          reporter: github-pr-review
           workdir: "ui"
 
+      # Unit test
       - name: Npm - Run unit tests
         shell: bash
         working-directory: ui
         run: npm run test:unit
 
+      # Build to send bundle stats to codecov
       - name: Npm - Run build
         shell: bash
         working-directory: ui
@@ -199,6 +203,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: npm run build
 
+      # Storybook
       - name: Storybook - Install Playwright
         shell: bash
         working-directory: ui
@@ -215,7 +220,24 @@ jobs:
         run: |
           npx concurrently -k -s first -n "SB,TEST" -c "magenta,blue" \
             "npx http-server storybook-static --port 6006 --silent" \
-            "npx wait-on tcp:127.0.0.1:6006 && npm run test-storybook"
+            "npx wait-on tcp:127.0.0.1:6006 && npm run test:storybook"
+
+      # Codecov
+      - name: Codecov - Upload coverage reports
+        uses: codecov/codecov-action@v5
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: frontend
+
+      - name: Codecov - Upload test results
+        uses: codecov/test-results-action@v1
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: frontend
 
   # Run Reusable Workflow from QA repository
   check-e2e:

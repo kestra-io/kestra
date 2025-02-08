@@ -19,12 +19,12 @@
                 <div
                     class="d-flex justify-content-end align-items-center switch-content"
                 >
-                    <span class="pe-2 fw-light small">{{ t("duration") }}</span>
-                    <el-switch
-                        v-model="duration"
-                        :active-icon="CheckIcon"
-                        inline-prompt
-                    />
+                    <label class="pe-2 fw-light small">{{ t("duration") }}
+                        <el-switch
+                            v-model="duration"
+                            :active-icon="CheckIcon"
+                            inline-prompt
+                        /></label>
                 </div>
                 <div id="executions" />
             </div>

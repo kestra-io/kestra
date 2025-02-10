@@ -433,12 +433,7 @@
                         label: this.$t("triggers"),
                         prop: "triggers",
                         default: true,
-                    },
-                    {
-                        label: this.$t("actions"),
-                        prop: "action",
-                        default: true,
-                    },
+                    }
                 ],
                 displayColumns: [],
                 isDefaultNamespaceAllow: true,
@@ -546,7 +541,7 @@
                 };
             },
             loadDisplayColumns() {
-                const storedColumns = localStorage.getItem(this.storageKey);
+                const storedColumns = localStorage.getItem("columns_flows");
                 if (storedColumns) {
                     return storedColumns.split(",");
                 }

@@ -129,7 +129,7 @@ export function useLeftMenu() {
                 },
                 child: [
                     {
-                        title: t("flows"),
+                        title: t("blueprints.flows"),
                         routes: routeStartWith("blueprints/flow"),
                         icon: {
                             element: shallowRef(FileTreeOutline),
@@ -138,7 +138,7 @@ export function useLeftMenu() {
                         href: {name: "blueprints", params: {kind: "flow", tab: "community"}},
                     },
                     {
-                        title: t("homeDashboard.title"),
+                        title: t("blueprints.dashboards"),
                         routes: routeStartWith("blueprints/dashboard"),
                         icon: {
                             element: shallowRef(ViewDashboardVariantOutline),

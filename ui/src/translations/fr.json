@@ -268,7 +268,10 @@
       },
       "empty": "Aucun blueprint à afficher.",
       "custom": "Plans personnalisés",
-      "community": "Communauté"
+      "community": "Communauté",
+      "dashboards": "Tableaux de bord Blueprints",
+      "flows": "Plans de Flow",
+      "apps": "Plans d'application"
     },
     "use": "Utiliser",
     "plugins": {
@@ -1017,9 +1020,12 @@
         "in": "dans",
         "starts_with": "commence par",
         "not_contains": "ne contient pas",
-        "is_not_one_off": "n'est pas l'un de",
+        "not_in": "n'est pas dans",
         "is_one_of": "est l'un de",
-        "between": "entre"
+        "between": "entre",
+        "greater_than": "plus grand que",
+        "less_than": "moins de",
+        "ends_with": "se termine par"
       },
       "save": {
         "label": "Recherches enregistrées",
@@ -1167,6 +1173,7 @@
       "hint": "Choisir les colonnes visibles",
       "hidden": "Caché dans le tableau",
       "label": "Propriétés"
-    }
+    },
+    "debug": "Déboguer"
   }
 }

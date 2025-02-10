@@ -268,7 +268,10 @@
       },
       "empty": "कोई blueprints दिखाने के लिए नहीं हैं।",
       "custom": "कस्टम blueprints",
-      "community": "समुदाय"
+      "community": "समुदाय",
+      "dashboards": "डैशबोर्ड Blueprints",
+      "flows": "फ्लो Blueprints",
+      "apps": "ऐप Blueprints"
     },
     "use": "उपयोग करें",
     "plugins": {
@@ -1017,9 +1020,12 @@
         "in": "में",
         "starts_with": "शुरू होता है",
         "not_contains": "नहीं शामिल है",
-        "is_not_one_off": "नहीं है उनमें से एक",
+        "not_in": "में नहीं",
         "is_one_of": "में से एक है",
-        "between": "के बीच"
+        "between": "के बीच",
+        "greater_than": "से अधिक",
+        "less_than": "से कम",
+        "ends_with": "समाप्त होता है"
       },
       "save": {
         "label": "सहेजे गए खोजें",
@@ -1167,6 +1173,7 @@
       "hint": "दृश्य स्तंभ चुनें",
       "hidden": "टेबल में छिपा हुआ",
       "label": "गुणधर्म"
-    }
+    },
+    "debug": "डिबग"
   }
 }

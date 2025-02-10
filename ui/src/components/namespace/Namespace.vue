@@ -10,7 +10,7 @@
             </ul>
             <ul v-if="$route.params.tab === 'flows'">
                 <li>
-                    <router-link :to="{name: 'flows/create'}" v-if="canCreateFlow">
+                    <router-link :to="{name: 'flows/create', query: {namespace: $route.params.id}}" v-if="canCreateFlow">
                         <el-button :icon="Plus" type="primary">
                             {{ $t('create') }}
                         </el-button>

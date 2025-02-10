@@ -268,7 +268,10 @@
       },
       "empty": "Brak blueprintów do wyświetlenia.",
       "custom": "Niestandardowe blueprints",
-      "community": "Społeczność"
+      "community": "Społeczność",
+      "dashboards": "Dashboard Blueprinty",
+      "flows": "Schematy Flow",
+      "apps": "Szablony aplikacji"
     },
     "use": "Użyj",
     "plugins": {
@@ -1017,9 +1020,12 @@
         "in": "w",
         "starts_with": "zaczyna się od",
         "not_contains": "nie zawiera",
-        "is_not_one_off": "nie jest jednym z",
+        "not_in": "nie w",
         "is_one_of": "jest jednym z",
-        "between": "pomiędzy"
+        "between": "pomiędzy",
+        "greater_than": "większe niż",
+        "less_than": "mniej niż",
+        "ends_with": "kończy się na"
       },
       "save": {
         "label": "Zapisane wyszukiwania",
@@ -1167,6 +1173,7 @@
       "hint": "Wybierz widoczne kolumny",
       "hidden": "Ukryte w tabeli",
       "label": "Właściwości"
-    }
+    },
+    "debug": "Debugowanie"
   }
 }

@@ -178,13 +178,6 @@
             :namespace="props.namespace"
             class="card card-1/2"
         />
-
-        <ExecutionsDoughnut
-            v-if="props.flow"
-            :data="graphData"
-            :total="stats.total"
-            class="card card-1/2"
-        />
         <ExecutionsNextScheduled
             v-else-if="isAllowedTriggers"
             :flow="props.flowId"
@@ -194,7 +187,7 @@
 
         <ExecutionsEmptyNextScheduled v-else class="card card-1/2" />
         <ExecutionsNamespace
-            v-if="!props.flow"
+            v-if="!props.flow && Object.keys(namespaceExecutions).length > 1"
             class="card card-1"
             :data="namespaceExecutions"
             :total="stats.total"
@@ -505,11 +498,7 @@ $spacing: 20px;
 
     .description {
         border: none !important;
-        color: #564a75;
-
-        html.dark & {
-            color: #e3dbff;
-        }
+        color: var(ks-content-secondary);
     }
 }
 

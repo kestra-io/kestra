@@ -268,7 +268,10 @@
       },
       "empty": "블루프린트가 없습니다.",
       "custom": "사용자 정의 blueprints",
-      "community": "커뮤니티"
+      "community": "커뮤니티",
+      "dashboards": "대시보드 Blueprints",
+      "flows": "플로우 Blueprints",
+      "apps": "앱 Blueprints"
     },
     "use": "사용",
     "plugins": {
@@ -1017,9 +1020,12 @@
         "in": "안에",
         "starts_with": "로 시작합니다",
         "not_contains": "포함하지 않음",
-        "is_not_one_off": "아닌 것 중 하나입니다.",
+        "not_in": "에 없음",
         "is_one_of": "중 하나입니다.",
-        "between": "사이에"
+        "between": "사이에",
+        "greater_than": "보다 큼",
+        "less_than": "보다 작음",
+        "ends_with": "끝남"
       },
       "save": {
         "label": "저장된 검색",
@@ -1167,6 +1173,7 @@
       "hint": "열 표시 선택",
       "hidden": "테이블에 숨김",
       "label": "속성"
-    }
+    },
+    "debug": "디버그"
   }
 }

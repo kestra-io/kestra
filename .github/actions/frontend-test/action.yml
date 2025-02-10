@@ -1,0 +1,79 @@
+name: Frontend Test
+
+inputs:
+  github-token:
+    description: 'GitHub Token'
+    required: true
+  codecov-token:
+    description: 'Codecov Token'
+    required: true
+runs:
+
+  using: composite
+  steps:
+    - id: checkout
+      uses: actions/checkout@v4
+      with:
+        ref: ${{ github.head_ref }}
+
+    - name: Npm - install
+      shell: bash
+      working-directory: ui
+      run: npm ci
+
+    - name: Npm - lint
+      uses: reviewdog/action-eslint@v1
+      with:
+        github_token: ${{ inputs.github-token }}
+        reporter: github-pr-review # Change reporter.
+        workdir: "ui"
+
+      # Build to send bundle stats to codecov
+    - name: Npm - Run build
+      shell: bash
+      working-directory: ui
+      env:
+        CODECOV_TOKEN: ${{ inputs.codecov-token }}
+      run: npm run build
+
+      # Unit test
+    - name: Run front-end unit tests
+      shell: bash
+      working-directory: ui
+      run: npm run test:cicd
+
+      # Storybook
+    - name: Storybook - Install Playwright
+      shell: bash
+      working-directory: ui
+      run: npx playwright install --with-deps
+
+    - name: Storybook - Build
+      shell: bash
+      working-directory: ui
+      run: npm run build-storybook --quiet
+
+    - name: Storybook - Run tests
+      shell: bash
+      working-directory: ui
+      run: |
+        npx concurrently -k -s first -n "SB,TEST" -c "magenta,blue" \
+          "npx http-server storybook-static --port 6006 --silent" \
+          "npx wait-on tcp:127.0.0.1:6006 && npm run test:storybook"
+
+    # Codecov
+    - name: Codecov - Upload coverage reports
+      uses: codecov/codecov-action@v5
+      if: ${{ !cancelled() }}
+      continue-on-error: true
+      with:
+        token: ${{ inputs.codecov-token }}
+        flags: frontend
+
+    - name: Codecov - Upload test results
+      uses: codecov/test-results-action@v1
+      if: ${{ !cancelled() }}
+      continue-on-error: true
+      with:
+        token: ${{ inputs.codecov-token }}
+        flags: frontend

@@ -2,6 +2,7 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
@@ -195,6 +196,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     abstract protected Condition findCondition(String query, Map<String, String> labels);
+    abstract protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation);
 
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
@@ -204,17 +206,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     @Override
     public ArrayListTotal<Execution> find(
         Pageable pageable,
-        @Nullable String query,
         @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> state,
-        @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter
+        @Nullable List<QueryFilter> filters
+
     ) {
         return this.jdbcRepository
             .getDslContextWrapper()
@@ -223,18 +217,9 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
                 SelectConditionStep<Record1<Object>> select = this.findSelect(
                     context,
-                    query,
                     tenantId,
-                    scope,
-                    namespace,
-                    flowId,
-                    startDate,
-                    endDate,
-                    state,
-                    labels,
-                    triggerExecutionId,
-                    childFilter,
-                    false
+                    filters
+
                 );
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
@@ -288,6 +273,36 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 }),
             FluxSink.OverflowStrategy.BUFFER
         );
+    }
+
+    private SelectConditionStep<Record1<Object>> findSelect(
+        DSLContext context,
+        @Nullable String tenantId,
+        @Nullable List<QueryFilter> filters
+    ) {
+
+        SelectConditionStep<Record1<Object>> select = context
+            .select(
+                field("value")
+            )
+            .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
+            .from(this.jdbcRepository.getTable())
+            .where(this.defaultFilter(tenantId, false));
+
+        if (filters != null)
+            for (QueryFilter filter : filters) {
+                QueryFilter.Field field = filter.field();
+                QueryFilter.Op operation = filter.operation();
+                Object value = filter.value();
+                if (field.equals(QueryFilter.Field.QUERY)) {
+                    select = select.and(this.findCondition(filter.value().toString(), null));
+                } else if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
+                    select = select.and(findCondition(labels, operation));
+                else
+                    select = getConditionOnField(select, field, value, operation, "start_date");
+            }
+
+        return select;
     }
 
     private SelectConditionStep<Record1<Object>> findSelect(
@@ -351,16 +366,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     @Override
     public ArrayListTotal<TaskRun> findTaskRun(
         Pageable pageable,
-        @Nullable String query,
         @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate,
-        @Nullable List<State.Type> states,
-        @Nullable Map<String, String> labels,
-        @Nullable String triggerExecutionId,
-        @Nullable ChildFilter childFilter
+        List<QueryFilter> filters
     ) {
         throw new UnsupportedOperationException();
     }

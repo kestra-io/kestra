@@ -344,7 +344,7 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             if (backfill.getPaused()) {
                 return Optional.empty();
             }
-            currentDateTimeExecution = backfill.getCurrentDate();
+            currentDateTimeExecution = convertDateTime(backfill.getCurrentDate());
         }
 
         Output scheduleDates = this.scheduleDates(executionTime, currentDateTimeExecution).orElse(null);

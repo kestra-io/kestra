@@ -1,0 +1,54 @@
+name: Publish Maven
+description: Publish Maven artifacts to Maven Central
+
+inputs:
+    sonatype-username:
+        description: 'Sonatype Username'
+        required: true
+    sonatype-password:
+        description: 'Sonatype Password'
+        required: true
+    sonatype-gpg-keyid:
+        description: 'GPG Key ID'
+        required: true
+    sonatype-gpg-password:
+        description: 'GPG Password'
+        required: true
+    sonatype-gpg-file:
+        description: 'GPG File'
+        required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Checkout - Current ref
+      uses: actions/checkout@v4
+
+    # Setup build
+    - name: Setup - Build
+      uses: kestra-io/actions/.github/actions/setup-build@main
+      id: build
+      with:
+        java-enabled: true
+        node-enabled: true
+
+    # Publish
+    - name: Publish - Release package to Maven Central
+      shell: bash
+      env:
+        ORG_GRADLE_PROJECT_sonatypeUsername: ${{ inputs.sonatype-username }}
+        ORG_GRADLE_PROJECT_sonatypePassword: ${{ inputs.sonatype-password }}
+        SONATYPE_GPG_KEYID: ${{ inputs.sonatype-gpg-keyid }}
+        SONATYPE_GPG_PASSWORD: ${{ inputs.sonatype-gpg-password }}
+        SONATYPE_GPG_FILE: ${{ inputs.sonatype-gpg-file }}
+      run: |
+        mkdir -p ~/.gradle/
+        echo "signing.keyId=${SONATYPE_GPG_KEYID}" > ~/.gradle/gradle.properties
+        echo "signing.password=${SONATYPE_GPG_PASSWORD}" >> ~/.gradle/gradle.properties
+        echo "signing.secretKeyRingFile=${HOME}/.gradle/secring.gpg" >> ~/.gradle/gradle.properties
+        echo ${SONATYPE_GPG_FILE} | base64 -d > ~/.gradle/secring.gpg
+        ./gradlew publishToSonatype ${{ startsWith(github.ref, 'refs/tags/v')  && 'closeAndReleaseSonatypeStagingRepository' || '' }}
+
+    # Gradle dependency
+    - name: Java - Gradle dependency graph
+      uses: gradle/actions/dependency-submission@v4

@@ -151,7 +151,6 @@ export default async (app, routes, stores, translations, additionalTranslations 
         await loadLocaleMessages(i18n, locale, additionalTranslations);
         await setI18nLanguage(i18n, locale);
     }
-    
     app.use(i18n);
 
     // moment

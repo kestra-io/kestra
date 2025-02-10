@@ -6,10 +6,10 @@
 name: "CodeQL"
 
 on:
-  push:
-    branches: [develop]
   schedule:
     - cron: '0 5 * * 1'
+
+  workflow_dispatch: {}
 
 jobs:
   analyze:
@@ -51,13 +51,23 @@ jobs:
     # Set up JDK
     - name: Set up JDK
       uses: actions/setup-java@v4
+      if: ${{ matrix.language == 'java' }}
       with:
         distribution: 'temurin'
         java-version: 21
 
+    - name: Setup gradle
+      if: ${{ matrix.language == 'java' }}
+      uses: gradle/actions/setup-gradle@v4
+
+    - name: Build with Gradle
+      if: ${{ matrix.language == 'java' }}
+      run: ./gradlew testClasses -x :ui:installFrontend -x :ui:assembleFrontend
+
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Autobuild
+      if: ${{ matrix.language != 'java' }}
       uses: github/codeql-action/autobuild@v3
 
     # ℹ️ Command-line programs to run using the OS shell.

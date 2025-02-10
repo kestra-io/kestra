@@ -13,9 +13,11 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
+import lombok.extern.jackson.Jacksonized;
 
 @Builder(toBuilder = true)
 @Getter
+@Jacksonized
 public class HttpConfiguration {
     @Schema(title = "The timeout configuration.")
     @PluginProperty

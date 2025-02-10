@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.collectors.Usage;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -101,6 +102,7 @@ public class MiscController {
                 .build()
             ).isBasicAuthEnabled(basicAuthService.isEnabled())
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
+            .resourceToFilters(QueryFilter.Resource.asResourceList())
             .hiddenLabelsPrefixes(hiddenLabelsPrefixes);
 
         if (this.environmentName != null || this.environmentColor != null) {
@@ -166,6 +168,8 @@ public class MiscController {
         String systemNamespace;
 
         List<String> hiddenLabelsPrefixes;
+        // List of filter by component
+        List<QueryFilter.ResourceField> resourceToFilters;
     }
 
     @Value

@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -29,6 +30,7 @@ public interface TriggerRepositoryInterface {
     Trigger lock(String triggerUid, Function<Trigger, Trigger> function);
 
     ArrayListTotal<Trigger> find(Pageable from, String query, String tenantId, String namespace, String flowId, String workerId);
+    ArrayListTotal<Trigger> find(Pageable from, String tenantId, List<QueryFilter> filters);
 
     /**
      * Counts the total number of triggers.

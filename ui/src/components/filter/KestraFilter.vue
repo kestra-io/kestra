@@ -33,6 +33,10 @@
             data-test-id="KestraFilter__select"
         >
             <template #label="{value}">
+                <!--
+                    TODO: Find a way to have persistent tags for el-select.
+                    https://github.com/kestra-io/kestra/issues/6256
+                -->
                 <Label :option="value" />
             </template>
             <template #empty>
@@ -434,9 +438,19 @@
                     },
                 ];
             }
+            const index = currentFilters.value.findIndex((v) => v.label === "absolute_date");
+
+            if (index !== -1) {
+                if (!filter || !filter.startDate || !filter.endDate) {
+                    // Remove absolute_date if it's empty
+                    currentFilters.value.splice(index, 1);
+                }
+            }
         }
 
         if (
+            dropdowns.value.third.index !== -1 &&
+            currentFilters.value[dropdowns.value.third.index] &&
             !currentFilters.value[dropdowns.value.third.index].comparator?.multiple
         ) {
             // If selection is not multiple, close the dropdown
@@ -648,13 +662,15 @@
 
     const triggerSearch = () => {
         if (props.searchCallback) return;
-        else router.push({query: encodeParams(currentFilters.value, OPTIONS)});
+        else {
+            router.push({query: encodeParams(route.path, currentFilters.value, OPTIONS)});
+        }
     };
 
     // Include parameters from URL directly to filter
     onMounted(() => {
         if (props.decode) {
-            const decodedParams = decodeParams(route.query, props.include, OPTIONS);
+            const decodedParams = decodeParams(route.path, route.query, props.include, OPTIONS);
             currentFilters.value = decodedParams.map((item: any) => {
                 if (item.label === "absolute_date") {
                     return {
@@ -701,7 +717,7 @@
                 currentFilters.value.push({
                     label: "flow",
                     value: [`${params.id}`],
-                    comparator: COMPARATORS.IS,
+                    comparator: COMPARATORS.EQUALS,
                     persistent: true,
                 });
             }
@@ -949,7 +965,6 @@ $properties: v-bind('props.propertiesWidth + "px"');
 .filters-select {
     & .el-select-dropdown {
         width: auto !important;
-        max-width: 300px;
 
         &:has(.el-select-dropdown__empty) {
             width: auto !important;

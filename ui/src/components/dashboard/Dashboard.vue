@@ -498,11 +498,7 @@ $spacing: 20px;
 
     .description {
         border: none !important;
-        color: #564a75;
-
-        html.dark & {
-            color: #e3dbff;
-        }
+        color: var(ks-content-secondary);
     }
 }
 

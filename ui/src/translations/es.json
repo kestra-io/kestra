@@ -269,7 +269,9 @@
       "empty": "No hay blueprints para mostrar.",
       "custom": "Planos personalizados",
       "community": "Comunidad",
-      "dashboards": "Planos del Dashboard"
+      "dashboards": "Planos del Dashboard",
+      "flows": "Planos de Flow",
+      "apps": "Planos de la Aplicación"
     },
     "use": "Usar",
     "plugins": {

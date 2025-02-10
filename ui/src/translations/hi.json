@@ -269,7 +269,9 @@
       "empty": "कोई blueprints दिखाने के लिए नहीं हैं।",
       "custom": "कस्टम blueprints",
       "community": "समुदाय",
-      "dashboards": "डैशबोर्ड Blueprints"
+      "dashboards": "डैशबोर्ड Blueprints",
+      "flows": "फ्लो Blueprints",
+      "apps": "ऐप Blueprints"
     },
     "use": "उपयोग करें",
     "plugins": {

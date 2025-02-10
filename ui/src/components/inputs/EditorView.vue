@@ -1079,7 +1079,7 @@
     };
 
     const save = async (e) => {
-        if (!haveChange.value && !props.isCreating) {
+        if (flowErrors.value?.length || !haveChange.value && !props.isCreating) {
             return;
         }
         if (e) {

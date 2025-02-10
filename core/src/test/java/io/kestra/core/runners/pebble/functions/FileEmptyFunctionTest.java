@@ -68,23 +68,4 @@ class FileEmptyFunctionTest {
         boolean render = Boolean.parseBoolean(variableRenderer.render("{{ fileEmpty('" + internalStorageFile + "') }}", variables));
         assertTrue(render);
     }
-
-    @Test
-    void shouldReturnTrueForFileWithOnlyWhiteSpace() throws IOException, IllegalVariableEvaluationException {
-        String executionId = IdUtils.create();
-        URI internalStorageURI = getInternalStorageURI(executionId);
-        URI internalStorageFile = getInternalStorageFile(internalStorageURI, "   ");
-
-        // test for an authorized execution
-        Map<String, Object> variables = Map.of(
-            "flow", Map.of(
-                "id", FLOW,
-                "namespace", NAMESPACE),
-            "execution", Map.of("id", executionId)
-        );
-
-        boolean render = Boolean.parseBoolean(variableRenderer.render("{{ fileEmpty('" + internalStorageFile + "') }}", variables));
-        assertTrue(render);
-    }
-
 }

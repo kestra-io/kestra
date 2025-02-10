@@ -19,7 +19,7 @@ import java.util.Map;
 
 @Singleton
 public class FileEmptyFunction implements Function {
-    private static final String ERROR_MESSAGE = "The 'read' function expects an argument 'path' that is a path to a namespace file or an internal storage URI.";
+    private static final String ERROR_MESSAGE = "The 'fileEmpty' function expects an argument 'path' that is a path to a namespace file or an internal storage URI.";
     private static final String KESTRA_SCHEME = "kestra:///";
     private static final String TRIGGER = "trigger";
     private static final String NAMESPACE = "namespace";
@@ -72,7 +72,7 @@ public class FileEmptyFunction implements Function {
             checkIfFileFromParentExecution(context, path);
         }
         try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), flow.get("namespace"), path)) {
-            return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8).isBlank();
+            return inputStream.read()==-1;
         }
     }
 

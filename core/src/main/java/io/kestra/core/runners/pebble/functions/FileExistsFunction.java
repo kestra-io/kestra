@@ -16,7 +16,7 @@ import java.util.Map;
 
 @Singleton
 public class FileExistsFunction implements Function {
-    private static final String ERROR_MESSAGE = "The 'fileSize' function expects an argument 'path' that is a path to the internal storage URI.";
+    private static final String ERROR_MESSAGE = "The 'fileExists' function expects an argument 'path' that is a path to the internal storage URI.";
     private static final String KESTRA_SCHEME = "kestra:///";
     private static final String TRIGGER = "trigger";
     private static final String NAMESPACE = "namespace";

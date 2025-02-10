@@ -158,7 +158,6 @@
                     <template #default>
                         <el-table-column
                             prop="id"
-                            v-if="displayColumn('id')"
                             sortable="custom"
                             :sort-orders="['ascending', 'descending']"
                             :label="$t('id')"
@@ -490,21 +489,6 @@
                         default: true
                     },
                     {
-                        label: this.$t("state"),
-                        prop: "state.current",
-                        default: true
-                    },
-                    {
-                        label: this.$t("labels"),
-                        prop: "labels",
-                        default: true
-                    },
-                    {
-                        label: this.$t("inputs"),
-                        prop: "inputs",
-                        default: false
-                    },
-                    {
                         label: this.$t("namespace"),
                         prop: "namespace",
                         default: true
@@ -515,19 +499,29 @@
                         default: true
                     },
                     {
+                        label: this.$t("labels"),
+                        prop: "labels",
+                        default: true
+                    },
+                    {
+                        label: this.$t("state"),
+                        prop: "state.current",
+                        default: true
+                    },
+                    {
                         label: this.$t("revision"),
                         prop: "flowRevision",
+                        default: false
+                    },
+                    {
+                        label: this.$t("inputs"),
+                        prop: "inputs",
                         default: false
                     },
                     {
                         label: this.$t("task id"),
                         prop: "taskRunList.taskId",
                         default: false
-                    },
-                    {
-                        label: this.$t("actions"),
-                        prop: "action",
-                        default: true
                     }
                 ],
                 displayColumns: [],
@@ -547,7 +541,7 @@
                 this.storageKey = storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS;
                 this.optionalColumns = this.optionalColumns.filter(col => col.prop !== "namespace" && col.prop !== "flowId")
             }
-            this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
+            this.displayColumns = localStorage.getItem("columns_executions")?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
             if (this.isConcurrency) {
                 this.emitStateCount([State.RUNNING, State.PAUSED])
@@ -852,18 +846,18 @@
                         h(ElSwitch, {
                             modelValue: includeNonTerminated.value,
                             "onUpdate:modelValue": (val) => {
-                                includeNonTerminated.value = val
+                                includeNonTerminated.value = val;
                             },
                         }),
                     ]),
-                    h(ElAlert, {
-                        title:  this.$t("execution-warn-title"),
+                    includeNonTerminated.value ? h(ElAlert, {
+                        title: this.$t("execution-warn-title"),
                         description: this.$t("execution-warn-deleting-still-running"),
                         type: "warning",
                         showIcon: true,
                         closable: false,
                         class: "custom-warning"
-                    }),
+                    }) : null,
                     h(ElCheckbox, {
                         modelValue: deleteLogs.value,
                         label: this.$t("execution_deletion.logs"),
@@ -894,7 +888,7 @@
                         "execution/queryDeleteExecution",
                         "execution/bulkDeleteExecution",
                         "executions deleted"
-                    )
+                    );
                 });
             },
             killExecutions() {

@@ -33,6 +33,12 @@ jobs:
           node-enabled: true
           caches-enabled: true
 
+      # Npm
+      - name: Npm - Install
+        shell: bash
+        working-directory: kestra-ee/ui-ee
+        run: npm install
+
       # Run OWASP dependency check plugin
       - name: Gradle Dependency Check
         env:

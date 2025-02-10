@@ -314,7 +314,10 @@
           "2": "Explore blueprints to kick-start your next {kind}."
         },
         "alt": "Blueprints Icon"
-      }
+      },
+      "flows": "Flow Blueprints",
+      "apps": "App Blueprints",
+      "dashboards": "Dashboard Blueprints"
     },
     "use": "Use",
     "plugins": {
@@ -1086,12 +1089,15 @@
         "is": "is",
         "is_one_of": "is one of",
         "is_not": "is not",
-        "is_not_one_off": "is not one of",
+        "not_in": "not in",
         "contains": "contains",
         "not_contains": "not contains",
         "in": "in",
         "between": "between",
-        "starts_with": "starts with"
+        "starts_with": "starts with",
+        "greater_than": "greater than",
+        "less_than": "less than",
+        "ends_with": "ends with"
       },
       "save": {
         "label": "Saved searches",
@@ -1181,7 +1187,8 @@
     },
     "instance": "Instance",
     "something_went_wrong": {
-      "loading_execution": "Something went wrong while loading the execution"
-    }
+        "loading_execution": "Something went wrong while loading the execution"
+    },
+    "debug": "Debug"
   }
 }

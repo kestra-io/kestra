@@ -402,8 +402,9 @@
             onLogsFontSize(value) {
                 this.pendingSettings.logsFontSize = value;
             },
-            saveAllSettings() {
-                Object.keys(this.pendingSettings).forEach((key) => {
+            async saveAllSettings() {
+                let refreshWhenSaved = false
+                for (const key in this.pendingSettings){
                     const storedKey = this.settingsKeyMapping[key]
                     switch(key) {
                     case "defaultNamespace":
@@ -428,7 +429,6 @@
                         break
                     case "logsFontSize":
                         localStorage.setItem(key, this.pendingSettings[key])
-                        this.$store.commit("layout/setLogsFontSize", this.pendingSettings[key])
                         break
                     case "theme":
                         Utils.switchTheme(this.$store, this.pendingSettings[key]);
@@ -440,10 +440,17 @@
                             localStorage.setItem(key, this.pendingSettings[key])
                         }
 
-                        let newlang = Utils.getLang();
-                        this.$moment.locale(newlang);
-                        this.$i18n.locale = newlang;
-                        this.localeKey = this.$moment.locale();
+                        // For language change, we have to load a json file into i18n.
+                        // To get the new language applied, we refresh the page fully.
+                        // This avoids having to rewrite the language loading here
+                        // that we already wrote in `i18n.ts`.
+
+                        // NOTE: We cannot call it here directly as we don't have an
+                        // instance of VueI18n available.
+                        // NOTE2: We have to wait until all values are saved
+                        // before refreshing. If we don't, some values will be saved
+                        // but the page will refresh before all is saved.
+                        refreshWhenSaved = true
 
                         break;
                     }
@@ -457,7 +464,10 @@
                                 localStorage.setItem(key, this.pendingSettings[key])
                         }
                     }
-                })
+                }
+                if(refreshWhenSaved){
+                    document.location.assign(document.location.href)
+                }
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
             }
         },
@@ -588,7 +598,7 @@
 
     .el-input__count {
         color: var(--ks-content-primary) !important;
-        
+
         .el-input__count-inner {
             background: none !important;
         }

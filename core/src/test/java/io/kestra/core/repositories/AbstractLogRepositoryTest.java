@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.statistics.LogStatistics;
@@ -41,23 +42,28 @@ public abstract class AbstractLogRepositoryTest {
     void all() {
         LogEntry.LogEntryBuilder builder = logEntry(Level.INFO);
 
-        ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, null, null, null, null, null, null, null, null);
+        ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, null, null);
         assertThat(find.size(), is(0));
+
 
         LogEntry save = logRepository.save(builder.build());
 
-        find = logRepository.find(Pageable.UNPAGED, "doe", null, null, null, null, null, null, null);
+        find = logRepository.find(Pageable.UNPAGED, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getExecutionId(), is(save.getExecutionId()));
-
-        find = logRepository.find(Pageable.UNPAGED,  "doe", null, null, null, null, Level.WARN,null,  null);
+        var filters = List.of(QueryFilter.builder()
+                .field(QueryFilter.Field.MIN_LEVEL)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(Level.WARN)
+            .build());
+        find = logRepository.find(Pageable.UNPAGED,  "doe", filters);
         assertThat(find.size(), is(0));
 
-        find = logRepository.find(Pageable.UNPAGED, null, null, null, null, null, null, null, null);
+        find = logRepository.find(Pageable.UNPAGED, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getExecutionId(), is(save.getExecutionId()));
 
-        logRepository.find(Pageable.UNPAGED, "kestra-io/kestra", null, null, null, null, null, null, null);
+        logRepository.find(Pageable.UNPAGED, "kestra-io/kestra", null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getExecutionId(), is(save.getExecutionId()));
 

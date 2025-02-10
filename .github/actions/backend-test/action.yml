@@ -1,0 +1,124 @@
+name: 'Backend Test'
+
+inputs:
+  google-service-account:
+    description: 'Google Service Account'
+    required: true
+  sonar-token:
+    description: 'Sonar Token'
+    required: false
+  github-token:
+    description: 'GitHub Token'
+    required: true
+  codecov-token:
+    description: 'Codecov Token'
+    required: false
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/checkout@v4
+      name: Checkout - Current ref
+
+    # Setup build
+    - uses: kestra-io/actions/.github/actions/setup-build@main
+      name: Setup - Build
+      id: build
+      with:
+        java-enabled: true
+        node-enabled: true
+        python-enabled: true
+
+    # Services
+    - name: Setup - Start docker compose
+      shell: bash
+      run: docker compose -f docker-compose-ci.yml up -d
+
+    # Gradle check
+    - name: Gradle - Build
+      if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+      env:
+        GOOGLE_SERVICE_ACCOUNT: ${{ inputs.google-service-account }}
+      shell: bash
+      run: |
+        echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
+        export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
+        ./gradlew check javadoc --parallel
+
+    # report test
+    - name: Test - Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Java Tests Report
+        reporter: java-junit
+        path: '**/build/test-results/test/TEST-*.xml'
+        list-suites: 'failed'
+        list-tests: 'failed'
+        fail-on-error: 'false'
+
+    # Sonar
+    - name: Test - Analyze with Sonar
+      if: ${{ inputs.sonar-token != '' }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        SONAR_TOKEN: ${{ inputs.sonar-token }}
+      shell: bash
+      run: ./gradlew sonar --info
+
+    # Allure check
+    - name: GCP - Auth with unit test account
+      id: auth
+      if: ${{ always() && inputs.google-service-account != '' }}
+      continue-on-error: true
+      uses: "google-github-actions/auth@v2"
+      with:
+        credentials_json: "${{ inputs.google-service-account }}"
+
+    - name: GCP - Setup Cloud SDK
+      if: ${{ inputs.google-service-account != '' }}
+      uses: "google-github-actions/setup-gcloud@v2"
+
+      # Allure check
+    - uses: rlespinasse/github-slug-action@v5
+      name: Allure - Generate slug variables
+
+    - name: Allure - Publish report
+      uses: andrcuns/allure-publish-action@v2.9.0
+      if: ${{ always() && inputs.google-service-account != '' }}
+      env:
+        GITHUB_AUTH_TOKEN: ${{ inputs.github-token }}
+        JAVA_HOME: /usr/lib/jvm/default-jvm/
+      with:
+        storageType: gcs
+        resultsGlob: "**/build/allure-results"
+        bucket: internal-kestra-host
+        baseUrl: "https://internal.dev.kestra.io"
+        prefix: ${{ format('{0}/{1}', github.repository, 'allure/java') }}
+        copyLatest: true
+        ignoreMissingResults: true
+
+    # Jacoco
+    - name: Jacoco - Copy reports
+      if: ${{ inputs.google-service-account != '' }}
+      shell: bash
+      run: |
+        mv build/reports/jacoco/testCodeCoverageReport build/reports/jacoco/test/
+        mv build/reports/jacoco/test/testCodeCoverageReport.xml build/reports/jacoco/test/jacocoTestReport.xml
+        gsutil -m rsync -d -r  build/reports/jacoco/test/ gs://internal-kestra-host/${{ format('{0}/{1}', github.repository, 'jacoco') }}
+        
+
+    # Codecov
+    - name: Codecov - Upload coverage reports
+      uses: codecov/codecov-action@v5
+      if: ${{ !cancelled() }}
+      continue-on-error: true
+      with:
+        token: ${{ inputs.codecov-token }}
+
+    - name: Codecov - Upload test results
+      uses: codecov/test-results-action@v1
+      if: ${{ !cancelled() }}
+      continue-on-error: true
+      with:
+        token: ${{ inputs.codecov-token }}

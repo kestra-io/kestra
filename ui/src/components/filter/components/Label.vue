@@ -26,14 +26,18 @@
         const {value, label, comparator} = props.option;
 
         if (!value.length) return;
-
+        if (label === "labels") {
+            return Array.isArray(value) && value.length === 1 ? value[0] : value;
+        }
         if (label !== "absolute_date" && comparator?.label !== "between") {
             return `${value.join(", ")}`;
         }
 
         if (typeof value[0] !== "string") {
             const {startDate, endDate} = value[0];
-            return `${startDate ? formatter(new Date(startDate)) : UNKNOWN}:and:${endDate ? formatter(new Date(endDate)) : UNKNOWN}`;
+            if(startDate && endDate) {
+                return `${startDate ? formatter(new Date(startDate)) : UNKNOWN}:and:${endDate ? formatter(new Date(endDate)) : UNKNOWN}`;
+            }
         }
 
         return UNKNOWN;

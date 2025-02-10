@@ -4,6 +4,7 @@ import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.executions.Execution;
@@ -143,26 +144,62 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void find() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null, null, null);
+        List<QueryFilter> filters = List.of(QueryFilter.builder()
+                .field(QueryFilter.Field.STATE)
+                .operation(QueryFilter.Op.EQUALS)
+                .value( List.of(State.Type.RUNNING, State.Type.FAILED))
+                .build());
+        executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
         assertThat(executions.getTotal(), is(8L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, Map.of("key", "value"), null, null);
+        filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(Map.of("key", "value"))
+            .build());
+        executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
         assertThat(executions.getTotal(), is(1L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, Map.of("key", "value2"), null, null);
+        filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(Map.of("key", "value2"))
+            .build());
+        executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
         assertThat(executions.getTotal(), is(0L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, "second", null, null, null, null, null, null);
+        filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.FLOW_ID)
+            .operation(QueryFilter.Op.EQUALS)
+            .value("second")
+            .build());
+        executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
         assertThat(executions.getTotal(), is(13L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, NAMESPACE, "second", null, null, null, null, null, null);
+        filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.FLOW_ID)
+            .operation(QueryFilter.Op.EQUALS)
+            .value("second")
+            .build(),
+            QueryFilter.builder()
+                .field(QueryFilter.Field.NAMESPACE)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(NAMESPACE)
+                .build()
+            );
+        executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
         assertThat(executions.getTotal(), is(13L));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, "io.kestra", null, null, null, null, null, null, null);
+        filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.NAMESPACE)
+            .operation(QueryFilter.Op.STARTS_WITH)
+            .value("io.kestra")
+            .build());
+        executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
         assertThat(executions.getTotal(), is(28L));
     }
 
@@ -173,22 +210,38 @@ public abstract class AbstractExecutionRepositoryTest {
         inject(executionTriggerId);
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10), null, null, null, null, null, null, null, null, null, executionTriggerId, null);
+        var filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.TRIGGER_EXECUTION_ID)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(executionTriggerId)
+            .build());
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10), null, filters);
+        assertThat(executions.getTotal(), is(28L));
+        assertThat(executions.size(), is(10));
+        assertThat(executions.getFirst().getTrigger().getVariables().get("executionId"), is(executionTriggerId));
+        filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.CHILD_FILTER)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(ExecutionRepositoryInterface.ChildFilter.CHILD)
+            .build());
+
+        executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
         assertThat(executions.getFirst().getTrigger().getVariables().get("executionId"), is(executionTriggerId));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null, ExecutionRepositoryInterface.ChildFilter.CHILD);
-        assertThat(executions.getTotal(), is(28L));
-        assertThat(executions.size(), is(10));
-        assertThat(executions.getFirst().getTrigger().getVariables().get("executionId"), is(executionTriggerId));
+        filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.CHILD_FILTER)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(ExecutionRepositoryInterface.ChildFilter.MAIN)
+            .build());
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null, ExecutionRepositoryInterface.ChildFilter.MAIN);
+        executions = executionRepository.find(Pageable.from(1, 10),  null, filters );
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
         assertThat(executions.getFirst().getTrigger(), is(nullValue()));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, null, null, null, null);
+        executions = executionRepository.find(Pageable.from(1, 10),  null,null);
         assertThat(executions.getTotal(), is(56L));
     }
 
@@ -196,11 +249,16 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findWithSort() {
         inject();
 
-        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null, null, null, null, null, null, null, null, null, null);
+        ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null);
         assertThat(executions.getTotal(), is(28L));
         assertThat(executions.size(), is(10));
 
-        executions = executionRepository.find(Pageable.from(1, 10),  null, null, null, null, null, null, null, List.of(State.Type.RUNNING, State.Type.FAILED), null, null, null);
+        var filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.STATE)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(List.of(State.Type.RUNNING, State.Type.FAILED))
+            .build());
+        executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
         assertThat(executions.getTotal(), is(8L));
     }
 
@@ -208,11 +266,17 @@ public abstract class AbstractExecutionRepositoryTest {
     protected void findTaskRun() {
         inject();
 
-        ArrayListTotal<TaskRun> taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, null, null, null, null);
+        ArrayListTotal<TaskRun> taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null);
         assertThat(taskRuns.getTotal(), is(71L));
         assertThat(taskRuns.size(), is(10));
 
-        taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null, null, null, null, null, null, Map.of("key", "value"), null, null);
+        var filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(Map.of("key", "value"))
+            .build());
+
+        taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, filters);
         assertThat(taskRuns.getTotal(), is(1L));
         assertThat(taskRuns.size(), is(1));
     }

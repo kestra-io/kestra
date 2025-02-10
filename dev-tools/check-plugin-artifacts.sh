@@ -25,7 +25,7 @@ set -e;
 ###############################################################
 BASEDIR=$(dirname "$(readlink -f $0)")
 WORKING_DIR=/tmp/kestra-plugins;
-PLUGIN_FILE="$BASEDIR/.plugins"
+PLUGIN_FILE="$BASEDIR/../.plugins"
 
 # Maven Central URL
 MAVEN_CENTRAL="https://repo1.maven.org/maven2"
@@ -37,7 +37,7 @@ SONATYPE_SNAPSHOT="https://s01.oss.sonatype.org/content/repositories/snapshots"
 
 # Function to display the help message
 usage() {
-    echo "Usage: $0 [--working-dir /tmp/kestra] [--plugin-file]"
+    echo "Usage: $0 --version <version> [--plugin-file]"
     echo
     echo "Options:"
     echo "  --plugin-file                File containing the plugin list"
@@ -91,6 +91,12 @@ while [[ "$#" -gt 0 ]]; do
             ;;
     esac
 done
+
+## Check options
+if [[ -z "$VERSION" ]]; then
+   echo -e "Missing required argument: --version\n";
+   usage
+fi
 
 ## Get plugin list
 if [[ "${#PLUGINS_ARGS[@]}" -eq 0 ]]; then
@@ -150,6 +156,6 @@ do
   COUNTER=$(( COUNTER + 1 ));
 done;
 
-echo "✅ Available: $AVAILABLE, ❌  Unavailable: $NOT_AVAILABLE"
+echo -e "\n\n✅ Available: $AVAILABLE, ❌  Unavailable: $NOT_AVAILABLE";
 
 exit 0;

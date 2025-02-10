@@ -1,0 +1,58 @@
+name: Generate Translations
+description: "Required the environment variable OPENAI_API_KEY to be set. This action will generate translations for the UI."
+
+inputs:
+    github-token:
+        description: 'GitHub Token'
+        required: true
+
+runs:
+  using: composite
+
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 50
+        ref: ${{ github.head_ref }}
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+
+    - name: Install Python dependencies
+      shell: bash
+      run: pip install gitpython openai
+
+    - name: Generate translations
+      shell: bash
+      run: python ui/src/translations/generate_translations.py
+
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20.x"
+
+    - name: Check keys matching
+      shell: bash
+      run: node ui/src/translations/check.js
+
+    - name: Set up Git
+      shell: bash
+      run: |
+        git config --global user.name "GitHub Action"
+        git config --global user.email "actions@github.com"
+
+    - name: Check for changes and commit
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+      shell: bash
+      run: |
+        git add ui/src/translations/*.json
+        if git diff --cached --quiet; then
+          echo "No changes to commit. Exiting with success."
+          exit 0
+        fi
+        git commit -m "chore(translations): auto generate values for languages other than english"
+        git push origin ${{ github.head_ref }}

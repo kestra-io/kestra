@@ -1,5 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
@@ -15,9 +16,11 @@ import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -74,19 +77,37 @@ public class TriggerController {
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "The identifier of the worker currently evaluating the trigger") @Nullable @QueryValue String workerId,
-        @Parameter(description = "The flow identifier") @Nullable @QueryValue String flowId
-    ) throws HttpStatusException {
+        @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
+        // Deprecated params
+        @Parameter(description = "A string filter",deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Parameter(description = "The identifier of the worker currently evaluating the trigger", deprecated = true) @Nullable @QueryValue String workerId,
+        @Parameter(description = "The flow identifier",deprecated = true) @Nullable @QueryValue String flowId
 
+
+    ) throws HttpStatusException {
+        // If filters is empty, map old params to QueryFilter
+        if (filters == null || filters.isEmpty()) {
+            filters = RequestUtils.mapLegacyParamsToFilters(
+                query,
+                namespace,
+                flowId,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                null,
+                workerId);
+        }
         ArrayListTotal<Trigger> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
-            query,
             tenantService.resolveTenant(),
-            namespace,
-            flowId,
-            workerId
+            filters
+
         );
 
         List<Triggers> triggers = new ArrayList<>();

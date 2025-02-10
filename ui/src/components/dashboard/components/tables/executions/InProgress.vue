@@ -188,13 +188,6 @@ code {
 }
 
 .inprogress {
-    background: var(--ks-background-body);
-    & a {
-        color: #8e71f7;
-
-        html.dark & {
-            color: #e0e0fc;
-        }
-    }
+    background: var(--ks-background-table-row);
 }
 </style>

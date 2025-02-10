@@ -31,9 +31,9 @@ dependencies {
     api platform("io.micronaut.platform:micronaut-platform:4.7.4")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.53.0')
+    api platform('com.google.cloud:libraries-bom:26.54.0')
     api platform("com.azure:azure-sdk-bom:1.2.31")
-    api platform('software.amazon.awssdk:bom:2.30.11')
+    api platform('software.amazon.awssdk:bom:2.30.16')
 
 
     constraints {

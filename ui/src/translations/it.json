@@ -268,7 +268,10 @@
       },
       "empty": "Nessun blueprint da mostrare.",
       "custom": "Blueprint personalizzati",
-      "community": "Comunità"
+      "community": "Comunità",
+      "dashboards": "Blueprint del Dashboard",
+      "flows": "Blueprint dei Flow",
+      "apps": "Blueprint delle App"
     },
     "use": "Usa",
     "plugins": {
@@ -1017,9 +1020,12 @@
         "in": "nel",
         "starts_with": "inizia con",
         "not_contains": "non contiene",
-        "is_not_one_off": "non è uno di",
+        "not_in": "non in",
         "is_one_of": "è uno di",
-        "between": "tra"
+        "between": "tra",
+        "greater_than": "maggiore di",
+        "less_than": "minore di",
+        "ends_with": "termina con"
       },
       "save": {
         "label": "Ricerche salvate",
@@ -1167,6 +1173,7 @@
       "hint": "Scegli colonne visibili",
       "hidden": "Nascosto nella Tabella",
       "label": "Proprietà"
-    }
+    },
+    "debug": "Debug"
   }
 }

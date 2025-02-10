@@ -1,5 +1,6 @@
 package io.kestra.repository.h2;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import org.jooq.*;
@@ -9,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+import static io.kestra.core.models.QueryFilter.Op.EQUALS;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 
 public abstract class H2FlowRepositoryService {
@@ -35,5 +37,24 @@ public abstract class H2FlowRepositoryService {
 
     public static Condition findSourceCodeCondition(AbstractJdbcRepository<Flow> jdbcRepository, String query) {
         return jdbcRepository.fullTextCondition(List.of("source_code"), query);
+    }
+
+    public static Condition findCondition(Object labels, QueryFilter.Op operation) {
+        List<Condition> conditions = new ArrayList<>();
+
+        if (labels instanceof Map<?, ?> labelValues) {
+            labelValues.forEach((key, value) -> {
+                Field<String> valueField = DSL.field("JQ_STRING(\"value\", '.labels[]? | select(.key == \"" + key + "\") | .value')", String.class);
+                Condition condition = switch (operation) {
+                    case EQUALS -> value == null ? valueField.isNull() : valueField.eq((String) value);
+                    case NOT_EQUALS -> value == null ? valueField.isNotNull() : valueField.ne((String) value);
+                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                };
+
+                conditions.add(condition);
+            });
+
+        }
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 }

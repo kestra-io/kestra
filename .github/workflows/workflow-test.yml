@@ -1,0 +1,120 @@
+name: Tests
+
+on:
+  workflow_call:
+    inputs:
+        report-status:
+            description: "Report status of the jobs"
+            type: string
+            required: false
+            default: false
+    outputs:
+      docker-tag:
+          description: "The Docker image Tag for Kestra"
+          value: ${{ jobs.build-artifacts.outputs.docker-tag }}
+      docker-artifact-name:
+          description: "The GitHub artifact containing the Kestra docker image."
+          value: ${{ jobs.build-artifacts.outputs.docker-artifact-name }}
+      plugins:
+          description: "The Kestra plugins used for the build."
+          value: ${{ jobs.build-artifacts.outputs.plugins }}
+      frontend_status:
+          description: "Status of the frontend job"
+          value: ${{ jobs.set-frontend-status.outputs.frontend_status }}
+      backend_status:
+          description: "Status of the backend job"
+          value: ${{ jobs.set-backend-status.outputs.backend_status }}
+      e2e_status:
+          description: "Status of the e2e job"
+          value: ${{ jobs.set-e2e-status.outputs.e2e_status }}
+
+
+jobs:
+  frontend:
+    name: 'Check Frontend'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: frontend-test
+        name: Frontend test
+        uses: ./.github/actions/frontend-test
+        env:
+          # to save corepack from itself
+          COREPACK_INTEGRITY_KEYS: 0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+
+  backend:
+    name: 'Check Backend'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Backend test
+        uses: ./.github/actions/backend-test
+        with:
+          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          github-token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          google-service-account: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+
+  build-artifacts:
+    name: Build artifacts
+    runs-on: ubuntu-latest
+    outputs:
+      docker-tag: ${{ steps.build-artifacts.outputs.docker-tag }}
+      docker-artifact-name: ${{ steps.build-artifacts.outputs.docker-artifact-name }}
+      plugins: ${{ steps.build-artifacts.outputs.plugins }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/build-artifacts
+        id: build-artifacts
+
+  e2e:
+    name: Check E2E
+    needs: [ build-artifacts ]
+    uses: ./.github/workflows/e2e.yml
+    strategy:
+      fail-fast: false
+      matrix:
+        backends: [ "postgres" ]
+    with:
+      tags: oss
+      backend: ${{ matrix.backends }}
+      docker-artifact-name: ${{ needs.build-artifacts.outputs.docker-artifact-name }}
+      docker-image-tag: kestra/kestra:${{ needs.build-artifacts.outputs.docker-tag }}
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+
+  # Output every job status
+  # To be used in other workflows
+  report-status:
+    name: Report Status
+    runs-on: ubuntu-latest
+    needs:
+      - frontend
+      - backend
+      - e2e
+    if: always() && inputs.report-status == 'true'
+    outputs:
+      frontend_status: ${{ steps.set-frontend-status.outputs.frontend_status }}
+      backend_status: ${{ steps.set-backend-status.outputs.backend_status }}
+      e2e_status: ${{ steps.set-e2e-status.outputs.e2e_status }}
+    steps:
+      - id: set-frontend-status
+        name: Set frontend job status
+        run: echo "::set-output name=frontend_status::${{ needs.frontend.result }}"
+
+      - id: set-backend-status
+        name: Set backend job status
+        run: echo "::set-output name=backend_status::${{ needs.backend.result }}"
+
+      - id: set-e2e-status
+        name: Set e2e job status
+        run: echo "::set-output name=e2e_status::${{ needs.e2e.result }}"

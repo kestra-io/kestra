@@ -2,7 +2,6 @@ package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Slugify;
-import io.micronaut.context.annotation.Value;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.extension.Function;
 import io.pebbletemplates.pebble.template.EvaluationContext;
@@ -13,7 +12,6 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 
@@ -72,7 +70,8 @@ public class FileEmptyFunction implements Function {
             checkIfFileFromParentExecution(context, path);
         }
         try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), flow.get("namespace"), path)) {
-            return inputStream.read()==-1;
+            byte[] buffer = new byte[1];
+            return inputStream.read(buffer, 0, 1) <= 0;
         }
     }
 

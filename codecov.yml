@@ -8,6 +8,10 @@ component_management:
       name: Core
       paths:
         - core/**
+    - component_id: e2e-tests
+      name: End to End
+      paths:
+        - e2e-tests/**
     - component_id: jdbc
       name: Jdbc
       paths:
@@ -28,10 +32,6 @@ component_management:
       name: Model
       paths:
         - model/**
-    - component_id: platform
-      name: Platform
-      paths:
-        - platform/**
     - component_id: processor
       name: Processor
       paths:
@@ -52,3 +52,25 @@ component_management:
       name: Storage Local
       paths:
         - storage-local/**
+    - component_id: tests
+      name: Tests
+      paths:
+        - tests/**
+    - component_id: ui
+      name: Ui
+      paths:
+        - ui/**
+    - component_id: webserver
+      name: Webserver
+      paths:
+        - webserver/**
+
+flag_management:
+  default_rules:
+    carryforward: true
+    statuses:
+      - type: project
+        target: 80%
+        threshold: 1%
+      - type: patch
+        target: 90%

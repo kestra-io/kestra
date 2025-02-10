@@ -449,6 +449,30 @@ class ScheduleTest {
         assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
     }
 
+    //todo
+    @Test
+    void timezone_with_backfile() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .cron(TEST_CRON_EVERYDAY_AT_8)
+            .timezone("America/New_York")
+            .build();
+
+        TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
+            .backfill(Backfill
+                .builder()
+                .currentDate(ZonedDateTime.now(ZoneId.of("America/New_York")).with(LocalTime.MIN).plus(Duration.ofHours(8)).withZoneSameInstant(ZoneId.systemDefault()))
+                .end(ZonedDateTime.now().with(LocalTime.MAX))
+                .build()
+            )
+            .build();
+        // When
+        Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
+
+        // Then
+        assertThat(result.isPresent(), is(true));
+    }
+
 
 
     private ConditionContext conditionContext(AbstractTrigger trigger) {

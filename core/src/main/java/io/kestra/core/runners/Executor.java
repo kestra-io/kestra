@@ -23,7 +23,6 @@ public class Executor {
     private Flow flow;
     private final List<TaskRun> nexts = new ArrayList<>();
     private final List<WorkerTask> workerTasks = new ArrayList<>();
-    private final List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
     private final List<ExecutionDelay> executionDelays = new ArrayList<>();
     private WorkerTaskResult joinedWorkerTaskResult;
     private final List<SubflowExecution<?>> subflowExecutions = new ArrayList<>();
@@ -126,13 +125,6 @@ public class Executor {
 
     public Executor withWorkerTriggers(List<WorkerTrigger> workerTriggers, String from) {
         this.workerTriggers.addAll(workerTriggers);
-        this.from.add(from);
-
-        return this;
-    }
-
-    public Executor withWorkerTaskResults(List<WorkerTaskResult> workerTaskResults, String from) {
-        this.workerTaskResults.addAll(workerTaskResults);
         this.from.add(from);
 
         return this;

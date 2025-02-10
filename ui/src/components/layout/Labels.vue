@@ -59,7 +59,7 @@
                 return this.labelsFromQuery.has(key) && this.labelsFromQuery.get(key) === value;
             },
             link(key, value) {
-                const labels = this.getLabelsFromQuery();
+                const labels = this.labelsFromQuery;
 
                 if (labels.has(key)) {
                     labels.delete(key);

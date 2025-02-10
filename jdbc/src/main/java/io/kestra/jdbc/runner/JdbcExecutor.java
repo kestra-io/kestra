@@ -940,6 +940,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 executorService.log(log, false, executor);
             }
 
+            // delete all previous execution messages
+            // we still send the last one so all consumers of terminated executions will be sure to have the latest status
+            // TODO we check 3 times if the exec is terminated, we may want to refactor all this
+            if (executorService.canBePurged(executor)) {
+                ((JdbcQueue<Execution>) executionQueue).deleteByKey(executor.getExecution().getId());
+            }
+
             // emit for other consumer than executor if no failure
             if (hasFailure) {
                 this.executionQueue.emit(executor.getExecution());

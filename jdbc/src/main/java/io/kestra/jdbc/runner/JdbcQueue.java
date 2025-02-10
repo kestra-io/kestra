@@ -163,6 +163,18 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         // and the queue has its own cleaner, which we better not mess with, as the 'queues' table is selected with a lock.
     }
 
+    public void deleteByKey(String key) throws QueueException {
+        dslContextWrapper.transaction(configuration -> {
+            int deleted = DSL
+                .using(configuration)
+                .delete(this.table)
+                .where(buildTypeCondition(this.cls.getName()))
+                .and(AbstractJdbcRepository.field("key").eq(key))
+                .execute();
+            log.debug("Cleaned {} records for key {}", deleted, key);
+        });
+    }
+
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset) {
         return this.receiveFetch(ctx, consumerGroup, offset, true);
     }

@@ -1089,7 +1089,7 @@
         "is": "is",
         "is_one_of": "is one of",
         "is_not": "is not",
-        "is_not_one_off": "is not one of",
+        "not_in": "not in",
         "contains": "contains",
         "not_contains": "not contains",
         "in": "in",

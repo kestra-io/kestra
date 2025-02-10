@@ -35,7 +35,9 @@
 
         if (typeof value[0] !== "string") {
             const {startDate, endDate} = value[0];
-            return `${startDate ? formatter(new Date(startDate)) : UNKNOWN}:and:${endDate ? formatter(new Date(endDate)) : UNKNOWN}`;
+            if(startDate && endDate) {
+                return `${startDate ? formatter(new Date(startDate)) : UNKNOWN}:and:${endDate ? formatter(new Date(endDate)) : UNKNOWN}`;
+            }
         }
 
         return UNKNOWN;

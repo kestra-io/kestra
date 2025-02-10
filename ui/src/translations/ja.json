@@ -1020,7 +1020,7 @@
         "in": "内",
         "starts_with": "で始まる",
         "not_contains": "含まれていない",
-        "is_not_one_off": "のいずれでもありません",
+        "not_in": "にない",
         "is_one_of": "のいずれか",
         "between": "間",
         "greater_than": "より大きい",

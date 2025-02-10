@@ -35,7 +35,7 @@ export function useFilters(prefix: string) {
         STARTS_WITH: buildComparator(t(comparator("starts_with")), "$startsWith"),
         ENDS_WITH: buildComparator(t(comparator("ends_with")), "$endsWith"),
         IN: buildComparator(t(comparator("in")), "$in", true),
-        NOT_IN: buildComparator(t(comparator("is_not_one_off")), "$notIn", true),
+        NOT_IN: buildComparator(t(comparator("not_in")), "$notIn", true),
         BETWEEN: buildComparator(t(comparator("between")), "$between"),
         GREATER_THAN: buildComparator(t(comparator("greater_than")), "$gt"),
         LESS_THAN: buildComparator(t(comparator("less_than")), "$lt"),

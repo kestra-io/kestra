@@ -1020,7 +1020,7 @@
         "in": "안에",
         "starts_with": "로 시작합니다",
         "not_contains": "포함하지 않음",
-        "is_not_one_off": "아닌 것 중 하나입니다.",
+        "not_in": "에 없음",
         "is_one_of": "중 하나입니다.",
         "between": "사이에",
         "greater_than": "보다 큼",

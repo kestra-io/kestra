@@ -1020,7 +1020,7 @@
         "in": "在",
         "starts_with": "以...开始",
         "not_contains": "不包含",
-        "is_not_one_off": "不是其中之一",
+        "not_in": "不在",
         "is_one_of": "是其中之一",
         "between": "之间",
         "greater_than": "大于",

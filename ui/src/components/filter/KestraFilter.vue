@@ -438,9 +438,19 @@
                     },
                 ];
             }
+            const index = currentFilters.value.findIndex((v) => v.label === "absolute_date");
+
+            if (index !== -1) {
+                if (!filter || !filter.startDate || !filter.endDate) {
+                    // Remove absolute_date if it's empty
+                    currentFilters.value.splice(index, 1);
+                }
+            }
         }
 
         if (
+            dropdowns.value.third.index !== -1 &&
+            currentFilters.value[dropdowns.value.third.index] &&
             !currentFilters.value[dropdowns.value.third.index].comparator?.multiple
         ) {
             // If selection is not multiple, close the dropdown
@@ -955,7 +965,6 @@ $properties: v-bind('props.propertiesWidth + "px"');
 .filters-select {
     & .el-select-dropdown {
         width: auto !important;
-        max-width: 300px;
 
         &:has(.el-select-dropdown__empty) {
             width: auto !important;

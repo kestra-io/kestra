@@ -1020,7 +1020,7 @@
         "in": "में",
         "starts_with": "शुरू होता है",
         "not_contains": "नहीं शामिल है",
-        "is_not_one_off": "नहीं है उनमें से एक",
+        "not_in": "में नहीं",
         "is_one_of": "में से एक है",
         "between": "के बीच",
         "greater_than": "से अधिक",

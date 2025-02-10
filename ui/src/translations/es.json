@@ -1020,7 +1020,7 @@
         "in": "en",
         "starts_with": "comienza con",
         "not_contains": "no contiene",
-        "is_not_one_off": "no es uno de",
+        "not_in": "no en",
         "is_one_of": "es uno de",
         "between": "entre",
         "greater_than": "mayor que",

@@ -1,4 +1,4 @@
-name: 'Frontend Test'
+name: Frontend Test
 
 inputs:
   github-token:
@@ -7,15 +7,14 @@ inputs:
   codecov-token:
     description: 'Codecov Token'
     required: true
-
-
 runs:
+
   using: composite
   steps:
     - id: checkout
       uses: actions/checkout@v4
       with:
-        ref: ${{ github.ref }} # Using ref in case translations has committed something
+        ref: ${{ github.head_ref }}
 
     - name: Npm install
       shell: bash
@@ -51,10 +50,10 @@ runs:
       working-directory: ui
       run: npm run build-storybook --quiet
 
-    - name: Serve Storybook and run tests
+    - name: Storybook - Run tests
       shell: bash
       working-directory: ui
       run: |
         npx concurrently -k -s first -n "SB,TEST" -c "magenta,blue" \
           "npx http-server storybook-static --port 6006 --silent" \
-          "npx wait-on tcp:127.0.0.1:6006 && npm run test-storybook"
+          "npx wait-on tcp:127.0.0.1:6006 && npm run test:storybook"

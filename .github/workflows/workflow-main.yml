@@ -1,2 +1,52 @@
+name: Main Workflow
+
 on:
+  push:
+    branches:
+      - develop
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
+  tests:
+    name: Execute tests
+    uses: ./.github/workflows/workflow-test.yml
+
+  release:
+    name: Release
+    needs: [tests]
+    uses: ./.github/workflows/workflow-release.yml
+    with:
+      docker-tag: ${{ needs.tests.outputs.docker-tag }}
+      plugins: ${{ needs.tests.outputs.plugins }}
+
+  end:
+    runs-on: ubuntu-latest
+    needs:
+      - release
+    if: always()
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+    steps:
+      # Update
+      - name: Github - Update internal
+        uses: benc-uk/workflow-dispatch@v1
+        if: github.ref == 'refs/heads/develop' && needs.docker.result == 'success'
+        with:
+          workflow: oss-build.yml
+          repo: kestra-io/infra
+          ref: master
+          token: ${{ secrets.GH_PERSONAL_TOKEN }}
+
+      # Slack
+      - name: Slack - Notification
+        uses: Gamesight/slack-workflow-status@master
+        if: ${{ always() && env.SLACK_WEBHOOK_URL != 0 }}
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          slack_webhook_url: ${{ secrets.SLACK_WEBHOOK_URL }}
+          name: GitHub Actions
+          icon_emoji: ":github-actions:"
+          channel: "C02DQ1A7JLR" # _int_git channel

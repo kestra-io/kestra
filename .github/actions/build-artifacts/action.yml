@@ -1,24 +1,25 @@
-name: 'Basic Multi-Step Action'
-description: 'A basic GitHub Action that runs multiple steps.'
+name: 'Build Artifacts'
+description: 'Build Jar & Docker image, upload artifacts, and push the docker image to the registry.'
+
+inputs:
+  plugin-version:
+    description: "Kestra version"
+    default: 'LATEST'
+    required: true
 
 outputs:
   docker-tag:
-    description: "The Docker image Tag for Kestra"
     value: ${{ steps.vars.outputs.tag }}
+    description: "The Docker image Tag for Kestra"
   docker-artifact-name:
-    description: "The GitHub artifact containing the Kestra docker image."
     value: ${{ steps.vars.outputs.artifact }}
+    description: "The GitHub artifact containing the Kestra docker image name."
   plugins:
-    description: "The Kestra plugins to be used for the build."
     value: ${{ steps.plugins-list.outputs.plugins }}
+    description: "The Kestra plugins list used for the build."
 
 runs:
   using: composite
-  name: Build Artifacts
-  outputs:
-    docker-tag: ${{ steps.vars.outputs.tag }}
-    docker-artifact-name: ${{ steps.vars.outputs.artifact }}
-    plugins: ${{ steps.plugins-list.outputs.plugins }}
   steps:
     - name: Checkout current ref
       uses: actions/checkout@v4
@@ -44,12 +45,13 @@ runs:
       if: "!startsWith(github.ref, 'refs/tags/v')"
       id: plugins-list
       with:
-        plugin-version: ${{ env.PLUGIN_VERSION }}
+        plugin-version: ${{ inputs.plugin-version }}
 
     # Set Plugins List
     - name: Set Plugin List
       id: plugins
       if: "!startsWith(github.ref, 'refs/tags/v')"
+      shell: bash
       run: |
         PLUGINS="${{ steps.plugins-list.outputs.plugins }}"
         TAG=${GITHUB_REF#refs/*/}
@@ -59,20 +61,21 @@ runs:
           echo "plugins=--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots $PLUGINS" >> $GITHUB_OUTPUT
         fi
 
-
     # Build
     - name: Build with Gradle
+      shell: bash
       run: |
         ./gradlew executableJar
 
     - name: Copy exe to image
+      shell: bash
       run: |
         cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
-
 
     # Docker Tag
     - name: Set up Vars
       id: vars
+      shell: bash
       run: |
         TAG=${GITHUB_REF#refs/*/}
         if [[ $TAG = "master" ]]
@@ -89,7 +92,6 @@ runs:
         fi
         echo "tag=${TAG}" >> $GITHUB_OUTPUT
         echo "artifact=docker-kestra-${TAG}" >> $GITHUB_OUTPUT
-
 
     # Docker setup
     - name: Set up QEMU
@@ -133,3 +135,11 @@ runs:
       with:
         name: ${{ steps.vars.outputs.artifact }}
         path: /tmp/${{ steps.vars.outputs.artifact }}.tar
+
+    - name: Set outputs
+      id: set-outputs
+      shell: bash
+      run: |
+        echo "docker-tag=${{ steps.vars.outputs.tag }}" >> GITHUB_OUTPUT
+        echo "docker-artifact-name=${{ steps.vars.outputs.artifact }}" >> GITHUB_OUTPUT
+        echo "plugins=${{ steps.plugins.outputs.plugins }}" >> GITHUB_OUTPUT

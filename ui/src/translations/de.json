@@ -1170,6 +1170,7 @@
       "hint": "Sichtbare Spalten auswählen",
       "hidden": "In Tabelle versteckt",
       "label": "Eigenschaften"
-    }
+    },
+    "debug": "Debuggen"
   }
 }

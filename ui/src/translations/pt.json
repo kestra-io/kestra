@@ -1170,6 +1170,7 @@
       "hint": "Escolher Colunas Visíveis",
       "hidden": "Oculto na Tabela",
       "label": "Propriedades"
-    }
+    },
+    "debug": "Depurar"
   }
 }

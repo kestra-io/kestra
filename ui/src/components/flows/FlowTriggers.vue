@@ -1,4 +1,14 @@
 <template>
+    <KestraFilter
+        prefix="flow_triggers"
+        :include="['text']"
+        :search="search"
+        :buttons="{
+            refresh: {shown: true, callback: loadData},
+            settings: {shown: false}
+        }"
+    />
+
     <el-table
         v-if="triggersWithType.length"
         v-bind="$attrs"
@@ -39,12 +49,6 @@
         <el-table-column column-key="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
             <template #header>
                 {{ $t("backfill") }}
-                <refresh-button
-                    :can-auto-refresh="true"
-                    @refresh="loadData"
-                    size="small"
-                    custom-class="mx-1"
-                />
             </template>
             <template #default="scope">
                 <el-button
@@ -220,7 +224,7 @@
     import Restart from "vue-material-design-icons/Restart.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
     import FlowRun from "./FlowRun.vue";
-    import RefreshButton from "../layout/RefreshButton.vue";
+    import KestraFilter from "../filter/KestraFilter.vue";
     import Id from "../Id.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
 </script>
@@ -240,7 +244,7 @@
     import TriggersEmptyImage from "../../assets/triggers_empty.svg";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, EmptyState},
+        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, EmptyState, KestraFilter},
         data() {
             return {
                 triggerId: undefined,
@@ -425,6 +429,18 @@
                     })
                 })
             },
+            search(trigger) {
+                this.$store.dispatch("trigger/search", {
+                    namespace: this.flow.namespace,
+                    flowId: this.flow.id,
+                    trigger: trigger
+                }).then(response => {
+                    this.triggers = response.results;
+                }).catch(() => {
+                    this.$toast().error("Search failed. Please try again.");
+                });
+            },
+
             restart(trigger) {
                 this.$store.dispatch("trigger/restart", {
                     namespace: trigger.namespace,

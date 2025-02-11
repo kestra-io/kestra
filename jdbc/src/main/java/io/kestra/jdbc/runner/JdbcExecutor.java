@@ -933,6 +933,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             }
 
             if (!shouldSend) {
+                // delete the execution from the state storage if ended
+                // IMPORTANT: it must be done here as it's when the execution arrives 'again' with a terminated state,
+                // so we are sure at this point that no new executions will be created otherwise the tate storage would be re-created by the execution queue.
+                if (executorService.canBePurged(executor)) {
+                    executorStateStorage.delete(executor.getExecution());
+                }
+
                 return;
             }
 
@@ -955,11 +962,6 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 this.executionQueue.emit(executor.getExecution());
             } else {
                 ((JdbcQueue<Execution>) this.executionQueue).emitOnly(null, executor.getExecution());
-            }
-
-            // delete the execution from the state storage if ended
-            if (executorService.canBePurged(executor)) {
-                executorStateStorage.delete(executor.getExecution());
             }
 
             Execution execution = executor.getExecution();

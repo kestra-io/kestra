@@ -1174,6 +1174,7 @@
       "hidden": "Caché dans le tableau",
       "label": "Propriétés"
     },
-    "debug": "Déboguer"
+    "debug": "Déboguer",
+    "default": "Par défaut"
   }
 }

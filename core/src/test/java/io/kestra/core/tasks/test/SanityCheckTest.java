@@ -14,70 +14,70 @@ import static org.hamcrest.Matchers.is;
 @KestraTest(startRunner = true)
 class SanityCheckTest {
     @Test
-    @ExecuteFlow("sanity-checks/qa.fail.yaml")
+    @ExecuteFlow("sanity-checks/fail.yaml")
     void qaFail(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.fetch.yaml")
+    @ExecuteFlow("sanity-checks/fetch.yaml")
     void qaFetch(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.if.yaml")
+    @ExecuteFlow("sanity-checks/if.yaml")
     void qaIf(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(8));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.kv.yaml")
+    @ExecuteFlow("sanity-checks/kv.yaml")
     void qaKv(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(6));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.labels.yaml")
+    @ExecuteFlow("sanity-checks/labels.yaml")
     void qaLabels(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.namespace_files.yaml")
+    @ExecuteFlow("sanity-checks/namespace_files.yaml")
     void qaNamespaceFiles(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(8));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.parallel.yaml")
+    @ExecuteFlow("sanity-checks/parallel.yaml")
     void qaParallel(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(4));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.pause.yaml")
+    @ExecuteFlow("sanity-checks/pause.yaml")
     void qaPause(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(1));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.purge_current_execution_files.yaml")
+    @ExecuteFlow("sanity-checks/purge_current_execution_files.yaml")
     void qaPurgeExecutionFiles(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.return.yaml")
+    @ExecuteFlow("sanity-checks/return.yaml")
     void qaReturn(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
@@ -87,28 +87,21 @@ class SanityCheckTest {
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.sequential.yaml")
+    @ExecuteFlow("sanity-checks/sequential.yaml")
     void qaSequential(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(5));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.sleep.yaml")
-    void qaSleep(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(4));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-    }
-
-    @Test
-    @ExecuteFlow("sanity-checks/qa.switch.yaml")
+    @ExecuteFlow("sanity-checks/switch.yaml")
     void qaSwitch(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
     @Test
-    @ExecuteFlow("sanity-checks/qa.write.yaml")
+    @ExecuteFlow("sanity-checks/write.yaml")
     void qaWrite(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));

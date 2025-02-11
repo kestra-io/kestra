@@ -3,6 +3,7 @@ package io.kestra.jdbc.runner;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
+import com.google.common.collect.Iterables;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -163,6 +164,10 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         // and the queue has its own cleaner, which we better not mess with, as the 'queues' table is selected with a lock.
     }
 
+    /**
+     * Delete all messages of the queue for this key.
+     * This is used to purge a queue for a specific key.
+     */
     public void deleteByKey(String key) throws QueueException {
         dslContextWrapper.transaction(configuration -> {
             int deleted = DSL
@@ -175,17 +180,22 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         });
     }
 
+    /**
+     * Delete all messages of the queue for a set of keys.
+     * This is used to purge a queue for specific keys.
+     */
     public void deleteByKeys(List<String> keys) throws QueueException {
-        // TODO check that IN is not an issue with executions with a lot of taskuns
-        //  we may instead either split by 100/1000 or use a batch delete with equals
-        dslContextWrapper.transaction(configuration -> {
-            int deleted = DSL
-                .using(configuration)
-                .delete(this.table)
-                .where(buildTypeCondition(this.cls.getName()))
-                .and(AbstractJdbcRepository.field("key").in(keys))
-                .execute();
-            log.debug("Cleaned {} records for keys {}", deleted, keys);
+        // process in batches of 100 items to avoid too big IN clause
+        Iterables.partition(keys, 100).forEach(batch -> {
+            dslContextWrapper.transaction(configuration -> {
+                int deleted = DSL
+                    .using(configuration)
+                    .delete(this.table)
+                    .where(buildTypeCondition(this.cls.getName()))
+                    .and(AbstractJdbcRepository.field("key").in(batch))
+                    .execute();
+                log.debug("Cleaned {} records for keys {}", deleted, batch);
+            });
         });
     }
 

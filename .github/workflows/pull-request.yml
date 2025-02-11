@@ -34,90 +34,50 @@ jobs:
               - '!{ui,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  frontend:
-    name: 'Check Frontend'
-    needs: file-changes
+  translations:
+    name: 'Translations - Generate translations'
     runs-on: ubuntu-latest
     timeout-minutes: 60
-    if: "needs.file-changes.outputs.ui == 'true'"
+    needs: file-changes
     steps:
-      - uses: actions/checkout@v4
+        - uses: actions/checkout@v4
+          name: Checkout - Current ref
+          if: "needs.file-changes.outputs.translations == 'true'"
 
-      - id: generate-translations
-        name: Generate translations
-        if: "needs.file-changes.outputs.translations == 'true'"
-        uses: ./.github/actions/generate-translations
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        - id: generate-translations
+          name: Translations - Generate translations
+          if: "needs.file-changes.outputs.translations == 'true'"
+          uses: ./.github/actions/generate-translations
+          with:
+            github-token: ${{ secrets.GITHUB_TOKEN }}
+          env:
+            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-      - id: frontend-test
-        name: Frontend test
-        uses: ./.github/actions/frontend-test
-        env:
-          # to save corepack from itself
-          COREPACK_INTEGRITY_KEYS: 0
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}
+  frontend:
+    name: Frontend - Tests
+    needs: [file-changes, translations]
+    if: "needs.file-changes.outputs.ui == 'true'"
+    uses: ./.github/workflows/workflow-frontend-test.yml
+    secrets:
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   backend:
-    name: 'Check Backend'
+    name: Backend - Tests
     needs: file-changes
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
     if: "needs.file-changes.outputs.backend == 'true'"
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Backend test
-        uses: ./.github/actions/backend-test
-        with:
-          codecov-token: ${{ secrets.CODECOV_TOKEN }}
-          sonar-token: ${{ secrets.SONAR_TOKEN }}
-          github-token: ${{ secrets.GH_PERSONAL_TOKEN }}
-          google-service-account: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
-
-  build-artifacts:
-    name: Build artifacts
-    needs: file-changes
-    if: "needs.file-changes.outputs.backend == 'true' || needs.file-changes.outputs.ui == 'true'"
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    outputs:
-        docker-tag: ${{ steps.build-artifacts.outputs.docker-tag }}
-        docker-artifact-name: ${{ steps.build-artifacts.outputs.docker-artifact-name }}
-        plugins: ${{ steps.build-artifacts.outputs.plugins }}
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ./.github/actions/build-artifacts
-        id: build-artifacts
-        with:
-          plugin-version: ${{ env.PLUGIN_VERSION }}
-
-  e2e:
-    name: Check E2E
-    needs: [build-artifacts]
-    uses: ./.github/workflows/e2e.yml
-    strategy:
-      fail-fast: false
-      matrix:
-        backends: [ "postgres" ]
-    with:
-      tags: oss
-      backend: ${{ matrix.backends }}
-      docker-artifact-name: ${{ needs.build-artifacts.outputs.docker-artifact-name }}
-      docker-image-tag: kestra/kestra:${{ needs.build-artifacts.outputs.docker-tag }}
+    uses: ./.github/workflows/workflow-backend-test.yml
     secrets:
-      GITHUB_AUTH_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
+      GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
 
   end:
     name: End
     runs-on: ubuntu-latest
     if: always()
+    needs: [frontend, backend]
     steps:
       # Slack
       - name: Slack notification

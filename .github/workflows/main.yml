@@ -3,7 +3,11 @@ name: Main Workflow
 on:
   push:
     branches:
-      - develop
+      - master
+      - main
+      - releases/*
+    tags:
+      - v*
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

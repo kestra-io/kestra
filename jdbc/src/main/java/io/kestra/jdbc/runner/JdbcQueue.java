@@ -175,6 +175,20 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         });
     }
 
+    public void deleteByKeys(List<String> keys) throws QueueException {
+        // TODO check that IN is not an issue with executions with a lot of taskuns
+        //  we may instead either split by 100/1000 or use a batch delete with equals
+        dslContextWrapper.transaction(configuration -> {
+            int deleted = DSL
+                .using(configuration)
+                .delete(this.table)
+                .where(buildTypeCondition(this.cls.getName()))
+                .and(AbstractJdbcRepository.field("key").in(keys))
+                .execute();
+            log.debug("Cleaned {} records for keys {}", deleted, keys);
+        });
+    }
+
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset) {
         return this.receiveFetch(ctx, consumerGroup, offset, true);
     }

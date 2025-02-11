@@ -942,12 +942,15 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
             // delete all previous execution messages
             // we still send the last one so all consumers of terminated executions will be sure to have the latest status
-            // TODO we check 3 times if the exec is terminated, we may want to refactor all this
+            // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notifyed that the execution ends.
+            // NOTE: we may also kill ExecutionKilled events but as their may not be a lot of them it may not be worth it.
+            // TODO we check 3 times if the exec is terminated, we may want to refactor all this.
+            // TODO we may want to delete the queue in more cases...
             if (executorService.canBePurged(executor)) {
                 ((JdbcQueue<Execution>) executionQueue).deleteByKey(executor.getExecution().getId());
             }
 
-            // emit for other consumer than executor if no failure
+            // emit for other consumers than the executor if no failure
             if (hasFailure) {
                 this.executionQueue.emit(executor.getExecution());
             } else {
@@ -957,6 +960,14 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             // delete if ended
             if (executorService.canBePurged(executor)) {
                 executorStateStorage.delete(executor.getExecution());
+
+                // also purge worker task results
+                if (!ListUtils.isEmpty(executor.getExecution().getTaskRunList())) {
+                    List<String> taskRunKeys = executor.getExecution().getTaskRunList().stream()
+                        .map(taskRun -> taskRun.getId())
+                        .toList();
+                    ((JdbcQueue<WorkerTaskResult>) workerTaskResultQueue).deleteByKeys(taskRunKeys);
+                }
             }
 
             Execution execution = executor.getExecution();

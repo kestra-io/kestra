@@ -503,6 +503,7 @@
             return;
         }
         const parentValue = lastClickedParent.value
+            .toLowerCase()
             .replace(/\blog\b/gi, "")
             .trim()
             .replace(/\s+/g, "_");

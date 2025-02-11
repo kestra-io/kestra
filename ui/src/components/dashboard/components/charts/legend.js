@@ -20,6 +20,7 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
 
         listContainer.style.maxHeight = "196px"; // 4 visible items
         listContainer.style.overflow = "auto";
+        listContainer.style.flexDirection= window.innerWidth <= 768?"column": direction; // changes the direction if the width is less than or equal to 768
 
         legendContainer?.appendChild(listContainer);
     }

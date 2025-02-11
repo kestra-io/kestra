@@ -78,9 +78,11 @@ public class PluginScanner {
     public RegisteredPlugin scan() {
         try {
             long start = System.currentTimeMillis();
-            Manifest manifest = new Manifest(IOUtils.toInputStream("Manifest-Version: 1.0\n" +
-                "X-Kestra-Title: core\n" +
-                "X-Kestra-Group: io.kestra.plugin.core\n",
+            Manifest manifest = new Manifest(IOUtils.toInputStream("""
+                    Manifest-Version: 1.0
+                    X-Kestra-Title: core
+                    X-Kestra-Group: io.kestra.plugin.core
+                    """,
                 StandardCharsets.UTF_8
             ));
 
@@ -93,6 +95,7 @@ public class PluginScanner {
 
     }
 
+    @SuppressWarnings("unchecked")
     private RegisteredPlugin scanClassLoader(final ClassLoader classLoader,
                                              final ExternalPlugin externalPlugin,
                                              Manifest manifest) {
@@ -106,7 +109,7 @@ public class PluginScanner {
         List<Class<? extends AppBlockInterface>> appBlocks = new ArrayList<>();
         List<Class<? extends Chart<?>>> charts = new ArrayList<>();
         List<Class<? extends DataFilter<?, ?>>> dataFilters = new ArrayList<>();
-        List<Class<? extends LogExporter>> logExporter = new ArrayList<>();
+        List<Class<? extends LogExporter<?>>> logExporter = new ArrayList<>();
         List<String> guides = new ArrayList<>();
         Map<String, Class<?>> aliases = new HashMap<>();
 
@@ -165,9 +168,9 @@ public class PluginScanner {
                         //noinspection unchecked
                         dataFilters.add((Class<? extends DataFilter<?, ?>>)  dataFilter.getClass());
                     }
-                    case LogExporter shipper -> {
+                    case LogExporter<?> shipper -> {
                         log.debug("Loading LogExporter plugin: '{}'", plugin.getClass());
-                        logExporter.add(shipper.getClass());
+                        logExporter.add((Class<? extends LogExporter<?>>)  shipper.getClass());
                     }
                     default -> {
                     }

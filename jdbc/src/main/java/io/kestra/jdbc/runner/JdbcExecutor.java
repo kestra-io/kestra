@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.sla.*;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueException;
@@ -532,7 +533,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                             workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.SKIPPED)));
                                         } else {
                                             if (workerTask.getTask().isSendToWorkerTask()) {
-                                                workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask).map(group -> group.getKey()).orElse(null), workerTask);
+                                                workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask).map(WorkerGroup::getKey).orElse(null), workerTask);
                                             }
                                             if (workerTask.getTask().isFlowable()) {
                                                 workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));
@@ -967,6 +968,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     String parentExecutionId = (String) execution.getTrigger().getVariables().get("executionId");
                     String taskRunId = (String) execution.getTrigger().getVariables().get("taskRunId");
                     String taskId = (String) execution.getTrigger().getVariables().get("taskId");
+                    @SuppressWarnings("unchecked")
                     Map<String, Object> outputs = (Map<String, Object>) execution.getTrigger().getVariables().get("taskRunOutputs");
                     SubflowExecutionEnd subflowExecutionEnd = new SubflowExecutionEnd(executor.getExecution(), parentExecutionId, taskRunId, taskId, execution.getState().getCurrent(), outputs);
                     this.subflowExecutionEndQueue.emit(subflowExecutionEnd);

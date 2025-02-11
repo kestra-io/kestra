@@ -16,8 +16,8 @@ import java.util.List;
 import java.util.Map;
 
 @Singleton
-public class FileEmptyFunction implements Function {
-    private static final String ERROR_MESSAGE = "The 'fileEmpty' function expects an argument 'path' that is a path to a namespace file or an internal storage URI.";
+public class IsFileEmptyFunction implements Function {
+    private static final String ERROR_MESSAGE = "The 'isFileEmpty' function expects an argument 'path' that is a path to a namespace file or an internal storage URI.";
     private static final String KESTRA_SCHEME = "kestra:///";
     private static final String TRIGGER = "trigger";
     private static final String NAMESPACE = "namespace";

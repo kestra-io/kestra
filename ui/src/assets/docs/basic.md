@@ -267,61 +267,61 @@ The table below lists common Pebble expressions and functions.
 
 The table below lists Pebble functions and filter expressions:
 
-| Filter            | Example and Description                                                                                                         |
-|-------------------|---------------------------------------------------------------------------------------------------------------------------------|
-| `abs`             | `{{ -7 \| abs }}` — Returns the absolute value of -7, resulting in 7.                                                           |
-| `number`          | `{{ "123" \| number }}` — Parses the string "123" into the number 123.                                                          |
-| `numberFormat`    | `{{ 12345.6789 \| numberFormat("###,###.##") }}` — Formats the number 12345.6789 as "12,345.68".                                |
-| `replace`         | `{{ "Hello, world!" \| replace("world", "Kestra") }}` — Replaces "world" with "Kestra", resulting in "Hello, Kestra!".          |
-| `yaml`            | `{{ myObject \| yaml }}` — Converts `myObject` into a YAML string.                                                              |
-| `indent`          | `{{ "Hello\nworld" \| indent(4) }}` — Adds 4 spaces before each line except the first, resulting in "Hello\n    world".         |
-| `nindent`         | `{{ "Hello\nworld" \| nindent(4) }}` — Adds a newline and then 4 spaces before each line, resulting in "\n    Hello\n    world". |
-| `toJson`          | `{{ myObject \| toJson }}` — Converts `myObject` into a JSON string.                                                            |
-| `toIon`           | `{{ myObject \| toIon }}` — Converts `myObject` into a ION string.                                                              |
-| `jq`              | `{{ myObject \| jq(".foo") }}` — Applies JQ expression to extract the "foo" property from `myObject`.                           |
-| `length`          | `{{ "Hello" \| length }}` — Returns the length of "Hello", which is 5.                                                          |
-| `merge`           | `{{ [1, 2] \| merge([3, 4]) }}` — Merges two lists, resulting in [1, 2, 3, 4].                                                  |
-| `reverse`         | `{{ [1, 2, 3] \| reverse }}` — Reverses the list, resulting in [3, 2, 1].                                                       |
-| `rsort`           | `{{ [3, 1, 2] \| rsort }}` — Sorts the list in reverse order, resulting in [3, 2, 1].                                           |
-| `slice`           | `{{ "Hello, world!" \| slice(0, 5) }}` — Extracts a substring, resulting in "Hello".                                            |
-| `sort`            | `{{ [3, 1, 2] \| sort }}` — Sorts the list in ascending order, resulting in [1, 2, 3].                                          |
-| `split`           | `{{ "a,b,c" \| split(",") }}` — Splits the string into a list, resulting in ["a", "b", "c"].                                    |
-| `capitalize`      | `{{ "hello" \| capitalize }}` — Capitalizes the first letter, resulting in "Hello".                                             |
-| `join`            | `{{ ["a", "b", "c"] \| join(",") }}` — Joins the list into a string, resulting in "a,b,c".                                      |
-| `keys`            | `{{ {"a": 1, "b": 2} \| keys }}` — Returns the keys of the map, resulting in ["a", "b"].                                        |
-| `date`            | `{{ execution.startDate \| date("yyyy-MM-dd") }}` — Formats the date as "yyyy-MM-dd".                                           |
-| `dateAdd`         | `{{ execution.startDate \| dateAdd(1, "DAYS") }}` — Adds 1 day to the date.                                                     |
-| `timestamp`       | `{{ execution.startDate \| timestamp }}` — Converts the date to a Unix timestamp in seconds.                                    |
-| `timestampMicro`  | `{{ execution.startDate \| timestampMicro }}` — Converts the date to a Unix timestamp in microseconds.                          |
-| `timestampNano`   | `{{ execution.startDate \| timestampNano }}` — Converts the date to a Unix timestamp in nanoseconds.                            |
-| `default`         | `{{ myVar \| default("default value") }}` — Returns "default value" if `myVar` is null or empty.                                |
-| `trim`            | `{{ " Hello " \| trim }}` — Trims leading and trailing whitespace, resulting in "Hello".                                        |
-| `truncate`        | `{{ "Hello, world!" \| truncate(5) }}` — Truncates the string to 5 characters, resulting in "Hello".                            |
-| `lower`           | `{{ "HELLO" \| lower }}` — Converts the string to lowercase, resulting in "hello".                                              |
-| `upper`           | `{{ "hello" \| upper }}` — Converts the string to uppercase, resulting in "HELLO".                                              |
-| `first`           | `{{ [1, 2, 3] \| first }}` — Returns the first element of the list, resulting in 1.                                             |
-| `last`            | `{{ [1, 2, 3] \| last }}` — Returns the last element of the list, resulting in 3.                                               |
-| `unique`          | `{{ [1, 2, 2, 3] \| unique }}` — Returns a list of unique elements, resulting in [1, 2, 3].                                     |
-| `urlEncode`       | `{{ "a b" \| urlEncode }}` — URL encodes the string, resulting in "a%20b".                                                      |
-| `urlDecode`       | `{{ "a%20b" \| urlDecode }}` — URL decodes the string, resulting in "a b".                                                      |
-| `base64Encode`    | `{{ "hello" \| base64Encode }}` — Encodes the string in base64, resulting in "aGVsbG8=".                                        |
-| `base64Decode`    | `{{ "aGVsbG8=" \| base64Decode }}` — Decodes the base64 string, resulting in "hello".                                           |
-| `format`          | `{{ "Hello, %s!" \| format("world") }}` — Formats the string, resulting in "Hello, world!".                                     |
-| `md5`             | `{{ "hello" \| md5 }}` — Computes the MD5 hash of the string.                                                                   |
-| `sha1`            | `{{ "hello" \| sha1 }}` — Computes the SHA-1 hash of the string.                                                                |
-| `sha256`          | `{{ "hello" \| sha256 }}` — Computes the SHA-256 hash of the string.                                                            |
-| `sha512`          | `{{ "hello" \| sha512 }}` — Computes the SHA-512 hash of the string.                                                            |
-| `map`             | `{{ [1, 2, 3] \| map(i => i * 2) }}` — Applies a function to each element, resulting in [2, 4, 6].                              |
-| `filter`          | `{{ [1, 2, 3] \| filter(i => i > 1) }}` — Filters the list based on a predicate, resulting in [2, 3].                           |
-| `reduce`          | `{{ [1, 2, 3] \| reduce((a, b) => a + b, 0) }}` — Reduces the list to a single value, resulting in 6.                           |
-| `zip`             | `{{ zip([1, 2], [3, 4]) }}` — Zips two lists together, resulting in [[1, 3], [2, 4]].                                           |
-| `unzip`           | `{{ unzip([[1, 3], [2, 4]]) }}` — Unzips a list of lists, resulting in [[1, 2], [3, 4]].                                        |
-| `flatten`         | `{{ [[1, 2], [3, 4]] \| flatten }}` — Flattens a nested list, resulting in [1, 2, 3, 4].                                        |
-| `groupBy`         | `{{ [{"name": "Alice"}, {"name": "Bob"}] \| groupBy("name") }}` — Groups elements by the "name" key.                            |
-| `chunk`           | `{{ [1, 2, 3, 4] \| chunk(2) }}` — Splits the list into chunks of size 2, resulting in [[1, 2], [3, 4]].                        |
-| `fileSize`        | `{{ fileSize(output.download.uri) }}` — Returns the size of the file present at the given uri location.                         |
-| `fileExists`      | `{{ fileExists(output.download.uri) }}` — Returns true if file is present at the given uri location.                            |
-| `fileEmpty`       | `{{ fileEmpty(output.download.uri) }}` — Returns true if file present at the given uri location is empty.                       |
+| Filter           | Example and Description                                                                                                         |
+|------------------|---------------------------------------------------------------------------------------------------------------------------------|
+| `abs`            | `{{ -7 \| abs }}` — Returns the absolute value of -7, resulting in 7.                                                           |
+| `number`         | `{{ "123" \| number }}` — Parses the string "123" into the number 123.                                                          |
+| `numberFormat`   | `{{ 12345.6789 \| numberFormat("###,###.##") }}` — Formats the number 12345.6789 as "12,345.68".                                |
+| `replace`        | `{{ "Hello, world!" \| replace("world", "Kestra") }}` — Replaces "world" with "Kestra", resulting in "Hello, Kestra!".          |
+| `yaml`           | `{{ myObject \| yaml }}` — Converts `myObject` into a YAML string.                                                              |
+| `indent`         | `{{ "Hello\nworld" \| indent(4) }}` — Adds 4 spaces before each line except the first, resulting in "Hello\n    world".         |
+| `nindent`        | `{{ "Hello\nworld" \| nindent(4) }}` — Adds a newline and then 4 spaces before each line, resulting in "\n    Hello\n    world". |
+| `toJson`         | `{{ myObject \| toJson }}` — Converts `myObject` into a JSON string.                                                            |
+| `toIon`          | `{{ myObject \| toIon }}` — Converts `myObject` into a ION string.                                                              |
+| `jq`             | `{{ myObject \| jq(".foo") }}` — Applies JQ expression to extract the "foo" property from `myObject`.                           |
+| `length`         | `{{ "Hello" \| length }}` — Returns the length of "Hello", which is 5.                                                          |
+| `merge`          | `{{ [1, 2] \| merge([3, 4]) }}` — Merges two lists, resulting in [1, 2, 3, 4].                                                  |
+| `reverse`        | `{{ [1, 2, 3] \| reverse }}` — Reverses the list, resulting in [3, 2, 1].                                                       |
+| `rsort`          | `{{ [3, 1, 2] \| rsort }}` — Sorts the list in reverse order, resulting in [3, 2, 1].                                           |
+| `slice`          | `{{ "Hello, world!" \| slice(0, 5) }}` — Extracts a substring, resulting in "Hello".                                            |
+| `sort`           | `{{ [3, 1, 2] \| sort }}` — Sorts the list in ascending order, resulting in [1, 2, 3].                                          |
+| `split`          | `{{ "a,b,c" \| split(",") }}` — Splits the string into a list, resulting in ["a", "b", "c"].                                    |
+| `capitalize`     | `{{ "hello" \| capitalize }}` — Capitalizes the first letter, resulting in "Hello".                                             |
+| `join`           | `{{ ["a", "b", "c"] \| join(",") }}` — Joins the list into a string, resulting in "a,b,c".                                      |
+| `keys`           | `{{ {"a": 1, "b": 2} \| keys }}` — Returns the keys of the map, resulting in ["a", "b"].                                        |
+| `date`           | `{{ execution.startDate \| date("yyyy-MM-dd") }}` — Formats the date as "yyyy-MM-dd".                                           |
+| `dateAdd`        | `{{ execution.startDate \| dateAdd(1, "DAYS") }}` — Adds 1 day to the date.                                                     |
+| `timestamp`      | `{{ execution.startDate \| timestamp }}` — Converts the date to a Unix timestamp in seconds.                                    |
+| `timestampMicro` | `{{ execution.startDate \| timestampMicro }}` — Converts the date to a Unix timestamp in microseconds.                          |
+| `timestampNano`  | `{{ execution.startDate \| timestampNano }}` — Converts the date to a Unix timestamp in nanoseconds.                            |
+| `default`        | `{{ myVar \| default("default value") }}` — Returns "default value" if `myVar` is null or empty.                                |
+| `trim`           | `{{ " Hello " \| trim }}` — Trims leading and trailing whitespace, resulting in "Hello".                                        |
+| `truncate`       | `{{ "Hello, world!" \| truncate(5) }}` — Truncates the string to 5 characters, resulting in "Hello".                            |
+| `lower`          | `{{ "HELLO" \| lower }}` — Converts the string to lowercase, resulting in "hello".                                              |
+| `upper`          | `{{ "hello" \| upper }}` — Converts the string to uppercase, resulting in "HELLO".                                              |
+| `first`          | `{{ [1, 2, 3] \| first }}` — Returns the first element of the list, resulting in 1.                                             |
+| `last`           | `{{ [1, 2, 3] \| last }}` — Returns the last element of the list, resulting in 3.                                               |
+| `unique`         | `{{ [1, 2, 2, 3] \| unique }}` — Returns a list of unique elements, resulting in [1, 2, 3].                                     |
+| `urlEncode`      | `{{ "a b" \| urlEncode }}` — URL encodes the string, resulting in "a%20b".                                                      |
+| `urlDecode`      | `{{ "a%20b" \| urlDecode }}` — URL decodes the string, resulting in "a b".                                                      |
+| `base64Encode`   | `{{ "hello" \| base64Encode }}` — Encodes the string in base64, resulting in "aGVsbG8=".                                        |
+| `base64Decode`   | `{{ "aGVsbG8=" \| base64Decode }}` — Decodes the base64 string, resulting in "hello".                                           |
+| `format`         | `{{ "Hello, %s!" \| format("world") }}` — Formats the string, resulting in "Hello, world!".                                     |
+| `md5`            | `{{ "hello" \| md5 }}` — Computes the MD5 hash of the string.                                                                   |
+| `sha1`           | `{{ "hello" \| sha1 }}` — Computes the SHA-1 hash of the string.                                                                |
+| `sha256`         | `{{ "hello" \| sha256 }}` — Computes the SHA-256 hash of the string.                                                            |
+| `sha512`         | `{{ "hello" \| sha512 }}` — Computes the SHA-512 hash of the string.                                                            |
+| `map`            | `{{ [1, 2, 3] \| map(i => i * 2) }}` — Applies a function to each element, resulting in [2, 4, 6].                              |
+| `filter`         | `{{ [1, 2, 3] \| filter(i => i > 1) }}` — Filters the list based on a predicate, resulting in [2, 3].                           |
+| `reduce`         | `{{ [1, 2, 3] \| reduce((a, b) => a + b, 0) }}` — Reduces the list to a single value, resulting in 6.                           |
+| `zip`            | `{{ zip([1, 2], [3, 4]) }}` — Zips two lists together, resulting in [[1, 3], [2, 4]].                                           |
+| `unzip`          | `{{ unzip([[1, 3], [2, 4]]) }}` — Unzips a list of lists, resulting in [[1, 2], [3, 4]].                                        |
+| `flatten`        | `{{ [[1, 2], [3, 4]] \| flatten }}` — Flattens a nested list, resulting in [1, 2, 3, 4].                                        |
+| `groupBy`        | `{{ [{"name": "Alice"}, {"name": "Bob"}] \| groupBy("name") }}` — Groups elements by the "name" key.                            |
+| `chunk`          | `{{ [1, 2, 3, 4] \| chunk(2) }}` — Splits the list into chunks of size 2, resulting in [[1, 2], [3, 4]].                        |
+| `fileSize`       | `{{ fileSize(output.download.uri) }}` — Returns the size of the file present at the given uri location.                         |
+| `fileExists`     | `{{ fileExists(output.download.uri) }}` — Returns true if file is present at the given uri location.                            |
+| `isFileEmpty`    | `{{ isFileEmpty(output.download.uri) }}` — Returns true if file present at the given uri location is empty.                       |
 
 
 

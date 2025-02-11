@@ -16,7 +16,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.*;
 
 @KestraTest
-class FileEmptyFunctionTest {
+class IsFileEmptyFunctionTest {
 
     private static final String NAMESPACE = "my.namespace";
     private static final String FLOW = "flow";
@@ -48,7 +48,7 @@ class FileEmptyFunctionTest {
                 "namespace", NAMESPACE),
             "execution", Map.of("id", executionId)
         );
-        boolean render = Boolean.parseBoolean(variableRenderer.render("{{ fileEmpty('" + internalStorageFile + "') }}", variables));
+        boolean render = Boolean.parseBoolean(variableRenderer.render("{{ isFileEmpty('" + internalStorageFile + "') }}", variables));
         assertFalse(render);
     }
 
@@ -65,7 +65,7 @@ class FileEmptyFunctionTest {
                 "namespace", NAMESPACE),
             "execution", Map.of("id", executionId)
         );
-        boolean render = Boolean.parseBoolean(variableRenderer.render("{{ fileEmpty('" + internalStorageFile + "') }}", variables));
+        boolean render = Boolean.parseBoolean(variableRenderer.render("{{ isFileEmpty('" + internalStorageFile + "') }}", variables));
         assertTrue(render);
     }
 }

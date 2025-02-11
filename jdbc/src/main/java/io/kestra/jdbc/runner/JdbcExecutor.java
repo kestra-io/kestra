@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.sla.*;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.topologies.FlowTopology;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.queues.QueueException;
@@ -80,7 +81,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     @Inject
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
-    private QueueInterface<WorkerJob> workerTaskQueue;
+    private QueueInterface<WorkerJob> workerJobQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
@@ -367,7 +368,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         workerJobRunningRepository.deleteByKey(workerTaskRunning.uid());
                     } else {
                         try {
-                            workerTaskQueue.emit(WorkerTask.builder()
+                            workerJobQueue.emit(WorkerTask.builder()
                                 .taskRun(workerTaskRunning.getTaskRun().onRunningResend())
                                 .task(workerTaskRunning.getTask())
                                 .runContext(workerTaskRunning.getRunContext())
@@ -394,7 +395,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 // WorkerTriggerRunning
                 if (workerJobRunning instanceof WorkerTriggerRunning workerTriggerRunning) {
                     try {
-                        workerTaskQueue.emit(WorkerTrigger.builder()
+                        workerJobQueue.emit(WorkerTrigger.builder()
                             .trigger(workerTriggerRunning.getTrigger())
                             .conditionContext(workerTriggerRunning.getConditionContext())
                             .triggerContext(workerTriggerRunning.getTriggerContext())
@@ -532,7 +533,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                             workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.SKIPPED)));
                                         } else {
                                             if (workerTask.getTask().isSendToWorkerTask()) {
-                                                workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTask).map(group -> group.getKey()).orElse(null), workerTask);
+                                                workerJobQueue.emit(workerGroupService.resolveGroupFromJob(workerTask).map(group -> group.getKey()).orElse(null), workerTask);
                                             }
                                             if (workerTask.getTask().isFlowable()) {
                                                 workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun().withState(State.Type.RUNNING)));
@@ -939,14 +940,24 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 executorService.log(log, false, executor);
             }
 
-            // emit for other consumer than executor if no failure
+            // the terminated state can only come from the execution queue, in this case we always have a flow in the executor
+            boolean isTerminated = executor.getFlow() != null && conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution());
+
+            // purge the executionQueue
+            // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.
+            // NOTE: we may also purge ExecutionKilled events, but as there may not be a lot of them, it may not be worth it.
+            if (isTerminated) {
+                ((JdbcQueue<Execution>) executionQueue).deleteByKey(executor.getExecution().getId());
+            }
+
+            // emit for other consumers than the executor if no failure
             if (hasFailure) {
                 this.executionQueue.emit(executor.getExecution());
             } else {
                 ((JdbcQueue<Execution>) this.executionQueue).emitOnly(null, executor.getExecution());
             }
 
-            // delete if ended
+            // delete the execution from the state storage if ended
             if (executorService.canBePurged(executor)) {
                 executorStateStorage.delete(executor.getExecution());
             }
@@ -959,14 +970,14 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             }
 
             // handle actions on terminated state
-            // the terminated state can only come from the execution queue, and in this case we always have a flow in the executor
-            if (executor.getFlow() != null && conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())) {
+            if (isTerminated) {
                 // if there is a parent, we send a subflow execution result to it
                 if (ExecutableUtils.isSubflow(execution)) {
                     // locate the parent execution to find the parent task run
                     String parentExecutionId = (String) execution.getTrigger().getVariables().get("executionId");
                     String taskRunId = (String) execution.getTrigger().getVariables().get("taskRunId");
                     String taskId = (String) execution.getTrigger().getVariables().get("taskId");
+                    @SuppressWarnings("unchecked")
                     Map<String, Object> outputs = (Map<String, Object>) execution.getTrigger().getVariables().get("taskRunOutputs");
                     SubflowExecutionEnd subflowExecutionEnd = new SubflowExecutionEnd(executor.getExecution(), parentExecutionId, taskRunId, taskId, execution.getState().getCurrent(), outputs);
                     this.subflowExecutionEndQueue.emit(subflowExecutionEnd);
@@ -984,6 +995,18 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         executor.getFlow().getId(),
                         throwConsumer(queued -> executionQueue.emit(queued.withState(State.Type.RUNNING)))
                     );
+                }
+
+                // Purge the workerTaskResultQueue and the workerJobQueue
+                // IMPORTANT: this is safe as only the executor is listening to WorkerTaskResult,
+                // and we are sure at this stage that all WorkerJob has been listened and processed by the Worker.
+                // If any of these assumptions changed, this code would not be safe anymore.
+                if (!ListUtils.isEmpty(executor.getExecution().getTaskRunList())) {
+                    List<String> taskRunKeys = executor.getExecution().getTaskRunList().stream()
+                        .map(taskRun -> taskRun.getId())
+                        .toList();
+                    ((JdbcQueue<WorkerTaskResult>) workerTaskResultQueue).deleteByKeys(taskRunKeys);
+                    ((JdbcQueue<WorkerJob>) workerJobQueue).deleteByKeys(taskRunKeys);
                 }
             }
         } catch (QueueException e) {

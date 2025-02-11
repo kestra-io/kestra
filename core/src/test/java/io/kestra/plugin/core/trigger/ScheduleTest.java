@@ -461,7 +461,11 @@ class ScheduleTest {
         TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
             .backfill(Backfill
                 .builder()
-                .currentDate(ZonedDateTime.now(ZoneId.of("America/New_York")).with(LocalTime.MIN).plus(Duration.ofHours(8)).withZoneSameInstant(ZoneId.systemDefault()))
+                .currentDate(ZonedDateTime.now(ZoneId.of("America/New_York"))
+                    .minusDays(1L)
+                    .with(LocalTime.MIN)
+                    .plus(Duration.ofHours(8))
+                    .withZoneSameInstant(ZoneId.systemDefault()))
                 .end(ZonedDateTime.now().with(LocalTime.MAX))
                 .build()
             )

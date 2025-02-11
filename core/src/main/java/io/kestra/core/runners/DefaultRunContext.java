@@ -163,6 +163,7 @@ public class DefaultRunContext extends RunContext {
 
         // this is used when a run context is re-hydrated so we need to add again the secrets from the inputs
         if (!ListUtils.isEmpty(secretInputs) && getVariables().containsKey("inputs")) {
+            @SuppressWarnings("unchecked")
             Map<String, Object> inputs = (Map<String, Object>) getVariables().get("inputs");
             for (String secretInput : secretInputs) {
                 String secret = (String) inputs.get(secretInput);

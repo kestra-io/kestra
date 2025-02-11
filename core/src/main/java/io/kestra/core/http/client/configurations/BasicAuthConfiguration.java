@@ -6,8 +6,7 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
-import lombok.Getter;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.HttpHeaders;
@@ -16,8 +15,9 @@ import org.apache.hc.core5.http.message.BasicHeader;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-@Getter
 @SuperBuilder(toBuilder = true)
+@Getter
+@NoArgsConstructor
 public class BasicAuthConfiguration extends AbstractAuthConfiguration {
     @NotNull
     @JsonInclude
@@ -25,10 +25,10 @@ public class BasicAuthConfiguration extends AbstractAuthConfiguration {
     protected Property<AuthType> type = Property.of(AuthType.BASIC);
 
     @Schema(title = "The username for HTTP basic authentication.")
-    private final Property<String> username;
+    private Property<String> username;
 
     @Schema(title = "The password for HTTP basic authentication.")
-    private final Property<String> password;
+    private Property<String> password;
 
     @Override
     public void configure(HttpClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException {

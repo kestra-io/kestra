@@ -1,5 +1,5 @@
 id: fail
-namespace: qa
+namespace: sanitychecks
 
 tasks:
   - id: fail

@@ -1,5 +1,5 @@
 id: switch
-namespace: qa
+namespace: sanitychecks
 
 variables:
   switch_value: 3

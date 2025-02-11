@@ -1,5 +1,5 @@
 id: pause
-namespace: qa
+namespace: sanitychecks
 
 tasks:
   - id: pause_flow

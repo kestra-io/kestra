@@ -1,5 +1,5 @@
 id: sleep
-namespace: qa
+namespace: sanitychecks
 
 tasks:
   - id: before

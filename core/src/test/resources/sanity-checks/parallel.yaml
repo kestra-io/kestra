@@ -1,5 +1,5 @@
 id: parallel
-namespace: qa
+namespace: sanitychecks
 
 tasks:
   - id: parallel

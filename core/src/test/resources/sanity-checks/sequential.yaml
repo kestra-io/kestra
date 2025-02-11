@@ -1,5 +1,5 @@
 id: sequential
-namespace: qa
+namespace: sanitychecks
 
 tasks:
   - id: sequential_root

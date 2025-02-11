@@ -1,5 +1,5 @@
 id: kv
-namespace: qa
+namespace: sanitychecks
 
 variables:
   key: mykey

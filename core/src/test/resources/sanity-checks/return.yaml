@@ -1,5 +1,5 @@
 id: return
-namespace: qa
+namespace: sanitychecks
 
 variables:
   my_var: test

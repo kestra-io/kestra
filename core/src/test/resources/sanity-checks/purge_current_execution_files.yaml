@@ -1,5 +1,5 @@
 id: purge_current_execution_files
-namespace: qa
+namespace: sanitychecks
 
 tasks:
   - id: download

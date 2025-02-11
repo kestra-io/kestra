@@ -1,5 +1,5 @@
 id: if
-namespace: qa
+namespace: sanitychecks
 
 tasks:
   - id: if_true

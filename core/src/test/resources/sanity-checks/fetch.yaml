@@ -1,5 +1,5 @@
 id: fetch
-namespace: qa
+namespace: sanitychecks
 
 tasks:
   - id: log_info

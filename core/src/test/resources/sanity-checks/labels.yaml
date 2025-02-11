@@ -1,5 +1,5 @@
 id: labels
-namespace: qa
+namespace: sanitychecks
 
 variables:
   label_1: test1

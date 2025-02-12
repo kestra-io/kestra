@@ -1276,7 +1276,7 @@ class ExecutionControllerTest {
     @RetryingTest(5)
     void kill() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
-        Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
+        Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep-long");
         assertThat(runningExecution.getState().isRunning(), is(true));
 
         // listen to the execution queue

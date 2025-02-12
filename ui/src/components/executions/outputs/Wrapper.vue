@@ -1,5 +1,6 @@
 <template>
     <el-row class="flex-grow-1 outputs">
+        <!-- Left column: Cascader panel for output selection -->
         <el-col
             :xs="24"
             :sm="24"
@@ -8,6 +9,7 @@
             :xl="multipleSelected || selectedValue ? 18 : 24"
             class="d-flex flex-column"
         >
+            <!-- Cascader panel component from Element Plus -->
             <el-cascader-panel
                 ref="cascader"
                 v-model="selected"
@@ -16,38 +18,48 @@
                 class="flex-grow-1 overflow-x-auto cascader"
                 @expand-change="() => scrollRight()"
             >
+                <!-- Custom template for each cascader item -->
                 <template #default="{data}">
+                    <!-- Display heading if data.heading is true -->
                     <div
                         v-if="data.heading"
                         @click="expandedValue = data.path"
                         class="pe-none d-flex fs-5"
                     >
+                        <!-- Display icon component -->
                         <component :is="data.component" class="me-2" />
+                        <!-- Display label -->
                         <span>{{ data.label }}</span>
                     </div>
 
+                    <!-- Display task information -->
                     <div
                         v-else
                         @click="expandedValue = data.path"
                         class="w-100 d-flex justify-content-between"
                     >
+                        <!-- Task details -->
                         <div class="pe-5 d-flex task">
+                            <!-- Task icon -->
                             <TaskIcon
                                 v-if="data.icon"
                                 :icons="allIcons"
                                 :cls="icons[data.taskId]"
                                 only-icon
                             />
+                            <!-- Task label -->
                             <span :class="{'ms-3': data.icon}">{{
                                 data.label
                             }}</span>
                         </div>
+                        <!-- Code representation of the value -->
                         <code>
                             <span
                                 :class="{
                                     regular: processedValue(data).regular,
                                 }"
                             >
+                                <!-- Processed value label -->
                                 {{ processedValue(data).label }}
                             </span>
                         </code>
@@ -55,23 +67,33 @@
                 </template>
             </el-cascader-panel>
         </el-col>
+        <!-- Right column: Displaying selected value and debug information -->
         <el-col
             v-if="multipleSelected || selectedValue"
             :xs="24"
             :sm="24"
-            :md="8"
-            :lg="8"
-            :xl="6"
+            :md="sidebarWidth"
+            :lg="sidebarWidth"
+            :xl="sidebarWidth"
             class="d-flex wrapper"
+            :style="{width: sidebarWidth + 'px'}"
         >
-            <div @mousedown.prevent.stop="dragSidebar" class="slider" />
+            <!-- Slider for resizing the sidebar -->
+            <div
+                @mousedown.prevent.stop="startDrag"
+                class="slider"
+                style="cursor: col-resize"
+            />
+            <!-- Content of the right column -->
             <div class="w-100 overflow-auto p-3">
+                <!-- Selected value label -->
                 <div class="d-flex justify-content-between pe-none fs-5 values">
                     <code class="d-block">
                         {{ selectedNode()?.label ?? "Value" }}
                     </code>
                 </div>
 
+                <!-- Collapse for debug information -->
                 <el-collapse
                     v-model="debugCollapse"
                     class="mb-3 debug bordered"
@@ -81,7 +103,9 @@
                             <span>{{ t("eval.title") }}</span>
                         </template>
 
+                        <!-- Debug section -->
                         <div class="d-flex flex-column p-3 debug">
+                            <!-- Editor component for debug expression input -->
                             <editor
                                 ref="debugEditor"
                                 :full-height="false"
@@ -92,6 +116,7 @@
                                 class="w-100"
                             />
 
+                            <!-- Button to evaluate the debug expression -->
                             <el-button
                                 type="primary"
                                 @click="
@@ -104,6 +129,7 @@
                                 {{ t("eval.title") }}
                             </el-button>
 
+                            <!-- Editor component to display the debug expression result -->
                             <editor
                                 v-if="debugExpression"
                                 :read-only="true"
@@ -119,6 +145,7 @@
                     </el-collapse-item>
                 </el-collapse>
 
+                <!-- Alert for displaying debug errors -->
                 <el-alert
                     v-if="debugError"
                     type="error"
@@ -129,27 +156,26 @@
                         <strong>{{ debugError }}</strong>
                     </p>
                     <div class="my-2">
+                        <!-- Combined Copy Error Log button -->
                         <CopyToClipboard
-                            :text="debugError"
-                            label="Copy Error"
-                            class="d-inline-block me-2"
-                        />
-                        <CopyToClipboard
-                            :text="debugStackTrace"
-                            label="Copy Stack Trace"
+                            :text="debugError + '\n' + debugStackTrace"
+                            label="Copy Error Log"
                             class="d-inline-block"
                         />
                     </div>
+                    <!-- Display stack trace -->
                     <pre class="mb-0" style="overflow: scroll">{{
                         debugStackTrace
                     }}</pre>
                 </el-alert>
 
+                <!-- Component to display the variable value -->
                 <VarValue
                     v-if="displayVarValue()"
                     :value="selectedValue"
                     :execution="execution"
                 />
+                <!-- Component to display a link to a subflow execution -->
                 <SubFlowLink
                     v-if="selectedNode().label === 'executionId'"
                     :execution-id="selectedNode().value"
@@ -162,7 +188,6 @@
 <script setup lang="ts">
     import {ref, computed, shallowRef, onMounted} from "vue";
     import {ElTree} from "element-plus";
-
     import {useStore} from "vuex";
     const store = useStore();
 
@@ -172,11 +197,12 @@
     import {apiUrl} from "override/utils/route";
 
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
-
     import Editor from "../../inputs/Editor.vue";
+
     const debugCollapse = ref("");
     const debugEditor = ref(null);
     const debugExpression = ref("");
+
     const computedDebugValue = computed(() => {
         const formatTask = (task) => {
             if (!task) return "";
@@ -202,8 +228,24 @@
         return `{{ outputs${formatPath(path)} }}`;
     });
 
-    // TODO: To be implemented properly
-    const dragSidebar = () => {};
+    // Sidebar Resize Logic
+    const sidebarWidth = ref(300); // Initial width
+    let startX = 0;
+    const startDrag = (e: MouseEvent) => {
+        startX = e.clientX;
+        document.addEventListener("mousemove", dragSidebar);
+        document.addEventListener("mouseup", stopDrag);
+    };
+
+    const dragSidebar = (e: MouseEvent) => {
+        const width = sidebarWidth.value + (e.clientX - startX);
+        sidebarWidth.value = Math.max(200, Math.min(width, 500)); // Set min/max width
+    };
+
+    const stopDrag = () => {
+        document.removeEventListener("mousemove", dragSidebar);
+        document.removeEventListener("mouseup", stopDrag);
+    };
 
     const debugError = ref("");
     const debugStackTrace = ref("");
@@ -297,7 +339,6 @@
                 ? {label: "Internal link", regular}
                 : {label: "External link", regular};
         }
-
         return {label: trim(data.value), regular: true};
     };
 
@@ -471,68 +512,18 @@
 
     .wrapper {
         background: var(--ks-background-card);
+        position: relative; // Required for absolute positioning of the slider
     }
 
-    .el-cascader-menu {
-        min-width: 300px;
-        max-width: 300px;
-
-        &:last-child {
-            border-right: 1px solid var(--ks-border-primary);
-        }
-
-        .el-cascader-menu__wrap {
-            height: 100%;
-        }
-
-        & .el-cascader-node {
-            height: 36px;
-            line-height: 36px;
-            font-size: var(--el-font-size-small);
-            color: var(--ks-content-primary);
-
-            &[aria-haspopup="false"] {
-                padding-right: 0.5rem !important;
-            }
-
-            &:hover {
-                background-color: var(--ks-border-primary);
-            }
-
-            &.in-active-path,
-            &.is-active {
-                background-color: var(--ks-border-primary);
-                font-weight: normal;
-            }
-
-            .el-cascader-node__prefix {
-                display: none;
-            }
-
-            .task .wrapper {
-                align-self: center;
-                height: var(--el-font-size-small);
-                width: var(--el-font-size-small);
-            }
-
-            code span.regular {
-                color: var(--ks-content-primary);
-            }
-        }
-    }
-}
-
-.slider {
-    flex: 0 0 3px;
-    border-radius: 0.15rem;
-    margin: 0 4px;
-    background-color: var(--ks-border-primary);
-    border: none;
-    cursor: col-resize;
-    user-select: none; /* disable selection */
-
-    &:hover {
-        background-color: var(--ks-border-active);
+    .slider {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 5px;
+        background: var(--ks-border-primary);
+        cursor: col-resize;
+        z-index: 1; // Ensure it's above other elements
     }
 }
 </style>

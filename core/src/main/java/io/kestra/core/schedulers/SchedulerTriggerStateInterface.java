@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.QueueException;
 import jakarta.validation.ConstraintViolationException;
 
 import java.time.ZonedDateTime;
@@ -25,7 +26,10 @@ public interface SchedulerTriggerStateInterface {
 
     Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) throws Exception;
 
-
+    /**
+     * QueueException required for Kafka implementation
+     */
+    void delete(Trigger trigger) throws QueueException;
     /**
      * Used by the JDBC implementation: find triggers in all tenants.
      */

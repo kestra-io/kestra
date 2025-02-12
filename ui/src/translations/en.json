@@ -1059,6 +1059,7 @@
     "create_dashboard": "Create Dashboard",
     "edit_custom_dashboard": "Edit Dashboard",
     "custom_dashboard_validate_editing": "Changes in dashboard <code>{title}</code> are saved.",
+    "custom_dashboard_confirm_deletion": "Are you sure you want to delete <code>{title}</code> dashboard?",
     "custom_dashboard_empty": "There are no results to be shown.",
     "filters": {
       "label": "Choose filters",

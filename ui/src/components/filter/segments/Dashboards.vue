@@ -86,10 +86,10 @@
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
 
     const remove = (dashboard: any) => {
-        toast.confirm(t("delete confirm", {name: dashboard.title}), () => {
-            store.dispatch("dashboard/delete", dashboard.id).then((item) => {
+        toast.confirm(t("custom_dashboard_confirm_deletion", {title: dashboard.title}), () => {
+            store.dispatch("dashboard/delete", dashboard.id).then(() => {
                 dashboards.value = dashboards.value.filter((d) => d.id !== dashboard.id);
-                toast.deleted(item.title);
+                toast.deleted(dashboard.title);
                 router.push({name: "home"});
             });
         });

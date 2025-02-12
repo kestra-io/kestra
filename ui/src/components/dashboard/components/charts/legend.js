@@ -12,7 +12,7 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
 
     if (!listContainer) {
         listContainer = document.createElement("ul");
-        listContainer.classList.add("w-100","fw-light","legend",direction === "row"? "small": "tall");
+        listContainer.classList.add("w-100", "fw-light", "legend", direction === "row" ? "small" : "tall");
         listContainer.style.display = "flex";
         listContainer.style.flexDirection = direction;
         listContainer.style.margin = 0;
@@ -20,7 +20,6 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
 
         listContainer.style.maxHeight = "196px"; // 4 visible items
         listContainer.style.overflow = "auto";
-        listContainer.style.flexDirection= window.innerWidth <= 768?"column": direction; // changes the direction if the width is less than or equal to 768
 
         legendContainer?.appendChild(listContainer);
     }
@@ -33,16 +32,11 @@ export const barLegend = {
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
 
-        const legendList = document.createElement("div");
-        legendList.classList.add("legend-List");
-        legendList.style.position ="relative";             
-
         while (ul.firstChild) {
             ul.firstChild.remove();
         }
 
         const items = chart.options.plugins.legend.labels.generateLabels(chart);
-
 
         items.forEach((item) => {
             const dataset = chart.data.datasets[item.datasetIndex];
@@ -105,14 +99,6 @@ export const barLegend = {
             li.appendChild(textContainer);
             ul.appendChild(li);
         });
-        legendList.onmouseover = () =>{   // hover effect function
-            legendList.querySelectorAll("li").forEach((legend) =>{
-                legend.style.display="block";
-            });
-        };
-        const legendContainer=document.getElementById(options.containerID);
-        if(legendContainer)
-            legendContainer.appendChild(legendList);
     },
 };
 
@@ -120,10 +106,6 @@ export const customBarLegend = {
     id: "customBarLegend",
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
-        
-        const legendList = document.createElement("div");
-        legendList.classList.add("legend-List");
-        legendList.style.position ="relative";             
 
         while (ul.firstChild) {
             ul.firstChild.remove();
@@ -187,14 +169,6 @@ export const customBarLegend = {
             li.appendChild(textContainer);
             ul.appendChild(li);
         });
-        legendList.onmouseover = () =>{   // hover effect function
-            legendList.querySelectorAll("li").forEach((legend) =>{
-                legend.style.display="block";
-            });
-        };
-        const legendContainer=document.getElementById(options.containerID);
-        if(legendContainer)
-            legendContainer.appendChild(legendList);
     },
 };
 
@@ -275,38 +249,9 @@ const generateTotalsLegend = (isDuration) => ({
                     ? "#FFFFFF"
                     : cssVariable("--bs-gray-700");
             executionsText.textContent = isDuration ? Utils.humanDuration(dataset.data[item.index]) : dataset.data[item.index];
-          
-            const small_width=100;
-            const medium_width=200;
-            const large_width=300; // these widths will help change the font size
-            const FontSizeChange= ()=>{
-                const container_width = textContainer.offsetWidth;
-                //change font size with if statement
-                if(container_width < small_width)
-                {
-                    executionsText.style.fontSize="12px"; //change font size to 12
-                    executionsText.style.lineHeight = "16px"; //change line height
-                }else if(container_width < medium_width)
-                {
-                    executionsText.style.fontSize = "14px";
-                    executionsText.style.lineHeight = "18px";
-                }else if(container_width < large_width)
-                {
-                    executionsText.style.fontSize = "16px";
-                    executionsText.style.lineHeight = "18px";
-                }else
-                {
-                    executionsText.style.fontSize = "18px";
-                    executionsText.style.lineHeight = "18px";
-                }
-                //adjust line height
-
-            }
-            FontSizeChange();
 
             const labelText = document.createElement("p");
             labelText.style.margin = "0";
-            labelText.style.marginTop="5px"; //margin spacing
             labelText.textContent = item.text.toLowerCase();
 
             textContainer.appendChild(executionsText);

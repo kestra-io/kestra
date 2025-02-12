@@ -694,7 +694,8 @@
               "classic": "क्लासिक",
               "kestra": "Kestra"
             },
-            "logs_font_size": "लॉग्स फ़ॉन्ट आकार"
+            "logs_font_size": "लॉग्स फ़ॉन्ट आकार",
+            "theme": "मोडस"
           }
         },
         "localization": {

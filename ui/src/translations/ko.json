@@ -694,7 +694,8 @@
               "classic": "클래식",
               "kestra": "Kestra"
             },
-            "logs_font_size": "로그 글꼴 크기"
+            "logs_font_size": "로그 글꼴 크기",
+            "theme": "테마"
           }
         },
         "localization": {

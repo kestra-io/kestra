@@ -694,7 +694,8 @@
               "classic": "经典",
               "kestra": "Kestra"
             },
-            "logs_font_size": "日志字体大小"
+            "logs_font_size": "日志字体大小",
+            "theme": "主题"
           }
         },
         "localization": {

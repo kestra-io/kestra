@@ -694,7 +694,8 @@
               "classic": "Классический",
               "kestra": "Kestra"
             },
-            "logs_font_size": "Размер шрифта Logs"
+            "logs_font_size": "Размер шрифта Logs",
+            "theme": "Тема"
           }
         },
         "localization": {

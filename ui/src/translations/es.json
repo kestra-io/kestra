@@ -694,7 +694,8 @@
               "classic": "Clásico",
               "kestra": "Kestra"
             },
-            "logs_font_size": "Tamaño de Fuente de Logs"
+            "logs_font_size": "Tamaño de Fuente de Logs",
+            "theme": "Tema"
           }
         },
         "localization": {

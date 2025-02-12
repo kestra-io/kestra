@@ -103,7 +103,7 @@
     "lint-staged": "^15.4.3",
     "monaco-editor": "^0.52.2",
     "monaco-yaml": "^5.2.3",
-    "prettier": "^3.4.2",
+    "prettier": "^3.5.0",
     "rollup-plugin-copy": "^3.5.0",
     "sass": "^1.83.0",
     "storybook": "^8.5.3",

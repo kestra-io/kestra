@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, ref, computed, getCurrentInstance} from "vue";
+    import {onBeforeMount, ref, computed, getCurrentInstance, watch} from "vue";
     import KestraIcon from "../../Kicon.vue";
     import {Menu, Plus, DeleteOutline, Magnify, Pencil} from "../utils/icons";
     import {useI18n} from "vue-i18n";
@@ -81,6 +81,7 @@
     const {t} = useI18n({useScope: "global"});
     const store = useStore();
     const route = useRoute();
+    const routeTenant = ref(route.params.tenant);
     const router = useRouter();
     const emits = defineEmits(["dashboard"]);
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
@@ -116,7 +117,7 @@
         router.push({name: "dashboards/update", params: {id: dashboard.id}});
     }
 
-    onBeforeMount(() => {
+    const fetchDashboards = () => {
         store
             .dispatch("dashboard/list", {})
             .then((response: { results: { id: string; title: string }[] }) => {
@@ -125,28 +126,43 @@
                     const dashboard = dashboards.value.find(d => d.id === route.params.id);
                     if (dashboard) {
                         selectedDashboard.value = dashboard.title;
+                    } else {
+                        selectedDashboard.value = null;
                     }
                 }
             });
+    }
+
+    onBeforeMount(() => {
+        fetchDashboards()
     });
+
+    watch(
+        route,
+        (newRoute) => {
+            if (routeTenant.value !== newRoute.params.tenant) {
+                fetchDashboards();
+                routeTenant.value = newRoute.params.tenant;
+            }
+        }, {deep: true});
 </script>
 
 <style scoped lang="scss">
-@import "../styles/filter";
+    @import "../styles/filter";
 
-.dropdown {
-    width: 300px;
-}
-
-.items {
-    max-height: 160px !important; // 5 visible items
-}
-
-.main-button {
-    max-width: 300px;
-
-    span {
-        max-width: 250px;
+    .dropdown {
+        width: 300px;
     }
-}
+
+    .items {
+        max-height: 160px !important; // 5 visible items
+    }
+
+    .main-button {
+        max-width: 300px;
+
+        span {
+            max-width: 250px;
+        }
+    }
 </style>

@@ -35,7 +35,7 @@ export const barLegend = {
 
         const legendList = document.createElement("div");
         legendList.classList.add("legend-List");
-        legendList.style.position ="sticky";             // changes based on scroll position
+        legendList.style.position ="relative";             
 
         while (ul.firstChild) {
             ul.firstChild.remove();
@@ -123,7 +123,7 @@ export const customBarLegend = {
         
         const legendList = document.createElement("div");
         legendList.classList.add("legend-List");
-        legendList.style.position ="relative";             // changes based on scroll position
+        legendList.style.position ="relative";             
 
         while (ul.firstChild) {
             ul.firstChild.remove();

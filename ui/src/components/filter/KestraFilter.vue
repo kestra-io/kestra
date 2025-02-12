@@ -668,7 +668,7 @@
     };
 
     // Include parameters from URL directly to filter
-    onMounted(() => {
+    watch(route, () => {
         if (props.decode) {
             const decodedParams = decodeParams(route.path, route.query, props.include, OPTIONS);
             currentFilters.value = decodedParams.map((item: any) => {
@@ -741,9 +741,9 @@
                     comparator: COMPARATORS.EQUALS,
                     persistent: true,
                 });
-            }            
+            }
         }
-    });
+    }, {immediate: true});
 
     watch(
         () => select.value?.dropdownMenuVisible,

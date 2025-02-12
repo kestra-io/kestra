@@ -14,6 +14,9 @@
 </template>
 
 <script>
+    import {decodeParams, encodeParams} from "../filter/utils/helpers";
+    import {useFilters} from "../filter/composables/useFilters";
+
     export default {
         props: {
             labels: {
@@ -35,21 +38,25 @@
                     return this.labels;
                 }
             },
+            filterUtils() {
+                return useFilters(this.$route.name);
+            },
+            currentFilters() {
+                return decodeParams(this.$route.path, this.$route.query, this.$props.include, this.filterUtils.OPTIONS);
+            },
             labelsFromQuery() {
                 const labels = new Map();
-                (this.$route.query.labels !== undefined ?
-                    (typeof(this.$route.query.labels) === "string" ? [this.$route.query.labels] : this.$route.query.labels)  :
-                    []
-                )
-                    .forEach(label => {
-                        const separatorIndex = label.indexOf(":");
+                const queryLabels = this.currentFilters.filter(item => item.label === "labels");
 
-                        if (separatorIndex === -1) {
-                            return;
-                        }
+                queryLabels.map(item => item.value[0]).forEach(label => {
+                    const separatorIndex = label.indexOf(":");
 
-                        labels.set(label.slice(0, separatorIndex), label.slice(separatorIndex + 1));
-                    })
+                    if (separatorIndex === -1) {
+                        return;
+                    }
+
+                    labels.set(label.slice(0, separatorIndex), label.slice(separatorIndex + 1));
+                });
 
                 return labels;
             }
@@ -58,21 +65,20 @@
             checked(key, value) {
                 return this.labelsFromQuery.has(key) && this.labelsFromQuery.get(key) === value;
             },
+            removeLabelFromFilters(key, value) {
+                return this.currentFilters.filter(item => !(item.label === "labels" && item.value[0] === `${key}:${value}`))
+            },
+            appendLabelToFilters(key, value) {
+                const labelValue = `${key}:${value}`;
+                const label = {label: "labels", value: [labelValue], comparator: this.filterUtils.COMPARATORS.EQUALS};
+
+                return this.currentFilters.concat([label]);
+            },
             link(key, value) {
-                const labels = this.labelsFromQuery;
-
-                if (labels.has(key)) {
-                    labels.delete(key);
-                } else {
-                    labels.set(key, value);
-                }
-
-                const qs = {
-                    ...this.$route.query,
-                    ...{"labels": Array.from(labels.keys()).map((key) => key + ":" + labels.get(key))}
-                };
-
-                delete qs.page;
+                const modifiedFilters = this.labelsFromQuery.has(key) ?
+                    this.removeLabelFromFilters(key, value) :
+                    this.appendLabelToFilters(key, value);
+                const qs =  encodeParams(this.$route.path, modifiedFilters, this.filterUtils.OPTIONS);
 
                 return {name: this.$route.name, params: this.$route.params, query: qs};
             }

@@ -151,7 +151,7 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
             const [, field, operation, subKey] = match;
 
             if (field === "labels" && subKey) {
-                return {label: field, value: `${subKey}:${decodeURIComponent(value)}`, operation};
+                return {label: field, value: [`${subKey}:${decodeURIComponent(value)}`], operation};
             }
 
             const label = field === "q" ? "text" : OPTIONS.find(o => o.key === field)?.value.label || field;
@@ -176,4 +176,7 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
     return params;
 };
 
-export const isSearchPath = (path: string) =>["/admin/triggers","/dashboards/default", "/flows", "/executions", "/logs", "/dashboard"].includes(path);
+export const isSearchPath = (path: string) => {
+    return ["/admin/triggers","/dashboards/default", "/flows", "/logs", "/dashboard"].includes(path) ||
+        path.endsWith("/executions");
+};

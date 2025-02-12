@@ -1058,6 +1058,7 @@
     "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> is created.",
     "create_dashboard": "Create Dashboard",
     "edit_custom_dashboard": "Edit Dashboard",
+    "custom_dashboard_validate_editing": "Changes in dashboard <code>{title}</code> are saved.",
     "custom_dashboard_empty": "There are no results to be shown.",
     "filters": {
       "label": "Choose filters",

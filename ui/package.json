@@ -102,7 +102,7 @@
     "jsdom": "^26.0.0",
     "lint-staged": "^15.4.3",
     "monaco-editor": "^0.52.2",
-    "monaco-yaml": "^5.2.3",
+    "monaco-yaml": "^5.3.1",
     "prettier": "^3.4.2",
     "rollup-plugin-copy": "^3.5.0",
     "sass": "^1.83.0",

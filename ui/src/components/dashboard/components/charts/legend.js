@@ -123,7 +123,7 @@ export const customBarLegend = {
         
         const legendList = document.createElement("div");
         legendList.classList.add("legend-List");
-        legendList.style.position ="sticky";             // changes based on scroll position
+        legendList.style.position ="relative";             // changes based on scroll position
 
         while (ul.firstChild) {
             ul.firstChild.remove();
@@ -275,9 +275,38 @@ const generateTotalsLegend = (isDuration) => ({
                     ? "#FFFFFF"
                     : cssVariable("--bs-gray-700");
             executionsText.textContent = isDuration ? Utils.humanDuration(dataset.data[item.index]) : dataset.data[item.index];
+          
+            const small_width=100;
+            const medium_width=200;
+            const large_width=300; // these widths will help change the font size
+            const FontSizeChange= ()=>{
+                const container_width = textContainer.offsetWidth;
+                //change font size with if statement
+                if(container_width < small_width)
+                {
+                    executionsText.style.fontSize="12px"; //change font size to 12
+                    executionsText.style.lineHeight = "16px"; //change line height
+                }else if(container_width < medium_width)
+                {
+                    executionsText.style.fontSize = "14px";
+                    executionsText.style.lineHeight = "18px";
+                }else if(container_width < large_width)
+                {
+                    executionsText.style.fontSize = "16px";
+                    executionsText.style.lineHeight = "18px";
+                }else
+                {
+                    executionsText.style.fontSize = "18px";
+                    executionsText.style.lineHeight = "18px";
+                }
+                //adjust line height
+
+            }
+            FontSizeChange();
 
             const labelText = document.createElement("p");
             labelText.style.margin = "0";
+            labelText.style.marginTop="5px"; //margin spacing
             labelText.textContent = item.text.toLowerCase();
 
             textContainer.appendChild(executionsText);

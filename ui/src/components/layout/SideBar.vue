@@ -276,6 +276,10 @@
             .el-tooltip__trigger {
                 display: flex;
             }
+
+            & > span{
+                max-width: 100%;
+            }
         }
 
         .vsm--title span:first-child{

@@ -273,6 +273,9 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapGetters("flow", ["flow"]),
+            query() {
+                return Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
+            },
             modalData() {
                 return Object
                     .entries(this.triggersWithType.filter(trigger => trigger.triggerId === this.triggerId)[0])
@@ -295,14 +298,12 @@
                     return {...trigger, sourceDisabled: trigger.disabled ?? false}
                 })
                 if (flowTriggers) {
-                    const q = Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
-
                     const triggers = flowTriggers.map(flowTrigger => {
                         let pollingTrigger = this.triggers.find(trigger => trigger.triggerId === flowTrigger.id)
                         return {...flowTrigger, ...(pollingTrigger || {})}
                     })
 
-                    return !q ? triggers : triggers.filter(trigger => trigger.id.includes(q))
+                    return !this.query ? triggers : triggers.filter(trigger => trigger.id.includes(this.query))
                 }
                 return this.triggers
             },
@@ -346,10 +347,8 @@
             loadData() {
                 if(!this.triggersWithType.length) return;
 
-                const q = Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
-
                 this.$store
-                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length, q})
+                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length, q: this.query})
                     .then(triggers => this.triggers = triggers.results);
             },
             setBackfillModal(trigger, bool) {
@@ -442,18 +441,6 @@
                     })
                 })
             },
-            search(trigger) {
-                this.$store.dispatch("trigger/search", {
-                    namespace: this.flow.namespace,
-                    flowId: this.flow.id,
-                    trigger: trigger
-                }).then(response => {
-                    this.triggers = response.results;
-                }).catch(() => {
-                    this.$toast().error("Search failed. Please try again.");
-                });
-            },
-
             restart(trigger) {
                 this.$store.dispatch("trigger/restart", {
                     namespace: trigger.namespace,

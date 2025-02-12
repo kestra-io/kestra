@@ -1175,6 +1175,9 @@
       "label": "Propriétés"
     },
     "debug": "Déboguer",
-    "default": "Par défaut"
+    "default": "Par défaut",
+    "custom_dashboard_confirm_deletion": "Êtes-vous sûr de vouloir supprimer le tableau de bord <code>{title}</code> ?",
+    "custom_dashboard_validate_editing": "Les modifications dans le tableau de bord <code>{title}</code> sont enregistrées.",
+    "custom_dashboard_validate_creation": "Tableau de bord <code>{title}</code> est créé."
   }
 }

@@ -1175,6 +1175,9 @@
       "label": "Свойства"
     },
     "debug": "Отладка",
-    "default": "По умолчанию"
+    "default": "По умолчанию",
+    "custom_dashboard_confirm_deletion": "Вы уверены, что хотите удалить панель <code>{title}</code>?",
+    "custom_dashboard_validate_editing": "Изменения в панели <code>{title}</code> сохранены.",
+    "custom_dashboard_validate_creation": "Панель управления <code>{title}</code> создана."
   }
 }

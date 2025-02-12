@@ -1175,6 +1175,9 @@
       "label": "Proprietà"
     },
     "debug": "Debug",
-    "default": "Predefinito"
+    "default": "Predefinito",
+    "custom_dashboard_confirm_deletion": "Sei sicuro di voler eliminare la dashboard <code>{title}</code>?",
+    "custom_dashboard_validate_editing": "Le modifiche nel dashboard <code>{title}</code> sono state salvate.",
+    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> è stato creato."
   }
 }

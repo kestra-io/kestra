@@ -1175,6 +1175,9 @@
       "label": "Propriedades"
     },
     "debug": "Depurar",
-    "default": "Padrão"
+    "default": "Padrão",
+    "custom_dashboard_confirm_deletion": "Tem certeza de que deseja excluir o dashboard <code>{title}</code>?",
+    "custom_dashboard_validate_editing": "Alterações no dashboard <code>{title}</code> foram salvas.",
+    "custom_dashboard_validate_creation": "Painel <code>{title}</code> foi criado."
   }
 }

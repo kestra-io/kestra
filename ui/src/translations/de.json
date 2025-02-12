@@ -1175,6 +1175,9 @@
       "label": "Eigenschaften"
     },
     "debug": "Debuggen",
-    "default": "Standard"
+    "default": "Standard",
+    "custom_dashboard_confirm_deletion": "Möchten Sie das Dashboard <code>{title}</code> wirklich löschen?",
+    "custom_dashboard_validate_editing": "Änderungen im Dashboard <code>{title}</code> sind gespeichert.",
+    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> wurde erstellt."
   }
 }

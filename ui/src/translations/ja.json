@@ -1175,6 +1175,9 @@
       "label": "プロパティ"
     },
     "debug": "デバッグ",
-    "default": "デフォルト"
+    "default": "デフォルト",
+    "custom_dashboard_confirm_deletion": "<code>{title}</code> ダッシュボードを削除してもよろしいですか？",
+    "custom_dashboard_validate_editing": "ダッシュボード<code>{title}</code>の変更が保存されました。",
+    "custom_dashboard_validate_creation": "ダッシュボード <code>{title}</code> が作成されました。"
   }
 }

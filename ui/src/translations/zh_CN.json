@@ -1175,6 +1175,9 @@
       "label": "属性"
     },
     "debug": "调试",
-    "default": "默认值"
+    "default": "默认值",
+    "custom_dashboard_confirm_deletion": "您确定要删除<code>{title}</code>仪表板吗？",
+    "custom_dashboard_validate_editing": "仪表板<code>{title}</code>中的更改已保存。",
+    "custom_dashboard_validate_creation": "仪表板 <code>{title}</code> 已创建。"
   }
 }

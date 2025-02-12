@@ -110,21 +110,29 @@
                 cursor: pointer;
             }
         }
-    }
-    a {
-        display: block;
-        padding: .25rem .5rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        color: var(--ks-content-primary);
-        font-size: 0.875em;
-        border-radius: 4px;
+
+        a {
+            display: block;
+            padding: .25rem .5rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--ks-content-primary);
+            font-size: 0.875em;
+            border-radius: 4px;
+            transition: none;
+            &:hover{
+                color: var(--ks-content-link);
+
+            }
+        }
+
+        &:hover a {
+            margin-right: 2.5rem;
+        }
+
         &:hover{
-            color: var(--ks-content-link);
             background-color: var(--ks-button-background-secondary-hover);
         }
     }
-
-
 </style>

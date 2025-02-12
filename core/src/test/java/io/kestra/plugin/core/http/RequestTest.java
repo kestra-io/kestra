@@ -210,6 +210,37 @@ class RequestTest {
     }
 
     @Test
+    void failedPost() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.of(server.getURL().toString() + "/markdown"))
+                .method(Property.of("POST"))
+                .body(Property.of("# hello web!"))
+                .contentType(Property.of("text/markdown"))
+                .options(HttpConfiguration.builder().defaultCharset(Property.of(null)).build())
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            HttpClientResponseException exception = assertThrows(
+                HttpClientResponseException.class,
+                () -> task.run(runContext)
+            );
+
+            assertThat(exception.getResponse().getStatus().getCode(), is(417));
+            assertThat(exception.getMessage(), containsString("hello world"));
+            byte[] content = ((io.kestra.core.http.HttpRequest.ByteArrayRequestBody) exception.getRequest().getBody()).getContent();
+            assertThat(new String(content) , containsString("hello web"));
+        }
+    }
+
+    @Test
     void selfSigned() throws Exception {
         try (
             ApplicationContext applicationContext = ApplicationContext.run(Environment.TEST, "testssl");
@@ -528,6 +559,13 @@ class RequestTest {
         @Get("/hello417")
         HttpResponse<String> hello417() {
             return HttpResponse.status(HttpStatus.EXPECTATION_FAILED).body("{ \"hello\": \"world\" }");
+        }
+
+        @Post("/markdown")
+        @Consumes(MediaType.TEXT_MARKDOWN)
+        @Produces(MediaType.TEXT_MARKDOWN)
+        HttpResponse<String> postMarkdown() {
+            return HttpResponse.status(HttpStatus.EXPECTATION_FAILED).body("# hello world");
         }
 
         @Get("/redirect")

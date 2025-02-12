@@ -83,6 +83,7 @@ public class Exit extends Task implements ExecutionUpdatableTask {
 
         // if the state is killed, we send a kill event and end here
         if (exitState == State.Type.KILLED) {
+            @SuppressWarnings("unchecked")
             QueueInterface<ExecutionKilled> killQueue = ((DefaultRunContext) runContext).getApplicationContext().getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
             killQueue.emit(ExecutionKilledExecution
                 .builder()

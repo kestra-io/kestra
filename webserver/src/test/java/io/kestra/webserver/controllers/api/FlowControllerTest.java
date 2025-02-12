@@ -170,8 +170,11 @@ class FlowControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     void findAll() {
-        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?filters[q][$eq]=*"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal(), equalTo(Helpers.FLOWS_COUNT));
+
+        PagedResults<Flow> flows_oldParameters = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows_oldParameters.getTotal(), equalTo(Helpers.FLOWS_COUNT));
     }
 
     @Test
@@ -792,8 +795,12 @@ class FlowControllerTest {
         String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
-            .GET("/api/v1/flows/search?labels=" + encodedCommaWithinLabel);
+            .GET("/api/v1/flows/search?filters[labels][$eq][project]=foo,bar");
         assertDoesNotThrow(() -> client.toBlocking().retrieve(searchRequest, PagedResults.class));
+
+        MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
+            .GET("/api/v1/flows/search?labels=project:foo,bar");
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class));
 
         MutableHttpRequest<Object> exportRequest = HttpRequest
             .GET("/api/v1/flows/export/by-query?labels=" + encodedCommaWithinLabel);
@@ -814,16 +821,18 @@ class FlowControllerTest {
 
     @Test
     void commaInOneOfMultiLabels() {
-        String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
-        String encodedRegularLabel = URLEncoder.encode("status:test", StandardCharsets.UTF_8);
 
         Map<String, Object> flow = JacksonMapper.toMap(generateFlow("io.kestra.unittest", "a"));
         flow.put("labels", Map.of("project", "foo,bar", "status", "test"));
 
         parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
 
-        var flows = client.toBlocking().retrieve(GET("/api/v1/flows/search?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel), Argument.of(PagedResults.class, Flow.class));
+        var flows = client.toBlocking().retrieve(GET("/api/v1/flows/search?filters[labels][$eq][project]=foo,bar" + "&filters[labels][$eq][status]=test"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal(), is(1L));
+
+        flows = client.toBlocking().retrieve(GET("/api/v1/flows/search?labels=project:foo,bar" + "&labels=status:test"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal(), is(1L));
+
     }
 
     @Test

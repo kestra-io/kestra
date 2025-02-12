@@ -1,5 +1,5 @@
 <template>
-    <div v-if="!isNamespace && (isAllowedEdit || canDelete)" class="mx-2">
+    <div v-if="!isNamespace && (isAllowedEdit || canDelete)" class="me-2">
         <el-dropdown>
             <el-button type="default" :disabled="isReadOnly">
                 <DotsVertical title="" />
@@ -42,7 +42,7 @@
             @click="forwardEvent('save', $event)"
             v-if="isAllowedEdit"
             :type="buttonType"
-            :disabled="!haveChange && !isCreating"
+            :disabled="hasErrors || !haveChange && !isCreating"
             class="edit-flow-save-button"
         >
             {{ $t("save") }}
@@ -106,6 +106,9 @@
             }
         },
         computed: {
+            hasErrors(){
+                return this.errors && this.errors.length > 0;
+            },
             buttonType() {
                 if (this.errors) {
                     return "danger";

@@ -130,6 +130,7 @@
         >
             <template v-if="editorViewType === 'YAML'">
                 <editor
+                    class="position-relative"
                     v-if="isCreating || openedTabs.length"
                     ref="editorDomElement"
                     @save="save"
@@ -144,7 +145,11 @@
                     @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                     :read-only="isReadOnly"
                     :navbar="false"
-                />
+                >
+                    <template #absolute>
+                        <KeyShortcuts />
+                    </template>
+                </editor>
                 <section v-else class="no-tabs-opened">
                     <div class="img" />
 
@@ -330,6 +335,7 @@
     import ValidationError from "../flows/ValidationError.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
     import SwitchView from "./SwitchView.vue";
+    import KeyShortcuts from "./KeyShortcuts.vue";
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -940,15 +946,13 @@
     };
 
     const onUpdateMetadata = (event, shouldSave) => {
-        metadata.value = event;
-
         if(shouldSave) {
-            metadata.value = {...metadata.value, ...event};
+            metadata.value = {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)};
             onSaveMetadata();
             validateFlow(flowYaml.value)
 
         } else {
-            metadata.value = event;
+            metadata.value = event.concurrency?.limit === 0 ?  {concurrency: null} : event;
         }
     };
 
@@ -1075,7 +1079,7 @@
     };
 
     const save = async (e) => {
-        if (!haveChange.value && !props.isCreating) {
+        if (flowErrors.value?.length || !haveChange.value && !props.isCreating) {
             return;
         }
         if (e) {
@@ -1478,7 +1482,7 @@
         text-align: center;
 
         .img {
-            background: url("../../assets/errors/kestra-error.png") no-repeat center;
+            background: url("../../assets/empty-ns-files.png") no-repeat center;
             background-size: contain;
         }
 

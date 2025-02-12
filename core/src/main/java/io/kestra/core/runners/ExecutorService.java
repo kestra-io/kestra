@@ -594,7 +594,7 @@ public class ExecutorService {
             }
         }
 
-        executor.withWorkerTaskDelays(executionDelays, "handleChildWorkerTaskResult");
+        executor.withWorkerTaskDelays(executionDelays, "handleChildWorkerTaskDelay");
 
         if (list.isEmpty()) {
             return executor;
@@ -602,7 +602,9 @@ public class ExecutorService {
 
         executor = this.handlePausedDelay(executor, list);
 
-        return executor.withWorkerTaskResults(list, "handleChildWorkerTaskResult");
+        this.addWorkerTaskResults(executor, executor.getFlow(), list);
+
+        return executor;
     }
 
     private Executor handlePausedDelay(Executor executor, List<WorkerTaskResult> workerTaskResults) throws InternalException {
@@ -649,7 +651,7 @@ public class ExecutorService {
         return executor.withWorkerTaskDelays(list, "handlePausedDelay");
     }
 
-    private Executor handleCreatedKilling(Executor executor) {
+    private Executor handleCreatedKilling(Executor executor) throws InternalException {
         if (executor.getExecution().getTaskRunList() == null || executor.getExecution().getState().getCurrent() != State.Type.KILLING) {
             return executor;
         }
@@ -666,7 +668,8 @@ public class ExecutorService {
             .map(Optional::get)
             .toList();
 
-        return executor.withWorkerTaskResults(workerTaskResults, "handleChildWorkerCreatedKilling");
+        this.addWorkerTaskResults(executor, executor.getFlow(), workerTaskResults);
+        return executor;
     }
 
     private Executor handleListeners(Executor executor) {
@@ -812,7 +815,8 @@ public class ExecutorService {
                 .stream()
                 .map(workerTask -> WorkerTaskResult.builder().taskRun(workerTask.getTaskRun()).build())
                 .toList();
-            executorToReturn = executorToReturn.withWorkerTaskResults(failed, "handleWorkerTask");
+
+            this.addWorkerTaskResults(executor, executor.getFlow(), failed);
         }
 
         // Send other TaskRun to the worker (create worker tasks)
@@ -892,12 +896,13 @@ public class ExecutorService {
                         }
                     }
                 } catch (Exception e) {
-                    WorkerTaskResult failed = WorkerTaskResult.builder()
-                        .taskRun(workerTask.getTaskRun().fail())
-                        .build();
-                    executor
-                        .withWorkerTaskResults(List.of(failed), "handleExecutableTask")
-                        .withException(e, "handleExecutableTask");
+                    try {
+                        executor
+                            .withExecution(executor.getExecution().withTaskRun(workerTask.getTaskRun().fail()), "handleExecutableTask")
+                            .withException(e, "handleExecutableTask");
+                    } catch (InternalException ex) {
+                        log.error("Unable to fail the executable task.", ex);
+                    }
                 }
                 return true;
             });
@@ -915,7 +920,7 @@ public class ExecutorService {
         return resultExecutor;
     }
 
-    private Executor handleExecutionUpdatingTask(final Executor executor) {
+    private Executor handleExecutionUpdatingTask(final Executor executor) throws InternalException {
         List<WorkerTaskResult> workerTaskResults = new ArrayList<>();
 
         executor.getWorkerTasks()
@@ -952,14 +957,39 @@ public class ExecutorService {
                 return true;
             });
 
-        if (!workerTaskResults.isEmpty()) {
-            return executor.withWorkerTaskResults(workerTaskResults, "handleExecutionUpdatingTask.workerTaskResults");
-        }
+        this.addWorkerTaskResults(executor, executor.getFlow(), workerTaskResults);
 
         return executor;
     }
 
-    public Execution addDynamicTaskRun(Execution execution, Flow flow, WorkerTaskResult workerTaskResult) throws InternalException {
+    public void addWorkerTaskResults(Executor executor, Flow flow, List<WorkerTaskResult> workerTaskResults) throws InternalException {
+        for (WorkerTaskResult workerTaskResult : workerTaskResults) {
+            this.addWorkerTaskResult(executor, flow, workerTaskResult);
+        }
+    }
+
+    public void addWorkerTaskResult(Executor executor, Flow flow, WorkerTaskResult workerTaskResult) throws InternalException {
+        // dynamic tasks
+        Execution newExecution = this.addDynamicTaskRun(
+            executor.getExecution(),
+            flow,
+            workerTaskResult
+        );
+        if (newExecution != null) {
+            executor.withExecution(newExecution, "addDynamicTaskRun");
+        }
+
+        TaskRun taskRun = workerTaskResult.getTaskRun();
+        newExecution = executor.getExecution().withTaskRun(taskRun);
+        // If the worker task result is killed, we must check if it has a parents to also kill them if not already done.
+        // Running flowable tasks that have child tasks running in the worker will be killed thanks to that.
+        if (taskRun.getState().getCurrent() == State.Type.KILLED && taskRun.getParentTaskRunId() != null) {
+            newExecution = executionService.killParentTaskruns(taskRun, newExecution);
+        }
+        executor.withExecution(newExecution, "addWorkerTaskResult");
+    }
+
+    private Execution addDynamicTaskRun(Execution execution, Flow flow, WorkerTaskResult workerTaskResult) throws InternalException {
         ArrayList<TaskRun> taskRuns = new ArrayList<>(execution.getTaskRunList());
 
         // declared dynamic tasks

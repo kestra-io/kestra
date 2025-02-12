@@ -126,7 +126,8 @@
                     class: "menu-icon",
                 },
                 child: [{
-
+                    // here we use only one component for all bookmarks
+                    // so when one edits the bookmark, it will be updated without closing the section
                     component: () => h(BookmarkLinkList, {pages: store.state.bookmarks.pages}),
                 }]
             }] : []),
@@ -280,6 +281,10 @@
             .el-tooltip__trigger {
                 display: flex;
             }
+
+            & > span{
+                max-width: 100%;
+            }
         }
 
         .vsm--link_open{
@@ -364,6 +369,10 @@
 
             .vsm--link {
                 padding-left: 13px;
+                &.vsm--link_hover {
+                    background-color: var(--ks-button-background-primary);
+                    color: var(--ks-button-content-primary);
+                }
             }
 
             .vsm--item {

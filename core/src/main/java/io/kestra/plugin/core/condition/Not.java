@@ -37,8 +37,8 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 "- conditions:",
                 "    - type: io.kestra.plugin.core.condition.Not",
                 "      conditions:",
-                "      -  type: io.kestra.plugin.core.condition.DateBetween",
-                "         after: \"2013-09-08T16:19:12\"",
+                "        -  type: io.kestra.plugin.core.condition.DateTimeBetween",
+                "           after: \"2013-09-08T16:19:12Z\"",
             }
         )
     },

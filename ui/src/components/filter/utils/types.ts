@@ -2,6 +2,13 @@ export type Shown = {
     shown: boolean;
 };
 
+export type Property = {
+    shown: boolean;
+    columns?: any[];
+    displayColumns?: string[];
+    storageKey?: string;
+};
+
 export type Buttons = {
     refresh: Shown & {
         callback: () => void;

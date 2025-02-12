@@ -19,12 +19,12 @@
                 <div
                     class="d-flex justify-content-end align-items-center switch-content"
                 >
-                    <span class="pe-2 fw-light small">{{ t("duration") }}</span>
                     <el-switch
                         v-model="duration"
                         :active-icon="CheckIcon"
                         inline-prompt
                     />
+                    <span class="d-flex align-items-center ps-2 fw-light small">{{ t("duration") }}</span>
                 </div>
                 <div id="executions" />
             </div>
@@ -131,10 +131,6 @@ $height: 200px;
 
     .small {
         font-size: 0.75rem;
-    }
-
-    .pe-2 {
-        padding-right: 0.5rem;
     }
 }
 </style>

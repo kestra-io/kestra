@@ -209,8 +209,7 @@ code {
 }
 
 .nextscheduled {
-    --el-table-tr-bg-color: var(--ks-background-body) !important;
-    background: var(--ks-background-body);
+    background: var(--ks-background-table-row);
 }
 
 .next-toggle {

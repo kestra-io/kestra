@@ -202,10 +202,11 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
     @Schema(
         title = "List of port bindings.",
-        description = "Corresponds to the --publish (-p) option of the docker run CLI command using the format `ip:dockerHostPort:containerPort/protocol`. Possible example : \n" +
-            "- 8080:80/udp" +
-            "- 127.0.0.1:8080:80" +
-            "- 127.0.0.1:8080:80/udp"
+        description = "Corresponds to the `--publish` (`-p`) option of the docker run CLI command using the format `ip:dockerHostPort:containerPort/protocol`.\n" +
+            "Possible example :\n" +
+            "- `8080:80/udp`" +
+            "- `127.0.0.1:8080:80`" +
+            "- `127.0.0.1:8080:80/udp`"
     )
     @PluginProperty(dynamic = true)
     protected List<String> portBindings;

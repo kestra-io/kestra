@@ -27,6 +27,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -214,7 +215,7 @@ public class ExecutionService {
                 execution.withState(State.Type.RESTARTED).getState()
             );
 
-        List<Label> newLabels = new ArrayList<>(execution.getLabels());
+        List<Label> newLabels = new ArrayList<>(ListUtils.emptyOnNull(execution.getLabels()));
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
         }
@@ -297,7 +298,7 @@ public class ExecutionService {
             taskRunId == null ? new State() : execution.withState(State.Type.RESTARTED).getState()
         );
 
-        List<Label> newLabels = new ArrayList<>(execution.getLabels());
+        List<Label> newLabels = new ArrayList<>(ListUtils.emptyOnNull(execution.getLabels()));
         if (!newLabels.contains(new Label(Label.REPLAY, "true"))) {
             newLabels.add(new Label(Label.REPLAY, "true"));
         }
@@ -486,7 +487,7 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task -> {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), execution, Map.of()));
+                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), flow, execution, Map.of()));
                 } else {
                     return Mono.just(Collections.emptyList());
                 }
@@ -507,7 +508,7 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task -> {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return flowInputOutput.validateExecutionInputs(pauseTask.getOnResume(), execution, inputs);
+                    return flowInputOutput.validateExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
                 } else {
                     return Mono.just(Collections.emptyList());
                 }
@@ -528,7 +529,7 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task -> {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return flowInputOutput.readExecutionInputs(pauseTask.getOnResume(), execution, inputs);
+                    return flowInputOutput.readExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
                 } else {
                     return Mono.just(Collections.<String, Object>emptyMap());
                 }

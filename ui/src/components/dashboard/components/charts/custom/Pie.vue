@@ -25,7 +25,7 @@
     import {computed, onMounted, ref, watch} from "vue";
 
     import NoData from "../../../../layout/NoData.vue";
-    import Utils from "../../../../../utils/utils.js";
+    import Utils, {useTheme} from "../../../../../utils/utils.js";
 
     import {Doughnut, Pie} from "vue-chartjs";
 
@@ -56,6 +56,8 @@
 
     const isDuration = Object.values(props.chart.data.columns).find(c => c.agg !== undefined).field === "DURATION";
 
+    const theme = useTheme();
+
     const options = computed(() => {
         return defaultConfig({
             plugins: {
@@ -77,13 +79,13 @@
                     }
                 },
             },
-        });
+        }, theme.value);
     });
 
-    const centerPlugin = {
+    const centerPlugin = computed(() => ({
         id: "centerPlugin",
         beforeDraw(chart) {
-            const darkTheme = Utils.getTheme() === "dark";
+            const darkTheme = theme.value === "dark";
 
             const ctx = chart.ctx;
             const dataset = chart.data.datasets[0];
@@ -106,7 +108,7 @@
 
             ctx.restore();
         },
-    };
+    }));
 
     const thicknessPlugin = {
         id: "thicknessPlugin",
@@ -157,7 +159,7 @@
         const labels = Object.keys(results);
         const dataElements = labels.map((label) => results[label]);
 
-        const backgroundColor = labels.map((label) => getConsistentHEXColor(label));
+        const backgroundColor = labels.map((label) => getConsistentHEXColor(theme.value, label));
 
         const maxDataValue = Math.max(...dataElements);
         const thicknessScale = dataElements.map(

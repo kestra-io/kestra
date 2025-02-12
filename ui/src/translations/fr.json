@@ -268,7 +268,10 @@
       },
       "empty": "Aucun blueprint à afficher.",
       "custom": "Plans personnalisés",
-      "community": "Communauté"
+      "community": "Communauté",
+      "dashboards": "Tableaux de bord Blueprints",
+      "flows": "Plans de Flow",
+      "apps": "Plans d'application"
     },
     "use": "Utiliser",
     "plugins": {
@@ -290,7 +293,7 @@
     "template creation": "Création de template",
     "templates": "Templates",
     "templates deprecated": "Les templates sont obsolètes. Veuillez utiliser des sous-flux au lieu des templates. Consultez <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">section Migrations</a> expliquant comment vous pouvez migrer vers les sous-flux.",
-    "no result": "Aucun log émis jusqu'à présent",
+    "no result": "Il n'y a aucun résultat à afficher.",
     "trigger": "Déclencheur",
     "triggers": "Déclencheurs",
     "trigger details": "Détails du déclencheur",
@@ -532,7 +535,7 @@
     "management port": "Port de gestion",
     "file preview truncated": "Displayed content has been truncated",
     "show": "Afficher",
-    "advanced configuration": "Configuration avancée",
+    "advanced configuration": "Autres propriétés",
     "row count": "Nombre de lignes",
     "encoding": "Encodage",
     "all executions": "Toutes les exécutions",
@@ -681,8 +684,6 @@
         "theme": {
           "label": "Préférences de thème",
           "fields": {
-            "mode": "Mode thème",
-            "editor_theme": "Thème de l'éditeur",
             "editor_font_size": "Taille de Police de l'éditeur",
             "editor_font_family": "Police de caractères de l'éditeur",
             "editor_folding_stratgy": "Stratégie de Pliage Automatique ou Multi-Lignes de l'Éditeur",
@@ -693,7 +694,8 @@
               "classic": "Classique",
               "kestra": "Kestra"
             },
-            "logs_font_size": "Taille de police des Logs"
+            "logs_font_size": "Taille de police des Logs",
+            "theme": "Modèle"
           }
         },
         "localization": {
@@ -1018,9 +1020,12 @@
         "in": "dans",
         "starts_with": "commence par",
         "not_contains": "ne contient pas",
-        "is_not_one_off": "n'est pas l'un de",
+        "not_in": "n'est pas dans",
         "is_one_of": "est l'un de",
-        "between": "entre"
+        "between": "entre",
+        "greater_than": "plus grand que",
+        "less_than": "moins de",
+        "ends_with": "se termine par"
       },
       "save": {
         "label": "Recherches enregistrées",
@@ -1068,8 +1073,8 @@
         "main": "Principales propriétés",
         "error_handlers": "Gestionnaires d'erreurs",
         "tasks": "Tâches",
-        "advanced": "Configuration avancée",
-        "finally": "Enfin"
+        "finally": "Enfin",
+        "optional": "Propriétés optionnelles"
       },
       "creation": {
         "select": "Sélectionnez une {section}",
@@ -1148,6 +1153,28 @@
         "message": "Les applications dans Kestra Enterprise Edition vous permettent de créer des interfaces utilisateur personnalisées qui interagissent avec les workflows Kestra depuis l'extérieur de la plateforme. Cette fonctionnalité vous permet d'utiliser vos workflows comme un backend pour des applications personnalisées, permettant aux utilisateurs non techniques de soumettre des données via des formulaires ou de reprendre des workflows PAUSED en attente d'approbation."
       }
     },
-    "apps": "Applications"
+    "apps": "Applications",
+    "editor_shortcuts": {
+      "save_flow": "Enregistrer le flow",
+      "comment_uncomment": "Commenter/Décommenter",
+      "duplicate_cursor": "Dupliquer le curseur",
+      "uncomment": "Décommenter",
+      "label": "Raccourcis clavier",
+      "fold_unfold": "Plier/Déplier le code",
+      "comment": "Commentaire",
+      "move_line": "Déplacer la ligne",
+      "command_palette": "Afficher la palette de commandes"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Une erreur s'est produite lors du chargement de l'exécution"
+    },
+    "properties": {
+      "shown": "Affiché dans le tableau",
+      "hint": "Choisir les colonnes visibles",
+      "hidden": "Caché dans le tableau",
+      "label": "Propriétés"
+    },
+    "debug": "Déboguer",
+    "default": "Par défaut"
   }
 }

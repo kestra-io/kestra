@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.HasSource;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
@@ -29,6 +30,7 @@ import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -47,8 +49,6 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.extensions.Extension;
-import io.swagger.v3.oas.annotations.extensions.ExtensionProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.inject.Inject;
@@ -57,15 +57,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -101,6 +97,7 @@ public class FlowController {
 
     @Inject
     private TenantService tenantService;
+
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph")
@@ -207,21 +204,39 @@ public class FlowController {
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
+        @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
+        // Deprecated params
+        @Parameter(description = "A string filter",deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
+        @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels
+
     ) throws HttpStatusException {
+        // If filters is empty, map old params to QueryFilter
+        if (filters == null || filters.isEmpty()) {
+            filters = RequestUtils.mapLegacyParamsToFilters(
+                query,
+                namespace,
+                null,
+                null,
+                null,
+                null,
+                null,
+                scope,
+                labels,
+                null,
+                null,
+                null,
+                null);
+        }
 
         return PagedResults.of(flowRepository.find(
             PageableUtils.from(page, size, sort),
-            query,
             tenantService.resolveTenant(),
-            scope,
-            namespace,
-            RequestUtils.toMap(labels)
+            filters
         ));
     }
+
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{namespace}")

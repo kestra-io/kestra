@@ -268,7 +268,10 @@
       },
       "empty": "Нет blueprints для отображения.",
       "custom": "Пользовательские blueprints",
-      "community": "Сообщество"
+      "community": "Сообщество",
+      "dashboards": "Панель управления Blueprints",
+      "flows": "Черновики Flow",
+      "apps": "Черновики приложений"
     },
     "use": "Использовать",
     "plugins": {
@@ -290,7 +293,7 @@
     "template creation": "Создание шаблона",
     "templates": "Шаблоны",
     "templates deprecated": "Шаблоны устарели. Пожалуйста, используйте subflows вместо них. См. <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">раздел миграции</a>, объясняющий, как можно мигрировать с шаблонов на subflows.",
-    "no result": "Логи пока не были сгенерированы",
+    "no result": "Нет результатов для отображения.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Подробности trigger",
@@ -534,7 +537,7 @@
     "row count": "Количество строк",
     "encoding": "Кодировка",
     "show": "Показать",
-    "advanced configuration": "Расширенная конфигурация",
+    "advanced configuration": "Другие свойства",
     "all executions": "Все выполнения",
     "trigger execution id": "Trigger Execution Id",
     "triggers_state": {
@@ -681,8 +684,6 @@
         "theme": {
           "label": "Настройки темы",
           "fields": {
-            "mode": "Режим темы",
-            "editor_theme": "Тема редактора",
             "editor_font_size": "Размер шрифта редактора",
             "editor_font_family": "Шрифт редактора",
             "editor_folding_stratgy": "Автоматическое сворачивание кода в редакторе",
@@ -693,7 +694,8 @@
               "classic": "Классический",
               "kestra": "Kestra"
             },
-            "logs_font_size": "Размер шрифта Logs"
+            "logs_font_size": "Размер шрифта Logs",
+            "theme": "Тема"
           }
         },
         "localization": {
@@ -1018,9 +1020,12 @@
         "in": "в",
         "starts_with": "начинается с",
         "not_contains": "не содержит",
-        "is_not_one_off": "не является одним из",
+        "not_in": "не является одним из",
         "is_one_of": "является одним из",
-        "between": "между"
+        "between": "между",
+        "greater_than": "больше чем",
+        "less_than": "меньше чем",
+        "ends_with": "заканчивается на"
       },
       "save": {
         "label": "Сохранённые поиски",
@@ -1068,8 +1073,8 @@
         "main": "Основные свойства",
         "error_handlers": "Обработчики ошибок",
         "tasks": "Задачи",
-        "advanced": "Расширенная конфигурация",
-        "finally": "Наконец"
+        "finally": "Наконец",
+        "optional": "Необязательные свойства"
       },
       "creation": {
         "select": "Выберите {section}",
@@ -1148,6 +1153,28 @@
         "message": "Приложения в Kestra Enterprise Edition позволяют создавать пользовательские интерфейсы, которые взаимодействуют с Kestra workflows вне платформы. Эта функция позволяет использовать ваши workflows в качестве backend для пользовательских приложений, что дает возможность нетехническим пользователям отправлять данные через формы или возобновлять PAUSED workflows, ожидающие одобрения."
       }
     },
-    "apps": "Приложения"
+    "apps": "Приложения",
+    "editor_shortcuts": {
+      "save_flow": "Сохранить flow",
+      "comment_uncomment": "Комментарий/Раскомментировать",
+      "duplicate_cursor": "Дублировать курсор",
+      "uncomment": "Раскомментировать",
+      "label": "Горячие клавиши",
+      "fold_unfold": "Свернуть/Развернуть код",
+      "comment": "Комментарий",
+      "move_line": "Переместить строку",
+      "command_palette": "Показать палитру команд"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Произошла ошибка при загрузке выполнения"
+    },
+    "properties": {
+      "shown": "Показано в таблице",
+      "hint": "Выберите видимые столбцы",
+      "hidden": "Скрыто в таблице",
+      "label": "Свойства"
+    },
+    "debug": "Отладка",
+    "default": "По умолчанию"
   }
 }

@@ -16,6 +16,8 @@
 <script setup lang="ts">
     import {ref, watch} from "vue";
 
+    defineOptions({inheritAttrs: false});
+
     const emits = defineEmits(["update:modelValue"]);
     const props = defineProps({
         modelValue: {type: [String, Number, Boolean], default: undefined},

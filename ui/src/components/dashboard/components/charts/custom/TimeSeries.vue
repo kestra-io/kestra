@@ -19,14 +19,14 @@
     import {Bar} from "vue-chartjs";
 
     import {customBarLegend} from "../legend.js";
-    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
+    import {defaultConfig, getConsistentHEXColor} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
     import moment from "moment";
 
     import {useRoute} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
-    import KestraUtils from "../../../../../utils/utils.js"
+    import KestraUtils, {useTheme} from "../../../../../utils/utils.js"
 
     const store = useStore();
 
@@ -49,6 +49,8 @@
         .filter(([_, v]) => v.agg)
         .sort((a, b) => a[1].graphStyle.localeCompare(b[1].graphStyle));
     const yBShown = aggregator.length === 2;
+
+    const theme = useTheme();
 
     const DEFAULTS = {
         display: true,
@@ -120,7 +122,7 @@
                     },
                 }),
             },
-        });
+        }, theme.value);
     });
 
     function isDuration(field) {
@@ -166,6 +168,7 @@
                         tooltip: stack,
                         label: params[colorByColumn],
                         backgroundColor: getConsistentHEXColor(
+                            theme.value,
                             params[colorByColumn],
                         ),
                         unique: new Set(),
@@ -221,7 +224,7 @@
                         pointRadius: 0,
                         borderWidth: 0.75,
                         label: label,
-                        borderColor: getConsistentHEXColor(label),
+                        borderColor: getConsistentHEXColor(theme.value, label),
                     },
                     ...yDatasetData,
                 ]

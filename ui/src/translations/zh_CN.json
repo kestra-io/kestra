@@ -268,7 +268,10 @@
       },
       "empty": "没有可显示的blueprints。",
       "custom": "自定义blueprints",
-      "community": "社区"
+      "community": "社区",
+      "dashboards": "仪表板 Blueprints",
+      "flows": "流程蓝图",
+      "apps": "应用蓝图"
     },
     "use": "使用",
     "plugins": {
@@ -290,7 +293,7 @@
     "template creation": "模板创建",
     "templates": "模板",
     "templates deprecated": "模板已弃用。请使用子流程代替。查看 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">迁移部分</a> 了解如何从模板迁移到子流程。",
-    "no result": "没有日志发出",
+    "no result": "没有结果显示。",
     "trigger": "触发器",
     "triggers": "触发器",
     "trigger details": "触发器详情",
@@ -534,7 +537,7 @@
     "row count": "行数",
     "encoding": "编码",
     "show": "显示",
-    "advanced configuration": "高级配置",
+    "advanced configuration": "其他属性",
     "all executions": "所有执行",
     "trigger execution id": "触发执行ID",
     "triggers_state": {
@@ -681,8 +684,6 @@
         "theme": {
           "label": "主题偏好",
           "fields": {
-            "mode": "主题模式",
-            "editor_theme": "编辑器主题",
             "editor_font_size": "编辑器字体大小",
             "editor_font_family": "编辑器字体家族",
             "editor_folding_stratgy": "编辑器中的自动代码折叠",
@@ -693,7 +694,8 @@
               "classic": "经典",
               "kestra": "Kestra"
             },
-            "logs_font_size": "日志字体大小"
+            "logs_font_size": "日志字体大小",
+            "theme": "主题"
           }
         },
         "localization": {
@@ -1018,9 +1020,12 @@
         "in": "在",
         "starts_with": "以...开始",
         "not_contains": "不包含",
-        "is_not_one_off": "不是其中之一",
+        "not_in": "不在",
         "is_one_of": "是其中之一",
-        "between": "之间"
+        "between": "之间",
+        "greater_than": "大于",
+        "less_than": "小于",
+        "ends_with": "以...结束"
       },
       "save": {
         "label": "已保存的搜索",
@@ -1068,8 +1073,8 @@
         "main": "主要属性",
         "error_handlers": "错误处理程序",
         "tasks": "任务",
-        "advanced": "高级配置",
-        "finally": "最后"
+        "finally": "最后",
+        "optional": "可选属性"
       },
       "creation": {
         "select": "选择一个{section}",
@@ -1148,6 +1153,28 @@
         "message": "在 Kestra 企业版中，应用程序允许您构建自定义 UI，以便从平台外部与 Kestra 工作流进行交互。此功能使您可以将工作流用作自定义应用程序的后端，允许非技术用户通过表单提交数据或恢复等待批准的暂停工作流。"
       }
     },
-    "apps": "应用程序"
+    "apps": "应用程序",
+    "editor_shortcuts": {
+      "save_flow": "保存flow",
+      "comment_uncomment": "注释/取消注释",
+      "duplicate_cursor": "复制光标",
+      "uncomment": "取消注释",
+      "label": "键盘快捷键",
+      "fold_unfold": "折叠/展开代码",
+      "comment": "评论",
+      "move_line": "移动行",
+      "command_palette": "显示命令面板"
+    },
+    "something_went_wrong": {
+      "loading_execution": "加载执行时出现问题"
+    },
+    "properties": {
+      "shown": "显示在表格中",
+      "hint": "选择可见列",
+      "hidden": "隐藏在表格中",
+      "label": "属性"
+    },
+    "debug": "调试",
+    "default": "默认值"
   }
 }

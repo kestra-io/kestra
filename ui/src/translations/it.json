@@ -268,7 +268,10 @@
       },
       "empty": "Nessun blueprint da mostrare.",
       "custom": "Blueprint personalizzati",
-      "community": "Comunità"
+      "community": "Comunità",
+      "dashboards": "Blueprint del Dashboard",
+      "flows": "Blueprint dei Flow",
+      "apps": "Blueprint delle App"
     },
     "use": "Usa",
     "plugins": {
@@ -290,7 +293,7 @@
     "template creation": "Creazione del template",
     "templates": "Templates",
     "templates deprecated": "I templates sono deprecati. Si prega di utilizzare i subflows. Vedi la <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sezione Migrazioni</a> che spiega come migrare dai templates ai subflows.",
-    "no result": "Nessun log emesso finora",
+    "no result": "Non ci sono risultati da mostrare.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Dettagli del trigger",
@@ -534,7 +537,7 @@
     "row count": "Conteggio righe",
     "encoding": "Codifica",
     "show": "Mostra",
-    "advanced configuration": "Configurazione avanzata",
+    "advanced configuration": "Altre proprietà",
     "all executions": "Tutte le esecuzioni",
     "trigger execution id": "Trigger Execution Id",
     "triggers_state": {
@@ -681,8 +684,6 @@
         "theme": {
           "label": "Preferenze del Tema",
           "fields": {
-            "mode": "Modalità Tema",
-            "editor_theme": "Tema dell'Editor",
             "editor_font_size": "Dimensione del Font dell'Editor",
             "editor_font_family": "Famiglia del Font dell'Editor",
             "editor_folding_stratgy": "Piegatura automatica del codice nell'Editor",
@@ -693,7 +694,8 @@
               "classic": "Classico",
               "kestra": "Kestra"
             },
-            "logs_font_size": "Dimensione Font dei Log"
+            "logs_font_size": "Dimensione Font dei Log",
+            "theme": "Modello"
           }
         },
         "localization": {
@@ -1018,9 +1020,12 @@
         "in": "nel",
         "starts_with": "inizia con",
         "not_contains": "non contiene",
-        "is_not_one_off": "non è uno di",
+        "not_in": "non in",
         "is_one_of": "è uno di",
-        "between": "tra"
+        "between": "tra",
+        "greater_than": "maggiore di",
+        "less_than": "minore di",
+        "ends_with": "termina con"
       },
       "save": {
         "label": "Ricerche salvate",
@@ -1068,8 +1073,8 @@
         "main": "Proprietà principali",
         "error_handlers": "Gestori degli Errori",
         "tasks": "Attività",
-        "advanced": "Configurazione avanzata",
-        "finally": "Infine"
+        "finally": "Infine",
+        "optional": "Proprietà opzionali"
       },
       "creation": {
         "select": "Seleziona una {section}",
@@ -1148,6 +1153,28 @@
         "message": "Le app nella Kestra Enterprise Edition ti consentono di creare interfacce utente personalizzate che interagiscono con i workflow di Kestra al di fuori della piattaforma. Questa funzionalità ti permette di utilizzare i tuoi workflow come backend per applicazioni personalizzate, consentendo agli utenti non tecnici di inviare dati tramite moduli o riprendere workflow PAUSED in attesa di approvazione."
       }
     },
-    "apps": "Applicazioni"
+    "apps": "Applicazioni",
+    "editor_shortcuts": {
+      "save_flow": "Salva flow",
+      "comment_uncomment": "Commenta/Decommenta",
+      "duplicate_cursor": "Duplica cursore",
+      "uncomment": "Decommenta",
+      "label": "Scorciatoie da tastiera",
+      "fold_unfold": "Piega/Spiega codice",
+      "comment": "Commento",
+      "move_line": "Sposta linea",
+      "command_palette": "Mostra la palette dei comandi"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Si è verificato un errore durante il caricamento dell'esecuzione"
+    },
+    "properties": {
+      "shown": "Visualizzato nella tabella",
+      "hint": "Scegli colonne visibili",
+      "hidden": "Nascosto nella Tabella",
+      "label": "Proprietà"
+    },
+    "debug": "Debug",
+    "default": "Predefinito"
   }
 }

@@ -8,33 +8,49 @@
             <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins.filter(p => !p.subGroup)" />
         </template>
         <template #content>
-            <div class="markdown" v-loading="isLoading">
-                <markdown :source="plugin.markdown" :permalink="true" />
+            <div class="plugin-doc">
+                <div class="d-flex gap-3 mb-3 align-items-center">
+                    <task-icon
+                        class="plugin-icon"
+                        :cls="$route.params.cls"
+                        only-icon
+                        :icons="icons"
+                    />
+                    <h4 class="mb-0">
+                        {{ pluginName }}
+                    </h4>
+                </div>
+                <Suspense v-loading="isLoading">
+                    <schema-to-html class="plugin-schema" :dark-mode="theme === 'dark'" :schema="plugin.schema" :props-initially-expanded="true" :plugin-type="$route.params.cls">
+                        <template #markdown="{content}">
+                            <markdown font-size-var="font-size-base" :source="content" />
+                        </template>
+                    </schema-to-html>
+                </Suspense>
             </div>
         </template>
     </docs-layout>
 </template>
 
-<script>
-    import RouteContext from "../../mixins/routeContext";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
+<script setup>
+    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {SchemaToHtml} from "@kestra-io/ui-libs";
+    import DocsLayout from "../docs/DocsLayout.vue";
+    import PluginHome from "./PluginHome.vue";
     import Markdown from "../layout/Markdown.vue"
     import Toc from "./Toc.vue"
-    import {mapState} from "vuex";
-    import PluginHome from "./PluginHome.vue";
-    import DocsLayout from "../docs/DocsLayout.vue";
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
+</script>
+
+<script>
+    import RouteContext from "../../mixins/routeContext";
+    import {mapState, mapGetters} from "vuex";
 
     export default {
         mixins: [RouteContext],
-        components: {
-            DocsLayout,
-            PluginHome,
-            Markdown,
-            Toc,
-            TopNavBar
-        },
         computed: {
-            ...mapState("plugin", ["plugin", "plugins"]),
+            ...mapState("plugin", ["plugin", "plugins", "icons"]),
+            ...mapGetters("misc", ["theme"]),
             routeInfo() {
                 return {
                     title: this.$route.params.cls ? this.$route.params.cls : this.$t("plugins.names"),
@@ -47,6 +63,10 @@
                         }
                     ]
                 }
+            },
+            pluginName() {
+                const split = this.$route.params.cls.split(".");
+                return split[split.length - 1];
             },
             pluginIsSelected() {
                 return this.plugin && this.$route.params.cls
@@ -99,3 +119,6 @@
     };
 </script>
 
+<style scoped lang="scss">
+    @import "../../styles/components/plugin-doc";
+</style>

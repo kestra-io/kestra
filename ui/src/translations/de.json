@@ -268,7 +268,10 @@
       },
       "empty": "Keine Blueprints zum Anzeigen.",
       "custom": "Benutzerdefinierte Blueprints",
-      "community": "Gemeinschaft"
+      "community": "Gemeinschaft",
+      "dashboards": "Dashboard Blueprints",
+      "flows": "Flow-Blueprints",
+      "apps": "App-Blueprints"
     },
     "use": "Verwenden",
     "plugins": {
@@ -290,7 +293,7 @@
     "template creation": "Vorlagenerstellung",
     "templates": "Vorlagen",
     "templates deprecated": "Vorlagen sind veraltet. Bitte verwenden Sie stattdessen Subflows. Siehe den <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Migrationsabschnitt</a>, der erklärt, wie Sie von Vorlagen zu Subflows migrieren können.",
-    "no result": "Keine Logs bisher ausgegeben",
+    "no result": "Es gibt keine Ergebnisse anzuzeigen.",
     "trigger": "Trigger",
     "triggers": "Trigger",
     "trigger details": "Trigger-Details",
@@ -534,7 +537,7 @@
     "row count": "Zeilenanzahl",
     "encoding": "Kodierung",
     "show": "Anzeigen",
-    "advanced configuration": "Erweiterte Konfiguration",
+    "advanced configuration": "Andere Eigenschaften",
     "all executions": "Alle Ausführungen",
     "trigger execution id": "Trigger-Ausführungs-Id",
     "triggers_state": {
@@ -681,8 +684,6 @@
         "theme": {
           "label": "Modus-Einstellungen",
           "fields": {
-            "mode": "Modus",
-            "editor_theme": "Editor-Thema",
             "editor_font_size": "Editor-Schriftgröße",
             "editor_font_family": "Editor-Schriftfamilie",
             "editor_folding_stratgy": "Automatisch Code im Editor zusammenklappen",
@@ -693,7 +694,8 @@
               "classic": "Klassisch",
               "kestra": "Kestra"
             },
-            "logs_font_size": "Logs Schriftgröße"
+            "logs_font_size": "Logs Schriftgröße",
+            "theme": "Modus"
           }
         },
         "localization": {
@@ -1018,9 +1020,12 @@
         "in": "im",
         "starts_with": "beginnt mit",
         "not_contains": "nicht enthält",
-        "is_not_one_off": "ist nicht einer von",
+        "not_in": "nicht in",
         "is_one_of": "ist eine von",
-        "between": "zwischen"
+        "between": "zwischen",
+        "greater_than": "größer als",
+        "less_than": "weniger als",
+        "ends_with": "endet mit"
       },
       "save": {
         "label": "Gespeicherte Suchen",
@@ -1068,8 +1073,8 @@
         "main": "Haupteigenschaften",
         "error_handlers": "Fehlerbehandler",
         "tasks": "Aufgaben",
-        "advanced": "Erweiterte Konfiguration",
-        "finally": "Schließlich"
+        "finally": "Schließlich",
+        "optional": "Optionale Eigenschaften"
       },
       "creation": {
         "select": "Wählen Sie einen {section} aus",
@@ -1148,6 +1153,28 @@
         "message": "Apps in der Kestra Enterprise Edition ermöglichen es Ihnen, benutzerdefinierte UIs zu erstellen, die mit Kestra-Workflows außerhalb der Plattform interagieren. Diese Funktion erlaubt es Ihnen, Ihre Workflows als Backend für benutzerdefinierte Anwendungen zu nutzen, sodass nicht-technische Benutzer Daten über Formulare einreichen oder pausierte Workflows, die auf eine Genehmigung warten, fortsetzen können."
       }
     },
-    "apps": "Apps"
+    "apps": "Apps",
+    "editor_shortcuts": {
+      "save_flow": "Flow speichern",
+      "comment_uncomment": "Kommentar/Kommentar entfernen",
+      "duplicate_cursor": "Kursor duplizieren",
+      "uncomment": "Entkommentieren",
+      "label": "Tastenkombinationen",
+      "fold_unfold": "Code ein-/ausklappen",
+      "comment": "Kommentar",
+      "move_line": "Zeile verschieben",
+      "command_palette": "Befehlsübersicht anzeigen"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Beim Laden der Ausführung ist etwas schiefgelaufen."
+    },
+    "properties": {
+      "shown": "In Tabelle angezeigt",
+      "hint": "Sichtbare Spalten auswählen",
+      "hidden": "In Tabelle versteckt",
+      "label": "Eigenschaften"
+    },
+    "debug": "Debuggen",
+    "default": "Standard"
   }
 }

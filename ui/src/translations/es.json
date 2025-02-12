@@ -268,7 +268,10 @@
       },
       "empty": "No hay blueprints para mostrar.",
       "custom": "Planos personalizados",
-      "community": "Comunidad"
+      "community": "Comunidad",
+      "dashboards": "Planos del Dashboard",
+      "flows": "Planos de Flow",
+      "apps": "Planos de la Aplicación"
     },
     "use": "Usar",
     "plugins": {
@@ -290,7 +293,7 @@
     "template creation": "Creación de plantilla",
     "templates": "Plantillas",
     "templates deprecated": "Las plantillas están obsoletas. Por favor usa subflows en su lugar. Consulta la <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sección de Migraciones</a> que explica cómo puedes migrar de plantillas a subflows.",
-    "no result": "No se han emitido logs hasta ahora",
+    "no result": "No hay resultados para mostrar.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Detalles del trigger",
@@ -534,7 +537,7 @@
     "row count": "Recuento de filas",
     "encoding": "Codificación",
     "show": "Mostrar",
-    "advanced configuration": "Configuración avanzada",
+    "advanced configuration": "Otras propiedades",
     "all executions": "Todas las ejecuciones",
     "trigger execution id": "Trigger Execution Id",
     "triggers_state": {
@@ -681,8 +684,6 @@
         "theme": {
           "label": "Preferencias de Tema",
           "fields": {
-            "mode": "Modo de Tema",
-            "editor_theme": "Tema del Editor",
             "editor_font_size": "Tamaño de Fuente del Editor",
             "editor_font_family": "Familia de Fuente del Editor",
             "editor_folding_stratgy": "Plegado Automático de Código en el Editor",
@@ -693,7 +694,8 @@
               "classic": "Clásico",
               "kestra": "Kestra"
             },
-            "logs_font_size": "Tamaño de Fuente de Logs"
+            "logs_font_size": "Tamaño de Fuente de Logs",
+            "theme": "Tema"
           }
         },
         "localization": {
@@ -1018,9 +1020,12 @@
         "in": "en",
         "starts_with": "comienza con",
         "not_contains": "no contiene",
-        "is_not_one_off": "no es uno de",
+        "not_in": "no en",
         "is_one_of": "es uno de",
-        "between": "entre"
+        "between": "entre",
+        "greater_than": "mayor que",
+        "less_than": "menos de",
+        "ends_with": "termina con"
       },
       "save": {
         "label": "Búsquedas guardadas",
@@ -1068,8 +1073,8 @@
         "main": "Propiedades principales",
         "error_handlers": "Manejadores de Errores",
         "tasks": "Tareas",
-        "advanced": "Configuración avanzada",
-        "finally": "Finalmente"
+        "finally": "Finalmente",
+        "optional": "Propiedades opcionales"
       },
       "creation": {
         "select": "Seleccione una {section}",
@@ -1148,6 +1153,28 @@
         "message": "Las aplicaciones en Kestra Enterprise Edition te permiten construir interfaces de usuario personalizadas que interactúan con los workflows de Kestra desde fuera de la plataforma. Esta función te permite usar tus workflows como un backend para aplicaciones personalizadas, permitiendo a usuarios no técnicos enviar datos a través de formularios o reanudar workflows PAUSED que esperan aprobación."
       }
     },
-    "apps": "Aplicaciones"
+    "apps": "Aplicaciones",
+    "editor_shortcuts": {
+      "save_flow": "Guardar flow",
+      "comment_uncomment": "Comentar/Descomentar",
+      "duplicate_cursor": "Duplicar cursor",
+      "uncomment": "Descomentar",
+      "label": "Atajos de teclado",
+      "fold_unfold": "Plegar/Desplegar código",
+      "comment": "Comentario",
+      "move_line": "Mover línea",
+      "command_palette": "Mostrar paleta de comandos"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Algo salió mal al cargar la ejecución."
+    },
+    "properties": {
+      "shown": "Mostrado en Tabla",
+      "hint": "Elegir Columnas Visibles",
+      "hidden": "Oculto en la Tabla",
+      "label": "Propiedades"
+    },
+    "debug": "Depuración",
+    "default": "Predeterminado"
   }
 }

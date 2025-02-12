@@ -1,5 +1,6 @@
 package io.kestra.repository.postgres;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.DateUtils;
@@ -45,6 +46,11 @@ public class PostgresExecutionRepository extends AbstractJdbcExecutionRepository
     @Override
     protected Condition findCondition(String query, Map<String, String> labels) {
         return PostgresExecutionRepositoryService.findCondition(this.jdbcRepository, query, labels);
+    }
+
+    @Override
+    protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation) {
+        return PostgresExecutionRepositoryService.findCondition(value, operation);
     }
 
     @Override

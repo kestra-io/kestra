@@ -83,10 +83,10 @@
             z-index: -2;
             background-image: linear-gradient(138.8deg, #CCE8FE 0%, #CDA0FF 27.03%, #8489F5 41.02%, #CDF1FF 68.68%, #B591E9 94%, #CCE8FE 100%);
             background-size: 200% 200%;
-            top: -2px;
-            bottom: -2px;
-            left: -2px;
-            right: -2px;
+            top: 0px;
+            bottom: 0px;
+            left: 0px;
+            right: 0px;
             animation: move-border 3s linear infinite;
         }
 
@@ -94,11 +94,11 @@
 
         .enterprise-tag::after{
             z-index: -1;
-            background: $base-gray-200;
-            top: -1px;
-            left: -1px;
-            bottom: -1px;
-            right: -1px;
+            background: $base-gray-100;
+            top: 1px;
+            left: 1px;
+            bottom: 1px;
+            right: 1px;
             html.dark & {
                 background: $base-gray-400;
             }
@@ -107,14 +107,12 @@
         .enterprise-tag{
             position: relative;
             background: $base-gray-200;
-            border: 1px solid transparent;
-            padding: 0 1rem;
+            padding: .125rem 1rem;
             border-radius: 1rem;
             display: inline-block;
             z-index: 2;
             html.dark &{
                 background: #FBFBFB26;
-                border-color: #FFFFFF;
             }
             .flare{
                 display: none;

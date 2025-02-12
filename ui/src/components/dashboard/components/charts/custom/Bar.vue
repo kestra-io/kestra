@@ -18,6 +18,7 @@
     import {Bar} from "vue-chartjs";
 
     import {customBarLegend} from "../legend.js";
+    import {useTheme} from "../../../../../utils/utils.js";
     import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
@@ -51,6 +52,8 @@
     };
 
     const aggregator = Object.entries(data.columns).filter(([_, v]) => v.agg);
+
+    const theme = useTheme();
 
     const options = computed(() => {
         return defaultConfig({
@@ -102,7 +105,7 @@
                     }
                 },
             },
-        });
+        }, theme.value);
     });
 
     function isDurationAgg() {
@@ -142,7 +145,7 @@
             return Object.entries(grouped[xLabel]).map(subSectionsEntry => ({
                 label: subSectionsEntry[0],
                 data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
-                backgroundColor: getConsistentHEXColor(subSectionsEntry[0]),
+                backgroundColor: getConsistentHEXColor(theme.value, subSectionsEntry[0]),
                 tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
             }));
         });

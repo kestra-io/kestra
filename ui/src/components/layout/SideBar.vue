@@ -326,6 +326,10 @@
 
             .vsm--link {
                 padding-left: 13px;
+                &.vsm--link_hover {
+                    background-color: var(--ks-button-background-primary);
+                    color: var(--ks-button-content-primary);
+                }
             }
 
             .vsm--item {

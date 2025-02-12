@@ -8,13 +8,15 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.core5.http.HttpHeaders;
 import org.apache.hc.core5.http.message.BasicHeader;
 
-@Getter
 @SuperBuilder(toBuilder = true)
+@Getter
+@NoArgsConstructor
 public class BearerAuthConfiguration extends AbstractAuthConfiguration {
     @NotNull
     @JsonInclude
@@ -22,7 +24,7 @@ public class BearerAuthConfiguration extends AbstractAuthConfiguration {
     protected Property<AuthType> type = Property.of(AuthType.BEARER);
 
     @Schema(title = "The token for bearer token authentication.")
-    private final Property<String> token;
+    private Property<String> token;
 
     @Override
     public void configure(HttpClientBuilder builder, RunContext runContext) throws IllegalVariableEvaluationException {

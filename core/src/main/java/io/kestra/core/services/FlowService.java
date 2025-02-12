@@ -170,6 +170,12 @@ public class FlowService {
         Set<ConstraintViolation<?>> violations = new HashSet<>();
 
         subFlows.forEach(subflow -> {
+            String regex = ".*\\{\\{.+}}.*"; // regex to check if string contains pebble
+            String subflowId = subflow.getFlowId();
+            String namespace = subflow.getNamespace();
+            if (subflowId.matches(regex) || namespace.matches(regex)) {
+                return;
+            }
             Optional<Flow> optional = findById(flow.getTenantId(), subflow.getNamespace(), subflow.getFlowId());
 
             if (optional.isEmpty()) {

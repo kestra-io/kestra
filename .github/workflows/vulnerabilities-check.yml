@@ -36,7 +36,7 @@ jobs:
       # Npm
       - name: Npm - Install
         shell: bash
-        working-directory: kestra-ee/ui-ee
+²        working-directory: ui
         run: npm install
 
       # Run OWASP dependency check plugin

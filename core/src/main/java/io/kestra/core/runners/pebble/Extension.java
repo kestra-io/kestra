@@ -48,6 +48,12 @@ public class Extension extends AbstractExtension {
     private FileSizeFunction fileSizeFunction;
 
     @Inject
+    private IsFileEmptyFunction isFileEmptyFunction;
+
+    @Inject
+    private FileExistsFunction fileExistsFunction;
+
+    @Inject
     @Nullable
     private ErrorLogsFunction errorLogsFunction;
 
@@ -152,6 +158,8 @@ public class Extension extends AbstractExtension {
         }
         functions.put("randomInt", new RandomIntFunction());
         functions.put("randomPort", new RandomPortFunction());
+        functions.put("fileExists", fileExistsFunction);
+        functions.put("isFileEmpty", isFileEmptyFunction);
         return functions;
     }
 

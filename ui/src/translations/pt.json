@@ -1174,6 +1174,7 @@
       "hidden": "Oculto na Tabela",
       "label": "Propriedades"
     },
-    "debug": "Depurar"
+    "debug": "Depurar",
+    "default": "Padrão"
   }
 }

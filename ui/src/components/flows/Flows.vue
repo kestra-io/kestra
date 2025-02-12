@@ -289,7 +289,6 @@
                             </el-table-column>
 
                             <el-table-column
-                                v-if="displayColumn('action')"
                                 column-key="action"
                                 class-name="row-action"
                                 :label="$t('actions')"

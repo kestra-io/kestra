@@ -1,0 +1,134 @@
+name: Backend - Tests
+
+on:
+  workflow_call:
+    secrets:
+      GITHUB_AUTH_TOKEN:
+        description: "The GitHub Token."
+        required: true
+      CODECOV_TOKEN:
+        description: 'Codecov Token'
+        required: true
+      SONAR_TOKEN:
+        description: 'Sonar Token'
+        required: true
+      GOOGLE_SERVICE_ACCOUNT:
+        description: 'Google Service Account'
+        required: true
+
+jobs:
+  test:
+    name: Backend - Tests
+    runs-on: ubuntu-latest
+    env:
+      GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        name: Checkout - Current ref
+
+      # Setup build
+      - uses: kestra-io/actions/.github/actions/setup-build@main
+        name: Setup - Build
+        id: build
+        with:
+          java-enabled: true
+          node-enabled: true
+          python-enabled: true
+
+      # Services
+      - name: Setup - Start docker compose
+        shell: bash
+        run: docker compose -f docker-compose-ci.yml up -d
+
+      # Gradle check
+      - name: Gradle - Build
+        if: ${{ github.event.inputs.skip-test == 'false' || github.event.inputs.skip-test == '' }}
+        env:
+          GOOGLE_SERVICE_ACCOUNT: ${{ secrets.GOOGLE_SERVICE_ACCOUNT }}
+        shell: bash
+        run: |
+          echo $GOOGLE_SERVICE_ACCOUNT | base64 -d > ~/.gcp-service-account.json
+          export GOOGLE_APPLICATION_CREDENTIALS=$HOME/.gcp-service-account.json
+          ./gradlew check javadoc --parallel
+
+      # report test
+      - name: Test - Publish Test Results
+        uses: dorny/test-reporter@v1
+        if: always()
+        with:
+          name: Java Tests Report
+          reporter: java-junit
+          path: '**/build/test-results/test/TEST-*.xml'
+          list-suites: 'failed'
+          list-tests: 'failed'
+          fail-on-error: 'false'
+
+      # Sonar
+      - name: Test - Analyze with Sonar
+        if: env.SONAR_TOKEN != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        shell: bash
+        run: ./gradlew sonar --info
+
+      # GCP
+      - name: GCP - Auth with unit test account
+        id: auth
+        if: always() && env.GOOGLE_SERVICE_ACCOUNT != ''
+        continue-on-error: true
+        uses: "google-github-actions/auth@v2"
+        with:
+          credentials_json: "${{ secrets.GOOGLE_SERVICE_ACCOUNT }}"
+
+      - name: GCP - Setup Cloud SDK
+        if: env.GOOGLE_SERVICE_ACCOUNT != ''
+        uses: "google-github-actions/setup-gcloud@v2"
+
+        # Allure check
+      - uses: rlespinasse/github-slug-action@v5
+        name: Allure - Generate slug variables
+
+      - name: Allure - Publish report
+        uses: andrcuns/allure-publish-action@v2.9.0
+        if: always() && env.GOOGLE_SERVICE_ACCOUNT != ''
+        continue-on-error: true
+        env:
+          GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_AUTH_TOKEN }}
+          JAVA_HOME: /usr/lib/jvm/default-jvm/
+        with:
+          storageType: gcs
+          resultsGlob: "**/build/allure-results"
+          bucket: internal-kestra-host
+          baseUrl: "https://internal.dev.kestra.io"
+          prefix: ${{ format('{0}/{1}', github.repository, 'allure/java') }}
+          copyLatest: true
+          ignoreMissingResults: true
+
+      # Jacoco
+      - name: Jacoco - Copy reports
+        if: env.GOOGLE_SERVICE_ACCOUNT != ''
+        continue-on-error: true
+        shell: bash
+        run: |
+          mv build/reports/jacoco/testCodeCoverageReport build/reports/jacoco/test/
+          mv build/reports/jacoco/test/testCodeCoverageReport.xml build/reports/jacoco/test/jacocoTestReport.xml
+          gsutil -m rsync -d -r  build/reports/jacoco/test/ gs://internal-kestra-host/${{ format('{0}/{1}', github.repository, 'jacoco') }}
+
+      # Codecov
+      - name: Codecov - Upload coverage reports
+        uses: codecov/codecov-action@v5
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: backend
+
+      - name: Codecov - Upload test results
+        uses: codecov/test-results-action@v1
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: backend

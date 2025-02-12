@@ -458,6 +458,33 @@ class RequestTest {
         }
     }
 
+    @SuppressWarnings("deprecation")
+    @Test
+    void basicAuthOld() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.of(server.getURL().toString() + "/auth/basic"))
+                .options(HttpConfiguration.builder()
+                    .basicAuthUser("John")
+                    .basicAuthPassword("p4ss")
+                    .build()
+                )
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getBody(), is("{\"hello\":\"John\"}"));
+            assertThat(output.getCode(), is(200));
+        }
+    }
+
     @Test
     void bearerAuth() throws Exception {
         try (
@@ -484,6 +511,7 @@ class RequestTest {
             assertThat(output.getCode(), is(200));
         }
     }
+
 
     @Controller
     static class MockController {

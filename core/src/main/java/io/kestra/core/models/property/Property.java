@@ -169,6 +169,7 @@ public class Property<T> {
      *
      * @see io.kestra.core.runners.RunContextProperty#asMap(Class, Class, Map)
      */
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public static <T, K,V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.value == null) {
             JavaType targetMapType = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);

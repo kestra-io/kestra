@@ -201,16 +201,16 @@ build-plugins:
 	for repo in "$(PLUGIN_GIT_DIR)"/*; do \
 	    if [ -d "$$repo/.git" ]; then \
 	        branch=$$(git -C "$$repo" rev-parse --abbrev-ref HEAD); \
-	        if [[ "$$branch" == "master" ]]; then \
+	        if [[ "$$branch" == "master" || "$$branch" == "main" ]]; then \
 	            MASTER_REPOS+=("$$repo"); \
 	        else \
-	            echo "❌ Skipping: $$(basename "$$repo") (Not on master branch)"; \
+	            echo "❌ Skipping: $$(basename "$$repo") (Not on master or main branch)"; \
 	        fi; \
 	    fi; \
 	done; \
 	\
-	# === STEP 2: Update Repos on Master Branch === \
-	echo "⬇️ Updating repositories on master branch..."; \
+	# === STEP 2: Update Repos on Master or Main Branch === \
+	echo "⬇️ Updating repositories on master or main branch..."; \
 	for repo in "$${MASTER_REPOS[@]}"; do \
 	    echo "🔄 Updating: $$(basename "$$repo")"; \
 	    git -C "$$repo" pull --rebase; \
@@ -244,4 +244,4 @@ build-plugins:
 	    done; \
 	done; \
 	\
-	echo "🎉 Done! All master branch repos updated, built, and organized."
+	echo "🎉 Done! All master and main branch repos updated, built, and organized."

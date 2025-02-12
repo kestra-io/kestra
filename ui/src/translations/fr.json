@@ -684,7 +684,6 @@
         "theme": {
           "label": "Préférences de thème",
           "fields": {
-            "mode": "Mode thème",
             "editor_font_size": "Taille de Police de l'éditeur",
             "editor_font_family": "Police de caractères de l'éditeur",
             "editor_folding_stratgy": "Stratégie de Pliage Automatique ou Multi-Lignes de l'Éditeur",

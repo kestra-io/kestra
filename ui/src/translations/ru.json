@@ -684,7 +684,6 @@
         "theme": {
           "label": "Настройки темы",
           "fields": {
-            "mode": "Режим темы",
             "editor_font_size": "Размер шрифта редактора",
             "editor_font_family": "Шрифт редактора",
             "editor_folding_stratgy": "Автоматическое сворачивание кода в редакторе",

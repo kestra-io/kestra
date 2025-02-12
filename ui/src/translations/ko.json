@@ -684,7 +684,6 @@
         "theme": {
           "label": "테마 설정",
           "fields": {
-            "mode": "테마 모드",
             "editor_font_size": "편집기 글꼴 크기",
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_folding_stratgy": "편집기에서 자동 코드 접기",

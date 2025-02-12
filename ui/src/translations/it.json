@@ -684,7 +684,6 @@
         "theme": {
           "label": "Preferenze del Tema",
           "fields": {
-            "mode": "Modalità Tema",
             "editor_font_size": "Dimensione del Font dell'Editor",
             "editor_font_family": "Famiglia del Font dell'Editor",
             "editor_folding_stratgy": "Piegatura automatica del codice nell'Editor",

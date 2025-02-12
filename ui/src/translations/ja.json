@@ -684,7 +684,6 @@
         "theme": {
           "label": "テーマ設定",
           "fields": {
-            "mode": "テーマモード",
             "editor_font_size": "エディタフォントサイズ",
             "editor_font_family": "エディタフォントファミリー",
             "editor_folding_stratgy": "エディタでの自動コード折りたたみ",

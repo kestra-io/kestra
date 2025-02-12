@@ -185,7 +185,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
      * This is used to purge a queue for specific keys.
      */
     public void deleteByKeys(List<String> keys) throws QueueException {
-        // process in batches of 100 items to avoid too big IN clause
+        // process in batches of 100 items to avoid too big IN clausecQueue
         Iterables.partition(keys, 100).forEach(batch -> {
             dslContextWrapper.transaction(configuration -> {
                 int deleted = DSL

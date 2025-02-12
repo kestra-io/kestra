@@ -83,7 +83,7 @@
                 </template>
 
                 <template #top>
-                    <el-card v-if="showStatChart()" shadow="never" class="mb-4">
+                    <el-card v-if="showStatChart()" class="mb-4 shadow">
                         <ExecutionsBar :data="daily" :total="executionsCount" />
                     </el-card>
                 </template>
@@ -908,6 +908,10 @@
 </script>
 
 <style lang="scss" scoped>
+.shadow {
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+}
+
 :deep(nav .dropdown-menu) {
     display: flex;
     width: 20rem;

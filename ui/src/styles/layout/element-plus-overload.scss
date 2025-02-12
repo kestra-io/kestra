@@ -650,7 +650,6 @@ form.ks-horizontal {
     --el-card-padding: #{$spacer};
     color: var(--ks-content-primary);
     background-color: var(--ks-background-card);
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
 
     .el-card__header {
         padding: $card-cap-padding-y $card-cap-padding-x;

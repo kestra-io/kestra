@@ -58,7 +58,7 @@
             </template>
 
             <template #top>
-                <el-card v-if="showStatChart()" shadow="never" class="mb-4">
+                <el-card v-if="showStatChart()" class="mb-4 shadow">
                     <ExecutionsBar v-if="daily" :data="daily" :total="executionsCount" />
                 </el-card>
             </template>
@@ -974,6 +974,10 @@
 
 
 <style scoped lang="scss">
+.shadow {
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+}
+
 .padding-bottom {
     padding-bottom: 4rem;
 }

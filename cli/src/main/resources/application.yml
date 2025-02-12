@@ -135,6 +135,11 @@ kestra:
       initial-delay: 1h
       fixed-delay: 1h
       retention: 7d
+      types:
+        - type : io.kestra.core.models.executions.LogEntry
+          retention: 1h
+        - type: io.kestra.core.models.executions.MetricEntry
+          retention: 1h
 
   plugins:
     repositories:

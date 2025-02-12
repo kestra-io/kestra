@@ -46,7 +46,7 @@ public class RegisteredPlugin {
     private final List<Class<? extends Chart<?>>> charts;
     private final List<Class<? extends DataFilter<?, ?>>> dataFilters;
     private final List<String> guides;
-    private final List<Class<? extends LogExporter>> logExporters;
+    private final List<Class<? extends LogExporter<?>>> logExporters;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
 

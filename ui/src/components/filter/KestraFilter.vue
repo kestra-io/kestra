@@ -943,11 +943,22 @@ $properties: v-bind('props.propertiesWidth + "px"');
             0 1px 0 0 $filters-border-color inset;
 
         & .el-tag {
-            background: $filters-border-color !important;
-            color: $filters-gray-900;
+            overflow: hidden;
+            padding: 0 !important;
+            padding-right: 0.30rem !important;
+            color: var(--ks-tag-content);
+            background: var(--ks-tag-background-active) !important;
+
+            &:hover {
+                background: var(--ks-tag-background-hover) !important;
+            }
 
             & .el-tag__close {
-                color: $filters-gray-900;
+                color: var(--ks-content-link);
+
+                &:hover{
+                    background: none !important;
+                }
             }
         }
     }

@@ -1174,6 +1174,7 @@
       "hidden": "In Tabelle versteckt",
       "label": "Eigenschaften"
     },
-    "debug": "Debuggen"
+    "debug": "Debuggen",
+    "default": "Standard"
   }
 }

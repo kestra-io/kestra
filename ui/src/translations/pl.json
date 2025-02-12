@@ -1174,6 +1174,7 @@
       "hidden": "Ukryte w tabeli",
       "label": "Właściwości"
     },
-    "debug": "Debugowanie"
+    "debug": "Debugowanie",
+    "default": "Domyślny"
   }
 }

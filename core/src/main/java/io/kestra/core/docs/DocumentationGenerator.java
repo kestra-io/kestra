@@ -37,7 +37,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
 public class DocumentationGenerator {
-    private static PebbleEngine pebbleEngine;
+    private static final PebbleEngine PEBBLE_ENGINE;
 
     @Inject
     JsonSchemaGenerator jsonSchemaGenerator;
@@ -46,7 +46,7 @@ public class DocumentationGenerator {
         ClasspathLoader classpathLoader = new ClasspathLoader();
         classpathLoader.setPrefix("docs/");
 
-        pebbleEngine = new PebbleEngine.Builder()
+        PEBBLE_ENGINE = new PebbleEngine.Builder()
             .newLineTrimming(false)
             .loader(classpathLoader)
             .extension(new AbstractExtension() {
@@ -62,6 +62,7 @@ public class DocumentationGenerator {
             .build();
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public List<Document> generate(RegisteredPlugin registeredPlugin) throws Exception {
         ArrayList<Document> result = new ArrayList<>();
 
@@ -72,7 +73,7 @@ public class DocumentationGenerator {
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getConditions(), Condition.class, "conditions"));
         //noinspection unchecked
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTaskRunners(), (Class) TaskRunner.class, "task-runners"));
-        result.addAll(this.generate(registeredPlugin, registeredPlugin.getLogExporters(), LogExporter.class, "log-exporters"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getLogExporters(), (Class) LogExporter.class, "log-exporters"));
 
         result.addAll(guides(registeredPlugin));
 
@@ -260,7 +261,7 @@ public class DocumentationGenerator {
             StandardCharsets.UTF_8
         );
 
-        PebbleTemplate compiledTemplate = pebbleEngine.getLiteralTemplate(pebbleTemplate);
+        PebbleTemplate compiledTemplate = PEBBLE_ENGINE.getLiteralTemplate(pebbleTemplate);
 
         Writer writer = new JsonWriter();
         compiledTemplate.evaluate(writer, vars);

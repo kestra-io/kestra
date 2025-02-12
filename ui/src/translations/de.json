@@ -268,7 +268,10 @@
       },
       "empty": "Keine Blueprints zum Anzeigen.",
       "custom": "Benutzerdefinierte Blueprints",
-      "community": "Gemeinschaft"
+      "community": "Gemeinschaft",
+      "dashboards": "Dashboard Blueprints",
+      "flows": "Flow-Blueprints",
+      "apps": "App-Blueprints"
     },
     "use": "Verwenden",
     "plugins": {
@@ -1017,7 +1020,7 @@
         "in": "im",
         "starts_with": "beginnt mit",
         "not_contains": "nicht enthält",
-        "is_not_one_off": "ist nicht einer von",
+        "not_in": "nicht in",
         "is_one_of": "ist eine von",
         "between": "zwischen",
         "greater_than": "größer als",
@@ -1170,6 +1173,8 @@
       "hint": "Sichtbare Spalten auswählen",
       "hidden": "In Tabelle versteckt",
       "label": "Eigenschaften"
-    }
+    },
+    "debug": "Debuggen",
+    "default": "Standard"
   }
 }

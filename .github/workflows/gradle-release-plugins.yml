@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       releaseVersion:
-        description: 'The release version (e.g., 0.21.0-RC1)'
+        description: 'The release version (e.g., 0.21.0-rc1)'
         required: true
         type: string
       nextVersion:
@@ -59,8 +59,9 @@ jobs:
         env:
           GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |
-          chmod +x ./release-plugins.sh;
-          ./release-plugins.sh \
+          chmod +x ./dev-tools/release-plugins.sh;
+          
+          ./dev-tools/release-plugins.sh \
           --release-version=${{github.event.inputs.releaseVersion}} \
           --next-version=${{github.event.inputs.nextVersion}} \
           --yes \
@@ -71,8 +72,9 @@ jobs:
         env:
           GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |
-          chmod +x ./release-plugins.sh;
-          ./release-plugins.sh \
+          chmod +x ./dev-tools/release-plugins.sh;
+          
+          ./dev-tools/release-plugins.sh \
           --release-version=${{github.event.inputs.releaseVersion}} \
           --next-version=${{github.event.inputs.nextVersion}} \
           --dry-run \

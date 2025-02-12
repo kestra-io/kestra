@@ -41,7 +41,7 @@ export async function loadLocaleMessages(i18n: I18n, locale: (typeof SUPPORT_LOC
   }
 
   // set locale and locale message
-  i18n.global.setLocaleMessage(locale, messages.default[locale])
+  i18n.global.setLocaleMessage(locale, messages.default[locale][locale])
 
   return nextTick()
 }

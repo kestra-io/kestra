@@ -19,7 +19,7 @@ dependencies {
     def jollydayVersion = "0.32.0"
     def jsonschemaVersion = "4.37.0"
     def kafkaVersion = "3.9.0"
-    def opensearchVersion = "2.19.0"
+    def opensearchVersion = "2.20.0"
     def opensearchRestVersion = "2.18.0"
     def flyingSaucerVersion = "9.11.3"
     def jacksonVersion = "2.18.2"
@@ -28,12 +28,12 @@ dependencies {
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     // needed because httpclient fails to communicate with docker socket with > v5.4 (https://github.com/docker-java/docker-java/pull/2293#issuecomment-2435455322) and opensearch-java brings that version
     api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.3.1")
-    api platform("io.micronaut.platform:micronaut-platform:4.7.4")
+    api platform("io.micronaut.platform:micronaut-platform:4.7.5")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.53.0')
+    api platform('com.google.cloud:libraries-bom:26.54.0')
     api platform("com.azure:azure-sdk-bom:1.2.31")
-    api platform('software.amazon.awssdk:bom:2.30.11')
+    api platform('software.amazon.awssdk:bom:2.30.16')
 
 
     constraints {
@@ -66,7 +66,7 @@ dependencies {
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.33.11'
+        api 'software.amazon.awssdk.crt:aws-crt:0.34.0'
 
         // we need at least 0.14, it could be removed when Micronaut contains a recent only version in their BOM
         api "io.micrometer:micrometer-core:1.14.3"
@@ -94,7 +94,7 @@ dependencies {
         api "org.eclipse.aether:aether-transport-http:$aetherVersion"
         api 'org.apache.maven:maven-aether-provider:3.3.9'
         api 'com.github.oshi:oshi-core:6.6.6'
-        api 'io.pebbletemplates:pebble:3.2.2'
+        api 'io.pebbletemplates:pebble:3.2.3'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion
         api group: 'de.focus-shift', name: 'jollyday-jaxb', version: jollydayVersion
@@ -135,7 +135,7 @@ dependencies {
         api group: 'org.exparity', name: 'hamcrest-date', version: '2.0.8'
         api "org.wiremock:wiremock:3.10.0"
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
-        api "com.microsoft.playwright:playwright:1.49.0"
+        api "com.microsoft.playwright:playwright:1.50.0"
 
         // Kestra components
         api "io.kestra:core:$version"

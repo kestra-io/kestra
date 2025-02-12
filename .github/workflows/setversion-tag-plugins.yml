@@ -21,22 +21,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Checkout GitHub Actions
-      - uses: actions/checkout@v4
-        with:
-          repository: kestra-io/actions
-          path: actions
-          ref: main
-
-      # Setup build
-      - uses: ./actions/.github/actions/setup-build
-        id: build
-        with:
-          java-enabled: true
-          node-enabled: true
-          python-enabled: true
-          caches-enabled: true
-
       # Get Plugins List
       - name: Get Plugins List
         uses: ./.github/actions/plugins-list
@@ -55,8 +39,9 @@ jobs:
         env:
           GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |
-          chmod +x ./tag-release-plugins.sh;
-          ./tag-release-plugins.sh \
+          chmod +x ./dev-tools/setversion-tag-plugins.sh;
+          
+          ./dev-tools/setversion-tag-plugins.sh \
           --release-version=${{github.event.inputs.releaseVersion}} \
           --yes \
            ${{ steps.plugins-list.outputs.repositories }}
@@ -66,8 +51,9 @@ jobs:
         env:
           GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
         run: |
-          chmod +x ./tag-release-plugins.sh;
-          ./tag-release-plugins.sh \
+          chmod +x ./dev-tools/setversion-tag-plugins.sh;
+          
+          ./dev-tools/setversion-tag-plugins.sh \
           --release-version=${{github.event.inputs.releaseVersion}} \
           --dry-run \
           --yes \

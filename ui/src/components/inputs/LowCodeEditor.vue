@@ -381,13 +381,23 @@
         taskObject.value = null;
     };
 
+    const fitViewOrientation = () => {
+        const resizeObserver = new ResizeObserver(() => {
+            clearTimeout(timer.value);
+            nextTick(() => {
+                fitView();
+            });
+        });
+        resizeObserver.observe(vueFlow.value);
+    };
+
     const toggleOrientation = () => {
         localStorage.setItem(
             "topology-orientation",
             localStorage.getItem("topology-orientation") !== "0" ? "0" : "1",
         );
         isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
-        fitView();
+        fitViewOrientation();
     };
 
     const openFlow = (data) => {

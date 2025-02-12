@@ -33,6 +33,10 @@
             data-test-id="KestraFilter__select"
         >
             <template #label="{value}">
+                <!--
+                    TODO: Find a way to have persistent tags for el-select.
+                    https://github.com/kestra-io/kestra/issues/6256
+                -->
                 <Label :option="value" />
             </template>
             <template #empty>
@@ -434,9 +438,19 @@
                     },
                 ];
             }
+            const index = currentFilters.value.findIndex((v) => v.label === "absolute_date");
+
+            if (index !== -1) {
+                if (!filter || !filter.startDate || !filter.endDate) {
+                    // Remove absolute_date if it's empty
+                    currentFilters.value.splice(index, 1);
+                }
+            }
         }
 
         if (
+            dropdowns.value.third.index !== -1 &&
+            currentFilters.value[dropdowns.value.third.index] &&
             !currentFilters.value[dropdowns.value.third.index].comparator?.multiple
         ) {
             // If selection is not multiple, close the dropdown
@@ -929,11 +943,22 @@ $properties: v-bind('props.propertiesWidth + "px"');
             0 1px 0 0 $filters-border-color inset;
 
         & .el-tag {
-            background: $filters-border-color !important;
-            color: $filters-gray-900;
+            overflow: hidden;
+            padding: 0 !important;
+            padding-right: 0.30rem !important;
+            color: var(--ks-tag-content);
+            background: var(--ks-tag-background-active) !important;
+
+            &:hover {
+                background: var(--ks-tag-background-hover) !important;
+            }
 
             & .el-tag__close {
-                color: $filters-gray-900;
+                color: var(--ks-content-link);
+
+                &:hover{
+                    background: none !important;
+                }
             }
         }
     }
@@ -951,7 +976,6 @@ $properties: v-bind('props.propertiesWidth + "px"');
 .filters-select {
     & .el-select-dropdown {
         width: auto !important;
-        max-width: 300px;
 
         &:has(.el-select-dropdown__empty) {
             width: auto !important;

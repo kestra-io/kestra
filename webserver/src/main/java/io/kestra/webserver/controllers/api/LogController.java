@@ -7,6 +7,7 @@ import io.kestra.core.services.ExecutionLogService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.core.services.LogStreamingService;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
@@ -28,11 +29,13 @@ import jakarta.inject.Inject;
 import jakarta.validation.constraints.Min;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.io.InputStream;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
@@ -49,6 +52,9 @@ public class LogController {
 
     @Inject
     private TenantService tenantService;
+
+    @Inject
+    private LogStreamingService logStreamingService;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/search")
@@ -152,7 +158,21 @@ public class LogController {
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
-        return logService.streamExecutionLogs(tenantService.resolveTenant(), executionId, minLevel, true);
+        String subscriberId = UUID.randomUUID().toString();
+        final List<String> levels = LogEntry.findLevelsByMin(minLevel).stream().map(Enum::name).toList();
+
+        return Flux.<Event<LogEntry>>create(emitter -> {
+                // send a first "empty" event so the SSE is correctly initialized in the frontend in case there are no logs
+                emitter.next(Event.of(LogEntry.builder().build()).id("start"));
+
+                // fetch repository first
+                logService.getExecutionLogs(tenantService.resolveTenant(), executionId, minLevel, List.of(), true)
+                    .forEach(logEntry -> emitter.next(Event.of(logEntry).id("progress")));
+
+                // consume in realtime
+                logStreamingService.registerSubscriber(executionId, subscriberId, emitter, levels);
+            }, FluxSink.OverflowStrategy.BUFFER)
+            .doFinally(ignored -> logStreamingService.unregisterSubscriber(executionId, subscriberId));
     }
 
     @ExecuteOn(TaskExecutors.IO)

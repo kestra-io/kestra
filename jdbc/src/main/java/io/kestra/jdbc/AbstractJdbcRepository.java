@@ -206,6 +206,7 @@ public abstract class AbstractJdbcRepository<T> {
         return this.fetchPage(context, select, pageable, this::map);
     }
 
+    @SuppressWarnings("unchecked")
     public <R extends Record> Select<R> buildPageQuery(DSLContext context, SelectConditionStep<R> select){
         return (Select<R>) context.select(DSL.asterisk())
                 .from(this

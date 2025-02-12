@@ -341,6 +341,7 @@ public abstract class AbstractJdbcRepository {
     }
 
     // Generate the condition for Field.STATE
+    @SuppressWarnings("unchecked")
     private Condition generateStateCondition(Object value, QueryFilter.Op operation) {
         List<State.Type> stateList = switch (value) {
             case List<?> list when !list.isEmpty() && list.getFirst() instanceof State.Type ->

@@ -232,7 +232,7 @@
     "force run": "Force run",
     "force run title": "Force run execution <code>{id}</code>.",
     "force run tooltip": "Force the execution to run. It can creates duplicate task executions, if possible use another action.",
-    "force run confirm": "Are you sure to force run execution <code>{id}</code>?<br/><br/>WARNING: force running an execution is not guaranteed and may creates duplicate task executions.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
+    "force run confirm": "Are you sure to force run execution <code>{id}</code>?<br/><br/>WARNING: force running an execution is not guaranteed and may create duplicate task runs.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
     "force run done": "Execution is forced run",
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
@@ -314,7 +314,10 @@
           "2": "Explore blueprints to kick-start your next {kind}."
         },
         "alt": "Blueprints Icon"
-      }
+      },
+      "flows": "Flow Blueprints",
+      "apps": "App Blueprints",
+      "dashboards": "Dashboard Blueprints"
     },
     "use": "Use",
     "plugins": {
@@ -1086,7 +1089,7 @@
         "is": "is",
         "is_one_of": "is one of",
         "is_not": "is not",
-        "is_not_one_off": "is not one of",
+        "not_in": "not in",
         "contains": "contains",
         "not_contains": "not contains",
         "in": "in",
@@ -1184,7 +1187,9 @@
     },
     "instance": "Instance",
     "something_went_wrong": {
-      "loading_execution": "Something went wrong while loading the execution"
-    }
+        "loading_execution": "Something went wrong while loading the execution"
+    },
+    "debug": "Debug",
+    "default": "Default"
   }
 }

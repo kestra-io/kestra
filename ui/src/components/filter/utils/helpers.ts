@@ -130,8 +130,10 @@ export const encodeSearchParams = (filters, OPTIONS) => {
                 Object.assign(query, encode(filter.value, key, operation));
             } else if (filter.value?.length > 0) {
                 const {startDate, endDate} = filter.value[0];
-                query["filters[startDate][$gte]"] = startDate;
-                query["filters[endDate][$lte]"] = endDate;
+                if(startDate && endDate) {
+                    query["filters[startDate][$gte]"] = startDate;
+                    query["filters[endDate][$lte]"] = endDate;
+                }
             }
         }
         return query;

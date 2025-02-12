@@ -4,19 +4,20 @@ import vue from "@vitejs/plugin-vue";
 
 import {filename} from "./plugins/filename"
 import {commit} from "./plugins/commit"
+import {codecovVitePlugin} from "@codecov/vite-plugin";
 
 export const manualChunks = {
     // bundle dashboard and all its dependencies in a single chunk
     "dashboard": [
-        "src/components/dashboard/Dashboard.vue", 
-        "src/components/dashboard/components/DashboardCreate.vue", 
+        "src/components/dashboard/Dashboard.vue",
+        "src/components/dashboard/components/DashboardCreate.vue",
         "src/override/components/dashboard/components/DashboardEdit.vue"
     ],
     // bundle flows and all its dependencies in a second chunk
     "flows": [
-        "src/components/flows/Flows.vue", 
-        "src/components/flows/FlowCreate.vue", 
-        "src/components/flows/FlowsSearch.vue", 
+        "src/components/flows/Flows.vue",
+        "src/components/flows/FlowCreate.vue",
+        "src/components/flows/FlowsSearch.vue",
         "src/components/flows/FlowRoot.vue"
     ],
     "markdownDeps": [
@@ -33,7 +34,7 @@ export default defineConfig({
         outDir: "../webserver/src/main/resources/ui",
         rollupOptions: {
             output: {
-                manualChunks 
+                manualChunks
             }
         },
     },
@@ -59,7 +60,13 @@ export default defineConfig({
             }
         }),
         filename(),
-        commit()
+        commit(),
+        codecovVitePlugin({
+            enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
+            bundleName: "ui",
+            uploadToken: process.env.CODECOV_TOKEN,
+            telemetry: false
+        }),
     ],
     assetsInclude: ["**/*.md"],
     css: {

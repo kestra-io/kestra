@@ -1,19 +1,15 @@
 <template>
     <span data-component="FILENAME_PLACEHOLDER" v-if="labels">
-        <!-- 'el-check-tag' would be a better fit but it currently lacks customization -->
-        <el-tag
+        <!-- 'el-check-tag' would be a better fit but it currently lacks customization (missing size, bold font) -->
+        <template
             v-for="(value, key) in labelMap"
             :key="key"
-            :type="checked(key, value) ? 'primary' : undefined"
-            class="me-1 labels"
-            size="small"
-            disable-transitions
         >
-            <router-link v-if="filterEnabled" :to="link(key, value)">
+            <router-link v-if="filterEnabled" :to="link(key, value)" class="me-1 labels el-tag el-tag--small" :class="{'el-tag--primary': checked(key, value)}">
                 {{ key }}: {{ value }}
             </router-link>
-            <template v-else>{{ key }}: {{ value }}</template>
-        </el-tag>
+            <div v-else class="me-1 labels el-tag el-tag--small" :class="{'el-tag--primary': checked(key, value)}">{{ key }}: {{ value }}</div>
+        </template>
     </span>
 </template>
 
@@ -38,10 +34,8 @@
                 } else {
                     return this.labels;
                 }
-            }
-        },
-        methods: {
-            getLabelsFromQuery() {
+            },
+            labelsFromQuery() {
                 const labels = new Map();
                 (this.$route.query.labels !== undefined ?
                     (typeof(this.$route.query.labels) === "string" ? [this.$route.query.labels] : this.$route.query.labels)  :
@@ -58,12 +52,14 @@
                     })
 
                 return labels;
-            },
+            }
+        },
+        methods: {
             checked(key, value) {
-                return this.getLabelsFromQuery().has(key) && this.getLabelsFromQuery().get(key) === value;
+                return this.labelsFromQuery.has(key) && this.labelsFromQuery.get(key) === value;
             },
             link(key, value) {
-                const labels = this.getLabelsFromQuery();
+                const labels = this.labelsFromQuery;
 
                 if (labels.has(key)) {
                     labels.delete(key);

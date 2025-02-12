@@ -35,7 +35,9 @@
 
         if (typeof value[0] !== "string") {
             const {startDate, endDate} = value[0];
-            return `${startDate ? formatter(new Date(startDate)) : UNKNOWN}:and:${endDate ? formatter(new Date(endDate)) : UNKNOWN}`;
+            if(startDate && endDate) {
+                return `${startDate ? formatter(new Date(startDate)) : UNKNOWN}:and:${endDate ? formatter(new Date(endDate)) : UNKNOWN}`;
+            }
         }
 
         return UNKNOWN;
@@ -43,13 +45,20 @@
 </script>
 
 <style scoped lang="scss">
+    span {
+        padding: 0.33rem 0.35rem;
+        display: inline-block;
 
-.comparator {
-    display: inline-block;
+        &:first-child,.comparator{
+            background: var(--ks-tag-background);
+        }
+        .comparator {
+            border-left: 4px solid #ffffff;
+            border-right: 4px solid #ffffff;
 
-    margin: 0 0.5rem;
-    padding: 0.3rem 0.35rem;
-
-    background: var(--ks-background-paused);
-}
+            html.dark &{
+                border-color: #20232d;
+            }
+        }
+    }
 </style>

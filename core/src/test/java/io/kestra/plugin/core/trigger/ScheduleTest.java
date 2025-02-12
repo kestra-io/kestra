@@ -35,6 +35,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
 class ScheduleTest {
@@ -100,6 +101,8 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.get().getLabels(), hasSize(3));
+        assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
         var inputs = evaluate.get().getInputs();
@@ -132,6 +135,8 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.get().getLabels(), hasSize(3));
+        assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
 
         var inputs = evaluate.get().getInputs();
 

@@ -33,11 +33,16 @@ export const barLegend = {
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
 
+        const legendList = document.createElement("div");
+        legendList.classList.add("legend-List");
+        legendList.style.position ="sticky";             // changes based on scroll position
+
         while (ul.firstChild) {
             ul.firstChild.remove();
         }
 
         const items = chart.options.plugins.legend.labels.generateLabels(chart);
+
 
         items.forEach((item) => {
             const dataset = chart.data.datasets[item.datasetIndex];
@@ -100,6 +105,14 @@ export const barLegend = {
             li.appendChild(textContainer);
             ul.appendChild(li);
         });
+        legendList.onmouseover = () =>{   // hover effect function
+            legendList.querySelectorAll("li").forEach((legend) =>{
+                legend.style.display="block";
+            });
+        };
+        const legendContainer=document.getElementById(options.containerID);
+        if(legendContainer)
+            legendContainer.appendChild(legendList);
     },
 };
 
@@ -107,6 +120,10 @@ export const customBarLegend = {
     id: "customBarLegend",
     afterUpdate(chart, args, options) {
         const ul = getOrCreateLegendList(chart, options.containerID);
+        
+        const legendList = document.createElement("div");
+        legendList.classList.add("legend-List");
+        legendList.style.position ="sticky";             // changes based on scroll position
 
         while (ul.firstChild) {
             ul.firstChild.remove();
@@ -170,6 +187,14 @@ export const customBarLegend = {
             li.appendChild(textContainer);
             ul.appendChild(li);
         });
+        legendList.onmouseover = () =>{   // hover effect function
+            legendList.querySelectorAll("li").forEach((legend) =>{
+                legend.style.display="block";
+            });
+        };
+        const legendContainer=document.getElementById(options.containerID);
+        if(legendContainer)
+            legendContainer.appendChild(legendList);
     },
 };
 

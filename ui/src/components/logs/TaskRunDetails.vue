@@ -588,7 +588,7 @@
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
                             const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.forcedAttemptNumber ?? 0)
                             if (this.shownAttemptsUid.includes(`${taskRun.id}-${attemptNumber}`)) {
-                                this.logsScrollerRefs?.[`${taskRun.id}-${attemptNumber}`]?.[0]?.scrollToBottom();
+                                this.logsScrollerRefs?.[`${taskRun.id}-${attemptNumber}`]?.scrollToBottom();
                             }
                         }
                     });

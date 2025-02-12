@@ -603,6 +603,7 @@ $media-lg: 1200px;
                 background: var(--ks-background-card);
                 border: 1px solid var(--ks-border-primary);
                 border-radius: $border-radius;
+                box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
             }
         }
     }

@@ -1,4 +1,12 @@
 <template>
+    <KestraFilter
+        prefix="flow_triggers"
+        :buttons="{
+            refresh: {shown: true, callback: loadData},
+            settings: {shown: false}
+        }"
+    />
+
     <el-table
         v-if="triggersWithType.length"
         v-bind="$attrs"
@@ -39,12 +47,6 @@
         <el-table-column column-key="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
             <template #header>
                 {{ $t("backfill") }}
-                <refresh-button
-                    :can-auto-refresh="true"
-                    @refresh="loadData"
-                    size="small"
-                    custom-class="mx-1"
-                />
             </template>
             <template #default="scope">
                 <el-button
@@ -220,9 +222,10 @@
     import Restart from "vue-material-design-icons/Restart.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
     import FlowRun from "./FlowRun.vue";
-    import RefreshButton from "../layout/RefreshButton.vue";
     import Id from "../Id.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
+
+    import KestraFilter from "../filter/KestraFilter.vue";
 </script>
 
 <script>
@@ -238,6 +241,7 @@
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import EmptyState from "../layout/EmptyState.vue";
     import TriggersEmptyImage from "../../assets/triggers_empty.svg";
+    import _isEqual from "lodash/isEqual";
 
     export default {
         components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, EmptyState},
@@ -259,9 +263,19 @@
         created() {
             this.loadData();
         },
+        watch: {
+            $route(newValue, oldValue) {
+                if (oldValue.name === newValue.name && !_isEqual(newValue.query, oldValue.query)) {
+                    this.loadData();
+                }
+            }
+        },
         computed: {
             ...mapState("auth", ["user"]),
             ...mapGetters("flow", ["flow"]),
+            query() {
+                return Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
+            },
             modalData() {
                 return Object
                     .entries(this.triggersWithType.filter(trigger => trigger.triggerId === this.triggerId)[0])
@@ -284,10 +298,12 @@
                     return {...trigger, sourceDisabled: trigger.disabled ?? false}
                 })
                 if (flowTriggers) {
-                    return flowTriggers.map(flowTrigger => {
+                    const triggers = flowTriggers.map(flowTrigger => {
                         let pollingTrigger = this.triggers.find(trigger => trigger.triggerId === flowTrigger.id)
                         return {...flowTrigger, ...(pollingTrigger || {})}
                     })
+
+                    return !this.query ? triggers : triggers.filter(trigger => trigger.id.includes(this.query))
                 }
                 return this.triggers
             },
@@ -332,7 +348,7 @@
                 if(!this.triggersWithType.length) return;
 
                 this.$store
-                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length})
+                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length, q: this.query})
                     .then(triggers => this.triggers = triggers.results);
             },
             setBackfillModal(trigger, bool) {

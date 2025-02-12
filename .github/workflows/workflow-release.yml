@@ -33,11 +33,9 @@ on:
 jobs:
   Build-Artifacts:
     name: Build - Artifacts
-    runs-on: ubuntu-latest
-    steps:
-      - uses: ./.github/workflows/workflow-build-artifacts.yml
-        with:
-          plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
+    uses: ./.github/workflows/workflow-build-artifacts.yml
+    with:
+      plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
 
   Docker:
     name: Publish Docker

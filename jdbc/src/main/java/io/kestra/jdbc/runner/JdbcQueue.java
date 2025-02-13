@@ -74,7 +74,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
         this.poolExecutor = executorsUtils.cachedThreadPool("jdbc-queue-" + cls.getSimpleName());
-        this.asyncPoolExecutor = executorsUtils.maxCachedThreadPool(MAX_ASYNC_THREADS, "jdbc-queue-async-" + cls.getSimpleName());
+        this.asyncPoolExecutor = executorsUtils.elasticCachedThreadPool(1, MAX_ASYNC_THREADS, "jdbc-queue-async-" + cls.getSimpleName());
 
         this.queueService = applicationContext.getBean(QueueService.class);
         this.cls = cls;

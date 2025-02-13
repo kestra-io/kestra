@@ -1179,6 +1179,7 @@
     },
     "editor_shortcuts": {
       "label": "Keyboard shortcuts",
+      "trigger_autocompletion": "Trigger autocompletion",
       "command_palette": "Show command palette",
       "save_flow": "Save flow",
       "move_line": "Move line",

@@ -52,6 +52,10 @@
 
     const commands = [
         {
+            keys: ["⌘ Cmd/Ctrl", "SPACE"],
+            description: "editor_shortcuts.trigger_autocompletion",
+        },
+        {
             keys: ["⌘ Cmd/Ctrl", "p"],
             description: "editor_shortcuts.command_palette",
         },

@@ -189,6 +189,21 @@
             :embed="true"
         />
         <template #footer>
+            <router-link
+                v-if="isSchedule(selectedTrigger.type)"
+                :to="{
+                    name: 'admin/triggers',
+                    query: {
+                        namespace: selectedTrigger.namespace,
+                        flowId: selectedTrigger.flowId,
+                        q: selectedTrigger.triggerId
+                    }
+                }"
+            >
+                <el-button class="me-2">
+                    {{ $t("backfill") }}
+                </el-button>
+            </router-link>
             <el-button
                 type="primary"
                 @click="postBackfill()"

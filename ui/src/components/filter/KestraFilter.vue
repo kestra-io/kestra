@@ -707,7 +707,7 @@
                 persistent: true,
             });
         };
-        const {name, params} = route;
+        const {name, params, query} = route;
 
         if (name === "flows/update") {
             // Single flow page
@@ -724,6 +724,24 @@
         } else if (name === "namespaces/update") {
             // Single namespace page
             addNamespaceFilter(params.id);
+        } else if (name === "admin/triggers") {
+            if(query.namespace) addNamespaceFilter(query.namespace);
+            if(query.flowId){
+                currentFilters.value.push({
+                    label: "flow",
+                    value: [`${query.flowId}`],
+                    comparator: COMPARATORS.EQUALS,
+                    persistent: true,
+                });
+            }
+            if(query.q) {
+                currentFilters.value.push({
+                    label: "text",
+                    value: [`${query.q}`],
+                    comparator: COMPARATORS.EQUALS,
+                    persistent: true,
+                });
+            }            
         }
     });
 

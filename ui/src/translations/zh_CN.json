@@ -1163,7 +1163,8 @@
       "fold_unfold": "折叠/展开代码",
       "comment": "评论",
       "move_line": "移动行",
-      "command_palette": "显示命令面板"
+      "command_palette": "显示命令面板",
+      "trigger_autocompletion": "触发自动完成"
     },
     "something_went_wrong": {
       "loading_execution": "加载执行时出现问题"

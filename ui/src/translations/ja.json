@@ -1163,7 +1163,8 @@
       "fold_unfold": "コードを折りたたむ/展開する",
       "comment": "コメント",
       "move_line": "行を移動",
-      "command_palette": "コマンドパレットを表示"
+      "command_palette": "コマンドパレットを表示",
+      "trigger_autocompletion": "オートコンプリートをトリガー"
     },
     "something_went_wrong": {
       "loading_execution": "実行の読み込み中に問題が発生しました。"

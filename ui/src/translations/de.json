@@ -1163,7 +1163,8 @@
       "fold_unfold": "Code ein-/ausklappen",
       "comment": "Kommentar",
       "move_line": "Zeile verschieben",
-      "command_palette": "Befehlsübersicht anzeigen"
+      "command_palette": "Befehlsübersicht anzeigen",
+      "trigger_autocompletion": "Autovervollständigung auslösen"
     },
     "something_went_wrong": {
       "loading_execution": "Beim Laden der Ausführung ist etwas schiefgelaufen."

@@ -1163,7 +1163,8 @@
       "fold_unfold": "कोड को फोल्ड/अनफोल्ड करें",
       "comment": "टिप्पणी",
       "move_line": "लाइन को स्थानांतरित करें",
-      "command_palette": "कमांड पैलेट दिखाएं"
+      "command_palette": "कमांड पैलेट दिखाएं",
+      "trigger_autocompletion": "ट्रिगर ऑटोकम्प्लीशन"
     },
     "something_went_wrong": {
       "loading_execution": "लोडिंग के दौरान कुछ गलत हो गया।"

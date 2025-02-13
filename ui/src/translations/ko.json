@@ -1163,7 +1163,8 @@
       "fold_unfold": "코드 접기/펼치기",
       "comment": "댓글",
       "move_line": "줄 이동",
-      "command_palette": "명령 팔레트 표시"
+      "command_palette": "명령 팔레트 표시",
+      "trigger_autocompletion": "자동 완성 트리거"
     },
     "something_went_wrong": {
       "loading_execution": "실행을 로드하는 중 문제가 발생했습니다."

@@ -1163,7 +1163,8 @@
       "fold_unfold": "Piega/Spiega codice",
       "comment": "Commento",
       "move_line": "Sposta linea",
-      "command_palette": "Mostra la palette dei comandi"
+      "command_palette": "Mostra la palette dei comandi",
+      "trigger_autocompletion": "Attiva autocompletamento"
     },
     "something_went_wrong": {
       "loading_execution": "Si è verificato un errore durante il caricamento dell'esecuzione"

@@ -1163,7 +1163,8 @@
       "fold_unfold": "Zwiń/Rozwiń kod",
       "comment": "Komentarz",
       "move_line": "Przenieś linię",
-      "command_palette": "Pokaż paletę poleceń"
+      "command_palette": "Pokaż paletę poleceń",
+      "trigger_autocompletion": "Wyzwól autouzupełnianie"
     },
     "something_went_wrong": {
       "loading_execution": "Wystąpił problem podczas ładowania wykonania"

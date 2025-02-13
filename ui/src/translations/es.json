@@ -1163,7 +1163,8 @@
       "fold_unfold": "Plegar/Desplegar código",
       "comment": "Comentario",
       "move_line": "Mover línea",
-      "command_palette": "Mostrar paleta de comandos"
+      "command_palette": "Mostrar paleta de comandos",
+      "trigger_autocompletion": "Activar autocompletado"
     },
     "something_went_wrong": {
       "loading_execution": "Algo salió mal al cargar la ejecución."

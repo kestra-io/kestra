@@ -405,7 +405,7 @@
             );
             if (parentIndex !== -1) {
                 if (
-                    ["namespace", "log level"].includes(
+                    ["log level"].includes(
                         lastClickedParent.value.toLowerCase(),
                     )
                 ) {

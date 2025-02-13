@@ -71,6 +71,13 @@ micronaut:
       type: scheduled
       core-pool-size: 1
 
+  # Disable OpenTelemetry metrics by default, users that need it must enable it and configure the collector URL.
+  metrics:
+    export:
+      otlp:
+        enabled: false
+#        url: http://localhost:4318/v1/metrics
+
 jackson:
   serialization:
     writeDatesAsTimestamps: false

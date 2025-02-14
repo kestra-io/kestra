@@ -37,7 +37,7 @@
                     TODO: Find a way to have persistent tags for el-select.
                     https://github.com/kestra-io/kestra/issues/6256
                 -->
-                <Label :option="value" />
+                <Label :option="value" :prefix="ITEMS_PREFIX" />
             </template>
             <template #empty>
                 <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>

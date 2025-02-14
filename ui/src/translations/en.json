@@ -19,8 +19,8 @@
     "delete ok": "is deleted",
     "Default page": "Default page",
     "confirmation": "Confirmation",
-    "delete confirm": "Are you sure to delete <code>{name}</code>?",
-    "delete confirm multiple": "Are you sure to delete <code>{name}</code> KV(s)?",
+    "delete confirm": "Are you sure you want to delete <code>{name}</code>?",
+    "delete confirm multiple": "Are you sure you want to delete <code>{name}</code> KV(s)?",
     "outdated revision save confirmation": {
       "confirm": "Do you want to overwrite it?",
       "update": {
@@ -31,7 +31,7 @@
       "create": {
         "title": "Flow already exists",
         "description": "A Flow with the same id / namespace already exists.",
-        "details": "Saving to override and force the creation of a new revision."
+        "details": "Save to override and force the creation of a new revision."
       }
     },
     "override": {
@@ -73,9 +73,9 @@
     "topology": "Topology",
     "date": "Date",
     "datepicker": {
-      "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (example: 'P1DT1H1M1S)'",
+      "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S)'",
       "duration example": "Example: 'P1DT1H1M1S'",
-      "error": "Invalid duration format, must be an ISO 8601 duration (P1DT1H1M1S for eg.)",
+      "error": "Invalid duration format, must be an ISO 8601 duration (e.g., P1DT1H1M1S)",
       "custom": "Custom",
       "custom duration": "Custom duration",
       "last5minutes": "Last 5 minutes",
@@ -173,14 +173,14 @@
     "restart latest revision": "Restart latest revision",
     "restart tooltip": "Restart the execution from the <code>{state}</code> task",
     "restarted": "Execution is restarted",
-    "restart confirm": "Are you sure to restart execution <code>{id}</code>?",
+    "restart confirm": "Are you sure you want to restart execution <code>{id}</code>?",
     "restart change revision": "You can change the revision that will be used for the new execution.",
     "replay": "Replay",
     "replay from task tooltip": "Create a similar execution starting from task <code>{taskId}</code>",
     "replay from beginning tooltip": "Create a similar execution starting from the beginning",
     "replay latest revision": "Replay using latest revision",
     "replayed": "Execution is replayed",
-    "replay confirm": "Are you sure to replay this execution <code>{id}</code> and create a new one?",
+    "replay confirm": "Are you sure you want to replay this execution <code>{id}</code> and create a new one?",
     "prefill inputs": "Prefill",
     "current": "current",
     "change state": "Change state",
@@ -215,25 +215,25 @@
     "kill": "Kill",
     "kill parents and subflow": "Kill parents and subflows",
     "kill only parents": "Kill parents only",
-    "killed confirm": "Are you sure to kill execution <code>{id}</code>?",
+    "killed confirm": "Are you sure you want to kill execution <code>{id}</code>?",
     "killed done": "Execution is queued for killing",
     "resume": "Resume",
     "resumed title": "Resume execution <code>{id}</code>",
-    "resumed confirm": "Are you sure to resume execution <code>{id}</code>?",
+    "resumed confirm": "Are you sure you want to resume execution <code>{id}</code>?",
     "resumed done": "Execution is resumed",
     "pause": "Pause",
-    "pause title": "Pause execution <code>{id}</code>.<br/>Note that currently running tasks will still be process, and the execution will have to be resumed manually.",
-    "pause confirm": "Are you sure to pause execution <code>{id}</code>?",
+    "pause title": "Pause execution <code>{id}</code>.<br/>Note that currently running tasks will still be processed, and the execution will have to be resumed manually.",
+    "pause confirm": "Are you sure you want to pause execution <code>{id}</code>?",
     "pause done": "Execution is paused",
     "unqueue": "Unqueue",
-    "unqueue title": "Unqueue execution <code>{id}</code>.<br/>Note that it will not obey to the flow concurrency limit so more executions could be running than the allowed limit.",
-    "unqueue confirm": "Are you sure to unqueue execution <code>{id}</code>?",
+    "unqueue title": "Unqueue execution <code>{id}</code>.<br/>Note that it will not obey the flow concurrency limit, so more executions could be running than the allowed limit.",
+    "unqueue confirm": "Are you sure you want to unqueue execution <code>{id}</code>?",
     "unqueue done": "Execution is unqueued",
     "force run": "Force run",
     "force run title": "Force run execution <code>{id}</code>.",
     "force run tooltip": "Force the execution to run. It can creates duplicate task executions, if possible use another action.",
-    "force run confirm": "Are you sure to force run execution <code>{id}</code>?<br/><br/>WARNING: force running an execution is not guaranteed and may create duplicate task runs.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
-    "force run done": "Execution is forced run",
+    "force run confirm": "Are you sure you want to force run execution <code>{id}</code>?<br/><br/>WARNING: force running an execution is not guaranteed and may create duplicate task runs.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
+    "force run done": "Execution is forced ran",
     "toggle output": "Toggle outputs",
     "metrics": "Metrics",
     "no data current task": "There's no data available for the current task",
@@ -400,14 +400,14 @@
     },
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">This execution is still running, deleting it will not stop it.<br />You need to kill the execution to stop it.</div>",
     "restore": "Restore",
-    "restore confirm": "Are you sure to restore the revision <code>{revision}</code>?",
+    "restore confirm": "Are you sure you want to restore the revision <code>{revision}</code>?",
     "bulk delete": "Are you sure you want to delete <code>{executionCount}</code> execution(s)?",
     "bulk replay": "Are you sure you want to replay <code>{executionCount}</code> execution(s)?",
     "bulk change state": "Are you sure you want to change the state of <code>{executionCount}</code> execution(s)?",
     "bulk resume": "Are you sure you want to resume <code>{executionCount}</code> execution(s)?",
     "bulk pause": "Are you sure you want to pause <code>{executionCount}</code> execution(s)?",
     "bulk unqueue": "Are you sure you want to unqueue <code>{executionCount}</code> execution(s)?",
-    "bulk force run": "Are you sure you want to force run <code>{executionCount}</code> execution(s)?<br/><br/>WARNING: force running an execution is not guaranteed and may creates duplicate task executions.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
+    "bulk force run": "Are you sure you want to force run <code>{executionCount}</code> execution(s)?<br/><br/>WARNING: force running an execution is not guaranteed and may create duplicate task executions.<br/><br/>The following transitions will be done:<br/><ul><li>CREATED tasks will be moved to the running state.</li><li>RUNNING tasks will be re-submitted.</li><li>QUEUED tasks will be un-queued</li><li>PAUSED tasks will be resumed.</li></ul>",
     "bulk restart": "Are you sure you want to restart <code>{executionCount}</code> execution(s)?",
     "bulk kill": "Are you sure you want to kill <code>{executionCount}</code> execution(s)?",
     "selection": {
@@ -527,7 +527,7 @@
     "source and doc": "Source and documentation",
     "source and blueprints": "Source and blueprints",
     "editor": "Editor",
-    "error in editor": "An error have been found in the editor",
+    "error in editor": "An error has been found in the editor",
     "delete task confirm": "Do you want to delete the task <code>{taskId}</code>?",
     "can not save": "Can not save",
     "flow must have id and namespace": "Flow must have an id and a namespace.",
@@ -588,9 +588,9 @@
     "date format": "Date format",
     "timezone": "Timezone",
     "add task": "Add a task",
-    "unable to generate graph": "An issue occurred while generating the graph which prevents the topology to be displayed.",
+    "unable to generate graph": "An issue occurred while generating the graph, which prevents the topology from displaying.",
     "attempts": "Attempt(s)",
-    "flow deleted, you can restore it": "The flow has been deleted and this is a read-only view. You can still restore it.",
+    "flow deleted, you can restore it": "The flow has been deleted, and this is a read-only view. You can still restore it.",
     "workers": "Workers",
     "worker group": "Worker Group",
     "worker group key": "Worker Group key",
@@ -700,7 +700,7 @@
     "Set labels": "Set labels",
     "Set labels to execution": "Add or update the labels of the execution <code>{id}</code>",
     "Set labels done": "Successfully set the labels of the execution",
-    "bulk set labels": "Are you sure you want to set labels to <code>{executionCount}</code>  executions(s)?",
+    "bulk set labels": "Are you sure you want to set labels to <code>{executionCount}</code> executions(s)?",
     "dependencies loaded": "Dependencies loaded",
     "loaded x dependencies": "{count} dependencies loaded",
     "security_advice": {
@@ -727,7 +727,7 @@
       },
       "help": {
         "title": "Need help?",
-        "text": "Ask any question in our Slack community. If you are stuck, we are help to help you. ✋"
+        "text": "Ask any question in our Slack community. If you are stuck, we are here to help you. ✋"
       }
     },
     "pluginPage": {
@@ -801,7 +801,7 @@
       },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
-        "message": "Kestra Enterprise Edition has built-in IAM capabilities with a single sign-on (SSO), SCIM directory sync, and role-based access control (RBAC), integrating with multiple identity providers and letting you assign fine-grained permissions for users and service accounts."
+        "message": "Kestra Enterprise Edition has built-in IAM capabilities with single sign-on (SSO), SCIM directory sync, and role-based access control (RBAC), integrating with multiple identity providers and letting you assign fine-grained permissions for users and service accounts."
       },
       "tenants": {
         "title": "Manage Workflows in Isolated Tenants",
@@ -822,7 +822,7 @@
       "namespace": {
         "edit": {
           "title": "Upgrade Your Namespace Management",
-          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and governance of secrets, variables and plugin defaults at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and plugin configurations remain secure and easy to maintain across different teams and projects."
+          "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and governance of secrets, variables, and plugin defaults at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and plugin configurations remain secure and easy to maintain across different teams and projects."
         },
         "variables": {
           "title": "Centrally Govern Your Variables",
@@ -834,7 +834,7 @@
         },
         "secrets": {
           "title": "Manage Secrets in a Secure Way",
-          "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
+          "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace, and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
         },
         "audit-logs": {
           "title": "Track All Changes in One Place",
@@ -947,11 +947,11 @@
     },
     "curl": {
       "command": "cURL command",
-      "note": "Note that for SECRET and FILE input type, the command must be accommodate to match the real values."
+      "note": "Note that for SECRET and FILE input type, the command must be accommodated to match the real values."
     },
     "logs_view": {
       "raw": "Temporal view",
-      "raw_details": "Show full task logs and flow logs in a raw timestamp-ordered format",
+      "raw_details": "Show full task logs and flow logs in a raw, timestamp-ordered format",
       "compact": "Default view",
       "compact_details": "Show task logs in a compact view grouped by each task"
     },
@@ -973,9 +973,9 @@
     "trigger_check_warning": "Using trigger variables won't work with manual flow execution. Add the `??` coalesce operator to solve the issue. For example, instead of `trigger.date`, use `trigger.date ?? execution.startDate`.",
     "dashboard": {
       "success_ratio": "Success Ratio",
-      "success_ratio_tooltip": "Success Ratio is the sum of SUCCESS, CANCELLED and WARNING executions divided by the total number of executions in a terminated state.",
+      "success_ratio_tooltip": "Success Ratio is the sum of SUCCESS, CANCELLED, and WARNING executions divided by the total number of executions in a terminated state.",
       "failure_ratio": "Failure Ratio",
-      "failure_ratio_tooltip": "Failed ratio is the sum of FAILED, KILLED and RETRIED executions divided by the total number of executions in a terminated state.",
+      "failure_ratio_tooltip": "Failed ratio is the sum of FAILED, KILLED, and RETRIED executions divided by the total number of executions in a terminated state.",
       "per_day": " (per day)",
       "per_namespace": " (per namespace)",
       "total_executions": "Total Executions",

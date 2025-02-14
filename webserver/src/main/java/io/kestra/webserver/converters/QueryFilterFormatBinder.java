@@ -8,6 +8,8 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.bind.binders.AnnotatedRequestArgumentBinder;
 import jakarta.inject.Singleton;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +43,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
                     switch (field) {
                         case SCOPE -> RequestUtils.toFlowScopes(values);
                         default -> (operation == QueryFilter.Op.IN || operation == QueryFilter.Op.NOT_IN)
-                            ? List.of(values.getFirst().replaceAll("[\\[\\]]", "").split(","))
+                            ? List.of(URLDecoder.decode(values.getFirst(), StandardCharsets.UTF_8).replaceAll("[\\[\\]]", "").split(","))
                             : values.size() == 1 ? values.getFirst() : values;
                     };
 

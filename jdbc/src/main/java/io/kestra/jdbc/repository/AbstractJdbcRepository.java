@@ -334,7 +334,21 @@ public abstract class AbstractJdbcRepository {
             case STARTS_WITH -> select = select.and(NAMESPACE_FIELD.like(value + ".%")
                 .or(NAMESPACE_FIELD.eq((String) value)));
             case ENDS_WITH -> select = select.and(NAMESPACE_FIELD.like("%." + value));
-            default ->
+            case IN ->  {
+                if (value instanceof Collection<?> values) {
+                select = select.and(NAMESPACE_FIELD.in(values.stream()
+                    .map(String.class::cast)
+                    .toList()));
+                }
+             }
+             case NOT_IN ->  {
+                 if (value instanceof Collection<?> values) {
+                     select = select.and(NAMESPACE_FIELD.notIn(values.stream()
+                         .map(String.class::cast)
+                         .toList()));
+                 }
+             }
+             default ->
                 throw new UnsupportedOperationException("Unsupported operation '%s' for field 'namespace'.".formatted(operation));
         }
          return select;

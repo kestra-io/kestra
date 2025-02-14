@@ -3,24 +3,16 @@
         <template #additional-right>
             <ul>
                 <li>
-                    <div class="el-input el-input-file custom-upload">
-                        <form ref="importForm">
-                            <div class="el-input__wrapper">
-                                <label for="importFlows">
-                                    <Upload />
-                                    {{ $t("import") }}
-                                </label>
-                                <input
-                                    id="importFlows"
-                                    class="el-input__inner"
-                                    type="file"
-                                    accept=".zip, .yml, .yaml"
-                                    @change="importFlows()"
-                                    ref="file"
-                                >
-                            </div>
-                        </form>
-                    </div>
+                    <el-button :icon="Upload" @click="file?.click()">
+                        {{ $t("import") }}
+                    </el-button>
+                    <input
+                        ref="file"
+                        type="file"
+                        accept=".zip, .yml, .yaml"
+                        @change="importFlows()"
+                        class="d-none"
+                    >
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
@@ -321,6 +313,7 @@
 </template>
 
 <script setup>
+    import {ref} from "vue";
     import moment from "moment";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
@@ -339,6 +332,8 @@
 
     const route = useRoute();
     const router = useRouter();
+
+    const file = ref(null);
 
     function tableChartClick(namespace, flowId, e, elements) {
         if (
@@ -432,7 +427,7 @@
                         label: this.$t("triggers"),
                         prop: "triggers",
                         default: true,
-                    }
+                    },
                 ],
                 displayColumns: [],
                 isDefaultNamespaceAllow: true,

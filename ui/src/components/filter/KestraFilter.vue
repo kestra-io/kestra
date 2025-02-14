@@ -37,7 +37,7 @@
                     TODO: Find a way to have persistent tags for el-select.
                     https://github.com/kestra-io/kestra/issues/6256
                 -->
-                <Label :option="value" />
+                <Label :option="value" :prefix="ITEMS_PREFIX" />
             </template>
             <template #empty>
                 <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
@@ -405,7 +405,7 @@
             );
             if (parentIndex !== -1) {
                 if (
-                    ["namespace", "log level"].includes(
+                    ["log level"].includes(
                         lastClickedParent.value.toLowerCase(),
                     )
                 ) {
@@ -590,6 +590,16 @@
         }
     };
     const currentFilters = ref<CurrentItem[]>([]);
+
+    watch(
+        () => route.query,
+        (q: any) => {
+            // Handling change of label filters from direct click events
+            const routeFilters = decodeParams(route.path, q, props.include, OPTIONS);
+            currentFilters.value = routeFilters;
+        },
+        {immediate: true},
+    );
 
     const prefixFilter = ref("");
 

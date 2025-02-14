@@ -10,6 +10,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  labels:
+    name: Add appropriate labels to PR
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate GitHub CLI
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
+
+      - name: Get author & add labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_AUTHOR=$(gh pr view ${{ github.event.pull_request.html_url }} --json author --jq '.author.login')
+          ITEM_ID=$(gh project item-add 16 --owner kestra-io --url ${{ github.event.pull_request.html_url }} --json id --jq '.id')
+
+          if gh api orgs/kestra-io/members/$PR_AUTHOR --silent; then  
+              gh project item-edit $ITEM_ID --project 16 --field "Contribution" --value "Internal"  
+          else  
+              gh project item-edit $ITEM_ID --project 16 --field "Contribution" --value "External" --field "Area" --value "TBD"  
+          fi
+
   file-changes:
     name: File changes detection
     runs-on: ubuntu-latest

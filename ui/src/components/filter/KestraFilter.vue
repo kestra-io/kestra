@@ -591,6 +591,16 @@
     };
     const currentFilters = ref<CurrentItem[]>([]);
 
+    watch(
+        () => route.query,
+        (q: any) => {
+            // Handling change of label filters from direct click events
+            const routeFilters = decodeParams(route.path, q, props.include, OPTIONS);
+            currentFilters.value = routeFilters;
+        },
+        {immediate: true},
+    );
+
     const prefixFilter = ref("");
 
     const includedOptions = computed(() => {

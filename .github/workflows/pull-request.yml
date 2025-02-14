@@ -20,17 +20,29 @@ jobs:
       - name: Authenticate GitHub CLI
         run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
+      - name: Fetch project ID
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PROJECT_ID=$(gh project list --owner kestra-io --format json | jq -r '.[] | select(.number == 16) | .id')
+          echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
+
       - name: Get author & add labels
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_AUTHOR=$(gh pr view ${{ github.event.pull_request.html_url }} --json author --jq '.author.login')
-          ITEM_ID=$(gh project item-add 16 --owner kestra-io --url ${{ github.event.pull_request.html_url }} | jq -r '.id')
+          ITEM_ID=$(gh project item-add --owner kestra-io --project-id $PROJECT_ID --url ${{ github.event.pull_request.html_url }} | jq -r '.id')
+
+          # Get field IDs
+          FIELD_CONTRIBUTION=$(gh project field-list --owner kestra-io --project-id $PROJECT_ID --format json | jq -r '.[] | select(.name == "Contribution") | .id')
+          FIELD_AREA=$(gh project field-list --owner kestra-io --project-id $PROJECT_ID --format json | jq -r '.[] | select(.name == "Area") | .id')
 
           if gh api orgs/kestra-io/members/$PR_AUTHOR --silent; then  
-              gh project item-edit --project-id 16 --id $ITEM_ID --field "Contribution" --value "Internal"  
+              gh project item-edit --id $ITEM_ID --project-id $PROJECT_ID --field-id $FIELD_CONTRIBUTION --text "Internal"
           else  
-              gh project item-edit --project-id 16 --id $ITEM_ID --field "Contribution" --value "External" --field "Area" --value "TBD"  
+              gh project item-edit --id $ITEM_ID --project-id $PROJECT_ID --field-id $FIELD_CONTRIBUTION --text "External"
+              gh project item-edit --id $ITEM_ID --project-id $PROJECT_ID --field-id $FIELD_AREA --text "TBD"
           fi
 
   file-changes:

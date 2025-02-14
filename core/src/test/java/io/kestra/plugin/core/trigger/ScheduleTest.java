@@ -248,12 +248,12 @@ class ScheduleTest {
     shouldReturnExecutionForBackFillWhenCurrentDateIsAfterScheduleDate() throws Exception {
         // Given
         Schedule trigger = Schedule.builder().id("schedule").cron(TEST_CRON_EVERYDAY_AT_8).build();
-        ZonedDateTime now = ZonedDateTime.now();
-        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
+        ZonedDateTime now = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
+        TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
             .backfill(Backfill
                 .builder()
-                .currentDate(ZonedDateTime.now().with(LocalTime.MIN).plus(Duration.ofHours(8)))
-                .end(ZonedDateTime.now().with(LocalTime.MAX))
+                .currentDate(now.with(LocalTime.MIN).plus(Duration.ofHours(8)))
+                .end(now.with(LocalTime.MAX))
                 .build()
             )
             .build();

@@ -169,7 +169,7 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
                 startDate: query["filters[startDate][$gte]"],
                 endDate: query["filters[endDate][$lte]"]
             }],
-            operation: "$range"
+            operation: "$between"
         });
     }
 

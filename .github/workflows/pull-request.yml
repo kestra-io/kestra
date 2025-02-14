@@ -25,12 +25,12 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_AUTHOR=$(gh pr view ${{ github.event.pull_request.html_url }} --json author --jq '.author.login')
-          ITEM_ID=$(gh project item-add 16 --owner kestra-io --url ${{ github.event.pull_request.html_url }} --json id --jq '.id')
+          ITEM_ID=$(gh project item-add 16 --owner kestra-io --url ${{ github.event.pull_request.html_url }} | jq -r '.id')
 
           if gh api orgs/kestra-io/members/$PR_AUTHOR --silent; then  
-              gh project item-edit $ITEM_ID --project 16 --field "Contribution" --value "Internal"  
+              gh project item-edit --project-id 16 --id $ITEM_ID --field "Contribution" --value "Internal"  
           else  
-              gh project item-edit $ITEM_ID --project 16 --field "Contribution" --value "External" --field "Area" --value "TBD"  
+              gh project item-edit --project-id 16 --id $ITEM_ID --field "Contribution" --value "External" --field "Area" --value "TBD"  
           fi
 
   file-changes:

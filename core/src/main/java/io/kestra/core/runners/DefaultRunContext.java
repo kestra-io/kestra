@@ -18,6 +18,9 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
@@ -51,6 +54,7 @@ public class DefaultRunContext extends RunContext {
     private KVStoreService kvStoreService;
     private Optional<String> secretKey;
     private WorkingDir workingDir;
+    private Validator validator;
 
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
@@ -147,6 +151,7 @@ public class DefaultRunContext extends RunContext {
             this.version = applicationContext.getBean(VersionProvider.class);
             this.kvStoreService = applicationContext.getBean(KVStoreService.class);
             this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
+            this.validator = applicationContext.getBean(Validator.class);
         }
     }
 
@@ -307,6 +312,16 @@ public class DefaultRunContext extends RunContext {
                 this.render(entry.getValue(), allVariables)
             )))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    @Override
+    public <T> void validate(T bean) {
+        // It can be null in unit test as init() is not always called there
+        Validator theValidator = validator != null ? validator : applicationContext.getBean(Validator.class);
+        Set<ConstraintViolation<T>> violations = theValidator.validate(bean);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
     }
 
     /**

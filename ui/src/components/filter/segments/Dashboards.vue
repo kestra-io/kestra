@@ -148,21 +148,33 @@
 </script>
 
 <style scoped lang="scss">
-    @import "../styles/filter";
+@import "../styles/filter";
 
-    .dropdown {
-        width: 300px;
-    }
+.dropdown {
+    width: 300px;
+    background: var(--ks-select-background);
 
-    .items {
-        max-height: 160px !important; // 5 visible items
-    }
-
-    .main-button {
-        max-width: 300px;
-
-        span {
-            max-width: 250px;
+    :deep(li.el-dropdown-menu__item) {
+        &:hover,
+        &:focus {
+            background: var(--ks-select-hover);
         }
     }
+}
+
+.items {
+    max-height: 160px !important; // 5 visible items
+
+    :deep(li.el-dropdown-menu__item) {
+        border-radius: unset;
+    }
+}
+
+.main-button {
+    max-width: 300px;
+
+    span {
+        max-width: 250px;
+    }
+}
 </style>

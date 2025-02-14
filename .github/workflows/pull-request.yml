@@ -23,13 +23,14 @@ jobs:
       - name: Get Project ID & Field IDs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PROJECT_NUMBER: 16  # Change if your project number is different
         run: |
+          PROJECT_NUMBER=16  # Change this if needed
+          
           # Get the project ID
           PROJECT_ID=$(gh api graphql -f query='
             query {
               organization(login: "kestra-io") {
-                projectV2(number: $PROJECT_NUMBER) {
+                projectV2(number: 16) {
                   id
                 }
               }
@@ -44,8 +45,14 @@ jobs:
                 ... on ProjectV2 {
                   fields(first: 20) {
                     nodes {
-                      id
-                      name
+                      ... on ProjectV2SingleSelectField {
+                        id
+                        name
+                      }
+                      ... on ProjectV2Field {
+                        id
+                        name
+                      }
                     }
                   }
                 }
@@ -66,22 +73,22 @@ jobs:
 
           # Add PR to the project
           ITEM_ID=$(gh api graphql -f query='
-            mutation($projectId: ID!, $url: URI!) {
-              addProjectV2ItemById(input: {projectId: $projectId, contentId: $url}) {
+            mutation($projectId: ID!, $contentId: ID!) {
+              addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
                 item {
                   id
                 }
               }
-            }' -F projectId="$PROJECT_ID" -F url="${{ github.event.pull_request.node_id }}" | jq -r '.data.addProjectV2ItemById.item.id')
+            }' -F projectId="$PROJECT_ID" -F contentId="${{ github.event.pull_request.node_id }}" | jq -r '.data.addProjectV2ItemById.item.id')
 
           echo "ITEM_ID=$ITEM_ID" >> $GITHUB_ENV
 
           # Determine if the author is an internal contributor
           if gh api orgs/kestra-io/members/$PR_AUTHOR --silent; then  
               gh api graphql -f query='
-                mutation($itemId: ID!, $fieldId: ID!, $value: String!) {
+                mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $value: String!) {
                   updateProjectV2ItemFieldValue(input: {
-                    projectId: "'"$PROJECT_ID"'",
+                    projectId: $projectId,
                     itemId: $itemId,
                     fieldId: $fieldId,
                     value: {text: $value}
@@ -90,12 +97,12 @@ jobs:
                       id
                     }
                   }
-                }' -F itemId="$ITEM_ID" -F fieldId="$FIELD_CONTRIBUTION" -F value="Internal"
+                }' -F projectId="$PROJECT_ID" -F itemId="$ITEM_ID" -F fieldId="$FIELD_CONTRIBUTION" -F value="Internal"
           else  
               gh api graphql -f query='
-                mutation($itemId: ID!, $fieldId: ID!, $value: String!) {
+                mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $value: String!) {
                   updateProjectV2ItemFieldValue(input: {
-                    projectId: "'"$PROJECT_ID"'",
+                    projectId: $projectId,
                     itemId: $itemId,
                     fieldId: $fieldId,
                     value: {text: $value}
@@ -104,12 +111,12 @@ jobs:
                       id
                     }
                   }
-                }' -F itemId="$ITEM_ID" -F fieldId="$FIELD_CONTRIBUTION" -F value="External"
+                }' -F projectId="$PROJECT_ID" -F itemId="$ITEM_ID" -F fieldId="$FIELD_CONTRIBUTION" -F value="External"
 
               gh api graphql -f query='
-                mutation($itemId: ID!, $fieldId: ID!, $value: String!) {
+                mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $value: String!) {
                   updateProjectV2ItemFieldValue(input: {
-                    projectId: "'"$PROJECT_ID"'",
+                    projectId: $projectId,
                     itemId: $itemId,
                     fieldId: $fieldId,
                     value: {text: $value}
@@ -118,7 +125,7 @@ jobs:
                       id
                     }
                   }
-                }' -F itemId="$ITEM_ID" -F fieldId="$FIELD_AREA" -F value="TBD"
+                }' -F projectId="$PROJECT_ID" -F itemId="$ITEM_ID" -F fieldId="$FIELD_AREA" -F value="TBD"
           fi
 
   file-changes:

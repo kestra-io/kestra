@@ -171,7 +171,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.numThreads = numThreads;
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
         this.eventPublisher = eventPublisher;
-        this.executorService = executorsUtils.maxCachedThreadPool(numThreads, EXECUTOR_NAME);
+        this.executorService = executorsUtils.elasticCachedThreadPool(1, numThreads, EXECUTOR_NAME);
         this.setState(ServiceState.CREATED);
     }
 
@@ -272,6 +272,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
 
         setState(ServiceState.RUNNING);
+        log.info("Worker started with {} thread(s)", numThreads);
     }
 
     private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {

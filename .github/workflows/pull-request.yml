@@ -23,8 +23,7 @@ pr-labels:
       - name: Get PR Author & Add Labels
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          PR_AUTHOR=$(gh api repos/kestra-io/kestra/pulls/${{ github.event.pull_request.number }} --jq '.user.login') && echo "PR Author: $PR_AUTHOR"
+        run: PR_AUTHOR=$(gh api repos/kestra-io/kestra/pulls/${{ github.event.pull_request.number }} --jq '.user.login') && echo "PR Author: $PR_AUTHOR"
 
   file-changes:
     name: File changes detection

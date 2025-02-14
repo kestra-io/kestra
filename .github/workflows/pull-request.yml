@@ -10,39 +10,115 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  labels:
-    name: Add appropriate labels to PR
+  pr-labels:
+    name: PR Labels
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Authenticate GitHub CLI
         run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
-      - name: Fetch project ID
+      - name: Get Project ID & Field IDs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECT_NUMBER: 16  # Change if your project number is different
         run: |
-          PROJECT_ID=$(gh project list --owner kestra-io --format json | jq -r '.[] | select(.number == 16) | .id')
+          # Get the project ID
+          PROJECT_ID=$(gh api graphql -f query='
+            query {
+              organization(login: "kestra-io") {
+                projectV2(number: $PROJECT_NUMBER) {
+                  id
+                }
+              }
+            }' | jq -r '.data.organization.projectV2.id')
+
           echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
 
-      - name: Get author & add labels
+          # Get the field IDs for "Contribution" and "Area"
+          FIELDS=$(gh api graphql -f query='
+            query {
+              node(id: "'"$PROJECT_ID"'") {
+                ... on ProjectV2 {
+                  fields(first: 20) {
+                    nodes {
+                      id
+                      name
+                    }
+                  }
+                }
+              }
+            }')
+
+          FIELD_CONTRIBUTION=$(echo $FIELDS | jq -r '.data.node.fields.nodes[] | select(.name == "Contribution") | .id')
+          FIELD_AREA=$(echo $FIELDS | jq -r '.data.node.fields.nodes[] | select(.name == "Area") | .id')
+
+          echo "FIELD_CONTRIBUTION=$FIELD_CONTRIBUTION" >> $GITHUB_ENV
+          echo "FIELD_AREA=$FIELD_AREA" >> $GITHUB_ENV
+
+      - name: Add PR to Project & Set Labels
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_AUTHOR=$(gh pr view ${{ github.event.pull_request.html_url }} --json author --jq '.author.login')
-          ITEM_ID=$(gh project item-add --owner kestra-io --project-id $PROJECT_ID --url ${{ github.event.pull_request.html_url }} | jq -r '.id')
 
-          # Get field IDs
-          FIELD_CONTRIBUTION=$(gh project field-list --owner kestra-io --project-id $PROJECT_ID --format json | jq -r '.[] | select(.name == "Contribution") | .id')
-          FIELD_AREA=$(gh project field-list --owner kestra-io --project-id $PROJECT_ID --format json | jq -r '.[] | select(.name == "Area") | .id')
+          # Add PR to the project
+          ITEM_ID=$(gh api graphql -f query='
+            mutation($projectId: ID!, $url: URI!) {
+              addProjectV2ItemById(input: {projectId: $projectId, contentId: $url}) {
+                item {
+                  id
+                }
+              }
+            }' -F projectId="$PROJECT_ID" -F url="${{ github.event.pull_request.node_id }}" | jq -r '.data.addProjectV2ItemById.item.id')
 
+          echo "ITEM_ID=$ITEM_ID" >> $GITHUB_ENV
+
+          # Determine if the author is an internal contributor
           if gh api orgs/kestra-io/members/$PR_AUTHOR --silent; then  
-              gh project item-edit --id $ITEM_ID --project-id $PROJECT_ID --field-id $FIELD_CONTRIBUTION --text "Internal"
+              gh api graphql -f query='
+                mutation($itemId: ID!, $fieldId: ID!, $value: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: "'"$PROJECT_ID"'",
+                    itemId: $itemId,
+                    fieldId: $fieldId,
+                    value: {text: $value}
+                  }) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }' -F itemId="$ITEM_ID" -F fieldId="$FIELD_CONTRIBUTION" -F value="Internal"
           else  
-              gh project item-edit --id $ITEM_ID --project-id $PROJECT_ID --field-id $FIELD_CONTRIBUTION --text "External"
-              gh project item-edit --id $ITEM_ID --project-id $PROJECT_ID --field-id $FIELD_AREA --text "TBD"
+              gh api graphql -f query='
+                mutation($itemId: ID!, $fieldId: ID!, $value: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: "'"$PROJECT_ID"'",
+                    itemId: $itemId,
+                    fieldId: $fieldId,
+                    value: {text: $value}
+                  }) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }' -F itemId="$ITEM_ID" -F fieldId="$FIELD_CONTRIBUTION" -F value="External"
+
+              gh api graphql -f query='
+                mutation($itemId: ID!, $fieldId: ID!, $value: String!) {
+                  updateProjectV2ItemFieldValue(input: {
+                    projectId: "'"$PROJECT_ID"'",
+                    itemId: $itemId,
+                    fieldId: $fieldId,
+                    value: {text: $value}
+                  }) {
+                    projectV2Item {
+                      id
+                    }
+                  }
+                }' -F itemId="$ITEM_ID" -F fieldId="$FIELD_AREA" -F value="TBD"
           fi
 
   file-changes:

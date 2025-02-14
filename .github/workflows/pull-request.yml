@@ -10,92 +10,28 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  add-to-project:
-    name: Add PR to GitHub Project
+pr-labels:
+    name: PR Labels
     runs-on: ubuntu-latest
     steps:
-      - name: Install jq
-        run: sudo apt-get install -y jq
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - name: Authenticate with GitHub CLI
+      - name: Authenticate GitHub CLI
         run: echo "${{ secrets.GITHUB_TOKEN }}" | gh auth login --with-token
 
-      - name: Get Project ID
-        id: get-project
-        run: |
-          PROJECT_ID=$(gh api graphql -f query='
-          query {
-            organization(login: "kestra-io") {
-              projectsV2(first: 20) {
-                nodes {
-                  id
-                  number
-                }
-              }
-            }
-          }' | jq -r '.data.organization.projectsV2.nodes[] | select(.number == 16) | .id')
-          
-          echo "Project ID: $PROJECT_ID"
-          echo "PROJECT_ID=$PROJECT_ID" >> $GITHUB_ENV
-
-      - name: Add PR to Project
-        id: add-item
-        run: |
-          ITEM_ID=$(gh api graphql -f query='
-          mutation($projectId: ID!, $contentId: ID!) {
-            addProjectV2ItemById(input: {projectId: $projectId, contentId: $contentId}) {
-              item { id }
-            }
-          }' -F projectId="$PROJECT_ID" -F contentId="${{ github.event.pull_request.node_id }}" | jq -r '.data.addProjectV2ItemById.item.id')
-          
-          echo "Item ID: $ITEM_ID"
-          echo "ITEM_ID=$ITEM_ID" >> $GITHUB_ENV
-
-      - name: Get Contribution Field ID
-        id: get-field
-        run: |
-          FIELD_ID=$(gh api graphql -f query='
-          query {
-            node(id: "'"$PROJECT_ID"'") {
-              ... on ProjectV2 {
-                fields(first: 20) {
-                  nodes {
-                    id
-                    name
-                  }
-                }
-              }
-            }
-          }' | jq -r '.data.node.fields.nodes[] | select(.name == "Contribution") | .id')
-
-          echo "Field ID: $FIELD_ID"
-          echo "FIELD_ID=$FIELD_ID" >> $GITHUB_ENV
-
-      - name: Check PR Author Type
-        id: check-author
+      - name: Get PR Author & Add Labels
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           PR_AUTHOR=$(gh api repos/kestra-io/kestra/pulls/${{ github.event.pull_request.number }} --jq '.user.login')
           echo "PR Author: $PR_AUTHOR"
 
-          if gh api orgs/kestra-io/members/$PR_AUTHOR --silent; then
-            echo "CONTRIBUTION_TYPE=Internal" >> $GITHUB_ENV
-          else
-            echo "CONTRIBUTION_TYPE=External" >> $GITHUB_ENV
-          fi
+          ITEM_ID=$(gh api --method POST /projects/16/items \
+            -F content_id="${{ github.event.pull_request.node_id }}" \
+            --jq '.id')
 
-      - name: Update Project Fields
-        run: |
-          gh api graphql -f query='
-          mutation($projectId: ID!, $itemId: ID!, $fieldId: ID!, $value: String!) {
-            updateProjectV2ItemFieldValue(input: {
-              projectId: $projectId,
-              itemId: $itemId,
-              fieldId: $fieldId,
-              value: {text: $value}
-            }) {
-              projectV2Item { id }
-            }
-          }' -F projectId="$PROJECT_ID" -F itemId="$ITEM_ID" -F fieldId="$FIELD_ID" -F value="$CONTRIBUTION_TYPE"
+          echo "Added PR to Project. Item ID: $ITEM_ID"
 
   file-changes:
     name: File changes detection

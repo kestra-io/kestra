@@ -5,7 +5,7 @@
 </p>
 
 <h1 align="center" style="border-bottom: none">
-    Event-Driven Declarative Orchestration Platform
+    Forked to Work on Issues by Ash
 </h1>
 
 <div align="center">
@@ -202,6 +202,13 @@ We welcome contributions of all kinds!
 - **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/getting-started/contributing) for initial guidelines, and explore our [good first issues](https://go.kestra.io/contributing) for beginner-friendly tasks to tackle first.
 - **Develop Plugins:** Build and share plugins using our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/).
 - **Contribute to our Docs:** Contribute edits or updates to keep our [documentation](https://github.com/kestra-io/docs) top-notch.
+
+---
+## 📫 Contact Me  
+
+I'm always open to connecting and collaborating! Feel free to reach out to me on **LinkedIn**:  
+
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat&logo=linkedin)](www.linkedin.com/in/aleuribeencina05)  
 
 ---
 

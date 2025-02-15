@@ -208,7 +208,7 @@ We welcome contributions of all kinds!
 
 I'm always open to connecting and collaborating! Feel free to reach out to me on **LinkedIn**:  
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat&logo=linkedin)](www.linkedin.com/in/aleuribeencina05)  
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Profile-blue?style=flat&logo=linkedin)](www.linkedin.com/in/aleuribeencina05).  
 
 ---
 

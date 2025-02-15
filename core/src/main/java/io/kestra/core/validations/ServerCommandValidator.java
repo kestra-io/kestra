@@ -1,4 +1,4 @@
-package io.kestra.cli;
+package io.kestra.core.validations;
 
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;

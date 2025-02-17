@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.kestra.core.utils.Rethrow.throwFunction;
+
 @AllArgsConstructor
 @Getter
 public class CommandsWrapper implements TaskCommands {
@@ -263,6 +265,17 @@ public class CommandsWrapper implements TaskCommands {
             command,
             taskRunner instanceof RemoteRunnerInterface
         );
+    }
+
+    public String render(RunContext runContext, Property<String> command) throws IllegalVariableEvaluationException, IOException {
+        TaskRunner<?> taskRunner = this.getTaskRunner();
+        if (command == null) {
+            return null;
+        }
+
+        return runContext.render(command).as(String.class, taskRunner.additionalVars(runContext, this))
+            .map(throwFunction(c -> ScriptService.replaceInternalStorage(runContext, c, taskRunner instanceof RemoteRunnerInterface)))
+            .orElse(null);
     }
 
     public List<String> renderCommands(RunContext runContext, Property<List<String>> commands) throws IllegalVariableEvaluationException, IOException {

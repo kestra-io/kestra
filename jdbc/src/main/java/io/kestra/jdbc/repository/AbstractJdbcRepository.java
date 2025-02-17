@@ -452,15 +452,13 @@ public abstract class AbstractJdbcRepository {
 
         if (scopeValues.contains(FlowScope.USER)) {
             Condition userCondition = isEqualsOperation
-                ? DSL.field("namespace").ne(systemNamespace)
-                : DSL.field("namespace").eq(systemNamespace);
+                ? field("namespace").ne(systemNamespace)
+                : field("namespace").eq(systemNamespace);
             select = select.and(userCondition);
-        }
-
-        if (scopeValues.contains(FlowScope.SYSTEM)) {
+        } else if (scopeValues.contains(FlowScope.SYSTEM)) {
             Condition systemCondition = isEqualsOperation
-                ? DSL.field("namespace").eq(systemNamespace)
-                : DSL.field("namespace").ne(systemNamespace);
+                ? field("namespace").eq(systemNamespace)
+                : field("namespace").ne(systemNamespace);
             select = select.and(systemCondition);
         }
 

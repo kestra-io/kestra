@@ -137,7 +137,7 @@ public class Process extends TaskRunner<TaskRunnerDetailResult> {
 
         processBuilder.directory(taskCommands.getWorkingDirectory().toFile());
 
-        List<String> renderedCommands = this.renderCommands(runContext, taskCommands);
+        List<String> renderedCommands = runContext.render(taskCommands.getCommands()).asList(String.class);
 
         processBuilder.command(renderedCommands);
 

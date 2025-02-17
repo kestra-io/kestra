@@ -140,7 +140,7 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
             .flatMap(Collection::stream).toList();
     }
 
-    public List<String> renderCommandsFromList(RunContext runContext, TaskCommands taskCommands, Property<List<String>> commands) throws IllegalVariableEvaluationException, IOException {
+    private List<String> renderCommandsFromList(RunContext runContext, TaskCommands taskCommands, Property<List<String>> commands) throws IllegalVariableEvaluationException, IOException {
         return ScriptService.replaceInternalStorage(
             runContext,
             this.additionalVars(runContext, taskCommands),

@@ -322,6 +322,7 @@ The table below lists Pebble functions and filter expressions:
 | `fileSize`       | `{{ fileSize(output.download.uri) }}` — Returns the size of the file present at the given uri location.                         |
 | `fileExists`     | `{{ fileExists(output.download.uri) }}` — Returns true if file is present at the given uri location.                            |
 | `isFileEmpty`    | `{{ isFileEmpty(output.download.uri) }}` — Returns true if file present at the given uri location is empty.                       |
+| `string`         | `{{ 123 \| string }}` — Converts 123 into a string.                                                                       |
 
 
 

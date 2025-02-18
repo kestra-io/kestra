@@ -10,6 +10,31 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  labeling:
+    name: PR Labeling & Project Assignment
+    runs-on: ubuntu-latest
+    # if: github.event.action == 'opened'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get PR Author
+        id: pr_author
+        run: echo "PR_AUTHOR=$(gh pr view ${{ github.event.pull_request.html_url }} --json author --jq '.author.login')" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add PR to Project
+        id: project_add
+        run: echo "ITEM_ID=$(gh project item-add 16 --owner kestra-io --url ${{ github.event.pull_request.html_url }} --json id --jq '.id')" >> $GITHUB_ENV
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Add Label to PR
+        run: gh pr edit ${{ github.event.pull_request.number }} --add-label "needs-review"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   file-changes:
     name: File changes detection
     runs-on: ubuntu-latest

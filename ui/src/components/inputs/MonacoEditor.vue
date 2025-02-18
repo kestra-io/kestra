@@ -635,6 +635,25 @@
                         command: "editor.action.quickCommand"
                     })
 
+                    
+                    monaco.editor.addKeybindingRule({
+                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.UpArrow,
+                        command: "editor.action.fontZoomIn",
+                        when: "editorFocus"
+                    })
+
+                    monaco.editor.addKeybindingRule({
+                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.DownArrow,
+                        command: "editor.action.fontZoomOut",
+                        when: "editorFocus"
+                    })
+
+                    monaco.editor.addKeybindingRule({
+                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit0,
+                        command: "editor.action.fontZoomReset",
+                        when: "editorFocus"
+                    });
+
                     this.editor = monaco.editor.create(this.$el, options);
 
                     if(!this.input){

@@ -62,6 +62,8 @@
     "overview": "Overview",
     "gantt": "Gantt",
     "logs": "Logs",
+    "no_logs_data": "No Data",
+    "no_logs_data_description": "Either no flows are running, or you may need to adjust your filters.",
     "duration": "Duration",
     "running duration": "Running duration",
     "queued duration": "Queued duration",

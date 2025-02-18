@@ -26,7 +26,9 @@ jobs:
 
       - name: Add PR to Project
         id: project_add
-        run: echo "ITEM_ID=$(gh project item-add 16 --owner kestra-io --url ${{ github.event.pull_request.html_url }} --json id --jq '.id')" >> $GITHUB_ENV
+        run: |
+          ITEM_ID=$(gh project item-add 16 --owner kestra-io --url https://github.com/kestra-io/kestra/pull/7447 | grep -oP '"id":\s*\K\d+')
+          echo "ITEM_ID=$ITEM_ID" >> $GITHUB_ENV
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

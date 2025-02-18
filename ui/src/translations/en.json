@@ -1190,9 +1190,9 @@
       "comment_uncomment": "Comment/Uncomment",
       "comment": "Comment",
       "uncomment": "Uncomment",
-      "reset_fontsize": "Reset font Editor size",
-      "fontsize_in": "Increase font Editor size",
-      "fontsize_out": "Decrease font Editor size"
+      "reset_fontsize": "Reset Editor font size",
+      "fontsize_in": "Increase Editor font size",
+      "fontsize_out": "Decrease Editor font size"
     },
     "instance": "Instance",
     "something_went_wrong": {

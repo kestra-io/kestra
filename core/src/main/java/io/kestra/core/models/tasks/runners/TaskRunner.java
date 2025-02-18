@@ -131,24 +131,6 @@ public abstract class TaskRunner<T extends TaskRunnerDetailResult> implements Pl
         return windowsToUnixPath(workingDir + "/" + relativePath);
     }
 
-    public List<String> renderCommands(RunContext runContext, TaskCommands taskCommands) throws IllegalVariableEvaluationException, IOException {
-        List<String> renderedCommands = this.renderCommandsFromList(runContext, taskCommands, taskCommands.getCommands());
-        List<String> renderedBeforeCommands = this.renderCommandsFromList(runContext, taskCommands, taskCommands.getBeforeCommands());
-        List<String> renderedInterpreter = this.renderCommandsFromList(runContext, taskCommands, taskCommands.getInterpreter());
-
-        return Stream.of(renderedInterpreter, renderedBeforeCommands, renderedCommands)
-            .flatMap(Collection::stream).toList();
-    }
-
-    private List<String> renderCommandsFromList(RunContext runContext, TaskCommands taskCommands, Property<List<String>> commands) throws IllegalVariableEvaluationException, IOException {
-        return ScriptService.replaceInternalStorage(
-            runContext,
-            this.additionalVars(runContext, taskCommands),
-            commands,
-            this instanceof RemoteRunnerInterface
-        );
-    }
-
     /** {@inheritDoc} **/
     @Override
     public void kill() {

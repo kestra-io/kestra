@@ -428,7 +428,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             // start container
             dockerClient.startContainerCmd(exec.getId()).exec();
 
-            List<String> renderedCommands = this.renderCommands(runContext, taskCommands);
+            List<String> renderedCommands = runContext.render(taskCommands.getCommands()).asList(String.class);
 
             if (logger.isDebugEnabled()) {
                 logger.debug(
@@ -780,7 +780,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
         return container
             .withHostConfig(hostConfig)
-            .withCmd(this.renderCommands(runContext, taskCommands))
+            .withCmd(runContext.render(taskCommands.getCommands()).asList(String.class))
             .withAttachStderr(true)
             .withAttachStdout(true);
     }

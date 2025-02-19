@@ -652,14 +652,14 @@
                     })
 
                     monaco.editor.addKeybindingRule({
-                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.UpArrow,
-                        command: "editor.action.fontZoomIn",
+                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.DownArrow,
+                        command: "editor.action.fontZoomOut",
                         when: "editorFocus"
                     })
 
                     monaco.editor.addKeybindingRule({
-                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.DownArrow,
-                        command: "editor.action.fontZoomOut",
+                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.UpArrow,
+                        command: "editor.action.fontZoomIn",
                         when: "editorFocus"
                     })
 

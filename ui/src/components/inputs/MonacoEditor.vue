@@ -46,6 +46,22 @@
         }
     });
 
+    monaco.editor.defineTheme("light", {
+        base: "vs",
+        inherit: true,
+        rules: [
+            {token: "type", foreground: "#8405FF"},
+            {token: "string.yaml", foreground: "#001233"},
+            {token: "comment", foreground: "#8d99ae", fontStyle: "italic"},
+        ],
+        colors: {
+            "editor.lineHighlightBackground": "#fbfaff",
+            "editorLineNumber.foreground": "#444444",
+            "editor.selectionBackground": "#E8E5FF",
+            "editor.wordHighlightBackground": "#E8E5FF",
+        }
+    });
+
     export default defineComponent({
         data() {
             return {
@@ -76,7 +92,7 @@
             },
             theme: {
                 type: String,
-                default: "vs"
+                default: "light"
             },
             language: {
                 type: String,
@@ -634,6 +650,24 @@
                         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyP,
                         command: "editor.action.quickCommand"
                     })
+
+                    monaco.editor.addKeybindingRule({
+                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.DownArrow,
+                        command: "editor.action.fontZoomOut",
+                        when: "editorFocus"
+                    })
+
+                    monaco.editor.addKeybindingRule({
+                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.UpArrow,
+                        command: "editor.action.fontZoomIn",
+                        when: "editorFocus"
+                    })
+
+                    monaco.editor.addKeybindingRule({
+                        keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.Digit0,
+                        command: "editor.action.fontZoomReset",
+                        when: "editorFocus"
+                    });
 
                     this.editor = monaco.editor.create(this.$el, options);
 

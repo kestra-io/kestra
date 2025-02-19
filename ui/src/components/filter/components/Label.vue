@@ -29,7 +29,7 @@
     const UNKNOWN = "unknown";
 
     const label = computed(() => props.option.label);
-    const operation = computed(() => props.option?.operation);
+    const operation = computed(() => props.option?.operation ?? props.option?.comparator?.value ?? (props.option?.label === "text" ? "$eq" : undefined));
     const value = computed(() => {
         const {value, label, operation} = props.option;
 

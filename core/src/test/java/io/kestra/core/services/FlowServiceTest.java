@@ -337,7 +337,7 @@ class FlowServiceTest {
             .build();
 
         ConstraintViolationException exception = assertThrows(ConstraintViolationException.class, () -> {
-            flowService.checkValidSubflows(flow);
+            flowService.checkValidSubflows(flow, null);
         });
 
         assertThat(exception.getConstraintViolations().size(), is(1));
@@ -360,6 +360,6 @@ class FlowServiceTest {
             ))
             .build();
 
-        assertDoesNotThrow(() -> flowService.checkValidSubflows(flow));
+        assertDoesNotThrow(() -> flowService.checkValidSubflows(flow, null));
     }
 }

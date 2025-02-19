@@ -20,7 +20,7 @@
                             <template v-if="hasStatsData">
                                 <Logs :data="logDaily" />
                             </template>
-                            <NoData v-else />
+                            <LogsNoData v-else />
                         </div>
                     </el-card>
                 </template>
@@ -52,7 +52,7 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../../components/layout/DataTable.vue";
-    import NoData from "../layout/NoData.vue";
+    import LogsNoData from "../dashboard/components/charts/logs/LogsNoData.vue";
     import _merge from "lodash/merge";
     import Logs from "../dashboard/components/charts/logs/Bar.vue";
     import {storageKeys} from "../../utils/constants";
@@ -62,7 +62,7 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             KestraFilter,
-            DataTable, LogLine, TopNavBar, Logs, NoData},
+            DataTable, LogLine, TopNavBar, Logs, LogsNoData},
         props: {
             logLevel: {
                 type: String,

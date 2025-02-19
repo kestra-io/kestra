@@ -1,12 +1,12 @@
-export const encodeParams = (path, filters, OPTIONS) => {
-    if(isSearchPath(path)) {return encodeSearchParams(filters, OPTIONS); }
+export const encodeParams = (route, filters, OPTIONS) => {
+    if(isSearchPath(route)) {return encodeSearchParams(filters, OPTIONS); }
 
     const encode = (values, key) => {
         return values
             .map((v) => {
-                if (key === "childFilter" && v === "ALL") {
-                    return null;
-                }
+                if (key === "childFilter" && v === "ALL") return null;
+                else if(key === "q") return v;
+
                 const encoded = encodeURIComponent(v);
                 return key === "labels"
                     ? encoded.replace(/%3A/g, ":")
@@ -44,8 +44,8 @@ export const encodeParams = (path, filters, OPTIONS) => {
     }, {});
 };
 
-export const decodeParams = (path, query, include, OPTIONS) => {
-    if(isSearchPath(path)) {return decodeSearchParams(query, include, OPTIONS); }
+export const decodeParams = (route, query, include, OPTIONS) => {
+    if(isSearchPath(route)) {return decodeSearchParams(query, include, OPTIONS); }
 
 
     let params = Object.entries(query)
@@ -176,4 +176,4 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
     return params;
 };
 
-export const isSearchPath = (path: string) =>["/admin/triggers","/dashboards/default", "/flows", "/executions", "/logs", "/dashboard"].includes(path);
+export const isSearchPath = (name: string) => ["home", "flows/list", "executions/list", "logs/list", "namespaces/update", "admin/triggers"].includes(name);

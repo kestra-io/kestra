@@ -1164,7 +1164,10 @@
       "comment": "Commentaire",
       "move_line": "Déplacer la ligne",
       "command_palette": "Afficher la palette de commandes",
-      "trigger_autocompletion": "Déclencher l'autocomplétion"
+      "trigger_autocompletion": "Déclencher l'autocomplétion",
+      "reset_fontsize": "Réinitialiser la taille de la police",
+      "decrease_fontsize": "Diminuer la taille de la police",
+      "increase_fontsize": "Augmenter la taille de la police"
     },
     "something_went_wrong": {
       "loading_execution": "Une erreur s'est produite lors du chargement de l'exécution"
@@ -1179,6 +1182,8 @@
     "default": "Par défaut",
     "custom_dashboard_confirm_deletion": "Êtes-vous sûr de vouloir supprimer le tableau de bord <code>{title}</code> ?",
     "custom_dashboard_validate_editing": "Les modifications dans le tableau de bord <code>{title}</code> sont enregistrées.",
-    "custom_dashboard_validate_creation": "Tableau de bord <code>{title}</code> est créé."
+    "custom_dashboard_validate_creation": "Tableau de bord <code>{title}</code> est créé.",
+    "no_logs_data_description": "Soit aucun flow n'est en cours d'exécution, soit vous devez ajuster vos filtres.",
+    "no_logs_data": "Pas de données"
   }
 }

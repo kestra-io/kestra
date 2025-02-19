@@ -95,7 +95,6 @@
                     :input="true"
                     :full-height="false"
                     :navbar="false"
-                    :minimap="false"
                     :model-value="selectedTask.runIf"
                     lang="yaml"
                     class="mt-3"

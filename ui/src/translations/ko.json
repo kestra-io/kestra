@@ -1164,7 +1164,10 @@
       "comment": "댓글",
       "move_line": "줄 이동",
       "command_palette": "명령 팔레트 표시",
-      "trigger_autocompletion": "자동 완성 트리거"
+      "trigger_autocompletion": "자동 완성 트리거",
+      "reset_fontsize": "글꼴 크기 재설정",
+      "decrease_fontsize": "글꼴 크기 줄이기",
+      "increase_fontsize": "글꼴 크기 증가"
     },
     "something_went_wrong": {
       "loading_execution": "실행을 로드하는 중 문제가 발생했습니다."
@@ -1179,6 +1182,8 @@
     "default": "기본값",
     "custom_dashboard_confirm_deletion": "<code>{title}</code> 대시보드를 삭제하시겠습니까?",
     "custom_dashboard_validate_editing": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
-    "custom_dashboard_validate_creation": "대시보드 <code>{title}</code>가 생성되었습니다."
+    "custom_dashboard_validate_creation": "대시보드 <code>{title}</code>가 생성되었습니다.",
+    "no_logs_data_description": "흐름이 실행 중이지 않거나 필터를 조정해야 할 수 있습니다.",
+    "no_logs_data": "데이터 없음"
   }
 }

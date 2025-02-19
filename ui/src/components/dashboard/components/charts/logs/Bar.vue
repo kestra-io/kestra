@@ -19,7 +19,7 @@
             :plugins="[barLegend]"
             class="tall"
         />
-        <NoData v-else />
+        <LogsNoData v-else />
     </div>
 </template>
 
@@ -36,7 +36,7 @@
     import {useScheme} from "../../../../../utils/scheme.js";
     import Logs from "../../../../../utils/logs.js";
 
-    import NoData from "../../../../layout/NoData.vue";
+    import LogsNoData from "./LogsNoData.vue";
     import {useTheme} from "../../../../../utils/utils.js";
 
     const {t} = useI18n({useScope: "global"});

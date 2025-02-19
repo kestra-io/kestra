@@ -1164,7 +1164,10 @@
       "comment": "Komentarz",
       "move_line": "Przenieś linię",
       "command_palette": "Pokaż paletę poleceń",
-      "trigger_autocompletion": "Wyzwól autouzupełnianie"
+      "trigger_autocompletion": "Wyzwól autouzupełnianie",
+      "reset_fontsize": "Zresetuj rozmiar czcionki",
+      "decrease_fontsize": "Zmniejsz rozmiar czcionki",
+      "increase_fontsize": "Zwiększ rozmiar czcionki"
     },
     "something_went_wrong": {
       "loading_execution": "Wystąpił problem podczas ładowania wykonania"
@@ -1179,6 +1182,8 @@
     "default": "Domyślny",
     "custom_dashboard_confirm_deletion": "Czy na pewno chcesz usunąć dashboard <code>{title}</code>?",
     "custom_dashboard_validate_editing": "Zmiany w dashboardzie <code>{title}</code> zostały zapisane.",
-    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> został utworzony."
+    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> został utworzony.",
+    "no_logs_data_description": "Albo żadne flow nie są uruchomione, albo musisz dostosować swoje filtry.",
+    "no_logs_data": "Brak danych"
   }
 }

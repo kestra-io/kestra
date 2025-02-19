@@ -62,14 +62,12 @@ public class HttpConfiguration {
     private final Duration connectTimeout;
 
     @Schema(title = "The maximum time allowed for reading data from the server before failing.")
-    @Builder.Default
     @Deprecated
-    private final Duration readTimeout = Duration.ofSeconds(HttpClientConfiguration.DEFAULT_READ_TIMEOUT_SECONDS);
+    private final Duration readTimeout;
 
     @Schema(title = "The type of proxy to use.")
-    @Builder.Default
     @Deprecated
-    private final Proxy.Type proxyType = Proxy.Type.DIRECT;
+    private final Proxy.Type proxyType;
 
     @Schema(title = "The address of the proxy server.")
     @Deprecated
@@ -102,19 +100,16 @@ public class HttpConfiguration {
 
     // Deprecated properties with no equivalent value to be kept, silently ignore
     @Schema(title = "The time allowed for a read connection to remain idle before closing it.")
-    @Builder.Default
     @Deprecated
-    private final Duration readIdleTimeout = Duration.of(HttpClientConfiguration.DEFAULT_READ_IDLE_TIMEOUT_MINUTES, ChronoUnit.MINUTES);
+    private final Duration readIdleTimeout;
 
     @Schema(title = "The time an idle connection can remain in the client's connection pool before being closed.")
-    @Builder.Default
     @Deprecated
-    private final Duration connectionPoolIdleTimeout = Duration.ofSeconds(HttpClientConfiguration.DEFAULT_CONNECTION_POOL_IDLE_TIMEOUT_SECONDS);
+    private final Duration connectionPoolIdleTimeout;
 
     @Schema(title = "The maximum content length of the response.")
-    @Builder.Default
     @Deprecated
-    private final Integer maxContentLength = HttpClientConfiguration.DEFAULT_MAX_CONTENT_LENGTH;
+    private final Integer maxContentLength;
 
     public static class HttpConfigurationBuilder {
         @Deprecated

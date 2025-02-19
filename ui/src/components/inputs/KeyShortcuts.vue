@@ -87,6 +87,18 @@
             keys: ["⌘ Cmd/Ctrl", "k", "u"],
             description: "editor_shortcuts.uncomment",
         },
+        {
+            keys: ["⌘ Cmd/Ctrl", "↓"],
+            description: "editor_shortcuts.decrease_fontsize",
+        },
+        {
+            keys: ["⌘ Cmd/Ctrl", "↑"],
+            description: "editor_shortcuts.increase_fontsize",
+        },
+        {
+            keys: ["⌘ Cmd/Ctrl", "0"],
+            description: "editor_shortcuts.reset_fontsize",
+        }
     ];
 </script>
 

@@ -1164,7 +1164,10 @@
       "comment": "टिप्पणी",
       "move_line": "लाइन को स्थानांतरित करें",
       "command_palette": "कमांड पैलेट दिखाएं",
-      "trigger_autocompletion": "ट्रिगर ऑटोकम्प्लीशन"
+      "trigger_autocompletion": "ट्रिगर ऑटोकम्प्लीशन",
+      "reset_fontsize": "फ़ॉन्ट आकार रीसेट करें",
+      "decrease_fontsize": "फ़ॉन्ट आकार घटाएँ",
+      "increase_fontsize": "फॉन्ट आकार बढ़ाएं"
     },
     "something_went_wrong": {
       "loading_execution": "लोडिंग के दौरान कुछ गलत हो गया।"
@@ -1179,6 +1182,8 @@
     "default": "डिफ़ॉल्ट",
     "custom_dashboard_confirm_deletion": "क्या आप वाकई <code>{title}</code> डैशबोर्ड को हटाना चाहते हैं?",
     "custom_dashboard_validate_editing": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
-    "custom_dashboard_validate_creation": "डैशबोर्ड <code>{title}</code> बनाया गया है।"
+    "custom_dashboard_validate_creation": "डैशबोर्ड <code>{title}</code> बनाया गया है।",
+    "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
+    "no_logs_data": "कोई डेटा नहीं"
   }
 }

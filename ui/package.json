@@ -95,7 +95,7 @@
     "@vue/test-utils": "^2.4.6",
     "decompress": "^4.2.1",
     "eslint": "^9.20.1",
-    "eslint-plugin-storybook": "^0.11.1",
+    "eslint-plugin-storybook": "^0.11.3",
     "eslint-plugin-vue": "^9.32.0",
     "globals": "^15.14.0",
     "husky": "^9.1.7",

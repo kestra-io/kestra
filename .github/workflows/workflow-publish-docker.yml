@@ -1,7 +1,20 @@
 name: Publish - Docker
 
 on:
+  workflow_dispatch:
+    inputs:
+      plugin-version:
+        description: "Kestra version"
+        default: 'LATEST'
+        required: false
+        type: string
   workflow_call:
+    inputs:
+      plugin-version:
+        description: "Kestra version"
+        default: 'LATEST'
+        required: false
+        type: string
     secrets:
       DOCKERHUB_USERNAME:
         description: "The Dockerhub username."
@@ -39,6 +52,11 @@ jobs:
       # Docker setup
       - name: Docker - Setup QEMU
         uses: docker/setup-qemu-action@v3
+
+      - name: Docker - Fix Qemu
+        shell: bash
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes -c yes
 
       - name: Docker - Setup Docker Buildx
         uses: docker/setup-buildx-action@v3

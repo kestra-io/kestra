@@ -82,11 +82,33 @@ public class JsonSchemaGenerator {
             }
             replaceAnyOfWithOneOf(objectNode);
             pullOfDefaultFromOneOf(objectNode);
+            removeRequiredOnPropsWithDefaults(objectNode);
 
             return JacksonMapper.toMap(objectNode);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
+    }
+
+    private void removeRequiredOnPropsWithDefaults(ObjectNode objectNode) {
+        objectNode.findParents("required").forEach(jsonNode -> {
+            if (jsonNode instanceof ObjectNode clazzSchema && clazzSchema.get("required") instanceof ArrayNode requiredPropsNode && clazzSchema.get("properties") instanceof ObjectNode properties) {
+                List<String> requiredFieldValues = StreamSupport.stream(requiredPropsNode.spliterator(), false)
+                    .map(JsonNode::asText)
+                    .toList();
+
+                properties.fields().forEachRemaining(e -> {
+                    int indexInRequiredArray = requiredFieldValues.indexOf(e.getKey());
+                    if (indexInRequiredArray != -1 && e.getValue() instanceof ObjectNode valueNode && valueNode.has("default")) {
+                        requiredPropsNode.remove(indexInRequiredArray);
+                    }
+                });
+
+                if (requiredPropsNode.isEmpty()) {
+                    clazzSchema.remove("required");
+                }
+            }
+        });
     }
 
     private void replaceAnyOfWithOneOf(ObjectNode objectNode) {
@@ -605,6 +627,7 @@ public class JsonSchemaGenerator {
             ObjectNode objectNode = generator.generateSchema(cls);
             replaceAnyOfWithOneOf(objectNode);
             pullOfDefaultFromOneOf(objectNode);
+            removeRequiredOnPropsWithDefaults(objectNode);
 
             return JacksonMapper.toMap(extractMainRef(objectNode));
         } catch (IllegalArgumentException e) {

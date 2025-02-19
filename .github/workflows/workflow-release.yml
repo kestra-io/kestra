@@ -1,6 +1,13 @@
 name: Release
 
 on:
+  workflow_dispatch:
+    inputs:
+      plugin-version:
+        description: "Kestra version"
+        default: 'LATEST'
+        required: false
+        type: string
   workflow_call:
     inputs:
       plugin-version:
@@ -35,8 +42,8 @@ jobs:
     name: Publish Docker
     uses: ./.github/workflows/workflow-publish-docker.yml
     secrets:
-        DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-        DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
 
   Maven:
     name: Publish Maven

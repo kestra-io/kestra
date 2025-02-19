@@ -1179,6 +1179,8 @@
     "default": "Predeterminado",
     "custom_dashboard_confirm_deletion": "¿Está seguro de que desea eliminar el dashboard <code>{title}</code>?",
     "custom_dashboard_validate_editing": "Los cambios en el dashboard <code>{title}</code> se han guardado.",
-    "custom_dashboard_validate_creation": "El Dashboard <code>{title}</code> ha sido creado."
+    "custom_dashboard_validate_creation": "El Dashboard <code>{title}</code> ha sido creado.",
+    "no_logs_data_description": "Ya sea que no haya flows en ejecución, o puede que necesite ajustar sus filtros.",
+    "no_logs_data": "Sin datos"
   }
 }

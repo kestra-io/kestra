@@ -1179,6 +1179,8 @@
     "default": "По умолчанию",
     "custom_dashboard_confirm_deletion": "Вы уверены, что хотите удалить панель <code>{title}</code>?",
     "custom_dashboard_validate_editing": "Изменения в панели <code>{title}</code> сохранены.",
-    "custom_dashboard_validate_creation": "Панель управления <code>{title}</code> создана."
+    "custom_dashboard_validate_creation": "Панель управления <code>{title}</code> создана.",
+    "no_logs_data_description": "Либо никакие flows не выполняются, либо вам нужно изменить фильтры.",
+    "no_logs_data": "Нет данных"
   }
 }

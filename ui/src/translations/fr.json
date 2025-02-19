@@ -1164,7 +1164,10 @@
       "comment": "Commentaire",
       "move_line": "Déplacer la ligne",
       "command_palette": "Afficher la palette de commandes",
-      "trigger_autocompletion": "Déclencher l'autocomplétion"
+      "trigger_autocompletion": "Déclencher l'autocomplétion",
+      "reset_fontsize": "Réinitialiser la taille de la police",
+      "decrease_fontsize": "Diminuer la taille de la police",
+      "increase_fontsize": "Augmenter la taille de la police"
     },
     "something_went_wrong": {
       "loading_execution": "Une erreur s'est produite lors du chargement de l'exécution"

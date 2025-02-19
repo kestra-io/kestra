@@ -122,7 +122,7 @@
         >
             <KestraIcon :tooltip="$t('search')" placement="bottom">
                 <el-button
-                    :disabled="props.searchCallback"
+                    :disabled="!!props.searchCallback"
                     :icon="Magnify"
                     @click="triggerSearch"
                     class="rounded-0"

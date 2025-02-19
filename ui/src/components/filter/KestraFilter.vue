@@ -596,7 +596,7 @@
         () => route.query,
         (q: any) => {
             // Handling change of label filters from direct click events
-            const routeFilters = decodeParams(route.path, q, props.include, OPTIONS);
+            const routeFilters = decodeParams(route.name, q, props.include, OPTIONS);
             currentFilters.value = routeFilters;
         },
         {immediate: true},
@@ -674,14 +674,14 @@
     const triggerSearch = () => {
         if (props.searchCallback) return;
         else {
-            router.push({query: encodeParams(route.path, currentFilters.value, OPTIONS)});
+            router.push({query: encodeParams(route.name, currentFilters.value, OPTIONS)});
         }
     };
 
     // Include parameters from URL directly to filter
     onMounted(() => {
         if (props.decode) {
-            const decodedParams = decodeParams(route.path, route.query, props.include, OPTIONS);
+            const decodedParams = decodeParams(route.name, route.query, props.include, OPTIONS);
             currentFilters.value = decodedParams.map((item: any) => {
                 if (item.label === "absolute_date") {
                     return {

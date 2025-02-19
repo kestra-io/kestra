@@ -1164,7 +1164,10 @@
       "comment": "Kommentar",
       "move_line": "Zeile verschieben",
       "command_palette": "Befehlsübersicht anzeigen",
-      "trigger_autocompletion": "Autovervollständigung auslösen"
+      "trigger_autocompletion": "Autovervollständigung auslösen",
+      "reset_fontsize": "Schriftgröße zurücksetzen",
+      "decrease_fontsize": "Schriftgröße verkleinern",
+      "increase_fontsize": "Schriftgröße erhöhen"
     },
     "something_went_wrong": {
       "loading_execution": "Beim Laden der Ausführung ist etwas schiefgelaufen."

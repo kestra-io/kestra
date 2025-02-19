@@ -1164,7 +1164,10 @@
       "comment": "Комментарий",
       "move_line": "Переместить строку",
       "command_palette": "Показать палитру команд",
-      "trigger_autocompletion": "Запустить автозаполнение"
+      "trigger_autocompletion": "Запустить автозаполнение",
+      "reset_fontsize": "Сбросить размер шрифта",
+      "decrease_fontsize": "Уменьшить размер шрифта",
+      "increase_fontsize": "Увеличить размер шрифта"
     },
     "something_went_wrong": {
       "loading_execution": "Произошла ошибка при загрузке выполнения"

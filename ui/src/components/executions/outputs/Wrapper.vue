@@ -101,7 +101,6 @@
                                 :input="true"
                                 :full-height="false"
                                 :navbar="false"
-                                :minimap="false"
                                 :model-value="debugExpression"
                                 :lang="isJSON ? 'json' : ''"
                                 class="mt-3"

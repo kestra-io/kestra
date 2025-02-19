@@ -46,7 +46,6 @@
                         :read-only="true"
                         :input="true"
                         :full-height="false"
-                        :minimap="false"
                         :model-value="blueprint.source"
                         lang="yaml"
                         :navbar="false"

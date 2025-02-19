@@ -1189,7 +1189,10 @@
       "fold_unfold": "Fold/Unfold code",
       "comment_uncomment": "Comment/Uncomment",
       "comment": "Comment",
-      "uncomment": "Uncomment"
+      "uncomment": "Uncomment",
+      "decrease_fontsize": "Decrease font size",
+      "increase_fontsize": "Increase font size",
+      "reset_fontsize": "Reset font size"
     },
     "instance": "Instance",
     "something_went_wrong": {

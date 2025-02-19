@@ -92,7 +92,7 @@
             },
             theme: {
                 type: String,
-                default: "vs"
+                default: "light"
             },
             language: {
                 type: String,
@@ -622,12 +622,12 @@
                 let options = {
                     ...{
                         value: this.value,
-                        theme: this.theme === "vs" ? "light" : this.theme,
+                        theme: this.theme,
                         language: this.language,
                         suggest: {
                             showClasses: false,
                             showWords: false
-                        },
+                        }
                     },
                     ...this.options
                 };

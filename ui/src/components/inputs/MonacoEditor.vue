@@ -651,7 +651,6 @@
                         command: "editor.action.quickCommand"
                     })
 
-                    
                     monaco.editor.addKeybindingRule({
                         keybinding: monaco.KeyMod.CtrlCmd | monaco.KeyCode.UpArrow,
                         command: "editor.action.fontZoomIn",

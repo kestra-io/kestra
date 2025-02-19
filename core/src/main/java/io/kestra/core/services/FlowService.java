@@ -186,6 +186,14 @@ public class FlowService {
                     "flow.tasks",
                     flow.getNamespace()
                 ));
+            } else if (optional.get().isDisabled()) {
+                violations.add(ManualConstraintViolation.of(
+                    "The subflow '" + subflow.getFlowId() + "' is disabled in namespace '" + subflow.getNamespace() + "'.",
+                    flow,
+                    Flow.class,
+                    "flow.tasks",
+                    flow.getNamespace()
+                ));
             }
         });
 

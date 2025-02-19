@@ -46,6 +46,22 @@
         }
     });
 
+    monaco.editor.defineTheme("light", {
+        base: "vs",
+        inherit: true,
+        rules: [
+            {token: "type", foreground: "#8405FF"},
+            {token: "string.yaml", foreground: "#001233"},
+            {token: "comment", foreground: "#8d99ae", fontStyle: "italic"},
+        ],
+        colors: {
+            "editor.lineHighlightBackground": "#fbfaff",
+            "editorLineNumber.foreground": "#444444",
+            "editor.selectionBackground": "#E8E5FF",
+            "editor.wordHighlightBackground": "#E8E5FF",
+        }
+    });
+
     export default defineComponent({
         data() {
             return {
@@ -76,7 +92,7 @@
             },
             theme: {
                 type: String,
-                default: "vs"
+                default: "light"
             },
             language: {
                 type: String,

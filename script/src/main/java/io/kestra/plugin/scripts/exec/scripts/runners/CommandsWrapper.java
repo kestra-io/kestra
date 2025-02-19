@@ -21,16 +21,14 @@ import io.kestra.plugin.scripts.runner.docker.Docker;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.With;
+import org.apache.commons.lang3.SystemUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -53,6 +51,12 @@ public class CommandsWrapper implements TaskCommands {
 
     @With
     private Property<List<String>> commands;
+
+    @With
+    private boolean beforeCommandsWithOptions;
+
+    @With
+    private boolean failFast;
 
     private Map<String, String> env;
 
@@ -109,6 +113,8 @@ public class CommandsWrapper implements TaskCommands {
             interpreter,
             beforeCommands,
             commands,
+            beforeCommandsWithOptions,
+            failFast,
             envs,
             logConsumer,
             runnerType,
@@ -176,7 +182,7 @@ public class CommandsWrapper implements TaskCommands {
             renderedCommands :
             ScriptService.scriptCommands(
                 renderedInterpreter,
-                renderedBeforeCommands,
+                this.isBeforeCommandsWithOptions() ? getBeforeCommandsWithOptions(renderedBeforeCommands) :  renderedBeforeCommands,
                 renderedCommands,
                 Optional.ofNullable(targetOS).orElse(TargetOS.AUTO)
             );
@@ -289,5 +295,32 @@ public class CommandsWrapper implements TaskCommands {
             commands,
             taskRunner instanceof RemoteRunnerInterface
         );
+    }
+
+    protected List<String> getBeforeCommandsWithOptions(List<String> beforeCommands) throws IllegalVariableEvaluationException {
+        if (!this.isFailFast()) {
+            return beforeCommands;
+        }
+
+        if (beforeCommands == null || beforeCommands.isEmpty()) {
+            return getExitOnErrorCommands();
+        }
+
+        ArrayList<String> newCommands = new ArrayList<>(beforeCommands.size() + 1);
+        newCommands.addAll(getExitOnErrorCommands());
+        newCommands.addAll(beforeCommands);
+        return newCommands;
+    }
+
+    protected List<String> getExitOnErrorCommands() {
+        TargetOS os = this.getTargetOS();
+
+        // If targetOS is Windows OR targetOS is AUTO && current system is windows and we use process as a runner.(TLDR will run on windows)
+        if (os == TargetOS.WINDOWS ||
+            (os == TargetOS.AUTO && SystemUtils.IS_OS_WINDOWS && this.getTaskRunner() instanceof Process)) {
+            return List.of("");
+        }
+        // errexit option may be unsupported by non-shell interpreter.
+        return List.of("set -e");
     }
 }

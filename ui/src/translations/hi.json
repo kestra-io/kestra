@@ -1164,7 +1164,10 @@
       "comment": "टिप्पणी",
       "move_line": "लाइन को स्थानांतरित करें",
       "command_palette": "कमांड पैलेट दिखाएं",
-      "trigger_autocompletion": "ट्रिगर ऑटोकम्प्लीशन"
+      "trigger_autocompletion": "ट्रिगर ऑटोकम्प्लीशन",
+      "reset_fontsize": "फ़ॉन्ट आकार रीसेट करें",
+      "decrease_fontsize": "फ़ॉन्ट आकार घटाएँ",
+      "increase_fontsize": "फॉन्ट आकार बढ़ाएं"
     },
     "something_went_wrong": {
       "loading_execution": "लोडिंग के दौरान कुछ गलत हो गया।"

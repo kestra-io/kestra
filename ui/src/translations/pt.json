@@ -1164,7 +1164,10 @@
       "comment": "Comentário",
       "move_line": "Mover linha",
       "command_palette": "Mostrar paleta de comandos",
-      "trigger_autocompletion": "Acionar autocompletar"
+      "trigger_autocompletion": "Acionar autocompletar",
+      "reset_fontsize": "Redefinir tamanho da fonte",
+      "decrease_fontsize": "Diminuir tamanho da fonte",
+      "increase_fontsize": "Aumentar tamanho da fonte"
     },
     "something_went_wrong": {
       "loading_execution": "Algo deu errado ao carregar a execução"

@@ -105,7 +105,7 @@
     "monaco-yaml": "^5.3.1",
     "prettier": "^3.5.0",
     "rollup-plugin-copy": "^3.5.0",
-    "sass": "^1.84.0",
+    "sass": "^1.85.0",
     "storybook": "^8.5.4",
     "storybook-vue3-router": "^5.0.0",
     "typescript": "^5.7.2",

@@ -53,6 +53,11 @@ jobs:
       - name: Docker - Setup QEMU
         uses: docker/setup-qemu-action@v3
 
+      - name: Docker - Fix Qemu
+        shell: bash
+        run: |
+          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes -c yes
+
       - name: Docker - Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
 
@@ -86,11 +91,6 @@ jobs:
         shell: bash
         run: |
           cp build/executable/* docker/app/kestra && chmod +x docker/app/kestra
-
-      - name: Docker - Fix Qemu
-        shell: bash
-        run: |
-          docker run --rm --privileged multiarch/qemu-user-static --reset -p yes -c yes
 
       # Docker Build and push
       - name: Docker - Build image

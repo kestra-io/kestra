@@ -1179,6 +1179,8 @@
     "default": "Par défaut",
     "custom_dashboard_confirm_deletion": "Êtes-vous sûr de vouloir supprimer le tableau de bord <code>{title}</code> ?",
     "custom_dashboard_validate_editing": "Les modifications dans le tableau de bord <code>{title}</code> sont enregistrées.",
-    "custom_dashboard_validate_creation": "Tableau de bord <code>{title}</code> est créé."
+    "custom_dashboard_validate_creation": "Tableau de bord <code>{title}</code> est créé.",
+    "no_logs_data_description": "Soit aucun flow n'est en cours d'exécution, soit vous devez ajuster vos filtres.",
+    "no_logs_data": "Pas de données"
   }
 }

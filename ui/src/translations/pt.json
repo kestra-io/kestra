@@ -1179,6 +1179,8 @@
     "default": "Padrão",
     "custom_dashboard_confirm_deletion": "Tem certeza de que deseja excluir o dashboard <code>{title}</code>?",
     "custom_dashboard_validate_editing": "Alterações no dashboard <code>{title}</code> foram salvas.",
-    "custom_dashboard_validate_creation": "Painel <code>{title}</code> foi criado."
+    "custom_dashboard_validate_creation": "Painel <code>{title}</code> foi criado.",
+    "no_logs_data_description": "Nenhum flow está em execução, ou você pode precisar ajustar seus filtros.",
+    "no_logs_data": "Sem Dados"
   }
 }

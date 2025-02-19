@@ -161,7 +161,7 @@ public class FlowService {
     }
 
     // check if subflow is present in given namespace
-    public void checkValidSubflows(Flow flow) {
+    public void checkValidSubflows(Flow flow, String tenantId) {
         List<io.kestra.plugin.core.flow.Subflow> subFlows = ListUtils.emptyOnNull(flow.getTasks()).stream()
             .filter(io.kestra.plugin.core.flow.Subflow.class::isInstance)
             .map(io.kestra.plugin.core.flow.Subflow.class::cast)
@@ -176,7 +176,7 @@ public class FlowService {
             if (subflowId.matches(regex) || namespace.matches(regex)) {
                 return;
             }
-            Optional<Flow> optional = findById(flow.getTenantId(), subflow.getNamespace(), subflow.getFlowId());
+            Optional<Flow> optional = findById(tenantId, subflow.getNamespace(), subflow.getFlowId());
 
             if (optional.isEmpty()) {
                 violations.add(ManualConstraintViolation.of(

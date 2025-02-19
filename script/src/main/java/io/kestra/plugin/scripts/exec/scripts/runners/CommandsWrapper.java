@@ -172,12 +172,15 @@ public class CommandsWrapper implements TaskCommands {
         List<String> renderedBeforeCommands = this.renderCommands(runContext, beforeCommands);
         List<String> renderedInterpreter = this.renderCommands(runContext, interpreter);
 
-        List<String> finalCommands = ScriptService.scriptCommands(
-            renderedInterpreter,
-            renderedBeforeCommands,
-            renderedCommands,
-            Optional.ofNullable(targetOS).orElse(TargetOS.AUTO)
-        );
+        List<String> finalCommands = renderedBeforeCommands.isEmpty() && renderedInterpreter.isEmpty() ?
+            renderedCommands :
+            ScriptService.scriptCommands(
+                renderedInterpreter,
+                renderedBeforeCommands,
+                renderedCommands,
+                Optional.ofNullable(targetOS).orElse(TargetOS.AUTO)
+            );
+
         this.commands = Property.of(finalCommands);
 
         ScriptOutput.ScriptOutputBuilder scriptOutputBuilder = ScriptOutput.builder()

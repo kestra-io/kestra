@@ -337,6 +337,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
     @Override
     public TaskRunnerResult<DockerTaskRunnerDetailResult> run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception {
+        Boolean renderedDelete = runContext.render(delete).as(Boolean.class).orElseThrow();
+
         if (taskCommands.getContainerImage() == null && this.image == null) {
             throw new IllegalArgumentException("This task runner needs the `containerImage` property to be set");
         }
@@ -428,7 +430,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             // start container
             dockerClient.startContainerCmd(exec.getId()).exec();
 
-            List<String> renderedCommands = this.renderCommands(runContext, taskCommands);
+            List<String> renderedCommands = runContext.render(taskCommands.getCommands()).asList(String.class);
 
             if (logger.isDebugEnabled()) {
                 logger.debug(
@@ -538,7 +540,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     // come to a normal end.
                     kill();
 
-                    if (Boolean.TRUE.equals(runContext.render(delete).as(Boolean.class).orElseThrow())) {
+                    if (Boolean.TRUE.equals(renderedDelete)) {
                         dockerClient.removeContainerCmd(exec.getId()).exec();
                         if (logger.isTraceEnabled()) {
                             logger.trace("Container deleted: {}", exec.getId());
@@ -780,7 +782,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
         return container
             .withHostConfig(hostConfig)
-            .withCmd(this.renderCommands(runContext, taskCommands))
+            .withCmd(runContext.render(taskCommands.getCommands()).asList(String.class))
             .withAttachStderr(true)
             .withAttachStdout(true);
     }

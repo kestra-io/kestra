@@ -1179,6 +1179,8 @@
     "default": "डिफ़ॉल्ट",
     "custom_dashboard_confirm_deletion": "क्या आप वाकई <code>{title}</code> डैशबोर्ड को हटाना चाहते हैं?",
     "custom_dashboard_validate_editing": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
-    "custom_dashboard_validate_creation": "डैशबोर्ड <code>{title}</code> बनाया गया है।"
+    "custom_dashboard_validate_creation": "डैशबोर्ड <code>{title}</code> बनाया गया है।",
+    "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
+    "no_logs_data": "कोई डेटा नहीं"
   }
 }

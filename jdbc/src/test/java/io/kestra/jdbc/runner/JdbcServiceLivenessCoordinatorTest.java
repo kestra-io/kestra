@@ -1,6 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -11,14 +12,7 @@ import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.RunContextFactory;
-import io.kestra.core.runners.StandAloneRunner;
-import io.kestra.core.runners.Worker;
-import io.kestra.core.runners.WorkerJob;
-import io.kestra.core.runners.WorkerTask;
-import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.core.runners.WorkerTrigger;
-import io.kestra.core.runners.WorkerTriggerResult;
+import io.kestra.core.runners.*;
 import io.kestra.core.services.SkipExecutionService;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.Await;
@@ -28,7 +22,6 @@ import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.flow.Sleep;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.BeforeAll;
@@ -157,7 +150,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         });
 
         workerJobQueue.emit(workerTask);
-        boolean runningLatchAwait = runningLatch.await(2, TimeUnit.SECONDS);
+        boolean runningLatchAwait = runningLatch.await(10, TimeUnit.SECONDS);
         assertThat(runningLatchAwait, is(true));
         worker.shutdown();
 

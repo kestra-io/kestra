@@ -1179,6 +1179,8 @@
     "default": "Domyślny",
     "custom_dashboard_confirm_deletion": "Czy na pewno chcesz usunąć dashboard <code>{title}</code>?",
     "custom_dashboard_validate_editing": "Zmiany w dashboardzie <code>{title}</code> zostały zapisane.",
-    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> został utworzony."
+    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> został utworzony.",
+    "no_logs_data_description": "Albo żadne flow nie są uruchomione, albo musisz dostosować swoje filtry.",
+    "no_logs_data": "Brak danych"
   }
 }

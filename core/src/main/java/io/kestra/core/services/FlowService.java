@@ -128,21 +128,17 @@ public class FlowService {
         return deprecationTraversal("", flow).toList();
     }
 
+    /**
+     * @deprecated as we have no more usaage inside
+     * maybe be kept if we found something to verify
+     */
+    @Deprecated
     public List<String> warnings(Flow flow) {
         if (flow == null) {
             return Collections.emptyList();
         }
 
         List<String> warnings = new ArrayList<>();
-        List<io.kestra.plugin.core.trigger.Flow> flowTriggers = ListUtils.emptyOnNull(flow.getTriggers()).stream()
-            .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
-            .map(io.kestra.plugin.core.trigger.Flow.class::cast)
-            .toList();
-        flowTriggers.forEach(flowTrigger -> {
-            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
-                warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId() + "'.");
-            }
-        });
 
         return warnings;
     }

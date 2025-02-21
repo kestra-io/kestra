@@ -57,6 +57,7 @@
     import Logs from "../dashboard/components/charts/logs/Bar.vue";
     import {storageKeys} from "../../utils/constants";
     import KestraFilter from "../filter/KestraFilter.vue"
+    import {decodeSearchParams} from "../filter/utils/helpers";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
@@ -115,7 +116,8 @@
                 return this.$route.name === "namespaces/update"
             },
             selectedLogLevel() {
-                return this.logLevel || this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO";
+                const decoded = [decodeSearchParams(this.$route.query, ["level"], [])?.[0]?.value].flat()[0] ?? "INFO"
+                return this.logLevel || decoded || localStorage.getItem("defaultLogLevel") || "INFO";
             },
             endDate() {
                 if (this.$route.query.endDate) {
@@ -224,10 +226,13 @@
             loadStats() {
                 this.statsReady = false;
                 this.$store
-                    .dispatch("stat/logDaily", this.loadQuery({
-                        startDate: this.$moment(this.startDate).toISOString(true),
-                        endDate: this.$moment(this.endDate).toISOString(true)
-                    }, true))
+                    .dispatch("stat/logDaily", {
+                        ...this.loadQuery({
+                            startDate: this.$moment(this.startDate).toISOString(true),
+                            endDate: this.$moment(this.endDate).toISOString(true)
+                        }),
+                        logLevel: this.selectedLogLevel
+                    })
                     .then(() => {
                         this.statsReady = true;
                     });

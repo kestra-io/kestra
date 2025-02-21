@@ -596,8 +596,15 @@
         () => route.query,
         (q: any) => {
             // Handling change of label filters from direct click events
-            const routeFilters = decodeParams(route.name, q, props.include, OPTIONS);
-            currentFilters.value = routeFilters;
+            if (
+                Object.keys(q).length === 0 ||
+                Object.keys(q).some(key => key.startsWith("filters[labels]"))
+            ) {
+                const routeFilters = decodeParams(route.name, q, props.include, OPTIONS);
+                currentFilters.value = routeFilters;
+            }
+
+
         },
         {immediate: true},
     );
@@ -752,7 +759,7 @@
                     comparator: COMPARATORS.EQUALS,
                     persistent: true,
                 });
-            }            
+            }
         }
     });
 

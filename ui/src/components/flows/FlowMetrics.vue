@@ -20,7 +20,7 @@
         }"
         :buttons="{
             refresh: {shown: true, callback: load},
-            settings: {shown: false}
+            settings: {shown: false},
         }"
     />
 
@@ -70,8 +70,8 @@
             Bar,
             KestraFilter,
         },
-        created() {
-            this.loadMetrics();
+        async created() {
+            await this.loadMetrics();
         },
         computed: {
             ...mapState("flow", [
@@ -108,12 +108,7 @@
                         !this.display
                             ? []
                             : {
-                                label:
-                                    this.$t(this.$route.query.aggregation) +
-                                    " " +
-                                    this.$t("of") +
-                                    " " +
-                                    this.$route.query.metric,
+                                label: `${this.$t([this.$route.query.aggregation].flat()[0]?.toLowerCase())} ${this.$t("of")} ${this.$route.query.metric}`,
                                 backgroundColor:
                                     cssVariable("--el-color-success"),
                                 borderRadius: 4,
@@ -134,42 +129,45 @@
                         ? cssVariable("--bs-gray-200")
                         : cssVariable("--bs-gray-400");
 
-                return defaultConfig({
-                    plugins: {
-                        tooltip: {
-                            external: (context) => {
-                                this.tooltipContent = tooltip(context.tooltip);
+                return defaultConfig(
+                    {
+                        plugins: {
+                            tooltip: {
+                                external: (context) => {
+                                    this.tooltipContent = tooltip(context.tooltip);
+                                },
+                            },
+                        },
+                        scales: {
+                            x: {
+                                display: true,
+                                grid: {
+                                    borderColor: lighten,
+                                    color: lighten,
+                                    drawTicks: false,
+                                },
+                                ticks: {
+                                    color: darken,
+                                    autoSkip: true,
+                                    minRotation: 0,
+                                    maxRotation: 0,
+                                },
+                            },
+                            y: {
+                                display: true,
+                                grid: {
+                                    borderColor: lighten,
+                                    color: lighten,
+                                    drawTicks: false,
+                                },
+                                ticks: {
+                                    color: darken,
+                                },
                             },
                         },
                     },
-                    scales: {
-                        x: {
-                            display: true,
-                            grid: {
-                                borderColor: lighten,
-                                color: lighten,
-                                drawTicks: false,
-                            },
-                            ticks: {
-                                color: darken,
-                                autoSkip: true,
-                                minRotation: 0,
-                                maxRotation: 0,
-                            },
-                        },
-                        y: {
-                            display: true,
-                            grid: {
-                                borderColor: lighten,
-                                color: lighten,
-                                drawTicks: false,
-                            },
-                            ticks: {
-                                color: darken,
-                            },
-                        },
-                    },
-                }, this.theme);
+                    this.theme,
+                );
             },
             display() {
                 return this.$route.query.metric && this.$route.query.aggregation;
@@ -229,14 +227,12 @@
 
                 if (this.display) {
                     this.$store.dispatch(
-                        this.$route.query.task
-                            ? "flow/loadTaskAggregatedMetrics"
-                            : "flow/loadFlowAggregatedMetrics",
+                        `flow/load${this.$route.query?.task ? "Task" : "Flow"}AggregatedMetrics`,
                         this.loadQuery({
                             ...this.$route.params,
                             ...this.$route.query,
                             metric: this.$route.query.metric,
-                            aggregate: this.$route.query.aggregation,
+                            aggregation: [this.$route.query.aggregation].flat().map(item => item.toLowerCase()),
                             taskId: this.$route.query.task,
                         }),
                     );

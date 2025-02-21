@@ -83,7 +83,6 @@ def translate_text(text, target_language):
         print(f"Error during translation: {e}")
         return text  # Return the original text if translation fails
 
-
 def translate_dict(en_dict, target_language):
     translated_dict = {}
     for key, value in en_dict.items():
@@ -95,7 +94,6 @@ def translate_dict(en_dict, target_language):
         translated_dict[key] = translated_value
     return translated_dict
 
-
 def unflatten_dict(d, sep="|"):
     result = {}
     for k, v in d.items():
@@ -105,7 +103,6 @@ def unflatten_dict(d, sep="|"):
             d = d.setdefault(key, {})
         d[keys[-1]] = v
     return result
-
 
 def flatten_dict(d, parent_key="", sep="|"):
     items = []
@@ -120,8 +117,6 @@ def flatten_dict(d, parent_key="", sep="|"):
 def load_en_dict(file_path):
     with open(file_path, "r") as f:
         return json.load(f)
-
-
 
 def main(
         language_code,
@@ -151,7 +146,6 @@ def main(
 
     with open(f"ui/src/translations/{language_code}.json", "w") as f:
         json.dump({language_code: updated_target_dict}, f, ensure_ascii=False, indent=2)
-
 
 if __name__ == "__main__":
     main(language_code="de", target_language="German")

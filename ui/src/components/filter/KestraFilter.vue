@@ -37,7 +37,7 @@
                     TODO: Find a way to have persistent tags for el-select.
                     https://github.com/kestra-io/kestra/issues/6256
                 -->
-                <Label :option="value" />
+                <Label :option="value" :prefix="ITEMS_PREFIX" />
             </template>
             <template #empty>
                 <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
@@ -122,6 +122,7 @@
         >
             <KestraIcon :tooltip="$t('search')" placement="bottom">
                 <el-button
+                    :disabled="!!props.searchCallback"
                     :icon="Magnify"
                     @click="triggerSearch"
                     class="rounded-0"
@@ -405,7 +406,7 @@
             );
             if (parentIndex !== -1) {
                 if (
-                    ["namespace", "log level"].includes(
+                    ["log level"].includes(
                         lastClickedParent.value.toLowerCase(),
                     )
                 ) {
@@ -591,6 +592,23 @@
     };
     const currentFilters = ref<CurrentItem[]>([]);
 
+    watch(
+        () => route.query,
+        (q: any) => {
+            // Handling change of label filters from direct click events
+            if (
+                Object.keys(q).length === 0 ||
+                Object.keys(q).some(key => key.startsWith("filters[labels]"))
+            ) {
+                const routeFilters = decodeParams(route.name, q, props.include, OPTIONS);
+                currentFilters.value = routeFilters;
+            }
+
+
+        },
+        {immediate: true},
+    );
+
     const prefixFilter = ref("");
 
     const includedOptions = computed(() => {
@@ -663,14 +681,14 @@
     const triggerSearch = () => {
         if (props.searchCallback) return;
         else {
-            router.push({query: encodeParams(route.path, currentFilters.value, OPTIONS)});
+            router.push({query: encodeParams(route.name, currentFilters.value, OPTIONS)});
         }
     };
 
     // Include parameters from URL directly to filter
     onMounted(() => {
         if (props.decode) {
-            const decodedParams = decodeParams(route.path, route.query, props.include, OPTIONS);
+            const decodedParams = decodeParams(route.name, route.query, props.include, OPTIONS);
             currentFilters.value = decodedParams.map((item: any) => {
                 if (item.label === "absolute_date") {
                     return {
@@ -707,7 +725,7 @@
                 persistent: true,
             });
         };
-        const {name, params} = route;
+        const {name, params, query} = route;
 
         if (name === "flows/update") {
             // Single flow page
@@ -724,6 +742,24 @@
         } else if (name === "namespaces/update") {
             // Single namespace page
             addNamespaceFilter(params.id);
+        } else if (name === "admin/triggers") {
+            if(query.namespace) addNamespaceFilter(query.namespace);
+            if(query.flowId){
+                currentFilters.value.push({
+                    label: "flow",
+                    value: [`${query.flowId}`],
+                    comparator: COMPARATORS.EQUALS,
+                    persistent: true,
+                });
+            }
+            if(query.q) {
+                currentFilters.value.push({
+                    label: "text",
+                    value: [`${query.q}`],
+                    comparator: COMPARATORS.EQUALS,
+                    persistent: true,
+                });
+            }
         }
     });
 
@@ -943,11 +979,22 @@ $properties: v-bind('props.propertiesWidth + "px"');
             0 1px 0 0 $filters-border-color inset;
 
         & .el-tag {
-            background: $filters-border-color !important;
-            color: $filters-gray-900;
+            overflow: hidden;
+            padding: 0 !important;
+            padding-right: 0.30rem !important;
+            color: var(--ks-tag-content);
+            background: var(--ks-tag-background-active) !important;
+
+            &:hover {
+                background: var(--ks-tag-background-hover) !important;
+            }
 
             & .el-tag__close {
-                color: $filters-gray-900;
+                color: var(--ks-content-link);
+
+                &:hover{
+                    background: none !important;
+                }
             }
         }
     }

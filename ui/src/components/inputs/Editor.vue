@@ -273,7 +273,7 @@
                 if (!this.readOnly) {
                     this.editor.addAction({
                         id: "kestra-save",
-                        label: "Save",
+                        label: this.$t("save"),
                         keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
                         contextMenuGroupId: "navigation",
                         contextMenuOrder: 1.5,
@@ -289,7 +289,7 @@
 
                 this.editor.addAction({
                     id: "kestra-execute",
-                    label: "Execute the flow",
+                    label: this.$t("execute flow behaviour"),
                     keybindings: [KeyMod.CtrlCmd | KeyCode.KeyE],
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 1.5,
@@ -300,7 +300,7 @@
 
                 this.editor.addAction({
                     id: "confirm",
-                    label: "Confirm",
+                    label: this.$t("confirm"),
                     keybindings: [KeyMod.CtrlCmd | KeyCode.Enter],
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 1.5,
@@ -329,7 +329,7 @@
                 if (this.original === undefined && this.navbar && this.fullHeight) {
                     this.editor.addAction({
                         id: "fold-multiline",
-                        label: "Fold All Multi Lines",
+                        label: this.$t("fold_all_multi_lines"),
                         keybindings: [KeyCode.F10],
                         contextMenuGroupId: "fold",
                         contextMenuOrder: 1.5,

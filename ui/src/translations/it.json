@@ -684,7 +684,6 @@
         "theme": {
           "label": "Preferenze del Tema",
           "fields": {
-            "mode": "Modalità Tema",
             "editor_font_size": "Dimensione del Font dell'Editor",
             "editor_font_family": "Famiglia del Font dell'Editor",
             "editor_folding_stratgy": "Piegatura automatica del codice nell'Editor",
@@ -695,7 +694,8 @@
               "classic": "Classico",
               "kestra": "Kestra"
             },
-            "logs_font_size": "Dimensione Font dei Log"
+            "logs_font_size": "Dimensione Font dei Log",
+            "theme": "Modello"
           }
         },
         "localization": {
@@ -1163,7 +1163,11 @@
       "fold_unfold": "Piega/Spiega codice",
       "comment": "Commento",
       "move_line": "Sposta linea",
-      "command_palette": "Mostra la palette dei comandi"
+      "command_palette": "Mostra la palette dei comandi",
+      "trigger_autocompletion": "Attiva autocompletamento",
+      "reset_fontsize": "Reimposta dimensione del font",
+      "decrease_fontsize": "Riduci dimensione carattere",
+      "increase_fontsize": "Aumenta dimensione del carattere"
     },
     "something_went_wrong": {
       "loading_execution": "Si è verificato un errore durante il caricamento dell'esecuzione"
@@ -1174,6 +1178,45 @@
       "hidden": "Nascosto nella Tabella",
       "label": "Proprietà"
     },
-    "debug": "Debug"
+    "debug": "Debug",
+    "default": "Predefinito",
+    "custom_dashboard_confirm_deletion": "Sei sicuro di voler eliminare la dashboard <code>{title}</code>?",
+    "custom_dashboard_validate_editing": "Le modifiche nel dashboard <code>{title}</code> sono state salvate.",
+    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> è stato creato.",
+    "no_logs_data_description": "O non ci sono flow in esecuzione, oppure potrebbe essere necessario modificare i filtri.",
+    "no_logs_data": "Nessun dato",
+    "fold_all_multi_lines": "Comprimi Tutte le Linee Multiple",
+    "months": "Mesi",
+    "trigger_id_message": "L'ID del trigger ${existingTrigger} esiste già nel flow.",
+    "minutes": "Minuti",
+    "for flow": "per flow",
+    "light_version": "Versione leggera",
+    "deleted_label": "Eliminato",
+    "task_id_exists": "L'ID del task esiste già",
+    "use_dark_background": "Usa questa versione quando lavori su uno sfondo scuro per garantire che il nostro nome rimanga leggibile.",
+    "download_logos": "Scarica il Pacchetto Logo",
+    "seconds": "Secondi",
+    "this_task_has": "Questo task ha",
+    "dark_version": "Versione scura",
+    "runners": "Corridori",
+    "watch_video": "Guarda Video",
+    "wordmark_colors": "I colori del marchio si adattano in base allo sfondo, mentre l'icona rimane senza sfondo quando posizionata su uno sfondo scuro.",
+    "weeks": "Settimane",
+    "years": "Anni",
+    "task_id_message": "L'ID del Task ${existingTask} esiste già nel flow.",
+    "monogram": "Monogramma",
+    "select": "Seleziona il tuo {{section}}",
+    "task_runners": "Esecutori di Task",
+    "learn_more": "Scopri di più",
+    "light_background": "Questa è l'opzione preferita quando si lavora con uno sfondo chiaro.",
+    "watch": "Guarda",
+    "hours": "Ore",
+    "input_custom_duration": "oppure inserisci durata personalizzata:",
+    "days": "Giorni",
+    "data_not_protected": "I tuoi dati non sono protetti. Non perderli. <b>Abilita le nostre funzionalità di sicurezza gratuite o prova la nostra offerta a pagamento.</b>",
+    "confirm": "Conferma",
+    "activate_basic_auth": "Attiva l'Autenticazione di Base",
+    "trigger_id_exists": "L'ID del trigger esiste già",
+    "about_this_blueprint": "Informazioni su questo blueprint"
   }
 }

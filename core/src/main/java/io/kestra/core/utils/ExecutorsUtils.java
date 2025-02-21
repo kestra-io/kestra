@@ -25,6 +25,24 @@ public class ExecutorsUtils {
         );
     }
 
+    public ExecutorService elasticCachedThreadPool(int minThread, int maxThread, String name) {
+        ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
+            minThread,
+            maxThread,
+            60L,
+            TimeUnit.SECONDS,
+            new LinkedBlockingQueue<>(),
+            threadFactoryBuilder.build(name + "_%d")
+        );
+
+        threadPoolExecutor.allowCoreThreadTimeOut(true);
+
+        return this.wrap(
+            name,
+            threadPoolExecutor
+        );
+    }
+
     public ExecutorService maxCachedThreadPool(int maxThread, String name) {
         ThreadPoolExecutor threadPoolExecutor = new ThreadPoolExecutor(
             maxThread,

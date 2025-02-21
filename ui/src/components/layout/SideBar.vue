@@ -259,10 +259,15 @@
             color: var(--ks-content-primary);
             box-shadow: none;
 
-            &_active, body &_active:hover, &.vsm--link_open, &.vsm--link_open:hover {
+            &_active, body &_active:hover {
                 background-color: var(--ks-button-background-primary);
                 color: var(--ks-button-content-primary);
                 font-weight: normal;
+            }
+
+            &.vsm--link_open, &.vsm--link_open:hover {
+                background-color: var(--ks-background-left-menu);
+                color: var(--ks-content-primary);
             }
 
             &_disabled {
@@ -275,6 +280,44 @@
 
             .el-tooltip__trigger {
                 display: flex;
+            }
+
+            & > span{
+                max-width: 100%;
+            }
+        }
+
+        .vsm--link_open{
+            position:relative !important;
+            z-index: 3;
+        }
+
+        .vsm--child .vsm--link{
+            padding: 0 0.2rem;
+            position: relative!important;
+            font-size: 14px;
+            margin-left: 1.8rem;
+            .vsm--icon {
+                margin-right:4px;
+                color: var(--ks-content-secondary);
+            }
+            &.vsm--link_active .vsm--icon{
+                color: var(--ks-button-content-primary);
+            }
+            &:before{
+                content: "";
+                position: absolute;
+                left: -.8rem;
+                top: -2.5rem;
+                border-radius: 8px;
+                width: 1.6rem;
+                height: 170%;
+                border: 2px solid var(--ks-border-primary);
+                border-top:0;
+                border-right:0;
+                z-index: 2;
+                // mask the right half of the object and the top border
+                clip-path: polygon(50% 8px, 50% 100%, 0 100%, 0 8px);
             }
         }
 
@@ -326,6 +369,10 @@
 
             .vsm--link {
                 padding-left: 13px;
+                &.vsm--link_hover {
+                    background-color: var(--ks-button-background-primary);
+                    color: var(--ks-button-content-primary);
+                }
             }
 
             .vsm--item {

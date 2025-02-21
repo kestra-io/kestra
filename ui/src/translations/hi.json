@@ -684,7 +684,6 @@
         "theme": {
           "label": "थीम प्राथमिकताएँ",
           "fields": {
-            "mode": "थीम मोड",
             "editor_font_size": "संपादक फ़ॉन्ट आकार",
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_folding_stratgy": "संपादक में स्वचालित कोड फोल्डिंग",
@@ -695,7 +694,8 @@
               "classic": "क्लासिक",
               "kestra": "Kestra"
             },
-            "logs_font_size": "लॉग्स फ़ॉन्ट आकार"
+            "logs_font_size": "लॉग्स फ़ॉन्ट आकार",
+            "theme": "मोडस"
           }
         },
         "localization": {
@@ -1163,7 +1163,11 @@
       "fold_unfold": "कोड को फोल्ड/अनफोल्ड करें",
       "comment": "टिप्पणी",
       "move_line": "लाइन को स्थानांतरित करें",
-      "command_palette": "कमांड पैलेट दिखाएं"
+      "command_palette": "कमांड पैलेट दिखाएं",
+      "trigger_autocompletion": "ट्रिगर ऑटोकम्प्लीशन",
+      "reset_fontsize": "फ़ॉन्ट आकार रीसेट करें",
+      "decrease_fontsize": "फ़ॉन्ट आकार घटाएँ",
+      "increase_fontsize": "फॉन्ट आकार बढ़ाएं"
     },
     "something_went_wrong": {
       "loading_execution": "लोडिंग के दौरान कुछ गलत हो गया।"
@@ -1174,6 +1178,45 @@
       "hidden": "टेबल में छिपा हुआ",
       "label": "गुणधर्म"
     },
-    "debug": "डिबग"
+    "debug": "डिबग",
+    "default": "डिफ़ॉल्ट",
+    "custom_dashboard_confirm_deletion": "क्या आप वाकई <code>{title}</code> डैशबोर्ड को हटाना चाहते हैं?",
+    "custom_dashboard_validate_editing": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
+    "custom_dashboard_validate_creation": "डैशबोर्ड <code>{title}</code> बनाया गया है।",
+    "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
+    "no_logs_data": "कोई डेटा नहीं",
+    "fold_all_multi_lines": "सभी मल्टी लाइन्स को फोल्ड करें",
+    "months": "महीने",
+    "trigger_id_message": "ट्रिगर Id ${existingTrigger} पहले से ही flow में मौजूद है।",
+    "minutes": "मिनट्स",
+    "for flow": "फ्लो के लिए",
+    "light_version": "लाइट संस्करण",
+    "deleted_label": "हटाया गया",
+    "task_id_exists": "टास्क Id पहले से मौजूद है",
+    "use_dark_background": "इस संस्करण का उपयोग तब करें जब आप एक गहरे पृष्ठभूमि पर काम कर रहे हों ताकि यह सुनिश्चित हो सके कि हमारा नाम पठनीय बना रहे।",
+    "download_logos": "लोगो पैक डाउनलोड करें",
+    "seconds": "सेकंड्स",
+    "this_task_has": "यह task है",
+    "dark_version": "डार्क संस्करण",
+    "runners": "धावक",
+    "watch_video": "वीडियो देखें",
+    "wordmark_colors": "शब्दचिह्न के रंग पृष्ठभूमि के आधार पर अनुकूलित होते हैं, जबकि आइकन एक गहरे पृष्ठभूमि पर रखे जाने पर बिना पृष्ठभूमि के रहता है।",
+    "weeks": "सप्ताह",
+    "years": "वर्ष",
+    "task_id_message": "टास्क Id ${existingTask} पहले से ही flow में मौजूद है।",
+    "monogram": "मोनोग्राम",
+    "select": "अपने {{section}} का चयन करें",
+    "task_runners": "टास्क रनर्स",
+    "learn_more": "और जानें",
+    "light_background": "यह हल्की पृष्ठभूमि के साथ काम करते समय पसंदीदा विकल्प है।",
+    "watch": "देखें",
+    "hours": "घंटे",
+    "input_custom_duration": "या कस्टम अवधि दर्ज करें:",
+    "days": "दिन",
+    "data_not_protected": "आपका डेटा सुरक्षित नहीं है। इसे न खोएं। <b>हमारी मुफ्त सुरक्षा सुविधाओं को सक्षम करें या हमारे भुगतान वाले ऑफर को आज़माएं।</b>",
+    "confirm": "पुष्टि करें",
+    "activate_basic_auth": "बेसिक ऑथेंटिकेशन सक्रिय करें",
+    "trigger_id_exists": "ट्रिगर Id पहले से मौजूद है",
+    "about_this_blueprint": "इस blueprint के बारे में"
   }
 }

@@ -101,11 +101,11 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
                 date.add((String) execution.getTrigger().getVariables().get("date"));
                 executionId.add(execution.getId());
 
-                queueCount.countDown();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));
                 }
                 assertThat(execution.getFlowId(), is(flow.getId()));
+                queueCount.countDown();
             }));
 
             scheduler.run();

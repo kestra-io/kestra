@@ -21,6 +21,7 @@ import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
@@ -173,6 +174,14 @@ public class Flow extends AbstractFlow implements HasUID {
             tenantId,
             namespace,
             id
+        );
+    }
+
+    public static String uid(Trigger trigger) {
+        return IdUtils.fromParts(
+            trigger.getTenantId(),
+            trigger.getNamespace(),
+            trigger.getFlowId()
         );
     }
 

@@ -71,7 +71,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, ref, computed, getCurrentInstance} from "vue";
+    import {onBeforeMount, ref, computed, getCurrentInstance, watch} from "vue";
     import KestraIcon from "../../Kicon.vue";
     import {Menu, Plus, DeleteOutline, Magnify, Pencil} from "../utils/icons";
     import {useI18n} from "vue-i18n";
@@ -81,15 +81,16 @@
     const {t} = useI18n({useScope: "global"});
     const store = useStore();
     const route = useRoute();
+    const routeTenant = ref(route.params.tenant);
     const router = useRouter();
     const emits = defineEmits(["dashboard"]);
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
 
     const remove = (dashboard: any) => {
-        toast.confirm(t("delete confirm", {name: dashboard.title}), () => {
-            store.dispatch("dashboard/delete", dashboard.id).then((item) => {
+        toast.confirm(t("custom_dashboard_confirm_deletion", {title: dashboard.title}), () => {
+            store.dispatch("dashboard/delete", dashboard.id).then(() => {
                 dashboards.value = dashboards.value.filter((d) => d.id !== dashboard.id);
-                toast.deleted(item.title);
+                toast.deleted(dashboard.title);
                 router.push({name: "home"});
             });
         });
@@ -116,7 +117,7 @@
         router.push({name: "dashboards/update", params: {id: dashboard.id}});
     }
 
-    onBeforeMount(() => {
+    const fetchDashboards = () => {
         store
             .dispatch("dashboard/list", {})
             .then((response: { results: { id: string; title: string }[] }) => {
@@ -125,10 +126,25 @@
                     const dashboard = dashboards.value.find(d => d.id === route.params.id);
                     if (dashboard) {
                         selectedDashboard.value = dashboard.title;
+                    } else {
+                        selectedDashboard.value = null;
                     }
                 }
             });
+    }
+
+    onBeforeMount(() => {
+        fetchDashboards()
     });
+
+    watch(
+        route,
+        (newRoute) => {
+            if (routeTenant.value !== newRoute.params.tenant) {
+                fetchDashboards();
+                routeTenant.value = newRoute.params.tenant;
+            }
+        }, {deep: true});
 </script>
 
 <style scoped lang="scss">
@@ -136,10 +152,22 @@
 
 .dropdown {
     width: 300px;
+    background: var(--ks-select-background);
+
+    :deep(li.el-dropdown-menu__item) {
+        &:hover,
+        &:focus {
+            background: var(--ks-select-hover);
+        }
+    }
 }
 
 .items {
     max-height: 160px !important; // 5 visible items
+
+    :deep(li.el-dropdown-menu__item) {
+        border-radius: unset;
+    }
 }
 
 .main-button {

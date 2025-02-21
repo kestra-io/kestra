@@ -1,7 +1,7 @@
 import {nextTick} from "vue"
 import {createI18n, type I18n} from "vue-i18n"
 
-const translations = import.meta.glob("./*.json")
+const translations = import.meta.glob(["./*.json", "!./en.json"])
 
 export const SUPPORT_LOCALES = ["de","en","es","fr","hi","it","ja","ko","pl","pt","ru","zh_CN"] as const
 
@@ -29,19 +29,19 @@ export function setI18nLanguage(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[num
 }
 
 export async function loadLocaleMessages(i18n: I18n, locale: (typeof SUPPORT_LOCALES)[number], additionalTranslationsProvider: Record<string, () => Promise<any>>) {
-  const messages = {default: {}} as any
-  
+  let messages = {} as any
+
   if(additionalTranslationsProvider[locale]){
     // load additional translations from the provider
     const additionalTranslations = await additionalTranslationsProvider[locale]()
-    messages.default[locale] = additionalTranslations.default[locale]
+    messages = additionalTranslations.default
   }else{
     // load locale messages with dynamic import
-    messages.default[locale] = await translations[`./${locale}.json`]() as any
+    messages = await translations[`./${locale}.json`]()
   }
 
   // set locale and locale message
-  i18n.global.setLocaleMessage(locale, messages.default[locale][locale])
+  i18n.global.setLocaleMessage(locale, messages[locale])
 
   return nextTick()
 }

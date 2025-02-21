@@ -365,6 +365,13 @@ public abstract class AbstractRunnerTest {
         forEachItemCaseTest.restartForEachItem();
     }
 
+    @RetryingTest(5)
+    @LoadFlows({"flows/valids/for-each-item-subflow.yaml",
+        "flows/valids/for-each-item-in-if.yaml"})
+    protected void forEachItemInIf() throws Exception {
+        forEachItemCaseTest.forEachItemInIf();
+    }
+
     @Test
     @LoadFlows({"flows/valids/flow-concurrency-cancel.yml"})
     void concurrencyCancel() throws Exception {

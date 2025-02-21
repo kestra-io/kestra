@@ -12,7 +12,7 @@
                 <li>
                     <router-link :to="{name: 'flows/create', query: {namespace: $route.params.id}}" v-if="canCreateFlow">
                         <el-button :icon="Plus" type="primary">
-                            {{ $t('create') }}
+                            {{ $t('create_flow') }}
                         </el-button>
                     </router-link>
                 </li>
@@ -69,15 +69,23 @@
                 return this.user && this.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
             },
             routeInfo() {
+                const parts = this.$route.params.id?.split(".") || [];
                 return {
-                    title: this.$route.params.id || this.$t("namespaces"),
+                    title: parts?.[parts.length - 1] || this.$t("namespaces"),
                     breadcrumb: [
                         {
                             label: this.$t("namespaces"),
                             link: {
                                 name: "namespaces"
                             }
-                        }
+                        },
+                        ...parts.map((part, index) => ({
+                            label: part,
+                            link: {
+                                name: "namespaces/update",
+                                params: {id: parts.slice(0, index + 1).join(".")},
+                            },
+                        })),
                     ]
                 };
             },

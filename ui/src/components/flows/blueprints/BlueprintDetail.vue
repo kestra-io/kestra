@@ -46,7 +46,6 @@
                         :read-only="true"
                         :input="true"
                         :full-height="false"
-                        :minimap="false"
                         :model-value="blueprint.source"
                         lang="yaml"
                         :navbar="false"
@@ -57,7 +56,7 @@
                     </editor>
                 </el-card>
                 <template v-if="blueprint.description">
-                    <h4>About this blueprint</h4>
+                    <h4>{{ $t('about_this_blueprint') }}</h4>
                     <div v-if="!system" class="tags text-uppercase">
                         <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
                             <el-tag type="info" size="small">
@@ -69,7 +68,7 @@
                 </template>
             </el-col>
             <el-col :md="24" :lg="embed ? 24 : 6" v-if="blueprint?.includedTasks?.length > 0">
-                <h4>Plugins</h4>
+                <h4>{{ $t('plugins.names') }}</h4>
                 <div class="plugins-container">
                     <div v-for="task in [...new Set(blueprint.includedTasks)]" :key="task">
                         <task-icon :cls="task" :icons="icons" />

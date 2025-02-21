@@ -869,8 +869,8 @@
         if (existingTask) {
             store.dispatch("core/showMessage", {
                 variant: "error",
-                title: "Trigger Id already exist",
-                message: `Trigger Id ${existingTask} already exist in the flow.`,
+                title: this.$t("trigger_id_exists"),
+                message: this.$t("trigger_id_message", {existingTrigger: existingTask}),
             });
             return;
         }
@@ -903,8 +903,8 @@
         if (existingTask) {
             store.dispatch("core/showMessage", {
                 variant: "error",
-                title: "Task Id already exist",
-                message: `Task Id ${existingTask} already exist in the flow.`,
+                title: this.$t("task_id_exists"),
+                message: this.$t("task_id_message", {existingTask}),
             });
             return;
         }
@@ -1012,8 +1012,8 @@
         if (flowParsed.value === undefined) {
             store.dispatch("core/showMessage", {
                 variant: "error",
-                title: t("invalid flow"),
-                message: t("invalid yaml"),
+                title: this.$t("invalid flow"),
+                message: this.$t("invalid yaml"),
             });
 
             return;
@@ -1022,15 +1022,15 @@
         if (flowErrors.value) {
             if (props.flowValidation.outdated && props.isCreating) {
                 overrideFlow.value = await ElMessageBox({
-                    title: t("override.title"),
+                    title: this.$t("override.title"),
                     message: () => {
                         return h("div", null, [
-                            h("p", null, t("override.details")),
+                            h("p", null, this.$t("override.details")),
                         ]);
                     },
                     showCancelButton: true,
-                    confirmButtonText: t("ok"),
-                    cancelButtonText: t("cancel"),
+                    confirmButtonText: this.$t("ok"),
+                    cancelButtonText: this.$t("cancel"),
                     center: false,
                     showClose: false,
                 })
@@ -1184,7 +1184,7 @@
                     }
                 }
 
-                return t("delete confirm", {name: metadata.id}) + warning;
+                return this.$t("delete confirm", {name: metadata.id}) + warning;
             })
             .then((message) => {
                 toast.confirm(message, () => {

@@ -95,7 +95,7 @@ public class HttpClient implements Closeable {
         }
 
         // proxy
-        if (this.configuration.getProxy() != null) {
+        if (this.configuration.getProxy() != null && configuration.getProxy().getAddress() != null) {
             SocketAddress proxyAddr = new InetSocketAddress(
                 runContext.render(configuration.getProxy().getAddress()).as(String.class).orElse(null),
                 runContext.render(configuration.getProxy().getPort()).as(Integer.class).orElse(null)

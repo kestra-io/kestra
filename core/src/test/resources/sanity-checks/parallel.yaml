@@ -1,0 +1,17 @@
+id: parallel
+namespace: sanitychecks
+
+tasks:
+  - id: parallel
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: 1st
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }} > {{ taskrun.startDate }}"
+      - id: 2nd
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }} > {{ taskrun.id }}"
+
+  - id: last
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ task.id }} > {{ taskrun.startDate }}"

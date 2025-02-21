@@ -1,12 +1,24 @@
 name: Main Workflow
 
 on:
+  workflow_dispatch:
+    inputs:
+      plugin-version:
+          description: "Kestra version"
+          default: 'LATEST'
+          required: true
+          type: string
   push:
     branches:
+      - master
+      - main
+      - releases/*
       - develop
+    tags:
+      - v*
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-main
   cancel-in-progress: true
 
 jobs:
@@ -21,8 +33,7 @@ jobs:
     needs: [tests]
     uses: ./.github/workflows/workflow-release.yml
     with:
-      docker-tag: ${{ needs.tests.outputs.docker-tag }}
-      plugins: ${{ needs.tests.outputs.plugins }}
+        plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

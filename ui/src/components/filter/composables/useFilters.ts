@@ -47,7 +47,8 @@ export function useFilters(prefix: string) {
             icon: ICONS.DotsSquare,
             label: t("filters.options.namespace"),
             value: {label: "namespace", comparator: undefined, value: []},
-            comparators: [COMPARATORS.EQUALS, COMPARATORS.NOT_EQUALS, COMPARATORS.STARTS_WITH, COMPARATORS.ENDS_WITH, COMPARATORS.CONTAINS],
+            comparators: [COMPARATORS.EQUALS, COMPARATORS.NOT_EQUALS, COMPARATORS.STARTS_WITH,
+                COMPARATORS.ENDS_WITH, COMPARATORS.CONTAINS, COMPARATORS.IN, COMPARATORS.NOT_IN],
         },
         {
             key: "state",

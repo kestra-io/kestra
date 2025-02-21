@@ -684,7 +684,6 @@
         "theme": {
           "label": "Preferencje Motywu",
           "fields": {
-            "mode": "Tryb Motywu",
             "editor_font_size": "Rozmiar Czcionki Edytora",
             "editor_font_family": "Rodzina Czcionki Edytora",
             "editor_folding_stratgy": "Automatyczne Zwijanie Kodu w Edytorze",
@@ -695,7 +694,8 @@
               "classic": "Klasyczny",
               "kestra": "Kestra"
             },
-            "logs_font_size": "Rozmiar czcionki logów"
+            "logs_font_size": "Rozmiar czcionki logów",
+            "theme": "Motyw"
           }
         },
         "localization": {
@@ -1163,7 +1163,11 @@
       "fold_unfold": "Zwiń/Rozwiń kod",
       "comment": "Komentarz",
       "move_line": "Przenieś linię",
-      "command_palette": "Pokaż paletę poleceń"
+      "command_palette": "Pokaż paletę poleceń",
+      "trigger_autocompletion": "Wyzwól autouzupełnianie",
+      "reset_fontsize": "Zresetuj rozmiar czcionki",
+      "decrease_fontsize": "Zmniejsz rozmiar czcionki",
+      "increase_fontsize": "Zwiększ rozmiar czcionki"
     },
     "something_went_wrong": {
       "loading_execution": "Wystąpił problem podczas ładowania wykonania"
@@ -1174,6 +1178,45 @@
       "hidden": "Ukryte w tabeli",
       "label": "Właściwości"
     },
-    "debug": "Debugowanie"
+    "debug": "Debugowanie",
+    "default": "Domyślny",
+    "custom_dashboard_confirm_deletion": "Czy na pewno chcesz usunąć dashboard <code>{title}</code>?",
+    "custom_dashboard_validate_editing": "Zmiany w dashboardzie <code>{title}</code> zostały zapisane.",
+    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> został utworzony.",
+    "no_logs_data_description": "Albo żadne flow nie są uruchomione, albo musisz dostosować swoje filtry.",
+    "no_logs_data": "Brak danych",
+    "fold_all_multi_lines": "Zwiń wszystkie linie wielokrotne",
+    "months": "Miesiące",
+    "trigger_id_message": "Identyfikator Trigger ${existingTrigger} już istnieje w flow.",
+    "minutes": "Minuty",
+    "for flow": "dla flow",
+    "light_version": "Wersja jasna",
+    "deleted_label": "Usunięto",
+    "task_id_exists": "Id zadania już istnieje",
+    "use_dark_background": "Użyj tej wersji podczas pracy na ciemnym tle, aby zapewnić, że nasza nazwa pozostanie czytelna.",
+    "download_logos": "Pobierz Pakiet Logo",
+    "seconds": "Sekundy",
+    "this_task_has": "To zadanie ma",
+    "dark_version": "Ciemna wersja",
+    "runners": "Biegacze",
+    "watch_video": "Obejrzyj wideo",
+    "wordmark_colors": "Kolory znaku słownego dostosowują się w zależności od tła, podczas gdy ikona pozostaje bez tła, gdy jest umieszczona na ciemnym tle.",
+    "weeks": "Tygodnie",
+    "years": "Lata",
+    "task_id_message": "Identyfikator Task ${existingTask} już istnieje w flow.",
+    "monogram": "Monogram",
+    "select": "Wybierz swoją {{section}}",
+    "task_runners": "Uruchamiacze zadań",
+    "learn_more": "Dowiedz się więcej",
+    "light_background": "To jest preferowana opcja podczas pracy z jasnym tłem.",
+    "watch": "Oglądaj",
+    "hours": "Godziny",
+    "input_custom_duration": "lub wprowadź niestandardowy czas trwania:",
+    "days": "Dni",
+    "data_not_protected": "Twoje dane nie są chronione. Nie trać ich. <b>Włącz nasze darmowe funkcje zabezpieczeń lub wypróbuj naszą płatną ofertę.</b>",
+    "confirm": "Potwierdź",
+    "activate_basic_auth": "Aktywuj podstawowe uwierzytelnianie",
+    "trigger_id_exists": "Id triggera już istnieje",
+    "about_this_blueprint": "O tym blueprint"
   }
 }

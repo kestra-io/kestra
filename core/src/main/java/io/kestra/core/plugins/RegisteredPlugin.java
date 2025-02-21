@@ -46,7 +46,7 @@ public class RegisteredPlugin {
     private final List<Class<? extends Chart<?>>> charts;
     private final List<Class<? extends DataFilter<?, ?>>> dataFilters;
     private final List<String> guides;
-    private final List<Class<? extends LogExporter>> logExporters;
+    private final List<Class<? extends LogExporter<?>>> logExporters;
     // Map<lowercasealias, <Alias, Class>>
     private final Map<String, Map.Entry<String, Class<?>>> aliases;
 
@@ -177,11 +177,11 @@ public class RegisteredPlugin {
                     pluginSubGroup = null;
                 }
 
-                if (pluginSubGroup != null && clazz.getPackageName().startsWith(this.group()) ) {
-                    return this.group() + "." + clazz.getPackageName().substring(this.group().length() + 1);
-                } else {
+                if (pluginSubGroup == null) {
                     return null;
                 }
+
+                return clazz.getPackageName();
             })
             .filter(Objects::nonNull)
             .collect(Collectors.toSet());

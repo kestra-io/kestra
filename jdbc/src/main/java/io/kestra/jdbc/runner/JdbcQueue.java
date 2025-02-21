@@ -3,6 +3,7 @@ package io.kestra.jdbc.runner;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
+import com.google.common.collect.Iterables;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -73,7 +74,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
         this.poolExecutor = executorsUtils.cachedThreadPool("jdbc-queue-" + cls.getSimpleName());
-        this.asyncPoolExecutor = executorsUtils.maxCachedThreadPool(MAX_ASYNC_THREADS, "jdbc-queue-async-" + cls.getSimpleName());
+        this.asyncPoolExecutor = executorsUtils.elasticCachedThreadPool(1, MAX_ASYNC_THREADS, "jdbc-queue-async-" + cls.getSimpleName());
 
         this.queueService = applicationContext.getBean(QueueService.class);
         this.cls = cls;
@@ -161,6 +162,41 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         // Just do nothing!
         // The message will be removed by the indexer (synchronously if using the queue indexer, async otherwise),
         // and the queue has its own cleaner, which we better not mess with, as the 'queues' table is selected with a lock.
+    }
+
+    /**
+     * Delete all messages of the queue for this key.
+     * This is used to purge a queue for a specific key.
+     */
+    public void deleteByKey(String key) throws QueueException {
+        dslContextWrapper.transaction(configuration -> {
+            int deleted = DSL
+                .using(configuration)
+                .delete(this.table)
+                .where(buildTypeCondition(this.cls.getName()))
+                .and(AbstractJdbcRepository.field("key").eq(key))
+                .execute();
+            log.debug("Cleaned {} records for key {}", deleted, key);
+        });
+    }
+
+    /**
+     * Delete all messages of the queue for a set of keys.
+     * This is used to purge a queue for specific keys.
+     */
+    public void deleteByKeys(List<String> keys) throws QueueException {
+        // process in batches of 100 items to avoid too big IN clausecQueue
+        Iterables.partition(keys, 100).forEach(batch -> {
+            dslContextWrapper.transaction(configuration -> {
+                int deleted = DSL
+                    .using(configuration)
+                    .delete(this.table)
+                    .where(buildTypeCondition(this.cls.getName()))
+                    .and(AbstractJdbcRepository.field("key").in(batch))
+                    .execute();
+                log.debug("Cleaned {} records for keys {}", deleted, batch);
+            });
+        });
     }
 
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset) {

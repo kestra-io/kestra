@@ -3,24 +3,16 @@
         <template #additional-right>
             <ul>
                 <li>
-                    <div class="el-input el-input-file custom-upload">
-                        <form ref="importForm">
-                            <div class="el-input__wrapper">
-                                <label for="importFlows">
-                                    <Upload />
-                                    {{ $t("import") }}
-                                </label>
-                                <input
-                                    id="importFlows"
-                                    class="el-input__inner"
-                                    type="file"
-                                    accept=".zip, .yml, .yaml"
-                                    @change="importFlows()"
-                                    ref="file"
-                                >
-                            </div>
-                        </form>
-                    </div>
+                    <el-button :icon="Upload" @click="file?.click()">
+                        {{ $t("import") }}
+                    </el-button>
+                    <input
+                        ref="file"
+                        type="file"
+                        accept=".zip, .yml, .yaml"
+                        @change="importFlows()"
+                        class="d-none"
+                    >
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
@@ -83,7 +75,7 @@
                 </template>
 
                 <template #top>
-                    <el-card v-if="showStatChart()" shadow="never" class="mb-4">
+                    <el-card v-if="showStatChart()" class="mb-4 shadow">
                         <ExecutionsBar :data="daily" :total="executionsCount" />
                     </el-card>
                 </template>
@@ -289,7 +281,6 @@
                             </el-table-column>
 
                             <el-table-column
-                                v-if="displayColumn('action')"
                                 column-key="action"
                                 class-name="row-action"
                                 :label="$t('actions')"
@@ -322,6 +313,7 @@
 </template>
 
 <script setup>
+    import {ref} from "vue";
     import moment from "moment";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
@@ -340,6 +332,8 @@
 
     const route = useRoute();
     const router = useRouter();
+
+    const file = ref(null);
 
     function tableChartClick(namespace, flowId, e, elements) {
         if (
@@ -433,7 +427,7 @@
                         label: this.$t("triggers"),
                         prop: "triggers",
                         default: true,
-                    }
+                    },
                 ],
                 displayColumns: [],
                 isDefaultNamespaceAllow: true,
@@ -909,6 +903,10 @@
 </script>
 
 <style lang="scss" scoped>
+.shadow {
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+}
+
 :deep(nav .dropdown-menu) {
     display: flex;
     width: 20rem;

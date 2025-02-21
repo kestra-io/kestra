@@ -37,7 +37,11 @@ VITE_APP_API_URL=http://localhost:8080
 - Now go to the `cli/src/main/resources` folder and create a `application-override.yml` file.
 
 Now you have two choices:
-- Run in local mode which uses a H2 database, so this is the only config you'd need:
+
+`Local mode`:
+
+Runs the Kestra server in local mode which uses a H2 database, so this is the only config you'd need:
+
 ```yaml
 micronaut:
   server:
@@ -49,7 +53,12 @@ micronaut:
             - http://localhost:5173
 ```
 
-- Run in standalone mode which uses Postgres. Make sure to have a local Postgres instance already running on localhost:
+You can then open a new terminal and run the following command to start the backend server: `./gradlew runLocal`
+
+`Standalone mode`:
+
+Runs in standalone mode which uses Postgres. Make sure to have a local Postgres instance already running on localhost:
+
 ```yaml
 kestra:
   repository:
@@ -97,10 +106,25 @@ micronaut:
             - http://localhost:5173
 ```
 
-Now your environment should be setup for you to develop on both the frontend and backend.
+Then add the following settings to the `.vscode/launch.json` file:
 
-You can then open a new terminal and run the following command to start the backend server:
-`./gradlew runLocal`
+```json
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "type": "java",
+      "name": "Kestra Standalone",
+      "request": "launch",
+      "mainClass": "io.kestra.cli.App",
+      "projectName": "cli",
+      "args": "server standalone",
+    },
+  ]
+}
+```
+
+You can then use the VSCode `Run and Debug` extension to start the Kestra server.
 
 ---
 

@@ -358,6 +358,8 @@
                 comparatorCallback(option.comparators[0]);
             }
         }
+
+        updateHoveringIndex(0);
     };
     const comparatorCallback = (value) => {
         currentFilters.value[dropdowns.value.second.index].comparator = value;

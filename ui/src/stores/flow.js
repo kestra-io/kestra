@@ -1,4 +1,6 @@
 import axios from "axios";
+import permission from "../models/permission";
+import action from "../models/action";
 import YamlUtils from "../utils/yamlUtils";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
@@ -392,6 +394,9 @@ export default {
         },
         setTasksWithMetrics(state, tasksWithMetrics) {
             state.tasksWithMetrics = tasksWithMetrics
+        },
+        updateFlowSource(state, source) {
+            state.flow = {...state.flow, source};
         }
     },
     getters: {
@@ -414,6 +419,24 @@ export default {
             if (state.taskError) {
                 return state.taskError;
             }
+        },
+        isAllowedEdit(_state, getters, _rootState, rootGetters) {
+            if (!getters.flow || !rootGetters["auth/user"]) {
+                return false;
+            }
+
+            return rootGetters["auth/user"].isAllowed(
+                permission.FLOW,
+                action.UPDATE,
+                getters.flow.namespace,
+            );
+        },
+        readOnlySystemLabel(_state, getters) {
+            if (!getters.flow) {
+                return false;
+            }
+
+            return (getters.flow.labels?.["system.readOnly"] === "true") || (getters.flow.labels?.["system.readOnly"] === true);
         }
     }
 }

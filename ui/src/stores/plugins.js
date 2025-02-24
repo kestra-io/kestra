@@ -1,4 +1,5 @@
 import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
+import YamlUtils from "../utils/yamlUtils";
 
 export default {
     namespaced: true,
@@ -100,8 +101,22 @@ export default {
             return this.$http.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
                 return response.data;
             })
+        },
+        updateDocumentation({commit, dispatch, getters}, options) {
+            const pluginSingleList = getters["plugin/getPluginSingleList"];
+            const taskType = options.task !== undefined ? options.task : YamlUtils.getTaskType(
+                options.event.model.getValue(),
+                options.event.position,
+                pluginSingleList
+            );
+            if (taskType) {
+                dispatch("plugin/load", {cls: taskType}).then((plugin) => {
+                    commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
+                });
+            } else {
+                commit("plugin/setEditorPlugin", undefined);
+            }
         }
-
     },
     mutations: {
         setPlugin(state, plugin) {

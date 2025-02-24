@@ -440,10 +440,10 @@
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
 
-    const isFlow = () => currentTab?.value?.flow || props.isCreating;
+    const isFlow = computed(() => currentTab?.value?.flow || props.isCreating);
 
     const flowErrors = computed(() => {
-        if (isFlow()) {
+        if (isFlow.value) {
             const flowExistsError =
                 props.flowValidation?.outdated && props.isCreating
                     ? [outdatedMessage.value]
@@ -472,7 +472,7 @@
     });
 
     const flowWarnings = computed(() => {
-        if (isFlow()) {
+        if (isFlow.value) {
             const outdatedWarning =
                 props.flowValidation?.outdated && !props.isCreating
                     ? [outdatedMessage.value]
@@ -498,7 +498,7 @@
     });
 
     const flowInfos = computed(() => {
-        if (isFlow()) {
+        if (isFlow.value) {
             const infos = props.flowValidation?.infos  ?? [];
             return infos.length === 0 ? undefined : infos;
         }
@@ -624,7 +624,7 @@
     );
 
     const flowHaveTasks = (source) => {
-        if (isFlow()) {
+        if (isFlow.value) {
             const flow = props.isCreating ? props.flow.source : (source ? source : flowYaml.value);
             return flow ? YamlUtils.flowHaveTasks(flow) : false;
         } else return false;
@@ -753,19 +753,7 @@
     };
 
     const updatePluginDocumentation = (event, task) => {
-        const pluginSingleList = store.getters["plugin/getPluginSingleList"];
-        const taskType = task !== undefined ? task : YamlUtils.getTaskType(
-            event.model.getValue(),
-            event.position,
-            pluginSingleList
-        );
-        if (taskType) {
-            store.dispatch("plugin/load", {cls: taskType}).then((plugin) => {
-                store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
-            });
-        } else {
-            store.commit("plugin/setEditorPlugin", undefined);
-        }
+        store.dispatch("plugin/updateDocumentation", {event,task});
     };
 
     const fetchGraph = () => {
@@ -975,7 +963,7 @@
     };
 
     const editorUpdate = (event) => {
-        const currentIsFlow = isFlow();
+        const currentIsFlow = isFlow.value;
 
         updatedFromEditor.value = true;
         flowYaml.value = event;
@@ -1095,7 +1083,7 @@
             }
         }
 
-        if (isFlow()) {
+        if (isFlow.value) {
             onEdit(flowYaml.value, true).then((validation) => {
                 if (validation.outdated && !props.isCreating) {
                     confirmOutdatedSaveDialog.value = true;

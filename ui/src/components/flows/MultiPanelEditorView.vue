@@ -1,11 +1,11 @@
 <template>
     <Splitpanes>
         <Pane>
-            <Editor>
+            <EditorWrapper>
                 <template #absolute>
                     <KeyShortcuts />
                 </template>
-            </Editor>
+            </EditorWrapper>
         </Pane>
         <Pane />
     </Splitpanes>
@@ -15,6 +15,6 @@
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
 
-    import Editor from "../inputs/Editor.vue";
+    import EditorWrapper from "../inputs/EditorWrapper.vue";
     import KeyShortcuts from "../inputs/KeyShortcuts.vue";
 </script>

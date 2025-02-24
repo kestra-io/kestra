@@ -16,7 +16,7 @@
     import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
@@ -286,7 +286,7 @@
             }
         },
         computed: {
-            ...mapState("flow", ["flow"]),
+            ...mapGetters("flow", ["flow", "isAllowedEdit", "readOnlySystemLabel"]),
             ...mapState("auth", ["user"]),
             ...mapState("core", ["guidedProperties"]),
             routeInfo() {
@@ -316,24 +316,6 @@
             },
             ready() {
                 return this.user && this.flow;
-            },
-            isAllowedEdit() {
-                if (!this.flow || !this.user) {
-                    return false;
-                }
-
-                return this.user.isAllowed(
-                    permission.FLOW,
-                    action.UPDATE,
-                    this.flow.namespace,
-                );
-            },
-            readOnlySystemLabel() {
-                if (!this.flow) {
-                    return false;
-                }
-
-                return (this.flow.labels?.["system.readOnly"] === "true") || (this.flow.labels?.["system.readOnly"] === true);
             },
             routeFlowDependencies() {
                 return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;

@@ -5,11 +5,11 @@
             v-if="source"
             :flow-id="flowParsed?.id"
             :namespace="flowParsed?.namespace"
-            :is-creating="true"
             :flow-validation="flowValidation"
             :flow-graph="flowGraph"
             :is-read-only="false"
-            :is-dirty="true"
+            is-creating
+            is-dirty
             :flow="sourceWrapper"
             :next-revision="1"
         />

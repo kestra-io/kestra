@@ -19,6 +19,7 @@ import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.runtime.server.EmbeddedServer;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -554,7 +555,10 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.of(server.getURL().toString() + "/content-type"))
+                .method(Property.of("POST"))
+                .body(Property.of("{}"))
                 .contentType(Property.of("application/vnd.campaignsexport.v1+json"))
+                .options(HttpConfiguration.builder().logs(HttpConfiguration.LoggingType.values()).defaultCharset(null).build())
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -573,10 +577,10 @@ class RequestTest {
             return HttpResponse.ok("{ \"hello\": \"world\" }");
         }
 
-
-        @Get("content-type")
+        @Post("content-type")
+        @Consumes("application/vnd.campaignsexport.v1+json")
         @Produces(MediaType.TEXT_PLAIN)
-        public io.micronaut.http.HttpResponse<String> contentType(io.micronaut.http.HttpRequest<?> request) {
+        public io.micronaut.http.HttpResponse<String> contentType(io.micronaut.http.HttpRequest<?> request, @Nullable @Body Map<String, String> body) {
             return io.micronaut.http.HttpResponse.ok(request.getContentType().orElseThrow().toString());
         }
 

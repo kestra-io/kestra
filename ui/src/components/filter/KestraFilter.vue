@@ -241,7 +241,7 @@
         }
         return valueOptions.value.filter((o) =>
             o.label.toLowerCase().startsWith(prefixFilter.value),
-        );
+        ) || [];
     });
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
@@ -275,6 +275,7 @@
 
                 if (o.key === "timeRange") comparator = "relative_date";
                 if (o.key === "date") comparator = "absolute_date";
+                if (o.key === "childFilter") comparator = "child";
 
                 return comparator === option.label;
             })[0];

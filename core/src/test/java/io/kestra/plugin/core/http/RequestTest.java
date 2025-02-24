@@ -543,12 +543,41 @@ class RequestTest {
         }
     }
 
+    @Test
+    void specialContentType() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.of(server.getURL().toString() + "/content-type"))
+                .contentType(Property.of("application/vnd.campaignsexport.v1+json"))
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getBody(), is("application/vnd.campaignsexport.v1+json"));
+            assertThat(output.getCode(), is(200));
+        }
+    }
 
     @Controller
     static class MockController {
         @Get("/hello")
         HttpResponse<String> hello() {
             return HttpResponse.ok("{ \"hello\": \"world\" }");
+        }
+
+
+        @Get("content-type")
+        @Produces(MediaType.TEXT_PLAIN)
+        public io.micronaut.http.HttpResponse<String> contentType(io.micronaut.http.HttpRequest<?> request) {
+            return io.micronaut.http.HttpResponse.ok(request.getContentType().orElseThrow().toString());
         }
 
         @Head("/hello")

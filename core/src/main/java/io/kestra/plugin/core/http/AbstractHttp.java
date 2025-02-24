@@ -16,6 +16,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -160,6 +161,8 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                 .charset(this.options != null ? runContext.render(this.options.getDefaultCharset()).as(Charset.class).orElse(null) : StandardCharsets.UTF_8)
                 .build()
             );
+        } else if (this.contentType != null) {
+            request.addHeader("Content-Type", runContext.render(this.contentType).as(String.class).orElse(null));
         }
 
         var renderedHeader = runContext.render(this.headers).asMap(CharSequence.class, CharSequence.class);
@@ -177,6 +180,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                 (a, b) -> true)
             );
         }
+
 
         return request.build();
     }

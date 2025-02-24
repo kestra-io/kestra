@@ -1,5 +1,5 @@
 <template>
-    <context-info-content :title="t('feeds.title')">
+    <context-info-content :title="$t('feeds.title')">
         <div class="post" :class="{lastPost: index === 0, expanded: expanded[feed.id]}" v-for="(feed, index) in feeds" :key="feed.id">
             <div v-if="feed.image" class="mr-2">
                 <img :src="feed.image" alt="">
@@ -23,7 +23,7 @@
                 </el-button>
                 <el-button
                     v-if="feed.href"
-                    :title="t('open in new tab')"
+                    :title="$t('open in new tab')"
                     tag="a"
                     type="primary"
                     target="_blank"

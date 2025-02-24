@@ -5,8 +5,8 @@
             <CheckCircle @click.stop="renameBookmark" class="save" />
         </div>
         <div class="buttons">
-            <PencilOutline @click="startEditBookmark" :title="t('edit')" />
-            <DeleteOutline @click="deleteBookmark" :title="t('delete')" />
+            <PencilOutline @click="startEditBookmark" :title="$t('edit')" />
+            <DeleteOutline @click="deleteBookmark" :title="$t('delete')" />
         </div>
         <a :href="href" :title="updatedTitle">
             {{ updatedTitle }}

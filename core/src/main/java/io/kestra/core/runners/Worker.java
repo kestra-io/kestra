@@ -839,6 +839,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
             );
         } catch(Exception e) {
             // should only occur if it fails in the tracing code which should be unexpected
+            // we add the exception to have some log in that case
+            workerJobCallable.exception = e;
             return State.Type.FAILED;
         } finally {
             synchronized (this) {

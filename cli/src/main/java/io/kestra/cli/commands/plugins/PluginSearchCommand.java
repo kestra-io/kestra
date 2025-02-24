@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.plugins;
 
 import io.kestra.cli.AbstractCommand;
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,12 +36,9 @@ public class PluginSearchCommand extends AbstractCommand {
 
         try {
             JsonNode root = fetchPlugins();
-            if (root == null) return 1;
-
             List<PluginInfo> plugins = findPlugins(root);
             printResults(plugins);
             return 0;
-
         } catch (Exception e) {
             stdOut("Error processing plugins: {0}", e.getMessage());
             return 1;
@@ -57,8 +55,7 @@ public class PluginSearchCommand extends AbstractCommand {
         HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
 
         if (response.statusCode() != 200) {
-            stdOut("API request failed with status: {0}", response.statusCode());
-            return null;
+            throw new RuntimeException("API request failed with status: " + response.statusCode());
         }
 
         return MAPPER.readTree(response.body());
@@ -84,16 +81,13 @@ public class PluginSearchCommand extends AbstractCommand {
     }
 
     private boolean matchesSearch(JsonNode plugin, String term) {
-        if (term.isEmpty()) return true;
+        if (term.isEmpty()) {
+            return true;
+        }
 
-        String name = plugin.path("name").asText().toLowerCase();
-        if (name.contains(term)) return true;
-
-        String title = plugin.path("title").asText().toLowerCase();
-        if (title.contains(term)) return true;
-
-        String group = plugin.path("group").asText().toLowerCase();
-        return group.contains(term);
+        return plugin.path("name").asText().toLowerCase().contains(term) ||
+            plugin.path("title").asText().toLowerCase().contains(term) ||
+            plugin.path("group").asText().toLowerCase().contains(term);
     }
 
     private void printResults(List<PluginInfo> plugins) {

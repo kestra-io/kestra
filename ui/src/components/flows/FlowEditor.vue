@@ -18,6 +18,7 @@
             :expanded-subflows="expandedSubflows"
             @expand-subflow="$emit('expand-subflow', $event)"
             :next-revision="flow.revision + 1"
+            :embed
         />
     </template>
 </template>
@@ -41,6 +42,10 @@
         expandedSubflows: {
             type: Array,
             default: () => []
+        },
+        embed: {
+            type: Boolean,
+            default: false
         }
     })
 

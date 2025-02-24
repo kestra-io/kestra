@@ -14,7 +14,8 @@
         >
             <el-button @click="toggleExplorerVisibility()">
                 <span class="pe-2 toggle-button">{{ t("files") }}</span>
-                <component :is="explorerVisible ? MenuOpen : MenuClose" />
+                <MenuOpen v-if="explorerVisible" />
+                <MenuClose v-else />
             </el-button>
         </el-tooltip>
 

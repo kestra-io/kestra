@@ -241,7 +241,7 @@
         }
         return valueOptions.value.filter((o) =>
             o.label.toLowerCase().startsWith(prefixFilter.value),
-        );
+        ) || [];
     });
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
@@ -275,6 +275,7 @@
 
                 if (o.key === "timeRange") comparator = "relative_date";
                 if (o.key === "date") comparator = "absolute_date";
+                if (o.key === "childFilter") comparator = "child";
 
                 return comparator === option.label;
             })[0];
@@ -636,9 +637,13 @@
                 ["labels", "details"].includes(wholeSearchContent.at(-2)?.label) ||
                 wholeSearchContent.at(-2)?.value?.length === 0
             ) {
-                // Adding value to preceding empty filter
-                // TODO Provide a way for user to escape infinite labels & details loop (you can never fallback to a new filter, any further text will be added as a value to the filter)
-                wholeSearchContent.at(-2)?.value?.push(wholeSearchContent.at(-1));
+                if(wholeSearchContent.at(-2)?.label === "child") {
+                    if (typeof wholeSearchContent.at(-1) === "string") wholeSearchContent = [];
+                } else {
+                    // Adding value to preceding empty filter
+                    // TODO Provide a way for user to escape infinite labels & details loop (you can never fallback to a new filter, any further text will be added as a value to the filter)
+                    wholeSearchContent.at(-2)?.value?.push(wholeSearchContent.at(-1));
+                }
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");

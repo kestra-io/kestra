@@ -16,7 +16,21 @@ import "moment/dist/locale/ru"
 import "moment/dist/locale/zh-cn"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
-
+import {
+    Chart,
+    CategoryScale,
+    LinearScale,
+    BarElement,
+    BarController,
+    LineElement,
+    LineController,
+    PointElement,
+    Tooltip,
+    Filler,
+    Legend,
+    ArcElement,
+    DoughnutController,
+} from "chart.js";
 import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
 
@@ -48,6 +62,24 @@ import Utils from "./utils";
 import TaskTaskRunner from "../components/flows/tasks/TaskTaskRunner.vue";
 
 export default async (app, routes, stores, translations, additionalTranslations = {}) => {
+    // charts
+    Chart.register(
+        CategoryScale,
+        LinearScale,
+        BarElement,
+        BarController,
+        LineElement,
+        LineController,
+        PointElement,
+        Filler,
+        ArcElement,
+        DoughnutController,
+        Tooltip,
+        Legend,
+        CategoryScale,
+        LinearScale
+    );
+
     // store
     let store = createStore(stores);
     app.use(store);

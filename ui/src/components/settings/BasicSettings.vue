@@ -72,6 +72,11 @@
                         </el-select>
                     </Column>
                 </Row>
+                <Row>
+                    <Column :label="$t('settings.blocks.configuration.fields.multi_panel_editor')">
+                        <el-switch :aria-label="$t('settings.blocks.configuration.fields.multi_panel_editor')" :model-value="pendingSettings.multiPanelEditor" @update:model-value="onMultiPanelEditor" />
+                    </Column>
+                </Row>
             </template>
         </Block>
 
@@ -282,7 +287,8 @@
                     envName: undefined,
                     envColor: undefined,
                     executeDefaultTab: undefined,
-                    logsFontSize: undefined
+                    logsFontSize: undefined,
+                    multiPanelEditor: undefined
                 },
                 settingsKeyMapping: {
                     chartColor: "scheme",
@@ -329,6 +335,7 @@
             this.pendingSettings.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
             this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
+            this.pendingSettings.multiPanelEditor = localStorage.getItem("multiPanelEditor") === "true";
         },
         methods: {
             onNamespaceSelect(value) {
@@ -399,6 +406,9 @@
             onExecuteDefaultTabChange(value){
                 this.pendingSettings.executeDefaultTab = value;
             },
+            onMultiPanelEditor(value) {
+                this.pendingSettings.multiPanelEditor = value;
+            },
             onLogsFontSize(value) {
                 this.pendingSettings.logsFontSize = value;
             },
@@ -423,12 +433,6 @@
                         if (this.pendingSettings[key] !== this.configs?.environment?.color) {
                             this.$store.commit("layout/setEnvColor", this.pendingSettings[key])
                         }
-                        break
-                    case "autofoldTextEditor":
-                        localStorage.setItem(key, this.pendingSettings[key])
-                        break
-                    case "logsFontSize":
-                        localStorage.setItem(key, this.pendingSettings[key])
                         break
                     case "theme":
                         Utils.switchTheme(this.$store, this.pendingSettings[key]);
@@ -460,7 +464,7 @@
                                 localStorage.setItem(storedKey, this.pendingSettings[key])
                         }
                         else {
-                            if(this.pendingSettings[key])
+                            if(this.pendingSettings[key] !== undefined)
                                 localStorage.setItem(key, this.pendingSettings[key])
                         }
                     }

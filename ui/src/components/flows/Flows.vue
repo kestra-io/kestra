@@ -75,7 +75,7 @@
                 </template>
 
                 <template #top>
-                    <el-card v-if="showStatChart()" class="mb-4 shadow">
+                    <el-card v-if="showStatChart()" class="mb-4">
                         <ExecutionsBar :data="daily" :total="executionsCount" />
                     </el-card>
                 </template>

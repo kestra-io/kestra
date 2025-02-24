@@ -407,7 +407,7 @@
             );
             if (parentIndex !== -1) {
                 if (
-                    ["log level"].includes(
+                    ["status", "log level"].includes(
                         lastClickedParent.value.toLowerCase(),
                     )
                 ) {

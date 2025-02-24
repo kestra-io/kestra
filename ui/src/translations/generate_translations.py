@@ -1,7 +1,10 @@
+"""
+To run it locally, add OPENAI_API_KEY env variable and pip install gitpython openai
+"""
 import json
 import git
 from openai import OpenAI
-# pip install gitpython openai
+
 client = OpenAI()
 
 

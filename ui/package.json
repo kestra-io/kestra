@@ -31,7 +31,6 @@
     "bootstrap": "^5.3.3",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.7",
-    "chartjs-chart-treemap": "^3.0.0",
     "core-js": "^3.39.0",
     "cronstrue": "^2.54.0",
     "dagre": "^0.8.5",

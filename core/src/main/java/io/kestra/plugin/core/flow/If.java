@@ -153,10 +153,10 @@ public class If extends Task implements FlowableTask<If.Output> {
         // For this, we evaluate the condition in the outputs() method and get it from the outputs.
         // But unfortunately, the output may not have yet been computed in some cases, like if the task is inside a flowable, in this case we compute the result anyway.
         Boolean evaluationResult;
-        if (parentTaskRun.getOutputs() == null || parentTaskRun.getOutputs().get("evaluationResult") == null) {
+        if (parentTaskRun.getOutputs() == null || parentTaskRun.getOutputs().toMap().get("evaluationResult") == null) {
             evaluationResult = isTrue(runContext);
         } else {
-            evaluationResult = (Boolean) parentTaskRun.getOutputs().get("evaluationResult");
+            evaluationResult = (Boolean) parentTaskRun.getOutputs().toMap().get("evaluationResult");
         }
 
         if (Boolean.TRUE.equals(evaluationResult)) {

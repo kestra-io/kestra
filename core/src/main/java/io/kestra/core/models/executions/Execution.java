@@ -789,7 +789,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     /**
      * Transform an exception to {@link ILoggingEvent}
      *
-     * @param e the current execption
+     * @param e the current exception
      * @return the {@link ILoggingEvent} waited to generate {@link LogEntry}
      */
     public static ILoggingEvent loggingEventFromException(Exception e) {
@@ -833,10 +833,10 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         if (parents.isEmpty()) {
             if (taskRun.getValue() == null) {
-                return Map.of(taskRun.getTaskId(), taskRun.getOutputs());
+                return Map.of(taskRun.getTaskId(), taskRun.getOutputs().toMap());
             } else {
                 return Map.of(taskRun.getTaskId(),
-                    Map.of(taskRun.getValue(), taskRun.getOutputs()));
+                    Map.of(taskRun.getValue(), taskRun.getOutputs().toMap()));
             }
         }
 
@@ -851,9 +851,9 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         if (taskRun.getOutputs() != null) {
             if (taskRun.getValue() != null) {
-                current.put(taskRun.getValue(), taskRun.getOutputs());
+                current.put(taskRun.getValue(), taskRun.getOutputs().toMap());
             } else {
-                current.putAll(taskRun.getOutputs());
+                current.putAll(taskRun.getOutputs().toMap());
             }
         }
 
@@ -874,8 +874,8 @@ public class Execution implements DeletedInterface, TenantInterface {
                 current.put("taskrun", Map.of("value", childTaskRun.getValue()));
             }
 
-            if (childTaskRun.getOutputs() != null && !childTaskRun.getOutputs().isEmpty()) {
-                current.put("outputs", childTaskRun.getOutputs());
+            if (childTaskRun.getOutputs() != null && !childTaskRun.getOutputs().toMap().isEmpty()) {
+                current.put("outputs", childTaskRun.getOutputs().toMap());
             }
 
             if (!current.isEmpty()) {

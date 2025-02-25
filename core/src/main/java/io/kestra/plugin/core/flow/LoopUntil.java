@@ -176,7 +176,7 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
         }
 
         Integer iterationCount = Optional.ofNullable(parentTaskRun.getOutputs())
-            .map(outputs -> (Integer) outputs.get("iterationCount"))
+            .map(outputs -> (Integer) outputs.toMap().get("iterationCount"))
             .orElse(0);
         if (this.checkFrequency.maxIterations != null && iterationCount != null && iterationCount > this.checkFrequency.maxIterations) {
             if (printLog) {logger.warn("Max iterations reached");}
@@ -246,7 +246,7 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
     public LoopUntil.Output outputs(TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         String value = parentTaskRun != null ?
             String.valueOf(Optional.ofNullable(parentTaskRun.getOutputs())
-                .map(outputs -> outputs.get("iterationCount"))
+                .map(outputs -> outputs.toMap().get("iterationCount"))
                 .orElse("0")) : "0";
 
         return Output.builder()

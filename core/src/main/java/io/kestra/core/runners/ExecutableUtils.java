@@ -90,9 +90,9 @@ public final class ExecutableUtils {
                 ExecutionRepositoryInterface executionRepository = ((DefaultRunContext) runContext).getApplicationContext().getBean(ExecutionRepositoryInterface.class);
 
                 Optional<Execution> existingSubflowExecution = Optional.empty();
-                if (currentTaskRun.getOutputs() != null && currentTaskRun.getOutputs().containsKey("executionId")) {
+                if (currentTaskRun.getOutputs() != null && currentTaskRun.getOutputs().toMap().containsKey("executionId")) {
                     // we know which execution to restart; this should be the case for Subflow tasks
-                    existingSubflowExecution = executionRepository.findById(currentExecution.getTenantId(), (String) currentTaskRun.getOutputs().get("executionId"));
+                    existingSubflowExecution = executionRepository.findById(currentExecution.getTenantId(), (String) currentTaskRun.getOutputs().toMap().get("executionId"));
                 }
 
                 if (existingSubflowExecution.isEmpty()) {
@@ -220,7 +220,7 @@ public final class ExecutableUtils {
 
     @SuppressWarnings("unchecked")
     public static TaskRun manageIterations(Storage storage, TaskRun taskRun, Execution execution, boolean transmitFailed, boolean allowFailure, boolean allowWarning) throws InternalException {
-        Integer numberOfBatches = (Integer) taskRun.getOutputs().get(TASK_VARIABLE_NUMBER_OF_BATCHES);
+        Integer numberOfBatches = (Integer) taskRun.getOutputs().toMap().get(TASK_VARIABLE_NUMBER_OF_BATCHES);
         var previousTaskRun = execution.findTaskRunByTaskRunId(taskRun.getId());
         if (previousTaskRun == null) {
             throw new IllegalStateException("Should never happen");
@@ -232,8 +232,8 @@ public final class ExecutableUtils {
             Optional.empty();
 
         // search for the previous iterations, if not found, we init it with an empty map
-        Map<String, Integer> iterations = !MapUtils.isEmpty(previousTaskRun.getOutputs()) ?
-            (Map<String, Integer>) previousTaskRun.getOutputs().get(TASK_VARIABLE_ITERATIONS) :
+        Map<String, Integer> iterations = !MapUtils.isEmpty(previousTaskRun.getOutputs().toMap()) ?
+            (Map<String, Integer>) previousTaskRun.getOutputs().toMap().get(TASK_VARIABLE_ITERATIONS) :
             new HashMap<>();
 
         int currentStateIteration = iterations.getOrDefault(currentState.toString(), 0);

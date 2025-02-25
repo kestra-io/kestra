@@ -177,7 +177,7 @@ public class RunContextInitializer {
         }
 
         if (workerTaskResult.getTaskRun().getOutputs() != null) {
-            current.putAll(workerTaskResult.getTaskRun().getOutputs());
+            current.putAll(workerTaskResult.getTaskRun().getOutputs().toMap());
         }
 
         outputs.put(workerTaskResult.getTaskRun().getTaskId(), result);

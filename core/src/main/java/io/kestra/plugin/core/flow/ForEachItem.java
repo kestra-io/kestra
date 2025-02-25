@@ -542,14 +542,14 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                     );
                 final ForEachItem.Output.OutputBuilder builder = Output
                     .builder()
-                    .iterations((Map<State.Type, Integer>) taskRun.getOutputs().get(ExecutableUtils.TASK_VARIABLE_ITERATIONS))
-                    .numberOfBatches((Integer) taskRun.getOutputs().get(ExecutableUtils.TASK_VARIABLE_NUMBER_OF_BATCHES));
+                    .iterations((Map<State.Type, Integer>) taskRun.getOutputs().toMap().get(ExecutableUtils.TASK_VARIABLE_ITERATIONS))
+                    .numberOfBatches((Integer) taskRun.getOutputs().toMap().get(ExecutableUtils.TASK_VARIABLE_NUMBER_OF_BATCHES));
 
                 try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
                     FileSerde.write(bos, runContext.render(outputs));
                     URI uri = runContext.storage().putFile(
                         new ByteArrayInputStream(bos.toByteArray()),
-                        URI.create((String) taskRun.getOutputs().get("uri"))
+                        URI.create((String) taskRun.getOutputs().toMap().get("uri"))
                     );
                     builder.uri(uri);
                 } catch (Exception e) {

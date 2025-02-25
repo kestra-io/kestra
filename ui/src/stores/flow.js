@@ -3,6 +3,7 @@ import permission from "../models/permission";
 import action from "../models/action";
 import YamlUtils from "../utils/yamlUtils";
 import Utils from "../utils/utils";
+import {editorViewTypes} from "../../utils/constants";
 import {apiUrl} from "override/utils/route";
 
 const textYamlHeader = {
@@ -36,6 +37,42 @@ export default {
     },
 
     actions: {
+        fetchGraph({getters, state, dispatch}) {
+            return dispatch("loadGraphFromSource", {
+                flow: state.flowYaml,
+                config: {
+                    params: {
+                        // due to usage of axios instance instead of $http which doesn't convert arrays
+                        subflows: getters.expandedSubflows.join(","),
+                    },
+                    validateStatus: (status) => {
+                        return status === 200;
+                    },
+                },
+            });
+        },
+        async initYamlSource({getters, commit, dispatch, state}, {viewType}) {
+            const {source} = getters.flow;
+            commit("setFlowYaml", source);
+            commit("setFlowYamlOrigin", source);
+            if (getters.flowHaveTasks) {
+                if (
+                    [
+                        editorViewTypes.TOPOLOGY,
+                        editorViewTypes.SOURCE_TOPOLOGY,
+                    ].includes(viewType)
+                ) {
+                    await dispatch("fetchGraph");
+                } else {
+                    dispatch("fetchGraph");
+                }
+            }
+
+            const yamlWithNextRevision = `revision: ${getters.nextRevision}\n${source}`;
+
+            // validate flow on first load
+            return dispatch("validateFlow", {flow: state.isCreating ? source : yamlWithNextRevision})
+        },
         findFlows({commit}, options) {
             const sortString = options.sort ? `?sort=${options.sort}` : ""
             delete options.sort
@@ -91,8 +128,6 @@ export default {
                     if(options.store === false) {
                         return response.data;
                     }
-                    commit("setFlow", response.data);
-                    commit("setFlowYamlOrigin", response.data.source);
                     commit("setOverallTotal", 1)
                     return response.data;
                 })
@@ -511,6 +546,15 @@ export default {
             }
 
             return undefined;
+        },
+        flowHaveTasks(state, getters){
+            if (getters.isFlow) {
+                const flow = state.isCreating ? getters.flow.source : state.flowYaml;
+                return flow ? YamlUtils.flowHaveTasks(flow) : false;
+            } else return false;
+        },
+        nextRevision(_state, getters){
+            return getters.flow.revision + 1;
         }
     }
 }

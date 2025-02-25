@@ -571,36 +571,6 @@
         store.commit("core/setAutocompletionSource", newYaml);
     });
 
-    const initYamlSource = async () => {
-        flowYaml.value = props.flow.source;
-        flowYamlOrigin.value = props.flow.source;
-        if (flowHaveTasks()) {
-            if (
-                [
-                    editorViewTypes.TOPOLOGY,
-                    editorViewTypes.SOURCE_TOPOLOGY,
-                ].includes(viewType.value)
-            ) {
-                await fetchGraph();
-            } else {
-                fetchGraph();
-            }
-        }
-
-        // validate flow on first load
-        store
-            .dispatch("flow/validateFlow", {flow: props.isCreating ? flowYaml.value : yamlWithNextRevision.value})
-            .then((value) => {
-                if (validationDomElement.value && editorDomElement.value) {
-                    validationDomElement.value.onResize(
-                        editorDomElement.value.$el.offsetWidth
-                    );
-                }
-
-                return value;
-            });
-    };
-
     const persistEditorWidth = () => {
         if (editorWidth.value !== null) {
             localStorage.setItem(editorWidthStorageKey, editorWidth.value);
@@ -620,7 +590,7 @@
 
         if(!props.isNamespace) {
             initViewType()
-            await initYamlSource();
+            await store.dispatch("initYamlSource", {viewType: viewType.value});
         } else {
             store.commit("editor/closeAllTabs");
             switchViewType(editorViewTypes.SOURCE, false)

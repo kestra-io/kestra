@@ -63,6 +63,11 @@ public class InternalNamespace implements Namespace {
         return namespace;
     }
 
+    @Override
+    public String tenantId() {
+        return tenant;
+    }
+
     /**
      * {@inheritDoc}
      **/

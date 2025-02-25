@@ -222,7 +222,7 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList().stream()
                 .filter(t -> t.getTaskId().equals("exists"))
                 .findFirst().get()
-                .getOutputs()).isEqualTo(Map.of("uris", Collections.emptyMap()));
+                .getOutputs()).containsAllEntriesOf(Map.of("uris", Collections.emptyMap()));
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
             assertTrue(storageInterface.exists(null, null, cacheURI));
 

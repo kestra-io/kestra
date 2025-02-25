@@ -507,7 +507,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                                     currentFlow,
                                     this,
                                     currentTaskRun
-                                        .withOutputs(Variables.of(outputs.toMap()))
+                                        .withOutputs(Variables.inMemory(outputs.toMap()))
                                         .withIteration(iteration),
                                     inputs,
                                     labels,
@@ -559,7 +559,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                     taskRun = taskRun
                         .withState(state)
                         .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
-                        .withOutputs(Variables.of(builder.build().toMap()));
+                        .withOutputs(Variables.inMemory(builder.build().toMap()));
 
                     return Optional.of(SubflowExecutionResult.builder()
                         .executionId(execution.getId())
@@ -567,7 +567,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                         .parentTaskRun(taskRun)
                         .build());
                 }
-                taskRun = taskRun.withOutputs(Variables.of(builder.build().toMap()));
+                taskRun = taskRun.withOutputs(Variables.inMemory(builder.build().toMap()));
             }
 
             // ForEachItem is an iterative task, the terminal state will be computed in the executor while counting on the task run execution list

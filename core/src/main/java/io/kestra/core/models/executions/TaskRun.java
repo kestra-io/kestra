@@ -50,6 +50,7 @@ public class TaskRun implements TenantInterface {
     List<TaskRunAttempt> attempts;
 
     @With
+    @JsonInclude(JsonInclude.Include.ALWAYS)
     Variables outputs;
 
     @NotNull

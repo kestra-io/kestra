@@ -29,7 +29,7 @@ class ExecutionFixture {
                     TaskRunAttempt.builder()
                         .build()
                 ))
-                .outputs(Variables.of(ImmutableMap.of(
+                .outputs(Variables.inMemory(ImmutableMap.of(
                     "out", "value"
                 )))
                 .build()
@@ -53,7 +53,7 @@ class ExecutionFixture {
                     TaskRunAttempt.builder()
                         .build()
                 ))
-                .outputs(Variables.of(ImmutableMap.of(
+                .outputs(Variables.inMemory(ImmutableMap.of(
                     "out", 1
                 )))
                 .build()

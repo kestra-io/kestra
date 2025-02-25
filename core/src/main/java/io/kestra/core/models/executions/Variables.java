@@ -2,242 +2,270 @@ package io.kestra.core.models.executions;
 
 import com.fasterxml.jackson.core.JsonGenerator;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializerProvider;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.storages.Storage;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.extern.jackson.Jacksonized;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.MapUtils;
+import io.kestra.core.utils.ReadOnlyDelegatingMap;
 
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.utils.Rethrow.throwBiConsumer;
 
-@AllArgsConstructor
-@Builder
-@Jacksonized
+/**
+ * A <code>Variables</code> represent a set of output variables.
+ * Variables can be stored in-memory or inside the internal storage.
+ * <p>
+ * The easiest way to construct a <code>Variables</code> object is to use the {@link io.kestra.core.services.VariablesService}.
+ *
+ * @see io.kestra.core.services.VariablesService
+ */
 @JsonSerialize(using = Variables.Serializer.class)
-//@JsonDeserialize(using = TaskRunOutput.Deserializer.class)
-public class Variables implements Map<String, Object> {
-    public static final String TYPE = "io.kestra.datatype:outputs";
+@JsonDeserialize(using = Variables.Deserializer.class)
+public sealed interface Variables extends Map<String, Object> {
+    String TYPE = "io.kestra.datatype:outputs";
+    Variables EMPTY = new InMemoryVariables(Collections.emptyMap());
 
-    @Getter
-    private URI storageUri;
+    /**
+     * Returns an empty Variables.
+     */
+    static Variables empty() {
+        return EMPTY;
+    }
 
-    private transient Storage storage;
+    /**
+     * Creates an InMemoryVariables with an output map.
+     * This is safer to use {@link io.kestra.core.services.VariablesService#of(io.kestra.core.storages.StorageContext, Map)} instead.
+     *
+     * @see InMemoryVariables
+     * @see io.kestra.core.services.VariablesService
+     */
+    static Variables inMemory(Map<String, Object> outputs) {
+        if (MapUtils.isEmpty(outputs)) {
+            return empty();
+        }
+        return new InMemoryVariables(outputs);
+    }
 
-    private transient Map<String, Object> delegate;
+    /**
+     * Creates an InStorageVariables with a {@link Storage} and an output map.
+     * The output map will be immediately stored inside the internal storage.
+     *
+     * @see InStorageVariables
+     * @see io.kestra.core.services.VariablesService
+     */
+    static Variables inStorage(Storage storage, Map<String, Object> outputs) {
+        if (MapUtils.isEmpty(outputs)) {
+            return empty();
+        }
+        return new InStorageVariables(storage, outputs);
+    }
 
-    private Map<String, Object> loadFromStorage() {
-//        if (this.delegate == null) {
-//            if (this.storage == null) {
-//                throw new RuntimeException("storage is null, could not load outputs");
-//            }
+    /**
+     * Creates an InStorageVariables with an internal storage URI.
+     * The output map will be read lazily from the internal storage URI at access time.
+     *
+     * @see InStorageVariables
+     * @see io.kestra.core.services.VariablesService
+     */
+    static Variables inStorage(StorageContext storageContext, URI uri) {
+        return new InStorageVariables(storageContext, uri);
+    }
 
-//            try {
-//                delegate = this.storage.getOutputs();
+    record StorageContext(String tenantId, String namespace) {}
 
-                if (delegate == null) {
-                    delegate = Map.of();
+    final class InMemoryVariables extends ReadOnlyDelegatingMap<String, Object> implements Variables {
+        private final Map<String, Object> delegate;
+
+        InMemoryVariables(Map<String, Object> outputs) {
+            this.delegate = outputs;
+        }
+
+        @Override
+        protected Map<String, Object> getDelegate() {
+            return MapUtils.emptyOnNull(delegate);
+        }
+    }
+
+    final class InStorageVariables extends ReadOnlyDelegatingMap<String, Object> implements Variables {
+        private static final ObjectMapper ION_MAPPER = JacksonMapper.ofIon();
+
+        private final URI storageUri;
+        private final StorageContext storageContext;
+
+        private Map<String, Object> delegate;
+        private State state;
+
+        // we need to store the tenantId and namespace for loading the file from the storage
+
+        InStorageVariables(Storage storage, Map<String, Object> outputs) {
+            // expand the map in case it already contains variable in it
+            this.delegate = expand(outputs);
+            this.state = State.DEFLATED;
+            this.storageContext = new StorageContext(storage.namespace().tenantId(), storage.namespace().namespace());
+
+            if (!MapUtils.isEmpty(outputs)) {
+                try {
+                    File file = Files.createTempFile("output-", ".ion").toFile();
+                    ION_MAPPER.writeValue(file, outputs);
+                    this.storageUri = storage.putFile(file);
+                } catch (IOException e) {
+                    // FIXME check if we should not declare it
+                    throw new UncheckedIOException(e);
                 }
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
-//        }
-
-        return delegate;
-    }
-
-    public static Variables of(Map<String, Object> map) {
-        return new Variables(null, null, map);
-    }
-
-
-    public static Variables of(URI uri, Storage storage) {
-        return new Variables(uri, storage, null);
-    }
-
-    public static Variables of(URI uri) {
-        return new Variables(uri, null, null);
-    }
-
-
-    @Override
-    public int size() {
-        return loadFromStorage().size();
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return loadFromStorage().isEmpty();
-    }
-
-    @Override
-    public boolean containsKey(Object key) {
-        return loadFromStorage().containsKey(key);
-    }
-
-    @Override
-    public boolean containsValue(Object value) {
-        return loadFromStorage().containsValue(value);
-    }
-
-    @Override
-    public Object get(Object key) {
-        return loadFromStorage().get(key);
-    }
-
-    @Override
-    public Object put(String key, Object value) {
-        throw new UnsupportedOperationException("Can't put, OutputMap are Read-Only");
-    }
-
-    @Override
-    public Object remove(Object key) {
-        throw new UnsupportedOperationException("Can't remove, OutputMap are Read-Only");
-    }
-
-    @Override
-    public void putAll(Map<? extends String, ?> m) {
-        throw new UnsupportedOperationException("Can't putAll, OutputMap are Read-Only");
-    }
-
-    @Override
-    public void clear() {
-        throw new UnsupportedOperationException("Can't clear, OutputMap are Read-Only");
-    }
-
-    @Override
-    public Set<String> keySet() {
-        return loadFromStorage().keySet();
-    }
-
-    @Override
-    public Collection<Object> values() {
-        return loadFromStorage().values();
-    }
-
-    @Override
-    public Set<Entry<String, Object>> entrySet() {
-        return loadFromStorage().entrySet();
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    public static Map<String, Object> injectStorage(Map<String, Object> data, Storage storage) {
-        Map<String, Object> injectMap = new HashMap<>(data);
-        for (var entry: data.entrySet()) {
-            if (entry.getValue() instanceof Map map) {
-                if (TYPE.equalsIgnoreCase((String)map.get("type"))) {
-                    injectMap.put(entry.getKey(), Variables.of(URI.create((String) map.get("storageUri"))));
-                }  else {
-                    injectMap.put(entry.getKey(), injectStorage((Map<String, Object>) map, storage));
-                }
+            } else {
+                this.storageUri = null;
             }
         }
-        return injectMap;
+
+        InStorageVariables(StorageContext storageContext, URI storageUri) {
+            this.storageUri = storageUri;
+            this.state = State.INIT;
+            this.storageContext = storageContext;
+        }
+
+        URI getStorageUri() {
+            return storageUri;
+        }
+
+        StorageContext getStorageContext() {
+            return storageContext;
+        }
+
+        @Override
+        protected Map<String, Object> getDelegate() {
+            return loadFromStorage();
+        }
+
+        private Map<String, Object> loadFromStorage() {
+            if (this.state == State.INIT) {
+                if (storageUri == null) {
+                    return Collections.emptyMap();
+                }
+
+                StorageInterface storage = KestraContext.getContext().getStorageInterface();
+                try (InputStream file = storage.get(storageContext.tenantId(), storageContext.namespace(), storageUri)) {
+                    delegate = ION_MAPPER.readValue(file, JacksonMapper.MAP_TYPE_REFERENCE);
+                    state = State.DEFLATED;
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+
+                // check all entries to possibly deflate them also
+                return MapUtils.emptyOnNull(expand(delegate));
+            }
+
+            return MapUtils.emptyOnNull(delegate);
+        }
+
+        @SuppressWarnings("unchecked")
+        private static Map<String, Object> expand(Map<String, Object> variables) {
+            if (MapUtils.isEmpty(variables)) {
+                return variables;
+            }
+
+            return variables.entrySet()
+                .stream()
+                .map(entry -> {
+                    if (entry.getValue() instanceof InStorageVariables var) {
+                        return Map.entry(entry.getKey(), (Object) expand(var.loadFromStorage()));
+                    } else if (entry.getValue() instanceof Map<?, ?> map) {
+                        if (TYPE.equals(map.get("type"))) {
+                            String uriString = (String) map.get("storageUri");
+                            if (uriString != null) {
+                                Map<String, String> storageContextMap = (Map<String, String>) map.get("storageContext");
+                                StorageContext storageContext = new StorageContext(storageContextMap.get("tenantId"), storageContextMap.get("namespace"));
+                                URI storageUri = URI.create(uriString);
+                                InStorageVariables inStorage = new InStorageVariables(storageContext, storageUri);
+                                return Map.entry(entry.getKey(), (Object) expand(inStorage.loadFromStorage()));
+                            }
+                            InStorageVariables inStorage = new InStorageVariables((StorageContext) null, null);
+                            return Map.entry(entry.getKey(), (Object) inStorage.loadFromStorage());
+                        }
+                        else {
+                            return Map.entry(entry.getKey(), (Object) expand((Map<String, Object>) map));
+                        }
+                    } else {
+                        return entry;
+                    }
+                })
+                .collect(Collectors.toMap(entry -> entry.getKey(), entry -> entry.getValue()));
+        }
+
+        enum State { INIT, DEFLATED }
     }
 
-    public static class Serializer extends StdSerializer<Variables> {
+    class Serializer extends StdSerializer<Variables> {
         protected Serializer() {
             super(Variables.class);
         }
 
         @Override
         public void serialize(Variables value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-            gen.writeStartObject();
-
-            if (value.storageUri != null) {
-                gen.writeStringField("type", TYPE);
-                gen.writeStringField("storageUri", value.storageUri.toString());
-            } else if (value.delegate != null) {
-                for (Map.Entry<String, Object> val : value.delegate.entrySet()) {
-                    gen.writeObjectField(val.getKey(), val.getValue());
+            if (value == null) {
+                gen.writeNull();
+            } else {
+                switch (value) {
+                    case InMemoryVariables inMemory -> {
+                        // we must write entry by entry otherwise nulls are not included
+                        gen.writeStartObject();
+                        inMemory.getDelegate().forEach(throwBiConsumer((k, v) -> gen.writeObjectField(k, v)));
+                        gen.writeEndObject();
+                    }
+                    case InStorageVariables inStorage -> {
+                        gen.writeStartObject();
+                        gen.writeStringField("type", TYPE); // marker to be sure at deserialization time it's a Variables not some random Map
+                        gen.writeStringField("storageUri", inStorage.getStorageUri() != null ? inStorage.getStorageUri().toString() : null);
+                        gen.writeObjectField("storageContext", inStorage.getStorageContext());
+                        gen.writeEndObject();
+                    }
                 }
             }
-
-            gen.writeEndObject();
         }
     }
 
-
-    public static class Deserializer extends StdDeserializer<Map<String, Object>> {
+    class Deserializer extends StdDeserializer<Variables> {
         public Deserializer() {
-            this(null);
+            super(Variables.class);
         }
 
-        public Deserializer(Class<?> vc) {
-            super(vc);
-        }
-
-        @SuppressWarnings("unchecked")
         @Override
-        public Map<String, Object> deserialize(JsonParser parser, DeserializationContext ctx) throws IOException {
-            return (Map<String, Object>) recursive(ctx.readValue(parser, Map.class));
-        }
-
-        private static Map<?, ?> recursive(Map<?, ?> in) {
-            return in
-                .entrySet()
-                .stream()
-                .map(t -> {
-                    Object value = t.getValue();
-
-                    if (value instanceof Map<?, ?> map) {
-                        value = recursive((Map<?, ?>) map);
+        @SuppressWarnings("unchecked")
+        public Variables deserialize(JsonParser parser, DeserializationContext ctx) throws IOException {
+            if (parser.hasToken(JsonToken.VALUE_NULL)) {
+                return null;
+            } else if (parser.hasToken(JsonToken.START_OBJECT)) {
+                // deserialize as map
+                Map<String, Object> ret = ctx.readValue(parser, Map.class);
+                if (TYPE.equals(ret.get("type"))) {
+                    String uriString = (String) ret.get("storageUri");
+                    if (uriString != null) {
+                        Map<String, String> storageContextMap = (Map<String, String>) ret.get("storageContext");
+                        StorageContext storageContext = new StorageContext(storageContextMap.get("tenantId"), storageContextMap.get("namespace"));
+                        URI storageUri = URI.create(uriString);
+                        return new InStorageVariables(storageContext, storageUri);
                     }
+                    return new InStorageVariables((StorageContext) null, null);
+                }
 
-                    if (value instanceof Map<?, ?> map && map.containsKey("storageUri")) {
-                        return new AbstractMap.SimpleEntry<>(
-                            t.getKey(),
-                            Variables.of(URI.create(String.valueOf(map.get("storageUri"))))
-                        );
-                    } else if (value instanceof Collection<?> collection) {
-                        return new AbstractMap.SimpleEntry<>(
-                            t.getKey(),
-                            collection
-                                .stream()
-                                .map(o -> o instanceof Map<?, ?> map ? recursive(map) : o)
-                                .toList()
-                        );
-                    } else {
-                        return new AbstractMap.SimpleEntry<>(
-                            t.getKey(),
-                            value
-                        );
-                    }
-                })
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                // If the type is not TYPE, a real map has been serialized so we build a Variables with it.
+                return new InMemoryVariables(ret);
+            }
+            throw new IllegalArgumentException("Unable to deserialize value as it's not an object");
         }
     }
-
-//
-//    public static class Deserializer extends StdDeserializer<TaskRunOutput> {
-//        public Deserializer() {
-//            this(null);
-//        }
-//
-//        public Deserializer(Class<?> vc) {
-//            super(vc);
-//        }
-//
-//        @Override
-//        public TaskRunOutput deserialize(JsonParser parser, DeserializationContext ctx)
-//            throws IOException {
-//
-//            JsonNode node = parser.getCodec().readTree(parser);
-//
-//            if (node.get("storageUri") != null) {
-//                return TaskRunOutput.of(URI.create(node.get("storageUri").asText()));
-//            } else {
-//                return TaskRunOutput.of(Map.of());
-//            }
-//        }
-//    }
 }
 

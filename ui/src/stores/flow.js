@@ -28,7 +28,11 @@ export default {
         aggregatedMetrics: undefined,
         tasksWithMetrics: [],
         executeFlow: false,
-        lastSaveFlow: undefined
+        lastSaveFlow: undefined,
+        isCreating: false,
+        flowYaml: undefined,
+        flowYamlOrigin: undefined,
+        confirmOutdatedSaveDialog: false
     },
 
     actions: {
@@ -88,6 +92,7 @@ export default {
                         return response.data;
                     }
                     commit("setFlow", response.data);
+                    commit("setFlowYamlOrigin", response.data.source);
                     commit("setOverallTotal", 1)
                     return response.data;
                 })
@@ -395,11 +400,20 @@ export default {
         setTasksWithMetrics(state, tasksWithMetrics) {
             state.tasksWithMetrics = tasksWithMetrics
         },
-        updateFlowSource(state, source) {
-            state.flow = {...state.flow, source};
+        setFlowYaml(state, flowYaml) {
+            state.flowYaml = flowYaml
+        },
+        setCreating(state, value) {
+            state.isCreating = value
+        },
+        setFlowYamlOrigin(state, value) {
+            state.flowYamlOrigin = value
         }
     },
     getters: {
+        isFlow(state) {
+            return state.flow !== undefined || state.isCreating;
+        },
         lastSaveFlow(state){
             if(state.lastSavedFlow){
                 return state.lastSavedFlow;
@@ -437,6 +451,66 @@ export default {
             }
 
             return (getters.flow.labels?.["system.readOnly"] === "true") || (getters.flow.labels?.["system.readOnly"] === true);
+        },
+        baseOutdatedTranslationKey(state) {
+                const createOrUpdateKey = state.isCreating ? "create" : "update";
+                return "outdated revision save confirmation." + createOrUpdateKey;
+        },
+        outdatedMessage(_, getters){
+            return `${this.$i18n.t(getters.baseOutdatedTranslationKey + ".description")} ${this.$i18n.t(
+                getters.baseOutdatedTranslationKey + ".details"
+            )}`;
+        },
+        flowErrors(state, getters){
+            if (getters.isFlow) {
+                const flowExistsError =
+                    state.flowValidation?.outdated && state.isCreating
+                        ? [getters.outdatedMessage]
+                        : [];
+
+                const constraintsError =
+                    state.flowValidation?.constraints?.split(/, ?/) ?? [];
+
+                const errors = [...flowExistsError, ...constraintsError];
+
+                return errors.length === 0 ? undefined : errors;
+            }
+
+            return undefined;
+        },
+        flowWarnings(state, getters){
+            if (getters.isFlow) {
+                const outdatedWarning =
+                    state.flowValidation?.outdated && !state.isCreating
+                        ? [getters.outdatedMessage]
+                        : [];
+
+                const deprecationWarnings =
+                    state.flowValidation?.deprecationPaths?.map(
+                        (f) => `${f} ${this.$i18n.t("is deprecated")}.`
+                    ) ?? [];
+
+                const otherWarnings = state.flowValidation?.warnings ?? [];
+
+                const warnings = [
+                    ...outdatedWarning,
+                    ...deprecationWarnings,
+                    ...otherWarnings,
+                ];
+
+                return warnings.length === 0 ? undefined : warnings;
+            }
+
+            return undefined;
+        },
+        flowInfos(state, getters){
+            if (getters.isFlow) {
+                const infos = state.flowValidation?.infos ?? [];
+
+                return infos.length === 0 ? undefined : infos;
+            }
+
+            return undefined;
         }
     }
 }

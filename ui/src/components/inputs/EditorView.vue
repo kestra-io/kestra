@@ -438,73 +438,14 @@
         },
     });
 
+    store.commit("flow/setIsCreating", props.isCreating);
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
-
     const isFlow = computed(() => currentTab?.value?.flow || props.isCreating);
 
-    const flowErrors = computed(() => {
-        if (isFlow.value) {
-            const flowExistsError =
-                props.flowValidation?.outdated && props.isCreating
-                    ? [outdatedMessage.value]
-                    : [];
-
-            const constraintsError =
-                props.flowValidation?.constraints?.split(/, ?/) ?? [];
-
-            const errors = [...flowExistsError, ...constraintsError];
-
-            return errors.length === 0 ? undefined : errors;
-        }
-
-        return undefined;
-    });
-
-    const baseOutdatedTranslationKey = computed(() => {
-        const createOrUpdateKey = props.isCreating ? "create" : "update";
-        return "outdated revision save confirmation." + createOrUpdateKey;
-    });
-
-    const outdatedMessage = computed(() => {
-        return `${t(baseOutdatedTranslationKey.value + ".description")} ${t(
-            baseOutdatedTranslationKey.value + ".details"
-        )}`;
-    });
-
-    const flowWarnings = computed(() => {
-        if (isFlow.value) {
-            const outdatedWarning =
-                props.flowValidation?.outdated && !props.isCreating
-                    ? [outdatedMessage.value]
-                    : [];
-
-            const deprecationWarnings =
-                props.flowValidation?.deprecationPaths?.map(
-                    (f) => `${f} ${t("is deprecated")}.`
-                ) ?? [];
-
-            const otherWarnings = props.flowValidation?.warnings ?? [];
-
-            const warnings = [
-                ...outdatedWarning,
-                ...deprecationWarnings,
-                ...otherWarnings,
-            ];
-
-            return warnings.length === 0 ? undefined : warnings;
-        }
-
-        return undefined;
-    });
-
-    const flowInfos = computed(() => {
-        if (isFlow.value) {
-            const infos = props.flowValidation?.infos  ?? [];
-            return infos.length === 0 ? undefined : infos;
-        }
-
-        return undefined;
-    });
+    const baseOutdatedTranslationKey = computed(() => store.getters["flow/baseOutdatedTranslationKey"]);
+    const flowErrors = computed(() => store.getters["flow/flowErrors"]);
+    const flowWarnings = computed(() => store.getters["flow/flowWarnings"]);
+    const flowInfos = computed(() => store.getters["flow/flowInfos"]);
 
     const editorViewType = ref("YAML");
     const changeEditorViewType = (value) => {
@@ -568,8 +509,7 @@
     const isHorizontal = ref(isHorizontalDefault());
     const updatedFromEditor = ref(false);
     const timer = ref(null);
-    const taskError = ref(store.getters["flow/taskError"]);
-    const user = store.getters["auth/user"];
+    const user = computed(() => store.getters["auth/user"]);
     const routeParams = router.currentRoute.value.params;
     const blueprintsLoaded = ref(false);
     const confirmOutdatedSaveDialog = ref(false);
@@ -603,15 +543,8 @@
         localStorage.setItem(editorViewTypes.STORAGE_KEY, value);
     };
 
-    watch(
-        () => store.getters["flow/taskError"],
-        async () => {
-            taskError.value = store.getters["flow/taskError"];
-        }
-    );
-
     const taskErrors = computed(() => {
-        return taskError.value?.split(/, ?/);
+        return store.getters["flow/taskError"]?.split(/, ?/);
     });
 
     watch(
@@ -742,9 +675,8 @@
     };
 
     const isAllowedEdit = computed(() => {
-
         return (
-            user && user.isAllowed(permission.FLOW, action.UPDATE, flowParsed.value?.namespace ?? props.namespace)
+            user.value?.isAllowed(permission.FLOW, action.UPDATE, flowParsed.value?.namespace ?? props.namespace)
         );
     });
 
@@ -1126,7 +1058,7 @@
     };
 
     const canDelete = () => {
-        return user.isAllowed(permission.FLOW, action.DELETE, props.namespace);
+        return user.value?.isAllowed(permission.FLOW, action.DELETE, props.namespace);
     };
 
     const deleteFlow = () => {

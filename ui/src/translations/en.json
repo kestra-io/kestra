@@ -242,7 +242,7 @@
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
-      "title": "Debug Outputs",
+      "title": "Debug Expression",
       "tooltip": "Render any Pebble expression and inspect the Execution context."
     },
     "attempt": "Attempt",

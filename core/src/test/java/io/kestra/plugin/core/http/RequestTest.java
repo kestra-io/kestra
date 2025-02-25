@@ -19,6 +19,7 @@ import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.runtime.server.EmbeddedServer;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -554,7 +555,10 @@ class RequestTest {
                 .id(RequestTest.class.getSimpleName())
                 .type(RequestTest.class.getName())
                 .uri(Property.of(server.getURL().toString() + "/content-type"))
+                .method(Property.of("POST"))
+                .body(Property.of("{}"))
                 .contentType(Property.of("application/vnd.campaignsexport.v1+json"))
+                .options(HttpConfiguration.builder().logs(HttpConfiguration.LoggingType.values()).defaultCharset(null).build())
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -566,6 +570,28 @@ class RequestTest {
         }
     }
 
+    @Test
+    void spaceInURI() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.of(server.getURL().toString() + "/uri with space"))
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getBody(), is("Hello World"));
+            assertThat(output.getCode(), is(200));
+        }
+    }
+
     @Controller
     static class MockController {
         @Get("/hello")
@@ -573,10 +599,10 @@ class RequestTest {
             return HttpResponse.ok("{ \"hello\": \"world\" }");
         }
 
-
-        @Get("content-type")
+        @Post("content-type")
+        @Consumes("application/vnd.campaignsexport.v1+json")
         @Produces(MediaType.TEXT_PLAIN)
-        public io.micronaut.http.HttpResponse<String> contentType(io.micronaut.http.HttpRequest<?> request) {
+        public io.micronaut.http.HttpResponse<String> contentType(io.micronaut.http.HttpRequest<?> request, @Nullable @Body Map<String, String> body) {
             return io.micronaut.http.HttpResponse.ok(request.getContentType().orElseThrow().toString());
         }
 
@@ -652,6 +678,11 @@ class RequestTest {
                         return hello + " > " + IOUtils.toString(fileInputStream, StandardCharsets.UTF_8);
                     }
                 }));
+        }
+
+        @Get("/uri%20with%20space")
+        HttpResponse<String> uriWithSpace() {
+            return HttpResponse.ok("Hello World");
         }
     }
 }

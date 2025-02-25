@@ -196,7 +196,7 @@
     "outputs": "输出",
     "output": "输出",
     "eval": {
-      "title": "调试输出",
+      "title": "调试表达式",
       "tooltip": "渲染任何Pebble表达式并检查执行上下文。"
     },
     "attempt": "尝试",

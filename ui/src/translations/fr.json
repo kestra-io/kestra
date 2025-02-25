@@ -196,7 +196,7 @@
     "outputs": "Sorties",
     "output": "Sortie",
     "eval": {
-      "title": "Évaluer une expression",
+      "title": "Expression de débogage",
       "tooltip": "Vous devez choisir une tâche pour évaluer une expression."
     },
     "attempt": "Essai",

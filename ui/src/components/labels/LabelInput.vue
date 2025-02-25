@@ -18,7 +18,7 @@
         <div class="flex-shrink-1">
             <el-button-group class="d-flex">
                 <el-button :icon="Plus" @click="addItem" />
-                <el-button :icon="Minus" @click="removeItem(index)" :disabled="index === 0 && locals.length === 1" />
+                <el-button :icon="Minus" @click="removeItem(index)" />
             </el-button-group>
         </div>
     </div>
@@ -31,6 +31,8 @@
 
 
 <script>
+    import {mapGetters} from "vuex";
+
     export default {
         props: {
             labels: {
@@ -49,13 +51,21 @@
             }
         },
         emits: ["update:labels"],
+        computed: {
+            ...mapGetters("misc", ["configs"]),
+        },
         created() {
+            const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+
             if (this.labels.length === 0) {
                 this.addItem();
             } else {
-                this.locals = this.labels
+                this.locals = this.labels.filter(item => !item || !toIgnore.some(prefix => item.key?.startsWith(prefix)))
+                if(this.locals.length === 0) {
+                    this.addItem();
+                }
             }
-            this.localExisting = this.existingLabels.map(label => label.key);
+            this.localExisting = this.existingLabels.filter(item => !item || !toIgnore.some(prefix => item.key?.startsWith(prefix))).map(label => label.key);
         },
         methods: {
             addItem() {
@@ -64,6 +74,11 @@
             },
             removeItem(index) {
                 this.locals.splice(index, 1);
+
+                if (this.locals.length === 0) {
+                    this.addItem();
+                }
+                
                 this.$emit("update:labels", this.locals);
             },
             update(index, value, prop) {

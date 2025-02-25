@@ -196,7 +196,7 @@
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
-      "title": "Debug Outputs",
+      "title": "Espressione di Debug",
       "tooltip": "Esegui qualsiasi espressione Pebble e ispeziona il contesto dell'esecuzione."
     },
     "attempt": "Tentativo",

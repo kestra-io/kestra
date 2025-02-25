@@ -31,6 +31,8 @@
 
 
 <script>
+    import {mapGetters} from "vuex";
+
     export default {
         props: {
             labels: {
@@ -49,13 +51,21 @@
             }
         },
         emits: ["update:labels"],
+        computed: {
+            ...mapGetters("misc", ["configs"]),
+        },
         created() {
+            const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+
             if (this.labels.length === 0) {
                 this.addItem();
             } else {
-                this.locals = this.labels
+                this.locals = this.labels.filter(item => !item || !toIgnore.some(prefix => item.key?.startsWith(prefix)))
+                if(this.locals.length === 0) {
+                    this.addItem();
+                }
             }
-            this.localExisting = this.existingLabels.map(label => label.key);
+            this.localExisting = this.existingLabels.filter(item => !item || !toIgnore.some(prefix => item.key?.startsWith(prefix))).map(label => label.key);
         },
         methods: {
             addItem() {

@@ -18,7 +18,7 @@
         <div class="flex-shrink-1">
             <el-button-group class="d-flex">
                 <el-button :icon="Plus" @click="addItem" />
-                <el-button :icon="Minus" @click="removeItem(index)" :disabled="index === 0 && locals.length === 1" />
+                <el-button :icon="Minus" @click="removeItem(index)" />
             </el-button-group>
         </div>
     </div>
@@ -74,6 +74,11 @@
             },
             removeItem(index) {
                 this.locals.splice(index, 1);
+
+                if (this.locals.length === 0) {
+                    this.addItem();
+                }
+                
                 this.$emit("update:labels", this.locals);
             },
             update(index, value, prop) {

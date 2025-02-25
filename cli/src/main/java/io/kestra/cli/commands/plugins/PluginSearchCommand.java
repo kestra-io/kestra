@@ -1,17 +1,16 @@
 package io.kestra.cli.commands.plugins;
 
 import io.kestra.cli.AbstractCommand;
-import io.micronaut.context.annotation.Value;
+import io.micronaut.core.type.Argument;
+import io.micronaut.http.HttpRequest;
+import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.client.annotation.Client;
+import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,12 +19,11 @@ import java.util.List;
     description = "Search for available Kestra plugins"
 )
 public class PluginSearchCommand extends AbstractCommand {
-    @Value("${kestra.plugins.api-url:https://api.kestra.io/v1/plugins}")
-    private String API_URL;
+    @Inject
+    @Client("api")
+    private HttpClient httpClient;
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
-    private static final HttpClient CLIENT = HttpClient.newBuilder()
-        .connectTimeout(Duration.ofSeconds(10))
-        .build();
     private static final char SPACE = ' ';
 
     @Parameters(index = "0", description = "Search term (optional)", defaultValue = "")
@@ -47,19 +45,12 @@ public class PluginSearchCommand extends AbstractCommand {
     }
 
     private JsonNode fetchPlugins() throws Exception {
-        HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create(API_URL))
-            .header("Accept", "application/json")
-            .GET()
-            .build();
-
-        HttpResponse<String> response = CLIENT.send(request, HttpResponse.BodyHandlers.ofString());
-
-        if (response.statusCode() != 200) {
-            throw new RuntimeException("API request failed with status: " + response.statusCode());
-        }
-
-        return MAPPER.readTree(response.body());
+        String response = httpClient.toBlocking()
+            .retrieve(
+                HttpRequest.GET("/v1/plugins")
+                    .header("Accept", "application/json")
+            );
+        return MAPPER.readTree(response);
     }
 
     private List<PluginInfo> findPlugins(JsonNode root) {

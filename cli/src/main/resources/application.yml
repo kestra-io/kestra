@@ -164,7 +164,6 @@ kestra:
       - type: io.kestra.plugin.core.trigger.Schedule
         values:
           recoverMissedSchedules: ALL
-    api-url: "https://api.kestra.io/v1/plugins"
   variables:
     env-vars-prefix: KESTRA_
     cache-enabled: true

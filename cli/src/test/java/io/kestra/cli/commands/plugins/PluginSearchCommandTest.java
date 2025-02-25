@@ -55,13 +55,12 @@ class PluginSearchCommandTest {
                 """)));
 
         try (ApplicationContext ctx = ApplicationContext.builder(Environment.CLI, Environment.TEST)
-            .properties(Map.of("kestra.plugins.api-url", "http://localhost:28181/v1/plugins"))
+            .properties(Map.of("micronaut.http.services.api.url", "http://localhost:28181"))
             .start()) {
             String[] args = {"notifications"};
             PicocliRunner.call(PluginSearchCommand.class, ctx, args);
 
             String output = outputStreamCaptor.toString().trim();
-            System.out.println("Captured output: [" + output + "]"); // Debug
             assertThat(output, containsString("Found 1 plugins matching 'notifications'"));
             assertThat(output, containsString("plugin-notifications"));
             assertThat(output, not(containsString("plugin-scripts")));
@@ -91,13 +90,13 @@ class PluginSearchCommandTest {
                 """)));
 
         try (ApplicationContext ctx = ApplicationContext.builder(Environment.CLI, Environment.TEST)
-            .properties(Map.of("kestra.plugins.api-url", "http://localhost:28181/v1/plugins"))
+            .properties(Map.of("micronaut.http.services.api.url", "http://localhost:28181"))
             .start()) {
+
             String[] args = {""};
             PicocliRunner.call(PluginSearchCommand.class, ctx, args);
 
             String output = outputStreamCaptor.toString().trim();
-            System.out.println("Captured output: [" + output + "]"); // Debug
             assertThat(output, containsString("Found 2 plugins"));
             assertThat(output, containsString("plugin-notifications"));
             assertThat(output, containsString("plugin-scripts"));

@@ -1,7 +1,7 @@
 package io.kestra.cli.commands.plugins;
 
 import io.kestra.cli.AbstractCommand;
-import picocli.CommandLine;
+import io.micronaut.context.annotation.Value;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Parameters;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -20,7 +20,8 @@ import java.util.List;
     description = "Search for available Kestra plugins"
 )
 public class PluginSearchCommand extends AbstractCommand {
-    private static final String API_URL = "https://api.kestra.io/v1/plugins";
+    @Value("${kestra.plugins.api-url:https://api.kestra.io/v1/plugins}")
+    private String API_URL;
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final HttpClient CLIENT = HttpClient.newBuilder()
         .connectTimeout(Duration.ofSeconds(10))
@@ -106,18 +107,13 @@ public class PluginSearchCommand extends AbstractCommand {
     }
 
     private void printPluginsTable(List<PluginInfo> plugins) {
-        // Pre-calculate max lengths in single pass
-        int maxName = 4;
-        int maxTitle = 5;
-        int maxGroup = 5;
-
+        int maxName = 4, maxTitle = 5, maxGroup = 5;
         for (PluginInfo plugin : plugins) {
             maxName = Math.max(maxName, plugin.name.length());
             maxTitle = Math.max(maxTitle, plugin.title.length());
             maxGroup = Math.max(maxGroup, plugin.group.length());
         }
 
-        // Pre-allocate string builders for reuse
         StringBuilder namePad = new StringBuilder(maxName);
         StringBuilder titlePad = new StringBuilder(maxTitle);
         StringBuilder groupPad = new StringBuilder(maxGroup);
@@ -153,12 +149,7 @@ public class PluginSearchCommand extends AbstractCommand {
         return sb.toString();
     }
 
-    private record PluginInfo(
-        String name,
-        String title,
-        String group,
-        String version
-    ) {}
+    private record PluginInfo(String name, String title, String group, String version) {}
 
     @Override
     protected boolean loadExternalPlugins() {

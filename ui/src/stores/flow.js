@@ -1,4 +1,6 @@
 import axios from "axios";
+import {h} from "vue";
+import {ElMessageBox} from "element-plus";
 import permission from "../models/permission";
 import action from "../models/action";
 import YamlUtils from "../utils/yamlUtils";
@@ -33,10 +35,131 @@ export default {
         isCreating: false,
         flowYaml: undefined,
         flowYamlOrigin: undefined,
-        confirmOutdatedSaveDialog: false
+        confirmOutdatedSaveDialog: false,
+        haveChange: false,
     },
 
     actions: {
+        onEdit({getters, dispatch, commit, state, rootDispatch, rootCommit, rootState}, {flowYaml, currentIsFlow, id, namespace, editorViewType, viewType}) {
+            commit("setFlowYaml", flowYaml);
+            const flowParsed = YamlUtils.parse(flowYaml);
+            const currentTab =rootState.editor.current;
+
+            if (currentIsFlow) {
+                if (
+                    flowParsed &&
+                    !state.isCreating &&
+                    (id !== flowParsed.id ||
+                        namespace !== flowParsed.namespace)
+                ) {
+                    rootDispatch("core/showMessage", {
+                        variant: "error",
+                        title: this.$i18n.t("readonly property"),
+                        message: this.$i18n.t("namespace and id readonly"),
+                    });
+                    flowYaml.value = YamlUtils.replaceIdAndNamespace(
+                        flowYaml.value,
+                        id,
+                        namespace
+                    );
+                    return;
+                }
+            }
+
+            commit("setHaveChange", true);
+            if(editorViewType.value === "YAML") {
+                rootDispatch("core/isUnsaved", true);
+            }
+
+            if(!state.isCreating){
+                rootCommit("editor/changeOpenedTabs", {
+                    action: "dirty",
+                    ...currentTab,
+                    name: currentTab?.name ?? "Flow",
+                    path: currentTab?.path ?? "Flow.yaml",
+                    dirty: true
+                });
+            }
+
+            if(!currentIsFlow) return;
+
+            return dispatch("validateFlow", {flow: state.isCreating ? flowYaml.value : getters.yamlWithNextRevision})
+                .then((value) => {
+                    if (
+                        getters.flowHaveTasks &&
+                        [
+                            editorViewTypes.TOPOLOGY,
+                            editorViewTypes.SOURCE_TOPOLOGY,
+                        ].includes(viewType)
+                    ) {
+                        if(!value.constraints) dispatch("fetchGraph");
+                    }
+
+                    return value;
+                });
+        },
+        async saveWithoutRevisionGuard ({commit, state, dispatch, getters, rootDispatch}) {
+            const flowYaml = state.flowYaml;
+            const flowParsed = YamlUtils.parse(flowYaml);
+
+            if (flowParsed === undefined) {
+                rootDispatch("core/showMessage", {
+                    variant: "error",
+                    title: this.$t("invalid flow"),
+                    message: this.$t("invalid yaml"),
+                });
+
+                return;
+            }
+            let overrideFlow = false;
+            if (getters.flowErrors) {
+                if (state.flowValidation.outdated && state.isCreating) {
+                    overrideFlow = await ElMessageBox({
+                        title: this.$t("override.title"),
+                        message: () => {
+                            return h("div", null, [
+                                h("p", null, this.$t("override.details")),
+                            ]);
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: this.$t("ok"),
+                        cancelButtonText: this.$t("cancel"),
+                        center: false,
+                        showClose: false,
+                    })
+                        .then(() => {
+                            overrideFlow = true;
+                            return true;
+                        })
+                        .catch(() => {
+                            return false;
+                        });
+                }
+            }
+
+            if (state.isCreating && !overrideFlow) {
+                await dispatch("createFlow", {flow: flowYaml.value})
+                    .then((response) => {
+                        this.toast.saved(response.id);
+                        rootDispatch("core/isUnsaved", false);
+                    });
+            } else {
+                await dispatch("saveFlow", {flow: flowYaml.value})
+                    .then((response) => {
+                        this.toast.saved(response.id);
+                        rootDispatch("core/isUnsaved", false);
+                    });
+            }
+
+            if (state.isCreating || overrideFlow) {
+                return "redirect_to_update";
+            }
+
+            commit("setHaveChange", false);
+            await dispatch("validateFlow", {
+                flow: state.isCreating ? flowYaml.value : getters.yamlWithNextRevision
+            });
+        },
         fetchGraph({getters, state, dispatch}) {
             return dispatch("loadGraphFromSource", {
                 flow: state.flowYaml,
@@ -68,10 +191,8 @@ export default {
                 }
             }
 
-            const yamlWithNextRevision = `revision: ${getters.nextRevision}\n${source}`;
-
             // validate flow on first load
-            return dispatch("validateFlow", {flow: state.isCreating ? source : yamlWithNextRevision})
+            return dispatch("validateFlow", {flow: state.isCreating ? source : getters.yamlWithNextRevision})
         },
         findFlows({commit}, options) {
             const sortString = options.sort ? `?sort=${options.sort}` : ""
@@ -443,6 +564,9 @@ export default {
         },
         setFlowYamlOrigin(state, value) {
             state.flowYamlOrigin = value
+        },
+        setHaveChange(state, value) {
+            state.haveChange = value
         }
     },
     getters: {
@@ -555,6 +679,9 @@ export default {
         },
         nextRevision(_state, getters){
             return getters.flow.revision + 1;
+        },
+        yamlWithNextRevision(_state, getters){
+            return `revision: ${getters.nextRevision}\n${getters.flow.source}`;
         }
     }
 }

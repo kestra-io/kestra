@@ -104,7 +104,7 @@
                 :can-delete="canDelete()"
                 :is-allowed-edit="isAllowedEdit"
                 :have-change="flowYaml !== flowYamlOrigin"
-                :flow-have-tasks="flowHaveTasks()"
+                :flow-have-tasks="flowHaveTasks"
                 :errors="flowErrors"
                 :warnings="flowWarnings"
                 @delete-flow="deleteFlow"
@@ -321,7 +321,7 @@
 </template>
 
 <script setup>
-    import {computed, getCurrentInstance, h, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
+    import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
     import {useRoute, useRouter} from "vue-router";
 
@@ -332,7 +332,6 @@
     import Close from "vue-material-design-icons/Close.vue";
     import CircleMedium from "vue-material-design-icons/CircleMedium.vue";
 
-    import {ElMessageBox} from "element-plus";
     import {Utils} from "@kestra-io/ui-libs";
 
     import TypeIcon from "../utils/icons/Type.vue"
@@ -446,6 +445,7 @@
     const flowErrors = computed(() => store.getters["flow/flowErrors"]);
     const flowWarnings = computed(() => store.getters["flow/flowWarnings"]);
     const flowInfos = computed(() => store.getters["flow/flowInfos"]);
+    const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"]);
 
     const editorViewType = ref("YAML");
     const changeEditorViewType = (value) => {
@@ -556,12 +556,7 @@
         }
     );
 
-    const flowHaveTasks = (source) => {
-        if (isFlow.value) {
-            const flow = props.isCreating ? props.flow.source : (source ? source : flowYaml.value);
-            return flow ? YamlUtils.flowHaveTasks(flow) : false;
-        } else return false;
-    };
+
 
     const yamlWithNextRevision = computed(() => {
         return `revision: ${props.nextRevision}\n${flowYaml.value}`;
@@ -720,7 +715,7 @@
             .dispatch("flow/validateFlow", {flow: props.isCreating ? flowYaml.value : yamlWithNextRevision.value})
             .then((value) => {
                 if (
-                    flowHaveTasks() &&
+                    flowHaveTasks.value &&
                     [
                         editorViewTypes.TOPOLOGY,
                         editorViewTypes.SOURCE_TOPOLOGY,
@@ -903,59 +898,9 @@
     });
 
     const saveWithoutRevisionGuard = async () => {
-        if (flowParsed.value === undefined) {
-            store.dispatch("core/showMessage", {
-                variant: "error",
-                title: this.$t("invalid flow"),
-                message: this.$t("invalid yaml"),
-            });
-
-            return;
-        }
-        const overrideFlow = ref(false);
-        if (flowErrors.value) {
-            if (props.flowValidation.outdated && props.isCreating) {
-                overrideFlow.value = await ElMessageBox({
-                    title: this.$t("override.title"),
-                    message: () => {
-                        return h("div", null, [
-                            h("p", null, this.$t("override.details")),
-                        ]);
-                    },
-                    showCancelButton: true,
-                    confirmButtonText: this.$t("ok"),
-                    cancelButtonText: this.$t("cancel"),
-                    center: false,
-                    showClose: false,
-                })
-                    .then(() => {
-                        overrideFlow.value = true;
-                        return true;
-                    })
-                    .catch(() => {
-                        return false;
-                    });
-            }
-        }
-
-        if (props.isCreating && !overrideFlow.value) {
-            await store
-                .dispatch("flow/createFlow", {flow: flowYaml.value})
-                .then((response) => {
-                    toast.saved(response.id);
-                    store.dispatch("core/isUnsaved", false);
-                });
-        } else {
-            await store
-                .dispatch("flow/saveFlow", {flow: flowYaml.value})
-                .then((response) => {
-                    toast.saved(response.id);
-                    store.dispatch("core/isUnsaved", false);
-                });
-        }
-
-        if (props.isCreating || overrideFlow.value) {
-            router.push({
+        const result = await store.dispatch("flow/saveWithoutRevisionGuard");
+        if(result === "redirect_to_update"){
+            await router.push({
                 name: "flows/update",
                 params: {
                     id: flowParsed.value.id,
@@ -965,11 +910,6 @@
                 },
             });
         }
-
-        haveChange.value = false;
-        await store.dispatch("flow/validateFlow", {
-            flow: props.isCreating ? flowYaml.value : yamlWithNextRevision.value
-        });
     };
 
     const save = async (e) => {

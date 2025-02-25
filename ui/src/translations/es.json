@@ -196,7 +196,7 @@
     "outputs": "Salidas",
     "output": "Salida",
     "eval": {
-      "title": "Salidas de depuración",
+      "title": "Depurar Expresión",
       "tooltip": "Renderiza cualquier expresión Pebble e inspecciona el contexto de la ejecución."
     },
     "attempt": "Intento",

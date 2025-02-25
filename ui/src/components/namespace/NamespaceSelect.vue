@@ -19,7 +19,7 @@
     </el-select>
 </template>
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import _uniqBy from "lodash/uniqBy";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -49,13 +49,14 @@
                 this.$store
                     .dispatch("namespace/loadNamespacesForDatatype", {dataType: this.dataType})
                     .then(() => {
-                        this.groupedNamespaces = this.groupNamespaces(this.datatypeNamespaces).filter(namespace => namespace.code !== "system");
+                        this.groupedNamespaces = this.groupNamespaces(this.datatypeNamespaces).filter(namespace => namespace.code !== (this.configs?.systemNamespace || "system"));
                     });
             }
         },
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
             ...mapState("auth", ["user"]),
+            ...mapGetters("misc", ["configs"]),
         },
         data() {
             return {

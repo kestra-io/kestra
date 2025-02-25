@@ -196,7 +196,7 @@
     "outputs": "出力",
     "output": "Output",
     "eval": {
-      "title": "デバッグ出力",
+      "title": "デバッグ式",
       "tooltip": "任意のPebble式をレンダリングし、実行コンテキストを検査します。"
     },
     "attempt": "試行",

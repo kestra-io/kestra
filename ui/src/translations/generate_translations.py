@@ -1,7 +1,12 @@
+"""
+To run it locally, add OPENAI_API_KEY env variable and pip install gitpython openai
+"""
 import json
+import git
 from openai import OpenAI
 
 client = OpenAI()
+
 
 def translate_text(text, target_language):
     prompt = f"""Translate the text provided after "----------" to {target_language}.
@@ -50,10 +55,10 @@ def translate_text(text, target_language):
                 - "Log level" and "log_level" should be translated to "Log-Ebene" in German, rather than "Protokoll-Ebene".
                 - "Task logs" should be translated to "Task Logs" in German, rather than "Aufgabenprotokolle".
 
-                Never translate variables provided within curly braces like {{label}} or {{key}}.
+                Never translate variables provided within curly braces like {{label}} or {{key}}. 
                 They should remain fully unchanged in the translation. For example, the string "System {{label}}"
-                should remain unchanged and be translated to "System {{label}}" in German,
-                rather than "System {{Etikett}}" or "System {{Label}}".
+                should remain unchanged and be translated to "System {{label}}" in German, 
+                rather than "System {{Etikett}}" or "System {{Label}}". 
 
                 Here is the text to translate:
                 ----------
@@ -83,6 +88,7 @@ def translate_text(text, target_language):
         print(f"Error during translation: {e}")
         return text  # Return the original text if translation fails
 
+
 def translate_dict(en_dict, target_language):
     translated_dict = {}
     for key, value in en_dict.items():
@@ -90,9 +96,10 @@ def translate_dict(en_dict, target_language):
             translated_value = translate_dict(value, target_language)
         else:
             translated_value = translate_text(value, target_language)
-            print(f"Translating key '{key}' with value '{value}' from English, to value '{translated_value}' in {target_language}.")
+            print(f"Translating key {key} with value {value} from English to {target_language}, to value '{translated_value}'.")
         translated_dict[key] = translated_value
     return translated_dict
+
 
 def unflatten_dict(d, sep="|"):
     result = {}
@@ -104,6 +111,7 @@ def unflatten_dict(d, sep="|"):
         d[keys[-1]] = v
     return result
 
+
 def flatten_dict(d, parent_key="", sep="|"):
     items = []
     for k, v in d.items():
@@ -114,38 +122,78 @@ def flatten_dict(d, parent_key="", sep="|"):
             items.append((new_key, v))
     return dict(items)
 
+
+def load_en_changes_from_last_commits(input_file, commit_range=50):
+    repo = git.Repo(".")
+    commits = list(repo.iter_commits('HEAD', max_count=commit_range))
+    
+    # Iterate over commits and compare to find the last one that modified the file
+    for commit in commits[1:]:
+        previous_version = commit.tree / input_file
+        if previous_version:
+            return json.loads(previous_version.data_stream.read())
+    return {}
+
+
 def load_en_dict(file_path):
     with open(file_path, "r") as f:
         return json.load(f)
 
+
+# Detect changes between the current and previous version
+def detect_changes(current_dict, previous_dict):
+    added_keys = []
+    changed_keys = []
+
+    current_flat = flatten_dict(current_dict)
+    previous_flat = flatten_dict(previous_dict)
+
+    for key in current_flat:
+        if key not in previous_flat:
+            added_keys.append(key)
+        elif current_flat[key] != previous_flat[key]:
+            changed_keys.append(key)
+
+    return set(added_keys + changed_keys)
+
+
+def get_keys_to_translate(file_path="ui/src/translations/en.json"):
+    current_en_dict = load_en_dict(file_path)
+    previous_en_dict = load_en_changes_from_last_commits(file_path)
+
+    keys_to_translate = detect_changes(current_en_dict, previous_en_dict)
+    en_flat = flatten_dict(current_en_dict)
+    to_translate = {k: en_flat[k] for k in keys_to_translate}
+    return to_translate
+
+
+def remove_en_prefix(dictionary, prefix="en|"):
+    """
+    Removes the 'en|' prefix from the english dictionary keys.
+    """
+    return {k[len(prefix):]: v for k, v in dictionary.items() if k.startswith(prefix)}
+
+
 def main(
-        language_code,
-        target_language,
-        input_file="ui/src/translations/en.json",
+    language_code,
+    target_language,
+    input_file="ui/src/translations/en.json",
 ):
     with open(f"ui/src/translations/{language_code}.json", "r") as f:
         target_dict = json.load(f)[language_code]
 
-    en_dict = load_en_dict(input_file)["en"]
-    en_flat = flatten_dict(en_dict)
-    target_flat = flatten_dict(target_dict)
-
-    # Remove keys not in EN
-    keys_to_remove = set(target_flat.keys()) - set(en_flat.keys())
-    for key in keys_to_remove:
-        del target_flat[key]
-
-    # Translate missing keys
-    keys_to_translate = set(en_flat.keys()) - set(target_flat.keys())
-    to_translate = {k: en_flat[k] for k in keys_to_translate}
+    to_translate = get_keys_to_translate(input_file)
+    to_translate = remove_en_prefix(to_translate)
     translated_flat_dict = translate_dict(to_translate, target_language)
 
     # Merge with the existing translations
+    target_flat = flatten_dict(target_dict)
     target_flat.update(translated_flat_dict)
     updated_target_dict = unflatten_dict(target_flat)
 
     with open(f"ui/src/translations/{language_code}.json", "w") as f:
         json.dump({language_code: updated_target_dict}, f, ensure_ascii=False, indent=2)
+
 
 if __name__ == "__main__":
     main(language_code="de", target_language="German")

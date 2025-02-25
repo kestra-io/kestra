@@ -75,6 +75,11 @@ public abstract class RunContext {
 
     public abstract Map<String, String> renderMap(Map<String, String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
+    /**
+     * Validate a bean using Jakarta Bean Validation.
+     */
+    public abstract <T> void validate(T bean);
+
     public abstract String decrypt(String encrypted) throws GeneralSecurityException;
 
     /**

@@ -133,7 +133,7 @@ dependencies {
         api 'org.hamcrest:hamcrest:3.0'
         api 'org.hamcrest:hamcrest-library:3.0'
         api group: 'org.exparity', name: 'hamcrest-date', version: '2.0.8'
-        api "org.wiremock:wiremock:3.10.0"
+        api "org.wiremock:wiremock:3.12.0"
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
         api "com.microsoft.playwright:playwright:1.50.0"
 

@@ -328,7 +328,7 @@
         };
 
         // Check if parent filter already exists
-        const existingFilterIndex = currentFilters.value.findIndex(
+        const existingFilterIndex = currentFilters.value.filter((itm) => itm.label !== "labels").findIndex(
             (item) => item.label === option.value.label,
         );
         if (existingFilterIndex !== -1) {
@@ -393,7 +393,7 @@
     const isOptionDisabled = () => {
         if (!activeParentFilter.value) return false;
 
-        const parentIndex = currentFilters.value.findIndex(
+        const parentIndex = currentFilters.value.filter((itm) => itm.label !== "labels").findIndex(
             (item) => item.label === activeParentFilter.value,
         );
         if (parentIndex === -1) return false;

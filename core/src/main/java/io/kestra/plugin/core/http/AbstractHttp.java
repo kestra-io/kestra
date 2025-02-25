@@ -25,6 +25,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.net.http.HttpHeaders;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -104,9 +105,11 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     protected HttpRequest request(RunContext runContext) throws IllegalVariableEvaluationException, URISyntaxException, IOException {
+        // ideally we should URLEncode the path of the UI, but as we cannot URLEncode everything, we handle the common case of space in the URI.
+        String renderedUri = runContext.render(this.uri).as(String.class).map(s -> s.replace(" ", "%20")).orElseThrow();
         HttpRequest.HttpRequestBuilder request = HttpRequest.builder()
             .method(runContext.render(this.method).as(String.class).orElse(null))
-            .uri(new URI(runContext.render(this.uri).as(String.class).orElseThrow()));
+            .uri(new URI(renderedUri));
 
         var renderedFormData = runContext.render(this.formData).asMap(String.class, Object.class);
         if (!renderedFormData.isEmpty()) {

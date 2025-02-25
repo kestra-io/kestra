@@ -570,6 +570,28 @@ class RequestTest {
         }
     }
 
+    @Test
+    void spaceInURI() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.of(server.getURL().toString() + "/uri with space"))
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getBody(), is("Hello World"));
+            assertThat(output.getCode(), is(200));
+        }
+    }
+
     @Controller
     static class MockController {
         @Get("/hello")
@@ -656,6 +678,11 @@ class RequestTest {
                         return hello + " > " + IOUtils.toString(fileInputStream, StandardCharsets.UTF_8);
                     }
                 }));
+        }
+
+        @Get("/uri%20with%20space")
+        HttpResponse<String> uriWithSpace() {
+            return HttpResponse.ok("Hello World");
         }
     }
 }

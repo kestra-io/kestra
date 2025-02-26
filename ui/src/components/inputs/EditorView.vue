@@ -410,12 +410,6 @@
             type: Number,
             default: null,
         },
-        guidedProperties: {
-            type: Object,
-            default: () => {
-                return {tourStarted: false};
-            },
-        },
         flowValidation: {
             type: Object,
             default: undefined,
@@ -433,6 +427,8 @@
             default: false,
         },
     });
+
+    const guidedProperties = ref(store.getters["core/guidedProperties"]);
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
 
@@ -679,7 +675,12 @@
     };
 
     onMounted(async () => {
-        editorViewType.value = props.isNamespace ? "YAML" : (localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML");
+        if(guidedProperties.value?.tourStarted) {
+            editorViewType.value = "YAML";
+            switchViewType(editorViewTypes.SOURCE_TOPOLOGY, false);
+        } else {
+            editorViewType.value = props.isNamespace ? "YAML" : (localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML");
+        }
 
         if(!props.isNamespace) {
             initViewType()
@@ -695,7 +696,7 @@
         // Guided tour
         setTimeout(() => {
             if (
-                !props.guidedProperties.tourStarted &&
+                !guidedProperties?.value?.tourStarted &&
                 localStorage.getItem("tourDoneOrSkip") !== "true" &&
                 props.total === 0
             ) {

@@ -11,7 +11,7 @@
         </el-col>
         <el-col :span="20">
             <InputText
-                :model-value="element"
+                :model-value="YamUtils.stringify(element)"
                 @update:model-value="(v) => handleInput(v, index)"
                 :placeholder="$t('value')"
                 class="w-100"
@@ -28,6 +28,7 @@
     import {ref} from "vue";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../code/utils/icons";
+    import YamUtils from "../../../utils/yamlUtils";
 
     import InputText from "../../code/components/inputs/InputText.vue";
     import Add from "../../code/components/Add.vue";

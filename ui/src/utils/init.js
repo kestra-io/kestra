@@ -152,7 +152,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
         await setI18nLanguage(i18n, locale);
     }
     app.use(i18n);
-    store.$i18n = i18n;
+    store.$i18n = i18n.global;
 
     // moment
     moment.locale(locale);

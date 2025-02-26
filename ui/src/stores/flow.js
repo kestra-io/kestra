@@ -41,10 +41,10 @@ export default {
     },
 
     actions: {
-        onEdit({getters, dispatch, commit, state, rootDispatch, rootCommit, rootState}, {flowYaml, currentIsFlow, id, namespace, editorViewType, viewType}) {
-            commit("setFlowYaml", flowYaml);
-            const flowParsed = YamlUtils.parse(flowYaml);
-            const currentTab =rootState.editor.current;
+        onEdit({getters, dispatch, commit, state, rootState}, {source, currentIsFlow, id, namespace, editorViewType, viewType}) {
+            commit("setFlowYaml", source);
+            const flowParsed = getters.flowParsed;
+            const currentTab = rootState.editor.current;
 
             if (currentIsFlow) {
                 if (
@@ -53,38 +53,38 @@ export default {
                     (id !== flowParsed.id ||
                         namespace !== flowParsed.namespace)
                 ) {
-                    rootDispatch("core/showMessage", {
+                    dispatch("core/showMessage", {
                         variant: "error",
                         title: this.$i18n.t("readonly property"),
                         message: this.$i18n.t("namespace and id readonly"),
-                    });
-                    flowYaml.value = YamlUtils.replaceIdAndNamespace(
-                        flowYaml.value,
+                    }, {root: true});
+                    commit("setFlowYaml", YamlUtils.replaceIdAndNamespace(
+                        source,
                         id,
                         namespace
-                    );
+                    ));
                     return;
                 }
             }
 
             commit("setHaveChange", true);
-            if(editorViewType.value === "YAML") {
-                rootDispatch("core/isUnsaved", true);
+            if(editorViewType === "YAML") {
+                dispatch("core/isUnsaved", true, {root: true});
             }
 
             if(!state.isCreating){
-                rootCommit("editor/changeOpenedTabs", {
+                commit("editor/changeOpenedTabs", {
                     action: "dirty",
                     ...currentTab,
                     name: currentTab?.name ?? "Flow",
                     path: currentTab?.path ?? "Flow.yaml",
                     dirty: true
-                });
+                }, {root: true});
             }
 
             if(!currentIsFlow) return;
 
-            return dispatch("validateFlow", {flow: state.isCreating ? flowYaml.value : getters.yamlWithNextRevision})
+            return dispatch("validateFlow", {flow: state.isCreating ? state.flowYaml : getters.yamlWithNextRevision})
                 .then((value) => {
                     if (
                         getters.flowHaveTasks &&
@@ -99,16 +99,16 @@ export default {
                     return value;
                 });
         },
-        async saveWithoutRevisionGuard ({commit, state, dispatch, getters, rootDispatch}) {
+        async saveWithoutRevisionGuard ({commit, state, dispatch, getters}) {
             const flowYaml = state.flowYaml;
-            const flowParsed = YamlUtils.parse(flowYaml);
+            const flowParsed = getters.flowParsed;
 
             if (flowParsed === undefined) {
-                rootDispatch("core/showMessage", {
+                dispatch("core/showMessage", {
                     variant: "error",
                     title: this.$t("invalid flow"),
                     message: this.$t("invalid yaml"),
-                });
+                }, {root: true});
 
                 return;
             }
@@ -142,13 +142,13 @@ export default {
                 await dispatch("createFlow", {flow: flowYaml.value})
                     .then((response) => {
                         this.toast.saved(response.id);
-                        rootDispatch("core/isUnsaved", false);
+                        dispatch("core/isUnsaved", false, {root: true});
                     });
             } else {
                 await dispatch("saveFlow", {flow: flowYaml.value})
                     .then((response) => {
                         this.toast.saved(response.id);
-                        rootDispatch("core/isUnsaved", false);
+                        dispatch("core/isUnsaved", false, {root: true});
                     });
             }
 
@@ -274,7 +274,7 @@ export default {
                     }
                 })
         },
-        saveFlow({commit, _dispatch}, options) {
+        saveFlow({commit}, options) {
             const flowData = YamlUtils.parse(options.flow)
             return this.$http.put(`${apiUrl(this)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
@@ -687,6 +687,13 @@ export default {
         },
         yamlWithNextRevision(_state, getters){
             return `revision: ${getters.nextRevision}\n${getters.flow.source}`;
+        },
+        flowParsed(state){
+            try{
+                return YamlUtils.parse(state.flowYaml)
+            }catch{
+                return undefined
+            }
         }
     }
 }

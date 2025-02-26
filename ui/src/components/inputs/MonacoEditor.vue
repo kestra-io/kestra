@@ -70,7 +70,8 @@
         },
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
-            ...mapState("core", ["autocompletionSource", "monacoYamlConfigured"]),
+            ...mapState("core", ["monacoYamlConfigured"]),
+            ...mapState("flow", ["flowYaml"]),
             ...mapState({
                 currentTab: (state) => state.editor.current,
                 tabs: (state) => state.editor.tabs,
@@ -309,7 +310,7 @@
                         const indexOfFieldToComplete = match.index + match[1].length;
                         return {
                             suggestions: await _this.autocompletionForField(
-                                _this.autocompletionSource,
+                                _this.flowYaml,
                                 lineContent,
                                 match[2],
                                 match[3],

@@ -287,6 +287,14 @@ public class Flow extends AbstractFlow implements HasUID {
             .orElse(null);
     }
 
+    public AbstractTrigger findTriggerByTriggerId(String triggerId) {
+        return this.triggers
+            .stream()
+            .filter(trigger -> trigger.getId().equals(triggerId))
+            .findFirst()
+            .orElse(null);
+    }
+
     /**
      * @deprecated should not be used
      */

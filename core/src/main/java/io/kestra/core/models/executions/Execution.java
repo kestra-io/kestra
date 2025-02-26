@@ -1010,4 +1010,10 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         return crc32.getValue();
     }
+
+    public Optional<Instant> finishedAt() {
+        return this.findLastTerminated(this.taskRunList)
+            .map(taskRun -> taskRun.getState().getEndDate())
+            .orElse(null);
+    }
 }

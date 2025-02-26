@@ -38,10 +38,60 @@ export default {
         confirmOutdatedSaveDialog: false,
         haveChange: false,
         expandedSubflows: [],
+        metadata: undefined,
     },
 
     actions: {
-        onEdit({getters, dispatch, commit, state, rootState}, {source, currentIsFlow, id, namespace, editorViewType, viewType}) {
+        onSaveMetadata({commit, state}){
+            commit("setFlowYaml", YamlUtils.updateMetadata(state.flowYaml, state.metadata));
+            commit("setMetadata", null);
+            commit("setHaveChange", true)
+        },
+        async save({getters, dispatch, commit, state, rootState}, {content}){
+            if (getters.flowErrors?.length || !getters.haveChange && !state.isCreating) {
+                return;
+            }
+
+            const source = state.flowYaml
+            const currentTab = rootState.editor.current;
+
+            if (getters.isFlow) {
+                dispatch("onEdit", {source, currentIsFlow:true}).then((validation) => {
+                    if (validation.outdated && !state.isCreating) {
+                        return "confirmOutdatedSaveDialog";
+                    }
+                    dispatch("saveWithoutRevisionGuard");
+                    commit("setFlowYamlOrigin", source);
+
+                    if (currentTab.value && currentTab.value.name) {
+                        commit("editor/changeOpenedTabs", {
+                            action: "dirty",
+                            name: "Flow",
+                            path: "Flow.yaml",
+                            dirty: false,
+                            flow: true,
+                        }, {root: true});
+                    }
+                });
+            } else {
+                if(!currentTab.value.dirty) return;
+
+                await dispatch("namespace/createFile", {
+                    namespace: getters.namespace,
+                    path: currentTab.value.path ?? currentTab.value.name,
+                    content,
+                }, {root: true});
+                commit("editor/changeOpenedTabs", {
+                    action: "dirty",
+                    path: currentTab.value.path,
+                    name: currentTab.value.name,
+                    dirty: false
+                }, {root: true});
+
+                dispatch("core/isUnsaved", false, {root: true});
+            }
+        },
+        onEdit({getters, dispatch, commit, state, rootState}, {source, currentIsFlow, editorViewType, viewType}) {
             commit("setFlowYaml", source);
             const flowParsed = getters.flowParsed;
             const currentTab = rootState.editor.current;
@@ -50,8 +100,8 @@ export default {
                 if (
                     flowParsed &&
                     !state.isCreating &&
-                    (id !== flowParsed.id ||
-                        namespace !== flowParsed.namespace)
+                    (getters.id !== flowParsed.id ||
+                        getters.namespace !== flowParsed.namespace)
                 ) {
                     dispatch("core/showMessage", {
                         variant: "error",
@@ -60,8 +110,8 @@ export default {
                     }, {root: true});
                     commit("setFlowYaml", YamlUtils.replaceIdAndNamespace(
                         source,
-                        id,
-                        namespace
+                        getters.id,
+                        getters.namespace
                     ));
                     return;
                 }
@@ -370,7 +420,7 @@ export default {
                     return Promise.reject(error);
                 })
         },
-        getGraphFromSourceResponse({_commit}, options) {
+        getGraphFromSourceResponse(_, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
             const flowParsed = YamlUtils.parse(options.flow);
             let flowSource = options.flow
@@ -573,6 +623,9 @@ export default {
         setExpandedSubflows(state, value) {
             state.expandedSubflows = value
         },
+        setMetadata(state, value) {
+            state.metadata = value
+        }
     },
     getters: {
         isFlow(state) {
@@ -694,6 +747,15 @@ export default {
             }catch{
                 return undefined
             }
+        },
+        namespace(state){
+            return state.flow.namespace;
+        },
+        id(state){
+            return state.flow.id;
+        },
+        flowYamlMetadata(state){
+            return YamlUtils.parseMetadata(state.flowYaml);
         }
     }
 }

@@ -274,7 +274,7 @@
 
             <el-form label-position="top">
                 <metadata-editor
-                    :metadata="getFlowMetadata()"
+                    :metadata="store.getters['flow/flowYamlMetadata']"
                     @update:model-value="onUpdateMetadata"
                     :editing="!props.isCreating"
                 />
@@ -497,20 +497,19 @@
     const editorWidth = useLocalStorage("editor-size", 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const haveChange = computed(() => store.state.flow.haveChange);
     const flowYaml = computed(() => store.state.flow.flowYaml);
     const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
+    const user = computed(() => store.getters["auth/user"]);
+    const metadata = computed(() => store.state.flow.metadata);
     const newTrigger = ref(null);
     const isNewTriggerOpen = ref(false);
     const newError = ref(null);
     const isNewErrorOpen = ref(false);
     const isEditMetadataOpen = ref(false);
-    const metadata = ref(null);
     const viewType = ref(initViewType());
     const isHorizontal = ref(isHorizontalDefault());
     const updatedFromEditor = ref(false);
     const timer = ref(null);
-    const user = computed(() => store.getters["auth/user"]);
     const routeParams = router.currentRoute.value.params;
     const blueprintsLoaded = ref(false);
     const confirmOutdatedSaveDialog = ref(false);
@@ -578,7 +577,8 @@
         }
 
         // Save on ctrl+s in topology
-        document.addEventListener("keydown", save);
+        document.addEventListener("keydown", saveUsingKeyboard);
+
         // Guided tour
         setTimeout(() => {
             if (
@@ -605,7 +605,7 @@
         window.removeEventListener("resize", onResize);
 
         store.commit("plugin/setEditorPlugin", undefined);
-        document.removeEventListener("keydown", save);
+        document.removeEventListener("keydown", saveUsingKeyboard);
         document.removeEventListener("popstate", () => {
             stopTour();
         });
@@ -738,20 +738,25 @@
         isNewErrorOpen.value = false;
     };
 
-    const getFlowMetadata = () => {
-        return YamlUtils.getMetadata(flowYaml.value);
+    const checkRequiredMetadata = () => {
+        const md = metadata.value ?? store.getters["flow/flowYamlMetadata"];;
+
+        return md.id.length > 0 && md.namespace.length > 0;
     };
 
-    const checkRequiredMetadata = () => {
-        if (metadata.value) {
-            return (
-                metadata.value.id.length > 0 && metadata.value.namespace.length > 0
-            );
+    const onUpdateMetadata = (event, shouldSave) => {
+        if(shouldSave) {
+            metadata.value = {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)};
+            onSaveMetadata();
+            validateFlow(flowYaml.value)
+        } else {
+            metadata.value = event.concurrency?.limit === 0 ?  {concurrency: null} : event;
         }
-        return (
-            getFlowMetadata().id.length > 0 &&
-            getFlowMetadata().namespace.length > 0
-        );
+    };
+
+    const onSaveMetadata = () => {
+        store.commit("flow/onSaveMetadata");
+        isEditMetadataOpen.value = false;
     };
 
     const validateFlow = (flow) => {
@@ -768,24 +773,6 @@
 
                 return value;
             });
-    };
-
-    const onUpdateMetadata = (event, shouldSave) => {
-        if(shouldSave) {
-            metadata.value = {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)};
-            onSaveMetadata();
-            validateFlow(flowYaml.value)
-
-        } else {
-            metadata.value = event.concurrency?.limit === 0 ?  {concurrency: null} : event;
-        }
-    };
-
-    const onSaveMetadata = () => {
-        store.commit("flow/setFlowYaml", YamlUtils.updateMetadata(flowYaml.value, metadata.value));
-        metadata.value = null;
-        isEditMetadataOpen.value = false;
-        store.commit("flow/setHaveChange", true)
     };
 
     const handleReorder = (yaml) => {
@@ -841,55 +828,17 @@
         }
     };
 
-    const save = async (e) => {
-        if (flowErrors.value?.length || !haveChange.value && !props.isCreating) {
-            return;
+    const saveUsingKeyboard = (e) => {
+        if (e.ctrlKey && e.key === "s") {
+            e.preventDefault();
+            return save();
         }
-        if (e) {
-            if (e.type === "keydown") {
-                if (!(e.keyCode === 83 && e.ctrlKey)) {
-                    return;
-                }
-                e.preventDefault();
-            }
-        }
+    };
 
-        if (isFlow.value) {
-            onEdit(flowYaml.value, true).then((validation) => {
-                if (validation.outdated && !props.isCreating) {
-                    confirmOutdatedSaveDialog.value = true;
-                    return;
-                }
-                saveWithoutRevisionGuard();
-                store.commit("flow/setFlowYamlOrigin", flowYaml.value);
-
-                if (currentTab.value && currentTab.value.name) {
-                    store.commit("editor/changeOpenedTabs", {
-                        action: "dirty",
-                        name: "Flow",
-                        path: "Flow.yaml",
-                        dirty: false,
-                        flow: true,
-                    });
-                }
-            });
-        } else {
-            if(!currentTab.value.dirty) return;
-
-            await store.dispatch("namespace/createFile", {
-                namespace: props.namespace ?? routeParams.id,
-                path: currentTab.value.path ?? currentTab.value.name,
-                content: editorDomElement.value.$refs.monacoEditor.value,
-            });
-            store.commit("editor/changeOpenedTabs", {
-                action: "dirty",
-                path: currentTab.value.path,
-                name: currentTab.value.name,
-                dirty: false
-            });
-
-            store.dispatch("core/isUnsaved", false);
-        }
+    const save = () => {
+        return store.dispatch("flow/save", {
+            content: editorDomElement.value.$refs.monacoEditor.value,
+        })
     };
 
     const execute = (_) => {
@@ -901,7 +850,7 @@
     };
 
     const deleteFlow = () => {
-        const metadata = getFlowMetadata();
+        const metadata = store.getters["flow/flowYamlMetadata"];
 
         return http
             .get(

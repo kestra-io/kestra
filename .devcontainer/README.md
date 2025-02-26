@@ -13,7 +13,7 @@ Take a look at this guide to get an idea of what the setup is like as this devco
 Once you have this repo cloned to your local system, you will need to install the VSCode extension [Remote Development](https://marketplace.visualstudio.com/items?itemName=ms-vscode-remote.vscode-remote-extensionpack).
 
 Then run the following command from the command palette:
-`Dev Containers: Open Folder in Container...`
+`Dev Containers: Open Folder in Container...` and select your Kestra root folder.
 
 This will then put you inside a docker container ready for development.
 
@@ -118,13 +118,27 @@ Then add the following settings to the `.vscode/launch.json` file:
       "request": "launch",
       "mainClass": "io.kestra.cli.App",
       "projectName": "cli",
-      "args": "server standalone",
-    },
+      "args": "server standalone"
+    }
   ]
 }
 ```
 
 You can then use the VSCode `Run and Debug` extension to start the Kestra server.
+
+Additionally, if you're doing frontend development, you can run `npm run dev` from the `ui` folder after having the above running (which will provide a backend) to access your application from `localhost:5173`. This has the benefit to watch your changes and hot-reload upon doing frontend changes.
+
+#### Plugins
+If you want your plugins to be loaded inside your devcontainer, point the `source` field to a folder containing jars of the plugins you want to embed in the following snippet in `devcontainer.json`:
+```
+"mounts": [
+  {
+    "source": "/absolute/path/to/your/local/jar/plugins/folder",
+    "target": "/workspaces/kestra/local/plugins",
+    "type": "bind"
+  }
+],
+```
 
 ---
 

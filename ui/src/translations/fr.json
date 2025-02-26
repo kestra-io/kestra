@@ -268,7 +268,10 @@
       },
       "empty": "Aucun blueprint à afficher.",
       "custom": "Plans personnalisés",
-      "community": "Communauté"
+      "community": "Communauté",
+      "apps": "Plans d'application",
+      "dashboards": "Tableau de bord Blueprints",
+      "flows": "Plans de Flow"
     },
     "use": "Utiliser",
     "plugins": {

@@ -268,7 +268,10 @@
       },
       "empty": "設計図が表示されていません。",
       "custom": "カスタムblueprint",
-      "community": "コミュニティ"
+      "community": "コミュニティ",
+      "apps": "アプリケーション Blueprints",
+      "dashboards": "ダッシュボード Blueprints",
+      "flows": "フローBlueprints"
     },
     "use": "使用",
     "plugins": {

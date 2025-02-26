@@ -268,7 +268,10 @@
       },
       "empty": "没有可显示的blueprints。",
       "custom": "自定义blueprints",
-      "community": "社区"
+      "community": "社区",
+      "apps": "应用Blueprints",
+      "dashboards": "仪表板 Blueprints",
+      "flows": "流程蓝图"
     },
     "use": "使用",
     "plugins": {

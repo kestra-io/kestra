@@ -268,7 +268,10 @@
       },
       "empty": "블루프린트가 없습니다.",
       "custom": "사용자 정의 blueprints",
-      "community": "커뮤니티"
+      "community": "커뮤니티",
+      "apps": "앱 Blueprints",
+      "dashboards": "대시보드 Blueprints",
+      "flows": "플로우 Blueprints"
     },
     "use": "사용",
     "plugins": {

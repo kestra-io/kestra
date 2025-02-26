@@ -32,7 +32,7 @@
     "buffer": "^6.0.3",
     "chart.js": "^4.4.7",
     "core-js": "^3.39.0",
-    "cronstrue": "^2.54.0",
+    "cronstrue": "^2.55.0",
     "dagre": "^0.8.5",
     "element-plus": "^2.9.4",
     "humanize-duration": "^3.32.1",

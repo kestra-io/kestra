@@ -35,7 +35,7 @@
                 </template>
                 <component
                     :is="`task-${getType(schema, key)}`"
-                    :model-value="getPropertiesValue(key)"
+                    :model-value="modelValue?.[key]"
                     :task="modelValue"
                     @update:model-value="onObjectInput(key, $event)"
                     :root="getKey(key)"
@@ -82,7 +82,7 @@
                         </template>
                         <component
                             :is="`task-${getType(schema, key)}`"
-                            :model-value="getPropertiesValue(key)"
+                            :model-value="modelValue?.[key]"
                             :task="modelValue"
                             @update:model-value="onObjectInput(key, $event)"
                             :root="getKey(key)"
@@ -149,11 +149,6 @@
             },
         },
         methods: {
-            getPropertiesValue(properties) {
-                return this.modelValue && this.modelValue[properties]
-                    ? this.modelValue[properties]
-                    : undefined;
-            },
             sortProperties(properties) {
                 if (!properties) {
                     return properties;
@@ -200,7 +195,7 @@
             isValidated(key) {
                 return (
                     this.isRequired(key) &&
-                    !this.getPropertiesValue(key) &&
+                    !this.modelValue?.[key] &&
                     this.schema.properties[key].default === undefined
                 );
             },

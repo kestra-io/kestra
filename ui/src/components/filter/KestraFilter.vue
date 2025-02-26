@@ -1040,6 +1040,15 @@ $properties: v-bind('props.propertiesWidth + "px"');
     }
 
     .el-select-dropdown__item {
+        &.is-selected {
+            background-color: var(--ks-background-hover);
+            font-weight: initial;
+
+            &::after {
+                display: none;
+            }
+        }
+
         &.disabled {
             opacity: 0.6;
 

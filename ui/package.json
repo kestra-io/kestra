@@ -30,7 +30,7 @@
     "axios": "^1.7.9",
     "bootstrap": "^5.3.3",
     "buffer": "^6.0.3",
-    "chart.js": "^4.4.7",
+    "chart.js": "^4.4.8",
     "core-js": "^3.39.0",
     "cronstrue": "^2.54.0",
     "dagre": "^0.8.5",

@@ -5,7 +5,7 @@ import permission from "../models/permission";
 import action from "../models/action";
 import YamlUtils from "../utils/yamlUtils";
 import Utils from "../utils/utils";
-import {editorViewTypes} from "../../utils/constants";
+import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
 
 const textYamlHeader = {

@@ -42,7 +42,6 @@
                 tabIndex: undefined,
                 previousFlow: undefined,
                 dependenciesCount: undefined,
-                expandedSubflows: [],
                 deleted: false,
             };
         },
@@ -279,7 +278,7 @@
                 return tabs;
             },
             updateExpandedSubflows(expandedSubflows) {
-                this.expandedSubflows = expandedSubflows;
+                this.$store.commit("setExpandedSubflows", expandedSubflows);
             },
             activeTabName() {
                 return this.$refs.currentTab?.activeTab?.name ?? "home";
@@ -287,6 +286,7 @@
         },
         computed: {
             ...mapGetters("flow", ["flow", "isAllowedEdit", "readOnlySystemLabel"]),
+            ...mapState("flow", ["expandedSubflows"]),
             ...mapState("auth", ["user"]),
             ...mapState("core", ["guidedProperties"]),
             routeInfo() {

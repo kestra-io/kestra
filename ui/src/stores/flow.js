@@ -37,6 +37,7 @@ export default {
         flowYamlOrigin: undefined,
         confirmOutdatedSaveDialog: false,
         haveChange: false,
+        expandedSubflows: [],
     },
 
     actions: {
@@ -160,13 +161,13 @@ export default {
                 flow: state.isCreating ? flowYaml.value : getters.yamlWithNextRevision
             });
         },
-        fetchGraph({getters, state, dispatch}) {
+        fetchGraph({state, dispatch}) {
             return dispatch("loadGraphFromSource", {
                 flow: state.flowYaml,
                 config: {
                     params: {
                         // due to usage of axios instance instead of $http which doesn't convert arrays
-                        subflows: getters.expandedSubflows.join(","),
+                        subflows: state.expandedSubflows.join(","),
                     },
                     validateStatus: (status) => {
                         return status === 200;
@@ -249,6 +250,7 @@ export default {
                     if(options.store === false) {
                         return response.data;
                     }
+                    commit("setFlow", response.data);
                     commit("setOverallTotal", 1)
                     return response.data;
                 })
@@ -559,7 +561,7 @@ export default {
         setFlowYaml(state, flowYaml) {
             state.flowYaml = flowYaml
         },
-        setCreating(state, value) {
+        setIsCreating(state, value) {
             state.isCreating = value
         },
         setFlowYamlOrigin(state, value) {
@@ -567,7 +569,10 @@ export default {
         },
         setHaveChange(state, value) {
             state.haveChange = value
-        }
+        },
+        setExpandedSubflows(state, value) {
+            state.expandedSubflows = value
+        },
     },
     getters: {
         isFlow(state) {

@@ -136,7 +136,7 @@
                     ref="editorDomElement"
                     @save="save"
                     @execute="execute"
-                    v-model="flowYaml"
+                    :model-value="flowYaml"
                     :schema-type="isCurrentTabFlow? 'flow': undefined"
                     :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                     :extension="currentTab?.extension"
@@ -497,8 +497,8 @@
     const validationDomElement = ref(null);
     const isLoading = ref(false);
     const haveChange = ref(props.isDirty);
-    const flowYaml = ref("");
-    const flowYamlOrigin = ref("");
+    const flowYaml = computed(() => store.state.flow.flowYaml);
+    const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
     const newTrigger = ref(null);
     const isNewTriggerOpen = ref(false);
     const newError = ref(null);
@@ -585,7 +585,7 @@
 
         if(!props.isNamespace) {
             initViewType()
-            await store.dispatch("initYamlSource", {viewType: viewType.value});
+            await store.dispatch("flow/initYamlSource", {viewType: viewType.value});
         } else {
             store.commit("editor/closeAllTabs");
             switchViewType(editorViewTypes.SOURCE, false)
@@ -670,8 +670,8 @@
         });
     };
 
-    const onEdit = (event, currentIsFlow = false) => {
-        flowYaml.value = event;
+    const onEdit = (source, currentIsFlow = false) => {
+
 
         if (currentIsFlow) {
             if (
@@ -685,13 +685,15 @@
                     title: t("readonly property"),
                     message: t("namespace and id readonly"),
                 });
-                flowYaml.value = YamlUtils.replaceIdAndNamespace(
-                    flowYaml.value,
+                store.commit("flow/setFlowYaml", YamlUtils.replaceIdAndNamespace(
+                    source,
                     routeParams.id,
                     routeParams.namespace
-                );
+                ));
                 return;
             }
+        } else {
+            store.commit("flow/setFlowYaml", source);
         }
 
         haveChange.value = true;
@@ -847,23 +849,23 @@
 
     const onSaveMetadata = () => {
         const source = flowYaml.value;
-        flowYaml.value = YamlUtils.updateMetadata(source, metadata.value);
+        store.commit("flow/setFlowYaml", YamlUtils.updateMetadata(source, metadata.value));
         metadata.value = null;
         isEditMetadataOpen.value = false;
         haveChange.value = true;
     };
 
     const handleReorder = (yaml) => {
-        flowYaml.value = yaml;
+        store.commit("flow/setFlowYaml", yaml);
         haveChange.value = true;
         save()
     };
 
-    const editorUpdate = (event) => {
+    const editorUpdate = (source) => {
         const currentIsFlow = isFlow.value;
 
         updatedFromEditor.value = true;
-        flowYaml.value = event;
+        store.commit("flow/setFlowYaml", source);
 
         clearTimeout(timer.value);
         timer.value = setTimeout(() => onEdit(event, currentIsFlow), 500);
@@ -932,7 +934,7 @@
                     return;
                 }
                 saveWithoutRevisionGuard();
-                flowYamlOrigin.value = flowYaml.value;
+                store.commit("flow/setFlowYamlOrigin", flowYaml.value);
 
                 if (currentTab.value && currentTab.value.name) {
                     store.commit("editor/changeOpenedTabs", {

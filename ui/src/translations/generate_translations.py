@@ -9,9 +9,9 @@ client = OpenAI()
 
 
 def translate_text(text, target_language):
-    prompt = f"""Translate the text provided after "----------" to {target_language}.
-                The text is intended to be displayed within a software application,
-                so make sure to keep the translation consistent with the context of a software UI.
+    prompt = f"""Translate the text provided after "----------" to {target_language} for use in a software UI.
+                Only output the translated text without any extra commentary or explanation.
+                Keep technical terms (e.g. "kv store", "tenant", "namespace", etc.) and variables in {{curly braces}} unchanged.
                 For example, translating from English to German, you should translate:
                 - "State" to "Zustand" rather than "Staat"
                 - "Execution" to "Ausführung" rather than "Hinrichtung"
@@ -96,7 +96,7 @@ def translate_dict(en_dict, target_language):
             translated_value = translate_dict(value, target_language)
         else:
             translated_value = translate_text(value, target_language)
-            print(f"Translating key {key} with value {value} from English to {target_language}, to value '{translated_value}'.")
+            print(f"Translating key {key}:{value} to {target_language} -> '{translated_value}'.")
         translated_dict[key] = translated_value
     return translated_dict
 
@@ -125,14 +125,21 @@ def flatten_dict(d, parent_key="", sep="|"):
 
 def load_en_changes_from_last_commits(input_file, commit_range=50):
     repo = git.Repo(".")
-    commits = list(repo.iter_commits('HEAD', max_count=commit_range))
+    # Fetch all remote branches (including fork commits merged into remotes)
+    repo.git.fetch("--all")
 
-    # Iterate over commits and compare to find the last one that modified the file
-    for commit in commits[1:]:
-        previous_version = commit.tree / input_file
-        if previous_version:
-            return json.loads(previous_version.data_stream.read())
-    return {}
+    # Get the two most recent commits that modified the input_file.
+    commits = list(repo.iter_commits(paths=input_file, max_count=2))
+    if len(commits) < 2:
+        return {}
+
+    # Compare the current working file with the version from the previous commit.
+    previous_commit = commits[1]
+    try:
+        previous_version = previous_commit.tree / input_file
+        return json.loads(previous_version.data_stream.read())
+    except Exception:
+        return {}
 
 
 def load_en_dict(file_path):

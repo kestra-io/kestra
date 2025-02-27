@@ -1,8 +1,8 @@
 <template>
-    <div class="timeline">
+    <div class="mb-3 timeline">
         <div v-if="isToggle" class="timeline-header">
             <el-button class="see_states" @click="toggleStates">
-                {{ $t('see_states') }}
+                {{ $t('see_all_states') }}
                 <el-icon class="el-icon--right">
                     <ChevronUp v-if="showStates" />
                     <ChevronDown v-else />
@@ -88,7 +88,6 @@
     justify-content: space-between;
     padding: 20px;
     position: relative;
-    margin-bottom: 10px;
     border-radius: 5px;
     background-color: var(--ks-background-body);
     box-shadow: 0 2px 4px 0 var(--ks-card-shadow);

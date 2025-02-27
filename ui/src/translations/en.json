@@ -545,7 +545,7 @@
     "aggregation": "Aggregation",
     "metric choice": "Please choose a metric and an aggregation",
     "of": "of",
-    "see_states": "See all states",
+    "see_all_states": "See all states",
     "save draft": {
       "message": "Draft saved",
       "retrieval": {

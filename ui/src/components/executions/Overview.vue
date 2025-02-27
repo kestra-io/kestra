@@ -306,7 +306,8 @@
                     const params = {
                         namespace: this.execution.namespace,
                         flowId: this.execution.flowId,
-                        pageSize: 100
+                        pageSize: 100,
+                        sort: "state.startDate:desc"
                     };
                     
                     const result = await this.$store.dispatch("execution/findExecutions", params);
@@ -331,6 +332,8 @@
                 if (!result) return;
 
                 const {executions, currentIndex} = result;
+                // Since executions are sorted by startDate desc here. (opposite of default ASC sort as in Execution Table)
+                // "next" means newer (lower index) and "previous" means older (higher index)
                 const targetIndex = direction === "previous" ? currentIndex + 1 : currentIndex - 1;
 
                 if (targetIndex >= 0 && targetIndex < executions.length) {
@@ -354,7 +357,9 @@
                 }
 
                 const {executions, currentIndex} = result;
+                // Previous means we can go to older executions.
                 this.hasPreviousExecution = currentIndex < executions.length - 1;
+                // Next means we can go to newer executions.
                 this.hasNextExecution = currentIndex > 0;
             },
         },

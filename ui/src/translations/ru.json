@@ -1217,6 +1217,8 @@
     "confirm": "Подтвердить",
     "activate_basic_auth": "Активировать Basic Authentication",
     "trigger_id_exists": "Идентификатор Trigger уже существует",
-    "about_this_blueprint": "О данном blueprint"
+    "about_this_blueprint": "О данном blueprint",
+    "next_execution": "Следующее выполнение",
+    "prev_execution": "Предыдущее выполнение"
   }
 }

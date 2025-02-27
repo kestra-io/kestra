@@ -1217,6 +1217,8 @@
     "confirm": "确认",
     "activate_basic_auth": "启用基本身份验证",
     "trigger_id_exists": "Trigger Id 已经存在",
-    "about_this_blueprint": "关于此blueprint"
+    "about_this_blueprint": "关于此blueprint",
+    "next_execution": "下一次执行",
+    "prev_execution": "先前执行"
   }
 }

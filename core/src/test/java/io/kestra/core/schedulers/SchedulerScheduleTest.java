@@ -1,6 +1,9 @@
 package io.kestra.core.schedulers;
 
+import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.PluginDefault;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.condition.Expression;
@@ -30,8 +33,7 @@ import java.util.concurrent.TimeUnit;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
 
 public class SchedulerScheduleTest extends AbstractSchedulerTest {
     @Inject
@@ -42,6 +44,9 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
     @Inject
     protected SchedulerExecutionStateInterface executionState;
+
+    @Inject
+    protected FlowRepositoryInterface flowRepository;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -513,6 +518,159 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             assertThat(queueCount.getCount(), is(0L));
         } catch (Exception e) {
             throw new RuntimeException(e);
+        }
+    }
+
+
+    @Test
+    void recoverLASTLongRunningExecution() throws Exception {
+        // mock flow listeners
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        Schedule mockSchedule = mock(Schedule.class);
+        String triggerId = "recoverLASTLongRunningExecution";
+        Schedule schedule = Schedule.builder().id(triggerId).type(Schedule.class.getName()).cron("* * * * *").build();
+        FlowWithSource flow = createLongRunningFlow(
+            Collections.singletonList(schedule),
+            List.of(
+                PluginDefault.builder()
+                    .type(Schedule.class.getName())
+                    .values(Map.of("recoverMissedSchedules", "LAST"))
+                    .build()
+            )
+        );
+        flowRepository.create(flow, flow.generateSource(), flow);
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        ZonedDateTime nextDate = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        doReturn(nextDate.plusMinutes(2))
+            .when(mockSchedule)
+            .previousEvaluationDate(any());
+
+        // to avoid waiting too much before a trigger execution, we add a last trigger with a date now - 1m.
+        Trigger lastTrigger = Trigger
+            .builder()
+            .triggerId(triggerId)
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .date(ZonedDateTime.now())
+            .nextExecutionDate(nextDate)
+            .build();
+        triggerState.create(lastTrigger);
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        // scheduler
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+            // wait for execution
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
+                Execution execution = either.getLeft();
+                assertThat(execution.getFlowId(), is(flow.getId()));
+
+                queueCount.countDown();
+                if (execution.getState().getCurrent() == State.Type.CREATED) {
+                    executionQueue.emit(execution.withState(State.Type.SUCCESS)
+                        .toBuilder()
+                        .taskRunList(List.of(TaskRun.builder()
+                            .id("test")
+                            .executionId(execution.getId())
+                            .state(State.of(State.Type.SUCCESS,
+                                List.of(new State.History(
+                                    State.Type.SUCCESS,
+                                    lastTrigger.getNextExecutionDate().plusMinutes(3).toInstant()
+                                ))))
+                            .build()))
+                        .build()
+                    );
+                }
+            }));
+
+            scheduler.run();
+
+            queueCount.await(3, TimeUnit.MINUTES);
+            receive.blockLast();
+
+            assertThat(queueCount.getCount(), is(0L));
+
+            Trigger trigger = Trigger.of(flow, schedule);
+            Await.until(() -> this.triggerState.findLast(trigger).map(t -> t.getNextExecutionDate().isAfter(lastTrigger.getNextExecutionDate().plusMinutes(1))).orElse(false).booleanValue(), Duration.ofMillis(100), Duration.ofSeconds(10));
+        }
+    }
+
+    @Test
+    void recoverNONELongRunningExecution() throws Exception {
+        // mock flow listeners
+        FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
+        Schedule mockSchedule = mock(Schedule.class);
+        String triggerId = "recoverNONELongRunningExecution";
+        Schedule schedule = Schedule.builder().id(triggerId).type(Schedule.class.getName()).cron("* * * * *").build();
+        FlowWithSource flow = createLongRunningFlow(
+            Collections.singletonList(schedule),
+            List.of(
+                PluginDefault.builder()
+                    .type(Schedule.class.getName())
+                    .values(Map.of("recoverMissedSchedules", "NONE"))
+                    .build()
+            )
+        );
+        flowRepository.create(flow, flow.generateSource(), flow);
+        doReturn(List.of(flow))
+            .when(flowListenersServiceSpy)
+            .flows();
+
+        ZonedDateTime nextDate = ZonedDateTime.now().truncatedTo(ChronoUnit.MINUTES);
+        doReturn(nextDate.plusMinutes(2))
+            .when(mockSchedule)
+            .previousEvaluationDate(any());
+
+        // to avoid waiting too much before a trigger execution, we add a last trigger with a date now - 1m.
+        Trigger lastTrigger = Trigger
+            .builder()
+            .triggerId(triggerId)
+            .flowId(flow.getId())
+            .namespace(flow.getNamespace())
+            .date(ZonedDateTime.now())
+            .nextExecutionDate(nextDate)
+            .build();
+        triggerState.create(lastTrigger);
+
+        CountDownLatch queueCount = new CountDownLatch(1);
+
+        // scheduler
+        try (AbstractScheduler scheduler = scheduler(flowListenersServiceSpy, executionState)) {
+            // wait for execution
+            Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
+                Execution execution = either.getLeft();
+                assertThat(execution.getFlowId(), is(flow.getId()));
+
+                queueCount.countDown();
+                if (execution.getState().getCurrent() == State.Type.CREATED) {
+                    executionQueue.emit(execution.withState(State.Type.SUCCESS)
+                        .toBuilder()
+                        .taskRunList(List.of(TaskRun.builder()
+                            .id("test")
+                            .executionId(execution.getId())
+                            .state(State.of(State.Type.SUCCESS,
+                                List.of(new State.History(
+                                    State.Type.SUCCESS,
+                                    lastTrigger.getNextExecutionDate().plusMinutes(3).toInstant()
+                                ))))
+                            .build()))
+                        .build()
+                    );
+                }
+            }));
+
+            scheduler.run();
+
+            queueCount.await(3, TimeUnit.MINUTES);
+            receive.blockLast();
+
+            assertThat(queueCount.getCount(), is(0L));
+
+            Trigger trigger = Trigger.of(flow, schedule);
+            Await.until(() -> this.triggerState.findLast(trigger).map(t -> t.getNextExecutionDate().isAfter(lastTrigger.getNextExecutionDate().plusMinutes(1))).orElse(false).booleanValue(), Duration.ofMillis(100), Duration.ofSeconds(10));
         }
     }
 }

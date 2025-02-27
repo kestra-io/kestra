@@ -83,7 +83,7 @@ def translate_text(text, target_language):
         return response.choices[0].message.content.strip()
     except Exception as e:
         print(f"Error during translation: {e}")
-        return text
+        return text # Return the original text if translation fails
 
 def translate_dict(en_dict, target_language):
     translated_dict = {}

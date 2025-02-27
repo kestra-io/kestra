@@ -71,9 +71,7 @@ def translate_text(text, target_language):
             messages=[
                 {
                     "role": "system",
-                    "content": f"""You are a software engineer translating textual UI elements
-                    within a software application from English into {target_language}
-                    while keeping technical terms in English.""",
+                    "content": f"You are a software engineer translating textual UI elements into {target_language} while keeping technical terms in English.",
                 },
                 {
                     "role": "user",
@@ -82,12 +80,10 @@ def translate_text(text, target_language):
             ],
             temperature=0.1,
         )
-        translation = response.choices[0].message.content.strip()
-        return translation
+        return response.choices[0].message.content.strip()
     except Exception as e:
         print(f"Error during translation: {e}")
-        return text  # Return the original text if translation fails
-
+        return text
 
 def translate_dict(en_dict, target_language):
     translated_dict = {}
@@ -105,10 +101,10 @@ def unflatten_dict(d, sep="|"):
     result = {}
     for k, v in d.items():
         keys = k.split(sep)
-        d = result
+        current = result
         for key in keys[:-1]:
-            d = d.setdefault(key, {})
-        d[keys[-1]] = v
+            current = current.setdefault(key, {})
+        current[keys[-1]] = v
     return result
 
 
@@ -147,7 +143,6 @@ def load_en_dict(file_path):
         return json.load(f)
 
 
-# Detect changes between the current and previous version
 def detect_changes(current_dict, previous_dict):
     added_keys = []
     changed_keys = []
@@ -170,53 +165,39 @@ def get_keys_to_translate(file_path="ui/src/translations/en.json"):
 
     keys_to_translate = detect_changes(current_en_dict, previous_en_dict)
     en_flat = flatten_dict(current_en_dict)
-    to_translate = {k: en_flat[k] for k in keys_to_translate}
-    return to_translate
+    return {k: en_flat[k] for k in keys_to_translate}
 
 
 def remove_en_prefix(dictionary, prefix="en|"):
-    """
-    Removes the 'en|' prefix from the english dictionary keys.
-    """
     return {k[len(prefix):]: v for k, v in dictionary.items() if k.startswith(prefix)}
 
 
-def main(
-    language_code,
-    target_language,
-    input_file="ui/src/translations/en.json",
-):
+def main(language_code, target_language, input_file="ui/src/translations/en.json"):
     with open(f"ui/src/translations/{language_code}.json", "r") as f:
         target_dict = json.load(f)[language_code]
 
-    # Detect which keys in en.json are new or changed
     to_translate = get_keys_to_translate(input_file)
-    # Remove any "en|" prefix if present
     to_translate = remove_en_prefix(to_translate)
 
-    # Flatten both the target dictionary and the list of keys to translate
     target_flat = flatten_dict(target_dict)
-    # to_translate is already a flat dict
-
     translated_flat_dict = {}
 
     # Only re-translate if the key is not already in the target dict or is empty
     for k, v in to_translate.items():
+        # Skip if we already have a non-empty translation for this key
         if k in target_flat and target_flat[k]:
             print(f"Skipping re-translation for '{k}' since a translation already exists.")
             continue
+        new_translation = translate_text(v, target_language)
+        translated_flat_dict[k] = new_translation
+        print(f"Translating '{k}': '{v}' -> '{new_translation}'.")
 
-        translation = translate_text(v, target_language)
-        translated_flat_dict[k] = translation
-        print(f"Translating '{k}': '{v}' -> '{translation}'.")
-
-    # Merge new translations with existing translations
     target_flat.update(translated_flat_dict)
     updated_target_dict = unflatten_dict(target_flat)
 
-    # Write updated translations back to disk
+    # Sort keys to keep output stable
     with open(f"ui/src/translations/{language_code}.json", "w") as f:
-        json.dump({language_code: updated_target_dict}, f, ensure_ascii=False, indent=2)
+        json.dump({language_code: updated_target_dict}, f, ensure_ascii=False, indent=2, sort_keys=True)
 
 if __name__ == "__main__":
     main(language_code="de", target_language="German")

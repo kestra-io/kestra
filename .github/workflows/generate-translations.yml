@@ -2,8 +2,17 @@ name: Auto-Translate UI keys and create PR
 
 on:
   schedule:
-    - cron: "0 9-21 * * *"  # Every day
-  workflow_dispatch: {}
+    - cron: "0 9-21 * * *"  # Every hour from 9 AM to 9 PM
+  workflow_dispatch:
+    inputs:
+      retranslate_modified_keys:
+        description: "Whether to re-translate modified keys even if they already have translations."
+        type: choice
+        options:
+          - "false"
+          - "true"
+        default: "false"
+        required: false
 
 jobs:
   translations:
@@ -25,7 +34,7 @@ jobs:
           run: pip install gitpython openai
 
         - name: Generate translations
-          run: python ui/src/translations/generate_translations.py
+          run: python ui/src/translations/generate_translations.py ${{ github.event.inputs.retranslate_modified_keys }}
           env:
             OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 

@@ -38,6 +38,8 @@ dependencies {
 
     constraints {
         // Forced dependencies
+        // Temporal force to include https://github.com/micronaut-projects/micronaut-core/commit/9bb43ce55ea3fca97c12cb50c5f1baea28557729 as a potential fix for https://github.com/kestra-io/kestra/issues/3402
+        api("io.micronaut:micronaut-core:4.7.15")
         api("org.slf4j:slf4j-api:$slf4jVersion")
         // need to force this dep as mysql-connector brings a version incompatible with the Google Cloud libs
         api("com.google.protobuf:protobuf-java:$protobufVersion")

@@ -17,6 +17,16 @@
             :show-arrow="false"
             fit-input-width
             :popper-class="!!props.searchCallback ? 'd-none' : 'filters-select'"
+            :popper-options="{
+                modifiers: [
+                    {
+                        name: 'offset',
+                        options: {
+                            offset: [dropdownOffset, 12],
+                        },
+                    },
+                ],
+            }"
             @change="(value) => changeCallback(value)"
             @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
@@ -310,7 +320,9 @@
     };
 
     const handleClear = () => {
-        currentFilters.value = currentFilters.value.filter((item) => item.persistent);
+        currentFilters.value = currentFilters.value.filter(
+            (item) => item.persistent,
+        );
         triggerSearch();
     };
 
@@ -384,6 +396,10 @@
         updateHoveringIndex(0);
     };
 
+    let dropdownOffset = ref(0);
+    const calculateDropdownOffset = (left: number = 0, halfWidth: number = 0) => {
+        return left > halfWidth ? Math.abs(halfWidth - left) : -(halfWidth - left);
+    };
     const dropdownToggleCallback = (visible) => {
         if (!visible) {
             dropdowns.value = {...INITIAL_DROPDOWNS};
@@ -394,6 +410,12 @@
             if (currentFilters.value?.at(-1)?.value?.length === 0)
                 currentFilters.value.pop();
         } else {
+            const {selectRef, inputRef} = select.value || {};
+            dropdownOffset.value = calculateDropdownOffset(
+                inputRef?.offsetLeft,
+                selectRef?.offsetWidth / 2,
+            );
+
             updateHoveringIndex(0);
         }
     };

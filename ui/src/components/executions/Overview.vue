@@ -1,4 +1,5 @@
 <template>
+    <Timeline :histories="execution.state.histories" />
     <div v-if="execution" class="execution-overview">
         <div v-if="isFailed()">
             <el-alert type="error" :closable="false" class="mb-4 main-error">
@@ -182,6 +183,7 @@
     import DateAgo from "../layout/DateAgo.vue";
     import Crud from "override/components/auth/Crud.vue";
     import Duration from "../layout/Duration.vue";
+    import Timeline from "../layout/Timeline.vue";
     import Labels from "../layout/Labels.vue"
     import {toRaw} from "vue";
     import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
@@ -197,6 +199,7 @@
         components: {
             ChangeExecutionStatus,
             Duration,
+            Timeline,
             Status,
             SetLabels,
             Restart,

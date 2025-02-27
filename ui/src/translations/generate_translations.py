@@ -2,6 +2,7 @@
 To run it locally, add OPENAI_API_KEY env variable and pip install gitpython openai
 """
 import json
+import sys
 import git
 from openai import OpenAI
 
@@ -9,61 +10,27 @@ client = OpenAI()
 
 
 def translate_text(text, target_language):
-    prompt = f"""Translate the text provided after "----------" to {target_language} for use in a software UI.
-                Only output the translated text without any extra commentary or explanation.
-                Keep technical terms (e.g. "kv store", "tenant", "namespace", etc.) and variables in {{curly braces}} unchanged.
-                For example, translating from English to German, you should translate:
-                - "State" to "Zustand" rather than "Staat"
-                - "Execution" to "Ausführung" rather than "Hinrichtung"
-                - "Theme" to "Modus" rather than "Thema"
-                - "Concurrency" to "Nebenläufigkeit" rather than "Konkurrenz"
-                - "Tenant" to "Mandant" rather than "Mieter"
-                - "Expand" to "Ausklappen" rather than "Erweitern"
-                - "Tab" to "Registerkarte" rather than "Reiter"
-                - "Creation" to "Erstellung" rather than "Schöpfung".
+    prompt = f"""Translate the text provided after "----------" into {target_language} for use in Kestra’s orchestration UI. Follow these guidelines:
+        - Output Only the Translation: Provide only the translated text, with no additional commentary or explanation.
+        - Maintain Technical Accuracy: Use correct translations for technical terms (avoid literal translations that change the meaning).
+        - Reserved English Terms (Do Not Translate): Keep the following terms in English (adjusting capitalization or plural forms as needed): kv store, namespace, flow, subflow, task, log, blueprint, id, trigger, label, key, value, input, output, port, worker, backfill, healthcheck, min, max. For example, in German, "log" must remain "Log" in phrases: translate "Log level" as "Log-Ebene" (not "Protokoll-Ebene"), and "Task logs" stays "Task Logs" (not "Aufgabenprotokolle"). Important: do not alter "flow" or "namespace" at all – keep them exactly as "flow" and "namespace."
+        - UI Terminology Consistency: Ensure the translation sounds natural for a software interface. Avoid overly formal or word-for-word translations that feel unnatural in a UI. Use terminology that users expect in the target language. For example, in German translations:
+          - State → Zustand (not "Staat")
+          - Execution → Ausführung (not "Hinrichtung")
+          - Theme → Modus (not "Thema")
+          - Concurrency → Nebenläufigkeit (not "Konkurrenz")
+          - Tenant (in multi-tenant context) → Mandant (not "Mieter")
+          - Expand (UI control) → Ausklappen (not "Erweitern")
+          - Tab (interface element) → Registerkarte (not "Reiter")
+          - Creation → Erstellung (not "Schöpfung")
+          Apply similar context-appropriate translations in other languages to avoid false friends or misleading terms.
+        - State Labels in English: Keep status labels that are in all caps (e.g. WARNING, FAILED, SUCCESS, PAUSED, RUNNING) in English and in their original uppercase format.
+        - Preserve Variables: Do not translate or change any placeholders enclosed in double curly braces (e.g. `{{label}}`, `{{key}}`). Leave them exactly as they are. For example, "System {{label}}" should remain "System {{label}}" in the translated text (do not translate "label" or remove the braces).
 
-                Keep the following technical terms in the original format in English without translating them to {target_language}
-                 (you can adjust the case or pluralization as needed):
-                - "kv store"
-                - "tenant"
-                - "namespace"
-                - "flow"
-                - "subflow"
-                - "task"
-                - "log"
-                - "blueprint"
-                - "id"
-                - "trigger"
-                - "label"
-                - "key"
-                - "value"
-                - "input"
-                - "output"
-                - "port"
-                - "worker"
-                - "backfill"
-                - "healthcheck"
-                - "min"
-                - "max"
-
-                Similarly, keep the states shown in capital letters like WARNING, FAILED, SUCCESS, PAUSED
-                and RUNNING in the original format in English without translating them to {target_language}.
-
-                It's essential that you keep the translation consistent with the context of a software UI
-                and that you keep the above-mentioned technical terms in English. For example, never translate "log"
-                to an equivalent word in {target_language} but keep it as "Log". This means:
-                - "Log level" and "log_level" should be translated to "Log-Ebene" in German, rather than "Protokoll-Ebene".
-                - "Task logs" should be translated to "Task Logs" in German, rather than "Aufgabenprotokolle".
-
-                Never translate variables provided within curly braces like {{label}} or {{key}}.
-                They should remain fully unchanged in the translation. For example, the string "System {{label}}"
-                should remain unchanged and be translated to "System {{label}}" in German,
-                rather than "System {{Etikett}}" or "System {{Label}}".
-
-                Here is the text to translate:
-                ----------
-                \n\n{text}
-                """
+        Here is the text to translate:
+        ----------
+        {text}
+        """
 
     try:
         response = client.chat.completions.create(
@@ -83,8 +50,7 @@ def translate_text(text, target_language):
         return response.choices[0].message.content.strip()
     except Exception as e:
         print(f"Error during translation: {e}")
-        return text # Return the original text if translation fails
-
+        return text # Return original if translation fails
 
 def unflatten_dict(d, sep="|"):
     result = {}
@@ -160,8 +126,7 @@ def get_keys_to_translate(file_path="ui/src/translations/en.json"):
 def remove_en_prefix(dictionary, prefix="en|"):
     return {k[len(prefix):]: v for k, v in dictionary.items() if k.startswith(prefix)}
 
-
-def main(language_code, target_language, input_file="ui/src/translations/en.json"):
+def main(language_code, target_language, input_file="ui/src/translations/en.json", retranslate_modified_keys=False):
     with open(f"ui/src/translations/{language_code}.json", "r") as f:
         target_dict = json.load(f)[language_code]
 
@@ -173,8 +138,8 @@ def main(language_code, target_language, input_file="ui/src/translations/en.json
 
     # Only re-translate if the key is not already in the target dict or is empty
     for k, v in to_translate.items():
-        # Skip if we already have a non-empty translation for this key
-        if k in target_flat and target_flat[k]:
+        # If we already have a non-empty translation, skip unless forced to re-translate
+        if k in target_flat and target_flat[k] and not retranslate_modified_keys:
             print(f"Skipping re-translation for '{k}' since a translation already exists.")
             continue
         new_translation = translate_text(v, target_language)
@@ -189,14 +154,19 @@ def main(language_code, target_language, input_file="ui/src/translations/en.json
         json.dump({language_code: updated_target_dict}, f, ensure_ascii=False, indent=2, sort_keys=True)
 
 if __name__ == "__main__":
-    main(language_code="de", target_language="German")
-    main(language_code="es", target_language="Spanish")
-    main(language_code="fr", target_language="French")
-    main(language_code="hi", target_language="Hindi")
-    main(language_code="it", target_language="Italian")
-    main(language_code="ja", target_language="Japanese")
-    main(language_code="ko", target_language="Korean")
-    main(language_code="pl", target_language="Polish")
-    main(language_code="pt", target_language="Portuguese")
-    main(language_code="ru", target_language="Russian")
-    main(language_code="zh_CN", target_language="Simplified Chinese (Mandarin)")
+    # Default to 'false' if no argument is provided
+    bool_from_ci = False
+    if len(sys.argv) > 1 and sys.argv[1].lower() == "true":
+        bool_from_ci = True
+
+    main(language_code="de", target_language="German", retranslate_modified_keys=bool_from_ci)
+    main(language_code="es", target_language="Spanish", retranslate_modified_keys=bool_from_ci)
+    main(language_code="fr", target_language="French", retranslate_modified_keys=bool_from_ci)
+    main(language_code="hi", target_language="Hindi", retranslate_modified_keys=bool_from_ci)
+    main(language_code="it", target_language="Italian", retranslate_modified_keys=bool_from_ci)
+    main(language_code="ja", target_language="Japanese", retranslate_modified_keys=bool_from_ci)
+    main(language_code="ko", target_language="Korean", retranslate_modified_keys=bool_from_ci)
+    main(language_code="pl", target_language="Polish", retranslate_modified_keys=bool_from_ci)
+    main(language_code="pt", target_language="Portuguese", retranslate_modified_keys=bool_from_ci)
+    main(language_code="ru", target_language="Russian", retranslate_modified_keys=bool_from_ci)
+    main(language_code="zh_CN", target_language="Simplified Chinese (Mandarin)", retranslate_modified_keys=bool_from_ci)

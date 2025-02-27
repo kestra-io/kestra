@@ -1,6 +1,5 @@
 <template>
     <div
-        v-show="explorerVisible"
         class="p-2 sidebar"
         @click="$refs.tree.setCurrentKey(undefined)"
         @contextmenu.prevent="onTabContextMenu"
@@ -418,7 +417,6 @@
         computed: {
             ...mapState({
                 flow: (state) => state.flow.flow,
-                explorerVisible: (state) => state.editor.explorerVisible,
             }),
             folders() {
                 function extractPaths(basePath = "", array) {

@@ -28,6 +28,9 @@
         </el-checkbox-group>
     </div>
     <Splitpanes>
+        <Pane v-if="activeTabs.includes('files')">
+            <EditorSidebarWrapper />
+        </Pane>
         <Pane v-if="activeTabs.includes('code')">
             <EditorWrapper />
         </Pane>
@@ -39,6 +42,9 @@
         </Pane>
         <Pane v-if="activeTabs.includes('doc')">
             <PluginDocumentation />
+        </Pane>
+        <Pane v-if="activeTabs.includes('blueprints')">
+            <BlueprintsWrapper />
         </Pane>
     </Splitpanes>
 </template>
@@ -55,13 +61,12 @@
     import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
     import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
 
+    import EditorSidebarWrapper from "../inputs/EditorSidebarWrapper.vue";
     import EditorWrapper from "../inputs/EditorWrapper.vue";
-
     import NoCodeWrapper from "../code/NoCodeWrapper.vue";
-
     import LowCodeEditorWrapper from "../inputs/LowCodeEditorWrapper.vue";
-
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
+    import BlueprintsWrapper from "../flows/blueprints/BlueprintsWrapper.vue";
 
 
     const activeTabs = ref(["code", "topology"])

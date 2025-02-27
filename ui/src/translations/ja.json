@@ -982,6 +982,7 @@
     },
     "see dependencies": "依存関係を表示",
     "see full revision": "完全なリビジョンを見る",
+    "see_all_states": "すべての状態を表示",
     "seeing old revision": "古いリビジョンを表示しています: {revision}",
     "select": "{{section}}を選択してください",
     "select datetime": "日付を選択",

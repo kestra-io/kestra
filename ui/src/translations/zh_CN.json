@@ -982,6 +982,7 @@
     },
     "see dependencies": "查看依赖关系",
     "see full revision": "查看完整修订版",
+    "see_all_states": "查看所有状态",
     "seeing old revision": "你正在查看旧修订版：{revision}",
     "select": "选择您的{{section}}",
     "select datetime": "选择日期",

@@ -982,6 +982,7 @@
     },
     "see dependencies": "Ver dependências",
     "see full revision": "Ver revisão completa",
+    "see_all_states": "Ver todos os estados",
     "seeing old revision": "Você está vendo uma revisão antiga: {revision}",
     "select": "Selecione sua {{section}}",
     "select datetime": "Selecione uma data",

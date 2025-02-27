@@ -80,7 +80,7 @@ def translate_text(text, target_language):
                     "content": prompt,
                 },
             ],
-            temperature=0.2,
+            temperature=0.1,
         )
         translation = response.choices[0].message.content.strip()
         return translation
@@ -189,18 +189,34 @@ def main(
     with open(f"ui/src/translations/{language_code}.json", "r") as f:
         target_dict = json.load(f)[language_code]
 
+    # Detect which keys in en.json are new or changed
     to_translate = get_keys_to_translate(input_file)
+    # Remove any "en|" prefix if present
     to_translate = remove_en_prefix(to_translate)
-    translated_flat_dict = translate_dict(to_translate, target_language)
 
-    # Merge with the existing translations
+    # Flatten both the target dictionary and the list of keys to translate
     target_flat = flatten_dict(target_dict)
+    # to_translate is already a flat dict
+
+    translated_flat_dict = {}
+
+    # Only re-translate if the key is not already in the target dict or is empty
+    for k, v in to_translate.items():
+        if k in target_flat and target_flat[k]:
+            print(f"Skipping re-translation for '{k}' since a translation already exists.")
+            continue
+
+        translation = translate_text(v, target_language)
+        translated_flat_dict[k] = translation
+        print(f"Translating '{k}': '{v}' -> '{translation}'.")
+
+    # Merge new translations with existing translations
     target_flat.update(translated_flat_dict)
     updated_target_dict = unflatten_dict(target_flat)
 
+    # Write updated translations back to disk
     with open(f"ui/src/translations/{language_code}.json", "w") as f:
         json.dump({language_code: updated_target_dict}, f, ensure_ascii=False, indent=2)
-
 
 if __name__ == "__main__":
     main(language_code="de", target_language="German")

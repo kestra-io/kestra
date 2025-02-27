@@ -849,8 +849,8 @@
     "outdated revision save confirmation": {
       "confirm": "你想覆盖它吗？",
       "create": {
-        "description": "具有相同ID/命名空间的流程已存在。",
-        "details": "保存以覆盖并强制创建新修订版。",
+        "description": "在此namespace中已存在具有相同id的flow。",
+        "details": "保存以覆盖并创建新版本。",
         "title": "流程已存在"
       },
       "update": {
@@ -862,7 +862,7 @@
     "output": "输出",
     "outputs": "输出",
     "override": {
-      "details": "以前的流程可以通过修订标签恢复。",
+      "details": "先前的flow可以从Revisions标签页恢复。",
       "title": "你将覆盖当前流程"
     },
     "overview": "概览",

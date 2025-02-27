@@ -849,8 +849,8 @@
     "outdated revision save confirmation": {
       "confirm": "上書きしますか？",
       "create": {
-        "description": "同じid / namespaceのFlowが既に存在します。",
-        "details": "新しいリビジョンの作成を強制的に上書き保存します。",
+        "description": "このnamespaceには、同じidのflowが既に存在します。",
+        "details": "上書きして新しいリビジョンを作成するために保存します。",
         "title": "Flowは既に存在します"
       },
       "update": {
@@ -862,7 +862,7 @@
     "output": "Output",
     "outputs": "出力",
     "override": {
-      "details": "前のflowはリビジョンタブから復元可能です。",
+      "details": "以前のflowはRevisionsタブから復元できます。",
       "title": "現在のflowを上書きしようとしています"
     },
     "overview": "概要",

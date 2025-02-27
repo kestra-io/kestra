@@ -849,8 +849,8 @@
     "outdated revision save confirmation": {
       "confirm": "Czy chcesz to nadpisać?",
       "create": {
-        "description": "Flow z tym samym id / namespace już istnieje.",
-        "details": "Zapisywanie w celu nadpisania i wymuszenia utworzenia nowej wersji.",
+        "description": "Flow z tym samym id już istnieje w tym namespace.",
+        "details": "Zapisz, aby nadpisać i utworzyć nową wersję.",
         "title": "Flow już istnieje"
       },
       "update": {
@@ -862,7 +862,7 @@
     "output": "Wyjście",
     "outputs": "Wyjścia",
     "override": {
-      "details": "Poprzedni flow będzie można odzyskać przez zakładkę wersje.",
+      "details": "Poprzedni flow można przywrócić z karty Revisions.",
       "title": "Zamierzasz nadpisać bieżący flow"
     },
     "overview": "Przegląd",

@@ -849,8 +849,8 @@
     "outdated revision save confirmation": {
       "confirm": "Möchten Sie es überschreiben?",
       "create": {
-        "description": "Ein Flow mit derselben Id / Namespace existiert bereits.",
-        "details": "Speichern, um zu überschreiben und eine neue Revision zu erzwingen.",
+        "description": "Ein flow mit derselben id existiert bereits in diesem namespace.",
+        "details": "Speichern, um zu überschreiben und eine neue Revision zu erstellen.",
         "title": "Flow existiert bereits"
       },
       "update": {
@@ -862,7 +862,7 @@
     "output": "Output",
     "outputs": "Outputs",
     "override": {
-      "details": "Der vorherige Flow kann über die Registerkarte \"Revisionen\" wiederhergestellt werden.",
+      "details": "Der vorherige flow kann über die Registerkarte \"Revisions\" wiederhergestellt werden.",
       "title": "Sie werden den aktuellen Flow überschreiben"
     },
     "overview": "Übersicht",

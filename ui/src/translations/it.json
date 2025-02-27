@@ -849,8 +849,8 @@
     "outdated revision save confirmation": {
       "confirm": "Vuoi sovrascriverlo?",
       "create": {
-        "description": "Un Flow con lo stesso id / namespace esiste già.",
-        "details": "Salvataggio per sovrascrivere e forzare la creazione di una nuova revisione.",
+        "description": "Un flow con lo stesso id esiste già in questo namespace.",
+        "details": "Salva per sovrascrivere e creare una nuova revisione.",
         "title": "Flow già esistente"
       },
       "update": {
@@ -862,7 +862,7 @@
     "output": "Output",
     "outputs": "Outputs",
     "override": {
-      "details": "Il flow precedente sarà recuperabile tramite la scheda delle revisioni.",
+      "details": "Il flow precedente può essere ripristinato dalla scheda Revisions.",
       "title": "Stai per sovrascrivere il flow corrente"
     },
     "overview": "Panoramica",

@@ -849,8 +849,8 @@
     "outdated revision save confirmation": {
       "confirm": "¿Quieres sobrescribirlo?",
       "create": {
-        "description": "Un flujo con el mismo id / namespace ya existe.",
-        "details": "Guardando para sobrescribir y forzar la creación de una nueva revisión.",
+        "description": "Un flow con el mismo id ya existe en este namespace.",
+        "details": "Guardar para sobrescribir y crear una nueva revisión.",
         "title": "El flujo ya existe"
       },
       "update": {
@@ -862,7 +862,7 @@
     "output": "Salida",
     "outputs": "Salidas",
     "override": {
-      "details": "El flujo anterior será recuperable a través de la pestaña de revisiones.",
+      "details": "El flow anterior se puede restaurar desde la pestaña de Revisions.",
       "title": "Vas a sobrescribir el flujo actual"
     },
     "overview": "Resumen",

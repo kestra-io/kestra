@@ -849,8 +849,8 @@
     "outdated revision save confirmation": {
       "confirm": "Êtes-vous sûr de vouloir l'écraser ?",
       "create": {
-        "description": "Un Flow avec le même id / namespace existe déjà.",
-        "details": "Sauvegarder pour l'écraser et forcer la création d'une révision.",
+        "description": "Un flow avec le même id existe déjà dans ce namespace.",
+        "details": "Enregistrer pour remplacer et créer une nouvelle révision.",
         "title": "Le flux existe déjà"
       },
       "update": {
@@ -862,7 +862,7 @@
     "output": "Sortie",
     "outputs": "Sorties",
     "override": {
-      "details": "Vous pourrez toujours le restaurer via les révisions.",
+      "details": "Le flow précédent peut être restauré depuis l'onglet Revisions.",
       "title": "Vous allez écraser le flow actuel"
     },
     "overview": "Vue générale",

@@ -849,8 +849,8 @@
     "outdated revision save confirmation": {
       "confirm": "덮어쓰시겠습니까?",
       "create": {
-        "description": "동일한 id / namespace를 가진 Flow가 이미 존재합니다.",
-        "details": "덮어쓰고 새 수정본을 강제로 생성합니다.",
+        "description": "이 namespace에는 동일한 id를 가진 flow가 이미 존재합니다.",
+        "details": "덮어쓰기를 저장하고 새 버전을 생성합니다.",
         "title": "Flow가 이미 존재합니다"
       },
       "update": {
@@ -862,7 +862,7 @@
     "output": "Output",
     "outputs": "Outputs",
     "override": {
-      "details": "이전 Flow는 수정본 탭을 통해 복구할 수 있습니다.",
+      "details": "이전 flow는 Revisions 탭에서 복원할 수 있습니다.",
       "title": "현재 Flow를 덮어쓸 예정입니다."
     },
     "overview": "개요",

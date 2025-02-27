@@ -849,8 +849,8 @@
     "outdated revision save confirmation": {
       "confirm": "क्या आप इसे अधिलेखित करना चाहते हैं?",
       "create": {
-        "description": "समान id / namespace के साथ एक Flow पहले से मौजूद है।",
-        "details": "एक नया पुनरीक्षण बनाने के लिए अधिलेखित और सेविंग।",
+        "description": "इस namespace में पहले से ही वही id वाला एक flow मौजूद है।",
+        "details": "ओवरराइड करने और एक नया संशोधन बनाने के लिए सहेजें।",
         "title": "Flow पहले से मौजूद है"
       },
       "update": {
@@ -862,7 +862,7 @@
     "output": "आउटपुट",
     "outputs": "आउटपुट",
     "override": {
-      "details": "पिछला flow पुनरीक्षण टैब के माध्यम से पुनर्प्राप्त किया जा सकेगा।",
+      "details": "पिछला flow Revisions टैब से पुनर्स्थापित किया जा सकता है।",
       "title": "आप वर्तमान flow को अधिलेखित करने जा रहे हैं"
     },
     "overview": "अवलोकन",

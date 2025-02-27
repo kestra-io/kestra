@@ -27,22 +27,50 @@ import jakarta.validation.constraints.NotNull;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger the flow only after the specific date.",
             full = true,
-            code = {
-                "# This will evaluate to true when the trigger date falls after the `after` date.",
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.DateTimeBetween",
-                "      date: \"{{ trigger.date }}\"",
-                "      after: \"2024-01-01T08:30:00Z\"",
-                "",
-                "# This will evaluate to true when the trigger date falls between the `before` and `after` dates.",
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.DateTimeBetween",
-                "      date: \"{{ trigger.date }}\"",
-                "      before: \"2024-01-01T08:30:00Z\"",
-                "      after: \"2024-12-31T23:30:00Z\"",
-            }
-        )
+            code = """
+                id: schedule-condition-datetimebetween
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will be triggered once every 5 minutes after the date 2025-12-31T23:59:59Z"
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "*/5 * * * *"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.DateTimeBetween
+                        date: "{{ trigger.date }}"
+                        after: "2025-12-31T23:59:59Z"
+                """
+        ),
+        @Example(
+            title = "Trigger the flow between two specific dates.",
+            full = true,
+            code = """
+                id: schedule-condition-datetimebetween
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will be triggered once every 5 minutes between the before and after dates"
+                
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "*/5 * * * *"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.DateTimeBetween
+                        date: "{{ trigger.date }}"
+                        before: "2025-01-01T00:00:00Z"
+                        after: "2025-12-31T23:59:59Z"
+                """
+        ),
     },
     aliases = {"io.kestra.core.models.conditions.types.DateTimeBetweenCondition", "io.kestra.plugin.core.condition.DateTimeBetweenCondition"}
 )

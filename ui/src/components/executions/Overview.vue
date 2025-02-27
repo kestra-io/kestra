@@ -110,6 +110,28 @@
             </el-table-column>
         </el-table>
 
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <el-button
+                :disabled="!hasPreviousExecution"
+                @click="navigateToExecution('previous')"
+            >
+                <el-icon class="el-icon--left">
+                    <ChevronLeft />
+                </el-icon>
+                {{ $t('prev_execution') }}
+            </el-button>
+            
+            <el-button 
+                :disabled="!hasNextExecution" 
+                @click="navigateToExecution('next')"
+            >
+                {{ $t('next_execution') }}
+                <el-icon class="el-icon--right">
+                    <ChevronRight />
+                </el-icon>
+            </el-button>
+        </div>
+
         <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
             <KestraCascader
@@ -170,6 +192,8 @@
     import Alert from "vue-material-design-icons/Alert.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
 
     export default {
         components: {
@@ -191,7 +215,9 @@
             LogLine,
             Alert,
             ChevronDown,
-            ChevronUp
+            ChevronUp,
+            ChevronLeft,
+            ChevronRight
         },
         emits: ["follow"],
         methods: {
@@ -274,7 +300,63 @@
                             this.errorLast = undefined;
                         }
                     })
-            }
+            },
+            async getFlowExecutions() {
+                try {
+                    const params = {
+                        namespace: this.execution.namespace,
+                        flowId: this.execution.flowId,
+                        pageSize: 100
+                    };
+                    
+                    const result = await this.$store.dispatch("execution/findExecutions", params);
+                    if (!result || !result.results || !result.results.length) {
+                        return null;
+                    }
+
+                    const executions = result.results;
+                    const currentIndex = executions.findIndex(e => e.id === this.execution.id);
+                    if (currentIndex === -1) {
+                        return null;
+                    }
+
+                    return {executions, currentIndex};
+                } catch (error) {
+                    console.error("Failed to fetch executions:", error);
+                    return null;
+                }
+            },
+            async navigateToExecution(direction) {
+                const result = await this.getFlowExecutions();
+                if (!result) return;
+
+                const {executions, currentIndex} = result;
+                const targetIndex = direction === "previous" ? currentIndex + 1 : currentIndex - 1;
+
+                if (targetIndex >= 0 && targetIndex < executions.length) {
+                    const targetExecution = executions[targetIndex];
+                    this.$router.push({
+                        name: "executions/update",
+                        params: {
+                            namespace: targetExecution.namespace,
+                            flowId: targetExecution.flowId,
+                            id: targetExecution.id
+                        }
+                    });
+                }
+            },
+            async updateNavigationStatus() {
+                const result = await this.getFlowExecutions();
+                if (!result) {
+                    this.hasPreviousExecution = false;
+                    this.hasNextExecution = false;
+                    return;
+                }
+
+                const {executions, currentIndex} = result;
+                this.hasPreviousExecution = currentIndex < executions.length - 1;
+                this.hasNextExecution = currentIndex > 0;
+            },
         },
         mounted() {
             if (this.isFailed()) {
@@ -286,6 +368,14 @@
                 if (oldValue.name === newValue.name && this.execution.id !== this.$route.params.id) {
                     this.load();
                 }
+            },
+            execution: {
+                handler(newExecution) {
+                    if (newExecution) {
+                        this.updateNavigationStatus();
+                    }
+                },
+                immediate: true
             }
         },
         data() {
@@ -294,6 +384,8 @@
                 errorLogs: undefined,
                 errorLogsMore: false,
                 errorLast: undefined,
+                hasPreviousExecution: false,
+                hasNextExecution: false,
             };
         },
         computed: {

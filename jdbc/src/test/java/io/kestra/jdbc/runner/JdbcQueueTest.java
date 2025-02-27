@@ -6,6 +6,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.Indexer;
+import io.kestra.core.runners.WorkerTaskResult;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
@@ -30,6 +31,10 @@ abstract public class JdbcQueueTest {
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
     protected QueueInterface<FlowWithSource> flowQueue;
+
+    @Inject
+    @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
+    protected QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Inject
     JdbcTestUtils jdbcTestUtils;

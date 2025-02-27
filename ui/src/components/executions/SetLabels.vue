@@ -75,10 +75,10 @@
         },
         methods: {
             setLabels() {
-                const filtered = filterLabels(this.executionLabels)
+                let filtered = filterLabels(this.executionLabels)
+                
                 if(filtered.error) {
-                    this.$toast().error(this.$t("wrong labels"))
-                    return;
+                    filtered.labels = filtered.labels.filter(obj => !(obj.key === null && obj.value === null));
                 }
 
                 this.isOpen = false;

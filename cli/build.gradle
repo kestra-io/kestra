@@ -43,4 +43,7 @@ dependencies {
     implementation project(":storage-local")
 
     implementation project(":webserver")
+
+    //test
+    testImplementation "org.wiremock:wiremock"
 }

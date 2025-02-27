@@ -42,14 +42,14 @@ public abstract class PostgresFlowRepositoryService {
         if (labels instanceof Map<?, ?> labelValues) {
             labelValues.forEach((key, value) -> {
                 String sql = "value -> 'labels' @> '[{\"key\":\"" + key + "\", \"value\":\"" + value + "\"}]'";
-                if (operation.equals(EQUALS))
+                if (operation.equals(EQUALS)) {
                     conditions.add(DSL.condition(sql));
-                else
+                } else {
                     conditions.add(DSL.not(DSL.condition(sql)));
-
+                }
             });
         }
-       return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.or(conditions);
     }
 
 

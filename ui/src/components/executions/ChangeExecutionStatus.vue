@@ -28,7 +28,7 @@
             <p v-html="$t('change execution state confirm', {id: execution.id})" />
 
             <p>
-                Current status is : <status size="small" class="me-1" :status="execution.state.current" />
+                {{ $t("change state current state") }} <status size="small" class="me-1" :status="execution.state.current" />
             </p>
 
             <el-select

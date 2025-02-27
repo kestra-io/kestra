@@ -1217,8 +1217,6 @@
     "confirm": "확인",
     "activate_basic_auth": "기본 인증 활성화",
     "trigger_id_exists": "트리거 ID가 이미 존재합니다.",
-    "about_this_blueprint": "이 blueprint 정보",
-    "next_execution": "다음 실행",
-    "prev_execution": "이전 실행"
+    "about_this_blueprint": "이 blueprint 정보"
   }
 }

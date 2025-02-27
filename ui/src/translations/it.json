@@ -1217,8 +1217,6 @@
     "confirm": "Conferma",
     "activate_basic_auth": "Attiva l'Autenticazione di Base",
     "trigger_id_exists": "L'ID del trigger esiste già",
-    "about_this_blueprint": "Informazioni su questo blueprint",
-    "next_execution": "Prossima esecuzione",
-    "prev_execution": "Esecuzione precedente"
+    "about_this_blueprint": "Informazioni su questo blueprint"
   }
 }

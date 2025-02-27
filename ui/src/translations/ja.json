@@ -1217,8 +1217,6 @@
     "confirm": "確認",
     "activate_basic_auth": "基本認証を有効化する",
     "trigger_id_exists": "トリガーIDはすでに存在します。",
-    "about_this_blueprint": "このblueprintについて",
-    "next_execution": "次回実行",
-    "prev_execution": "前回の実行"
+    "about_this_blueprint": "このblueprintについて"
   }
 }

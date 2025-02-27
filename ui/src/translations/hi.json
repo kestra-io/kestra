@@ -1217,8 +1217,6 @@
     "confirm": "पुष्टि करें",
     "activate_basic_auth": "बेसिक ऑथेंटिकेशन सक्रिय करें",
     "trigger_id_exists": "ट्रिगर Id पहले से मौजूद है",
-    "about_this_blueprint": "इस blueprint के बारे में",
-    "next_execution": "अगली निष्पादन",
-    "prev_execution": "पिछला निष्पादन"
+    "about_this_blueprint": "इस blueprint के बारे में"
   }
 }

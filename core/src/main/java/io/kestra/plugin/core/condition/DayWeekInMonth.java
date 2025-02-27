@@ -23,7 +23,7 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events on day of the week relative to current month (first, last, ...)"
+    title = "Condition to execute tasks on a specific day of the week relative to the current month (first, last, ...)"
 )
 @Plugin(
     examples = {

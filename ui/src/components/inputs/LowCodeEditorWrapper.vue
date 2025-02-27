@@ -1,10 +1,10 @@
 <template>
-    <div v-loading="isLoading">
+    <div v-loading="isLoading" class="vue-flow">
         <LowCodeEditor
+            v-if="flowGraph"
             :flow-graph="flowGraph"
             :flow-id="flowId"
             :namespace="namespace"
-            :execution="execution"
             :is-read-only="isReadOnly"
             :source="flowYaml"
             :is-allowed-edit="isAllowedEdit"
@@ -87,3 +87,9 @@
         router.replace({query: {...route.query, ...params}})
     }
 </script>
+
+<style scoped>
+    .vue-flow {
+        height: 100%;
+    }
+</style>

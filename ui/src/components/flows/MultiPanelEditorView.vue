@@ -64,7 +64,7 @@
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
 
 
-    const activeTabs = ref<string[]>([])
+    const activeTabs = ref(["code", "topology"])
 </script>
 
 <style lang="scss" scoped>

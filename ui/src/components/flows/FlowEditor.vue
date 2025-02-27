@@ -24,7 +24,7 @@
 <script setup>
     import {onBeforeUnmount, computed} from "vue"
     import {useStore} from "vuex";
-    import {useLocalStorage} from "@vueuse/core";
+    import {useStorage} from "@vueuse/core";
     import EditorView from "../inputs/EditorView.vue";
     import MultiPanelEditorView from "./MultiPanelEditorView.vue";
 
@@ -48,7 +48,7 @@
     })
 
     const store = useStore();
-    const multiPanelEditor = useLocalStorage("multiPanelEditor", false);
+    const multiPanelEditor = useStorage("multiPanelEditor", false);
     const flow = computed(() => store.state.flow.flow);
     const flowGraph = computed(() => store.state.flow.flowGraph);
     const flowValidation = computed(() => store.getters["flow/flowValidation"]);

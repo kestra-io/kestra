@@ -328,7 +328,7 @@
     import {computed, getCurrentInstance, nextTick, onBeforeUnmount, onMounted, ref, watch,} from "vue";
     import {useStore} from "vuex";
     import {useRoute, useRouter} from "vue-router";
-    import {useLocalStorage} from "@vueuse/core";
+    import {useStorage} from "@vueuse/core";
 
     // Icons
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
@@ -448,7 +448,7 @@
     const flowInfos = computed(() => store.getters["flow/flowInfos"]);
     const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"]);
 
-    const editorViewType = useLocalStorage(storageKeys.EDITOR_VIEW_TYPE, "YAML");
+    const editorViewType = useStorage(storageKeys.EDITOR_VIEW_TYPE, "YAML");
 
     watch(editorViewType, (value) => {
         if(value === "NO_CODE") {
@@ -493,7 +493,7 @@
     store.commit("flow/setHaveChange", props.isDirty);
 
     const editorDomElement = ref(null);
-    const editorWidth = useLocalStorage("editor-size", 50);
+    const editorWidth = useStorage("editor-size", 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
     const flowYaml = computed(() => store.getters["flow/flowYaml"]);

@@ -105,10 +105,10 @@
 </template>
 
 <script setup>
-// Core
+    // Core
     import {getCurrentInstance, nextTick, onMounted, ref, watch} from "vue";
     import {useStore} from "vuex";
-    import {useLocalStorage} from "@vueuse/core";
+    import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
     import {useVueFlow} from "@vue-flow/core";
 
@@ -195,8 +195,8 @@
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
 
     // Components variables
-    const isHorizontalLS = useLocalStorage("topology-orientation", props.horizontalDefault);
-    const isHorizontal = ref(props.horizontalDefault ?? isHorizontalLS.value);
+    const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault);
+    const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value === "true"));
     const vueFlow = ref(null);
     const timer = ref(null);
     const icons = ref(store.getters["plugin/getIcons"]);

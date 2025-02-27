@@ -27,7 +27,7 @@ import jakarta.validation.constraints.NotNull;
 @Plugin(
     examples = {
         @Example(
-            title = "Trigger the flow only after the specific date.",
+            title = "Trigger condition to execute the flow only after the specific date.",
             full = true,
             code = """
                 id: schedule-condition-datetimebetween
@@ -36,7 +36,7 @@ import jakarta.validation.constraints.NotNull;
                 tasks:
                   - id: log_message
                     type: io.kestra.plugin.core.log.Log
-                    message: "This flow will be triggered once every 5 minutes after the date 2025-12-31T23:59:59Z"
+                    message: "This flow will be executed once every 5 minutes after the date 2025-12-31T23:59:59Z"
 
                 triggers:
                   - id: schedule
@@ -49,7 +49,7 @@ import jakarta.validation.constraints.NotNull;
                 """
         ),
         @Example(
-            title = "Trigger the flow between two specific dates.",
+            title = "Trigger condition to execute the flow between two specific dates.",
             full = true,
             code = """
                 id: schedule-condition-datetimebetween
@@ -58,7 +58,7 @@ import jakarta.validation.constraints.NotNull;
                 tasks:
                   - id: log_message
                     type: io.kestra.plugin.core.log.Log
-                    message: "This flow will be triggered once every 5 minutes between the before and after dates"
+                    message: "This flow will be executed once every 5 minutes between the before and after dates"
                 
                 triggers:
                   - id: schedule

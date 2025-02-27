@@ -1,56 +1,21 @@
 <template>
     <div class="tabs">
         <el-checkbox-group v-model="activeTabs">
-            <el-checkbox-button name="code" value="code">
-                <CodeTagsIcon class="tabs-icon" />
-                Flow code
-            </el-checkbox-button>
-            <el-checkbox-button name="nocode" value="nocode">
-                <MouseRightClickIcon class="tabs-icon" />
-                Flow no-code
-            </el-checkbox-button>
-            <el-checkbox-button name="topology" value="topology">
-                <FileTreeOutlineIcon class="tabs-icon" />
-                Topology
-            </el-checkbox-button>
-            <el-checkbox-button name="doc" value="doc">
-                <FileDocumentIcon class="tabs-icon" />
-                Documentation
-            </el-checkbox-button>
-            <el-checkbox-button name="files" value="files">
-                <DotsSquareIcon class="tabs-icon" />
-                Files
-            </el-checkbox-button>
-            <el-checkbox-button name="blueprints" value="blueprints">
-                <BallotOutlineIcon class="tabs-icon" />
-                Blueprints
+            <el-checkbox-button v-for="element of EDITOR_ELEMENTS" :key="element.value" :value="element.value" :name="element.value">
+                <component class="tabs-icon" :is="element.button.icon" />
+                {{ element.button.label }}
             </el-checkbox-button>
         </el-checkbox-group>
     </div>
-    <Splitpanes>
-        <Pane v-if="activeTabs.includes('files')">
-            <EditorSidebarWrapper />
-        </Pane>
-        <Pane v-if="activeTabs.includes('code')">
-            <EditorWrapper />
-        </Pane>
-        <Pane v-if="activeTabs.includes('nocode')">
-            <NoCodeWrapper />
-        </Pane>
-        <Pane v-if="activeTabs.includes('topology')">
-            <LowCodeEditorWrapper />
-        </Pane>
-        <Pane v-if="activeTabs.includes('doc')">
-            <PluginDocumentation />
-        </Pane>
-        <Pane v-if="activeTabs.includes('blueprints')">
-            <BlueprintsWrapper />
+    <Splitpanes class="default-theme">
+        <Pane v-for="element in visibleTabs" :key="element.value">
+            <component :is="element.component" />
         </Pane>
     </Splitpanes>
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
+    import {computed, ref} from "vue";
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
 
@@ -65,11 +30,65 @@
     import EditorWrapper from "../inputs/EditorWrapper.vue";
     import NoCodeWrapper from "../code/NoCodeWrapper.vue";
     import LowCodeEditorWrapper from "../inputs/LowCodeEditorWrapper.vue";
-    import PluginDocumentation from "../plugins/PluginDocumentation.vue";
+    import PluginDocumentationWrapper from "../plugins/PluginDocumentationWrapper.vue";
     import BlueprintsWrapper from "../flows/blueprints/BlueprintsWrapper.vue";
 
+    const activeTabs = ref(["code", "doc"])
 
-    const activeTabs = ref(["code", "topology"])
+    const visibleTabs = computed(() => {
+        return EDITOR_ELEMENTS.filter((element) => activeTabs.value.includes(element.value))
+    })
+
+    const EDITOR_ELEMENTS = [
+        {
+            button: {
+                icon: CodeTagsIcon,
+                label: "Code"
+            },
+            value: "code",
+            component: EditorWrapper
+        },
+        {
+            button: {
+                icon: MouseRightClickIcon,
+                label: "No-code"
+            },
+            value: "nocode",
+            component: NoCodeWrapper
+        },
+        {
+            button: {
+                icon: FileTreeOutlineIcon,
+                label: "Topology"
+            },
+            value: "topology",
+            component: LowCodeEditorWrapper
+        },
+        {
+            button: {
+                icon: FileDocumentIcon,
+                label: "Documentation"
+            },
+            value: "doc",
+            component: PluginDocumentationWrapper
+        },
+        {
+            button: {
+                icon: DotsSquareIcon,
+                label: "Files"
+            },
+            value: "files",
+            component: EditorSidebarWrapper
+        },
+        {
+            button: {
+                icon: BallotOutlineIcon,
+                label: "Blueprints"
+            },
+            value: "blueprints",
+            component: BlueprintsWrapper
+        }
+    ]
 </script>
 
 <style lang="scss" scoped>

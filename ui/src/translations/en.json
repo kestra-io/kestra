@@ -74,8 +74,6 @@
     "triggered done": "Execution <em>{name}</em> is successfully triggered",
     "topology": "Topology",
     "date": "Date",
-    "prev_execution": "Previous execution",
-    "next_execution": "Next execution",
     "datepicker": {
       "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S)'",
       "duration example": "Example: 'P1DT1H1M1S'",

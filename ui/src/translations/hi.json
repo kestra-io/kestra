@@ -982,6 +982,7 @@
     },
     "see dependencies": "निर्भरताएँ देखें",
     "see full revision": "पूर्ण पुनरीक्षण देखें",
+    "see_all_states": "सभी अवस्थाएँ देखें",
     "seeing old revision": "आप एक पुराना संशोधन देख रहे हैं: {revision}",
     "select": "अपने {{section}} का चयन करें",
     "select datetime": "एक तिथि चुनें",

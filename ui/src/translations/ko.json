@@ -982,6 +982,7 @@
     },
     "see dependencies": "종속성 보기",
     "see full revision": "전체 수정본 보기",
+    "see_all_states": "모든 상태 보기",
     "seeing old revision": "이전 리비전을 보고 있습니다: {revision}",
     "select": "{{section}}을 선택하세요",
     "select datetime": "날짜 선택",

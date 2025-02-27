@@ -410,12 +410,6 @@
             type: Number,
             default: null,
         },
-        guidedProperties: {
-            type: Object,
-            default: () => {
-                return {tourStarted: false};
-            },
-        },
         flowValidation: {
             type: Object,
             default: undefined,
@@ -433,6 +427,8 @@
             default: false,
         },
     });
+
+    const guidedProperties = ref(store.getters["core/guidedProperties"]);
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
 
@@ -679,7 +675,12 @@
     };
 
     onMounted(async () => {
-        editorViewType.value = props.isNamespace ? "YAML" : (localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML");
+        if(guidedProperties.value?.tourStarted) {
+            editorViewType.value = "YAML";
+            switchViewType(editorViewTypes.SOURCE_TOPOLOGY, false);
+        } else {
+            editorViewType.value = props.isNamespace ? "YAML" : (localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML");
+        }
 
         if(!props.isNamespace) {
             initViewType()
@@ -695,7 +696,7 @@
         // Guided tour
         setTimeout(() => {
             if (
-                !props.guidedProperties.tourStarted &&
+                !guidedProperties?.value?.tourStarted &&
                 localStorage.getItem("tourDoneOrSkip") !== "true" &&
                 props.total === 0
             ) {
@@ -869,8 +870,8 @@
         if (existingTask) {
             store.dispatch("core/showMessage", {
                 variant: "error",
-                title: this.$t("trigger_id_exists"),
-                message: this.$t("trigger_id_message", {existingTrigger: existingTask}),
+                title: t("trigger_id_exists"),
+                message: t("trigger_id_message", {existingTrigger: existingTask}),
             });
             return;
         }
@@ -903,8 +904,8 @@
         if (existingTask) {
             store.dispatch("core/showMessage", {
                 variant: "error",
-                title: this.$t("task_id_exists"),
-                message: this.$t("task_id_message", {existingTask}),
+                title: t("task_id_exists"),
+                message: t("task_id_message", {existingTask}),
             });
             return;
         }
@@ -1012,8 +1013,8 @@
         if (flowParsed.value === undefined) {
             store.dispatch("core/showMessage", {
                 variant: "error",
-                title: this.$t("invalid flow"),
-                message: this.$t("invalid yaml"),
+                title: t("invalid flow"),
+                message: t("invalid yaml"),
             });
 
             return;
@@ -1022,15 +1023,15 @@
         if (flowErrors.value) {
             if (props.flowValidation.outdated && props.isCreating) {
                 overrideFlow.value = await ElMessageBox({
-                    title: this.$t("override.title"),
+                    title: t("override.title"),
                     message: () => {
                         return h("div", null, [
-                            h("p", null, this.$t("override.details")),
+                            h("p", null, t("override.details")),
                         ]);
                     },
                     showCancelButton: true,
-                    confirmButtonText: this.$t("ok"),
-                    cancelButtonText: this.$t("cancel"),
+                    confirmButtonText: t("ok"),
+                    cancelButtonText: t("cancel"),
                     center: false,
                     showClose: false,
                 })
@@ -1184,7 +1185,7 @@
                     }
                 }
 
-                return this.$t("delete confirm", {name: metadata.id}) + warning;
+                return t("delete confirm", {name: metadata.id}) + warning;
             })
             .then((message) => {
                 toast.confirm(message, () => {

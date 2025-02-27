@@ -241,7 +241,7 @@
         }
         return valueOptions.value.filter((o) =>
             o.label.toLowerCase().startsWith(prefixFilter.value),
-        );
+        ) || [];
     });
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
@@ -275,6 +275,7 @@
 
                 if (o.key === "timeRange") comparator = "relative_date";
                 if (o.key === "date") comparator = "absolute_date";
+                if (o.key === "childFilter") comparator = "child";
 
                 return comparator === option.label;
             })[0];
@@ -327,7 +328,7 @@
         };
 
         // Check if parent filter already exists
-        const existingFilterIndex = currentFilters.value.findIndex(
+        const existingFilterIndex = currentFilters.value.filter((itm) => itm.label !== "labels").findIndex(
             (item) => item.label === option.value.label,
         );
         if (existingFilterIndex !== -1) {
@@ -358,6 +359,8 @@
                 comparatorCallback(option.comparators[0]);
             }
         }
+
+        updateHoveringIndex(0);
     };
     const comparatorCallback = (value) => {
         currentFilters.value[dropdowns.value.second.index].comparator = value;
@@ -392,7 +395,7 @@
     const isOptionDisabled = () => {
         if (!activeParentFilter.value) return false;
 
-        const parentIndex = currentFilters.value.findIndex(
+        const parentIndex = currentFilters.value.filter((itm) => itm.label !== "labels").findIndex(
             (item) => item.label === activeParentFilter.value,
         );
         if (parentIndex === -1) return false;
@@ -406,7 +409,7 @@
             );
             if (parentIndex !== -1) {
                 if (
-                    ["log level"].includes(
+                    ["status", "log level"].includes(
                         lastClickedParent.value.toLowerCase(),
                     )
                 ) {
@@ -633,12 +636,16 @@
 
         if (typeof wholeSearchContent.at(-1) === "string") {
             if (
-                ["labels", "details"].includes(wholeSearchContent.at(-2)?.label) ||
+                ["details"].includes(wholeSearchContent.at(-2)?.label) ||
                 wholeSearchContent.at(-2)?.value?.length === 0
             ) {
-                // Adding value to preceding empty filter
-                // TODO Provide a way for user to escape infinite labels & details loop (you can never fallback to a new filter, any further text will be added as a value to the filter)
-                wholeSearchContent.at(-2)?.value?.push(wholeSearchContent.at(-1));
+                if(wholeSearchContent.at(-2)?.label === "child") {
+                    if (typeof wholeSearchContent.at(-1) === "string") wholeSearchContent = [];
+                } else {
+                    // Adding value to preceding empty filter
+                    // TODO Provide a way for user to escape infinite labels & details loop (you can never fallback to a new filter, any further text will be added as a value to the filter)
+                    wholeSearchContent.at(-2)?.value?.push(wholeSearchContent.at(-1));
+                }
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
@@ -1033,6 +1040,15 @@ $properties: v-bind('props.propertiesWidth + "px"');
     }
 
     .el-select-dropdown__item {
+        &.is-selected {
+            background-color: var(--ks-background-hover);
+            font-weight: initial;
+
+            &::after {
+                display: none;
+            }
+        }
+
         &.disabled {
             opacity: 0.6;
 

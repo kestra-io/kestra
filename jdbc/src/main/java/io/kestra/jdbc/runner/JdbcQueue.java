@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.DataException;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
@@ -129,18 +130,22 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         Map<Field<Object>, Object> fields = this.produceFields(consumerGroup, key, message);
 
-        dslContextWrapper.transaction(configuration -> {
-            DSLContext context = DSL.using(configuration);
+        try {
+            dslContextWrapper.transaction(configuration -> {
+                DSLContext context = DSL.using(configuration);
 
-            if (!skipIndexer) {
-                jdbcQueueIndexer.accept(context, message);
-            }
+                if (!skipIndexer) {
+                    jdbcQueueIndexer.accept(context, message);
+                }
 
-            context
-                .insertInto(table)
-                .set(fields)
-                .execute();
-        });
+                context
+                    .insertInto(table)
+                    .set(fields)
+                    .execute();
+            });
+        } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
+            throw new QueueException("Unable to emit a message to the queue", e);
+        }
     }
 
     public void emitOnly(String consumerGroup, T message) throws QueueException{

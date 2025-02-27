@@ -267,7 +267,7 @@
     const onDelete = (event) => {
         const flowParsed = YamlUtils.parse(props.source);
         toast.confirm(
-            this.$t("delete task confirm", {taskId: event.id}),
+            t("delete task confirm", {taskId: event.id}),
             () => {
                 const section = event.section ? event.section : SECTIONS.TASKS;
                 if (
@@ -277,8 +277,8 @@
                 ) {
                     store.dispatch("core/showMessage", {
                         variant: "error",
-                        title: this.$t("can not delete"),
-                        message: this.$t("can not have less than 1 task"),
+                        title: t("can not delete"),
+                        message: t("can not have less than 1 task"),
                     });
                     return;
                 }
@@ -365,8 +365,8 @@
         } else {
             store.dispatch("core/showMessage", {
                 variant: "error",
-                title: this.$t("error detected"),
-                message: this.$t("Task Id already exist in the flow", {
+                title: t("error detected"),
+                message: t("Task Id already exist in the flow", {
                     taskId: YamlUtils.parse(event).id,
                 }),
             });

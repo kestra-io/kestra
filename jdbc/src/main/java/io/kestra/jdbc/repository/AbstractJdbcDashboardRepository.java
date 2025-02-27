@@ -135,9 +135,14 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     public <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException {
         Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new HashMap<>();
 
+        @SuppressWarnings("unchecked")
         QueryBuilderInterface<F> queryBuilder = (QueryBuilderInterface<F>) queryBuilderByHandledFields.computeIfAbsent(
             dataChart.getData().repositoryClass(),
-            clazz -> queryBuilders.stream().filter(b -> clazz.isAssignableFrom(b.getClass())).findFirst().orElseThrow(() -> new UnsupportedOperationException("No query builder found for " + clazz))
+            clazz -> queryBuilders
+                .stream()
+                .filter(b -> clazz.isAssignableFrom(b.getClass()))
+                .findFirst()
+                .orElseThrow(() -> new UnsupportedOperationException("No query builder found for " + clazz))
         );
 
         return queryBuilder.fetchData(tenantId, dataChart.getData(), startDate, endDate, pageable);

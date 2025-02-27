@@ -321,6 +321,8 @@ class ExecutionControllerTest {
         assertThat(results, is(notNullValue()));
         assertThat(results.size(), is(greaterThan(0)));
         assertThat(results.getLast().getData().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(results.getFirst().getId(), is("start"));
+        assertThat(results.getLast().getId(), is("end"));
     }
 
     private ExecutionController.EvalResult eval(Execution execution, String expression, int index) {
@@ -1211,19 +1213,31 @@ class ExecutionControllerTest {
 
         // + is there to simulate that a space was added (this can be the case from UI autocompletion for eg.)
         executions = client.toBlocking().retrieve(
-            GET("/api/v1/executions/search?page=1&size=25&labels=url:+"+ENCODED_URL_LABEL_VALUE), PagedResults.class
+            GET("/api/v1/executions/search?page=1&size=25&filters[labels][$eq][url]="+ENCODED_URL_LABEL_VALUE), PagedResults.class
+        );
+
+        assertThat(executions.getTotal(), is(1L));
+
+        executions = client.toBlocking().retrieve(
+            GET("/api/v1/executions/search?page=1&size=25&labels=url:"+ENCODED_URL_LABEL_VALUE), PagedResults.class
         );
 
         assertThat(executions.getTotal(), is(1L));
 
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?startDate=2024-01-07T18:43:11.248%2B01:00&timeRange=PT12H"))
+            () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?filters[startDate][$eq]=2024-01-07T18:43:11.248%2B01:00&filters[timeRange][$eq]=PT12H"))
         );
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
         assertThat(e.getResponse().getBody(String.class).isPresent(), is(true));
         assertThat(e.getResponse().getBody(String.class).get(), containsString("are mutually exclusive"));
+
+        executions = client.toBlocking().retrieve(
+            GET("/api/v1/executions/search?filters[timeRange][$eq]=PT12H"), PagedResults.class
+        );
+
+        assertThat(executions.getTotal(), is(1L));
 
         executions = client.toBlocking().retrieve(
             GET("/api/v1/executions/search?timeRange=PT12H"), PagedResults.class
@@ -1233,9 +1247,14 @@ class ExecutionControllerTest {
 
         e = assertThrows(
             HttpClientResponseException.class,
+            () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?filters[timeRange][$eq]=P1Y"))
+        );
+        assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+
+        e = assertThrows(
+            HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?timeRange=P1Y"))
         );
-
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
 
         e = assertThrows(
@@ -1257,7 +1276,7 @@ class ExecutionControllerTest {
     @RetryingTest(5)
     void kill() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
-        Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
+        Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep-long");
         assertThat(runningExecution.getState().isRunning(), is(true));
 
         // listen to the execution queue
@@ -1495,9 +1514,16 @@ class ExecutionControllerTest {
     @Test
     void badDate() {
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(GET("/api/v1/executions/search?startDate=2024-06-03T00:00:00.000%2B02:00&endDate=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
+            client.toBlocking().retrieve(GET(
+                "/api/v1/executions/search?filters[startDate][$eq]=2024-06-03T00:00:00.000%2B02:00&filters[endDate][$eq]=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
         assertThat(exception.getStatus().getCode(), is(422));
         assertThat(exception.getMessage(),is("Illegal argument: Start date must be before End Date"));
+
+        HttpClientResponseException exception_oldParameters = assertThrows(HttpClientResponseException.class, () ->
+            client.toBlocking().retrieve(GET(
+                "/api/v1/executions/search?startDate=2024-06-03T00:00:00.000%2B02:00&endDate=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
+        assertThat(exception_oldParameters.getStatus().getCode(), is(422));
+        assertThat(exception_oldParameters.getMessage(),is("Illegal argument: Start date must be before End Date"));
     }
 
     @Test
@@ -1539,8 +1565,12 @@ class ExecutionControllerTest {
         assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels(), hasItem(new Label("project", "foo,bar")));
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
-            .GET("/api/v1/executions/search?labels=" + encodedCommaWithinLabel);
+            .GET("/api/v1/executions/search?filters[labels][$eq][project]=foo,bar");
         assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal(), is(2L));
+
+        MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
+            .GET("/api/v1/executions/search?labels=project:foo,bar");
+        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal(), is(2L));
     }
 
     @Test
@@ -1557,8 +1587,12 @@ class ExecutionControllerTest {
         ));
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
-            .GET("/api/v1/executions/search?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel);
+            .GET("/api/v1/executions/search?filters[labels][$eq][project]=foo,bar" + "&filters[labels][$eq][status]=test");
         assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal(), is(1L));
+
+        MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
+            .GET("/api/v1/executions/search?labels=project:foo,bar" + "&labels=status:test");
+        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal(), is(1L));
     }
 
     @Test

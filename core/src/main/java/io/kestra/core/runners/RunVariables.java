@@ -233,6 +233,7 @@ public final class RunVariables {
                                 tasksMap.put(taskRun.getTaskId(), Map.of("state", taskRun.getState().getCurrent()));
                             } else {
                                 if (tasksMap.containsKey(taskRun.getTaskId())) {
+                                    @SuppressWarnings("unchecked")
                                     Map<String, Object> taskRunMap = new HashMap<>((Map<String, Object>) tasksMap.get(taskRun.getTaskId()));
                                     taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
                                     tasksMap.put(taskRun.getTaskId(), taskRunMap);

@@ -1,3 +1,6 @@
+"""
+To run it locally, add OPENAI_API_KEY env variable and pip install gitpython openai
+"""
 import json
 import git
 from openai import OpenAI
@@ -93,7 +96,7 @@ def translate_dict(en_dict, target_language):
             translated_value = translate_dict(value, target_language)
         else:
             translated_value = translate_text(value, target_language)
-            print(f"Translating key '{key}' with value '{value}' from English, to value '{translated_value}' in {target_language}.")
+            print(f"Translating key {key} with value {value} from English to {target_language}, to value '{translated_value}'.")
         translated_dict[key] = translated_value
     return translated_dict
 

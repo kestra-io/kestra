@@ -25,16 +25,17 @@
 <script setup>
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
+    import {useRouter} from "vue-router";
 
     import {Doughnut} from "vue-chartjs";
 
     import {totalsLegend} from "../legend.js";
-
-    import Utils from "../../../../../utils/utils.js";
+    import {useTheme} from "../../../../../utils/utils.js";
     import {defaultConfig} from "../../../../../utils/charts.js";
-    import {getScheme} from "../../../../../utils/scheme.js";
-    import {useRouter} from "vue-router";
+    import {useScheme} from "../../../../../utils/scheme.js";
+
     const router = useRouter();
+    const scheme = useScheme();
 
     import NoData from "../../../../layout/NoData.vue";
 
@@ -51,6 +52,8 @@
         },
     });
 
+    const theme = useTheme();
+
     const parsedData = computed(() => {
         let stateCounts = Object.create(null);
 
@@ -66,7 +69,7 @@
 
         const labels = Object.keys(stateCounts);
         const data = labels.map((state) => stateCounts[state]);
-        const backgroundColor = labels.map((state) => getScheme(state));
+        const backgroundColor = labels.map((state) => scheme.value[state]);
 
         const maxDataValue = Math.max(...data);
         const thicknessScale = data.map(
@@ -78,6 +81,8 @@
             datasets: [{data, backgroundColor, thicknessScale, borderWidth: 0}],
         };
     });
+
+
 
     const options = computed(() =>
         defaultConfig({
@@ -111,13 +116,13 @@
                     });
                 }
             },
-        }),
+        }, theme.value),
     );
 
-    const centerPlugin = {
+    const centerPlugin = computed(() => ({
         id: "centerPlugin",
         beforeDraw(chart) {
-            const darkTheme = Utils.getTheme() === "dark";
+            const darkTheme = theme.value === "dark";
 
             const ctx = chart.ctx;
             const dataset = chart.data.datasets[0];
@@ -135,7 +140,7 @@
 
             ctx.restore();
         },
-    };
+    }));
 
     const thicknessPlugin = {
         id: "thicknessPlugin",

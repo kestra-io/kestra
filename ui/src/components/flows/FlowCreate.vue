@@ -23,6 +23,8 @@
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
 
+    import {getRandomFlowID} from "../../../scripts/product/flow";
+
     export default {
         mixins: [RouteContext],
         components: {
@@ -37,7 +39,7 @@
         created() {
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
+                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
                 this.$tours["guidedTour"]?.start();
             }
             this.setupFlow()
@@ -59,7 +61,7 @@
                     this.source = await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
                     const selectedNamespace = this.$route.query.namespace || "company.team";
-                    this.source = `id: myflow
+                    this.source = `id: ${getRandomFlowID()}
 namespace: ${selectedNamespace}
 
 tasks:

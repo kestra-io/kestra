@@ -138,7 +138,7 @@
             @keydown.delete.prevent="deleteKeystroke"
         >
             <template #empty>
-                <div class="m-5 empty">
+                <div class="m-4 empty">
                     <img :src="FileExplorerEmpty">
                     <h3>{{ $t("namespace files.no_items.heading") }}</h3>
                     <p>{{ $t("namespace files.no_items.paragraph") }}</p>
@@ -1063,40 +1063,6 @@
     };
 </script>
 
-<style lang="scss">
-.filter .el-input__wrapper {
-    padding-right: 0px;
-}
-
-.el-tree {
-    height: calc(100% - 64px);
-    overflow: auto;
-
-    .el-tree__empty-block {
-        height: auto;
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: var(--ks-button-background-primary);
-        border-radius: 5px;
-
-        html.dark & {
-            background:  var(--ks-button-background-primary);
-        }
-    }
-
-    .node {
-        --el-tree-node-content-height: 36px;
-        --el-tree-node-hover-bg-color: transparent;
-        line-height: 36px;
-    }
-
-    .el-tree-node.is-current > .el-tree-node__content {
-            min-width: fit-content;
-    }
-}
-</style>
-
 <style lang="scss" scoped>
 @import "@kestra-io/ui-libs/src/scss/variables";
 
@@ -1104,17 +1070,20 @@
     background: var(--ks-background-card);
     border-right: 1px solid var(--ks-border-primary);
     overflow-x: hidden;
-    min-width: calc(30% - 8px);
+    min-width: calc(20% - 11px);
+    width: 20%;
+
+    .filter{
+        .el-input__wrapper {
+            padding-right: 0px;
+        }
+    }
 
     .empty {
         position: relative;
         top: 100px;
         text-align: center;
-        color: white;
-
-        html.light & {
-            color: $tertiary;
-        }
+        color: var(--ks-content-secondary);
 
         & img {
             margin-bottom: 2rem;
@@ -1124,6 +1093,7 @@
             font-size: var(--font-size-lg);
             font-weight: 500;
             margin-bottom: 0.5rem;
+            color: var(--ks-content-secondary);
         }
 
         & p {
@@ -1153,7 +1123,7 @@
         color: var(--ks-content-primary);
 
         &:hover {
-            color: var(--ks-content-link);
+            color: var(--ks-content-link-hover);
         }
     }
 
@@ -1166,10 +1136,62 @@
             height: 30px;
             padding: 16px;
             font-size: var(--el-font-size-small);
-            color: var(--bs-gray-900);
+            color: $gray-900;
 
             &:hover {
                 color: var(--ks-content-secondary);
+            }
+        }
+    }
+
+    :deep(.el-tree) {
+        height: calc(100% - 64px);
+        overflow: auto;
+
+        .el-tree__empty-block {
+            height: auto;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--ks-button-background-primary);
+            border-radius: 5px;
+
+            html.dark & {
+                background:  var(--ks-button-background-primary);
+            }
+        }
+
+        .node {
+            --el-tree-node-content-height: fit-content;
+            --el-tree-node-hover-bg-color: transparent;
+        }
+
+        .el-tree-node__content {
+            margin-bottom: 2px !important;
+            padding-left: 0 !important;
+
+            &:last-child{
+                margin-bottom: 0px;
+            }
+
+            &:hover{
+                border: 1px solid $primary;
+            }
+        }
+
+        .is-expanded {
+            .el-tree-node__children {
+                margin-left: 11px !important;
+                padding-left: 0 !important;
+                border-left: 1px solid var(--ks-border-primary);
+            }
+        }
+
+        .el-tree-node.is-current > .el-tree-node__content {
+            min-width: fit-content;
+
+            html.dark &{
+                background-color: $primary;
             }
         }
     }

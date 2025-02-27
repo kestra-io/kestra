@@ -112,14 +112,10 @@
             addInput() {
                 this.newInputs.push({type: "STRING"});
             },
-            onChangeType(value) {
+            onChangeType(type) {
                 this.loading = true;
-                this.selectedInput = {
-                    type: value,
-                    id: this.newInputs[this.selectedIndex].id,
-                };
-                this.newInputs[this.selectedIndex] = this.selectedInput;
-                this.loadSchema(value);
+                this.newInputs[this.selectedIndex].type = type;
+                this.loadSchema(type);
             },
         },
     };

@@ -48,7 +48,7 @@
 
             <!-- Non required properties shown collapsed-->
             <el-collapse class="collapse">
-                <el-collapse-item :title="$t('no_code.sections.advanced')">
+                <el-collapse-item :title="$t('no_code.sections.optional')">
                     <el-form-item
                         :key="index"
                         :required="isRequired(key)"
@@ -238,6 +238,16 @@
 .el-form-item.is-required:not(.is-no-asterisk).asterisk-left {
     > :deep(.el-form-item__label) {
         display: flex;
+    }
+}
+
+.label {
+    color: var(--ks-content-primary);
+}
+
+.el-tooltip__trigger {
+    > :deep(svg) {
+        fill: var(--ks-content-tertiary);
     }
 }
 

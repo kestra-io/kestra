@@ -30,7 +30,7 @@
             />
         </div>
 
-        <small class="total text-total ms-2">
+        <small class="total ms-2">
             {{ $t('Total') }}: {{ total }}
         </small>
     </div>
@@ -127,17 +127,23 @@
             }
         }
 
-        .text-total {
-            color: var(--ks-content-primary);
-            font-weight: normal;
-        }
-
         .total {
             padding: 0 4px;
             line-height: 1.85;
             font-size: var(--el-font-size-extra-small);
-            color: var(--ks-content-link);
+            color: var(--ks-content-secondary);
             white-space: nowrap;
+        }
+
+        :deep(.el-pagination .el-pager li) {
+            background-color: var(--ks-button-background-secondary);
+            border: 1px solid var(--ks-border-primary);
+            color: var(--ks-content-primary);
+
+            &:hover, &.is-active {
+                background-color: var(--ks-button-background-secondary-hover);
+                border: 1px solid var(--ks-border-active);
+            }
         }
     }
 </style>

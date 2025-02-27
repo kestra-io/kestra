@@ -43,7 +43,7 @@
                         target="_blank"
                         class="p-3 px-4 mt-0 mb-lg-5 watch"
                     >
-                        Watch Video
+                        {{ $t("watch_video") }}
                     </el-button>
                 </div>
                 <el-divider>

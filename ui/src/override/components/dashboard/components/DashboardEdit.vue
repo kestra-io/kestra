@@ -27,7 +27,7 @@
                     source: input,
                 });
 
-                this.$toast().saved(response.title);
+                this.$toast().success(this.$t("custom_dashboard_validate_editing", {title: response.title}));
 
                 this.$store.dispatch("core/isUnsaved", false);
             },

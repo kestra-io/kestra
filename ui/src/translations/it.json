@@ -196,7 +196,7 @@
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
-      "title": "Debug Outputs",
+      "title": "Espressione di Debug",
       "tooltip": "Esegui qualsiasi espressione Pebble e ispeziona il contesto dell'esecuzione."
     },
     "attempt": "Tentativo",
@@ -268,7 +268,10 @@
       },
       "empty": "Nessun blueprint da mostrare.",
       "custom": "Blueprint personalizzati",
-      "community": "Comunità"
+      "community": "Comunità",
+      "dashboards": "Blueprint del Dashboard",
+      "flows": "Blueprint dei Flow",
+      "apps": "Blueprint delle App"
     },
     "use": "Usa",
     "plugins": {
@@ -290,7 +293,7 @@
     "template creation": "Creazione del template",
     "templates": "Templates",
     "templates deprecated": "I templates sono deprecati. Si prega di utilizzare i subflows. Vedi la <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sezione Migrazioni</a> che spiega come migrare dai templates ai subflows.",
-    "no result": "Nessun log emesso finora",
+    "no result": "Non ci sono risultati da mostrare.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Dettagli del trigger",
@@ -534,7 +537,7 @@
     "row count": "Conteggio righe",
     "encoding": "Codifica",
     "show": "Mostra",
-    "advanced configuration": "Configurazione avanzata",
+    "advanced configuration": "Altre proprietà",
     "all executions": "Tutte le esecuzioni",
     "trigger execution id": "Trigger Execution Id",
     "triggers_state": {
@@ -681,8 +684,6 @@
         "theme": {
           "label": "Preferenze del Tema",
           "fields": {
-            "mode": "Modalità Tema",
-            "editor_theme": "Tema dell'Editor",
             "editor_font_size": "Dimensione del Font dell'Editor",
             "editor_font_family": "Famiglia del Font dell'Editor",
             "editor_folding_stratgy": "Piegatura automatica del codice nell'Editor",
@@ -693,7 +694,8 @@
               "classic": "Classico",
               "kestra": "Kestra"
             },
-            "logs_font_size": "Dimensione Font dei Log"
+            "logs_font_size": "Dimensione Font dei Log",
+            "theme": "Modello"
           }
         },
         "localization": {
@@ -1018,9 +1020,12 @@
         "in": "nel",
         "starts_with": "inizia con",
         "not_contains": "non contiene",
-        "is_not_one_off": "non è uno di",
+        "not_in": "non in",
         "is_one_of": "è uno di",
-        "between": "tra"
+        "between": "tra",
+        "greater_than": "maggiore di",
+        "less_than": "minore di",
+        "ends_with": "termina con"
       },
       "save": {
         "label": "Ricerche salvate",
@@ -1068,8 +1073,8 @@
         "main": "Proprietà principali",
         "error_handlers": "Gestori degli Errori",
         "tasks": "Attività",
-        "advanced": "Configurazione avanzata",
-        "finally": "Infine"
+        "finally": "Infine",
+        "optional": "Proprietà opzionali"
       },
       "creation": {
         "select": "Seleziona una {section}",
@@ -1148,6 +1153,70 @@
         "message": "Le app nella Kestra Enterprise Edition ti consentono di creare interfacce utente personalizzate che interagiscono con i workflow di Kestra al di fuori della piattaforma. Questa funzionalità ti permette di utilizzare i tuoi workflow come backend per applicazioni personalizzate, consentendo agli utenti non tecnici di inviare dati tramite moduli o riprendere workflow PAUSED in attesa di approvazione."
       }
     },
-    "apps": "Applicazioni"
+    "apps": "Applicazioni",
+    "editor_shortcuts": {
+      "save_flow": "Salva flow",
+      "comment_uncomment": "Commenta/Decommenta",
+      "duplicate_cursor": "Duplica cursore",
+      "uncomment": "Decommenta",
+      "label": "Scorciatoie da tastiera",
+      "fold_unfold": "Piega/Spiega codice",
+      "comment": "Commento",
+      "move_line": "Sposta linea",
+      "command_palette": "Mostra la palette dei comandi",
+      "trigger_autocompletion": "Attiva autocompletamento",
+      "reset_fontsize": "Reimposta dimensione del font",
+      "decrease_fontsize": "Riduci dimensione carattere",
+      "increase_fontsize": "Aumenta dimensione del carattere"
+    },
+    "something_went_wrong": {
+      "loading_execution": "Si è verificato un errore durante il caricamento dell'esecuzione"
+    },
+    "properties": {
+      "shown": "Visualizzato nella tabella",
+      "hint": "Scegli colonne visibili",
+      "hidden": "Nascosto nella Tabella",
+      "label": "Proprietà"
+    },
+    "debug": "Debug",
+    "default": "Predefinito",
+    "custom_dashboard_confirm_deletion": "Sei sicuro di voler eliminare la dashboard <code>{title}</code>?",
+    "custom_dashboard_validate_editing": "Le modifiche nel dashboard <code>{title}</code> sono state salvate.",
+    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> è stato creato.",
+    "no_logs_data_description": "O non ci sono flow in esecuzione, oppure potrebbe essere necessario modificare i filtri.",
+    "no_logs_data": "Nessun dato",
+    "fold_all_multi_lines": "Comprimi Tutte le Linee Multiple",
+    "months": "Mesi",
+    "trigger_id_message": "L'ID del trigger ${existingTrigger} esiste già nel flow.",
+    "minutes": "Minuti",
+    "for flow": "per flow",
+    "light_version": "Versione leggera",
+    "deleted_label": "Eliminato",
+    "task_id_exists": "L'ID del task esiste già",
+    "use_dark_background": "Usa questa versione quando lavori su uno sfondo scuro per garantire che il nostro nome rimanga leggibile.",
+    "download_logos": "Scarica il Pacchetto Logo",
+    "seconds": "Secondi",
+    "this_task_has": "Questo task ha",
+    "dark_version": "Versione scura",
+    "runners": "Corridori",
+    "watch_video": "Guarda Video",
+    "wordmark_colors": "I colori del marchio si adattano in base allo sfondo, mentre l'icona rimane senza sfondo quando posizionata su uno sfondo scuro.",
+    "weeks": "Settimane",
+    "years": "Anni",
+    "task_id_message": "L'ID del Task ${existingTask} esiste già nel flow.",
+    "monogram": "Monogramma",
+    "select": "Seleziona il tuo {{section}}",
+    "task_runners": "Esecutori di Task",
+    "learn_more": "Scopri di più",
+    "light_background": "Questa è l'opzione preferita quando si lavora con uno sfondo chiaro.",
+    "watch": "Guarda",
+    "hours": "Ore",
+    "input_custom_duration": "oppure inserisci durata personalizzata:",
+    "days": "Giorni",
+    "data_not_protected": "I tuoi dati non sono protetti. Non perderli. <b>Abilita le nostre funzionalità di sicurezza gratuite o prova la nostra offerta a pagamento.</b>",
+    "confirm": "Conferma",
+    "activate_basic_auth": "Attiva l'Autenticazione di Base",
+    "trigger_id_exists": "L'ID del trigger esiste già",
+    "about_this_blueprint": "Informazioni su questo blueprint"
   }
 }

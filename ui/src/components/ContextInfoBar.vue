@@ -171,7 +171,7 @@
 
     const onSwitchTheme = () => {
         themeIsDark.value = !themeIsDark.value;
-        Utils.switchTheme(themeIsDark.value ? "dark" : "light");
+        Utils.switchTheme(store, themeIsDark.value ? "dark" : "light");
     }
 </script>
 
@@ -254,7 +254,7 @@
         .newsDot{
             width: 10px;
             height: 10px;
-            background-color: var(--content-alert);
+            background-color: var(--ks-content-alert);
             border: 2px solid var(--ks-button-background-secondary);
             border-radius: 50%;
             display: block;

@@ -196,7 +196,7 @@
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
-      "title": "디버그 출력",
+      "title": "디버그 표현식",
       "tooltip": "모든 Pebble 표현식을 렌더링하고 실행 컨텍스트를 검사합니다."
     },
     "attempt": "시도",
@@ -268,7 +268,10 @@
       },
       "empty": "블루프린트가 없습니다.",
       "custom": "사용자 정의 blueprints",
-      "community": "커뮤니티"
+      "community": "커뮤니티",
+      "dashboards": "대시보드 Blueprints",
+      "flows": "플로우 Blueprints",
+      "apps": "앱 Blueprints"
     },
     "use": "사용",
     "plugins": {
@@ -290,7 +293,7 @@
     "template creation": "템플릿 생성",
     "templates": "템플릿들",
     "templates deprecated": "템플릿은 사용 중지되었습니다. 대신 subflows를 사용하세요. 템플릿에서 subflows로 마이그레이션하는 방법을 설명하는 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">마이그레이션 섹션</a>을 참조하세요.",
-    "no result": "지금까지 log가 생성되지 않았습니다",
+    "no result": "결과가 없습니다.",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Trigger 세부 정보",
@@ -534,7 +537,7 @@
     "row count": "행 수",
     "encoding": "인코딩",
     "show": "보기",
-    "advanced configuration": "고급 구성",
+    "advanced configuration": "다른 속성",
     "all executions": "모든 실행",
     "trigger execution id": "Trigger Execution Id",
     "triggers_state": {
@@ -681,8 +684,6 @@
         "theme": {
           "label": "테마 설정",
           "fields": {
-            "mode": "테마 모드",
-            "editor_theme": "편집기 테마",
             "editor_font_size": "편집기 글꼴 크기",
             "editor_font_family": "편집기 글꼴 패밀리",
             "editor_folding_stratgy": "편집기에서 자동 코드 접기",
@@ -693,7 +694,8 @@
               "classic": "클래식",
               "kestra": "Kestra"
             },
-            "logs_font_size": "로그 글꼴 크기"
+            "logs_font_size": "로그 글꼴 크기",
+            "theme": "테마"
           }
         },
         "localization": {
@@ -1018,9 +1020,12 @@
         "in": "안에",
         "starts_with": "로 시작합니다",
         "not_contains": "포함하지 않음",
-        "is_not_one_off": "아닌 것 중 하나입니다.",
+        "not_in": "에 없음",
         "is_one_of": "중 하나입니다.",
-        "between": "사이에"
+        "between": "사이에",
+        "greater_than": "보다 큼",
+        "less_than": "보다 작음",
+        "ends_with": "끝남"
       },
       "save": {
         "label": "저장된 검색",
@@ -1068,8 +1073,8 @@
         "main": "주요 속성",
         "error_handlers": "오류 처리기",
         "tasks": "작업",
-        "advanced": "고급 구성",
-        "finally": "마지막으로"
+        "finally": "마지막으로",
+        "optional": "선택적 속성"
       },
       "creation": {
         "select": "{section}을 선택하십시오",
@@ -1148,6 +1153,70 @@
         "message": "Kestra Enterprise Edition의 앱은 플랫폼 외부에서 Kestra 워크플로와 상호작용하는 맞춤형 UI를 구축할 수 있게 해줍니다. 이 기능을 통해 워크플로를 맞춤형 애플리케이션의 백엔드로 사용할 수 있으며, 비기술적 사용자도 양식을 통해 데이터를 제출하거나 승인을 기다리는 PAUSED 워크플로를 재개할 수 있습니다."
       }
     },
-    "apps": "앱"
+    "apps": "앱",
+    "editor_shortcuts": {
+      "save_flow": "Flow 저장",
+      "comment_uncomment": "주석 처리/주석 해제",
+      "duplicate_cursor": "커서 복제",
+      "uncomment": "주석 해제",
+      "label": "키보드 단축키",
+      "fold_unfold": "코드 접기/펼치기",
+      "comment": "댓글",
+      "move_line": "줄 이동",
+      "command_palette": "명령 팔레트 표시",
+      "trigger_autocompletion": "자동 완성 트리거",
+      "reset_fontsize": "글꼴 크기 재설정",
+      "decrease_fontsize": "글꼴 크기 줄이기",
+      "increase_fontsize": "글꼴 크기 증가"
+    },
+    "something_went_wrong": {
+      "loading_execution": "실행을 로드하는 중 문제가 발생했습니다."
+    },
+    "properties": {
+      "shown": "표에 표시됨",
+      "hint": "열 표시 선택",
+      "hidden": "테이블에 숨김",
+      "label": "속성"
+    },
+    "debug": "디버그",
+    "default": "기본값",
+    "custom_dashboard_confirm_deletion": "<code>{title}</code> 대시보드를 삭제하시겠습니까?",
+    "custom_dashboard_validate_editing": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
+    "custom_dashboard_validate_creation": "대시보드 <code>{title}</code>가 생성되었습니다.",
+    "no_logs_data_description": "흐름이 실행 중이지 않거나 필터를 조정해야 할 수 있습니다.",
+    "no_logs_data": "데이터 없음",
+    "fold_all_multi_lines": "모든 다중 라인 접기",
+    "months": "개월",
+    "trigger_id_message": "Flow에 Trigger Id ${existingTrigger}가 이미 존재합니다.",
+    "minutes": "분",
+    "for flow": "flow용",
+    "light_version": "라이트 버전",
+    "deleted_label": "삭제됨",
+    "task_id_exists": "Task ID가 이미 존재합니다.",
+    "use_dark_background": "어두운 배경에서 작업할 때는 이 버전을 사용하여 우리의 이름이 읽기 쉽게 유지되도록 하세요.",
+    "download_logos": "로고 팩 다운로드",
+    "seconds": "초",
+    "this_task_has": "이 task는",
+    "dark_version": "다크 버전",
+    "runners": "러너",
+    "watch_video": "비디오 보기",
+    "wordmark_colors": "워드마크 색상은 배경에 따라 조정되며, 아이콘은 어두운 배경에 놓였을 때 배경 없이 유지됩니다.",
+    "weeks": "주",
+    "years": "연도",
+    "task_id_message": "Flow에 Task Id ${existingTask}가 이미 존재합니다.",
+    "monogram": "모노그램",
+    "select": "{{section}}을 선택하세요",
+    "task_runners": "작업 실행기",
+    "learn_more": "자세히 알아보기",
+    "light_background": "밝은 배경에서 작업할 때 선호되는 옵션입니다.",
+    "watch": "시청",
+    "hours": "운영 시간",
+    "input_custom_duration": "또는 사용자 지정 기간 입력:",
+    "days": "일",
+    "data_not_protected": "귀하의 데이터는 보호되지 않습니다. 잃어버리지 마세요. <b>무료 보안 기능을 활성화하거나 유료 서비스를 시도해 보세요.</b>",
+    "confirm": "확인",
+    "activate_basic_auth": "기본 인증 활성화",
+    "trigger_id_exists": "트리거 ID가 이미 존재합니다.",
+    "about_this_blueprint": "이 blueprint 정보"
   }
 }

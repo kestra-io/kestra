@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -248,6 +250,28 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 }
 
                 return null;
+            });
+    }
+    @Override
+    public ArrayListTotal<Trigger> find(Pageable pageable,String tenantId, List<QueryFilter> filters) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                // extract Query field from the filters list
+                String query = getQuery(filters);
+
+                // Base query with table and DSL fields
+                SelectConditionStep<?> select = context
+                    .select(field("value"))
+                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId))
+                    .and(this.fullTextCondition(query));
+
+                filter(select, filters, "next_execution_date");
+                // Return paginated results
+                return this.jdbcRepository.fetchPage(context, select, pageable);
             });
     }
 

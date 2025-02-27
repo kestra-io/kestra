@@ -196,7 +196,7 @@
     "outputs": "आउटपुट",
     "output": "आउटपुट",
     "eval": {
-      "title": "डिबग आउटपुट",
+      "title": "डिबग अभिव्यक्ति",
       "tooltip": "किसी भी Pebble अभिव्यक्ति को प्रस्तुत करें और निष्पादन संदर्भ का निरीक्षण करें।"
     },
     "attempt": "प्रयास",
@@ -268,7 +268,10 @@
       },
       "empty": "कोई blueprints दिखाने के लिए नहीं हैं।",
       "custom": "कस्टम blueprints",
-      "community": "समुदाय"
+      "community": "समुदाय",
+      "dashboards": "डैशबोर्ड Blueprints",
+      "flows": "फ्लो Blueprints",
+      "apps": "ऐप Blueprints"
     },
     "use": "उपयोग करें",
     "plugins": {
@@ -290,7 +293,7 @@
     "template creation": "template निर्माण",
     "templates": "templates",
     "templates deprecated": "templates अप्रचलित हैं। कृपया इसके बजाय subflows का उपयोग करें। यह समझाने वाला <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">माइग्रेशन अनुभाग</a> देखें कि आप टेम्पलेट्स से subflows में कैसे माइग्रेट कर सकते हैं।",
-    "no result": "अब तक कोई logs उत्पन्न नहीं हुए हैं",
+    "no result": "कोई परिणाम दिखाने के लिए नहीं हैं।",
     "trigger": "Trigger",
     "triggers": "Triggers",
     "trigger details": "Trigger विवरण",
@@ -534,7 +537,7 @@
     "row count": "पंक्ति संख्या",
     "encoding": "एन्कोडिंग",
     "show": "दिखाएं",
-    "advanced configuration": "उन्नत कॉन्फ़िगरेशन",
+    "advanced configuration": "अन्य गुण",
     "all executions": "सभी निष्पादन",
     "trigger execution id": "Trigger निष्पादन Id",
     "triggers_state": {
@@ -681,8 +684,6 @@
         "theme": {
           "label": "थीम प्राथमिकताएँ",
           "fields": {
-            "mode": "थीम मोड",
-            "editor_theme": "संपादक थीम",
             "editor_font_size": "संपादक फ़ॉन्ट आकार",
             "editor_font_family": "संपादक फ़ॉन्ट परिवार",
             "editor_folding_stratgy": "संपादक में स्वचालित कोड फोल्डिंग",
@@ -693,7 +694,8 @@
               "classic": "क्लासिक",
               "kestra": "Kestra"
             },
-            "logs_font_size": "लॉग्स फ़ॉन्ट आकार"
+            "logs_font_size": "लॉग्स फ़ॉन्ट आकार",
+            "theme": "मोडस"
           }
         },
         "localization": {
@@ -1018,9 +1020,12 @@
         "in": "में",
         "starts_with": "शुरू होता है",
         "not_contains": "नहीं शामिल है",
-        "is_not_one_off": "नहीं है उनमें से एक",
+        "not_in": "में नहीं",
         "is_one_of": "में से एक है",
-        "between": "के बीच"
+        "between": "के बीच",
+        "greater_than": "से अधिक",
+        "less_than": "से कम",
+        "ends_with": "समाप्त होता है"
       },
       "save": {
         "label": "सहेजे गए खोजें",
@@ -1068,8 +1073,8 @@
         "main": "मुख्य गुणधर्म",
         "error_handlers": "त्रुटि हैंडलर",
         "tasks": "कार्य",
-        "advanced": "उन्नत कॉन्फ़िगरेशन",
-        "finally": "अंत में"
+        "finally": "अंत में",
+        "optional": "वैकल्पिक गुण"
       },
       "creation": {
         "select": "किसी {section} का चयन करें",
@@ -1148,6 +1153,70 @@
         "message": "Kestra एंटरप्राइज एडिशन में ऐप्स आपको कस्टम UI बनाने की अनुमति देते हैं जो प्लेटफ़ॉर्म के बाहर से Kestra वर्कफ़्लोज़ के साथ इंटरैक्ट करते हैं। यह फीचर आपको अपने वर्कफ़्लोज़ को कस्टम एप्लिकेशनों के लिए बैकएंड के रूप में उपयोग करने देता है, जिससे गैर-तकनीकी उपयोगकर्ता फॉर्म के माध्यम से डेटा सबमिट कर सकते हैं या अप्रूवल की प्रतीक्षा कर रहे PAUSED वर्कफ़्लोज़ को फिर से शुरू कर सकते हैं।"
       }
     },
-    "apps": "ऐप्स"
+    "apps": "ऐप्स",
+    "editor_shortcuts": {
+      "save_flow": "फ्लो सहेजें",
+      "comment_uncomment": "टिप्पणी/अनटिप्पणी",
+      "duplicate_cursor": "कर्सर को डुप्लिकेट करें",
+      "uncomment": "अनकमेंट करें",
+      "label": "कीबोर्ड शॉर्टकट्स",
+      "fold_unfold": "कोड को फोल्ड/अनफोल्ड करें",
+      "comment": "टिप्पणी",
+      "move_line": "लाइन को स्थानांतरित करें",
+      "command_palette": "कमांड पैलेट दिखाएं",
+      "trigger_autocompletion": "ट्रिगर ऑटोकम्प्लीशन",
+      "reset_fontsize": "फ़ॉन्ट आकार रीसेट करें",
+      "decrease_fontsize": "फ़ॉन्ट आकार घटाएँ",
+      "increase_fontsize": "फॉन्ट आकार बढ़ाएं"
+    },
+    "something_went_wrong": {
+      "loading_execution": "लोडिंग के दौरान कुछ गलत हो गया।"
+    },
+    "properties": {
+      "shown": "तालिका में दिखाया गया",
+      "hint": "दृश्य स्तंभ चुनें",
+      "hidden": "टेबल में छिपा हुआ",
+      "label": "गुणधर्म"
+    },
+    "debug": "डिबग",
+    "default": "डिफ़ॉल्ट",
+    "custom_dashboard_confirm_deletion": "क्या आप वाकई <code>{title}</code> डैशबोर्ड को हटाना चाहते हैं?",
+    "custom_dashboard_validate_editing": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
+    "custom_dashboard_validate_creation": "डैशबोर्ड <code>{title}</code> बनाया गया है।",
+    "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
+    "no_logs_data": "कोई डेटा नहीं",
+    "fold_all_multi_lines": "सभी मल्टी लाइन्स को फोल्ड करें",
+    "months": "महीने",
+    "trigger_id_message": "ट्रिगर Id ${existingTrigger} पहले से ही flow में मौजूद है।",
+    "minutes": "मिनट्स",
+    "for flow": "फ्लो के लिए",
+    "light_version": "लाइट संस्करण",
+    "deleted_label": "हटाया गया",
+    "task_id_exists": "टास्क Id पहले से मौजूद है",
+    "use_dark_background": "इस संस्करण का उपयोग तब करें जब आप एक गहरे पृष्ठभूमि पर काम कर रहे हों ताकि यह सुनिश्चित हो सके कि हमारा नाम पठनीय बना रहे।",
+    "download_logos": "लोगो पैक डाउनलोड करें",
+    "seconds": "सेकंड्स",
+    "this_task_has": "यह task है",
+    "dark_version": "डार्क संस्करण",
+    "runners": "धावक",
+    "watch_video": "वीडियो देखें",
+    "wordmark_colors": "शब्दचिह्न के रंग पृष्ठभूमि के आधार पर अनुकूलित होते हैं, जबकि आइकन एक गहरे पृष्ठभूमि पर रखे जाने पर बिना पृष्ठभूमि के रहता है।",
+    "weeks": "सप्ताह",
+    "years": "वर्ष",
+    "task_id_message": "टास्क Id ${existingTask} पहले से ही flow में मौजूद है।",
+    "monogram": "मोनोग्राम",
+    "select": "अपने {{section}} का चयन करें",
+    "task_runners": "टास्क रनर्स",
+    "learn_more": "और जानें",
+    "light_background": "यह हल्की पृष्ठभूमि के साथ काम करते समय पसंदीदा विकल्प है।",
+    "watch": "देखें",
+    "hours": "घंटे",
+    "input_custom_duration": "या कस्टम अवधि दर्ज करें:",
+    "days": "दिन",
+    "data_not_protected": "आपका डेटा सुरक्षित नहीं है। इसे न खोएं। <b>हमारी मुफ्त सुरक्षा सुविधाओं को सक्षम करें या हमारे भुगतान वाले ऑफर को आज़माएं।</b>",
+    "confirm": "पुष्टि करें",
+    "activate_basic_auth": "बेसिक ऑथेंटिकेशन सक्रिय करें",
+    "trigger_id_exists": "ट्रिगर Id पहले से मौजूद है",
+    "about_this_blueprint": "इस blueprint के बारे में"
   }
 }

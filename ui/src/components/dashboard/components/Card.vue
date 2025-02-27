@@ -21,8 +21,10 @@
                     <TextSearchVariant class="fs-4 icons url" />
                 </RouterLink>
             </div>
+
             <p class="m-0 fs-2 fw-bold">
-                {{ value }}
+                <el-skeleton v-if="loading" :rows="0" />
+                <span v-else>{{ value }}</span>
             </p>
         </slot>
     </div>
@@ -37,6 +39,7 @@
         label: string;
         tooltip?: string;
         value: string | number;
+        loading?: boolean;
         redirect: RouteLocationRaw;
     }>();
 </script>

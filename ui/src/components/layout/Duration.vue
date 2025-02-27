@@ -28,7 +28,7 @@
         },
         watch: {
             histories(newValue, oldValue) {
-                if (oldValue[0].date !== newValue[0].date) {
+                if (oldValue.length !== newValue.length) {
                     this.paint()
                 }
             },

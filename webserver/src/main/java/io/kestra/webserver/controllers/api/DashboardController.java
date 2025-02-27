@@ -152,6 +152,7 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{id}/charts/{chartId}")
     @Operation(tags = {"Dashboards"}, summary = "Generate a dashboard chart data")
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public PagedResults<Map<String, Object>> dashboardChart(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The chart id") @PathVariable String chartId,
@@ -184,6 +185,7 @@ public class DashboardController {
             return null;
         }
 
+
         if (chart instanceof DataChart dataChart) {
             Integer pageNumber = globalFilter.getPageNumber();
             Integer pageSize = globalFilter.getPageSize();
@@ -201,6 +203,7 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "charts/preview", consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Dashboards"}, summary = "Preview a chart data")
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public PagedResults<Map<String, Object>> previewChart(
         @Parameter(description = "The chart") @Body String chart
     ) throws IOException {

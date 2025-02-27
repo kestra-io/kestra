@@ -1,5 +1,6 @@
 package io.kestra.repository.mysql;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.micronaut.context.ApplicationContext;
@@ -8,6 +9,7 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.jooq.Condition;
 
+import java.util.List;
 import java.util.Map;
 
 @Singleton
@@ -22,6 +24,11 @@ public class MysqlFlowRepository extends AbstractJdbcFlowRepository {
     @Override
     protected Condition findCondition(String query, Map<String, String> labels) {
         return MysqlFlowRepositoryService.findCondition(this.jdbcRepository, query, labels);
+    }
+
+    @Override
+    protected Condition findCondition(Object value, QueryFilter.Op operation) {
+        return MysqlFlowRepositoryService.findCondition(value, operation);
     }
 
     @Override

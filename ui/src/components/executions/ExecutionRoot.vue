@@ -59,6 +59,9 @@
             };
         },
         created() {
+            const tab = localStorage.getItem("executeDefaultTab") || undefined;
+            this.$router.replace({name: "executions/update", params: {...this.$route.params, tab}});
+
             this.follow();
             window.addEventListener("popstate", this.follow)
         },
@@ -112,6 +115,12 @@
                                     variant: "error",
                                     title: this.$t("error"),
                                     message: this.$t("errors.404.flow or execution"),
+                                });
+                            } else {
+                                this.$store.dispatch("core/showMessage", {
+                                    variant: "error",
+                                    title: this.$t("error"),
+                                    message: this.$t("something_went_wrong.loading_execution"),
                                 });
                             }
                         }

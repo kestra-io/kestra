@@ -39,6 +39,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junitpioneer.jupiter.RetryingTest;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -107,7 +108,7 @@ class HttpClientTest {
         return builder.build();
     }
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     void getText() throws IllegalVariableEvaluationException, HttpClientException, IOException {
         Flow flow = TestsUtils.mockFlow();
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
@@ -351,6 +352,21 @@ class HttpClientTest {
     }
 
     @Test
+    void specialContentType() throws IllegalVariableEvaluationException, HttpClientException, IOException {
+        try (HttpClient client = client()) {
+            HttpResponse<String> response = client.request(
+                HttpRequest.of(URI.create(embeddedServerUri + "/http/content-type"), Map.of(
+                    "Content-Type", List.of("application/vnd.campaignsexport.v1+json")
+                )),
+                String.class
+            );
+
+            assertThat(response.getStatus().getCode(), is(200));
+            assertThat(response.getBody(), is("application/vnd.campaignsexport.v1+json"));
+        }
+    }
+
+    @Test
     void getProxy() throws IllegalVariableEvaluationException, HttpClientException, IOException {
         try (HttpClient client = client(b -> b
             .configuration(HttpConfiguration.builder()
@@ -380,6 +396,12 @@ class HttpClientTest {
         @Produces(MediaType.TEXT_PLAIN)
         public io.micronaut.http.HttpResponse<String> text() {
             return io.micronaut.http.HttpResponse.ok("pong");
+        }
+
+        @Get("content-type")
+        @Produces(MediaType.TEXT_PLAIN)
+        public io.micronaut.http.HttpResponse<String> contentType(io.micronaut.http.HttpRequest<?> request) {
+            return io.micronaut.http.HttpResponse.ok(request.getContentType().orElseThrow().toString());
         }
 
         @Get("json")

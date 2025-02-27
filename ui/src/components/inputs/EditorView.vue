@@ -130,6 +130,7 @@
         >
             <template v-if="editorViewType === 'YAML'">
                 <editor
+                    class="position-relative"
                     v-if="isCreating || openedTabs.length"
                     ref="editorDomElement"
                     @save="save"
@@ -144,7 +145,11 @@
                     @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
                     :read-only="isReadOnly"
                     :navbar="false"
-                />
+                >
+                    <template #absolute>
+                        <KeyShortcuts />
+                    </template>
+                </editor>
                 <section v-else class="no-tabs-opened">
                     <div class="img" />
 
@@ -330,6 +335,7 @@
     import ValidationError from "../flows/ValidationError.vue";
     import Blueprints from "override/components/flows/blueprints/Blueprints.vue";
     import SwitchView from "./SwitchView.vue";
+    import KeyShortcuts from "./KeyShortcuts.vue";
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -404,12 +410,6 @@
             type: Number,
             default: null,
         },
-        guidedProperties: {
-            type: Object,
-            default: () => {
-                return {tourStarted: false};
-            },
-        },
         flowValidation: {
             type: Object,
             default: undefined,
@@ -427,6 +427,8 @@
             default: false,
         },
     });
+
+    const guidedProperties = ref(store.getters["core/guidedProperties"]);
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
 
@@ -673,7 +675,12 @@
     };
 
     onMounted(async () => {
-        editorViewType.value = props.isNamespace ? "YAML" : (localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML");
+        if(guidedProperties.value?.tourStarted) {
+            editorViewType.value = "YAML";
+            switchViewType(editorViewTypes.SOURCE_TOPOLOGY, false);
+        } else {
+            editorViewType.value = props.isNamespace ? "YAML" : (localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML");
+        }
 
         if(!props.isNamespace) {
             initViewType()
@@ -689,7 +696,7 @@
         // Guided tour
         setTimeout(() => {
             if (
-                !props.guidedProperties.tourStarted &&
+                !guidedProperties?.value?.tourStarted &&
                 localStorage.getItem("tourDoneOrSkip") !== "true" &&
                 props.total === 0
             ) {
@@ -863,8 +870,8 @@
         if (existingTask) {
             store.dispatch("core/showMessage", {
                 variant: "error",
-                title: "Trigger Id already exist",
-                message: `Trigger Id ${existingTask} already exist in the flow.`,
+                title: t("trigger_id_exists"),
+                message: t("trigger_id_message", {existingTrigger: existingTask}),
             });
             return;
         }
@@ -897,8 +904,8 @@
         if (existingTask) {
             store.dispatch("core/showMessage", {
                 variant: "error",
-                title: "Task Id already exist",
-                message: `Task Id ${existingTask} already exist in the flow.`,
+                title: t("task_id_exists"),
+                message: t("task_id_message", {existingTask}),
             });
             return;
         }
@@ -941,12 +948,12 @@
 
     const onUpdateMetadata = (event, shouldSave) => {
         if(shouldSave) {
-            metadata.value = {...metadata.value, ...(event.concurrency.limit === 0 ? {concurrency: null} : event)};
+            metadata.value = {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)};
             onSaveMetadata();
             validateFlow(flowYaml.value)
 
         } else {
-            metadata.value = event.concurrency.limit === 0 ?  {concurrency: null} : event;
+            metadata.value = event.concurrency?.limit === 0 ?  {concurrency: null} : event;
         }
     };
 
@@ -1073,7 +1080,7 @@
     };
 
     const save = async (e) => {
-        if (!haveChange.value && !props.isCreating) {
+        if (flowErrors.value?.length || !haveChange.value && !props.isCreating) {
             return;
         }
         if (e) {
@@ -1476,7 +1483,7 @@
         text-align: center;
 
         .img {
-            background: url("../../assets/errors/kestra-error.png") no-repeat center;
+            background: url("../../assets/empty-ns-files.png") no-repeat center;
             background-size: contain;
         }
 

@@ -3,48 +3,51 @@
         <template #additional-right>
             <ul>
                 <li>
-                    <div class="el-input el-input-file custom-upload">
-                        <form ref="importForm">
-                            <div class="el-input__wrapper">
-                                <label for="importFlows">
-                                    <Upload />
-                                    {{ $t('import') }}
-                                </label>
-                                <input
-                                    id="importFlows"
-                                    class="el-input__inner"
-                                    type="file"
-                                    accept=".zip, .yml, .yaml"
-                                    @change="importFlows()"
-                                    ref="file"
-                                >
-                            </div>
-                        </form>
-                    </div>
+                    <el-button :icon="Upload" @click="file?.click()">
+                        {{ $t("import") }}
+                    </el-button>
+                    <input
+                        ref="file"
+                        type="file"
+                        accept=".zip, .yml, .yaml"
+                        @change="importFlows()"
+                        class="d-none"
+                    >
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
                         <el-button :icon="TextBoxSearch">
-                            {{ $t('source search') }}
+                            {{ $t("source search") }}
                         </el-button>
                     </router-link>
                 </li>
                 <li>
-                    <router-link :to="{name: 'flows/create', query: {namespace: $route.query.namespace}}" v-if="canCreate">
+                    <router-link
+                        :to="{
+                            name: 'flows/create',
+                            query: {namespace: $route.query.namespace},
+                        }"
+                        v-if="canCreate"
+                    >
                         <el-button :icon="Plus" type="primary">
-                            {{ $t('create') }}
+                            {{ $t("create") }}
                         </el-button>
                     </router-link>
                 </li>
             </ul>
         </template>
     </top-nav-bar>
-    <section data-component="FILENAME_PLACEHOLDER" :class="{'container': topbar}" v-if="ready">
+    <section
+        data-component="FILENAME_PLACEHOLDER"
+        :class="{container: topbar}"
+        v-if="ready"
+    >
         <div>
             <data-table
                 @page-changed="onPageChanged"
                 ref="dataTable"
                 :total="total"
+                :hide-top-pagination="!!namespace"
             >
                 <template #navbar>
                     <KestraFilter
@@ -52,13 +55,27 @@
                         :include="['namespace', 'scope', 'labels']"
                         :buttons="{
                             refresh: {shown: false},
-                            settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
+                            settings: {
+                                shown: true,
+                                charts: {
+                                    shown: true,
+                                    value: showChart,
+                                    callback: onShowChartChange,
+                                },
+                            },
                         }"
+                        :properties="{
+                            shown: true,
+                            columns: optionalColumns,
+                            displayColumns,
+                            storageKey: 'flows',
+                        }"
+                        @update-properties="updateDisplayColumns"
                     />
                 </template>
 
                 <template #top>
-                    <el-card v-if="showStatChart()" shadow="never" class="mb-4">
+                    <el-card v-if="showStatChart()" class="mb-4 shadow">
                         <ExecutionsBar :data="daily" :total="executionsCount" />
                     </el-card>
                 </template>
@@ -86,17 +103,33 @@
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
-                                <el-button v-if="canRead" :icon="Download" @click="exportFlows()">
-                                    {{ $t('export') }}
+                                <el-button
+                                    v-if="canRead"
+                                    :icon="Download"
+                                    @click="exportFlows()"
+                                >
+                                    {{ $t("export") }}
                                 </el-button>
-                                <el-button v-if="canDelete" @click="deleteFlows" :icon="TrashCan">
-                                    {{ $t('delete') }}
+                                <el-button
+                                    v-if="canDelete"
+                                    @click="deleteFlows"
+                                    :icon="TrashCan"
+                                >
+                                    {{ $t("delete") }}
                                 </el-button>
-                                <el-button v-if="canUpdate && anyFlowDisabled()" @click="enableFlows" :icon="FileDocumentCheckOutline">
-                                    {{ $t('enable') }}
+                                <el-button
+                                    v-if="canUpdate && anyFlowDisabled()"
+                                    @click="enableFlows"
+                                    :icon="FileDocumentCheckOutline"
+                                >
+                                    {{ $t("enable") }}
                                 </el-button>
-                                <el-button v-if="canUpdate && anyFlowEnabled()" @click="disableFlows" :icon="FileDocumentRemoveOutline">
-                                    {{ $t('disable') }}
+                                <el-button
+                                    v-if="canUpdate && anyFlowEnabled()"
+                                    @click="disableFlows"
+                                    :icon="FileDocumentRemoveOutline"
+                                >
+                                    {{ $t("disable") }}
                                 </el-button>
                             </bulk-select>
                         </template>
@@ -110,21 +143,43 @@
                                 <template #default="scope">
                                     <div class="flow-id">
                                         <router-link
-                                            :to="{name: 'flows/update', params: {namespace: scope.row.namespace, id: scope.row.id}}"
+                                            :to="{
+                                                name: 'flows/update',
+                                                params: {
+                                                    namespace:
+                                                        scope.row.namespace,
+                                                    id: scope.row.id,
+                                                },
+                                            }"
                                             class="me-1"
                                         >
-                                            {{ $filters.invisibleSpace(scope.row.id) }}
+                                            {{
+                                                $filters.invisibleSpace(
+                                                    scope.row.id,
+                                                )
+                                            }}
                                         </router-link>
                                         <markdown-tooltip
-                                            :id="scope.row.namespace + '-' + scope.row.id"
+                                            :id="
+                                                scope.row.namespace +
+                                                    '-' +
+                                                    scope.row.id
+                                            "
                                             :description="scope.row.description"
-                                            :title="scope.row.namespace + '.' + scope.row.id"
+                                            :title="
+                                                scope.row.namespace +
+                                                    '.' +
+                                                    scope.row.id
+                                            "
                                         />
                                     </div>
                                 </template>
                             </el-table-column>
 
-                            <el-table-column :label="$t('labels')">
+                            <el-table-column
+                                v-if="displayColumn('labels')"
+                                :label="$t('labels')"
+                            >
                                 <template #default="scope">
                                     <labels :labels="scope.row.labels" />
                                 </template>
@@ -132,36 +187,67 @@
 
                             <el-table-column
                                 prop="namespace"
+                                v-if="displayColumn('namespace')"
                                 sortable="custom"
                                 :sort-orders="['ascending', 'descending']"
                                 :label="$t('namespace')"
-                                :formatter="(_, __, cellValue) => $filters.invisibleSpace(cellValue)"
+                                :formatter="
+                                    (_, __, cellValue) =>
+                                        $filters.invisibleSpace(cellValue)
+                                "
                             />
 
                             <el-table-column
                                 prop="state.startDate"
+                                v-if="
+                                    displayColumn('state.startDate') &&
+                                        user.hasAny(permission.EXECUTION)
+                                "
                                 :label="$t('last execution date')"
-                                v-if="user.hasAny(permission.EXECUTION)"
                             >
                                 <template #default="scope">
-                                    <date-ago v-if="lastExecutionByFlowReady" :inverted="true" :date="getLastExecution(scope.row).startDate" />
+                                    <date-ago
+                                        v-if="lastExecutionByFlowReady"
+                                        :inverted="true"
+                                        :date="
+                                            getLastExecution(scope.row)
+                                                .startDate
+                                        "
+                                    />
                                 </template>
                             </el-table-column>
 
                             <el-table-column
                                 prop="state.current"
+                                v-if="
+                                    displayColumn('state.current') &&
+                                        user.hasAny(permission.EXECUTION)
+                                "
                                 :label="$t('last execution status')"
-                                v-if="user.hasAny(permission.EXECUTION)"
                             >
                                 <template #default="scope">
-                                    <status v-if="lastExecutionByFlowReady && getLastExecution(scope.row).lastStatus" :status="getLastExecution(scope.row).lastStatus" size="small" />
+                                    <status
+                                        v-if="
+                                            lastExecutionByFlowReady &&
+                                                getLastExecution(scope.row)
+                                                    .lastStatus
+                                        "
+                                        :status="
+                                            getLastExecution(scope.row)
+                                                .lastStatus
+                                        "
+                                        size="small"
+                                    />
                                 </template>
                             </el-table-column>
 
                             <el-table-column
                                 prop="state"
+                                v-if="
+                                    displayColumn('state') &&
+                                        user.hasAny(permission.EXECUTION)
+                                "
                                 :label="$t('execution statistics')"
-                                v-if="user.hasAny(permission.EXECUTION)"
                                 class-name="row-graph"
                             >
                                 <template #default="scope">
@@ -173,23 +259,46 @@
                                         :data="chartData(scope.row)"
                                         small
                                         external-tooltip
-                                        @click="tableChartClick.bind(null, scope.row.namespace, scope.row.id)"
+                                        @click="
+                                            tableChartClick.bind(
+                                                null,
+                                                scope.row.namespace,
+                                                scope.row.id,
+                                            )
+                                        "
                                     />
                                 </template>
                             </el-table-column>
 
-                            <el-table-column :label="$t('triggers')" class-name="row-action">
+                            <el-table-column
+                                v-if="displayColumn('triggers')"
+                                :label="$t('triggers')"
+                                class-name="row-action"
+                            >
                                 <template #default="scope">
                                     <trigger-avatar :flow="scope.row" />
                                 </template>
                             </el-table-column>
 
-                            <el-table-column column-key="action" class-name="row-action">
+                            <el-table-column
+                                column-key="action"
+                                class-name="row-action"
+                                :label="$t('actions')"
+                            >
                                 <template #default="scope">
                                     <router-link
-                                        :to="{name: 'flows/update', params : {namespace: scope.row.namespace, id: scope.row.id}}"
+                                        :to="{
+                                            name: 'flows/update',
+                                            params: {
+                                                namespace: scope.row.namespace,
+                                                id: scope.row.id,
+                                            },
+                                        }"
                                     >
-                                        <kicon :tooltip="$t('details')" placement="left">
+                                        <kicon
+                                            :tooltip="$t('details')"
+                                            placement="left"
+                                        >
                                             <TextSearch />
                                         </kicon>
                                     </router-link>
@@ -204,6 +313,7 @@
 </template>
 
 <script setup>
+    import {ref} from "vue";
     import moment from "moment";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
@@ -216,26 +326,27 @@
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
     import ExecutionsBarChart from "../dashboard/components/charts/executions/BarChart.vue";
-    import KestraFilter from "../filter/KestraFilter.vue"
+    import KestraFilter from "../filter/KestraFilter.vue";
     import {chartClick} from "../../utils/charts.js";
     import {useRoute, useRouter} from "vue-router";
 
     const route = useRoute();
     const router = useRouter();
 
-    function tableChartClick(namespace, flowId, e, elements){
-        if (elements.length > 0 && elements[0].index !== undefined && elements[0].datasetIndex !== undefined) {
-            chartClick(
-                moment,
-                router,
-                route,
-                {
-                    date: e.chart.data.labels[elements[0].index],
-                    state: e.chart.data.datasets[elements[0].datasetIndex].label,
-                    namespace,
-                    flowId
-                }
-            )
+    const file = ref(null);
+
+    function tableChartClick(namespace, flowId, e, elements) {
+        if (
+            elements.length > 0 &&
+            elements[0].index !== undefined &&
+            elements[0].datasetIndex !== undefined
+        ) {
+            chartClick(moment, router, route, {
+                date: e.chart.data.labels[elements[0].index],
+                state: e.chart.data.datasets[elements[0].datasetIndex].label,
+                namespace,
+                flowId,
+            });
         }
     }
 </script>
@@ -255,9 +366,9 @@
     import DataTable from "../layout/DataTable.vue";
     import Status from "../Status.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
-    import MarkdownTooltip from "../layout/MarkdownTooltip.vue"
-    import Kicon from "../Kicon.vue"
-    import Labels from "../layout/Labels.vue"
+    import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
+    import Kicon from "../Kicon.vue";
+    import Labels from "../layout/Labels.vue";
     import {storageKeys} from "../../utils/constants";
 
     export default {
@@ -276,16 +387,49 @@
         props: {
             topbar: {
                 type: Boolean,
-                default: true
+                default: true,
             },
             namespace: {
                 type: String,
                 required: false,
-                default: undefined
+                default: undefined,
             },
         },
         data() {
             return {
+                optionalColumns: [
+                    {
+                        label: this.$t("labels"),
+                        prop: "labels",
+                        default: true,
+                    },
+                    {
+                        label: this.$t("namespace"),
+                        prop: "namespace",
+                        default: true,
+                    },
+                    {
+                        label: this.$t("last execution date"),
+                        prop: "state.startDate",
+                        default: true,
+                    },
+                    {
+                        label: this.$t("last execution status"),
+                        prop: "state.current",
+                        default: true,
+                    },
+                    {
+                        label: this.$t("execution statistics"),
+                        prop: "state",
+                        default: true,
+                    },
+                    {
+                        label: this.$t("triggers"),
+                        prop: "triggers",
+                        default: true,
+                    },
+                ],
+                displayColumns: [],
                 isDefaultNamespaceAllow: true,
                 permission: permission,
                 action: action,
@@ -293,7 +437,9 @@
                 lastExecutionByFlowReady: false,
                 dailyReady: false,
                 file: undefined,
-                showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_FLOWS_CHART)),
+                showChart: ["true", null].includes(
+                    localStorage.getItem(storageKeys.SHOW_FLOWS_CHART),
+                ),
             };
         },
         computed: {
@@ -302,57 +448,108 @@
             ...mapState("auth", ["user"]),
             routeInfo() {
                 return {
-                    title: this.$t("flows")
+                    title: this.$t("flows"),
                 };
             },
             endDate() {
                 return new Date();
             },
             startDate() {
-                return this.$moment(this.endDate)
-                    .add(-30, "days")
-                    .toDate();
+                return this.$moment(this.endDate).add(-30, "days").toDate();
             },
             canCheck() {
                 return this.canRead || this.canDelete || this.canUpdate;
             },
             canCreate() {
-                return this.user && this.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
+                return (
+                    this.user &&
+                    this.user.hasAnyActionOnAnyNamespace(
+                        permission.FLOW,
+                        action.CREATE,
+                    )
+                );
             },
             canRead() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.READ, this.$route.query.namespace);
+                return (
+                    this.user &&
+                    this.user.isAllowed(
+                        permission.FLOW,
+                        action.READ,
+                        this.$route.query.namespace,
+                    )
+                );
             },
             canDelete() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.DELETE, this.$route.query.namespace);
+                return (
+                    this.user &&
+                    this.user.isAllowed(
+                        permission.FLOW,
+                        action.DELETE,
+                        this.$route.query.namespace,
+                    )
+                );
             },
             canUpdate() {
-                return this.user && this.user.isAllowed(permission.FLOW, action.UPDATE, this.$route.query.namespace);
+                return (
+                    this.user &&
+                    this.user.isAllowed(
+                        permission.FLOW,
+                        action.UPDATE,
+                        this.$route.query.namespace,
+                    )
+                );
             },
             executionsCount() {
                 return [...this.daily].reduce((a, b) => {
-                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                    return (
+                        a +
+                        Object.values(b.executionCounts).reduce((a, b) => a + b, 0)
+                    );
                 }, 0);
-            }
+            },
         },
         beforeRouteEnter(to, from, next) {
-            const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+            const defaultNamespace = localStorage.getItem(
+                storageKeys.DEFAULT_NAMESPACE,
+            );
             const query = {...to.query};
             if (defaultNamespace) {
                 query.namespace = defaultNamespace;
-            } if (!query.scope) {
+            }
+            if (!query.scope) {
                 query.scope = ["USER"];
             }
-            next(vm => {
+            next((vm) => {
                 vm.$router?.replace({query});
             });
+        },
+        created() {
+            this.displayColumns = this.loadDisplayColumns();
         },
         methods: {
             selectionMapper(element) {
                 return {
                     id: element.id,
                     namespace: element.namespace,
-                    enabled: !element.disabled
+                    enabled: !element.disabled,
+                };
+            },
+            loadDisplayColumns() {
+                const storedColumns = localStorage.getItem("columns_flows");
+                if (storedColumns) {
+                    return storedColumns.split(",");
                 }
+                return this.optionalColumns
+                    .filter((col) => {
+                        return col.default && (!col.condition || col.condition());
+                    })
+                    .map((col) => col.prop);
+            },
+            displayColumn(column) {
+                return this.displayColumns.includes(column);
+            },
+            updateDisplayColumns(newColumns) {
+                this.displayColumns = newColumns;
             },
             showStatChart() {
                 return this.daily && this.showChart;
@@ -360,184 +557,281 @@
             onShowChartChange(value) {
                 this.showChart = value;
                 localStorage.setItem(storageKeys.SHOW_FLOWS_CHART, value);
-                if(this.showStatChart())
-                    this.loadStats();
+                if (this.showStatChart()) this.loadStats();
             },
             exportFlows() {
                 this.$toast().confirm(
-                    this.$t("flow export", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("flow export", {
+                        flowCount: this.queryBulkAction
+                            ? this.total
+                            : this.selection.length,
+                    }),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
-                                .dispatch("flow/exportFlowByQuery", this.loadQuery({
-                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
-                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
-                                }, false))
-                                .then(_ => {
-                                    this.$toast().success(this.$t("flows exported"));
-                                })
+                                .dispatch(
+                                    "flow/exportFlowByQuery",
+                                    this.loadQuery(
+                                        {
+                                            namespace: this.$route.query.namespace
+                                                ? [this.$route.query.namespace]
+                                                : undefined,
+                                            q: this.$route.query.q
+                                                ? [this.$route.query.q]
+                                                : undefined,
+                                        },
+                                        false,
+                                    ),
+                                )
+                                .then((_) => {
+                                    this.$toast().success(
+                                        this.$t("flows exported"),
+                                    );
+                                });
                         } else {
                             return this.$store
-                                .dispatch("flow/exportFlowByIds", {ids: this.selection})
-                                .then(_ => {
-                                    this.$toast().success(this.$t("flows exported"));
+                                .dispatch("flow/exportFlowByIds", {
+                                    ids: this.selection,
                                 })
+                                .then((_) => {
+                                    this.$toast().success(
+                                        this.$t("flows exported"),
+                                    );
+                                });
                         }
                     },
-                    () => {
-                    }
-                )
+                    () => {},
+                );
             },
             disableFlows() {
                 this.$toast().confirm(
-                    this.$t("flow disable", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("flow disable", {
+                        flowCount: this.queryBulkAction
+                            ? this.total
+                            : this.selection.length,
+                    }),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
-                                .dispatch("flow/disableFlowByQuery", this.loadQuery({
-                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
-                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
-                                }, false))
-                                .then(r => {
-                                    this.$toast().success(this.$t("flows disabled", {count: r.data.count}));
-                                    this.loadData(() => {
-                                    })
-                                })
+                                .dispatch(
+                                    "flow/disableFlowByQuery",
+                                    this.loadQuery(
+                                        {
+                                            namespace: this.$route.query.namespace
+                                                ? [this.$route.query.namespace]
+                                                : undefined,
+                                            q: this.$route.query.q
+                                                ? [this.$route.query.q]
+                                                : undefined,
+                                        },
+                                        false,
+                                    ),
+                                )
+                                .then((r) => {
+                                    this.$toast().success(
+                                        this.$t("flows disabled", {
+                                            count: r.data.count,
+                                        }),
+                                    );
+                                    this.loadData(() => {});
+                                });
                         } else {
                             return this.$store
-                                .dispatch("flow/disableFlowByIds", {ids: this.selection})
-                                .then(r => {
-                                    this.$toast().success(this.$t("flows disabled", {count: r.data.count}));
-                                    this.loadData(() => {
-                                    })
+                                .dispatch("flow/disableFlowByIds", {
+                                    ids: this.selection,
                                 })
+                                .then((r) => {
+                                    this.$toast().success(
+                                        this.$t("flows disabled", {
+                                            count: r.data.count,
+                                        }),
+                                    );
+                                    this.loadData(() => {});
+                                });
                         }
                     },
-                    () => {
-                    }
-                )
+                    () => {},
+                );
             },
             anyFlowDisabled() {
-                return this.selection.some(flow => !flow.enabled);
+                return this.selection.some((flow) => !flow.enabled);
             },
             anyFlowEnabled() {
-                return this.selection.some(flow => flow.enabled);
+                return this.selection.some((flow) => flow.enabled);
             },
             enableFlows() {
                 this.$toast().confirm(
-                    this.$t("flow enable", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("flow enable", {
+                        flowCount: this.queryBulkAction
+                            ? this.total
+                            : this.selection.length,
+                    }),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
-                                .dispatch("flow/enableFlowByQuery", this.loadQuery({
-                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
-                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
-                                }, false))
-                                .then(r => {
-                                    this.$toast().success(this.$t("flows enabled", {count: r.data.count}));
-                                    this.loadData(() => {
-                                    })
-                                })
+                                .dispatch(
+                                    "flow/enableFlowByQuery",
+                                    this.loadQuery(
+                                        {
+                                            namespace: this.$route.query.namespace
+                                                ? [this.$route.query.namespace]
+                                                : undefined,
+                                            q: this.$route.query.q
+                                                ? [this.$route.query.q]
+                                                : undefined,
+                                        },
+                                        false,
+                                    ),
+                                )
+                                .then((r) => {
+                                    this.$toast().success(
+                                        this.$t("flows enabled", {
+                                            count: r.data.count,
+                                        }),
+                                    );
+                                    this.loadData(() => {});
+                                });
                         } else {
                             return this.$store
-                                .dispatch("flow/enableFlowByIds", {ids: this.selection})
-                                .then(r => {
-                                    this.$toast().success(this.$t("flows enabled", {count: r.data.count}));
-                                    this.loadData(() => {
-                                    })
+                                .dispatch("flow/enableFlowByIds", {
+                                    ids: this.selection,
                                 })
+                                .then((r) => {
+                                    this.$toast().success(
+                                        this.$t("flows enabled", {
+                                            count: r.data.count,
+                                        }),
+                                    );
+                                    this.loadData(() => {});
+                                });
                         }
                     },
-                    () => {
-                    }
-                )
+                    () => {},
+                );
             },
             deleteFlows() {
                 this.$toast().confirm(
-                    this.$t("flow delete", {"flowCount": this.queryBulkAction ? this.total : this.selection.length}),
+                    this.$t("flow delete", {
+                        flowCount: this.queryBulkAction
+                            ? this.total
+                            : this.selection.length,
+                    }),
                     () => {
                         if (this.queryBulkAction) {
                             return this.$store
-                                .dispatch("flow/deleteFlowByQuery", this.loadQuery({
-                                    namespace: this.$route.query.namespace ? [this.$route.query.namespace] : undefined,
-                                    q: this.$route.query.q ? [this.$route.query.q] : undefined,
-                                }, false))
-                                .then(r => {
-                                    this.$toast().success(this.$t("flows deleted", {count: r.data.count}));
-                                    this.loadData(() => {
-                                    })
-                                })
+                                .dispatch(
+                                    "flow/deleteFlowByQuery",
+                                    this.loadQuery(
+                                        {
+                                            namespace: this.$route.query.namespace
+                                                ? [this.$route.query.namespace]
+                                                : undefined,
+                                            q: this.$route.query.q
+                                                ? [this.$route.query.q]
+                                                : undefined,
+                                        },
+                                        false,
+                                    ),
+                                )
+                                .then((r) => {
+                                    this.$toast().success(
+                                        this.$t("flows deleted", {
+                                            count: r.data.count,
+                                        }),
+                                    );
+                                    this.loadData(() => {});
+                                });
                         } else {
                             return this.$store
-                                .dispatch("flow/deleteFlowByIds", {ids: this.selection})
-                                .then(r => {
-                                    this.$toast().success(this.$t("flows deleted", {count: r.data.count}));
-                                    this.loadData(() => {
-                                    })
+                                .dispatch("flow/deleteFlowByIds", {
+                                    ids: this.selection,
                                 })
+                                .then((r) => {
+                                    this.$toast().success(
+                                        this.$t("flows deleted", {
+                                            count: r.data.count,
+                                        }),
+                                    );
+                                    this.loadData(() => {});
+                                });
                         }
                     },
-                    () => {
-                    }
-                )
+                    () => {},
+                );
             },
             importFlows() {
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
-                this.$store
-                    .dispatch("flow/importFlows", formData)
-                    .then(res => {
-                        if (res.data.length > 0) {
-                            this.$toast().warning(this.$t("flows not imported") + ": " + res.data.join(", "));
-                        } else {
-                            this.$toast().success(this.$t("flows imported"));
-                        }
-                        this.$refs.importForm.reset();
-                        this.loadData(() => {
-                        })
-                    })
+                this.$store.dispatch("flow/importFlows", formData).then((res) => {
+                    if (res.data.length > 0) {
+                        this.$toast().warning(
+                            this.$t("flows not imported") +
+                                ": " +
+                                res.data.join(", "),
+                        );
+                    } else {
+                        this.$toast().success(this.$t("flows imported"));
+                    }
+                    this.$refs.importForm.reset();
+                    this.loadData(() => {});
+                });
             },
             chartData(row) {
-                if (this.dailyGroupByFlow && this.dailyGroupByFlow[row.namespace] && this.dailyGroupByFlow[row.namespace][row.id]) {
+                if (
+                    this.dailyGroupByFlow &&
+                    this.dailyGroupByFlow[row.namespace] &&
+                    this.dailyGroupByFlow[row.namespace][row.id]
+                ) {
                     return this.dailyGroupByFlow[row.namespace][row.id];
                 } else {
                     return [];
                 }
             },
             getLastExecution(row) {
-                let noState = {state: null, startDate: null}
+                let noState = {state: null, startDate: null};
                 if (this.lastExecutions && this.lastExecutions.length > 0) {
-                    let filteredFlowExec = this.lastExecutions.filter((executedFlow) => executedFlow.flowId == row.id && executedFlow.namespace == row.namespace)
+                    let filteredFlowExec = this.lastExecutions.filter(
+                        (executedFlow) =>
+                            executedFlow.flowId == row.id &&
+                            executedFlow.namespace == row.namespace,
+                    );
                     if (filteredFlowExec.length > 0) {
                         return {
                             lastStatus: filteredFlowExec[0].state?.current,
-                            startDate: filteredFlowExec[0].state?.startDate
-                        }
+                            startDate: filteredFlowExec[0].state?.startDate,
+                        };
                     }
-                    return noState
-                }
-                else {
-                    return noState
+                    return noState;
+                } else {
+                    return noState;
                 }
             },
             loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
 
-                if(this.namespace){
-                    queryFilter.namespace = this.namespace
+                if (this.namespace) {
+                    queryFilter.namespace = this.namespace;
                 }
 
-                return _merge(base, queryFilter)
+                return _merge(base, queryFilter);
             },
             loadStats() {
                 this.dailyReady = false;
 
                 if (this.user.hasAny(permission.EXECUTION) && this.showStatChart) {
                     this.$store
-                        .dispatch("stat/daily", this.loadQuery({
-                            startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
-                            endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
-                        }))
+                        .dispatch(
+                            "stat/daily",
+                            this.loadQuery({
+                                startDate: this.$moment(this.startDate)
+                                    .add(-1, "day")
+                                    .startOf("day")
+                                    .toISOString(true),
+                                endDate: this.$moment(this.endDate)
+                                    .endOf("day")
+                                    .toISOString(true),
+                            }),
+                        )
                         .then(() => {
                             this.dailyReady = true;
                         });
@@ -547,40 +841,55 @@
                 this.loadStats();
 
                 this.$store
-                    .dispatch("flow/findFlows", this.loadQuery({
-                        size: parseInt(this.$route.query.size || 25),
-                        page: parseInt(this.$route.query.page || 1),
-                        sort: this.$route.query.sort || "id:asc"
-                    }))
-                    .then(flows => {
+                    .dispatch(
+                        "flow/findFlows",
+                        this.loadQuery({
+                            size: parseInt(this.$route.query.size || 25),
+                            page: parseInt(this.$route.query.page || 1),
+                            sort: this.$route.query.sort || "id:asc",
+                        }),
+                    )
+                    .then((flows) => {
                         this.dailyGroupByFlowReady = false;
                         this.lastExecutionByFlowReady = false;
 
                         if (flows.results && flows.results.length > 0) {
-                            if (this.user && this.user.hasAny(permission.EXECUTION)) {
+                            if (
+                                this.user &&
+                                this.user.hasAny(permission.EXECUTION)
+                            ) {
                                 this.$store
                                     .dispatch("stat/dailyGroupByFlow", {
-                                        flows: flows.results
-                                            .map(flow => {
-                                                return {namespace: flow.namespace, id: flow.id}
-                                            }),
-                                        startDate: this.$moment(this.startDate).add(-1, "day").startOf("day").toISOString(true),
-                                        endDate: this.$moment(this.endDate).endOf("day").toISOString(true)
+                                        flows: flows.results.map((flow) => {
+                                            return {
+                                                namespace: flow.namespace,
+                                                id: flow.id,
+                                            };
+                                        }),
+                                        startDate: this.$moment(this.startDate)
+                                            .add(-1, "day")
+                                            .startOf("day")
+                                            .toISOString(true),
+                                        endDate: this.$moment(this.endDate)
+                                            .endOf("day")
+                                            .toISOString(true),
                                     })
                                     .then(() => {
-                                        this.dailyGroupByFlowReady = true
-                                    })
+                                        this.dailyGroupByFlowReady = true;
+                                    });
 
                                 this.$store
                                     .dispatch("stat/lastExecutions", {
-                                        flows: flows.results
-                                            .map(flow => {
-                                                return {namespace: flow.namespace, id: flow.id}
-                                            }),
+                                        flows: flows.results.map((flow) => {
+                                            return {
+                                                namespace: flow.namespace,
+                                                id: flow.id,
+                                            };
+                                        }),
                                     })
                                     .then(() => {
-                                        this.lastExecutionByFlowReady = true
-                                    })
+                                        this.lastExecutionByFlowReady = true;
+                                    });
                             }
                         }
                     })
@@ -588,22 +897,26 @@
             },
             rowClasses(row) {
                 return row && row.row && row.row.disabled ? "disabled" : "";
-            }
-        }
+            },
+        },
     };
 </script>
 
 <style lang="scss" scoped>
-    :deep(nav .dropdown-menu) {
-        display: flex;
-        width: 20rem;
-    }
+.shadow {
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+}
 
-    .flow-id {
-        min-width: 200px;
-    }
+:deep(nav .dropdown-menu) {
+    display: flex;
+    width: 20rem;
+}
 
-    .flows-table  .el-table__cell {
-        vertical-align: middle;
-    }
+.flow-id {
+    min-width: 200px;
+}
+
+.flows-table .el-table__cell {
+    vertical-align: middle;
+}
 </style>

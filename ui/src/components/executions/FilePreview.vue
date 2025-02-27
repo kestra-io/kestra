@@ -1,6 +1,6 @@
 <template>
     <el-button size="small" type="primary" :icon="EyeOutline" @click="getFilePreview">
-        Preview
+        {{ $t("preview") }}
     </el-button>
     <drawer
         v-if="selectedPreview === value && preview"

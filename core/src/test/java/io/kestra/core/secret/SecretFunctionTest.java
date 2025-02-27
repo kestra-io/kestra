@@ -1,13 +1,12 @@
 package io.kestra.core.secret;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -22,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import reactor.core.publisher.Flux;
 
+import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
@@ -48,6 +48,9 @@ public class SecretFunctionTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "secrets");
         assertThat(execution.getTaskRunList().getFirst().getOutputs().get("value"), is("secretValue"));
         assertThat(execution.getTaskRunList().get(2).getOutputs().get("value"), is("passwordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlong"));
+        assertThat(execution.getTaskRunList().get(3).getOutputs().get("value"), is("secretValue"));
+        assertThat(execution.getTaskRunList().get(4).getOutputs(), anEmptyMap());
+        assertThat(execution.getTaskRunList().get(4).getState().getCurrent(), is(State.Type.WARNING));
 
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getTaskId() != null && logEntry.getTaskId().equals("log-secret"));
         receive.blockLast();

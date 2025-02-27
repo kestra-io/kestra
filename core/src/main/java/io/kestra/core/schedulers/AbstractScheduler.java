@@ -30,7 +30,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.models.triggers.RecoverMissedSchedules;
+import io.kestra.core.models.flows.Flow;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -70,7 +70,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private final QueueInterface<WorkerJob> workerTaskQueue;
     private final WorkerTriggerResultQueueInterface workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
-    @SuppressWarnings("rawtypes") private final Optional<QueueInterface> clusterEventQueue;
+    @SuppressWarnings("rawtypes")
+    private final Optional<QueueInterface> clusterEventQueue;
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final RunContextInitializer runContextInitializer;
@@ -407,6 +408,16 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
     private List<FlowWithTriggers> computeSchedulable(List<FlowWithSource> flows, List<Trigger> triggerContextsToEvaluate, ScheduleContextInterface scheduleContext) {
         List<String> flowToKeep = triggerContextsToEvaluate.stream().map(Trigger::getFlowId).toList();
+
+        triggerContextsToEvaluate.stream()
+            .filter(trigger -> !flows.stream().map(FlowWithSource::uidWithoutRevision).toList().contains(Flow.uid(trigger)))
+            .forEach(trigger -> {
+                try {
+                    this.triggerState.delete(trigger);
+                } catch (QueueException e) {
+                    log.error("Unable to delete the trigger: {}.{}.{}", trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId(), e);
+                }
+            });
 
         return flows
             .stream()

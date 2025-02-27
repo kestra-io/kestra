@@ -1,7 +1,7 @@
 <template>
     <a
         href="https://kestra.io/slack?utm_source=app&utm_campaign=slack&utm_content=error"
-        class="position-absolute slack-on-error el-button el-button--small is-text is-has-bg"
+        class="position-absolute slack-on-error el-button el-button--small"
         target="_blank"
     >
         <Slack />

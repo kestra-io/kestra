@@ -46,11 +46,19 @@
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
                     }"
+                    :properties-width="182"
+                    :properties="{
+                        shown: true,
+                        columns: optionalColumns,
+                        displayColumns,
+                        storageKey: 'executions'
+                    }"
+                    @update-properties="updateDisplayColumns"
                 />
             </template>
 
             <template #top>
-                <el-card v-if="showStatChart()" shadow="never" class="mb-4">
+                <el-card v-if="showStatChart()" class="mb-4 shadow">
                     <ExecutionsBar v-if="daily" :data="daily" :total="executionsCount" />
                 </el-card>
             </template>
@@ -247,6 +255,7 @@
 
                         <el-table-column
                             prop="flowRevision"
+                            v-if="displayColumn('revision')"
                             :label="$t('revision')"
                             class-name="shrink"
                         >
@@ -291,7 +300,11 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column column-key="action" class-name="row-action">
+                        <el-table-column 
+                            column-key="action" 
+                            class-name="row-action"
+                            :label="$t('actions')"
+                        >
                             <template #default="scope">
                                 <router-link
                                     :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}, query: {revision: scope.row.flowRevision}}"
@@ -460,57 +473,52 @@
                 showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_CHART)),
                 optionalColumns: [
                     {
-                        label: "start date",
+                        label: this.$t("start date"),
                         prop: "state.startDate",
                         default: true
                     },
                     {
-                        label: "end date",
+                        label: this.$t("end date"),
                         prop: "state.endDate",
                         default: true
                     },
                     {
-                        label: "duration",
+                        label: this.$t("duration"),
                         prop: "state.duration",
                         default: true
                     },
                     {
-                        label: "state",
-                        prop: "state.current",
-                        default: true
-                    },
-                    {
-                        label: "triggers",
-                        prop: "triggers",
-                        default: true
-                    },
-                    {
-                        label: "labels",
-                        prop: "labels",
-                        default: true
-                    },
-                    {
-                        label: "inputs",
-                        prop: "inputs",
-                        default: false
-                    },
-                    {
-                        label: "namespace",
+                        label: this.$t("namespace"),
                         prop: "namespace",
                         default: true
                     },
                     {
-                        label: "flow",
+                        label: this.$t("flow"),
                         prop: "flowId",
                         default: true
                     },
                     {
-                        label: "revision",
+                        label: this.$t("labels"),
+                        prop: "labels",
+                        default: true
+                    },
+                    {
+                        label: this.$t("state"),
+                        prop: "state.current",
+                        default: true
+                    },
+                    {
+                        label: this.$t("revision"),
                         prop: "flowRevision",
                         default: false
                     },
                     {
-                        label: "task id",
+                        label: this.$t("inputs"),
+                        prop: "inputs",
+                        default: false
+                    },
+                    {
+                        label: this.$t("task id"),
                         prop: "taskRunList.taskId",
                         default: false
                     }
@@ -532,7 +540,7 @@
                 this.storageKey = storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS;
                 this.optionalColumns = this.optionalColumns.filter(col => col.prop !== "namespace" && col.prop !== "flowId")
             }
-            this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
+            this.displayColumns = localStorage.getItem("columns_executions")?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
             if (this.isConcurrency) {
                 this.emitStateCount([State.RUNNING, State.PAUSED])
@@ -644,6 +652,9 @@
             },
             displayColumn(column) {
                 return this.hidden ? !this.hidden.includes(column) : this.displayColumns.includes(column);
+            },
+            updateDisplayColumns(newColumns) {
+                this.displayColumns = newColumns;
             },
             onShowChartChange(value) {
                 this.showChart = value;
@@ -834,18 +845,18 @@
                         h(ElSwitch, {
                             modelValue: includeNonTerminated.value,
                             "onUpdate:modelValue": (val) => {
-                                includeNonTerminated.value = val
+                                includeNonTerminated.value = val;
                             },
                         }),
                     ]),
-                    h(ElAlert, {
-                        title:  this.$t("execution-warn-title"),
+                    includeNonTerminated.value ? h(ElAlert, {
+                        title: this.$t("execution-warn-title"),
                         description: this.$t("execution-warn-deleting-still-running"),
                         type: "warning",
                         showIcon: true,
                         closable: false,
                         class: "custom-warning"
-                    }),
+                    }) : null,
                     h(ElCheckbox, {
                         modelValue: deleteLogs.value,
                         label: this.$t("execution_deletion.logs"),
@@ -876,7 +887,7 @@
                         "execution/queryDeleteExecution",
                         "execution/bulkDeleteExecution",
                         "executions deleted"
-                    )
+                    );
                 });
             },
             killExecutions() {
@@ -963,6 +974,10 @@
 
 
 <style scoped lang="scss">
+.shadow {
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+}
+
 .padding-bottom {
     padding-bottom: 4rem;
 }

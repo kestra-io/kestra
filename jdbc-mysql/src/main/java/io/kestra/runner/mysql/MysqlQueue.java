@@ -7,6 +7,7 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -62,7 +63,6 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
             .getFirst();
     }
 
-    @SuppressWarnings("RedundantCast")
     @Override
     protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
         var update = ctx
@@ -71,7 +71,8 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
                 AbstractJdbcRepository.field("consumers"),
                 DSL.field("CONCAT_WS(',', consumers, ?)", String.class, queueType)
             )
-            .where(AbstractJdbcRepository.field("offset").in((Object[]) offsets.toArray(Integer[]::new)));
+            .set(AbstractJdbcRepository.field("updated"), LocalDateTime.now())
+            .where(AbstractJdbcRepository.field("offset").in(offsets.toArray(Integer[]::new)));
 
         if (consumerGroup != null) {
             update = update.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));

@@ -42,7 +42,7 @@
                                 <div>
                                     <el-tooltip placement="right" :persistent="false" :hide-after="0" effect="light">
                                         <template #content>
-                                            <span>This task has {{ item.attempts }} attempts.</span>
+                                            <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
                                         </template>
                                         <Warning
                                             v-if="item.attempts > 1"

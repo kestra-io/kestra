@@ -1,0 +1,46 @@
+{
+  "name": "kestra",
+  "build": {
+    "context": ".",
+    "dockerfile": "Dockerfile"
+  },
+  "workspaceFolder": "/workspaces/kestra",
+  "forwardPorts": [5173, 8080],
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.profiles.linux": {
+          "zsh": {
+            "path": "/bin/zsh"
+          }
+        },
+        "workbench.iconTheme": "vscode-icons",
+        "editor.tabSize": 4,
+        "editor.formatOnSave": true,
+        "files.insertFinalNewline": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode",
+        "telemetry.telemetryLevel": "off",
+        "editor.bracketPairColorization.enabled": true,
+        "editor.guides.bracketPairs": "active"
+      },
+      "extensions": [
+        "redhat.vscode-yaml",
+        "dbaeumer.vscode-eslint",
+        "vscode-icons-team.vscode-icons",
+        "eamodio.gitlens",
+        "esbenp.prettier-vscode",
+        "aaron-bond.better-comments",
+        "codeandstuff.package-json-upgrade",
+        "andys8.jest-snippets",
+        "oderwat.indent-rainbow",
+        "evondev.indent-rainbow-palettes",
+        "formulahendry.auto-rename-tag",
+        "IronGeek.vscode-env",
+        "yoavbls.pretty-ts-errors",
+        "github.vscode-github-actions",
+        "vscjava.vscode-java-pack",
+        "ms-azuretools.vscode-docker"
+      ]
+    }
+  }
+}

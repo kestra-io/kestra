@@ -503,6 +503,7 @@
                         this.logsSSE = sse;
 
                         this.logsSSE.onmessage = event => {
+
                             // we are receiving a first "fake" event to force initializing the connection: ignoring it
                             if (event.lastEventId !== "start") {
                                 this.logsBuffer = this.logsBuffer.concat(JSON.parse(event.data));
@@ -525,7 +526,16 @@
                                 this.scrollToBottomFailedTask();
                             }
                         }
+
+                        this.logsSSE.onerror = _ => {
+                            this.$store.dispatch("core/showMessage", {
+                                variant: "error",
+                                title: this.$t("error"),
+                                message: this.$t("something_went_wrong.loading_execution"),
+                            });
+                        }
                     })
+
             },
             isSubflow(taskRun) {
                 return taskRun.outputs?.executionId;
@@ -578,7 +588,7 @@
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
                             const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.forcedAttemptNumber ?? 0)
                             if (this.shownAttemptsUid.includes(`${taskRun.id}-${attemptNumber}`)) {
-                                this.logsScrollerRefs?.[`${taskRun.id}-${attemptNumber}`]?.[0]?.scrollToBottom();
+                                this.logsScrollerRefs?.[`${taskRun.id}-${attemptNumber}`]?.scrollToBottom();
                             }
                         }
                     });

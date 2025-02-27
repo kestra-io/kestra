@@ -25,15 +25,13 @@ jobs:
           filters: |
             ui:
               - 'ui/**'
-            translations:
-              - 'ui/src/translations/**'
             backend:
               - '!{ui,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
   frontend:
     name: Frontend - Tests
-    needs: [file-changes, translations]
+    needs: [file-changes]
     if: "needs.file-changes.outputs.ui == 'true'"
     uses: ./.github/workflows/workflow-frontend-test.yml
     secrets:

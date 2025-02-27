@@ -155,8 +155,8 @@ export default {
             if (flowParsed === undefined) {
                 dispatch("core/showMessage", {
                     variant: "error",
-                    title: this.$t("invalid flow"),
-                    message: this.$t("invalid yaml"),
+                    title: this.$i18n.t("invalid flow"),
+                    message: this.$i18n.t("invalid yaml"),
                 }, {root: true});
 
                 return;
@@ -165,15 +165,15 @@ export default {
             if (getters.flowErrors) {
                 if (state.flowValidation.outdated && state.isCreating) {
                     overrideFlow = await ElMessageBox({
-                        title: this.$t("override.title"),
+                        title: this.$i18n.t("override.title"),
                         message: () => {
                             return h("div", null, [
-                                h("p", null, this.$t("override.details")),
+                                h("p", null, this.$i18n.t("override.details")),
                             ]);
                         },
                         showCancelButton: true,
-                        confirmButtonText: this.$t("ok"),
-                        cancelButtonText: this.$t("cancel"),
+                        confirmButtonText: this.$i18n.t("ok"),
+                        cancelButtonText: this.$i18n.t("cancel"),
                         center: false,
                         showClose: false,
                     })

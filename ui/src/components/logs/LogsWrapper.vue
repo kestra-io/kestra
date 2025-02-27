@@ -116,7 +116,9 @@
                 return this.$route.name === "namespaces/update"
             },
             selectedLogLevel() {
-                const decoded = [decodeSearchParams(this.$route.query, ["level"], [])?.[0]?.value].flat()[0] ?? "INFO"
+                const decodedParams = decodeSearchParams(this.$route.query, ["level"], []);
+                const levelFilters = decodedParams.filter(item => item.label === "level");
+                const decoded = levelFilters.length > 0 ? levelFilters[0].value : "INFO";
                 return this.logLevel || decoded || localStorage.getItem("defaultLogLevel") || "INFO";
             },
             endDate() {

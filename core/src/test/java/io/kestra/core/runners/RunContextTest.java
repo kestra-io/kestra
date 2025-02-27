@@ -35,6 +35,7 @@ import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -62,6 +63,7 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
 @Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
@@ -321,6 +323,22 @@ class RunContextTest {
         assertThat(Objects.requireNonNull(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null)).getMessage(), is("john ******** doe"));
     }
 
+    @Test
+    void shouldValidateABean() {
+        RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) runContextFactory.of());
+        TestBean testBean = new TestBean("someValue");
+
+        runContext.validate(testBean);
+    }
+
+    @Test
+    void shouldFailValidateABean() {
+        RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) runContextFactory.of());
+        TestBean testBean = new TestBean(null);
+
+        assertThrows(ConstraintViolationException.class, () -> runContext.validate(testBean));
+    }
+
     @SuperBuilder
     @ToString
     @EqualsAndHashCode
@@ -344,4 +362,6 @@ class RunContextTest {
             return null;
         }
     }
+
+    record TestBean(@NotNull String someValue) {}
 }

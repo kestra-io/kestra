@@ -31,7 +31,6 @@ import {
     ArcElement,
     DoughnutController,
 } from "chart.js";
-import {TreemapController, TreemapElement} from "chartjs-chart-treemap"
 import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
 
@@ -78,9 +77,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
         Tooltip,
         Legend,
         CategoryScale,
-        LinearScale,
-        TreemapController,
-        TreemapElement
+        LinearScale
     );
 
     // store

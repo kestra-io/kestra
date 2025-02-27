@@ -2,8 +2,6 @@
     <template v-if="multiPanelEditor">
         <multi-panel-editor-view
             v-if="flow"
-            :is-read-only="isReadOnly"
-            :expanded-subflows="expandedSubflows"
         />
     </template>
     <template v-else>

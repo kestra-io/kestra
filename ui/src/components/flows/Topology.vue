@@ -9,7 +9,6 @@
                 :source="flow.source"
                 :is-read-only="isReadOnly"
                 :expanded-subflows="expandedSubflows"
-                view-type="topology"
                 @expand-subflow="onExpandSubflow($event)"
                 @on-edit="(event) => emit('on-edit', event, true)"
             />

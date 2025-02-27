@@ -1,4 +1,3 @@
-import axios from "axios";
 import {h} from "vue";
 import {ElMessageBox} from "element-plus";
 import permission from "../models/permission";
@@ -301,6 +300,8 @@ export default {
                         return response.data;
                     }
                     commit("setFlow", response.data);
+                    commit("setFlowYaml", response.data.source);
+                    commit("setFlowYamlOrigin", response.data.source);
                     commit("setOverallTotal", 1)
                     return response.data;
                 })
@@ -386,7 +387,7 @@ export default {
             if (!flowParsed.id || !flowParsed.namespace) {
                 flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
-            return axios.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config, withCredentials: true})
+            return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config, withCredentials: true})
                 .then(response => {
                     commit("setFlowGraph", response.data)
 
@@ -472,14 +473,14 @@ export default {
             return this.$http.delete(`${apiUrl(this)}/flows/delete/by-query`, {params: options})
         },
         validateFlow({commit}, options) {
-            return axios.post(`${apiUrl(this)}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
+            return this.$http.post(`${apiUrl(this)}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
                 .then(response => {
                     commit("setFlowValidation", response.data[0])
                     return response.data[0]
                 })
         },
         validateTask({commit}, options) {
-            return axios.post(`${apiUrl(this)}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
+            return this.$http.post(`${apiUrl(this)}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
                 .then(response => {
                     commit("setTaskError", response.data.constraints)
                     return response.data
@@ -641,6 +642,9 @@ export default {
                 return state.flow;
             }
         },
+        flowYaml(state) {
+            return state.flowYaml;
+        },
         flowValidation(state) {
             if (state.flowValidation) {
                 return state.flowValidation;
@@ -661,6 +665,9 @@ export default {
                 action.UPDATE,
                 getters.flow.namespace,
             );
+        },
+        isReadOnly(_state, getters) {
+            return getters.flow?.deleted || !getters.isAllowedEdit || getters.readOnlySystemLabel;
         },
         readOnlySystemLabel(_state, getters) {
             if (!getters.flow) {

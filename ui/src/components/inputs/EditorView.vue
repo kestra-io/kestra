@@ -72,7 +72,7 @@
             <el-switch
                 v-if="!isNamespace"
                 v-model="editorViewType"
-                @change="changeEditorViewType"
+                @change="(val) => editorViewType = val"
                 active-value="NO_CODE"
                 inactive-value="YAML"
                 :inactive-text="$t('no_code.labels.no_code')"
@@ -206,7 +206,11 @@
                     :is-read-only="isReadOnly"
                     :source="flowYaml"
                     :is-allowed-edit="isAllowedEdit"
-                    :view-type="viewType"
+                    :horizontal-default="viewType === editorViewTypes.SOURCE_TOPOLOGY
+                        ? false
+                        : viewType === editorViewTypes.SOURCE_BLUEPRINTS
+                            ? true
+                            : undefined"
                     :expanded-subflows="props.expandedSubflows"
                 />
                 <el-alert v-else type="warning" :closable="false">
@@ -448,14 +452,13 @@
     const flowInfos = computed(() => store.getters["flow/flowInfos"]);
     const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"]);
 
-    const editorViewType = ref("YAML");
-    const changeEditorViewType = (value) => {
-        localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, value);
+    const editorViewType = useLocalStorage(storageKeys.EDITOR_VIEW_TYPE, "YAML");
 
+    watch(editorViewType, (value) => {
         if(value === "NO_CODE") {
             editorWidth.value = editorWidth.value > 33.3 ? 33.3 : editorWidth.value;
         }
-    }
+    });
 
     const handleTopologyEditClick = (params) => {
         if (viewType.value === editorViewTypes.TOPOLOGY) {
@@ -497,7 +500,7 @@
     const editorWidth = useLocalStorage("editor-size", 50);
     const validationDomElement = ref(null);
     const isLoading = ref(false);
-    const flowYaml = computed(() => store.state.flow.flowYaml);
+    const flowYaml = computed(() => store.getters["flow/flowYaml"]);
     const flowYamlOrigin = computed(() => store.state.flow.flowYamlOrigin);
     const user = computed(() => store.getters["auth/user"]);
     const metadata = computed(() => store.state.flow.metadata);
@@ -620,11 +623,7 @@
         store.commit("core/setGuidedProperties", {tourStarted: false});
     };
 
-    const isAllowedEdit = computed(() => {
-        return (
-            user.value?.isAllowed(permission.FLOW, action.UPDATE, flowParsed.value?.namespace ?? props.namespace)
-        );
-    });
+    const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"]);
 
     const forwardEvent = (type, event) => {
         emit(type, event);
@@ -755,7 +754,7 @@
     };
 
     const onSaveMetadata = () => {
-        store.commit("flow/onSaveMetadata");
+        store.dispatch("flow/onSaveMetadata");
         isEditMetadataOpen.value = false;
     };
 

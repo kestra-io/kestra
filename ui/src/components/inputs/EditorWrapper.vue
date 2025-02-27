@@ -14,24 +14,25 @@
         @save="save"
         @execute="execute"
     >
-        <template #absolute>
-            <KeyShortcuts />
-        </template>
+        <KeyShortcuts />
     </editor>
 </template>
 
-<script setup>
-    import {computed} from "vue";
+<script lang="ts" setup>
+    import {computed, ref} from "vue";
     import {useStore} from "vuex";
     import Editor from "./Editor.vue";
     import KeyShortcuts from "./KeyShortcuts.vue";
 
     const store = useStore();
 
-    const flow = computed(() => store.getters["flow/flow"])
+    const editorDomElement = ref<any>(null);
 
-    const flowYaml = computed(() => flow.value?.source);
-    function editorUpdate(newValue){
+    const flow = computed(() => store.getters["flow/flow"])
+    const flowYaml = computed(() => store.getters["flow/flowYaml"]);
+    const isCreating = computed(() => store.state.flow.isCreating);
+
+    function editorUpdate(newValue: string){
         store.commit("flow/updateFlowSource", newValue);
     }
 
@@ -40,10 +41,17 @@
 
     const isReadOnly = computed(() => flow.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"])
 
-    defineProps({
-        isCreating: {
-            type: Boolean,
-            default: false
-        }
-    })
+    function updatePluginDocumentation(event: string | undefined, task: any){
+        store.dispatch("plugin/updateDocumentation", {event,task});
+    };
+
+    function save(){
+        return store.dispatch("flow/save", {
+            content: editorDomElement.value.$refs.monacoEditor.value,
+        })
+    }
+
+    const execute = (_) => {
+        store.commit("flow/executeFlow", true);
+    };
 </script>

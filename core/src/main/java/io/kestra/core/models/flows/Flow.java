@@ -204,9 +204,9 @@ public class Flow extends AbstractFlow implements HasUID {
 
     public Stream<Task> allTasks() {
         return Stream.of(
-                this.tasks != null ? this.tasks : new ArrayList<Task>(),
-                this.errors != null ? this.errors : new ArrayList<Task>(),
-                this._finally != null ? this._finally : new ArrayList<Task>(),
+                this.tasks != null ? this.tasks : Collections.<Task>emptyList(),
+                this.errors != null ? this.errors : Collections.<Task>emptyList(),
+                this._finally != null ? this._finally : Collections.<Task>emptyList(),
                 this.listenersTasks()
             )
             .flatMap(Collection::stream);
@@ -331,7 +331,7 @@ public class Flow extends AbstractFlow implements HasUID {
 
     private List<Task> listenersTasks() {
         if (this.getListeners() == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
         return this.getListeners()

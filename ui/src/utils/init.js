@@ -162,6 +162,9 @@ export default async (app, routes, stores, translations, additionalTranslations 
     app.use(Vue3Tour)
     app.use(VueVirtualScroller)
 
+    // Passing toast to VUEX store to be used in modules
+    store.$toast = app.config.globalProperties.$toast;
+
     // filters
     app.config.globalProperties.$filters = filters;
 

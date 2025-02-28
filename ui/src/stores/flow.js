@@ -55,14 +55,14 @@ export default {
             const currentTab = rootState.editor.current;
 
             if (getters.isFlow) {
-                dispatch("onEdit", {source, currentIsFlow:true}).then((validation) => {
+                return dispatch("onEdit", {source, currentIsFlow:true}).then((validation) => {
                     if (validation.outdated && !state.isCreating) {
                         return "confirmOutdatedSaveDialog";
                     }
-                    dispatch("saveWithoutRevisionGuard");
+                    const res = dispatch("saveWithoutRevisionGuard");
                     commit("setFlowYamlOrigin", source);
 
-                    if (currentTab.value && currentTab.value.name) {
+                    if (currentTab && currentTab.name) {
                         commit("editor/changeOpenedTabs", {
                             action: "dirty",
                             name: "Flow",
@@ -71,19 +71,20 @@ export default {
                             flow: true,
                         }, {root: true});
                     }
+                    return res
                 });
             } else {
-                if(!currentTab.value.dirty) return;
+                if(!currentTab.dirty) return;
 
                 await dispatch("namespace/createFile", {
                     namespace: getters.namespace,
-                    path: currentTab.value.path ?? currentTab.value.name,
+                    path: currentTab.path ?? currentTab.name,
                     content,
                 }, {root: true});
                 commit("editor/changeOpenedTabs", {
                     action: "dirty",
-                    path: currentTab.value.path,
-                    name: currentTab.value.name,
+                    path: currentTab.path,
+                    name: currentTab.name,
                     dirty: false
                 }, {root: true});
 
@@ -188,15 +189,15 @@ export default {
             }
 
             if (state.isCreating && !overrideFlow) {
-                await dispatch("createFlow", {flow: flowYaml.value})
+                await dispatch("createFlow", {flow: flowYaml})
                     .then((response) => {
-                        this.toast.saved(response.id);
+                        this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
                         dispatch("core/isUnsaved", false, {root: true});
                     });
             } else {
-                await dispatch("saveFlow", {flow: flowYaml.value})
+                await dispatch("saveFlow", {flow: flowYaml})
                     .then((response) => {
-                        this.toast.saved(response.id);
+                        this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
                         dispatch("core/isUnsaved", false, {root: true});
                     });
             }
@@ -207,7 +208,7 @@ export default {
 
             commit("setHaveChange", false);
             await dispatch("validateFlow", {
-                flow: state.isCreating ? flowYaml.value : getters.yamlWithNextRevision
+                flow: state.isCreating ? flowYaml : getters.yamlWithNextRevision
             });
         },
         fetchGraph({state, dispatch}) {

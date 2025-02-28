@@ -835,10 +835,21 @@
         }
     };
 
-    const save = () => {
-        return store.dispatch("flow/save", {
+    const  save = async () => {
+        const result = await store.dispatch("flow/save", {
             content: editorDomElement.value.$refs.monacoEditor.value,
         })
+        if(result === "redirect_to_update"){
+            await router.push({
+                name: "flows/update",
+                params: {
+                    id: flowParsed.value.id,
+                    namespace: flowParsed.value.namespace,
+                    tab: "edit",
+                    tenant: routeParams.tenant,
+                },
+            });
+        }
     };
 
     const execute = (_) => {

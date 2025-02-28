@@ -11,9 +11,6 @@ import stores from "./stores/store";
 const app = createApp(App)
 
 initApp(app, routes, stores, en).then(({store, router}) => {
-    // Passing toast to VUEX store to be used in modules
-    store.$toast = app.config.globalProperties.$toast();
-
     // axios
     configureAxios((instance) => {
         app.use(VueAxios, instance);

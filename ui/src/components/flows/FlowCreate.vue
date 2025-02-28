@@ -66,7 +66,7 @@ tasks:
     message: Hello World! 🚀`);
                 }
 
-                this.$store.commit("flow/setFlow", YamlUtils.parse(this.flowYaml));
+                this.$store.commit("flow/setFlow", {...YamlUtils.parse(this.flowYaml), source: this.flowYaml});
             }
         },
         computed: {

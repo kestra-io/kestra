@@ -30,13 +30,13 @@
       },
       "create": {
         "title": "Flow already exists",
-        "description": "A Flow with the same id / namespace already exists.",
-        "details": "Save to override and force the creation of a new revision."
+        "description": "A flow with the same id already exists in this namespace.",
+        "details": "Save to override and create a new revision."
       }
     },
     "override": {
       "title": "You are going to override the current flow",
-      "details": "Previous flow will be recoverable through the revisions tab."
+      "details": "Previous flow can be restored from the Revisions tab."
     },
     "is deprecated": "is deprecated",
     "success": "Success",
@@ -74,6 +74,8 @@
     "triggered done": "Execution <em>{name}</em> is successfully triggered",
     "topology": "Topology",
     "date": "Date",
+    "prev_execution": "Previous execution",
+    "next_execution": "Next execution",
     "datepicker": {
       "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S)'",
       "duration example": "Example: 'P1DT1H1M1S'",
@@ -242,7 +244,7 @@
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
-      "title": "Debug Outputs",
+      "title": "Debug Expression",
       "tooltip": "Render any Pebble expression and inspect the Execution context."
     },
     "attempt": "Attempt",
@@ -543,6 +545,7 @@
     "aggregation": "Aggregation",
     "metric choice": "Please choose a metric and an aggregation",
     "of": "of",
+    "see_all_states": "See all states",
     "save draft": {
       "message": "Draft saved",
       "retrieval": {
@@ -1068,6 +1071,7 @@
       "label": "Choose filters",
       "empty": "No data.",
       "format": "Type parameter as 'key:value'",
+      "text_search": "Search for this text",
       "options": {
         "namespace": "Namespace",
         "flow": "Flow",
@@ -1200,6 +1204,39 @@
         "loading_execution": "Something went wrong while loading the execution"
     },
     "debug": "Debug",
-    "default": "Default"
+    "default": "Default",
+    "data_not_protected": "Your data is not protected. Don't loose it. <b>Enable our free security features or try our paid offering.</b>",
+    "activate_basic_auth": "Activate Basic Authentication",
+    "dark_version": "Dark version",
+    "use_dark_background": "Use this version when working on a dark background to ensure our name remains readable.",
+    "light_version": "Light version",
+    "light_background": "This is the preferred option when working with a light background.",
+    "monogram": "Monogram",
+    "wordmark_colors": "The wordmark colors adapt based on the background, while the icon remains without a background when placed on a dark background.",
+    "download_logos": "Download Logo Pack",
+    "this_task_has": "This task has",
+    "about_this_blueprint": "About this blueprint",
+    "deleted_label": "Deleted",
+    "years": "Years",
+    "months": "Months",
+    "weeks": "Weeks",
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds",
+    "input_custom_duration": "or input custom duration:",
+    "fold_all_multi_lines": "Fold All Multi Lines",
+    "task_id_exists": "Task Id already exist",
+    "task_id_message": "Task Id ${existingTask} already exist in the flow.",
+    "trigger_id_exists": "Trigger Id already exist",
+    "trigger_id_message": "Trigger Id ${existingTrigger} already exist in the flow.",
+    "watch": "Watch",
+    "learn_more": "Learn more",
+    "watch_video": "Watch Video",
+    "runners": "Runners",
+    "select": "Select your {{section}}",
+    "for flow": "for flow",
+    "confirm": "Confirm",
+    "task_runners": "Task Runners"
   }
 }

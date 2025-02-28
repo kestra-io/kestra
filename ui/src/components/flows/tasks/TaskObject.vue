@@ -241,6 +241,16 @@
     }
 }
 
+.label {
+    color: var(--ks-content-primary);
+}
+
+.el-tooltip__trigger {
+    > :deep(svg) {
+        fill: var(--ks-content-tertiary);
+    }
+}
+
 .el-form-item {
     > :deep(.el-form-item__label) {
         align-items: center;

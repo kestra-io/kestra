@@ -3,7 +3,7 @@
         <router-link :to="{name: 'executions/update', params: {id: props.execution, namespace: props.namespace, flowId: props.flowId}}">
             {{ props.execution }}
         </router-link>
-        for flow
+        {{ $t('for flow') }}
         <router-link :to="{name: 'flows/update', params: {namespace: props.namespace, id: props.flowId}}">
             {{ props.namespace }}.{{ props.flowId }}
         </router-link>

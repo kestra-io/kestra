@@ -302,7 +302,7 @@ class PropertyTest {
     void aListToRender() throws Exception {
         var task = DynamicPropertyExampleTask.builder()
             .items(new Property<>("""
-                ["python test.py --input1 \\"{{ item1 }}\\" --input2 \\"{{ item2 }}\\""]"""))
+                ["python test.py --input1 \\"{{ item1 }}\\" --input2 \\"{{ item2 }}\\"", "'gs://{{ renderOnce(\\"bucket\\") }}/{{ 'table' }}/{{ 'file' }}_*.csv.gz'"]"""))
             .properties(new Property<>("""
                 {
                   "key1": "{{value1}}",
@@ -319,7 +319,7 @@ class PropertyTest {
         var output = task.run(runContext);
 
         assertThat(output, notNullValue());
-        assertThat(output.getList(), containsInAnyOrder("python test.py --input1 \"item1\" --input2 \"item2\""));
+        assertThat(output.getList(), containsInAnyOrder("python test.py --input1 \"item1\" --input2 \"item2\"", "'gs://bucket/table/file_*.csv.gz'"));
     }
 
     @Builder

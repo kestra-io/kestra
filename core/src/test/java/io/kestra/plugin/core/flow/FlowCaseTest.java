@@ -49,6 +49,36 @@ public class FlowCaseTest {
         this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing", false);
     }
 
+    public void oldTaskName() throws Exception {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<Execution> triggered = new AtomicReference<>();
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Execution execution = either.getLeft();
+            if (execution.getFlowId().equals("minimal") && execution.getState().getCurrent().isTerminated()) {
+                triggered.set(execution);
+                countDownLatch.countDown();
+            }
+        });
+
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "subflow-old-task-name"
+        );
+
+        countDownLatch.await(1, TimeUnit.MINUTES);
+        receive.blockLast();
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("executionId"), is(triggered.get().getId()));
+        assertThat(triggered.get().getTrigger().getType(), is("io.kestra.core.tasks.flows.Subflow"));
+        assertThat(triggered.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
+        assertThat(triggered.get().getTrigger().getVariables().get("flowId"), is(execution.getFlowId()));
+        assertThat(triggered.get().getTrigger().getVariables().get("namespace"), is(execution.getNamespace()));
+    }
+
     @SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})
     void run(String input, State.Type fromState, State.Type triggerState, int count, String outputs, boolean testInherited) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);

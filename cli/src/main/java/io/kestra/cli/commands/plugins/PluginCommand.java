@@ -14,7 +14,8 @@ import picocli.CommandLine;
     subcommands = {
         PluginInstallCommand.class,
         PluginListCommand.class,
-        PluginDocCommand.class
+        PluginDocCommand.class,
+        PluginSearchCommand.class
     }
 )
 @Slf4j

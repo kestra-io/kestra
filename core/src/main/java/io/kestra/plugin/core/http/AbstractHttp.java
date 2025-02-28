@@ -16,6 +16,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.hc.core5.http.ContentType;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,6 +25,7 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URLEncoder;
 import java.net.http.HttpHeaders;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
@@ -103,9 +105,11 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     protected HttpRequest request(RunContext runContext) throws IllegalVariableEvaluationException, URISyntaxException, IOException {
+        // ideally we should URLEncode the path of the UI, but as we cannot URLEncode everything, we handle the common case of space in the URI.
+        String renderedUri = runContext.render(this.uri).as(String.class).map(s -> s.replace(" ", "%20")).orElseThrow();
         HttpRequest.HttpRequestBuilder request = HttpRequest.builder()
             .method(runContext.render(this.method).as(String.class).orElse(null))
-            .uri(new URI(runContext.render(this.uri).as(String.class).orElseThrow()));
+            .uri(new URI(renderedUri));
 
         var renderedFormData = runContext.render(this.formData).asMap(String.class, Object.class);
         if (!renderedFormData.isEmpty()) {
@@ -157,9 +161,11 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
             request.body(HttpRequest.StringRequestBody.builder()
                 .content(runContext.render(body).as(String.class).orElseThrow())
                 .contentType(runContext.render(this.contentType).as(String.class).orElse(null))
-                .charset(this.options != null ? runContext.render(this.options.getDefaultCharset()).as(Charset.class).orElse(null) : StandardCharsets.UTF_8)
+                .charset(this.options != null && this.options.getDefaultCharset() != null ? runContext.render(this.options.getDefaultCharset()).as(Charset.class).orElse(null) : null)
                 .build()
             );
+        } else if (this.contentType != null) {
+            request.addHeader("Content-Type", runContext.render(this.contentType).as(String.class).orElse(null));
         }
 
         var renderedHeader = runContext.render(this.headers).asMap(CharSequence.class, CharSequence.class);
@@ -177,6 +183,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
                 (a, b) -> true)
             );
         }
+
 
         return request.build();
     }

@@ -23,18 +23,31 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Condition to allow events on weekdays relative to current month (first, last, ...)"
+    title = "Condition to execute tasks on a specific day of the week relative to the current month (first, last, ...)"
 )
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition to execute the flow only on the first Monday of the month.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.DayWeekInMonth",
-                "      dayOfWeek: MONDAY",
-                "      dayInMonth: FIRST",
-            }
+            code = """
+                id: schedule-condition-dayweekinmonth
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will be executed only on the first Monday of the month at 11:00 am."
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 11 * * *"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.DayWeekInMonth
+                        dayOfWeek: "MONDAY"
+                        dayInMonth: FIRST
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.DayWeekInMonthCondition", "io.kestra.plugin.core.condition.DayWeekInMonthCondition"}

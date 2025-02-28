@@ -3,7 +3,7 @@
         <el-tooltip v-if="histories" popper-class="duration-tt" :persistent="false" transition="" :hide-after="0" effect="light">
             <template #content>
                 <span v-for="(history, index) in histories" :key="'tt-' + index">
-                    <span class="square" :class="squareClass(history.state)" />
+                    <span class="square" :style="squareClass(history.state)" />
                     <strong>{{ history.state }}:</strong> {{ $filters.date(history.date, 'iso') }} <br>
                 </span>
             </template>
@@ -81,10 +81,11 @@
                 this.duration = Utils.humanDuration(this.delta() / 1000)
             },
             squareClass(state) {
-                return [
-                    "bg-" + State.colorClass()[state]
-                ]
-            }
+                const statusVarname = state.toLowerCase();
+                return {
+                    backgroundColor: `var(--ks-chart-${statusVarname})`
+                };
+            },
         },
         beforeUnmount() {
             this.cancel();

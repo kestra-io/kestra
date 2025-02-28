@@ -1,5 +1,5 @@
 export const encodeParams = (route, filters, OPTIONS) => {
-    if(isSearchPath(route)) {return encodeSearchParams(filters, OPTIONS); }
+    if(isSearchPath(route)) { return encodeSearchParams(filters, OPTIONS); }
 
     const encode = (values, key) => {
         return values
@@ -104,17 +104,17 @@ export const decodeParams = (route, query, include, OPTIONS) => {
 
 export const encodeSearchParams = (filters, OPTIONS) => {
     const encode = (values, key, operation) => {
-        return values.reduce((acc, v) => {
-            if (key === "childFilter" && v === "ALL") return acc;
+        const valuesArray = Array.isArray(values) ? values : [values];
 
-            const encoded = encodeURIComponent(v);
+        return valuesArray.reduce((acc, v) => {
+            if (key === "childFilter" && v === "ALL") return acc;
 
             if (key === "labels") {
                 const [labelKey, labelValue] = v.split(":");
-                acc[`filters[${key}][${operation}][${labelKey}]`] = encodeURIComponent(labelValue);
+                acc[`filters[${key}][${operation}][${labelKey}]`] = labelValue;
             } else {
                 const paramKey = `filters[${key}][${operation}]`;
-                acc[paramKey] = acc[paramKey] ? `${acc[paramKey]},${encoded}` : encoded;
+                acc[paramKey] = acc[paramKey] ? `${acc[paramKey]},${v}` : v;
             }
             return acc;
         }, {});

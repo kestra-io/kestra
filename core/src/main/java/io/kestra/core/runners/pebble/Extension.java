@@ -113,6 +113,7 @@ public class Extension extends AbstractExtension {
         filters.put("sha1", new Sha1Filter());
         filters.put("sha512", new Sha512Filter());
         filters.put("md5", new Md5Filter());
+        filters.put("string", new StringFilter());
         return filters;
     }
 

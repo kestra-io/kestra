@@ -15,7 +15,7 @@ dependencies {
     def slf4jVersion = "2.0.16"
     def protobufVersion = "3.25.5" // Orc still uses 3.25.5 see https://github.com/apache/orc/blob/main/java/pom.xml
     def bouncycastleVersion = "1.80"
-    def aetherVersion = "1.1.0"
+    def mavenResolverVersion = "1.9.22"
     def jollydayVersion = "0.32.0"
     def jsonschemaVersion = "4.37.0"
     def kafkaVersion = "3.9.0"
@@ -28,7 +28,7 @@ dependencies {
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     // needed because httpclient fails to communicate with docker socket with > v5.4 (https://github.com/docker-java/docker-java/pull/2293#issuecomment-2435455322) and opensearch-java brings that version
     api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.3.1")
-    api platform("io.micronaut.platform:micronaut-platform:4.7.5")
+    api platform("io.micronaut.platform:micronaut-platform:4.7.6")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.54.0')
@@ -38,6 +38,8 @@ dependencies {
 
     constraints {
         // Forced dependencies
+        // Temporal force to include https://github.com/micronaut-projects/micronaut-core/commit/9bb43ce55ea3fca97c12cb50c5f1baea28557729 as a potential fix for https://github.com/kestra-io/kestra/issues/3402
+        api("io.micronaut:micronaut-core:4.7.15")
         api("org.slf4j:slf4j-api:$slf4jVersion")
         // need to force this dep as mysql-connector brings a version incompatible with the Google Cloud libs
         api("com.google.protobuf:protobuf-java:$protobufVersion")
@@ -85,14 +87,11 @@ dependencies {
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.17.0'
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
         api 'ch.qos.logback.contrib:logback-jackson:0.1.5'
-        api "org.eclipse.aether:aether-api:$aetherVersion"
-        api "org.eclipse.aether:aether-spi:$aetherVersion"
-        api "org.eclipse.aether:aether-util:$aetherVersion"
-        api "org.eclipse.aether:aether-impl:$aetherVersion"
-        api "org.eclipse.aether:aether-connector-basic:$aetherVersion"
-        api "org.eclipse.aether:aether-transport-file:$aetherVersion"
-        api "org.eclipse.aether:aether-transport-http:$aetherVersion"
-        api 'org.apache.maven:maven-aether-provider:3.3.9'
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-impl', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-supplier', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-connector-basic', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-file', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-http', version: mavenResolverVersion
         api 'com.github.oshi:oshi-core:6.6.6'
         api 'io.pebbletemplates:pebble:3.2.3'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'

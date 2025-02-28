@@ -31,6 +31,7 @@
 
     const emits = defineEmits(["updateTask", "updateDocumentation"]);
     const props = defineProps({
+        identifier: {type: String, required: true},
         flow: {type: String, required: true},
         creation: {type: Boolean, default: false},
     });
@@ -60,7 +61,7 @@
     });
 
     const yaml = ref(
-        YamlUtils.extractTask(props.flow, route.query.identifier)?.toString() || "",
+        YamlUtils.extractTask(props.flow, props.identifier)?.toString() || "",
     );
 
     onBeforeMount(() => {
@@ -77,7 +78,7 @@
     );
 
     watch(
-        () => route.query.identifier,
+        () => props.identifier,
         (value) => {
             if (value === "new") {
                 yaml.value = "";
@@ -128,7 +129,7 @@
         const currentSection = route.query.section;
         const isCreation =
             props.creation &&
-            (!route.query.identifier || route.query.identifier === "new");
+            (!props.identifier || props.identifier === "new");
 
         let result;
 
@@ -164,7 +165,7 @@
         } else {
             result = YamlUtils.replaceTaskInDocument(
                 source,
-                route.query.identifier,
+                props.identifier,
                 task,
             );
         }

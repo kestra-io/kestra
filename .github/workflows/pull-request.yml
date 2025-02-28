@@ -25,36 +25,13 @@ jobs:
           filters: |
             ui:
               - 'ui/**'
-            translations:
-              - 'ui/src/translations/**'
             backend:
               - '!{ui,.github}/**'
           token: ${{ secrets.GITHUB_TOKEN }}
 
-  translations:
-    name: 'Translations - Generate translations'
-    runs-on: ubuntu-latest
-    timeout-minutes: 60
-    needs: file-changes
-    steps:
-        - uses: actions/checkout@v4
-          name: Checkout - Current ref
-          if: "needs.file-changes.outputs.translations == 'true'"
-          with:
-            fetch-depth: 50
-            ref: ${{ github.head_ref }}
-        - id: generate-translations
-          name: Translations - Generate translations
-          if: "needs.file-changes.outputs.translations == 'true'"
-          uses: ./.github/actions/generate-translations
-          with:
-            github-token: ${{ secrets.GITHUB_TOKEN }}
-          env:
-            OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
   frontend:
     name: Frontend - Tests
-    needs: [file-changes, translations]
+    needs: [file-changes]
     if: "needs.file-changes.outputs.ui == 'true'"
     uses: ./.github/workflows/workflow-frontend-test.yml
     secrets:

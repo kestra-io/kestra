@@ -30,13 +30,13 @@
       },
       "create": {
         "title": "Flow already exists",
-        "description": "A Flow with the same id / namespace already exists.",
-        "details": "Save to override and force the creation of a new revision."
+        "description": "A flow with the same id already exists in this namespace.",
+        "details": "Save to override and create a new revision."
       }
     },
     "override": {
       "title": "You are going to override the current flow",
-      "details": "Previous flow will be recoverable through the revisions tab."
+      "details": "Previous flow can be restored from the Revisions tab."
     },
     "is deprecated": "is deprecated",
     "success": "Success",
@@ -74,6 +74,8 @@
     "triggered done": "Execution <em>{name}</em> is successfully triggered",
     "topology": "Topology",
     "date": "Date",
+    "prev_execution": "Previous execution",
+    "next_execution": "Next execution",
     "datepicker": {
       "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S)'",
       "duration example": "Example: 'P1DT1H1M1S'",
@@ -543,6 +545,7 @@
     "aggregation": "Aggregation",
     "metric choice": "Please choose a metric and an aggregation",
     "of": "of",
+    "see_all_states": "See all states",
     "save draft": {
       "message": "Draft saved",
       "retrieval": {
@@ -1067,6 +1070,7 @@
       "label": "Choose filters",
       "empty": "No data.",
       "format": "Type parameter as 'key:value'",
+      "text_search": "Search for this text",
       "options": {
         "namespace": "Namespace",
         "flow": "Flow",

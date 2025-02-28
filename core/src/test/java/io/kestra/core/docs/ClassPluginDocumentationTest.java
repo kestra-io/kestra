@@ -3,6 +3,8 @@ package io.kestra.core.docs;
 import io.kestra.core.Helpers;
 import io.kestra.core.models.property.DynamicPropertyExampleTask;
 import io.kestra.core.models.tasks.runners.TaskRunner;
+import io.kestra.core.models.triggers.TriggerInterface;
+import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.plugin.core.runner.Process;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -37,7 +39,8 @@ class ClassPluginDocumentationTest {
             assertThat(scan.size(), is(1));
             assertThat(scan.getFirst().getTasks().size(), is(1));
 
-            ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class);
+            PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class, null);
+            ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
             assertThat(doc.getDocExamples().size(), is(2));
             assertThat(doc.getIcon(), is(notNullValue()));
@@ -99,7 +102,8 @@ class ClassPluginDocumentationTest {
             PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
             RegisteredPlugin scan = pluginScanner.scan();
 
-            ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, Schedule.class, null);
+            PluginClassAndMetadata<AbstractTrigger> metadata = PluginClassAndMetadata.create(scan, Schedule.class, AbstractTrigger.class, null);
+            ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, true);
 
             assertThat(doc.getDefs().size(), is(1));
             assertThat(doc.getDocLicense(), nullValue());
@@ -117,7 +121,8 @@ class ClassPluginDocumentationTest {
             PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
             RegisteredPlugin scan = pluginScanner.scan();
 
-            ClassPluginDocumentation<? extends TaskRunner<?>> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, Process.class, null);
+            PluginClassAndMetadata<? extends TaskRunner<?>> metadata = PluginClassAndMetadata.create(scan, Process.class, Process.class, null);
+            ClassPluginDocumentation<? extends TaskRunner<?>> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
             assertThat((Map<?, ?>) doc.getPropertiesSchema().get("properties"), anEmptyMap());
             assertThat(doc.getCls(), is("io.kestra.plugin.core.runner.Process"));
@@ -135,12 +140,13 @@ class ClassPluginDocumentationTest {
             PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
             RegisteredPlugin scan = pluginScanner.scan();
 
-            ClassPluginDocumentation<? extends DynamicPropertyExampleTask> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, DynamicPropertyExampleTask.class, null);
+            PluginClassAndMetadata<DynamicPropertyExampleTask> metadata = PluginClassAndMetadata.create(scan, DynamicPropertyExampleTask.class, DynamicPropertyExampleTask.class, null);
+            ClassPluginDocumentation<? extends DynamicPropertyExampleTask> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, true);
 
             assertThat(doc.getCls(), is("io.kestra.core.models.property.DynamicPropertyExampleTask"));
             assertThat(doc.getDefs(), aMapWithSize(6));
             Map<String, Object> properties = (Map<String, Object>) doc.getPropertiesSchema().get("properties");
-            assertThat(properties, aMapWithSize(19));
+            assertThat(properties, aMapWithSize(20));
 
             Map<String, Object> number = (Map<String, Object>) properties.get("number");
             assertThat(number.get("oneOf"), notNullValue());

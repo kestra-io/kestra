@@ -4,16 +4,17 @@ import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.services.StartupHookInterface;
-import io.kestra.core.contexts.KestraContext;
+import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.webserver.services.FlowAutoLoaderService;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.yaml.YamlPropertySourceLoader;
 import io.micronaut.core.annotation.Introspected;
+import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.management.endpoint.EndpointDefaultConfiguration;
 import io.micronaut.runtime.server.EmbeddedServer;
+import jakarta.inject.Provider;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.http.client.utils.URIBuilder;
 import io.kestra.core.utils.Rethrow;
 import picocli.CommandLine;
 
@@ -26,10 +27,13 @@ import java.nio.file.Paths;
 import java.text.MessageFormat;
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import jakarta.inject.Inject;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
 
-@CommandLine.Command(
+@Command(
     versionProvider = VersionProvider.class,
     mixinStandardHelpOptions = true,
     showDefaultValues = true
@@ -49,22 +53,28 @@ abstract public class AbstractCommand implements Callable<Integer> {
     @Inject
     private io.kestra.core.utils.VersionProvider versionProvider;
 
+    @Inject
+    protected Provider<PluginRegistry> pluginRegistryProvider;
+
+    @Inject
+    protected Provider<PluginManager> pluginManagerProvider;
+
     private PluginRegistry pluginRegistry;
 
-    @CommandLine.Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.", showDefaultValue = CommandLine.Help.Visibility.NEVER)
+    @Option(names = {"-v", "--verbose"}, description = "Change log level. Multiple -v options increase the verbosity.", showDefaultValue = CommandLine.Help.Visibility.NEVER)
     private boolean[] verbose = new boolean[0];
 
-    @CommandLine.Option(names = {"-l", "--log-level"}, description = "Change log level (values: ${COMPLETION-CANDIDATES})")
+    @Option(names = {"-l", "--log-level"}, description = "Change log level (values: ${COMPLETION-CANDIDATES})")
     private LogLevel logLevel = LogLevel.INFO;
 
-    @CommandLine.Option(names = {"--internal-log"}, description = "Change also log level for internal log")
+    @Option(names = {"--internal-log"}, description = "Change also log level for internal log")
     private boolean internalLog = false;
 
-    @CommandLine.Option(names = {"-c", "--config"}, description = "Path to a configuration file")
+    @Option(names = {"-c", "--config"}, description = "Path to a configuration file")
     private Path config = Paths.get(System.getProperty("user.home"), ".kestra/config.yml");
 
-    @CommandLine.Option(names = {"-p", "--plugins"}, description = "Path to plugins directory")
-    protected Path pluginsPath = System.getenv("KESTRA_PLUGINS_PATH") != null ? Paths.get(System.getenv("KESTRA_PLUGINS_PATH")) : null;
+    @Option(names = {"-p", "--plugins"}, description = "Path to plugins directory")
+    protected Path pluginsPath = Optional.ofNullable(System.getenv("KESTRA_PLUGINS_PATH")).map(Paths::get).orElse(null);
 
     public enum LogLevel {
         TRACE,
@@ -76,7 +86,7 @@ abstract public class AbstractCommand implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
-        Thread.currentThread().setName(this.getClass().getDeclaredAnnotation(CommandLine.Command.class).name());
+        Thread.currentThread().setName(this.getClass().getDeclaredAnnotation(Command.class).name());
         startLogger();
         sendServerLog();
         if (this.startupHook != null) {
@@ -84,8 +94,10 @@ abstract public class AbstractCommand implements Callable<Integer> {
         }
 
         if (this.pluginsPath != null && loadExternalPlugins()) {
-            pluginRegistry = pluginRegistry();
+            pluginRegistry = pluginRegistryProvider.get();
             pluginRegistry.registerIfAbsent(pluginsPath);
+            PluginManager manager = pluginManagerProvider.get();
+            manager.start();
         }
 
         startWebserver();
@@ -100,10 +112,6 @@ abstract public class AbstractCommand implements Callable<Integer> {
      */
     protected boolean loadExternalPlugins() {
         return true;
-    }
-
-    protected PluginRegistry pluginRegistry() {
-        return KestraContext.getContext().getPluginRegistry(); // Lazy init
     }
 
     private static String message(String message, Object... format) {
@@ -183,9 +191,9 @@ abstract public class AbstractCommand implements Callable<Integer> {
                 if (this.endpointConfiguration.getPort().isPresent()) {
                     URI endpoint = null;
                     try {
-                        endpoint = new URIBuilder(server.getURL().toURI())
-                            .setPort(this.endpointConfiguration.getPort().get())
-                            .setPath("/health")
+                        endpoint = UriBuilder.of(server.getURL().toURI())
+                            .port(this.endpointConfiguration.getPort().get())
+                            .path("/health")
                             .build();
                     } catch (URISyntaxException e) {
                         e.printStackTrace();

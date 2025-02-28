@@ -47,6 +47,8 @@
 
         <Task
             v-else
+            :key="taskIdentifier"
+            :identifier="taskIdentifier"
             :flow
             :creation
             @update-task="(yaml) => emits('updateTask', yaml)"
@@ -73,6 +75,8 @@
 
     import {useRoute} from "vue-router";
     const route = useRoute();
+
+    const taskIdentifier = computed(() => route.query.identifier?.toString() ?? "new");
 
     watch(
         () => route.query,

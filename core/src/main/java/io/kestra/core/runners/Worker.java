@@ -20,9 +20,9 @@ import io.kestra.core.server.*;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.LogService;
 import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
-import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.utils.*;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.annotation.Parameter;
@@ -171,7 +171,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.numThreads = numThreads;
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
         this.eventPublisher = eventPublisher;
-        this.executorService = executorsUtils.elasticCachedThreadPool(1, numThreads, EXECUTOR_NAME);
+        this.executorService = executorsUtils.maxCachedThreadPool(numThreads, EXECUTOR_NAME);
         this.setState(ServiceState.CREATED);
     }
 
@@ -839,6 +839,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
             );
         } catch(Exception e) {
             // should only occur if it fails in the tracing code which should be unexpected
+            // we add the exception to have some log in that case
+            workerJobCallable.exception = e;
             return State.Type.FAILED;
         } finally {
             synchronized (this) {

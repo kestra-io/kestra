@@ -29,28 +29,48 @@ import java.time.LocalDate;
     examples = {
         @Example(
             full = true,
-            title = "Condition to allow events on public holidays.",
-            code = {
+            title = "Trigger condition to excute the flow only on public holidays.",
+            code = """
+                id: schedule-condition-public-holiday
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will be executed only on the public holidays of France at 11:00 am."
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 11 * * *"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.PublicHoliday
+                        country: FR
                 """
-                - conditions:
-                    - type: io.kestra.plugin.core.condition.PublicHoliday
-                      country: FR
-                """
-            }
         ),
         @Example(
             full = true,
-            title = "Conditions to allow events on work days.",
-            code = {
+            title = "Trigger condition to excute the flow only on work days in France.",
+            code = """
+                id: schedule-condition-work-days
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will be executed only on the work days of France at 11:00 am."
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 11 * * *"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.Not
+                        conditions:
+                          - type: io.kestra.plugin.core.condition.PublicHoliday
+                            country: FR
+                          - type: io.kestra.plugin.core.condition.Weekend
                 """
-                - conditions:
-                    - type: io.kestra.plugin.core.condition.Not
-                      conditions:
-                        - type: io.kestra.plugin.core.condition.PublicHoliday
-                          country: FR
-                        - type: io.kestra.plugin.core.condition.Weekend
-                """
-            }
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.PublicHolidayCondition", "io.kestra.plugin.core.condition.PublicHolidayCondition"}

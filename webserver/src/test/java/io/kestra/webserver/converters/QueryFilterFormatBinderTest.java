@@ -45,7 +45,7 @@ class QueryFilterFormatBinderTest {
     void testGetQueryFiltersWithNestedFilters() {
         // GIVEN
         Map<String, List<String>> queryParams = Map.of(
-            "filters[labels][$eq][key]", List.of("value")
+            "filters[labels][$eq][key with special chars [(_-|&/*^)]]", List.of("value with special chars [(_-|&/*^)]")
         );
 
         // WHEN
@@ -54,10 +54,10 @@ class QueryFilterFormatBinderTest {
         // THEN
         assertEquals(1, filters.size());
 
-        QueryFilter filter = filters.get(0);
+        QueryFilter filter = filters.getFirst();
         assertEquals(QueryFilter.Field.LABELS, filter.field());
         assertEquals(QueryFilter.Op.EQUALS, filter.operation());
-        assertEquals(Map.of("key", "value"), filter.value());
+        assertEquals(Map.of("key with special chars [(_-|&/*^)]", "value with special chars [(_-|&/*^)]"), filter.value());
     }
 
     @Test
@@ -70,8 +70,8 @@ class QueryFilterFormatBinderTest {
         List<QueryFilter> filters = QueryFilterFormatBinder.getQueryFilters(queryParams);
         // THEN
         assertEquals(1, filters.size());
-        assertEquals(QueryFilter.Field.SCOPE, filters.get(0).field());
-        assertEquals(RequestUtils.toFlowScopes(List.of("USER,SYSTEM")), filters.get(0).value());
+        assertEquals(QueryFilter.Field.SCOPE, filters.getFirst().field());
+        assertEquals(RequestUtils.toFlowScopes(List.of("USER,SYSTEM")), filters.getFirst().value());
     }
 
     @Test

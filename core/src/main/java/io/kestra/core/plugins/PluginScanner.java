@@ -142,7 +142,7 @@ public class PluginScanner {
                         storages.add(storage.getClass());
                     }
                     case SecretPluginInterface storage -> {
-                        log.debug("Loading SecretPlugin plugin: '{}'", plugin.getClass());
+                        log.debug("Loading Secret plugin: '{}'", plugin.getClass());
                         secrets.add(storage.getClass());
                     }
                     case TaskRunner<?> runner -> {
@@ -151,11 +151,11 @@ public class PluginScanner {
                         taskRunners.add((Class<? extends TaskRunner<?>>) runner.getClass());
                     }
                     case AppPluginInterface app -> {
-                        log.debug("Loading AppPlugin plugin: '{}'", plugin.getClass());
+                        log.debug("Loading App plugin: '{}'", plugin.getClass());
                         apps.add(app.getClass());
                     }
                     case AppBlockInterface appBlock -> {
-                        log.debug("Loading AppBlocking plugin: '{}'", plugin.getClass());
+                        log.debug("Loading AppBlock plugin: '{}'", plugin.getClass());
                         appBlocks.add(appBlock.getClass());
                     }
                     case Chart<?> chart -> {

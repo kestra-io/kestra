@@ -187,9 +187,6 @@
             background: var(--ks-background-body);
             color: var(--ks-content-link);
         }
-        .el-tree-node__expand-icon {
-            display: none;
-        }
 
         .icon {
             color: var(--ks-content-link);

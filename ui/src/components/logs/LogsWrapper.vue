@@ -20,7 +20,7 @@
                             <template v-if="hasStatsData">
                                 <Logs :data="logDaily" :loading="!statsReady" />
                             </template>
-                            <NoData v-else />
+                            <LogsNoData v-else />
                         </div>
                     </el-card>
                 </template>
@@ -52,17 +52,18 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../../components/layout/DataTable.vue";
-    import NoData from "../layout/NoData.vue";
+    import LogsNoData from "../dashboard/components/charts/logs/LogsNoData.vue";
     import _merge from "lodash/merge";
     import Logs from "../dashboard/components/charts/logs/Bar.vue";
     import {storageKeys} from "../../utils/constants";
     import KestraFilter from "../filter/KestraFilter.vue"
+    import {decodeSearchParams} from "../filter/utils/helpers";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             KestraFilter,
-            DataTable, LogLine, TopNavBar, Logs, NoData},
+            DataTable, LogLine, TopNavBar, Logs, LogsNoData},
         props: {
             logLevel: {
                 type: String,
@@ -115,7 +116,10 @@
                 return this.$route.name === "namespaces/update"
             },
             selectedLogLevel() {
-                return this.logLevel || this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO";
+                const decodedParams = decodeSearchParams(this.$route.query, ["level"], []);
+                const levelFilters = decodedParams.filter(item => item.label === "level");
+                const decoded = levelFilters.length > 0 ? levelFilters[0].value : "INFO";
+                return this.logLevel || decoded || localStorage.getItem("defaultLogLevel") || "INFO";
             },
             endDate() {
                 if (this.$route.query.endDate) {
@@ -224,10 +228,13 @@
             loadStats() {
                 this.statsReady = false;
                 this.$store
-                    .dispatch("stat/logDaily", this.loadQuery({
-                        startDate: this.$moment(this.startDate).toISOString(true),
-                        endDate: this.$moment(this.endDate).toISOString(true)
-                    }, true))
+                    .dispatch("stat/logDaily", {
+                        ...this.loadQuery({
+                            startDate: this.$moment(this.startDate).toISOString(true),
+                            endDate: this.$moment(this.endDate).toISOString(true)
+                        }),
+                        logLevel: this.selectedLogLevel
+                    })
                     .then(() => {
                         this.statsReady = true;
                     });

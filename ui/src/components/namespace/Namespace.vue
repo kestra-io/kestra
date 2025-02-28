@@ -12,7 +12,7 @@
                 <li>
                     <router-link :to="{name: 'flows/create', query: {namespace: $route.params.id}}" v-if="canCreateFlow">
                         <el-button :icon="Plus" type="primary">
-                            {{ $t('create') }}
+                            {{ $t('create_flow') }}
                         </el-button>
                     </router-link>
                 </li>

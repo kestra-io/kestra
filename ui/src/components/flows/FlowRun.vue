@@ -70,7 +70,7 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import {executeTask} from "../../utils/submitTask"
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
@@ -108,6 +108,7 @@
         computed: {
             ...mapState("execution", ["flow", "execution"]),
             ...mapState("core", ["guidedProperties"]),
+            ...mapGetters("misc", ["configs"]),
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },
@@ -132,7 +133,8 @@
             },
             fillInputsFromExecution(){
                 // Add all labels except the one from flow to prevent duplicates
-                this.executionLabels = this.getExecutionLabels().filter(item => !item.key.startsWith("system."));
+                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                this.executionLabels = this.getExecutionLabels().filter(item => !toIgnore.some(prefix => item.key.startsWith(prefix)));
 
                 if (!this.flow.inputs) {
                     return;

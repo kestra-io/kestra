@@ -522,7 +522,8 @@
       "settings": {
         "label": "Paramètres de la page",
         "show_chart": "Afficher le graphique principal"
-      }
+      },
+      "text_search": "Rechercher ce texte"
     },
     "flow": "Flow",
     "flow already exists": "Flow déjà existant",

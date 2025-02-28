@@ -522,7 +522,8 @@
       "settings": {
         "label": "页面设置",
         "show_chart": "显示主图表"
-      }
+      },
+      "text_search": "搜索此文本"
     },
     "flow": "流程",
     "flow already exists": "流程已存在",

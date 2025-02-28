@@ -7,88 +7,54 @@
             </el-checkbox-button>
         </el-checkbox-group>
     </div>
-    <Splitpanes class="default-theme">
-        <Pane v-for="element in visibleTabs" :key="element.value">
-            <component :is="element.component" />
-        </Pane>
-    </Splitpanes>
+    <MultiPanelTabs :panels-definition="panels" />
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
-    import "splitpanes/dist/splitpanes.css"
-    import {Splitpanes, Pane} from "splitpanes"
+    import {ref, watch, reactive} from "vue";
+    import MultiPanelTabs from "../MultiPanelTabs.vue";
+    import {EDITOR_ELEMENTS} from "./panelDefinition";
 
-    import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
-    import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
-    import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue";
-    import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
-    import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
-    import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
+    const DEFAULT_ACTIVE_TABS = ["code", "doc"]
+    const previousActiveTabs = ref(DEFAULT_ACTIVE_TABS)
+    const activeTabs = ref(DEFAULT_ACTIVE_TABS)
 
-    import EditorSidebarWrapper from "../inputs/EditorSidebarWrapper.vue";
-    import EditorWrapper from "../inputs/EditorWrapper.vue";
-    import NoCodeWrapper from "../code/NoCodeWrapper.vue";
-    import LowCodeEditorWrapper from "../inputs/LowCodeEditorWrapper.vue";
-    import PluginDocumentationWrapper from "../plugins/PluginDocumentationWrapper.vue";
-    import BlueprintsWrapper from "../flows/blueprints/BlueprintsWrapper.vue";
-
-    const activeTabs = ref(["code", "doc"])
-
-    const visibleTabs = computed(() => {
-        return EDITOR_ELEMENTS.filter((element) => activeTabs.value.includes(element.value))
-    })
-
-    const EDITOR_ELEMENTS = [
-        {
-            button: {
-                icon: CodeTagsIcon,
-                label: "Code"
-            },
-            value: "code",
-            component: EditorWrapper
-        },
-        {
-            button: {
-                icon: MouseRightClickIcon,
-                label: "No-code"
-            },
-            value: "nocode",
-            component: NoCodeWrapper
-        },
-        {
-            button: {
-                icon: FileTreeOutlineIcon,
-                label: "Topology"
-            },
-            value: "topology",
-            component: LowCodeEditorWrapper
-        },
-        {
-            button: {
-                icon: FileDocumentIcon,
-                label: "Documentation"
-            },
-            value: "doc",
-            component: PluginDocumentationWrapper
-        },
-        {
-            button: {
-                icon: DotsSquareIcon,
-                label: "Files"
-            },
-            value: "files",
-            component: EditorSidebarWrapper
-        },
-        {
-            button: {
-                icon: BallotOutlineIcon,
-                label: "Blueprints"
-            },
-            value: "blueprints",
-            component: BlueprintsWrapper
+    const panels = reactive(DEFAULT_ACTIVE_TABS.map(t => {
+        const element = EDITOR_ELEMENTS.find(e => e.value === t)!
+        return {
+            activeTabIndex: 0,
+            tabs: [element]
         }
-    ]
+    }))
+
+    watch(activeTabs, (newVal) => {
+        const previous = previousActiveTabs.value
+
+        // get the tabs to remove
+        const toRemove = previous.filter(t => !newVal.includes(t))
+        // get the tabs to add
+        const toAdd = newVal.filter(t => !previous.includes(t))
+
+        // remove the tabs
+        for(const t of toRemove){
+            const p = panels.find(p => p.tabs.some(tab => tab.value === t))
+            const tabIndex = p?.tabs.findIndex(tab => tab.value === t)
+            if(p && tabIndex !== undefined){
+                p.tabs.splice(tabIndex, 1)
+            }
+        }
+
+        // add the tabs
+        for(const t of toAdd){
+            const element = EDITOR_ELEMENTS.find(e => e.value === t)!
+            panels.push({
+                activeTabIndex: 0,
+                tabs: [element]
+            })
+        }
+
+        previousActiveTabs.value = newVal
+    })
 </script>
 
 <style lang="scss" scoped>

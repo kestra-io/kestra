@@ -33,7 +33,7 @@
     const isCreating = computed(() => store.state.flow.isCreating);
 
     function editorUpdate(newValue: string){
-        store.commit("flow/updateFlowSource", newValue);
+        store.commit("flow/setFlowYaml", newValue);
     }
 
     const currentTab = computed(() => store.state.editor.current);

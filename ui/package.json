@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test:unit": "vitest run",
     "test:lint": "eslint",
-    "test:cicd": "vitest run --coverage --reporter=junit --outputFile=test-report.junit.xml",
+    "test:cicd": "vitest run --coverage --reporter=junit --outputFile=test-report.junit.xml --exclude=\"**/translation.spec.js\"",
     "translations:check": "node ./src/translations/check.js",
     "lint": "eslint --fix",
     "storybook": "storybook dev -p 6006",

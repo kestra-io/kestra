@@ -98,6 +98,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         FlowWithSource invalid = createScheduleFlow("Asia/Delhi", "schedule", true);
         FlowWithSource flow = createScheduleFlow("Europe/Paris", "schedule", false);
 
+        flowRepository.create(flow, flow.generateSource(), flow);
         doReturn(List.of(invalid, flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -426,6 +427,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             .when(flowListenersServiceSpy)
             .flows();
 
+        flowRepository.create(flow, flow.generateSource(), flow);
         // to avoid waiting too much before a trigger execution, we add a last trigger with a date now - 1m.
         Trigger lastTrigger = Trigger
             .builder()

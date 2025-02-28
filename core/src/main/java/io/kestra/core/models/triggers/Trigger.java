@@ -212,26 +212,28 @@ public class Trigger extends TriggerContext implements HasUID {
     }
 
     public Trigger resetExecution(Flow flow, Execution execution, ConditionContext conditionContext) {
-        AbstractTrigger abstractTrigger = flow.findTriggerByTriggerId(this.getTriggerId());
-        if (abstractTrigger == null) {
-            throw new IllegalArgumentException("Unable to find trigger with id '" + this.getTriggerId() + "'");
-        }
-        // If trigger is a schedule and execution ended after the next execution date
-        else if (abstractTrigger instanceof Schedule schedule &&
-            execution.getState().getEndDate().get().isAfter(this.getNextExecutionDate().toInstant())
-        ) {
-            RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedule.getRecoverMissedSchedules())
-                .orElseGet(() -> schedule.defaultRecoverMissedSchedules(conditionContext.getRunContext()));
+        boolean disabled = this.getStopAfter() != null ? this.getStopAfter().contains(execution.getState().getCurrent()) : this.getDisabled();
+        if (!disabled) {
+            AbstractTrigger abstractTrigger = flow.findTriggerByTriggerId(this.getTriggerId());
+            if (abstractTrigger == null) {
+                throw new IllegalArgumentException("Unable to find trigger with id '" + this.getTriggerId() + "'");
+            }
+            // If trigger is a schedule and execution ended after the next execution date
+            else if (abstractTrigger instanceof Schedule schedule &&
+                execution.getState().getEndDate().get().isAfter(this.getNextExecutionDate().toInstant())
+            ) {
+                RecoverMissedSchedules recoverMissedSchedules = Optional.ofNullable(schedule.getRecoverMissedSchedules())
+                    .orElseGet(() -> schedule.defaultRecoverMissedSchedules(conditionContext.getRunContext()));
 
-            ZonedDateTime previousDate = schedule.previousEvaluationDate(conditionContext);
+                ZonedDateTime previousDate = schedule.previousEvaluationDate(conditionContext);
 
-            if (recoverMissedSchedules.equals(RecoverMissedSchedules.LAST)) {
-                return resetExecution(execution.getState().getCurrent(), previousDate);
-            } else if (recoverMissedSchedules.equals(RecoverMissedSchedules.NONE)) {
-                return resetExecution(execution.getState().getCurrent(), schedule.nextEvaluationDate(conditionContext, Optional.empty()));
+                if (recoverMissedSchedules.equals(RecoverMissedSchedules.LAST)) {
+                    return resetExecution(execution.getState().getCurrent(), previousDate);
+                } else if (recoverMissedSchedules.equals(RecoverMissedSchedules.NONE)) {
+                    return resetExecution(execution.getState().getCurrent(), schedule.nextEvaluationDate(conditionContext, Optional.empty()));
+                }
             }
         }
-
         return resetExecution(execution.getState().getCurrent());
     }
 

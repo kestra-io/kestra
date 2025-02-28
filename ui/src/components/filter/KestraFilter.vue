@@ -244,6 +244,7 @@
         searchCallback: {type: Function, default: undefined},
     });
 
+    const TEXT_PREFIX = `${t("filters.text_search")}: `;
     const ITEMS_PREFIX = props.prefix ?? String(route.name);
 
     const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX);
@@ -316,6 +317,10 @@
 
         if (currentFilters.value.at(-1)?.label === "user") {
             emits("input", getInputValue());
+        }
+
+        if (getInputValue() === TEXT_PREFIX) {
+            select.value!.states.inputValue = "";
         }
     };
 
@@ -662,6 +667,18 @@
         });
     });
 
+    watch(
+        () => includedOptions.value,
+        (options) => {
+            if (options.length || !dropdowns.value.first?.shown) return;
+
+            if (!getInputValue().startsWith(TEXT_PREFIX)) {
+                select.value!.states.inputValue = `${TEXT_PREFIX}${getInputValue()}`;
+            }
+        },
+        {immediate: true},
+    );
+
     const changeCallback = (wholeSearchContent) => {
         if (!Array.isArray(wholeSearchContent) || !wholeSearchContent.length)
             return;
@@ -688,13 +705,12 @@
                     (i) => i.label === label,
                 );
 
-                if (index !== -1)
-                    currentFilters.value[index].value = [wholeSearchContent.at(-1)];
-                else
-                    currentFilters.value.push({
-                        label,
-                        value: [wholeSearchContent.at(-1)],
-                    });
+                const value = wholeSearchContent
+                    .at(-1)
+                    ?.replace(new RegExp(`^${TEXT_PREFIX}\\s*`), "");
+
+                if (index !== -1) currentFilters.value[index].value = [value];
+                else currentFilters.value.push({label, value: [value]});
             }
 
             triggerSearch();

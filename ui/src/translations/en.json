@@ -1070,6 +1070,7 @@
       "label": "Choose filters",
       "empty": "No data.",
       "format": "Type parameter as 'key:value'",
+      "text_search": "Search for this text",
       "options": {
         "namespace": "Namespace",
         "flow": "Flow",

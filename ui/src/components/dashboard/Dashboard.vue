@@ -470,21 +470,13 @@
         if (!custom.value.shown) {
             try {
                 executionsLoading.value = true;
-                await new Promise((resolve) => {
-                    setTimeout(async () => {
-                        try {
-                            await Promise.any([
-                                fetchNumbers(),
-                                fetchExecutions(),
-                                fetchNamespaceExecutions(),
-                                fetchLogs(),
-                            ]);
-                            resolve();
-                        } catch (error) {
-                            console.error("All promises failed:", error);
-                            resolve();
-                        }
-                    }, 1000); // 1 second delay - please remove this after testing.
+                await Promise.all([
+                    fetchNumbers(),
+                    fetchExecutions(),
+                    fetchNamespaceExecutions(),
+                    fetchLogs(),
+                ]).catch(error => {
+                    console.error("Failed to fetch dashboard data:", error);
                 });
             } finally {
                 executionsLoading.value = false;

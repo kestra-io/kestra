@@ -217,7 +217,7 @@ public class DefaultPluginRegistry implements PluginRegistry {
             if (identifier == null || identifier.isBlank()) {
                 throw new IllegalArgumentException("Cannot create plugin identifier from null or empty string");
             }
-            return new ClassTypeIdentifier(identifier.toLowerCase(Locale.ROOT));
+            return new ClassTypeIdentifier(identifier);
         }
 
         /**

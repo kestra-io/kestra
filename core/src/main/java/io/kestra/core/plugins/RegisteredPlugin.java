@@ -266,8 +266,11 @@ public class RegisteredPlugin {
                 IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)
             );
         }
-
         return null;
+    }
+
+    public String icon() {
+        return icon("plugin-icon");
     }
 
     @SneakyThrows
@@ -278,7 +281,6 @@ public class RegisteredPlugin {
                 IOUtils.toString(resourceAsStream, StandardCharsets.UTF_8).getBytes(StandardCharsets.UTF_8)
             );
         }
-
         return null;
     }
 

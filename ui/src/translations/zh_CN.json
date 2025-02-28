@@ -522,7 +522,8 @@
       "settings": {
         "label": "页面设置",
         "show_chart": "显示主图表"
-      }
+      },
+      "text_search": "搜索此文本"
     },
     "flow": "流程",
     "flow already exists": "流程已存在",
@@ -720,8 +721,10 @@
         "tab": "关闭标签页"
       },
       "empty": {
+        "create_message": "您可以创建或导入namespace文件。",
         "message": "你可以从侧边栏创建或导入命名空间文件，也可以查看我们的编辑器介绍视频。",
-        "title": "当前没有打开的标签"
+        "title": "当前没有打开的标签",
+        "video_message": "您可以查看我们编辑器的介绍视频。"
       }
     },
     "namespaces": "命名空间",

@@ -941,7 +941,8 @@
     "namespace_editor": {
       "empty": {
         "title": "No tabs currently opened",
-        "message": "You can create or import namespace files from the sidebar and you can check out the introduction video for our Editor."
+        "create_message": "You can create or import namespace files.",
+        "video_message": "You can check out the Introduction Video for our Editor."
       },
       "close": {
         "tab": "Close tab",

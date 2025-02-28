@@ -721,8 +721,10 @@
         "tab": "Fechar aba"
       },
       "empty": {
+        "create_message": "Você pode criar ou importar arquivos de namespace.",
         "message": "Você pode criar ou importar arquivos de namespace na barra lateral e pode assistir ao vídeo de introdução do nosso Editor.",
-        "title": "Nenhuma aba aberta no momento"
+        "title": "Nenhuma aba aberta no momento",
+        "video_message": "Você pode assistir ao Vídeo de Introdução para o nosso Editor."
       }
     },
     "namespaces": "Namespaces",

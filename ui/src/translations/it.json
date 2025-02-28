@@ -721,8 +721,10 @@
         "tab": "Chiudi scheda"
       },
       "empty": {
+        "create_message": "Puoi creare o importare file namespace.",
         "message": "Puoi creare o importare file namespace dalla barra laterale e puoi guardare il video introduttivo per il nostro Editor.",
-        "title": "Nessuna scheda attualmente aperta"
+        "title": "Nessuna scheda attualmente aperta",
+        "video_message": "Puoi guardare il Video di Introduzione per il nostro Editor."
       }
     },
     "namespaces": "Namespaces",

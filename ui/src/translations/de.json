@@ -721,8 +721,10 @@
         "tab": "Registerkarte schließen"
       },
       "empty": {
+        "create_message": "Sie können namespace-Dateien erstellen oder importieren.",
         "message": "Sie können Namespace-Dateien aus der Seitenleiste erstellen oder importieren und sich das Einführungsvideo für unseren Editor ansehen.",
-        "title": "Derzeit keine Registerkarten geöffnet"
+        "title": "Derzeit keine Registerkarten geöffnet",
+        "video_message": "Sie können sich das Einführungsvideo für unseren Editor ansehen."
       }
     },
     "namespaces": "Namespaces",

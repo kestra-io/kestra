@@ -721,8 +721,10 @@
         "tab": "Cerrar pestaña"
       },
       "empty": {
+        "create_message": "Puedes crear o importar archivos de namespace.",
         "message": "Puedes crear o importar archivos de namespace desde la barra lateral y puedes ver el video de introducción para nuestro Editor.",
-        "title": "No hay pestañas abiertas actualmente"
+        "title": "No hay pestañas abiertas actualmente",
+        "video_message": "Puedes ver el Video de Introducción para nuestro Editor."
       }
     },
     "namespaces": "Namespaces",

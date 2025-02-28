@@ -7,6 +7,7 @@ import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.pebble.Extension;
 import io.kestra.core.runners.pebble.JsonWriter;
@@ -217,7 +218,15 @@ public class DocumentationGenerator {
     private <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, Class<T> baseCls, String type) {
         return cls
             .stream()
-            .map(r -> ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, r, baseCls))
+            .map(pluginClass -> {
+                PluginClassAndMetadata<T> metadata = PluginClassAndMetadata.create(
+                    registeredPlugin,
+                    pluginClass,
+                    baseCls,
+                    null
+                );
+                return ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, true);
+            })
             .map(pluginDocumentation -> {
                 try {
                     return new Document(
@@ -247,15 +256,15 @@ public class DocumentationGenerator {
             classPluginDocumentation.getCls() + ".md";
     }
 
-    public static <T> String render(ClassPluginDocumentation<T> classPluginDocumentation) throws IOException {
+    public static String render(ClassPluginDocumentation<?> classPluginDocumentation) throws IOException {
         return render("task", JacksonMapper.toMap(classPluginDocumentation));
     }
 
-    public static <T> String render(AbstractClassDocumentation<T> classInputDocumentation) throws IOException {
+    public static String render(AbstractClassDocumentation classInputDocumentation) throws IOException {
         return render("task", JacksonMapper.toMap(classInputDocumentation));
     }
 
-    public static <T> String render(String templateName, Map<String, Object> vars) throws IOException {
+    public static String render(String templateName, Map<String, Object> vars) throws IOException {
         String pebbleTemplate = IOUtils.toString(
             Objects.requireNonNull(DocumentationGenerator.class.getClassLoader().getResourceAsStream("docs/" + templateName + ".peb")),
             StandardCharsets.UTF_8

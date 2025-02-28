@@ -522,7 +522,8 @@
       "settings": {
         "label": "Настройки страницы",
         "show_chart": "Показать основную диаграмму"
-      }
+      },
+      "text_search": "Искать этот текст"
     },
     "flow": "Flow",
     "flow already exists": "Flow уже существует",

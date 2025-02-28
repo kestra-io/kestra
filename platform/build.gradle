@@ -15,7 +15,7 @@ dependencies {
     def slf4jVersion = "2.0.16"
     def protobufVersion = "3.25.5" // Orc still uses 3.25.5 see https://github.com/apache/orc/blob/main/java/pom.xml
     def bouncycastleVersion = "1.80"
-    def aetherVersion = "1.1.0"
+    def mavenResolverVersion = "1.9.22"
     def jollydayVersion = "0.32.0"
     def jsonschemaVersion = "4.37.0"
     def kafkaVersion = "3.9.0"
@@ -87,14 +87,11 @@ dependencies {
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.17.0'
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
         api 'ch.qos.logback.contrib:logback-jackson:0.1.5'
-        api "org.eclipse.aether:aether-api:$aetherVersion"
-        api "org.eclipse.aether:aether-spi:$aetherVersion"
-        api "org.eclipse.aether:aether-util:$aetherVersion"
-        api "org.eclipse.aether:aether-impl:$aetherVersion"
-        api "org.eclipse.aether:aether-connector-basic:$aetherVersion"
-        api "org.eclipse.aether:aether-transport-file:$aetherVersion"
-        api "org.eclipse.aether:aether-transport-http:$aetherVersion"
-        api 'org.apache.maven:maven-aether-provider:3.3.9'
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-impl', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-supplier', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-connector-basic', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-file', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-http', version: mavenResolverVersion
         api 'com.github.oshi:oshi-core:6.6.6'
         api 'io.pebbletemplates:pebble:3.2.3'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'

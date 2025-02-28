@@ -184,7 +184,7 @@
     import {computed, nextTick, onMounted, ref, shallowRef, watch} from "vue";
     import {ElSelect} from "element-plus";
 
-    import {Buttons, CurrentItem, Shown, Pair, Property} from "./utils/types";
+    import {Buttons, CurrentItem, Pair, Property, Shown} from "./utils/types";
 
     import Refresh from "../layout/RefreshButton.vue";
     import Items from "./segments/Items.vue";
@@ -668,12 +668,12 @@
     });
 
     watch(
-        () => includedOptions.value,
+        includedOptions,
         (options) => {
             if (options.length || !dropdowns.value.first?.shown) return;
 
-            if (!getInputValue().startsWith(TEXT_PREFIX)) {
-                select.value!.states.inputValue = `${TEXT_PREFIX}${getInputValue()}`;
+            if (!getInputValue()?.startsWith(TEXT_PREFIX) && select.value) {
+                select.value.states.inputValue = `${TEXT_PREFIX}${getInputValue()}`;
             }
         },
         {immediate: true},

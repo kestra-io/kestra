@@ -61,10 +61,7 @@
         </div>
 
         <el-row class="mb-3">
-            <el-col :span="12" class="crud-align">
-                <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
-            </el-col>
-            <el-col :span="12" class="gap-2 d-flex justify-content-end actions-buttons">
+            <el-col :span="24" class="gap-2 d-flex justify-content-end actions-buttons">
                 <set-labels :execution="execution" />
                 <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
@@ -181,7 +178,6 @@
     import Kill from "./Kill.vue";
     import {State} from "@kestra-io/ui-libs"
     import DateAgo from "../layout/DateAgo.vue";
-    import Crud from "override/components/auth/Crud.vue";
     import Duration from "../layout/Duration.vue";
     import Timeline from "../layout/Timeline.vue";
     import Labels from "../layout/Labels.vue"
@@ -210,7 +206,6 @@
             Kill,
             DateAgo,
             Labels,
-            Crud,
             KestraCascader,
             LogLine,
             Alert,
@@ -465,11 +460,6 @@
 </script>
 
 <style lang="scss">
-.crud-align {
-    display: flex;
-    align-items: center;
-}
-
 .execution-overview {
     .cascader {
         &::-webkit-scrollbar {

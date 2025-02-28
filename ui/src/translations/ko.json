@@ -522,7 +522,8 @@
       "settings": {
         "label": "페이지 설정",
         "show_chart": "주요 차트 표시"
-      }
+      },
+      "text_search": "이 텍스트 검색"
     },
     "flow": "Flow",
     "flow already exists": "Flow가 이미 존재합니다",

@@ -23,6 +23,10 @@
                 v-for="(tab, index) in openedTabs"
                 :key="index"
                 :class="{'tab-active': isActiveTab(tab)}"
+                draggable="true"
+                @dragstart="onDragStart($event, index)"
+                @dragover.prevent="onDragOver($event, index)"
+                @drop.prevent="onDrop($event, index)"
                 @click="changeCurrentTab(tab)"
                 :disabled="isActiveTab(tab)"
                 @contextmenu.prevent.stop="onTabContextMenu($event, tab, index)"
@@ -1395,6 +1399,29 @@
 
         return tab.name === currentTab.value.name;
     }
+
+    const draggedTabIndex = ref(null);
+    const dragOverTabIndex = ref(null);
+    
+    const onDragStart = (event, index) => {
+        draggedTabIndex.value = index;
+        event.dataTransfer.effectAllowed = "move";
+    };
+    const onDragOver = (event, index) => {
+        event.preventDefault();
+        if (index !== draggedTabIndex.value) {
+            dragOverTabIndex.value = index;
+        }
+    };
+    const onDrop = (event, to) => {
+        event.preventDefault();
+        const from = draggedTabIndex.value;
+        if (from !== to) {
+            store.commit("editor/reorderTabs", {from, to});
+        }
+        draggedTabIndex.value = null;
+        dragOverTabIndex.value = null;
+    };
 
     watch(currentTab, (current, previous) => {
         const isCurrentFlow = current?.name === "Flow";

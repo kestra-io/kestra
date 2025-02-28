@@ -522,7 +522,8 @@
       "settings": {
         "label": "Seiteneinstellungen",
         "show_chart": "Hauptdiagramm anzeigen"
-      }
+      },
+      "text_search": "Nach diesem Text suchen"
     },
     "flow": "Flow",
     "flow already exists": "Flow existiert bereits",

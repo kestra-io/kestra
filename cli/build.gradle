@@ -12,18 +12,6 @@ dependencies {
     implementation 'ch.qos.logback.contrib:logback-json-classic'
     implementation 'ch.qos.logback.contrib:logback-jackson'
 
-    // plugins
-    implementation 'org.eclipse.aether:aether-api'
-    implementation 'org.eclipse.aether:aether-spi'
-    implementation 'org.eclipse.aether:aether-util'
-    implementation 'org.eclipse.aether:aether-impl'
-    implementation 'org.eclipse.aether:aether-connector-basic'
-    implementation 'org.eclipse.aether:aether-transport-file'
-    implementation 'org.eclipse.aether:aether-transport-http'
-    implementation('org.apache.maven:maven-aether-provider') {
-        // sisu dependency injector is not used
-        exclude group: 'org.eclipse.sisu'
-    }
     // aether still use javax.inject
     compileOnly 'javax.inject:javax.inject:1'
 

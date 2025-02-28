@@ -94,6 +94,10 @@ export default {
             state.tabs = [];
             state.current = undefined
         },
+        reorderTabs(state, {from, to}) {
+            const tab = state.tabs.splice(from, 1)[0];
+            state.tabs.splice(to, 0, tab);
+        },
         changeView(state, view) {
             state.view = view;
         },

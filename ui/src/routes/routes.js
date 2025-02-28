@@ -35,7 +35,7 @@ export default [
 
     //Documentation
     {name: "plugins/list", path: "/:tenant?/plugins", component: () => import("../components/plugins/Plugin.vue")},
-    {name: "plugins/view", path: "/:tenant?/plugins/:cls",   component: () => import("../components/plugins/Plugin.vue")},
+    {name: "plugins/view", path: "/:tenant?/plugins/:cls/:version?",   component: () => import("../components/plugins/Plugin.vue")},
 
     //Templates
     {name: "templates/list", path: "/:tenant?/templates", component: () => import("../components/templates/Templates.vue")},

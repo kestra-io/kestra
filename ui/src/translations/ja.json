@@ -522,7 +522,8 @@
       "settings": {
         "label": "ページ設定",
         "show_chart": "メインチャートを表示"
-      }
+      },
+      "text_search": "このテキストを検索"
     },
     "flow": "Flow",
     "flow already exists": "Flowはすでに存在します",

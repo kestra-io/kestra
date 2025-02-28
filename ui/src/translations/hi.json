@@ -522,7 +522,8 @@
       "settings": {
         "label": "पृष्ठ सेटिंग्स",
         "show_chart": "मुख्य चार्ट दिखाएं"
-      }
+      },
+      "text_search": "इस पाठ के लिए खोजें"
     },
     "flow": "Flow",
     "flow already exists": "Flow पहले से मौजूद है",

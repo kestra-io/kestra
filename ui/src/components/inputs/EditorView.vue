@@ -1285,7 +1285,6 @@
         return tab.name === currentTab.value.name;
     }
 
-    // Tabs drag and drop logic
     const draggedTabIndex = ref(null);
     const dragOverTabIndex = ref(null);
     

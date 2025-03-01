@@ -1,6 +1,12 @@
 /* eslint-disable vue/one-component-per-file */
-import {defineComponent} from "vue";
+import {defineComponent, markRaw} from "vue";
 import MultiPanelTabs from "../../../src/components/MultiPanelTabs.vue";
+import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
+import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
+import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue";
+import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
+import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
+import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
 
 export default {
   title: "Components/MultiPanelTabs",
@@ -17,29 +23,65 @@ const Template = (args) => defineComponent({
   },
 });
 
+const BG_COLORS = [
+    // lightpink
+    "#FFB6C1",
+    // lightblue
+    "#ADD8E6",
+    // lightgreen
+    "#90EE90",
+    // lightyellow
+    "#FFFFE0",
+    // lightcoral
+    "#F08080",
+    // lightcyan
+    "#E0FFFF",
+];
+
+const PlaceholderComponent = ({tabId}) => <div style={{
+    padding: "1rem",
+    height: "50vh",
+    background: BG_COLORS[parseInt(tabId)]
+}}>Content for Tab {tabId}</div>;
+
 export const Default = Template.bind({});
 Default.args = {
   panelsDefinition: [
     {
       tabs: [
         {
-          button: {icon: "icon1", label: "Tab 1"},
+          button: {icon: markRaw(CodeTagsIcon), label: "Tab 1"},
           value: "tab1",
-          component: () => <div style="padding: 1rem">Content for Tab 1</div>,
+          component: () => <PlaceholderComponent tabId="1" />,
         },
         {
-          button: {icon: "icon2", label: "Tab 2"},
+          button: {icon: markRaw(MouseRightClickIcon), label: "Tab 2"},
           value: "tab2",
-          component: () => <div style="padding: 1rem">Content for Tab 2</div>,
+          component: () => <PlaceholderComponent tabId="2" />,
+        },
+        {
+            button: {icon: markRaw(FileTreeOutlineIcon), label: "Tab 3"},
+            value: "tab3",
+            component: () => <PlaceholderComponent tabId="3" />,
         },
       ],
     },
     {
       tabs: [
         {
-          button: {icon: "icon3", label: "Tab 3"},
-          value: "tab3",
-          component: () => <div style="padding: 1rem">Content for Tab 3</div>,
+          button: {icon: markRaw(FileDocumentIcon), label: "Tab 4"},
+          value: "tab4",
+          component: () => <PlaceholderComponent tabId="4" />,
+        },
+        {
+          button: {icon: markRaw(DotsSquareIcon), label: "Tab 5"},
+          value: "tab5",
+          component: () => <PlaceholderComponent tabId="5" />,
+        },
+        {
+          button: {icon: markRaw(BallotOutlineIcon), label: "Tab 6"},
+          value: "tab6",
+          component: () => <PlaceholderComponent tabId="6" />,
         },
       ],
     },

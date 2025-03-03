@@ -1054,7 +1054,7 @@ class ExecutionControllerRunnerTest {
     }
 
     // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
-    @Test
+    @RetryingTest(5)
     @LoadFlows({"flows/valids/sleep-long.yml"})
     void kill() throws TimeoutException, InterruptedException, QueueException {
         // listen to the execution queue

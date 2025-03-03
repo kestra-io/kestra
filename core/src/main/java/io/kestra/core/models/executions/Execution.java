@@ -840,11 +840,11 @@ public class Execution implements DeletedInterface, TenantInterface {
             }
         }
 
-        Map<String, Object> result = MapUtils.newHashMap(1);
+        Map<String, Object> result = HashMap.newHashMap(1);
         Map<String, Object> current = result;
 
         for (TaskRun t : parents) {
-            HashMap<String, Object> item = MapUtils.newHashMap(1);
+            HashMap<String, Object> item = HashMap.newHashMap(1);
             current.put(t.getValue(), item);
             current = item;
         }

@@ -37,7 +37,7 @@ jobs:
       - name: Npm - Install
         shell: bash
         working-directory: ui
-        run: npm install
+        run: npm ci
 
       # Run OWASP dependency check plugin
       - name: Gradle Dependency Check

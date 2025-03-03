@@ -28,9 +28,9 @@ import java.util.*;
 @Schema(
     title = "Run a flow if the list of preconditions are met in a time window.",
     description = """
-        **This task is deprecated**, use io.kestra.plugin.core.condition.ExecutionsWindow or io.kestra.plugin.core.condition.FilteredExecutionsWindow instead.
+        **This task is deprecated**, use the `preconditions` property of the `io.kestra.plugin.core.trigger.Flow` trigger instead.
         Will trigger an executions when all the flows defined by the preconditions are successfully executed in a specific period of time.
-        The period is defined by the `timeSLA` property and is by default a duration window of 24 hours."""
+        The period is defined by the `timeWindow` property and is by default a duration window of 24 hours."""
 )
 @Plugin(
     examples = {
@@ -47,7 +47,7 @@ import java.util.*;
                 "        - SUCCESS",
                 "      - id: multiple",
                 "        type: io.kestra.plugin.core.condition.MultipleCondition",
-                "        sla:",
+                "        timeWindow:",
                 "          window: PT12H",
                 "        conditions:",
                 "          flow-a:",
@@ -102,7 +102,7 @@ public class MultipleCondition extends Condition implements io.kestra.core.model
 
     @Schema(
         title = "The duration of the window",
-        description = "Deprecated, use `timeSLA.window` instead.")
+        description = "Deprecated, use `timeWindow.window` instead.")
     @PluginProperty
     @Deprecated
     private Duration window;
@@ -114,7 +114,7 @@ public class MultipleCondition extends Condition implements io.kestra.core.model
 
     @Schema(
         title = "The window advance duration",
-        description = "Deprecated, use `timeSLA.windowAdvance` instead.")
+        description = "Deprecated, use `timeWindow.windowAdvance` instead.")
     @PluginProperty
     @Deprecated
     private Duration windowAdvance;

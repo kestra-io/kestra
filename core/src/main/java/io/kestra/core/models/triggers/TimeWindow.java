@@ -3,7 +3,6 @@ package io.kestra.core.models.triggers;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.validations.TimeWindowValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.With;
@@ -19,7 +18,6 @@ public class TimeWindow {
         title = "The type of the SLA",
         description = "The default SLA is a sliding window (`DURATION_WINDOW`) with a window of 24 hours."
     )
-    @NotNull
     @Builder.Default
     @PluginProperty
     private TimeWindow.Type type = TimeWindow.Type.DURATION_WINDOW;

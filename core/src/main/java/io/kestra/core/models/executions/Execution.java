@@ -816,11 +816,16 @@ public class Execution implements DeletedInterface, TenantInterface {
         ));
 
         Map<String, Object> result = new HashMap<>();
-        for (TaskRun current : this.taskRunList) {
-            if (current.getOutputs() != null) {
-                result = MapUtils.merge(result, outputs(current, byIds));
-            }
-        }
+        this.taskRunList.stream()
+            .filter(taskRun -> taskRun.getOutputs() != null)
+            .collect(Collectors.groupingBy(taskRun -> taskRun.getTaskId()))
+            .forEach((taskId, taskRuns) -> {
+                Map<String, Object> taskOutputs = new HashMap<>();
+                for (TaskRun current : taskRuns) {
+                    taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                }
+                result.put(taskId, taskOutputs);
+            });
 
         return result;
     }
@@ -833,10 +838,9 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         if (parents.isEmpty()) {
             if (taskRun.getValue() == null) {
-                return Map.of(taskRun.getTaskId(), taskRun.getOutputs());
+                return taskRun.getOutputs();
             } else {
-                return Map.of(taskRun.getTaskId(),
-                    Map.of(taskRun.getValue(), taskRun.getOutputs()));
+                return Map.of(taskRun.getValue(), taskRun.getOutputs());
             }
         }
 
@@ -857,7 +861,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             }
         }
 
-        return Map.of(taskRun.getTaskId(), result);
+        return result;
     }
 
 

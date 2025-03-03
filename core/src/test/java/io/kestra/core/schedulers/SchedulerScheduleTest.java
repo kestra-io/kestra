@@ -565,7 +565,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
                 queueCount.countDown();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    Thread.sleep(10000);
+                    Thread.sleep(11000);
                     executionQueue.emit(execution.withState(State.Type.SUCCESS)
                         .toBuilder()
                         .taskRunList(List.of(TaskRun.builder()

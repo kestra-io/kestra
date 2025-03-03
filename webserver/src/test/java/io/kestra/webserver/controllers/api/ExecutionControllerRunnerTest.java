@@ -1100,7 +1100,7 @@ class ExecutionControllerRunnerTest {
         assertThat(executionKilledId.get(), is(runningExecution.getId()));
 
         // retrieve the execution from the API and check that the task has been set to killed
-        Thread.sleep(500);
+        Thread.sleep(1000);
         Execution execution = client.toBlocking().retrieve(
             GET("/api/v1/executions/" + runningExecution.getId()),
             Execution.class);
@@ -1475,10 +1475,10 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/runners/sleep.ymldium.yml"})
+    @LoadFlows({"flows/runners/sleep_medium.yml"})
     void shouldForRunByQueryFlows() throws TimeoutException, QueueException {
         String namespace = "io.kestra.forcerun.tests";
-        runnerUtils.runOneUntilRunning(null, namespace, "sleep.ymldium");
+        runnerUtils.runOneUntilRunning(null, namespace, "sleep_medium");
         runnerUtils.runOneUntilRunning(null, namespace, "sleep_medium");
         runnerUtils.runOneUntilRunning(null, namespace, "sleep_medium");
 

@@ -46,8 +46,13 @@ const PlaceholderComponent = ({tabId}) => <div style={{
 
 export const Default = Template.bind({});
 Default.args = {
-  panelsDefinition: [
+  modelValue: [
     {
+      activeTab: {
+        button: {icon: markRaw(CodeTagsIcon), label: "Tab 1"},
+        value: "tab1",
+        component: () => <PlaceholderComponent tabId="1" />,
+      },
       tabs: [
         {
           button: {icon: markRaw(CodeTagsIcon), label: "Tab 1"},
@@ -67,7 +72,13 @@ Default.args = {
       ],
     },
     {
+      activeTab: {
+        button: {icon: markRaw(FileDocumentIcon), label: "Tab 4"},
+        value: "tab4",
+        component: () => <PlaceholderComponent tabId="4" />,
+      },
       tabs: [
+
         {
           button: {icon: markRaw(FileDocumentIcon), label: "Tab 4"},
           value: "tab4",

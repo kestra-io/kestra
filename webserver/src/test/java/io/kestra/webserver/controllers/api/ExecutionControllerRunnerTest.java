@@ -72,12 +72,16 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
+@Slf4j
 @KestraTest(startRunner = true)
 class ExecutionControllerRunnerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
@@ -1050,32 +1054,34 @@ class ExecutionControllerRunnerTest {
     }
 
     // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/sleep-long.yml"})
     void kill() throws TimeoutException, InterruptedException, QueueException {
-        // Run execution until it is paused
-        Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep-long");
-        assertThat(runningExecution.getState().isRunning(), is(true));
-
         // listen to the execution queue
+        AtomicReference<Execution> killedExecution = new AtomicReference<>();
         CountDownLatch killingLatch = new CountDownLatch(1);
         CountDownLatch killedLatch = new CountDownLatch(1);
         Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, e -> {
-            if (e.getLeft().getId().equals(runningExecution.getId()) && e.getLeft().getState().getCurrent() == State.Type.KILLING) {
+            if (e.getLeft().getState().getCurrent() == State.Type.KILLING) {
                 killingLatch.countDown();
             }
-            if (e.getLeft().getId().equals(runningExecution.getId()) && e.getLeft().getState().getCurrent() == State.Type.KILLED) {
+            if (e.getLeft().getState().getCurrent() == State.Type.KILLED) {
+                killedExecution.set(e.getLeft());
                 killedLatch.countDown();
             }
         });
 
         // listen to the executionkilled queue
+        AtomicReference<String> executionKilledId = new AtomicReference<>();
         CountDownLatch executionKilledLatch = new CountDownLatch(1);
         Flux<ExecutionKilled> receiveKilled = TestsUtils.receive(killQueue, e -> {
-            if (((ExecutionKilledExecution) e.getLeft()).getExecutionId().equals(runningExecution.getId())) {
-                executionKilledLatch.countDown();
-            }
+            executionKilledId.set(((ExecutionKilledExecution) e.getLeft()).getExecutionId());
+            executionKilledLatch.countDown();
         });
+
+        // Run execution until it is paused
+        Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep-long");
+        assertThat(runningExecution.getState().isRunning(), is(true));
 
         // kill the execution
         HttpResponse<?> killResponse = client.toBlocking().exchange(
@@ -1086,10 +1092,12 @@ class ExecutionControllerRunnerTest {
         assertTrue(killingLatch.await(10, TimeUnit.SECONDS));
         assertTrue(killedLatch.await(10, TimeUnit.SECONDS));
         receiveExecutions.blockLast();
+        assertThat(killedExecution.get().getId(), is(runningExecution.getId()));
 
         //check that an executionkilled message has been sent
         assertTrue(executionKilledLatch.await(10, TimeUnit.SECONDS));
         receiveKilled.blockLast();
+        assertThat(executionKilledId.get(), is(runningExecution.getId()));
 
         // retrieve the execution from the API and check that the task has been set to killed
         Thread.sleep(500);
@@ -1467,10 +1475,10 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/runners/sleep_medium.yml"})
+    @LoadFlows({"flows/runners/sleep.ymldium.yml"})
     void shouldForRunByQueryFlows() throws TimeoutException, QueueException {
         String namespace = "io.kestra.forcerun.tests";
-        runnerUtils.runOneUntilRunning(null, namespace, "sleep_medium");
+        runnerUtils.runOneUntilRunning(null, namespace, "sleep.ymldium");
         runnerUtils.runOneUntilRunning(null, namespace, "sleep_medium");
         runnerUtils.runOneUntilRunning(null, namespace, "sleep_medium");
 

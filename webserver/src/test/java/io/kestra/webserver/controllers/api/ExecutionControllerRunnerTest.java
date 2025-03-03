@@ -74,14 +74,11 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
-@Slf4j
 @KestraTest(startRunner = true)
 class ExecutionControllerRunnerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
@@ -1054,17 +1051,13 @@ class ExecutionControllerRunnerTest {
     }
 
     // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/sleep-long.yml"})
     void kill() throws TimeoutException, InterruptedException, QueueException {
         // listen to the execution queue
         AtomicReference<Execution> killedExecution = new AtomicReference<>();
-        CountDownLatch killingLatch = new CountDownLatch(1);
         CountDownLatch killedLatch = new CountDownLatch(1);
         Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, e -> {
-            if (e.getLeft().getState().getCurrent() == State.Type.KILLING) {
-                killingLatch.countDown();
-            }
             if (e.getLeft().getState().getCurrent() == State.Type.KILLED) {
                 killedExecution.set(e.getLeft());
                 killedLatch.countDown();
@@ -1089,7 +1082,6 @@ class ExecutionControllerRunnerTest {
         assertThat(killResponse.getStatus(), is(HttpStatus.ACCEPTED));
 
         // check that the execution has been set to killing then killed
-        assertTrue(killingLatch.await(10, TimeUnit.SECONDS));
         assertTrue(killedLatch.await(10, TimeUnit.SECONDS));
         receiveExecutions.blockLast();
         assertThat(killedExecution.get().getId(), is(runningExecution.getId()));

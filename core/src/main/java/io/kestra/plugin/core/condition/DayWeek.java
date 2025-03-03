@@ -27,16 +27,16 @@ import jakarta.validation.constraints.NotNull;
 @Plugin(
     examples = {
         @Example(
-            title = "Trigger the flow only on a specific day of the week.",
+            title = "Trigger condition to execute the flow only on a specific day of the week.",
             full = true,
             code = """
-                id: schedule-condition-dayweek
+                id: schedule_condition_dayweek
                 namespace: company.team
 
                 tasks:
                   - id: log_message
                     type: io.kestra.plugin.core.log.Log
-                    message: "This flow will be executed only on Mondays at 11:00 am."
+                    message: "This flow will execute only on Mondays at 11:00 am."
 
                 triggers:
                   - id: schedule

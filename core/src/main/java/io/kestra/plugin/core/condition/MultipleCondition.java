@@ -37,28 +37,36 @@ import java.util.*;
         @Example(
             full = true,
             title = "A flow that is waiting for 2 flows to run successfully in a day",
-            code = {
-                "triggers:",
-                "  - id: multiple-listen-flow",
-                "    type: io.kestra.plugin.core.trigger.Flow",
-                "    conditions:",
-                "      - type: io.kestra.plugin.core.condition.ExecutionStatus",
-                "        in:",
-                "        - SUCCESS",
-                "      - id: multiple",
-                "        type: io.kestra.plugin.core.condition.MultipleCondition",
-                "        timeWindow:",
-                "          window: PT12H",
-                "        conditions:",
-                "          flow-a:",
-                "            type: io.kestra.plugin.core.condition.ExecutionFlow",
-                "            namespace: io.kestra.demo",
-                "            flowId: multiplecondition-flow-a",
-                "          flow-b:",
-                "            type: io.kestra.plugin.core.condition.ExecutionFlow",
-                "            namespace: io.kestra.demo",
-                "            flowId: multiplecondition-flow-b"
-            }
+            code = """
+                id: schedule_condition_multiplecondition
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute when `multiplecondition_flow_a` and `multiplecondition_flow_b` are successfully executed in the last 12 hours."
+                
+                triggers:
+                  - id: multiple_listen_flow
+                    type: io.kestra.plugin.core.trigger.Flow
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.ExecutionStatus
+                        in:
+                          - SUCCESS
+                      - id: multiple
+                        type: io.kestra.plugin.core.condition.MultipleCondition
+                        timeWindow:
+                          window: PT12H
+                        conditions:
+                          flow_a:
+                            type: io.kestra.plugin.core.condition.ExecutionFlow
+                            namespace: company.team
+                            flowId: multiplecondition_flow_a
+                          flow_b:
+                            type: io.kestra.plugin.core.condition.ExecutionFlow
+                            namespace: company.team
+                            flowId: multiplecondition_flow_b
+                """
         )
     },
     aliases = "io.kestra.core.models.conditions.types.MultipleCondition"

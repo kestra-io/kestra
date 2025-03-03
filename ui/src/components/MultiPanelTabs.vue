@@ -74,19 +74,13 @@
         tab: Tab
     }
 
-    const props = defineProps<{
-        panelsDefinition: {
-            tabs:Tab[]
-        }[]
-    }>()
-
-    const panels = ref(props.panelsDefinition.map((panel) => {
-        return {
-            tabs: panel.tabs,
-            activeTab: panel.tabs[0],
-            dragover: false
-        }
-    }))
+    const panels = defineModel<{
+        tabs: Tab[],
+        dragover?:boolean,
+        activeTab: Tab,
+    }[]>({
+        required: true,
+    })
 
     const movedTab = ref<TabInfo | null>(null);
 

@@ -7,7 +7,7 @@
             </el-checkbox-button>
         </el-checkbox-group>
     </div>
-    <MultiPanelTabs :panels-definition="panels" />
+    <MultiPanelTabs v-model="panels" />
 </template>
 
 <script setup lang="ts">
@@ -22,7 +22,7 @@
     const panels = reactive(DEFAULT_ACTIVE_TABS.map(t => {
         const element = EDITOR_ELEMENTS.find(e => e.value === t)!
         return {
-            activeTabIndex: 0,
+            activeTab: element,
             tabs: [element]
         }
     }))
@@ -48,7 +48,7 @@
         for(const t of toAdd){
             const element = EDITOR_ELEMENTS.find(e => e.value === t)!
             panels.push({
-                activeTabIndex: 0,
+                activeTab: element,
                 tabs: [element]
             })
         }

@@ -1,5 +1,9 @@
 <template>
-    <div class="d-flex w-100 mb-2" v-for="(label, index) in locals" :key="index">
+    <div
+        class="d-flex w-100 mb-2"
+        v-for="(label, index) in locals"
+        :key="index"
+    >
         <div class="flex-grow-1 d-flex align-items-center">
             <el-input
                 class="form-control me-2"
@@ -29,7 +33,6 @@
     import Minus from "vue-material-design-icons/Minus.vue";
 </script>
 
-
 <script>
     import {mapGetters} from "vuex";
 
@@ -37,35 +40,35 @@
         props: {
             labels: {
                 type: Array,
-                required: true
+                required: true,
+                default: () => [],
             },
             existingLabels: {
                 type: Array,
-                default: () => []
-            }
+                default: () => [],
+            },
         },
         data() {
             return {
                 locals: [],
-                localExisting: []
-            }
+                localExisting: [],
+            };
         },
         emits: ["update:labels"],
         computed: {
             ...mapGetters("misc", ["configs"]),
         },
         created() {
-            const toIgnore = this.configs.hiddenLabelsPrefixes || [];
-
             if (this.labels.length === 0) {
                 this.addItem();
             } else {
-                this.locals = this.labels.filter(item => item?.key === undefined || item?.key === null || !toIgnore.some(prefix => item.key?.startsWith(prefix)))
-                if(this.locals.length === 0) {
+                this.locals = this.labels;
+
+                if (this.locals.length === 0) {
                     this.addItem();
                 }
             }
-            this.localExisting = this.existingLabels.filter(item => !item || !toIgnore.some(prefix => item.key?.startsWith(prefix))).map(label => label.key);
+            this.localExisting = this.existingLabels.map((label) => label.key);
         },
         methods: {
             addItem() {
@@ -86,5 +89,5 @@
                 this.$emit("update:labels", this.locals);
             },
         },
-    }
+    };
 </script>

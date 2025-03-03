@@ -128,17 +128,13 @@ public class FlowService {
         return deprecationTraversal("", flow).toList();
     }
 
-    /**
-     * @deprecated as we have no more usaage inside
-     * maybe be kept if we found something to verify
-     */
-    @Deprecated
-    public List<String> warnings(Flow flow) {
+
+    public List<String> warnings(Flow flow, String tenantId) {
         if (flow == null) {
             return Collections.emptyList();
         }
 
-        List<String> warnings = new ArrayList<>();
+        List<String> warnings = new ArrayList<>(checkValidSubflows(flow, tenantId));
 
         return warnings;
     }
@@ -157,13 +153,13 @@ public class FlowService {
     }
 
     // check if subflow is present in given namespace
-    public void checkValidSubflows(Flow flow, String tenantId) {
+    public List<String> checkValidSubflows(Flow flow, String tenantId) {
         List<io.kestra.plugin.core.flow.Subflow> subFlows = ListUtils.emptyOnNull(flow.getTasks()).stream()
             .filter(io.kestra.plugin.core.flow.Subflow.class::isInstance)
             .map(io.kestra.plugin.core.flow.Subflow.class::cast)
             .toList();
 
-        Set<ConstraintViolation<?>> violations = new HashSet<>();
+        List<String> violations = new ArrayList<>();
 
         subFlows.forEach(subflow -> {
             String regex = ".*\\{\\{.+}}.*"; // regex to check if string contains pebble
@@ -175,27 +171,13 @@ public class FlowService {
             Optional<Flow> optional = findById(tenantId, subflow.getNamespace(), subflow.getFlowId());
 
             if (optional.isEmpty()) {
-                violations.add(ManualConstraintViolation.of(
-                    "The subflow '" + subflow.getFlowId() + "' not found in namespace '" + subflow.getNamespace() + "'.",
-                    flow,
-                    Flow.class,
-                    "flow.tasks",
-                    flow.getNamespace()
-                ));
+                violations.add("The subflow '" + subflow.getFlowId() + "' not found in namespace '" + subflow.getNamespace() + "'.");
             } else if (optional.get().isDisabled()) {
-                violations.add(ManualConstraintViolation.of(
-                    "The subflow '" + subflow.getFlowId() + "' is disabled in namespace '" + subflow.getNamespace() + "'.",
-                    flow,
-                    Flow.class,
-                    "flow.tasks",
-                    flow.getNamespace()
-                ));
+                violations.add("The subflow '" + subflow.getFlowId() + "' is disabled in namespace '" + subflow.getNamespace() + "'.");
             }
         });
 
-        if (!violations.isEmpty()) {
-            throw new ConstraintViolationException(violations);
-        }
+        return violations;
     }
 
     public record Relocation(String from, String to) {}

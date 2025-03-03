@@ -92,12 +92,9 @@
     function cleanUp(){
         nextTick(() => {
             movedTab.value = null
-            panels.value = panels.value.map((panel) => {
-                return {
-                    ...panel,
-                    dragover: false,
-                    tabs: panel.tabs.filter((tab) => !tab.potential)
-                }
+            panels.value.forEach((panel) => {
+                panel.dragover = false;
+                panel.tabs = panel.tabs.filter((tab) => !tab.potential)
             })
         })
     }
@@ -189,9 +186,9 @@
     function dragleavePanel(event: DragEvent) {
         // if the dragleave happens because the
         // new simulated tab appeared, do not remove it
-        if(event.relatedTarget instanceof HTMLElement && event.relatedTarget.classList.contains("simulated")) {
-            return
-        }
+        // if(event.relatedTarget instanceof HTMLElement && event.relatedTarget.classList.contains("simulated")) {
+        //     return
+        // }
         dragleave(event, true);
     }
 

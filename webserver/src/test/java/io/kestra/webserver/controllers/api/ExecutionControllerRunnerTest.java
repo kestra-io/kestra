@@ -1467,7 +1467,7 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep_medium.yml"})
+    @LoadFlows({"flows/runners/sleep_medium.yml"})
     void shouldForRunByQueryFlows() throws TimeoutException, QueueException {
         String namespace = "io.kestra.forcerun.tests";
         runnerUtils.runOneUntilRunning(null, namespace, "sleep_medium");

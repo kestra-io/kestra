@@ -6,16 +6,13 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.Matchers.startsWith;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,11 +26,8 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.storage.FileMetas;
-import io.kestra.core.models.tasks.TaskForExecution;
-import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -58,7 +52,6 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
-import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
@@ -71,10 +64,6 @@ import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -84,12 +73,8 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
-import lombok.SneakyThrows;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
@@ -1482,19 +1467,19 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep.yml"})
+    @LoadFlows({"flows/valids/sleep_medium.yml"})
     void shouldForRunByQueryFlows() throws TimeoutException, QueueException {
-        runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
-        runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
-        runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
+        String namespace = "io.kestra.forcerun.tests";
+        runnerUtils.runOneUntilRunning(null, namespace, "sleep_medium");
+        runnerUtils.runOneUntilRunning(null, namespace, "sleep_medium");
+        runnerUtils.runOneUntilRunning(null, namespace, "sleep_medium");
 
         BulkResponse response = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/executions/force-run/by-query?namespace=" + TESTS_FLOW_NS, null),
+            HttpRequest.POST("/api/v1/executions/force-run/by-query?namespace=" + namespace, null),
             BulkResponse.class
         );
         assertThat(response.getCount(), is(3));
     }
-
 
     private ExecutionController.EvalResult eval(Execution execution, String expression, int index) {
         return client.toBlocking().retrieve(

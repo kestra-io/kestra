@@ -37,10 +37,11 @@
 
         // remove the tabs
         for(const t of toRemove){
-            const p = panels.find(p => p.tabs.some(tab => tab.value === t))
-            const tabIndex = p?.tabs.findIndex(tab => tab.value === t)
-            if(p && tabIndex !== undefined){
-                p.tabs.splice(tabIndex, 1)
+            for(const p of panels){
+                const tabIndex = p?.tabs.findIndex(tab => tab.value === t)
+                if(p && tabIndex !== undefined && tabIndex > -1){
+                    p.tabs.splice(tabIndex, 1)
+                }
             }
         }
 

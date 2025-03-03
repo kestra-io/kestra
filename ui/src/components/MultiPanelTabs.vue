@@ -52,7 +52,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {nextTick, ref} from "vue";
+    import {nextTick, ref, watch} from "vue";
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
 
@@ -184,11 +184,6 @@
     }
 
     function dragleavePanel(event: DragEvent) {
-        // if the dragleave happens because the
-        // new simulated tab appeared, do not remove it
-        // if(event.relatedTarget instanceof HTMLElement && event.relatedTarget.classList.contains("simulated")) {
-        //     return
-        // }
         dragleave(event, true);
     }
 
@@ -246,12 +241,17 @@
             // add the tab to the target panel in-place of the hovered simulated tab
             panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab);
         }
-
-        // if the leaving panel after removing is empty, delete the panel
-        if(panels.value[originalPanelIndex].tabs.length === 0) {
-            panels.value.splice(originalPanelIndex, 1);
-        }
     }
+
+    watch(panels, () => {
+        let index = 0;
+        for(const panel of panels.value){
+            if(panel.tabs.length === 0){
+                panels.value.splice(index, 1)
+            }
+            index++;
+        }
+    }, {deep: true})
 </script>
 
 <style lang="scss" scoped>

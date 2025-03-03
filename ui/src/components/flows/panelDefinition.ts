@@ -1,3 +1,5 @@
+import {markRaw} from "vue";
+
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue";
@@ -16,50 +18,50 @@ import BlueprintsWrapper from "../flows/blueprints/BlueprintsWrapper.vue";
 export const EDITOR_ELEMENTS = [
     {
         button: {
-            icon: CodeTagsIcon,
+            icon: markRaw(CodeTagsIcon),
             label: "Code"
         },
         value: "code",
-        component: EditorWrapper,
+        component: markRaw(EditorWrapper),
     },
     {
         button: {
-            icon: MouseRightClickIcon,
+            icon: markRaw(MouseRightClickIcon),
             label: "No-code"
         },
         value: "nocode",
-        component: NoCodeWrapper,
+        component: markRaw(NoCodeWrapper),
     },
     {
         button: {
-            icon: FileTreeOutlineIcon,
+            icon: markRaw(FileTreeOutlineIcon),
             label: "Topology"
         },
         value: "topology",
-        component: LowCodeEditorWrapper,
+        component: markRaw(LowCodeEditorWrapper),
     },
     {
         button: {
-            icon: FileDocumentIcon,
+            icon: markRaw(FileDocumentIcon),
             label: "Documentation"
         },
         value: "doc",
-        component: PluginDocumentationWrapper,
+        component: markRaw(PluginDocumentationWrapper),
     },
     {
         button: {
-            icon: DotsSquareIcon,
+            icon: markRaw(DotsSquareIcon),
             label: "Files"
         },
         value: "files",
-        component: EditorSidebarWrapper,
+        component: markRaw(EditorSidebarWrapper),
     },
     {
         button: {
-            icon: BallotOutlineIcon,
+            icon: markRaw(BallotOutlineIcon),
             label: "Blueprints"
         },
         value: "blueprints",
-        component: BlueprintsWrapper,
+        component: markRaw(BlueprintsWrapper),
     }
 ]

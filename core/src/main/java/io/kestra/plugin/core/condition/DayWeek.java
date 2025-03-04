@@ -27,12 +27,25 @@ import jakarta.validation.constraints.NotNull;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition to execute the flow only on a specific day of the week.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.DayWeek",
-                "      dayOfWeek: \"MONDAY\"",
-            }
+            code = """
+                id: schedule_condition_dayweek
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute only on Mondays at 11:00 am."
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 11 * * *"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.DayWeek
+                        dayOfWeek: "MONDAY"
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.DayWeekCondition", "io.kestra.plugin.core.condition.DayWeekCondition"}

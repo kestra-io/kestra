@@ -269,6 +269,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
         flows
             .stream()
+            .map(flow -> pluginDefaultService.injectDefaults(flow, log))
+            .filter(Objects::nonNull)
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .flatMap(flow -> flow.getTriggers().stream().filter(trigger -> trigger instanceof WorkerTriggerInterface).map(trigger -> new FlowAndTrigger(flow, trigger)))
             .forEach(flowAndTrigger -> {
@@ -421,6 +423,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
         return flows
             .stream()
+            .map(flow -> pluginDefaultService.injectDefaults(flow, log))
+            .filter(Objects::nonNull)
             .filter(flow -> flowToKeep.contains(flow.getId()))
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .filter(flow -> !flow.isDisabled() && !(flow instanceof FlowWithException))
@@ -642,7 +646,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         });
     }
 
-    private void handleEvaluateWorkerTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime nextExecutionDate) {
+    private void handleEvaluateWorkerTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime
+        nextExecutionDate) {
         Optional.ofNullable(result)
             .ifPresent(executionWithTrigger -> {
                     log(executionWithTrigger);
@@ -660,7 +665,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             );
     }
 
-    private void handleEvaluateSchedulingTriggerResult(Schedulable schedule, SchedulerExecutionWithTrigger result, ConditionContext conditionContext, ScheduleContextInterface scheduleContext) throws Exception {
+    private void handleEvaluateSchedulingTriggerResult(Schedulable schedule, SchedulerExecutionWithTrigger
+        result, ConditionContext conditionContext, ScheduleContextInterface scheduleContext) throws Exception {
         log(result);
         Trigger trigger = Trigger.of(
             result.getTriggerContext(),
@@ -679,7 +685,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.saveLastTriggerAndEmitExecution(result.getExecution(), trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
     }
 
-    protected void saveLastTriggerAndEmitExecution(Execution execution, Trigger trigger, Consumer<Trigger> saveAction) {
+    protected void saveLastTriggerAndEmitExecution(Execution execution, Trigger
+        trigger, Consumer<Trigger> saveAction) {
         saveAction.accept(trigger);
         this.emitExecution(execution, trigger);
     }
@@ -855,7 +862,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         }
     }
 
-    private void logError(ConditionContext conditionContext, FlowWithSource flow, AbstractTrigger trigger, Throwable e) {
+    private void logError(ConditionContext conditionContext, FlowWithSource flow, AbstractTrigger
+        trigger, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
 
         logService.logFlow(
@@ -1027,5 +1035,13 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     @Override
     public ServiceState getState() {
         return state.get();
+    }
+
+    protected Trigger resetExecution(FlowWithSource flow, Execution execution, Trigger trigger) {
+        Flow flowWithDefaults = pluginDefaultService.injectDefaults(flow, execution);
+        RunContext runContext = runContextFactory.of(flowWithDefaults, flowWithDefaults.findTriggerByTriggerId(trigger.getTriggerId()));
+        ConditionContext conditionContext = conditionService.conditionContext(runContext, flowWithDefaults, null);
+
+        return trigger.resetExecution(flowWithDefaults, execution, conditionContext);
     }
 }

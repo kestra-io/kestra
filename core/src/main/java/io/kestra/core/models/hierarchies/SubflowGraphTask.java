@@ -90,5 +90,10 @@ public class SubflowGraphTask extends AbstractGraphTask {
         public String getType() {
             return ((TaskInterface) subflowTask).getType();
         }
+
+        @Override
+        public String getVersion() {
+            return ((TaskInterface) subflowTask).getVersion();
+        }
     }
 }

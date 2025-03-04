@@ -61,10 +61,7 @@
         </div>
 
         <el-row class="mb-3">
-            <el-col :span="12" class="crud-align">
-                <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
-            </el-col>
-            <el-col :span="12" class="gap-2 d-flex justify-content-end actions-buttons">
+            <el-col :span="24" class="gap-2 d-flex justify-content-end actions-buttons">
                 <set-labels :execution="execution" />
                 <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
@@ -181,7 +178,6 @@
     import Kill from "./Kill.vue";
     import {State} from "@kestra-io/ui-libs"
     import DateAgo from "../layout/DateAgo.vue";
-    import Crud from "override/components/auth/Crud.vue";
     import Duration from "../layout/Duration.vue";
     import Timeline from "../layout/Timeline.vue";
     import Labels from "../layout/Labels.vue"
@@ -210,7 +206,6 @@
             Kill,
             DateAgo,
             Labels,
-            Crud,
             KestraCascader,
             LogLine,
             Alert,
@@ -306,7 +301,8 @@
                     const params = {
                         namespace: this.execution.namespace,
                         flowId: this.execution.flowId,
-                        pageSize: 100
+                        pageSize: 100,
+                        sort: "state.startDate:desc"
                     };
                     
                     const result = await this.$store.dispatch("execution/findExecutions", params);
@@ -331,6 +327,8 @@
                 if (!result) return;
 
                 const {executions, currentIndex} = result;
+                // Since executions are sorted by startDate desc here. (opposite of default ASC sort as in Execution Table)
+                // "next" means newer (lower index) and "previous" means older (higher index)
                 const targetIndex = direction === "previous" ? currentIndex + 1 : currentIndex - 1;
 
                 if (targetIndex >= 0 && targetIndex < executions.length) {
@@ -354,7 +352,9 @@
                 }
 
                 const {executions, currentIndex} = result;
+                // Previous means we can go to older executions.
                 this.hasPreviousExecution = currentIndex < executions.length - 1;
+                // Next means we can go to newer executions.
                 this.hasNextExecution = currentIndex > 0;
             },
         },
@@ -460,11 +460,6 @@
 </script>
 
 <style lang="scss">
-.crud-align {
-    display: flex;
-    align-items: center;
-}
-
 .execution-overview {
     .cascader {
         &::-webkit-scrollbar {

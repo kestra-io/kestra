@@ -3,13 +3,15 @@
         <el-form-item
             v-for="input in inputsMetaData || []"
             :key="input.id"
-            :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
             :rules="requiredRules(input)"
             :prop="input.id"
             :error="inputError(input.id)"
             :inline-message="true"
         >
+            <template #label>
+                <markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
+            </template>
             <editor
                 :full-height="false"
                 :input="true"
@@ -38,7 +40,7 @@
                     :label="item"
                     :value="item"
                 >
-                    {{ item }}
+                    <markdown :source="item" />
                 </el-option>
             </el-select>
             <el-radio-group
@@ -74,7 +76,7 @@
                     :label="item"
                     :value="item"
                 >
-                    {{ item }}
+                    <markdown :source="item" />
                 </el-option>
             </el-select>
             <el-input
@@ -462,6 +464,10 @@
 </script>
 
 <style scoped lang="scss">
+.md-label {
+    height: 20px;
+}
+
 .hint {
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);

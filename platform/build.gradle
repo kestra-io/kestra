@@ -15,13 +15,13 @@ dependencies {
     def slf4jVersion = "2.0.16"
     def protobufVersion = "3.25.5" // Orc still uses 3.25.5 see https://github.com/apache/orc/blob/main/java/pom.xml
     def bouncycastleVersion = "1.80"
-    def aetherVersion = "1.1.0"
+    def mavenResolverVersion = "1.9.22"
     def jollydayVersion = "0.32.0"
     def jsonschemaVersion = "4.37.0"
     def kafkaVersion = "3.9.0"
     def opensearchVersion = "2.20.0"
     def opensearchRestVersion = "2.18.0"
-    def flyingSaucerVersion = "9.11.3"
+    def flyingSaucerVersion = "9.11.4"
     def jacksonVersion = "2.18.2"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
@@ -33,7 +33,7 @@ dependencies {
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.54.0')
     api platform("com.azure:azure-sdk-bom:1.2.31")
-    api platform('software.amazon.awssdk:bom:2.30.16')
+    api platform('software.amazon.awssdk:bom:2.30.31')
 
 
     constraints {
@@ -87,20 +87,17 @@ dependencies {
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.17.0'
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
         api 'ch.qos.logback.contrib:logback-jackson:0.1.5'
-        api "org.eclipse.aether:aether-api:$aetherVersion"
-        api "org.eclipse.aether:aether-spi:$aetherVersion"
-        api "org.eclipse.aether:aether-util:$aetherVersion"
-        api "org.eclipse.aether:aether-impl:$aetherVersion"
-        api "org.eclipse.aether:aether-connector-basic:$aetherVersion"
-        api "org.eclipse.aether:aether-transport-file:$aetherVersion"
-        api "org.eclipse.aether:aether-transport-http:$aetherVersion"
-        api 'org.apache.maven:maven-aether-provider:3.3.9'
-        api 'com.github.oshi:oshi-core:6.6.6'
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-impl', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-supplier', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-connector-basic', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-file', version: mavenResolverVersion
+        api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-http', version: mavenResolverVersion
+        api 'com.github.oshi:oshi-core:6.7.0'
         api 'io.pebbletemplates:pebble:3.2.3'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion
         api group: 'de.focus-shift', name: 'jollyday-jaxb', version: jollydayVersion
-        api 'nl.basjes.gitignore:gitignore-reader:1.10.0'
+        api 'nl.basjes.gitignore:gitignore-reader:1.11.1'
         api group: 'dev.failsafe', name: 'failsafe', version: '3.3.2'
         api group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'
         api group: 'com.github.victools', name: 'jsonschema-generator', version: jsonschemaVersion

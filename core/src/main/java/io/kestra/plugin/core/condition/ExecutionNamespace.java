@@ -26,13 +26,27 @@ import java.util.function.BiPredicate;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition to execute the flow based on execution of another flow(s) belonging to certain namespace.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.ExecutionNamespace",
-                "      namespace: company.team",
-                "      comparison: PREFIX"
-            }
+            code = """
+                id: flow_condition_executionnamespace
+                namespace: company.team
+
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute when any flow within `company.engineering` namespace enters RUNNING state."
+                
+                triggers:
+                  - id: flow_trigger
+                    type: io.kestra.plugin.core.trigger.Flow
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.ExecutionNamespace
+                        namespace: company.engineering
+                        comparison: PREFIX
+                    states:
+                      - RUNNING 
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.ExecutionNamespaceCondition", "io.kestra.plugin.core.condition.ExecutionNamespaceCondition"}

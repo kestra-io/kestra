@@ -522,7 +522,8 @@
       "settings": {
         "label": "Paramètres de la page",
         "show_chart": "Afficher le graphique principal"
-      }
+      },
+      "text_search": "Rechercher ce texte"
     },
     "flow": "Flow",
     "flow already exists": "Flow déjà existant",
@@ -720,8 +721,10 @@
         "tab": "Fermer l'onglet"
       },
       "empty": {
+        "create_message": "Vous pouvez créer ou importer des fichiers de namespace.",
         "message": "Vous pouvez créer ou importer des fichiers de namespace à partir de la barre latérale et vous pouvez consulter la vidéo d'introduction pour notre éditeur.",
-        "title": "Aucun onglet actuellement ouvert"
+        "title": "Aucun onglet actuellement ouvert",
+        "video_message": "Vous pouvez regarder la vidéo d'introduction pour notre éditeur."
       }
     },
     "namespaces": "Espaces de nom",

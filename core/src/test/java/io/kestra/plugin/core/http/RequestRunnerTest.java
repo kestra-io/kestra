@@ -20,6 +20,13 @@ public class RequestRunnerTest {
     }
 
     @Test
+    @ExecuteFlow("sanity-checks/request_no_options.yaml")
+    void request_no_options(Execution execution) {
+        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+    @Test
     @ExecuteFlow("sanity-checks/request-basicauth.yaml")
     void requestBasicAuth(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(2));

@@ -9,6 +9,26 @@
         </template>
         <template #content>
             <div class="plugin-doc">
+                <div class="versions" v-if="versions?.length > 0">
+                    <el-select
+                        v-model="version"
+                        placeholder="Version"
+                        size="small"
+                        :disabled="versions?.length === 1"
+                        @change="selectVersion(version)"
+                    >
+                        <template #label="{value}">
+                            <span>Version: </span>
+                            <span style="font-weight: bold">{{ value }}</span>
+                        </template>
+                        <el-option
+                            v-for="item in versions"
+                            :key="item"
+                            :label="item"
+                            :value="item"
+                        />
+                    </el-select>
+                </div>
                 <div class="d-flex gap-3 mb-3 align-items-center">
                     <task-icon
                         class="plugin-icon"
@@ -49,7 +69,7 @@
     export default {
         mixins: [RouteContext],
         computed: {
-            ...mapState("plugin", ["plugin", "plugins", "icons"]),
+            ...mapState("plugin", ["plugin", "plugins",  "icons", "versions"]),
             ...mapGetters("misc", ["theme"]),
             routeInfo() {
                 return {
@@ -74,7 +94,8 @@
         },
         data() {
             return {
-                isLoading: false
+                isLoading: false,
+                version: undefined
             };
         },
         created() {
@@ -95,15 +116,30 @@
                 })
             },
 
-            loadPlugin() {
-                if (this.$route.params.cls) {
-                    this.isLoading = true;
+            selectVersion(version) {
+                this.$router.push({name: "plugins/view", params: {cls: this.$route.params.cls, version: version}});
+            },
 
-                    this.$store
-                        .dispatch("plugin/load", this.$route.params)
-                        .finally(() => {
-                            this.isLoading = false
-                        });
+            loadPlugin() {
+                if (this.$route.params.version) {
+                    this.version = this.$route.params.version;
+                }
+                const params = {...this.$route.params};
+                if (params.cls) {
+                    this.isLoading = true;
+                    Promise.all([
+                        this.$store.dispatch("plugin/load", params),
+                        this.$store.dispatch("plugin/loadVersions", params)
+                            .then(data => {
+                                if (data.versions && data.versions.length > 0) {
+                                    if (this.version === undefined) {
+                                        this.version = data.versions[0];
+                                    }
+                                }
+                            })
+                    ]).finally(() => {
+                        this.isLoading = false
+                    });
                 }
             },
 
@@ -112,7 +148,6 @@
                     top: 0,
                     behavior: "smooth"
                 })
-
                 this.loadPlugin();
             }
         }
@@ -121,4 +156,9 @@
 
 <style scoped lang="scss">
     @import "../../styles/components/plugin-doc";
+    .versions {
+      min-width: 200px;
+      display: inline-grid;
+      float: right;
+    }
 </style>

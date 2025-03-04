@@ -16,6 +16,11 @@ on:
         description: 'Google Service Account'
         required: true
 
+permissions:
+  contents: write
+  checks: write
+  actions: read
+
 jobs:
   test:
     name: Backend - Tests

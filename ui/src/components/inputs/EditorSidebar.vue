@@ -417,6 +417,8 @@
         computed: {
             ...mapState({
                 flow: (state) => state.flow.flow,
+                explorerVisible: (state) => state.editor.explorerVisible,
+                treeRefresh: (state) => state.editor.treeRefresh,
             }),
             folders() {
                 function extractPaths(basePath = "", array) {
@@ -502,9 +504,9 @@
 
                     this.renderNodes(items);
                     this.items = this.sorted(this.items);
-                }
-
-                if (node.level >= 1) {
+                    this.$store.commit("editor/setTreeData", this.items);
+                    resolve(this.items);
+                } else if (node.level >= 1) {
                     const payload = {
                         namespace: this.currentNS ?? this.$route.params.namespace,
                         path: this.getPath(node),
@@ -1056,6 +1058,19 @@
                 },
                 immediate: true,
                 deep: true,
+            },
+            treeRefresh: {
+                async handler() {
+                    if (this.$refs.tree) {
+                        this.items = undefined;
+                        const items = await this.readDirectory({
+                            namespace: this.currentNS ?? this.$route.params.namespace
+                        });
+                        this.renderNodes(items);
+                        this.items = this.sorted(this.items);
+                    }
+                },
+                immediate: true,
             },
         },
     };

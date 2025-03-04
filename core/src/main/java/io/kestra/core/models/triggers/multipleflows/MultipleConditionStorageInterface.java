@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import static io.kestra.core.models.triggers.TimeWindow.Type.DURATION_WINDOW;
+
 public interface MultipleConditionStorageInterface {
     Optional<MultipleConditionWindow> get(Flow flow, String conditionId);
 
@@ -20,7 +22,8 @@ public interface MultipleConditionStorageInterface {
         ZonedDateTime now = ZonedDateTime.now().withNano(0);
         TimeWindow timeWindow = multipleCondition.getTimeWindow() != null ? multipleCondition.getTimeWindow() : TimeWindow.builder().build();
 
-        var startAndEnd = switch (timeWindow.getType()) {
+        TimeWindow.Type type = timeWindow.getType() != null ? timeWindow.getType() : DURATION_WINDOW;
+        var startAndEnd = switch (type) {
             case DURATION_WINDOW -> {
                 Duration window = timeWindow.getWindow() == null ? Duration.ofDays(1) : timeWindow.getWindow();
                 if (window.toDays() > 0) {

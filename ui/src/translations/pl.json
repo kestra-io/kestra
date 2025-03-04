@@ -522,7 +522,8 @@
       "settings": {
         "label": "Ustawienia strony",
         "show_chart": "Pokaż główny wykres"
-      }
+      },
+      "text_search": "Wyszukaj ten tekst"
     },
     "flow": "Flow",
     "flow already exists": "Flow już istnieje",
@@ -720,8 +721,10 @@
         "tab": "Zamknij kartę"
       },
       "empty": {
+        "create_message": "Możesz tworzyć lub importować pliki namespace.",
         "message": "Możesz tworzyć lub importować pliki namespace z paska bocznego i obejrzeć film wprowadzający do naszego Edytora.",
-        "title": "Obecnie brak otwartych zakładek"
+        "title": "Obecnie brak otwartych zakładek",
+        "video_message": "Możesz obejrzeć Wideo Wprowadzające do naszego Edytora."
       }
     },
     "namespaces": "Namespaces",

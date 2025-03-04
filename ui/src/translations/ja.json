@@ -522,7 +522,8 @@
       "settings": {
         "label": "ページ設定",
         "show_chart": "メインチャートを表示"
-      }
+      },
+      "text_search": "このテキストを検索"
     },
     "flow": "Flow",
     "flow already exists": "Flowはすでに存在します",
@@ -720,8 +721,10 @@
         "tab": "タブを閉じる"
       },
       "empty": {
+        "create_message": "namespaceファイルを作成またはインポートできます。",
         "message": "サイドバーからnamespaceファイルを作成またはインポートできます。また、エディターの紹介ビデオをチェックしてください。",
-        "title": "現在開いているタブはありません"
+        "title": "現在開いているタブはありません",
+        "video_message": "エディターの紹介ビデオをご覧いただけます。"
       }
     },
     "namespaces": "Namespaces",

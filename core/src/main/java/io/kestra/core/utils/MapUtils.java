@@ -25,7 +25,7 @@ public class MapUtils {
             .entrySet()
             .stream()
             .collect(
-                () -> newHashMap(copy.size()),
+                () -> HashMap.newHashMap(copy.size()),
                 (m, v) -> {
                     Object original = copy.get(v.getKey());
                     Object value = v.getValue();
@@ -66,7 +66,7 @@ public class MapUtils {
             .entrySet()
             .stream()
             .collect(
-                () -> newHashMap(original.size()),
+                () -> HashMap.newHashMap(original.size()),
                 (map, entry) -> {
                     Object value = entry.getValue();
                     Object found;
@@ -133,19 +133,6 @@ public class MapUtils {
      */
     public static boolean isEmpty(Map<?, ?> map) {
         return map == null || map.isEmpty();
-    }
-
-    /**
-     * Creates a hash map that can hold <code>numMappings</code> entry.
-     * This is a copy of the same methods available starting with Java 19.
-     */
-    public static <K, V> HashMap<K, V> newHashMap(int numMappings) {
-        if (numMappings < 0) {
-            throw new IllegalArgumentException("Negative number of mappings: " + numMappings);
-        }
-
-        int hashMapCapacity = (int) Math.ceil(numMappings / 0.75d);
-        return new HashMap<>(hashMapCapacity);
     }
 
     /**

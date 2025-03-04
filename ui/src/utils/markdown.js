@@ -12,7 +12,7 @@ async function getHighlighter(createHighlighterCore, langs, engine, githubDark, 
 }
 
 export async function render(markdown, options = {}) {
-    const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, anchor, container, fromHighlighter, linkTag, langs, onigurumaEngine} = await import( "./markdownDeps")
+    const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, anchor, container, fromHighlighter, linkTag, langs, onigurumaEngine, DOMPurify} = await import( "./markdownDeps")
     const highlighter = await getHighlighter(createHighlighterCore, langs, onigurumaEngine, githubDark, githubLight);
 
     githubDark["colors"]["editor.background"] = "var(--bs-gray-500)";
@@ -48,5 +48,6 @@ export async function render(markdown, options = {}) {
 
     md.renderer.rules.table_open = () => "<table class=\"table\">\n";
 
-    return md.render(markdown);
+    const safeHTML = DOMPurify.sanitize(markdown);
+    return md.render(safeHTML);
 }

@@ -34,6 +34,7 @@
     "core-js": "^3.39.0",
     "cronstrue": "^2.54.0",
     "dagre": "^0.8.5",
+    "dompurify": "^3.2.4",
     "element-plus": "^2.9.4",
     "humanize-duration": "^3.32.1",
     "js-yaml": "^4.1.0",

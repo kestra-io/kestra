@@ -39,7 +39,7 @@ plugins {
     id 'ru.vyarus.github-info' version '2.0.0' apply false
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.0.2" apply false
+    id "org.owasp.dependencycheck" version "12.1.0" apply false
 }
 
 idea {

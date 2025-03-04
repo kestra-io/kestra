@@ -11,6 +11,12 @@
     }
 
     .plugin-schema {
+        :deep(.markdown) {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacer);
+        }
+
         :deep(button) {
             color: var(--ks-content-primary);
         }

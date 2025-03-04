@@ -59,7 +59,8 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
 
     protected Property<Map<CharSequence, CharSequence>> headers;
 
-    protected HttpConfiguration options;
+    @Builder.Default
+    protected HttpConfiguration options = HttpConfiguration.builder().build();
 
     @Deprecated
     @Schema(

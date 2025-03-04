@@ -49,7 +49,7 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import LabelInput from "../../components/labels/LabelInput.vue";
     import {State} from "@kestra-io/ui-libs"
 
@@ -93,6 +93,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapGetters("misc", ["configs"]),
             enabled() {
                 if (!(this.user && this.user.isAllowed(permission.EXECUTION, action.UPDATE, this.execution.namespace))) {
                     return false;
@@ -110,8 +111,11 @@
         watch: {
             isOpen() {
                 this.executionLabels = [];
+
+                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+
                 if (this.execution.labels) {
-                    this.executionLabels = this.execution.labels
+                    this.executionLabels = this.execution.labels.filter(label => !toIgnore.some(prefix => label.key?.startsWith(prefix)));
                 }
             }
         },

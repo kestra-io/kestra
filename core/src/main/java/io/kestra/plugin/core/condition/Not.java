@@ -32,14 +32,27 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition to execute the flow when the condition is not satisfied.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.Not",
-                "      conditions:",
-                "        -  type: io.kestra.plugin.core.condition.DateTimeBetween",
-                "           after: \"2013-09-08T16:19:12Z\"",
-            }
+            code = """
+                id: schedule_condition_not
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute on all days except Sunday at 11am."
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 11 * * *"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.Not
+                        conditions:
+                          - type: io.kestra.plugin.core.condition.DayWeek
+                            dayOfWeek: "SUNDAY"
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.NotCondition", "io.kestra.plugin.core.condition.NotCondition"}

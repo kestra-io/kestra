@@ -6,13 +6,13 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.trigger.ScheduleOnDates;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
@@ -25,7 +25,8 @@ import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.oneOf;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -35,6 +36,9 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
 
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
+
+    @Inject
+    protected FlowRepositoryInterface flowRepository;
 
     private ScheduleOnDates.ScheduleOnDatesBuilder<?, ?> createScheduleOnDatesTrigger(String zone, List<ZonedDateTime> dates, String triggerId) {
         return ScheduleOnDates.builder()
@@ -75,6 +79,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
 
         // then flow should be executed 4 times
         Flow flow = createScheduleFlow("Europe/Paris", "schedule");
+        flowRepository.create(flow, flow.generateSource(), flow);
 
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)

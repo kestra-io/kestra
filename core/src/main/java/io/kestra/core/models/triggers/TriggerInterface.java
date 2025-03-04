@@ -20,4 +20,8 @@ public interface TriggerInterface extends Plugin {
     @Schema(title = "The class name for this current trigger.")
     String getType();
 
+    @Pattern(regexp="\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9]+)|([a-zA-Z0-9]+)")
+    @Schema(title = "The class version for this trigger.")
+    String getVersion();
+
 }

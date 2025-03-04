@@ -4,6 +4,7 @@ export default {
     namespaced: true,
     state: {
         plugin: undefined,
+        versions: undefined,
         pluginAllProps: undefined,
         plugins: undefined,
         pluginSingleList: undefined,
@@ -35,13 +36,18 @@ export default {
                 throw new Error("missing required cls");
             }
 
-            const cachedPluginDoc = state.pluginsDocumentation[options.cls];
+            const id = options.version ? `${options.cls}/${options.version}` : options.cls;
+            const cachedPluginDoc = state.pluginsDocumentation[id];
             if (!options.all && cachedPluginDoc) {
                 commit("setPlugin", cachedPluginDoc);
                 return Promise.resolve(cachedPluginDoc);
             }
 
-            return this.$http.get(`${apiUrl(this)}/plugins/${options.cls}`, {params: options}).then(response => {
+            const url = options.version ?
+                `${apiUrl(this)}/plugins/${options.cls}/versions/${options.version}` :
+                `${apiUrl(this)}/plugins/${options.cls}`;
+
+            return this.$http.get(url).then(response => {
                 if (options.commit !== false) {
                     if (options.all === true) {
                         commit("setPluginAllProps", response.data);
@@ -51,9 +57,20 @@ export default {
                 }
 
                 if (!options.all) {
-                    commit("addPluginDocumentation", {[options.cls]: response.data});
+                    commit("addPluginDocumentation", {[id]: response.data});
                 }
 
+                return response.data;
+            })
+        },
+        loadVersions({commit}, options) {
+            const promise = this.$http.get(
+                `${apiUrl(this)}/plugins/${options.cls}/versions`
+            );
+            return promise.then(response => {
+                if (options.commit !== false) {
+                    commit("setVersions", response.data.versions);
+                }
                 return response.data;
             })
         },
@@ -106,6 +123,9 @@ export default {
     mutations: {
         setPlugin(state, plugin) {
             state.plugin = plugin
+        },
+        setVersions(state, versions) {
+            state.versions = versions
         },
         setPluginAllProps(state, pluginAllProps) {
             state.pluginAllProps = pluginAllProps

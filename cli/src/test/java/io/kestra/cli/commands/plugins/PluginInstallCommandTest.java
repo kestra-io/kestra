@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -17,7 +16,7 @@ import static org.hamcrest.Matchers.*;
 class PluginInstallCommandTest {
 
     @Test
-    void fixedVersion() throws IOException {
+    void shouldInstallPluginLocallyGivenFixedVersion() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();
 
@@ -28,12 +27,12 @@ class PluginInstallCommandTest {
             List<Path> files = Files.list(pluginsPath).toList();
 
             assertThat(files.size(), is(1));
-            assertThat(files.getFirst().getFileName().toString(), is("plugin-notifications-0.6.0.jar"));
+            assertThat(files.getFirst().getFileName().toString(), is("io_kestra_plugin__plugin-notifications__0_6_0.jar"));
         }
     }
 
     @Test
-    void latestVersion() throws IOException {
+    void shouldInstallPluginLocallyGivenLatestVersion() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();
 
@@ -44,13 +43,13 @@ class PluginInstallCommandTest {
             List<Path> files = Files.list(pluginsPath).toList();
 
             assertThat(files.size(), is(1));
-            assertThat(files.getFirst().getFileName().toString(), startsWith("plugin-notifications"));
+            assertThat(files.getFirst().getFileName().toString(), startsWith("io_kestra_plugin__plugin-notifications__"));
             assertThat(files.getFirst().getFileName().toString(), not(containsString("LATEST")));
         }
     }
 
     @Test
-    void rangeVersion() throws IOException {
+    void shouldInstallPluginLocallyGivenRangeVersion() throws IOException {
         Path pluginsPath = Files.createTempDirectory(PluginInstallCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();
 
@@ -62,7 +61,7 @@ class PluginInstallCommandTest {
             List<Path> files = Files.list(pluginsPath).toList();
 
             assertThat(files.size(), is(1));
-            assertThat(files.getFirst().getFileName().toString(), is("storage-s3-0.12.1.jar"));
+            assertThat(files.getFirst().getFileName().toString(), is("io_kestra_storage__storage-s3__0_12_1.jar"));
         }
     }
 }

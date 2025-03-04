@@ -271,7 +271,7 @@ public abstract class AbstractScheduler implements Scheduler {
                             logError(conditionContext, flow, abstractTrigger, e);
                             return null;
                         }
-                        this.triggerState.save(triggerContext, scheduleContext);
+                        this.triggerState.save(triggerContext, scheduleContext, "/kestra/services/scheduler/compute-schedulable/save/lastTrigger-nextDate-null");
                     } else {
                         triggerContext = lastTrigger;
                     }
@@ -373,7 +373,7 @@ public abstract class AbstractScheduler implements Scheduler {
                                 Trigger triggerRunning = Trigger.of(f.getTriggerContext(), now);
 
                                 try {
-                                    this.triggerState.save(triggerRunning, scheduleContext);
+                                    this.triggerState.save(triggerRunning, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/polling");
                                     this.sendPollingTriggerToWorker(f);
                                 } catch (InternalException e) {
                                     logService.logTrigger(
@@ -399,7 +399,7 @@ public abstract class AbstractScheduler implements Scheduler {
                                         schedule.nextEvaluationDate(f.getConditionContext(), Optional.of(f.getTriggerContext()))
                                     );
                                     trigger = trigger.checkBackfill();
-                                    this.triggerState.save(trigger, scheduleContext);
+                                    this.triggerState.save(trigger, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/schedule");
                                 }
                             } else {
                                 logService.logTrigger(
@@ -417,7 +417,7 @@ public abstract class AbstractScheduler implements Scheduler {
                                 logError(f, e);
                             }
                             var trigger = f.getTriggerContext().toBuilder().nextExecutionDate(nextExecutionDate).build().checkBackfill();
-                            this.triggerState.save(trigger, scheduleContext);
+                            this.triggerState.save(trigger, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-false");
                         }
                     } catch (InternalException ie) {
                         // validate schedule condition can fail to render variables
@@ -434,7 +434,7 @@ public abstract class AbstractScheduler implements Scheduler {
                             .build();
                         ZonedDateTime nextExecutionDate = f.getPollingTrigger().nextEvaluationDate();
                         var trigger = f.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
-                        this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
+                        this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handle/save/on-error"));
                     }
                 });
         });
@@ -474,7 +474,7 @@ public abstract class AbstractScheduler implements Scheduler {
 
         // Schedule triggers are being executed directly from the handle method within the context where triggers are locked.
         // So we must save them by passing the scheduleContext.
-        this.saveLastTriggerAndEmitExecution(result.getExecution(), trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
+        this.saveLastTriggerAndEmitExecution(result.getExecution(), trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handleEvaluateSchedulingTriggerResult/save"));
     }
 
     protected void saveLastTriggerAndEmitExecution(Execution execution, Trigger trigger, Consumer<Trigger> saveAction) {

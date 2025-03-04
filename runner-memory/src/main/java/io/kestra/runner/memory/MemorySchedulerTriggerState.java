@@ -57,6 +57,22 @@ public class MemorySchedulerTriggerState implements SchedulerTriggerStateInterfa
     }
 
     @Override
+    public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface, String headerContent) {
+        triggers.put(trigger.uid(), trigger);
+        triggerQueue.emit(trigger);
+
+        return trigger;
+    }
+
+    @Override
+    public Trigger create(Trigger trigger, String headerContent) {
+        triggers.put(trigger.uid(), trigger);
+        triggerQueue.emit(trigger);
+
+        return trigger;
+    }
+
+    @Override
     public Trigger update(Trigger trigger) {
         triggers.put(trigger.uid(), trigger);
         triggerQueue.emit(trigger);

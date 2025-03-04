@@ -56,7 +56,7 @@
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
 
-    interface Tab {
+    export interface Tab {
         button: {
             icon: any,
             label: string
@@ -74,11 +74,13 @@
         tab: Tab
     }
 
-    const panels = defineModel<{
+    export interface Panel {
         tabs: Tab[],
         dragover?:boolean,
         activeTab: Tab,
-    }[]>({
+    }
+
+    const panels = defineModel<Panel[]>({
         required: true,
     })
 

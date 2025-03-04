@@ -236,6 +236,14 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.flowTriggerPreconditions();
     }
 
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-preconditions-flow-listen.yaml",
+        "flows/valids/flow-trigger-preconditions-flow-a.yaml",
+        "flows/valids/flow-trigger-preconditions-flow-b.yaml"})
+    void flowTriggerPreconditionsMergeOutputs() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerPreconditionsMergeOutputs();
+    }
+
     @RetryingTest(5)
     @LoadFlows({"flows/valids/each-null.yaml"})
     void eachWithNull() throws Exception {

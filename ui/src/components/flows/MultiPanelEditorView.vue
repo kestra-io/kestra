@@ -11,15 +11,21 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, reactive} from "vue";
+    import {ref, watch, reactive, computed} from "vue";
+    import {useRouteQuery} from "@vueuse/router";
     import MultiPanelTabs from "../MultiPanelTabs.vue";
     import {EDITOR_ELEMENTS} from "./panelDefinition";
 
     const DEFAULT_ACTIVE_TABS = ["code", "doc"]
     const previousActiveTabs = ref(DEFAULT_ACTIVE_TABS)
-    const activeTabs = ref(DEFAULT_ACTIVE_TABS)
 
-    const panels = reactive(DEFAULT_ACTIVE_TABS.map(t => {
+    const activeTabsUrl = useRouteQuery("activeTabs", DEFAULT_ACTIVE_TABS)
+    const activeTabs = computed({
+        get:() => Array.isArray(activeTabsUrl.value) ? activeTabsUrl.value : [activeTabsUrl.value],
+        set: (value) => activeTabsUrl.value = value
+    })
+
+    const panels = reactive(activeTabs.value.map(t => {
         const element = EDITOR_ELEMENTS.find(e => e.value === t)!
         return {
             activeTab: element,

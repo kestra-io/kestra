@@ -11,21 +11,20 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, reactive, computed} from "vue";
+    import {ref, watch, computed} from "vue";
     import {useRouteQuery} from "@vueuse/router";
-    import MultiPanelTabs from "../MultiPanelTabs.vue";
-    import {EDITOR_ELEMENTS} from "./panelDefinition";
+    import MultiPanelTabs, {Panel} from "../MultiPanelTabs.vue";
+    import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
 
-    const DEFAULT_ACTIVE_TABS = ["code", "doc"]
-    const previousActiveTabs = ref(DEFAULT_ACTIVE_TABS)
 
     const activeTabsUrl = useRouteQuery("activeTabs", DEFAULT_ACTIVE_TABS)
+    const previousActiveTabs = ref(activeTabsUrl.value)
     const activeTabs = computed({
-        get:() => Array.isArray(activeTabsUrl.value) ? activeTabsUrl.value : [activeTabsUrl.value],
+        get: () => Array.isArray(activeTabsUrl.value) ? activeTabsUrl.value : [activeTabsUrl.value],
         set: (value) => activeTabsUrl.value = value
     })
 
-    const panels = reactive(activeTabs.value.map(t => {
+    const panels = ref<Panel[]>(activeTabs.value.map(t => {
         const element = EDITOR_ELEMENTS.find(e => e.value === t)!
         return {
             activeTab: element,
@@ -36,25 +35,21 @@
     watch(activeTabs, (newVal) => {
         const previous = previousActiveTabs.value
 
-        // get the tabs to remove
-        const toRemove = previous.filter(t => !newVal.includes(t))
         // get the tabs to add
         const toAdd = newVal.filter(t => !previous.includes(t))
 
         // remove the tabs
-        for(const t of toRemove){
-            for(const p of panels){
-                const tabIndex = p?.tabs.findIndex(tab => tab.value === t)
-                if(p && tabIndex !== undefined && tabIndex > -1){
-                    p.tabs.splice(tabIndex, 1)
-                }
-            }
+        for(const p of panels.value){
+            p.tabs = p.tabs.filter(
+                t => newVal.includes(t.value)
+            )
         }
+
 
         // add the tabs
         for(const t of toAdd){
             const element = EDITOR_ELEMENTS.find(e => e.value === t)!
-            panels.push({
+            panels.value.push({
                 activeTab: element,
                 tabs: [element]
             })

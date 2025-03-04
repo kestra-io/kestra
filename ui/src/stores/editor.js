@@ -21,6 +21,10 @@ export default {
         changeExplorerWidth(state, width) {
             state.explorerWidth = width > 40 ? 40 : width < 20 ? 20 : width;
         },
+        setTabContent(state, payload) {
+            const tab = state.tabs.find((tab) => tab.path === payload.path);
+            tab.content = payload.content;
+        },
         changeOpenedTabs(state, payload) {
             const {action, name, extension, index, persistent, dirty, path, flow} =
                 payload;

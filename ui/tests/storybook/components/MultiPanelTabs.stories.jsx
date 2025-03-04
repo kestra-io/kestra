@@ -1,5 +1,5 @@
-/* eslint-disable vue/one-component-per-file */
-import {defineComponent, markRaw} from "vue";
+
+import {defineComponent, markRaw, ref} from "vue";
 import MultiPanelTabs from "../../../src/components/MultiPanelTabs.vue";
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
@@ -17,10 +17,12 @@ export default {
 }
 
 
-const Template = (args) => defineComponent({
-  setup() {
-    return () => <MultiPanelTabs {...args} />;
-  },
+const Template = (props) => defineComponent(() => {
+    const modelValueRef = ref(props.modelValue);
+    return () => <div style="padding: 1rem;border: 1ps solid #ccc; border-radius: 4px; margin: 1rem; background: #f9f9f9;">
+        <MultiPanelTabs modelValue={modelValueRef.value} />
+        <pre>{JSON.stringify(modelValueRef.value.map(p => p.tabs.map(t => t.value)))}</pre>
+    </div>
 });
 
 const BG_COLORS = [

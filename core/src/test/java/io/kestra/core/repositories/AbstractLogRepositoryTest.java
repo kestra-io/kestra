@@ -212,19 +212,19 @@ public abstract class AbstractLogRepositoryTest {
 
         ZonedDateTime startDate = ZonedDateTime.now().minusSeconds(1);
 
-        Flux<LogEntry> find = logRepository.findAsync(null, "io.kestra.unittest", Level.INFO, startDate, 5);
+        Flux<LogEntry> find = logRepository.findAsync(null, "io.kestra.unittest", Level.INFO, startDate);
         List<LogEntry> logEntries = find.collectList().block();
         assertThat(logEntries.size(), is(3));
 
-        find = logRepository.findAsync(null, null, Level.ERROR, startDate, 5);
+        find = logRepository.findAsync(null, null, Level.ERROR, startDate);
         logEntries = find.collectList().block();
         assertThat(logEntries.size(), is(1));
 
-        find = logRepository.findAsync(null, "io.kestra.unused", Level.INFO, startDate, 5);
+        find = logRepository.findAsync(null, "io.kestra.unused", Level.INFO, startDate);
         logEntries = find.collectList().block();
         assertThat(logEntries.size(), is(0));
 
-        find = logRepository.findAsync(null, null, Level.INFO, startDate.plusSeconds(2), 5);
+        find = logRepository.findAsync(null, null, Level.INFO, startDate.plusSeconds(2));
         logEntries = find.collectList().block();
         assertThat(logEntries.size(), is(0));
     }

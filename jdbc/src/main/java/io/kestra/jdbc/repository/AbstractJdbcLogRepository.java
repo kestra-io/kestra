@@ -156,8 +156,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable Level minLevel,
-        ZonedDateTime startDate,
-        int batchSize
+        ZonedDateTime startDate
     ){
         return Flux.create(emitter -> this.jdbcRepository
             .getDslContextWrapper()
@@ -175,7 +174,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
                 Select<Record1<Object>> query = this.jdbcRepository.buildQuery(context, select, "timestamp");
 
-                try (Stream<Record1<Object>> stream = query.fetchSize(batchSize).stream()){
+                try (Stream<Record1<Object>> stream = query.fetchSize(FETCH_SIZE).stream()){
                     stream.map((Record record) -> jdbcRepository.map(record))
                         .forEach(emitter::next);
                 } finally {

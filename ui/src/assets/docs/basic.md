@@ -311,9 +311,6 @@ The table below lists Pebble functions and filter expressions:
 | `sha1`           | `{{ "hello" \| sha1 }}` — Computes the SHA-1 hash of the string.                                                                |
 | `sha256`         | `{{ "hello" \| sha256 }}` — Computes the SHA-256 hash of the string.                                                            |
 | `sha512`         | `{{ "hello" \| sha512 }}` — Computes the SHA-512 hash of the string.                                                            |
-| `map`            | `{{ [1, 2, 3] \| map(i => i * 2) }}` — Applies a function to each element, resulting in [2, 4, 6].                              |
-| `filter`         | `{{ [1, 2, 3] \| filter(i => i > 1) }}` — Filters the list based on a predicate, resulting in [2, 3].                           |
-| `reduce`         | `{{ [1, 2, 3] \| reduce((a, b) => a + b, 0) }}` — Reduces the list to a single value, resulting in 6.                           |
 | `zip`            | `{{ zip([1, 2], [3, 4]) }}` — Zips two lists together, resulting in [[1, 3], [2, 4]].                                           |
 | `unzip`          | `{{ unzip([[1, 3], [2, 4]]) }}` — Unzips a list of lists, resulting in [[1, 2], [3, 4]].                                        |
 | `flatten`        | `{{ [[1, 2], [3, 4]] \| flatten }}` — Flattens a nested list, resulting in [1, 2, 3, 4].                                        |

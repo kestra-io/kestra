@@ -632,7 +632,7 @@ export default {
     getters: {
         isFlow(state, _getters, rootState) {
             const currentTab = rootState.editor.current;
-            return currentTab.flow !== undefined || state.isCreating;
+            return currentTab?.flow !== undefined || state.isCreating;
         },
         lastSaveFlow(state){
             if(state.lastSavedFlow){

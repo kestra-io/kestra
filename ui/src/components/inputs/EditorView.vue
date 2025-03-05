@@ -904,7 +904,6 @@
         const currentIsFlow = isFlow.value;
 
         updatedFromEditor.value = true;
-        console.log("editorUpdate", source);
         store.commit("flow/setFlowYaml", source);
 
         clearTimeout(timer.value);
@@ -1159,15 +1158,11 @@
         if(previous?.flow) persistViewType(viewType.value);
 
         if(current?.flow){
-            store.commit("flow/setFlowYaml", store.state.flow.flow?.source)
             switchViewType(loadViewType(), false)
         }else {
             switchViewType(editorViewTypes.SOURCE, false)
             if(current?.path && !current.dirty) {
                 loadFileAtPath(current.path)
-            }else{
-                store.commit("flow/setFlowYaml", "")
-                // load content from local
             }
         }
 

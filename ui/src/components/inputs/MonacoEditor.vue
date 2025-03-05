@@ -127,7 +127,7 @@
         },
         watch: {
             path(newValue) {
-                this.changeTab(newValue, () => this.value, false);
+                this.changeTab(newValue, () => this.value);
             },
             options: {
                 deep: true,

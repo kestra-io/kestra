@@ -106,7 +106,7 @@
     "prettier": "^3.5.1",
     "rollup-plugin-copy": "^3.5.0",
     "sass": "^1.85.0",
-    "storybook": "^8.5.8",
+    "storybook": "^8.6.3",
     "storybook-vue3-router": "^5.0.0",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.24.1",

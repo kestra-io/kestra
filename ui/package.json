@@ -84,7 +84,7 @@
     "@storybook/blocks": "^8.5.8",
     "@storybook/test": "^8.5.8",
     "@storybook/test-runner": "^0.21.2",
-    "@storybook/vue3": "^8.5.8",
+    "@storybook/vue3": "^8.6.3",
     "@storybook/vue3-vite": "^8.5.8",
     "@types/path-browserify": "^1.0.3",
     "@typescript-eslint/parser": "^8.24.1",

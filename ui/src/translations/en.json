@@ -613,6 +613,9 @@
     "advanced configuration": "Other properties",
     "all executions": "All executions",
     "trigger execution id": "Trigger Execution Id",
+    "execution_status": "Execution is: ",
+    "no_tasks_running": "No tasks are running yet.",
+    "execution_starts_progress": "Once the execution starts, you'll see progress updates here.",
     "triggers_state": {
       "state": "State",
       "options": {

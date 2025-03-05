@@ -158,6 +158,7 @@
             }),
             containerClass() {
                 const isEnterpriseTab = this.activeTab.locked;
+                const isGanttTab = this.activeTab.name === "gantt";
 
                 if (this.activeTab.containerClass) {
                     return {[this.activeTab.containerClass]: true};
@@ -166,7 +167,8 @@
                 return {
                     "container": !isEnterpriseTab,
                     "mt-4": !isEnterpriseTab,
-                    "px-0": isEnterpriseTab
+                    "px-0": isEnterpriseTab,
+                    "gantt-container": isGanttTab
                 };
             },
             activeTab() {

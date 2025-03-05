@@ -87,7 +87,7 @@
     "@storybook/vue3": "^8.5.8",
     "@storybook/vue3-vite": "^8.5.8",
     "@types/path-browserify": "^1.0.3",
-    "@typescript-eslint/parser": "^8.24.1",
+    "@typescript-eslint/parser": "^8.26.0",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vitejs/plugin-vue-jsx": "^4.1.1",
     "@vitest/coverage-v8": "^3.0.5",

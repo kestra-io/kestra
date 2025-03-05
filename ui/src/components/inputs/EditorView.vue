@@ -140,6 +140,7 @@
                     ref="editorDomElement"
                     @save="save"
                     @execute="execute"
+                    :path="currentTab?.path"
                     :model-value="flowYaml"
                     :schema-type="isCurrentTabFlow? 'flow': undefined"
                     :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
@@ -903,6 +904,7 @@
         const currentIsFlow = isFlow.value;
 
         updatedFromEditor.value = true;
+        console.log("editorUpdate", source);
         store.commit("flow/setFlowYaml", source);
 
         clearTimeout(timer.value);
@@ -1124,7 +1126,7 @@
 
     const draggedTabIndex = ref(null);
     const dragOverTabIndex = ref(null);
-    
+
     const onDragStart = (event, index) => {
         draggedTabIndex.value = index;
         event.dataTransfer.effectAllowed = "move";
@@ -1145,12 +1147,24 @@
         dragOverTabIndex.value = null;
     };
 
-    watch(currentTab, (current, previous) => {
-        const isCurrentFlow = current?.name === "Flow";
-        const isPreviousFlow = previous?.name === "Flow";
+    async function loadFileAtPath(path){
+        const content = await store.dispatch("namespace/readFile", {
+            path,
+            namespace: props.namespace,
+        })
+        store.commit("flow/setFlowYaml", content);
+    }
 
-        if(isPreviousFlow) persistViewType(viewType.value);
-        switchViewType(isCurrentFlow ? loadViewType() : editorViewTypes.SOURCE, false)
+    watch(currentTab, (current, previous) => {
+        if(previous?.flow) persistViewType(viewType.value);
+
+        if(current?.flow){
+            switchViewType(loadViewType(), false)
+        }else {
+            switchViewType(editorViewTypes.SOURCE, false)
+            loadFileAtPath(current.path);
+        }
+
 
         nextTick(() => {
             const activeTabElement = tabsScrollRef.value.wrapRef.querySelector(".tab-active");
@@ -1262,10 +1276,10 @@
     });
     const dialogHandler = async () => {
         try {
-            const path = dialog.value.folder 
+            const path = dialog.value.folder
                 ? `${dialog.value.folder}/${dialog.value.name}`
                 : dialog.value.name;
-            
+
             if (dialog.value.type === "file") {
                 await store.dispatch("namespace/createFile", {
                     namespace: props.namespace ?? route.params.namespace,
@@ -1302,7 +1316,7 @@
                 reader.readAsArrayBuffer(file);
             });
             const path = file.webkitRelativePath || file.name;
-            
+
             await store.dispatch("namespace/importFileDirectory", {
                 namespace: props.namespace ?? route.params.namespace,
                 content,
@@ -1491,14 +1505,14 @@
             margin-top: 1rem;
             border: 1px solid var(--ks-border-primary);
             border-radius: 0.5rem;
-            
+
             iframe {
                 width: 100%;
                 min-height: 380px;
                 height: auto;
             }
         }
-        
+
         .hidden {
             display: none;
         }

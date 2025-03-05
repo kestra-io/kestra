@@ -47,7 +47,7 @@ export default {
             commit("setHaveChange", true)
         },
         async save({getters, dispatch, commit, state, rootState}, {content}){
-            if (getters.flowErrors?.length || !getters.haveChange && !state.isCreating) {
+            if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
                 return;
             }
 
@@ -56,7 +56,7 @@ export default {
 
             if (getters.isFlow) {
                 return dispatch("onEdit", {source, currentIsFlow:true}).then((validation) => {
-                    if (validation.outdated && !state.isCreating) {
+                    if (validation?.outdated && !state.isCreating) {
                         return "confirmOutdatedSaveDialog";
                     }
                     const res = dispatch("saveWithoutRevisionGuard");
@@ -630,8 +630,9 @@ export default {
         }
     },
     getters: {
-        isFlow(state) {
-            return state.flow !== undefined || state.isCreating;
+        isFlow(state, _getters, rootState) {
+            const currentTab = rootState.editor.current;
+            return currentTab.flow !== undefined || state.isCreating;
         },
         lastSaveFlow(state){
             if(state.lastSavedFlow){

@@ -43,6 +43,7 @@
             <div ref="editorContainer" class="editor-wrapper position-relative">
                 <monaco-editor
                     ref="monacoEditor"
+                    :path="path"
                     :theme="themeComputed"
                     :value="modelValue"
                     :options="options"
@@ -90,6 +91,7 @@
             modelValue: {type: String, default: ""},
             original: {type: String, default: undefined},
             lang: {type: String, default: undefined},
+            path: {type: String, default: undefined},
             extension: {type: String, default: undefined},
             schemaType: {type: String, default: undefined},
             navbar: {type: Boolean, default: true},
@@ -268,11 +270,11 @@
                         this.focus = false;
                     });
 
-                    if(this.shouldFocus){                
+                    if(this.shouldFocus){
                         this.editor.onDidFocusEditorText?.(() => {
                             this.focus = true;
                         });
-                        
+
                         this.$refs.monacoEditor.focus();
                     }
                 }

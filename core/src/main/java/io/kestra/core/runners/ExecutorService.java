@@ -15,6 +15,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.*;
+import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
@@ -772,7 +773,7 @@ public class ExecutorService {
         Map<Boolean, List<WorkerTask>> workerTasks = executor.getExecution()
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
+            .filter(taskRun -> taskRun.getState().getCurrent().isCreated() && executor.getExecution().getFixtureForTaskRun(taskRun).isEmpty())
             .map(throwFunction(taskRun -> {
                     Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
@@ -828,7 +829,31 @@ public class ExecutorService {
             )
             .collect(Collectors.groupingBy(workerTask -> workerTask.getTaskRun().getState().isFailed() || workerTask.getTaskRun().getState().getCurrent() == State.Type.CANCELLED));
 
-        if (workerTasks.isEmpty()) {
+        // mock WorkerTaskResult for mocked execution
+        // submit TaskRun when receiving created, must be done after the state execution store
+        boolean hasMockedWorkerTask = false;
+        record FixtureAndTaskRun(TaskFixture fixture, TaskRun taskRun) {}
+        if (executor.getExecution().getFixtures() != null) {
+            List<WorkerTaskResult> workerTaskResults = executor.getExecution()
+                .getTaskRunList()
+                .stream()
+                .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
+                .flatMap(taskRun -> executor.getExecution().getFixtureForTaskRun(taskRun).stream().map(fixture -> new FixtureAndTaskRun(fixture, taskRun)))
+                .map(fixtureAndTaskRun -> WorkerTaskResult.builder()
+                    .taskRun(fixtureAndTaskRun.taskRun()
+                        .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
+                        .withOutputs(variablesService.of(StorageContext.forTask(fixtureAndTaskRun.taskRun), fixtureAndTaskRun.fixture().getOutputs()))
+                    )
+                    .build()
+                )
+                .toList();
+
+            hasMockedWorkerTask = !workerTaskResults.isEmpty();
+            this.addWorkerTaskResults(executor, executor.getFlow(), workerTaskResults);
+        }
+
+
+        if (workerTasks.isEmpty() || hasMockedWorkerTask) {
             return executor;
         }
 

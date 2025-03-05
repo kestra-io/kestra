@@ -1159,10 +1159,16 @@
         if(previous?.flow) persistViewType(viewType.value);
 
         if(current?.flow){
+            store.commit("flow/setFlowYaml", store.state.flow.flow?.source)
             switchViewType(loadViewType(), false)
         }else {
             switchViewType(editorViewTypes.SOURCE, false)
-            loadFileAtPath(current.path);
+            if(current?.path && !current.dirty) {
+                loadFileAtPath(current.path)
+            }else{
+                store.commit("flow/setFlowYaml", "")
+                // load content from local
+            }
         }
 
 

@@ -70,8 +70,8 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
     }
 
     @Override
-    public <R extends Record> Select<R> buildPageQuery(DSLContext context, SelectConditionStep<R> select){
-        return this.sort(select, Pageable.from(Sort.of(Order.asc("timestamp"))));
+    public <R extends Record> Select<R> buildQuery(DSLContext context, SelectConditionStep<R> select, String orderField){
+        return this.sort(select, Pageable.from(Sort.of(Order.asc(orderField))));
     }
 
     public Field<Integer> weekFromTimestamp(Field<Timestamp> timestampField) {

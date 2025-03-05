@@ -85,7 +85,8 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
         @Nullable String tenantId,
         @Nullable String namespace,
         @Nullable Level minLevel,
-        ZonedDateTime startDate
+        ZonedDateTime startDate,
+        int batchSize
     );
 
     List<LogStatistics> statistics(

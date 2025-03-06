@@ -27,6 +27,8 @@
     onMounted(() => {
         store.commit("doc/setDocPath", "<reset>")
         nextTick(() => {
+            if(props.embed) return;
+            
             store.commit("doc/setDocPath", "")
             store.commit("misc/setContextInfoBarOpenTab", "docs")
         })
@@ -43,12 +45,13 @@
         return demoUrl;
     });
 
-    defineProps<{
+    const props = defineProps<{
         title: string;
         image: {
             source: string;
             alt: string;
         };
+        embed: boolean;
     }>();
 </script>
 

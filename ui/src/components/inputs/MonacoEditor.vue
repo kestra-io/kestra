@@ -21,6 +21,7 @@
     import Utils from "../../utils/utils";
     import YamlUtils from "../../utils/yamlUtils";
     import {FlowAutoCompletion, YamlNoAutoCompletion} from "override/services/autoCompletionProvider";
+    import RegexProvider from "../../utils/regex";
 
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {
@@ -221,7 +222,7 @@
             }
 
             const endOfWordColumn = (position, model) => {
-                return position.column + (model.findNextMatch("[^ }]*", position, true, false, null, true)?.matches[0].length ?? 0);
+                return position.column + (model.findNextMatch(RegexProvider.beforeSeparator, position, true, false, null, true)?.matches[0].length ?? 0);
             }
 
             this.autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider("yaml", {
@@ -231,18 +232,19 @@
                     const cursorPosition = model.getOffsetAt(position);
                     const parsed = YamlUtils.parse(source, false);
 
-                    const currentWord = model.findPreviousMatch("[^ }:]*", position, true, false, null, true);
-                    const cursorParent = YamlUtils.localizeCursorParent(source, cursorPosition);
-                    if (cursorParent?.key === undefined) {
+                    const currentWord = model.findPreviousMatch(RegexProvider.beforeSeparator, position, true, false, null, true);
+                    const elementUnderCursor = YamlUtils.localizeElementAtIndex(source, cursorPosition);
+                    if (elementUnderCursor?.key === undefined) {
                         return NO_SUGGESTIONS;
                     }
 
-                    const parentStartLine = model.getPositionAt(cursorParent.range[0]).lineNumber;
-                    const autoCompletions = await yamlAutoCompletionProvider.valueAutoCompletion(source, parsed, cursorPosition);
+                    const parentStartLine = model.getPositionAt(elementUnderCursor.range[0]).lineNumber;
+                    const autoCompletions = await yamlAutoCompletionProvider.valueAutoCompletion(source, parsed, elementUnderCursor);
                     return {
                         suggestions: autoCompletions.map(autoCompletion => {
                             const [label, isKey] = autoCompletion.split(":");
                             let insertText = label;
+                            const endColumn = endOfWordColumn(position, model);
                             if (isKey === undefined) {
                                 if (source.charAt(cursorPosition - 1) === ":") {
                                     insertText = ` ${label}`;
@@ -251,7 +253,7 @@
                                 if (parentStartLine === position.lineNumber) {
                                     insertText = `\n  ${label}: `;
                                 } else {
-                                    insertText = `${label}: `;
+                                    insertText = model.getLineContent(position.lineNumber).charAt(endColumn - 1) === ":" ? label : `${label}: `;
                                 }
                             }
                             return ({
@@ -262,7 +264,7 @@
                                     startLineNumber: position.lineNumber,
                                     endLineNumber: position.lineNumber,
                                     startColumn: position.column - currentWord.matches[0].length,
-                                    endColumn: endOfWordColumn(position, model)
+                                    endColumn: endColumn
                                 }
                             });
                         })
@@ -282,19 +284,16 @@
                 }
             });
 
-            const PEBBLE_START_REGEX = "\\{\\{ *";
-            const CAPTURE_VAR_PART_REGEX_SUPPLIER = (allowedDot) => "([^}:~" + (allowedDot ? "" : ".") + " ]*)";
-            const CAPTURE_WORD_PREFIXED_BY_SEPARATOR_REGEX_SUPPLIER = (allowedDot) => `(?:[^}:]+[ ~]+${CAPTURE_VAR_PART_REGEX_SUPPLIER(allowedDot)})`;
             this.autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider("yaml", {
                 triggerCharacters: ["{"],
                 async provideCompletionItems(model, position) {
                     // Not a subfield access
-                    const rootPebbleVariableMatcher = model.findPreviousMatch(`${PEBBLE_START_REGEX}(?:${CAPTURE_WORD_PREFIXED_BY_SEPARATOR_REGEX_SUPPLIER(false)}|${CAPTURE_VAR_PART_REGEX_SUPPLIER(false)})$`, position, true, false, null, true);
+                    const rootPebbleVariableMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarRoot + "$", position, true, false, null, true);
                     if (rootPebbleVariableMatcher === null) {
                         return NO_SUGGESTIONS;
                     }
 
-                    const startOfWordColumn = position.column - ((rootPebbleVariableMatcher.matches?.[1] ?? rootPebbleVariableMatcher.matches?.[2])?.length ?? 0);
+                    const startOfWordColumn = position.column - rootPebbleVariableMatcher.matches[1].length;
                     return {
                         suggestions: (await (yamlAutoCompletionProvider.rootFieldAutoCompletion()))
                             .map(s => propertySuggestion(s, {
@@ -312,14 +311,14 @@
                     const source = model.getValue();
                     const parsed = YamlUtils.parse(source, false);
 
-                    const parentFieldMatcher = model.findPreviousMatch(`${PEBBLE_START_REGEX}(?:(?:${CAPTURE_WORD_PREFIXED_BY_SEPARATOR_REGEX_SUPPLIER(true)}\\.${CAPTURE_VAR_PART_REGEX_SUPPLIER(false)})|(?:${CAPTURE_VAR_PART_REGEX_SUPPLIER(true)}\\.${CAPTURE_VAR_PART_REGEX_SUPPLIER(true)}))$`, position, true, false, null, true);
+                    const parentFieldMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarParent + "$", position, true, false, null, true);
                     if (parentFieldMatcher === null) {
                         return NO_SUGGESTIONS;
                     }
 
-                    const startOfWordColumn = position.column - ((parentFieldMatcher.matches?.[2] ?? parentFieldMatcher.matches?.[4])?.length ?? 0);
+                    const startOfWordColumn = position.column - parentFieldMatcher.matches[2].length;
                     return {
-                        suggestions: (await yamlAutoCompletionProvider.nestedFieldAutoCompletion(source, parsed, parentFieldMatcher.matches?.[1] ?? parentFieldMatcher.matches[3]))
+                        suggestions: (await yamlAutoCompletionProvider.nestedFieldAutoCompletion(source, parsed, parentFieldMatcher.matches[1]))
                             .map(s => propertySuggestion(s, {
                                 lineNumber: position.lineNumber,
                                 startColumn: startOfWordColumn,

@@ -3,8 +3,12 @@ import yaml, {Document, isMap, isPair, isSeq, LineCounter, Pair, Scalar, YAMLMap
 import _cloneDeep from "lodash/cloneDeep"
 import {SECTIONS} from "./constants.js";
 
+const yamlKeyCapture = "([^:\\n]+): *"
+const indentAndYamlKeyCapture = new RegExp(`(( *)(?:${yamlKeyCapture})?)[^\\n]*?$`);
+
 const TOSTRING_OPTIONS = {lineWidth: 0};
 
+export type YamlElement = { key?: string, value: Record<string, any>, parents: Record<string, any>[] };
 export default class YamlUtils {
     static stringify(value) {
         if (typeof value === "undefined") {
@@ -260,27 +264,28 @@ export default class YamlUtils {
         return maps;
     }
 
-    static localizeCursorParent(source: string, cursorIndexInSource: number): { key?: string, value: Record<string, any>, parents: Record<string, any>[] } {
-        const tillCursor = source.substring(0, cursorIndexInSource);
-        const indentFinder = tillCursor.match(/( *)(?:[^\n:]*: *([^:\n]*))?$/);
+    static localizeElementAtIndex(source: string, indexInSource: number): YamlElement {
+        const tillCursor = source.substring(0, indexInSource);
 
-        const isChild = indentFinder?.[2] === undefined;
-        const parentKeyCaptureRegex = new RegExp(`(?<! )( {${indentFinder[1].length - (isChild ? 2 : 0)}}(?! )([^:]+): *)`, "g");
-        const matchArray = tillCursor.matchAll(parentKeyCaptureRegex).toArray();
-        const parentKeyMatcher = matchArray?.[matchArray.length - 1];
-
-        const key = parentKeyMatcher?.[2]
-        if (key === null) {
-            return undefined;
+        const indentAndYamlKey = YamlUtils.extractIndentAndMaybeYamlKey(tillCursor);
+        let {yamlKey} = indentAndYamlKey;
+        const {indent} = indentAndYamlKey;
+        // We search in previous keys to find the parent key
+        let valueStartIndex;
+        if (yamlKey === undefined) {
+            const parentKeyExtract = YamlUtils.getParentKeyByChildIndent(tillCursor, indent);
+            yamlKey = parentKeyExtract?.key;
+            valueStartIndex = parentKeyExtract?.valueStartIndex;
+        } else {
+            valueStartIndex = tillCursor.lastIndexOf(yamlKey + ":") + yamlKey.length + 1;
         }
-        const keyIndex = parentKeyMatcher?.index + parentKeyMatcher?.[1].length;
 
         const yamlDoc = yaml.parseDocument(source);
         const elements = [];
 
         yaml.visit(yamlDoc, {
             Pair(_, pair, parents: any[]) {
-                if (pair.value?.range !== undefined && pair.key.value === key) {
+                if (pair.value?.range !== undefined && pair.key.value === yamlKey) {
                     const beforeElement = source.substring(0, pair.value.range[0]);
                     elements.push({
                         parents: parents.filter(p => yaml.isMap(p)).map(p => p.toJS(yamlDoc)),
@@ -292,7 +297,7 @@ export default class YamlUtils {
             }
         });
 
-        const filter = elements.filter(map => map.range[0] <= keyIndex && keyIndex <= map.range[2]);
+        const filter = elements.filter(map => map.range[0] <= valueStartIndex && valueStartIndex <= map.range[2]);
         return filter.sort((a, b) => b.range[0] - a.range[0])?.[0];
     }
 
@@ -754,5 +759,28 @@ export default class YamlUtils {
         });
 
         return charts;
+    }
+
+    static extractIndentAndMaybeYamlKey(stringToTest: string): {indent: number, yamlKey: string | undefined, valueStartIndex: number | undefined} | undefined {
+        const exec = indentAndYamlKeyCapture.exec(stringToTest);
+        if (exec === null) {
+            return undefined;
+        }
+
+        const [, stringBeforeValue, indent, yamlKey]: [string, string, string | undefined] = [...exec];
+        return {indent: indent.length, yamlKey, valueStartIndex: yamlKey === undefined ? undefined : (exec.index + stringBeforeValue.length)};
+    }
+
+    static getParentKeyByChildIndent(stringToSearch: string, indent: number): {key: string, valueStartIndex: number} | undefined {
+        if (indent < 2) {
+            return undefined;
+        }
+
+        const matches = stringToSearch.matchAll(new RegExp(`(?<! ) {${indent - 2}}(?! )${yamlKeyCapture}`, "g"));
+        const lastMatch = [...matches].pop();
+        if (lastMatch === undefined) {
+            return undefined;
+        }
+        return {key: lastMatch[1], valueStartIndex: lastMatch.index + lastMatch[0].length};
     }
 }

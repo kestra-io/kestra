@@ -1,6 +1,6 @@
 import type {Store} from "vuex";
 import type {JSONSchema} from "@kestra-io/ui-libs";
-import YamlUtils from "../../utils/yamlUtils";
+import YamlUtils, {YamlElement} from "../../utils/yamlUtils";
 
 export class YamlNoAutoCompletion {
     rootFieldAutoCompletion(): Promise<string[]> {
@@ -11,7 +11,7 @@ export class YamlNoAutoCompletion {
         return Promise.resolve([])
     }
 
-    valueAutoCompletion(_source: string, _parsed?: any, _cursorIndexInSource?: number): Promise<string[]> {
+    valueAutoCompletion(_source: string, _parsed?: any, _yamlElement: YamlElement | undefined): Promise<string[]> {
         return Promise.resolve([]);
     }
 }
@@ -123,8 +123,8 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
         }
     }
 
-    private async subflowInputsAutoCompletion(namespace: string, flowId: string, revision: string, alreadyFilledInputs: string[]): Promise<string[]> {
-        const subflowUid = namespace + "." + flowId;
+    private async subflowInputsAutoCompletion(namespace: string, flowId: string, revision: string | undefined, alreadyFilledInputs: string[]): Promise<string[]> {
+        const subflowUid = namespace + "." + flowId + (revision === undefined ? "" : `:${revision}`) ;
         if (this.flowsInputsCache?.[subflowUid] === undefined) {
             try {
                 const {inputs} = (await this.store.dispatch(
@@ -138,7 +138,7 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
                         deleted: true
                     }
                 ))
-                return inputs?.map((input: {id:string}) => `${input.id}`) ?? [];
+                this.flowsInputsCache[subflowUid] = inputs?.map((input: {id:string}) => `${input.id}`) ?? [];
             } catch {
                 return [];
             }
@@ -148,15 +148,14 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
             .map(input => `${input}:`);
     }
 
-    async valueAutoCompletion(source: string, parsed: any | undefined, cursorIndexInSource: number): Promise<string[]> {
-        const elementAtCursor = YamlUtils.localizeCursorParent(source, cursorIndexInSource ?? -1);
-        if (elementAtCursor === undefined) {
+    async valueAutoCompletion(source: string, parsed: any | undefined, yamlElement: YamlElement | undefined): Promise<string[]> {
+        if (yamlElement === undefined) {
             return Promise.resolve([]);
         }
 
-        const parentTask = elementAtCursor.parents?.[elementAtCursor.parents.length - 1];
+        const parentTask = yamlElement.parents?.[yamlElement.parents.length - 1];
 
-        switch(elementAtCursor.key) {
+        switch(yamlElement.key) {
             case "namespace": {
                 const datatypeNamespaces = this.store.state["namespace"].datatypeNamespaces;
                 return datatypeNamespaces === undefined
@@ -177,7 +176,7 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
             }
             case "inputs": {
                 if (parentTask !== undefined && parentTask.namespace !== undefined && parentTask.flowId !== undefined) {
-                    return await this.subflowInputsAutoCompletion(parentTask.namespace, parentTask.flowId, parentTask.revision, Object.keys(elementAtCursor.value ?? {}));
+                    return await this.subflowInputsAutoCompletion(parentTask.namespace, parentTask.flowId, parentTask.revision, Object.keys(yamlElement.value ?? {}));
                 }
             }
         }

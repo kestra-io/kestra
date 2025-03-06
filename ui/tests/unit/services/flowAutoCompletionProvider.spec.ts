@@ -28,10 +28,10 @@ tasks:
     flowId: flow-other-namespace
     revision: 2
     inputs:
-        first-input: "value1"
+      first-input: "value1"
 triggers:
   - id: schedule
-    type: io.kestra.core.models.triggers.Schedule
+    type: io.kestra.plugin.core.trigger.Schedule
     cron: "* * * * *"
 id: my-flow
 namespace: my.namespace`;
@@ -55,7 +55,7 @@ const mockedStore: MockStore<Record<string, any>> = {
     dispatch: vi.fn((type, payload) => {
         if (type === "plugin/load") {
             switch (payload.cls) {
-                case "io.kestra.core.models.triggers.Schedule":
+                case "io.kestra.plugin.core.trigger.Schedule":
                     return Promise.resolve(propertiesSchemaWrapper({
                         date: {},
                         next: {},
@@ -127,7 +127,7 @@ describe("FlowAutoCompletionProvider", () => {
 
     it("nested field autocompletions", async () => {
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "inputs")).toEqual(["input1", "input2"]);
-        expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs")).toEqual(["task1", "task2"]);
+        expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs")).toEqual(["task1", "task2", "subflow"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "labels")).toEqual(["myLabel1", "myLabel2"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "flow")).toEqual(["id", "namespace", "revision", "tenantId"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "execution")).toEqual(["id", "startDate", "originalId"]);
@@ -143,18 +143,20 @@ describe("FlowAutoCompletionProvider", () => {
     })
 
     it("value autocompletions", async () => {
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, defaultFlow.indexOf("namespace:") + "namespace:".length)).toEqual(["my.namespace", "another.namespace"]);
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, defaultFlow.indexOf("flowId:") + "flowId:".length)).toEqual(["flow-other-namespace", "another-flow-other-namespace"]);
+        mockedStore.dispatch.mockClear();
+
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YamlUtils.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("namespace:") + "namespace:".length))).toEqual(["my.namespace", "another.namespace"]);
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YamlUtils.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("flowId:") + "flowId:".length))).toEqual(["flow-other-namespace", "another-flow-other-namespace"]);
 
         expect(mockedStore.dispatch.mock.calls.length).toBe(2);
         const firstInputIndex = defaultFlow.indexOf("first-input");
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, firstInputIndex)).toEqual(["second-input"]);
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YamlUtils.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
         expect(mockedStore.dispatch.mock.calls.length).toBe(3);
         // Subflow inputs cache kicks in
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, firstInputIndex)).toEqual(["second-input"]);
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YamlUtils.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
         expect(mockedStore.dispatch.mock.calls.length).toBe(3);
 
         // With newline already inserted
-        expect(await provider.valueAutoCompletion(defaultFlow.substring(0, firstInputIndex) + "\n        " + defaultFlow.substring(firstInputIndex, defaultFlow.length), parsed, firstInputIndex)).toEqual(["second-input"]);
+        expect(await provider.valueAutoCompletion(defaultFlow.substring(0, firstInputIndex) + "\n        " + defaultFlow.substring(firstInputIndex, defaultFlow.length), parsed, YamlUtils.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
     })
 })

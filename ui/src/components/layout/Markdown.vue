@@ -20,6 +20,10 @@
             fontSizeVar: {
                 type: String,
                 default: "font-size-sm"
+            },
+            html: {
+                type: Boolean,
+                default: true
             }
         },
         data() {
@@ -39,6 +43,7 @@
             async renderMarkdown() {
                 return await Markdown.render(this.sourceWithReplacedAlerts, {
                     permalink: this.permalink,
+                    html: this.html
                 });
             },
         },

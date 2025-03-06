@@ -158,12 +158,13 @@
                 >
                     <Markdown
                         :source="description"
+                        :html="false"
                         class="p-4 description"
                     />
                 </el-dialog>
             </span>
 
-            <Markdown :source="description" class="p-4 description" />
+            <Markdown :source="description" :html="false" class="p-4 description" />
         </div>
         <ExecutionsInProgress
             v-else

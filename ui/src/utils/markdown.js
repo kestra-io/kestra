@@ -37,7 +37,7 @@ export async function render(markdown, options = {}) {
         .use(linkTag);
 
     md.set({
-        html: false,
+        html: options.html,
         xhtmlOut: true,
         breaks: true,
         linkify: true,

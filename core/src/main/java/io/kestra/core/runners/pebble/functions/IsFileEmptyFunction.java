@@ -5,7 +5,6 @@ import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Map;
 
 @Singleton
 public class IsFileEmptyFunction extends AbstractFileFunction {
@@ -13,9 +12,8 @@ public class IsFileEmptyFunction extends AbstractFileFunction {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected Object fileFunction(EvaluationContext context, URI path, String namespace) throws IOException {
-        Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
-        try (InputStream inputStream = storageInterface.get(flow.get(TENANT_ID), namespace, path)) {
+    protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId) throws IOException {
+        try (InputStream inputStream = storageInterface.get(tenantId, namespace, path)) {
             byte[] buffer = new byte[1];
             return inputStream.read(buffer, 0, 1) <= 0;
         }

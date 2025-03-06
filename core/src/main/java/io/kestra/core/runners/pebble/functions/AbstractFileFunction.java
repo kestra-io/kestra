@@ -55,6 +55,8 @@ abstract class AbstractFileFunction implements Function {
         try {
             URI fileUri;
             String namespace;
+            Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
+            String tenantId = flow.get(TENANT_ID);
 
             if (path instanceof URI uri) {
                 fileUri = uri;
@@ -64,15 +66,14 @@ abstract class AbstractFileFunction implements Function {
                     fileUri = URI.create(str);
                     namespace = checkAllowedFileAndReturnNamespace(context, fileUri);
                 } else {
-                    Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
                     namespace = (String) Optional.ofNullable(args.get(NAMESPACE)).orElse(flow.get(NAMESPACE));
                     fileUri = URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + str);
-                    flowService.checkAllowedNamespace(flow.get(TENANT_ID), namespace, flow.get(TENANT_ID), flow.get(NAMESPACE));
+                    flowService.checkAllowedNamespace(tenantId, namespace, tenantId, flow.get(NAMESPACE));
                 }
             } else {
                 throw new PebbleException(null, "Unable to read the file " + path, lineNumber, self.getName());
             }
-            return fileFunction(context, fileUri, namespace);
+            return fileFunction(context, fileUri, namespace, tenantId);
         } catch (IOException e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }
@@ -85,7 +86,7 @@ abstract class AbstractFileFunction implements Function {
 
     protected abstract String getErrorMessage();
 
-    protected abstract Object fileFunction(EvaluationContext context, URI path, String namespace) throws IOException;
+    protected abstract Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId) throws IOException;
 
     boolean isFileUriValid(String namespace, String flowId, String executionId, URI path) {
         // Internal storage URI should be: kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion or kestra:///$namespace/$flowId/executions/$executionId/trigger/$triggerName/$random.ion

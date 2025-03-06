@@ -6,7 +6,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
 
 @Singleton
 public class ReadFileFunction extends AbstractFileFunction {
@@ -14,9 +13,8 @@ public class ReadFileFunction extends AbstractFileFunction {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected Object fileFunction(EvaluationContext context, URI path, String namespace) throws IOException {
-        Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
-        try (InputStream inputStream = storageInterface.get(flow.get(TENANT_ID), namespace, path)) {
+    protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId) throws IOException {
+        try (InputStream inputStream = storageInterface.get(tenantId, namespace, path)) {
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         }
     }

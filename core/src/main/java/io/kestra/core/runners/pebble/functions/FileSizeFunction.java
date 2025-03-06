@@ -5,7 +5,6 @@ import io.pebbletemplates.pebble.template.EvaluationContext;
 import jakarta.inject.Singleton;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Map;
 
 @Singleton
 public class FileSizeFunction extends AbstractFileFunction {
@@ -13,9 +12,8 @@ public class FileSizeFunction extends AbstractFileFunction {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected Object fileFunction(EvaluationContext context, URI path, String namespace) throws IOException {
-        Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
-        FileAttributes fileAttributes = storageInterface.getAttributes(flow.get(TENANT_ID), namespace, path);
+    protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId) throws IOException {
+        FileAttributes fileAttributes = storageInterface.getAttributes(tenantId, namespace, path);
         return fileAttributes.getSize();
     }
 

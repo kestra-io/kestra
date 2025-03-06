@@ -3,7 +3,6 @@ package io.kestra.core.runners.pebble.functions;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import jakarta.inject.Singleton;
 import java.net.URI;
-import java.util.Map;
 
 @Singleton
 public class FileExistsFunction extends AbstractFileFunction {
@@ -11,9 +10,8 @@ public class FileExistsFunction extends AbstractFileFunction {
 
     @SuppressWarnings("unchecked")
     @Override
-    protected Object fileFunction(EvaluationContext context, URI path, String namespace) {
-        Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
-        return storageInterface.exists(flow.get(TENANT_ID), namespace, path);
+    protected Object fileFunction(EvaluationContext context, URI path, String namespace, String tenantId) {
+        return storageInterface.exists(tenantId, namespace, path);
     }
 
     @Override

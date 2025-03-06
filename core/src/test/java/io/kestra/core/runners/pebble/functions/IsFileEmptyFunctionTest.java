@@ -3,6 +3,7 @@ package io.kestra.core.runners.pebble.functions;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
@@ -49,6 +50,19 @@ class IsFileEmptyFunctionTest {
             "execution", Map.of("id", executionId)
         );
         boolean render = Boolean.parseBoolean(variableRenderer.render("{{ isFileEmpty('" + internalStorageFile + "') }}", variables));
+        assertFalse(render);
+    }
+
+    @Test
+    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
+        String namespace = "io.kestra.tests";
+        String filePath = "file.txt";
+        storageInterface.createDirectory(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("NOT AN EMPTY FILE".getBytes()));
+
+        boolean render = Boolean.parseBoolean(
+            variableRenderer.render("{{ isFileEmpty('" + filePath + "', namespace='" + namespace + "') }}",
+                Map.of("flow", Map.of("namespace", "flow.namespace"))));
         assertFalse(render);
     }
 

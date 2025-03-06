@@ -1,52 +1,23 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.storages.StorageInterface;
-import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.EvaluationContext;
-import io.pebbletemplates.pebble.template.PebbleTemplate;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-
-import java.io.IOException;
 import java.net.URI;
-import java.util.List;
 import java.util.Map;
 
 @Singleton
 public class FileExistsFunction extends AbstractFileFunction {
     private static final String ERROR_MESSAGE = "The 'fileExists' function expects an argument 'path' that is a path to the internal storage URI.";
 
-    @Inject
-    private StorageInterface storageInterface;
-
-    @Override
-    public List<String> getArgumentNames() {
-        return List.of("path");
-    }
-
-    @Override
-    public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
-        if (!args.containsKey("path")) {
-            throw new PebbleException(null, ERROR_MESSAGE, lineNumber, self.getName());
-        }
-
-        Object path = args.get("path");
-        URI uri = getUriFromThePath(path, lineNumber, self);
-
-        try {
-            return checkFileExistsFromInternalStorage(context, uri);
-        } catch (IOException e) {
-            throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
-        }
-
-    }
-
     @SuppressWarnings("unchecked")
-    private boolean checkFileExistsFromInternalStorage(EvaluationContext context, URI path) throws IOException {
-        // check if the file is from the current execution, the parent execution, or an allowed namespace
-        String namespace = checkAllowedFileAndReturnNamespace(context, path);
-
+    @Override
+    protected Object fileFunction(EvaluationContext context, URI path, String namespace) {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         return storageInterface.exists(flow.get(TENANT_ID), namespace, path);
+    }
+
+    @Override
+    protected String getErrorMessage() {
+        return ERROR_MESSAGE;
     }
 }

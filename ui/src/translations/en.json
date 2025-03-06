@@ -1201,7 +1201,7 @@
     },
     "instance": "Instance",
     "something_went_wrong": {
-        "loading_execution": "Something went wrong while loading the execution"
+      "loading_execution": "Something went wrong while loading the execution"
     },
     "debug": "Debug",
     "default": "Default",
@@ -1237,6 +1237,16 @@
     "select": "Select your {{section}}",
     "for flow": "for flow",
     "confirm": "Confirm",
-    "task_runners": "Task Runners"
+    "task_runners": "Task Runners",
+    "empty": {
+      "announcements": {
+        "title": "You have no annoucements yet!",
+        "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."
+      },
+      "apps": {
+        "title": "You have no apps yet!",
+        "content": "Start building Apps to interact with Kestra from the outside world."
+      }
+    }
   }
 }

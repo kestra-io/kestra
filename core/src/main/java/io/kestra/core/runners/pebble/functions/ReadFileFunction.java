@@ -2,7 +2,6 @@ package io.kestra.core.runners.pebble.functions;
 
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
-import io.micronaut.context.annotation.Value;
 import io.pebbletemplates.pebble.error.PebbleException;
 import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
@@ -23,8 +22,8 @@ public class ReadFileFunction extends AbstractFileFunction {
     @Inject
     private StorageInterface storageInterface;
 
-    @Value("${kestra.server-type:}") // default to empty as tests didn't set this property
-    private String serverType;
+//    @Value("${kestra.server-type:}") // default to empty as tests didn't set this property
+//    private String serverType;
 
     @Override
     public List<String> getArgumentNames() {
@@ -67,19 +66,19 @@ public class ReadFileFunction extends AbstractFileFunction {
     @SuppressWarnings("unchecked")
     private String readFromNamespaceFile(EvaluationContext context, String path) throws IOException {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
-        URI namespaceFile = URI.create(StorageContext.namespaceFilePrefix(flow.get("namespace")) + "/" + path);
-        try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), flow.get("namespace"), namespaceFile)) {
+        URI namespaceFile = URI.create(StorageContext.namespaceFilePrefix(flow.get(NAMESPACE)) + "/" + path);
+        try (InputStream inputStream = storageInterface.get(flow.get(TENANT_ID), flow.get(NAMESPACE), namespaceFile)) {
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
 
     @SuppressWarnings("unchecked")
     private String readFromInternalStorageUri(EvaluationContext context, URI path) throws IOException {
-        // check if the file is from the current execution or the parent execution
-        checkAllowedFile(context, path);
+        // check if the file is from the current execution, the parent execution, or an allowed namespace
+        String namespace = checkAllowedFileAndReturnNamespace(context, path);
 
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
-        try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), flow.get("namespace"), path)) {
+        try (InputStream inputStream = storageInterface.get(flow.get(TENANT_ID), namespace, path)) {
             return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
         }
     }

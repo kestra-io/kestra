@@ -43,10 +43,10 @@ public class FileExistsFunction extends AbstractFileFunction {
 
     @SuppressWarnings("unchecked")
     private boolean checkFileExistsFromInternalStorage(EvaluationContext context, URI path) throws IOException {
-        // check if the file is from the current execution or the parent execution
-        checkAllowedFile(context, path);
+        // check if the file is from the current execution, the parent execution, or an allowed namespace
+        String namespace = checkAllowedFileAndReturnNamespace(context, path);
 
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
-        return storageInterface.exists(flow.get("tenantId"), flow.get("namespace"), path);
+        return storageInterface.exists(flow.get(TENANT_ID), namespace, path);
     }
 }

@@ -44,11 +44,11 @@ public class IsFileEmptyFunction extends AbstractFileFunction {
 
     @SuppressWarnings("unchecked")
     private boolean readAndCheckEmptyFileFromInternalStorage(EvaluationContext context, URI path) throws IOException {
-        // check if the file is from the current execution or the parent execution
-        checkAllowedFile(context, path);
+        // check if the file is from the current execution, the parent execution, or an allowed namespace
+        String namespace = checkAllowedFileAndReturnNamespace(context, path);
 
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
-        try (InputStream inputStream = storageInterface.get(flow.get("tenantId"), flow.get("namespace"), path)) {
+        try (InputStream inputStream = storageInterface.get(flow.get(TENANT_ID), namespace, path)) {
             byte[] buffer = new byte[1];
             return inputStream.read(buffer, 0, 1) <= 0;
         }

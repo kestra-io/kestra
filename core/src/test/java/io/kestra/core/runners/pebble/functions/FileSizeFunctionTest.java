@@ -73,7 +73,7 @@ public class FileSizeFunctionTest {
     }
 
     @Test
-    void shouldThrowIllegalArgumentException_givenMissingTrigger_andParentExecution() throws IOException {
+    void shouldReadFromAnotherExecution() throws IOException, IllegalVariableEvaluationException {
         String executionId = IdUtils.create();
         URI internalStorageURI = getInternalStorageURI(executionId);
         URI internalStorageFile = getInternalStorageFile(internalStorageURI);
@@ -85,12 +85,8 @@ public class FileSizeFunctionTest {
             "execution", Map.of("id", IdUtils.create())
         );
 
-        Exception ex = assertThrows(
-            IllegalArgumentException.class,
-            () -> variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables)
-        );
-
-        assertTrue(ex.getMessage().startsWith("Unable to read the file"), "Exception message doesn't match expected one");
+        String size = variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables);
+        assertThat(size, is(FILE_SIZE));
     }
 
     @Test

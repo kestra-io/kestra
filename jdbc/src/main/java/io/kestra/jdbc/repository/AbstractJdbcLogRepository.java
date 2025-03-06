@@ -35,8 +35,6 @@ import java.util.stream.Stream;
 
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository implements LogRepositoryInterface {
 
-    protected static final int FETCH_SIZE = 100;
-
     protected io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository;
 
     public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository,
@@ -174,7 +172,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 addMinLevel(select, minLevel);
                 select = select.and(field("timestamp").greaterThan(startDate.toOffsetDateTime()));
 
-                Select<Record1<Object>> query = this.jdbcRepository.buildPageQuery(context, select);
+                Select<Record1<Object>> query = this.jdbcRepository.buildQuery(context, select, "timestamp");
 
                 try (Stream<Record1<Object>> stream = query.fetchSize(FETCH_SIZE).stream()){
                     stream.map((Record record) -> jdbcRepository.map(record))

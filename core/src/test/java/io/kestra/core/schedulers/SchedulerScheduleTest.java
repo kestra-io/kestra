@@ -133,11 +133,11 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 date.add((String) execution.getTrigger().getVariables().get("date"));
                 executionId.add(execution.getId());
 
-                queueCount.countDown();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));
                 }
                 assertThat(execution.getFlowId(), is(flow.getId()));
+                queueCount.countDown();
             }));
 
             Flux<LogEntry> receiveLogs = TestsUtils.receive(logQueue, e -> {
@@ -449,10 +449,10 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 assertThat(execution.getInputs().get("def"), is("awesome"));
                 assertThat(execution.getFlowId(), is(flow.getId()));
 
-                queueCount.countDown();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     executionQueue.emit(execution.withState(State.Type.SUCCESS));
                 }
+                queueCount.countDown();
             }));
 
             scheduler.run();
@@ -563,7 +563,6 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 Execution execution = either.getLeft();
                 assertThat(execution.getFlowId(), is(flow.getId()));
 
-                queueCount.countDown();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     Thread.sleep(11000);
                     executionQueue.emit(execution.withState(State.Type.SUCCESS)
@@ -580,6 +579,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                         .build()
                     );
                 }
+                queueCount.countDown();
             }));
 
             scheduler.run();
@@ -634,7 +634,6 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 Execution execution = either.getLeft();
                 assertThat(execution.getFlowId(), is(flow.getId()));
 
-                queueCount.countDown();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
                     Thread.sleep(10000);
                     executionQueue.emit(execution.withState(State.Type.SUCCESS)
@@ -651,6 +650,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                         .build()
                     );
                 }
+                queueCount.countDown();
             }));
 
             scheduler.run();

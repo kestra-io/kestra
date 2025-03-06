@@ -103,4 +103,10 @@ public class PluginDocCommand extends AbstractCommand {
 
         return hasFailures ? 1 : 0;
     }
+
+    /** {@inheritDoc} **/
+    @Override
+    protected boolean isPluginManagerEnabled() {
+        return false;
+    }
 }

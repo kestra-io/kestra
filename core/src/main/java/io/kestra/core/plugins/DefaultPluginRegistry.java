@@ -134,9 +134,11 @@ public class DefaultPluginRegistry implements PluginRegistry {
             return;
         }
 
+        var mutablePluginsToUnregister = new ArrayList<>(pluginsToUnregister);
+
         lock.lock();
         try {
-            ListIterator<RegisteredPlugin> iter = pluginsToUnregister.listIterator();
+            ListIterator<RegisteredPlugin> iter = mutablePluginsToUnregister.listIterator();
             while (iter.hasNext()) {
                 final RegisteredPlugin current = iter.next();
                 final PluginBundleIdentifier identifier = PluginBundleIdentifier.of(current);

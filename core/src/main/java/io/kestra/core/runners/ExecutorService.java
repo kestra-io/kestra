@@ -774,7 +774,7 @@ public class ExecutorService {
                     if (workerGroup.isPresent()) {
                         // Check if the worker group exist
                         String tenantId = executor.getFlow().getTenantId();
-                        String workerGroupKey = workerGroup.get().getKey();
+                        String workerGroupKey = runContext.render(workerGroup.get().getKey());
                         if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                             // Check whether at-least one worker is available
                             if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroupKey)) {

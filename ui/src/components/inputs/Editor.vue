@@ -50,6 +50,7 @@
                     :original="original"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
+                    @tab-loaded="$emit('tabLoaded', $event)"
                     :language="lang"
                     :extension="extension"
                     :schema-type="schemaType"
@@ -113,10 +114,11 @@
             "save",
             "execute",
             "focusout",
-            "tab",
+            "tabLoaded",
             "update:modelValue",
             "cursor",
             "confirm",
+            "tabLoaded",
         ],
         editor: undefined,
         data() {
@@ -268,11 +270,11 @@
                         this.focus = false;
                     });
 
-                    if(this.shouldFocus){                
+                    if(this.shouldFocus){
                         this.editor.onDidFocusEditorText?.(() => {
                             this.focus = true;
                         });
-                        
+
                         this.$refs.monacoEditor.focus();
                     }
                 }

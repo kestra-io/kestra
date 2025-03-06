@@ -123,7 +123,7 @@
                 default: false
             }
         },
-        emits: ["editorDidMount", "change"],
+        emits: ["editorDidMount", "change", "tabLoaded"],
         model: {
             event: "change"
         },
@@ -159,6 +159,8 @@
                     model = await this.changeTab(newTabName, () => this.readFile(payload));
                 }
                 this.$emit("change", model.getValue());
+                console.log("Tab loaded", newTabName);
+                this.$emit("tabLoaded", newValue);
             },
             options: {
                 deep: true,

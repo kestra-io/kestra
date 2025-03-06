@@ -147,6 +147,7 @@
                     @cursor="updatePluginDocumentation"
                     :creating="isCreating"
                     @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
+                    @tab-loaded="onTabLoaded"
                     :read-only="isReadOnly"
                     :navbar="false"
                 >
@@ -1424,13 +1425,18 @@
         dragOverTabIndex.value = null;
     };
 
+    const dirtyBeforeLoad = ref(false);
+
     watch(currentTab, (current, previous) => {
+        // to avoid changing the dirty state of a tab
+        // when switching between tabs, we save the value
+        // before the tabs text is loaded from the model.
+        dirtyBeforeLoad.value = currentTab.value.dirty;
         const isCurrentFlow = current?.name === "Flow";
         const isPreviousFlow = previous?.name === "Flow";
 
         if(isPreviousFlow) persistViewType(viewType.value);
         updatedFromEditor.value = false;
-        haveChange.value = currentTab.value.dirty;
         switchViewType(isCurrentFlow ? loadViewType() : editorViewTypes.SOURCE, false)
 
         nextTick(() => {
@@ -1441,6 +1447,16 @@
             tabsScrollRef.value.setScrollLeft(rightMostCurrentTabPixel - tabsWrapper.clientWidth);
         });
     })
+
+    function onTabLoaded(tab){
+        clearTimeout(timer.value);
+
+        // once the tab is finished loading, restore the dirty state
+        if(tab.path === currentTab.value.path){
+            currentTab.value.dirty = dirtyBeforeLoad.value
+            haveChange.value = dirtyBeforeLoad.value
+        }
+    }
 
     const tabContextMenu = ref({
         visible: false,

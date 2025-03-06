@@ -158,9 +158,9 @@
 
                     model = await this.changeTab(newTabName, () => this.readFile(payload));
                 }
-                this.$emit("change", model.getValue());
-                console.log("Tab loaded", newTabName);
-                this.$emit("tabLoaded", newValue);
+                const source = model.getValue()
+                this.$emit("change", source);
+                this.$emit("tabLoaded", newValue, source);
             },
             options: {
                 deep: true,

@@ -106,7 +106,7 @@
                 :is-read-only="props.isReadOnly"
                 :can-delete="canDelete()"
                 :is-allowed-edit="isAllowedEdit"
-                :have-change="flowYaml !== flowYamlOrigin"
+                :have-change="isFlow() ? flowYaml !== flowYamlOrigin : currentTab?.dirty"
                 :flow-have-tasks="flowHaveTasks()"
                 :errors="flowErrors"
                 :warnings="flowWarnings"
@@ -1448,11 +1448,13 @@
         });
     })
 
-    function onTabLoaded(tab){
+    function onTabLoaded(tab, source){
         clearTimeout(timer.value);
 
         // once the tab is finished loading, restore the dirty state
         if(tab.path === currentTab.value.path){
+            flowYaml.value = source;
+            onEdit(source, tab.flow);
             currentTab.value.dirty = dirtyBeforeLoad.value
             haveChange.value = dirtyBeforeLoad.value
         }

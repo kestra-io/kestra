@@ -50,7 +50,7 @@
                     :original="original"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
-                    @tab-loaded="$emit('tabLoaded', $event)"
+                    @tab-loaded="(...args) => $emit('tabLoaded', ...args)"
                     :language="lang"
                     :extension="extension"
                     :schema-type="schemaType"

@@ -139,7 +139,7 @@
                     ref="editorDomElement"
                     @save="save"
                     @execute="execute"
-                    v-model="flowYaml"
+                    :model-value="flowYaml"
                     :schema-type="isCurrentTabFlow? 'flow': undefined"
                     :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                     :extension="currentTab?.extension"
@@ -1094,7 +1094,6 @@
         const currentIsFlow = isFlow();
 
         updatedFromEditor.value = true;
-        flowYaml.value = event;
 
         clearTimeout(timer.value);
         timer.value = setTimeout(() => onEdit(event, currentIsFlow), 500);
@@ -1202,6 +1201,7 @@
         if (flowErrors.value?.length || !haveChange.value && !props.isCreating) {
             return;
         }
+
         if (e) {
             if (e.type === "keydown") {
                 if (!(e.keyCode === 83 && e.ctrlKey)) {
@@ -1430,6 +1430,7 @@
 
         if(isPreviousFlow) persistViewType(viewType.value);
         updatedFromEditor.value = false;
+        haveChange.value = currentTab.value.dirty;
         switchViewType(isCurrentFlow ? loadViewType() : editorViewTypes.SOURCE, false)
 
         nextTick(() => {

@@ -1,23 +1,23 @@
 import type {Store} from "vuex";
 import type {JSONSchema} from "@kestra-io/ui-libs";
 import YamlUtils from "../../utils/yamlUtils";
-import uniqBy from "lodash/uniqBy";
-import {YAMLMap} from "yaml";
 
 export class YamlNoAutoCompletion {
     rootFieldAutoCompletion(): Promise<string[]> {
         return Promise.resolve([]);
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    nestedFieldAutoCompletion(source: string, parsed?: any, parentField: string): Promise<string[]> {
+    nestedFieldAutoCompletion(_source: string, _parsed?: any, _parentField?: string): Promise<string[]> {
         return Promise.resolve([])
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    valueAutoCompletion(source: string, parsed?: any, cursorIndexInSource: number): Promise<string[]> {
+    valueAutoCompletion(_source: string, _parsed?: any, _cursorIndexInSource?: number): Promise<string[]> {
         return Promise.resolve([]);
     }
+}
+
+function distinct<T>(val: T[] | undefined): T[] {
+    return Array.from(new Set(val ?? []));
 }
 
 export class FlowAutoCompletion extends YamlNoAutoCompletion{
@@ -47,7 +47,7 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
         ]);
     }
 
-    private tasks(source: string): YAMLMap<string, string> {
+    private tasks(source: string): any[] {
         const tasksFromTasksProp = YamlUtils.extractFieldFromMaps(source, "tasks")
             .flatMap(allTasks => allTasks.tasks);
         const tasksFromTaskProp = YamlUtils.extractFieldFromMaps(source, "task")
@@ -78,7 +78,7 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
         }
 
         const fetchTriggerVarsByType = await Promise.all(
-            uniqBy(flowAsJs?.triggers?.map(trigger => trigger.type))
+            distinct(flowAsJs?.triggers?.map(trigger => trigger.type))
                 .map(async triggerType => {
                     const triggerDoc: {schema: JSONSchema} | undefined = await this.store.dispatch("plugin/load", {
                         cls: triggerType,
@@ -87,13 +87,13 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
                     return Object.keys(triggerDoc?.schema?.outputs?.properties ?? {});
                 })
         );
-        return uniqBy(fetchTriggerVarsByType.flat());
+        return distinct(fetchTriggerVarsByType.flat());
     }
 
-    async nestedFieldAutoCompletion(source: string, parsed?: any, parentField: string): Promise<string[]> {
+    async nestedFieldAutoCompletion(source: string, parsed: any | undefined, parentField: string): Promise<string[]> {
         switch (parentField) {
             case "inputs":
-                return Promise.resolve(parsed?.inputs?.map(input => input.id) ?? []);
+                return Promise.resolve(parsed?.inputs?.map((input: {id: string}) => input.id) ?? []);
             case "outputs":
                 return Promise.resolve(this.tasks(source).map(task => task.get("id")));
             case "labels":
@@ -123,21 +123,22 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
         }
     }
 
-    private async subflowInputsAutoCompletion(namespace, flowId, revision, alreadyFilledInputs: string[]): Promise<string[]> {
+    private async subflowInputsAutoCompletion(namespace: string, flowId: string, revision: string, alreadyFilledInputs: string[]): Promise<string[]> {
         const subflowUid = namespace + "." + flowId;
         if (this.flowsInputsCache?.[subflowUid] === undefined) {
             try {
-                this.flowsInputsCache[subflowUid] = (await this.store.dispatch(
+                const {inputs} = (await this.store.dispatch(
                     "flow/loadFlow",
                     {
-                        namespace: namespace,
+                        namespace,
                         id: flowId,
-                        revision: revision,
+                        revision,
                         source: false,
                         store: false,
                         deleted: true
                     }
-                )).inputs?.map(input => `${input.id}`) ?? [];
+                ))
+                return inputs?.map((input: {id:string}) => `${input.id}`) ?? [];
             } catch {
                 return [];
             }
@@ -147,8 +148,8 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
             .map(input => `${input}:`);
     }
 
-    async valueAutoCompletion(source: string, parsed?: any, cursorIndexInSource: number): Promise<string[]> {
-        const elementAtCursor = YamlUtils.localizeCursorParent(source, cursorIndexInSource);
+    async valueAutoCompletion(source: string, parsed: any | undefined, cursorIndexInSource: number): Promise<string[]> {
+        const elementAtCursor = YamlUtils.localizeCursorParent(source, cursorIndexInSource ?? -1);
         if (elementAtCursor === undefined) {
             return Promise.resolve([]);
         }
@@ -164,8 +165,8 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
             }
             case "flowId": {
                 if (parentTask !== undefined && parentTask.namespace !== undefined) {
-                    let flowIds = (await this.store.dispatch("flow/flowsByNamespace", parentTask.namespace))
-                        .map(flow => flow.id)
+                    let flowIds: string[] = (await this.store.dispatch("flow/flowsByNamespace", parentTask.namespace))
+                        .map((flow: {id: string}) => flow.id)
                     if (parsed?.id !== undefined && parsed?.namespace === parentTask.namespace) {
                         flowIds = flowIds.filter(flowId => flowId !== parsed?.id);
                     }

@@ -1,4 +1,5 @@
-import {describe, expect, it, vi} from "vitest"
+import type {Store} from "vuex";
+import {describe, expect, it, Mock, vi} from "vitest"
 import {FlowAutoCompletion} from "override/services/autoCompletionProvider.ts";
 import YamlUtils from "../../../src/utils/yamlUtils";
 
@@ -35,7 +36,7 @@ triggers:
 id: my-flow
 namespace: my.namespace`;
 
-const propertiesSchemaWrapper = (properties) => ({
+const propertiesSchemaWrapper = (properties: Record<string, any>) => ({
     schema: {
         outputs: {
             properties
@@ -43,7 +44,11 @@ const propertiesSchemaWrapper = (properties) => ({
     }
 })
 
-const mockedStore = {
+interface MockStore<T> extends Store<T> {
+    dispatch: Mock<() => Promise<any>>
+}
+
+const mockedStore: MockStore<Record<string, any>> = {
     state: {
         namespace: {}
     },
@@ -94,15 +99,16 @@ const mockedStore = {
                 return Promise.resolve({})
             }
         }
+        return Promise.resolve({})
     })
-}
+} as any
 
 const provider = new FlowAutoCompletion(mockedStore);
 const parsed = YamlUtils.parse(defaultFlow);
 
 describe("FlowAutoCompletionProvider", () => {
     it("root autocompletions", async () => {
-        expect(await new FlowAutoCompletion().rootFieldAutoCompletion()).toEqual([
+        expect(await new FlowAutoCompletion(mockedStore).rootFieldAutoCompletion()).toEqual([
             "outputs",
             "inputs",
             "vars",
@@ -137,18 +143,18 @@ describe("FlowAutoCompletionProvider", () => {
     })
 
     it("value autocompletions", async () => {
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, defaultFlow.indexOf("namespace:") + "namespace:".length, "namespace")).toEqual(["my.namespace", "another.namespace"]);
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, defaultFlow.indexOf("flowId:") + "flowId:".length, "flowId")).toEqual(["flow-other-namespace", "another-flow-other-namespace"]);
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, defaultFlow.indexOf("namespace:") + "namespace:".length)).toEqual(["my.namespace", "another.namespace"]);
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, defaultFlow.indexOf("flowId:") + "flowId:".length)).toEqual(["flow-other-namespace", "another-flow-other-namespace"]);
 
         expect(mockedStore.dispatch.mock.calls.length).toBe(2);
         const firstInputIndex = defaultFlow.indexOf("first-input");
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, firstInputIndex, "inputs")).toEqual(["second-input"]);
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, firstInputIndex)).toEqual(["second-input"]);
         expect(mockedStore.dispatch.mock.calls.length).toBe(3);
         // Subflow inputs cache kicks in
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, firstInputIndex, "inputs")).toEqual(["second-input"]);
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, firstInputIndex)).toEqual(["second-input"]);
         expect(mockedStore.dispatch.mock.calls.length).toBe(3);
 
         // With newline already inserted
-        expect(await provider.valueAutoCompletion(defaultFlow.substring(0, firstInputIndex) + "\n        " + defaultFlow.substring(firstInputIndex, defaultFlow.length), parsed, firstInputIndex, "inputs")).toEqual(["second-input"]);
+        expect(await provider.valueAutoCompletion(defaultFlow.substring(0, firstInputIndex) + "\n        " + defaultFlow.substring(firstInputIndex, defaultFlow.length), parsed, firstInputIndex)).toEqual(["second-input"]);
     })
 })

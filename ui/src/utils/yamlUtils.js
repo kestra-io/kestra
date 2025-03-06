@@ -250,6 +250,28 @@ export default class YamlUtils {
         return maps;
     }
 
+    // Find map a cursor position, optionally filtering by a property name that the map must contain
+    static getMapAtPosition(source, position, fieldName = null) {
+        const yamlDoc = yaml.parseDocument(source);
+        const lineCounter = new yaml.LineCounter();
+        yaml.parseDocument(source, {lineCounter});
+        const cursorIndex = (lineCounter.lineStarts[position.lineNumber - 1] + position.column) - 1;
+        let targetMap = null;
+        yaml.visit(yamlDoc, {
+            Map(_, map) {
+                if (map.range[0] <= cursorIndex && map.range[1] >= cursorIndex) {
+                    for (const item of map.items) {
+                        if (fieldName === null || item.key.value === fieldName) {
+                            targetMap = map;
+                        }
+                    }
+                }
+            }
+        });
+
+        return targetMap ? targetMap.toJSON() : null;
+    }
+
     static extractAllTypes(source, validTypes = []) {
         return this.extractFieldFromMaps(source, "type", undefined, value => validTypes.some(t => t === value));
     }

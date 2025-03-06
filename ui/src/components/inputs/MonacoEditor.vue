@@ -147,16 +147,18 @@
                     return;
                 }
 
+                let model
                 if (newValue.persistent && this.flow?.source) {
-                    await this.changeTab("Flow", () => this.flow.source);
+                    model = await this.changeTab("Flow", () => this.flow.source);
                 } else {
                     const payload = {
                         namespace: this.$route.params.namespace || this.$route.params.id,
                         path: newValue.path ?? newValue.name,
                     };
 
-                    await this.changeTab(newTabName, () => this.readFile(payload));
+                    model = await this.changeTab(newTabName, () => this.readFile(payload));
                 }
+                this.$emit("change", model.getValue());
             },
             options: {
                 deep: true,
@@ -724,6 +726,8 @@
                     }
                 }
                 this.editor.setModel(model);
+
+                return model
             },
             getEditor: function () {
                 return this.editor;

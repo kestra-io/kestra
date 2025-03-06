@@ -901,44 +901,45 @@
     };
 
     const onEdit = (event, currentIsFlow = false) => {
-        flowYaml.value = event;
+        if(flowYaml.value !== event) {
+            flowYaml.value = event;
 
-        if (currentIsFlow) {
-            if (
-                flowParsed.value &&
-                !props.isCreating &&
-                (routeParams.id !== flowParsed.value.id ||
-                    routeParams.namespace !== flowParsed.value.namespace)
-            ) {
-                store.dispatch("core/showMessage", {
-                    variant: "error",
-                    title: t("readonly property"),
-                    message: t("namespace and id readonly"),
+            if (currentIsFlow) {
+                if (
+                    flowParsed.value &&
+                    !props.isCreating &&
+                    (routeParams.id !== flowParsed.value.id ||
+                        routeParams.namespace !== flowParsed.value.namespace)
+                ) {
+                    store.dispatch("core/showMessage", {
+                        variant: "error",
+                        title: t("readonly property"),
+                        message: t("namespace and id readonly"),
+                    });
+                    flowYaml.value = YamlUtils.replaceIdAndNamespace(
+                        flowYaml.value,
+                        routeParams.id,
+                        routeParams.namespace
+                    );
+                    return;
+                }
+            }
+
+            haveChange.value = true;
+            if(editorViewType.value === "YAML") store.dispatch("core/isUnsaved", true);
+
+            if(!props.isCreating){
+                store.commit("editor/changeOpenedTabs", {
+                    action: "dirty",
+                    ...currentTab.value,
+                    name: currentTab.value?.name ?? "Flow",
+                    path: currentTab.value?.path ?? "Flow.yaml",
+                    dirty: true
                 });
-                flowYaml.value = YamlUtils.replaceIdAndNamespace(
-                    flowYaml.value,
-                    routeParams.id,
-                    routeParams.namespace
-                );
-                return;
             }
         }
 
-        haveChange.value = true;
-        if(editorViewType.value === "YAML") store.dispatch("core/isUnsaved", true);
-        
-        if(!props.isCreating){
-            store.commit("editor/changeOpenedTabs", {
-                action: "dirty",
-                ...currentTab.value,
-                name: currentTab.value?.name ?? "Flow",
-                path: currentTab.value?.path ?? "Flow.yaml",
-                dirty: true
-            });
-        }
-
         clearTimeout(timer.value);
-
         if(!currentIsFlow) return;
 
         return store
@@ -1402,7 +1403,7 @@
 
     const draggedTabIndex = ref(null);
     const dragOverTabIndex = ref(null);
-    
+
     const onDragStart = (event, index) => {
         draggedTabIndex.value = index;
         event.dataTransfer.effectAllowed = "move";
@@ -1428,6 +1429,7 @@
         const isPreviousFlow = previous?.name === "Flow";
 
         if(isPreviousFlow) persistViewType(viewType.value);
+        updatedFromEditor.value = false;
         switchViewType(isCurrentFlow ? loadViewType() : editorViewTypes.SOURCE, false)
 
         nextTick(() => {
@@ -1540,10 +1542,10 @@
     });
     const dialogHandler = async () => {
         try {
-            const path = dialog.value.folder 
+            const path = dialog.value.folder
                 ? `${dialog.value.folder}/${dialog.value.name}`
                 : dialog.value.name;
-            
+
             if (dialog.value.type === "file") {
                 await store.dispatch("namespace/createFile", {
                     namespace: props.namespace ?? route.params.namespace,
@@ -1580,7 +1582,7 @@
                 reader.readAsArrayBuffer(file);
             });
             const path = file.webkitRelativePath || file.name;
-            
+
             await store.dispatch("namespace/importFileDirectory", {
                 namespace: props.namespace ?? route.params.namespace,
                 content,
@@ -1769,14 +1771,14 @@
             margin-top: 1rem;
             border: 1px solid var(--ks-border-primary);
             border-radius: 0.5rem;
-            
+
             iframe {
                 width: 100%;
                 min-height: 380px;
                 height: auto;
             }
         }
-        
+
         .hidden {
             display: none;
         }

@@ -1,5 +1,5 @@
 <template>
-    <div style="padding: 0 1rem;">
+    <div style="padding: 1px 1rem; background-color: var(--ks-background-body);">
         <PluginDocumentation />
     </div>
 </template>

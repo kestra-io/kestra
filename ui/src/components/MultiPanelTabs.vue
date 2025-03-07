@@ -273,7 +273,7 @@
         border-top-width: 4px;
         border-radius: 5px 5px 0 0;
         border-bottom: none;
-        background-color: var(--ks-background-card);
+        background-color: var(--ks-button-background-secondary-active);
         display: flex;
         flex-wrap:nowrap;
         white-space: nowrap;
@@ -284,6 +284,20 @@
         }
         &.simulated{
             opacity: .5;
+        }
+    }
+
+    .default-theme{
+        .splitpanes__pane {
+            background-color: var(--ks-background-card);
+        }
+
+        :deep(.splitpanes__splitter){
+            border-left-color: var(--ks-border-primary);
+            background-color: var(--ks-background-card);
+            &:before, &:after{
+                background-color: var(--ks-content-secondary);
+            }
         }
     }
 </style>

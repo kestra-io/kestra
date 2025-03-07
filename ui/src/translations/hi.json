@@ -372,7 +372,7 @@
         "title": "आपके पास अभी तक कोई घोषणाएँ नहीं हैं!"
       },
       "apps": {
-        "content": "Kestra के साथ बाहरी दुनिया से इंटरैक्ट करने के लिए ऐप्स बनाना शुरू करें।",
+        "content": "बाहरी दुनिया से Kestra के साथ इंटरैक्ट करने के लिए Apps बनाना शुरू करें।",
         "title": "आपके पास अभी तक कोई ऐप्स नहीं हैं!"
       },
       "concurrency_executions": {
@@ -381,7 +381,7 @@
       },
       "concurrency_limit": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
-        "title": "इस Flow के लिए कोई सीमा निर्धारित नहीं है।"
+        "title": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं हैं।"
       },
       "dependencies": {
         "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।",
@@ -392,7 +392,7 @@
         "title": "इस Namespace के लिए कोई प्लगइन डिफॉल्ट सेट नहीं हैं।"
       },
       "triggers": {
-        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> के बारे में अधिक पढ़ें।",
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> के बारे में और पढ़ें।",
         "title": "आपके flow में कोई Triggers नहीं हैं।"
       }
     },

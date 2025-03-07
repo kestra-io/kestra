@@ -380,7 +380,7 @@
         "title": "Keine laufenden Ausführungen für diesen Flow."
       },
       "concurrency_limit": {
-        "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
+        "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
         "title": "Für diesen Flow sind keine Grenzen festgelegt."
       },
       "dependencies": {
@@ -388,11 +388,11 @@
         "title": "Für diesen Flow sind keine Abhängigkeiten festgelegt."
       },
       "plugins": {
-        "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
+        "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
         "title": "Für diesen Namespace sind keine Plugin-Standardeinstellungen festgelegt."
       },
       "triggers": {
-        "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in unserer Dokumentation.",
+        "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in unserer Dokumentation.",
         "title": "Ihr flow hat keine Trigger."
       }
     },

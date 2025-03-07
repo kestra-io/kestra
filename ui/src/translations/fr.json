@@ -376,7 +376,7 @@
         "title": "Vous n'avez pas encore d'applications !"
       },
       "concurrency_executions": {
-        "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> dans notre documentation.",
+        "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Exécutions</a></strong> dans notre documentation.",
         "title": "Aucune exécution en cours pour ce flow."
       },
       "concurrency_limit": {
@@ -384,7 +384,7 @@
         "title": "Aucune limite n'est définie pour ce flow."
       },
       "dependencies": {
-        "content": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> dans notre documentation.",
+        "content": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">dépendances de flow</a> dans notre documentation.",
         "title": "Aucune dépendance n'est définie pour ce flow."
       },
       "plugins": {

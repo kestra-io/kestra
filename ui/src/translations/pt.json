@@ -373,10 +373,10 @@
       },
       "apps": {
         "content": "Comece a criar Apps para interagir com o Kestra a partir do mundo externo.",
-        "title": "Você ainda não tem aplicativos!"
+        "title": "Você ainda não tem apps!"
       },
       "concurrency_executions": {
-        "content": "Saiba mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Execuções</a></strong> na nossa documentação.",
+        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Execuções</a></strong> em nossa documentação.",
         "title": "Nenhuma Execução em andamento para este Flow."
       },
       "concurrency_limit": {
@@ -384,11 +384,11 @@
         "title": "Nenhum limite está definido para este Flow."
       },
       "dependencies": {
-        "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> em nossa documentação.",
+        "content": "Leia mais sobre <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependências de Flow</a> em nossa documentação.",
         "title": "Nenhuma dependência está definida para este Flow."
       },
       "plugins": {
-        "content": "Saiba mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
+        "content": "Leia mais sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limites de Concurrency</a></strong> em nossa documentação.",
         "title": "Nenhum padrão de plugin está definido para este Namespace."
       },
       "triggers": {

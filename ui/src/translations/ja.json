@@ -372,19 +372,19 @@
         "title": "お知らせはまだありません！"
       },
       "apps": {
-        "content": "外部の世界からKestraと連携するためのアプリを作成し始めましょう。",
+        "content": "外部からKestraと連携するアプリを作成し始めましょう。",
         "title": "まだアプリがありません！"
       },
       "concurrency_executions": {
-        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">実行</a></strong>についての詳細は、ドキュメントをご覧ください。",
-        "title": "このFlowには進行中のExecutionはありません。"
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> についての詳細は、ドキュメントをご覧ください。",
+        "title": "このFlowには進行中の実行はありません。"
       },
       "concurrency_limit": {
-        "content": "ドキュメントで<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong>について詳しく読む。",
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">同時実行制限</a></strong>についての詳細は、ドキュメントをご覧ください。",
         "title": "このFlowには制限が設定されていません。"
       },
       "dependencies": {
-        "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
+        "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。",
         "title": "このFlowには依存関係が設定されていません。"
       },
       "plugins": {
@@ -392,7 +392,7 @@
         "title": "このNamespaceにはプラグインのデフォルトが設定されていません。"
       },
       "triggers": {
-        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>についての詳細は、ドキュメントをご覧ください。",
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "あなたのflowにはTriggerがありません。"
       }
     },

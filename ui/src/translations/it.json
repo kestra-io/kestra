@@ -368,7 +368,7 @@
     "email length constraint": "L'email non deve superare i 256 caratteri",
     "empty": {
       "announcements": {
-        "content": "Gli annunci ti permettono di notificare ai tuoi utenti eventuali modifiche o di informarli su periodi di inattività programmata per manutenzione. Seleziona semplicemente il tipo di annuncio, l'intervallo di date in cui deve essere visualizzato e scrivi il messaggio dell'annuncio.",
+        "content": "Gli annunci ti permettono di notificare ai tuoi utenti eventuali modifiche o di informarli su periodi di manutenzione programmata. Seleziona semplicemente il tipo di annuncio, l'intervallo di date in cui deve essere visualizzato e scrivi il messaggio dell'annuncio.",
         "title": "Non hai ancora annunci!"
       },
       "apps": {
@@ -389,10 +389,10 @@
       },
       "plugins": {
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limiti di Concurrency</a></strong> nella nostra documentazione.",
-        "title": "Nessun plugin predefinito è impostato per questo Namespace."
+        "title": "Nessun valore predefinito del plugin è impostato per questo Namespace."
       },
       "triggers": {
-        "content": "Per saperne di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Trigger</a></strong>, consulta la nostra documentazione.",
+        "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Trigger</a></strong> nella nostra documentazione.",
         "title": "Il tuo flow non ha alcun trigger."
       }
     },

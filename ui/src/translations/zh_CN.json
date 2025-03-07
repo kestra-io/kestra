@@ -368,7 +368,7 @@
     "email length constraint": "电子邮件不得超过256个字符",
     "empty": {
       "announcements": {
-        "content": "公告允许您通知用户任何更改或告知他们计划的维护停机。只需选择公告类型、显示的日期范围，并撰写公告消息。",
+        "content": "公告允许您通知用户任何更改或告知他们计划的维护停机时间。只需选择公告类型、显示的日期范围，并撰写公告消息。",
         "title": "您还没有公告！"
       },
       "apps": {
@@ -377,10 +377,10 @@
       },
       "concurrency_executions": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>的信息。",
-        "title": "此Flow没有正在进行的Executions。"
+        "title": "此 Flow 没有正在进行的 Executions。"
       },
       "concurrency_limit": {
-        "content": "了解更多关于我们文档中的<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
         "title": "此Flow未设置限制。"
       },
       "dependencies": {

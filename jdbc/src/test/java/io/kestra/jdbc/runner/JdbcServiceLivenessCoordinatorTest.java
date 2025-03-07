@@ -8,29 +8,36 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State.Type;
 import io.kestra.core.models.tasks.ResolvedTask;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.*;
 import io.kestra.core.services.SkipExecutionService;
+import io.kestra.core.services.WorkerGroupService;
 import io.kestra.core.tasks.test.SleepTrigger;
-import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.core.validations.WorkerGroupValidation;
+import io.kestra.core.validations.validator.WorkerGroupValidator;
 import io.kestra.jdbc.JdbcTestUtils;
+import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.plugin.core.flow.Sleep;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
+import io.micronaut.core.annotation.AnnotationValue;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.annotation.Nullable;
+import io.micronaut.test.annotation.MockBean;
+import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import reactor.core.publisher.Flux;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
@@ -40,6 +47,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 @KestraTest(environments =  {"test", "liveness"})
@@ -50,41 +58,57 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     private StandAloneRunner runner;
 
     @Inject
-    private LocalFlowRepositoryLoader repositoryLoader;
-
-    @Inject
     private ApplicationContext applicationContext;
 
     @Inject
-    JdbcTestUtils jdbcTestUtils;
+    private JdbcTestUtils jdbcTestUtils;
 
     @Inject
-    RunContextFactory runContextFactory;
+    private RunContextFactory runContextFactory;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
-    QueueInterface<WorkerJob> workerJobQueue;
+    private QueueInterface<WorkerJob> workerJobQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
-    QueueInterface<WorkerTaskResult> workerTaskResultQueue;
+    private QueueInterface<WorkerTaskResult> workerTaskResultQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
-    QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
+    private QueueInterface<WorkerTriggerResult> workerTriggerResultQueue;
 
     @Inject
-    JdbcServiceLivenessCoordinator jdbcServiceLivenessHandler;
+    @Named(QueueFactoryInterface.TRIGGER_NAMED)
+    private QueueInterface<Trigger> triggerQueue;
 
     @Inject
-    SkipExecutionService skipExecutionService;
+    private JdbcServiceLivenessCoordinator jdbcServiceLivenessHandler;
+
+    @Inject
+    private SkipExecutionService skipExecutionService;
+
+    @Inject
+    private AbstractJdbcWorkerJobRunningRepository workerJobRunningRepository;
 
     @BeforeAll
-    void init() throws IOException, URISyntaxException {
+    void init() {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
+
         // Simulate that executor and workers are not running on the same JVM.
         jdbcServiceLivenessHandler.setServerInstance(IdUtils.create());
+
+        // start the runner
+        runner.setSchedulerEnabled(false);
+        runner.setWorkerEnabled(false);
+        runner.run();
+    }
+
+    @AfterEach
+    void tearDown() {
+        List<WorkerJobRunning> workerJobRunnings = workerJobRunningRepository.findAll();
+        workerJobRunnings.forEach(workerJobRunning -> workerJobRunningRepository.deleteByKey(workerJobRunning.uid()));
     }
 
     @Test
@@ -96,9 +120,6 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
         worker.run();
 
-        runner.setSchedulerEnabled(false);
-        runner.setWorkerEnabled(false);
-        runner.run();
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
             if (either.getLeft().getTaskRun().getState().getCurrent() == Type.SUCCESS) {
                 resubmitLatch.countDown();
@@ -109,7 +130,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
             }
         });
 
-        workerJobQueue.emit(workerTask(Duration.ofSeconds(10)));
+        workerJobQueue.emit(workerTask(Duration.ofSeconds(5)));
         boolean runningLatchAwait = runningLatch.await(5, TimeUnit.SECONDS);
         assertThat(runningLatchAwait, is(true));
         worker.shutdown(); // stop processing task
@@ -117,7 +138,43 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         // create second worker (this will revoke previously one).
         Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
         newWorker.run();
-        boolean resubmitLatchAwait = resubmitLatch.await(30, TimeUnit.SECONDS);
+        boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
+        assertThat(resubmitLatchAwait, is(true));
+        WorkerTaskResult workerTaskResult = receive.blockLast();
+        assertThat(workerTaskResult, notNullValue());
+        assertThat(workerTaskResult.getTaskRun().getState().getCurrent(), is(Type.SUCCESS));
+        assertThat(workerTaskResult.getTaskRun().getAttempts(), hasSize(2));
+        newWorker.shutdown();
+    }
+
+    @Test
+    void shouldReEmitTasksToTheSameWorkerGroup() throws Exception {
+        CountDownLatch runningLatch = new CountDownLatch(1);
+        CountDownLatch resubmitLatch = new CountDownLatch(1);
+
+        // create first worker
+        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, "workerGroupKey");
+        worker.run();
+
+        Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
+            if (either.getLeft().getTaskRun().getState().getCurrent() == Type.SUCCESS) {
+                resubmitLatch.countDown();
+            }
+
+            if (either.getLeft().getTaskRun().getState().getCurrent() == Type.RUNNING) {
+                runningLatch.countDown();
+            }
+        });
+
+        workerJobQueue.emit("workerGroupKey", workerTask(Duration.ofSeconds(5), "workerGroupKey"));
+        boolean runningLatchAwait = runningLatch.await(5, TimeUnit.SECONDS);
+        assertThat(runningLatchAwait, is(true));
+        worker.shutdown(); // stop processing task
+
+        // create second worker (this will revoke previously one).
+        Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, "workerGroupKey");
+        newWorker.run();
+        boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
         assertThat(resubmitLatchAwait, is(true));
         WorkerTaskResult workerTaskResult = receive.blockLast();
         assertThat(workerTaskResult, notNullValue());
@@ -132,10 +189,8 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
 
         Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         worker.run();
-        runner.setSchedulerEnabled(false);
-        runner.setWorkerEnabled(false);
-        runner.run();
-        WorkerTask workerTask = workerTask(Duration.ofSeconds(10));
+
+        WorkerTask workerTask = workerTask(Duration.ofSeconds(5));
         skipExecutionService.setSkipExecutions(List.of(workerTask.getTaskRun().getExecutionId()));
 
         Flux<WorkerTaskResult> receive = TestsUtils.receive(workerTaskResultQueue, either -> {
@@ -168,40 +223,103 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     void shouldReEmitTriggerWhenWorkerIsDetectedAsNonResponding() throws Exception {
         Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
         worker.run();
-        runner.setSchedulerEnabled(false);
-        runner.setWorkerEnabled(false);
-        runner.run();
 
         WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5));
 
         // 2 trigger should happen because of the resubmit
         CountDownLatch countDownLatch = new CountDownLatch(2);
-        Flux<WorkerJob> receive = TestsUtils.receive(workerJobQueue, workerJob -> countDownLatch.countDown());
+        Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, workerTriggerResult -> countDownLatch.countDown());
 
+        // we wait that the worker receive the trigger
+        CountDownLatch triggerCountDownLatch = new CountDownLatch(1);
+        Flux<Trigger> receiveTrigger = TestsUtils.receive(triggerQueue, either -> {
+            if (either.getLeft().getWorkerId().equals(worker.getId())) {
+                triggerCountDownLatch.countDown();
+            }
+        });
         workerJobQueue.emit(workerTrigger);
-        Await.until(() -> worker.getEvaluateTriggerRunningCount()
-                .get(workerTrigger.getTriggerContext().uid()) != null,
-            Duration.ofMillis(100),
-            Duration.ofSeconds(5)
-        );
+        assertTrue(triggerCountDownLatch.await(10, TimeUnit.SECONDS));
+        receiveTrigger.blockLast();
         worker.shutdown();
 
         Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
         applicationContext.registerSingleton(newWorker);
         newWorker.run();
 
-        boolean lastAwait = countDownLatch.await(15, TimeUnit.SECONDS);
+        boolean lastAwait = countDownLatch.await(10, TimeUnit.SECONDS);
 
         newWorker.shutdown();
         receive.blockLast();
         assertThat(lastAwait, is(true));
     }
 
+    @Test
+    void shouldReEmitTriggerToTheSameWorkerGroup() throws Exception {
+        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, "workerGroupKey");
+        worker.run();
+
+        WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), "workerGroupKey");
+
+        // 2 trigger should happen because of the resubmit
+        CountDownLatch countDownLatch = new CountDownLatch(2);
+        Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, workerTriggerResult -> countDownLatch.countDown());
+
+        // we wait that the worker receive the trigger
+        CountDownLatch triggerCountDownLatch = new CountDownLatch(1);
+        Flux<Trigger> receiveTrigger = TestsUtils.receive(triggerQueue, either -> {
+            if (either.getLeft().getWorkerId().equals(worker.getId())) {
+                triggerCountDownLatch.countDown();
+            }
+        });
+        workerJobQueue.emit("workerGroupKey", workerTrigger);
+        assertTrue(triggerCountDownLatch.await(10, TimeUnit.SECONDS));
+        receiveTrigger.blockLast();
+        worker.shutdown();
+
+        Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, "workerGroupKey");
+        applicationContext.registerSingleton(newWorker);
+        newWorker.run();
+
+        boolean lastAwait = countDownLatch.await(10, TimeUnit.SECONDS);
+
+        newWorker.shutdown();
+        receive.blockLast();
+        assertThat(lastAwait, is(true));
+    }
+
+    @MockBean(WorkerGroupService.class)
+    WorkerGroupService workerGroupService() {
+        return new WorkerGroupService() {
+            @Override
+            public String resolveGroupFromKey(String workerGroupKey) {
+                return workerGroupKey;
+            }
+        };
+    }
+
+    @MockBean(WorkerGroupValidator.class)
+    WorkerGroupValidator workerGroupValidator() {
+        return new WorkerGroupValidator() {
+            @Override
+            public boolean isValid(
+                @Nullable WorkerGroup value,
+                @NonNull AnnotationValue<WorkerGroupValidation> annotationMetadata,
+                @NonNull ConstraintValidatorContext context) {
+                return true;
+            }
+        };
+    }
+
     private WorkerTask workerTask(Duration sleep) {
+        return workerTask(sleep, null);
+    }
+
+    private WorkerTask workerTask(Duration sleep, String workerGroupKey) {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
             .duration(sleep)
+            .workerGroup(workerGroupKey != null ? new WorkerGroup(workerGroupKey, null) : null)
             .build();
 
         Execution execution = TestsUtils.mockExecution(flowBuilder(sleep), ImmutableMap.of());
@@ -216,10 +334,15 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     }
 
     private WorkerTrigger workerTrigger(Duration sleep) {
+        return workerTrigger(sleep, null);
+    }
+
+    private WorkerTrigger workerTrigger(Duration sleep, String workerGroupKey) {
         SleepTrigger trigger = SleepTrigger.builder()
             .type(SleepTrigger.class.getName())
             .id("unit-test")
             .duration(sleep.toMillis())
+            .workerGroup(workerGroupKey != null ? new WorkerGroup(workerGroupKey, null) : null)
             .build();
 
         Map.Entry<ConditionContext, Trigger> mockedTrigger = TestsUtils.mockTrigger(runContextFactory, trigger);

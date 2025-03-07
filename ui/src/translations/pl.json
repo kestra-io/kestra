@@ -366,6 +366,36 @@
     },
     "email": "Email",
     "email length constraint": "Email nie może przekraczać 256 znaków",
+    "empty": {
+      "announcements": {
+        "content": "Ogłoszenia pozwalają powiadomić użytkowników o wszelkich zmianach lub poinformować ich o planowanej przerwie konserwacyjnej. Wystarczy wybrać typ ogłoszenia, zakres dat, w którym ma być wyświetlane, oraz napisać treść ogłoszenia.",
+        "title": "Nie masz jeszcze ogłoszeń!"
+      },
+      "apps": {
+        "content": "Rozpocznij tworzenie aplikacji do interakcji z Kestra z zewnętrznym światem.",
+        "title": "Nie masz jeszcze aplikacji!"
+      },
+      "concurrency_executions": {
+        "content": "Dowiedz się więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> w naszej dokumentacji.",
+        "title": "Brak trwających Ausführung dla tego flow."
+      },
+      "concurrency_limit": {
+        "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Limitach Nebenläufigkeit</a></strong> w naszej dokumentacji.",
+        "title": "Dla tego flow nie ustawiono żadnych limitów."
+      },
+      "dependencies": {
+        "content": "Przeczytaj więcej o <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> w naszej dokumentacji.",
+        "title": "Dla tego flow nie ustawiono żadnych zależności."
+      },
+      "plugins": {
+        "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limitach Concurrency</a></strong> w naszej dokumentacji.",
+        "title": "Dla tego namespace nie ustawiono domyślnych pluginów."
+      },
+      "triggers": {
+        "content": "Dowiedz się więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> w naszej dokumentacji.",
+        "title": "Twój flow nie ma żadnych Triggerów."
+      }
+    },
     "empty search": "Wyniki wyszukiwania są puste",
     "enable": "Włącz",
     "enable concurrency": "Włącz concurrency",

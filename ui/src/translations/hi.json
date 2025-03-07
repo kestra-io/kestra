@@ -366,6 +366,36 @@
     },
     "email": "ईमेल",
     "email length constraint": "ईमेल 256 वर्णों से अधिक नहीं होना चाहिए",
+    "empty": {
+      "announcements": {
+        "content": "घोषणाएँ आपको अपने उपयोगकर्ताओं को किसी भी परिवर्तन के बारे में सूचित करने या नियोजित रखरखाव डाउनटाइम के बारे में जानकारी देने की अनुमति देती हैं। बस घोषणा का प्रकार चुनें, वह तारीख सीमा चुनें जिसके लिए इसे प्रदर्शित किया जाना चाहिए, और घोषणा संदेश लिखें।",
+        "title": "आपके पास अभी तक कोई घोषणाएँ नहीं हैं!"
+      },
+      "apps": {
+        "content": "Kestra के साथ बाहरी दुनिया से इंटरैक्ट करने के लिए ऐप्स बनाना शुरू करें।",
+        "title": "आपके पास अभी तक कोई ऐप्स नहीं हैं!"
+      },
+      "concurrency_executions": {
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> के बारे में अधिक पढ़ें।",
+        "title": "इस Flow के लिए कोई चल रही Executions नहीं हैं।"
+      },
+      "concurrency_limit": {
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
+        "title": "इस Flow के लिए कोई सीमा निर्धारित नहीं है।"
+      },
+      "dependencies": {
+        "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।",
+        "title": "इस Flow के लिए कोई dependencies सेट नहीं हैं।"
+      },
+      "plugins": {
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
+        "title": "इस Namespace के लिए कोई प्लगइन डिफॉल्ट सेट नहीं हैं।"
+      },
+      "triggers": {
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> के बारे में अधिक पढ़ें।",
+        "title": "आपके flow में कोई Triggers नहीं हैं।"
+      }
+    },
     "empty search": "खोज परिणाम खाली हैं",
     "enable": "सक्षम करें",
     "enable concurrency": "concurrency सक्षम करें",

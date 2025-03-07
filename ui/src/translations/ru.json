@@ -366,6 +366,36 @@
     },
     "email": "Email",
     "email length constraint": "Email не должен превышать 256 символов",
+    "empty": {
+      "announcements": {
+        "content": "Объявления позволяют уведомлять ваших пользователей о любых изменениях или информировать их о запланированном времени простоя для технического обслуживания. Просто выберите тип объявления, диапазон дат, в течение которого оно должно отображаться, и напишите сообщение объявления.",
+        "title": "У вас пока нет объявлений!"
+      },
+      "apps": {
+        "content": "Начните создавать приложения для взаимодействия с Kestra из внешнего мира.",
+        "title": "У вас еще нет приложений!"
+      },
+      "concurrency_executions": {
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> в нашей документации.",
+        "title": "Нет текущих выполнений для этого flow."
+      },
+      "concurrency_limit": {
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">ограничениях на Concurrency</a></strong> в нашей документации.",
+        "title": "Для этого flow не установлены ограничения."
+      },
+      "dependencies": {
+        "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации.",
+        "title": "Для этого flow зависимости не установлены."
+      },
+      "plugins": {
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> в нашей документации.",
+        "title": "Для этого namespace не установлены значения по умолчанию для плагинов."
+      },
+      "triggers": {
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> в нашей документации.",
+        "title": "Ваш flow не имеет никаких Triggers."
+      }
+    },
     "empty search": "Результаты поиска пусты",
     "enable": "Включить",
     "enable concurrency": "Включить concurrency",

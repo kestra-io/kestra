@@ -27,42 +27,30 @@
                 />
             </el-card>
         </div>
-        <empty-state
-            v-else
-            :title="$t('concurrency-view.title_no_executions')"
-            :description="$t('concurrency-view.desc_no_executions')"
-            :image="noConcurrencyImage"
-        />
+        <Empty v-else type="concurrency_executions" />
     </template>
-    <empty-state
-        v-else
-        :title="$t('concurrency-view.title_no_limit')"
-        :description="$t('concurrency-view.desc_no_limit')"
-        :image="noConcurrencyImage"
-    />
+    <Empty v-else type="concurrency_limit" />
 </template>
 
 <script>
     import Executions from "../executions/Executions.vue";
-    import EmptyState from "../layout/EmptyState.vue";
+    import Empty from "../layout/empty/Empty.vue";
     import {mapState} from "vuex";
     import {State} from "@kestra-io/ui-libs";
     import Status from "../Status.vue";
-    import noConcurrencyImage from "../../assets/no_concurrency.svg";
 
     export default {
         inheritAttrs: false,
         components: {
             Status,
             Executions,
-            EmptyState
+            Empty
         },
         emits: ["expand-subflow"],
         data() {
             return {
                 runningCount: 0,
                 runningCountSet: false,
-                noConcurrencyImage
             }
         },
         methods: {

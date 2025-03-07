@@ -2,6 +2,7 @@ import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import FlowEditor from "../../../../src/components/flows/FlowEditor.vue";
 import YamlUtils from "../../../../src/utils/yamlUtils";
+import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
 
 
 export default {
@@ -28,12 +29,17 @@ const Template = (args) => ({
     const store = useStore()
     store.$http = {
         get: async (uri) => {
+            console.log("get request", uri)
             if(uri.endsWith("/plugins")) {
                 return {data: []}
             }
             return {data: {}}
         },
-        post: async () => {
+        post: async (uri) => {
+            console.log("post request", uri)
+            if(uri.endsWith("/graph")) {
+                return {data: allowFailureDemo}
+            }
             return {data: {}}
         }
     }
@@ -48,7 +54,10 @@ const Template = (args) => ({
         persistent:true,
     })
 
-    return () => <FlowEditor />;
+    return () =>
+        <div style="height: 100vh">
+            <FlowEditor />
+        </div>
   }
 });
 

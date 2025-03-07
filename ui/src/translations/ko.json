@@ -366,6 +366,36 @@
     },
     "email": "이메일",
     "email length constraint": "이메일은 256자를 초과할 수 없습니다.",
+    "empty": {
+      "announcements": {
+        "content": "공지사항을 통해 사용자에게 변경 사항을 알리거나 계획된 유지보수 중단 시간을 안내할 수 있습니다. 공지사항 유형을 선택하고, 표시할 날짜 범위를 설정한 후 공지사항 메시지를 작성하세요.",
+        "title": "아직 공지가 없습니다!"
+      },
+      "apps": {
+        "content": "Kestra와 외부 세계를 상호작용하는 앱을 만들기 시작하세요.",
+        "title": "앱이 아직 없습니다!"
+      },
+      "concurrency_executions": {
+        "content": "자세한 내용은 <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>에 대한 문서를 참조하세요.",
+        "title": "이 Flow에 대한 진행 중인 실행이 없습니다."
+      },
+      "concurrency_limit": {
+        "content": "자세한 내용은 <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">동시성 제한</a></strong>에 대한 문서를 참조하세요.",
+        "title": "이 Flow에 대한 제한이 설정되지 않았습니다."
+      },
+      "dependencies": {
+        "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>에 대한 자세한 내용은 문서를 참조하세요.",
+        "title": "이 Flow에 대한 종속성이 설정되지 않았습니다."
+      },
+      "plugins": {
+        "content": "자세한 내용은 <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>에 대한 문서를 참조하세요.",
+        "title": "이 Namespace에 대한 플러그인 기본값이 설정되어 있지 않습니다."
+      },
+      "triggers": {
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>에 대한 자세한 내용은 문서를 참조하세요.",
+        "title": "귀하의 flow에는 Trigger가 없습니다."
+      }
+    },
     "empty search": "검색 결과가 없습니다",
     "enable": "활성화",
     "enable concurrency": "동시성 활성화",

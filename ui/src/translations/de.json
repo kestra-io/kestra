@@ -366,6 +366,36 @@
     },
     "email": "E-Mail",
     "email length constraint": "E-Mail darf 256 Zeichen nicht überschreiten",
+    "empty": {
+      "announcements": {
+        "content": "Ankündigungen ermöglichen es Ihnen, Ihre Benutzer über Änderungen zu informieren oder sie über geplante Wartungsarbeiten zu benachrichtigen. Wählen Sie einfach den Ankündigungstyp, den Zeitraum, in dem sie angezeigt werden soll, und schreiben Sie die Ankündigungsnachricht.",
+        "title": "Sie haben noch keine Ankündigungen!"
+      },
+      "apps": {
+        "content": "Beginnen Sie mit dem Erstellen von Apps, um mit Kestra von der Außenwelt zu interagieren.",
+        "title": "Sie haben noch keine Apps!"
+      },
+      "concurrency_executions": {
+        "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Ausführungen</a></strong> in unserer Dokumentation.",
+        "title": "Keine laufenden Ausführungen für diesen Flow."
+      },
+      "concurrency_limit": {
+        "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
+        "title": "Für diesen Flow sind keine Grenzen festgelegt."
+      },
+      "dependencies": {
+        "content": "Lesen Sie mehr über <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow-Abhängigkeiten</a> in unserer Dokumentation.",
+        "title": "Für diesen Flow sind keine Abhängigkeiten festgelegt."
+      },
+      "plugins": {
+        "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
+        "title": "Für diesen Namespace sind keine Plugin-Standardeinstellungen festgelegt."
+      },
+      "triggers": {
+        "content": "Erfahren Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in unserer Dokumentation.",
+        "title": "Ihr flow hat keine Trigger."
+      }
+    },
     "empty search": "Suchergebnisse sind leer",
     "enable": "Aktivieren",
     "enable concurrency": "Nebenläufigkeit aktivieren",

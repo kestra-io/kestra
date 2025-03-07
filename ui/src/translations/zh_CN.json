@@ -366,6 +366,36 @@
     },
     "email": "电子邮件",
     "email length constraint": "电子邮件不得超过256个字符",
+    "empty": {
+      "announcements": {
+        "content": "公告允许您通知用户任何更改或告知他们计划的维护停机。只需选择公告类型、显示的日期范围，并撰写公告消息。",
+        "title": "您还没有公告！"
+      },
+      "apps": {
+        "content": "开始构建应用程序，以便与外部世界的Kestra进行交互。",
+        "title": "您还没有应用程序！"
+      },
+      "concurrency_executions": {
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>的信息。",
+        "title": "此Flow没有正在进行的Executions。"
+      },
+      "concurrency_limit": {
+        "content": "了解更多关于我们文档中的<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
+        "title": "此Flow未设置限制。"
+      },
+      "dependencies": {
+        "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
+        "title": "此Flow未设置依赖项。"
+      },
+      "plugins": {
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
+        "title": "此Namespace未设置插件默认值。"
+      },
+      "triggers": {
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>的信息。",
+        "title": "您的 flow 没有任何 Triggers。"
+      }
+    },
     "empty search": "搜索结果为空",
     "enable": "启用",
     "enable concurrency": "启用并发",

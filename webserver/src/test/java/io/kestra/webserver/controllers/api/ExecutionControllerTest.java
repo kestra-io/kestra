@@ -22,7 +22,6 @@ import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
-import io.kestra.core.runners.InputsTest;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.webserver.responses.BulkResponse;
@@ -76,24 +75,6 @@ class ExecutionControllerTest {
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TESTS_WEBHOOK_KEY = "a-secret-key";
-
-    public static Map<String, Object> inputs = ImmutableMap.<String, Object>builder()
-        .put("failed", "NO")
-        .put("string", "myString")
-        .put("enum", "ENUM_VALUE")
-        .put("int", "42")
-        .put("float", "42.42")
-        .put("instant", "2019-10-06T18:27:49Z")
-        .put("file", Objects.requireNonNull(InputsTest.class.getClassLoader().getResource("data/hello.txt")).getPath())
-        .put("secret", "secret")
-        .put("array", "[1, 2, 3]")
-        .put("json", "{}")
-        .put("yaml", """
-            some: property
-            alist:
-            - of
-            - values""")
-        .build();
 
     @SneakyThrows
     @BeforeEach

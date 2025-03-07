@@ -7,7 +7,7 @@
             </el-checkbox-button>
         </el-checkbox-group>
     </div>
-    <MultiPanelTabs v-model="panels" />
+    <MultiPanelTabs v-model="panels" @remove-tab="removeTab" />
 </template>
 
 <script setup lang="ts">
@@ -15,7 +15,9 @@
     import {useRouteQuery} from "@vueuse/router";
     import MultiPanelTabs, {Panel} from "../MultiPanelTabs.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
+    import {useCodeTabs} from "./useCodeTabs";
 
+    const {codeTabs} = useCodeTabs();
 
     const activeTabsUrl = useRouteQuery("activeTabs", DEFAULT_ACTIVE_TABS)
     const previousActiveTabs = ref(activeTabsUrl.value)
@@ -24,13 +26,23 @@
         set: (value) => activeTabsUrl.value = value
     })
 
-    const panels = ref<Panel[]>(activeTabs.value.map(t => {
+    const panels = ref<Panel[]>(activeTabs.value.map((t: string) => {
+        if(t === "code"){
+            return {
+                activeTab: codeTabs.value[0],
+                tabs: codeTabs.value
+            }
+        }
         const element = EDITOR_ELEMENTS.find(e => e.value === t)!
         return {
             activeTab: element,
             tabs: [element]
         }
     }))
+
+    function removeTab(tab: string){
+        activeTabs.value = activeTabs.value.filter(t => t !== tab)
+    }
 
     watch(activeTabs, (newVal) => {
         const previous = previousActiveTabs.value
@@ -42,9 +54,9 @@
         for(const p of panels.value){
             p.tabs = p.tabs.filter(
                 t => newVal.includes(t.value)
+                    || (t.value.startsWith("code-") && newVal.includes("code"))
             )
         }
-
 
         // add the tabs
         for(const t of toAdd){

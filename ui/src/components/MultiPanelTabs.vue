@@ -29,6 +29,7 @@
                     >
                         <component :is="tab.button.icon" />
                         {{ tab.button.label }}
+                        <CloseIcon v-if="tab.closable" @click.stop="destroyTab(panelIndex, tab)" />
                     </button>
                     <div
                         v-else
@@ -55,6 +56,7 @@
     import {nextTick, ref, watch} from "vue";
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
+    import CloseIcon from "vue-material-design-icons/Close.vue"
 
     export interface Tab {
         button: {
@@ -65,6 +67,7 @@
         fromPanel?: boolean
         value: string,
         component: any
+        closable?: boolean
     }
 
     interface TabInfo {
@@ -83,6 +86,10 @@
     const panels = defineModel<Panel[]>({
         required: true,
     })
+
+    const emit = defineEmits<{
+        removeTab: [tab: string]
+    }>()
 
     const movedTab = ref<TabInfo | null>(null);
 
@@ -243,6 +250,16 @@
             // add the tab to the target panel in-place of the hovered simulated tab
             panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab);
         }
+    }
+
+    function destroyTab(panelIndex:number, tab: Tab){
+        const panel = panels.value[panelIndex];
+        const tabIndex = panel.tabs.findIndex((t) => t.value === tab.value);
+        panel.tabs.splice(tabIndex, 1);
+        if(panel.activeTab.value === tab.value){
+            panel.activeTab = panel.tabs[0];
+        }
+        emit("removeTab", tab.value)
     }
 
     watch(panels, () => {

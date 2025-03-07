@@ -2,10 +2,10 @@
     <editor
         class="position-relative"
         ref="editorDomElement"
-        :model-value="flowYaml"
+        :model-value="source"
         :schema-type="isCurrentTabFlow ? 'flow': undefined"
-        :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
-        :extension="currentTab?.extension"
+        :lang="extension === undefined ? 'yaml' : undefined"
+        :extension="extension"
         :navbar="false"
         :read-only="isReadOnly"
         :creating="isCreating"
@@ -19,27 +19,64 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref} from "vue";
+    import {computed, onActivated, onMounted, ref} from "vue";
     import {useStore} from "vuex";
     import Editor from "./Editor.vue";
     import KeyShortcuts from "./KeyShortcuts.vue";
 
     const store = useStore();
 
-    const editorDomElement = ref<any>(null);
+    const props = withDefaults(defineProps<{
+        path: string
+        name: string
+        extension: string | undefined
+        flow?: boolean
+        dirty?: boolean
+    }>(), {
+        dirty: false,
+        flow: false
+    });
 
-    const flow = computed(() => store.getters["flow/flow"])
-    const flowYaml = computed(() => store.getters["flow/flowYaml"]);
-    const isCreating = computed(() => store.state.flow.isCreating);
+    const source = computed(() => {
+        return props.flow
+            ? store.getters["flow/flowYaml"]
+            : store.state.editor.tabs.find((t:any) => t.path === props.path)?.content;
+    })
 
-    function editorUpdate(newValue: string){
-        store.commit("flow/setFlowYaml", newValue);
+    async function loadFile(){
+        if(props.dirty || props.flow){
+            return;
+        }
+        const content = await store.dispatch("namespace/readFile", {namespace: namespace.value, path: props.path})
+        store.commit("editor/setTabContent", {
+            path: props.path,
+            content
+        })
     }
 
-    const currentTab = computed(() => store.state.editor.current);
-    const isCurrentTabFlow = computed(() => currentTab.value?.extension === undefined)
+    onMounted(() => {
+        loadFile()
+    });
 
-    const isReadOnly = computed(() => flow.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"])
+    onActivated(() => {
+        loadFile()
+    });
+
+    const editorDomElement = ref<any>(null);
+
+    const namespace = computed(() => store.getters["flow/namespace"]);
+    const flowStore = computed(() => store.getters["flow/flow"]);
+    const isCreating = computed(() => store.state.flow.isCreating);
+    const isCurrentTabFlow = computed(() => props.flow)
+    const isReadOnly = computed(() => flowStore.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"])
+
+    function editorUpdate(newValue: string){
+        if(isCurrentTabFlow.value){
+            store.commit("flow/setFlowYaml", newValue);
+        }
+        store.commit("editor/setTabContent", {content: newValue, path: props.path});
+    }
+
 
     function updatePluginDocumentation(event: string | undefined, task: any){
         store.dispatch("plugin/updateDocumentation", {event,task});
@@ -51,7 +88,7 @@
         })
     }
 
-    const execute = (_) => {
+    const execute = () => {
         store.commit("flow/executeFlow", true);
     };
 </script>

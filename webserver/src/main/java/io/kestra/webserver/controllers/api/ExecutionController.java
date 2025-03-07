@@ -112,6 +112,8 @@ import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
@@ -124,6 +126,8 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Validated
 @Controller("/api/v1/executions")
 public class ExecutionController {
+    private static final Pattern SECRET_FUNCTION = Pattern.compile("(.*)(secret\\([^)]+\\))(.*)");
+
     @Nullable
     @Value("${micronaut.server.context-path}")
     protected String basePath;
@@ -320,8 +324,18 @@ public class ExecutionController {
         }
     }
 
-    protected String runContextRender(Flow flow, Task task, Execution execution, TaskRun taskRun, String expression) throws IllegalVariableEvaluationException {
-        return runContextFactory.of(flow, task, execution, taskRun, false).render(expression);
+    private String runContextRender(Flow flow, Task task, Execution execution, TaskRun taskRun, String expression) throws IllegalVariableEvaluationException {
+        RunContext runContext = runContextFactory.of(flow, task, execution, taskRun, false);
+        if (expression.contains("{")) { // fast backoff from regex
+            Matcher matcher = SECRET_FUNCTION.matcher(expression);
+            String maskedExpression = expression;
+            while (matcher.find()) {
+                maskedExpression = matcher.replaceFirst("$1\"******\"$3");
+                matcher = SECRET_FUNCTION.matcher(maskedExpression);
+            }
+            return runContext.render(maskedExpression);
+        }
+        return runContext.render(expression);
     }
 
     @SuperBuilder

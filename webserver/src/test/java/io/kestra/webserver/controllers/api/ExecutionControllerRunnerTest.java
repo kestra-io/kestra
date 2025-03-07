@@ -73,12 +73,16 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
+@Slf4j
 @KestraTest(startRunner = true)
 class ExecutionControllerRunnerTest {
     public static final String URL_LABEL_VALUE = "https://some-url.com";
@@ -1546,5 +1550,49 @@ class ExecutionControllerRunnerTest {
             it -> it.getState().getCurrent() == state,
             throwRunnable(() -> this.executionQueue.emit(execution)),
             Duration.ofSeconds(1));
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
+    void shouldRemoveLabelsFromExecution() throws QueueException, TimeoutException {
+
+        Execution result = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
+        Execution executionWithLabels = client.toBlocking().retrieve(
+            HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", List.of(new Label("flow-label-1",
+                "flow-label-1"),new Label("flow-label-2","flow-label-2"))),
+            Execution.class
+        );
+
+        // Verify labels were added
+        assertThat(executionWithLabels, notNullValue());
+        assertThat(executionWithLabels.getLabels(), hasSize(2));
+        assertThat(executionWithLabels.getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
+        assertThat(executionWithLabels.getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
+
+        // Now remove one label by sending a request with only one label
+        Execution executionWithOneLabel = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/executions/" + executionWithLabels.getId() + "/labels",
+                    List.of(new Label("flow-label-1", "flow-label-1"))),
+            Execution.class
+        );
+
+        // Verify one label was removed
+        assertThat(executionWithOneLabel, notNullValue());
+        assertThat(executionWithOneLabel.getLabels(), hasSize(1));
+        assertThat(executionWithLabels.getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
+
+        // Now remove all labels by sending an empty list
+        Execution executionWithNoLabels = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/executions/" + executionWithLabels.getId() + "/labels",
+                    Collections.emptyList()),
+            Execution.class
+        );
+
+        // Verify all labels were removed
+        assertThat(executionWithNoLabels, notNullValue());
+        assertThat(executionWithNoLabels.getLabels(), hasSize(0));
     }
 }

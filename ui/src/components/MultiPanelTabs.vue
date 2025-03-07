@@ -29,7 +29,7 @@
                     >
                         <component :is="tab.button.icon" />
                         {{ tab.button.label }}
-                        <CloseIcon v-if="tab.closable" @click.stop="destroyTab(panelIndex, tab)" />
+                        <CloseIcon @click.stop="destroyTab(panelIndex, tab)" />
                     </button>
                     <div
                         v-else
@@ -67,7 +67,6 @@
         fromPanel?: boolean
         value: string,
         component: any
-        closable?: boolean
     }
 
     interface TabInfo {

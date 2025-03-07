@@ -128,6 +128,11 @@
             event: "change"
         },
         watch: {
+            path(newValue, oldValue) {
+                if (newValue !== oldValue) {
+                    this.changeTab(newValue, () => this.value);
+                }
+            },
             tabs(newValue, oldValue) {
                 if (newValue?.length < oldValue?.length) {
                     const openedTabPaths = newValue.map(tab => (tab.path ?? tab.name));

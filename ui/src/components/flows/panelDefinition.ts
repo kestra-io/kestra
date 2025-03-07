@@ -20,7 +20,7 @@ export const EDITOR_ELEMENTS = [
     {
         button: {
             icon: markRaw(CodeTagsIcon),
-            label: "Code"
+            label: "Flow Code"
         },
         value: "code",
         component: markRaw(EditorWrapper),
@@ -32,7 +32,6 @@ export const EDITOR_ELEMENTS = [
         },
         value: "nocode",
         component: markRaw(NoCodeWrapper),
-        closable: true,
     },
     {
         button: {
@@ -41,7 +40,6 @@ export const EDITOR_ELEMENTS = [
         },
         value: "topology",
         component: markRaw(LowCodeEditorWrapper),
-        closable: true,
     },
     {
         button: {
@@ -50,7 +48,6 @@ export const EDITOR_ELEMENTS = [
         },
         value: "doc",
         component: markRaw(PluginDocumentationWrapper),
-        closable: true,
     },
     {
         button: {
@@ -59,7 +56,6 @@ export const EDITOR_ELEMENTS = [
         },
         value: "files",
         component: markRaw(EditorSidebarWrapper),
-        closable: true,
     },
     {
         button: {
@@ -68,6 +64,5 @@ export const EDITOR_ELEMENTS = [
         },
         value: "blueprints",
         component: markRaw(BlueprintsWrapper),
-        closable: true,
     }
 ]

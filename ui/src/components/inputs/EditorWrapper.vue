@@ -9,6 +9,7 @@
         :navbar="false"
         :read-only="isReadOnly"
         :creating="isCreating"
+        :path="props.path"
         @update:model-value="editorUpdate"
         @cursor="updatePluginDocumentation"
         @save="save"
@@ -27,14 +28,17 @@
     const store = useStore();
 
     const props = withDefaults(defineProps<{
-        path: string
-        name: string
-        extension: string | undefined
+        path?: string
+        name?: string
+        extension?: string | undefined
         flow?: boolean
         dirty?: boolean
     }>(), {
+        path: "flow.yaml",
+        name: "Flow",
+        extension: "yaml",
         dirty: false,
-        flow: false
+        flow: true
     });
 
     const source = computed(() => {

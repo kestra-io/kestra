@@ -4,7 +4,7 @@
             <img :src>
 
             <h2>{{ t(`empty.${props.type}.title`) }}</h2>
-            <p>{{ t(`empty.${props.type}.content`) }}</p>
+            <p v-html="t(`empty.${props.type}.content`)" />
 
             <slot name="button" />
             <slot name="content" />

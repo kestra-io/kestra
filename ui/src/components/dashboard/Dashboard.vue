@@ -158,12 +158,13 @@
                 >
                     <Markdown
                         :source="description"
+                        :html="false"
                         class="p-4 description"
                     />
                 </el-dialog>
             </span>
 
-            <Markdown :source="description" class="p-4 description" />
+            <Markdown :source="description" :html="false" class="p-4 description" />
         </div>
         <ExecutionsInProgress
             v-else
@@ -498,11 +499,7 @@ $spacing: 20px;
 
     .description {
         border: none !important;
-        color: #564a75;
-
-        html.dark & {
-            color: #e3dbff;
-        }
+        color: var(ks-content-secondary);
     }
 }
 

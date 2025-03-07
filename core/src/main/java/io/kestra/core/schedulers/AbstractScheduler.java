@@ -16,6 +16,7 @@ import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -30,7 +31,7 @@ import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Either;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.models.triggers.RecoverMissedSchedules;
+import io.kestra.core.models.flows.Flow;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.inject.qualifiers.Qualifiers;
@@ -60,6 +61,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.utils.Rethrow.throwFunction;
+
 @Slf4j
 @Singleton
 @SuppressWarnings("this-escape")
@@ -70,7 +73,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private final QueueInterface<WorkerJob> workerTaskQueue;
     private final WorkerTriggerResultQueueInterface workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
-    @SuppressWarnings("rawtypes") private final Optional<QueueInterface> clusterEventQueue;
+    @SuppressWarnings("rawtypes")
+    private final Optional<QueueInterface> clusterEventQueue;
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final RunContextInitializer runContextInitializer;
@@ -268,6 +272,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
         flows
             .stream()
+            .map(flow -> pluginDefaultService.injectDefaults(flow, log))
+            .filter(Objects::nonNull)
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .flatMap(flow -> flow.getTriggers().stream().filter(trigger -> trigger instanceof WorkerTriggerInterface).map(trigger -> new FlowAndTrigger(flow, trigger)))
             .forEach(flowAndTrigger -> {
@@ -408,8 +414,20 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private List<FlowWithTriggers> computeSchedulable(List<FlowWithSource> flows, List<Trigger> triggerContextsToEvaluate, ScheduleContextInterface scheduleContext) {
         List<String> flowToKeep = triggerContextsToEvaluate.stream().map(Trigger::getFlowId).toList();
 
+        triggerContextsToEvaluate.stream()
+            .filter(trigger -> !flows.stream().map(FlowWithSource::uidWithoutRevision).toList().contains(Flow.uid(trigger)))
+            .forEach(trigger -> {
+                try {
+                    this.triggerState.delete(trigger);
+                } catch (QueueException e) {
+                    log.error("Unable to delete the trigger: {}.{}.{}", trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId(), e);
+                }
+            });
+
         return flows
             .stream()
+            .map(flow -> pluginDefaultService.injectDefaults(flow, log))
+            .filter(Objects::nonNull)
             .filter(flow -> flowToKeep.contains(flow.getId()))
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .filter(flow -> !flow.isDisabled() && !(flow instanceof FlowWithException))
@@ -438,7 +456,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             logError(conditionContext, flow, abstractTrigger, e);
                             return null;
                         }
-                        this.triggerState.save(triggerContext, scheduleContext);
+                        this.triggerState.save(triggerContext, scheduleContext, "/kestra/services/scheduler/compute-schedulable/save/lastTrigger-nextDate-null");
                     } else {
                         triggerContext = lastTrigger;
                     }
@@ -565,7 +583,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                                 Trigger triggerRunning = Trigger.of(f.getTriggerContext(), now);
                                 var flowWithTrigger = f.toBuilder().triggerContext(triggerRunning).build();
                                 try {
-                                    this.triggerState.save(triggerRunning, scheduleContext);
+                                    this.triggerState.save(triggerRunning, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/polling");
                                     this.sendWorkerTriggerToWorker(flowWithTrigger);
                                 } catch (InternalException e) {
                                     logService.logTrigger(
@@ -590,7 +608,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                                         schedule.nextEvaluationDate(f.getConditionContext(), Optional.of(f.getTriggerContext()))
                                     );
                                     trigger = trigger.checkBackfill();
-                                    this.triggerState.save(trigger, scheduleContext);
+                                    this.triggerState.save(trigger, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/schedule");
                                 }
                             } else {
                                 logService.logTrigger(
@@ -608,7 +626,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                                 logError(f, e);
                             }
                             var trigger = f.getTriggerContext().toBuilder().nextExecutionDate(nextExecutionDate).build().checkBackfill();
-                            this.triggerState.save(trigger, scheduleContext);
+                            this.triggerState.save(trigger, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-false");
                         }
                     } catch (Exception ie) {
                         // validate schedule condition can fail to render variables
@@ -625,13 +643,14 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             .build();
                         ZonedDateTime nextExecutionDate = this.nextEvaluationDate(f.getAbstractTrigger());
                         var trigger = f.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
-                        this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
+                        this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handle/save/on-error"));
                     }
                 });
         });
     }
 
-    private void handleEvaluateWorkerTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime nextExecutionDate) {
+    private void handleEvaluateWorkerTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime
+        nextExecutionDate) {
         Optional.ofNullable(result)
             .ifPresent(executionWithTrigger -> {
                     log(executionWithTrigger);
@@ -649,7 +668,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             );
     }
 
-    private void handleEvaluateSchedulingTriggerResult(Schedulable schedule, SchedulerExecutionWithTrigger result, ConditionContext conditionContext, ScheduleContextInterface scheduleContext) throws Exception {
+    private void handleEvaluateSchedulingTriggerResult(Schedulable schedule, SchedulerExecutionWithTrigger
+        result, ConditionContext conditionContext, ScheduleContextInterface scheduleContext) throws Exception {
         log(result);
         Trigger trigger = Trigger.of(
             result.getTriggerContext(),
@@ -665,10 +685,11 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
         // Schedule triggers are being executed directly from the handle method within the context where triggers are locked.
         // So we must save them by passing the scheduleContext.
-        this.saveLastTriggerAndEmitExecution(result.getExecution(), trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
+        this.saveLastTriggerAndEmitExecution(result.getExecution(), trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handleEvaluateSchedulingTriggerResult/save"));
     }
 
-    protected void saveLastTriggerAndEmitExecution(Execution execution, Trigger trigger, Consumer<Trigger> saveAction) {
+    protected void saveLastTriggerAndEmitExecution(Execution execution, Trigger
+        trigger, Consumer<Trigger> saveAction) {
         saveAction.accept(trigger);
         this.emitExecution(execution, trigger);
     }
@@ -844,7 +865,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         }
     }
 
-    private void logError(ConditionContext conditionContext, FlowWithSource flow, AbstractTrigger trigger, Throwable e) {
+    private void logError(ConditionContext conditionContext, FlowWithSource flow, AbstractTrigger
+        trigger, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
 
         logService.logFlow(
@@ -882,7 +904,10 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             .conditionContext(flowWithTriggerWithDefault.conditionContext)
             .build();
         try {
-            this.workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTrigger).map(group -> group.getKey()).orElse(null), workerTrigger);
+            Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(workerTrigger);
+            String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> flowWithTriggerWithDefault.conditionContext.getRunContext().render(workerGroup.getKey())))
+                .orElse(null);
+            this.workerTaskQueue.emit(workerGroupKey, workerTrigger);
         } catch (QueueException e) {
             log.error("Unable to emit the Worker Trigger job", e);
         }
@@ -1016,5 +1041,13 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     @Override
     public ServiceState getState() {
         return state.get();
+    }
+
+    protected Trigger resetExecution(FlowWithSource flow, Execution execution, Trigger trigger) {
+        Flow flowWithDefaults = pluginDefaultService.injectDefaults(flow, execution);
+        RunContext runContext = runContextFactory.of(flowWithDefaults, flowWithDefaults.findTriggerByTriggerId(trigger.getTriggerId()));
+        ConditionContext conditionContext = conditionService.conditionContext(runContext, flowWithDefaults, null);
+
+        return trigger.resetExecution(flowWithDefaults, execution, conditionContext);
     }
 }

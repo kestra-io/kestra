@@ -16,20 +16,25 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.utils.Await;
 import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Slf4j
 @KestraTest(startRunner = true)
 class ExecutionServiceTest {
     @Inject
@@ -379,13 +384,14 @@ class ExecutionServiceTest {
 
     @Test
     @ExecuteFlow("flows/valids/logs.yaml")
-    void deleteExecution(Execution execution) throws IOException {
+    void deleteExecution(Execution execution) throws IOException, TimeoutException {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        Await.until(() -> logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.TRACE).size() == 5, Duration.ofMillis(10), Duration.ofSeconds(5));
 
         executionService.delete(execution, true, true, true);
 
         assertThat(executionRepository.findById(execution.getTenantId(),execution.getId()), is(Optional.empty()));
-        assertThat(logRepository.findByExecutionId(execution.getTenantId(),execution.getId(), Level.INFO), hasSize(0));
+        assertThat(logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.INFO), empty());
     }
 
     @Test

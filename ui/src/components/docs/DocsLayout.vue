@@ -169,30 +169,23 @@
 
         :deep(.video-container) {
             position: relative;
-            margin: 2rem 0;
-            padding-top: 35.25%;
+            margin-top: 2rem;
+            margin-bottom: -1rem;
+            padding-top: 56.75%;
+            overflow: hidden;
             background-color: var(--ks-background-body);
-            height: 28.351rem;
             border-radius: calc($spacer / 2);
             border: 1px solid var(--ks-border-secondary);
 
-            @media only screen and (max-width: 1919px) {
-                padding-top: 56.25%;
-                height: auto;
-                background-color: transparent;
-            }
-
             iframe {
-                margin: auto;
-                max-width: 43.7rem;
-                max-height: 24.351rem;
                 position: absolute;
                 top: 0;
                 left: 0;
-                bottom: 0;
-                right: 0;
+                margin: auto;
                 width: 100%;
                 height: 100%;
+                max-width: 100%;
+                max-height: 100%;
             }
         }
 

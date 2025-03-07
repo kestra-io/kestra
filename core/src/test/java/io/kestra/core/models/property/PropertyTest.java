@@ -298,6 +298,30 @@ class PropertyTest {
         assertThat(output.getMap().get("mapKey2"), is("mapValue2"));
     }
 
+    @Test
+    void aListToRender() throws Exception {
+        var task = DynamicPropertyExampleTask.builder()
+            .items(new Property<>("""
+                ["python test.py --input1 \\"{{ item1 }}\\" --input2 \\"{{ item2 }}\\"", "'gs://{{ renderOnce(\\"bucket\\") }}/{{ 'table' }}/{{ 'file' }}_*.csv.gz'"]"""))
+            .properties(new Property<>("""
+                {
+                  "key1": "{{value1}}",
+                  "key2": "{{value2}}"
+                }"""))
+            .build();
+        var runContext = runContextFactory.of(Map.ofEntries(
+            entry("item1", "item1"),
+            entry("item2", "item2"),
+            entry("value1", "value1"),
+            entry("value2", "value2")
+        ));
+
+        var output = task.run(runContext);
+
+        assertThat(output, notNullValue());
+        assertThat(output.getList(), containsInAnyOrder("python test.py --input1 \"item1\" --input2 \"item2\"", "'gs://bucket/table/file_*.csv.gz'"));
+    }
+
     @Builder
     @Getter
     private static class TestObj {

@@ -24,6 +24,7 @@ export type Buttons = {
 export type CurrentItem = {
     label: string;
     value: string[] | { startDate: Date; endDate: Date }[];
+    operation?: string;
     comparator?: Comparator;
     persistent?: boolean;
 };

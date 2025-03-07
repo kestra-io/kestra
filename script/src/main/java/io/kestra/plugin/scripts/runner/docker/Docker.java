@@ -151,6 +151,11 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     private static final String LEGACY_VOLUME_ENABLED_CONFIG = "kestra.tasks.scripts.docker.volume-enabled";
     private static final String VOLUME_ENABLED_CONFIG = "volume-enabled";
 
+    /**
+     * Container stop command grace period (in seconds).
+     */
+    private static final Integer STOP_TIMEOUT_SEC = 10;
+
     @Schema(
         title = "Docker API URI."
     )
@@ -202,10 +207,11 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
     @Schema(
         title = "List of port bindings.",
-        description = "Corresponds to the --publish (-p) option of the docker run CLI command using the format `ip:dockerHostPort:containerPort/protocol`. Possible example : \n" +
-            "- 8080:80/udp" +
-            "- 127.0.0.1:8080:80" +
-            "- 127.0.0.1:8080:80/udp"
+        description = "Corresponds to the `--publish` (`-p`) option of the docker run CLI command using the format `ip:dockerHostPort:containerPort/protocol`.\n" +
+            "Possible example :\n" +
+            "- `8080:80/udp`" +
+            "- `127.0.0.1:8080:80`" +
+            "- `127.0.0.1:8080:80/udp`"
     )
     @PluginProperty(dynamic = true)
     protected List<String> portBindings;
@@ -336,6 +342,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
     @Override
     public TaskRunnerResult<DockerTaskRunnerDetailResult> run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception {
+        Boolean renderedDelete = runContext.render(delete).as(Boolean.class).orElseThrow();
+
         if (taskCommands.getContainerImage() == null && this.image == null) {
             throw new IllegalArgumentException("This task runner needs the `containerImage` property to be set");
         }
@@ -427,11 +435,13 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             // start container
             dockerClient.startContainerCmd(exec.getId()).exec();
 
+            List<String> renderedCommands = runContext.render(taskCommands.getCommands()).asList(String.class);
+
             if (logger.isDebugEnabled()) {
                 logger.debug(
                     "Starting command with container id {} [{}]",
                     exec.getId(),
-                    String.join(" ", taskCommands.getCommands())
+                    String.join(" ", renderedCommands)
                 );
             }
 
@@ -535,7 +545,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     // come to a normal end.
                     kill();
 
-                    if (Boolean.TRUE.equals(runContext.render(delete).as(Boolean.class).orElseThrow())) {
+                    if (Boolean.TRUE.equals(renderedDelete)) {
                         dockerClient.removeContainerCmd(exec.getId()).exec();
                         if (logger.isTraceEnabled()) {
                             logger.trace("Container deleted: {}", exec.getId());
@@ -590,11 +600,20 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         }
     }
 
+    /**
+     * Attempts to gracefully stop the specified Docker container.
+     * After the {@link Docker#STOP_TIMEOUT_SEC} grace period, it kills the container.<br/>
+     * See <a href="https://docs.docker.com/reference/cli/docker/container/stop/">{@code docker container stop}</a>.
+     *
+     * @param dockerClient client for the Docker Engine API
+     * @param containerId  container to kill
+     * @param logger       standard logger
+     */
     private void kill(final DockerClient dockerClient, final String containerId, final Logger logger) {
         try {
             InspectContainerResponse inspect = dockerClient.inspectContainerCmd(containerId).exec();
             if (Boolean.TRUE.equals(inspect.getState().getRunning())) {
-                dockerClient.killContainerCmd(containerId).exec();
+                dockerClient.stopContainerCmd(containerId).withTimeout(STOP_TIMEOUT_SEC).exec();
 
                 if (logger.isTraceEnabled()) {
                     logger.trace("Container was killed.");
@@ -639,7 +658,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         return DockerService.client(dockerClientConfig);
     }
 
-    private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars) throws IllegalVariableEvaluationException {
+    private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars) throws IllegalVariableEvaluationException, IOException {
         Optional<Boolean> volumeEnabledConfig = runContext.pluginConfiguration(VOLUME_ENABLED_CONFIG);
         if (volumeEnabledConfig.isEmpty()) {
             // check the legacy property and emit a warning if used
@@ -777,7 +796,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
         return container
             .withHostConfig(hostConfig)
-            .withCmd(taskCommands.getCommands())
+            .withCmd(runContext.render(taskCommands.getCommands()).asList(String.class))
             .withAttachStderr(true)
             .withAttachStdout(true);
     }

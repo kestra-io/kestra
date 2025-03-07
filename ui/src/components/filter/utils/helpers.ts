@@ -1,12 +1,12 @@
-export const encodeParams = (path, filters, OPTIONS) => {
-    if(isSearchPath(path)) {return encodeSearchParams(filters, OPTIONS); }
+export const encodeParams = (route, filters, OPTIONS) => {
+    if(isSearchPath(route)) { return encodeSearchParams(filters, OPTIONS); }
 
     const encode = (values, key) => {
         return values
             .map((v) => {
-                if (key === "childFilter" && v === "ALL") {
-                    return null;
-                }
+                if (key === "childFilter" && v === "ALL") return null;
+                else if(key === "q") return v;
+
                 const encoded = encodeURIComponent(v);
                 return key === "labels"
                     ? encoded.replace(/%3A/g, ":")
@@ -44,8 +44,8 @@ export const encodeParams = (path, filters, OPTIONS) => {
     }, {});
 };
 
-export const decodeParams = (path, query, include, OPTIONS) => {
-    if(isSearchPath(path)) {return decodeSearchParams(query, include, OPTIONS); }
+export const decodeParams = (route, query, include, OPTIONS) => {
+    if(isSearchPath(route)) {return decodeSearchParams(query, include, OPTIONS); }
 
 
     let params = Object.entries(query)
@@ -104,17 +104,17 @@ export const decodeParams = (path, query, include, OPTIONS) => {
 
 export const encodeSearchParams = (filters, OPTIONS) => {
     const encode = (values, key, operation) => {
-        return values.reduce((acc, v) => {
-            if (key === "childFilter" && v === "ALL") return acc;
+        const valuesArray = Array.isArray(values) ? values : [values];
 
-            const encoded = encodeURIComponent(v);
+        return valuesArray.reduce((acc, v) => {
+            if (key === "childFilter" && v === "ALL") return acc;
 
             if (key === "labels") {
                 const [labelKey, labelValue] = v.split(":");
-                acc[`filters[${key}][${operation}][${labelKey}]`] = encodeURIComponent(labelValue);
+                acc[`filters[${key}][${operation}][${labelKey}]`] = labelValue;
             } else {
                 const paramKey = `filters[${key}][${operation}]`;
-                acc[paramKey] = acc[paramKey] ? `${acc[paramKey]},${encoded}` : encoded;
+                acc[paramKey] = acc[paramKey] ? `${acc[paramKey]},${v}` : v;
             }
             return acc;
         }, {});
@@ -130,8 +130,10 @@ export const encodeSearchParams = (filters, OPTIONS) => {
                 Object.assign(query, encode(filter.value, key, operation));
             } else if (filter.value?.length > 0) {
                 const {startDate, endDate} = filter.value[0];
-                query["filters[startDate][$gte]"] = startDate;
-                query["filters[endDate][$lte]"] = endDate;
+                if(startDate && endDate) {
+                    query["filters[startDate][$gte]"] = startDate;
+                    query["filters[endDate][$lte]"] = endDate;
+                }
             }
         }
         return query;
@@ -167,11 +169,11 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
                 startDate: query["filters[startDate][$gte]"],
                 endDate: query["filters[endDate][$lte]"]
             }],
-            operation: "$range"
+            operation: "$between"
         });
     }
 
     return params;
 };
 
-export const isSearchPath = (path: string) =>["/admin/triggers","/dashboards/default", "/flows", "/executions", "/logs", "/dashboard"].includes(path);
+export const isSearchPath = (name: string) => ["home", "flows/list", "executions/list", "logs/list", "namespaces/update", "admin/triggers"].includes(name);

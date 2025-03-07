@@ -22,6 +22,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static io.kestra.core.utils.Rethrow.throwFunction;
+
 /**
  * Define a plugin properties that will be rendered and converted to a target type at use time.
  *
@@ -136,12 +138,31 @@ public class Property<T> {
      *
      * @see io.kestra.core.runners.RunContextProperty#asList(Class, Map)
      */
+    @SuppressWarnings("unchecked")
     public static <T, I> T asList(Property<T> property, RunContext runContext, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.value == null) {
-            String rendered =  runContext.render(property.expression, variables);
             JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
             try {
-                property.value = MAPPER.readValue(rendered, type);
+                String trimmedExpression = property.expression.trim();
+                // We need to detect if the expression is already a list or if it's a pebble expression (for eg. referencing a variable containing a list).
+                // Doing that allows us to, if it's an expression, first render then read it as a list.
+                if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
+                    property.value = MAPPER.readValue(runContext.render(property.expression, variables), type);
+                }
+                // Otherwise, if it's already a list, we read it as a list first then render it from run context which handle list rendering by rendering each item of the list
+                else {
+                    List<?> asRawList = MAPPER.readValue(property.expression, List.class);
+                    property.value = (T) asRawList.stream()
+                        .map(throwFunction(item -> {
+                            if (item instanceof String str) {
+                                return MAPPER.convertValue(runContext.render(str, variables), itemClazz);
+                            } else if (item instanceof Map map) {
+                                return MAPPER.convertValue(runContext.render(map, variables), itemClazz);
+                            }
+                            return item;
+                        }))
+                        .toList();
+                }
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
@@ -169,6 +190,7 @@ public class Property<T> {
      *
      * @see io.kestra.core.runners.RunContextProperty#asMap(Class, Class, Map)
      */
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public static <T, K,V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.value == null) {
             JavaType targetMapType = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);

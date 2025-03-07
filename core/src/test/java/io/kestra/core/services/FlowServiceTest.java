@@ -206,26 +206,6 @@ class FlowServiceTest {
     }
 
     @Test
-    void warnings() {
-        Flow flow = create("test", "test", 1).toBuilder()
-            .namespace("system")
-            .triggers(List.of(
-                io.kestra.plugin.core.trigger.Flow.builder()
-                    .id("flow-trigger")
-                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
-                    .build()
-            ))
-            .build();
-
-        List<String> warnings = flowService.warnings(flow);
-
-        assertThat(warnings.size(), is(1));
-        assertThat(warnings, containsInAnyOrder(
-            "This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger 'flow-trigger'."
-        ));
-    }
-
-    @Test
     void aliases() {
         List<FlowService.Relocation> warnings = flowService.relocations("""
             id: hello-alias
@@ -336,12 +316,10 @@ class FlowServiceTest {
             ))
             .build();
 
-        ConstraintViolationException exception = assertThrows(ConstraintViolationException.class, () -> {
-            flowService.checkValidSubflows(flow);
-        });
+        List<String> exceptions = flowService.checkValidSubflows(flow, null);
 
-        assertThat(exception.getConstraintViolations().size(), is(1));
-        assertThat(exception.getConstraintViolations().iterator().next().getMessage(), is("The subflow 'nonExistentSubflow' not found in namespace 'io.kestra.unittest'."));
+        assertThat(exceptions.size(), is(1));
+        assertThat(exceptions.iterator().next(), is("The subflow 'nonExistentSubflow' not found in namespace 'io.kestra.unittest'."));
     }
 
     @Test
@@ -360,6 +338,8 @@ class FlowServiceTest {
             ))
             .build();
 
-        assertDoesNotThrow(() -> flowService.checkValidSubflows(flow));
+        List<String> exceptions = flowService.checkValidSubflows(flow, null);
+
+        assertThat(exceptions.size(), is(0));
     }
 }

@@ -496,7 +496,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                         QueryFilter.Field field = filter.field();
                         QueryFilter.Op operation = filter.operation();
                         Object value = filter.value();
-                        if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
+                        if (field.equals(QueryFilter.Field.QUERY)) {
+                            select = select.and(this.findCondition(filter.value().toString(), Map.of()));
+                        } else if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
                             select = select.and(findCondition(labels, operation));
                         else
                             select = getConditionOnField(select, field, value, operation, null);

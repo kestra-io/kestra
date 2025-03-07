@@ -55,6 +55,6 @@ public abstract class H2FlowRepositoryService {
             });
 
         }
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.or(conditions);
     }
 }

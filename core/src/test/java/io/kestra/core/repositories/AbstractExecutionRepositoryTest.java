@@ -173,6 +173,15 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(executions.getTotal(), is(0L));
 
         filters = List.of(QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(Map.of("key", "value", "keyTest", "valueTest"))
+                .build()
+        );
+        executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
+        assertThat(executions.getTotal(), is(1L));
+
+        filters = List.of(QueryFilter.builder()
             .field(QueryFilter.Field.FLOW_ID)
             .operation(QueryFilter.Op.EQUALS)
             .value("second")

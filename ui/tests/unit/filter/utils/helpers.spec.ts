@@ -43,8 +43,8 @@ describe("Params Encoding & Decoding", () => {
     });
 
     it("should identify search paths correctly", () => {
-        expect(isSearchPath("/flows")).toBe(true);
-        expect(isSearchPath("/dashboard")).toBe(true);
+        expect(isSearchPath( "flows/list")).toBe(true);
+        expect(isSearchPath("executions/list")).toBe(true);
         expect(isSearchPath("/unknown")).toBe(false);
     });
 });

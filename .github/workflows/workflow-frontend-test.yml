@@ -1,0 +1,84 @@
+name: Frontend - Tests
+
+on:
+  workflow_call:
+    secrets:
+      GITHUB_AUTH_TOKEN:
+        description: "The GitHub Token."
+        required: true
+      CODECOV_TOKEN:
+        description: 'Codecov Token'
+        required: true
+
+env:
+  # to save corepack from itself
+  COREPACK_INTEGRITY_KEYS: 0
+
+jobs:
+  test:
+    name: Frontend - Tests
+    runs-on: ubuntu-latest
+    steps:
+      - id: checkout
+        name: Checkout - Current ref
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Npm - install
+        shell: bash
+        working-directory: ui
+        run: npm ci
+
+      - name: Npm - lint
+        uses: reviewdog/action-eslint@v1
+        with:
+          github_token: ${{ secrets.GITHUB_AUTH_TOKEN }}
+          reporter: github-pr-review
+          workdir: ui
+
+      - name: Npm - Run build
+        shell: bash
+        working-directory: ui
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: npm run build
+
+      - name: Run front-end unit tests
+        shell: bash
+        working-directory: ui
+        run: npm run test:cicd
+
+      - name: Storybook - Install Playwright
+        shell: bash
+        working-directory: ui
+        run: npx playwright install --with-deps
+
+      - name: Storybook - Build
+        shell: bash
+        working-directory: ui
+        run: npm run build-storybook --quiet
+
+      - name: Storybook - Run tests
+        shell: bash
+        working-directory: ui
+        run: |
+          npx concurrently -k -s first -n "SB,TEST" -c "magenta,blue" \
+            "npx http-server storybook-static --port 6006 --silent" \
+            "npx wait-on tcp:127.0.0.1:6006 && npm run test:storybook"
+
+      - name: Codecov - Upload coverage reports
+        uses: codecov/codecov-action@v5
+        if: ${{ !cancelled() && github.event.pull_request.head.repo.full_name == github.repository }}
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: frontend
+
+      - name: Codecov - Upload test results
+        uses: codecov/test-results-action@v1
+        if: ${{ !cancelled() }}
+        continue-on-error: true
+        with:
+          token: ${{ secrets.CODECOV_TOKEN && github.event.pull_request.head.repo.full_name == github.repository }}
+          flags: frontend

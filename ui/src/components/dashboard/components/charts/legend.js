@@ -12,7 +12,7 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
 
     if (!listContainer) {
         listContainer = document.createElement("ul");
-        listContainer.classList.add("w-100", "fw-light", "small", "legend");
+        listContainer.classList.add("w-100", "fw-light", "legend", direction === "row" ? "small" : "tall");
         listContainer.style.display = "flex";
         listContainer.style.flexDirection = direction;
         listContainer.style.margin = 0;

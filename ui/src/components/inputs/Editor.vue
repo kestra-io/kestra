@@ -76,7 +76,7 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
-    import {mapGetters} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
@@ -132,17 +132,24 @@
                 editorDocumentation: undefined,
                 plugin: undefined,
                 taskType: undefined,
+                themeComputed: Utils.getTheme(),
             };
         },
         mounted() {
             this.$store.commit("doc/setDocId", "flowEditor");
         },
+        watch: {
+            mappedTheme: {
+                handler() {
+                    this.themeComputed = Utils.getTheme();
+                },
+                immediate: true,
+            },
+        },
         computed: {
+            ...mapState({mappedTheme: state => state.misc.theme}),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flowValidation"]),
-            themeComputed() {
-                return Utils.getTheme();
-            },
             containerClass() {
                 return [
                     !this.input ? "" : "single-line",
@@ -273,7 +280,7 @@
                 if (!this.readOnly) {
                     this.editor.addAction({
                         id: "kestra-save",
-                        label: "Save",
+                        label: this.$t("save"),
                         keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
                         contextMenuGroupId: "navigation",
                         contextMenuOrder: 1.5,
@@ -289,7 +296,7 @@
 
                 this.editor.addAction({
                     id: "kestra-execute",
-                    label: "Execute the flow",
+                    label: this.$t("execute flow behaviour"),
                     keybindings: [KeyMod.CtrlCmd | KeyCode.KeyE],
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 1.5,
@@ -300,7 +307,7 @@
 
                 this.editor.addAction({
                     id: "confirm",
-                    label: "Confirm",
+                    label: this.$t("confirm"),
                     keybindings: [KeyMod.CtrlCmd | KeyCode.Enter],
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 1.5,
@@ -329,7 +336,7 @@
                 if (this.original === undefined && this.navbar && this.fullHeight) {
                     this.editor.addAction({
                         id: "fold-multiline",
-                        label: "Fold All Multi Lines",
+                        label: this.$t("fold_all_multi_lines"),
                         keybindings: [KeyCode.F10],
                         contextMenuGroupId: "fold",
                         contextMenuOrder: 1.5,

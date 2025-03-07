@@ -10,6 +10,8 @@ import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
 import jakarta.inject.Singleton;
 
+import static io.kestra.core.models.triggers.TimeWindow.Type.DURATION_WINDOW;
+
 @Singleton
 @Introspected
 public class TimeWindowValidator implements ConstraintValidator<TimeWindowValidation, TimeWindow> {
@@ -23,7 +25,8 @@ public class TimeWindowValidator implements ConstraintValidator<TimeWindowValida
             return true;
         }
 
-        return switch (value.getType()) {
+        TimeWindow.Type type = value.getType() != null ? value.getType() : DURATION_WINDOW;
+        return switch (type) {
             case DAILY_TIME_DEADLINE -> {
                 if (value.getWindow() != null || value.getWindowAdvance() != null  || value.getStartTime() != null || value.getEndTime() != null) {
                     context.disableDefaultConstraintViolation();

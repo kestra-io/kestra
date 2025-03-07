@@ -11,6 +11,12 @@
     }
 
     .plugin-schema {
+        :deep(.markdown) {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacer);
+        }
+
         :deep(button) {
             color: var(--ks-content-primary);
         }
@@ -28,10 +34,14 @@
             p {
                 margin-bottom: 0;
             }
+
             .collapse-button {
-                padding: 3px 0;
                 font-size: var(--font-size-lg);
                 line-height: 1.5rem;
+            }
+
+            .collapsible-body .border {
+                #{--collapsible-border-color}: var(--ks-border-primary);
             }
 
             > .collapse-button:not(.collapsed) {
@@ -39,12 +49,16 @@
             }
 
             .property {
-                &:has(.collapsed):hover {
+                background-color: var(--ks-dropdown-background);
+
+                button:hover {
                     background-color: var(--ks-dropdown-background-hover);
                 }
 
                 &:not(:has(.collapsed)) {
-                    background-color: var(--ks-dropdown-background-active);
+                    & > .collapsible-body {
+                        background-color: var(--ks-dropdown-background-active);
+                    }
                 }
             }
 

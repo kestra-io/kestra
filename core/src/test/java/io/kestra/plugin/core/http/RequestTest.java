@@ -19,6 +19,7 @@ import io.micronaut.http.*;
 import io.micronaut.http.annotation.*;
 import io.micronaut.http.multipart.StreamingFileUpload;
 import io.micronaut.runtime.server.EmbeddedServer;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.Test;
@@ -206,6 +207,37 @@ class RequestTest {
             );
 
             assertThat(exception.getResponse().getStatus().getCode(), is(417));
+        }
+    }
+
+    @Test
+    void failedPost() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.of(server.getURL().toString() + "/markdown"))
+                .method(Property.of("POST"))
+                .body(Property.of("# hello web!"))
+                .contentType(Property.of("text/markdown"))
+                .options(HttpConfiguration.builder().defaultCharset(Property.of(null)).build())
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            HttpClientResponseException exception = assertThrows(
+                HttpClientResponseException.class,
+                () -> task.run(runContext)
+            );
+
+            assertThat(exception.getResponse().getStatus().getCode(), is(417));
+            assertThat(exception.getMessage(), containsString("hello world"));
+            byte[] content = ((io.kestra.core.http.HttpRequest.ByteArrayRequestBody) exception.getRequest().getBody()).getContent();
+            assertThat(new String(content) , containsString("hello web"));
         }
     }
 
@@ -458,6 +490,33 @@ class RequestTest {
         }
     }
 
+    @SuppressWarnings("deprecation")
+    @Test
+    void basicAuthOld() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.of(server.getURL().toString() + "/auth/basic"))
+                .options(HttpConfiguration.builder()
+                    .basicAuthUser("John")
+                    .basicAuthPassword("p4ss")
+                    .build()
+                )
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, Map.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getBody(), is("{\"hello\":\"John\"}"));
+            assertThat(output.getCode(), is(200));
+        }
+    }
+
     @Test
     void bearerAuth() throws Exception {
         try (
@@ -485,11 +544,66 @@ class RequestTest {
         }
     }
 
+    @Test
+    void specialContentType() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.of(server.getURL().toString() + "/content-type"))
+                .method(Property.of("POST"))
+                .body(Property.of("{}"))
+                .contentType(Property.of("application/vnd.campaignsexport.v1+json"))
+                .options(HttpConfiguration.builder().logs(HttpConfiguration.LoggingType.values()).defaultCharset(null).build())
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getBody(), is("application/vnd.campaignsexport.v1+json"));
+            assertThat(output.getCode(), is(200));
+        }
+    }
+
+    @Test
+    void spaceInURI() throws Exception {
+        try (
+            ApplicationContext applicationContext = ApplicationContext.run();
+            EmbeddedServer server = applicationContext.getBean(EmbeddedServer.class).start();
+
+        ) {
+            Request task = Request.builder()
+                .id(RequestTest.class.getSimpleName())
+                .type(RequestTest.class.getName())
+                .uri(Property.of(server.getURL().toString() + "/uri with space"))
+                .build();
+
+            RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
+
+            Request.Output output = task.run(runContext);
+
+            assertThat(output.getBody(), is("Hello World"));
+            assertThat(output.getCode(), is(200));
+        }
+    }
+
     @Controller
     static class MockController {
         @Get("/hello")
         HttpResponse<String> hello() {
             return HttpResponse.ok("{ \"hello\": \"world\" }");
+        }
+
+        @Post("content-type")
+        @Consumes("application/vnd.campaignsexport.v1+json")
+        @Produces(MediaType.TEXT_PLAIN)
+        public io.micronaut.http.HttpResponse<String> contentType(io.micronaut.http.HttpRequest<?> request, @Nullable @Body Map<String, String> body) {
+            return io.micronaut.http.HttpResponse.ok(request.getContentType().orElseThrow().toString());
         }
 
         @Head("/hello")
@@ -500,6 +614,13 @@ class RequestTest {
         @Get("/hello417")
         HttpResponse<String> hello417() {
             return HttpResponse.status(HttpStatus.EXPECTATION_FAILED).body("{ \"hello\": \"world\" }");
+        }
+
+        @Post("/markdown")
+        @Consumes(MediaType.TEXT_MARKDOWN)
+        @Produces(MediaType.TEXT_MARKDOWN)
+        HttpResponse<String> postMarkdown() {
+            return HttpResponse.status(HttpStatus.EXPECTATION_FAILED).body("# hello world");
         }
 
         @Get("/redirect")
@@ -557,6 +678,11 @@ class RequestTest {
                         return hello + " > " + IOUtils.toString(fileInputStream, StandardCharsets.UTF_8);
                     }
                 }));
+        }
+
+        @Get("/uri%20with%20space")
+        HttpResponse<String> uriWithSpace() {
+            return HttpResponse.ok("Hello World");
         }
     }
 }

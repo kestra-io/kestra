@@ -128,21 +128,13 @@ public class FlowService {
         return deprecationTraversal("", flow).toList();
     }
 
-    public List<String> warnings(Flow flow) {
+
+    public List<String> warnings(Flow flow, String tenantId) {
         if (flow == null) {
             return Collections.emptyList();
         }
 
-        List<String> warnings = new ArrayList<>();
-        List<io.kestra.plugin.core.trigger.Flow> flowTriggers = ListUtils.emptyOnNull(flow.getTriggers()).stream()
-            .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
-            .map(io.kestra.plugin.core.trigger.Flow.class::cast)
-            .toList();
-        flowTriggers.forEach(flowTrigger -> {
-            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
-                warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId() + "'.");
-            }
-        });
+        List<String> warnings = new ArrayList<>(checkValidSubflows(flow, tenantId));
 
         return warnings;
     }
@@ -161,31 +153,31 @@ public class FlowService {
     }
 
     // check if subflow is present in given namespace
-    public void checkValidSubflows(Flow flow) {
+    public List<String> checkValidSubflows(Flow flow, String tenantId) {
         List<io.kestra.plugin.core.flow.Subflow> subFlows = ListUtils.emptyOnNull(flow.getTasks()).stream()
             .filter(io.kestra.plugin.core.flow.Subflow.class::isInstance)
             .map(io.kestra.plugin.core.flow.Subflow.class::cast)
             .toList();
 
-        Set<ConstraintViolation<?>> violations = new HashSet<>();
+        List<String> violations = new ArrayList<>();
 
         subFlows.forEach(subflow -> {
-            Optional<Flow> optional = findById(flow.getTenantId(), subflow.getNamespace(), subflow.getFlowId());
+            String regex = ".*\\{\\{.+}}.*"; // regex to check if string contains pebble
+            String subflowId = subflow.getFlowId();
+            String namespace = subflow.getNamespace();
+            if (subflowId.matches(regex) || namespace.matches(regex)) {
+                return;
+            }
+            Optional<Flow> optional = findById(tenantId, subflow.getNamespace(), subflow.getFlowId());
 
             if (optional.isEmpty()) {
-                violations.add(ManualConstraintViolation.of(
-                    "The subflow '" + subflow.getFlowId() + "' not found in namespace '" + subflow.getNamespace() + "'.",
-                    flow,
-                    Flow.class,
-                    "flow.tasks",
-                    flow.getNamespace()
-                ));
+                violations.add("The subflow '" + subflow.getFlowId() + "' not found in namespace '" + subflow.getNamespace() + "'.");
+            } else if (optional.get().isDisabled()) {
+                violations.add("The subflow '" + subflow.getFlowId() + "' is disabled in namespace '" + subflow.getNamespace() + "'.");
             }
         });
 
-        if (!violations.isEmpty()) {
-            throw new ConstraintViolationException(violations);
-        }
+        return violations;
     }
 
     public record Relocation(String from, String to) {}

@@ -8,7 +8,7 @@
                     </router-link>
                 </el-breadcrumb-item>
             </el-breadcrumb>
-            <h1 class="h5 fw-semibold m-0 d-inline-fle">
+            <h1 class="h5 fw-semibold m-0 d-inline-flex">
                 <slot name="title">
                     {{ title }}
                 </slot>
@@ -105,7 +105,7 @@
         methods: {
             restartGuidedTour() {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
+                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
 
                 this.$tours["guidedTour"]?.start();
             },

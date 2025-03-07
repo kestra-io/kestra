@@ -2,7 +2,7 @@
     <top-nav-bar :breadcrumb="routeInfo.breadcrumb" :title="routeInfo.title">
         <template #title>
             <template v-if="deleted">
-                <Alert class="text-warning me-2" />Deleted:&nbsp;
+                <Alert class="text-warning me-2" />{{ $t('deleted_label') }}:&nbsp;
             </template>
             <Lock v-else-if="!isAllowedEdit" class="me-2 gray-700" />
             <span :class="{'body-color': deleted}">{{ routeInfo.title }}</span>

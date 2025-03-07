@@ -78,7 +78,7 @@
         <Block :heading="$t('settings.blocks.theme.label')">
             <template #content>
                 <Row>
-                    <Column :label="$t('settings.blocks.theme.fields.mode')">
+                    <Column :label="$t('settings.blocks.theme.fields.theme')">
                         <el-select :model-value="pendingSettings.theme" @update:model-value="onTheme">
                             <el-option
                                 v-for="item in themesOptions"

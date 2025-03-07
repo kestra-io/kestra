@@ -60,13 +60,13 @@ public class JdbcScheduler extends AbstractScheduler {
 
                 Execution execution = either.getLeft();
                 if (execution.getTrigger() != null) {
-                    var flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId()).orElse(null);
+                    var flow = flowRepository.findByIdWithSource(execution.getTenantId(), execution.getNamespace(), execution.getFlowId()).orElse(null);
                     if (execution.isDeleted() || conditionService.isTerminatedWithListeners(flow, execution)) {
                         // reset scheduler trigger at end
                         triggerRepository
                             .findByExecution(execution)
                             .ifPresent(trigger -> {
-                                this.triggerState.update(trigger.resetExecution(execution.getState().getCurrent()));
+                                this.triggerState.update(resetExecution(flow, execution, trigger));
                             });
                     }
                 }

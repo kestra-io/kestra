@@ -35,6 +35,8 @@ import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE
 
 public abstract class AbstractJdbcRepository {
 
+    protected static final int FETCH_SIZE = 100;
+
     @Getter
     @Value("${kestra.system-flows.namespace:" + SYSTEM_FLOWS_DEFAULT_NAMESPACE + "}")
     private String systemFlowNamespace;
@@ -334,13 +336,28 @@ public abstract class AbstractJdbcRepository {
             case STARTS_WITH -> select = select.and(NAMESPACE_FIELD.like(value + ".%")
                 .or(NAMESPACE_FIELD.eq((String) value)));
             case ENDS_WITH -> select = select.and(NAMESPACE_FIELD.like("%." + value));
-            default ->
+            case IN ->  {
+                if (value instanceof Collection<?> values) {
+                select = select.and(NAMESPACE_FIELD.in(values.stream()
+                    .map(String.class::cast)
+                    .toList()));
+                }
+             }
+             case NOT_IN ->  {
+                 if (value instanceof Collection<?> values) {
+                     select = select.and(NAMESPACE_FIELD.notIn(values.stream()
+                         .map(String.class::cast)
+                         .toList()));
+                 }
+             }
+             default ->
                 throw new UnsupportedOperationException("Unsupported operation '%s' for field 'namespace'.".formatted(operation));
         }
          return select;
     }
 
     // Generate the condition for Field.STATE
+    @SuppressWarnings("unchecked")
     private Condition generateStateCondition(Object value, QueryFilter.Op operation) {
         List<State.Type> stateList = switch (value) {
             case List<?> list when !list.isEmpty() && list.getFirst() instanceof State.Type ->
@@ -437,15 +454,13 @@ public abstract class AbstractJdbcRepository {
 
         if (scopeValues.contains(FlowScope.USER)) {
             Condition userCondition = isEqualsOperation
-                ? DSL.field("namespace").ne(systemNamespace)
-                : DSL.field("namespace").eq(systemNamespace);
+                ? field("namespace").ne(systemNamespace)
+                : field("namespace").eq(systemNamespace);
             select = select.and(userCondition);
-        }
-
-        if (scopeValues.contains(FlowScope.SYSTEM)) {
+        } else if (scopeValues.contains(FlowScope.SYSTEM)) {
             Condition systemCondition = isEqualsOperation
-                ? DSL.field("namespace").eq(systemNamespace)
-                : DSL.field("namespace").ne(systemNamespace);
+                ? field("namespace").eq(systemNamespace)
+                : field("namespace").ne(systemNamespace);
             select = select.and(systemCondition);
         }
 

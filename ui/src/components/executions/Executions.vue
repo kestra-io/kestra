@@ -975,7 +975,7 @@
 
 <style scoped lang="scss">
 .shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
 }
 
 .padding-bottom {

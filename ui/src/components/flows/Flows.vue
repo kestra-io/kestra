@@ -904,7 +904,7 @@
 
 <style lang="scss" scoped>
 .shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
 }
 
 :deep(nav .dropdown-menu) {

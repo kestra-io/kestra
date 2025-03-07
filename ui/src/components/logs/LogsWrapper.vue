@@ -246,7 +246,7 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .shadow {
-        box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+        box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
     }
 
     .log-panel {

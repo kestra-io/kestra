@@ -263,7 +263,7 @@
         padding-bottom: 0;
         border-bottom: 1px solid var(--ks-border-primary);
         &.dragover {
-            background-color: #e3e3e3;
+            background-color: var(--ks-background-card-hover);
         }
     }
 

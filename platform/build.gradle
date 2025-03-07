@@ -19,10 +19,10 @@ dependencies {
     def jollydayVersion = "0.32.0"
     def jsonschemaVersion = "4.37.0"
     def kafkaVersion = "3.9.0"
-    def opensearchVersion = "2.20.0"
-    def opensearchRestVersion = "2.18.0"
+    def opensearchVersion = "2.21.0"
+    def opensearchRestVersion = "2.19.1"
     def flyingSaucerVersion = "9.11.4"
-    def jacksonVersion = "2.18.2"
+    def jacksonVersion = "2.18.3"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
@@ -31,7 +31,7 @@ dependencies {
     api platform("io.micronaut.platform:micronaut-platform:4.7.6")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.54.0')
+    api platform('com.google.cloud:libraries-bom:26.56.0')
     api platform("com.azure:azure-sdk-bom:1.2.31")
     api platform('software.amazon.awssdk:bom:2.30.31')
 

@@ -96,8 +96,12 @@ abstract public class AbstractCommand implements Callable<Integer> {
         if (this.pluginsPath != null && loadExternalPlugins()) {
             pluginRegistry = pluginRegistryProvider.get();
             pluginRegistry.registerIfAbsent(pluginsPath);
-            PluginManager manager = pluginManagerProvider.get();
-            manager.start();
+
+            // PluginManager mus only be initialized if a registry is also instantiated
+            if (isPluginManagerEnabled()) {
+                PluginManager manager = pluginManagerProvider.get();
+                manager.start();
+            }
         }
 
         startWebserver();
@@ -111,6 +115,17 @@ abstract public class AbstractCommand implements Callable<Integer> {
      * @return {@code true} if external plugins must be loaded.
      */
     protected boolean loadExternalPlugins() {
+        return true;
+    }
+
+    /**
+     * Specifies whether the {@link PluginManager} service must be initialized.
+     * <p>
+     * This method can be overridden by concrete commands.
+     *
+     * @return {@code true} if the {@link PluginManager} service must be initialized.
+     */
+    protected boolean isPluginManagerEnabled() {
         return true;
     }
 

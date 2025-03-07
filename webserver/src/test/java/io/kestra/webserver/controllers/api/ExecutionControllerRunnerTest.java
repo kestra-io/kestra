@@ -18,6 +18,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.Label;
@@ -1476,6 +1477,30 @@ class ExecutionControllerRunnerTest {
             BulkResponse.class
         );
         assertThat(response.getCount(), is(3));
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/minimal.yaml")
+    void shouldEvalPebbleExpression(Execution execution) {
+        ExecutionController.EvalResult evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().getFirst().getId(), "{{ taskrun.id }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getResult(), notNullValue());
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/minimal.yaml")
+    void shouldMaskSecretWhenEvalPebbleExpression(Execution execution) {
+        ExecutionController.EvalResult evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().getFirst().getId(), "{{ secret('KEY') }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getResult(), is("******"));
     }
 
     private ExecutionController.EvalResult eval(Execution execution, String expression, int index) {

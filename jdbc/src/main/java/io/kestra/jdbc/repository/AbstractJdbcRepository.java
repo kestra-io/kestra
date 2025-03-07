@@ -35,6 +35,8 @@ import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE
 
 public abstract class AbstractJdbcRepository {
 
+    protected static final int FETCH_SIZE = 100;
+
     @Getter
     @Value("${kestra.system-flows.namespace:" + SYSTEM_FLOWS_DEFAULT_NAMESPACE + "}")
     private String systemFlowNamespace;

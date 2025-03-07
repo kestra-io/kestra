@@ -51,6 +51,7 @@
                     :original="original"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
+                    @tab-loaded="(...args) => $emit('tabLoaded', ...args)"
                     :language="lang"
                     :extension="extension"
                     :schema-type="schemaType"
@@ -115,10 +116,11 @@
             "save",
             "execute",
             "focusout",
-            "tab",
+            "tabLoaded",
             "update:modelValue",
             "cursor",
             "confirm",
+            "tabLoaded",
         ],
         editor: undefined,
         data() {

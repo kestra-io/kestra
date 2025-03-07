@@ -149,6 +149,7 @@
                     @cursor="updatePluginDocumentation"
                     :creating="isCreating"
                     @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
+                    @tab-loaded="onTabLoaded"
                     :read-only="isReadOnly"
                     :navbar="false"
                 >
@@ -1154,8 +1155,12 @@
         store.commit("flow/setFlowYaml", content);
     }
 
+    const dirtyBeforeLoad = ref(false);
+
     watch(currentTab, (current, previous) => {
         if(previous?.flow) persistViewType(viewType.value);
+
+        dirtyBeforeLoad.value = current?.dirty;
 
         if(current?.flow){
             switchViewType(loadViewType(), false)
@@ -1166,7 +1171,6 @@
             }
         }
 
-
         nextTick(() => {
             const activeTabElement = tabsScrollRef.value.wrapRef.querySelector(".tab-active");
             const rightMostCurrentTabPixel = activeTabElement?.offsetLeft + activeTabElement?.clientWidth;
@@ -1175,6 +1179,17 @@
             tabsScrollRef.value.setScrollLeft(rightMostCurrentTabPixel - tabsWrapper.clientWidth);
         });
     })
+
+    function onTabLoaded(tab, source){
+        clearTimeout(timer.value);
+
+        // once the tab is finished loading, restore the dirty state
+        if(tab.path === currentTab.value.path){
+            flowYaml.value = source;
+            onEdit(source, tab.flow);
+            currentTab.value.dirty = dirtyBeforeLoad.value
+        }
+    }
 
     const tabContextMenu = ref({
         visible: false,

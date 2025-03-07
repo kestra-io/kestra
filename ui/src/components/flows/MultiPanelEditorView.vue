@@ -1,21 +1,28 @@
 <template>
-    <div class="tabs">
-        <el-checkbox-group v-model="activeTabs">
-            <el-checkbox-button v-for="element of EDITOR_ELEMENTS" :key="element.value" :value="element.value" :name="element.value">
-                <component class="tabs-icon" :is="element.button.icon" />
-                {{ element.button.label }}
-            </el-checkbox-button>
-        </el-checkbox-group>
+    <div style="display:flex; align-items: center; justify-content: space-between;">
+        <div class="tabs">
+            <el-checkbox-group v-model="activeTabs">
+                <el-checkbox-button v-for="element of EDITOR_ELEMENTS" :key="element.value" :value="element.value" :name="element.value">
+                    <component class="tabs-icon" :is="element.button.icon" />
+                    {{ element.button.label }}
+                </el-checkbox-button>
+            </el-checkbox-group>
+        </div>
+        <EditorButtonsWrapper />
     </div>
     <MultiPanelTabs v-model="panels" @remove-tab="removeTab" />
 </template>
 
 <script setup lang="ts">
     import {ref, watch, computed} from "vue";
+
     import {useRouteQuery} from "@vueuse/router";
     import MultiPanelTabs, {Panel} from "../MultiPanelTabs.vue";
+    import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
     import {useCodeTabs} from "./useCodeTabs";
+
+
 
     const {codeTabs} = useCodeTabs();
 
@@ -26,19 +33,22 @@
         set: (value) => activeTabsUrl.value = value
     })
 
-    const panels = ref<Panel[]>(activeTabs.value.map((t: string) => {
-        if(t === "code"){
+
+    function getPanelFromValue(value: string): Panel{
+        if(value === "code"){
             return {
                 activeTab: codeTabs.value[0],
                 tabs: codeTabs.value
             }
         }
-        const element = EDITOR_ELEMENTS.find(e => e.value === t)!
+        const element = EDITOR_ELEMENTS.find(e => e.value === value)!
         return {
             activeTab: element,
             tabs: [element]
         }
-    }))
+    }
+
+    const panels = ref<Panel[]>(activeTabs.value.map((t: string) => getPanelFromValue(t)))
 
     function removeTab(tab: string){
         activeTabs.value = activeTabs.value.filter(t => t !== tab)
@@ -60,11 +70,7 @@
 
         // add the tabs
         for(const t of toAdd){
-            const element = EDITOR_ELEMENTS.find(e => e.value === t)!
-            panels.value.push({
-                activeTab: element,
-                tabs: [element]
-            })
+            panels.value.push(getPanelFromValue(t))
         }
 
         previousActiveTabs.value = newVal

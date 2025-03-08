@@ -778,6 +778,7 @@
             editorViewType: editorViewType.value,
             id: props.id ?? routeParams.id,
             namespace: props.namespace ?? routeParams.namespace,
+            viewType: viewType.value,
         }).then((value) => {
 
             if (validationDomElement.value && editorDomElement.value?.$el?.offsetWidth) {

@@ -411,12 +411,12 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-body);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
-            border-radius: 20px;
+            background: var(--ks-border-primary);
+            border-radius: 5px;
         }
     }
 

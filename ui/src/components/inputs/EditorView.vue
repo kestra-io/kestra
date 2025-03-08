@@ -1659,17 +1659,17 @@
         }
 
         &::-webkit-scrollbar {
-            width: 10px;
-            height: 2px;
+            width: 5px;
+            height: 5px;
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--ks-background-card);
+            background: var(--ks-background-body);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 20px;
+            background: var(--ks-border-primary);
+            border-radius: 5px;
         }
     }
 

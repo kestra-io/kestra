@@ -14,12 +14,12 @@ $code-font-sm: var(--el-font-size-small);
     }
 
     &::-webkit-scrollbar-track {
-        background: $code-card-color
+        background: var(--ks-background-body);
     }
 
     &::-webkit-scrollbar-thumb {
-        background: $code-border-color;
-        border-radius: 0px;
+        background: var(--ks-border-primary);
+        border-radius: 5px;
     }
 }
 

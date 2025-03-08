@@ -184,16 +184,17 @@
         }
 
         &::-webkit-scrollbar {
-            width: 2px;
+            width: 5px;
+            height: 5px;
         }
 
         &::-webkit-scrollbar-track {
-            -webkit-border-radius: 10px;
+            background: var(--ks-background-body);
         }
 
         &::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
-            background: var(--bs-gray-600);
+            background: var(--ks-border-primary);
+            border-radius: 5px;
         }
 
         .el-collapse-item__header {

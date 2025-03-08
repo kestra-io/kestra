@@ -1166,13 +1166,18 @@
             height: auto;
         }
 
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 5px;
+        &::-webkit-scrollbar {
+            height: 5px;
+            width: 5px;
+        }
 
-            html.dark & {
-                background:  var(--ks-button-background-primary);
-            }
+        &::-webkit-scrollbar-track {
+            background: var(--ks-background-body);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--ks-border-primary);
+            border-radius: 5px;
         }
 
         .node {

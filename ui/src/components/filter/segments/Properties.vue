@@ -189,20 +189,16 @@
 
     &::-webkit-scrollbar {
         width: 6px;
+        height: 6px;
     }
 
     &::-webkit-scrollbar-track {
-        background: var(--el-scrollbar-bg-color);
-        border-radius: 3px;
+        background: var(--ks-background-body);
     }
 
     &::-webkit-scrollbar-thumb {
-        background: var(--el-color-primary);
-        border-radius: 3px;
-
-        &:hover {
-            background: var(--el-color-primary-light-3);
-        }
+        background: var(--ks-border-primary);
+        border-radius: 5px;
     }
 }
 
@@ -215,7 +211,7 @@
 }
 
 .group-title {
-    color: var(--el-text-color-secondary);
+    color: var(--ks-content-tertiary);
     font-size: var(--el-font-size-extra-small);
 }
 

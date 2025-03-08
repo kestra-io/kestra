@@ -214,15 +214,16 @@
 
         &::-webkit-scrollbar {
             width: 5px;
+            height: 5px;
         }
 
         &::-webkit-scrollbar-track {
-            -webkit-border-radius: 10px;
+            background: var(--ks-background-body);
         }
 
         &::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
-            background: var(--ks-button-background-primary);
+            background: var(--ks-border-primary);
+            border-radius: 5px;
         }
     }
 

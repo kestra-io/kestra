@@ -17,18 +17,13 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, computed, markRaw, h} from "vue";
-    import {useStore} from "vuex";
-
+    import {ref, watch, computed} from "vue";
     import {useRouteQuery} from "@vueuse/router";
+
     import MultiPanelTabs, {Panel} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
-    import EditorWrapper from "../inputs/EditorWrapper.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
-
-    const store = useStore()
-
-    const codeEditorTabs = computed(() => store.state.editor.tabs.filter((t:any) => !t.flow))
+    import {useCodePanels} from "./useCodePanels";
 
     const activeTabsUrl = useRouteQuery("activeTabs", DEFAULT_ACTIVE_TABS)
     const previousActiveTabs = ref(activeTabsUrl.value)
@@ -46,61 +41,6 @@
         activeTabs.value = [...activeTabs.value, tabValue]
     }
 
-    interface EditorTab {
-        name: string,
-        path: string,
-        extension: string,
-        persistent?: boolean,
-        dirty?: boolean,
-        flow?: boolean
-
-    }
-
-    function getPanelsFromCodeEditorTabs(codeTabs: EditorTab[]){
-        const tabs = codeTabs.map(t => ({
-            value: `code-${t.name}`,
-            button: {
-                label: t.name,
-                icon: "FileIcon"
-            },
-            component: () => h(markRaw(EditorWrapper), {...t, flow: false})
-        }))
-
-        return {
-            activeTab: tabs[0],
-            tabs
-        }
-    }
-
-    watch(codeEditorTabs, (newVal) => {
-        const codeTabs = getPanelsFromCodeEditorTabs(newVal)
-
-        // get all the tabs to add since they are not already part of the panels tabs
-        const toAdd = codeTabs.tabs.filter(t => !panels.value.some(p => p.tabs.some(pt => t.value === pt.value)))
-
-        if(toAdd.length === 0){
-            return
-        }
-
-        // find the first panel where there is already a code tab
-        const firstPanelWithCodeTab = panels.value.find(p => p.tabs.some(t => t.value.startsWith("code")))
-        if(firstPanelWithCodeTab){
-            // add the tabs to the first panel with a code tab
-            firstPanelWithCodeTab.tabs.push(...toAdd)
-            firstPanelWithCodeTab.activeTab = toAdd[0]
-        }else{
-            // find the panel where the files tab is
-            const filesPanel = panels.value.findIndex(p => p.tabs.some(t => t.value === "files"))
-            if(filesPanel >= 0){
-                // add the code panel after the files tab
-                panels.value.splice(filesPanel + 1, 0, codeTabs)
-            }else{
-                // add the code tabs at the end
-                panels.value.push(codeTabs)
-            }
-        }
-    })
-
     function getPanelFromValue(value: string): {prepend: boolean, panel: Panel}{
         const element = EDITOR_ELEMENTS.find(e => e.value === value)!
         return {
@@ -115,25 +55,19 @@
     const panels = ref<Panel[]>(activeTabs.value.map((t: string) =>
         getPanelFromValue(t)).sort((a) => a.prepend ? -1 : 1).map(p => p.panel))
 
+    const {onRemoveTab} = useCodePanels(panels)
+
     function removeTab(tab: string){
         activeTabs.value = activeTabs.value.filter(t => t !== tab)
-
-        if(tab.startsWith("code-")){
-            store.commit("editor/changeOpenedTabs", {
-                action: "close",
-                name: tab.substring(5),
-            });
-        }
+        onRemoveTab(tab)
     }
 
     watch(activeTabs, (newVal) => {
         const previous = previousActiveTabs.value
 
-        // get the tabs to add
-        const toAdd = newVal.filter(t => !previous.includes(t))
+        const tabIdsToAdd = newVal.filter(t => !previous.includes(t))
 
-        // add the tabs
-        for(const t of toAdd){
+        for(const t of tabIdsToAdd){
             const {panel, prepend} = getPanelFromValue(t)
             if(prepend){
                 panels.value.unshift(panel)

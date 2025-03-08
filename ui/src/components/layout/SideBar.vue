@@ -357,7 +357,7 @@
         }
 
         .vsm--scroll-thumb {
-            background: var(--ks-border-primary);
+            background: var(--ks-border-primary) !important;
             border-radius: 5px;
         }
 

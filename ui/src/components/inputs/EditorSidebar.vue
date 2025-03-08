@@ -1166,20 +1166,6 @@
             height: auto;
         }
 
-        &::-webkit-scrollbar {
-            height: 5px;
-            width: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-body);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-border-primary);
-            border-radius: 5px;
-        }
-
         .node {
             --el-tree-node-content-height: fit-content;
             --el-tree-node-hover-bg-color: transparent;

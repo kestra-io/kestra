@@ -186,20 +186,6 @@
 .scrollable-container {
     max-height: 300px;
     overflow-y: scroll;
-
-    &::-webkit-scrollbar {
-        width: 6px;
-        height: 6px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: var(--ks-background-body);
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: var(--ks-border-primary);
-        border-radius: 5px;
-    }
 }
 
 .container-header {

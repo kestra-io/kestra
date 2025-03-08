@@ -465,21 +465,6 @@
 
 <style lang="scss">
 .execution-overview {
-    .cascader {
-        &::-webkit-scrollbar {
-            height: 5px;
-            width: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-body);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-border-primary);
-            border-radius: 5px;
-        }
-    }
 
     .wrapper {
         background: var(--ks-background-card);

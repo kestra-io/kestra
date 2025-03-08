@@ -678,19 +678,6 @@
     .log-wrapper {
         max-height: calc(100vh - 233px);
 
-        &::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-body);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-border-primary);
-            border-radius: 5px;
-        }
-
         :deep(> .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div) {
             padding-bottom: 1rem;
         }
@@ -748,19 +735,6 @@
                 &.cursor {
                     background-color: var(--bs-gray-300)
                 }
-            }
-
-            &::-webkit-scrollbar {
-                width: 5px;
-            }
-
-            &::-webkit-scrollbar-track {
-                background: var(--ks-background-body);
-            }
-
-            &::-webkit-scrollbar-thumb {
-                background: var(--ks-border-primary);
-                border-radius: 5px;
             }
         }
     }

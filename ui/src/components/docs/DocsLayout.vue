@@ -47,19 +47,6 @@
         position: sticky;
         overflow-y: auto;
 
-        &::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-body);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-border-primary);
-            border-radius: 5px;
-        }
-
         &.collapsed {
             padding: 2rem .5rem;
             background: transparent;

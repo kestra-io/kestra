@@ -404,20 +404,6 @@
             padding: calc(var(--spacer) * 1.5);
             background-color: var(--bs-gray-100);
         }
-
-        &::-webkit-scrollbar {
-            width: 10px;
-            height: 2px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-body);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-border-primary);
-            border-radius: 5px;
-        }
     }
 
     .slider {

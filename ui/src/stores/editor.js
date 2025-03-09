@@ -9,6 +9,20 @@ export default {
         view: undefined,
         treeData: [],
     },
+    actions: {
+        saveAllTabs({dispatch, state}, {namespace}) {
+            return Promise.all(
+                state.tabs.map(async (tab) => {
+                    await dispatch("namespace/createFile", {
+                        namespace,
+                        path: tab.path ?? tab.name,
+                        content: tab.content,
+                    }, {root: true});
+                    tab.dirty = false;
+                })
+            );
+        },
+    },
     mutations: {
         updateOnboarding(state) {
             state.onboarding = true;

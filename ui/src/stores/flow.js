@@ -46,6 +46,14 @@ export default {
             commit("setMetadata", null);
             commit("setHaveChange", true)
         },
+        async saveAll({dispatch, state, commit, getters}){
+            if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
+                return;
+            }
+
+            await dispatch("editor/saveAllTabs", {namespace: getters.namespace}, {root: true});
+            commit("setFlowYamlOrigin", state.flowYaml);
+        },
         async save({getters, dispatch, commit, state, rootState}, {content}){
             if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
                 return;

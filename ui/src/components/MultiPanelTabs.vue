@@ -128,7 +128,6 @@
         }
 
         return targetPanelIndex
-
     }
 
     function dragover(event: DragEvent, fromPanel: boolean = false) {
@@ -275,6 +274,7 @@
 <style lang="scss" scoped>
     .editor-tabs {
         display: flex;
+        align-items: end;
         padding: .25rem;
         padding-bottom: 0;
         border-bottom: 1px solid var(--ks-border-primary);
@@ -284,9 +284,8 @@
     }
 
     .editor-tabs .editor-tab{
-        padding: 0 .5rem;
+        padding: 1px .5rem;
         border: 1px solid var(--ks-border-primary);
-        border-top-width: 4px;
         border-radius: 5px 5px 0 0;
         border-bottom: none;
         background-color: var(--ks-button-background-secondary-active);
@@ -296,7 +295,8 @@
         align-items: center;
         gap: .5rem;
         &.active {
-            border-top-width: 1px;
+            padding-top: 3px;
+            padding-bottom: 3px;
         }
         &.simulated{
             opacity: .5;

@@ -12,7 +12,7 @@
             :is-read-only="isReadOnly"
             :can-delete="true"
             :is-allowed-edit="isAllowedEdit"
-            :have-change="currentTab.dirty === true"
+            :have-change="tabs.some(t => t.dirty === true)"
             :flow-have-tasks="flowHaveTasks"
             :errors="flowErrors"
             :warnings="flowWarnings"
@@ -59,13 +59,10 @@
     const flowWarnings = computed(() => store.getters["flow/flowWarnings"])
     const flowInfos = computed(() => store.getters["flow/flowInfos"])
     const flowParsed = computed(() => store.getters["flow/flow"])
-    const flowYaml = computed(() => store.getters["flow/flowYaml"])
-    const currentTab = computed(() => store.state.editor.current)
+    const tabs = computed<{dirty:boolean}[]>(() => store.state.editor.tabs)
 
     async function save(){
-        const result = await store.dispatch("flow/save", {
-            content: flowYaml.value,
-        })
+        const result = await store.dispatch("flow/saveAll")
 
         if(result === "redirect_to_update"){
             await router.push({

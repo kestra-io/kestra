@@ -34,7 +34,7 @@
         flow?: boolean
         dirty?: boolean
     }>(), {
-        path: "flow.yaml",
+        path: "Flow.yaml",
         name: "Flow",
         extension: "yaml",
         dirty: false,
@@ -51,7 +51,10 @@
         if(props.dirty || props.flow){
             return;
         }
-        const content = await store.dispatch("namespace/readFile", {namespace: namespace.value, path: props.path})
+        const content = await store.dispatch("namespace/readFile", {
+            namespace: namespace.value,
+            path: props.path
+        })
         store.commit("editor/setTabContent", {
             path: props.path,
             content
@@ -74,11 +77,24 @@
     const isCurrentTabFlow = computed(() => props.flow)
     const isReadOnly = computed(() => flowStore.value?.deleted || !store.getters["flow/isAllowedEdit"] || store.getters["flow/readOnlySystemLabel"])
 
+    const timeout = ref<any>(null);
+
     function editorUpdate(newValue: string){
         if(isCurrentTabFlow.value){
             store.commit("flow/setFlowYaml", newValue);
         }
         store.commit("editor/setTabContent", {content: newValue, path: props.path});
+        // throttle the trigger of the flow update
+        clearTimeout(timeout.value);
+        timeout.value = setTimeout(() => {
+            store.dispatch("flow/onEdit", {
+                source: newValue,
+                currentIsFlow: isCurrentTabFlow.value,
+                editorViewType: "YAML", // this is to be opposed to the no-code editor
+                topologyVisible: true,
+            });
+        }, 500);
+
     }
 
 

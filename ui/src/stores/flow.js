@@ -133,8 +133,6 @@ export default {
 
             if(!currentIsFlow) return;
 
-            console.log("validate flow", state.isCreating)
-
             return dispatch("validateFlow", {
                 flow: state.isCreating ? state.flowYaml : getters.yamlWithNextRevision
             })

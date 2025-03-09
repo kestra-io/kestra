@@ -776,9 +776,10 @@
             source,
             currentIsFlow,
             editorViewType: editorViewType.value,
-            id: props.id ?? routeParams.id,
-            namespace: props.namespace ?? routeParams.namespace,
-            viewType: viewType.value,
+            topologyVisible: [
+                editorViewTypes.TOPOLOGY,
+                editorViewTypes.SOURCE_TOPOLOGY,
+            ].includes(viewType.value),
         }).then((value) => {
 
             if (validationDomElement.value && editorDomElement.value?.$el?.offsetWidth) {

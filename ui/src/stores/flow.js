@@ -91,7 +91,7 @@ export default {
                 dispatch("core/isUnsaved", false, {root: true});
             }
         },
-        onEdit({getters, dispatch, commit, state, rootState}, {source, currentIsFlow, editorViewType, viewType}) {
+        onEdit({getters, dispatch, commit, state, rootState}, {source, currentIsFlow, editorViewType, topologyVisible}) {
             commit("setFlowYaml", source);
             const flowParsed = getters.flowParsed;
             const currentTab = rootState.editor.current;
@@ -138,10 +138,7 @@ export default {
                 .then((value) => {
                     if (
                         getters.flowHaveTasks &&
-                        [
-                            editorViewTypes.TOPOLOGY,
-                            editorViewTypes.SOURCE_TOPOLOGY,
-                        ].includes(viewType)
+                        topologyVisible
                     ) {
                         if(!value.constraints) dispatch("fetchGraph");
                     }

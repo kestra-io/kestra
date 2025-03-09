@@ -92,7 +92,6 @@ export default {
             }
         },
         onEdit({getters, dispatch, commit, state, rootState}, {source, currentIsFlow, editorViewType, topologyVisible}) {
-            commit("setFlowYaml", source);
             const flowParsed = getters.flowParsed;
             const currentTab = rootState.editor.current;
 
@@ -134,7 +133,11 @@ export default {
 
             if(!currentIsFlow) return;
 
-            return dispatch("validateFlow", {flow: state.isCreating ? state.flowYaml : getters.yamlWithNextRevision})
+            console.log("validate flow", state.isCreating)
+
+            return dispatch("validateFlow", {
+                flow: state.isCreating ? state.flowYaml : getters.yamlWithNextRevision
+            })
                 .then((value) => {
                     if (
                         getters.flowHaveTasks &&
@@ -745,7 +748,7 @@ export default {
             return getters.flow.revision + 1;
         },
         yamlWithNextRevision(_state, getters){
-            return `revision: ${getters.nextRevision}\n${getters.flow.source}`;
+            return `revision: ${getters.nextRevision}\n${getters.flowYaml}`;
         },
         flowParsed(state){
             try{

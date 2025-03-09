@@ -2,6 +2,7 @@ import {computed, h, markRaw, Ref, watch} from "vue"
 import {useStore} from "vuex"
 import type {Panel} from "../MultiPanelTabs.vue";
 import EditorWrapper from "../inputs/EditorWrapper.vue";
+import TypeIcon from "../utils/icons/Type.vue";
 
 interface EditorTab {
     name: string,
@@ -23,7 +24,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
             value: `code-${t.path}`,
             button: {
                 label: t.name,
-                icon: "FileIcon"
+                icon: () => h(TypeIcon, {name:t.name})
             },
             component: () => h(markRaw(EditorWrapper), {...t, flow: false})
         }))

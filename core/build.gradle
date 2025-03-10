@@ -74,6 +74,6 @@ dependencies {
     testImplementation "io.micronaut:micronaut-management"
 
     testImplementation "org.testcontainers:testcontainers:1.20.5"
-    testImplementation "org.testcontainers:junit-jupiter:1.20.5"
+    testImplementation "org.testcontainers:junit-jupiter:1.20.6"
     testImplementation "org.bouncycastle:bcpkix-jdk18on:1.80"
 }

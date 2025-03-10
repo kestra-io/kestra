@@ -27,9 +27,9 @@
                         :data-tab-id="tab.value"
                         @click="panel.activeTab = tab"
                     >
-                        <component :is="tab.button.icon" />
+                        <component :is="tab.button.icon" class="tab-icon" />
                         {{ tab.button.label }}
-                        <CloseIcon @click.stop="destroyTab(panelIndex, tab)" />
+                        <CloseIcon @click.stop="destroyTab(panelIndex, tab)" class="tab-icon" />
                     </button>
                     <div
                         v-else
@@ -275,28 +275,34 @@
     .editor-tabs {
         display: flex;
         align-items: end;
-        padding: .25rem;
         padding-bottom: 0;
         border-bottom: 1px solid var(--ks-border-primary);
+        background-color: var(--ks-background-body);
         &.dragover {
             background-color: var(--ks-background-card-hover);
         }
     }
 
     .editor-tabs .editor-tab{
-        padding: 1px .5rem;
-        border: 1px solid var(--ks-border-primary);
-        border-radius: 5px 5px 0 0;
+        padding: 3px .5rem;
+        border: none;
+        border-left: 1px solid var(--ks-border-primary);
+        border-radius: 2px 2px 0 0;
         border-bottom: none;
-        background-color: var(--ks-button-background-secondary-active);
+        background-color: var(--ks-background-card);
         display: flex;
         flex-wrap:nowrap;
         white-space: nowrap;
         align-items: center;
         gap: .5rem;
+        color: var(--ks-content-secondary);
+        opacity: .6;
+        .tab-icon{
+            color: var(--ks-content-secondary);
+        }
         &.active {
-            padding-top: 3px;
-            padding-bottom: 3px;
+            opacity: 1;
+            color: var(--ks-content-primary);
         }
         &.simulated{
             opacity: .5;

@@ -139,7 +139,7 @@ public class ExecutorService {
     public Executor process(Executor executor) {
         // previous failed (flow join can fail), just forward
         // or concurrency limit failed/cancelled the execution
-        if (!executor.canBeProcessed() || conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())) {
+        if (!executor.canBeProcessed() || executionService.isTerminated(executor.getFlow(), executor.getExecution())) {
             return executor;
         }
 
@@ -158,7 +158,7 @@ public class ExecutorService {
             }
 
             // but keep listeners on killing
-            executor = this.handleListeners(executor);
+            executor = this.handleAfterExecution(executor);
 
             // search for worker task
             executor = this.handleWorkerTask(executor);
@@ -682,23 +682,39 @@ public class ExecutorService {
         return executor;
     }
 
-    private Executor handleListeners(Executor executor) {
+    private Executor handleAfterExecution(Executor executor) {
         if (!executor.getExecution().getState().isTerminated()) {
             return executor;
         }
 
-        List<ResolvedTask> currentTasks = conditionService.findValidListeners(executor.getFlow(), executor.getExecution());
-
-        List<TaskRun> nexts = FlowableUtils.resolveSequentialNexts(executor.getExecution(), currentTasks)
+        // first, execute listeners
+        List<ResolvedTask> listenerResolvedTasks = conditionService.findValidListeners(executor.getFlow(), executor.getExecution());
+        List<TaskRun> listenerNexts = FlowableUtils.resolveSequentialNexts(executor.getExecution(), listenerResolvedTasks)
             .stream()
             .map(throwFunction(NextTaskRun::getTaskRun))
             .toList();
 
-        if (nexts.isEmpty()) {
+        if (!listenerNexts.isEmpty()) {
+            return executor.withTaskRun(listenerNexts, "handleListeners");
+        }
+
+        // then, check if all listener tasks are terminated
+        if (!listenerResolvedTasks.isEmpty() && !executor.getExecution().isTerminated(listenerResolvedTasks)) {
             return executor;
         }
 
-        return executor.withTaskRun(nexts, "handleListeners");
+        // then, when no more listeners, execute afterExecution tasks
+        List<ResolvedTask> afterExecutionResolvedTasks = executionService.resolveAfterExecutionTasks(executor.getFlow());
+        List<TaskRun> afterExecutionNexts = FlowableUtils.resolveSequentialNexts(executor.getExecution(), afterExecutionResolvedTasks)
+            .stream()
+            .map(throwFunction(NextTaskRun::getTaskRun))
+            .toList();
+        if (!afterExecutionNexts.isEmpty()) {
+            return executor.withTaskRun(afterExecutionNexts, "handleAfterExecution ");
+        }
+
+        // if nothing more, just return the executor as is
+        return executor;
     }
 
     private Executor handleEnd(Executor executor) {
@@ -1028,7 +1044,7 @@ public class ExecutorService {
         return executor.getExecution().isDeleted() || (
             executor.getFlow() != null &&
                 // is terminated
-                conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())
+                executionService.isTerminated(executor.getFlow(), executor.getExecution())
                 // we don't purge pause execution in order to be able to restart automatically in case of delay
                 && executor.getExecution().getState().getCurrent() != State.Type.PAUSED
                 // we don't purge killed execution in order to have feedback about child running tasks

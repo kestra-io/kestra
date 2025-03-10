@@ -126,9 +126,6 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private ExecutorService executorService;
 
     @Inject
-    private ConditionService conditionService;
-
-    @Inject
     private MultipleConditionStorageInterface multipleConditionStorage;
 
     @Inject
@@ -962,7 +959,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             }
 
             // the terminated state can only come from the execution queue, in this case we always have a flow in the executor
-            boolean isTerminated = executor.getFlow() != null && conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution());
+            boolean isTerminated = executor.getFlow() != null && executionService.isTerminated(executor.getFlow(), executor.getExecution());
 
             // purge the executionQueue
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.

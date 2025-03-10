@@ -1,26 +1,14 @@
 import type {Store} from "vuex";
 import type {JSONSchema} from "@kestra-io/ui-libs";
 import YamlUtils, {YamlElement} from "../../utils/yamlUtils";
-
-export class YamlNoAutoCompletion {
-    rootFieldAutoCompletion(): Promise<string[]> {
-        return Promise.resolve([]);
-    }
-
-    nestedFieldAutoCompletion(_source: string, _parsed?: any, _parentField?: string): Promise<string[]> {
-        return Promise.resolve([])
-    }
-
-    valueAutoCompletion(_source: string, _parsed?: any, _yamlElement: YamlElement | undefined): Promise<string[]> {
-        return Promise.resolve([]);
-    }
-}
+import {QUOTE, YamlNoAutoCompletion} from "../../services/autoCompletionProvider";
+import RegexProvider from "../../utils/regex";
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []));
 }
 
-export class FlowAutoCompletion extends YamlNoAutoCompletion{
+export class FlowAutoCompletion extends YamlNoAutoCompletion {
     store: Store<Record<string, any>>;
     flowsInputsCache: Record<string, string[]> = {};
 
@@ -43,7 +31,9 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
             "envs",
             "globals",
             "parents",
-            "error"
+            "error",
+            "secret(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:MY_SECRET}" + QUOTE + ")",
+            "kv(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:my_key}" + QUOTE + ")"
         ]);
     }
 
@@ -181,6 +171,46 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
             }
         }
 
+        return Promise.resolve([]);
+    }
+
+    private extractArgValue(arg) {
+        if (arg === undefined) {
+            return undefined;
+        }
+
+        const captureValue = new RegExp("^" + RegexProvider.captureStringValue + "$").exec(arg);
+        if (!captureValue) {
+            return undefined;
+        }
+
+        return captureValue?.[1];
+    }
+
+    async functionAutoCompletion(parsed: any | undefined, functionName: string, args: Record<string, string>): Promise<string[]> {
+        let namespaceArg = args.namespace;
+        if (namespaceArg === undefined || namespaceArg === "flow.namespace") {
+           namespaceArg = parsed?.namespace === undefined ? "" : QUOTE + parsed.namespace + QUOTE;
+        }
+        switch (functionName) {
+            case "secret": {
+                const namespace = this.extractArgValue(namespaceArg);
+                if (namespace === undefined) {
+                    return Promise.resolve([]);
+                }
+                return Array.from(Object.entries(await this.store.dispatch("namespace/inheritedSecrets", {id: namespace})).reduce((acc, [_, nsSecrets]: [string, string[]]) => {
+                    nsSecrets.forEach(secret => acc.add(QUOTE + secret + QUOTE));
+                    return acc;
+                }, new Set()));
+            }
+            case "kv": {
+                const namespace = this.extractArgValue(namespaceArg);
+                if (namespace === undefined) {
+                    return Promise.resolve([]);
+                }
+                return (await this.store.dispatch("namespace/kvsList", {id: namespace})).map(kv => QUOTE + kv.key + QUOTE);
+            }
+        }
         return Promise.resolve([]);
     }
 }

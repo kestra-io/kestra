@@ -2,7 +2,7 @@
     <div class="ks-monaco-editor" />
 </template>
 
-<script>
+<script lang="ts">
     import {defineComponent} from "vue";
     import {mapActions, mapMutations, mapState} from "vuex";
 
@@ -20,8 +20,10 @@
     import {editorViewTypes} from "../../utils/constants";
     import Utils from "../../utils/utils";
     import YamlUtils from "../../utils/yamlUtils";
-    import {FlowAutoCompletion, YamlNoAutoCompletion} from "override/services/autoCompletionProvider";
+    import {QUOTE, YamlNoAutoCompletion} from "../../services/autoCompletionProvider.js"
+    import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider.js";
     import RegexProvider from "../../utils/regex";
+    import type {Position} from "monaco-editor"
 
     window.MonacoEnvironment = {
         getWorker(moduleId, label) {
@@ -218,7 +220,7 @@
 
             const NO_SUGGESTIONS = {suggestions: []};
 
-            let yamlAutoCompletionProvider;
+            let yamlAutoCompletionProvider: YamlNoAutoCompletion;
             if (this.schemaType === "flow") {
                 yamlAutoCompletionProvider = new FlowAutoCompletion(this.$store);
             } else {
@@ -226,7 +228,7 @@
             }
 
             const endOfWordColumn = (position, model) => {
-                return position.column + (model.findNextMatch(RegexProvider.beforeSeparator, position, true, false, null, true)?.matches[0].length ?? 0);
+                return position.column + (model.findNextMatch(RegexProvider.beforeSeparator(), position, true, false, null, true)?.matches[0].length ?? 0);
             }
 
             this.autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider("yaml", {
@@ -236,7 +238,7 @@
                     const cursorPosition = model.getOffsetAt(position);
                     const parsed = YamlUtils.parse(source, false);
 
-                    const currentWord = model.findPreviousMatch(RegexProvider.beforeSeparator, position, true, false, null, true);
+                    const currentWord = model.findPreviousMatch(RegexProvider.beforeSeparator(), position, true, false, null, true);
                     const elementUnderCursor = YamlUtils.localizeElementAtIndex(source, cursorPosition);
                     if (elementUnderCursor?.key === undefined) {
                         return NO_SUGGESTIONS;
@@ -246,7 +248,7 @@
                     const autoCompletions = await yamlAutoCompletionProvider.valueAutoCompletion(source, parsed, elementUnderCursor);
                     return {
                         suggestions: autoCompletions.map(autoCompletion => {
-                            const [label, isKey] = autoCompletion.split(":");
+                            const [label, isKey] = autoCompletion.split(":") as [string, string | undefined];
                             let insertText = label;
                             const endColumn = endOfWordColumn(position, model);
                             if (isKey === undefined) {
@@ -276,19 +278,27 @@
                 }
             }));
 
-            const propertySuggestion = (label, position) => ({
-                kind: monaco.languages.CompletionItemKind.Property,
-                label,
-                insertText: label,
-                range: {
-                    startLineNumber: position.lineNumber,
-                    endLineNumber: position.lineNumber,
-                    startColumn: position.startColumn,
-                    endColumn: position.endColumn
+            const propertySuggestion = (value: string, position: Position, kind: monaco.languages.CompletionItemKind | undefined) => {
+                let label = value.split("(")[0];
+                if (label.startsWith(QUOTE) && label.endsWith(QUOTE)) {
+                    label = label.substring(1, label.length - 1);
                 }
-            });
 
-            this.autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider("yaml", {
+                return ({
+                    kind: kind ?? (value.includes("(") ? monaco.languages.CompletionItemKind.Function : monaco.languages.CompletionItemKind.Property),
+                    label: label,
+                    insertText: value,
+                    insertTextRules: value.includes("${1:") ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
+                    range: {
+                        startLineNumber: position.lineNumber,
+                        endLineNumber: position.lineNumber,
+                        startColumn: position.startColumn,
+                        endColumn: position.endColumn
+                    }
+                });
+            };
+
+            this.autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
                 triggerCharacters: ["{"],
                 async provideCompletionItems(model, position) {
                     // Not a subfield access
@@ -308,6 +318,48 @@
                     };
                 }
             }));
+
+            this.autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
+                triggerCharacters: ["("],
+                async provideCompletionItems(model, position) {
+                    const source = model.getValue();
+                    const parsed = YamlUtils.parse(source, false);
+
+                    const functionMatcher = model.findPreviousMatch(RegexProvider.capturePebbleFunction + "$", position, true, false, null, true);
+                    if (functionMatcher === null) {
+                        return NO_SUGGESTIONS;
+                    }
+
+                    const QUOTES = ["\"", "'"];
+                    const wordStartOffset = functionMatcher.matches?.[3]?.length
+                        ?? model.findPreviousMatch(RegexProvider.beforeSeparator(QUOTES) + "$", position, true, false, null, true).matches[0].length;
+                    const startOfWordColumn = position.column - wordStartOffset;
+                    return {
+                        suggestions: (await yamlAutoCompletionProvider.functionAutoCompletion(
+                            parsed,
+                            functionMatcher.matches[1],
+                            Object.fromEntries(functionMatcher.matches?.[2]?.split(/ *, */)?.map(arg => arg.split(/ *= */)) ?? []))
+                        ).map(s => {
+                            const suggestion = propertySuggestion(s, {
+                                lineNumber: position.lineNumber,
+                                startColumn: startOfWordColumn,
+                                endColumn: endOfWordColumn(position, model)
+                            }, monaco.languages.CompletionItemKind.Value);
+
+                            // If the inserted value is a string (surrounded by quotes), we remove them if there is already one
+                            if (suggestion.insertText.startsWith(QUOTE) && suggestion.insertText.endsWith(QUOTE)) {
+                                const lineContent = model.getLineContent(position.lineNumber);
+                                suggestion.insertText = suggestion.insertText.substring(
+                                    QUOTES.includes(lineContent.charAt(startOfWordColumn - 2)) ? 1 : 0,
+                                    suggestion.insertText.length - (QUOTES.includes(lineContent.charAt(endOfWordColumn)) ? 1 : 0)
+                                );
+                            }
+
+                            return suggestion;
+                        })
+                    };
+                }
+            }))
 
             this.autoCompletionProviders.push(monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
                 triggerCharacters: ["."],
@@ -330,7 +382,7 @@
                             }))
                     };
                 }
-            }))
+            }));
 
             // Exposing functions globally for testing purposes
             window.pasteToEditor = (textToPaste) => {

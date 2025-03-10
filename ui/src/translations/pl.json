@@ -284,6 +284,10 @@
           "message": "W Kestra Enterprise Edition, namespaces zapewniają zaawansowaną izolację i zarządzanie tajemnicami, zmiennymi oraz domyślnymi ustawieniami pluginów na dużą skalę. Administratorzy mogą konfigurować niestandardowych menedżerów tajemnic, izolowane zaplecza pamięci, dedykowane grupy workerów oraz szczegółowe uprawnienia na poziomie namespace. To zapewnia, że tajemnice, zmienne i konfiguracje pluginów pozostają bezpieczne i łatwe do utrzymania w różnych zespołach i projektach.",
           "title": "Ulepsz zarządzanie Namespace"
         },
+        "history": {
+          "message": "W Kestra Enterprise Edition możesz zarządzać historią wersji swoich namespace.",
+          "title": "Zarządzaj historią wersji w jednym miejscu"
+        },
         "plugin-defaults": {
           "message": "W Kestra Enterprise Edition możesz ustawić domyślne wtyczki specyficzne dla namespace, co zmniejsza potrzebę powielania konfiguracji w każdym flow. To centralne zarządzanie wtyczkami zapewnia spójne konfiguracje, umożliwia bezpieczne odwoływanie się do sekretów lub zmiennych oraz upraszcza utrzymanie twoich workflow.",
           "title": "Standaryzuj konfigurację za pomocą domyślnych ustawień Pluginów"

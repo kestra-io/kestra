@@ -284,6 +284,10 @@
           "message": "Nella Kestra Enterprise Edition, i namespace forniscono un'isolamento avanzato e una governance dei segreti, delle variabili e dei plugin defaults su larga scala. Gli amministratori possono configurare gestori di segreti personalizzati, backend di storage isolati, gruppi di worker dedicati e permessi dettagliati su base per-namespace. Questo assicura che i segreti, le variabili e le configurazioni dei plugin rimangano sicuri e facili da gestire tra diversi team e progetti.",
           "title": "Aggiorna la Gestione del tuo Namespace"
         },
+        "history": {
+          "message": "Nella Kestra Enterprise Edition, puoi gestire la cronologia delle revisioni dei tuoi namespace",
+          "title": "Gestisci la Cronologia delle Revisioni in un Unico Luogo"
+        },
         "plugin-defaults": {
           "message": "Nella Kestra Enterprise Edition, puoi impostare i plugin predefiniti specifici per namespace, riducendo la necessità di configurazioni duplicate in ogni flow. Questa governance centrale dei plugin impone configurazioni coerenti, consente il riferimento sicuro a segreti o variabili e semplifica la manutenzione dei tuoi workflow.",
           "title": "Standardizza la Configurazione con i Valori Predefiniti del Plugin"

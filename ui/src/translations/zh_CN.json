@@ -284,6 +284,10 @@
           "message": "在 Kestra 企业版中，namespace 提供了高级的隔离和治理功能，用于管理大规模的密钥、变量和插件默认值。管理员可以为每个 namespace 配置自定义密钥管理器、隔离存储后端、专用 worker 组以及细粒度权限。这确保了密钥、变量和插件配置在不同团队和项目中保持安全且易于维护。",
           "title": "升级您的Namespace管理"
         },
+        "history": {
+          "message": "在 Kestra Enterprise Edition 中，您可以管理 Namespace 的修订历史记录。",
+          "title": "在一个地方管理修订历史"
+        },
         "plugin-defaults": {
           "message": "在 Kestra Enterprise Edition 中，您可以设置特定于 namespace 的插件默认值，从而减少每个 flow 中重复设置的需求。这种集中的插件管理强制执行一致的配置，允许安全引用机密或变量，并简化工作流的维护。",
           "title": "使用插件默认值标准化配置"

@@ -284,6 +284,10 @@
           "message": "In der Kestra Enterprise Edition bieten Namespaces erweiterte Isolation und Governance von Secrets, Variablen und Plugin-Standardeinstellungen im großen Maßstab. Administratoren können benutzerdefinierte Secrets-Manager, isolierte Speicher-Backends, dedizierte Worker-Gruppen und fein abgestufte Berechtigungen auf Basis von Namespaces konfigurieren. Dies stellt sicher, dass Secrets, Variablen und Plugin-Konfigurationen über verschiedene Teams und Projekte hinweg sicher und einfach zu verwalten bleiben.",
           "title": "Verbessern Sie Ihr Namespace-Management"
         },
+        "history": {
+          "message": "In der Kestra Enterprise Edition können Sie die Versionshistorie Ihrer Namespaces verwalten.",
+          "title": "Verwalten Sie die Revisionshistorie an einem Ort"
+        },
         "plugin-defaults": {
           "message": "In der Kestra Enterprise Edition können Sie namespace-spezifische Plugin-Standardeinstellungen festlegen, wodurch der Bedarf an doppelter Einrichtung in jedem Flow reduziert wird. Diese zentrale Plugin-Verwaltung erzwingt konsistente Konfigurationen, ermöglicht die sichere Referenzierung von Geheimnissen oder Variablen und vereinfacht die Wartung Ihrer Workflows.",
           "title": "Konfiguration mit Plugin-Standards standardisieren"

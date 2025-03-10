@@ -8,7 +8,7 @@
             @change="updateLabel(label)"
             class="me-1 el-tag label"
         >
-            {{ label.key }}: {{ label.value }}
+            {{ label.key }}:{{ label.value }}
         </el-check-tag>
     </span>
 </template>

@@ -215,14 +215,23 @@
             console.log(movedTabInfo.value)
             throw new Error("Tab is not defined");
         }
+
         moveTab(movedTabInfo.value, targetPanelIndex, targetTabId);
         cleanUp();
+    }
+
+    function getTargetTabIndex(targetPanelIndex: number, targetTabId: string): number {
+        const targetTabIndex = panels.value[targetPanelIndex].tabs.findIndex((tab) => tab.value === targetTabId)
+        if(targetTabIndex === -1){
+            return panels.value[targetPanelIndex].tabs.length;
+        }
+        return targetTabIndex;
     }
 
     function moveTab(movedTabInfo: TabInfo, targetPanelIndex: number, targetTabId?: string){
         const {tab: movedTab, panelIndex: originalPanelIndex, tabIndex} = movedTabInfo
 
-        const targetTabIndex = panels.value[targetPanelIndex].tabs.findIndex((tab) => tab.value === targetTabId);
+        const targetTabIndex = getTargetTabIndex(targetPanelIndex, targetTabId);
 
         // In case of reordering of tabs we have to
         // account for cases where simulated tabs are present.

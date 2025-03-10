@@ -307,7 +307,7 @@ TabMoveBetweenPanelsTest.play = async ({canvasElement}) => {
 
     // You might also click on the reordered tab to verify it still works
     // await userEvent.click(firstTab);
-    expect(within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab").map(tab => tab.textContent.trim())).toMatchObject(["Tab 4", "Tab 1", "Tab 5", "Tab 6"]);
+    expect(within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab").map(tab => tab.textContent.trim())).toMatchObject(["Tab 4", "Tab 1", "Tab 5", "Tab 6", "Tab 2"]);
   }
 
   await waitFor(dragInBetweenTabs);

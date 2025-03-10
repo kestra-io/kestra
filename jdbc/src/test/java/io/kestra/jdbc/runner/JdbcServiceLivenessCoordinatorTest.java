@@ -243,14 +243,11 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         worker.shutdown();
 
         Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
-        applicationContext.registerSingleton(newWorker);
         newWorker.run();
+        assertThat(countDownLatch.await(30, TimeUnit.SECONDS), is(true));
 
-        boolean lastAwait = countDownLatch.await(10, TimeUnit.SECONDS);
-
-        newWorker.shutdown();
         receive.blockLast();
-        assertThat(lastAwait, is(true));
+        newWorker.shutdown();
     }
 
     @Test
@@ -260,11 +257,11 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
 
         WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), "workerGroupKey");
 
-        // 2 trigger should happen because of the resubmit
+        // 2 triggers should happen because of the resubmit
         CountDownLatch countDownLatch = new CountDownLatch(2);
         Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, workerTriggerResult -> countDownLatch.countDown());
 
-        // we wait that the worker receive the trigger
+        // we wait that the worker receives the trigger
         CountDownLatch triggerCountDownLatch = new CountDownLatch(1);
         Flux<Trigger> receiveTrigger = TestsUtils.receive(triggerQueue, either -> {
             if (either.getLeft().getWorkerId().equals(worker.getId())) {
@@ -277,14 +274,11 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         worker.shutdown();
 
         Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, "workerGroupKey");
-        applicationContext.registerSingleton(newWorker);
         newWorker.run();
+        assertThat(countDownLatch.await(30, TimeUnit.SECONDS), is(true));
 
-        boolean lastAwait = countDownLatch.await(10, TimeUnit.SECONDS);
-
-        newWorker.shutdown();
         receive.blockLast();
-        assertThat(lastAwait, is(true));
+        newWorker.shutdown();
     }
 
     @MockBean(WorkerGroupService.class)

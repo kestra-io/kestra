@@ -1,53 +1,65 @@
 <template>
     <Splitpanes class="default-theme">
         <Pane v-for="(panel, panelIndex) in panels" :key="panelIndex">
-            <div
-                class="editor-tabs"
-                role="tablist"
-                :class="{dragover: panel.dragover}"
-                @dragleave.prevent="dragleavePanel"
-                @dragenter.prevent="dragoverPanel"
-                @dragover.prevent
-                @drop="drop"
-                :data-panel-index="panelIndex"
-            >
-                <template
-                    v-for="tab in panel.tabs"
-                    :key="tab.value"
+            <div class="editor-tabs-container">
+                <div
+                    class="editor-tabs"
+                    role="tablist"
+                    :class="{dragover: panel.dragover}"
+                    @dragleave.prevent="dragleavePanel"
+                    @dragenter.prevent="dragoverPanel"
+                    @dragover.prevent
+                    @drop="drop"
+                    :data-panel-index="panelIndex"
                 >
-                    <button
-                        v-if="!tab.potential"
-                        class="editor-tab"
-                        role="tab"
-                        :class="{active: tab.value === panel.activeTab.value}"
-                        draggable="true"
-                        @dragstart="() => dragstart(panelIndex, tab.value)"
-                        @dragend="cleanUp"
-                        @dragenter.prevent.stop="dragover"
-                        @dragover.prevent
-                        @drop.stop="drop"
-                        :data-tab-id="tab.value"
-                        @click="panel.activeTab = tab"
+                    <template
+                        v-for="tab in panel.tabs"
+                        :key="tab.value"
                     >
-                        <component :is="tab.button.icon" class="tab-icon" />
-                        {{ tab.button.label }}
-                        <CloseIcon @click.stop="destroyTab(panelIndex, tab)" class="tab-icon" />
-                    </button>
-                    <div
-                        v-else
-                        class="editor-tab simulated"
-                        @drop.stop="drop"
-                        :data-tab-id="tab.value"
-                    >
-                        <component
-                            :is="tab.button.icon"
-                            @dragover.prevent.stop
-                            @dragleave.prevent.stop
-                            @dragenter.prevent.stop
+                        <button
+                            v-if="!tab.potential"
+                            class="editor-tab"
+                            role="tab"
+                            :class="{active: tab.value === panel.activeTab.value}"
+                            draggable="true"
+                            @dragstart="() => dragstart(panelIndex, tab.value)"
+                            @dragend="cleanUp"
+                            @dragenter.prevent.stop="dragover"
+                            @dragover.prevent
+                            @drop.stop="drop"
+                            :data-tab-id="tab.value"
+                            @click="panel.activeTab = tab"
+                        >
+                            <component :is="tab.button.icon" class="tab-icon" />
+                            {{ tab.button.label }}
+                            <CloseIcon @click.stop="destroyTab(panelIndex, tab)" class="tab-icon" />
+                        </button>
+                        <div
+                            v-else
+                            class="editor-tab simulated"
+                            @drop.stop="drop"
+                            :data-tab-id="tab.value"
+                        >
+                            <component
+                                :is="tab.button.icon"
+                                @dragover.prevent.stop
+                                @dragleave.prevent.stop
+                                @dragenter.prevent.stop
+                            />
+                            {{ tab.button.label }}
+                        </div>
+                    </template>
+                </div>
+                <button v-if="panel.tabs.length > 1" @click="splitPanel(panelIndex)" title="Split panel">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            fill-rule="evenodd"
+                            clip-rule="evenodd"
+                            d="M22.038 20.5599C22.0402 21.35 21.4014 21.9924 20.6112 21.9946L3.47196 22.0424C2.6818 22.0446 2.03946 21.4058 2.03725 20.6157L1.98939 3.45824C1.98718 2.66808 2.62595 2.02574 3.41611 2.02353L20.5554 1.97571C21.3455 1.97351 21.9879 2.61228 21.9901 3.40244L22.038 20.5599ZM20.626 20.5807L10.5998 20.6086L10.5517 3.37297L20.5779 3.345L20.626 20.5807ZM9.10343 20.611L3.38734 20.6269L3.33925 3.39126L9.05535 3.37531L9.10343 20.611Z"
+                            fill="currentColor"
                         />
-                        {{ tab.button.label }}
-                    </div>
-                </template>
+                    </svg>
+                </button>
             </div>
             <component :is="panel.activeTab.component" />
         </Pane>
@@ -255,14 +267,8 @@
             panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[0];
         }
 
-
-        if (targetTabIndex === -1) {
-            // if there is no target tab, add the tab to the end of the target panel
-            panels.value[targetPanelIndex].tabs.push(movedTab);
-        }else {
-            // add the tab to the target panel in-place of the hovered simulated tab
-            panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab);
-        }
+        // add the tab to the target panel in-place of the hovered simulated tab
+        panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab);
     }
 
     function destroyTab(panelIndex:number, tab: Tab){
@@ -284,9 +290,44 @@
             index++;
         }
     }, {deep: true})
+
+    function splitPanel(panelIndex: number){
+        const panel = panels.value[panelIndex];
+        const newPanel = {
+            tabs: [panel.activeTab],
+            activeTab: panel.activeTab
+        }
+        panels.value.splice(panelIndex + 1, 0, newPanel)
+
+        // get index of active tab in the original panel
+        const activeTabIndex = panel.tabs.findIndex((tab) => tab.value === panel.activeTab.value)
+
+        // set the active tab to the previous tab in the original panel
+        panel.activeTab = panel.tabs[activeTabIndex - 1] ?? panel.tabs[activeTabIndex + 1]
+
+        // remove the tab from the original panel
+        panel.tabs.splice(activeTabIndex, 1)
+
+
+    }
 </script>
 
 <style lang="scss" scoped>
+    .editor-tabs-container{
+        display: flex;
+        justify-content: space-between;
+        button{
+            border: none;
+            color: var(--ks-content-tertiary);
+            background-color: transparent;
+            padding: 0 .5rem;
+            svg {
+                height: 16px;
+                width: 16px;
+            }
+        }
+    }
+
     .editor-tabs {
         display: flex;
         align-items: end;

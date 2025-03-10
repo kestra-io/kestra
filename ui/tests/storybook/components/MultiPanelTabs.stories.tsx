@@ -314,3 +314,18 @@ TabMoveBetweenPanelsTest.play = async ({canvasElement}) => {
   await new Promise(resolve => setTimeout(resolve, 100));
   await waitFor(dragOnPanel);
 };
+
+// Test for reordering tabs within a panel using drag and drop
+export const SplitPanel = Template.bind({});
+SplitPanel.args = {
+    modelValue: [Default.args.modelValue[0]]
+};
+SplitPanel.play = async ({canvasElement}) => {
+    const canvas = within(canvasElement);
+
+    canvas.getByTitle("Split panel", {
+
+    }).click()
+
+    await new Promise(resolve => setTimeout(resolve, 100));
+}

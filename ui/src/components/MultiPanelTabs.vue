@@ -3,6 +3,7 @@
         <Pane v-for="(panel, panelIndex) in panels" :key="panelIndex">
             <div
                 class="editor-tabs"
+                role="tablist"
                 :class="{dragover: panel.dragover}"
                 @dragleave.prevent="dragleavePanel"
                 @dragenter.prevent="dragoverPanel"
@@ -17,6 +18,7 @@
                     <button
                         v-if="!tab.potential"
                         class="editor-tab"
+                        role="tab"
                         :class="{active: tab.value === panel.activeTab.value}"
                         draggable="true"
                         @dragstart="() => dragstart(panelIndex, tab.value)"
@@ -90,16 +92,16 @@
         removeTab: [tab: string]
     }>()
 
-    const movedTab = ref<TabInfo | null>(null);
+    const movedTabInfo = ref<TabInfo | null>(null);
 
     function dragstart(panelIndex: number, tabId: string) {
         const tabIndex = panels.value[panelIndex].tabs.findIndex((tab) => tab.value === tabId);
-        movedTab.value = {panelIndex, tabId, tabIndex, tab: panels.value[panelIndex].tabs[tabIndex]}
+        movedTabInfo.value = {panelIndex, tabId, tabIndex, tab: panels.value[panelIndex].tabs[tabIndex]}
     }
 
     function cleanUp(){
         nextTick(() => {
-            movedTab.value = null
+            movedTabInfo.value = null
             panels.value.forEach((panel) => {
                 panel.dragover = false;
                 panel.tabs = panel.tabs.filter((tab) => !tab.potential)
@@ -122,7 +124,7 @@
                 return
             }
             const targetTabId = target.getAttribute("data-tab-id") ?? ""
-            if(targetTabId === movedTab.value?.tab.value) {
+            if(targetTabId === movedTabInfo.value?.tab?.value) {
                 return
             }
         }
@@ -146,19 +148,19 @@
             ? panels.value[targetPanelIndex].tabs.findIndex((tab) => tab.value === tabId)
             : panels.value[targetPanelIndex].tabs.length;
 
-        const movedTabInfo = movedTab.value;
-        if(!movedTabInfo) {
+        const movedTabInfoVal = movedTabInfo.value;
+        if(!movedTabInfoVal?.tab) {
             return;
         }
 
         // add a simulated tab to the target panel to see where the tab will be placed
         const tab = {
             component: () => null,
-            value: "simulated-" + movedTabInfo.tab.value,
+            value: "simulated-" + movedTabInfoVal.tab.value,
             fromPanel,
             potential:true,
             button: {
-                ...movedTabInfo.tab.button,
+                ...movedTabInfoVal.tab.button,
             }
         }
 
@@ -206,10 +208,14 @@
 
         const targetTabId = (event.target.classList.contains("editor-tab") ? event.target.getAttribute("data-tab-id") : "") ?? ""
 
-        if(!movedTab.value) {
+        if(!movedTabInfo.value) {
             return;
         }
-        moveTab(movedTab.value, targetPanelIndex, targetTabId);
+        if(!movedTabInfo.value.tab) {
+            console.log(movedTabInfo.value)
+            throw new Error("Tab is not defined");
+        }
+        moveTab(movedTabInfo.value, targetPanelIndex, targetTabId);
         cleanUp();
     }
 

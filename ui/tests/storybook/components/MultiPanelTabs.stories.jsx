@@ -6,7 +6,7 @@ import FileTreeOutlineIcon from "vue-material-design-icons/FileTreeOutline.vue";
 import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
 import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
 import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
-import {within, userEvent, expect} from "@storybook/test";
+import {within, userEvent, expect, fireEvent, waitFor} from "@storybook/test";
 
 export default {
   title: "Components/MultiPanelTabs",
@@ -17,13 +17,6 @@ export default {
 const Template = (props) => defineComponent(() => {
     const modelValueRef = ref(props.modelValue);
     return () => <div style="padding: 1rem;border: 1ps solid #ccc; border-radius: 4px; margin: 1rem; background: #f9f9f9;">
-        <div style={{position: "absolute",
-            left: "200px", top: "70px",
-            width: "1px", height: "1px",
-            background: "red",
-            boxShadow: "0 0 5px 5px rgba(255, 0, 0, 1)"
-        }}/>
-
         <MultiPanelTabs modelValue={modelValueRef.value} />
         <pre>{JSON.stringify(modelValueRef.value.map(p => p.tabs.map(t => t.value)))}</pre>
     </div>
@@ -182,50 +175,77 @@ PanelResizeTest.play = async ({canvasElement}) => {
 
 // Test for reordering tabs within a panel using drag and drop
 export const TabReorderTest = Template.bind({});
-TabReorderTest.args = Default.args;
+TabReorderTest.args = {
+    modelValue: [Default.args.modelValue[0]]
+};
 TabReorderTest.play = async ({canvasElement}) => {
   const canvas = within(canvasElement);
 
   // Wait for the component to render
   await new Promise(resolve => setTimeout(resolve, 100));
 
-  // Find the tab elements in the first panel
-  const firstTab = canvas.getByText("Tab 1");
-  const thirdTab = canvas.getByText("Tab 3");
+  const dropBetweenTabs = async () => {
+    // Find the tab elements in the first panel
+    const firstTab = canvas.getByText("Tab 1");
+    const thirdTab = canvas.getByText("Tab 3");
 
-  // Get the coordinates of the elements
-  const thirdTabRect = thirdTab.getBoundingClientRect();
+    // Perform drag operation
+    await fireEvent.dragStart(firstTab);
 
-  // Perform drag and drop to reorder tabs (moving Tab 1 after Tab 3)
-  await userEvent.pointer({
-    keys: "[MouseLeft>]", // Press left mouse button
-    target: firstTab,
-  });
+    await fireEvent.dragEnter(thirdTab);
 
-  // Move to the position after Tab 3
-  await userEvent.pointer({
-    target: document.body,
-    coords: {
-      clientX: thirdTabRect.right + 10,
-      clientY: thirdTabRect.y + (thirdTabRect.height / 2)
-    },
-  });
+    // Perform drop operation at the calculated position
+    await fireEvent.drop(canvas.getAllByText("Tab 3")[0]);
 
-  // Release mouse button
-  await userEvent.pointer({
-    keys: "[/MouseLeft]", // Release left mouse button
-  });
+    // Wait for the reorder to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-  // Wait for the reorder to complete
+    // Verify the tabs have been reordered (implementation-specific)
+    // This could check DOM order or test the component's internal state
+    // e.g., verify that Tab 2 now comes before Tab 1 in the DOM
+
+    // You might also click on the reordered tab to verify it still works
+    await userEvent.click(firstTab);
+    expect(canvas.getAllByRole("tab").map(tab => tab.textContent.trim())).toMatchObject(["Tab 2", "Tab 3", "Tab 1"]);
+  }
+
+  const dragEnterOnPanelDropOnSimulatedTab = async () => {
+    // Find the tab elements in the first panel
+    const secondTab = canvas.getByText("Tab 2");
+    const panel = canvas.getByRole("tablist")
+
+    // Perform drag operation
+    await fireEvent.dragStart(secondTab);
+
+    await fireEvent.dragEnter(panel);
+
+    // Perform drop operation at the calculated position
+    await fireEvent.drop(canvas.getAllByText("Tab 2")[1]);
+
+    expect(canvas.getAllByRole("tab").map(tab => tab.textContent.trim())).toMatchObject(["Tab 3", "Tab 1", "Tab 2"]);
+  }
+
+  const dragEnterOnPanelDropOnPanel = async () => {
+    // Find the tab elements in the first panel
+    const thirdTab = canvas.getByText("Tab 3");
+    const panel = canvas.getByRole("tablist")
+
+    // Perform drag operation
+    await fireEvent.dragStart(thirdTab);
+
+    await fireEvent.dragEnter(panel);
+
+    // // Perform drop operation at the calculated position
+    await fireEvent.drop(panel);
+
+    expect(canvas.getAllByRole("tab").map(tab => tab.textContent.trim())).toMatchObject(["Tab 1", "Tab 2", "Tab 3"]);
+  }
+
+  await waitFor(dropBetweenTabs);
   await new Promise(resolve => setTimeout(resolve, 100));
-
-  // Verify the tabs have been reordered (implementation-specific)
-  // This could check DOM order or test the component's internal state
-  // e.g., verify that Tab 2 now comes before Tab 1 in the DOM
-
-  // You might also click on the reordered tab to verify it still works
-  await userEvent.click(firstTab);
-  expect(canvas.getByText("Content for Tab 1")).toBeInTheDocument();
+  await waitFor(dragEnterOnPanelDropOnSimulatedTab);
+  await new Promise(resolve => setTimeout(resolve, 100));
+  await waitFor(dragEnterOnPanelDropOnPanel);
 };
 
 // Test for moving a tab from one panel to another using drag and drop
@@ -237,46 +257,60 @@ TabMoveBetweenPanelsTest.play = async ({canvasElement}) => {
   // Wait for the component to render
   await new Promise(resolve => setTimeout(resolve, 100));
 
-  // Find a tab in the first panel to move
-  const tabToMove = canvas.getByText("Tab 3");
+  // Find the tab elements in the first panel
+  const firstTab = canvas.getByText("Tab 1");
 
-  // Find a target location in the second panel
-  // This could be a specific tab in the second panel or the panel container itself
-  const targetPanel = canvas.getByText("Tab 5").closest(".panel-container") ||
-                      canvas.getByText("Tab 5").parentElement.closest("div");
+  const fifthTab = canvas.getByText("Tab 5");
 
-  // Get coordinates
-  const tabRect = tabToMove.getBoundingClientRect();
-  const targetRect = targetPanel.getBoundingClientRect();
 
-  // Perform drag and drop to move tab from first panel to second panel
-  await userEvent.pointer({
-    keys: "[MouseLeft>]", // Press left mouse button
-    target: tabToMove,
-  });
+  const dragInBetweenTabs = async () => {
+    // Perform drag operation
+    await fireEvent.dragStart(firstTab);
 
-  // Move to the target panel
-  await userEvent.pointer({
-    target: document.body,
-    coords: {
-      clientX: targetRect.x + (targetRect.width / 2),
-      clientY: targetRect.y + 20 // Position near the top of the panel where tabs usually are
-    },
-  });
+    await fireEvent.dragEnter(fifthTab);
 
-  // Release mouse button
-  await userEvent.pointer({
-    keys: "[/MouseLeft]", // Release left mouse button
-  });
+    const simulatedFirstTab = canvas.getAllByText("Tab 1")[1]
 
-  // Wait for the move to complete
+    // Perform drop operation at the calculated position
+    await fireEvent.drop(simulatedFirstTab);
+
+    // Wait for the reorder to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Verify the tabs have been reordered (implementation-specific)
+    // This could check DOM order or test the component's internal state
+    // e.g., verify that Tab 2 now comes before Tab 1 in the DOM
+
+    // You might also click on the reordered tab to verify it still works
+    // await userEvent.click(firstTab);
+    expect(within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab").map(tab => tab.textContent.trim())).toMatchObject(["Tab 4", "Tab 1", "Tab 5", "Tab 6"]);
+  }
+
+  const dragOnPanel = async () => {
+    const secondTab = canvas.getByText("Tab 2");
+    const panel = canvas.getAllByRole("tablist")[1];
+
+    // Perform drag operation
+    await fireEvent.dragStart(secondTab);
+
+    await fireEvent.dragEnter(panel);
+
+    // Perform drop operation at the calculated position
+    await fireEvent.drop(panel);
+
+    // Wait for the reorder to complete
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Verify the tabs have been reordered (implementation-specific)
+    // This could check DOM order or test the component's internal state
+    // e.g., verify that Tab 2 now comes before Tab 1 in the DOM
+
+    // You might also click on the reordered tab to verify it still works
+    // await userEvent.click(firstTab);
+    expect(within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab").map(tab => tab.textContent.trim())).toMatchObject(["Tab 4", "Tab 1", "Tab 5", "Tab 6"]);
+  }
+
+  await waitFor(dragInBetweenTabs);
   await new Promise(resolve => setTimeout(resolve, 100));
-
-  // Verify the tab has been moved to the second panel
-  // One way to verify: Click the tab in its new location and check content
-  await userEvent.click(canvas.getByText("Tab 3"));
-  expect(canvas.getByText("Content for Tab 3")).toBeInTheDocument();
-
-  // You might also check if the tab is no longer in the first panel
-  // This depends on how your component handles the UI after a tab is moved
+  await waitFor(dragOnPanel);
 };

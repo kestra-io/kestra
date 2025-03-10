@@ -174,7 +174,7 @@
             options() {
                 const options = {};
 
-                if (this.input) {
+                if (this.input && !this.lineNumbers) {
                     options.lineNumbers = "off";
                     options.folding = false;
                     options.renderLineHighlight = "none";

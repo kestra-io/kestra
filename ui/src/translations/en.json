@@ -1257,6 +1257,7 @@
         "title": "Your flow doesn't have any Triggers.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."      
       }
-    }
+    },
+    "toggle_word_wrap": "Toggle Word Wrap"
   }
 }

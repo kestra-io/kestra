@@ -1144,6 +1144,7 @@
     "toggle output": "Alternar outputs",
     "toggle output display": "Alternar exibição de output",
     "toggle periodic refresh each 10 seconds": "Alternar atualização periódica a cada 10 segundos",
+    "toggle_word_wrap": "Alternar Quebra de Linha",
     "topology": "Topologia",
     "topology-graph": {
       "graph-orientation": "Orientação do gráfico",

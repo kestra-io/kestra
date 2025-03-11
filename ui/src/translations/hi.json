@@ -1144,6 +1144,7 @@
     "toggle output": "आउटपुट टॉगल करें",
     "toggle output display": "आउटपुट प्रदर्शन टॉगल करें",
     "toggle periodic refresh each 10 seconds": "हर 10 सेकंड में आवधिक ताज़ा टॉगल करें",
+    "toggle_word_wrap": "शब्द रैप टॉगल करें",
     "topology": "टोपोलॉजी",
     "topology-graph": {
       "graph-orientation": "ग्राफ़ अभिविन्यास",

@@ -1144,6 +1144,7 @@
     "toggle output": "Переключить выводы",
     "toggle output display": "Переключить отображение вывода",
     "toggle periodic refresh each 10 seconds": "Переключить периодическое обновление каждые 10 секунд",
+    "toggle_word_wrap": "Переключить перенос слов",
     "topology": "Топология",
     "topology-graph": {
       "graph-orientation": "Ориентация графика",

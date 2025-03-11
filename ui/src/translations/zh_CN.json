@@ -1144,6 +1144,7 @@
     "toggle output": "切换输出",
     "toggle output display": "切换输出显示",
     "toggle periodic refresh each 10 seconds": "切换每10秒周期刷新",
+    "toggle_word_wrap": "切换自动换行",
     "topology": "拓扑",
     "topology-graph": {
       "graph-orientation": "图表方向",

@@ -1144,6 +1144,7 @@
     "toggle output": "出力を切り替え",
     "toggle output display": "出力表示を切り替え",
     "toggle periodic refresh each 10 seconds": "10秒ごとに定期的に更新を切り替え",
+    "toggle_word_wrap": "ワードラップを切り替え",
     "topology": "トポロジー",
     "topology-graph": {
       "graph-orientation": "グラフの向き",

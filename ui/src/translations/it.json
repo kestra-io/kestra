@@ -1144,6 +1144,7 @@
     "toggle output": "Attiva/disattiva outputs",
     "toggle output display": "Attiva/disattiva visualizzazione output",
     "toggle periodic refresh each 10 seconds": "Attiva/disattiva aggiornamento periodico ogni 10 secondi",
+    "toggle_word_wrap": "Attiva/disattiva Word Wrap",
     "topology": "Topologia",
     "topology-graph": {
       "graph-orientation": "Orientamento del grafico",

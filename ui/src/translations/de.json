@@ -1144,6 +1144,7 @@
     "toggle output": "Outputs umschalten",
     "toggle output display": "Outputanzeige umschalten",
     "toggle periodic refresh each 10 seconds": "Periodische Aktualisierung alle 10 Sekunden umschalten",
+    "toggle_word_wrap": "Zeilenumbruch umschalten",
     "topology": "Topologie",
     "topology-graph": {
       "graph-orientation": "Graph-Ausrichtung",

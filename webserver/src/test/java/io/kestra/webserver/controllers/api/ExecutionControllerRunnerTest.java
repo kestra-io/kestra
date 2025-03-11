@@ -77,6 +77,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import lombok.extern.slf4j.Slf4j;
+import org.hamcrest.Matcher;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -1554,45 +1555,74 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/minimal.yaml"})
-    void shouldRemoveLabelsFromExecution() throws QueueException, TimeoutException {
-
+    void shouldRemoveLabelsFromExecutionPreservingSystemLabels() throws QueueException, TimeoutException {
+        // Run initial execution
         Execution result = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
+
         Execution executionWithLabels = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", List.of(new Label("flow-label-1",
-                "flow-label-1"),new Label("flow-label-2","flow-label-2"))),
-            Execution.class
+                HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", List.of(
+                                new Label("flow-label-1", "flow-label-1"),
+                                new Label("flow-label-2", "flow-label-2"))),
+                Execution.class
         );
 
-        // Verify labels were added
-        assertThat(executionWithLabels, notNullValue());
-        assertThat(executionWithLabels.getLabels(), hasSize(2));
-        assertThat(executionWithLabels.getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
-        assertThat(executionWithLabels.getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
+        List<Label> allLabelsFromExecution = executionWithLabels.getLabels();
+        assertLabelCounts(allLabelsFromExecution, 2, greaterThan(0));
 
-        // Now remove one label by sending a request with only one label
+        // Update with only one custom label
         Execution executionWithOneLabel = client.toBlocking().retrieve(
-            HttpRequest
-                .POST("/api/v1/executions/" + executionWithLabels.getId() + "/labels",
-                    List.of(new Label("flow-label-1", "flow-label-1"))),
-            Execution.class
+                HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels",
+                        List.of(new Label("flow-label-1", "flow-label-1"))),
+                Execution.class
         );
 
-        // Verify one label was removed
-        assertThat(executionWithOneLabel, notNullValue());
-        assertThat(executionWithOneLabel.getLabels(), hasSize(1));
-        assertThat(executionWithLabels.getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
+        allLabelsFromExecution = executionWithOneLabel.getLabels();
+        assertLabelCounts(allLabelsFromExecution, 1, greaterThan(0));
 
-        // Now remove all labels by sending an empty list
+        // Remove all custom labels
         Execution executionWithNoLabels = client.toBlocking().retrieve(
-            HttpRequest
-                .POST("/api/v1/executions/" + executionWithLabels.getId() + "/labels",
-                    Collections.emptyList()),
-            Execution.class
+                HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", Collections.emptyList()),
+                Execution.class
         );
 
-        // Verify all labels were removed
-        assertThat(executionWithNoLabels, notNullValue());
-        assertThat(executionWithNoLabels.getLabels(), hasSize(0));
+        allLabelsFromExecution = executionWithNoLabels.getLabels();
+        assertLabelCounts(allLabelsFromExecution, 0, greaterThan(0));
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
+    void shouldNotAllowAddingSystemLabels() throws QueueException, TimeoutException {
+        Execution result = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        assertThat(result.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        List<Label> systemLabels = List.of(new Label("system.key", "system-value"));
+        HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/executions/" + result.getId() + "/labels", systemLabels),
+                Execution.class
+        ));
+
+        assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+        assertThat(e.getMessage(), containsString("System labels can only be set by Kestra itself"));
+    }
+
+    private List<Label> getNonSystemLabels(List<Label> labels) {
+        return labels == null ? List.of() :
+            labels.stream()
+                .filter(l -> !l.key().startsWith(Label.SYSTEM_PREFIX))
+                .collect(Collectors.toList());
+    }
+
+    private List<Label> getSystemLabels(List<Label> allLabelsFromExecution) {
+        return allLabelsFromExecution.stream()
+                .filter(label -> label.key().startsWith(Label.SYSTEM_PREFIX))
+                .collect(Collectors.toList());
+    }
+
+    private void assertLabelCounts(List<Label> allLabels, int expectedCustomCount, Matcher<Integer> expectedSystemMatcher) {
+        List<Label> customLabels = getNonSystemLabels(allLabels);
+        List<Label> systemLabels = getSystemLabels(allLabels);
+        assertThat("Custom label count", customLabels, hasSize(expectedCustomCount));
+        assertThat("System label count", systemLabels, hasSize(expectedSystemMatcher));
     }
 }

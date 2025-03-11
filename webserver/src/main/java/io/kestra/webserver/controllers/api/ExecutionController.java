@@ -1624,6 +1624,14 @@ public class ExecutionController {
         }
 
         Map<String, String> newLabels = labels.stream().collect(Collectors.toMap(Label::key, Label::value));
+        existingSystemLabels.forEach(
+                label -> {
+                    // only add system labels
+                    if (!newLabels.containsKey(label.key())) {
+                        newLabels.put(label.key(), label.value());
+                    }
+                }
+            );
 
         Execution newExecution = execution
             .withLabels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).filter(label -> !label.key().isEmpty() || !label.value().isEmpty()).toList());

@@ -4,7 +4,6 @@ import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.env.Environment;
 import org.apache.commons.io.FileUtils;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayOutputStream;
@@ -25,7 +24,7 @@ class PluginListCommandTest {
     private static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.18.0-SNAPSHOT.jar";
 
     @Test
-    void run() throws IOException, URISyntaxException {
+    void shouldListPluginsInstalledLocally() throws IOException, URISyntaxException {
         Path pluginsPath = Files.createTempDirectory(PluginListCommandTest.class.getSimpleName());
         pluginsPath.toFile().deleteOnExit();
 

@@ -1,6 +1,6 @@
 <template>
     <div class="input-group">
-        <label for="years">Years</label>
+        <label for="years">{{ $t('years') }}</label>
         <el-input-number
             size="small"
             controls-position="right"
@@ -10,7 +10,7 @@
         />
     </div>
     <div class="input-group">
-        <label for="months">Months</label>
+        <label for="months">{{ $t('months') }}</label>
         <el-input-number
             size="small"
             controls-position="right"
@@ -20,7 +20,7 @@
         />
     </div>
     <div class="input-group">
-        <label for="weeks">Weeks</label>
+        <label for="weeks">{{ $t('weeks') }}</label>
         <el-input-number
             size="small"
             controls-position="right"
@@ -30,7 +30,7 @@
         />
     </div>
     <div class="input-group">
-        <label for="days">Days</label>
+        <label for="days">{{ $t('days') }}</label>
         <el-input-number
             size="small"
             controls-position="right"
@@ -40,7 +40,7 @@
         />
     </div>
     <div class="input-group">
-        <label for="hours">Hours</label>
+        <label for="hours">{{ $t('hours') }}</label>
         <el-input-number
             size="small"
             controls-position="right"
@@ -50,7 +50,7 @@
         />
     </div>
     <div class="input-group">
-        <label for="minutes">Minutes</label>
+        <label for="minutes">{{ $t('minutes') }}</label>
         <el-input-number
             size="small"
             controls-position="right"
@@ -60,7 +60,7 @@
         />
     </div>
     <div class="input-group">
-        <label for="seconds">Seconds</label>
+        <label for="seconds">{{ $t('seconds') }}</label>
         <el-input-number
             size="small"
             controls-position="right"
@@ -71,9 +71,9 @@
     </div>
     <div>
         <el-text size="small" :type="durationIssue ? 'danger': ''">
-            {{ durationIssue ?? "or input custom duration:" }}
+            {{ durationIssue ?? $t('input_custom_duration') }}
         </el-text>
-        <el-input type="text" id="customDuration" v-model="customDuration" @input="parseDuration" placeholder="Custom duration" />
+        <el-input type="text" id="customDuration" v-model="customDuration" @input="parseDuration" :placeholder="$t('datepicker.custom duration')" />
     </div>
 </template>
 

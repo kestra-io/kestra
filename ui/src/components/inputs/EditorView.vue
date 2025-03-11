@@ -23,6 +23,10 @@
                 v-for="(tab, index) in openedTabs"
                 :key="index"
                 :class="{'tab-active': isActiveTab(tab)}"
+                draggable="true"
+                @dragstart="onDragStart($event, index)"
+                @dragover.prevent="onDragOver($event, index)"
+                @drop.prevent="onDrop($event, index)"
                 @click="changeCurrentTab(tab)"
                 :disabled="isActiveTab(tab)"
                 @contextmenu.prevent.stop="onTabContextMenu($event, tab, index)"
@@ -102,7 +106,7 @@
                 :is-read-only="props.isReadOnly"
                 :can-delete="canDelete()"
                 :is-allowed-edit="isAllowedEdit"
-                :have-change="flowYaml !== flowYamlOrigin"
+                :have-change="isFlow() ? flowYaml !== flowYamlOrigin : currentTab?.dirty"
                 :flow-have-tasks="flowHaveTasks()"
                 :errors="flowErrors"
                 :warnings="flowWarnings"
@@ -135,7 +139,7 @@
                     ref="editorDomElement"
                     @save="save"
                     @execute="execute"
-                    v-model="flowYaml"
+                    :model-value="flowYaml"
                     :schema-type="isCurrentTabFlow? 'flow': undefined"
                     :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                     :extension="currentTab?.extension"
@@ -143,6 +147,7 @@
                     @cursor="updatePluginDocumentation"
                     :creating="isCreating"
                     @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
+                    @tab-loaded="onTabLoaded"
                     :read-only="isReadOnly"
                     :navbar="false"
                 >
@@ -150,21 +155,83 @@
                         <KeyShortcuts />
                     </template>
                 </editor>
-                <section v-else class="no-tabs-opened">
-                    <div class="img" />
+                <div v-else class="no-tabs-opened">
+                    <div class="img mb-1" />
 
-                    <h2>{{ $t("namespace_editor.empty.title") }}</h2>
-                    <p><span>{{ $t("namespace_editor.empty.message") }}</span></p>
+                    <div>
+                        <h5 class="mb-0 fw-bold">
+                            {{ $t("namespace_editor.empty.title") }}
+                        </h5>
+                        <p>
+                            {{ $t("namespace_editor.empty.create_message") }}
+                        </p>
+                    </div>
 
-                    <iframe
-                        width="60%"
-                        height="400px"
-                        src="https://www.youtube.com/embed/o-d-GaXUiKQ?si=TTjV8jgRg6-lj_cC"
-                        frameborder="0"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                        allowfullscreen
-                    />
-                </section>
+                    <div class="empty-state-actions mt-1">
+                        <el-dropdown>
+                            <el-button :icon="Plus" type="primary">
+                                {{ $t("create") }}
+                            </el-button>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item @click="createFile">
+                                        <FilePlus class="me-2" />
+                                        {{ $t("namespace files.create.file") }}
+                                    </el-dropdown-item>
+                                    <el-dropdown-item @click="createFolder">
+                                        <FolderPlus class="me-2" />
+                                        {{ $t("namespace files.create.folder") }}
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                        <input
+                            ref="filePicker"
+                            type="file"
+                            multiple
+                            class="hidden"
+                            @change="handleFileImport"
+                        >
+                        <input
+                            ref="folderPicker"
+                            type="file"
+                            webkitdirectory
+                            mozdirectory
+                            msdirectory
+                            odirectory
+                            directory
+                            class="hidden"
+                            @change="handleFileImport"
+                        >
+                        <el-dropdown>
+                            <el-button :icon="Download" type="primary">
+                                {{ $t("import") }}
+                            </el-button>
+                            <template #dropdown>
+                                <el-dropdown-menu>
+                                    <el-dropdown-item @click="$refs.filePicker.click()">
+                                        <File class="me-2" />
+                                        {{ $t("namespace files.import.files") }}
+                                    </el-dropdown-item>
+                                    <el-dropdown-item @click="$refs.folderPicker.click()">
+                                        <Folder class="me-2" />
+                                        {{ $t("namespace files.import.folder") }}
+                                    </el-dropdown-item>
+                                </el-dropdown-menu>
+                            </template>
+                        </el-dropdown>
+                    </div>
+                    <el-divider>{{ $t("namespace_editor.empty.video_message") }}</el-divider>
+
+                    <div class="video-container">
+                        <iframe
+                            src="https://www.youtube.com/embed/o-d-GaXUiKQ?si=TTjV8jgRg6-lj_cC"
+                            frameborder="0"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                            allowfullscreen
+                        />
+                    </div>
+                </div>
             </template>
             <NoCode
                 v-else
@@ -316,6 +383,52 @@
             </el-button>
         </template>
     </el-dialog>
+    <el-dialog
+        v-model="dialog.visible"
+        :title="dialog.type === 'file' ? $t('namespace files.create.file') : $t('namespace files.create.folder')"
+        width="500"
+        @keydown.enter.prevent="dialog.name ? dialogHandler() : undefined"
+    >
+        <div class="pb-1">
+            <span>{{ $t(`namespace files.dialog.name.${dialog.type}`) }}</span>
+        </div>
+        <el-input
+            ref="creation_name"
+            v-model="dialog.name"
+            size="large"
+            class="mb-3"
+        />
+        <div class="py-1">
+            <span>{{ $t("namespace files.dialog.parent_folder") }}</span>
+        </div>
+        <el-select
+            v-model="dialog.folder"
+            clearable
+            size="large"
+            class="mb-3 w-100"
+        >
+            <el-option
+                v-for="folder in folders"
+                :key="folder"
+                :value="folder"
+                :label="folder"
+            />
+        </el-select>
+        <template #footer>
+            <div>
+                <el-button @click="dialog.visible = false">
+                    {{ $t("cancel") }}
+                </el-button>
+                <el-button
+                    type="primary"
+                    :disabled="!dialog.name"
+                    @click="dialogHandler"
+                >
+                    {{ $t("namespace files.create.label") }}
+                </el-button>
+            </div>
+        </template>
+    </el-dialog>
 </template>
 
 <script setup>
@@ -329,6 +442,12 @@
     import MenuClose from "vue-material-design-icons/MenuClose.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import CircleMedium from "vue-material-design-icons/CircleMedium.vue";
+    import FilePlus from "vue-material-design-icons/FilePlus.vue";
+    import FolderPlus from "vue-material-design-icons/FolderPlus.vue";
+    import Download from "vue-material-design-icons/Download.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
+    import File from "vue-material-design-icons/File.vue";
+    import Folder from "vue-material-design-icons/Folder.vue";
 
     import TypeIcon from "../utils/icons/Type.vue"
 
@@ -410,12 +529,6 @@
             type: Number,
             default: null,
         },
-        guidedProperties: {
-            type: Object,
-            default: () => {
-                return {tourStarted: false};
-            },
-        },
         flowValidation: {
             type: Object,
             default: undefined,
@@ -433,6 +546,8 @@
             default: false,
         },
     });
+
+    const guidedProperties = ref(store.getters["core/guidedProperties"]);
 
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
 
@@ -679,7 +794,12 @@
     };
 
     onMounted(async () => {
-        editorViewType.value = props.isNamespace ? "YAML" : (localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML");
+        if(guidedProperties.value?.tourStarted) {
+            editorViewType.value = "YAML";
+            switchViewType(editorViewTypes.SOURCE_TOPOLOGY, false);
+        } else {
+            editorViewType.value = props.isNamespace ? "YAML" : (localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML");
+        }
 
         if(!props.isNamespace) {
             initViewType()
@@ -695,7 +815,7 @@
         // Guided tour
         setTimeout(() => {
             if (
-                !props.guidedProperties.tourStarted &&
+                !guidedProperties?.value?.tourStarted &&
                 localStorage.getItem("tourDoneOrSkip") !== "true" &&
                 props.total === 0
             ) {
@@ -750,15 +870,14 @@
 
     const updatePluginDocumentation = (event, task) => {
         const pluginSingleList = store.getters["plugin/getPluginSingleList"];
-        const taskType = task !== undefined ? task : YamlUtils.getTaskType(
-            event.model.getValue(),
-            event.position,
-            pluginSingleList
-        );
+        const taskType = task !== undefined ? task : YamlUtils.getMapAtPosition(event.model.getValue(), event.position, "type").type;
         if (taskType) {
-            store.dispatch("plugin/load", {cls: taskType}).then((plugin) => {
-                store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
-            });
+            if (pluginSingleList.includes(taskType)) {
+                store.dispatch("plugin/load", {cls: taskType}).then((plugin) => {
+                    store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
+                });
+            }
+            return;
         } else {
             store.commit("plugin/setEditorPlugin", undefined);
         }
@@ -782,44 +901,45 @@
     };
 
     const onEdit = (event, currentIsFlow = false) => {
-        flowYaml.value = event;
+        if(flowYaml.value !== event) {
+            flowYaml.value = event;
 
-        if (currentIsFlow) {
-            if (
-                flowParsed.value &&
-                !props.isCreating &&
-                (routeParams.id !== flowParsed.value.id ||
-                    routeParams.namespace !== flowParsed.value.namespace)
-            ) {
-                store.dispatch("core/showMessage", {
-                    variant: "error",
-                    title: t("readonly property"),
-                    message: t("namespace and id readonly"),
+            if (currentIsFlow) {
+                if (
+                    flowParsed.value &&
+                    !props.isCreating &&
+                    (routeParams.id !== flowParsed.value.id ||
+                        routeParams.namespace !== flowParsed.value.namespace)
+                ) {
+                    store.dispatch("core/showMessage", {
+                        variant: "error",
+                        title: t("readonly property"),
+                        message: t("namespace and id readonly"),
+                    });
+                    flowYaml.value = YamlUtils.replaceIdAndNamespace(
+                        flowYaml.value,
+                        routeParams.id,
+                        routeParams.namespace
+                    );
+                    return;
+                }
+            }
+
+            haveChange.value = true;
+            if(editorViewType.value === "YAML") store.dispatch("core/isUnsaved", true);
+
+            if(!props.isCreating){
+                store.commit("editor/changeOpenedTabs", {
+                    action: "dirty",
+                    ...currentTab.value,
+                    name: currentTab.value?.name ?? "Flow",
+                    path: currentTab.value?.path ?? "Flow.yaml",
+                    dirty: true
                 });
-                flowYaml.value = YamlUtils.replaceIdAndNamespace(
-                    flowYaml.value,
-                    routeParams.id,
-                    routeParams.namespace
-                );
-                return;
             }
         }
 
-        haveChange.value = true;
-        if(editorViewType.value === "YAML") store.dispatch("core/isUnsaved", true);
-        
-        if(!props.isCreating){
-            store.commit("editor/changeOpenedTabs", {
-                action: "dirty",
-                ...currentTab.value,
-                name: currentTab.value?.name ?? "Flow",
-                path: currentTab.value?.path ?? "Flow.yaml",
-                dirty: true
-            });
-        }
-
         clearTimeout(timer.value);
-
         if(!currentIsFlow) return;
 
         return store
@@ -869,8 +989,8 @@
         if (existingTask) {
             store.dispatch("core/showMessage", {
                 variant: "error",
-                title: "Trigger Id already exist",
-                message: `Trigger Id ${existingTask} already exist in the flow.`,
+                title: t("trigger_id_exists"),
+                message: t("trigger_id_message", {existingTrigger: existingTask}),
             });
             return;
         }
@@ -903,8 +1023,8 @@
         if (existingTask) {
             store.dispatch("core/showMessage", {
                 variant: "error",
-                title: "Task Id already exist",
-                message: `Task Id ${existingTask} already exist in the flow.`,
+                title: t("task_id_exists"),
+                message: t("task_id_message", {existingTask}),
             });
             return;
         }
@@ -974,7 +1094,6 @@
         const currentIsFlow = isFlow();
 
         updatedFromEditor.value = true;
-        flowYaml.value = event;
 
         clearTimeout(timer.value);
         timer.value = setTimeout(() => onEdit(event, currentIsFlow), 500);
@@ -1082,6 +1201,7 @@
         if (flowErrors.value?.length || !haveChange.value && !props.isCreating) {
             return;
         }
+
         if (e) {
             if (e.type === "keydown") {
                 if (!(e.keyCode === 83 && e.ctrlKey)) {
@@ -1281,11 +1401,41 @@
         return tab.name === currentTab.value.name;
     }
 
+    const draggedTabIndex = ref(null);
+    const dragOverTabIndex = ref(null);
+
+    const onDragStart = (event, index) => {
+        draggedTabIndex.value = index;
+        event.dataTransfer.effectAllowed = "move";
+    };
+    const onDragOver = (event, index) => {
+        event.preventDefault();
+        if (index !== draggedTabIndex.value) {
+            dragOverTabIndex.value = index;
+        }
+    };
+    const onDrop = (event, to) => {
+        event.preventDefault();
+        const from = draggedTabIndex.value;
+        if (from !== to) {
+            store.commit("editor/reorderTabs", {from, to});
+        }
+        draggedTabIndex.value = null;
+        dragOverTabIndex.value = null;
+    };
+
+    const dirtyBeforeLoad = ref(false);
+
     watch(currentTab, (current, previous) => {
+        // to avoid changing the dirty state of a tab
+        // when switching between tabs, we save the value
+        // before the tabs text is loaded from the model.
+        dirtyBeforeLoad.value = currentTab.value.dirty;
         const isCurrentFlow = current?.name === "Flow";
         const isPreviousFlow = previous?.name === "Flow";
 
         if(isPreviousFlow) persistViewType(viewType.value);
+        updatedFromEditor.value = false;
         switchViewType(isCurrentFlow ? loadViewType() : editorViewTypes.SOURCE, false)
 
         nextTick(() => {
@@ -1296,6 +1446,18 @@
             tabsScrollRef.value.setScrollLeft(rightMostCurrentTabPixel - tabsWrapper.clientWidth);
         });
     })
+
+    function onTabLoaded(tab, source){
+        clearTimeout(timer.value);
+
+        // once the tab is finished loading, restore the dirty state
+        if(tab.path === currentTab.value.path){
+            flowYaml.value = source;
+            onEdit(source, tab.flow);
+            currentTab.value.dirty = dirtyBeforeLoad.value
+            haveChange.value = dirtyBeforeLoad.value
+        }
+    }
 
     const tabContextMenu = ref({
         visible: false,
@@ -1351,6 +1513,102 @@
     const exportYaml = () => {
         const blob = new Blob([flowYaml.value], {type: "text/yaml"});
         localUtils.downloadUrl(window.URL.createObjectURL(blob), "flow.yaml");
+    };
+
+    const dialog = ref({
+        visible: false,
+        type: "file",
+        name: undefined,
+        folder: undefined,
+    });
+    const createFile = () => {
+        dialog.value = {
+            visible: true,
+            type: "file",
+            name: undefined,
+            folder: undefined
+        };
+        store.commit("editor/toggleExplorerVisibility", true);
+    };
+    const createFolder = () => {
+        dialog.value = {
+            visible: true,
+            type: "folder",
+            name: undefined,
+            folder: undefined
+        };
+        store.commit("editor/toggleExplorerVisibility", true);
+    };
+    const folders = computed(() => {
+        function extractPaths(basePath = "", array) {
+            const paths = [];
+            array?.forEach((item) => {
+                if (item.type === "Directory") {
+                    const folderPath = `${basePath}${item.fileName}`;
+                    paths.push(folderPath);
+                    paths.push(
+                        ...extractPaths(
+                            `${folderPath}/`,
+                            item.children ?? [],
+                        ),
+                    );
+                }
+            });
+            return paths;
+        }
+        return extractPaths(undefined, store.state.editor.treeData);
+    });
+    const dialogHandler = async () => {
+        try {
+            const path = dialog.value.folder
+                ? `${dialog.value.folder}/${dialog.value.name}`
+                : dialog.value.name;
+
+            if (dialog.value.type === "file") {
+                await store.dispatch("namespace/createFile", {
+                    namespace: props.namespace ?? route.params.namespace,
+                    path,
+                    content: "",
+                });
+            } else {
+                await store.dispatch("namespace/createDirectory", {
+                    namespace: props.namespace ?? route.params.namespace,
+                    path,
+                });
+            }
+            dialog.value.visible = false;
+            store.commit("editor/refreshTree");
+            if (dialog.value.type === "file") {
+                store.commit("editor/changeOpenedTabs", {
+                    action: "open",
+                    name: dialog.value.name,
+                    path,
+                    extension: dialog.value.name.split(".").pop()
+                });
+            }
+        } catch (error) {
+            console.error(error);
+            toast().error(t("namespace files.create.error"));
+        }
+    };
+    const handleFileImport = async (event) => {
+        const files = event.target.files;
+        for (const file of files) {
+            const content = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.readAsArrayBuffer(file);
+            });
+            const path = file.webkitRelativePath || file.name;
+
+            await store.dispatch("namespace/importFileDirectory", {
+                namespace: props.namespace ?? route.params.namespace,
+                content,
+                path
+            });
+        }
+        store.commit("editor/refreshTree");
+        event.target.value = "";
     };
 </script>
 
@@ -1478,12 +1736,23 @@
     }
 
     .no-tabs-opened {
-        margin-top: 5em 10em;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         text-align: center;
+        max-width: 800px;
+        width: 100%;
+        padding: 2rem;
+        padding-bottom: 0;
+        margin: 0 auto;
+        height: 100%;
 
         .img {
             background: url("../../assets/empty-ns-files.png") no-repeat center;
             background-size: contain;
+            width: 180px;
+            height: 180px;
         }
 
         h2 {
@@ -1495,6 +1764,41 @@
         p {
             line-height: 22px;
             font-size: 14px;
+            margin-bottom: 1rem;
+            color: var(--ks-content-secondary);
+        }
+
+        .empty-state-actions {
+            margin-bottom: 2.5rem;
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            width: 100%;
+        }
+        :deep(.el-divider__text) {
+            font-size: 12px;
+            padding: 0 15px;
+            color: var(--ks-content-secondary);
+            background-color: #f9f9fa;
+            html.dark & {
+                background-color: #1C1E27;
+            }
+        }
+        .video-container {
+            width: 100%;
+            margin-top: 1rem;
+            border: 1px solid var(--ks-border-primary);
+            border-radius: 0.5rem;
+
+            iframe {
+                width: 100%;
+                min-height: 380px;
+                height: auto;
+            }
+        }
+
+        .hidden {
+            display: none;
         }
     }
 

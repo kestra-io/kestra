@@ -598,13 +598,12 @@ public class FlowController {
                     }
 
                     validateConstraintViolationBuilder.deprecationPaths(flowService.deprecationPaths(flowParse));
-                    validateConstraintViolationBuilder.warnings(flowService.warnings(flowParse));
+                    validateConstraintViolationBuilder.warnings(flowService.warnings(flowParse, tenantService.resolveTenant()));
                     validateConstraintViolationBuilder.infos(flowService.relocations(flow).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
                     validateConstraintViolationBuilder.flow(flowParse.getId());
                     validateConstraintViolationBuilder.namespace(flowParse.getNamespace());
 
                     modelValidator.validate(pluginDefaultService.injectDefaults(flowParse.withSource(flow)));
-                     flowService.checkValidSubflows(flowParse, tenantService.resolveTenant());
                 } catch (ConstraintViolationException e) {
                     validateConstraintViolationBuilder.constraints(e.getMessage());
                 } catch (RuntimeException re) {

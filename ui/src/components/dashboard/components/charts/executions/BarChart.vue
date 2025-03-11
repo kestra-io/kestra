@@ -35,6 +35,9 @@
     import {useScheme} from "../../../../../utils/scheme.js";
     import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts.js";
 
+    import {State} from "@kestra-io/ui-libs";
+    const ORDER = State.arrayAllStates().map((state) => state.name);
+
     const {t} = useI18n({useScope: "global"});
 
     const props = defineProps({
@@ -91,6 +94,10 @@
             return accumulator;
         }, Object.create(null));
 
+        datasets = Object.values(datasets).sort((a, b) => {
+            return ORDER.indexOf(a.label) - ORDER.indexOf(b.label);
+        });
+
         return {
             labels: props.data.map((r) =>
                 moment(r.startDate).format(getFormat(r.groupBy)),
@@ -116,7 +123,6 @@
                 : Object.values(datasets),
         };
     });
-
 
     const options = computed(() =>
         defaultConfig({

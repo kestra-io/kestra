@@ -30,13 +30,13 @@
       },
       "create": {
         "title": "Flow already exists",
-        "description": "A Flow with the same id / namespace already exists.",
-        "details": "Save to override and force the creation of a new revision."
+        "description": "A flow with the same id already exists in this namespace.",
+        "details": "Save to override and create a new revision."
       }
     },
     "override": {
       "title": "You are going to override the current flow",
-      "details": "Previous flow will be recoverable through the revisions tab."
+      "details": "Previous flow can be restored from the Revisions tab."
     },
     "is deprecated": "is deprecated",
     "success": "Success",
@@ -74,6 +74,8 @@
     "triggered done": "Execution <em>{name}</em> is successfully triggered",
     "topology": "Topology",
     "date": "Date",
+    "prev_execution": "Previous execution",
+    "next_execution": "Next execution",
     "datepicker": {
       "leave empty for infinite": "Leave empty for infinite duration or type an ISO 8601 duration (e.g., 'P1DT1H1M1S)'",
       "duration example": "Example: 'P1DT1H1M1S'",
@@ -242,7 +244,7 @@
     "outputs": "Outputs",
     "output": "Output",
     "eval": {
-      "title": "Debug Outputs",
+      "title": "Debug Expression",
       "tooltip": "Render any Pebble expression and inspect the Execution context."
     },
     "attempt": "Attempt",
@@ -543,6 +545,7 @@
     "aggregation": "Aggregation",
     "metric choice": "Please choose a metric and an aggregation",
     "of": "of",
+    "see_all_states": "See all states",
     "save draft": {
       "message": "Draft saved",
       "retrieval": {
@@ -826,6 +829,10 @@
           "title": "Upgrade Your Namespace Management",
           "message": "In Kestra Enterprise Edition, namespaces provide advanced isolation and governance of secrets, variables, and plugin defaults at scale. Administrators can configure custom secrets managers, isolated storage backends, dedicated worker groups, and fine-grained permissions on a per-namespace basis. This ensures that secrets, variables and plugin configurations remain secure and easy to maintain across different teams and projects."
         },
+        "secrets": {
+          "title": "Manage Secrets in a Secure Way",
+          "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace, and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
+        },
         "variables": {
           "title": "Centrally Govern Your Variables",
           "message": "In Kestra Enterprise Edition, you can define and manage namespace-level variables to eliminate repetitive configurations across flows. These variables ensure consistency, simplify configuration updates, and can be easily referenced by any task or trigger for cleaner, more maintainable workflows."
@@ -834,9 +841,9 @@
           "title": "Standardize Configuration with Plugin Defaults",
           "message": "In Kestra Enterprise Edition, you can set namespace-specific plugin defaults, reducing the need for duplicated setup in each flow. This central plugin governance enforces consistent configurations, allows secure referencing of secrets or variables, and simplifies maintenance of your workflows."
         },
-        "secrets": {
-          "title": "Manage Secrets in a Secure Way",
-          "message": "In Kestra Enterprise Edition, you can store and control secrets at the namespace level, minimizing risk and ensuring each team's credentials remain isolated. Thanks to the nested hierarchy, you can also configure credentials in a parent namespace, and they will be inherited by all child namespaces. Support for dedicated secrets managers and fine-grained namespace-level permission settings further strengthens security and compliance."
+        "history": {
+          "title": "Manage Revision History in One Place",
+          "message": "In Kestra Enterprise Edition, you can manage revision history of your Namespaces"
         },
         "audit-logs": {
           "title": "Track All Changes in One Place",
@@ -938,7 +945,8 @@
     "namespace_editor": {
       "empty": {
         "title": "No tabs currently opened",
-        "message": "You can create or import namespace files from the sidebar and you can check out the introduction video for our Editor."
+        "create_message": "You can create or import namespace files.",
+        "video_message": "You can check out the Introduction Video for our Editor."
       },
       "close": {
         "tab": "Close tab",
@@ -1017,20 +1025,6 @@
         "text": "Get started with our video tutorials."
       }
     },
-    "concurrency-view": {
-      "title_no_executions": "No ongoing Executions for this Flow.",
-      "desc_no_executions": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> in our documentation.",
-      "title_no_limit": "No limits are set for this Flow.",
-      "desc_no_limit": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
-    },
-    "dependency-view": {
-      "title_no_deps": "No dependencies are set for this Flow.",
-      "desc_no_deps": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
-    },
-    "triggers-view": {
-      "title_no_triggers": "Your flow doesn't have any Triggers.",
-      "desc_no_triggers": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."
-    },
     "open sidebar": "open sidebar",
     "close sidebar": "close sidebar",
     "files": "Files",
@@ -1067,6 +1061,7 @@
       "label": "Choose filters",
       "empty": "No data.",
       "format": "Type parameter as 'key:value'",
+      "text_search": "Search for this text",
       "options": {
         "namespace": "Namespace",
         "flow": "Flow",
@@ -1196,9 +1191,73 @@
     },
     "instance": "Instance",
     "something_went_wrong": {
-        "loading_execution": "Something went wrong while loading the execution"
+      "loading_execution": "Something went wrong while loading the execution"
     },
     "debug": "Debug",
-    "default": "Default"
+    "default": "Default",
+    "data_not_protected": "Your data is not protected. Don't loose it. <b>Enable our free security features or try our paid offering.</b>",
+    "activate_basic_auth": "Activate Basic Authentication",
+    "dark_version": "Dark version",
+    "use_dark_background": "Use this version when working on a dark background to ensure our name remains readable.",
+    "light_version": "Light version",
+    "light_background": "This is the preferred option when working with a light background.",
+    "monogram": "Monogram",
+    "wordmark_colors": "The wordmark colors adapt based on the background, while the icon remains without a background when placed on a dark background.",
+    "download_logos": "Download Logo Pack",
+    "this_task_has": "This task has",
+    "about_this_blueprint": "About this blueprint",
+    "deleted_label": "Deleted",
+    "years": "Years",
+    "months": "Months",
+    "weeks": "Weeks",
+    "days": "Days",
+    "hours": "Hours",
+    "minutes": "Minutes",
+    "seconds": "Seconds",
+    "input_custom_duration": "or input custom duration:",
+    "fold_all_multi_lines": "Fold All Multi Lines",
+    "task_id_exists": "Task Id already exist",
+    "task_id_message": "Task Id ${existingTask} already exist in the flow.",
+    "trigger_id_exists": "Trigger Id already exist",
+    "trigger_id_message": "Trigger Id ${existingTrigger} already exist in the flow.",
+    "watch": "Watch",
+    "learn_more": "Learn more",
+    "watch_video": "Watch Video",
+    "runners": "Runners",
+    "select": "Select your {{section}}",
+    "for flow": "for flow",
+    "confirm": "Confirm",
+    "task_runners": "Task Runners",
+    "empty": {
+      "announcements": {
+        "title": "You have no annoucements yet!",
+        "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."
+      },
+      "apps": {
+        "title": "You have no apps yet!",
+        "content": "Start building Apps to interact with Kestra from the outside world."
+      },
+      "concurrency_executions": {
+        "title": "No ongoing Executions for this Flow.",
+        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> in our documentation."
+      },
+      "concurrency_limit": {
+        "title": "No limits are set for this Flow.",
+        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
+       },
+      "dependencies": {
+        "title": "No dependencies are set for this Flow.",
+        "content": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
+      },
+      "plugins": {
+        "title": "No plugin defaults are set for this for this Namespace.",
+        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
+      },
+      "triggers": {
+        "title": "Your flow doesn't have any Triggers.",
+        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."      
+      }
+    },
+    "toggle_word_wrap": "Toggle Word Wrap"
   }
 }

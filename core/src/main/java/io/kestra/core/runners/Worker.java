@@ -839,6 +839,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
             );
         } catch(Exception e) {
             // should only occur if it fails in the tracing code which should be unexpected
+            // we add the exception to have some log in that case
+            workerJobCallable.exception = e;
             return State.Type.FAILED;
         } finally {
             synchronized (this) {
@@ -1017,6 +1019,17 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @VisibleForTesting
     public void shutdown() {
+        // initiate shutdown
+        shutdown.compareAndSet(false, true);
+
+        try {
+            // close the WorkerJob queue to stop receiving new JobTask execution.
+            workerJobQueue.close();
+        } catch (IOException e) {
+            log.error("Failed to close the WorkerJobQueue");
+        }
+
+        // close all queues and shutdown now
         this.receiveCancellations.forEach(Runnable::run);
         this.executorService.shutdownNow();
     }

@@ -9,10 +9,6 @@
 
     export default {
         props: {
-            watches: {
-                type: Array,
-                default: () => ["source", "show", "toc"],
-            },
             source: {
                 type: String,
                 default: "",
@@ -24,6 +20,10 @@
             fontSizeVar: {
                 type: String,
                 default: "font-size-sm"
+            },
+            html: {
+                type: Boolean,
+                default: true
             }
         },
         data() {
@@ -41,12 +41,19 @@
         },
         methods: {
             async renderMarkdown() {
-                return  await Markdown.render(this.source, {
+                return await Markdown.render(this.sourceWithReplacedAlerts, {
                     permalink: this.permalink,
+                    html: this.html
                 });
             },
         },
         computed: {
+            sourceWithReplacedAlerts() {
+                return this.source.replaceAll(
+                    /(\n)?::alert\{type="(.*)"}\n([\s\S]*?)\n::(\n)?/g,
+                    (_, newLine1, type, content, newLine2) => `${newLine1 ?? ""}::: ${type}\n${content}\n:::${newLine2 ?? ""}`
+                );
+            },
             fontSizeCss() {
                 return `var(--${this.fontSizeVar})`;
             },

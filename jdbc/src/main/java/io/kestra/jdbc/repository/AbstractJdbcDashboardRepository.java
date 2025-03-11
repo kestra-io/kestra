@@ -84,6 +84,25 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     }
 
     @Override
+    public List<Dashboard> findAll(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = context
+                    .select(
+                        field("value")
+                    )
+                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
+                    .from(jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId));
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    @Override
     public Dashboard save(Dashboard previousDashboard, Dashboard dashboard, String source) throws ConstraintViolationException {
         dashboard = dashboard.toBuilder().sourceCode(source).build();
         if (previousDashboard != null && previousDashboard.equals(dashboard)) {

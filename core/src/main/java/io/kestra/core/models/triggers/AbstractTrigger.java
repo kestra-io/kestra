@@ -34,6 +34,8 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     protected String type;
 
+    protected String version;
+
     private String description;
 
     @Valid

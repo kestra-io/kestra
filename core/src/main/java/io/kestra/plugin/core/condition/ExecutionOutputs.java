@@ -34,50 +34,50 @@ import static io.kestra.core.utils.MapUtils.mergeWithNullableValues;
     examples = {
         @Example(
             title = """
-                The upstream `flowA` must explicitly define its outputs 
+                The upstream `flow_a` must explicitly define its outputs 
                 to be used in the `ExecutionOutputs` condition. 
 
                 ```yaml
-                id: flowA
+                id: flow_a
                 namespace: company.team
 
                 inputs:
-                  - id: userValue
+                  - id: user_value
                     type: STRING
                     defaults: hello
 
                 tasks:
                   - id: hello
                     type: io.kestra.plugin.core.debug.Return
-                    format: "{{ inputs.userValue }}"
+                    format: "{{ inputs.user_value }}"
 
                 outputs:
-                  - id: flowAoutput
+                  - id: flow_a_output
                     type: STRING
                     value: "{{ outputs.hello.value }}"
                 ```
 
-                The `flowB` will run whenever `flowA` finishes successfully 
+                The `flow_condition_executionoutputs` will run whenever `flow_a` finishes successfully 
                 and returns an output matching the value 'hello':
                 """,
             full = true,
             code = """
-                id: flowB
+                id: flow_condition_executionoutputs
                 namespace: company.team
 
                 tasks:
-                  - id: upstreamOutputs
+                  - id: upstream_outputs
                     type: io.kestra.plugin.core.log.Log
                     message: hello from a downstream flow
 
                 triggers:
-                  - id: flowA
+                  - id: condition_on_flow_execution_outputs
                     type: io.kestra.plugin.core.trigger.Flow
                     states:
                       - SUCCESS
                     conditions:
                       - type: io.kestra.plugin.core.condition.ExecutionOutputs
-                        expression: "{{ trigger.outputs.flowAoutput == 'hello' }}"
+                        expression: "{{ trigger.outputs.flow_a_output == 'hello' }}"
                 """
         )
     },

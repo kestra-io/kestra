@@ -50,6 +50,7 @@
                     :original="original"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
+                    @tab-loaded="(...args) => $emit('tabLoaded', ...args)"
                     :language="lang"
                     :extension="extension"
                     :schema-type="schemaType"
@@ -76,7 +77,7 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
-    import {mapGetters} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
@@ -100,6 +101,7 @@
             placeholder: {type: [String, Number], default: ""},
             diffSideBySide: {type: Boolean, default: true},
             readOnly: {type: Boolean, default: false},
+            wordWrap: {type: Boolean, default: true},
             lineNumbers: {type: Boolean, default: undefined},
             minimap: {type: Boolean, default: false},
             creating: {type: Boolean, default: false},
@@ -113,10 +115,11 @@
             "save",
             "execute",
             "focusout",
-            "tab",
+            "tabLoaded",
             "update:modelValue",
             "cursor",
             "confirm",
+            "tabLoaded",
         ],
         editor: undefined,
         data() {
@@ -132,17 +135,24 @@
                 editorDocumentation: undefined,
                 plugin: undefined,
                 taskType: undefined,
+                themeComputed: Utils.getTheme(),
             };
         },
         mounted() {
             this.$store.commit("doc/setDocId", "flowEditor");
         },
+        watch: {
+            mappedTheme: {
+                handler() {
+                    this.themeComputed = Utils.getTheme();
+                },
+                immediate: true,
+            },
+        },
         computed: {
+            ...mapState({mappedTheme: state => state.misc.theme}),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flowValidation"]),
-            themeComputed() {
-                return Utils.getTheme();
-            },
             containerClass() {
                 return [
                     !this.input ? "" : "single-line",
@@ -165,7 +175,7 @@
             options() {
                 const options = {};
 
-                if (this.input) {
+                if (this.input && !this.lineNumbers) {
                     options.lineNumbers = "off";
                     options.folding = false;
                     options.renderLineHighlight = "none";
@@ -220,7 +230,7 @@
                     options.readOnly = true;
                 }
 
-                options.wordWrap = true;
+                options.wordWrap = this.wordWrap;
                 options.automaticLayout = true;
 
                 return {
@@ -261,11 +271,11 @@
                         this.focus = false;
                     });
 
-                    if(this.shouldFocus){                
+                    if(this.shouldFocus){
                         this.editor.onDidFocusEditorText?.(() => {
                             this.focus = true;
                         });
-                        
+
                         this.$refs.monacoEditor.focus();
                     }
                 }
@@ -273,7 +283,7 @@
                 if (!this.readOnly) {
                     this.editor.addAction({
                         id: "kestra-save",
-                        label: "Save",
+                        label: this.$t("save"),
                         keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
                         contextMenuGroupId: "navigation",
                         contextMenuOrder: 1.5,
@@ -289,7 +299,7 @@
 
                 this.editor.addAction({
                     id: "kestra-execute",
-                    label: "Execute the flow",
+                    label: this.$t("execute flow behaviour"),
                     keybindings: [KeyMod.CtrlCmd | KeyCode.KeyE],
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 1.5,
@@ -300,7 +310,7 @@
 
                 this.editor.addAction({
                     id: "confirm",
-                    label: "Confirm",
+                    label: this.$t("confirm"),
                     keybindings: [KeyMod.CtrlCmd | KeyCode.Enter],
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 1.5,
@@ -329,7 +339,7 @@
                 if (this.original === undefined && this.navbar && this.fullHeight) {
                     this.editor.addAction({
                         id: "fold-multiline",
-                        label: "Fold All Multi Lines",
+                        label: this.$t("fold_all_multi_lines"),
                         keybindings: [KeyCode.F10],
                         contextMenuGroupId: "fold",
                         contextMenuOrder: 1.5,

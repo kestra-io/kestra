@@ -25,6 +25,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.DataException;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
@@ -46,7 +47,7 @@ import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 @Slf4j
 public abstract class JdbcQueue<T> implements QueueInterface<T> {
-    private static final int MAX_ASYNC_THREADS = Runtime.getRuntime().availableProcessors() * 2;
+    private static final int MAX_ASYNC_THREADS = Runtime.getRuntime().availableProcessors();
     protected static final ObjectMapper MAPPER = JdbcMapper.of();
 
     private final ExecutorService poolExecutor;
@@ -74,7 +75,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
         this.poolExecutor = executorsUtils.cachedThreadPool("jdbc-queue-" + cls.getSimpleName());
-        this.asyncPoolExecutor = executorsUtils.elasticCachedThreadPool(1, MAX_ASYNC_THREADS, "jdbc-queue-async-" + cls.getSimpleName());
+        this.asyncPoolExecutor = executorsUtils.maxCachedThreadPool(MAX_ASYNC_THREADS, "jdbc-queue-async-" + cls.getSimpleName());
 
         this.queueService = applicationContext.getBean(QueueService.class);
         this.cls = cls;
@@ -129,18 +130,22 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         Map<Field<Object>, Object> fields = this.produceFields(consumerGroup, key, message);
 
-        dslContextWrapper.transaction(configuration -> {
-            DSLContext context = DSL.using(configuration);
+        try {
+            dslContextWrapper.transaction(configuration -> {
+                DSLContext context = DSL.using(configuration);
 
-            if (!skipIndexer) {
-                jdbcQueueIndexer.accept(context, message);
-            }
+                if (!skipIndexer) {
+                    jdbcQueueIndexer.accept(context, message);
+                }
 
-            context
-                .insertInto(table)
-                .set(fields)
-                .execute();
-        });
+                context
+                    .insertInto(table)
+                    .set(fields)
+                    .execute();
+            });
+        } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
+            throw new QueueException("Unable to emit a message to the queue", e);
+        }
     }
 
     public void emitOnly(String consumerGroup, T message) throws QueueException{

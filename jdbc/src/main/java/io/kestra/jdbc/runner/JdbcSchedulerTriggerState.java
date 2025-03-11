@@ -57,6 +57,18 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
     }
 
     @Override
+    public Trigger create(Trigger trigger, String headerContent) {
+        return this.triggerRepository.create(trigger);
+    }
+
+    @Override
+    public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface, String headerContent) {
+        this.triggerRepository.save(trigger, scheduleContextInterface);
+
+        return trigger;
+    }
+
+    @Override
     public Trigger create(Trigger trigger) {
         return this.triggerRepository.create(trigger);
     }

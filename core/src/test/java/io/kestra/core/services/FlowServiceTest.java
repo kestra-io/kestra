@@ -316,12 +316,10 @@ class FlowServiceTest {
             ))
             .build();
 
-        ConstraintViolationException exception = assertThrows(ConstraintViolationException.class, () -> {
-            flowService.checkValidSubflows(flow, null);
-        });
+        List<String> exceptions = flowService.checkValidSubflows(flow, null);
 
-        assertThat(exception.getConstraintViolations().size(), is(1));
-        assertThat(exception.getConstraintViolations().iterator().next().getMessage(), is("The subflow 'nonExistentSubflow' not found in namespace 'io.kestra.unittest'."));
+        assertThat(exceptions.size(), is(1));
+        assertThat(exceptions.iterator().next(), is("The subflow 'nonExistentSubflow' not found in namespace 'io.kestra.unittest'."));
     }
 
     @Test
@@ -340,6 +338,8 @@ class FlowServiceTest {
             ))
             .build();
 
-        assertDoesNotThrow(() -> flowService.checkValidSubflows(flow, null));
+        List<String> exceptions = flowService.checkValidSubflows(flow, null);
+
+        assertThat(exceptions.size(), is(0));
     }
 }

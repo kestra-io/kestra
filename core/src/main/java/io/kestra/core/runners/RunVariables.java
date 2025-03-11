@@ -209,6 +209,10 @@ public final class RunVariables {
 
                 executionMap.put("id", execution.getId());
 
+                if (execution.getState() != null) { // can occurs in tests
+                    executionMap.put("state", execution.getState().getCurrent());
+                }
+
                 Optional.ofNullable(execution.getState()).map(State::getStartDate)
                     .ifPresent(startDate -> executionMap.put("startDate", startDate));
 

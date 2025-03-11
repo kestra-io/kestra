@@ -27,13 +27,27 @@ import jakarta.validation.constraints.NotNull;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition to execute the flow based on execution of another flow.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.ExecutionFlow",
-                "      namespace: company.team",
-                "      flowId: my-current-flow"
-            }
+            code = """
+                id: flow_condition_executionflow
+                namespace: company.team
+                
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute when flow `flow_a` of namespace `company.team` enters RUNNING state."
+                
+                triggers:
+                  - id: flow_trigger
+                    type: io.kestra.plugin.core.trigger.Flow
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.ExecutionFlow
+                        flowId: flow_a
+                        namespace: company.team
+                    states:
+                      - RUNNING
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.ExecutionFlowCondition", "io.kestra.plugin.core.condition.ExecutionFlowCondition"}

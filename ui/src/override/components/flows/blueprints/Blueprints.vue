@@ -35,7 +35,7 @@
                     />
                 </template>
                 <template v-if="embeddedTab === 'custom'" #content>
-                    <DemoBlueprints />
+                    <DemoBlueprints :embed />
                 </template>
             </blueprints-browser>
         </section>

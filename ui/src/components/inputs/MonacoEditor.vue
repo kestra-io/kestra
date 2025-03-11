@@ -544,6 +544,7 @@
 <style scoped lang="scss">
     .ks-monaco-editor {
         position: absolute;
+        overflow-x: scroll;
         width: 100%;
         height: 100%;
         outline: none;

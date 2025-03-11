@@ -10,6 +10,8 @@
                 <span v-if="label">{{ label }}</span>
             </el-button>
         </el-tooltip>
+
+        <slot name="right" />
     </div>
 </template>
 
@@ -30,5 +32,6 @@
     position: absolute;
     top: $spacer;
     right: $spacer;
+    display: inline-flex;
 }
 </style>

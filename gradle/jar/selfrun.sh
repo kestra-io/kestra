@@ -31,7 +31,7 @@ if [ "${LD_PRELOAD_ENABLED:-true}" = "true" ] && [ -z "$LD_PRELOAD" ] && [ -f "$
 fi
 
 # Java options that Kestra engineers think are best for Kestra, they should be added before JAVA_OPTS so they are overridable:
-# -XX:MaxRAMPercentage=50.0: configure map heap to 50% of available RAM (default 25%)
+# -XX:MaxRAMPercentage=50.0: configure max heap to 50% of available RAM (default 25%)
 KESTRA_JAVA_OPTS="-XX:MaxRAMPercentage=50.0"
 
 # Exec

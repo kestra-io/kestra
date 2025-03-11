@@ -21,9 +21,12 @@ type Story = StoryObj<typeof MultiPanelTabs>;
 
 const render: Story["render"] = ({modelValue}) => {
     const modelValueRef = ref(modelValue);
-    return () => <div style="padding: 1rem;border: 1ps solid #ccc; border-radius: 4px; margin: 1rem; background: #f9f9f9;">
+    return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-background-body)">
         <MultiPanelTabs modelValue={modelValueRef.value} />
-        <pre>{JSON.stringify(modelValueRef.value.map(p => p.tabs.map(t => t.value)))}</pre>
+        <pre>{JSON.stringify(modelValueRef.value.map(p => ({
+            tabs:p.tabs.map(t => t.value),
+            size: p.size ? Math.round(p.size) : "<undefined>",
+        })))}</pre>
     </div>
 };
 
@@ -107,8 +110,7 @@ export const Default: Story = {
 
 // Add interaction test story
 export const TabInteractionTest: Story = {
-    render,
-    args: Default.args,
+    ...Default,
     play: async ({canvasElement}) => {
         const canvas = within(canvasElement);
 
@@ -137,8 +139,7 @@ const TARGET_SIZE = 320
 
 // Add test for panel resize functionality
 export const PanelResizeTest: Story = {
-    render,
-    args: Default.args,
+    ...Default,
     play: async ({canvasElement}) => {
         const canvas = within(canvasElement);
 
@@ -212,11 +213,7 @@ export const TabReorderTest: Story = {
             // Wait for the reorder to complete
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // Verify the tabs have been reordered (implementation-specific)
-            // This could check DOM order or test the component's internal state
-            // e.g., verify that Tab 2 now comes before Tab 1 in the DOM
-
-            // You might also click on the reordered tab to verify it still works
+            // Verify the tabs have been reordered
             await userEvent.click(firstTab);
             expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 2", "Tab 3", "Tab 1"]);
         }
@@ -230,6 +227,9 @@ export const TabReorderTest: Story = {
             await fireEvent.dragStart(secondTab);
 
             await fireEvent.dragEnter(panel);
+
+            // Wait for the reorder to complete
+            await new Promise(resolve => setTimeout(resolve, 100));
 
             // Perform drop operation at the calculated position
             await fireEvent.drop(canvas.getAllByText("Tab 2")[1]);
@@ -247,7 +247,7 @@ export const TabReorderTest: Story = {
 
             await fireEvent.dragEnter(panel);
 
-            // // Perform drop operation at the calculated position
+            // Perform drop operation at the calculated position
             await fireEvent.drop(panel);
 
             expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 1", "Tab 2", "Tab 3"]);
@@ -263,10 +263,7 @@ export const TabReorderTest: Story = {
 
 // Test for moving a tab from one panel to another using drag and drop
 export const TabMoveBetweenPanelsTest: Story = {
-    render,
-    args: {
-        modelValue: [(Default.args as any).modelValue[0]]
-    },
+    ...Default,
     play: async ({canvasElement}) => {
         const canvas = within(canvasElement);
 
@@ -293,12 +290,7 @@ export const TabMoveBetweenPanelsTest: Story = {
             // Wait for the reorder to complete
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // Verify the tabs have been reordered (implementation-specific)
-            // This could check DOM order or test the component's internal state
-            // e.g., verify that Tab 2 now comes before Tab 1 in the DOM
-
-            // You might also click on the reordered tab to verify it still works
-            // await userEvent.click(firstTab);
+            // Verify the tabs have been reordered
             expect(
                 within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab")
                     .map(tab => tab.textContent?.trim())
@@ -320,12 +312,7 @@ export const TabMoveBetweenPanelsTest: Story = {
             // Wait for the reorder to complete
             await new Promise(resolve => setTimeout(resolve, 100));
 
-            // Verify the tabs have been reordered (implementation-specific)
-            // This could check DOM order or test the component's internal state
-            // e.g., verify that Tab 2 now comes before Tab 1 in the DOM
-
-            // You might also click on the reordered tab to verify it still works
-            // await userEvent.click(firstTab);
+            // Verify the tabs have been reordered
             expect(
                 within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab")
                     .map(tab => tab.textContent?.trim())
@@ -349,7 +336,7 @@ export const SplitPanel: Story = {
 
         expect(canvas.getAllByRole("tablist")).toHaveLength(1)
 
-        canvas.getByTitle("Split panel").click()
+        userEvent.click(canvas.getByTitle("Split panel"))
 
         await new Promise(resolve => setTimeout(resolve, 100));
 

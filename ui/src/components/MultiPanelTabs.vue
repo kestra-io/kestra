@@ -1,16 +1,16 @@
 <template>
-    <Splitpanes class="default-theme">
-        <Pane v-for="(panel, panelIndex) in panels" :key="panelIndex">
+    <Splitpanes class="default-theme" @resize="onResize">
+        <Pane v-for="(panel, panelIndex) in panels" :key="panelIndex" :size="panel.size">
             <div class="editor-tabs-container">
                 <div
                     class="editor-tabs"
                     role="tablist"
-                    :class="{dragover: panel.dragover}"
                     @dragleave.prevent="dragleavePanel"
                     @dragenter.prevent="dragoverPanel"
                     @dragover.prevent
                     @drop="drop"
                     :data-panel-index="panelIndex"
+                    :class="{dragover: panel.dragover}"
                 >
                     <template
                         v-for="tab in panel.tabs"
@@ -50,7 +50,12 @@
                         </div>
                     </template>
                 </div>
-                <button v-if="panel.tabs.length > 1" @click="splitPanel(panelIndex)" title="Split panel">
+                <button
+                    v-if="panel.tabs.length > 1"
+                    @click="splitPanel(panelIndex)"
+                    class="split_right"
+                    title="Split panel"
+                >
                     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path
                             fill-rule="evenodd"
@@ -61,7 +66,18 @@
                     </svg>
                 </button>
             </div>
-            <component :is="panel.activeTab.component" />
+            <div style="position: relative">
+                <component :is="panel.activeTab.component" />
+                <div
+                    v-if="dragging"
+                    class="editor-content-overlay"
+                    @dragleave.prevent="dragleavePanel"
+                    @dragenter.prevent="dragoverContent"
+                    @dragover.prevent
+                    @drop="drop"
+                    :data-panel-index="panelIndex"
+                />
+            </div>
         </Pane>
     </Splitpanes>
 </template>
@@ -91,6 +107,7 @@
     }
 
     export interface Panel {
+        size?: number;
         tabs: Tab[],
         dragover?:boolean,
         activeTab: Tab,
@@ -105,6 +122,14 @@
     }>()
 
     const movedTabInfo = ref<TabInfo | null>(null);
+    const dragging = ref(true);
+
+    function onResize(e: {size:number}[]) {
+        let i = 0;
+        for(const p of panels.value){
+            p.size = e[i++].size
+        }
+    }
 
     function dragstart(panelIndex: number, tabId: string) {
         const tabIndex = panels.value[panelIndex].tabs.findIndex((tab) => tab.value === tabId);
@@ -200,8 +225,33 @@
         panels.value[targetPanelIndex].tabs = panels.value[targetPanelIndex].tabs.filter((tab) => !tab.potential)
     }
 
+    const panelTimeout = ref<any>(null);
+
     function dragoverPanel(event: DragEvent) {
-        dragover(event, true);
+        panelTimeout.value = setTimeout(() => {
+            dragover(event, true);
+        }, 50)
+    }
+
+    function dragoverContent(event: DragEvent) {
+        if(!event.target || !(event.target instanceof HTMLElement)) {
+            return;
+        }
+
+        let targetPanelIndex = getPanelIndex(true, event.target)
+
+        // if the target is the same as the original panel,
+        // we don't need to move the tab
+        // The tab should stay in place
+        if(targetPanelIndex === undefined
+            || !movedTabInfo.value
+            || movedTabInfo.value.panelIndex === targetPanelIndex){
+            return
+        }
+
+        setTimeout(() => {
+            dragover(event, false);
+        }, 20)
     }
 
     function dragleavePanel(event: DragEvent) {
@@ -232,7 +282,7 @@
         cleanUp();
     }
 
-    function getTargetTabIndex(targetPanelIndex: number, targetTabId: string): number {
+    function getTargetTabIndex(targetPanelIndex: number, targetTabId?: string): number {
         const targetTabIndex = panels.value[targetPanelIndex].tabs.findIndex((tab) => tab.value === targetTabId)
         if(targetTabIndex === -1){
             return panels.value[targetPanelIndex].tabs.length;
@@ -316,11 +366,13 @@
     .editor-tabs-container{
         display: flex;
         justify-content: space-between;
-        button{
+        background-color: var(--ks-background-body);
+        button.split_right{
             border: none;
             color: var(--ks-content-tertiary);
             background-color: transparent;
             padding: 0 .5rem;
+            line-height: 16px;
             svg {
                 height: 16px;
                 width: 16px;
@@ -328,12 +380,22 @@
         }
     }
 
+    .editor-content-overlay{
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.1);
+        z-index: 100;
+    }
+
     .editor-tabs {
         display: flex;
+        flex: 1;
         align-items: end;
         padding-bottom: 0;
         border-bottom: 1px solid var(--ks-border-primary);
-        background-color: var(--ks-background-body);
         &.dragover {
             background-color: var(--ks-background-card-hover);
         }

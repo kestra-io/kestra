@@ -95,6 +95,9 @@ public abstract class AbstractRunnerTest {
     @Inject
     private ChangeStateTestCase changeStateTestCase;
 
+    @Inject
+    private AfterExecutionTestCase afterExecutionTestCase;
+
     @Test
     @ExecuteFlow("flows/valids/full.yaml")
     void full(Execution execution) {
@@ -225,7 +228,7 @@ public abstract class AbstractRunnerTest {
         "flows/valids/trigger-multiplecondition-flow-c.yaml",
         "flows/valids/trigger-multiplecondition-flow-d.yaml"})
     void multipleConditionTriggerFailed() throws Exception {
-            multipleConditionTriggerCaseTest.failed();
+        multipleConditionTriggerCaseTest.failed();
     }
 
     @Test
@@ -247,7 +250,7 @@ public abstract class AbstractRunnerTest {
     @RetryingTest(5)
     @LoadFlows({"flows/valids/each-null.yaml"})
     void eachWithNull() throws Exception {
-        EachSequentialTest.eachNullTest(runnerUtils,logsQueue);
+        EachSequentialTest.eachNullTest(runnerUtils, logsQueue);
     }
 
     @Test
@@ -517,5 +520,29 @@ public abstract class AbstractRunnerTest {
     @LoadFlows({"flows/valids/failed-first.yaml", "flows/valids/subflow-parent-of-failed.yaml"})
     public void changeStateInSubflowShouldEndsParentFlowInSuccess() throws Exception {
         changeStateTestCase.changeStateInSubflowShouldEndsParentFlowInSuccess();
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/after-execution.yaml")
+    public void shouldCallTasksAfterExecution(Execution execution) {
+        afterExecutionTestCase.shouldCallTasksAfterExecution(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/after-execution-finally.yaml")
+    public void shouldCallTasksAfterFinally(Execution execution) {
+        afterExecutionTestCase.shouldCallTasksAfterFinally(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/after-execution-error.yaml")
+    public void shouldCallTasksAfterError(Execution execution) {
+        afterExecutionTestCase.shouldCallTasksAfterError(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/after-execution-listener.yaml")
+    public void shouldCallTasksAfterListener(Execution execution) {
+        afterExecutionTestCase.shouldCallTasksAfterListener(execution);
     }
 }

@@ -7,6 +7,7 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.schedulers.*;
 import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
@@ -28,7 +29,7 @@ public class JdbcScheduler extends AbstractScheduler {
     private final TriggerRepositoryInterface triggerRepository;
     private final FlowRepositoryInterface flowRepository;
     private final JooqDSLContextWrapper dslContextWrapper;
-    private final ConditionService conditionService;
+    private final ExecutionService executionService;
 
 
     @Inject
@@ -41,7 +42,7 @@ public class JdbcScheduler extends AbstractScheduler {
         triggerRepository = applicationContext.getBean(AbstractJdbcTriggerRepository.class);
         triggerState = applicationContext.getBean(SchedulerTriggerStateInterface.class);
         executionState = applicationContext.getBean(SchedulerExecutionState.class);
-        conditionService = applicationContext.getBean(ConditionService.class);
+        executionService = applicationContext.getBean(ExecutionService.class);
         flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
         dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
     }
@@ -61,7 +62,7 @@ public class JdbcScheduler extends AbstractScheduler {
                 Execution execution = either.getLeft();
                 if (execution.getTrigger() != null) {
                     var flow = flowRepository.findByIdWithSource(execution.getTenantId(), execution.getNamespace(), execution.getFlowId()).orElse(null);
-                    if (execution.isDeleted() || conditionService.isTerminatedWithListeners(flow, execution)) {
+                    if (execution.isDeleted() || executionService.isTerminated(flow, execution)) {
                         // reset scheduler trigger at end
                         triggerRepository
                             .findByExecution(execution)

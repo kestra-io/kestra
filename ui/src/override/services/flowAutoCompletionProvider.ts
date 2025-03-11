@@ -91,7 +91,7 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion {
             case "flow":
                 return Promise.resolve(["id", "namespace", "revision", "tenantId"]);
             case "execution":
-                return Promise.resolve(["id", "startDate", "originalId"]);
+                return Promise.resolve(["id", "startDate", "state", "originalId"]);
             case "vars":
                 return Promise.resolve(Object.keys(parsed?.variables ?? {}));
             case "trigger":

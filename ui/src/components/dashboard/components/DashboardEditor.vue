@@ -1,26 +1,30 @@
 <template>
     <div class="button-top">
-        <el-button-group>
+        <el-button-group class="view-buttons">
             <el-tooltip :content="$t('source only')">
                 <el-button
+                    :type="buttonType(views.NONE)"
                     :icon="FileDocumentEditOutline"
                     @click="setView(views.NONE)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('documentation.documentation')">
                 <el-button
+                    :type="buttonType(views.DOC)"
                     :icon="BookOpenVariant"
                     @click="setView(views.DOC)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('chart preview')">
                 <el-button
+                    :type="buttonType(views.CHART)"
                     :icon="ChartBar"
                     @click="setView(views.CHART)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('dashboard.preview')">
                 <el-button
+                    :type="buttonType(views.DASHBOARD)"
                     :icon="ViewDashboard"
                     @click="setView(views.DASHBOARD)"
                 />
@@ -36,7 +40,7 @@
         <el-button
             :icon="ContentSave"
             @click="$emit('save', source)"
-            :type="buttonType"
+            :type="saveButtonType"
             :disabled="!allowSaveUnchanged && source === initialSource"
         >
             {{ $t("save") }}
@@ -184,7 +188,7 @@
             YamlUtils() {
                 return YamlUtils
             },
-            buttonType() {
+            saveButtonType() {
                 if (this.errors) {
                     return "danger";
                 }
@@ -261,6 +265,9 @@
                         }).flat();
                     })
             },
+            buttonType(view) {
+                return view === this.currentView ? "primary" : "default";
+            },
             setView(view) {
                 this.currentView = view;
 
@@ -321,6 +328,8 @@
                     .then(errors => {
                         if (errors.constraints) {
                             this.errors = [errors.constraints];
+                        } else {
+                            this.errors = undefined;
                         }
                     });
             }
@@ -334,7 +343,6 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     $spacing: 20px;
-
 
     .main-editor {
         padding: .5rem 0px;
@@ -441,5 +449,20 @@
         text-align: center;
         word-wrap: break-word; /* Ensures long words break and wrap to the next line */
         white-space: normal; /* Allows text to wrap to the next line */
+    }
+
+    .view-buttons {
+        .el-button {
+            &.el-button--primary {
+                color: var(--ks-content-link);
+                opacity: 1;
+            }
+
+            border: 0;
+            background: none;
+            opacity: 0.5;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
     }
 </style>

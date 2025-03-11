@@ -280,7 +280,7 @@
                 return tabs;
             },
             updateExpandedSubflows(expandedSubflows) {
-                this.$store.commit("setExpandedSubflows", expandedSubflows);
+                this.$store.commit("flow/setExpandedSubflows", expandedSubflows);
             },
             activeTabName() {
                 return this.$refs.currentTab?.activeTab?.name ?? "home";

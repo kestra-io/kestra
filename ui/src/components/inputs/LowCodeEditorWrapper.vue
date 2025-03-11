@@ -44,7 +44,7 @@
     }
 
     const onExpandSubflow = (expandedSubflows: string[]) => {
-        store.commit("setExpandedSubflows", expandedSubflows);
+        store.commit("flow/setExpandedSubflows", expandedSubflows);
     };
 
     const onSwappedTask = (swappedTasks: [string, string]) => {

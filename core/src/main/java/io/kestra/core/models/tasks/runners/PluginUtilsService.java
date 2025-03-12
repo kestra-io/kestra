@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
-import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -24,7 +23,7 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -167,7 +166,7 @@ abstract public class PluginUtilsService {
         }
     }
 
-    public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr)  {
+    public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr, Timestamp customTimestamp) {
         Matcher m = PATTERN.matcher(line);
         Map<String, Object> outputs = new HashMap<>();
 
@@ -186,10 +185,12 @@ abstract public class PluginUtilsService {
                 if (bashCommand.getLogs() != null) {
                     bashCommand.getLogs().forEach(logLine -> {
                         try {
+                            if (customTimestamp != null) {
+                                runContext.setRunContextLoggerTimestamp(customTimestamp);
+                            }
                             LoggingEventBuilder builder = runContext
                                 .logger()
                                 .atLevel(logLine.getLevel());
-
                             builder.log(logLine.getMessage());
                         } catch (Exception e) {
                             logger.warn("Invalid log '{}'", m.group(1), e);

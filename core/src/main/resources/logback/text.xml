@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <included>
+    <conversionRule conversionWord="nanos"
+                    converterClass="io.kestra.core.logs.NanoConverter" />
+
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
         <target>System.out</target>
         <immediateFlush>true</immediateFlush>

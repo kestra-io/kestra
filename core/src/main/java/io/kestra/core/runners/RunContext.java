@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 
 import java.net.URI;
 import java.security.GeneralSecurityException;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -183,4 +184,6 @@ public abstract class RunContext {
     }
 
     public abstract boolean isInitialized();
+
+    public abstract void setRunContextLoggerTimestamp(Timestamp timestamp);
 }

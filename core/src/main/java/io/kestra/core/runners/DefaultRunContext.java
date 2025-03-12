@@ -34,6 +34,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.GeneralSecurityException;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -557,6 +558,11 @@ public class DefaultRunContext extends RunContext {
     @Override
     public boolean isInitialized() {
         return isInitialized.get();
+    }
+
+    @Override
+    public void setRunContextLoggerTimestamp(Timestamp timestamp) {
+        logger.setCustomTimestamp(timestamp);
     }
 
     /**

@@ -2,6 +2,8 @@ package io.kestra.core.models.tasks.runners;
 
 import io.kestra.core.runners.RunContext;
 
+import java.sql.Timestamp;
+
 /**
  * Default implementation of an @{link {@link AbstractLogConsumer}}
  */
@@ -14,7 +16,11 @@ public class DefaultLogConsumer extends AbstractLogConsumer {
 
     @Override
     public void accept(String line, Boolean isStdErr) {
-        outputs.putAll(PluginUtilsService.parseOut(line, runContext.logger(), runContext, isStdErr));
+        this.accept(line, isStdErr, null);
+    }
+
+    public void accept(String line, Boolean isStdErr, Timestamp timestamp) {
+        outputs.putAll(PluginUtilsService.parseOut(line, runContext.logger(), runContext, isStdErr, timestamp));
 
         if (isStdErr) {
             this.stdErrCount.incrementAndGet();

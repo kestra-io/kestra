@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.sql.Timestamp;
 import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -96,6 +97,12 @@ public abstract class AbstractTaskRunnerTest {
         TaskRunner<?> taskRunner = taskRunner();
 
         Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
+            @Override
+            public void accept(String line, Boolean isStdErr, Timestamp timestamp) {
+                logsWithIsStdErr.put(line, isStdErr);
+                defaultLogConsumer.accept(line, isStdErr);
+            }
+
             @Override
             public void accept(String log, Boolean isStdErr) {
                 logsWithIsStdErr.put(log, isStdErr);

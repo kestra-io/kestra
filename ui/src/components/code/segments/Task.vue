@@ -128,8 +128,7 @@
 
         const currentSection = route.query.section;
         const isCreation =
-            props.creation &&
-            (!props.identifier || props.identifier === "new");
+            props.creation && (!props.identifier || props.identifier === "new");
 
         let result;
 
@@ -161,6 +160,8 @@
                 result = YamlUtils.insertError(source, CURRENT.value);
             } else if (currentSection === "finally") {
                 result = YamlUtils.insertFinally(source, CURRENT.value);
+            } else if (currentSection === "after execution") {
+                result = YamlUtils.insertAfterExecution(source, CURRENT.value);
             }
         } else {
             result = YamlUtils.replaceTaskInDocument(

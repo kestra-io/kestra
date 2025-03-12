@@ -33,7 +33,7 @@ export default {
             return this.root ? this.root + "." + addKey : addKey;
         },
         isRequired(key) {
-            return this.schema.required && this.schema.required.includes(key);
+            return key === "id" || this.schema.required && this.schema.required.includes(key);
         },
         getType(property, key) {
             if (property.enum !== undefined) {

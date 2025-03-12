@@ -455,6 +455,24 @@ export default class YamlUtils {
         return YamlUtils.cleanMetadata(yamlDoc.toString(TOSTRING_OPTIONS));
     }
 
+    static insertAfterExecution(source, afterExecutionTask) {
+        const yamlDoc = yaml.parseDocument(source);
+        const newAfterExecutionNode = yamlDoc.createNode(yaml.parseDocument(afterExecutionTask));
+        const items = yamlDoc.contents.items.find(item => item.key.value === "afterExecution");
+        if (items && items.value.items) {
+            yamlDoc.contents.items[yamlDoc.contents.items.indexOf(items)].value.items.push(newAfterExecutionNode);
+        } else {
+            if (items) {
+                yamlDoc.contents.items.splice(yamlDoc.contents.items.indexOf(items), 1)
+            }
+            const afterExecutionSeq = new yaml.YAMLSeq();
+            afterExecutionSeq.items.push(newAfterExecutionNode);
+            const newAfterExecution= new yaml.Pair(new yaml.Scalar("afterExecution"), afterExecutionSeq);
+            yamlDoc.contents.items.push(newAfterExecution);
+        }
+        return YamlUtils.cleanMetadata(yamlDoc.toString(TOSTRING_OPTIONS));
+    }
+
     static insertErrorInFlowable(source, errorTask, flowableTask) {
         const yamlDoc = yaml.parseDocument(source);
         const newErrorNode = yamlDoc.createNode(yaml.parseDocument(errorTask));
@@ -662,7 +680,7 @@ export default class YamlUtils {
             return source;
         }
 
-        const order = ["id", "namespace", "description", "retry", "labels", "inputs", "variables", "tasks", "triggers", "errors", "finally", "pluginDefaults", "taskDefaults", "concurrency", "outputs", "disabled"];
+        const order = ["id", "namespace", "description", "retry", "labels", "inputs", "variables", "tasks", "triggers", "errors", "finally", "afterExecution", "pluginDefaults", "taskDefaults", "concurrency", "outputs", "disabled"];
         const updatedItems = [];
         for (const prop of order) {
             const item = yamlDoc.contents.items.find(e => e.key.value === prop);

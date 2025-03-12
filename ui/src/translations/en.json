@@ -1134,7 +1134,8 @@
         "tasks": "Tasks",
         "triggers": "Triggers",
         "error_handlers": "Error Handlers",
-        "finally": "Finally"
+        "finally": "Finally",
+        "after_execution": "After Execution"
       },
       "fields": {
         "main": {
@@ -1158,13 +1159,15 @@
         "tasks": "Add a task",
         "triggers": "Add a trigger",
         "error handlers": "Add an error handler",
-        "finally": "Add a finally block"
+        "finally": "Add a finally block",
+        "after execution": "Add an after execution block"
       },
       "save": {
         "tasks": "Save task",
         "triggers": "Save trigger",
         "error handlers": "Save error handler",
         "finally": "Save task",
+        "after execution": "Save task",
         "input": "Save input"
       }
     },

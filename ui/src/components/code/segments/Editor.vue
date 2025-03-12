@@ -76,7 +76,9 @@
     import {useRoute} from "vue-router";
     const route = useRoute();
 
-    const taskIdentifier = computed(() => route.query.identifier?.toString() ?? "new");
+    const taskIdentifier = computed(
+        () => route.query.identifier?.toString() ?? "new",
+    );
 
     watch(
         () => route.query,
@@ -242,6 +244,10 @@
                 YamlUtils.parse(props.flow).errors ?? [],
             ),
             getSectionTitle("finally", YamlUtils.parse(props.flow).finally ?? []),
+            getSectionTitle(
+                "after_execution",
+                YamlUtils.parse(props.flow).afterExecution ?? [],
+            ),
         ];
     });
 </script>

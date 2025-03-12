@@ -74,7 +74,7 @@
     "@chromatic-com/storybook": "^3.2.5",
     "@codecov/vite-plugin": "^1.9.0",
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
-    "@eslint/js": "^9.20.0",
+    "@eslint/js": "^9.22.0",
     "@rushstack/eslint-patch": "^1.10.4",
     "@shikijs/markdown-it": "^3.1.0",
     "@storybook/addon-essentials": "^8.6.3",

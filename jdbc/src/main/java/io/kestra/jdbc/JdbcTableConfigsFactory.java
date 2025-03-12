@@ -125,6 +125,12 @@ public class JdbcTableConfigsFactory {
         return new InstantiableJdbcTableConfig("dashboards", Dashboard.class, "dashboards");
     }
 
+    @Bean
+    @Named("genericqueues")
+    public InstantiableJdbcTableConfig genericQueues() {
+        return new InstantiableJdbcTableConfig("generic_queues", null, "generic_queues");
+    }
+
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {
         public InstantiableJdbcTableConfig(String name, @Nullable Class<?> cls, String table) {
             super(name, cls, table);

@@ -5,6 +5,7 @@ import io.kestra.jdbc.JdbcTableConfigs;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
@@ -17,6 +18,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 @Singleton
+@Slf4j
 public class GenericJdbcQueue implements Pauseable, Closeable {
 
     private final JooqDSLContextWrapper dslContextWrapper;
@@ -25,7 +27,7 @@ public class GenericJdbcQueue implements Pauseable, Closeable {
 
     private final AtomicBoolean paused = new AtomicBoolean(false);
 
-    private final AtomicBoolean closed = new AtomicBoolean(true);
+    private final AtomicBoolean closed = new AtomicBoolean(false);
 
     @Override
     public void pause() {
@@ -59,6 +61,7 @@ public class GenericJdbcQueue implements Pauseable, Closeable {
     protected AtomicReference<Result<Record>> poll() {
         final AtomicReference<Result<Record>> records = new AtomicReference<>();
         if (this.paused.get() || this.closed.get()) {
+            log.error("Cannot poll a paused / closed queue");
             return records;
         }
         dslContextWrapper.transaction(configuration -> {
@@ -66,17 +69,20 @@ public class GenericJdbcQueue implements Pauseable, Closeable {
             records.set(context
                 .select()
                 .from(table)
-                .orderBy(DSL.field(Fields.OFFSET).asc())
+                .orderBy(DSL.field(DSL.quotedName(Fields.OFFSET)).asc())
                 .fetch());
         });
         return records;
     }
 
-    public void receive(String namespace, String tenant, String topic, Consumer<byte[]> consumer) {
+    public void receive(String namespace, String tenant, String topic, Consumer<String> consumer) {
         Result<Record> records = this.poll().get();
+        if (records == null || records.isEmpty()) {
+            return;
+        }
         List<Object> processed = records.map(record -> record.get(DSL.field(Fields.VALUE)));
         processed.forEach(obj -> {
-            consumer.accept((byte[])obj);
+            consumer.accept((String) obj);
         });
     }
 
@@ -87,11 +93,11 @@ public class GenericJdbcQueue implements Pauseable, Closeable {
         dslContextWrapper.transaction(configuration -> {
             DSLContext context = DSL.using(configuration);
             context.insertInto(table)
-                .columns(DSL.field(Fields.VALUE),
-                    DSL.field(Fields.TOPIC),
-                    DSL.field(Fields.NAMESPACE),
-                    DSL.field(Fields.TENANT))
-                .values(value, topic, namespace, tenant)
+                .columns(DSL.field(DSL.quotedName(Fields.VALUE)),
+                    DSL.field(DSL.quotedName(Fields.TOPIC)),
+                    DSL.field(DSL.quotedName(Fields.NAMESPACE)),
+                    DSL.field(DSL.quotedName(Fields.TENANT)))
+                .values(JSONB.valueOf(new String(value)), topic, namespace, tenant)
                 .execute();
         });
     }

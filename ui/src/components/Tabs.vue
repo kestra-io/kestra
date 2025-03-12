@@ -206,6 +206,11 @@
 </script>
 
 <style lang="scss" scoped>
+    section.container.mt-4:has(> section.empty) {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     :deep(.el-tabs) {
         .el-tabs__item.is-disabled {
             &:after {

@@ -9,6 +9,7 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static io.kestra.core.models.triggers.TimeWindow.Type.DURATION_WINDOW;
@@ -18,7 +19,7 @@ public interface MultipleConditionStorageInterface {
 
     List<MultipleConditionWindow> expired(String tenantId);
 
-    default MultipleConditionWindow getOrCreate(Flow flow, MultipleCondition multipleCondition) {
+    default MultipleConditionWindow getOrCreate(Flow flow, MultipleCondition multipleCondition, Map<String, Object> outputs) {
         ZonedDateTime now = ZonedDateTime.now().withNano(0);
         TimeWindow timeWindow = multipleCondition.getTimeWindow() != null ? multipleCondition.getTimeWindow() : TimeWindow.builder().build();
 
@@ -70,6 +71,7 @@ public interface MultipleConditionStorageInterface {
                 .start(startAndEnd.getLeft())
                 .end(startAndEnd.getRight())
                 .results(new HashMap<>())
+                .outputs(outputs)
                 .build()
             );
     }

@@ -129,12 +129,6 @@
     "collapse": "折叠",
     "collapse all": "折叠所有",
     "concurrency": "并发",
-    "concurrency-view": {
-      "desc_no_executions": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>的信息。",
-      "desc_no_limit": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">并发限制</a></strong>的信息。",
-      "title_no_executions": "此Flow没有正在进行的Executions。",
-      "title_no_limit": "没有为此 Flow 设置限制。"
-    },
     "conditions": "条件",
     "configure basic auth": "配置基本认证",
     "confirm": "确认",
@@ -290,6 +284,10 @@
           "message": "在 Kestra 企业版中，namespace 提供了高级的隔离和治理功能，用于管理大规模的密钥、变量和插件默认值。管理员可以为每个 namespace 配置自定义密钥管理器、隔离存储后端、专用 worker 组以及细粒度权限。这确保了密钥、变量和插件配置在不同团队和项目中保持安全且易于维护。",
           "title": "升级您的Namespace管理"
         },
+        "history": {
+          "message": "在 Kestra Enterprise Edition 中，您可以管理 Namespace 的修订历史记录。",
+          "title": "在一个地方管理修订历史"
+        },
         "plugin-defaults": {
           "message": "在 Kestra Enterprise Edition 中，您可以设置特定于 namespace 的插件默认值，从而减少每个 flow 中重复设置的需求。这种集中的插件管理强制执行一致的配置，允许安全引用机密或变量，并简化工作流的维护。",
           "title": "使用插件默认值标准化配置"
@@ -313,10 +311,6 @@
     "dependencies loaded": "依赖项已加载",
     "dependencies missing acls": "此流程没有权限",
     "dependency task": "任务 {taskId} 是另一个任务的依赖",
-    "dependency-view": {
-      "desc_no_deps": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
-      "title_no_deps": "此 Flow 未设置任何依赖项。"
-    },
     "description": "描述",
     "details": "详情",
     "disable": "禁用",
@@ -366,6 +360,36 @@
     },
     "email": "电子邮件",
     "email length constraint": "电子邮件不得超过256个字符",
+    "empty": {
+      "announcements": {
+        "content": "公告允许您通知用户任何更改或告知他们计划的维护停机时间。只需选择公告类型、显示的日期范围，并撰写公告消息。",
+        "title": "您还没有公告！"
+      },
+      "apps": {
+        "content": "开始构建应用程序，以便与外部世界的Kestra进行交互。",
+        "title": "您还没有应用程序！"
+      },
+      "concurrency_executions": {
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong>的信息。",
+        "title": "此 Flow 没有正在进行的 Executions。"
+      },
+      "concurrency_limit": {
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
+        "title": "此Flow未设置限制。"
+      },
+      "dependencies": {
+        "content": "在我们的文档中阅读更多关于<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>的信息。",
+        "title": "此Flow未设置依赖项。"
+      },
+      "plugins": {
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
+        "title": "此Namespace未设置插件默认值。"
+      },
+      "triggers": {
+        "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>的信息。",
+        "title": "您的 flow 没有任何 Triggers。"
+      }
+    },
     "empty search": "搜索结果为空",
     "enable": "启用",
     "enable concurrency": "启用并发",
@@ -722,7 +746,6 @@
       },
       "empty": {
         "create_message": "您可以创建或导入namespace文件。",
-        "message": "你可以从侧边栏创建或导入命名空间文件，也可以查看我们的编辑器介绍视频。",
         "title": "当前没有打开的标签",
         "video_message": "您可以查看我们编辑器的介绍视频。"
       }
@@ -1121,6 +1144,7 @@
     "toggle output": "切换输出",
     "toggle output display": "切换输出显示",
     "toggle periodic refresh each 10 seconds": "切换每10秒周期刷新",
+    "toggle_word_wrap": "切换自动换行",
     "topology": "拓扑",
     "topology-graph": {
       "graph-orientation": "图表方向",
@@ -1148,10 +1172,6 @@
     "triggered done": "执行 <em>{name}</em> 成功触发",
     "triggerflow disabled": "触发器在流程定义中被禁用",
     "triggers": "触发器",
-    "triggers-view": {
-      "desc_no_triggers": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>的信息。",
-      "title_no_triggers": "您的 flow 没有任何 Triggers。"
-    },
     "triggers_state": {
       "options": {
         "disabled": "禁用",

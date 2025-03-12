@@ -129,12 +129,6 @@
     "collapse": "Свернуть",
     "collapse all": "Свернуть все",
     "concurrency": "Конкурентность",
-    "concurrency-view": {
-      "desc_no_executions": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> в нашей документации.",
-      "desc_no_limit": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">ограничениях Concurrency</a></strong> в нашей документации.",
-      "title_no_executions": "Нет выполняющихся Executions для этого Flow.",
-      "title_no_limit": "Для этого Flow не установлены ограничения."
-    },
     "conditions": "условия",
     "configure basic auth": "Настроить базовую аутентификацию",
     "confirm": "Подтвердить",
@@ -290,6 +284,10 @@
           "message": "В Kestra Enterprise Edition, namespaces обеспечивают продвинутую изоляцию и управление секретами, переменными и настройками плагинов в масштабе. Администраторы могут настраивать пользовательские менеджеры секретов, изолированные хранилища, выделенные группы worker и детализированные разрешения на уровне каждого namespace. Это гарантирует, что секреты, переменные и конфигурации плагинов остаются безопасными и легкими в обслуживании для разных команд и проектов.",
           "title": "Обновите управление вашим Namespace"
         },
+        "history": {
+          "message": "В Kestra Enterprise Edition вы можете управлять историей ревизий ваших Namespaces.",
+          "title": "Управляйте Историей Ревизий в Одном Месте"
+        },
         "plugin-defaults": {
           "message": "В Kestra Enterprise Edition вы можете установить специфичные для namespace значения по умолчанию для плагинов, что уменьшает необходимость дублирования настроек в каждом flow. Это централизованное управление плагинами обеспечивает согласованность конфигураций, позволяет безопасно ссылаться на секреты или переменные и упрощает обслуживание ваших workflows.",
           "title": "Стандартизация конфигурации с помощью значений по умолчанию плагина"
@@ -313,10 +311,6 @@
     "dependencies loaded": "Зависимости загружены",
     "dependencies missing acls": "Нет разрешений на этот flow",
     "dependency task": "Задача {taskId} является зависимостью другого задачи",
-    "dependency-view": {
-      "desc_no_deps": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации.",
-      "title_no_deps": "Для этого Flow зависимости не установлены."
-    },
     "description": "Описание",
     "details": "Детали",
     "disable": "Отключить",
@@ -366,6 +360,36 @@
     },
     "email": "Email",
     "email length constraint": "Email не должен превышать 256 символов",
+    "empty": {
+      "announcements": {
+        "content": "Объявления позволяют уведомлять ваших пользователей о любых изменениях или информировать их о запланированном времени простоя для обслуживания. Просто выберите тип объявления, диапазон дат, в течение которого оно должно отображаться, и напишите сообщение объявления.",
+        "title": "У вас пока нет объявлений!"
+      },
+      "apps": {
+        "content": "Начните создавать приложения для взаимодействия с Kestra из внешнего мира.",
+        "title": "У вас пока нет приложений!"
+      },
+      "concurrency_executions": {
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> в нашей документации.",
+        "title": "Нет текущих выполнений для этого flow."
+      },
+      "concurrency_limit": {
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">ограничениях на Concurrency</a></strong> в нашей документации.",
+        "title": "Для этого flow не установлены ограничения."
+      },
+      "dependencies": {
+        "content": "Узнайте больше о <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> в нашей документации.",
+        "title": "Для этого flow зависимости не установлены."
+      },
+      "plugins": {
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> в нашей документации.",
+        "title": "Для этого namespace не установлены значения по умолчанию для плагинов."
+      },
+      "triggers": {
+        "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> в нашей документации.",
+        "title": "Ваш flow не имеет никаких Triggers."
+      }
+    },
     "empty search": "Результаты поиска пусты",
     "enable": "Включить",
     "enable concurrency": "Включить concurrency",
@@ -722,7 +746,6 @@
       },
       "empty": {
         "create_message": "Вы можете создать или импортировать файлы namespace.",
-        "message": "Вы можете создать или импортировать файлы namespace из боковой панели и посмотреть вводное видео для нашего редактора.",
         "title": "В настоящее время вкладки не открыты",
         "video_message": "Вы можете посмотреть Вводное Видео для нашего Editor."
       }
@@ -1121,6 +1144,7 @@
     "toggle output": "Переключить выводы",
     "toggle output display": "Переключить отображение вывода",
     "toggle periodic refresh each 10 seconds": "Переключить периодическое обновление каждые 10 секунд",
+    "toggle_word_wrap": "Переключить перенос слов",
     "topology": "Топология",
     "topology-graph": {
       "graph-orientation": "Ориентация графика",
@@ -1148,10 +1172,6 @@
     "triggered done": "Выполнение <em>{name}</em> успешно запущено",
     "triggerflow disabled": "Trigger отключен в определении flow",
     "triggers": "Triggers",
-    "triggers-view": {
-      "desc_no_triggers": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> в нашей документации.",
-      "title_no_triggers": "Ваш flow не имеет Triggers."
-    },
     "triggers_state": {
       "options": {
         "disabled": "Отключено",

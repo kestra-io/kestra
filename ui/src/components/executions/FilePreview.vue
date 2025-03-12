@@ -17,7 +17,35 @@
             <img v-else-if="preview.type === 'IMAGE'" :src="imageContent" alt="Image output preview">
             <pdf-preview v-else-if="preview.type === 'PDF'" :source="preview.content" />
             <markdown v-else-if="preview.type === 'MARKDOWN'" :source="preview.content" />
-            <editor v-else :full-height="false" :input="true" :navbar="false" :model-value="preview.content" :lang="extensionToMonacoLang" read-only />
+            <editor
+                v-else
+                :model-value="preview.content"
+                :lang="extensionToMonacoLang"
+                read-only
+                input
+                :word-wrap="wordWrap"
+                :full-height="false"
+                :navbar="false"
+                class="position-relative"
+            >
+                <template #absolute>
+                    <CopyToClipboard :text="preview.content">
+                        <template #right>
+                            <el-tooltip
+                                :content="$t('toggle_word_wrap')"
+                                placement="bottom"
+                                :auto-close="2000"
+                            >
+                                <el-button
+                                    :icon="Wrap"
+                                    type="default"
+                                    @click="wordWrap = !wordWrap"
+                                />
+                            </el-tooltip>
+                        </template>
+                    </CopyToClipboard>
+                </template>
+            </editor>
             <el-form class="ks-horizontal max-size mt-3">
                 <el-form-item :label="$t('row count')">
                     <el-select
@@ -60,6 +88,8 @@
 
 <script setup>
     import EyeOutline from "vue-material-design-icons/EyeOutline.vue";
+    import Wrap from "vue-material-design-icons/Wrap.vue";
+    import CopyToClipboard from "../layout/CopyToClipboard.vue";
 </script>
 
 <script>
@@ -98,7 +128,8 @@
                     {value: "UTF-16", label: "UTF-16"},
                     {value: "Cp500", label: "EBCDIC IBM-500"},
                 ],
-                preview: undefined
+                preview: undefined,
+                wordWrap: false
             }
         },
         mounted() {

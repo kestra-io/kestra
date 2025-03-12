@@ -24,7 +24,6 @@ import reactor.core.publisher.Flux;
 import java.time.Duration;
 import java.util.*;
 
-import static io.kestra.core.utils.TestsUtils.propertyFromList;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 

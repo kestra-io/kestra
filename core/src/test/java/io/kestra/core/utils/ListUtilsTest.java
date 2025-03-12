@@ -29,4 +29,14 @@ class ListUtilsTest {
         assertThat(ListUtils.isEmpty(Collections.emptyList()), is(true));
         assertThat(ListUtils.isEmpty(List.of("1")), is(false));
     }
+
+    @Test
+    void concat() {
+        List<String> list1 = List.of("1", "2");
+        List<String> list2 = List.of("3", "4");
+
+        assertThat(ListUtils.concat(list1, list2), is(List.of("1", "2", "3", "4")));
+        assertThat(ListUtils.concat(list1, null), is(List.of("1", "2")));
+        assertThat(ListUtils.concat(null, list2), is(List.of("3", "4")));
+    }
 }

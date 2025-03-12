@@ -129,12 +129,6 @@
     "collapse": "Masquer",
     "collapse all": "Masquer tout",
     "concurrency": "Concurrence",
-    "concurrency-view": {
-      "desc_no_executions": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> dans notre documentation.",
-      "desc_no_limit": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation.",
-      "title_no_executions": "Aucune exécution en cours pour ce Flow.",
-      "title_no_limit": "Aucune limite n'est définie pour ce Flow."
-    },
     "conditions": "conditions",
     "configure basic auth": "Configurer l'authentification basique",
     "confirm": "Confirmer",
@@ -290,6 +284,10 @@
           "message": "Dans l'édition Kestra Enterprise, les namespaces offrent une isolation avancée et une gouvernance des secrets, variables et paramètres par défaut des plugins à grande échelle. Les administrateurs peuvent configurer des gestionnaires de secrets personnalisés, des stockages backends isolés, des groupes de workers dédiés, et des permissions fines par namespace. Cela garantit que les secrets, variables et configurations de plugins restent sécurisés et faciles à maintenir à travers différentes équipes et projets.",
           "title": "Améliorez la Gestion de votre Namespace"
         },
+        "history": {
+          "message": "Dans Kestra Enterprise Edition, vous pouvez gérer l'historique des révisions de vos namespaces",
+          "title": "Gérer l'historique des révisions en un seul endroit"
+        },
         "plugin-defaults": {
           "message": "Dans Kestra Enterprise Edition, vous pouvez définir des paramètres par défaut spécifiques au namespace pour les plugins, réduisant ainsi le besoin de configurations dupliquées dans chaque flow. Cette gouvernance centrale des plugins impose des configurations cohérentes, permet une référence sécurisée des secrets ou des variables, et simplifie la maintenance de vos workflows.",
           "title": "Standardiser la Configuration avec les Valeurs par Défaut du Plugin"
@@ -313,10 +311,6 @@
     "dependencies loaded": "Dépendances chargées",
     "dependencies missing acls": "Aucune permission sur ce flow",
     "dependency task": "La tâche {taskId} est une dépendance d'une autre tâche",
-    "dependency-view": {
-      "desc_no_deps": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">dépendances de Flow</a> dans notre documentation.",
-      "title_no_deps": "Aucune dépendance n'est définie pour ce Flow."
-    },
     "description": "Description",
     "details": "Détails",
     "disable": "Désactiver",
@@ -366,6 +360,36 @@
     },
     "email": "Email",
     "email length constraint": "L'e-mail ne doit pas dépasser 256 caractères.",
+    "empty": {
+      "announcements": {
+        "content": "Les annonces vous permettent de notifier vos utilisateurs de tout changement ou de les informer des temps d'arrêt de maintenance planifiés. Sélectionnez simplement le type d'annonce, la plage de dates pendant laquelle elle doit être affichée, et rédigez le message d'annonce.",
+        "title": "Vous n'avez pas encore d'annonces !"
+      },
+      "apps": {
+        "content": "Commencez à créer des Apps pour interagir avec Kestra depuis le monde extérieur.",
+        "title": "Vous n'avez pas encore d'applications !"
+      },
+      "concurrency_executions": {
+        "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Exécutions</a></strong> dans notre documentation.",
+        "title": "Aucune exécution en cours pour ce flow."
+      },
+      "concurrency_limit": {
+        "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation.",
+        "title": "Aucune limite n'est définie pour ce flow."
+      },
+      "dependencies": {
+        "content": "En savoir plus sur les <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">dépendances de flow</a> dans notre documentation.",
+        "title": "Aucune dépendance n'est définie pour ce flow."
+      },
+      "plugins": {
+        "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limites de Concurrency</a></strong> dans notre documentation.",
+        "title": "Aucun paramètre par défaut de plugin n'est défini pour ce namespace."
+      },
+      "triggers": {
+        "content": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> dans notre documentation.",
+        "title": "Votre flow n'a pas de triggers."
+      }
+    },
     "empty search": "Les résultats de recherche sont vides",
     "enable": "Activer",
     "enable concurrency": "Activer la concurrence",
@@ -722,7 +746,6 @@
       },
       "empty": {
         "create_message": "Vous pouvez créer ou importer des fichiers de namespace.",
-        "message": "Vous pouvez créer ou importer des fichiers de namespace à partir de la barre latérale et vous pouvez consulter la vidéo d'introduction pour notre éditeur.",
         "title": "Aucun onglet actuellement ouvert",
         "video_message": "Vous pouvez regarder la vidéo d'introduction pour notre éditeur."
       }
@@ -1121,6 +1144,7 @@
     "toggle output": "Voir les sorties",
     "toggle output display": "Permuter l'affichage de sortie",
     "toggle periodic refresh each 10 seconds": "Activer le rafraîchissement toutes les 10 secondes",
+    "toggle_word_wrap": "Activer/Désactiver le retour à la ligne",
     "topology": "Topologie",
     "topology-graph": {
       "graph-orientation": "Orientation du graph",
@@ -1148,10 +1172,6 @@
     "triggered done": "L'exécution <em>{name}</em> est déclenchée !",
     "triggerflow disabled": "Déclencheur désactivé depuis la définition du flow",
     "triggers": "Déclencheurs",
-    "triggers-view": {
-      "desc_no_triggers": "En savoir plus sur les <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> dans notre documentation.",
-      "title_no_triggers": "Votre flow n'a pas de triggers."
-    },
     "triggers_state": {
       "options": {
         "disabled": "Désactivé",

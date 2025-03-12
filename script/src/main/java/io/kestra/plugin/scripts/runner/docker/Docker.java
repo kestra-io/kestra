@@ -151,6 +151,11 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     private static final String LEGACY_VOLUME_ENABLED_CONFIG = "kestra.tasks.scripts.docker.volume-enabled";
     private static final String VOLUME_ENABLED_CONFIG = "volume-enabled";
 
+    /**
+     * Container stop command grace period (in seconds).
+     */
+    private static final Integer STOP_TIMEOUT_SEC = 10;
+
     @Schema(
         title = "Docker API URI."
     )
@@ -595,11 +600,20 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         }
     }
 
+    /**
+     * Attempts to gracefully stop the specified Docker container.
+     * After the {@link Docker#STOP_TIMEOUT_SEC} grace period, it kills the container.<br/>
+     * See <a href="https://docs.docker.com/reference/cli/docker/container/stop/">{@code docker container stop}</a>.
+     *
+     * @param dockerClient client for the Docker Engine API
+     * @param containerId  container to kill
+     * @param logger       standard logger
+     */
     private void kill(final DockerClient dockerClient, final String containerId, final Logger logger) {
         try {
             InspectContainerResponse inspect = dockerClient.inspectContainerCmd(containerId).exec();
             if (Boolean.TRUE.equals(inspect.getState().getRunning())) {
-                dockerClient.killContainerCmd(containerId).exec();
+                dockerClient.stopContainerCmd(containerId).withTimeout(STOP_TIMEOUT_SEC).exec();
 
                 if (logger.isTraceEnabled()) {
                     logger.trace("Container was killed.");

@@ -44,6 +44,17 @@ class ReadFileFunctionTest {
     }
 
     @Test
+    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
+        String namespace = "io.kestra.tests";
+        String filePath = "file.txt";
+        storageInterface.createDirectory(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello but not from flow.namespace".getBytes()));
+
+        String render = variableRenderer.render("{{ read('" + filePath + "', namespace='" + namespace + "') }}", Map.of("flow", Map.of("namespace", "flow.namespace")));
+        assertThat(render, is("Hello but not from flow.namespace"));
+    }
+
+    @Test
     void readUnknownNamespaceFile() {
         IllegalVariableEvaluationException illegalVariableEvaluationException = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", Map.of("flow", Map.of("namespace", "io.kestra.tests"))));
         assertThat(illegalVariableEvaluationException.getCause().getCause().getClass(), is(FileNotFoundException.class));
@@ -125,14 +136,13 @@ class ReadFileFunctionTest {
     }
 
     @Test
-    void readUnauthorizedInternalStorageFile() throws IOException {
+    void readInternalStorageFileFromAnotherExecution() throws IOException, IllegalVariableEvaluationException {
         String namespace = "my.namespace";
         String flowId = "flow";
         String executionId = IdUtils.create();
         URI internalStorageURI = URI.create("/" + namespace.replace(".", "/") + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
         URI internalStorageFile = storageInterface.put(null, namespace, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
 
-        // test for an un-authorized execution with no trigger
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "notme",
@@ -140,39 +150,8 @@ class ReadFileFunctionTest {
             "execution", Map.of("id", "notme")
         );
 
-        var exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables));
-        assertThat(exception.getMessage(), is("Unable to read the file '" + internalStorageFile + "' as it didn't belong to the current execution"));
-
-        // test for an un-authorized execution with a trigger of type execution
-        Map<String, Object> executionTriggerVariables = Map.of(
-            "flow", Map.of(
-                "id", "notme",
-                "namespace", "notme"),
-            "execution", Map.of("id", "notme"),
-            "trigger", Map.of(
-                "flowId", "notme",
-                "namespace", "notme",
-                "executionId", "notme"
-            )
-        );
-
-        exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('" + internalStorageFile + "') }}", executionTriggerVariables));
-        assertThat(exception.getMessage(), is("Unable to read the file '" + internalStorageFile + "' as it didn't belong to the current execution"));
-
-        // test for an un-authorized execution with a trigger of another type
-        Map<String, Object> triggerVariables = Map.of(
-            "flow", Map.of(
-                "id", "notme",
-                "namespace", "notme"),
-            "execution", Map.of("id", "notme"),
-            "trigger", Map.of(
-                "date", "somedate",
-                "row", "somerow"
-            )
-        );
-
-        exception = assertThrows(IllegalArgumentException.class, () -> variableRenderer.render("{{ read('" + internalStorageFile + "') }}", triggerVariables));
-        assertThat(exception.getMessage(), is("Unable to read the file '" + internalStorageFile + "' as it didn't belong to the current execution"));
+        String render = variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables);
+        assertThat(render, is("Hello from a task output"));
     }
 
     @Test

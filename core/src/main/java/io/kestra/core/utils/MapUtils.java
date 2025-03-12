@@ -55,7 +55,7 @@ public class MapUtils {
     }
 
     private static Collection mergeCollections(Collection collectionOriginal, Collection collectionValue) {
-        List<String> newList = new ArrayList<>(collectionOriginal.size() + collectionValue.size());
+        List<?> newList = new ArrayList<>(collectionOriginal.size() + collectionValue.size());
         newList.addAll(collectionOriginal);
         newList.addAll(collectionValue);
         return newList;

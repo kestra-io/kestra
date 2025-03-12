@@ -31,13 +31,11 @@ public class IndexerCommand extends AbstractServerCommand {
     @Override
     public Integer call() throws Exception {
         super.call();
-        this.shutdownHook(() -> KestraContext.getContext().shutdown());
 
         IndexerInterface indexer = applicationContext.getBean(IndexerInterface.class);
         indexer.run();
 
         log.info("Indexer started");
-
         Await.until(() -> !this.applicationContext.isRunning());
 
         return 0;

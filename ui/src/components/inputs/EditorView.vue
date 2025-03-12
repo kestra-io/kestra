@@ -106,7 +106,7 @@
                 :is-read-only="props.isReadOnly"
                 :can-delete="canDelete()"
                 :is-allowed-edit="isAllowedEdit"
-                :have-change="flowYaml !== flowYamlOrigin"
+                :have-change="isFlow() ? flowYaml !== flowYamlOrigin : currentTab?.dirty"
                 :flow-have-tasks="flowHaveTasks()"
                 :errors="flowErrors"
                 :warnings="flowWarnings"
@@ -139,7 +139,7 @@
                     ref="editorDomElement"
                     @save="save"
                     @execute="execute"
-                    v-model="flowYaml"
+                    :model-value="flowYaml"
                     :schema-type="isCurrentTabFlow? 'flow': undefined"
                     :lang="currentTab?.extension === undefined ? 'yaml' : undefined"
                     :extension="currentTab?.extension"
@@ -147,6 +147,7 @@
                     @cursor="updatePluginDocumentation"
                     :creating="isCreating"
                     @restart-guided-tour="() => persistViewType(editorViewTypes.SOURCE)"
+                    @tab-loaded="onTabLoaded"
                     :read-only="isReadOnly"
                     :navbar="false"
                 >
@@ -869,15 +870,14 @@
 
     const updatePluginDocumentation = (event, task) => {
         const pluginSingleList = store.getters["plugin/getPluginSingleList"];
-        const taskType = task !== undefined ? task : YamlUtils.getTaskType(
-            event.model.getValue(),
-            event.position,
-            pluginSingleList
-        );
+        const taskType = task !== undefined ? task : YamlUtils.getMapAtPosition(event.model.getValue(), event.position, "type").type;
         if (taskType) {
-            store.dispatch("plugin/load", {cls: taskType}).then((plugin) => {
-                store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
-            });
+            if (pluginSingleList.includes(taskType)) {
+                store.dispatch("plugin/load", {cls: taskType}).then((plugin) => {
+                    store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
+                });
+            }
+            return;
         } else {
             store.commit("plugin/setEditorPlugin", undefined);
         }
@@ -901,44 +901,45 @@
     };
 
     const onEdit = (event, currentIsFlow = false) => {
-        flowYaml.value = event;
+        if(flowYaml.value !== event) {
+            flowYaml.value = event;
 
-        if (currentIsFlow) {
-            if (
-                flowParsed.value &&
-                !props.isCreating &&
-                (routeParams.id !== flowParsed.value.id ||
-                    routeParams.namespace !== flowParsed.value.namespace)
-            ) {
-                store.dispatch("core/showMessage", {
-                    variant: "error",
-                    title: t("readonly property"),
-                    message: t("namespace and id readonly"),
+            if (currentIsFlow) {
+                if (
+                    flowParsed.value &&
+                    !props.isCreating &&
+                    (routeParams.id !== flowParsed.value.id ||
+                        routeParams.namespace !== flowParsed.value.namespace)
+                ) {
+                    store.dispatch("core/showMessage", {
+                        variant: "error",
+                        title: t("readonly property"),
+                        message: t("namespace and id readonly"),
+                    });
+                    flowYaml.value = YamlUtils.replaceIdAndNamespace(
+                        flowYaml.value,
+                        routeParams.id,
+                        routeParams.namespace
+                    );
+                    return;
+                }
+            }
+
+            haveChange.value = true;
+            if(editorViewType.value === "YAML") store.dispatch("core/isUnsaved", true);
+
+            if(!props.isCreating){
+                store.commit("editor/changeOpenedTabs", {
+                    action: "dirty",
+                    ...currentTab.value,
+                    name: currentTab.value?.name ?? "Flow",
+                    path: currentTab.value?.path ?? "Flow.yaml",
+                    dirty: true
                 });
-                flowYaml.value = YamlUtils.replaceIdAndNamespace(
-                    flowYaml.value,
-                    routeParams.id,
-                    routeParams.namespace
-                );
-                return;
             }
         }
 
-        haveChange.value = true;
-        if(editorViewType.value === "YAML") store.dispatch("core/isUnsaved", true);
-        
-        if(!props.isCreating){
-            store.commit("editor/changeOpenedTabs", {
-                action: "dirty",
-                ...currentTab.value,
-                name: currentTab.value?.name ?? "Flow",
-                path: currentTab.value?.path ?? "Flow.yaml",
-                dirty: true
-            });
-        }
-
         clearTimeout(timer.value);
-
         if(!currentIsFlow) return;
 
         return store
@@ -1093,7 +1094,6 @@
         const currentIsFlow = isFlow();
 
         updatedFromEditor.value = true;
-        flowYaml.value = event;
 
         clearTimeout(timer.value);
         timer.value = setTimeout(() => onEdit(event, currentIsFlow), 500);
@@ -1201,6 +1201,7 @@
         if (flowErrors.value?.length || !haveChange.value && !props.isCreating) {
             return;
         }
+
         if (e) {
             if (e.type === "keydown") {
                 if (!(e.keyCode === 83 && e.ctrlKey)) {
@@ -1402,7 +1403,7 @@
 
     const draggedTabIndex = ref(null);
     const dragOverTabIndex = ref(null);
-    
+
     const onDragStart = (event, index) => {
         draggedTabIndex.value = index;
         event.dataTransfer.effectAllowed = "move";
@@ -1423,11 +1424,18 @@
         dragOverTabIndex.value = null;
     };
 
+    const dirtyBeforeLoad = ref(false);
+
     watch(currentTab, (current, previous) => {
+        // to avoid changing the dirty state of a tab
+        // when switching between tabs, we save the value
+        // before the tabs text is loaded from the model.
+        dirtyBeforeLoad.value = currentTab.value.dirty;
         const isCurrentFlow = current?.name === "Flow";
         const isPreviousFlow = previous?.name === "Flow";
 
         if(isPreviousFlow) persistViewType(viewType.value);
+        updatedFromEditor.value = false;
         switchViewType(isCurrentFlow ? loadViewType() : editorViewTypes.SOURCE, false)
 
         nextTick(() => {
@@ -1438,6 +1446,18 @@
             tabsScrollRef.value.setScrollLeft(rightMostCurrentTabPixel - tabsWrapper.clientWidth);
         });
     })
+
+    function onTabLoaded(tab, source){
+        clearTimeout(timer.value);
+
+        // once the tab is finished loading, restore the dirty state
+        if(tab.path === currentTab.value.path){
+            flowYaml.value = source;
+            onEdit(source, tab.flow);
+            currentTab.value.dirty = dirtyBeforeLoad.value
+            haveChange.value = dirtyBeforeLoad.value
+        }
+    }
 
     const tabContextMenu = ref({
         visible: false,
@@ -1540,10 +1560,10 @@
     });
     const dialogHandler = async () => {
         try {
-            const path = dialog.value.folder 
+            const path = dialog.value.folder
                 ? `${dialog.value.folder}/${dialog.value.name}`
                 : dialog.value.name;
-            
+
             if (dialog.value.type === "file") {
                 await store.dispatch("namespace/createFile", {
                     namespace: props.namespace ?? route.params.namespace,
@@ -1580,7 +1600,7 @@
                 reader.readAsArrayBuffer(file);
             });
             const path = file.webkitRelativePath || file.name;
-            
+
             await store.dispatch("namespace/importFileDirectory", {
                 namespace: props.namespace ?? route.params.namespace,
                 content,
@@ -1769,14 +1789,14 @@
             margin-top: 1rem;
             border: 1px solid var(--ks-border-primary);
             border-radius: 0.5rem;
-            
+
             iframe {
                 width: 100%;
                 min-height: 380px;
                 height: auto;
             }
         }
-        
+
         .hidden {
             display: none;
         }

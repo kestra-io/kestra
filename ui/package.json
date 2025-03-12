@@ -113,7 +113,7 @@
     "vitest": "^3.0.5"
   },
   "optionalDependencies": {
-    "@esbuild/darwin-arm64": "^0.25.0",
+    "@esbuild/darwin-arm64": "^0.25.1",
     "@esbuild/darwin-x64": "^0.25.0",
     "@esbuild/linux-x64": "^0.25.0",
     "@rollup/rollup-darwin-arm64": "^4.34.9",

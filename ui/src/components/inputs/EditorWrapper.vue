@@ -79,10 +79,21 @@
     const timeout = ref<any>(null);
 
     function editorUpdate(newValue: string){
+        if(store.state.editor.tabs.find((t:any) => t.path === props.path)?.content === newValue){
+            return;
+        }
         if(isCurrentTabFlow.value){
             store.commit("flow/setFlowYaml", newValue);
         }
-        store.commit("editor/setTabContent", {content: newValue, path: props.path});
+        store.commit("editor/setTabContent", {
+            content: newValue,
+            path: props.path
+        });
+        store.commit("editor/setTabDirty", {
+            path: props.path,
+            dirty: true
+        });
+
         // throttle the trigger of the flow update
         clearTimeout(timeout.value);
         timeout.value = setTimeout(() => {

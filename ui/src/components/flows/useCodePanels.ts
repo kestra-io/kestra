@@ -26,7 +26,8 @@ export function useCodePanels(panels: Ref<Panel[]>) {
                 label: t.name,
                 icon: () => h(TypeIcon, {name:t.name})
             },
-            component: () => h(markRaw(EditorWrapper), {...t, flow: false})
+            component: () => h(markRaw(EditorWrapper), {...t, flow: false}),
+            dirty: t.dirty,
         }))
 
         return {
@@ -66,7 +67,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
 
     function onRemoveTab(tabId: string){
         if(tabId.startsWith("code-")){
-            store.commit("editor/changeOpenedTabs", {
+            store.dispatch("editor/closeTab", {
                 action: "close",
                 path: tabId.substring(5),
             });

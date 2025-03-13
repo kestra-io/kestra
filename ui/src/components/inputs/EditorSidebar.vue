@@ -119,8 +119,7 @@
             @node-click="
                 (data, node) =>
                     data.leaf
-                        ? changeOpenedTabs({
-                            action: 'open',
+                        ? openTab({
                             name: data.fileName,
                             extension: data.fileName.split('.').pop(),
                             path: getPath(node),
@@ -445,7 +444,11 @@
         methods: {
             ...mapMutations("editor", [
                 "toggleExplorerVisibility",
-                "changeOpenedTabs",
+            ]),
+            ...mapActions("editor", [
+                "openTab",
+                "closeTab",
+                "setTabDirty",
             ]),
             ...mapActions("namespace", [
                 "createDirectory",
@@ -556,8 +559,7 @@
                 return this.searchResults;
             },
             chooseSearchResults(item) {
-                this.changeOpenedTabs({
-                    action: "open",
+                this.openTab({
                     name: item.split("/").pop(),
                     extension: item.split(".").pop(),
                     path: item,
@@ -812,8 +814,7 @@
                         creation: true,
                     });
 
-                    this.changeOpenedTabs({
-                        action: "open",
+                    this.openTab({
                         name: NAME,
                         path,
                         extension: extension,
@@ -905,8 +906,7 @@
 
                 this.$refs.tree.remove(data.id);
 
-                this.changeOpenedTabs({
-                    action: "close",
+                this.closeTab({
                     name: data.fileName,
                 });
 
@@ -1047,8 +1047,7 @@
             flow: {
                 handler(flow) {
                     if (flow) {
-                        this.changeOpenedTabs({
-                            action: "open",
+                        this.openTab({
                             name: "Flow",
                             path: "Flow.yaml",
                             persistent: true,

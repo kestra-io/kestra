@@ -651,10 +651,7 @@
     const openedTabs = computed(() => store.state.editor.tabs);
 
     const changeCurrentTab = (tab) => {
-        store.commit("editor/changeOpenedTabs", {
-            ...tab,
-            action: "open",
-        });
+        store.dispatch("editor/openTab", tab);
     };
 
     const persistViewType = (value) => {
@@ -1221,14 +1218,14 @@
     const FLOW_TAB = computed(() => store.state.editor?.tabs?.find(tab => tab.name === "Flow"))
 
     const closeTab = (tab, index) => {
-        store.commit("editor/changeOpenedTabs", {action: "close", ...tab, index});
+        store.dispatch("editor/closeTab", {...tab, index});
     };
 
     const closeTabs = (tabsToClose, openTab) => {
         tabsToClose.forEach(tab => {
-            store.commit("editor/changeOpenedTabs", {action: "close", ...tab});
+            store.dispatch("editor/closeTab", tab);
         });
-        store.commit("editor/changeOpenedTabs", {action: "open", ...openTab});
+        store.dispatch("editor/openTab", openTab);
         hideTabContextMenu();
     };
 
@@ -1313,8 +1310,7 @@
             dialog.value.visible = false;
             store.commit("editor/refreshTree");
             if (dialog.value.type === "file") {
-                store.commit("editor/changeOpenedTabs", {
-                    action: "open",
+                store.dispatch("editor/openTab", {
                     name: dialog.value.name,
                     path,
                     extension: dialog.value.name.split(".").pop()

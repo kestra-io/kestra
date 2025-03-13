@@ -22,6 +22,15 @@ export default {
                 })
             );
         },
+        openTab({commit}, payload) {
+            commit("changeOpenedTabs", {action: "open", ...payload});
+        },
+        closeTab({commit}, payload) {
+            commit("changeOpenedTabs", {action: "close", ...payload});
+        },
+        setTabDirty({commit}, payload) {
+            commit("changeOpenedTabs", {action: "dirty", ...payload});
+        },
     },
     mutations: {
         updateOnboarding(state) {

@@ -4,7 +4,7 @@
 
 <script lang="ts">
     import {defineComponent} from "vue";
-    import {mapState} from "vuex";
+    import {mapState, mapActions} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
     import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
@@ -399,6 +399,7 @@
             this.destroy();
         },
         methods: {
+            ...mapActions("editor", ["setTabDirty"]),
             initMonaco: async function () {
                 let self = this;
                 let options = {
@@ -466,8 +467,7 @@
                         self.$emit("change", value, event);
 
                         if (!self.input && self.current && self.current.name) {
-                            self.changeOpenedTabs({
-                                action: "dirty",
+                            self.setTabDirty({
                                 ...self.current,
                                 dirty: true,
                             });

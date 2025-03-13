@@ -1181,13 +1181,14 @@
         .el-tree-node__content {
             margin-bottom: 2px !important;
             padding-left: 0 !important;
+            border: 1px solid transparent;
 
             &:last-child{
                 margin-bottom: 0px;
             }
 
             &:hover{
-                border: 1px solid $primary;
+                border: 1px solid var(--ks-border-active);
             }
         }
 

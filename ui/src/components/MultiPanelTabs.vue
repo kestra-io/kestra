@@ -32,6 +32,7 @@
                         >
                             <component :is="tab.button.icon" class="tab-icon" />
                             {{ tab.button.label }}
+                            <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" />
                             <CloseIcon @click.stop="destroyTab(panelIndex, tab)" class="tab-icon" />
                         </button>
                         <div
@@ -66,7 +67,7 @@
                     </svg>
                 </button>
             </div>
-            <div style="position: relative">
+            <div class="content-panel">
                 <component :is="panel.activeTab.component" />
                 <div
                     v-if="dragging"
@@ -87,6 +88,7 @@
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
     import CloseIcon from "vue-material-design-icons/Close.vue"
+    import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
 
     export interface Tab {
         button: {
@@ -96,6 +98,7 @@
         potential?: boolean
         fromPanel?: boolean
         value: string,
+        dirty?: boolean,
         component: any
     }
 
@@ -179,11 +182,23 @@
             return
         }
 
+        // skip if the target is the same as the original panel
+        if(fromPanel && movedTabInfo.value?.panelIndex === targetPanelIndex){
+            return
+        }
+
         const tabId = event.target.getAttribute("data-tab-id")
 
         const targetTabIndex = tabId
             ? panels.value[targetPanelIndex].tabs.findIndex((tab) => tab.value === tabId)
             : panels.value[targetPanelIndex].tabs.length;
+
+        // avoid cloning the tab just beside itself
+        if(!fromPanel
+            && movedTabInfo.value?.panelIndex === targetPanelIndex
+            && (movedTabInfo.value?.tabIndex === targetTabIndex || movedTabInfo.value?.tabIndex === targetTabIndex - 1)){
+            return
+        }
 
         const movedTabInfoVal = movedTabInfo.value;
         if(!movedTabInfoVal?.tab) {
@@ -273,8 +288,8 @@
         if(!movedTabInfo.value) {
             return;
         }
+
         if(!movedTabInfo.value.tab) {
-            console.log(movedTabInfo.value)
             throw new Error("Tab is not defined");
         }
 
@@ -367,6 +382,7 @@
         display: flex;
         justify-content: space-between;
         background-color: var(--ks-background-body);
+        border-bottom: 1px solid var(--ks-border-primary);
         button.split_right{
             border: none;
             color: var(--ks-content-tertiary);
@@ -395,7 +411,6 @@
         flex: 1;
         align-items: end;
         padding-bottom: 0;
-        border-bottom: 1px solid var(--ks-border-primary);
         &.dragover {
             background-color: var(--ks-background-card-hover);
         }
@@ -425,6 +440,9 @@
         &.simulated{
             opacity: .5;
         }
+        &.dirty-icon{
+            font-size: 16px;
+        }
     }
 
     .default-theme{
@@ -439,5 +457,11 @@
                 background-color: var(--ks-content-secondary);
             }
         }
+    }
+
+    .content-panel{
+        position: relative;
+        height: 100%;
+        overflow: auto;
     }
 </style>

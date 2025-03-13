@@ -360,6 +360,19 @@ class FlowGraphTest {
         assertThat(edge(flowGraph, ".*dag.a2", ".*dag.end.*").getRelation().getRelationType(), is(nullValue()));
     }
 
+    @Test
+    void afterExecutionSequential() throws IllegalVariableEvaluationException, IOException {
+        FlowWithSource flow = this.parse("flows/valids/after-execution.yaml");
+        FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
+
+        assertThat(flowGraph.getNodes().size(), is(5));
+        assertThat(flowGraph.getEdges().size(), is(4));
+
+        assertThat(edge(flowGraph, "root.root.*", "root.hello.*"), notNullValue());
+        assertThat(edge(flowGraph, "root.hello.*", "root.after-execution.*"), notNullValue());
+        assertThat(edge(flowGraph, "root.after-execution.*", "root.end.*"), notNullValue());
+    }
+
     private FlowWithSource parse(String path) throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource(path);
         assert resource != null;

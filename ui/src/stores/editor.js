@@ -61,6 +61,7 @@ export default {
                 }
                 return tab.name !== name;
             }));
+
             const POSITION = index
                 ? index
                 : state.tabs.findIndex((tab) => {
@@ -95,7 +96,6 @@ export default {
         setTabContent(state, payload) {
             const tab = state.tabs.find((tab) => tab.path === payload.path);
             tab.content = payload.content;
-            tab.dirty = true;
         },
         setTabs(state, payload) {
             state.tabs = payload;

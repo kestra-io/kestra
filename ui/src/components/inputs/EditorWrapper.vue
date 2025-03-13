@@ -93,7 +93,6 @@
                 topologyVisible: true,
             });
         }, 500);
-
     }
 
 
@@ -102,6 +101,8 @@
     };
 
     function save(){
+        store.commit("flow/setIsFlow", isCurrentTabFlow.value);
+        store.commit("editor/setCurrentTab", store.state.editor.tabs.find((t:any) => t.path === props.path));
         return store.dispatch("flow/save", {
             content: editorDomElement.value.$refs.monacoEditor.value,
         })

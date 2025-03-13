@@ -4,7 +4,7 @@
 
 <script lang="ts">
     import {defineComponent} from "vue";
-    import {mapState, mapActions} from "vuex";
+    import {mapState, mapMutations} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
     import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
@@ -399,7 +399,7 @@
             this.destroy();
         },
         methods: {
-            ...mapActions("editor", ["setTabDirty"]),
+            ...mapMutations("editor", ["setTabDirty"]),
             initMonaco: async function () {
                 let self = this;
                 let options = {

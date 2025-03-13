@@ -444,11 +444,11 @@
         methods: {
             ...mapMutations("editor", [
                 "toggleExplorerVisibility",
+                "setTabDirty",
             ]),
             ...mapActions("editor", [
                 "openTab",
                 "closeTab",
-                "setTabDirty",
             ]),
             ...mapActions("namespace", [
                 "createDirectory",

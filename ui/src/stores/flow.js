@@ -71,7 +71,7 @@ export default {
                     commit("setFlowYamlOrigin", source);
 
                     if (currentTab && currentTab.name) {
-                        dispatch("editor/setTabDirty", {
+                        commit("editor/setTabDirty", {
                             name: "Flow",
                             path: "Flow.yaml",
                             dirty: false,
@@ -88,7 +88,7 @@ export default {
                     path: currentTab.path ?? currentTab.name,
                     content,
                 }, {root: true});
-                dispatch("editor/setTabDirty", {
+                commit("editor/setTabDirty", {
                     path: currentTab.path,
                     name: currentTab.name,
                     dirty: false
@@ -128,7 +128,7 @@ export default {
             }
 
             if(!state.isCreating){
-                dispatch("editor/setTabDirty", {
+                commit("editor/setTabDirty", {
                     ...currentTab,
                     name: currentTab?.name ?? "Flow",
                     path: currentTab?.path ?? "Flow.yaml",

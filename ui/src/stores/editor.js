@@ -22,15 +22,62 @@ export default {
                 })
             );
         },
-        openTab({commit}, payload) {
-            commit("changeOpenedTabs", {action: "open", ...payload});
+        openTab({commit, state}, payload) {
+            const {name, extension, persistent, path, flow} = payload;
+
+            const index = state.tabs.findIndex((tab) => {
+                if (path) {
+                    return tab.path === path;
+                }
+                return tab.name === name;
+            });
+
+            let isDirty;
+
+            if (index === -1) {
+                commit("setTabs",
+                    [...state.tabs, {name, extension, persistent, path, flow}]
+                );
+                isDirty = false;
+            } else {
+                isDirty = state.tabs[index].dirty;
+            }
+
+            commit("setCurrentTab", {
+                name,
+                extension,
+                persistent,
+                dirty: isDirty,
+                path,
+                flow
+            });
         },
-        closeTab({commit}, payload) {
-            commit("changeOpenedTabs", {action: "close", ...payload});
-        },
-        setTabDirty({commit}, payload) {
-            commit("changeOpenedTabs", {action: "dirty", ...payload});
-        },
+        closeTab({commit, state}, payload) {
+            const {name, index, path} = payload;
+
+            commit("setTabs", state.tabs.filter((tab) => {
+                if (path) {
+                    return tab.path !== path;
+                }
+                return tab.name !== name;
+            }));
+            const POSITION = index
+                ? index
+                : state.tabs.findIndex((tab) => {
+                        if (path) {
+                            return tab.path === path;
+                        }
+                        return tab.name === name;
+                    });
+
+            if (state.current.name === name) {
+                if(POSITION - 1 >= 0){
+                    commit("setCurrentTab", state.tabs[POSITION - 1]);
+                }else{
+                    commit("setCurrentTab", state.tabs[0]);
+                }
+            }
+        }
     },
     mutations: {
         updateOnboarding(state) {
@@ -50,68 +97,25 @@ export default {
             tab.content = payload.content;
             tab.dirty = true;
         },
-        changeOpenedTabs(state, payload) {
-            const {action, name, extension, index, persistent, dirty, path, flow} =
+        setTabs(state, payload) {
+            state.tabs = payload;
+        },
+        setCurrentTab(state, payload) {
+            state.current = payload;
+        },
+        setTabDirty(state, payload) {
+            const {name, dirty, path} =
                 payload;
 
-            if (action === "open") {
-                const index = state.tabs.findIndex((tab) => {
-                    if (path) {
-                        return tab.path === path;
-                    }
-                    return tab.name === name;
-                });
-
-                let isDirty;
-
-                if (index === -1) {
-                    state.tabs.push({name, extension, persistent, path, flow});
-                    isDirty = false;
-                } else {
-                    isDirty = state.tabs[index].dirty;
+            const tabIdxToDirty = state.tabs.findIndex((tab) => {
+                if (path) {
+                    return tab.path === path;
                 }
+                return tab.name === name;
+            });
 
-                state.current = {
-                    name,
-                    extension,
-                    persistent,
-                    dirty: isDirty,
-                    path,
-                    flow
-                };
-            } else if (action === "close") {
-                state.tabs = state.tabs.filter((tab) => {
-                    if (path) {
-                        return tab.path !== path;
-                    }
-                    return tab.name !== name;
-                });
-                const POSITION = index
-                    ? index
-                    : state.tabs.findIndex((tab) => {
-                          if (path) {
-                              return tab.path === path;
-                          }
-                          return tab.name === name;
-                      });
-
-                if (state.current.name === name) {
-                    const i = POSITION - 1 >= 0;
-                    state.current = i
-                        ? state.tabs[POSITION - 1]
-                        : state.tabs[0];
-                }
-            } else if (action === "dirty") {
-                const tabIdxToDirty = state.tabs.findIndex((tab) => {
-                    if (path) {
-                        return tab.path === path;
-                    }
-                    return tab.name === name;
-                });
-
-                if(state.tabs[tabIdxToDirty]) state.tabs[tabIdxToDirty].dirty = dirty;
-                if(state.current) state.current.dirty = dirty;
-            }
+            if(state.tabs[tabIdxToDirty]) state.tabs[tabIdxToDirty].dirty = dirty;
+            if(state.current) state.current.dirty = dirty;
         },
         closeTabs(state) {
             if (state.tabs[0]) {

@@ -1,5 +1,5 @@
 <template>
-    <div style="display:flex; align-items: center; justify-content: space-between;">
+    <div class="tabs-wrapper">
         <div class="tabs">
             <button
                 v-for="element of EDITOR_ELEMENTS"
@@ -17,24 +17,30 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, computed} from "vue";
-    import {useRouteQuery} from "@vueuse/router";
+    import {ref, watch} from "vue";
 
     import MultiPanelTabs, {Panel} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
     import {useCodePanels} from "./useCodePanels";
 
-    const activeTabsUrl = useRouteQuery("activeTabs", DEFAULT_ACTIVE_TABS)
-    const previousActiveTabs = ref(activeTabsUrl.value)
-    const activeTabs = computed({
-        get: () => Array.isArray(activeTabsUrl.value) ? activeTabsUrl.value : [activeTabsUrl.value],
-        set: (value) => activeTabsUrl.value = value
-    })
+    const previousActiveTabs = ref(DEFAULT_ACTIVE_TABS)
+    const activeTabs = ref(DEFAULT_ACTIVE_TABS)
+
+    /**
+     * Focus or activate a tab from it's value
+     * @param tabValue
+     */
+    function focusTab(tabValue: string){
+        for(const panel of panels.value){
+            const t = panel.tabs.find(e => e.value === tabValue)
+            if(t) panel.activeTab = t
+        }
+    }
 
     function setTabValue(tabValue: string){
         if(activeTabs.value.includes(tabValue)){
-            // here we could add a way to focus the tab
+            focusTab(tabValue)
             return
         }
 
@@ -81,9 +87,14 @@
 </script>
 
 <style lang="scss" scoped>
+    .tabs-wrapper{
+        display:flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--ks-border-primary);
+    }
     .tabs{
         padding: .5rem 1rem;
-        border-bottom: 1px solid var(--ks-border-primary);
 
         > button{
             background: none;

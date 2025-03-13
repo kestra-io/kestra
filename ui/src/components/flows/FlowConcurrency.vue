@@ -34,7 +34,7 @@
 
 <script>
     import Executions from "../executions/Executions.vue";
-    import Empty from "../layout/empty/Empty.vue";
+    import Empty from "../layout/Empty.vue";
     import {mapState} from "vuex";
     import {State} from "@kestra-io/ui-libs";
     import Status from "../Status.vue";

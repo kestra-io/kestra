@@ -237,7 +237,7 @@
     import TriggerAvatar from "./TriggerAvatar.vue";
 
     import KestraFilter from "../filter/KestraFilter.vue";
-    import Empty from "../layout/empty/Empty.vue";
+    import Empty from "../layout/Empty.vue";
 </script>
 
 <script>

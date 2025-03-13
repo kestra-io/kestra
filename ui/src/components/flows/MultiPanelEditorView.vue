@@ -19,10 +19,10 @@
 <script setup lang="ts">
     import {ref, watch} from "vue";
 
-    import MultiPanelTabs, {Panel} from "../MultiPanelTabs.vue";
+    import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
-    import {useCodePanels} from "./useCodePanels";
+    import {FLOW_RELATED_TABS, useCodePanels} from "./useCodePanels";
 
     const previousActiveTabs = ref(DEFAULT_ACTIVE_TABS)
     const activeTabs = ref(DEFAULT_ACTIVE_TABS)
@@ -47,8 +47,11 @@
         activeTabs.value = [...activeTabs.value, tabValue]
     }
 
-    function getPanelFromValue(value: string): {prepend: boolean, panel: Panel}{
-        const element = EDITOR_ELEMENTS.find(e => e.value === value)!
+    function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
+        const element: Tab = EDITOR_ELEMENTS.find(e => e.value === value)!
+        if(FLOW_RELATED_TABS.includes(element.value)){
+            element.dirty = dirtyFlow
+        }
         return {
             prepend: "files" === value,
             panel:{
@@ -61,7 +64,7 @@
     const panels = ref<Panel[]>(activeTabs.value.map((t: string) =>
         getPanelFromValue(t)).sort((a) => a.prepend ? -1 : 1).map(p => p.panel))
 
-    const {onRemoveTab} = useCodePanels(panels)
+    const {onRemoveTab, isFlowDirty} = useCodePanels(panels)
 
     function removeTab(tab: string){
         activeTabs.value = activeTabs.value.filter(t => t !== tab)
@@ -74,7 +77,7 @@
         const tabIdsToAdd = newVal.filter(t => !previous.includes(t))
 
         for(const t of tabIdsToAdd){
-            const {panel, prepend} = getPanelFromValue(t)
+            const {panel, prepend} = getPanelFromValue(t, isFlowDirty.value)
             if(prepend){
                 panels.value.unshift(panel)
             }else{

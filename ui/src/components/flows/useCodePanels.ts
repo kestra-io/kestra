@@ -11,13 +11,15 @@ interface EditorTab {
     persistent?: boolean,
     dirty?: boolean,
     flow?: boolean
-
 }
+
+export const FLOW_RELATED_TABS = ["code", "nocode", "topology"]
 
 export function useCodePanels(panels: Ref<Panel[]>) {
     const store = useStore()
 
     const codeEditorTabs = computed<EditorTab[]>(() => store.state.editor.tabs.filter((t:any) => !t.flow))
+    const isFlowDirty = computed(() => store.state.editor.tabs.some((t:any) => t.flow && t.dirty))
 
     function getPanelsFromCodeEditorTabs(codeTabs: EditorTab[]){
         const tabs = codeTabs.map(t => ({
@@ -35,6 +37,32 @@ export function useCodePanels(panels: Ref<Panel[]>) {
             tabs
         }
     }
+
+
+    watch(isFlowDirty, (newVal) => {
+        for(const p of panels.value){
+            for(const t of p.tabs){
+                if(FLOW_RELATED_TABS.includes(t.value)){
+                    t.dirty = newVal
+                }
+            }
+        }
+    }, {immediate: true})
+
+    const dirtyTabs = computed(() => codeEditorTabs.value.filter(t => t.dirty).map(t => t.path))
+
+    // maintain sync between dirty states of tabs
+    watch(dirtyTabs, (newVal) => {
+        for(const p of panels.value) {
+            for(const t of p.tabs) {
+                if(t.value.startsWith("code") && newVal.includes(t.value)){
+                    t.dirty = true
+                }else{
+                    t.dirty = false
+                }
+            }
+        }
+    })
 
     watch(codeEditorTabs, (newVal) => {
         const codeTabs = getPanelsFromCodeEditorTabs(newVal)
@@ -74,5 +102,5 @@ export function useCodePanels(panels: Ref<Panel[]>) {
         }
     }
 
-    return {onRemoveTab}
+    return {onRemoveTab, isFlowDirty}
 }

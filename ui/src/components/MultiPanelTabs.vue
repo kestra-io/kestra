@@ -125,7 +125,7 @@
     }>()
 
     const movedTabInfo = ref<TabInfo | null>(null);
-    const dragging = ref(true);
+    const dragging = ref(false);
 
     function onResize(e: {size:number}[]) {
         let i = 0;
@@ -135,11 +135,13 @@
     }
 
     function dragstart(panelIndex: number, tabId: string) {
+        dragging.value = true;
         const tabIndex = panels.value[panelIndex].tabs.findIndex((tab) => tab.value === tabId);
         movedTabInfo.value = {panelIndex, tabId, tabIndex, tab: panels.value[panelIndex].tabs[tabIndex]}
     }
 
     function cleanUp(){
+        dragging.value = false;
         nextTick(() => {
             movedTabInfo.value = null
             panels.value.forEach((panel) => {
@@ -196,7 +198,7 @@
         // avoid cloning the tab just beside itself
         if(!fromPanel
             && movedTabInfo.value?.panelIndex === targetPanelIndex
-            && (movedTabInfo.value?.tabIndex === targetTabIndex || movedTabInfo.value?.tabIndex === targetTabIndex - 1)){
+            && (movedTabInfo.value?.tabIndex === targetTabIndex)){
             return
         }
 
@@ -372,8 +374,6 @@
 
         // remove the tab from the original panel
         panel.tabs.splice(activeTabIndex, 1)
-
-
     }
 </script>
 

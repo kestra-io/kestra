@@ -464,4 +464,8 @@
         height: 100%;
         overflow: auto;
     }
+
+    .splitpanes__pane{
+        transition: none;
+    }
 </style>

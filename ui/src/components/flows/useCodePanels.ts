@@ -55,7 +55,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
     watch(dirtyTabs, (newVal) => {
         for(const p of panels.value) {
             for(const t of p.tabs) {
-                if(t.value.startsWith("code") && newVal.includes(t.value)){
+                if(t.value.startsWith("code-") && newVal.includes(t.value.substring(5))){
                     t.dirty = true
                 }else{
                     t.dirty = false

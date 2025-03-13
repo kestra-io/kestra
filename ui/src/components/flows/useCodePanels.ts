@@ -20,6 +20,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
 
     const codeEditorTabs = computed<EditorTab[]>(() => store.state.editor.tabs.filter((t:any) => !t.flow))
     const isFlowDirty = computed(() => store.state.editor.tabs.some((t:any) => t.flow && t.dirty))
+    const currentTab = computed(() => store.state.editor.current.path)
 
     function getPanelsFromCodeEditorTabs(codeTabs: EditorTab[]){
         const tabs = codeTabs.map(t => ({
@@ -38,6 +39,18 @@ export function useCodePanels(panels: Ref<Panel[]>) {
         }
     }
 
+    watch(currentTab, (newVal) => {
+        // when the current tab changes make sure
+        // the corresponding tab is active
+        for(const p of panels.value){
+            for(const t of p.tabs){
+                if(t.value === `code-${newVal}`){
+                    p.activeTab = t
+                }
+            }
+        }
+    })
+
 
     watch(isFlowDirty, (newVal) => {
         for(const p of panels.value){
@@ -47,7 +60,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
                 }
             }
         }
-    }, {immediate: true})
+    })
 
     const dirtyTabs = computed(() => codeEditorTabs.value.filter(t => t.dirty).map(t => t.path))
 

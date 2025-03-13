@@ -17,12 +17,17 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
+    import {computed, ref, watch} from "vue";
+    import {useStorage} from "@vueuse/core";
+    import {useStore} from "vuex";
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
-    import {FLOW_RELATED_TABS, useCodePanels} from "./useCodePanels";
+    import {FLOW_RELATED_TABS, useCodePanels, useInitialCodeTabs} from "./useCodePanels";
+
+    const store = useStore()
+    const flow = computed(() => store.state.flow.flow)
 
     const previousActiveTabs = ref(DEFAULT_ACTIVE_TABS)
     const activeTabs = ref(DEFAULT_ACTIVE_TABS)
@@ -60,9 +65,41 @@
             }
         }
     }
+    const {setupInitialCodeTab} = useInitialCodeTabs()
 
-    const panels = ref<Panel[]>(activeTabs.value.map((t: string) =>
-        getPanelFromValue(t)).sort((a) => a.prepend ? -1 : 1).map(p => p.panel))
+    const panels = useStorage(
+        `key-${flow.value.namespace}-${flow.value.id}`,
+        activeTabs.value.map((t: string) =>
+            getPanelFromValue(t)).sort((a) => a.prepend ? -1 : 1).map(p => p.panel),
+        undefined,
+        {
+            serializer: {
+                write: (v: Panel[]) =>
+                    JSON.stringify(v.map(p => ({
+                        tabs: p.tabs.map(t => t.value),
+                        activeTab: p.activeTab.value,
+                        size: p.size,
+                    })))
+                ,
+                read: (v?: string) => {
+                    if(v){
+                        const panels = JSON.parse(v)
+                        return panels.map((p: {tabs: string[], activeTab: string, size: number}) => {
+                            const tabs = p.tabs.map(t => setupInitialCodeTab(t) ?? EDITOR_ELEMENTS.find(e => e.value === t)!)
+                            const activeTab = tabs.find(t => t.value === p.activeTab)!
+                            return {
+                                activeTab,
+                                tabs,
+                                size: p.size
+                            }
+                        })
+                    }else{
+                        return null
+                    }
+                }
+            },
+        },
+    )
 
     const {onRemoveTab, isFlowDirty} = useCodePanels(panels)
 

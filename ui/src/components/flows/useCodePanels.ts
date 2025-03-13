@@ -15,6 +15,40 @@ interface EditorTab {
 
 export const FLOW_RELATED_TABS = ["code", "nocode", "topology"]
 
+export function getTabFromCodeTab(tab: EditorTab){
+    return {
+        value: `code-${tab.path}`,
+        button: {
+            label: tab.name,
+            icon: () => h(TypeIcon, {name:tab.name})
+        },
+        component: () => h(markRaw(EditorWrapper), {...tab, flow: false}),
+        dirty: tab.dirty,
+    }
+}
+
+export function useInitialCodeTabs(){
+    const store = useStore()
+
+    function setupInitialCodeTab(tab: string){
+        if(!tab.startsWith("code-")){
+            return
+        }
+        const filePath = tab.substring(5)
+        const editorTab: EditorTab = {
+            name: filePath.split("/").pop()!,
+            path: filePath,
+            extension: filePath.split(".").pop()!,
+            flow: false,
+            dirty: false
+        }
+        store.dispatch("editor/openTab", editorTab)
+        return getTabFromCodeTab(editorTab)
+    }
+
+    return {setupInitialCodeTab}
+}
+
 export function useCodePanels(panels: Ref<Panel[]>) {
     const store = useStore()
 
@@ -23,15 +57,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
     const currentTab = computed(() => store.state.editor.current.path)
 
     function getPanelsFromCodeEditorTabs(codeTabs: EditorTab[]){
-        const tabs = codeTabs.map(t => ({
-            value: `code-${t.path}`,
-            button: {
-                label: t.name,
-                icon: () => h(TypeIcon, {name:t.name})
-            },
-            component: () => h(markRaw(EditorWrapper), {...t, flow: false}),
-            dirty: t.dirty,
-        }))
+        const tabs = codeTabs.map(getTabFromCodeTab)
 
         return {
             activeTab: tabs[0],

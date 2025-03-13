@@ -770,6 +770,7 @@
       "adding": "+ Добавить {what}",
       "adding_default": "+ Добавить новое value",
       "creation": {
+        "after execution": "Добавить блок после выполнения",
         "error handlers": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
         "select": "Выберите {section}",
@@ -800,6 +801,7 @@
         "yaml": "Редактор YAML"
       },
       "save": {
+        "after execution": "Сохранить task",
         "error handlers": "Сохранить обработчик ошибок",
         "finally": "Сохранить task",
         "input": "Сохранить input",
@@ -807,6 +809,7 @@
         "triggers": "Сохранить trigger"
       },
       "sections": {
+        "after_execution": "После выполнения",
         "error_handlers": "Обработчики ошибок",
         "finally": "Наконец",
         "general": "Общие свойства",

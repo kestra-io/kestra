@@ -770,6 +770,7 @@
       "adding": "+ {what} 추가",
       "adding_default": "+ 새 value 추가",
       "creation": {
+        "after execution": "실행 후 블록 추가",
         "error handlers": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
         "select": "{section}을 선택하십시오",
@@ -800,6 +801,7 @@
         "yaml": "YAML 편집기"
       },
       "save": {
+        "after execution": "작업 저장",
         "error handlers": "오류 처리기 저장",
         "finally": "작업 저장",
         "input": "입력 저장",
@@ -807,6 +809,7 @@
         "triggers": "트리거 저장"
       },
       "sections": {
+        "after_execution": "실행 후",
         "error_handlers": "오류 처리기",
         "finally": "마지막으로",
         "general": "일반 속성",

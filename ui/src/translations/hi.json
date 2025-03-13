@@ -770,6 +770,7 @@
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",
       "creation": {
+        "after execution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
         "error handlers": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
         "select": "किसी {section} का चयन करें",
@@ -800,6 +801,7 @@
         "yaml": "YAML संपादक"
       },
       "save": {
+        "after execution": "टास्क सहेजें",
         "error handlers": "त्रुटि हैंडलर सहेजें",
         "finally": "कार्य सहेजें",
         "input": "इनपुट सहेजें",
@@ -807,6 +809,7 @@
         "triggers": "ट्रिगर सहेजें"
       },
       "sections": {
+        "after_execution": "Execution के बाद",
         "error_handlers": "त्रुटि हैंडलर",
         "finally": "अंत में",
         "general": "सामान्य गुणधर्म",

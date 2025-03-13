@@ -770,6 +770,7 @@
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
       "creation": {
+        "after execution": "Dodaj blok po wykonaniu",
         "error handlers": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
         "select": "Wybierz {section}",
@@ -800,6 +801,7 @@
         "yaml": "Edytor YAML"
       },
       "save": {
+        "after execution": "Zapisz task",
         "error handlers": "Zapisz obsługę błędów",
         "finally": "Zapisz task",
         "input": "Zapisz input",
@@ -807,6 +809,7 @@
         "triggers": "Zapisz trigger"
       },
       "sections": {
+        "after_execution": "Po wykonaniu",
         "error_handlers": "Obsługa błędów",
         "finally": "Na koniec",
         "general": "Właściwości ogólne",

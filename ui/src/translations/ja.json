@@ -770,6 +770,7 @@
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
       "creation": {
+        "after execution": "実行後ブロックを追加",
         "error handlers": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
         "select": "{section}を選択してください",
@@ -800,6 +801,7 @@
         "yaml": "YAMLエディター"
       },
       "save": {
+        "after execution": "タスクを保存",
         "error handlers": "エラーハンドラーを保存",
         "finally": "タスクを保存",
         "input": "入力を保存",
@@ -807,6 +809,7 @@
         "triggers": "トリガーを保存"
       },
       "sections": {
+        "after_execution": "実行後",
         "error_handlers": "エラーハンドラー",
         "finally": "最後に",
         "general": "一般プロパティ",

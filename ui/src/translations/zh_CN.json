@@ -770,6 +770,7 @@
       "adding": "+ 添加{what}",
       "adding_default": "+ 添加新value",
       "creation": {
+        "after execution": "添加执行后块",
         "error handlers": "添加错误处理程序",
         "finally": "添加一个finally块",
         "select": "选择一个{section}",
@@ -800,6 +801,7 @@
         "yaml": "YAML编辑器"
       },
       "save": {
+        "after execution": "保存task",
         "error handlers": "保存错误处理程序",
         "finally": "保存任务",
         "input": "保存输入",
@@ -807,6 +809,7 @@
         "triggers": "保存 trigger"
       },
       "sections": {
+        "after_execution": "执行后",
         "error_handlers": "错误处理程序",
         "finally": "最后",
         "general": "常规属性",

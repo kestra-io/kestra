@@ -770,6 +770,7 @@
       "adding": "+ Adicionar um {what}",
       "adding_default": "+ Adicionar um novo value",
       "creation": {
+        "after execution": "Adicionar um bloco após a execução",
         "error handlers": "Adicionar um manipulador de erro",
         "finally": "Adicionar um bloco finally",
         "select": "Selecione uma {section}",
@@ -800,6 +801,7 @@
         "yaml": "Editor YAML"
       },
       "save": {
+        "after execution": "Salvar task",
         "error handlers": "Salvar manipulador de erro",
         "finally": "Salvar task",
         "input": "Salvar input",
@@ -807,6 +809,7 @@
         "triggers": "Salvar trigger"
       },
       "sections": {
+        "after_execution": "Após a Execução",
         "error_handlers": "Manipuladores de Erros",
         "finally": "Finalmente",
         "general": "Propriedades gerais",

@@ -770,6 +770,7 @@
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",
       "creation": {
+        "after execution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
         "finally": "Fügen Sie einen Finally-Block hinzu",
         "select": "Wählen Sie einen {section} aus",
@@ -800,6 +801,7 @@
         "yaml": "YAML-Editor"
       },
       "save": {
+        "after execution": "Task speichern",
         "error handlers": "Fehlerbehandlungsroutine speichern",
         "finally": "Aufgabe speichern",
         "input": "Eingabe speichern",
@@ -807,6 +809,7 @@
         "triggers": "Speicher Trigger"
       },
       "sections": {
+        "after_execution": "Nach Ausführung",
         "error_handlers": "Fehlerbehandler",
         "finally": "Schließlich",
         "general": "Allgemeine Eigenschaften",

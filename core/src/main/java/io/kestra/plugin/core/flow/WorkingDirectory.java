@@ -1,7 +1,5 @@
 package io.kestra.plugin.core.flow;
 
-import static io.kestra.core.utils.NamespaceFilesUtils.loadNamespaceFiles;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -19,11 +17,10 @@ import io.kestra.core.models.tasks.OutputFilesInterface;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
-import io.kestra.core.runners.FilesService;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.*;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -264,7 +261,8 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         }
 
         if (this.namespaceFiles != null && !Boolean.FALSE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
-            loadNamespaceFiles(runContext, this.namespaceFiles);
+            NamespaceFilesUtils namespaceFilesUtils = ((DefaultRunContext) runContext).getApplicationContext().getBean(NamespaceFilesUtils.class);
+            namespaceFilesUtils.loadNamespaceFiles(runContext, this.namespaceFiles);
         }
 
         if (this.inputFiles != null) {

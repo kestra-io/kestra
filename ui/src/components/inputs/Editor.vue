@@ -103,6 +103,7 @@
             placeholder: {type: [String, Number], default: ""},
             diffSideBySide: {type: Boolean, default: true},
             readOnly: {type: Boolean, default: false},
+            wordWrap: {type: Boolean, default: true},
             lineNumbers: {type: Boolean, default: undefined},
             minimap: {type: Boolean, default: false},
             creating: {type: Boolean, default: false},
@@ -176,7 +177,7 @@
             options() {
                 const options = {};
 
-                if (this.input) {
+                if (this.input && !this.lineNumbers) {
                     options.lineNumbers = "off";
                     options.folding = false;
                     options.renderLineHighlight = "none";
@@ -231,7 +232,7 @@
                     options.readOnly = true;
                 }
 
-                options.wordWrap = true;
+                options.wordWrap = this.wordWrap;
                 options.automaticLayout = true;
 
                 return {

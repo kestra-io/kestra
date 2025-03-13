@@ -7,8 +7,6 @@ import io.kestra.core.models.tasks.runners.DefaultLogConsumer;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
-import io.kestra.core.storages.NamespaceFile;
-import io.kestra.core.utils.Rethrow;
 import io.kestra.plugin.core.runner.Process;
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.runners.FilesService;
@@ -24,12 +22,12 @@ import lombok.With;
 import org.apache.commons.lang3.SystemUtils;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 
+import static io.kestra.core.utils.NamespaceFilesUtils.loadNamespaceFiles;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @AllArgsConstructor
@@ -151,18 +149,7 @@ public class CommandsWrapper implements TaskCommands {
 
     public <T extends TaskRunnerDetailResult> ScriptOutput run() throws Exception {
         if (this.namespaceFiles != null && !Boolean.FALSE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
-
-            List<NamespaceFile> matchedNamespaceFiles = runContext.storage()
-                .namespace()
-                .findAllFilesMatching(
-                    runContext.render(this.namespaceFiles.getInclude()).asList(String.class),
-                    runContext.render(this.namespaceFiles.getExclude()).asList(String.class)
-                );
-
-            matchedNamespaceFiles.forEach(Rethrow.throwConsumer(namespaceFile -> {
-                    InputStream content = runContext.storage().getFile(namespaceFile.uri());
-                    runContext.workingDir().createFile(namespaceFile.path().toString(), content);
-                }));
+            loadNamespaceFiles(runContext, this.namespaceFiles);
         }
 
         TaskRunner<T> realTaskRunner = this.getTaskRunner();

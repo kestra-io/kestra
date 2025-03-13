@@ -39,7 +39,7 @@
                     <el-button
                         :icon="Play"
                         tag="a"
-                        href="https://www.youtube.com/watch?v=a2BZ7vOihjg"
+                        href="https://www.youtube.com/watch?v=waTpmiv4ZCs"
                         target="_blank"
                         class="p-3 px-4 mt-0 mb-lg-5 watch"
                     >

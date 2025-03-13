@@ -2,7 +2,6 @@ package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.services.FileChangedEventListener;
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.StandAloneRunner;
@@ -95,7 +94,6 @@ public class StandAloneCommand extends AbstractServerCommand {
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
 
         super.call();
-        this.shutdownHook(() -> KestraContext.getContext().shutdown());
 
         if (flowPath != null) {
             try {
@@ -123,8 +121,6 @@ public class StandAloneCommand extends AbstractServerCommand {
         if (fileWatcher != null) {
             fileWatcher.startListeningFromConfig();
         }
-
-        this.shutdownHook(standAloneRunner::close);
 
         Await.until(() -> !this.applicationContext.isRunning());
 

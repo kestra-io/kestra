@@ -129,12 +129,6 @@
     "collapse": "折りたたむ",
     "collapse all": "すべて折りたたむ",
     "concurrency": "並行性",
-    "concurrency-view": {
-      "desc_no_executions": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Execution</a></strong>についての詳細は、ドキュメントをご覧ください。",
-      "desc_no_limit": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">並行性制限</a></strong>についての詳細は、ドキュメントをご覧ください。",
-      "title_no_executions": "このFlowに対する進行中のExecutionはありません。",
-      "title_no_limit": "このFlowには制限が設定されていません。"
-    },
     "conditions": "条件",
     "configure basic auth": "基本認証を設定",
     "confirm": "確認",
@@ -290,6 +284,10 @@
           "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、プラグインのデフォルトの高度な分離とガバナンスを提供します。管理者は、カスタムシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、および詳細な権限をnamespaceごとに設定できます。これにより、シークレット、変数、およびプラグインの設定が異なるチームやプロジェクト間で安全かつ簡単に管理されることが保証されます。",
           "title": "名前空間管理をアップグレードする"
         },
+        "history": {
+          "message": "Kestra Enterprise Editionでは、Namespacesのリビジョン履歴を管理できます。",
+          "title": "一箇所でリビジョン履歴を管理"
+        },
         "plugin-defaults": {
           "message": "Kestra Enterprise Editionでは、namespace固有のプラグインデフォルトを設定でき、各flowでの重複した設定の必要性を減らします。この中央プラグインガバナンスは、一貫した設定を強制し、秘密情報や変数の安全な参照を可能にし、ワークフローのメンテナンスを簡素化します。",
           "title": "プラグインのデフォルトで設定を標準化する"
@@ -313,10 +311,6 @@
     "dependencies loaded": "依存関係が読み込まれました",
     "dependencies missing acls": "このflowには権限がありません",
     "dependency task": "Task {taskId}は他のtaskの依存関係です",
-    "dependency-view": {
-      "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。",
-      "title_no_deps": "このFlowには依存関係が設定されていません。"
-    },
     "description": "説明",
     "details": "詳細",
     "disable": "無効化",
@@ -372,19 +366,19 @@
         "title": "お知らせはまだありません！"
       },
       "apps": {
-        "content": "外部の世界からKestraと連携するためのアプリを作成し始めましょう。",
+        "content": "外部からKestraと連携するアプリを作成し始めましょう。",
         "title": "まだアプリがありません！"
       },
       "concurrency_executions": {
-        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">実行</a></strong>についての詳細は、ドキュメントをご覧ください。",
-        "title": "このFlowには進行中のExecutionはありません。"
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> についての詳細は、ドキュメントをご覧ください。",
+        "title": "このFlowには進行中の実行はありません。"
       },
       "concurrency_limit": {
-        "content": "ドキュメントで<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong>について詳しく読む。",
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">同時実行制限</a></strong>についての詳細は、ドキュメントをご覧ください。",
         "title": "このFlowには制限が設定されていません。"
       },
       "dependencies": {
-        "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> についての詳細は、ドキュメントをご覧ください。",
+        "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。",
         "title": "このFlowには依存関係が設定されていません。"
       },
       "plugins": {
@@ -392,7 +386,7 @@
         "title": "このNamespaceにはプラグインのデフォルトが設定されていません。"
       },
       "triggers": {
-        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>についての詳細は、ドキュメントをご覧ください。",
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "あなたのflowにはTriggerがありません。"
       }
     },
@@ -752,7 +746,6 @@
       },
       "empty": {
         "create_message": "namespaceファイルを作成またはインポートできます。",
-        "message": "サイドバーからnamespaceファイルを作成またはインポートできます。また、エディターの紹介ビデオをチェックしてください。",
         "title": "現在開いているタブはありません",
         "video_message": "エディターの紹介ビデオをご覧いただけます。"
       }
@@ -1151,6 +1144,7 @@
     "toggle output": "出力を切り替え",
     "toggle output display": "出力表示を切り替え",
     "toggle periodic refresh each 10 seconds": "10秒ごとに定期的に更新を切り替え",
+    "toggle_word_wrap": "ワードラップを切り替え",
     "topology": "トポロジー",
     "topology-graph": {
       "graph-orientation": "グラフの向き",
@@ -1178,10 +1172,6 @@
     "triggered done": "実行<em>{name}</em>が正常にトリガーされました",
     "triggerflow disabled": "Flow定義からTriggerが無効になっています",
     "triggers": "Triggers",
-    "triggers-view": {
-      "desc_no_triggers": "以下のリンクから、ドキュメント内の<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>についてさらに詳しくお読みください。",
-      "title_no_triggers": "あなたのflowにはTriggerがありません。"
-    },
     "triggers_state": {
       "options": {
         "disabled": "無効",

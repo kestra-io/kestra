@@ -230,10 +230,12 @@ abstract public class AbstractCommand implements Callable<Integer> {
         return false;
     }
 
-    protected void shutdownHook(Rethrow.RunnableChecked<Exception> run) {
+    protected void shutdownHook(boolean logShutdown, Rethrow.RunnableChecked<Exception> run) {
         Runtime.getRuntime().addShutdownHook(new Thread(
             () -> {
-                log.warn("Receiving shutdown ! Try to graceful exit");
+                if (logShutdown) {
+                    log.warn("Receiving shutdown ! Try to graceful exit");
+                }
                 try {
                     run.run();
                 } catch (Exception e) {

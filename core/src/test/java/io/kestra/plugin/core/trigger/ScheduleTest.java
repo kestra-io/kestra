@@ -454,7 +454,6 @@ class ScheduleTest {
         assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
     }
 
-    //todo
     @Test
     void timezone_with_backfile() throws Exception {
         Schedule trigger = Schedule.builder()
@@ -466,12 +465,8 @@ class ScheduleTest {
         TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
             .backfill(Backfill
                 .builder()
-                .currentDate(ZonedDateTime.now(ZoneId.of("America/New_York"))
-                    .minusDays(1L)
-                    .with(LocalTime.MIN)
-                    .plus(Duration.ofHours(8))
-                    .withZoneSameInstant(ZoneId.systemDefault()))
-                .end(ZonedDateTime.now().with(LocalTime.MAX))
+                .currentDate(ZonedDateTime.parse("2025-01-15T08:00-05:00[America/New_York]"))
+                .end(ZonedDateTime.parse("2025-01-16T07:00-05:00[America/New_York]"))
                 .build()
             )
             .build();

@@ -1,6 +1,6 @@
 import type {Store} from "vuex";
 import {describe, expect, it, Mock, vi} from "vitest"
-import {FlowAutoCompletion} from "override/services/autoCompletionProvider.ts";
+import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
 import YamlUtils from "../../../src/utils/yamlUtils";
 
 const defaultFlow = `inputs:
@@ -70,7 +70,7 @@ const mockedStore: MockStore<Record<string, any>> = {
                         value: {}
                     }))
                 default:
-                    return Promise.resolve({})
+                    return Promise.reject("404")
             }
         } else if (type === "namespace/loadNamespacesForDatatype" && payload.dataType === "flow") {
             return Promise.resolve(["my.namespace", "another.namespace"])
@@ -78,7 +78,7 @@ const mockedStore: MockStore<Record<string, any>> = {
             if (payload === "another.namespace") {
                 return Promise.resolve([{id: "flow-other-namespace"}, {id: "another-flow-other-namespace"}])
             } else {
-                return Promise.resolve([])
+                return Promise.reject("404")
             }
         } else if (type === "flow/loadFlow") {
             if (
@@ -96,10 +96,22 @@ const mockedStore: MockStore<Record<string, any>> = {
                     ]
                 })
             } else {
-                return Promise.resolve({})
+                return Promise.reject("404")
+            }
+        } else if (type === "namespace/inheritedSecrets") {
+            if (payload.id === "my.namespace") {
+                return Promise.resolve({"my.namespace": ["myFirstSecret", "mySecondSecret"], "my": ["myInheritedSecret"]});
+            } else if (payload.id === "another.namespace") {
+                return Promise.resolve({"another.namespace": ["anotherNsFirstSecret", "anotherNsSecondSecret"]});
+            }
+        } else if (type === "namespace/kvsList") {
+            if (payload.id === "my.namespace") {
+                return Promise.resolve([{key: "myFirstKv"}, {key: "mySecondKv"}]);
+            } else if (payload.id === "another.namespace") {
+                return Promise.resolve([{key: "anotherNsFirstKv"}, {key: "anotherNsSecondKv"}]);
             }
         }
-        return Promise.resolve({})
+        return Promise.reject("404")
     })
 } as any
 
@@ -121,7 +133,9 @@ describe("FlowAutoCompletionProvider", () => {
             "envs",
             "globals",
             "parents",
-            "error"
+            "error",
+            "secret(namespace=${1:flow.namespace}, key='${2:MY_SECRET}')",
+            "kv(namespace=${1:flow.namespace}, key='${2:my_key}')",
         ]);
     })
 
@@ -130,7 +144,7 @@ describe("FlowAutoCompletionProvider", () => {
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs")).toEqual(["task1", "task2", "subflow"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "labels")).toEqual(["myLabel1", "myLabel2"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "flow")).toEqual(["id", "namespace", "revision", "tenantId"]);
-        expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "execution")).toEqual(["id", "startDate", "originalId"]);
+        expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "execution")).toEqual(["id", "startDate", "state", "originalId"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "vars")).toEqual(["myVar1", "myVar2"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "trigger")).toEqual(["date", "next", "previous"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "task")).toEqual(["id", "type"]);
@@ -158,5 +172,12 @@ describe("FlowAutoCompletionProvider", () => {
 
         // With newline already inserted
         expect(await provider.valueAutoCompletion(defaultFlow.substring(0, firstInputIndex) + "\n        " + defaultFlow.substring(firstInputIndex, defaultFlow.length), parsed, YamlUtils.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
+    })
+
+    it("function autocompletions", async () => {
+        expect(await provider.functionAutoCompletion(parsed, "secret", {})).toEqual(["'myFirstSecret'", "'mySecondSecret'", "'myInheritedSecret'"]);
+        expect(await provider.functionAutoCompletion(parsed, "secret", {namespace: "'another.namespace'"})).toEqual(["'anotherNsFirstSecret'", "'anotherNsSecondSecret'"]);
+        expect(await provider.functionAutoCompletion(parsed, "kv", {})).toEqual(["'myFirstKv'", "'mySecondKv'"]);
+        expect(await provider.functionAutoCompletion(parsed, "kv", {namespace: "'another.namespace'"})).toEqual(["'anotherNsFirstKv'", "'anotherNsSecondKv'"]);
     })
 })

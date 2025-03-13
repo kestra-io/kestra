@@ -51,7 +51,7 @@
                         :navbar="false"
                     >
                         <template #absolute>
-                            <copy-to-clipboard class="position-absolute" :text="blueprint.source" />
+                            <copy-to-clipboard :text="blueprint.source" />
                         </template>
                     </editor>
                 </el-card>

@@ -1,43 +1,37 @@
 <template>
-    <div class="copy-wrapper">
-        <el-tooltip trigger="click" :content="$t('copied')" placement="left" :auto-close="2000" effect="light">
-            <el-button text round :icon="ContentCopy" @click="Utils.copy(text)">
-                <span v-if="label">
-                    {{ label }}
-                </span>
+    <div class="clipboard">
+        <el-tooltip
+            trigger="click"
+            :content="$t('copied')"
+            placement="left"
+            :auto-close="2000"
+        >
+            <el-button :icon="ContentCopy" type="default" @click="copyText">
+                <span v-if="label">{{ label }}</span>
             </el-button>
         </el-tooltip>
+
+        <slot name="right" />
     </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-</script>
-
-<script>
     import Utils from "../../utils/utils";
 
-    export default {
-        props: {
-            text: {
-                type: String,
-                required: true
-            },
-            label: {
-                type: String,
-                required: false,
-                default: undefined
-            }
-        }
-    }
+    const props = defineProps<{ text: string; label?: string }>();
+
+    const copyText = () => Utils.copy(props.text);
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables";
+@import "@kestra-io/ui-libs/src/scss/variables";
 
-    .copy-wrapper {
-        right: $spacer;
-        top: $spacer;
-        z-index: 1
-    }
+.clipboard {
+    z-index: 1;
+    position: absolute;
+    top: $spacer;
+    right: $spacer;
+    display: inline-flex;
+}
 </style>

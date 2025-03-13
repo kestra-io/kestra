@@ -19,7 +19,7 @@ dependencies {
     def jollydayVersion = "0.32.0"
     def jsonschemaVersion = "4.37.0"
     def kafkaVersion = "3.9.0"
-    def opensearchVersion = "2.21.0"
+    def opensearchVersion = "2.22.0"
     def opensearchRestVersion = "2.19.1"
     def flyingSaucerVersion = "9.11.4"
     def jacksonVersion = "2.18.3"
@@ -32,8 +32,8 @@ dependencies {
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.56.0')
-    api platform("com.azure:azure-sdk-bom:1.2.31")
-    api platform('software.amazon.awssdk:bom:2.30.31')
+    api platform("com.azure:azure-sdk-bom:1.2.32")
+    api platform('software.amazon.awssdk:bom:2.30.36')
 
 
     constraints {
@@ -68,10 +68,10 @@ dependencies {
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.34.0'
+        api 'software.amazon.awssdk.crt:aws-crt:0.36.1'
 
         // we need at least 0.14, it could be removed when Micronaut contains a recent only version in their BOM
-        api "io.micrometer:micrometer-core:1.14.3"
+        api "io.micrometer:micrometer-core:1.14.5"
 
         // Other libs
         api("org.projectlombok:lombok:1.18.36")
@@ -107,12 +107,12 @@ dependencies {
         api 'com.h2database:h2:2.3.232'
         api 'mysql:mysql-connector-java:8.0.33'
         api 'org.postgresql:postgresql:42.7.5'
-        api 'com.github.docker-java:docker-java:3.4.1'
-        api 'com.github.docker-java:docker-java-transport-httpclient5:3.4.1'
+        api 'com.github.docker-java:docker-java:3.4.2'
+        api 'com.github.docker-java:docker-java-transport-httpclient5:3.4.2'
         api (group: 'org.opensearch.client', name: 'opensearch-java', version: "$opensearchVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-client', version: "$opensearchRestVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchRestVersion") // used by the elasticsearch plugin
-        api 'org.jsoup:jsoup:1.18.3'
+        api 'org.jsoup:jsoup:1.19.1'
         api "org.xhtmlrenderer:flying-saucer-core:$flyingSaucerVersion"
         api "org.xhtmlrenderer:flying-saucer-pdf:$flyingSaucerVersion"
         api group: 'jakarta.mail', name: 'jakarta.mail-api', version: '2.1.3'

@@ -137,6 +137,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private final ExecutorService executorService;
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private final AtomicBoolean init = new AtomicBoolean(false);
 
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
 
@@ -177,13 +178,16 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @PostConstruct
     void initMetricsAndTracer() {
-        String[] tags = this.workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, this.workerGroup};
-        // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
-        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, numThreads, tags);
-        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, pendingJobCount, tags);
-        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT, runningJobCount, tags);
+        // the method is called twice due to how we create the bean, see https://github.com/micronaut-projects/micronaut-core/issues/11656
+        if (this.init.compareAndSet(false, true)) {
+            String[] tags = this.workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, this.workerGroup};
+            // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, numThreads, tags);
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, pendingJobCount, tags);
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT, runningJobCount, tags);
 
-        this.tracer = tracerFactory.getTracer(Worker.class, "WORKER");
+            this.tracer = tracerFactory.getTracer(Worker.class, "WORKER");
+        }
     }
 
     @Override

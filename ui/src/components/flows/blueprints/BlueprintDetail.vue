@@ -79,6 +79,8 @@
     </section>
 </template>
 <script setup>
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+
     import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue";
     import Editor from "../../inputs/Editor.vue";
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
@@ -86,7 +88,6 @@
     import TopNavBar from "../../layout/TopNavBar.vue";
 </script>
 <script>
-    import YamlUtils from "../../../utils/yamlUtils";
     import Markdown from "../../layout/Markdown.vue";
     import CopyToClipboard from "../../layout/CopyToClipboard.vue";
     import {mapState} from "vuex";
@@ -196,7 +197,7 @@
             },
             parsedFlow() {
                 return {
-                    ...YamlUtils.parse(this.blueprint.source),
+                    ...YAML_UTILS.parse(this.blueprint.source),
                     source: this.blueprint.source
                 }
             },

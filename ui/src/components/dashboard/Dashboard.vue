@@ -503,20 +503,19 @@ $spacing: 20px;
     }
 }
 
-$media-md: 600px;
-$media-lg: 1200px;
+$media-md: 500px;
+$media-lg: 1000px;
 
 .dashboard{
+    container-type: inline-size;
     padding-bottom: 1rem;
     margin: 1rem 0;
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    @media (min-width: $media-md) {
-        display: grid;
-        grid-template-columns: repeat(12, 1fr);
-    }
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
 }
 
 
@@ -529,40 +528,41 @@ $media-lg: 1200px;
     border-radius: $border-radius;
     overflow: hidden;
     flex-shrink: 0;
-    @media (min-width: $media-md) {
+    grid-column: span 12;
+    @container (width > #{$media-md}) {
         grid-column: span 6;
     }
-    @media (min-width: $media-lg) {
+    @container (width > #{$media-lg}) {
         grid-column: span 3;
     }
 }
 
-@media (min-width: $media-md) {
+@container (width > #{$media-md}) {
     .card-1\/2, .card-2\/3, .card-1\/3 {
         grid-column: span 12;
     }
 }
 
 .card-1\/2{
-    @media (min-width: $media-lg) {
+    @container (width > #{$media-lg}) {
         grid-column: span 6;
     }
 }
 
 .card-2\/3{
-    @media (min-width: $media-lg) {
+    @container (width > #{$media-lg}) {
         grid-column: span 8;
     }
 }
 
 .card-1\/3{
-    @media (min-width: $media-lg) {
+    @container (width > #{$media-lg}) {
         grid-column: span 4;
     }
 }
 
 .card-1{
-    @media (min-width: $media-md) {
+    @container (width > #{$media-md}) {
         grid-column: span 12;
     }
 }

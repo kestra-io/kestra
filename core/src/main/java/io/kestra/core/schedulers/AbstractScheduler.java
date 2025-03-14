@@ -731,7 +731,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             if (lastTrigger.getUpdatedDate() == null || lastTrigger.getUpdatedDate().plusSeconds(60).isBefore(Instant.now())) {
                 logService.logTrigger(
                     f.getTriggerContext(),
-                    log,
                     Level.WARN,
                     "Execution '{}' is not found, schedule is blocked since '{}'",
                     lastTrigger.getExecutionId(),
@@ -751,7 +750,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         if (log.isDebugEnabled()) {
             logService.logTrigger(
                 f.getTriggerContext(),
-                log,
                 Level.DEBUG,
                 "Execution '{}' is still '{}', updated at '{}'",
                 lastTrigger.getExecutionId(),
@@ -791,7 +789,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
         logService.logTrigger(
             executionWithTrigger.getTriggerContext(),
-            log,
             Level.INFO,
             "Scheduled execution {} at '{}' started at '{}'",
             executionWithTrigger.getExecution().getId(),
@@ -827,7 +824,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             if (log.isDebugEnabled()) {
                 logService.logTrigger(
                     flowWithWorkerTrigger.getTriggerContext(),
-                    log,
                     Level.DEBUG,
                     "[type: {}] {}",
                     flowWithWorkerTrigger.getAbstractTrigger().getType(),
@@ -869,7 +865,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         trigger, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
 
-        logService.logFlow(
+        logService.logExecution(
             flow,
             logger,
             Level.ERROR,
@@ -890,7 +886,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         if (log.isDebugEnabled()) {
             logService.logTrigger(
                 flowWithTrigger.getTriggerContext(),
-                log,
                 Level.DEBUG,
                 "[date: {}] Scheduling evaluation to the worker",
                 flowWithTrigger.getTriggerContext().getDate()

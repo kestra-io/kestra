@@ -110,7 +110,6 @@ public class ExecutorService {
                     // when max concurrency is reached, we throttle the execution and stop processing
                     logService.logExecution(
                         newExecution,
-                        flow.logger(),
                         Level.INFO,
                         "Flow is queued due to concurrency limit exceeded, {} running(s)",
                         count
@@ -180,11 +179,10 @@ public class ExecutorService {
         return executor;
     }
 
-    public Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
+    public Execution onNexts(Execution execution, List<TaskRun> nexts) {
         if (log.isTraceEnabled()) {
             logService.logExecution(
                 execution,
-                flow.logger(),
                 Level.TRACE,
                 "Found {} next(s) {}",
                 nexts.size(),
@@ -212,7 +210,6 @@ public class ExecutorService {
 
             logService.logExecution(
                 execution,
-                flow.logger(),
                 Level.INFO,
                 "Flow started"
             );
@@ -357,19 +354,18 @@ public class ExecutorService {
                     return taskRun;
                 }
                 FlowableTask<?> flowableTask = (FlowableTask<?>) t.getTask();
+                RunContext runContext = runContextFactory.of(
+                    executor.getFlow(),
+                    t.getTask(),
+                    executor.getExecution(),
+                    t.getTaskRun()
+                );
 
                 try {
-                    RunContext runContext = runContextFactory.of(
-                        executor.getFlow(),
-                        t.getTask(),
-                        executor.getExecution(),
-                        t.getTaskRun()
-                    );
-
                     Output outputs = flowableTask.outputs(runContext);
                     taskRun = taskRun.withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of());
                 } catch (Exception e) {
-                    executor.getFlow().logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
+                    runContext.logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
                 }
 
                 return taskRun;
@@ -379,8 +375,6 @@ public class ExecutorService {
 
     private Executor onEnd(Executor executor) {
         final Flow flow = executor.getFlow();
-
-        Logger logger = flow.logger();
 
         Execution newExecution = executor.getExecution()
             .withState(executor.getExecution().guessFinalState(flow));
@@ -397,7 +391,6 @@ public class ExecutorService {
             } catch (Exception e) {
                 logService.logExecution(
                     executor.getExecution(),
-                    logger,
                     Level.ERROR,
                     "Failed to render output values",
                     e
@@ -409,15 +402,14 @@ public class ExecutorService {
 
         logService.logExecution(
             newExecution,
-            logger,
             Level.INFO,
             "Flow completed with state {} in {}",
             newExecution.getState().getCurrent(),
             newExecution.getState().humanDuration()
         );
 
-        if (logger.isTraceEnabled()) {
-            logger.trace(newExecution.toString(true));
+        if (log.isTraceEnabled()) {
+            log.trace(newExecution.toString(true));
         }
 
         metricRegistry
@@ -748,7 +740,6 @@ public class ExecutorService {
 
         logService.logExecution(
             executor.getExecution(),
-            executor.getFlow().logger(),
             Level.INFO,
             "Flow restarted"
         );

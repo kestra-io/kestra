@@ -419,7 +419,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
         if (log.isDebugEnabled()) {
             logService.logTrigger(
                 workerTrigger.getTriggerContext(),
-                log,
                 Level.DEBUG,
                 "[type: {}] {}",
                 workerTrigger.getTrigger().getType(),
@@ -627,7 +626,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         logService.logTaskRun(
             workerTask.getTaskRun(),
-            workerTask.logger(),
             Level.INFO,
             "Type {} started",
             workerTask.getTask().getClass().getSimpleName()
@@ -724,7 +722,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         logService.logTaskRun(
             workerTask.getTaskRun(),
-            workerTask.logger(),
             Level.INFO,
             "Type {} with state {} completed in {}",
             workerTask.getTask().getClass().getSimpleName(),

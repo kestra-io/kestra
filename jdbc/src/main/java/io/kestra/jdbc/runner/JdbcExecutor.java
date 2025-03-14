@@ -384,14 +384,12 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             );
                             logService.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
-                                log,
                                 Level.WARN,
                                 "Re-emitting WorkerTask."
                             );
                         } catch (QueueException e) {
                             logService.logTaskRun(
                                 workerTaskRunning.getTaskRun(),
-                                log,
                                 Level.ERROR,
                                 "Unable to re-emit WorkerTask.",
                                 e
@@ -410,14 +408,12 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             .build());
                         logService.logTrigger(
                             workerTriggerRunning.getTriggerContext(),
-                            log,
                             Level.WARN,
                             "Re-emitting WorkerTrigger."
                         );
                     } catch (QueueException e) {
                         logService.logTrigger(
                             workerTriggerRunning.getTriggerContext(),
-                            log,
                             Level.ERROR,
                             "Unable to re-emit WorkerTrigger.",
                             e
@@ -524,7 +520,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                         if (!executor.getNexts().isEmpty() && deduplicateNexts(execution, executorState, executor.getNexts())) {
                             executor.withExecution(
-                                executorService.onNexts(executor.getFlow(), executor.getExecution(), executor.getNexts()),
+                                executorService.onNexts(executor.getExecution(), executor.getNexts()),
                                 "onNexts"
                             );
                         }

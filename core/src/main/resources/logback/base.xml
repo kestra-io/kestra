@@ -10,6 +10,9 @@
 
     <logger name="io.kestra" level="INFO" />
     <logger name="flow" level="INFO" />
+    <logger name="task" level="INFO" />
+    <logger name="execution" level="INFO" />
+    <logger name="trigger" level="INFO" />
 
     <logger name="io.kestra.ee.runner.kafka.services.KafkaConsumerService" level="WARN" />
     <logger name="io.kestra.ee.runner.kafka.services.KafkaProducerService" level="WARN" />

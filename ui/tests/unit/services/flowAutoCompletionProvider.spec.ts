@@ -136,6 +136,7 @@ describe("FlowAutoCompletionProvider", () => {
             "error",
             "secret(namespace=${1:flow.namespace}, key='${2:MY_SECRET}')",
             "kv(namespace=${1:flow.namespace}, key='${2:my_key}')",
+            "kestra"
         ]);
     })
 
@@ -150,6 +151,7 @@ describe("FlowAutoCompletionProvider", () => {
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "task")).toEqual(["id", "type"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "taskrun")).toEqual(["id", "startDate", "attemptsCount", "parentId", "value", "iteration"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "error")).toEqual(["taskId", "message", "stackTrace"]);
+        expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "kestra")).toEqual(["environment", "url"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs.task1")).toEqual(["values"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs.task2")).toEqual(["value"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs.task3")).toEqual([]);

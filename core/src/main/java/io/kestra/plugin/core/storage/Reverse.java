@@ -47,6 +47,7 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
         title = "The file to be split."
     )
     @NotNull
+    @PluginProperty(internalStorageURI = true)
     private Property<String> from;
 
     @Schema(

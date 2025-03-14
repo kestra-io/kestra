@@ -23,4 +23,9 @@ public @interface PluginProperty {
      * @return whether the property is in beta
      */
     boolean beta() default false;
+
+    /**
+     * @return whether the property is an internal storage URI
+     */
+    boolean internalStorageURI() default false;
 }

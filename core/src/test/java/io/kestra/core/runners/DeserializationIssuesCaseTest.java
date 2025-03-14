@@ -1,10 +1,13 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
@@ -266,14 +269,17 @@ public class DeserializationIssuesCaseTest {
         assertThat(workerTriggerResult.get().getSuccess(), is(Boolean.FALSE));
     }
 
-    public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException{
+    public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws Exception {
         AtomicReference<List<FlowWithSource>> flows = new AtomicReference<>();
-        flowListeners.listen(newFlows -> flows.set(newFlows));
+        flowListeners.listen(flows::set);
 
-        sendToQueue.accept(new QueueMessage(FlowWithSource.class, INVALID_FLOW_KEY, INVALID_FLOW_VALUE));
+        sendToQueue.accept(new QueueMessage(FlowInterface.class, INVALID_FLOW_KEY, INVALID_FLOW_VALUE));
 
         Await.until(
-            () -> flows.get() != null && flows.get().stream().anyMatch(newFlow -> newFlow.uid().equals("company.team_hello-world_2") && (newFlow.getTasks() == null || newFlow.getTasks().isEmpty())),
+            () -> flows.get() != null && flows.get()
+                .stream()
+                .anyMatch(newFlow -> newFlow.uid().equals("company.team_hello-world_2"))
+            ,
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );

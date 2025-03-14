@@ -83,8 +83,8 @@ class ErrorControllerTest {
         assertThat(exception.getStatus(), is(UNPROCESSABLE_ENTITY));
 
         String response = exception.getResponse().getBody(String.class).get();
-        assertThat(response, containsString("Invalid entity: Unrecognized field \\\"unknown\\\" (class io.kestra.core.models.flows.Flow), not marked as ignorable"));
-        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.Flow[\\\"unknown\\\"]\""));
+        assertThat(response, containsString("Invalid entity: Unrecognized field \\\"unknown\\\" (class io.kestra.core.models.flows.FlowWithSource), not marked as ignorable"));
+        assertThat(response, containsString("\"path\":\"io.kestra.core.models.flows.FlowWithSource[\\\"unknown\\\"]\""));
     }
 
     @Disabled("Test disabled: no exception thrown when converting to dynamic properties")

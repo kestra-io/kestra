@@ -1,8 +1,7 @@
 package io.kestra.repository.memory;
 
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
@@ -12,9 +11,6 @@ import static org.hamcrest.Matchers.is;
 
 @KestraTest
 public class MemoryRepositoryTest {
-
-    @Inject
-    private YamlParser yamlParser;
 
     @Inject
     private FlowRepositoryInterface flowRepositoryInterface;
@@ -29,9 +25,9 @@ public class MemoryRepositoryTest {
             tasks:
               - id: some-task
                 type: io.kestra.core.tasks.debugs.Return
-                format: "Hello, World!\"""";
-        Flow flow = yamlParser.parse(flowSource, Flow.class);
-        flowRepositoryInterface.create(flow, flowSource, flow);
+                format: "Hello, World!"
+         """;
+        flowRepositoryInterface.create(GenericFlow.fromYaml(null, flowSource));
 
         assertThat(flowRepositoryInterface.findAll(null).size(), is(1));
 

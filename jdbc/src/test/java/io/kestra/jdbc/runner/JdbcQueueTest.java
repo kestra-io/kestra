@@ -1,5 +1,6 @@
 package io.kestra.jdbc.runner;
 
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.QueueException;
@@ -30,7 +31,7 @@ import static org.hamcrest.Matchers.is;
 abstract public class JdbcQueueTest {
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
-    protected QueueInterface<FlowWithSource> flowQueue;
+    protected QueueInterface<FlowInterface> flowQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)
@@ -43,8 +44,8 @@ abstract public class JdbcQueueTest {
     void noGroup() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        Flux<FlowWithSource> receive = TestsUtils.receive(flowQueue, throwConsumer(either -> {
-            FlowWithSource flow = either.getLeft();
+        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, throwConsumer(either -> {
+            FlowInterface flow = either.getLeft();
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit(builder("io.kestra.f2"));
             }
@@ -64,8 +65,8 @@ abstract public class JdbcQueueTest {
     void withGroup() throws InterruptedException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
 
-        Flux<FlowWithSource> receive = TestsUtils.receive(flowQueue, "consumer_group", throwConsumer(either -> {
-            FlowWithSource flow = either.getLeft();
+        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, "consumer_group", throwConsumer(either -> {
+            FlowInterface flow = either.getLeft();
             if (flow.getNamespace().equals("io.kestra.f1")) {
                 flowQueue.emit("consumer_group", builder("io.kestra.f2"));
             }
@@ -87,7 +88,7 @@ abstract public class JdbcQueueTest {
         flowQueue.emit(builder("io.kestra.f1"));
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        Flux<FlowWithSource> receive = TestsUtils.receive(flowQueue, Indexer.class, either -> {
+        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, Indexer.class, either -> {
             countDownLatch.countDown();
         });
 
@@ -113,7 +114,7 @@ abstract public class JdbcQueueTest {
         flowQueue.emit("consumer_group", builder("io.kestra.f1"));
 
         CountDownLatch countDownLatch = new CountDownLatch(1);
-        Flux<FlowWithSource> receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, either -> {
+        Flux<FlowInterface> receive = TestsUtils.receive(flowQueue, "consumer_group", Indexer.class, either -> {
             countDownLatch.countDown();
         });
 

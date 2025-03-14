@@ -1,8 +1,9 @@
 package io.kestra.core.services;
 
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
@@ -10,7 +11,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
-import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -21,25 +21,25 @@ import java.util.stream.Stream;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
 class FlowServiceTest {
+    private static final String TEST_NAMESPACE = "io.kestra.unittest";
+
     @Inject
     private FlowService flowService;
     @Inject
     private FlowRepositoryInterface flowRepository;
 
-    private static Flow create(String flowId, String taskId, Integer revision) {
-        return create(null, flowId, taskId, revision);
+    private static FlowWithSource create(String flowId, String taskId, Integer revision) {
+        return create(null, TEST_NAMESPACE, flowId, taskId, revision);
     }
 
-    private static Flow create(String tenantId, String flowId, String taskId, Integer revision) {
-        return Flow.builder()
+    private static FlowWithSource create(String tenantId, String namespace, String flowId, String taskId, Integer revision) {
+        FlowWithSource flow = FlowWithSource.builder()
             .id(flowId)
-            .namespace("io.kestra.unittest")
+            .namespace(namespace)
             .tenantId(tenantId)
             .revision(revision)
             .tasks(Collections.singletonList(Return.builder()
@@ -48,6 +48,8 @@ class FlowServiceTest {
                 .format(Property.of("test"))
                 .build()))
             .build();
+
+        return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
     }
 
     @Test
@@ -59,7 +61,7 @@ class FlowServiceTest {
             - id: task
               type: io.kestra.plugin.core.log.Log
               message: Hello""";
-        Flow importFlow = flowService.importFlow("my-tenant", source);
+        FlowWithSource importFlow = flowService.importFlow("my-tenant", source);
 
         assertThat(importFlow.getId(), is("import"));
         assertThat(importFlow.getNamespace(), is("some.namespace"));
@@ -93,7 +95,7 @@ class FlowServiceTest {
             - id: task
               type: io.kestra.plugin.core.log.Log
               message: Hello""";
-        Flow importFlow = flowService.importFlow("my-tenant", oldSource);
+        FlowWithSource importFlow = flowService.importFlow("my-tenant", oldSource);
 
         assertThat(importFlow.getId(), is("import_dry"));
         assertThat(importFlow.getNamespace(), is("some.namespace"));
@@ -120,18 +122,14 @@ class FlowServiceTest {
 
     @Test
     void sameRevisionWithDeletedOrdered() {
-        var flow1 = create("test", "test", 1);
-        var flow2 = create("test", "test2", 2);
-        var flow3 = create("test", "test2", 2).toDeleted();
-        var flow4 = create("test", "test2", 4);
-        Stream<FlowWithSource> stream = Stream.of(
-            flow1.withSource(flow1.generateSource()),
-            flow2.withSource(flow2.generateSource()),
-            flow3.withSource(flow3.generateSource()),
-            flow4.withSource(flow4.generateSource())
+        Stream<FlowInterface> stream = Stream.of(
+            create("test", "test", 1),
+            create("test", "test2", 2),
+            create("test", "test2", 2).toDeleted(),
+            create("test", "test2", 4)
         );
 
-        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowInterface> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(1));
         assertThat(collect.getFirst().isDeleted(), is(false));
@@ -140,20 +138,16 @@ class FlowServiceTest {
 
     @Test
     void sameRevisionWithDeletedSameRevision() {
-        var flow1 = create("test2", "test2", 1);
-        var flow2 = create("test", "test", 1);
-        var flow3 = create("test", "test2", 2);
-        var flow4 = create("test", "test3", 3);
-        var flow5 = create("test", "test2", 2).toDeleted();
-        Stream<FlowWithSource> stream = Stream.of(
-            flow1.withSource(flow1.generateSource()),
-            flow2.withSource(flow2.generateSource()),
-            flow3.withSource(flow3.generateSource()),
-            flow4.withSource(flow4.generateSource()),
-            flow5.withSource(flow5.generateSource())
+
+        Stream<FlowInterface> stream = Stream.of(
+            create("test2", "test2", 1),
+            create("test", "test", 1),
+            create("test", "test2", 2),
+            create("test", "test3", 3),
+            create("test", "test2", 2).toDeleted()
         );
 
-        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowInterface> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(1));
         assertThat(collect.getFirst().isDeleted(), is(false));
@@ -162,18 +156,15 @@ class FlowServiceTest {
 
     @Test
     void sameRevisionWithDeletedUnordered() {
-        var flow1 = create("test", "test", 1);
-        var flow2 = create("test", "test2", 2);
-        var flow3 = create("test", "test2", 4);
-        var flow4 = create("test", "test2", 2).toDeleted();
-        Stream<FlowWithSource> stream = Stream.of(
-            flow1.withSource(flow1.generateSource()),
-            flow2.withSource(flow2.generateSource()),
-            flow3.withSource(flow3.generateSource()),
-            flow4.withSource(flow4.generateSource())
+
+        Stream<FlowInterface> stream = Stream.of(
+            create("test", "test", 1),
+            create("test", "test2", 2),
+            create("test", "test2", 4),
+            create("test", "test2", 2).toDeleted()
         );
 
-        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowInterface> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(1));
         assertThat(collect.getFirst().isDeleted(), is(false));
@@ -182,22 +173,17 @@ class FlowServiceTest {
 
     @Test
     void multipleFlow() {
-        var flow1 = create("test", "test", 2);
-        var flow2 = create("test", "test2", 1);
-        var flow3 = create("test2", "test2", 1);
-        var flow4 = create("test2", "test3", 3);
-        var flow5 = create("test3", "test1", 2);
-        var flow6 = create("test3", "test2", 3);
-        Stream<FlowWithSource> stream = Stream.of(
-            flow1.withSource(flow1.generateSource()),
-            flow2.withSource(flow2.generateSource()),
-            flow3.withSource(flow3.generateSource()),
-            flow4.withSource(flow4.generateSource()),
-            flow5.withSource(flow5.generateSource()),
-            flow6.withSource(flow6.generateSource())
+
+        Stream<FlowInterface> stream = Stream.of(
+            create("test", "test", 2),
+            create("test", "test2", 1),
+            create("test2", "test2", 1),
+            create("test2", "test3", 3),
+            create("test3", "test1", 2),
+            create("test3", "test2", 3)
         );
 
-        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowInterface> collect = flowService.keepLastVersion(stream).toList();
 
         assertThat(collect.size(), is(3));
         assertThat(collect.stream().filter(flow -> flow.getId().equals("test")).findFirst().orElseThrow().getRevision(), is(2));
@@ -207,7 +193,7 @@ class FlowServiceTest {
 
     @Test
     void warnings() {
-        Flow flow = create("test", "test", 1).toBuilder()
+        FlowWithSource flow = create("test", "test", 1).toBuilder()
             .namespace("system")
             .triggers(List.of(
                 io.kestra.plugin.core.trigger.Flow.builder()
@@ -257,9 +243,9 @@ class FlowServiceTest {
     @SuppressWarnings("deprecation")
     @Test
     void propertyRenamingDeprecation() {
-        Flow flow = Flow.builder()
+        FlowWithSource flow = FlowWithSource.builder()
             .id("flowId")
-            .namespace("io.kestra.unittest")
+            .namespace(TEST_NAMESPACE)
             .inputs(List.of(
                 StringInput.builder()
                     .id("inputWithId")
@@ -302,8 +288,8 @@ class FlowServiceTest {
 
     @Test
     void delete() {
-        Flow flow = create("deleteTest", "test", 1);
-        FlowWithSource saved = flowRepository.create(flow, flow.generateSource(), flow);
+        FlowWithSource flow = create("deleteTest", "test", 1);
+        FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
         assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent(), is(true));
         flowService.delete(saved);
         assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent(), is(false));
@@ -311,26 +297,26 @@ class FlowServiceTest {
 
     @Test
     void findByNamespacePrefix() {
-        Flow flow = create("findByTest", "test", 1).toBuilder().namespace("some.namespace").build();
-        flowRepository.create(flow, flow.generateSource(), flow);
+        FlowWithSource flow = create(null, "some.namespace","findByTest", "test", 1);
+        flowRepository.create(GenericFlow.of(flow));
         assertThat(flowService.findByNamespacePrefix(null, "some.namespace").size(), is(1));
     }
 
     @Test
     void findById() {
-        Flow flow = create("findByIdTest", "test", 1);
-        FlowWithSource saved = flowRepository.create(flow, flow.generateSource(), flow);
+        FlowWithSource flow = create("findByIdTest", "test", 1);
+        FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
         assertThat(flowService.findById(null, saved.getNamespace(), saved.getId()).isPresent(), is(true));
     }
 
     @Test
     void checkSubflowNotFound() {
-        Flow flow = create("mainFlow", "task", 1).toBuilder()
+        FlowWithSource flow = create("mainFlow", "task", 1).toBuilder()
             .tasks(List.of(
                 io.kestra.plugin.core.flow.Subflow.builder()
                     .id("subflowTask")
                     .type(io.kestra.plugin.core.flow.Subflow.class.getName())
-                    .namespace("io.kestra.unittest")
+                    .namespace(TEST_NAMESPACE)
                     .flowId("nonExistentSubflow")
                     .build()
             ))
@@ -344,15 +330,15 @@ class FlowServiceTest {
 
     @Test
     void checkValidSubflow() {
-        Flow subflow = create("existingSubflow", "task", 1);
-        flowRepository.create(subflow, subflow.generateSource(), subflow);
+        FlowWithSource subflow = create("existingSubflow", "task", 1);
+        flowRepository.create(GenericFlow.of(subflow));
 
-        Flow flow = create("mainFlow", "task", 1).toBuilder()
+        FlowWithSource flow = create("mainFlow", "task", 1).toBuilder()
             .tasks(List.of(
                 io.kestra.plugin.core.flow.Subflow.builder()
                     .id("subflowTask")
                     .type(io.kestra.plugin.core.flow.Subflow.class.getName())
-                    .namespace("io.kestra.unittest")
+                    .namespace(TEST_NAMESPACE)
                     .flowId("existingSubflow")
                     .build()
             ))

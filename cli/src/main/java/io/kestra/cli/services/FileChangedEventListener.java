@@ -1,11 +1,12 @@
 package io.kestra.cli.services;
 
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithPath;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.PluginDefaultService;
 import io.micronaut.context.annotation.Requires;
@@ -41,9 +42,6 @@ public class FileChangedEventListener {
     private PluginDefaultService pluginDefaultService;
 
     @Inject
-    private YamlParser yamlParser;
-
-    @Inject
     private ModelValidator modelValidator;
 
     @Inject
@@ -59,7 +57,6 @@ public class FileChangedEventListener {
 
     private boolean isStarted = false;
 
-
     @Inject
     public FileChangedEventListener(@Nullable FileWatchConfiguration fileWatchConfiguration, @Nullable WatchService watchService) {
         this.fileWatchConfiguration = fileWatchConfiguration;
@@ -68,7 +65,7 @@ public class FileChangedEventListener {
 
     public void startListeningFromConfig() throws IOException, InterruptedException {
         if (fileWatchConfiguration != null && fileWatchConfiguration.isEnabled()) {
-            this.flowFilesManager = new LocalFlowFileWatcher(flowRepositoryInterface, pluginDefaultService);
+            this.flowFilesManager = new LocalFlowFileWatcher(flowRepositoryInterface);
             List<Path> paths = fileWatchConfiguration.getPaths();
             this.setup(paths);
 
@@ -76,7 +73,7 @@ public class FileChangedEventListener {
             // Init existing flows not already in files
             flowListeners.listen(flows -> {
                 if (!isStarted) {
-                    for (FlowWithSource flow : flows) {
+                    for (FlowInterface flow : flows) {
                         if (this.flows.stream().noneMatch(flowWithPath -> flowWithPath.uidWithoutRevision().equals(flow.uidWithoutRevision()))) {
                             flowToFile(flow, this.buildPath(flow));
                             this.flows.add(FlowWithPath.of(flow, this.buildPath(flow).toString()));
@@ -137,7 +134,7 @@ public class FileChangedEventListener {
                                 try {
                                     String content = Files.readString(filePath, Charset.defaultCharset());
 
-                                    Optional<Flow> flow = parseFlow(content, entry);
+                                    Optional<FlowWithSource> flow = parseFlow(content, entry);
                                     if (flow.isPresent()) {
                                         if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
                                             // Check if we already have a file with the given path
@@ -156,7 +153,7 @@ public class FileChangedEventListener {
                                             flows.add(FlowWithPath.of(flow.get(), filePath.toString()));
                                         }
 
-                                        flowFilesManager.createOrUpdateFlow(flow.get(), content);
+                                        flowFilesManager.createOrUpdateFlow(GenericFlow.fromYaml(tenantId, content));
                                         log.info("Flow {} from file {} has been created or modified", flow.get().getId(), entry);
                                     }
 
@@ -207,11 +204,11 @@ public class FileChangedEventListener {
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (file.toString().endsWith(".yml") || file.toString().endsWith(".yaml")) {
                         String content = Files.readString(file, Charset.defaultCharset());
-                        Optional<Flow> flow = parseFlow(content, file);
+                        Optional<FlowWithSource> flow = parseFlow(content, file);
 
                         if (flow.isPresent() && flows.stream().noneMatch(flowWithPath -> flowWithPath.uidWithoutRevision().equals(flow.get().uidWithoutRevision()))) {
                             flows.add(FlowWithPath.of(flow.get(), file.toString()));
-                            flowFilesManager.createOrUpdateFlow(flow.get(), content);
+                            flowFilesManager.createOrUpdateFlow(GenericFlow.fromYaml(tenantId, content));
                         }
                     }
                     return FileVisitResult.CONTINUE;
@@ -223,27 +220,25 @@ public class FileChangedEventListener {
         }
     }
 
-    private void flowToFile(FlowWithSource flow, Path path) {
+    private void flowToFile(FlowInterface flow, Path path) {
         Path defaultPath = path != null ? path : this.buildPath(flow);
 
         try {
-            Files.writeString(defaultPath, flow.getSource());
+            Files.writeString(defaultPath, flow.source());
             log.info("Flow {} has been written to file {}", flow.getId(), defaultPath);
         } catch (IOException e) {
             log.error("Error writing file: {}", defaultPath, e);
         }
     }
 
-    private Optional<Flow> parseFlow(String content, Path entry) {
+    private Optional<FlowWithSource> parseFlow(String content, Path entry) {
         try {
-            Flow flow = yamlParser.parse(content, Flow.class);
-            FlowWithSource withPluginDefault = pluginDefaultService.injectDefaults(FlowWithSource.of(flow, content));
-            modelValidator.validate(withPluginDefault);
+            FlowWithSource flow = pluginDefaultService.parseFlowWithAllDefaults(tenantId, content, false);
+            modelValidator.validate(flow);
             return Optional.of(flow);
-        } catch (ConstraintViolationException e) {
+        } catch (DeserializationException | ConstraintViolationException e) {
             log.warn("Error while parsing flow: {}", entry, e);
         }
-
         return Optional.empty();
     }
 
@@ -259,7 +254,7 @@ public class FileChangedEventListener {
         }
     }
 
-    private Path buildPath(Flow flow) {
+    private Path buildPath(FlowInterface flow) {
         return fileWatchConfiguration.getPaths().getFirst().resolve(flow.uidWithoutRevision() + ".yml");
     }
 }

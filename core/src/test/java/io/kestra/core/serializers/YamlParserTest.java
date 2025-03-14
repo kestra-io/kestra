@@ -36,9 +36,6 @@ class YamlParserTest {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @Inject
-    private YamlParser yamlParser;
-
-    @Inject
     private ModelValidator modelValidator;
 
     @Test
@@ -213,7 +210,7 @@ class YamlParserTest {
         TypeReference<Map<String, Object>> TYPE_REFERENCE = new TypeReference<>() {};
         Map<String, Object> flow = JacksonMapper.ofYaml().readValue(flowSource, TYPE_REFERENCE);
 
-        Flow parse = yamlParser.parse(flow, Flow.class, false);
+        Flow parse = YamlParser.parse(flow, Flow.class, false);
 
         assertThat(parse.getId(), is("duplicate"));
     }
@@ -245,7 +242,7 @@ class YamlParserTest {
 
         File file = new File(resource.getFile());
 
-        return yamlParser.parse(file, Flow.class);
+        return YamlParser.parse(file, Flow.class);
     }
 
     private Flow parseString(String path) throws IOException {
@@ -254,6 +251,6 @@ class YamlParserTest {
 
         String input = Files.readString(Path.of(resource.getPath()), Charset.defaultCharset());
 
-        return yamlParser.parse(input, Flow.class);
+        return YamlParser.parse(input, Flow.class);
     }
 }

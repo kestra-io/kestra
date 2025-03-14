@@ -21,8 +21,6 @@ import static org.hamcrest.Matchers.is;
 class FlowValidationTest {
     @Inject
     private ModelValidator modelValidator;
-    @Inject
-    private YamlParser yamlParser;
 
     @Test
     void invalidRecursiveFlow() {
@@ -57,6 +55,6 @@ class FlowValidationTest {
 
         File file = new File(resource.getFile());
 
-        return yamlParser.parse(file, Flow.class);
+        return YamlParser.parse(file, Flow.class);
     }
 }

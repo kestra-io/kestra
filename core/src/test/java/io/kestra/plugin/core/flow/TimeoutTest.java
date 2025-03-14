@@ -5,13 +5,13 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunnerUtils;
-import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
@@ -32,9 +32,6 @@ import static org.hamcrest.Matchers.is;
 class TimeoutTest {
     @Inject
     FlowRepositoryInterface flowRepository;
-
-    @Inject
-    PluginDefaultService pluginDefaultService;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -60,7 +57,7 @@ class TimeoutTest {
                 .build()))
             .build();
 
-        flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
+        flowRepository.create(GenericFlow.of(flow));
 
         Execution execution = runnerUtils.runOne(flow.getTenantId(), flow.getNamespace(), flow.getId());
 

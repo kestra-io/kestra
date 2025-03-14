@@ -5,6 +5,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
@@ -101,7 +102,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         FlowWithSource invalid = createScheduleFlow("Asia/Delhi", "schedule", true);
         FlowWithSource flow = createScheduleFlow("Europe/Paris", "schedule", false);
 
-        flowRepository.create(flow, flow.generateSource(), flow);
+        flowRepository.create(GenericFlow.of(flow));
         doReturn(List.of(invalid, flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -137,7 +138,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 executionId.add(execution.getId());
 
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    terminateExecution(execution, trigger, flow.withSource(flow.generateSource()));
+                    terminateExecution(execution, trigger, flow);
                 }
                 assertThat(execution.getFlowId(), is(flow.getId()));
                 queueCount.countDown();
@@ -430,7 +431,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             .when(flowListenersServiceSpy)
             .flows();
 
-        flowRepository.create(flow, flow.generateSource(), flow);
+        flowRepository.create(GenericFlow.of(flow));
         // to avoid waiting too much before a trigger execution, we add a last trigger with a date now - 1m.
         Trigger lastTrigger = Trigger
             .builder()
@@ -453,7 +454,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 assertThat(execution.getFlowId(), is(flow.getId()));
 
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    terminateExecution(execution, lastTrigger, flow.withSource(flow.generateSource()));
+                    terminateExecution(execution, lastTrigger, flow);
                 }
                 queueCount.countDown();
             }));
@@ -542,7 +543,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                     .build()
             )
         );
-        flowRepository.create(flow, flow.generateSource(), flow);
+        flowRepository.create(GenericFlow.of(flow));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -614,7 +615,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                     .build()
             )
         );
-        flowRepository.create(flow, flow.generateSource(), flow);
+        flowRepository.create(GenericFlow.of(flow));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -650,7 +651,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                                 lastTrigger.getNextExecutionDate().plusMinutes(3).toInstant()
                             ))))
                         .build()));
-                    terminateExecution(terminated, lastTrigger, flow.withSource(flow.generateSource()));
+                    terminateExecution(terminated, lastTrigger, flow);
                 }
                 queueCount.countDown();
             }));

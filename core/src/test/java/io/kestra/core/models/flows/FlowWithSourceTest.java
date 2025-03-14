@@ -22,7 +22,7 @@ import static org.hamcrest.Matchers.*;
 class FlowWithSourceTest {
     @Test
     void source() throws JsonProcessingException {
-        var flow = Flow.builder()
+        FlowWithSource flow = FlowWithSource.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .tasks(List.of(
@@ -37,9 +37,9 @@ class FlowWithSourceTest {
             ))
             .build();
 
-        FlowWithSource flowWithSource = FlowWithSource.of(flow, flow.generateSource());
+        flow = flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
 
-        String source = flowWithSource.getSource();
+        String source = flow.getSource();
 
         assertThat(source, not(containsString("deleted: false")));
         assertThat(source, containsString("format: |\n"));
@@ -60,7 +60,7 @@ class FlowWithSourceTest {
             .triggers(List.of(Schedule.builder().id("schedule").cron("0 1 9 * * *").build()));
 
         FlowWithSource flow = builder
-            .source(JacksonMapper.ofYaml().writeValueAsString(builder.build().toFlow()))
+            .source(JacksonMapper.ofYaml().writeValueAsString(builder.build()))
             .build();
 
         String source = flow.getSource();
@@ -73,7 +73,7 @@ class FlowWithSourceTest {
     @Test
     void of() {
         // test that all fields are transmitted to FlowWithSource
-        Flow flow = Flow.builder()
+        FlowWithSource flow = FlowWithSource.builder()
             .tenantId("tenantId")
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
@@ -132,7 +132,7 @@ class FlowWithSourceTest {
                     .build()
             )
             .build();
-        String expectedSource = flow.generateSource() + " # additional comment";
+        String expectedSource = flow.sourceOrGenerateIfNull() + " # additional comment";
         FlowWithSource of = FlowWithSource.of(flow, expectedSource);
 
         assertThat(of.equalsWithoutRevision(flow), is(true));

@@ -1,10 +1,9 @@
 package io.kestra.core.repositories;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.common.collect.ImmutableList;
 import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
@@ -12,12 +11,9 @@ import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.services.PluginDefaultService;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.flow.Template;
-import io.kestra.plugin.core.log.Log;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -50,6 +46,9 @@ import static org.mockito.Mockito.spy;
 @KestraTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public abstract class AbstractFlowRepositoryTest {
+    public static final String TEST_TENANT_ID = "tenant";
+    public static final String TEST_NAMESPACE = "io.kestra.unittest";
+    public static final String TEST_FLOW_ID = "test";
     @Inject
     protected FlowRepositoryInterface flowRepository;
 
@@ -59,32 +58,29 @@ public abstract class AbstractFlowRepositoryTest {
     @Inject
     private LocalFlowRepositoryLoader repositoryLoader;
 
-    @Inject
-    protected PluginDefaultService pluginDefaultService;
-
     @BeforeEach
     protected void init() throws IOException, URISyntaxException {
         TestsUtils.loads(repositoryLoader);
         FlowListener.reset();
     }
 
-    private static Flow.FlowBuilder<?, ?> builder() {
-        return builder(IdUtils.create(), "test");
+    private static FlowWithSource.FlowWithSourceBuilder<?, ?> builder() {
+        return builder(IdUtils.create(), TEST_FLOW_ID);
     }
 
-    private static Flow.FlowBuilder<?, ?> builder(String flowId, String taskId) {
-        return Flow.builder()
+    private static FlowWithSource.FlowWithSourceBuilder<?, ?> builder(String flowId, String taskId) {
+        return FlowWithSource.builder()
             .id(flowId)
-            .namespace("io.kestra.unittest")
-            .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.of("test")).build()));
+            .namespace(TEST_NAMESPACE)
+            .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()));
     }
 
     @Test
     void findById() {
-        Flow flow = builder()
+        FlowWithSource flow = builder()
             .revision(3)
             .build();
-        flow = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
+        flow = flowRepository.create(GenericFlow.of(flow));
         try {
             Optional<Flow> full = flowRepository.findById(null, flow.getNamespace(), flow.getId());
             assertThat(full.isPresent(), is(true));
@@ -99,10 +95,10 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     void findByIdWithoutAcl() {
-        Flow flow = builder()
+        FlowWithSource flow = builder()
             .revision(3)
             .build();
-        flow = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
+        flow = flowRepository.create(GenericFlow.of(flow));
         try {
             Optional<Flow> full = flowRepository.findByIdWithoutAcl(null, flow.getNamespace(), flow.getId(), Optional.empty());
             assertThat(full.isPresent(), is(true));
@@ -117,10 +113,11 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     void findByIdWithSource() {
-        Flow flow = builder()
+        FlowWithSource flow = builder()
             .revision(3)
             .build();
-        flow = flowRepository.create(flow, "# comment\n" + flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
+        String source = "# comment\n" + flow.sourceOrGenerateIfNull();
+        flow = flowRepository.create(GenericFlow.fromYaml(null, source));
 
         try {
             Optional<FlowWithSource> full = flowRepository.findByIdWithSource(null, flow.getNamespace(), flow.getId());
@@ -137,95 +134,9 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    protected void revision() throws JsonProcessingException {
-        String flowId = IdUtils.create();
-        // create with builder
-        Flow first = Flow.builder()
-            .id(flowId)
-            .namespace("io.kestra.unittest")
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
-            .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("a").build()))
-            .build();
-        // create with repository
-        FlowWithSource flow = flowRepository.create(first, first.generateSource(), pluginDefaultService.injectDefaults(first.withSource(first.generateSource())));
-
-        List<FlowWithSource> revisions;
-        try {
-            // submit new one, no change
-            Flow notSaved = flowRepository.update(flow, flow, first.generateSource(), pluginDefaultService.injectDefaults(flow));
-            assertThat(notSaved.getRevision(), is(flow.getRevision()));
-
-            // submit new one with change
-            Flow flowRev2 = Flow.builder()
-                .id(flowId)
-                .namespace("io.kestra.unittest")
-                .tasks(Collections.singletonList(
-                    Log.builder()
-                        .id(IdUtils.create())
-                        .type(Log.class.getName())
-                        .message("Hello World")
-                        .build()
-                ))
-                .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("b").build()))
-                .build();
-
-            // revision is incremented
-            FlowWithSource incremented = flowRepository.update(flowRev2, flow, flowRev2.generateSource(), pluginDefaultService.injectDefaults(flowRev2.withSource(flowRev2.generateSource())));
-            assertThat(incremented.getRevision(), is(2));
-
-            // revision is well saved
-            revisions = flowRepository.findRevisions(null, flow.getNamespace(), flow.getId());
-            assertThat(revisions.size(), is(2));
-
-            // submit the same one serialized, no changed
-            FlowWithSource incremented2 = flowRepository.update(
-                JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class),
-                flowRev2,
-                JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flowRev2), Flow.class).generateSource(),
-                pluginDefaultService.injectDefaults(flowRev2.withSource(flowRev2.generateSource()))
-            );
-            assertThat(incremented2.getRevision(), is(2));
-
-            // resubmit first one, revision is incremented
-            FlowWithSource incremented3 = flowRepository.update(
-                JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow.toFlow()), Flow.class),
-                flowRev2,
-                JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow.toFlow()), Flow.class).generateSource(),
-                pluginDefaultService.injectDefaults(JacksonMapper.ofJson().readValue(JacksonMapper.ofJson().writeValueAsString(flow.toFlow()), Flow.class).withSource(flow.getSource()))
-            );
-            assertThat(incremented3.getRevision(), is(3));
-        } finally {
-            deleteFlow(flow);
-        }
-
-        // revisions is still findable after delete
-        revisions = flowRepository.findRevisions(null, flow.getNamespace(), flow.getId());
-        assertThat(revisions.size(), is(4));
-
-
-        Optional<Flow> findDeleted = flowRepository.findById(
-            null,
-            flow.getNamespace(),
-            flow.getId(),
-            Optional.of(flow.getRevision())
-        );
-        assertThat(findDeleted.isPresent(), is(true));
-        assertThat(findDeleted.get().getRevision(), is(flow.getRevision()));
-
-        // recreate the first one, we have a new revision
-        Flow incremented4 = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
-
-        try {
-            assertThat(incremented4.getRevision(), is(5));
-        } finally {
-            deleteFlow(incremented4);
-        }
-    }
-
-    @Test
     void save() {
-        Flow flow = builder().revision(12).build();
-        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
+        FlowWithSource flow = builder().revision(12).build();
+        FlowWithSource save = flowRepository.create(GenericFlow.of(flow));
 
         try {
             assertThat(save.getRevision(), is(1));
@@ -236,8 +147,8 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     void saveNoRevision() {
-        Flow flow = builder().build();
-        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
+        FlowWithSource flow = builder().build();
+        FlowWithSource save = flowRepository.create(GenericFlow.of(flow));
 
         try {
             assertThat(save.getRevision(), is(1));
@@ -304,8 +215,8 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = builder()
             .revision(3)
             .build();
-        String flowSource = "# comment\n" + flow.generateSource();
-        flow = flowRepository.create(flow, flowSource, pluginDefaultService.injectDefaults(flow.withSource(flowSource)));
+        String flowSource = "# comment\n" + flow.sourceOrGenerateIfNull();
+        flow = flowRepository.create(GenericFlow.fromYaml(null, flowSource));
 
         try {
             List<FlowWithSource> save = flowRepository.findByNamespaceWithSource(null, flow.getNamespace());
@@ -360,7 +271,7 @@ public abstract class AbstractFlowRepositoryTest {
     void delete() {
         Flow flow = builder().build();
 
-        FlowWithSource save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
+        FlowWithSource save = flowRepository.create(GenericFlow.of(flow));
 
         try {
             assertThat(flowRepository.findById(null, save.getNamespace(), save.getId()).isPresent(), is(true));
@@ -384,12 +295,12 @@ public abstract class AbstractFlowRepositoryTest {
 
         Flow flow = Flow.builder()
             .id(flowId)
-            .namespace("io.kestra.unittest")
-            .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("a").build()))
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
+            .namespace(TEST_NAMESPACE)
+            .inputs(List.of(StringInput.builder().type(Type.STRING).id("a").build()))
+            .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()))
             .build();
 
-        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
+        Flow save = flowRepository.create(GenericFlow.of(flow));
 
         try {
             assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent(), is(true));
@@ -397,14 +308,14 @@ public abstract class AbstractFlowRepositoryTest {
             Flow update = Flow.builder()
                 .id(IdUtils.create())
                 .namespace("io.kestra.unittest2")
-                .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("b").build()))
-                .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
+                .inputs(List.of(StringInput.builder().type(Type.STRING).id("b").build()))
+                .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()))
                 .build();
             ;
 
             ConstraintViolationException e = assertThrows(
                 ConstraintViolationException.class,
-                () -> flowRepository.update(update, flow, update.generateSource(), pluginDefaultService.injectDefaults(update.withSource(update.generateSource())))
+                () -> flowRepository.update(GenericFlow.of(update), flow)
             );
 
             assertThat(e.getConstraintViolations().size(), is(2));
@@ -419,26 +330,26 @@ public abstract class AbstractFlowRepositoryTest {
 
         Flow flow = Flow.builder()
             .id(flowId)
-            .namespace("io.kestra.unittest")
+            .namespace(TEST_NAMESPACE)
             .triggers(Collections.singletonList(AbstractSchedulerTest.UnitTest.builder()
                 .id("sleep")
                 .type(AbstractSchedulerTest.UnitTest.class.getName())
                 .build()))
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
+            .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()))
             .build();
 
-        flow = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
+        flow = flowRepository.create(GenericFlow.of(flow));
         try {
             assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent(), is(true));
 
             Flow update = Flow.builder()
                 .id(flowId)
-                .namespace("io.kestra.unittest")
-                .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
+                .namespace(TEST_NAMESPACE)
+                .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()))
                 .build();
             ;
 
-            Flow updated = flowRepository.update(update, flow, update.generateSource(), pluginDefaultService.injectDefaults(update.withSource(update.generateSource())));
+            Flow updated = flowRepository.update(GenericFlow.of(update), flow);
             assertThat(updated.getTriggers(), is(nullValue()));
         } finally {
             deleteFlow(flow);
@@ -457,15 +368,15 @@ public abstract class AbstractFlowRepositoryTest {
 
         Flow flow = Flow.builder()
             .id(flowId)
-            .namespace("io.kestra.unittest")
+            .namespace(TEST_NAMESPACE)
             .triggers(Collections.singletonList(AbstractSchedulerTest.UnitTest.builder()
                 .id("sleep")
                 .type(AbstractSchedulerTest.UnitTest.class.getName())
                 .build()))
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
+            .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()))
             .build();
 
-        Flow save = flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow.withSource(flow.generateSource())));
+        Flow save = flowRepository.create(GenericFlow.of(flow));
         try {
             assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent(), is(true));
         } finally {
@@ -489,7 +400,7 @@ public abstract class AbstractFlowRepositoryTest {
         Template template = Template.builder()
             .id(IdUtils.create())
             .type(Template.class.getName())
-            .namespace("test")
+            .namespace(TEST_FLOW_ID)
             .templateId("testTemplate")
             .build();
 
@@ -501,15 +412,11 @@ public abstract class AbstractFlowRepositoryTest {
 
         Flow flow = Flow.builder()
             .id(IdUtils.create())
-            .namespace("io.kestra.unittest")
+            .namespace(TEST_NAMESPACE)
             .tasks(Collections.singletonList(templateSpy))
             .build();
 
-        flow = flowRepository.create(
-            flow,
-            flow.generateSource(),
-            flow
-        );
+        flow = flowRepository.create(GenericFlow.of(flow));
 
         try {
             Optional<Flow> found = flowRepository.findById(null, flow.getNamespace(), flow.getId());
@@ -523,44 +430,173 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    protected void lastRevision() {
-        String namespace = "io.kestra.unittest";
-        String flowId = IdUtils.create();
-        String tenantId = "tenant";
+    protected void shouldReturnNullRevisionForNonExistingFlow() {
+        assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, IdUtils.create()), nullValue());
+    }
 
-        assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), nullValue());
-
-        // create with builder
-        Flow first = Flow.builder()
-            .tenantId(tenantId)
-            .id(flowId)
-            .namespace(namespace)
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()))
-            .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("a").build()))
-            .build();
-        // create with repository
-        first = flowRepository.create(first, first.generateSource(), pluginDefaultService.injectDefaults(first.withSource(first.generateSource())));
+    @Test
+    protected void shouldReturnLastRevisionOnCreate() {
+        // Given
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
         try {
-            assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), is(1));
+            // When
+            toDelete.add(flowRepository.create(createTestingLogFlow(flowId, "???")));
+            Integer result = flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId);
 
-            // submit new one with change
-
-            Flow flowRev2 = first.toBuilder()
-                .tasks(Collections.singletonList(
-                    Log.builder()
-                        .id(IdUtils.create())
-                        .type(Log.class.getName())
-                        .message("Hello World")
-                        .build()
-                ))
-                .inputs(ImmutableList.of(StringInput.builder().type(Type.STRING).id("b").build()))
-                .build();
-
-            first = flowRepository.update(flowRev2, first, flowRev2.generateSource(), pluginDefaultService.injectDefaults(flowRev2.withSource(flowRev2.generateSource())));
-            assertThat(flowRepository.lastRevision(tenantId, namespace, flowId), is(2));
+            // Then
+            assertThat(result, is(1));
+            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId), is(1));
         } finally {
-            deleteFlow(first);
+            toDelete.forEach(this::deleteFlow);
         }
+    }
+
+    @Test
+    protected void shouldIncrementRevisionOnDelete() {
+        // Given
+        final String flowId = IdUtils.create();
+        FlowWithSource created = flowRepository.create(createTestingLogFlow(flowId, "first"));
+        assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size(), is(1));
+
+        // When
+        flowRepository.delete(created);
+
+        // Then
+        assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size(), is(2));
+    }
+
+    @Test
+    protected void shouldIncrementRevisionOnCreateAfterDelete() {
+        // Given
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+            // Given
+            flowRepository.delete(
+                flowRepository.create(createTestingLogFlow(flowId, "first"))
+            );
+
+            // When
+            toDelete.add(flowRepository.create(createTestingLogFlow(flowId, "second")));
+
+            // Then
+            assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size(), is(3));
+            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId), is(3));
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
+    protected void shouldReturnNullForLastRevisionAfterDelete() {
+        // Given
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+            // Given
+            FlowWithSource created = flowRepository.create(createTestingLogFlow(flowId, "first"));
+            toDelete.add(created);
+
+            FlowWithSource updated = flowRepository.update(createTestingLogFlow(flowId, "second"), created);
+            toDelete.add(updated);
+
+            // When
+            flowRepository.delete(updated);
+
+            // Then
+            assertThat(flowRepository.findById(TEST_TENANT_ID, TEST_NAMESPACE, flowId, Optional.empty()), is(Optional.empty()));
+            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId), is(nullValue()));
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
+    protected void shouldFindAllRevisionsAfterDelete() {
+        // Given
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+            // Given
+            FlowWithSource created = flowRepository.create(createTestingLogFlow(flowId, "first"));
+            toDelete.add(created);
+
+            FlowWithSource updated = flowRepository.update(createTestingLogFlow(flowId, "second"), created);
+            toDelete.add(updated);
+
+            // When
+            flowRepository.delete(updated);
+
+            // Then
+            assertThat(flowRepository.findById(TEST_TENANT_ID, TEST_NAMESPACE, flowId, Optional.empty()), is(Optional.empty()));
+            assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size(), is(3));
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
+    protected void shouldIncrementRevisionOnUpdateGivenNotEqualSource() {
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+
+            // Given
+            FlowWithSource created = flowRepository.create(createTestingLogFlow(flowId, "first"));
+            toDelete.add(created);
+
+            // When
+            FlowWithSource updated = flowRepository.update(createTestingLogFlow(flowId, "second"), created);
+            toDelete.add(updated);
+
+            // Then
+            assertThat(updated.getRevision(), is(2));
+            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId), is(2));
+
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
+    protected void shouldNotIncrementRevisionOnUpdateGivenEqualSource() {
+        final List<Flow> toDelete = new ArrayList<>();
+        final String flowId = IdUtils.create();
+        try {
+
+            // Given
+            FlowWithSource created = flowRepository.create(createTestingLogFlow(flowId, "first"));
+            toDelete.add(created);
+
+            // When
+            FlowWithSource updated = flowRepository.update(createTestingLogFlow(flowId, "first"), created);
+            toDelete.add(updated);
+
+            // Then
+            assertThat(updated.getRevision(), is(1));
+            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId), is(1));
+
+        } finally {
+            toDelete.forEach(this::deleteFlow);
+        }
+    }
+
+    @Test
+    void shouldReturnForFindGivenQueryWildcard() {
+        ArrayListTotal<Flow> flows = flowRepository.find(Pageable.from(1, 10), "*", null, null, null, Map.of());
+        assertThat(flows.size(), is(10));
+        assertThat(flows.getTotal(), is(Helpers.FLOWS_COUNT));
+    }
+
+    @Test
+    void shouldReturnForGivenQueryWildCardFilters() {
+        List<QueryFilter> filters = List.of(
+           QueryFilter.builder().field(QueryFilter.Field.QUERY).operation(QueryFilter.Op.EQUALS).value("*").build()
+        );
+        ArrayListTotal<Flow> flows = flowRepository.find(Pageable.from(1, 10), null, filters);
+        assertThat(flows.size(), is(10));
+        assertThat(flows.getTotal(), is(Helpers.FLOWS_COUNT));
     }
 
     @Test
@@ -568,7 +604,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = builder()
             .revision(1)
             .build();
-        flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        flowRepository.create(GenericFlow.of(flow));
         Execution execution = Execution.builder()
             .id(IdUtils.create())
             .namespace(flow.getNamespace())
@@ -599,7 +635,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow flow = builder()
             .revision(3)
             .build();
-        flowRepository.create(flow, flow.generateSource(), pluginDefaultService.injectDefaults(flow));
+        flowRepository.create(GenericFlow.of(flow));
         Execution execution = Execution.builder()
             .id(IdUtils.create())
             .namespace(flow.getNamespace())
@@ -629,8 +665,8 @@ public abstract class AbstractFlowRepositoryTest {
         FlowWithSource toDelete = null;
         try {
             // Given
-            Flow flow = createTestFlowForNamespace("io.kestra.unittest");
-            toDelete = flowRepository.create(flow, "", flow);
+            Flow flow = createTestFlowForNamespace(TEST_NAMESPACE);
+            toDelete = flowRepository.create(GenericFlow.of(flow));
             // When
             int count = flowRepository.count(null);
 
@@ -647,14 +683,14 @@ public abstract class AbstractFlowRepositoryTest {
     void shouldCountForNullTenantGivenNamespace() {
         List<FlowWithSource> toDelete = new ArrayList<>();
         try {
-            toDelete.add(flowRepository.create(createTestFlowForNamespace("io.kestra.unittest.sub"), "", createTestFlowForNamespace("io.kestra.unittest.sub")));
-            toDelete.add(flowRepository.create(createTestFlowForNamespace("io.kestra.unittest.shouldcountbynamespacefornulltenant"), "", createTestFlowForNamespace("io.kestra.unittest.shouldcountbynamespacefornulltenant")));
-            toDelete.add(flowRepository.create(createTestFlowForNamespace("com.kestra.unittest"), "", createTestFlowForNamespace("com.kestra.unittest")));
+            toDelete.add(flowRepository.create(GenericFlow.of(createTestFlowForNamespace("io.kestra.unittest.sub"))));
+            toDelete.add(flowRepository.create(GenericFlow.of(createTestFlowForNamespace("io.kestra.unittest.shouldcountbynamespacefornulltenant"))));
+            toDelete.add(flowRepository.create(GenericFlow.of(createTestFlowForNamespace("com.kestra.unittest"))));
 
             int count = flowRepository.countForNamespace(null, "io.kestra.unittest.shouldcountbynamespacefornulltenant");
             assertThat(count, is(1));
 
-            count = flowRepository.countForNamespace(null, "io.kestra.unittest");
+            count = flowRepository.countForNamespace(null, TEST_NAMESPACE);
             assertThat(count, is(2));
         } finally {
             for (FlowWithSource flow : toDelete) {
@@ -676,8 +712,12 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     private void deleteFlow(Flow flow) {
-        Integer revision = flowRepository.lastRevision(flow.getTenantId(), flow.getNamespace(), flow.getId());
-        flowRepository.delete(flow.toBuilder().revision(revision).build().withSource(flow.generateSource()));
+        if (flow == null) {
+            return;
+        }
+        flowRepository
+            .findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId())
+            .ifPresent(delete -> flowRepository.delete(flow.toBuilder().revision(null).build()));
     }
 
     @Singleton
@@ -694,4 +734,17 @@ public abstract class AbstractFlowRepositoryTest {
             emits = new ArrayList<>();
         }
     }
+
+    private static GenericFlow createTestingLogFlow(String id, String logMessage) {
+        String source = """
+               id: %s
+               namespace: %s
+               tasks:
+                 - id: log
+                   type: io.kestra.plugin.core.log.Log
+                   message: %s
+            """.formatted(id, TEST_NAMESPACE, logMessage);
+        return GenericFlow.fromYaml(TEST_TENANT_ID, source);
+    }
+
 }

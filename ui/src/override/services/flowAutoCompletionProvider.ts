@@ -33,7 +33,8 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion {
             "parents",
             "error",
             "secret(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:MY_SECRET}" + QUOTE + ")",
-            "kv(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:my_key}" + QUOTE + ")"
+            "kv(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:my_key}" + QUOTE + ")",
+            "kestra"
         ]);
     }
 
@@ -102,6 +103,8 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion {
                 return Promise.resolve(["id", "startDate", "attemptsCount", "parentId", "value", "iteration"]);
             case "error":
                 return Promise.resolve(["taskId", "message", "stackTrace"]);
+            case "kestra":
+                return Promise.resolve(["environment", "url"]);
             default: {
                 const match = parentField.match(/^outputs\.([^.]+)$/);
                 if (match) {

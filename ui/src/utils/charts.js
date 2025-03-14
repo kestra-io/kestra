@@ -91,8 +91,28 @@ export function defaultConfig(override, theme) {
     );
 }
 
-export function chartClick(moment, router, route, event) {
+export function chartClick(moment, router, route, event, parsedData, elements, type = "label") {
     const query = {};
+
+    if (elements && parsedData) {
+        if (elements.length > 0) {
+            const element = elements[0];
+            let state;
+            if (type === "label") {
+                // For Bar charts that use dataset labels for state
+                state = parsedData.datasets[element.datasetIndex].label;
+            } else if (type === "dataset") {
+                // For Pie/Doughnut charts that use labels array for state
+                state = parsedData.labels[element.index];
+            }
+            if (state) {
+                query.state = state;
+                query.scope = "USER";
+                query.size = 100;
+                query.page = 1;
+            }
+        }
+    }
 
     if (event.date) {
         const formattedDate = moment(

@@ -66,8 +66,6 @@
             borderSkipped: false,
             borderColor: "transparent",
             borderWidth: 2,
-            responsive: true,
-            maintainAspectRatio: false,
             plugins: {
                 ...(chartOptions.legend.enabled
                     ? {

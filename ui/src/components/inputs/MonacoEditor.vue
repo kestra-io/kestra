@@ -19,7 +19,7 @@
     import {yamlSchemas} from "override/utils/yamlSchemas";
     import {editorViewTypes} from "../../utils/constants";
     import Utils from "../../utils/utils";
-    import YamlUtils from "../../utils/yamlUtils";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {QUOTE, YamlNoAutoCompletion} from "../../services/autoCompletionProvider.js"
     import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider.js";
     import RegexProvider from "../../utils/regex";
@@ -236,10 +236,10 @@
                 async provideCompletionItems(model, position) {
                     const source = model.getValue();
                     const cursorPosition = model.getOffsetAt(position);
-                    const parsed = YamlUtils.parse(source, false);
+                    const parsed = YAML_UTILS.parse(source, false);
 
                     const currentWord = model.findPreviousMatch(RegexProvider.beforeSeparator(), position, true, false, null, true);
-                    const elementUnderCursor = YamlUtils.localizeElementAtIndex(source, cursorPosition);
+                    const elementUnderCursor = YAML_UTILS.localizeElementAtIndex(source, cursorPosition);
                     if (elementUnderCursor?.key === undefined) {
                         return NO_SUGGESTIONS;
                     }
@@ -323,7 +323,7 @@
                 triggerCharacters: ["("],
                 async provideCompletionItems(model, position) {
                     const source = model.getValue();
-                    const parsed = YamlUtils.parse(source, false);
+                    const parsed = YAML_UTILS.parse(source, false);
 
                     const functionMatcher = model.findPreviousMatch(RegexProvider.capturePebbleFunction + "$", position, true, false, null, true);
                     if (functionMatcher === null) {
@@ -365,7 +365,7 @@
                 triggerCharacters: ["."],
                 async provideCompletionItems(model, position) {
                     const source = model.getValue();
-                    const parsed = YamlUtils.parse(source, false);
+                    const parsed = YAML_UTILS.parse(source, false);
 
                     const parentFieldMatcher = model.findPreviousMatch(RegexProvider.capturePebbleVarParent + "$", position, true, false, null, true);
                     if (parentFieldMatcher === null) {

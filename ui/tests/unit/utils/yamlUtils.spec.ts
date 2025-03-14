@@ -1,5 +1,5 @@
 import {describe, expect, it} from "vitest"
-import YamlUtils from "../../../src/utils/yamlUtils";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
 export const flat = `
 id: flat
@@ -82,9 +82,9 @@ thirdMap:
   extraField: "thirdMap"
 `
 
-describe("YamlUtils", () => {
+describe("Yaml Utils", () => {
     it("extractMaps with field conditions", () => {
-        const extractMaps = YamlUtils.extractMaps(extractMapsSample, {
+        const extractMaps = YAML_UTILS.extractMaps(extractMapsSample, {
             populatedField: {
                 populated: true
             },
@@ -102,32 +102,32 @@ describe("YamlUtils", () => {
     })
 
     it("extractTask from a flat flow", () => {
-        const doc = YamlUtils.extractTask(flat, "1-1", "tasks");
+        const doc = YAML_UTILS.extractTask(flat, "1-1", "tasks");
 
         expect(doc.toString()).toContain("\"1-1\"");
         expect(doc.toString()).toContain("# comment to keep");
     })
 
     it("extractTask from a flowable flow", () => {
-        const doc = YamlUtils.extractTask(flowable, "1-2", "tasks");
+        const doc = YAML_UTILS.extractTask(flowable, "1-2", "tasks");
 
         expect(doc.toString()).toContain("\"1-2\"");
     })
 
     it("extractTask from a plugin flow", () => {
-        const doc = YamlUtils.extractTask(plugins, "1-1", "tasks");
+        const doc = YAML_UTILS.extractTask(plugins, "1-1", "tasks");
 
         expect(doc.toString()).toContain("\"1-1\"");
     })
 
     it("extractTask undefined from a flowable flow", () => {
-        const doc = YamlUtils.extractTask(flowable, "X-X", "tasks");
+        const doc = YAML_UTILS.extractTask(flowable, "X-X", "tasks");
 
         expect(doc).toBe(undefined);
     })
 
     it("replace from a flat flow", () => {
-        const doc = YamlUtils.replaceTaskInDocument(flat, "1-1", replace, "tasks");
+        const doc = YAML_UTILS.replaceTaskInDocument(flat, "1-1", replace, "tasks");
 
         expect(doc.toString()).toContain("\"replaced\"");
         expect(doc.toString()).toContain("echo \"1-2\"");
@@ -136,7 +136,7 @@ describe("YamlUtils", () => {
     })
 
     it("replace from a flowable flow", () => {
-        const doc = YamlUtils.replaceTaskInDocument(flowable, "1-2", replace, "tasks");
+        const doc = YAML_UTILS.replaceTaskInDocument(flowable, "1-2", replace, "tasks");
 
         expect(doc.toString()).toContain("\"replaced\"");
         expect(doc.toString()).toContain("echo \"1-1\"");
@@ -144,7 +144,7 @@ describe("YamlUtils", () => {
     })
 
     it("replace from a plugin flow", () => {
-        const doc = YamlUtils.replaceTaskInDocument(plugins, "1-1", replace, "tasks");
+        const doc = YAML_UTILS.replaceTaskInDocument(plugins, "1-1", replace, "tasks");
 
         expect(doc.toString()).toContain("\"replaced\"");
         expect(doc.toString()).toContain("unittest.Example");
@@ -156,7 +156,7 @@ describe("YamlUtils", () => {
 c:
   d: e
   f:`;
-        expect(YamlUtils.localizeElementAtIndex(yaml, 14)).toEqual({
+        expect(YAML_UTILS.localizeElementAtIndex(yaml, 14)).toEqual({
             key: "d",
             value: "e",
             parents: [
@@ -186,17 +186,17 @@ c:
   d: e
   f:
     `;
-        expect(YamlUtils.extractIndentAndMaybeYamlKey(fourCharsIndent)).toEqual({
+        expect(YAML_UTILS.extractIndentAndMaybeYamlKey(fourCharsIndent)).toEqual({
             indent: 4,
             yamlKey: undefined,
             valueStartIndex: undefined
         });
-        expect(YamlUtils.extractIndentAndMaybeYamlKey(fourCharsIndent + "g: h")).toEqual({
+        expect(YAML_UTILS.extractIndentAndMaybeYamlKey(fourCharsIndent + "g: h")).toEqual({
             indent: 4,
             yamlKey: "g",
             valueStartIndex: 27
         });
-        expect(YamlUtils.extractIndentAndMaybeYamlKey(fourCharsIndent + "g:\n      h: i")).toEqual({
+        expect(YAML_UTILS.extractIndentAndMaybeYamlKey(fourCharsIndent + "g:\n      h: i")).toEqual({
             indent: 6,
             yamlKey: "h",
             valueStartIndex: 36
@@ -209,7 +209,7 @@ c:
   d: e
   f:
     g: h`;
-        expect(YamlUtils.getParentKeyByChildIndent(yaml, 4)).toEqual({key: "f", valueStartIndex: 19});
-        expect(YamlUtils.getParentKeyByChildIndent(yaml, 2)).toEqual({key: "c", valueStartIndex: 7});
+        expect(YAML_UTILS.getParentKeyByChildIndent(yaml, 4)).toEqual({key: "f", valueStartIndex: 19});
+        expect(YAML_UTILS.getParentKeyByChildIndent(yaml, 2)).toEqual({key: "c", valueStartIndex: 7});
     })
 })

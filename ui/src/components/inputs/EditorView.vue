@@ -458,7 +458,7 @@
     import PluginDocumentation from "../plugins/PluginDocumentation.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import YamlUtils from "../../utils/yamlUtils";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import TaskEditor from "../flows/TaskEditor.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
     import Editor from "./Editor.vue";
@@ -737,7 +737,7 @@
     const flowHaveTasks = (source) => {
         if (isFlow()) {
             const flow = props.isCreating ? props.flow.source : (source ? source : flowYaml.value);
-            return flow ? YamlUtils.flowHaveTasks(flow) : false;
+            return flow ? YAML_UTILS.flowHaveTasks(flow) : false;
         } else return false;
     };
 
@@ -870,7 +870,7 @@
 
     const updatePluginDocumentation = (event, task) => {
         const pluginSingleList = store.getters["plugin/getPluginSingleList"];
-        const taskType = task !== undefined ? task : YamlUtils.getMapAtPosition(event.model.getValue(), event.position, "type").type;
+        const taskType = task !== undefined ? task : YAML_UTILS.getMapAtPosition(event.model.getValue(), event.position, "type").type;
         if (taskType) {
             if (pluginSingleList.includes(taskType)) {
                 store.dispatch("plugin/load", {cls: taskType}).then((plugin) => {
@@ -916,7 +916,7 @@
                         title: t("readonly property"),
                         message: t("namespace and id readonly"),
                     });
-                    flowYaml.value = YamlUtils.replaceIdAndNamespace(
+                    flowYaml.value = YAML_UTILS.replaceIdAndNamespace(
                         flowYaml.value,
                         routeParams.id,
                         routeParams.namespace
@@ -982,7 +982,7 @@
 
     const onSaveNewTrigger = () => {
         const source = flowYaml.value;
-        const existingTask = YamlUtils.checkTaskAlreadyExist(
+        const existingTask = YAML_UTILS.checkTaskAlreadyExist(
             source,
             newTrigger.value
         );
@@ -994,7 +994,7 @@
             });
             return;
         }
-        onEdit(YamlUtils.insertTrigger(source, newTrigger.value), true);
+        onEdit(YAML_UTILS.insertSection("triggers", source, newTrigger.value), true);
         newTrigger.value = null;
         isNewTriggerOpen.value = false;
         haveChange.value = true;
@@ -1016,7 +1016,7 @@
 
     const onSaveNewError = () => {
         const source = flowYaml.value;
-        const existingTask = YamlUtils.checkTaskAlreadyExist(
+        const existingTask = YAML_UTILS.checkTaskAlreadyExist(
             source,
             newError.value
         );
@@ -1028,13 +1028,13 @@
             });
             return;
         }
-        onEdit(YamlUtils.insertError(source, newError.value), true);
+        onEdit(YAML_UTILS.insertSection("errors", source, newError.value), true);
         newError.value = null;
         isNewErrorOpen.value = false;
     };
 
     const getFlowMetadata = () => {
-        return YamlUtils.getMetadata(flowYaml.value);
+        return YAML_UTILS.getMetadata(flowYaml.value);
     };
 
     const checkRequiredMetadata = () => {
@@ -1078,7 +1078,7 @@
 
     const onSaveMetadata = () => {
         const source = flowYaml.value;
-        flowYaml.value = YamlUtils.updateMetadata(source, metadata.value);
+        flowYaml.value = YAML_UTILS.updateMetadata(source, metadata.value);
         metadata.value = null;
         isEditMetadataOpen.value = false;
         haveChange.value = true;
@@ -1121,7 +1121,7 @@
 
     const flowParsed = computed(() => {
         try {
-            return YamlUtils.parse(flowYaml.value);
+            return YAML_UTILS.parse(flowYaml.value);
         } catch {
             return undefined;
         }

@@ -6,7 +6,6 @@ import Delete from "vue-material-design-icons/Delete.vue";
 import Editor from "../components/inputs/Editor.vue";
 import RouteContext from "./routeContext";
 import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-import yamlUtils from "../utils/yamlUtils";
 import action from "../models/action";
 import permission from "../models/permission";
 import {pageFromRoute} from "../utils/eventsRouter";
@@ -262,7 +261,7 @@ export default {
             }
         },
         updatePluginDocumentation(event) {
-            const taskType = yamlUtils.getTaskType(event.model.getValue(), event.position, this.pluginSingleList)
+            const taskType = YAML_UTILS.getTaskType(event.model.getValue(), event.position, this.pluginSingleList)
             if (taskType) {
                 this.$store.dispatch("plugin/load", {cls: taskType})
                     .then(plugin => {

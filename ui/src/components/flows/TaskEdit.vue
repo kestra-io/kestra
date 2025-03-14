@@ -89,7 +89,6 @@
 </script>
 
 <script>
-    import YamlUtils from "../../utils/yamlUtils";
     import Editor from "../inputs/Editor.vue";
     import TaskEditor from "./TaskEditor.vue";
     import Drawer from "../Drawer.vue";
@@ -201,7 +200,7 @@
                     }
                 }
 
-                return YamlUtils.extractTask(this.source, taskId).toString();
+                return YAML_UTILS.extractTask(this.source, taskId).toString();
             },
             saveTask() {
                 this.$emit("update:task", this.taskYaml);

@@ -1,4 +1,4 @@
-import YamlUtils from "../../../utils/yamlUtils";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
 export default {
     props: {
@@ -105,7 +105,7 @@ export default {
                 return this.values;
             }
 
-            return YamlUtils.stringify(this.values);
+            return YAML_UTILS.stringify(this.values);
         },
         info() {
             return `${this.schema.title || this.schema.type}`

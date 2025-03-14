@@ -1,4 +1,4 @@
-import YamlUtils from "../utils/yamlUtils";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 
@@ -109,7 +109,7 @@ export default {
                 })
         },
         saveFlow({commit, _dispatch}, options) {
-            const flowData = YamlUtils.parse(options.flow)
+            const flowData = YAML_UTILS.parse(options.flow)
             return this.$http.put(`${apiUrl(this)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
                     if (response.status >= 300) {
@@ -165,16 +165,16 @@ export default {
         },
         loadGraphFromSource({commit, state}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
-            const flowParsed = YamlUtils.parse(options.flow);
+            const flowParsed = YAML_UTILS.parse(options.flow);
             let flowSource = options.flow
             if (!flowParsed.id || !flowParsed.namespace) {
-                flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
+                flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
             return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config, withCredentials: true})
                 .then(response => {
                     commit("setFlowGraph", response.data)
 
-                    let flow = YamlUtils.parse(options.flow);
+                    let flow = YAML_UTILS.parse(options.flow);
                     flow.id = state.flow?.id ?? flow.id;
                     flow.namespace = state.flow?.namespace ?? flow.namespace;
                     flow.source = options.flow;
@@ -206,10 +206,10 @@ export default {
         },
         getGraphFromSourceResponse({_commit}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
-            const flowParsed = YamlUtils.parse(options.flow);
+            const flowParsed = YAML_UTILS.parse(options.flow);
             let flowSource = options.flow
             if (!flowParsed.id || !flowParsed.namespace) {
-                flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
+                flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
             return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config})
                 .then(response => response.data)

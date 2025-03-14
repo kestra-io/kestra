@@ -871,7 +871,6 @@
     const updatePluginDocumentation = (event, task) => {
         const pluginSingleList = store.getters["plugin/getPluginSingleList"];
         const taskType = task !== undefined ? task : YamlUtils.getMapAtPosition(event.model.getValue(), event.position, "type")?.type;
-        console.log(taskType);
         if (taskType) {
             if (pluginSingleList.includes(taskType)) {
                 store.dispatch("plugin/load", {cls: taskType}).then((plugin) => {

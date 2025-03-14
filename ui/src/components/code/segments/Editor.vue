@@ -230,23 +230,23 @@
         else return rest;
     };
 
-    import YamlUtils from "../../../utils/yamlUtils";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     const getSectionTitle = (label: string, elements = []) => {
         const title = t(`no_code.sections.${label}`);
         return {title, elements};
     };
     const sections = computed((): CollapseItem[] => {
         return [
-            getSectionTitle("tasks", YamlUtils.parse(props.flow).tasks ?? []),
-            getSectionTitle("triggers", YamlUtils.parse(props.flow).triggers ?? []),
+            getSectionTitle("tasks", YAML_UTILS.parse(props.flow)?.tasks ?? []),
+            getSectionTitle("triggers", YAML_UTILS.parse(props.flow)?.triggers ?? []),
             getSectionTitle(
                 "error_handlers",
-                YamlUtils.parse(props.flow).errors ?? [],
+                YAML_UTILS.parse(props.flow)?.errors ?? [],
             ),
-            getSectionTitle("finally", YamlUtils.parse(props.flow).finally ?? []),
+            getSectionTitle("finally", YAML_UTILS.parse(props.flow)?.finally ?? []),
             getSectionTitle(
                 "after_execution",
-                YamlUtils.parse(props.flow).afterExecution ?? [],
+                YAML_UTILS.parse(props.flow)?.afterExecution ?? [],
             ),
         ];
     });

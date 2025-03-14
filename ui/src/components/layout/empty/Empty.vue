@@ -20,8 +20,8 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    const LOCATION: string = `../../assets/empty/visuals/${props.type}.png`;
-    const src = computed((): string => new URL(LOCATION, import.meta.url).href);
+    import {images} from "./images";
+    const src = computed((): string => images[props.type]);
 </script>
 
 <style scoped lang="scss">
@@ -30,10 +30,11 @@
     height: 100%;
     padding: 3rem 0;
     text-align: center;
-    background: top center / auto no-repeat url("../../assets/empty/background/light.svg#file");
+    background: top center / auto no-repeat
+        url("./assets/background/light.svg#file");
 
     html.dark & {
-        background-image: url("../../assets/empty/background/dark.svg#file");
+        background-image: url("./assets/background/dark.svg#file");
     }
 
     h2 {

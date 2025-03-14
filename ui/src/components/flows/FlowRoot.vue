@@ -24,7 +24,7 @@
     import Tabs from "../Tabs.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
-    import Empty from "../layout/Empty.vue";
+    import Empty from "../layout/empty/Empty.vue";
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";

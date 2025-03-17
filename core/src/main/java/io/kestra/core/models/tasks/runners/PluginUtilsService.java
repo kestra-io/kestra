@@ -23,11 +23,12 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static io.kestra.core.runners.RunContextLogger.ORIGINAL_TIMESTAMP_KEY;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 abstract public class PluginUtilsService {
@@ -166,7 +167,7 @@ abstract public class PluginUtilsService {
         }
     }
 
-    public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr, Timestamp customTimestamp) {
+    public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr, Instant customInstant) {
         Matcher m = PATTERN.matcher(line);
         Map<String, Object> outputs = new HashMap<>();
 
@@ -185,12 +186,10 @@ abstract public class PluginUtilsService {
                 if (bashCommand.getLogs() != null) {
                     bashCommand.getLogs().forEach(logLine -> {
                         try {
-                            if (customTimestamp != null) {
-                                runContext.setRunContextLoggerTimestamp(customTimestamp);
-                            }
                             LoggingEventBuilder builder = runContext
                                 .logger()
-                                .atLevel(logLine.getLevel());
+                                .atLevel(logLine.getLevel())
+                                .addKeyValue(ORIGINAL_TIMESTAMP_KEY, customInstant);
                             builder.log(logLine.getMessage());
                         } catch (Exception e) {
                             logger.warn("Invalid log '{}'", m.group(1), e);

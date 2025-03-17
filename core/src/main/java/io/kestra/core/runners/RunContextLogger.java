@@ -18,18 +18,18 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
 import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class RunContextLogger implements Supplier<org.slf4j.Logger> {
-    private static final int MAX_MESSAGE_LENGTH = 1024*10;
+    private static final int MAX_MESSAGE_LENGTH = 1024 * 10;
+    public static final String ORIGINAL_TIMESTAMP_KEY = "originalTimestamp";
 
     private final String loggerName;
     private volatile Logger logger; // must be volatile as it is built lazily via DCL
@@ -41,9 +41,6 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     @Getter
     private File logFile;
     private OutputStream logFileOS;
-    @Setter
-    @Getter
-    private Timestamp customTimestamp;
 
     @VisibleForTesting
     public RunContextLogger() {
@@ -280,6 +277,16 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             try {
                 String message = replaceSecret(event.getMessage());
                 Object[] argumentArray = replaceSecret(event.getArgumentArray());
+                Instant customTimestamp = null;
+
+                if (event.getKeyValuePairs() != null) {
+                    var originalTimestampKv = event.getKeyValuePairs().stream().filter((kv) -> kv.key.equals(ORIGINAL_TIMESTAMP_KEY)).findFirst();
+                    if (originalTimestampKv.isPresent()) {
+                        if (originalTimestampKv.get().value instanceof Instant instant) {
+                            customTimestamp = instant;
+                        }
+                    }
+                }
 
                 var lle = new LoggingEvent(
                     "ch.qos.logback.classic.Logger",
@@ -289,8 +296,8 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     event.getThrowableProxy() instanceof ThrowableProxy throwableProxy ? throwableProxy.getThrowable() : null,
                     argumentArray
                 );
-                if (this.runContextLogger.getCustomTimestamp() != null) {
-                    lle.setTimeStamp(this.runContextLogger.getCustomTimestamp().getTime());
+                if (customTimestamp != null) {
+                    lle.setTimeStamp(customTimestamp.toEpochMilli());
                 }
                 return lle;
             } catch (Throwable e) {
@@ -328,6 +335,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     public static class FileAppender extends BaseAppender {
         private static final ch.qos.logback.classic.Logger LOGGER = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("flow");
         private static final PatternLayout PATTERN_LAYOUT = new PatternLayout();
+
         static {
             // the pattern is the same as in core/src/main/base.xml except that we remove the coloring
             PATTERN_LAYOUT.setPattern("%d{ISO8601} %-5.5level %-12.36thread %-12.36logger{36} %msg%n");

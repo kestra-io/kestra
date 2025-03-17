@@ -1,5 +1,6 @@
 package io.kestra.core.models.tasks.runners;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
@@ -11,7 +12,6 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -22,11 +22,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -98,7 +99,7 @@ public abstract class AbstractTaskRunnerTest {
 
         Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
             @Override
-            public void accept(String line, Boolean isStdErr, Timestamp timestamp) {
+            public void accept(String line, Boolean isStdErr, Instant instant) {
                 logsWithIsStdErr.put(line, isStdErr);
                 defaultLogConsumer.accept(line, isStdErr);
             }

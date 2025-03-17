@@ -430,8 +430,6 @@
     "execute the flow": "Выполнить flow <code>{id}</code>",
     "execution": "Выполнение",
     "execution already finished": "Выполнение <code>{executionId}</code> уже завершено",
-    "execution failed header": "Выполнение FAILED!",
-    "execution failed message": "С последней ошибкой: <code>{message}</code>",
     "execution labels": "Метки выполнения",
     "execution not found": "Выполнение <code>{executionId}</code> не найдено",
     "execution not in state FAILED": "Выполнение <code>{executionId}</code> не в состоянии FAILED",
@@ -448,6 +446,7 @@
       "metrics": "Удалить метрики",
       "storage": "Удалить внутренние файлы хранения"
     },
+    "execution_failed": "Выполнение FAILED! Последняя ошибка была",
     "execution_guide": {
       "get_started": {
         "text": "Следуйте Руководству по быстрому старту, чтобы установить Kestra и начать создавать свои первые workflows.",

@@ -430,8 +430,6 @@
     "execute the flow": "Flow <code>{id}</code>を実行",
     "execution": "Execution",
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",
-    "execution failed header": "実行がFAILEDしました！",
-    "execution failed message": "最後のエラー: <code>{message}</code>",
     "execution labels": "実行ラベル",
     "execution not found": "実行<code>{executionId}</code>が見つかりません",
     "execution not in state FAILED": "実行<code>{executionId}</code>はFAILED状態ではありません",
@@ -448,6 +446,7 @@
       "metrics": "メトリクスを削除",
       "storage": "内部ストレージファイルを削除"
     },
+    "execution_failed": "実行に失敗しました！最後のエラーは",
     "execution_guide": {
       "get_started": {
         "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。",

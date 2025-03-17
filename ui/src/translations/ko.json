@@ -430,8 +430,6 @@
     "execute the flow": "Flow <code>{id}</code> 실행",
     "execution": "실행",
     "execution already finished": "실행 <code>{executionId}</code>이(가) 이미 완료되었습니다",
-    "execution failed header": "실행 실패!",
-    "execution failed message": "마지막 오류: <code>{message}</code>",
     "execution labels": "실행 라벨",
     "execution not found": "실행 <code>{executionId}</code>을(를) 찾을 수 없습니다",
     "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",
@@ -448,6 +446,7 @@
       "metrics": "메트릭 삭제",
       "storage": "내부 저장소 파일 삭제"
     },
+    "execution_failed": "실행 실패! 마지막 오류는",
     "execution_guide": {
       "get_started": {
         "text": "Quickstart Guide를 따라 Kestra를 설치하고 첫 번째 workflow를 구축하세요.",

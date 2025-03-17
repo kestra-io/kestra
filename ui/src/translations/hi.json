@@ -430,8 +430,6 @@
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "execution": "निष्पादन",
     "execution already finished": "निष्पादन <code>{executionId}</code> पहले ही समाप्त हो चुका है",
-    "execution failed header": "निष्पादन FAILED!",
-    "execution failed message": "अंतिम त्रुटि के साथ: <code>{message}</code>",
     "execution labels": "निष्पादन labels",
     "execution not found": "निष्पादन <code>{executionId}</code> नहीं मिला",
     "execution not in state FAILED": "निष्पादन <code>{executionId}</code> FAILED स्थिति में नहीं है",
@@ -448,6 +446,7 @@
       "metrics": "Metrics हटाएं",
       "storage": "आंतरिक स्टोरेज फाइलें हटाएं"
     },
+    "execution_failed": "निष्पादन FAILED! अंतिम त्रुटि थी",
     "execution_guide": {
       "get_started": {
         "text": "क्विकस्टार्ट गाइड का पालन करें ताकि आप Kestra को इंस्टॉल कर सकें और अपनी पहली workflows बनाना शुरू कर सकें।",

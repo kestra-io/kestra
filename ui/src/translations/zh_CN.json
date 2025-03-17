@@ -430,8 +430,6 @@
     "execute the flow": "执行流程 <code>{id}</code>",
     "execution": "执行",
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
-    "execution failed header": "执行失败！",
-    "execution failed message": "最后错误：<code>{message}</code>",
     "execution labels": "执行标签",
     "execution not found": "未找到执行 <code>{executionId}</code>",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
@@ -448,6 +446,7 @@
       "metrics": "删除指标",
       "storage": "删除内部存储文件"
     },
+    "execution_failed": "执行失败！最后的错误是",
     "execution_guide": {
       "get_started": {
         "text": "请按照快速入门指南安装Kestra并开始构建您的第一个工作流。",

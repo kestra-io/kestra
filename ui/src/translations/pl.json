@@ -430,8 +430,6 @@
     "execute the flow": "Wykonaj flow <code>{id}</code>",
     "execution": "Wykonanie",
     "execution already finished": "Wykonanie <code>{executionId}</code> już zakończone",
-    "execution failed header": "Wykonanie nie powiodło się!",
-    "execution failed message": "Z ostatnim błędem: <code>{message}</code>",
     "execution labels": "Etykiety wykonania",
     "execution not found": "Wykonanie <code>{executionId}</code> nie znalezione",
     "execution not in state FAILED": "Wykonanie <code>{executionId}</code> nie jest w stanie FAILED",
@@ -448,6 +446,7 @@
       "metrics": "Usuń metrics",
       "storage": "Usuń wewnętrzne pliki storage"
     },
+    "execution_failed": "Wykonanie nie powiodło się! Ostatni błąd to",
     "execution_guide": {
       "get_started": {
         "text": "Postępuj zgodnie z Przewodnikiem Szybkiego Startu, aby zainstalować Kestra i rozpocząć tworzenie swoich pierwszych workflowów.",

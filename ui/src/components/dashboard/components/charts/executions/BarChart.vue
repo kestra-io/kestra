@@ -12,6 +12,13 @@
     >
         <div>
             <Bar
+                v-if="loading"
+                :class="small ? 'small' : ''"
+                :data="skeletonData"
+                :options="skeletonOptions"
+            />
+            <Bar
+                v-else
                 :class="small ? 'small' : ''"
                 :data="parsedData"
                 :options="options"
@@ -33,11 +40,7 @@
 
     import Utils, {useTheme} from "../../../../../utils/utils.js";
     import {useScheme} from "../../../../../utils/scheme.js";
-    import {
-        defaultConfig,
-        tooltip,
-        getFormat,
-    } from "../../../../../utils/charts.js";
+    import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts.js";
 
     import {State} from "@kestra-io/ui-libs";
     const ORDER = State.arrayAllStates().map((state) => state.name);
@@ -73,12 +76,61 @@
             type: Boolean,
             default: false,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
 
-    const theme = useTheme();
+    const theme = useTheme()
     const scheme = useScheme();
 
-    const tooltipContent = ref("");
+    const tooltipContent = ref("")
+
+    const skeletonData = computed(() => {
+        const barColor = theme.value === "dark" 
+            ? "rgba(255, 255, 255, 0.08)"
+            : "rgba(0, 0, 0, 0.06)";
+
+        return {
+            labels: Array(18).fill(""),
+            datasets: [{
+                data: Array(18).fill(0).map(() => Math.random() * 70 + 30),
+                backgroundColor: barColor,
+                borderRadius: 2,
+                barThickness: props.small ? 8 : 12,
+            }]
+        };
+    });
+
+    const skeletonOptions = computed(() => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                enabled: false
+            }
+        },
+        scales: {
+            x: {
+                display: false,
+                grid: {
+                    display: false
+                }
+            },
+            y: {
+                display: false,
+                grid: {
+                    display: false
+                },
+                min: 0,
+                max: 100
+            }
+        }
+    }));
 
     const parsedData = computed(() => {
         let datasets = props.data.reduce(function (accumulator, value) {
@@ -129,135 +181,123 @@
     });
 
     const options = computed(() =>
-        defaultConfig(
-            {
-                barThickness: props.small ? 8 : 12,
-                skipNull: true,
-                borderSkipped: false,
-                borderColor: "transparent",
-                borderWidth: 2,
-                plugins: {
-                    barLegend: {
-                        containerID: "executions",
-                    },
-                    tooltip: {
-                        enabled: !props.externalTooltip,
-                        filter: (value) => value.raw,
-                        callbacks: {
-                            label: function (value) {
-                                const {label, yAxisID} = value.dataset;
-                                return `${label.toLowerCase().capitalize()}: ${value.raw}${yAxisID === "yB" ? "s" : ""}`;
-                            },
-                        },
-                        external: props.externalTooltip
-                            ? function (context) {
-                                let content = tooltip(context.tooltip);
-                                tooltipContent.value = content;
-                            }
-                            : undefined,
-                    },
+        defaultConfig({
+            barThickness: props.small ? 8 : 12,
+            skipNull: true,
+            borderSkipped: false,
+            borderColor: "transparent",
+            borderWidth: 2,
+            plugins: {
+                barLegend: {
+                    containerID: "executions",
                 },
-                scales: {
-                    x: {
-                        display: props.scales,
-                        title: {
-                            display: true,
-                            text: t("date"),
-                        },
-                        grid: {
-                            display: false,
-                        },
-                        position: "bottom",
-                        stacked: true,
-                        ticks: {
-                            maxTicksLimit: props.small ? 5 : 8,
-                            callback: function (value) {
-                                const label = this.getLabelForValue(value);
-
-                                if (
-                                    moment(
-                                        label,
-                                        ["h:mm A", "HH:mm"],
-                                        true,
-                                    ).isValid()
-                                ) {
-                                    // Handle time strings like "1:15 PM" or "13:15"
-                                    return moment(label, [
-                                        "h:mm A",
-                                        "HH:mm",
-                                    ]).format("h:mm A");
-                                } else if (moment(new Date(label)).isValid()) {
-                                    // Handle date strings
-                                    const date = moment(new Date(label));
-                                    const isCurrentYear =
-                                        date.year() === moment().year();
-                                    return date.format(
-                                        isCurrentYear ? "MM/DD" : "MM/DD/YY",
-                                    );
-                                }
-
-                                // Return the label as-is if it's neither a valid date nor time
-                                return label;
-                            },
+                tooltip: {
+                    enabled: !props.externalTooltip,
+                    filter: (value) => value.raw,
+                    callbacks: {
+                        label: function (value) {
+                            const {label, yAxisID} = value.dataset;
+                            return `${label.toLowerCase().capitalize()}: ${value.raw}${yAxisID === "yB" ? "s" : ""}`;
                         },
                     },
-                    y: {
-                        display: props.scales,
-                        title: {
-                            display: !props.small,
-                            text: t("executions"),
-                        },
-                        grid: {
-                            display: false,
-                        },
-                        position: "left",
-                        stacked: true,
-                        ticks: {
-                            maxTicksLimit: props.small ? 5 : 8,
-                        },
-                    },
-                    yB: {
-                        title: {
-                            display: props.duration && !props.small,
-                            text: t("duration"),
-                        },
-                        grid: {
-                            display: false,
-                        },
-                        display: props.duration,
-                        position: "right",
-                        ticks: {
-                            maxTicksLimit: props.small ? 5 : 8,
-                            callback: function (value) {
-                                return `${this.getLabelForValue(value)}s`;
-                            },
-                        },
-                    },
-                },
-                onClick: (e, elements) => {
-                    if (elements.length > 0) {
-                        const state =
-                            parsedData.value.datasets[elements[0].datasetIndex]
-                                .label;
-                        router.push({
-                            name: "executions/list",
-                            query: {
-                                state: state,
-                                scope: "USER",
-                                size: 100,
-                                page: 1,
-                            },
-                        });
-                    }
+                    external: props.externalTooltip ? function (context) {
+                        let content = tooltip(context.tooltip);
+                        tooltipContent.value = content;
+                    } : undefined,
                 },
             },
-            theme.value,
-        ),
+            scales: {
+                x: {
+                    display: props.scales,
+                    title: {
+                        display: true,
+                        text: t("date"),
+                    },
+                    grid: {
+                        display: false,
+                    },
+                    position: "bottom",
+                    stacked: true,
+                    ticks: {
+                        maxTicksLimit: props.small ? 5 : 8,
+                        callback: function (value) {
+                            const label = this.getLabelForValue(value);
+
+                            if (
+                                moment(label, ["h:mm A", "HH:mm"], true).isValid()
+                            ) {
+                                // Handle time strings like "1:15 PM" or "13:15"
+                                return moment(label, ["h:mm A", "HH:mm"]).format(
+                                    "h:mm A",
+                                );
+                            } else if (moment(new Date(label)).isValid()) {
+                                // Handle date strings
+                                const date = moment(new Date(label));
+                                const isCurrentYear =
+                                    date.year() === moment().year();
+                                return date.format(
+                                    isCurrentYear ? "MM/DD" : "MM/DD/YY",
+                                );
+                            }
+
+                            // Return the label as-is if it's neither a valid date nor time
+                            return label;
+                        },
+                    },
+                },
+                y: {
+                    display: props.scales,
+                    title: {
+                        display: !props.small,
+                        text: t("executions"),
+                    },
+                    grid: {
+                        display: false,
+                    },
+                    position: "left",
+                    stacked: true,
+                    ticks: {
+                        maxTicksLimit: props.small ? 5 : 8,
+                    },
+                },
+                yB: {
+                    title: {
+                        display: props.duration && !props.small,
+                        text: t("duration"),
+                    },
+                    grid: {
+                        display: false,
+                    },
+                    display: props.duration,
+                    position: "right",
+                    ticks: {
+                        maxTicksLimit: props.small ? 5 : 8,
+                        callback: function (value) {
+                            return `${this.getLabelForValue(value)}s`;
+                        },
+                    },
+                },
+            },
+            onClick: (e, elements) => {
+                if (elements.length > 0) {
+                    const state = parsedData.value.datasets[elements[0].datasetIndex].label;
+                    router.push({
+                        name: "executions/list",
+                        query: {
+                            state: state,
+                            scope: "USER",
+                            size: 100,
+                            page: 1,
+                        },
+                    });
+                }
+            },
+        }, theme.value),
     );
 </script>
 
-<style>
+<style lang="scss" scoped>
 .small {
-    max-height: 40px;
+    height: 40px;
 }
 </style>

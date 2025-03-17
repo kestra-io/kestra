@@ -147,6 +147,7 @@
     "copy": "コピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",
+    "copy_to_clipboard": "クリップボードにコピー",
     "create": "作成",
     "create first task": "最初のtaskを作成",
     "create_custom_dashboard": "新しいダッシュボードを作成",

@@ -147,6 +147,7 @@
     "copy": "Kopieren",
     "copy logs": "Logs kopieren",
     "copy url": "URL kopieren",
+    "copy_to_clipboard": "In die Zwischenablage kopieren",
     "create": "Erstellen",
     "create first task": "Erstellen Sie Ihren ersten Task",
     "create_custom_dashboard": "Neues Dashboard erstellen",

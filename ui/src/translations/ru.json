@@ -147,6 +147,7 @@
     "copy": "Копировать",
     "copy logs": "Копировать логи",
     "copy url": "Скопировать URL",
+    "copy_to_clipboard": "Копировать в буфер обмена",
     "create": "Создать",
     "create first task": "Создайте свою первую задачу",
     "create_custom_dashboard": "Создать новую панель управления",

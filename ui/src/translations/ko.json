@@ -147,6 +147,7 @@
     "copy": "복사",
     "copy logs": "Logs 복사",
     "copy url": "URL 복사",
+    "copy_to_clipboard": "클립보드에 복사",
     "create": "생성",
     "create first task": "첫 번째 task 만들기",
     "create_custom_dashboard": "새 대시보드 생성",

@@ -147,6 +147,7 @@
     "copy": "Copier",
     "copy logs": "Copier les logs",
     "copy url": "Copier l'URL",
+    "copy_to_clipboard": "Copier dans le presse-papiers",
     "create": "Créer",
     "create first task": "Créer votre première tâche",
     "create_custom_dashboard": "Créer un nouveau tableau de bord",

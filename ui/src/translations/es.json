@@ -147,6 +147,7 @@
     "copy": "Copiar",
     "copy logs": "Copiar logs",
     "copy url": "Copiar URL",
+    "copy_to_clipboard": "Copiar al portapapeles",
     "create": "Crear",
     "create first task": "Crea tu primera task",
     "create_custom_dashboard": "Crear nuevo dashboard",

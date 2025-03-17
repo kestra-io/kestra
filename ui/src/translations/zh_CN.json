@@ -147,6 +147,7 @@
     "copy": "复制",
     "copy logs": "复制日志",
     "copy url": "复制 URL",
+    "copy_to_clipboard": "复制到剪贴板",
     "create": "创建",
     "create first task": "创建你的第一个任务",
     "create_custom_dashboard": "创建新仪表板",

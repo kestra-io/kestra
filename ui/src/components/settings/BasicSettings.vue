@@ -71,6 +71,17 @@
                             />
                         </el-select>
                     </Column>
+
+                    <Column :label="$t('settings.blocks.configuration.fields.flow_default_tab')">
+                        <el-select :model-value="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
+                            <el-option
+                                v-for="item in flowDefaultTabOptions"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                            />
+                        </el-select>
+                    </Column>
                 </Row>
             </template>
         </Block>
@@ -282,6 +293,7 @@
                     envName: undefined,
                     envColor: undefined,
                     executeDefaultTab: undefined,
+                    flowDefaultTab: undefined,
                     logsFontSize: undefined
                 },
                 settingsKeyMapping: {
@@ -326,6 +338,7 @@
             this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
+            this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
             this.pendingSettings.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
             this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
@@ -398,6 +411,9 @@
             },
             onExecuteDefaultTabChange(value){
                 this.pendingSettings.executeDefaultTab = value;
+            },
+            onFlowDefaultTabChange(value){
+                this.pendingSettings.flowDefaultTab = value;
             },
             onLogsFontSize(value) {
                 this.pendingSettings.logsFontSize = value;
@@ -585,6 +601,54 @@
                         value : "metrics",
                         label: this.$t("metrics")
                     }
+                ]
+            },
+            flowDefaultTabOptions() {
+                return [
+                    {
+                        value : "overview",
+                        label: this.$t("overview")
+                    },
+                    {
+                        value : "topology",
+                        label: this.$t("topology")
+                    },
+                    {
+                        value : "executions",
+                        label: this.$t("executions")
+                    },
+                    {
+                        value : "edit",
+                        label: this.$t("edit")
+                    },
+                    {
+                        value : "revisions",
+                        label: this.$t("revisions")
+                    },
+                    {
+                        value : "triggers",
+                        label: this.$t("triggers")
+                    },
+                    {
+                        value : "logs",
+                        label: this.$t("logs")
+                    },
+                    {
+                        value : "metrics",
+                        label: this.$t("metrics")
+                    },
+                    {
+                        value : "dependencies",
+                        label: this.$t("dependencies")
+                    },
+                    {
+                        value : "concurrency",
+                        label: this.$t("concurrency")
+                    },
+                    {
+                        value : "auditlogs",
+                        label: this.$t("auditlogs")
+                    },
                 ]
             }
         }

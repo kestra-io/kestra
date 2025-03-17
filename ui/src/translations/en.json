@@ -757,7 +757,8 @@
             "log_display": "Default Log Display",
             "editor_type": "Default Editor Type",
             "execute_flow": "Execute the Flow",
-            "execute_default_tab": "Default Execution Tab"
+            "execute_default_tab": "Default Execution Tab",
+            "flow_default_tab": "Default Flow Tab"
           }
         },
         "theme": {

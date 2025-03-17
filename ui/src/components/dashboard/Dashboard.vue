@@ -623,5 +623,9 @@ $media-lg: 1200px;
         background: var(--ks-button-background-primary);
         border-radius: 0px;
     }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: var(--ks-button-background-primary-hover);
+    }
 }
 </style>

@@ -15,7 +15,7 @@
                 </p>
             </div>
 
-            <div class="switch-container">
+            <div class="switch-container w-100">
                 <div
                     class="d-flex justify-content-end align-items-center switch-content"
                 >
@@ -26,7 +26,7 @@
                     />
                     <span class="d-flex align-items-center ps-2 fw-light small">{{ t("duration") }}</span>
                 </div>
-                <div id="executions" />
+                <div id="executions" class="w-100" />
             </div>
         </div>
 

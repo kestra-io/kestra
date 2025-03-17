@@ -1,28 +1,26 @@
 <template>
-    <div class="chart-container">
-        <el-tooltip
-            effect="light"
-            placement="left"
-            :persistent="false"
-            :hide-after="0"
-            transition=""
-            :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
-            :disabled="!externalTooltip"
-            :content="tooltipContent"
-            raw-content
-        >
-            <div class="chart-wrapper">
-                <Bar
-                    :class="small ? 'small' : ''"
-                    :data="parsedData"
-                    :options="options"
-                    :total="total"
-                    :plugins="plugins"
-                    :duration="duration"
-                />
-            </div>
-        </el-tooltip>
-    </div>
+    <el-tooltip
+        effect="light"
+        placement="left"
+        :persistent="false"
+        :hide-after="0"
+        transition=""
+        :popper-class="tooltipContent === '' ? 'd-none' : 'tooltip-stats'"
+        :disabled="!externalTooltip"
+        :content="tooltipContent"
+        raw-content
+    >
+        <div>
+            <Bar
+                :class="small ? 'small' : ''"
+                :data="parsedData"
+                :options="options"
+                :total="total"
+                :plugins="plugins"
+                :duration="duration"
+            />
+        </div>
+    </el-tooltip>
 </template>
 
 <script setup>
@@ -34,8 +32,12 @@
     const router = useRouter();
 
     import Utils, {useTheme} from "../../../../../utils/utils.js";
-    import {useScheme} from "../../../../../utils/scheme.js";
-    import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts.js";
+
+    import {
+        defaultConfig,
+        tooltip,
+        getFormat,
+    } from "../../../../../utils/charts.js";
 
     import {State} from "@kestra-io/ui-libs";
     const ORDER = State.arrayAllStates().map((state) => state.name);
@@ -73,28 +75,86 @@
         },
     });
 
-    const theme = useTheme()
-    const scheme = useScheme();
+    const theme = useTheme();
 
-    const tooltipContent = ref("")
+    const tooltipContent = ref("");
 
     const parsedData = computed(() => {
-        let datasets = props.data.reduce(function (accumulator, value) {
-            Object.keys(value.executionCounts).forEach(function (state, index) {
-                if (accumulator[state] === undefined) {
-                    accumulator[state] = {
-                        label: index < 4 ? state : "Other",
-                        backgroundColor: scheme.value[state],
-                        yAxisID: "y",
-                        data: [],
-                    };
-                }
+        function getRandomData(length, min = 0, max = 4) {
+            return Array.from(
+                {length},
+                () => Math.floor(Math.random() * (max - min + 1)) + min,
+            );
+        }
 
-                accumulator[state].data.push(value.executionCounts[state]);
-            });
-
-            return accumulator;
-        }, Object.create(null));
+        let datasets = {
+            RUNNING: {
+                label: "RUNNING",
+                backgroundColor: "#5bb8ff",
+                yAxisID: "y",
+                data: getRandomData(30),
+            },
+            RESTARTED: {
+                label: "RESTARTED",
+                backgroundColor: "#c7f0ff",
+                yAxisID: "y",
+                data: getRandomData(30),
+            },
+            WARNING: {
+                label: "WARNING",
+                backgroundColor: "#eeae7e",
+                yAxisID: "y",
+                data: getRandomData(30),
+            },
+            KILLING: {
+                label: "KILLING",
+                backgroundColor: "#a6a4ca",
+                yAxisID: "y",
+                data: getRandomData(30),
+            },
+            SUCCESS: {
+                label: "SUCCESS",
+                backgroundColor: "#21ce9c",
+                yAxisID: "y",
+                data: getRandomData(30),
+            },
+            PAUSED: {
+                label: "PAUSED",
+                backgroundColor: "#fde89d",
+                yAxisID: "y",
+                data: getRandomData(30),
+            },
+            FAILED: {
+                label: "FAILED",
+                backgroundColor: "#fd7278",
+                yAxisID: "y",
+                data: getRandomData(30),
+            },
+            QUEUED: {
+                label: "QUEUED",
+                backgroundColor: "#bda85d",
+                yAxisID: "y",
+                data: getRandomData(30),
+            },
+            KILLED: {
+                label: "KILLED",
+                backgroundColor: "#7e719f",
+                yAxisID: "y",
+                data: getRandomData(30),
+            },
+            CREATED: {
+                label: "CREATED",
+                backgroundColor: "#fd9297",
+                yAxisID: "y",
+                data: getRandomData(30),
+            },
+            CANCELLED: {
+                label: "CANCELLED",
+                backgroundColor: "#9a8eb4",
+                yAxisID: "y",
+                data: getRandomData(30),
+            },
+        };
 
         datasets = Object.values(datasets).sort((a, b) => {
             return ORDER.indexOf(a.label) - ORDER.indexOf(b.label);
@@ -127,161 +187,135 @@
     });
 
     const options = computed(() =>
-        defaultConfig({
-            barThickness: props.small ? 8 : 12,
-            skipNull: true,
-            borderSkipped: false,
-            borderColor: "transparent",
-            borderWidth: 2,
-            plugins: {
-                legend:{ //size to 10px
-                    labels:{
-                        font:{
-                            size:10,
+        defaultConfig(
+            {
+                barThickness: props.small ? 8 : 12,
+                skipNull: true,
+                borderSkipped: false,
+                borderColor: "transparent",
+                borderWidth: 2,
+                plugins: {
+                    barLegend: {
+                        containerID: "executions",
+                    },
+                    tooltip: {
+                        enabled: !props.externalTooltip,
+                        filter: (value) => value.raw,
+                        callbacks: {
+                            label: function (value) {
+                                const {label, yAxisID} = value.dataset;
+                                return `${label.toLowerCase().capitalize()}: ${value.raw}${yAxisID === "yB" ? "s" : ""}`;
+                            },
                         },
-                    },
-                },
-                barLegend: {
-                    containerID: "executions",
-                },
-                tooltip: {
-                    enabled: !props.externalTooltip,
-                    filter: (value) => value.raw  !== undefined && value.raw !== null, 
-                    callbacks: {
-                        label: function (value) {
-                            const {label, yAxisID} = value.dataset;
-                            return `${label.toLowerCase().capitalize()}: ${value.raw}${yAxisID === "yB" ? "s" : ""}`;
-                        },
-                    },
-                    external: props.externalTooltip ? function (context) {
-                        let content = tooltip(context.tooltip);
-                        tooltipContent.value = content;
-                    } : undefined,
-                },
-            },
-            scales: {
-                x: {
-                    display: props.scales,
-                    title: {
-                        display: true,
-                        text: t("date"),
-                    },
-                    grid: {
-                        display: false,
-                    },
-                    position: "bottom",
-                    stacked: true,
-                    ticks: {
-                        maxTicksLimit: props.small ? 5 : 8,
-                        callback: function (value) {
-                            const label = this.getLabelForValue(value);
-
-                            if (
-                                moment(label, ["h:mm A", "HH:mm"], true).isValid()
-                            ) {
-                                // Handle time strings like "1:15 PM" or "13:15"
-                                return moment(label, ["h:mm A", "HH:mm"]).format(
-                                    "h:mm A",
-                                );
-                            } else if (moment(new Date(label)).isValid()) {
-                                // Handle date strings
-                                const date = moment(new Date(label));
-                                const isCurrentYear =
-                                    date.year() === moment().year();
-                                return date.format(
-                                    isCurrentYear ? "MM/DD" : "MM/DD/YY",
-                                );
+                        external: props.externalTooltip
+                            ? function (context) {
+                                let content = tooltip(context.tooltip);
+                                tooltipContent.value = content;
                             }
+                            : undefined,
+                    },
+                },
+                scales: {
+                    x: {
+                        display: props.scales,
+                        title: {
+                            display: true,
+                            text: t("date"),
+                        },
+                        grid: {
+                            display: false,
+                        },
+                        position: "bottom",
+                        stacked: true,
+                        ticks: {
+                            maxTicksLimit: props.small ? 5 : 8,
+                            callback: function (value) {
+                                const label = this.getLabelForValue(value);
 
-                            // Return the label as-is if it's neither a valid date nor time
-                            return label;
+                                if (
+                                    moment(
+                                        label,
+                                        ["h:mm A", "HH:mm"],
+                                        true,
+                                    ).isValid()
+                                ) {
+                                    // Handle time strings like "1:15 PM" or "13:15"
+                                    return moment(label, [
+                                        "h:mm A",
+                                        "HH:mm",
+                                    ]).format("h:mm A");
+                                } else if (moment(new Date(label)).isValid()) {
+                                    // Handle date strings
+                                    const date = moment(new Date(label));
+                                    const isCurrentYear =
+                                        date.year() === moment().year();
+                                    return date.format(
+                                        isCurrentYear ? "MM/DD" : "MM/DD/YY",
+                                    );
+                                }
+
+                                // Return the label as-is if it's neither a valid date nor time
+                                return label;
+                            },
+                        },
+                    },
+                    y: {
+                        display: props.scales,
+                        title: {
+                            display: !props.small,
+                            text: t("executions"),
+                        },
+                        grid: {
+                            display: false,
+                        },
+                        position: "left",
+                        stacked: true,
+                        ticks: {
+                            maxTicksLimit: props.small ? 5 : 8,
+                        },
+                    },
+                    yB: {
+                        title: {
+                            display: props.duration && !props.small,
+                            text: t("duration"),
+                        },
+                        grid: {
+                            display: false,
+                        },
+                        display: props.duration,
+                        position: "right",
+                        ticks: {
+                            maxTicksLimit: props.small ? 5 : 8,
+                            callback: function (value) {
+                                return `${this.getLabelForValue(value)}s`;
+                            },
                         },
                     },
                 },
-                y: {
-                    display: props.scales,
-                    title: {
-                        display: !props.small,
-                        text: t("executions"),
-                    },
-                    grid: {
-                        display: false,
-                    },
-                    position: "left",
-                    stacked: true,
-                    ticks: {
-                        maxTicksLimit: props.small ? 5 : 8,
-                    },
-                },
-                yB: {
-                    title: {
-                        display: props.duration && !props.small,
-                        text: t("duration"),
-                    },
-                    grid: {
-                        display: false,
-                    },
-                    display: props.duration,
-                    position: "right",
-                    ticks: {
-                        maxTicksLimit: props.small ? 5 : 8,
-                        callback: function (value) {
-                            return `${this.getLabelForValue(value)}s`;
-                        },
-                    },
+                onClick: (e, elements) => {
+                    if (elements.length > 0) {
+                        const state =
+                            parsedData.value.datasets[elements[0].datasetIndex]
+                                .label;
+                        router.push({
+                            name: "executions/list",
+                            query: {
+                                state: state,
+                                scope: "USER",
+                                size: 100,
+                                page: 1,
+                            },
+                        });
+                    }
                 },
             },
-            onClick: (e, elements) => {
-                if (elements.length > 0) {
-                    const state = parsedData.value.datasets[elements[0].datasetIndex].label;
-                    router.push({
-                        name: "executions/list",
-                        query: {
-                            state: state,
-                            scope: "USER",
-                            size: 100,
-                            page: 1,
-                        },
-                    });
-                }
-            },
-        }, theme.value),
+            theme.value,
+        ),
     );
 </script>
 
 <style>
-.small{
-    height: 40px;
+.small {
+    max-height: 40px;
 }
-
-    
-.chart-container{
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;    
-    overflow-x: auto;
-    width: 100%;
-}
-.chart-container::-webkit-scrollbar {
-    height: 8px;
-}
-.chart-container::-webkit-scrollbar-thumb {
-    background-color: rgba(0, 0, 0, 0.2);
-    border-radius: 4px;
-}
-.chart-container::-webkit-scrollbar-thumb:hover {
-    background-color: rgba(0, 0, 0, 0.4);
-}
-
-.chart-wrapper {
-    flex: 1 1 100%;
-    min-width: 0; 
-    max-width: 100%;
-}
-@media (min-width: 768px) {
-    .chart-wrapper {
-        flex: 1 1 100%;
-    }
-}
-    
 </style>

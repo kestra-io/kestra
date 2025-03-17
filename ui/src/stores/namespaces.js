@@ -15,8 +15,9 @@ export default {
     namespaced: true,
     state: {
         datatypeNamespaces: undefined,
-        namespaces: undefined,       
+        namespaces: undefined,
         namespace: undefined,
+        inheritedSecrets: undefined,
         kvs: undefined,
     },
     actions: {
@@ -82,6 +83,15 @@ export default {
                 })
                 .then(() => {
                     return dispatch("kvsList", {id: payload.namespace})
+                });
+        },
+
+        inheritedSecrets({commit}, item) {
+            return this.$http.get(`${apiUrl(this)}/namespaces/${item.id}/inherited-secrets`, {validateStatus: (status) => status === 200 || status === 404})
+                .then(response => {
+                    commit("setInheritedSecrets", response.data)
+
+                    return response.data;
                 });
         },
 
@@ -176,7 +186,7 @@ export default {
     mutations: {
         setDatatypeNamespaces(state, datatypeNamespaces) {
             state.datatypeNamespaces = datatypeNamespaces;
-        },    
+        },
         setNamespaces(state, namespaces) {
             state.namespaces = namespaces
         },
@@ -185,6 +195,9 @@ export default {
         },
         setKvs(state, kvs) {
             state.kvs = kvs
+        },
+        setInheritedSecrets(state, secrets) {
+            state.inheritedSecrets = secrets
         },
     },
 };

@@ -129,12 +129,6 @@
     "collapse": "折りたたむ",
     "collapse all": "すべて折りたたむ",
     "concurrency": "並行性",
-    "concurrency-view": {
-      "desc_no_executions": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Execution</a></strong>についての詳細は、ドキュメントをご覧ください。",
-      "desc_no_limit": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">並行性制限</a></strong>についての詳細は、ドキュメントをご覧ください。",
-      "title_no_executions": "このFlowに対する進行中のExecutionはありません。",
-      "title_no_limit": "このFlowには制限が設定されていません。"
-    },
     "conditions": "条件",
     "configure basic auth": "基本認証を設定",
     "confirm": "確認",
@@ -153,6 +147,7 @@
     "copy": "コピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",
+    "copy_to_clipboard": "クリップボードにコピー",
     "create": "作成",
     "create first task": "最初のtaskを作成",
     "create_custom_dashboard": "新しいダッシュボードを作成",
@@ -290,6 +285,10 @@
           "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、プラグインのデフォルトの高度な分離とガバナンスを提供します。管理者は、カスタムシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、および詳細な権限をnamespaceごとに設定できます。これにより、シークレット、変数、およびプラグインの設定が異なるチームやプロジェクト間で安全かつ簡単に管理されることが保証されます。",
           "title": "名前空間管理をアップグレードする"
         },
+        "history": {
+          "message": "Kestra Enterprise Editionでは、Namespacesのリビジョン履歴を管理できます。",
+          "title": "一箇所でリビジョン履歴を管理"
+        },
         "plugin-defaults": {
           "message": "Kestra Enterprise Editionでは、namespace固有のプラグインデフォルトを設定でき、各flowでの重複した設定の必要性を減らします。この中央プラグインガバナンスは、一貫した設定を強制し、秘密情報や変数の安全な参照を可能にし、ワークフローのメンテナンスを簡素化します。",
           "title": "プラグインのデフォルトで設定を標準化する"
@@ -313,10 +312,6 @@
     "dependencies loaded": "依存関係が読み込まれました",
     "dependencies missing acls": "このflowには権限がありません",
     "dependency task": "Task {taskId}は他のtaskの依存関係です",
-    "dependency-view": {
-      "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。",
-      "title_no_deps": "このFlowには依存関係が設定されていません。"
-    },
     "description": "説明",
     "details": "詳細",
     "disable": "無効化",
@@ -752,7 +747,6 @@
       },
       "empty": {
         "create_message": "namespaceファイルを作成またはインポートできます。",
-        "message": "サイドバーからnamespaceファイルを作成またはインポートできます。また、エディターの紹介ビデオをチェックしてください。",
         "title": "現在開いているタブはありません",
         "video_message": "エディターの紹介ビデオをご覧いただけます。"
       }
@@ -777,6 +771,7 @@
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
       "creation": {
+        "after execution": "実行後ブロックを追加",
         "error handlers": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
         "select": "{section}を選択してください",
@@ -807,6 +802,7 @@
         "yaml": "YAMLエディター"
       },
       "save": {
+        "after execution": "タスクを保存",
         "error handlers": "エラーハンドラーを保存",
         "finally": "タスクを保存",
         "input": "入力を保存",
@@ -814,6 +810,7 @@
         "triggers": "トリガーを保存"
       },
       "sections": {
+        "after_execution": "実行後",
         "error_handlers": "エラーハンドラー",
         "finally": "最後に",
         "general": "一般プロパティ",
@@ -1151,6 +1148,7 @@
     "toggle output": "出力を切り替え",
     "toggle output display": "出力表示を切り替え",
     "toggle periodic refresh each 10 seconds": "10秒ごとに定期的に更新を切り替え",
+    "toggle_word_wrap": "ワードラップを切り替え",
     "topology": "トポロジー",
     "topology-graph": {
       "graph-orientation": "グラフの向き",
@@ -1178,10 +1176,6 @@
     "triggered done": "実行<em>{name}</em>が正常にトリガーされました",
     "triggerflow disabled": "Flow定義からTriggerが無効になっています",
     "triggers": "Triggers",
-    "triggers-view": {
-      "desc_no_triggers": "以下のリンクから、ドキュメント内の<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>についてさらに詳しくお読みください。",
-      "title_no_triggers": "あなたのflowにはTriggerがありません。"
-    },
     "triggers_state": {
       "options": {
         "disabled": "無効",

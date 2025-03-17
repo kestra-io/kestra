@@ -1,26 +1,14 @@
 import type {Store} from "vuex";
 import type {JSONSchema} from "@kestra-io/ui-libs";
-import YamlUtils, {YamlElement} from "../../utils/yamlUtils";
-
-export class YamlNoAutoCompletion {
-    rootFieldAutoCompletion(): Promise<string[]> {
-        return Promise.resolve([]);
-    }
-
-    nestedFieldAutoCompletion(_source: string, _parsed?: any, _parentField?: string): Promise<string[]> {
-        return Promise.resolve([])
-    }
-
-    valueAutoCompletion(_source: string, _parsed?: any, _yamlElement: YamlElement | undefined): Promise<string[]> {
-        return Promise.resolve([]);
-    }
-}
+import {YamlUtils as YAML_UTILS, YamlElement} from "@kestra-io/ui-libs";
+import {QUOTE, YamlNoAutoCompletion} from "../../services/autoCompletionProvider";
+import RegexProvider from "../../utils/regex";
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []));
 }
 
-export class FlowAutoCompletion extends YamlNoAutoCompletion{
+export class FlowAutoCompletion extends YamlNoAutoCompletion {
     store: Store<Record<string, any>>;
     flowsInputsCache: Record<string, string[]> = {};
 
@@ -43,16 +31,19 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
             "envs",
             "globals",
             "parents",
-            "error"
+            "error",
+            "secret(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:MY_SECRET}" + QUOTE + ")",
+            "kv(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:my_key}" + QUOTE + ")",
+            "kestra"
         ]);
     }
 
     private tasks(source: string): any[] {
-        const tasksFromTasksProp = YamlUtils.extractFieldFromMaps(source, "tasks")
+        const tasksFromTasksProp = YAML_UTILS.extractFieldFromMaps(source, "tasks")
             .flatMap(allTasks => allTasks.tasks);
-        const tasksFromTaskProp = YamlUtils.extractFieldFromMaps(source, "task")
+        const tasksFromTaskProp = YAML_UTILS.extractFieldFromMaps(source, "task")
             .map(task => task.task)
-            .flatMap(task => YamlUtils.pairsToMap(task) ?? [])
+            .flatMap(task => YAML_UTILS.pairsToMap(task) ?? [])
 
         return [...tasksFromTasksProp, ...tasksFromTaskProp]
             .filter(task => typeof task?.get === "function" && task?.get("id"));
@@ -101,7 +92,7 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
             case "flow":
                 return Promise.resolve(["id", "namespace", "revision", "tenantId"]);
             case "execution":
-                return Promise.resolve(["id", "startDate", "originalId"]);
+                return Promise.resolve(["id", "startDate", "state", "originalId"]);
             case "vars":
                 return Promise.resolve(Object.keys(parsed?.variables ?? {}));
             case "trigger":
@@ -112,6 +103,8 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
                 return Promise.resolve(["id", "startDate", "attemptsCount", "parentId", "value", "iteration"]);
             case "error":
                 return Promise.resolve(["taskId", "message", "stackTrace"]);
+            case "kestra":
+                return Promise.resolve(["environment", "url"]);
             default: {
                 const match = parentField.match(/^outputs\.([^.]+)$/);
                 if (match) {
@@ -181,6 +174,46 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion{
             }
         }
 
+        return Promise.resolve([]);
+    }
+
+    private extractArgValue(arg) {
+        if (arg === undefined) {
+            return undefined;
+        }
+
+        const captureValue = new RegExp("^" + RegexProvider.captureStringValue + "$").exec(arg);
+        if (!captureValue) {
+            return undefined;
+        }
+
+        return captureValue?.[1];
+    }
+
+    async functionAutoCompletion(parsed: any | undefined, functionName: string, args: Record<string, string>): Promise<string[]> {
+        let namespaceArg = args.namespace;
+        if (namespaceArg === undefined || namespaceArg === "flow.namespace") {
+           namespaceArg = parsed?.namespace === undefined ? "" : QUOTE + parsed.namespace + QUOTE;
+        }
+        switch (functionName) {
+            case "secret": {
+                const namespace = this.extractArgValue(namespaceArg);
+                if (namespace === undefined) {
+                    return Promise.resolve([]);
+                }
+                return Array.from(Object.entries(await this.store.dispatch("namespace/inheritedSecrets", {id: namespace})).reduce((acc, [_, nsSecrets]: [string, string[]]) => {
+                    nsSecrets.forEach(secret => acc.add(QUOTE + secret + QUOTE));
+                    return acc;
+                }, new Set()));
+            }
+            case "kv": {
+                const namespace = this.extractArgValue(namespaceArg);
+                if (namespace === undefined) {
+                    return Promise.resolve([]);
+                }
+                return (await this.store.dispatch("namespace/kvsList", {id: namespace})).map(kv => QUOTE + kv.key + QUOTE);
+            }
+        }
         return Promise.resolve([]);
     }
 }

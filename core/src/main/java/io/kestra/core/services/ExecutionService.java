@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -49,15 +50,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -97,6 +90,9 @@ public class ExecutionService {
 
     @Inject
     private ConcurrencyLimitService concurrencyLimitService;
+
+    @Inject
+    private ConditionService conditionService;
 
     public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId, boolean withACL) {
         Execution execution = getExecution(tenant, executionId, withACL);
@@ -835,5 +831,31 @@ public class ExecutionService {
         // for all other states, we just return the same execution,
         // it will be resent to the queue and forced re-processed.
         return execution;
+    }
+
+    /**
+     * Remove true if the execution is terminated, including listeners and afterExecution tasks.
+     */
+    public boolean isTerminated(Flow flow, Execution execution) {
+        if (!execution.getState().isTerminated()) {
+            return false;
+        }
+
+        List<ResolvedTask> validListeners = conditionService.findValidListeners(flow, execution);
+        List<ResolvedTask> afterExecution = resolveAfterExecutionTasks(flow);
+        return execution.isTerminated(validListeners) && execution.isTerminated(afterExecution);
+    }
+
+    /**
+     * Resolve afterExecution tasks from a flow definition.
+     */
+    public List<ResolvedTask> resolveAfterExecutionTasks(Flow flow) {
+        if (flow == null || flow.getAfterExecution() == null) {
+            return Collections.emptyList();
+        }
+
+        return flow.getAfterExecution().stream()
+            .map(ResolvedTask::of)
+            .toList();
     }
 }

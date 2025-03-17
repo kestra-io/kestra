@@ -129,12 +129,6 @@
     "collapse": "Comprimi",
     "collapse all": "Comprimi tutto",
     "concurrency": "Concurrency",
-    "concurrency-view": {
-      "desc_no_executions": "Leggi di più sulle <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Esecuzioni</a></strong> nella nostra documentazione.",
-      "desc_no_limit": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Limiti di Concurrency</a></strong> nella nostra documentazione.",
-      "title_no_executions": "Nessuna esecuzione in corso per questo Flow.",
-      "title_no_limit": "Nessun limite è impostato per questo Flow."
-    },
     "conditions": "condizioni",
     "configure basic auth": "Configura Autenticazione di Base",
     "confirm": "Conferma",
@@ -153,6 +147,7 @@
     "copy": "Copia",
     "copy logs": "Copia logs",
     "copy url": "Copia URL",
+    "copy_to_clipboard": "Copia negli appunti",
     "create": "Crea",
     "create first task": "Crea il tuo primo task",
     "create_custom_dashboard": "Crea nuovo dashboard",
@@ -290,6 +285,10 @@
           "message": "Nella Kestra Enterprise Edition, i namespace forniscono un'isolamento avanzato e una governance dei segreti, delle variabili e dei plugin defaults su larga scala. Gli amministratori possono configurare gestori di segreti personalizzati, backend di storage isolati, gruppi di worker dedicati e permessi dettagliati su base per-namespace. Questo assicura che i segreti, le variabili e le configurazioni dei plugin rimangano sicuri e facili da gestire tra diversi team e progetti.",
           "title": "Aggiorna la Gestione del tuo Namespace"
         },
+        "history": {
+          "message": "Nella Kestra Enterprise Edition, puoi gestire la cronologia delle revisioni dei tuoi namespace",
+          "title": "Gestisci la Cronologia delle Revisioni in un Unico Luogo"
+        },
         "plugin-defaults": {
           "message": "Nella Kestra Enterprise Edition, puoi impostare i plugin predefiniti specifici per namespace, riducendo la necessità di configurazioni duplicate in ogni flow. Questa governance centrale dei plugin impone configurazioni coerenti, consente il riferimento sicuro a segreti o variabili e semplifica la manutenzione dei tuoi workflow.",
           "title": "Standardizza la Configurazione con i Valori Predefiniti del Plugin"
@@ -313,10 +312,6 @@
     "dependencies loaded": "Dipendenze caricate",
     "dependencies missing acls": "Nessun permesso su questo flow",
     "dependency task": "Il task {taskId} è una dipendenza di un altro task",
-    "dependency-view": {
-      "desc_no_deps": "Leggi di più sulle <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dipendenze dei Flow</a> nella nostra documentazione.",
-      "title_no_deps": "Nessuna dipendenza è impostata per questo Flow."
-    },
     "description": "Descrizione",
     "details": "Dettagli",
     "disable": "Disabilita",
@@ -752,7 +747,6 @@
       },
       "empty": {
         "create_message": "Puoi creare o importare file namespace.",
-        "message": "Puoi creare o importare file namespace dalla barra laterale e puoi guardare il video introduttivo per il nostro Editor.",
         "title": "Nessuna scheda attualmente aperta",
         "video_message": "Puoi guardare il Video di Introduzione per il nostro Editor."
       }
@@ -777,6 +771,7 @@
       "adding": "+ Aggiungi un {what}",
       "adding_default": "+ Aggiungi un nuovo value",
       "creation": {
+        "after execution": "Aggiungi un blocco after execution",
         "error handlers": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
         "select": "Seleziona una {section}",
@@ -807,6 +802,7 @@
         "yaml": "Editor YAML"
       },
       "save": {
+        "after execution": "Salva task",
         "error handlers": "Salva gestore errori",
         "finally": "Salva task",
         "input": "Salva input",
@@ -814,6 +810,7 @@
         "triggers": "Salva trigger"
       },
       "sections": {
+        "after_execution": "Dopo l'Esecuzione",
         "error_handlers": "Gestori degli Errori",
         "finally": "Infine",
         "general": "Proprietà generali",
@@ -1151,6 +1148,7 @@
     "toggle output": "Attiva/disattiva outputs",
     "toggle output display": "Attiva/disattiva visualizzazione output",
     "toggle periodic refresh each 10 seconds": "Attiva/disattiva aggiornamento periodico ogni 10 secondi",
+    "toggle_word_wrap": "Attiva/disattiva Word Wrap",
     "topology": "Topologia",
     "topology-graph": {
       "graph-orientation": "Orientamento del grafico",
@@ -1178,10 +1176,6 @@
     "triggered done": "L'esecuzione <em>{name}</em> è stata attivata con successo",
     "triggerflow disabled": "Il trigger è disabilitato dalla definizione del flow",
     "triggers": "Triggers",
-    "triggers-view": {
-      "desc_no_triggers": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Trigger</a></strong> nella nostra documentazione.",
-      "title_no_triggers": "Il tuo flow non ha alcun trigger."
-    },
     "triggers_state": {
       "options": {
         "disabled": "Disabilitato",

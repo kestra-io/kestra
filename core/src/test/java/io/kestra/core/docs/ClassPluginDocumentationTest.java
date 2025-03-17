@@ -124,7 +124,7 @@ class ClassPluginDocumentationTest {
             PluginClassAndMetadata<? extends TaskRunner<?>> metadata = PluginClassAndMetadata.create(scan, Process.class, Process.class, null);
             ClassPluginDocumentation<? extends TaskRunner<?>> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
-            assertThat((Map<?, ?>) doc.getPropertiesSchema().get("properties"), anEmptyMap());
+            assertThat(((Map<?, ?>) doc.getPropertiesSchema().get("properties")).get("version"), notNullValue());
             assertThat(doc.getCls(), is("io.kestra.plugin.core.runner.Process"));
             assertThat(doc.getPropertiesSchema().get("title"), is("Task runner that executes a task as a subprocess on the Kestra host."));
             assertThat(doc.getDefs(), anEmptyMap());

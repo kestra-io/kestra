@@ -59,7 +59,12 @@
 
             <template #top>
                 <el-card v-if="showStatChart()" class="mb-4 shadow">
-                    <ExecutionsBar v-if="daily" :data="daily" :total="executionsCount" />
+                    <ExecutionsBar 
+                        v-if="daily" 
+                        :data="daily" 
+                        :total="executionsCount" 
+                        :loading="loading"
+                    />
                 </el-card>
             </template>
 
@@ -531,7 +536,8 @@
                 actionOptions: {},
                 lastRefreshDate: new Date(),
                 changeStatusDialogVisible: false,
-                selectedStatus: undefined
+                selectedStatus: undefined,
+                loading: false
             };
         },
         created() {
@@ -704,6 +710,7 @@
             },
             loadStats() {
                 this.dailyReady = false;
+                this.loading = true;
 
                 this.$store
                     .dispatch("stat/daily", this.loadQuery({
@@ -712,6 +719,7 @@
                     }, true))
                     .then(() => {
                         this.dailyReady = true;
+                        this.loading = false;
                     });
             },
             loadData(callback) {

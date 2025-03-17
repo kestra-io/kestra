@@ -18,7 +18,7 @@
                     <el-card class="mb-3 shadow" v-loading="!statsReady">
                         <div>
                             <template v-if="hasStatsData">
-                                <Logs :data="logDaily" />
+                                <Logs :data="logDaily" :loading="!statsReady" />
                             </template>
                             <LogsNoData v-else />
                         </div>

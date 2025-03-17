@@ -3,14 +3,14 @@ package io.kestra.core.runners;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.micronaut.context.annotation.Property;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.*;
 
 class RunVariablesTest {
 
@@ -96,5 +96,18 @@ class RunVariablesTest {
             })
             .build(new RunContextLogger());
         Assertions.assertEquals(Map.of("id", "id-value", "type", "type-value"), variables.get("trigger"));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void shouldGetKestraConfiguration() {
+        Map<String, Object> variables = new RunVariables.DefaultBuilder()
+            .withKestraConfiguration(new RunVariables.KestraConfiguration("test", "http://localhost:8080"))
+            .build(new RunContextLogger());
+        assertThat(variables.size(), is(4));
+        Map<String, Object> kestra = (Map<String, Object>) variables.get("kestra");
+        assertThat(kestra, aMapWithSize(2));
+        assertThat(kestra.get("environment"), is("test"));
+        assertThat(kestra.get("url"), is("http://localhost:8080"));
     }
 }

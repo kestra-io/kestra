@@ -11,6 +11,8 @@
 </template>
 
 <script>
+    import {h} from "vue";
+
     import Topology from "./Topology.vue";
     import FlowRevisions from "./FlowRevisions.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue"
@@ -22,13 +24,14 @@
     import Tabs from "../Tabs.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
-    import FlowNoDependencies from "./FlowNoDependencies.vue";
+    import Empty from "../layout/empty/Empty.vue";
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";
     import {apiUrl} from "override/utils/route";
     import FlowRootTopBar from "./FlowRootTopBar.vue";
     import FlowConcurrency from "./FlowConcurrency.vue";
+    import DemoAuditLogs from "../demo/AuditLogs.vue";
 
     export default {
         mixins: [RouteContext],
@@ -161,9 +164,9 @@
                     )
                 ) {
                     tabs.push({
-                        name: "editor",
+                        name: "edit",
                         component: FlowEditor,
-                        title: this.$t("editor"),
+                        title: this.$t("edit"),
                         containerClass: "full-container",
                         props: {
                             expandedSubflows: this.expandedSubflows,
@@ -202,11 +205,6 @@
                         name: "triggers",
                         component: FlowTriggers,
                         title: this.$t("triggers"),
-                        props: {
-                            showTooltip: !this.flow.triggers || this.flow.triggers.length === 0
-                        },
-                        disabled: !this.flow.triggers,
-                        hideTitle: !this.flow.triggers
                     });
                 }
 
@@ -272,6 +270,11 @@
                 tabs.push(                    {
                     name: "auditlogs",
                     title: this.$t("auditlogs"),
+                    component: DemoAuditLogs,
+                    maximize: true,
+                    props:{
+                        embed: true
+                    },
                     locked: true
                 });
 
@@ -335,7 +338,8 @@
                 return (this.flow.labels?.["system.readOnly"] === "true") || (this.flow.labels?.["system.readOnly"] === true);
             },
             routeFlowDependencies() {
-                return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;
+                const EMPTY = () => h(Empty, {type: "dependencies"});
+                return this.dependenciesCount > 0 ? FlowDependencies : EMPTY;
             }
         },
         unmounted() {
@@ -346,9 +350,9 @@
 </script>
 <style lang="scss" scoped>
 .gray-700 {
-    color: var(--bs-secondary-color);
+    color: var(--ks-content-secondary-color);
 }
 .body-color {
-    color: var(--bs-body-color);
+    color: var(--ks-content-primary);
 }
 </style>

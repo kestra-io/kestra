@@ -7,13 +7,19 @@
 </template>
 
 <script>
-    import State from "../utils/state";
+    import {State} from "@kestra-io/ui-libs"
+
+    const StatusRemap = {
+        "failed": "error",
+        "warn": "warning"
+    }
 
     export default {
         props: {
             status: {
                 type: String,
-                required: true
+                required: true,
+                default: undefined
             },
             size: {
                 type: String,
@@ -31,11 +37,12 @@
         emits: ["click"],
         computed: {
             style() {
+                const statusVarname = (StatusRemap[this.status.toLowerCase()] ?? this.status)?.toLowerCase()
                 return {
-                    color: `var(--content-color-${this.status.toLowerCase()}) !important`,
-                    "border-color": `var(--border-color-${this.status.toLowerCase()}) !important`,
-                    "background-color": `var(--background-color-${this.status.toLowerCase()}) !important`
-                }
+                    color: `var(--ks-content-${statusVarname}) !important`,
+                    "border-color": `var(--ks-border-${statusVarname}) !important`,
+                    "background-color": `var(--ks-background-${statusVarname}) !important`
+                };
             },
             icon() {
                 return State.icon()[this.status];

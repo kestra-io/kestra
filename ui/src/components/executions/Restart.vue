@@ -79,7 +79,7 @@
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
     import ExecutionUtils from "../../utils/executionUtils";
 
     export default {
@@ -230,6 +230,6 @@
 </script>
 <style scoped>
 .execution-description {
-    color: var(--bs-gray-700);
+    color: var(--ks-content-secondary);
 }
 </style>

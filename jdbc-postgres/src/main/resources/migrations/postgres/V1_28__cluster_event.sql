@@ -1,0 +1,1 @@
+ALTER TYPE queue_type ADD VALUE IF NOT EXISTS 'io.kestra.core.server.ClusterEvent';

@@ -3,6 +3,8 @@ package io.kestra.plugin.core.trigger;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
@@ -24,6 +26,9 @@ class FlowTest {
     @Inject
     RunContextFactory runContextFactory;
 
+    @Inject
+    Optional<MultipleConditionStorageInterface> multipleConditionStorage;
+
     @Test
     void success() {
         var flow = io.kestra.core.models.flows.Flow.builder()
@@ -39,7 +44,7 @@ class FlowTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("test")
+                .format(Property.of("test"))
                 .build()))
             .build();
         var execution = Execution.builder()
@@ -55,7 +60,7 @@ class FlowTest {
             .build();
 
         Optional<Execution> evaluate = flowTrigger.evaluate(
-            runContextFactory.of(),
+                multipleConditionStorage, runContextFactory.of(),
             flow,
             execution
         );
@@ -82,7 +87,7 @@ class FlowTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("test")
+                .format(Property.of("test"))
                 .build()))
             .build();
         var execution = Execution.builder()
@@ -99,7 +104,7 @@ class FlowTest {
             .build();
 
         Optional<Execution> evaluate = flowTrigger.evaluate(
-            runContextFactory.of(),
+                multipleConditionStorage, runContextFactory.of(),
             flow,
             execution
         );
@@ -124,7 +129,7 @@ class FlowTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("test")
+                .format(Property.of("test"))
                 .build()))
             .build();
         var execution = Execution.builder()
@@ -145,7 +150,7 @@ class FlowTest {
             ))
             .build();
 
-        Optional<Execution> evaluate = flowTrigger.evaluate(runContextFactory.of(), flow, execution);
+        Optional<Execution> evaluate = flowTrigger.evaluate(multipleConditionStorage, runContextFactory.of(), flow, execution);
 
         assertThat(evaluate.isPresent(), is(true));
         assertThat(evaluate.get().getLabels(), hasSize(5));

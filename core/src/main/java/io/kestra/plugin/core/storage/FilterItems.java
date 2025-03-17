@@ -7,6 +7,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -61,9 +62,8 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
         title = "The file to be filtered.",
         description = "Must be a `kestra://` internal storage URI."
     )
-    @PluginProperty(dynamic = true)
     @NotNull
-    private String from;
+    private Property<String> from;
 
     @Schema(
         title = "The 'pebble' expression used to match items to be included or excluded.",
@@ -78,17 +78,15 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
         title = "Specifies the action to perform with items that match the `filterCondition` predicate",
         description = "Use `INCLUDE` to pass the item through, or `EXCLUDE` to drop the items."
     )
-    @PluginProperty
     @Builder.Default
-    private FilterType filterType = FilterType.INCLUDE;
+    private Property<FilterType> filterType = Property.of(FilterType.INCLUDE);
 
     @Schema(
         title = "Specifies the behavior when the expression fail to be evaluated on an item or return `null`.",
         description = "Use `FAIL` to throw the exception and fail the task, `INCLUDE` to pass the item through, or `EXCLUDE` to drop the item."
     )
-    @PluginProperty
     @Builder.Default
-    private ErrorOrNullBehavior errorOrNullBehavior = ErrorOrNullBehavior.FAIL;
+    private Property<ErrorOrNullBehavior> errorOrNullBehavior = Property.of(ErrorOrNullBehavior.FAIL);
 
     /**
      * {@inheritDoc}
@@ -96,7 +94,7 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
     @Override
     public Output run(RunContext runContext) throws Exception {
 
-        URI from = new URI(runContext.render(this.from));
+        URI from = new URI(runContext.render(this.from).as(String.class).orElseThrow());
 
         final PebbleExpressionPredicate predicate = getExpressionPredication(runContext);
 
@@ -116,10 +114,10 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
                     exception = e;
                 }
 
-                FilterType action = this.filterType;
+                FilterType action = runContext.render(this.filterType).as(FilterType.class).orElseThrow();
 
                 if (match == null) {
-                    switch (errorOrNullBehavior) {
+                    switch (runContext.render(errorOrNullBehavior).as(ErrorOrNullBehavior.class).orElseThrow()) {
                         case FAIL -> {
                             if (exception != null) {
                                 throw exception;

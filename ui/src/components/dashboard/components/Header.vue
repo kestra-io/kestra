@@ -8,9 +8,20 @@
                             name: 'dashboards/update',
                             params: {id: props.id},
                         }"
+                        data-test-id="dashboard-update-dashboard-button"
                     >
                         <el-button :icon="Pencil">
                             {{ $t("edit_custom_dashboard") }}
+                        </el-button>
+                    </router-link>
+                </li>
+                <li v-if="!props.id">
+                    <router-link
+                        :to="{name: 'dashboards/create'}"
+                        data-test-id="dashboard-create-dashboard-button"
+                    >
+                        <el-button :icon="ViewDashboardEdit">
+                            {{ $t("create_dashboard") }}
                         </el-button>
                     </router-link>
                 </li>
@@ -42,6 +53,7 @@
 
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
+    import ViewDashboardEdit from "vue-material-design-icons/ViewDashboardEdit.vue";
 
     const store = useStore();
     const {t} = useI18n({useScope: "global"});

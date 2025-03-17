@@ -40,4 +40,20 @@ class ForEachTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(7));
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/foreach-disabled-tasks.yaml")
+    void disabledTasks(Execution execution) {
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList(), hasSize(1));
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/foreach-error.yaml")
+    void errors(Execution execution) {
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList(), hasSize(6));
+        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+    }
 }

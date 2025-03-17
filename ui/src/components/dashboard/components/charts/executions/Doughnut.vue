@@ -9,7 +9,13 @@
         >
             <div class="w-75">
                 <Doughnut
-                    v-if="total > 0"
+                    v-if="loading"
+                    :data="skeletonData"
+                    :options="skeletonOptions"
+                    class="tall"
+                />
+                <Doughnut
+                    v-else-if="total > 0"
                     :data="parsedData"
                     :options="options"
                     :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
@@ -25,14 +31,17 @@
 <script setup>
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
+    import {useRouter} from "vue-router";
 
     import {Doughnut} from "vue-chartjs";
 
     import {totalsLegend} from "../legend.js";
-
-    import Utils from "../../../../../utils/utils.js";
+    import {useTheme} from "../../../../../utils/utils.js";
     import {defaultConfig} from "../../../../../utils/charts.js";
-    import {getScheme} from "../../../../../utils/scheme.js";
+    import {useScheme} from "../../../../../utils/scheme.js";
+
+    const router = useRouter();
+    const scheme = useScheme();
 
     import NoData from "../../../../layout/NoData.vue";
 
@@ -47,7 +56,13 @@
             type: Number,
             required: true,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
+
+    const theme = useTheme();
 
     const parsedData = computed(() => {
         let stateCounts = Object.create(null);
@@ -64,7 +79,7 @@
 
         const labels = Object.keys(stateCounts);
         const data = labels.map((state) => stateCounts[state]);
-        const backgroundColor = labels.map((state) => getScheme(state));
+        const backgroundColor = labels.map((state) => scheme.value[state]);
 
         const maxDataValue = Math.max(...data);
         const thicknessScale = data.map(
@@ -94,13 +109,28 @@
                     },
                 },
             },
-        }),
+            onClick: (e, elements) => {
+                if (elements.length > 0) {
+                    const index = elements[0].index;
+                    const state = parsedData.value.labels[index];
+                    router.push({
+                        name: "executions/list",
+                        query: {
+                            state: state,
+                            scope: "USER",
+                            size: 100,
+                            page: 1,
+                        },
+                    });
+                }
+            },
+        }, theme.value),
     );
 
-    const centerPlugin = {
+    const centerPlugin = computed(() => ({
         id: "centerPlugin",
         beforeDraw(chart) {
-            const darkTheme = Utils.getTheme() === "dark";
+            const darkTheme = theme.value === "dark";
 
             const ctx = chart.ctx;
             const dataset = chart.data.datasets[0];
@@ -118,7 +148,7 @@
 
             ctx.restore();
         },
-    };
+    }));
 
     const thicknessPlugin = {
         id: "thicknessPlugin",
@@ -139,6 +169,35 @@
             });
         },
     };
+
+    const skeletonData = computed(() => {
+        const barColor = theme.value === "dark" 
+            ? "rgba(255, 255, 255, 0.08)"
+            : "rgba(0, 0, 0, 0.06)";
+
+        return {
+            labels: ["Loading"],
+            datasets: [{
+                data: [100],
+                backgroundColor: [barColor],
+                borderWidth: 0
+            }]
+        };
+    });
+
+    const skeletonOptions = computed(() => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                enabled: false
+            }
+        },
+        cutout: "40%"
+    }));
 </script>
 
 <style lang="scss" scoped>

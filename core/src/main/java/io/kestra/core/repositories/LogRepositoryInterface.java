@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.statistics.LogStatistics;
@@ -11,6 +12,7 @@ import org.slf4j.event.Level;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import reactor.core.publisher.Flux;
 
 public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry>, QueryBuilderInterface<Logs.Fields> {
     /**
@@ -75,14 +77,15 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
 
     ArrayListTotal<LogEntry> find(
         Pageable pageable,
-        @Nullable String query,
+        @Nullable String tenantId,
+        List<QueryFilter> filters
+        );
+
+    Flux<LogEntry> findAsync(
         @Nullable String tenantId,
         @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable String triggerId,
         @Nullable Level minLevel,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate
+        ZonedDateTime startDate
     );
 
     List<LogStatistics> statistics(

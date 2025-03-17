@@ -10,11 +10,11 @@
             <KestraFilter :placeholder="$t('pluginPage.search', {count: countPlugin})" :search-callback="(input)=> searchInput = input" />
         </el-row>
         <section class="px-3 plugins-container">
-            <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="index" effect="light">
+            <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="plugin.name + '-' + index" effect="light">
                 <template #content>
                     <div class="tasks-tooltips">
                         <p v-if="plugin?.tasks.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Tasks
+                            {{ $t('tasks') }}
                         </p>
                         <ul>
                             <li
@@ -25,7 +25,7 @@
                             </li>
                         </ul>
                         <p v-if="plugin?.triggers.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Triggers
+                            {{ $t('triggers') }}
                         </p>
                         <ul>
                             <li
@@ -36,7 +36,7 @@
                             </li>
                         </ul>
                         <p v-if="plugin?.conditions.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Conditions
+                            {{ $t('conditions') }}
                         </p>
                         <ul>
                             <li
@@ -47,8 +47,7 @@
                             </li>
                         </ul>
                         <p v-if="plugin?.taskRunners.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Task
-                            Runners
+                            {{ $t('task_runners') }}
                         </p>
                         <ul>
                             <li
@@ -75,7 +74,7 @@
 </template>
 
 <script>
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {TaskIcon} from "@kestra-io/ui-libs";
     import DottedLayout from "../layout/DottedLayout.vue";
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
@@ -223,7 +222,7 @@
 
         &::-webkit-scrollbar-thumb {
             -webkit-border-radius: 10px;
-            background: var(--bs-primary);
+            background: var(--ks-button-background-primary);
         }
     }
 
@@ -235,20 +234,20 @@
         align-items: center;
         gap: 8px;
         border-radius: 4px;
-        border: 1px solid var(--bs-gray-300);
-        background-color: white;
-
-        html.dark & {
-            background-color: var(--bs-tertiary);
-            border-color: #404559;
-        }
-
-        color: var(--text-color-primary);
         text-overflow: ellipsis;
         font-size: 12px;
         font-weight: 700;
         line-height: 26px;
         cursor: pointer;
+
+        border: 1px solid var(--ks-border-primary);
+        background-color: var(--ks-button-background-secondary);
+        color: var(--ks-content-primary);
+
+        &:hover{
+            border-color: var(--ks-border-active);
+            background-color: var(--ks-button-background-secondary-hover);
+        }
     }
 
     .size {

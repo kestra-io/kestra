@@ -1,0 +1,26 @@
+id: exit
+namespace: io.kestra.tests
+
+inputs:
+  - id: state
+    type: SELECT
+    values:
+      - CONTINUE
+      - END
+    defaults: END
+
+tasks:
+  - id: if
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{inputs.state == 'CONTINUE'}}"
+    then:
+      - id: hello
+        type: io.kestra.plugin.core.log.Log
+        message: I'm continuing
+    else:
+      - id: exit
+        type: io.kestra.plugin.core.execution.Exit
+        state: WARNING
+  - id: end
+    type: io.kestra.plugin.core.log.Log
+    message: I'm ending

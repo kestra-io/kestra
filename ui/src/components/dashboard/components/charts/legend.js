@@ -1,5 +1,5 @@
 import Utils from "../../../../utils/utils.js";
-import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
+import {cssVariable} from "@kestra-io/ui-libs";
 import {getConsistentHEXColor} from "../../../../utils/charts.js";
 
 const getOrCreateLegendList = (chart, id, direction = "row") => {
@@ -12,7 +12,7 @@ const getOrCreateLegendList = (chart, id, direction = "row") => {
 
     if (!listContainer) {
         listContainer = document.createElement("ul");
-        listContainer.classList.add("w-100", "fw-light", "small", "legend");
+        listContainer.classList.add("w-100", "fw-light", "legend", direction === "row" ? "small" : "tall");
         listContainer.style.display = "flex";
         listContainer.style.flexDirection = direction;
         listContainer.style.margin = 0;
@@ -142,7 +142,7 @@ export const customBarLegend = {
             };
 
             const boxSpan = document.createElement("span");
-            const color = getConsistentHEXColor(item.text);
+            const color = getConsistentHEXColor(Utils.getTheme(), item.text);
             boxSpan.style.background = color;
             boxSpan.style.borderColor = "transparent";
             boxSpan.style.height = "5px";

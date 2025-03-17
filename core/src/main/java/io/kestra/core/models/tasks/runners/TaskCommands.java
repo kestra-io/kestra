@@ -1,5 +1,8 @@
 package io.kestra.core.models.tasks.runners;
 
+import io.kestra.core.models.property.Property;
+import lombok.With;
+
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,7 +22,11 @@ public interface TaskCommands {
 
     AbstractLogConsumer getLogConsumer();
 
-    List<String> getCommands();
+    Property<List<String>> getInterpreter();
+
+    Property<List<String>> getBeforeCommands();
+
+    Property<List<String>> getCommands();
 
     Map<String, Object> getAdditionalVars();
 

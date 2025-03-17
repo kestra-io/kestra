@@ -39,7 +39,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 @KestraTest
-@Property(name = "kestra.templates.enabled", value = StringUtils.TRUE)
+@io.micronaut.context.annotation.Property(name = "kestra.templates.enabled", value = StringUtils.TRUE)
 class TemplateControllerTest {
     @Inject
     @Client("/")
@@ -55,8 +55,8 @@ class TemplateControllerTest {
     }
 
     private Template createTemplate() {
-        Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format("test").build();
-        Task t2 = Return.builder().id("task-2").type(Return.class.getName()).format("test").build();
+        Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build();
+        Task t2 = Return.builder().id("task-2").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build();
         return Template.builder()
             .id(IdUtils.create())
             .namespace("kestra.test")
@@ -65,8 +65,8 @@ class TemplateControllerTest {
     }
 
     private Template createTemplate(String friendlyId, String namespace) {
-        Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format("test").build();
-        Task t2 = Return.builder().id("task-2").type(Return.class.getName()).format("test").build();
+        Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build();
+        Task t2 = Return.builder().id("task-2").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build();
         return Template.builder()
             .id(friendlyId)
             .namespace(namespace)
@@ -132,7 +132,7 @@ class TemplateControllerTest {
         client.toBlocking().retrieve(POST("/api/v1/templates", template), Template.class);
         Template createdTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
         assertThat(template.getTasks().size(), is(2));
-        Task t3 = Return.builder().id("task-3").type(Return.class.getName()).format("test").build();
+        Task t3 = Return.builder().id("task-3").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build();
         Template updateTemplate = Template.builder().id(template.getId()).namespace(template.getNamespace()).description("My new template description").tasks(Arrays.asList(t3)).build();
         client.toBlocking().retrieve(PUT("/api/v1/templates/" + template.getNamespace() + "/" + template.getId(), updateTemplate), Template.class);
         Template updatedTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
@@ -149,7 +149,7 @@ class TemplateControllerTest {
             Template t1 = Template.builder()
             .id(IdUtils.create())
             .namespace("kestra.template.custom")
-            .tasks(Arrays.asList(Return.builder().id("task").type(Return.class.getName()).format("test").build()))
+            .tasks(Arrays.asList(Return.builder().id("task").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build()))
             .build();
         client.toBlocking().retrieve(POST("/api/v1/templates", t1), Template.class);
         client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);

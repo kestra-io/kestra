@@ -22,6 +22,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -69,7 +71,7 @@ public class NamespaceControllerTest {
         assertThat(list.getTotal(), is(6L));
         assertThat(list.getResults().size(), is(6));
         assertThat(list.getResults(), everyItem(hasProperty("disabled", is(true))));
-        assertThat(list.getResults().map(NamespaceWithDisabled::getId), containsInAnyOrder(
+        assertThat(list.getResults().stream().map(NamespaceWithDisabled::getId).toList(), containsInAnyOrder(
             "my", "my.ns", "my.ns.flow",
             "another", "another.ns", "system"
         ));
@@ -113,6 +115,16 @@ public class NamespaceControllerTest {
 
         assertThat(retrieve.getNodes().size(), is(3));
         assertThat(retrieve.getEdges().size(), is(2));
+    }
+
+    @Test
+    void inheritedSecrets() {
+        Map<String, Set<String>> parentInheritedSecrets = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/namespaces/any.ns/inherited-secrets"),
+            Argument.mapOf(Argument.of(String.class), Argument.setOf(String.class))
+        );
+        assertThat(parentInheritedSecrets.size(), is(1));
+        assertThat(parentInheritedSecrets.get("any.ns"), is(Set.of("WEBHOOK_KEY", "PASSWORD", "NEW_LINE", "MY_SECRET")));
     }
 
     protected Flow flow(String namespace) {

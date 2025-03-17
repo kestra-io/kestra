@@ -21,16 +21,16 @@ import java.util.List;
 
 @CommandLine.Command(
     name = "updates",
-    description = "create or update flows from a folder, and optionally delete the ones not present",
+    description = "Create or update flows from a folder, and optionally delete the ones not present",
     mixinStandardHelpOptions = true
 )
 @Slf4j
 public class FlowUpdatesCommand extends AbstractApiCommand {
 
-    @CommandLine.Parameters(index = "0", description = "the directory containing files")
+    @CommandLine.Parameters(index = "0", description = "The directory containing files")
     public Path directory;
 
-    @CommandLine.Option(names = {"--delete"}, negatable = true, description = "if missing should be deleted")
+    @CommandLine.Option(names = {"--delete"}, negatable = true, description = "Whether missing should be deleted")
     public boolean delete = false;
 
     @SuppressWarnings("deprecation")

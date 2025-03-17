@@ -38,9 +38,6 @@
             ...mapState("flow", ["flow", "flowGraph"]),
             ...mapGetters("flow", ["flowValidation"]),
         },
-        mounted() {
-            this.$store.commit("doc/setDocId", "flowEditor");
-        },
         beforeUnmount() {
             this.$store.commit("flow/setFlowValidation", undefined);
         },

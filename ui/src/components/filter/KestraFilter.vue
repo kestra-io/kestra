@@ -4,31 +4,53 @@
 
         <el-select
             ref="select"
-            :model-value="current"
+            :model-value="currentFilters"
             value-key="label"
             :placeholder="props.placeholder ?? t('filters.label')"
             default-first-option
             allow-create
             filterable
+            :filter-method="(f) => (prefixFilter = f.toLowerCase())"
             clearable
             multiple
             placement="bottom"
             :show-arrow="false"
             fit-input-width
             :popper-class="!!props.searchCallback ? 'd-none' : 'filters-select'"
+            :popper-options="{
+                modifiers: [
+                    {
+                        name: 'offset',
+                        options: {
+                            offset: [dropdownOffset, 12],
+                        },
+                    },
+                ],
+            }"
             @change="(value) => changeCallback(value)"
             @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
-            @visible-change="(visible) => dropdownClosedCallback(visible)"
+            @visible-change="(visible) => dropdownToggleCallback(visible)"
             @clear="handleClear"
             :class="{
                 refresh: buttons.refresh.shown,
                 settings: buttons.settings.shown,
                 dashboards: dashboards.shown,
+                properties: properties.shown,
             }"
+            @focus="handleFocus"
+            data-test-id="KestraFilter__select"
         >
-            <template #label="{value}">
-                <Label :option="value" />
+            <template #tag>
+                <el-tag
+                    v-for="(option, index) in currentFilters"
+                    :key="index"
+                    :closable="!option.persistent"
+                    @close="() => removeItem(option)"
+                    :class="{disabled: option.persistent}"
+                >
+                    <Label :option :prefix="ITEMS_PREFIX" />
+                </el-tag>
             </template>
             <template #empty>
                 <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
@@ -40,11 +62,12 @@
             </template>
             <template v-if="dropdowns.first.shown">
                 <el-option
-                    v-for="option in includedOptions"
+                    v-for="(option, index) in includedOptions"
                     :key="option.value"
                     :value="option.value"
                     :label="option.label"
                     @click="() => filterCallback(option)"
+                    :data-test-id="`KestraFilter__type__${index}`"
                 >
                     <component
                         v-if="option.icon"
@@ -56,31 +79,47 @@
             </template>
             <template v-else-if="dropdowns.second.shown">
                 <el-option
-                    v-for="comparator in dropdowns.first.value.comparators"
+                    v-for="(comparator, index) in dropdowns.first.value
+                        .comparators"
                     :key="comparator.value"
                     :value="comparator"
                     :label="comparator.label"
                     :class="{
-                        selected: current.some(
+                        selected: currentFilters.some(
                             (c) => c.comparator === comparator,
                         ),
                     }"
                     @click="() => comparatorCallback(comparator)"
+                    :data-test-id="`KestraFilter__comparator__${index}`"
                 />
             </template>
             <template v-else-if="dropdowns.third.shown">
                 <el-option
-                    v-for="filter in valueOptions"
+                    v-for="(filter, index) in prefixFilteredValueOptions"
                     :key="filter.value"
                     :value="filter"
-                    :label="filter.label"
                     :class="{
-                        selected: current.some((c) =>
-                            c.value.includes(filter.value),
-                        ),
+                        selected: currentFilters
+                            .at(-1)
+                            ?.value?.includes(filter.value),
+                        disabled: isOptionDisabled(filter),
+                        'level-3': true,
                     }"
-                    @click="() => valueCallback(filter)"
-                />
+                    @click="
+                        () => !isOptionDisabled(filter) && valueCallback(filter)
+                    "
+                    :data-test-id="`KestraFilter__value__${index}`"
+                >
+                    <template v-if="filter.label.component">
+                        <component
+                            :is="filter.label.component"
+                            v-bind="filter.label.props"
+                        />
+                    </template>
+                    <template v-else>
+                        {{ filter.label }}
+                    </template>
+                </el-option>
             </template>
         </el-select>
 
@@ -90,23 +129,29 @@
                 'me-1':
                     buttons.refresh.shown ||
                     buttons.settings.shown ||
-                    dashboards.shown,
+                    dashboards.shown ||
+                    properties.shown,
             }"
         >
             <KestraIcon :tooltip="$t('search')" placement="bottom">
                 <el-button
+                    :disabled="!!props.searchCallback"
                     :icon="Magnify"
                     @click="triggerSearch"
                     class="rounded-0"
                 />
             </KestraIcon>
-            <Save :disabled="!current.length" :prefix="ITEMS_PREFIX" :current />
+            <Save
+                :disabled="!currentFilters.length"
+                :prefix="ITEMS_PREFIX"
+                :current="currentFilters"
+            />
         </el-button-group>
 
         <el-button-group
             v-if="buttons.refresh.shown || buttons.settings.shown"
             class="d-inline-flex ms-1"
-            :class="{'me-1': dashboards.shown}"
+            :class="{'me-1': dashboards.shown || properties.shown}"
         >
             <Refresh
                 v-if="buttons.refresh.shown"
@@ -124,14 +169,22 @@
             @dashboard="(value) => emits('dashboard', value)"
             class="ms-1"
         />
+        <Properties
+            v-if="properties.shown"
+            :columns="properties.columns"
+            :model-value="properties.displayColumns"
+            :storage-key="properties.storageKey"
+            @update-properties="(v) => emits('updateProperties', v)"
+            class="ms-1"
+        />
     </section>
 </template>
 
 <script setup lang="ts">
-    import {ref, computed} from "vue";
+    import {computed, nextTick, onMounted, ref, shallowRef, watch} from "vue";
     import {ElSelect} from "element-plus";
 
-    import {Shown, Buttons, CurrentItem} from "./utils/types";
+    import {Buttons, CurrentItem, Pair, Property, Shown} from "./utils/types";
 
     import Refresh from "../layout/RefreshButton.vue";
     import Items from "./segments/Items.vue";
@@ -139,26 +192,36 @@
     import Save from "./segments/Save.vue";
     import Settings from "./segments/Settings.vue";
     import Dashboards from "./segments/Dashboards.vue";
+    import Properties from "./segments/Properties.vue";
     import KestraIcon from "../Kicon.vue";
     import DateRange from "../layout/DateRange.vue";
+    import Status from "./components/Status.vue";
 
-    import {Magnify} from "./utils/icons.js";
+    import {Magnify} from "./utils/icons";
 
     import {useI18n} from "vue-i18n";
+    import {useStore} from "vuex";
+    import {useRoute, useRouter} from "vue-router";
+    import {useFilters} from "./composables/useFilters";
+    import action from "../../models/action.js";
+    import permission from "../../models/permission.js";
+    import {useValues} from "./composables/useValues";
+    import {decodeParams, encodeParams} from "./utils/helpers";
+
     const {t} = useI18n({useScope: "global"});
 
-    import {useStore} from "vuex";
     const store = useStore();
 
-    import {useRouter, useRoute} from "vue-router";
     const router = useRouter();
     const route = useRoute();
 
-    const emits = defineEmits(["dashboard", "input"]);
+    const emits = defineEmits(["dashboard", "input", "updateProperties"]);
     const props = defineProps({
         prefix: {type: String, default: undefined},
         include: {type: Array, default: () => []},
         values: {type: Object, default: undefined},
+        decode: {type: Boolean, default: true},
+        propertiesWidth: {type: Number, default: 144},
         buttons: {
             type: Object as () => Buttons,
             default: () => ({
@@ -173,18 +236,36 @@
             type: Object as () => Shown,
             default: () => ({shown: false}),
         },
+        properties: {
+            type: Object as () => Property,
+            default: () => ({shown: false}),
+        },
         placeholder: {type: String, default: undefined},
         searchCallback: {type: Function, default: undefined},
     });
 
+    const TEXT_PREFIX = `${t("filters.text_search")}: `;
     const ITEMS_PREFIX = props.prefix ?? String(route.name);
 
-    import {useFilters} from "./composables/useFilters.js";
     const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX);
+
+    const prefixFilteredValueOptions = computed(() => {
+        if (prefixFilter.value === "") {
+            return valueOptions.value;
+        }
+        return (
+            valueOptions.value.filter((o) =>
+                o.label.toLowerCase().startsWith(prefixFilter.value),
+            ) || []
+        );
+    });
 
     const select = ref<InstanceType<typeof ElSelect> | null>(null);
     const updateHoveringIndex = (index) => {
-        select.value.states.hoveringIndex = index >= 0 ? index : 0;
+        select.value!.states.hoveringIndex = undefined;
+        nextTick(() => {
+            select.value!.states.hoveringIndex = Math.max(index, 0);
+        });
     };
     const emptyLabel = ref(t("filters.empty"));
     const INITIAL_DROPDOWNS = {
@@ -193,7 +274,7 @@
         third: {shown: false, index: -1},
     };
     const dropdowns = ref({...INITIAL_DROPDOWNS});
-    const closeDropdown = () => (select.value.dropdownMenuVisible = false);
+    const closeDropdown = () => (select.value!.dropdownMenuVisible = false);
 
     const triggerEnter = ref(true);
     const handleEnterKey = (option) => {
@@ -210,6 +291,7 @@
 
                 if (o.key === "timeRange") comparator = "relative_date";
                 if (o.key === "date") comparator = "absolute_date";
+                if (o.key === "childFilter") comparator = "child";
 
                 return comparator === option.label;
             })[0];
@@ -220,6 +302,8 @@
         } else if (dropdowns.value.third.shown) {
             valueCallback(option);
         }
+
+        prefixFilter.value = "";
     };
 
     const getInputValue = () => select.value?.states.inputValue;
@@ -238,15 +322,27 @@
 
         if (key === "Enter") return;
 
-        if (current.value.at(-1)?.label === "user") {
+        if (currentFilters.value.at(-1)?.label === "user") {
             emits("input", getInputValue());
+        }
+
+        if (getInputValue() === TEXT_PREFIX) {
+            select.value!.states.inputValue = "";
         }
     };
 
     const handleClear = () => {
-        current.value = [];
+        currentFilters.value = currentFilters.value.filter(
+            (item) => item.persistent,
+        );
         triggerSearch();
     };
+
+    const activeParentFilter = ref<string | null>(null);
+    const lastClickedParent = ref<string | null>(null);
+    const showSubFilterDropdown = ref(false);
+    const valueOptions = ref<Pair[]>([]);
+    const parentValue = ref<string | null>(null);
 
     const filterCallback = (option) => {
         if (!option.value) {
@@ -259,74 +355,154 @@
             comparator: undefined,
             value: [],
         };
-        dropdowns.value.first = {shown: false, value: option};
-        dropdowns.value.second = {shown: true, index: current.value.length};
 
-        current.value.push(option.value);
-
-        // If only one comparator option, automate selection of it
-        if (option.comparators.length === 1) {
-            comparatorCallback(option.comparators[0]);
+        // Check if parent filter already exists
+        const existingFilterIndex = currentFilters.value
+            .filter((itm) => itm.label !== "labels")
+            .findIndex((item) => item.label === option.value.label);
+        if (existingFilterIndex !== -1) {
+            // If it exists, update current filter index
+            dropdowns.value.second = {shown: true, index: existingFilterIndex};
+            activeParentFilter.value = option.value.label;
+            lastClickedParent.value = option.value.label;
+            parentValue.value = option.value.label;
+            showSubFilterDropdown.value = true;
+            setOptions("filterCallback");
+            if (option.comparators.length === 1) {
+                comparatorCallback(option.comparators[0]);
+            }
+        } else {
+            // If it doesn't exist, push new filter
+            dropdowns.value.first = {shown: false, value: option};
+            dropdowns.value.second = {
+                shown: true,
+                index: currentFilters.value.length,
+            };
+            currentFilters.value.push(option.value);
+            activeParentFilter.value = option.value.label;
+            lastClickedParent.value = option.value.label;
+            parentValue.value = option.value.label;
+            showSubFilterDropdown.value = true;
+            setOptions("filterCallback");
+            if (option.comparators.length === 1) {
+                comparatorCallback(option.comparators[0]);
+            }
         }
+
+        updateHoveringIndex(0);
     };
     const comparatorCallback = (value) => {
-        current.value[dropdowns.value.second.index].comparator = value;
+        currentFilters.value[dropdowns.value.second.index].comparator = value;
         emptyLabel.value = ["labels", "details"].includes(
-            current.value[dropdowns.value.second.index].label,
+            currentFilters.value[dropdowns.value.second.index].label,
         )
             ? t("filters.format")
             : t("filters.empty");
 
-        dropdowns.value.first = {shown: false, value: {}};
-        dropdowns.value.second = {shown: false, index: -1};
-        dropdowns.value.third = {shown: true, index: current.value.length - 1};
+        dropdowns.value = {
+            first: {shown: false, value: {}},
+            second: {shown: false, index: -1},
+            third: {shown: true, index: currentFilters.value.length - 1},
+        };
 
-        // Set hover index to the selected comparator for highlighting
-        const index = valueOptions.value.findIndex((o) => o.value === value.value);
-        updateHoveringIndex(index);
+        updateHoveringIndex(0);
     };
-    const dropdownClosedCallback = (visible) => {
+
+    let dropdownOffset = ref(0);
+    const calculateDropdownOffset = (left: number = 0, halfWidth: number = 0) => {
+        return left > halfWidth ? Math.abs(halfWidth - left) : -(halfWidth - left);
+    };
+    const dropdownToggleCallback = (visible) => {
         if (!visible) {
             dropdowns.value = {...INITIAL_DROPDOWNS};
-
+            activeParentFilter.value = null;
+            lastClickedParent.value = null;
+            showSubFilterDropdown.value = false;
             // If last filter item selection was not completed, remove it from array
-            if (current.value?.at(-1)?.value?.length === 0) current.value.pop();
+            if (currentFilters.value?.at(-1)?.value?.length === 0)
+                currentFilters.value.pop();
         } else {
-            // Highlight all selected items by setting hoveringIndex to match the first selected item
-            const index = valueOptions.value.findIndex((o) => {
-                return current.value.some((c) => c.value.includes(o.value));
-            });
-            updateHoveringIndex(index);
+            const {selectRef, inputRef} = select.value || {};
+            dropdownOffset.value = calculateDropdownOffset(
+                inputRef?.offsetLeft,
+                selectRef?.offsetWidth / 2,
+            );
+
+            updateHoveringIndex(0);
         }
     };
+    const isOptionDisabled = () => {
+        if (!activeParentFilter.value) return false;
+
+        const parentIndex = currentFilters.value
+            .filter((itm) => itm.label !== "labels")
+            .findIndex((item) => item.label === activeParentFilter.value);
+        if (parentIndex === -1) return false;
+    };
     const valueCallback = (filter, isDate = false) => {
+        // Don't do anything if the option is disabled
+        if (isOptionDisabled(filter)) return;
         if (!isDate) {
-            const values = current.value[dropdowns.value.third.index].value;
-            const index = values.indexOf(filter.value);
-
-            if (index === -1) values.push(filter.value);
-            else values.splice(index, 1);
-
-            // Update the hover index for better UX
-            const hoverIndex = valueOptions.value.findIndex(
-                (o) => o.value === filter.value,
+            const parentIndex = currentFilters.value.findIndex(
+                (item) => item.label === parentValue.value,
             );
-            updateHoveringIndex(hoverIndex);
+            if (parentIndex !== -1) {
+                if (
+                    ["status", "log level"].includes(
+                        lastClickedParent.value.toLowerCase(),
+                    )
+                ) {
+                    const values = currentFilters.value[parentIndex].value;
+                    const index = values.indexOf(filter.value);
+
+                    if (index === -1) {
+                        currentFilters.value[parentIndex].value = [filter.value]; // Add only the filter.value
+                    } else {
+                        currentFilters.value[parentIndex].value = values.filter(
+                            (value, i) => i !== index,
+                        ); // remove the clicked item
+                    }
+                } else {
+                    const values = currentFilters.value[parentIndex].value;
+                    const index = values.indexOf(filter.value);
+                    if (index === -1) values.push(filter.value);
+                    else values.splice(index, 1);
+                }
+            }
         } else {
-            const match = current.value.find((v) => v.label === "absolute_date");
-            if (match) match.value = [filter];
+            const match = currentFilters.value.find(
+                (v) => v.label === "absolute_date",
+            );
+            if (match) {
+                match.value = [
+                    {
+                        startDate: filter.startDate,
+                        endDate: filter.endDate,
+                    },
+                ];
+            }
+            const index = currentFilters.value.findIndex(
+                (v) => v.label === "absolute_date",
+            );
+
+            if (index !== -1) {
+                if (!filter || !filter.startDate || !filter.endDate) {
+                    // Remove absolute_date if it's empty
+                    currentFilters.value.splice(index, 1);
+                }
+            }
         }
 
-        if (!current.value[dropdowns.value.third.index].comparator?.multiple) {
+        if (
+            dropdowns.value.third.index !== -1 &&
+            currentFilters.value[dropdowns.value.third.index] &&
+            !currentFilters.value[dropdowns.value.third.index].comparator?.multiple
+        ) {
             // If selection is not multiple, close the dropdown
             closeDropdown();
         }
-
         triggerSearch();
     };
-
-    import action from "../../models/action.js";
-    import permission from "../../models/permission.js";
 
     const user = computed(() => store.state.auth.user);
 
@@ -359,118 +535,204 @@
     // Load all namespaces only if that filter is included
     if (props.include.includes("namespace")) loadNamespaces();
 
-    import {useValues} from "./composables/useValues";
     const {VALUES} = useValues(ITEMS_PREFIX);
 
     const isDatePickerShown = computed(() => {
-        const c = current?.value?.at(-1);
-        return c?.label === "absolute_date" && c.comparator;
+        return currentFilters?.value?.some(
+            (c) => c.label === "absolute_date" && c.comparator,
+        );
     });
-
-    const valueOptions = computed(() => {
-        const type = current.value.at(-1)?.label;
-
-        switch (type) {
+    const setOptions = () => {
+        if (!lastClickedParent.value) {
+            valueOptions.value = [];
+            return;
+        }
+        const parentValue = lastClickedParent.value
+            .toLowerCase()
+            .replace(/\blog\b/gi, "")
+            .trim()
+            .replace(/\s+/g, "_");
+        switch (parentValue) {
         case "namespace":
-            return namespaceOptions.value;
+            valueOptions.value = namespaceOptions.value;
+            break;
 
         case "state":
-            return props.values?.state || VALUES.EXECUTION_STATES;
+            valueOptions.value = (
+                props.values?.state || VALUES.EXECUTION_STATES
+            ).map((value) => {
+                value.label = {
+                    component: shallowRef(Status),
+                    props: {status: value.value},
+                };
+                return value;
+            });
+            break;
 
         case "trigger_state":
-            return VALUES.TRIGGER_STATES;
+            valueOptions.value = VALUES.TRIGGER_STATES;
+            break;
 
         case "scope":
-            return VALUES.SCOPES;
+            valueOptions.value = VALUES.SCOPES;
+            break;
 
         case "child":
-            return VALUES.CHILDS;
+            valueOptions.value = VALUES.CHILDS;
+            break;
 
         case "level":
-            return VALUES.LEVELS;
+            valueOptions.value = VALUES.LEVELS;
+            break;
 
         case "task":
-            return props.values?.task || [];
+            valueOptions.value = props.values?.task || [];
+            break;
 
         case "metric":
-            return props.values?.metric || [];
+            valueOptions.value = props.values?.metric || [];
+            break;
 
         case "user":
-            return props.values?.user || [];
+            valueOptions.value = props.values?.user || [];
+            break;
 
         case "type":
-            return VALUES.TYPES;
+            valueOptions.value = VALUES.TYPES;
+            break;
 
         case "service_type":
-            return props.values?.type || [];
+            valueOptions.value = props.values?.type || [];
+            break;
 
         case "permission":
-            return VALUES.PERMISSIONS;
+            valueOptions.value = VALUES.PERMISSIONS;
+            break;
 
         case "action":
-            return VALUES.ACTIONS;
+            valueOptions.value = VALUES.ACTIONS;
+            break;
 
         case "status":
-            return VALUES.STATUSES;
+            valueOptions.value = VALUES.STATUSES;
+            break;
 
         case "aggregation":
-            return VALUES.AGGREGATIONS;
+            valueOptions.value = VALUES.AGGREGATIONS;
+            break;
 
         case "relative_date":
-            return VALUES.RELATIVE_DATE;
+            valueOptions.value = VALUES.RELATIVE_DATE;
+            break;
 
         case "absolute_date":
-            return [];
+            valueOptions.value = [];
+            break;
 
         default:
-            return [];
+            valueOptions.value = [];
+            break;
         }
-    });
+    };
+    const currentFilters = ref<CurrentItem[]>([]);
 
-    const current = ref<CurrentItem[]>([]);
+    watch(
+        () => route.query,
+        (q: any) => {
+            // Handling change of label filters from direct click events
+            if (
+                Object.keys(q).length === 0 ||
+                Object.keys(q).some((key) => key.startsWith("filters[labels]"))
+            ) {
+                const routeFilters = decodeParams(
+                    route.name,
+                    q,
+                    props.include,
+                    OPTIONS,
+                );
+                currentFilters.value = routeFilters;
+            }
+        },
+        {immediate: true},
+    );
+
+    const prefixFilter = ref("");
+
     const includedOptions = computed(() => {
         const dates = ["relative_date", "absolute_date"];
 
-        const found = current.value?.find((v) => dates.includes(v?.label));
+        const found = currentFilters.value?.find((v) => dates.includes(v?.label));
         const exclude = found ? dates.find((date) => date !== found.label) : null;
 
         return OPTIONS.filter((o) => {
             const label = o.value?.label;
-            return props.include.includes(label) && label !== exclude;
+            return (
+                props.include.includes(label) &&
+                label !== exclude &&
+                label.startsWith(prefixFilter.value)
+            );
         });
     });
 
-    const changeCallback = (v) => {
-        if (!Array.isArray(v) || !v.length) return;
+    watch(
+        includedOptions,
+        (options) => {
+            if (options.length || !dropdowns.value.first?.shown) return;
 
-        if (typeof v.at(-1) === "string") {
-            if (["labels", "details"].includes(v.at(-2)?.label)) {
-                // Adding labels to proper filter
-                v.at(-2).value?.push(v.at(-1));
+            if (!getInputValue()?.startsWith(TEXT_PREFIX) && select.value) {
+                select.value.states.inputValue = `${TEXT_PREFIX}${getInputValue()}`;
+            }
+        },
+        {immediate: true},
+    );
 
-                closeDropdown();
-                triggerSearch();
+    const changeCallback = (wholeSearchContent) => {
+        if (!Array.isArray(wholeSearchContent) || !wholeSearchContent.length)
+            return;
+
+        if (typeof wholeSearchContent.at(-1) === "string") {
+            if (
+                ["details"].includes(wholeSearchContent.at(-2)?.label) ||
+                wholeSearchContent.at(-2)?.value?.length === 0
+            ) {
+                if (wholeSearchContent.at(-2)?.label === "child") {
+                    if (typeof wholeSearchContent.at(-1) === "string")
+                        wholeSearchContent = [];
+                } else {
+                    // Adding value to preceding empty filter
+                    // TODO Provide a way for user to escape infinite labels & details loop (you can never fallback to a new filter, any further text will be added as a value to the filter)
+                    wholeSearchContent
+                        .at(-2)
+                        ?.value?.push(wholeSearchContent.at(-1));
+                }
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
-                const index = current.value.findIndex((i) => i.label === label);
+                const index = currentFilters.value.findIndex(
+                    (i) => i.label === label,
+                );
 
-                if (index !== -1) current.value[index].value = [v.at(-1)];
-                else current.value.push({label, value: [v.at(-1)]});
+                const value = wholeSearchContent
+                    .at(-1)
+                    ?.replace(new RegExp(`^${TEXT_PREFIX}\\s*`), "");
 
-                triggerSearch();
-                closeDropdown();
+                if (index !== -1) currentFilters.value[index].value = [value];
+                else currentFilters.value.push({label, value: [value]});
             }
+
+            triggerSearch();
+            closeDropdown();
 
             triggerEnter.value = false;
         }
 
         // Clearing the input field after value is being submitted
-        select.value.states.inputValue = "";
+        select.value!.states.inputValue = "";
     };
 
     const removeItem = (value) => {
-        current.value = current.value.filter(
+        if (value.persistent) return;
+        currentFilters.value = currentFilters.value.filter(
             (item) => JSON.stringify(item) !== JSON.stringify(value),
         );        
 
@@ -479,48 +741,235 @@
     };
 
     const handleClickedItems = (value) => {
-        if (value) current.value = value;
+        if (value) currentFilters.value = value;
         select.value?.focus();
     };
 
-    import {encodeParams, decodeParams} from "./utils/helpers.js";
-
     const triggerSearch = () => {
         if (props.searchCallback) return;
-        else router.push({query: encodeParams(current.value, OPTIONS)});
+        else {
+            router.push({
+                query: encodeParams(route.name, currentFilters.value, OPTIONS),
+            });
+        }
     };
 
     // Include parameters from URL directly to filter
-    current.value = decodeParams(route.query, props.include, OPTIONS);
-
-    const addNamespaceFilter = (namespace) => {
-        if (!namespace) return;
-        current.value.push({
-            label: "namespace",
-            value: [namespace],
-            comparator: COMPARATORS.STARTS_WITH,
-            persistent: true,
-        });
-    };
-
-    const {name, params} = route;
-
-    if (name === "flows/update") {
-        // Single flow page
-        addNamespaceFilter(params?.namespace);
-
-        if (params.id) {
-            current.value.push({
-                label: "flow",
-                value: [`${params.id}`],
-                comparator: COMPARATORS.IS,
-                persistent: true,
+    onMounted(() => {
+        if (props.decode) {
+            const decodedParams = decodeParams(
+                route.name,
+                route.query,
+                props.include,
+                OPTIONS,
+            );
+            currentFilters.value = decodedParams.map((item: any) => {
+                if (item.label === "absolute_date") {
+                    return {
+                        ...item,
+                        value:
+                            item.value?.length > 0
+                                ? [
+                                    {
+                                        startDate: item.value[0]?.startDate,
+                                        endDate: item.value[0]?.endDate,
+                                    },
+                                ]
+                                : [],
+                        comparator: item.comparator,
+                    };
+                }
+                if (item.label === "relative_date") {
+                    return {
+                        ...item,
+                        value: item.value?.length > 0 ? [item.value[0]] : [],
+                        comparator: item.comparator,
+                    };
+                }
+                return item;
             });
         }
-    } else if (name === "namespaces/update") {
-        // Single namespace page
-        addNamespaceFilter(params.id);
-    }
+
+        const addNamespaceFilter = (namespace) => {
+            if (!props.decode || !namespace) return;
+            currentFilters.value.push({
+                label: "namespace",
+                value: [namespace],
+                comparator: COMPARATORS.EQUALS,
+                persistent: true,
+            });
+        };
+        const {name, params, query} = route;
+
+        if (name === "flows/update") {
+            // Single flow page
+            addNamespaceFilter(params?.namespace);
+
+            if (props.decode && params.id) {
+                currentFilters.value.push({
+                    label: "flow",
+                    value: [`${params.id}`],
+                    comparator: COMPARATORS.EQUALS,
+                    persistent: true,
+                });
+            }
+        } else if (name === "namespaces/update") {
+            // Single namespace page
+            addNamespaceFilter(params.id);
+        } else if (name === "admin/triggers") {
+            if (query.namespace) addNamespaceFilter(query.namespace);
+            if (query.flowId) {
+                currentFilters.value.push({
+                    label: "flow",
+                    value: [`${query.flowId}`],
+                    comparator: COMPARATORS.EQUALS,
+                    persistent: true,
+                });
+            }
+            if (query.q) {
+                currentFilters.value.push({
+                    label: "text",
+                    value: [`${query.q}`],
+                    comparator: COMPARATORS.EQUALS,
+                    persistent: true,
+                });
+            }
+        }
+    });
+
+    watch(
+        () => select.value?.dropdownMenuVisible,
+        (visible) => {
+            if (!visible) {
+                dropdowns.value = {...INITIAL_DROPDOWNS};
+                activeParentFilter.value = null;
+                lastClickedParent.value = null;
+                showSubFilterDropdown.value = false;
+            }
+        },
+    );
+
+    const handleFocus = () => {
+        if (currentFilters.value.length > 0 && lastClickedParent.value) {
+            const existingFilterIndex = currentFilters.value.findIndex(
+                (item) => item.label === lastClickedParent.value,
+            );
+            if (existingFilterIndex !== -1) {
+                if (!currentFilters.value[existingFilterIndex].comparator) {
+                    dropdowns.value = {
+                        first: {shown: false, value: {}},
+                        second: {shown: true, index: existingFilterIndex},
+                        third: {shown: false, index: -1},
+                    };
+                    showSubFilterDropdown.value = true;
+                } else {
+                    dropdowns.value = {
+                        first: {shown: false, value: {}},
+                        second: {shown: false, index: -1},
+                        third: {shown: true, index: existingFilterIndex},
+                    };
+                    showSubFilterDropdown.value = false;
+                }
+                setOptions("handleFocus");
+                select.value!.dropdownMenuVisible = true;
+            }
+        }
+    };
+
+    onMounted(() => {
+        const el = select.value?.$el as HTMLElement;
+        if (el) {
+            let isDropdownOpen = false;
+
+            el.addEventListener("click", (event) => {
+                const target = event.target as HTMLElement;
+
+                if (isDropdownOpen) {
+                    return;
+                }
+                const selectedItem = target.closest(".el-select__selected-item");
+                const selection = target.closest(
+                    ".el-select__selection.is-near",
+                ) as HTMLElement;
+                if (selection && !selectedItem) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    dropdowns.value = {...INITIAL_DROPDOWNS};
+                    activeParentFilter.value = null;
+                    lastClickedParent.value = null;
+                    showSubFilterDropdown.value = false;
+                    setOptions("onClick");
+                    isDropdownOpen = true;
+                    nextTick(() => {
+                        if (!select.value?.dropdownMenuVisible) {
+                            select.value?.focus();
+                        }
+                        isDropdownOpen = false;
+                    });
+                    return;
+                }
+                if (selectedItem) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    const labelElement =
+                        selectedItem.querySelector(".text-lowercase");
+                    const label = labelElement?.textContent;
+
+                    if (label) {
+                        const existingFilterIndex = currentFilters.value.findIndex(
+                            (item) =>
+                                item?.label.toLowerCase() ===
+                                label
+                                    .toLowerCase()
+                                    .replace(/\blog\b/gi, "")
+                                    .trim()
+                                    .replace(/\s+/g, "_"),
+                        );
+                        if (existingFilterIndex !== -1) {
+                            lastClickedParent.value = label;
+                            parentValue.value = label
+                                .toLowerCase()
+                                .replace(/\blog\b/gi, "")
+                                .trim()
+                                .replace(/\s+/g, "_"); // Set parentValue when a filter is clicked
+                            if (
+                                !currentFilters.value[existingFilterIndex]
+                                    .comparator
+                            ) {
+                                dropdowns.value = {
+                                    first: {shown: false, value: {}},
+                                    second: {
+                                        shown: true,
+                                        index: existingFilterIndex,
+                                    },
+                                    third: {shown: false, index: -1},
+                                };
+                                showSubFilterDropdown.value = true;
+                            } else {
+                                dropdowns.value = {
+                                    first: {shown: false, value: {}},
+                                    second: {shown: false, index: -1},
+                                    third: {
+                                        shown: true,
+                                        index: existingFilterIndex,
+                                    },
+                                };
+                                showSubFilterDropdown.value = false;
+                            }
+                            setOptions("onClickSelection");
+                            isDropdownOpen = true;
+                            nextTick(() => {
+                                if (!select.value?.dropdownMenuVisible) {
+                                    select.value?.focus();
+                                }
+                                isDropdownOpen = false;
+                            });
+                        }
+                    }
+                }
+            });
+        }
+    });
 </script>
 
 <style lang="scss">
@@ -530,12 +979,20 @@ $included: 144px;
 $refresh: 104px;
 $settins: 52px;
 $dashboards: 52px;
+$properties: v-bind('props.propertiesWidth + "px"');
 
 .filters {
     @include width-available;
 
     & .el-select {
         width: 100%;
+
+        &.refresh.settings.dashboards.properties {
+            max-width: calc(
+                100% - $included - $refresh - $settins - $dashboards -
+                    #{$properties}
+            );
+        }
 
         &.refresh.settings.dashboards {
             max-width: calc(
@@ -551,8 +1008,20 @@ $dashboards: 52px;
             max-width: calc(100% - $included - $settins - $dashboards);
         }
 
+        &.settings.properties {
+            max-width: calc(100% - $included - $settins - #{$properties});
+        }
+
         &.refresh.dashboards {
             max-width: calc(100% - $included - $refresh - $dashboards);
+        }
+
+        &.refresh.properties {
+            max-width: calc(100% - $included - $refresh - #{$properties});
+        }
+
+        &.dashboards.properties {
+            max-width: calc(100% - $included - $dashboards - #{$properties});
         }
 
         &.refresh {
@@ -564,7 +1033,12 @@ $dashboards: 52px;
         }
 
         &.dashboards {
+            min-width: $dashboards;
             max-width: calc(100% - $included - $dashboards);
+        }
+
+        &.properties {
+            max-width: calc(100% - $included - #{$properties});
         }
     }
 
@@ -579,11 +1053,26 @@ $dashboards: 52px;
             0 1px 0 0 $filters-border-color inset;
 
         & .el-tag {
-            background: $filters-border-color !important;
-            color: $filters-gray-900;
+            overflow: hidden;
+            padding: 0 !important;
+            padding-right: 0.3rem !important;
+            color: var(--ks-tag-content);
+            background: var(--ks-tag-background-active) !important;
+
+            &.disabled .el-tag__content {
+                cursor: not-allowed;
+            }
+
+            &:hover {
+                background: var(--ks-tag-background-hover) !important;
+            }
 
             & .el-tag__close {
-                color: $filters-gray-900;
+                color: var(--ks-content-link);
+
+                &:hover {
+                    background: none !important;
+                }
             }
         }
     }
@@ -600,11 +1089,16 @@ $dashboards: 52px;
 
 .filters-select {
     & .el-select-dropdown {
-        width: 300px !important;
+        width: auto !important;
 
         &:has(.el-select-dropdown__empty) {
-            width: 500px !important;
+            width: auto !important;
         }
+    }
+
+    .el-select-dropdown__empty span {
+        padding: 0 1rem;
+        color: var(--ks-content-inactive);
     }
 
     & .el-date-editor.el-input__wrapper {
@@ -614,6 +1108,26 @@ $dashboards: 52px;
 
     & .el-select-dropdown__item .material-design-icon {
         bottom: -0.15rem;
+    }
+
+    .el-select-dropdown__item {
+        &.is-selected {
+            background-color: var(--ks-background-hover);
+            font-weight: initial;
+
+            &::after {
+                display: none;
+            }
+        }
+
+        &.disabled {
+            opacity: 0.6;
+
+            &:hover {
+                cursor: not-allowed;
+                background-color: transparent;
+            }
+        }
     }
 }
 </style>

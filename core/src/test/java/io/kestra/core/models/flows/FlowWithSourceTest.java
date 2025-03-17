@@ -2,6 +2,7 @@ package io.kestra.core.models.flows;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.Label;
+import io.kestra.core.models.property.Property;
 import io.kestra.plugin.core.condition.Expression;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.listeners.Listener;
@@ -28,10 +29,10 @@ class FlowWithSourceTest {
                 Return.builder()
                     .id(IdUtils.create())
                     .type(Return.class.getName())
-                    .format("123456789 \n123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789\n" +
+                    .format(Property.of("123456789 \n123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789\n" +
                         "123456789 \n" +
                         "123456789 \n" +
-                        "123456789     \n")
+                        "123456789     \n"))
                     .build()
             ))
             .build();
@@ -99,6 +100,13 @@ class FlowWithSourceTest {
                     .id(IdUtils.create())
                     .type(Log.class.getName())
                     .message("Error")
+                    .build()
+            ))
+            ._finally(List.of(
+                Log.builder()
+                    .id(IdUtils.create())
+                    .type(Log.class.getName())
+                    .message("Finally")
                     .build()
             ))
             .listeners(List.of(

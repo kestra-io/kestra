@@ -4,8 +4,9 @@
             <div class="section-1-main">
                 <div class="section-content">
                     <img :src="logo" alt="Kestra" class="img-fluid" width="150px">
+                    <img :src="logoDark" alt="Kestra" class="img-fluid img-fluid-dark" width="150px">
                     <h5 class="section-1-title mt-4">
-                        {{ $t("no-executions-view.title") }} <span style="color: #bbbbff">Kestra</span>
+                        {{ $t("no-executions-view.title") }} <span style="color: var(--ks-content-link)">Kestra</span>
                     </h5>
                     <p class="section-1-desc">
                         {{ $t("no-executions-view.sub_title") }}
@@ -42,6 +43,7 @@
     import OverviewBottom from "../onboarding/execution/OverviewBottom.vue";
     import TriggerFlow from "../flows/TriggerFlow.vue";
     import noexecutionimg from "../../assets/onboarding/noexecution.png";
+    import noexecutionimgDark from "../../assets/onboarding/noexecutionDark.png";
     import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
     import permission from "../../models/permission";
@@ -67,6 +69,9 @@
             logo() {
                 return noexecutionimg;
             },
+            logoDark() {
+                return noexecutionimgDark;
+            },
             canExecute() {
                 return this.flow ? this.user.isAllowed(permission.EXECUTION, action.CREATE, this.flow.namespace) : false;
             },
@@ -77,16 +82,17 @@
 <style scoped lang="scss">
 .main {
 	padding: 3rem 1rem 1rem;
-	background: var(--el-text-color-primary);
-	background: radial-gradient(ellipse at top, rgba(102, 51, 255, 0.6) 0%, rgba(253, 253, 253, 0) 20%);
-	background-size: 4000px;
-	background-position: center;
+	background: radial-gradient(ellipse at top, rgba(102, 51, 255, 0.1) 0, rgba(102, 51, 255, 0) 20%);
+	background-color: var(--ks-background-body);
+    background-size: 5000px 300px;
+    background-position: top center;
+    background-repeat: no-repeat;
 	height: 100vh;
 	width: auto;
 	display: flex;
 	flex-direction: column;
 	container-type: inline-size;
-    
+
     @media (min-width: 768px) {
         padding: 3rem 2rem 1rem;
     }
@@ -103,6 +109,16 @@
 .img-fluid {
     max-width: 100%;
     height: auto;
+    html.dark & {
+        display: none
+    }
+}
+
+.img-fluid-dark {
+    display: none;
+    html.dark & {
+        display: inline-block;
+    }
 }
 
 :deep(.el-button) {
@@ -128,7 +144,7 @@
                 line-height: var(--el-font-line-height-primary);
                 text-align: center;
                 font-weight: 600;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
 
             .section-1-desc {
@@ -137,11 +153,11 @@
                 font-weight: 300;
                 font-size: var(--el-font-size-extra-small);
                 text-align: center;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
 
             .guidance {
-                color: var(--el-text-color-secondary);
+                color: var(--ks-content-link);
             }
         }
 
@@ -150,7 +166,7 @@
 
             .title {
                 font-weight: 500;
-                color: var(--bs-gray-900-lighten-5);
+                color: var(--ks-content-secondary);
                 display: flex;
                 align-items: center;
                 justify-content: center;
@@ -161,7 +177,7 @@
 
                     &::before {
                         content: "";
-                        background-color: var(--bs-gray-600-lighten-10);
+                        background-color: var(--ks-border-primary);
                         height: 1px;
                         width: 50%;
                     }

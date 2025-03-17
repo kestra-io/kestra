@@ -1,4 +1,4 @@
-import {apiUrl} from "override/utils/route";
+ import {apiUrl} from "override/utils/route";
 
 const yamlContentHeader = {
     headers: {
@@ -8,7 +8,8 @@ const yamlContentHeader = {
 export default {
     namespaced: true,
     state: {
-        dashboard: undefined
+        dashboard: undefined,
+        chartErrors: []
     },
     actions: {
         list(_, options) {
@@ -36,11 +37,32 @@ export default {
         },
         generate(_, {id, chartId, ...filters}) {
             return this.$http.post(`${apiUrl(this)}/dashboards/${id}/charts/${chartId}`, filters).then(response => response.data);
+        },
+        validate(_, source) {
+            return this.$http.post(`${apiUrl(this)}/dashboards/validate`, source, yamlContentHeader).then(response => {
+                const errors = response.data;
+                
+                return errors;
+            });
+        },
+        validateChart({commit}, source) {
+            return this.$http.post(`${apiUrl(this)}/dashboards/validate/chart`, source, yamlContentHeader).then(response => {
+                const errors = response.data;
+                commit("setChartErrors", errors);
+                return errors;
+            });
+        },
+        chartPreview(_, chart) {
+            return this.$http.post(`${apiUrl(this)}/dashboards/charts/preview`, chart, yamlContentHeader)
+                .then(response => response.data);
         }
     },
     mutations: {
         setDashboard(state, dashboard) {
             state.dashboard = dashboard
+        },
+        setChartErrors(state, errors) {
+            state.chartErrors = errors
         }
     }
 }

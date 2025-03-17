@@ -1,5 +1,5 @@
 @use "@kestra-io/ui-libs/src/scss/variables.scss" as global-var;
-@use "@kestra-io/ui-libs/src/scss/vendor.scss";
+@use "@kestra-io/ui-libs/src/scss/vendor";
 
 // element-plus
 @forward 'element-plus/theme-chalk/src/common/var.scss' as light-* with (
@@ -25,8 +25,8 @@
         'round': global-var.$border-radius-lg,
     ),
 );
-@use "element-plus/theme-chalk/src/index.scss";
-@use "element-plus/theme-chalk/src/dark/css-vars.scss";
+@use "element-plus/theme-chalk/src/index";
+@use "element-plus/theme-chalk/src/dark/css-vars";
 
 // vue-sidebar
 @use "vue-sidebar-menu/src/scss/vue-sidebar-menu.scss" with (
@@ -52,8 +52,8 @@
     font-size: 0.875em;
 
     &.github-dark {
-        background-color: var(--bs-card-bg) !important;
-        border: 1px solid var(--bs-border-color) !important;
+        background-color: var(--ks-background-card) !important;
+        border: 1px solid var(--ks-border-primary) !important;
     }
 
     .line {

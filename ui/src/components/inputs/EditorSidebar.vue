@@ -1,7 +1,7 @@
 <template>
     <div
         v-show="explorerVisible"
-        class="p-3 sidebar"
+        class="p-2 sidebar"
         @click="$refs.tree.setCurrentKey(undefined)"
         @contextmenu.prevent="onTabContextMenu"
     >
@@ -138,7 +138,7 @@
             @keydown.delete.prevent="deleteKeystroke"
         >
             <template #empty>
-                <div class="m-5 empty">
+                <div class="m-4 empty">
                     <img :src="FileExplorerEmpty">
                     <h3>{{ $t("namespace files.no_items.heading") }}</h3>
                     <p>{{ $t("namespace files.no_items.paragraph") }}</p>
@@ -419,6 +419,7 @@
             ...mapState({
                 flow: (state) => state.flow.flow,
                 explorerVisible: (state) => state.editor.explorerVisible,
+                treeRefresh: (state) => state.editor.treeRefresh,
             }),
             folders() {
                 function extractPaths(basePath = "", array) {
@@ -504,9 +505,9 @@
 
                     this.renderNodes(items);
                     this.items = this.sorted(this.items);
-                }
-
-                if (node.level >= 1) {
+                    this.$store.commit("editor/setTreeData", this.items);
+                    resolve(this.items);
+                } else if (node.level >= 1) {
                     const payload = {
                         namespace: this.currentNS ?? this.$route.params.namespace,
                         path: this.getPath(node),
@@ -943,8 +944,12 @@
                 }
 
                 if (!this.dialog.folder) {
-                    this.items.push(NEW);
-                    this.items = this.sorted(this.items);
+                    const firstFolder = NEW.fileName.split("/")[0];
+                    if (!this.items.find(item => item.fileName === firstFolder)) {
+                        NEW.fileName = firstFolder;
+                        this.items.push(NEW);
+                        this.items = this.sorted(this.items);
+                    }
                 } else {
                     const SELF = this;
                     (function pushItemToFolder(basePath = "", array) {
@@ -955,8 +960,35 @@
                                 folderPath === SELF.dialog.folder &&
                                 Array.isArray(item.children)
                             ) {
-                                item.children.push(NEW);
-                                item.children = SELF.sorted(item.children);
+                                // find the first node that is not present in the current tree and then add it.
+
+                                const paths = NEW.fileName.split("/");
+                                let index = 0;
+                                let UNCOMMON_NODE = item;
+
+                                while (UNCOMMON_NODE && index < paths.length) {
+                                    // if any of node's children have path's folder name move ahead;
+                                    if (index >= paths.length) break;
+
+                                    const nextNode = UNCOMMON_NODE.children?.find(item => item.fileName.toLowerCase() === paths[index].toLowerCase());
+
+                                    if (!nextNode) {
+                                        break;
+                                    }
+
+                                    index++;
+                                    UNCOMMON_NODE = nextNode;
+                                }
+
+                                // return as all folders are already present so no change required.
+                                if (index === paths.length) return true;
+
+                                // add the node with last folder name which is not present already.
+                                NEW.fileName = paths[index];
+
+                                if (!UNCOMMON_NODE.children) UNCOMMON_NODE.children = [];
+                                UNCOMMON_NODE.children.push(NEW);
+                                UNCOMMON_NODE.children = SELF.sorted(UNCOMMON_NODE.children);
                                 return true; // Return true if the folder is found and item is pushed
                             } else if (Array.isArray(item.children)) {
                                 if (
@@ -1028,64 +1060,44 @@
                 immediate: true,
                 deep: true,
             },
+            treeRefresh: {
+                async handler() {
+                    if (this.$refs.tree) {
+                        this.items = undefined;
+                        const items = await this.readDirectory({
+                            namespace: this.currentNS ?? this.$route.params.namespace
+                        });
+                        this.renderNodes(items);
+                        this.items = this.sorted(this.items);
+                    }
+                },
+                immediate: true,
+            },
         },
     };
 </script>
 
-<style lang="scss">
-.filter .el-input__wrapper {
-    padding-right: 0px;
-}
-
-.el-tree {
-    height: calc(100% - 64px);
-    overflow: hidden auto;
-
-    .el-tree__empty-block {
-        height: auto;
-    }
-
-    &::-webkit-scrollbar {
-        width: 2px;
-    }
-
-    &::-webkit-scrollbar-track {
-        background: var(--card-bg);
-    }
-
-    &::-webkit-scrollbar-thumb {
-        background: var(--bs-primary);
-        border-radius: 0px;
-    }
-
-    .node {
-        --el-tree-node-content-height: 36px;
-        --el-tree-node-hover-bg-color: transparent;
-        line-height: 36px;
-
-        .el-tree-node__content {
-            width: 100%;
-        }
-    }
-}
-</style>
-
 <style lang="scss" scoped>
-@import "@kestra-io/ui-libs/src/scss/variables.scss";
+@import "@kestra-io/ui-libs/src/scss/variables";
 
 .sidebar {
-    background: var(--card-bg);
-    border-right: 1px solid var(--bs-border-color);
+    background: var(--ks-background-card);
+    border-right: 1px solid var(--ks-border-primary);
+    overflow-x: hidden;
+    min-width: calc(20% - 11px);
+    width: 20%;
+
+    .filter{
+        .el-input__wrapper {
+            padding-right: 0px;
+        }
+    }
 
     .empty {
         position: relative;
         top: 100px;
         text-align: center;
-        color: white;
-
-        html.light & {
-            color: $tertiary;
-        }
+        color: var(--ks-content-secondary);
 
         & img {
             margin-bottom: 2rem;
@@ -1095,6 +1107,7 @@
             font-size: var(--font-size-lg);
             font-weight: 500;
             margin-bottom: 0.5rem;
+            color: var(--ks-content-secondary);
         }
 
         & p {
@@ -1107,8 +1120,8 @@
         background: none;
         outline: none;
         opacity: 0.5;
-        padding-left: calc(var(--spacer) / 2);
-        padding-right: calc(var(--spacer) / 2);
+        padding-left: .5rem;
+        padding-right: .5rem;
 
         &.el-button--primary {
             opacity: 1;
@@ -1121,26 +1134,78 @@
 
     .filename {
         font-size: var(--el-font-size-small);
-        color: var(--el-text-color-regular);
+        color: var(--ks-content-primary);
 
         &:hover {
-            color: var(--el-text-color-primary);
+            color: var(--ks-content-link-hover);
         }
     }
 
     ul.tabs-context {
         position: fixed;
         z-index: 9999;
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
 
         & li {
             height: 30px;
             padding: 16px;
             font-size: var(--el-font-size-small);
-            color: var(--bs-gray-900);
+            color: $gray-900;
 
             &:hover {
-                color: var(--bs-secondary);
+                color: var(--ks-content-secondary);
+            }
+        }
+    }
+
+    :deep(.el-tree) {
+        height: calc(100% - 64px);
+        overflow: auto;
+
+        .el-tree__empty-block {
+            height: auto;
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--ks-button-background-primary);
+            border-radius: 5px;
+
+            html.dark & {
+                background:  var(--ks-button-background-primary);
+            }
+        }
+
+        .node {
+            --el-tree-node-content-height: fit-content;
+            --el-tree-node-hover-bg-color: transparent;
+        }
+
+        .el-tree-node__content {
+            margin-bottom: 2px !important;
+            padding-left: 0 !important;
+
+            &:last-child{
+                margin-bottom: 0px;
+            }
+
+            &:hover{
+                border: 1px solid $primary;
+            }
+        }
+
+        .is-expanded {
+            .el-tree-node__children {
+                margin-left: 11px !important;
+                padding-left: 0 !important;
+                border-left: 1px solid var(--ks-border-primary);
+            }
+        }
+
+        .el-tree-node.is-current > .el-tree-node__content {
+            min-width: fit-content;
+
+            html.dark &{
+                background-color: $primary;
             }
         }
     }

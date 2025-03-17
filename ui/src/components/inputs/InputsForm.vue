@@ -3,13 +3,15 @@
         <el-form-item
             v-for="input in inputsMetaData || []"
             :key="input.id"
-            :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
             :rules="requiredRules(input)"
             :prop="input.id"
             :error="inputError(input.id)"
             :inline-message="true"
         >
+            <template #label>
+                <markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
+            </template>
             <editor
                 :full-height="false"
                 :input="true"
@@ -38,7 +40,7 @@
                     :label="item"
                     :value="item"
                 >
-                    {{ item }}
+                    <markdown :source="item" />
                 </el-option>
             </el-select>
             <el-radio-group
@@ -47,8 +49,7 @@
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             >
-                <el-radio v-for="item in input.values" :key="item" :label="item" :value="item" />.
-                <!-- Allow customs input -->
+                <el-radio v-for="item in input.values" :key="item" :label="item" :value="item" />
                 <el-input
                     v-if="input.allowCustomValue"
                     v-model="inputsValues[input.id]"
@@ -75,7 +76,7 @@
                     :label="item"
                     :value="item"
                 >
-                    {{ item }}
+                    <markdown :source="item" />
                 </el-option>
             </el-select>
             <el-input
@@ -209,7 +210,6 @@
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
-    import YamlUtils from "../../utils/yamlUtils.js";
     import DurationPicker from "./DurationPicker.vue";
     import {inputsToFormDate} from "../../utils/submitTask"
     import {toRaw} from "vue";
@@ -217,9 +217,6 @@
     export default {
         computed: {
             ...mapState("auth", ["user"]),
-            YamlUtils() {
-                return YamlUtils
-            },
             inputErrors() {
                 // we only keep errors that don't target an input directly
                 const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);
@@ -269,12 +266,14 @@
                 inputsValidation: [],
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
+                debouncedValidation: () => {},
                 selTrigger: toRaw(this.selectedTrigger.inputs.taxi)
             };
         },
         emits: ["update:modelValue", "confirm", "validation"],
         created() {
             this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
+            this.debouncedValidation = debounce(this.validateInputs, 500)
 
             this.validateInputs().then(() => {
                 this.$watch("inputsValues", {
@@ -283,7 +282,7 @@
                         if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
                             // only revalidate if values are stable for more than 500ms
                             // to avoid too many calls to the server
-                            debounce(this.validateInputs, 500)();
+                            this.debouncedValidation();
                             this.$emit("update:modelValue", this.inputsValues);
                         }
                         this.previousInputsValues = JSON.parse(JSON.stringify(val))
@@ -467,6 +466,10 @@
 </script>
 
 <style scoped lang="scss">
+.md-label {
+    height: 20px;
+}
+
 .hint {
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
@@ -487,24 +490,24 @@
         .el-radio-button {
             &.is-active {
                 .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
-                    color: var(--el-text-color-regular);
+                    color: var(--ks-content-primary);
                     background-color: var(--bs-gray-100);
-                    box-shadow: 0 0 0 0 var(--el-color-primary);
+                    box-shadow: 0 0 0 0 var(--ks-border-active);
                 }
             }
 
             .el-radio-button__inner {
-                border: var(--el-border);
+                border: var(--ks-border-primary);
                 transition: 0.3s ease-in-out;
 
                 &:hover {
-                    color: var(--bs-secondary);
-                    border-color: var(--el-color-primary);
-                    background-color: var(--bs-card-bg);
+                    color: var(--ks-content-secondary);
+                    border-color: var(--ks-border-active);
+                    background-color: var(--ks-background-card);
                 }
 
                 &:first-child {
-                    border-left: var(--el-border);
+                    border-left: var(--ks-border-primary);
                 }
             }
         }

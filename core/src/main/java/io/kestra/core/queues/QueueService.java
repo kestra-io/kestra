@@ -29,6 +29,8 @@ public class QueueService {
             return null;
         } else if (object.getClass() == ExecutionRunning.class) {
             return ((ExecutionRunning) object).getExecution().getId();
+        } else if (object.getClass() == SubflowExecutionEnd.class) {
+            return ((SubflowExecutionEnd) object).getParentExecutionId();
         } else {
             throw new IllegalArgumentException("Unknown type '" + object.getClass().getName() + "'");
         }

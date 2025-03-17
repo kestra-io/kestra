@@ -163,7 +163,7 @@ public final class JacksonMapper {
         for (JsonNode patch : patches) {
             try {
                 // Required for ES
-                if (!patch.has("value")) {
+                if (patch.findValue("value") == null) {
                     ((ObjectNode) patch.get(0)).set("value", (JsonNode) null);
                 }
                 JsonNode current = MAPPER.valueToTree(object);

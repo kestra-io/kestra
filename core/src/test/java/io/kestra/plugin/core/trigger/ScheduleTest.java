@@ -2,6 +2,7 @@ package io.kestra.plugin.core.trigger;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.Backfill;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
@@ -22,7 +23,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -35,6 +35,7 @@ import java.util.Optional;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
 class ScheduleTest {
@@ -69,7 +70,7 @@ class ScheduleTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("test")
+                .format(Property.of("test"))
                 .build()))
             .build();
 
@@ -100,6 +101,8 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.get().getLabels(), hasSize(3));
+        assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
         var inputs = evaluate.get().getInputs();
@@ -132,6 +135,8 @@ class ScheduleTest {
         );
 
         assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.get().getLabels(), hasSize(3));
+        assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
 
         var inputs = evaluate.get().getInputs();
 
@@ -239,15 +244,16 @@ class ScheduleTest {
     }
 
     @Test
-    void shouldReturnExecutionForBackFillWhenCurrentDateIsAfterScheduleDate() throws Exception {
+    void
+    shouldReturnExecutionForBackFillWhenCurrentDateIsAfterScheduleDate() throws Exception {
         // Given
         Schedule trigger = Schedule.builder().id("schedule").cron(TEST_CRON_EVERYDAY_AT_8).build();
-        ZonedDateTime now = ZonedDateTime.now();
-        TriggerContext triggerContext = triggerContext(now, trigger).toBuilder()
+        ZonedDateTime now = ZonedDateTime.of(2025, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
+        TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
             .backfill(Backfill
                 .builder()
-                .currentDate(ZonedDateTime.now().with(LocalTime.MIN).plus(Duration.ofHours(8)))
-                .end(ZonedDateTime.now().with(LocalTime.MAX))
+                .currentDate(now.with(LocalTime.MIN).plus(Duration.ofHours(8)))
+                .end(now.with(LocalTime.MAX))
                 .build()
             )
             .build();
@@ -259,7 +265,7 @@ class ScheduleTest {
     }
 
     @Test
-    void noBackfillNextDate() throws Exception {
+    void noBackfillNextDate() {
         Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").build();
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
 
@@ -267,7 +273,7 @@ class ScheduleTest {
     }
 
     @Test
-    void noBackfillNextDateContext() throws Exception {
+    void noBackfillNextDateContext() {
         Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").timezone("Europe/Paris").build();
         ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(date, trigger)));
@@ -369,7 +375,7 @@ class ScheduleTest {
     }
 
     @Test
-    void lateMaximumDelay() throws Exception {
+    void lateMaximumDelay() {
         Schedule trigger = Schedule.builder()
             .id("schedule")
             .cron("* * * * *")
@@ -446,6 +452,29 @@ class ScheduleTest {
         assertThat(ZonedDateTime.parse(vars.get("date")).getZone().getId(), is("-04:00"));
         assertThat(dateFromVars(vars.get("next"), date), is(date.plusMonths(1)));
         assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
+    }
+
+    @Test
+    void timezone_with_backfile() throws Exception {
+        Schedule trigger = Schedule.builder()
+            .id("schedule")
+            .cron(TEST_CRON_EVERYDAY_AT_8)
+            .timezone("America/New_York")
+            .build();
+
+        TriggerContext triggerContext = triggerContext(ZonedDateTime.now(), trigger).toBuilder()
+            .backfill(Backfill
+                .builder()
+                .currentDate(ZonedDateTime.parse("2025-01-15T08:00-05:00[America/New_York]"))
+                .end(ZonedDateTime.parse("2025-01-16T07:00-05:00[America/New_York]"))
+                .build()
+            )
+            .build();
+        // When
+        Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
+
+        // Then
+        assertThat(result.isPresent(), is(true));
     }
 
 

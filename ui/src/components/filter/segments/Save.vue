@@ -67,7 +67,7 @@
     import KestraIcon from "../../Kicon.vue";
     import Label from "../components/Label.vue";
 
-    import {Save} from "../utils/icons.js";
+    import {Save} from "../utils/icons";
 
     const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
 
@@ -80,7 +80,7 @@
         current: {type: Object as PropType<CurrentItem[]>, required: true},
     });
 
-    import {useFilters} from "../composables/useFilters.js";
+    import {useFilters} from "../composables/useFilters";
     const {getSavedItems, setSavedItems} = useFilters(props.prefix);
 
     const visible = ref(false);
@@ -105,5 +105,5 @@
 </script>
 
 <style scoped lang="scss">
-@import "../styles/filter.scss";
+@import "../styles/filter";
 </style>

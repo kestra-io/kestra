@@ -81,7 +81,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
             case CREATED:
                 onCreateState(event);
                 break;
-            case RUNNING, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED:
+            case RUNNING, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED, MAINTENANCE:
                 updateServiceInstanceState(Instant.now(), event.getService(), newState, NOOP);
                 break;
             default:
@@ -393,7 +393,9 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
         for (LocalServiceState state : states) {
             final Service service = state.service();
             try {
-                service.unwrap().close();
+                Service unwrapped = service.unwrap();
+                unwrapped.close();
+                serviceRegistry.unregister(state);
             } catch (Exception e) {
                 log.error("[Service id={}, type={}] Unexpected error on close",
                     service.getId(),

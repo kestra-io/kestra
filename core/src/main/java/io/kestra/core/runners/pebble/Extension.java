@@ -48,6 +48,12 @@ public class Extension extends AbstractExtension {
     private FileSizeFunction fileSizeFunction;
 
     @Inject
+    private IsFileEmptyFunction isFileEmptyFunction;
+
+    @Inject
+    private FileExistsFunction fileExistsFunction;
+
+    @Inject
     @Nullable
     private ErrorLogsFunction errorLogsFunction;
 
@@ -87,6 +93,7 @@ public class Extension extends AbstractExtension {
         filters.put("escapeChar", new EscapeCharFilter());
         filters.put("json", new JsonFilter());
         filters.put("toJson", new ToJsonFilter());
+        filters.put("distinct", new DistinctFilter());
         filters.put("keys", new KeysFilter());
         filters.put("number", new NumberFilter());
         filters.put("urldecode", new UrlDecoderFilter());
@@ -106,6 +113,7 @@ public class Extension extends AbstractExtension {
         filters.put("sha1", new Sha1Filter());
         filters.put("sha512", new Sha512Filter());
         filters.put("md5", new Md5Filter());
+        filters.put("string", new StringFilter());
         return filters;
     }
 
@@ -150,6 +158,9 @@ public class Extension extends AbstractExtension {
             functions.put("errorLogs", errorLogsFunction);
         }
         functions.put("randomInt", new RandomIntFunction());
+        functions.put("randomPort", new RandomPortFunction());
+        functions.put("fileExists", fileExistsFunction);
+        functions.put("isFileEmpty", isFileEmptyFunction);
         return functions;
     }
 

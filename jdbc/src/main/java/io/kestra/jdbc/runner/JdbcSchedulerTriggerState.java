@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.schedulers.ScheduleContextInterface;
 import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
@@ -56,6 +57,18 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
     }
 
     @Override
+    public Trigger create(Trigger trigger, String headerContent) {
+        return this.triggerRepository.create(trigger);
+    }
+
+    @Override
+    public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface, String headerContent) {
+        this.triggerRepository.save(trigger, scheduleContextInterface);
+
+        return trigger;
+    }
+
+    @Override
     public Trigger create(Trigger trigger) {
         return this.triggerRepository.create(trigger);
     }
@@ -75,6 +88,10 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
 
     public Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) {
         return this.triggerRepository.update(flow, abstractTrigger, conditionContext);
+    }
+
+    public void delete(Trigger trigger) throws QueueException {
+        this.triggerRepository.delete(trigger);
     }
 
     @Override

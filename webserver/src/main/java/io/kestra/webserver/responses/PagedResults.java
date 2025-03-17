@@ -7,11 +7,13 @@ import lombok.NoArgsConstructor;
 
 import jakarta.validation.constraints.NotNull;
 
+import java.util.List;
+
 @Getter
 @NoArgsConstructor
 public class PagedResults<T> {
     @NotNull
-    private ArrayListTotal<T> results;
+    private List<T> results;
 
     @JsonInclude
     @NotNull

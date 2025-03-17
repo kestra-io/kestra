@@ -19,7 +19,7 @@
 
 <style lang="scss" scoped>
     :deep(.el-form-item) {
-        margin-bottom: var(--spacer);
+        margin-bottom: 1rem;
     }
 
     :deep(.el-form-item__content) {

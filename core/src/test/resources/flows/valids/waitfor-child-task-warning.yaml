@@ -1,0 +1,22 @@
+id: waitfor-child-task-warning
+namespace: io.kestra.tests
+
+tasks:
+  - id: loop
+    type: io.kestra.plugin.core.flow.WaitFor
+    condition: "{{ outputs.check_migration_task.values['test'] == 'FINISHED' }}"
+    failOnMaxReached: true
+    checkFrequency:
+      interval: PT5S
+      maxDuration: PT10S
+    tasks:
+
+      ## forcing a Warning
+      - id: allow_failure
+        allowFailure: true
+        type: io.kestra.plugin.core.execution.Fail
+
+      - id: check_migration_task
+        type: io.kestra.plugin.core.output.OutputValues
+        values:
+          test: "ok"

@@ -3,6 +3,8 @@ import pluginJs from "@eslint/js";
 import tseslint from "typescript-eslint";
 import pluginVue from "eslint-plugin-vue";
 
+const components = (folder) => `src/components/${folder}/**/*.vue`;
+
 /** @type {import('eslint').Linter.Config[]} */
 export default [
     {
@@ -12,8 +14,13 @@ export default [
     {languageOptions: {globals: globals.browser}},
     pluginJs.configs.recommended,
     ...tseslint.configs.recommended,
-     {
-        files: ["**/*.spec.js", "**/*.spec.ts", "vite.config.js", "vitest.config.js"],
+    {
+        files: [
+            "**/*.spec.js",
+            "**/*.spec.ts",
+            "vite.config.js",
+            "vitest.config.js",
+        ],
         languageOptions: {globals: globals.node},
     },
     ...pluginVue.configs["flat/strongly-recommended"],
@@ -66,7 +73,12 @@ export default [
                 },
             ],
             "@typescript-eslint/no-this-alias": "off",
-            "@typescript-eslint/no-explicit-any": "off"
-        }
-    }
+            "@typescript-eslint/no-explicit-any": "off",
+        },
+    },
+    {
+        // Enforce the use of the <script setup> block in components within these paths
+        files: [components("filter"), components("code")],
+        rules: {"vue/component-api-style": ["error", ["script-setup"]]},
+    },
 ];

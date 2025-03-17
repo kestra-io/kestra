@@ -30,10 +30,14 @@
             </template>
             <span class="versionNumber">{{ configs?.version }}</span>
         </el-tooltip>
+        <el-button class="theme-switcher" @click="onSwitchTheme">
+            <WeatherNight v-if="themeIsDark" />
+            <WeatherSunny v-else />
+        </el-button>
     </div>
     <div class="panelWrapper" :class="{panelTabResizing: resizing}" :style="{width: activeTab?.length ? `${panelWidth}px` : 0}">
         <div :style="{overflow: 'hidden'}">
-            <button v-if="activeTab.length" class="closeButton" @click="activeTab = ''">
+            <button v-if="activeTab.length" class="closeButton" @click="setActiveTab('')">
                 <Close />
             </button>
             <ContextDocs v-if="activeTab === 'docs'" />
@@ -59,16 +63,20 @@
     import Calendar from "vue-material-design-icons/Calendar.vue"
     import Close from "vue-material-design-icons/Close.vue"
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
+    import WeatherSunny from "vue-material-design-icons/WeatherSunny.vue"
+    import WeatherNight from "vue-material-design-icons/WeatherNight.vue"
 
     import {useStorage} from "@vueuse/core"
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
+    import Utils from "../utils/utils";
 
     const {t} = useI18n({useScope: "global"});
 
     const store = useStore();
 
-    const configs = computed(() => store.state.misc.configs);
+    const configs = computed(() => store.getters["misc/configs"]);
+    const activeTab = computed(() => store.getters["misc/contextInfoBarOpenTab"])
 
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
 
@@ -117,8 +125,6 @@
 
     const panelWidth = ref(640)
 
-    const activeTab = ref("")
-
     const {startResizing, resizing} = useResizablePanel(activeTab)
 
     function useResizablePanel(localActiveTab: Ref<string>) {
@@ -155,10 +161,17 @@
 
     function setActiveTab(tab: string) {
         if (activeTab.value === tab) {
-            activeTab.value = ""
+            store.commit("misc/setContextInfoBarOpenTab", "")
         } else {
-            activeTab.value = tab
+            store.commit("misc/setContextInfoBarOpenTab", tab)
         }
+    }
+
+    const themeIsDark = ref(localStorage.getItem("theme") === "dark")
+
+    const onSwitchTheme = () => {
+        themeIsDark.value = !themeIsDark.value;
+        Utils.switchTheme(store, themeIsDark.value ? "dark" : "light");
     }
 </script>
 
@@ -172,7 +185,7 @@
         top: 0;
         left: 0;
         z-index: 1040;
-        background-color: var(--bs-primary);
+        background-color: var(--ks-button-background-primary);
         opacity: 0;
         transition: opacity .1s;
         border: none;
@@ -189,14 +202,14 @@
         padding: 0.75rem;
         writing-mode: vertical-rl;
         text-orientation: mixed;
-        border-left: 1px solid var(--el-border-color);
+        border-left: 1px solid var(--ks-border-primary);
         display: flex;
         align-items: center;
         gap: 0.5rem;
         font-size: var(--font-size-sm);
 
         &.opened {
-            border-right: 1px solid var(--el-border-color);
+            border-right: 1px solid var(--ks-border-primary);
         }
 
         .el-button {
@@ -212,11 +225,13 @@
         }
 
         .versionNumber {
-            color: var(--bs-gray-400);
-            html.dark & {
-                color: var(--bs-gray-600);
-            }
-            margin-top: var(--spacer);
+            color: var(--ks-content-tertiary);
+            opacity: .4;
+            margin-top: 1rem;
+        }
+
+        .theme-switcher {
+            transform: rotate(-90deg);
         }
 
         .context-button-icon {
@@ -239,8 +254,8 @@
         .newsDot{
             width: 10px;
             height: 10px;
-            background-color: var(--content-alert);
-            border: 2px solid var(--el-button-bg-color);
+            background-color: var(--ks-content-alert);
+            border: 2px solid var(--ks-button-background-secondary);
             border-radius: 50%;
             display: block;
             position: absolute;
@@ -257,9 +272,9 @@
 
         .closeButton {
             position: fixed;
-            top: var(--spacer);
-            right: var(--spacer);
-            color: var(--bs-tertiary-color);
+            top: 1rem;
+            right: 1rem;
+            color: var(--ks-content-tertiary);
             background: none;
             border: none;
         }

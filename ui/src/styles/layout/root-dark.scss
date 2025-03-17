@@ -1,7 +1,9 @@
+/* stylelint-disable custom-property-pattern */
+/* stylelint-disable color-no-hex */
 @use 'sass:map';
 
-@import "@kestra-io/ui-libs/src/scss/theme-dark.scss";
-@import "@kestra-io/ui-libs/src/scss/variables.scss";
+@import "@kestra-io/ui-libs/src/scss/theme-dark";
+@import "@kestra-io/ui-libs/src/scss/variables";
 
 // Bootstrap
 @import "bootstrap/scss/functions";
@@ -44,20 +46,19 @@ html.dark {
     #{--bs-link-hover-color-rgb}: to-rgb(#E0E0FF);
 
     #{--card-bg}: $card-bg;
-    #{--card-bg-hover}: darken($card-bg, 3);
     #{--input-bg}: #262A36;;
 
-    --el-bg-color: var(--bs-body-bg);
-    --el-bg-color-page: var(--bs-body-bg);
+    --el-bg-color: var(--ks-background-body);
+    --el-bg-color-page: var(--ks-background-body);
     --el-bg-color-overlay: var(--bs-gray-100-darken-5);
 
     --el-disabled-bg-color: var(--bs-gray-100-lighten-5);
     --el-disabled-border-color: var(--bs-border-color);
 
     --el-text-color-primary: var(--bs-primary);
-    --el-text-color-regular: var(--bs-body-color);
+    --el-text-color-regular: var(--ks-content-primary);
     --el-text-color-secondary: var(--bs-secondary);
-    --el-text-color-placeholder: var(--bs-body-color);
+    --el-text-color-placeholder: var(--ks-content-primary);
     --el-text-color-disabled: var(--bs-gray-400);
 
     --el-border-color: var(--bs-border-color);
@@ -87,134 +88,21 @@ html.dark {
     #{--el-box-shadow-lighter}: $box-shadow-sm;
     #{--el-box-shadow-dark}: $box-shadow-lg;
 
-    --el-button-active-text-color: var(--bs-body-color);
+    --el-button-active-text-color: var(--ks-content-primary);
 
     --input-suffix-color: #C6C1D9;
     --white-black-font-color: #{$white};
 
-    /**
-    ** Log Levels Colors
-    **/
     $content-information: #c7f0ff;
     $content-running: #bbbbff;
     $content-alert: #fd7278;
     $content-warning: #f3c4a1;
     $content-success: #7cdfc4;
-    #{--background-failed}: #26000233;
-    #{--background-success}: #00231933;
-    #{--content-information}: $content-information;
-    #{--border-failed}: #ab0009;
-    #{--border-information}: #1761fd;
-    #{--background-information}: #0e3b9a33;
-    #{--content-alert}: $content-alert;
-    #{--content-success}: $content-success;
-    #{--border-success}: #029e73;
-    #{--chart-success}: #21ce9c;
-    #{--chart-failed}: #cd38fb;
-    #{--chart-warning}: #e1ba80;
-    #{--chart-created}: #5bb8ff;
-    #{--chart-running}: #7fbaff;
-    #{--chart-killed}: #3991ff;
-    #{--chart-paused}: #9a8eb4;
-    #{--border-warning}: #dd5f00;
-    #{--content-warning}: $content-warning;
-    #{--background-warning}: #6f300033;
-    #{--background-created}: #6f300033;
-    #{--content-created}: #7fbaff;
-    #{--border-created}: #1761fd;
-    #{--border-killed}: #fce07c;
-    #{--border-killing}: #918ba9;
-    #{--content-killed}: #fdeaa8;
-    #{--background-killed}: #7e703e33;
-    #{--background-running}: #42008033;
-    #{--content-running}: $content-running;
-    #{--border-running}: #8405ff;
-    #{--content-paused}: #ffffff;
-    #{--border-paused}: #9a8eb4;
-    #{--background-paused}: #a6a4ca;
-    #{--log-content-trace}: #e3dbff;
-    #{--log-border-trace}: #9a8eb4;
-    #{--log-chart-trace}: #a6a4ca;
-    #{--log-background-trace}: #d1cfe933;
-    #{--log-background-info}: #7cdfc433;
-    #{--log-content-info}: #7cdfc4;
-    #{--log-chart-info}: #21ce9c;
-    #{--log-border-info}: #02be8a;
-    #{--log-background-warn}: #e5823833;
-    #{--log-border-warn}: #e9985b;
-    #{--log-content-warn}: #fae7da;
-    #{--log-chart-warn}: #f3c4a1;
-    #{--log-background-error}: #fd727833;
-    #{--log-border-error}: #fd7278;
-    #{--log-content-error}: #fec9cb;
-    #{--log-chart-error}: #fd7278;
-    #{--log-background-debug}: #5bb8ff33;
-    #{--log-border-debug}: #5bb8ff;
-    #{--log-content-debug}: #7fbaff;
-    #{--log-chart-debug}: #3991ff;
-
     #{--bs-info-rgb}: to_rgb($content-information);
     #{--bs-running-rgb}: to_rgb($content-running);
     #{--bs-danger-rgb}: to_rgb($content-alert);
     #{--bs-warning-rgb}: to_rgb($content-warning);
     #{--bs-success-rgb}: to_rgb($content-success);
-    #{--token-content-link}: #BBBBFF;
-
-    /**
-    ** State Levels Colors
-    **/
-    // CREATED
-    #{--content-color-created}: #FEECED;
-    #{--border-color-created}: #FD9297;
-    #{--background-color-created}: #FD929733;
-    // RUNNING
-    #{--content-color-running}: #7FD8FF;
-    #{--border-color-running}: #3991FF;
-    #{--background-color-running}: #1761FD33;
-    // RETRYING
-    #{--content-color-retrying}: #C7FDFF;
-    #{--border-color-retrying}: #7FD8FF;
-    #{--background-color-retrying}: #1761FD33;
-    // RETRIED
-    #{--content-color-retried}: #C7FDFF;
-    #{--border-color-retried}: #A2EFFF;
-    #{--background-color-retried}: #578DFF33;
-    // PAUSED
-    #{--content-color-paused}: #FEF0BE;
-    #{--border-color-paused}: #FDEAA8;
-    #{--background-color-paused}: #7E703E33;
-    // RESTARTED
-    #{--content-color-restarted}: #7FD8FF;
-    #{--border-color-restarted}: #C7FDFF;
-    #{--background-color-restarted}: #5BB8FF20;
-    // KILLING
-    #{--content-color-killing}: #FFFFFF;
-    #{--border-color-killing}: #918BA9;
-    #{--background-color-killing}: #404559;
-    // SUCCESS
-    #{--content-color-success}: #BEEFE2;
-    #{--border-color-success}: #02BE8A;
-    #{--background-color-success}: #00231933;
-    // WARNING
-    #{--content-color-warning}: #EEAF80;
-    #{--border-color-warning}: #E37A2B;
-    #{--background-color-warning}: #6F300033;
-    // KILLED
-    #{--content-color-killed}: #FFFFFF;
-    #{--border-color-killed}: #918BA9;
-    #{--background-color-killed}: #2F3342;
-    // FAILED
-    #{--content-color-failed}: #FD9297;
-    #{--border-color-failed}: #E3262F;
-    #{--background-color-failed}: #26000233;
-    // CANCELLED
-    #{--content-color-cancelled}: #E3DBFF;
-    #{--border-color-cancelled}: #918BA9;
-    #{--background-color-cancelled}: #D1CFE933;
-    // QUEUED
-    #{--content-color-queued}: #FDEAA8;
-    #{--border-color-queued}: #7E703E;
-    #{--background-color-queued}: #7E703E33;
 
     .shiki, .shiki span {
         font-style: var(--shiki-dark-font-style) !important;

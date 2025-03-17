@@ -6,6 +6,7 @@
     "module": "ESNext",
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
+    "incremental": true, 
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -28,7 +29,8 @@
     },
   },
   "include": [
-    "src/**/*.ts", "src/**/*.tsx", "src/**/*.vue", ".storybook/preview.*",
+    ".storybook/preview.*",
+    "src/**/*.ts", "src/**/*.tsx", "src/**/*.vue",
     "tests/**/*.ts", "tests/**/*.tsx"
   ]
 }

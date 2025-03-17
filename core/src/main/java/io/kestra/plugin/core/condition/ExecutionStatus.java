@@ -27,15 +27,26 @@ import jakarta.validation.Valid;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition to execute the flow based on execution status of another flow(s).",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.ExecutionStatus",
-                "      in:",
-                "        - SUCCESS",
-                "      notIn: ",
-                "        - FAILED"
-            }
+            code = """
+                id: flow_condition_executionstatus
+                namespace: company.team
+
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute when any flow enters FAILED or KILLED state."
+                
+                triggers:
+                  - id: flow_trigger
+                    type: io.kestra.plugin.core.trigger.Flow
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.ExecutionStatus
+                        in:
+                          - FAILED
+                          - KILLED
+            """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.ExecutionStatusCondition", "io.kestra.plugin.core.condition.ExecutionStatusCondition"}

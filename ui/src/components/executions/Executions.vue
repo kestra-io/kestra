@@ -46,16 +46,29 @@
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
                     }"
+                    :properties-width="182"
+                    :properties="{
+                        shown: true,
+                        columns: optionalColumns,
+                        displayColumns,
+                        storageKey: 'executions'
+                    }"
+                    @update-properties="updateDisplayColumns"
                 />
             </template>
 
             <template #top>
-                <el-card v-if="showStatChart()" shadow="never" class="mb-4">
-                    <ExecutionsBar v-if="daily" :data="daily" :total="executionsCount" />
+                <el-card v-if="showStatChart()" class="mb-4 shadow">
+                    <ExecutionsBar 
+                        v-if="daily" 
+                        :data="daily" 
+                        :total="executionsCount" 
+                        :loading="loading"
+                    />
                 </el-card>
             </template>
 
-            <template #table v-if="executions.length">
+            <template #table v-if="executions?.length">
                 <select-table
                     ref="selectTable"
                     :data="executions"
@@ -247,7 +260,7 @@
 
                         <el-table-column
                             prop="flowRevision"
-                            v-if="displayColumn('flowRevision')"
+                            v-if="displayColumn('revision')"
                             :label="$t('revision')"
                             class-name="shrink"
                         >
@@ -292,7 +305,11 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column column-key="action" class-name="row-action">
+                        <el-table-column 
+                            column-key="action" 
+                            class-name="row-action"
+                            :label="$t('actions')"
+                        >
                             <template #default="scope">
                                 <router-link
                                     :to="{name: 'executions/update', params: {namespace: scope.row.namespace, flowId: scope.row.flowId, id: scope.row.id}, query: {revision: scope.row.flowRevision}}"
@@ -380,7 +397,7 @@
     import Kicon from "../Kicon.vue"
     import Labels from "../layout/Labels.vue"
     import RestoreUrl from "../../mixins/restoreUrl";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
     import permission from "../../models/permission";
@@ -461,57 +478,52 @@
                 showChart: ["true", null].includes(localStorage.getItem(storageKeys.SHOW_CHART)),
                 optionalColumns: [
                     {
-                        label: "start date",
+                        label: this.$t("start date"),
                         prop: "state.startDate",
                         default: true
                     },
                     {
-                        label: "end date",
+                        label: this.$t("end date"),
                         prop: "state.endDate",
                         default: true
                     },
                     {
-                        label: "duration",
+                        label: this.$t("duration"),
                         prop: "state.duration",
                         default: true
                     },
                     {
-                        label: "state",
-                        prop: "state.current",
-                        default: true
-                    },
-                    {
-                        label: "triggers",
-                        prop: "triggers",
-                        default: true
-                    },
-                    {
-                        label: "labels",
-                        prop: "labels",
-                        default: true
-                    },
-                    {
-                        label: "inputs",
-                        prop: "inputs",
-                        default: false
-                    },
-                    {
-                        label: "namespace",
+                        label: this.$t("namespace"),
                         prop: "namespace",
                         default: true
                     },
                     {
-                        label: "flow",
+                        label: this.$t("flow"),
                         prop: "flowId",
                         default: true
                     },
                     {
-                        label: "revision",
+                        label: this.$t("labels"),
+                        prop: "labels",
+                        default: true
+                    },
+                    {
+                        label: this.$t("state"),
+                        prop: "state.current",
+                        default: true
+                    },
+                    {
+                        label: this.$t("revision"),
                         prop: "flowRevision",
                         default: false
                     },
                     {
-                        label: "task id",
+                        label: this.$t("inputs"),
+                        prop: "inputs",
+                        default: false
+                    },
+                    {
+                        label: this.$t("task id"),
                         prop: "taskRunList.taskId",
                         default: false
                     }
@@ -524,7 +536,8 @@
                 actionOptions: {},
                 lastRefreshDate: new Date(),
                 changeStatusDialogVisible: false,
-                selectedStatus: undefined
+                selectedStatus: undefined,
+                loading: false
             };
         },
         created() {
@@ -533,7 +546,7 @@
                 this.storageKey = storageKeys.DISPLAY_FLOW_EXECUTIONS_COLUMNS;
                 this.optionalColumns = this.optionalColumns.filter(col => col.prop !== "namespace" && col.prop !== "flowId")
             }
-            this.displayColumns = localStorage.getItem(this.storageKey)?.split(",")
+            this.displayColumns = localStorage.getItem("columns_executions")?.split(",")
                 || this.optionalColumns.filter(col => col.default).map(col => col.prop);
             if (this.isConcurrency) {
                 this.emitStateCount([State.RUNNING, State.PAUSED])
@@ -591,9 +604,6 @@
             isDisplayedTop() {
                 return this.embed === false && this.filter
             },
-            filterStorageKey() {
-                return storageKeys.EXECUTIONS_FILTERS
-            },
             states() {
                 return [ State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED,].map(value => {
                     return {
@@ -649,6 +659,9 @@
             displayColumn(column) {
                 return this.hidden ? !this.hidden.includes(column) : this.displayColumns.includes(column);
             },
+            updateDisplayColumns(newColumns) {
+                this.displayColumns = newColumns;
+            },
             onShowChartChange(value) {
                 this.showChart = value;
                 localStorage.setItem(storageKeys.SHOW_CHART, value);
@@ -697,6 +710,7 @@
             },
             loadStats() {
                 this.dailyReady = false;
+                this.loading = true;
 
                 this.$store
                     .dispatch("stat/daily", this.loadQuery({
@@ -705,6 +719,7 @@
                     }, true))
                     .then(() => {
                         this.dailyReady = true;
+                        this.loading = false;
                     });
             },
             loadData(callback) {
@@ -838,18 +853,18 @@
                         h(ElSwitch, {
                             modelValue: includeNonTerminated.value,
                             "onUpdate:modelValue": (val) => {
-                                includeNonTerminated.value = val
+                                includeNonTerminated.value = val;
                             },
                         }),
                     ]),
-                    h(ElAlert, {
-                        title:  this.$t("execution-warn-title"),
+                    includeNonTerminated.value ? h(ElAlert, {
+                        title: this.$t("execution-warn-title"),
                         description: this.$t("execution-warn-deleting-still-running"),
                         type: "warning",
                         showIcon: true,
                         closable: false,
                         class: "custom-warning"
-                    }),
+                    }) : null,
                     h(ElCheckbox, {
                         modelValue: deleteLogs.value,
                         label: this.$t("execution_deletion.logs"),
@@ -880,7 +895,7 @@
                         "execution/queryDeleteExecution",
                         "execution/bulkDeleteExecution",
                         "executions deleted"
-                    )
+                    );
                 });
             },
             killExecutions() {
@@ -939,7 +954,7 @@
                     name: "flows/update", params: {
                         namespace: this.flow.namespace,
                         id: this.flow.id,
-                        tab: "editor",
+                        tab: "edit",
                         tenant: this.$route.params.tenant
                     }
                 })
@@ -967,6 +982,10 @@
 
 
 <style scoped lang="scss">
+.shadow {
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
+}
+
 .padding-bottom {
     padding-bottom: 4rem;
 }

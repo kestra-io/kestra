@@ -17,6 +17,8 @@ public class ResolvedTask {
 
     String value;
 
+    Integer iteration;
+
     String parentId;
 
     public NextTaskRun toNextTaskRun(Execution execution) {

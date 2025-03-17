@@ -1,7 +1,9 @@
 package io.kestra.plugin.core.runner;
 
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.core.annotation.Introspected;
@@ -14,6 +16,7 @@ import lombok.experimental.SuperBuilder;
 import org.slf4j.Logger;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
@@ -113,7 +116,7 @@ tasks:
         )
     }
 )
-public class Process extends TaskRunner {
+public class Process extends TaskRunner<TaskRunnerDetailResult> {
 
     /**
      * Convenient default instance to be used as task default value for a 'taskRunner' property.
@@ -123,7 +126,7 @@ public class Process extends TaskRunner {
     }
 
     @Override
-    public RunnerResult run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception {
+    public TaskRunnerResult<TaskRunnerDetailResult> run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception {
         Logger logger = runContext.logger();
         AbstractLogConsumer defaultLogConsumer = taskCommands.getLogConsumer();
 
@@ -133,11 +136,14 @@ public class Process extends TaskRunner {
         environment.putAll(this.env(runContext, taskCommands));
 
         processBuilder.directory(taskCommands.getWorkingDirectory().toFile());
-        processBuilder.command(taskCommands.getCommands());
+
+        List<String> renderedCommands = runContext.render(taskCommands.getCommands()).asList(String.class);
+
+        processBuilder.command(renderedCommands);
 
         java.lang.Process process = processBuilder.start();
         long pid = process.pid();
-        logger.debug("Starting command with pid {} [{}]", pid, String.join(" ", taskCommands.getCommands()));
+        logger.debug("Starting command with pid {} [{}]", pid, String.join(" ", renderedCommands));
 
         LogRunnable stdOutRunnable = new LogRunnable(process.getInputStream(), defaultLogConsumer, false);
         LogRunnable stdErrRunnable = new LogRunnable(process.getErrorStream(), defaultLogConsumer, true);
@@ -157,7 +163,7 @@ public class Process extends TaskRunner {
                 logger.debug("Command succeed with exit code {}", exitCode);
             }
 
-            return new RunnerResult(exitCode, defaultLogConsumer);
+            return new TaskRunnerResult<>(exitCode, defaultLogConsumer);
         } catch (InterruptedException e) {
             logger.warn("Killing process {} for InterruptedException", pid);
             killDescendantsOf(process.toHandle(), logger);

@@ -4,6 +4,12 @@ jackson:
     writeDurationsAsTimestamps: false
   serialization-inclusion: non_null
 
+micronaut:
+  metrics:
+    export:
+      otlp:
+        enabled: false
+
 kestra:
   encryption:
     secret-key: I6EGNzRESu3X3pKZidrqCGOHQFUFC0yK

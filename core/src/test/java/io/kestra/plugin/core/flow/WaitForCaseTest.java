@@ -61,4 +61,11 @@ public class WaitForCaseTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
         assertThat(execution.getTaskRunList().getLast().attemptNumber(), is(1));
     }
+
+    public void waitForChildTaskWarning() throws TimeoutException, QueueException {
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-child-task-warning");
+
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat((Integer) execution.getTaskRunList().getFirst().getOutputs().get("iterationCount"), greaterThan(1));
+    }
 }

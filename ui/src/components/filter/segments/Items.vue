@@ -67,7 +67,7 @@
     import Label from "../components/Label.vue";
     import Title from "../components/Title.vue";
 
-    import {History, DeleteOutline} from "../utils/icons.js";
+    import {History, DeleteOutline} from "../utils/icons";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -75,7 +75,7 @@
     const emits = defineEmits(["search"]);
     const props = defineProps({prefix: {type: String, required: true}});
 
-    import {useFilters} from "../composables/useFilters.js";
+    import {useFilters} from "../composables/useFilters";
     const {getSavedItems, removeSavedItem} = useFilters(props.prefix);
 
     let saved = ref<{ value: CurrentItem[]; name: string }[]>([]);
@@ -93,7 +93,7 @@
 </script>
 
 <style scoped lang="scss">
-@import "../styles/filter.scss";
+@import "../styles/filter";
 
 .dropdown {
     width: 400px;

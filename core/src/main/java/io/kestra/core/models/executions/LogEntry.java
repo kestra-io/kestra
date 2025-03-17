@@ -54,7 +54,6 @@ public class LogEntry implements DeletedInterface, TenantInterface {
 
     String thread;
 
-    @JsonInclude(JsonInclude.Include.NON_NULL)
     String message;
 
     @NotNull
@@ -128,4 +127,13 @@ public class LogEntry implements DeletedInterface, TenantInterface {
             .filter(e -> e.getValue() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
+
+    public Map<String, Object> toLogMap() {
+        Map<String, Object> map = new HashMap<>(this.toMap());
+        map.put("attemptNumber", this.attemptNumber);
+        map.put("thread", this.thread);
+        map.put("message", this.message);
+        return map;
+    }
+
 }

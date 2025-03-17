@@ -2,8 +2,8 @@ package io.kestra.plugin.core.kv;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.kv.KVType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
@@ -56,56 +56,50 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
     @Schema(
         title = "The key for which to set the value."
     )
-    @PluginProperty(dynamic = true)
-    private String key;
+    private Property<String> key;
 
     @NotNull
     @Schema(
         title = "The value to map to the key."
     )
-    @PluginProperty(dynamic = true)
-    private String value;
+    private Property<String> value;
 
     @NotNull
     @Schema(
         title = "The namespace in which the KV pair will be stored. By default, Kestra will use the namespace of the flow."
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private String namespace = "{{ flow.namespace }}";
+    private Property<String> namespace = new Property<>("{{ flow.namespace }}");
 
     @NotNull
     @Schema(
         title = "Whether to overwrite or fail if a value for the given key already exists."
     )
-    @PluginProperty
     @Builder.Default
-    private boolean overwrite = true;
+    private Property<Boolean> overwrite = Property.of(true);
 
     @Schema(
         title = "Optional Time-To-Live (TTL) duration for the key-value pair. If not set, the KV pair will never be deleted from internal storage."
     )
-    @PluginProperty
-    private Duration ttl;
+    private Property<Duration> ttl;
 
     @Schema(
         title = "Enum representing the data type of the KV pair. If not set, the value will be stored as a string."
     )
-    @PluginProperty
-    private KVType kvType;
+    private Property<KVType> kvType;
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        String renderedNamespace = runContext.render(this.namespace);
+        String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
 
-        String renderedKey = runContext.render(this.key);
-        Object renderedValue = runContext.renderTyped(this.value);
+        String renderedKey = runContext.render(this.key).as(String.class).orElse(null);
+
+        Object renderedValue = runContext.renderTyped(this.value.toString());
 
         KVStore kvStore = runContext.namespaceKv(renderedNamespace);
 
-        if (kvType != null) {
-            if (renderedValue instanceof String renderedValueStr) {
-                renderedValue = switch (kvType) {
+        if (kvType != null && renderedValue instanceof String renderedValueStr) {
+                renderedValue = switch (runContext.render(kvType).as(KVType.class).orElseThrow()) {
                     case NUMBER -> JacksonMapper.ofJson().readValue(renderedValueStr, Number.class);
                     case BOOLEAN -> Boolean.parseBoolean((String) renderedValue);
                     case DATETIME, DATE -> Instant.parse(renderedValueStr);
@@ -114,8 +108,11 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
                     default -> renderedValue;
                 };
             }
-        }
-        kvStore.put(renderedKey, new KVValueAndMetadata(new KVMetadata(ttl), renderedValue), this.overwrite);
+
+        kvStore.put(renderedKey, new KVValueAndMetadata(
+            new KVMetadata(runContext.render(ttl).as(Duration.class).orElse(null)), renderedValue),
+            runContext.render(this.overwrite).as(Boolean.class).orElseThrow()
+        );
 
         return null;
     }

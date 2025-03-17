@@ -70,7 +70,7 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import {executeTask} from "../../utils/submitTask"
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
@@ -112,6 +112,7 @@
         computed: {
             ...mapState("execution", ["flow", "execution"]),
             ...mapState("core", ["guidedProperties"]),
+            ...mapGetters("misc", ["configs"]),
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },
@@ -136,7 +137,8 @@
             },
             fillInputsFromExecution(){
                 // Add all labels except the one from flow to prevent duplicates
-                this.executionLabels = this.getExecutionLabels().filter(item => !item.key.startsWith("system."));
+                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                this.executionLabels = this.getExecutionLabels().filter(item => !toIgnore.some(prefix => item.key.startsWith(prefix)));
 
                 if (!this.flow.inputs) {
                     return;
@@ -209,18 +211,18 @@
 <style scoped lang="scss">
     :deep(.el-collapse) {
         border-radius: var(--bs-border-radius-lg);
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
         background: var(--bs-gray-100);
 
         .el-collapse-item__header {
             background: transparent;
-            border-bottom: 1px solid var(--bs-border-color);
+            border-bottom: 1px solid var(--ks-border-primary);
             font-size: var(--bs-font-size-sm);
         }
 
         .el-collapse-item__content {
             background: var(--bs-gray-100);
-            border-bottom: 1px solid var(--bs-border-color);
+            border-bottom: 1px solid var(--ks-border-primary);
         }
 
         .el-collapse-item__header, .el-collapse-item__content {

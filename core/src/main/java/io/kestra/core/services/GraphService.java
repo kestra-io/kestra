@@ -153,8 +153,8 @@ public class GraphService {
                 });
             parentCluster.getGraph().removeNode(taskToReplace);
 
-            if (taskToReplace.isError()) {
-                clusterForReplacement.updateErrorWithChildren(true);
+            if (taskToReplace.getBranchType() != null) {
+                clusterForReplacement.updateWithChildren(taskToReplace.getBranchType());
             }
         }
     }

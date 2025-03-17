@@ -1,0 +1,17 @@
+id: request-basicauth-deprecated
+namespace: sanitycheck.plugin.core.http
+
+tasks:
+  - id: request
+    type: io.kestra.plugin.core.http.Request
+    uri: https://testpages.eviltester.com/styled/auth/basic-auth-results.html
+    method: GET
+    options:
+      basicAuthUser: authorized
+      basicAuthPassword: password001
+
+  - id: assert
+    type: io.kestra.plugin.core.execution.Assert
+    errorMessage: "Invalid response code {{ outputs.request.code }}"
+    conditions:
+      - "{{ outputs.request.code == 200 }}"

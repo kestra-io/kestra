@@ -16,7 +16,7 @@
             :prefix="custom.shown ? 'custom_dashboard' : 'dashboard'"
             :include="
                 custom.shown
-                    ? ['relative_date', 'absolute_date']
+                    ? ['relative_date', 'absolute_date', 'namespace', 'labels']
                     : [
                         'namespace',
                         'state',
@@ -44,7 +44,7 @@
         <el-row class="custom">
             <el-col
                 v-for="(chart, index) in custom.dashboard.charts"
-                :key="index"
+                :key="index + JSON.stringify(route.query)"
                 :xs="24"
                 :sm="12"
             >
@@ -72,158 +72,142 @@
         </el-row>
     </div>
     <div v-else class="dashboard">
-        <el-row v-if="!props.flow">
-            <el-col :xs="24" :sm="12" :lg="6">
-                <Card
-                    :icon="CheckBold"
-                    :label="t('dashboard.success_ratio')"
-                    :tooltip="t('dashboard.success_ratio_tooltip')"
-                    :value="stats.success"
-                    :redirect="{
-                        name: 'executions/list',
-                        query: {
-                            state: State.SUCCESS,
-                            scope: 'USER',
-                            size: 100,
-                            page: 1,
-                        },
-                    }"
-                    class="me-2"
-                />
-            </el-col>
-            <el-col :xs="24" :sm="12" :lg="6">
-                <Card
-                    :icon="Alert"
-                    :label="t('dashboard.failure_ratio')"
-                    :tooltip="t('dashboard.failure_ratio_tooltip')"
-                    :value="stats.failed"
-                    :redirect="{
-                        name: 'executions/list',
-                        query: {
-                            state: State.FAILED,
-                            scope: 'USER',
-                            size: 100,
-                            page: 1,
-                        },
-                    }"
-                    class="mx-2"
-                />
-            </el-col>
-            <el-col :xs="24" :sm="12" :lg="6">
-                <Card
-                    :icon="FileTree"
-                    :label="t('flows')"
-                    :value="numbers.flows"
-                    :redirect="{
-                        name: 'flows/list',
-                        query: {scope: 'USER', size: 100, page: 1},
-                    }"
-                    class="mx-2"
-                />
-            </el-col>
-            <el-col :xs="24" :sm="12" :lg="6">
-                <Card
-                    :icon="LightningBolt"
-                    :label="t('triggers')"
-                    :value="numbers.triggers"
-                    :redirect="{
-                        name: 'admin/triggers',
-                        query: {size: 100, page: 1},
-                    }"
-                    class="ms-2"
-                />
-            </el-col>
-        </el-row>
+        <Card
+            :icon="CheckBold"
+            :label="t('dashboard.success_ratio')"
+            :tooltip="t('dashboard.success_ratio_tooltip')"
+            :value="stats.success"
+            :loading="executionsLoading"
+            :redirect="{
+                name: 'executions/list',
+                query: {
+                    state: State.SUCCESS,
+                    scope: 'USER',
+                    size: 100,
+                    page: 1,
+                },
+            }"
+        />
 
-        <el-row>
-            <el-col :xs="24" :lg="props.flow ? 24 : 16">
-                <ExecutionsBar
-                    :data="graphData"
-                    :total="stats.total"
-                    :class="{'me-2': !props.flow}"
-                />
-            </el-col>
-            <el-col v-if="!props.flow" :xs="24" :lg="8">
-                <ExecutionsDoughnut
-                    :data="graphData"
-                    :total="stats.total"
-                    class="ms-2"
-                />
-            </el-col>
-        </el-row>
+        <Card
+            :icon="Alert"
+            :label="t('dashboard.failure_ratio')"
+            :tooltip="t('dashboard.failure_ratio_tooltip')"
+            :value="stats.failed"
+            :loading="executionsLoading"
+            :redirect="{
+                name: 'executions/list',
+                query: {
+                    state: State.FAILED,
+                    scope: 'USER',
+                    size: 100,
+                    page: 1,
+                },
+            }"
+        />
 
-        <el-row>
-            <el-col :xs="24" :lg="props.flow ? 7 : 12">
-                <div v-if="props.flow" class="h-100 p-4 me-2">
-                    <span class="d-flex justify-content-between">
-                        <span class="fs-6 fw-bold">
-                            {{ t("dashboard.description") }}
-                        </span>
-                        <el-button
-                            :icon="BookOpenOutline"
-                            @click="descriptionDialog = true"
-                        >
-                            {{ t("open") }}
-                        </el-button>
+        <Card
+            :icon="FileTree"
+            :label="t('flows')"
+            :value="numbers.flows"
+            :loading="numbersLoading"
+            :redirect="{
+                name: 'flows/list',
+                query: {scope: 'USER', size: 100, page: 1},
+            }"
+        />
 
-                        <el-dialog
-                            v-model="descriptionDialog"
-                            :title="$t('description')"
-                        >
-                            <Markdown
-                                :source="description"
-                                class="p-4 description"
-                            />
-                        </el-dialog>
-                    </span>
+        <Card
+            :icon="LightningBolt"
+            :label="t('triggers')"
+            :value="numbers.triggers"
+            :loading="numbersLoading"
+            :redirect="{
+                name: 'admin/triggers',
+                query: {size: 100, page: 1},
+            }"
+        />
 
-                    <Markdown :source="description" class="p-4 description" />
-                </div>
-                <ExecutionsInProgress
-                    v-else
-                    :flow="props.flowID"
-                    :namespace="props.namespace"
-                    class="me-2"
-                />
-            </el-col>
-            <el-col v-if="props.flow" :xs="24" :lg="10">
-                <ExecutionsNextScheduled
-                    :flow="props.flowID"
-                    :namespace="filters.namespace"
-                    class="mx-2"
-                />
-            </el-col>
-            <el-col :xs="24" :lg="props.flow ? 7 : 12">
-                <ExecutionsDoughnut
-                    v-if="props.flow"
-                    :data="graphData"
-                    :total="stats.total"
-                    class="ms-2"
-                />
-                <ExecutionsNextScheduled
-                    v-else-if="isAllowedTriggers"
-                    :flow="props.flowID"
-                    :namespace="filters.namespace"
-                    class="ms-2"
-                />
-                <ExecutionsEmptyNextScheduled v-else />
-            </el-col>
-        </el-row>
+        <ExecutionsBar
+            :data="graphData"
+            :total="stats.total"
+            :loading="executionsLoading"
+            class="card card-2/3"
+        />
 
-        <el-row v-if="!props.flow">
-            <el-col :xs="24">
-                <ExecutionsNamespace
-                    :data="filteredNamespaceExecutions"
-                    :total="stats.total"
-                />
-            </el-col>
-        </el-row>
+        <ExecutionsDoughnut
+            :data="graphData"
+            :total="stats.total"
+            :loading="executionsLoading"
+            class="card card-1/3"
+        />
 
-        <el-row v-if="!props.flow">
-            <el-col :xs="24">
-                <Logs :data="logs" />
-            </el-col>
-        </el-row>
+        <div v-if="props.flow" class="h-100 p-4 card card-1/2">
+            <span class="d-flex justify-content-between">
+                <span class="fs-6 fw-bold">
+                    {{ t("dashboard.description") }}
+                </span>
+                <el-button
+                    :icon="BookOpenOutline"
+                    @click="descriptionDialog = true"
+                >
+                    {{ t("open") }}
+                </el-button>
+
+                <el-dialog
+                    v-model="descriptionDialog"
+                    :title="$t('description')"
+                >
+                    <Markdown
+                        :source="description"
+                        :html="false"
+                        class="p-4 description"
+                    />
+                </el-dialog>
+            </span>
+
+            <Markdown :source="description" :html="false" class="p-4 description" />
+        </div>
+        <ExecutionsInProgress
+            v-else
+            :flow="props.flowId"
+            :namespace="props.namespace"
+            :loading="executionsLoading"
+            class="card card-1/2"
+        />
+
+        <ExecutionsNextScheduled
+            v-if="props.flow"
+            :flow="props.flowId"
+            :namespace="props.namespace"
+            :loading="executionsLoading"
+            class="card card-1/2"
+        />
+        <ExecutionsNextScheduled
+            v-else-if="isAllowedTriggers"
+            :flow="props.flowId"
+            :namespace="props.namespace"
+            :loading="executionsLoading"
+            class="card card-1/2"
+        />
+
+        <ExecutionsEmptyNextScheduled 
+            v-else 
+            :loading="executionsLoading"
+            class="card card-1/2" 
+        />
+        <ExecutionsNamespace
+            v-if="!props.flow && Object.keys(namespaceExecutions).length > 1"
+            class="card card-1"
+            :data="namespaceExecutions"
+            :total="stats.total"
+        />
+        <Logs 
+            v-if="!props.flow" 
+            :data="logs" 
+            :loading="executionsLoading"
+            class="card card-1" 
+        />
     </div>
 </template>
 
@@ -236,7 +220,7 @@
     import moment from "moment";
 
     import {apiUrl} from "override/utils/route";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
 
     import Header from "./components/Header.vue";
     import Card from "./components/Card.vue";
@@ -265,7 +249,7 @@
     import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
     import permission from "../../models/permission.js";
     import action from "../../models/action.js";
-    // import {storageKeys} from "../../utils/constants";
+    import _cloneDeep from "lodash/cloneDeep.js";
 
     const router = useRouter();
     const route = useRoute();
@@ -273,7 +257,6 @@
     const {t} = useI18n({useScope: "global"});
     const user = store.getters["auth/user"];
 
-    // const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE) || null;
     const props = defineProps({
         embed: {
             type: Boolean,
@@ -283,7 +266,7 @@
             type: Boolean,
             default: false,
         },
-        flowID: {
+        flowId: {
             type: String,
             required: false,
             default: null,
@@ -309,7 +292,10 @@
         let dashboard = {};
 
         if (route.name === "home") {
-            router.replace({params: {...route.params, id: v?.id ?? "default"}});
+            router.replace({
+                params: {...route.params, id: v?.id ?? "default"},
+                query: {...route.query},
+            });
             if (v && v.id !== "default") {
                 dashboard = await store.dispatch("dashboard/load", v.id);
             }
@@ -340,23 +326,23 @@
             t("dashboard.no_flow_description"))
         : undefined;
 
-    const filters = ref({
-        namespace: null,
-        state: [],
-        startDate: null,
-        endDate: null,
-        timeRange: "PT720H",
-        scope: ["USER"],
-    });
-
     const defaultNumbers = {flows: 0, triggers: 0};
     const numbers = ref({...defaultNumbers});
+    const numbersLoading = ref(false);
     const fetchNumbers = () => {
+        if (props.flowId) {
+            return;
+        }
+
+        numbersLoading.value = true;
         store.$http
-            .post(`${apiUrl(store)}/stats/summary`, route.query)
+            .post(`${apiUrl(store)}/stats/summary`, mergeQuery())
             .then((response) => {
                 if (!response.data) return;
                 numbers.value = {...defaultNumbers, ...response.data};
+            })
+            .finally(() => {
+                numbersLoading.value = false;
             });
     };
 
@@ -370,21 +356,27 @@
             ),
         );
 
-        const total = Object.values(statesToCount).reduce(
+        const total = Object.values(counts).reduce(
             (sum, count) => sum + count,
             0,
         );
-        const successStates = ["SUCCESS", "CANCELLED", "WARNING"];
-        const failedStates = ["FAILED", "KILLED", "RETRIED"];
+
+        const totalTerminated = Object.values(statesToCount).reduce(
+            (sum, count) => sum + count,
+            0,
+        );
+
+        const successStates = ["SUCCESS", "CANCELLED", "WARNING", "SKIPPED"];
+        const failedStates = ["FAILED", "KILLED"];
         const sumStates = (states) =>
             states.reduce((sum, state) => sum + (statesToCount[state] || 0), 0);
-
         const successRatio =
-            total > 0 ? (sumStates(successStates) / total) * 100 : 0;
-        const failedRatio = total > 0 ? (sumStates(failedStates) / total) * 100 : 0;
+            totalTerminated > 0 ? (sumStates(successStates) / totalTerminated) * 100 : 0;
+        const failedRatio = totalTerminated > 0 ? (sumStates(failedStates) / totalTerminated) * 100 : 0;
 
         return {
-            total,
+            total: total,
+            totalTerminated: totalTerminated,
             success: `${successRatio.toFixed(2)}%`,
             failed: `${failedRatio.toFixed(2)}%`,
         };
@@ -407,102 +399,61 @@
             return accumulator;
         }, null);
     };
-    const fetchExecutions = () => {
-        store.dispatch("stat/daily", route.query).then((response) => {
-            const sorted = response.sort(
-                (a, b) => new Date(b.date) - new Date(a.date),
-            );
 
-            executions.value = {
-                raw: sorted,
-                all: transformer(sorted),
-                yesterday: sorted.at(-2),
-                today: sorted.at(-1),
-            };
-        });
+    const mergeQuery = () => {
+        let queryFilter = _cloneDeep(route.query);
+
+        if (props.namespace) {
+            queryFilter["namespace"] = props.namespace;
+        }
+
+        if (props.flowId) {
+            queryFilter["flowId"] = props.flowId;
+        }
+
+        return queryFilter;
+    }
+
+    const executionsLoading = ref(false);
+    const fetchExecutions = () => {
+        executionsLoading.value = true;
+
+        return store.dispatch("stat/daily", mergeQuery())
+            .then((response) => {
+                const sorted = response.sort(
+                    (a, b) => new Date(b.date) - new Date(a.date),
+                );
+
+                executions.value = {
+                    raw: sorted,
+                    all: transformer(sorted),
+                    yesterday: sorted.at(-2),
+                    today: sorted.at(-1),
+                };
+            })
+            .finally(() => {
+                executionsLoading.value = false;
+            });
     };
 
     const graphData = computed(() => store.state.stat.daily || []);
 
     const namespaceExecutions = ref({});
-    const filteredNamespaceExecutions = computed(() => {
-        const namespace = filters.value.namespace;
 
-        return !namespace
-            ? namespaceExecutions.value
-            : {[namespace]: namespaceExecutions.value[namespace]};
-    });
     const fetchNamespaceExecutions = () => {
-        store.dispatch("stat/dailyGroupByNamespace").then((response) => {
+        store.dispatch("stat/dailyGroupByNamespace", mergeQuery()).then((response) => {
             namespaceExecutions.value = response;
         });
     };
 
     const logs = ref([]);
     const fetchLogs = () => {
-        store.dispatch("stat/logDaily", route.query).then((response) => {
+        store.dispatch("stat/logDaily", mergeQuery()).then((response) => {
             logs.value = response;
         });
     };
 
-    // const handleDatesUpdate = (dates) => {
-    //     const {startDate, endDate, timeRange} = dates;
-
-    //     if (startDate && endDate) {
-    //         filters.value = {...filters.value, startDate, endDate, timeRange};
-    //     } else if (timeRange) {
-    //         filters.value = {
-    //             ...filters.value,
-    //             startDate: moment()
-    //                 .subtract(moment.duration(timeRange).as("milliseconds"))
-    //                 .toISOString(true),
-    //             endDate: moment().toISOString(true),
-    //             timeRange,
-    //         };
-    //     }
-
-    //     return Promise.resolve(filters.value);
-    // };
-
-    // const updateParams = async (params) => {
-    //     const completeParams = await handleDatesUpdate({
-    //         ...filters.value,
-    //         ...params,
-    //     });
-
-    //     filters.value = {
-    //         namespace: props.namespace ?? completeParams.namespace,
-    //         flowId: props.flowID ?? null,
-    //         state: completeParams.state?.filter(Boolean).length
-    //             ? [].concat(completeParams.state)
-    //             : undefined,
-    //         startDate: completeParams.startDate,
-    //         endDate: completeParams.endDate,
-    //         scope: completeParams.scope?.filter(Boolean).length
-    //             ? [].concat(completeParams.scope)
-    //             : undefined,
-    //     };
-
-    //     completeParams.flowId = props.flowID ?? null;
-
-    //     delete completeParams.timeRange;
-    //     for (const key in completeParams) {
-    //         if (completeParams[key] == null) {
-    //             delete completeParams[key];
-    //         }
-    //     }
-
-    //     router.push({query: completeParams}).then(fetchAll());
-    // };
-
     const fetchAll = async () => {
-        // if (!route.query.startDate || !route.query.endDate) {
-        //     route.query.startDate = moment()
-        //         .subtract(moment.duration("PT720H").as("milliseconds"))
-        //         .toISOString(true);
-        //     route.query.endDate = moment().toISOString(true);
-        // }
-
         route.query.startDate = route.query.timeRange
             ? moment()
                 .subtract(
@@ -519,14 +470,17 @@
 
         if (!custom.value.shown) {
             try {
-                await Promise.any([
+                executionsLoading.value = true;
+                await Promise.all([
                     fetchNumbers(),
                     fetchExecutions(),
                     fetchNamespaceExecutions(),
                     fetchLogs(),
-                ]);
-            } catch (error) {
-                console.error("All promises failed:", error);
+                ]).catch(error => {
+                    console.error("Failed to fetch dashboard data:", error);
+                });
+            } finally {
+                executionsLoading.value = false;
             }
         }
     };
@@ -534,31 +488,18 @@
     const isAllowedTriggers = computed(() => {
         return (
             user &&
-            user.isAllowed(permission.FLOW, action.READ, filters.value.namespace)
+            user.isAllowed(permission.FLOW, action.READ, props.value?.namespace)
         );
     });
 
     onBeforeMount(() => {
         handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
-
-        // if (props.flowID) {
-        //     router.replace({query: {...route.query, flowId: props.flowID}});
-        // }
-
-    // if (!route.query.namespace && props.restoreURL) {
-    //     router.replace({query: {...route.query, namespace: defaultNamespace}});
-    //     filters.value.namespace = route.query.namespace || defaultNamespace;
-    // }
-    // else {
-    //     filters.value.namespace = null
-    // }
-
-    // updateParams(route.query);
     });
 
     watch(
         route,
-        () => {
+        async () => {
+            await handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
             fetchAll();
         },
         {immediate: true, deep: true},
@@ -572,38 +513,77 @@ $spacing: 20px;
 
 .dashboard-filters,
 .dashboard {
-    padding: 0 32px;
-
-    & .el-row {
-        width: 100%;
-
-        & .el-col {
-            padding-bottom: $spacing;
-
-            & div {
-                background: var(--card-bg);
-                border: 1px solid var(--bs-gray-300);
-                border-radius: $border-radius;
-
-                html.dark & {
-                    border-color: var(--bs-gray-600);
-                }
-            }
-        }
-    }
+    padding: 0 2rem;
+    margin: 0;
 
     .description {
         border: none !important;
-        color: #564a75;
-
-        html.dark & {
-            color: #e3dbff;
-        }
+        color: var(ks-content-secondary);
     }
 }
 
-.dashboard {
-    margin: 0;
+$media-md: 500px;
+$media-lg: 1000px;
+
+.dashboard{
+    container-type: inline-size;
+    padding-bottom: 1rem;
+    margin: 1rem 0;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+}
+
+
+
+.card {
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+    background: var(--ks-background-card);
+    color: var(--ks-content-primary);
+    border: 1px solid var(--ks-border-primary);
+    border-radius: $border-radius;
+    overflow: hidden;
+    flex-shrink: 0;
+    grid-column: span 12;
+    @container (width > #{$media-md}) {
+        grid-column: span 6;
+    }
+    @container (width > #{$media-lg}) {
+        grid-column: span 3;
+    }
+}
+
+@container (width > #{$media-md}) {
+    .card-1\/2, .card-2\/3, .card-1\/3 {
+        grid-column: span 12;
+    }
+}
+
+.card-1\/2{
+    @container (width > #{$media-lg}) {
+        grid-column: span 6;
+    }
+}
+
+.card-2\/3{
+    @container (width > #{$media-lg}) {
+        grid-column: span 8;
+    }
+}
+
+.card-1\/3{
+    @container (width > #{$media-lg}) {
+        grid-column: span 4;
+    }
+}
+
+.card-1{
+    @container (width > #{$media-md}) {
+        grid-column: span 12;
+    }
 }
 
 .dashboard-filters {
@@ -620,13 +600,13 @@ $spacing: 20px;
 }
 
 .description {
-    padding: 0px 32px;
+    padding: 0 2rem 1rem 2rem;
     margin: 0;
-    color: var(--bs-gray-700);
+    color: var(--ks-content-secondary);
 }
 
 .custom {
-    padding: 24px 32px;
+    padding: 0 2rem 1rem 2rem;
 
     &.el-row {
         width: 100%;
@@ -640,13 +620,9 @@ $spacing: 20px;
 
             & > div {
                 height: 100%;
-                background: var(--card-bg);
-                border: 1px solid var(--bs-gray-300);
+                background: var(--ks-background-card);
+                border: 1px solid var(--ks-border-primary);
                 border-radius: $border-radius;
-
-                html.dark & {
-                    border-color: var(--bs-gray-600);
-                }
             }
         }
     }
@@ -659,12 +635,16 @@ $spacing: 20px;
     }
 
     &::-webkit-scrollbar-track {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
     }
 
     &::-webkit-scrollbar-thumb {
-        background: var(--bs-primary);
+        background: var(--ks-button-background-primary);
         border-radius: 0px;
+    }
+
+    &::-webkit-scrollbar-thumb:hover {
+        background: var(--ks-button-background-primary-hover);
     }
 }
 </style>

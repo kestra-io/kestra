@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.repositories.WorkerJobRunningRepositoryInterface;
 import io.kestra.core.runners.WorkerJobRunning;
 import lombok.extern.slf4j.Slf4j;
@@ -44,6 +45,20 @@ public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdb
                     );
 
                 return this.jdbcRepository.fetchOne(select);
+            });
+    }
+
+    @VisibleForTesting
+    public List<WorkerJobRunning> findAll() {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select((field("value")))
+                    .from(this.jdbcRepository.getTable());
+
+                return this.jdbcRepository.fetch(select);
             });
     }
 

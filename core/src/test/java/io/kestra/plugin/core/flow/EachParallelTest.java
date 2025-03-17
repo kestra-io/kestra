@@ -32,4 +32,11 @@ public class EachParallelTest {
     void parallelInteger(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/each-parallel-disabled-tasks.yaml")
+    void disabledTasks(Execution execution) {
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList(), hasSize(2));
+    }
 }

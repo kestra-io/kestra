@@ -3,7 +3,9 @@ import {apiUrl} from "override/utils/route";
 export default {
     namespaced: true,
     state: {
-        configs: undefined
+        configs: undefined,
+        contextInfoBarOpenTab: "",
+        theme: "light"
     },
     actions: {
         loadConfigs({commit}) {
@@ -38,13 +40,25 @@ export default {
         }
     },
     mutations: {
+        setTheme(state, theme) {
+            state.theme = theme
+        },
         setConfigs(state, configs) {
             state.configs = configs
+        },
+        setContextInfoBarOpenTab(state, value) {
+            state.contextInfoBarOpenTab = value
         }
     },
     getters: {
+        theme(state) {
+            return state.theme;
+        },
         configs(state) {
             return state.configs;
+        },
+        contextInfoBarOpenTab(state) {
+            return state.contextInfoBarOpenTab;
         }
     }
 }

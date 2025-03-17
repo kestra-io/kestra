@@ -1,7 +1,7 @@
 import {createStore} from "vuex";
 import {createRouter, createWebHistory} from "vue-router";
 import VueGtag from "vue-gtag";
-import {createI18n} from "vue-i18n";
+import {setI18nLanguage, loadLocaleMessages, setupI18n} from "../translations/i18n";
 import moment from "moment-timezone";
 import "moment/dist/locale/de"
 import "moment/dist/locale/es"
@@ -31,7 +31,6 @@ import {
     ArcElement,
     DoughnutController,
 } from "chart.js";
-import {TreemapController, TreemapElement} from "chartjs-chart-treemap"
 import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
 
@@ -62,7 +61,7 @@ import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
 import TaskTaskRunner from "../components/flows/tasks/TaskTaskRunner.vue";
 
-export default (app, routes, stores, translations) => {
+export default async (app, routes, stores, translations, additionalTranslations = {}) => {
     // charts
     Chart.register(
         CategoryScale,
@@ -78,9 +77,7 @@ export default (app, routes, stores, translations) => {
         Tooltip,
         Legend,
         CategoryScale,
-        LinearScale,
-        TreemapController,
-        TreemapElement
+        LinearScale
     );
 
     // store
@@ -139,14 +136,18 @@ export default (app, routes, stores, translations) => {
     // l18n
     let locale = Utils.getLang();
 
-    let i18n = createI18n({
-        locale: locale,
+    let i18n = setupI18n({
+        locale: "en",
         messages: translations,
         allowComposition: true,
         legacy: false,
         warnHtmlMessage: false,
     });
 
+    if(locale !== "en"){
+        await loadLocaleMessages(i18n, locale, additionalTranslations);
+        await setI18nLanguage(i18n, locale);
+    }
     app.use(i18n);
 
     // moment

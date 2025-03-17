@@ -15,7 +15,7 @@ import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 @KestraTest(startRunner = true)
-public class OutputValuesTest {
+class OutputValuesTest {
     @Inject
     FlowRepositoryInterface flowRepository;
 

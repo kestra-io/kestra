@@ -1,5 +1,9 @@
 <template>
-    <el-card id="gantt" shadow="never" v-if="execution && flow">
+    <ExecutionPending 
+        v-if="!isExecutionStarted" 
+        :execution="execution"
+    />
+    <el-card id="gantt" shadow="never" v-else-if="execution && flow">
         <template #header>
             <div class="d-flex">
                 <duration class="th text-end" :histories="execution.state.histories" />
@@ -39,6 +43,17 @@
                                         <small v-if="item.task && item.task.value"> {{ item.task.value }}</small>
                                     </span>
                                 </el-tooltip>
+                                <div>
+                                    <el-tooltip placement="right" :persistent="false" :hide-after="0" effect="light">
+                                        <template #content>
+                                            <span>{{ $t("this_task_has") }} {{ item.attempts }} {{ $t("attempts").toLowerCase() }}.</span>
+                                        </template>
+                                        <Warning
+                                            v-if="item.attempts > 1"
+                                            class="attempt_warn me-3"
+                                        />
+                                    </el-tooltip>
+                                </div>
                                 <div :style="'width: ' + (100 / (dates.length + 1)) * dates.length + '%'">
                                     <el-tooltip placement="top" :persistent="false" transition="" :hide-after="0" effect="light">
                                         <template #content>
@@ -84,7 +99,7 @@
 <script>
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import {mapState} from "vuex";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
     import FlowUtils from "../../utils/flowUtils";
@@ -92,32 +107,45 @@
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import Warning from "vue-material-design-icons/Alert.vue";
+    import ExecutionPending from "./ExecutionPending.vue";
 
     const ts = date => new Date(date).getTime();
-    const TASKRUN_THRESHOLD = 50
+    const TASKRUN_THRESHOLD = 50;
     export default {
-        components: {DynamicScroller, DynamicScrollerItem, TaskRunDetails, Duration, ChevronRight, ChevronDown},
+        components: {
+            DynamicScroller,
+            Warning, 
+            DynamicScrollerItem, 
+            TaskRunDetails, 
+            Duration, 
+            ChevronRight, 
+            ChevronDown,
+            ExecutionPending
+        },
         data() {
             return {
                 colors: State.colorClass(),
                 series: [],
-                realTime: true,
                 dates: [],
                 duration: undefined,
                 selectedTaskRuns: [],
+                regularPaintingInterval: undefined,
                 taskTypesToExclude: ["io.kestra.plugin.core.flow.ForEachItem$ForEachItemSplit", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemMergeOutputs", "io.kestra.plugin.core.flow.ForEachItem$ForEachItemExecutable", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemSplit", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemMergeOutputs", "io.kestra.core.tasks.flows.ForEachItem$ForEachItemExecutable"]
             };
         },
         watch: {
-            execution(newValue, oldValue) {
-                if (oldValue.id !== newValue.id && !this.realTime) {
-                    this.realTime = true;
-                    this.selectedTaskRuns = [];
-                    this.paint();
-                }
-                if(newValue.state?.current === State.SUCCESS){
-                    this.compute()
-                }
+            execution: {
+                handler(newValue) {
+                    if (!State.isRunning(newValue.state?.current)) {
+                        clearInterval(this.regularPaintingInterval);
+                        this.regularPaintingInterval = undefined;
+                        this.compute();
+                    } else if (this.regularPaintingInterval === undefined) {
+                        this.regularPaintingInterval = setInterval(this.compute, this.taskRunsCount < TASKRUN_THRESHOLD ? 40 : 500);
+                    }
+                },
+                immediate: true
             },
             forEachItemsTaskRunIds: {
                 handler(newValue, oldValue) {
@@ -130,9 +158,6 @@
                 },
                 immediate: true
             }
-        },
-        mounted() {
-            this.paint();
         },
         computed: {
             ...mapState("execution", ["flow", "execution"]),
@@ -198,22 +223,14 @@
                 }
                 childrenSort(rootTasks)
                 return sortedTasks
-            }
+            },
+            isExecutionStarted() {
+                return this.execution?.state?.current && !["CREATED", "QUEUED"].includes(this.execution.state.current);
+            },
         },
         methods: {
             forwardEvent(type, event) {
                 this.$emit(type, event);
-            },
-            paint() {
-                const repaint = () => {
-                    this.compute()
-                    if (this.realTime) {
-                        const delay = this.taskRunsCount < TASKRUN_THRESHOLD ? 40 : 500
-                        setTimeout(repaint, delay);
-                    }
-                }
-
-                repaint();
             },
             compute() {
                 this.computeSeries();
@@ -235,10 +252,6 @@
             computeSeries() {
                 if (!this.execution) {
                     return;
-                }
-
-                if (!State.isRunning(this.execution.state.current)) {
-                    this.stopRealTime();
                 }
 
                 const series = [];
@@ -287,7 +300,8 @@
                         task,
                         flowId: task.flowId,
                         namespace: task.namespace,
-                        executionId: task.outputs && task.outputs.executionId
+                        executionId: task.outputs && task.outputs.executionId,
+                        attempts: task.attempts ? task.attempts.length : 1
                     });
                 }
                 this.series = series;
@@ -311,16 +325,13 @@
 
                 this.selectedTaskRuns.push(taskRunId);
             },
-            stopRealTime() {
-                this.realTime = false
-            },
             taskType(taskRun) {
                 const task = FlowUtils.findTaskById(this.flow, taskRun.taskId);
                 return task?.type;
             }
         },
         unmounted() {
-            this.stopRealTime();
+            clearInterval(this.regularPaintingInterval);
         }
     };
 </script>
@@ -336,7 +347,7 @@
 
             > div {
                 > * {
-                    padding: calc(var(--spacer) / 2);
+                    padding: .5rem;
                     flex: 1;
                 }
 
@@ -365,7 +376,7 @@
                 }
 
                 &::-webkit-scrollbar-thumb {
-                    background: var(--bs-primary);
+                    background: var(--ks-button-background-primary);
                 }
             }
 
@@ -393,8 +404,13 @@
 
                     code {
                         font-size: var(--font-size-xs);
-                        color: var(--el-text-color-regular);
+                        color: var(--ks-content-primary);
                     }
+                }
+
+                .attempt_warn{
+                    color: var(--el-color-warning);
+                    vertical-align: middle;
                 }
 
                 .task-progress {
@@ -422,7 +438,7 @@
 
     // To Separate through Line
     :deep(.vue-recycle-scroller__item-view) {
-        border-bottom: 2px solid var(--bs-border-color);
+        border-bottom: 1px solid var(--ks-border-primary);
         margin-bottom: 10px;
 
         &:last-child {
@@ -437,23 +453,6 @@
     :deep(.log-wrapper) {
         > .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div {
             border-radius: var(--bs-border-radius-lg);
-        }
-
-        .attempt-wrapper {
-            margin-bottom: 0;
-            border: 2px solid var(--bs-border-color);
-
-            tbody:last-child & {
-                border-bottom: 2px solid var(--bs-border-color);
-            }
-
-            .attempt-header {
-                padding: calc(var(--spacer) / 2);
-            }
-
-            .line {
-                padding: calc(var(--spacer) / 2);
-            }
         }
     }
 </style>

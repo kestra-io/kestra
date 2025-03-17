@@ -15,6 +15,7 @@ import java.time.ZonedDateTime;
 @Getter
 @NoArgsConstructor
 @EqualsAndHashCode
+@Schema(title = "LESS_THAN")
 public class LessThan <F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude

@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.kv;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.kv.KVStore;
@@ -17,7 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
-public class DeleteTest {
+class DeleteTest {
     static final String TEST_KV_KEY = "test-key";
 
     @Inject
@@ -38,8 +39,8 @@ public class DeleteTest {
         Delete delete = Delete.builder()
             .id(Delete.class.getSimpleName())
             .type(Delete.class.getName())
-            .namespace("{{ inputs.namespace }}")
-            .key("{{ inputs.key }}")
+            .namespace(new Property<>("{{ inputs.namespace }}"))
+            .key(new Property<>("{{ inputs.key }}"))
             .build();
 
         final KVStore kv = runContext.namespaceKv(namespaceId);
@@ -67,8 +68,8 @@ public class DeleteTest {
         Delete delete = Delete.builder()
             .id(Delete.class.getSimpleName())
             .type(Delete.class.getName())
-            .namespace(namespaceId)
-            .key("my-key")
+            .namespace(new Property<>(namespaceId))
+            .key(new Property<>("my-key"))
             .build();
 
         // When
@@ -76,7 +77,8 @@ public class DeleteTest {
 
         assertThat(run.isDeleted(), is(false));
 
-        NoSuchElementException noSuchElementException = Assertions.assertThrows(NoSuchElementException.class, () -> delete.toBuilder().errorOnMissing(true).build().run(runContext));
+        Delete finalDelete = delete.toBuilder().errorOnMissing(Property.of(true)).build();
+        NoSuchElementException noSuchElementException = Assertions.assertThrows(NoSuchElementException.class, () -> finalDelete.run(runContext));
         assertThat(noSuchElementException.getMessage(), is("No value found for key 'my-key' in namespace '" + namespaceId + "' and `errorOnMissing` is set to true"));
     }
 }

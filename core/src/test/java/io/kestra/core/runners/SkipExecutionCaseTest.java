@@ -3,6 +3,7 @@ package io.kestra.core.runners;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
@@ -62,7 +63,7 @@ public class SkipExecutionCaseTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("{{ inputs.testInputs }}")
+                .format(new Property<>("{{ inputs.testInputs }}"))
                 .build()))
             .build();
     }

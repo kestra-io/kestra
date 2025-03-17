@@ -55,14 +55,14 @@
             height: 100%;
 
             span {
-                padding-left: calc(var(--spacer) * 1.5);
+                padding-left: 1.5rem;
             }
         }
 
         .el-button-group {
             display: flex;
         }
-        
+
         > * {
             padding: 0 8px;
         }

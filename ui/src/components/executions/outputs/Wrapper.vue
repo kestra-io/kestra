@@ -1,12 +1,8 @@
 <template>
-    <el-row class="flex-grow-1 outputs">
-        <el-col
-            :xs="24"
-            :sm="24"
-            :md="multipleSelected || selectedValue ? 16 : 24"
-            :lg="multipleSelected || selectedValue ? 16 : 24"
-            :xl="multipleSelected || selectedValue ? 18 : 24"
-            class="d-flex flex-column"
+    <div class="outputs">
+        <div
+            class="d-flex flex-column left"
+            :style="{width: leftWidth + '%'}"
         >
             <el-cascader-panel
                 ref="cascader"
@@ -54,18 +50,13 @@
                     </div>
                 </template>
             </el-cascader-panel>
-        </el-col>
-        <el-col
-            v-if="multipleSelected || selectedValue"
-            :xs="24"
-            :sm="24"
-            :md="8"
-            :lg="8"
-            :xl="6"
-            class="d-flex wrapper"
-        >
-            <div @mousedown.prevent.stop="dragSidebar" class="slider" />
-            <div class="w-100 overflow-auto p-3">
+        </div>
+        <div class="slider" @mousedown="startDragging" />
+        <div class="right wrapper" :style="{width: 100 - leftWidth + '%'}">
+            <div
+                v-if="multipleSelected || selectedValue"
+                class="w-100 overflow-auto p-3"
+            >
                 <div class="d-flex justify-content-between pe-none fs-5 values">
                     <code class="d-block">
                         {{ selectedNode()?.label ?? "Value" }}
@@ -110,7 +101,6 @@
                                 :input="true"
                                 :full-height="false"
                                 :navbar="false"
-                                :minimap="false"
                                 :model-value="debugExpression"
                                 :lang="isJSON ? 'json' : ''"
                                 class="mt-3"
@@ -130,14 +120,9 @@
                     </p>
                     <div class="my-2">
                         <CopyToClipboard
-                            :text="debugError"
+                            :text="`${debugError}\n\n${debugStackTrace}`"
                             label="Copy Error"
                             class="d-inline-block me-2"
-                        />
-                        <CopyToClipboard
-                            :text="debugStackTrace"
-                            label="Copy Stack Trace"
-                            class="d-inline-block"
                         />
                     </div>
                     <pre class="mb-0" style="overflow: scroll">{{
@@ -155,8 +140,8 @@
                     :execution-id="selectedNode().value"
                 />
             </div>
-        </el-col>
-    </el-row>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -191,7 +176,7 @@
             const rest = path.substring(bracketIndex);
 
             return `["${task}"]${rest}`;
-        }
+        };
 
         let task = selectedTask()?.taskId;
         if (!task) return "";
@@ -201,9 +186,6 @@
 
         return `{{ outputs${formatPath(path)} }}`;
     });
-
-    // TODO: To be implemented properly
-    const dragSidebar = () => {};
 
     const debugError = ref("");
     const debugStackTrace = ref("");
@@ -215,7 +197,7 @@
         const taskRunList = [...execution.value.taskRunList];
         return taskRunList.find((e) => e.taskId === filter);
     };
-    const onDebugExpression = (expression) => {
+    const onDebugExpression = (expression: string) => {
         const taskRun = selectedTask();
 
         if (!taskRun) return;
@@ -236,7 +218,7 @@
                     debugExpression.value = response.data.result;
 
                     // Parsing failed, therefore, copy raw result
-                    if (response.status === 200)
+                    if (response.status === 200 && response.data.result)
                         selected.value.push(response.data.result);
                 }
 
@@ -248,7 +230,7 @@
     import VarValue from "../VarValue.vue";
     import SubFlowLink from "../../flows/SubFlowLink.vue";
 
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {TaskIcon} from "@kestra-io/ui-libs";
 
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
@@ -417,6 +399,8 @@
         const mapped = {};
 
         getTaskIcons(store.state.execution?.flow?.tasks || [], mapped);
+        getTaskIcons(store.state.execution?.flow?.errors || [], mapped);
+        getTaskIcons(store.state.execution?.flow?.finally || [], mapped);
 
         return mapped;
     });
@@ -430,10 +414,45 @@
     const displayVarValue = () =>
         isFile(selectedValue.value) ||
         selectedValue.value !== debugExpression.value;
+
+    const leftWidth = ref(70);
+    const startDragging = (event: MouseEvent) => {
+        const startX = event.clientX;
+        const startWidth = leftWidth.value;
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+            const delta = ((moveEvent.clientX - startX) / window.innerWidth) * 100;
+            leftWidth.value = Math.max(30, Math.min(70, startWidth + delta));
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+    };
 </script>
 
 <style lang="scss">
+.slider {
+    width: 3px;
+    cursor: ew-resize;
+    position: relative;
+    background-color: var(--ks-border-primary);
+    user-select: none;
+
+    &:hover {
+        background-color: var(--ks-border-active);
+    }
+}
+
 .outputs {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+
     .el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child,
     .values {
         pointer-events: none;
@@ -441,11 +460,11 @@
     }
 
     .debug {
-        background: var(--bs-gray-100);
+        background: var(--ks-background-body);
     }
 
     .bordered {
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
     }
 
     .bordered > .el-collapse-item {
@@ -458,17 +477,17 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-button-background-primary);
             border-radius: 0px;
         }
     }
 
     .wrapper {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
     }
 
     .el-cascader-menu {
@@ -476,7 +495,7 @@
         max-width: 300px;
 
         &:last-child {
-            border-right: 1px solid var(--bs-border-color);
+            border-right: 1px solid var(--ks-border-primary);
         }
 
         .el-cascader-menu__wrap {
@@ -487,19 +506,19 @@
             height: 36px;
             line-height: 36px;
             font-size: var(--el-font-size-small);
-            color: var(--el-text-color-regular);
+            color: var(--ks-content-primary);
 
             &[aria-haspopup="false"] {
                 padding-right: 0.5rem !important;
             }
 
             &:hover {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
             }
 
             &.in-active-path,
             &.is-active {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
                 font-weight: normal;
             }
 
@@ -514,23 +533,9 @@
             }
 
             code span.regular {
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
         }
-    }
-}
-
-.slider {
-    flex: 0 0 3px;
-    border-radius: 0.15rem;
-    margin: 0 4px;
-    background-color: var(--bs-border-color);
-    border: none;
-    cursor: col-resize;
-    user-select: none; /* disable selection */
-
-    &:hover {
-        background-color: var(--bs-secondary);
     }
 }
 </style>

@@ -41,7 +41,7 @@
     import TopNavBar from "../layout/TopNavBar.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
     import {apiUrl} from "override/utils/route";
     import {mapState} from "vuex";
 
@@ -78,7 +78,7 @@
                     name: "flows/update", params: {
                         namespace: this.$route.params.namespace,
                         id: this.$route.params.flowId,
-                        tab: "editor",
+                        tab: "edit",
                         tenant: this.$route.params.tenant
                     }
                 })

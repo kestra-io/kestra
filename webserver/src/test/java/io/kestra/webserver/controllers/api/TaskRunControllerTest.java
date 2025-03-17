@@ -28,14 +28,4 @@ class TaskRunControllerTest {
 
         assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
     }
-
-    @Test
-    void maxTaskRunSetting() {
-        HttpClientResponseException e = assertThrows(
-            HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/taskruns/maxTaskRunSetting"))
-        );
-
-        assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
-    }
 }

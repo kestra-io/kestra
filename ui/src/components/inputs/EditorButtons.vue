@@ -1,5 +1,5 @@
 <template>
-    <div v-if="!isNamespace && (isAllowedEdit || canDelete)" class="mx-2">
+    <div v-if="!isNamespace && (isAllowedEdit || canDelete)" class="me-2">
         <el-dropdown>
             <el-button type="default" :disabled="isReadOnly">
                 <DotsVertical title="" />
@@ -7,6 +7,14 @@
             </el-button>
             <template #dropdown>
                 <el-dropdown-menu class="m-dropdown-menu">
+                    <el-dropdown-item
+                        v-if="isAllowedEdit"
+                        :icon="Download"
+                        size="large"
+                        @click="forwardEvent('export')"
+                    >
+                        {{ $t("export_to_file") }}
+                    </el-dropdown-item>
                     <el-dropdown-item
                         v-if="!isCreating && canDelete"
                         :icon="Delete"
@@ -24,33 +32,7 @@
                     >
                         {{ $t("copy") }}
                     </el-dropdown-item>
-                    <el-dropdown-item
-                        v-if="isAllowedEdit"
-                        :icon="Exclamation"
-                        size="large"
-                        @click="forwardEvent('open-new-error', null)"
-                        :disabled="!flowHaveTasks"
-                    >
-                        {{ $t("add global error handler") }}
-                    </el-dropdown-item>
-                    <el-dropdown-item
-                        v-if="isAllowedEdit"
-                        :icon="LightningBolt"
-                        size="large"
-                        @click="forwardEvent('open-new-trigger', null)"
-                        :disabled="!flowHaveTasks"
-                    >
-                        {{ $t("add trigger") }}
-                    </el-dropdown-item>
-                    <el-dropdown-item
-                        v-if="isAllowedEdit"
-                        :icon="FileEdit"
-                        size="large"
-                        @click="forwardEvent('open-edit-metadata', null)"
-                    >
-                        {{ $t("edit metadata") }}
-                    </el-dropdown-item>
-                </el-dropdown-menu>
+                </el-dropdown-menu> 
             </template>
         </el-dropdown>
     </div>
@@ -60,7 +42,7 @@
             @click="forwardEvent('save', $event)"
             v-if="isAllowedEdit"
             :type="buttonType"
-            :disabled="!haveChange && !isCreating"
+            :disabled="hasErrors || !haveChange && !isCreating"
             class="edit-flow-save-button"
         >
             {{ $t("save") }}
@@ -69,12 +51,11 @@
 </template>
 <script setup>
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    
     import Delete from "vue-material-design-icons/Delete.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
-    import Exclamation from "vue-material-design-icons/Exclamation.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import FileEdit from "vue-material-design-icons/FileEdit.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import Download from "vue-material-design-icons/Download.vue";
 </script>
 <script>
     import {defineComponent} from "vue";
@@ -83,10 +64,8 @@
         emits: [
             "delete-flow",
             "copy",
-            "open-new-error",
-            "open-new-trigger",
-            "open-edit-metadata",
-            "save"
+            "save",
+            "export"
         ],
         props: {
             isCreating: {
@@ -127,6 +106,9 @@
             }
         },
         computed: {
+            hasErrors(){
+                return this.errors && this.errors.length > 0;
+            },
             buttonType() {
                 if (this.errors) {
                     return "danger";

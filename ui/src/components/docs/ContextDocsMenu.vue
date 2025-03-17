@@ -129,11 +129,11 @@
     .docsMenu{
         position: absolute;
         z-index: 1000;
-        padding: calc(.5 * var(--spacer)) var(--spacer);
-        left: var(--spacer);
+        padding: .5rem 1rem;
+        left: 1rem;
         top: 100%;
-        right: var(--spacer);
-        background-color: var(--card-bg);
+        right: 1rem;
+        background-color: var(--ks-background-card);
         border-radius: 6px;
     }
 
@@ -144,10 +144,10 @@
 
     .menuOpener{
         flex: 1;
-        margin: var(--spacer);
+        margin: 1rem;
     }
 
     .expandIcon{
-        margin-left: var(--spacer);
+        margin-left: 1rem;
     }
 </style>

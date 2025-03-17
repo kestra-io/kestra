@@ -1,5 +1,7 @@
 package io.kestra.plugin.core.flow;
 
+import static io.kestra.core.utils.NamespaceFilesUtils.loadNamespaceFiles;
+
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -9,6 +11,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.InputFilesInterface;
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.models.tasks.NamespaceFilesInterface;
@@ -20,9 +23,7 @@ import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.utils.Rethrow;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -202,7 +203,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
 
     private Object inputFiles;
 
-    private List<String> outputFiles;
+    private Property<List<String>> outputFiles;
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
@@ -262,14 +263,8 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
             }
         }
 
-        if (this.namespaceFiles != null && !Boolean.FALSE.equals(this.namespaceFiles.getEnabled())) {
-            runContext.storage()
-                .namespace()
-                .findAllFilesMatching(this.namespaceFiles.getInclude(), this.namespaceFiles.getExclude())
-                .forEach(Rethrow.throwConsumer(namespaceFile -> {
-                    InputStream content = runContext.storage().getFile(namespaceFile.uri());
-                    runContext.workingDir().putFile(Path.of(namespaceFile.path()), content);
-                }));
+        if (this.namespaceFiles != null && !Boolean.FALSE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
+            loadNamespaceFiles(runContext, this.namespaceFiles);
         }
 
         if (this.inputFiles != null) {
@@ -280,7 +275,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     public void postExecuteTasks(RunContext runContext, TaskRun taskRun) throws Exception {
         if (this.outputFiles != null) {
             try {
-                Map<String, URI> outputFilesURIs = FilesService.outputFiles(runContext, this.outputFiles);
+                Map<String, URI> outputFilesURIs = FilesService.outputFiles(runContext, runContext.render(this.outputFiles).asList(String.class));
                 if (!outputFilesURIs.isEmpty()) {
                     final ByteArrayOutputStream os = new ByteArrayOutputStream();
                     try (os) {

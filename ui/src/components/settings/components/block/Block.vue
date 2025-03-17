@@ -24,7 +24,7 @@
 </script>
 
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables.scss";
+@import "@kestra-io/ui-libs/src/scss/variables";
 
 section {
     margin: calc($spacer * 2);

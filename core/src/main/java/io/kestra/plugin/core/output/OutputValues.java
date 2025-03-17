@@ -2,6 +2,7 @@ package io.kestra.plugin.core.output;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -60,13 +61,13 @@ public class OutputValues extends Task implements RunnableTask<OutputValues.Outp
         title = "The templated strings to render.",
         description = "These values can be strings, numbers, arrays, or objects. Templated strings (enclosed in {{ }}) will be rendered using the current context."
     )
-    private HashMap<String, Object> values;
+    private Property<Map<String, Object>> values;
 
 
     @Override
     public OutputValues.Output run(RunContext runContext) throws Exception {
-        return OutputValues.Output.builder()
-            .values(runContext.render(values))
+        return Output.builder()
+            .values(runContext.render(values).asMap(String.class, Object.class))
             .build();
     }
 

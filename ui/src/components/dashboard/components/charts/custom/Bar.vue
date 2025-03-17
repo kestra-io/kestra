@@ -18,13 +18,14 @@
     import {Bar} from "vue-chartjs";
 
     import {customBarLegend} from "../legend.js";
+    import {useTheme} from "../../../../../utils/utils.js";
     import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
     import moment from "moment";
 
     import {useRoute} from "vue-router";
-    import Utils from "@kestra-io/ui-libs/src/utils/Utils";
+    import {Utils} from "@kestra-io/ui-libs";
 
     const store = useStore();
 
@@ -36,6 +37,7 @@
     const props = defineProps({
         identifier: {type: Number, required: true},
         chart: {type: Object, required: true},
+        isPreview: {type: Boolean, required: false, default: false}
     });
 
     const {data, chartOptions} = props.chart;
@@ -50,6 +52,8 @@
     };
 
     const aggregator = Object.entries(data.columns).filter(([_, v]) => v.agg);
+
+    const theme = useTheme();
 
     const options = computed(() => {
         return defaultConfig({
@@ -101,7 +105,7 @@
                     }
                 },
             },
-        });
+        }, theme.value);
     });
 
     function isDurationAgg() {
@@ -141,7 +145,7 @@
             return Object.entries(grouped[xLabel]).map(subSectionsEntry => ({
                 label: subSectionsEntry[0],
                 data: xLabels.map(label => xLabel === label ? subSectionsEntry[1] : 0),
-                backgroundColor: getConsistentHEXColor(subSectionsEntry[0]),
+                backgroundColor: getConsistentHEXColor(theme.value, subSectionsEntry[0]),
                 tooltip: `(${subSectionsEntry[0]}): ${aggregator[0][0]} = ${(isDurationAgg() ? Utils.humanDuration(subSectionsEntry[1]) : subSectionsEntry[1])}`,
             }));
         });
@@ -151,25 +155,35 @@
 
     const generated = ref();
     const generate = async () => {
-        const params = {
-            id: dashboard.value.id,
-            chartId: props.chart.id,
-            startDate: route.query.timeRange
-                ? moment()
-                    .subtract(
-                        moment.duration(route.query.timeRange).as("milliseconds"),
-                    )
-                    .toISOString(true)
-                : route.query.startDate ||
-                    moment()
-                        .subtract(moment.duration("PT720H").as("milliseconds"))
-                        .toISOString(true),
-            endDate: route.query.timeRange
-                ? moment().toISOString(true)
-                : route.query.endDate || moment().toISOString(true),
-        };
-
-        generated.value = await store.dispatch("dashboard/generate", params);
+        if (!props.isPreview) {
+            const params = {
+                id: dashboard.value.id,
+                chartId: props.chart.id,
+                startDate: route.query.timeRange
+                    ? moment()
+                        .subtract(
+                            moment.duration(route.query.timeRange).as("milliseconds"),
+                        )
+                        .toISOString(true)
+                    : route.query.startDate ||
+                        moment()
+                            .subtract(moment.duration("PT720H").as("milliseconds"))
+                            .toISOString(true),
+                endDate: route.query.timeRange
+                    ? moment().toISOString(true)
+                    : route.query.endDate || moment().toISOString(true),
+            };
+            if (route.query.namespace) {
+                params.namespace = route.query.namespace;
+            }
+            if (route.query.labels) {
+                params.labels = Object.fromEntries(route.query.labels.map(l => l.split(":")));
+            }
+            generated.value = await store.dispatch("dashboard/generate", params);
+        }
+        else {
+            generated.value = await store.dispatch("dashboard/chartPreview", props.chart.content)
+        }
     };
 
     watch(route, async () => await generate());

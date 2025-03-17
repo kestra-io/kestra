@@ -13,12 +13,12 @@ public class RandomIntFunction implements Function {
   @Override
   public Object execute(
       Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
-    Integer lower = getArgument(args, "lower", self, lineNumber);
-    Integer upper = getArgument(args, "upper", self, lineNumber);
+    Long lower = getArgument(args, "lower", self, lineNumber);
+    Long upper = getArgument(args, "upper", self, lineNumber);
     if (upper < lower) {
         throw new PebbleException(
             null,
-            "In 'GenerateRandomNumber' upper is less than lower",
+            "In 'randomIn()' upper is less than lower",
             lineNumber,
             self.getName());
     }
@@ -30,23 +30,23 @@ public class RandomIntFunction implements Function {
     return List.of("lower", "upper");
   }
 
-  private Integer getArgument(
+  private Long getArgument(
       Map<String, Object> args, String arg, PebbleTemplate self, int lineNumber) {
     if (!args.containsKey(arg)) {
       throw new PebbleException(
           null,
-          "The 'GenerateRandomNumber' function expects an argument " + arg,
+          "The 'randomIn()' function expects an argument " + arg,
           lineNumber,
           self.getName());
     }
 
-    if (!(args.get(arg) instanceof Integer)) {
+    if (!(args.get(arg) instanceof Long)) {
       throw new PebbleException(
           null,
-          "The 'GenerateRandomNumber' function expects an argument " + arg + "with type Integer.",
+          "The 'randomIn()' function expects an argument " + arg + " of type Long.",
           lineNumber,
           self.getName());
     }
-    return (Integer) args.get(arg);
+    return (Long) args.get(arg);
   }
 }

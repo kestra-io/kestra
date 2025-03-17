@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.kv;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.kv.KVStore;
@@ -16,7 +17,7 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.empty;
 
 @KestraTest
-public class GetKeysTest {
+class GetKeysTest {
     static final String TEST_KEY_PREFIX_TEST = "test";
 
     @Inject
@@ -61,7 +62,7 @@ public class GetKeysTest {
         GetKeys getKeys = GetKeys.builder()
             .id(GetKeys.class.getSimpleName())
             .type(GetKeys.class.getName())
-            .prefix("{{ inputs.prefix }}")
+            .prefix(new Property<>("{{ inputs.prefix }}"))
             .build();
 
         final KVStore kv = runContext.namespaceKv(namespace);
@@ -90,7 +91,7 @@ public class GetKeysTest {
         GetKeys getKeys = GetKeys.builder()
             .id(GetKeys.class.getSimpleName())
             .type(GetKeys.class.getName())
-            .prefix("{{ inputs.prefix }}")
+            .prefix(new Property<>("{{ inputs.prefix }}"))
             .build();
 
         // When

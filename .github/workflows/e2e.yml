@@ -42,19 +42,13 @@ jobs:
         with:
           path: kestra
 
-      # Checkout GitHub Actions
-      - uses: actions/checkout@v4
-        with:
-          repository: kestra-io/actions
-          path: actions
-          ref: main
-
       # Setup build
-      - uses: ./actions/.github/actions/setup-build
+      - uses: kestra-io/actions/.github/actions/setup-build@main
         id: build
         with:
           java-enabled: true
-          caches-enabled: true
+          node-enabled: true
+          python-enabled: true
 
       # Get Docker Image
       - name: Download Kestra Image
@@ -158,7 +152,7 @@ jobs:
           storageType: gcs
           resultsGlob: build/allure-results
           bucket: internal-kestra-host
-          baseUrl: "https://internal.kestra.io"
+          baseUrl: "https://internal.dev.kestra.io"
           prefix: ${{ format('{0}/{1}/{2}', github.repository, env.GITHUB_HEAD_REF_SLUG != '' && env.GITHUB_HEAD_REF_SLUG || github.ref_name, 'allure/playwright') }}
           copyLatest: true
           ignoreMissingResults: true

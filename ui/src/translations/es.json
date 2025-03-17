@@ -1034,6 +1034,7 @@
             "editor_type": "Tipo de Editor Predeterminado",
             "execute_default_tab": "Pestaña de Ejecución Predeterminada",
             "execute_flow": "Ejecutar el Flow",
+            "flow_default_tab": "Pestaña de Flow Predeterminada",
             "language": "Idioma",
             "log_display": "Visualización de Log Predeterminada",
             "log_level": "Nivel de Log Predeterminado"

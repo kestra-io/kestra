@@ -1034,6 +1034,7 @@
             "editor_type": "डिफ़ॉल्ट एडिटर प्रकार",
             "execute_default_tab": "डिफ़ॉल्ट Execution टैब",
             "execute_flow": "Flow निष्पादित करें",
+            "flow_default_tab": "डिफ़ॉल्ट Flow टैब",
             "language": "भाषा",
             "log_display": "Log प्रदर्शन",
             "log_level": "Log स्तर"

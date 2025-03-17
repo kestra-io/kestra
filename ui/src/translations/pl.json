@@ -1034,6 +1034,7 @@
             "editor_type": "Domyślny typ edytora",
             "execute_default_tab": "Domyślna karta Execution",
             "execute_flow": "Wykonaj Flow",
+            "flow_default_tab": "Domyślna karta Flow",
             "language": "Język",
             "log_display": "Domyślne Wyświetlanie Log",
             "log_level": "Domyślna Poziom Logs"

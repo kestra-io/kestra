@@ -1034,6 +1034,7 @@
             "editor_type": "默认编辑器类型",
             "execute_default_tab": "默认执行选项卡",
             "execute_flow": "执行流程",
+            "flow_default_tab": "默认 Flow 标签页",
             "language": "语言",
             "log_display": "默认日志显示",
             "log_level": "默认日志级别"

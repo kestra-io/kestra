@@ -26,7 +26,7 @@
                 :navbar="false"
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-test-id="`input-form-${input.id}`"
-                v-model="inputsValues[input.id]"
+                v-model="selTrigger"
                 @update:model-value="onChange(input)"
                 :allow-create="input.allowCustomValue"
                 filterable
@@ -212,6 +212,7 @@
     import YamlUtils from "../../utils/yamlUtils.js";
     import DurationPicker from "./DurationPicker.vue";
     import {inputsToFormDate} from "../../utils/submitTask"
+    import {toRaw} from "vue";
 
     export default {
         computed: {
@@ -250,6 +251,10 @@
                 type: Object,
                 default: undefined,
             },
+            selectedTrigger: {
+                type: Object,
+                default: undefined,
+            }
         },
         data() {
             return {
@@ -264,6 +269,7 @@
                 inputsValidation: [],
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
+                selTrigger: toRaw(this.selectedTrigger.inputs.taxi)
             };
         },
         emits: ["update:modelValue", "confirm", "validation"],

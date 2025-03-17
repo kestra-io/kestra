@@ -2,12 +2,14 @@
     <Timeline :histories="execution.state.histories" />
     <div v-if="execution" class="execution-overview">
         <div v-if="isFailed()">
-            <el-alert type="error" :closable="false" class="mb-4 main-error">
+            <el-alert type="error" :closable="false" show-icon class="mb-4 main-error">
                 <template #title>
                     <div @click="isExpanded = !isExpanded">
-                        <alert class="main-icon" />
-                        {{ $t('execution failed header', errorLast ? 0 : 1, {message: errorLast?.message}) }}
-                        <span v-if="errorLast" v-html="$t('execution failed message', {message: errorLast?.message})" />
+                        <Markdown
+                            v-if="errorLast && errorLast.message"
+                            :source="errorMessage"
+                            :html="false"
+                        />
                         <span class="toggle-icon" v-if="errorLogs">
                             <chevron-up v-if="isExpanded" />
                             <chevron-down v-else />
@@ -194,6 +196,7 @@
     import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
     import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import Markdown from "../../components/layout/Markdown.vue";
 
     export default {
         components: {
@@ -216,7 +219,8 @@
             ChevronDown,
             ChevronUp,
             ChevronLeft,
-            ChevronRight
+            ChevronRight,
+            Markdown
         },
         emits: ["follow"],
         methods: {
@@ -394,6 +398,9 @@
         },
         computed: {
             ...mapState("execution", ["flow", "execution"]),
+            errorMessage() {
+                return `${this.$t("execution_failed")}: ${this.errorLast?.message}`;
+            },
             items() {
                 if (!this.execution) {
                     return []
@@ -543,7 +550,11 @@
 
 .el-alert.main-error {
     background-color: var(--ks-background-error) !important;
-    padding: 0.5rem;
+    padding: 1rem;
+
+    .el-alert__icon.is-big {
+        margin-right: 1rem;
+    }
 
     .el-button{
         color: var(--ks-log-content-error);

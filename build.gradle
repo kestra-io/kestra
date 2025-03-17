@@ -121,7 +121,6 @@ allprojects {
             micronaut "io.micronaut:micronaut-management"
             micronaut "io.micrometer:micrometer-core"
             micronaut "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
-            micronaut "io.micronaut.micrometer:micronaut-micrometer-registry-otlp"
             micronaut "io.micronaut:micronaut-http-client"
             micronaut "io.micronaut.reactor:micronaut-reactor-http-client"
             micronaut "io.micronaut.tracing:micronaut-tracing-opentelemetry-http"

@@ -147,6 +147,7 @@
     "copy": "Copia",
     "copy logs": "Copia logs",
     "copy url": "Copia URL",
+    "copy_to_clipboard": "Copia negli appunti",
     "create": "Crea",
     "create first task": "Crea il tuo primo task",
     "create_custom_dashboard": "Crea nuovo dashboard",
@@ -770,6 +771,7 @@
       "adding": "+ Aggiungi un {what}",
       "adding_default": "+ Aggiungi un nuovo value",
       "creation": {
+        "after execution": "Aggiungi un blocco after execution",
         "error handlers": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
         "select": "Seleziona una {section}",
@@ -800,6 +802,7 @@
         "yaml": "Editor YAML"
       },
       "save": {
+        "after execution": "Salva task",
         "error handlers": "Salva gestore errori",
         "finally": "Salva task",
         "input": "Salva input",
@@ -807,6 +810,7 @@
         "triggers": "Salva trigger"
       },
       "sections": {
+        "after_execution": "Dopo l'Esecuzione",
         "error_handlers": "Gestori degli Errori",
         "finally": "Infine",
         "general": "Proprietà generali",

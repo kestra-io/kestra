@@ -147,6 +147,7 @@
     "copy": "Copier",
     "copy logs": "Copier les logs",
     "copy url": "Copier l'URL",
+    "copy_to_clipboard": "Copier dans le presse-papiers",
     "create": "Créer",
     "create first task": "Créer votre première tâche",
     "create_custom_dashboard": "Créer un nouveau tableau de bord",
@@ -770,6 +771,7 @@
       "adding": "+ Ajouter un {what}",
       "adding_default": "+ Ajouter une nouvelle valeur",
       "creation": {
+        "after execution": "Ajouter un bloc après l'exécution",
         "error handlers": "Ajouter un gestionnaire d'erreurs",
         "finally": "Ajouter un bloc finally",
         "select": "Sélectionnez une {section}",
@@ -800,6 +802,7 @@
         "yaml": "Éditeur YAML"
       },
       "save": {
+        "after execution": "Enregistrer la task",
         "error handlers": "Enregistrer le gestionnaire d'erreurs",
         "finally": "Enregistrer la task",
         "input": "Enregistrer l'input",
@@ -807,6 +810,7 @@
         "triggers": "Enregistrer le trigger"
       },
       "sections": {
+        "after_execution": "Après l'Exécution",
         "error_handlers": "Gestionnaires d'erreurs",
         "finally": "Enfin",
         "general": "Propriétés générales",

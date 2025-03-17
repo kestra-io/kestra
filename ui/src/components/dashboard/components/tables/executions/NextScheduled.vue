@@ -1,17 +1,44 @@
 <template>
-    <div class="p-4 h-100">
+    <div class="h-100 p-4">
         <div class="d-flex justify-content-between align-items-center">
             <span class="fs-6 fw-bold">
                 {{ t("dashboard.next_scheduled_executions") }}
             </span>
-            <RouterLink :to="{name: 'admin/triggers'}">
+            <RouterLink
+                :to="{name: 'admin/triggers'}"
+            >
                 <el-button type="primary" size="small" text>
                     {{ t("dashboard.see_all") }}
                 </el-button>
             </RouterLink>
         </div>
 
-        <div class="pt-4" v-if="executions.results.length">
+        <div class="pt-4" v-if="loading">
+            <el-table :data="skeletonData" class="scheduled" :height="240">
+                <el-table-column :label="$t('dashboard.id')" width="100">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 80px" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('namespace')">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 100%" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('flow')">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 100%" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('dashboard.next_execution_date')" width="120">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 100px" />
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+
+        <div class="pt-4" v-else-if="executions.results.length">
             <el-table
                 :data="executions.results"
                 class="nextscheduled"
@@ -107,8 +134,7 @@
                 </el-table-column>
                 <el-table-column :label="$t('dashboard.next_execution_date')">
                     <template #default="scope">
-                        <date-ago v-if="!scope.row.disabled" :date="scope.row.triggerContext.nextExecutionDate" />
-                        <span v-else>-</span>
+                        <date-ago :date="scope.row.triggerContext.nextExecutionDate" />
                     </template>
                 </el-table-column>
             </el-table>
@@ -150,6 +176,10 @@
             required: false,
             default: null,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
 
     const store = useStore();
@@ -157,6 +187,8 @@
 
     const executions = ref({results: [], total: 0});
     const currentPage = ref(1);
+
+    const skeletonData = Array(5).fill({});
 
     const loadExecutions = (page = 1) => {
         store
@@ -214,5 +246,9 @@ code {
 
 .next-toggle {
     padding: 8px 0 0 0 !important;
+}
+
+:deep(.el-skeleton-item) {
+    background: var(--ks-background-skeleton);
 }
 </style>

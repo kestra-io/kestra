@@ -157,6 +157,8 @@
     </div>
 </template>
 <script setup>
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
     import ValidationErrors from "../../flows/ValidationError.vue"
     import BookOpenVariant from "vue-material-design-icons/BookOpenVariant.vue";
@@ -170,7 +172,6 @@
 </script>
 <script>
     import Editor from "../../inputs/Editor.vue";
-    import YamlUtils from "../../../utils/yamlUtils.js";
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
@@ -184,9 +185,6 @@
         computed: {
             ContentSave() {
                 return ContentSave
-            },
-            YamlUtils() {
-                return YamlUtils
             },
             saveButtonType() {
                 if (this.errors) {
@@ -220,7 +218,7 @@
         methods: {
             async updatePluginDocumentation(event) {
                 if (this.currentView === this.views.DOC) {
-                    const type = YamlUtils.getTaskType(event.model.getValue(), event.position, this.plugins)
+                    const type = YAML_UTILS.getTaskType(event.model.getValue(), event.position, this.plugins)
                     if (type) {
                         this.$store.dispatch("plugin/load", {cls: type})
                             .then(plugin => {
@@ -230,7 +228,7 @@
                         this.$store.commit("plugin/setEditorPlugin", undefined);
                     }
                 } else if (this.currentView === this.views.CHART) {
-                    const chart = YamlUtils.getChartAtPosition(event.model.getValue(), event.position)
+                    const chart = YAML_UTILS.getChartAtPosition(event.model.getValue(), event.position)
                     if (chart && this.selectedChart?.id !== chart.id) {
                         const result = await this.loadChart(chart);
                         this.selectedChart = result.data;
@@ -277,7 +275,7 @@
             },
             async validateAndLoadAllCharts() {
                 this.charts = [];
-                const allCharts = YamlUtils.getAllCharts(this.source);
+                const allCharts = YAML_UTILS.getAllCharts(this.source);
                 for (const chart of allCharts) {
                     const loadedChart = await this.loadChart(chart);
                     this.charts.push(loadedChart);

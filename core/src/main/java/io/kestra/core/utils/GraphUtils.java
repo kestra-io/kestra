@@ -43,6 +43,7 @@ public class GraphUtils {
             flow.getTasks(),
             flow.getErrors(),
             flow.getFinally(),
+            flow.getAfterExecution(),
             null,
             execution
         );
@@ -80,6 +81,7 @@ public class GraphUtils {
         });
 
         removeFinally(triggerCluster);
+        removeAfterExecution(triggerCluster);
 
         return triggerCluster;
     }
@@ -172,7 +174,19 @@ public class GraphUtils {
         TaskRun parent,
         Execution execution
     ) throws IllegalVariableEvaluationException {
-        iterate(graph, tasks, errors, _finally, parent, execution, RelationType.SEQUENTIAL);
+        iterate(graph, tasks, errors, _finally, null, parent, execution, RelationType.SEQUENTIAL);
+    }
+
+    public static void sequential(
+        GraphCluster graph,
+        List<Task> tasks,
+        List<Task> errors,
+        List<Task> _finally,
+        List<Task> afterExecution,
+        TaskRun parent,
+        Execution execution
+    ) throws IllegalVariableEvaluationException {
+        iterate(graph, tasks, errors, _finally, afterExecution, parent, execution, RelationType.SEQUENTIAL);
     }
 
     public static void parallel(
@@ -198,7 +212,7 @@ public class GraphUtils {
             fillGraph(graph, entry.getValue(), RelationType.SEQUENTIAL, parent, execution, entry.getKey());
         }
 
-        fillAlternativePaths(graph, errors, _finally, parent, execution, null);
+        fillAlternativePaths(graph, errors, _finally, null, parent, execution, null);
     }
 
     public static void ifElse(
@@ -215,7 +229,7 @@ public class GraphUtils {
             fillGraph(graph, _else, RelationType.SEQUENTIAL, parent, execution, "else");
         }
 
-        fillAlternativePaths(graph, errors, _finally, parent, execution, null);
+        fillAlternativePaths(graph, errors, _finally, null, parent, execution, null);
     }
 
     public static void dag(
@@ -228,7 +242,7 @@ public class GraphUtils {
     ) throws IllegalVariableEvaluationException {
         fillGraphDag(graph, tasks, parent, execution);
 
-        fillAlternativePaths(graph, errors, _finally, parent, execution, null);
+        fillAlternativePaths(graph, errors, _finally, null, parent, execution, null);
     }
 
     private static void iterate(
@@ -240,47 +254,85 @@ public class GraphUtils {
         Execution execution,
         RelationType relationType
     ) throws IllegalVariableEvaluationException {
+        iterate(graph, tasks, errors, _finally, null, parent, execution, relationType);
+    }
+
+    private static void iterate(
+        GraphCluster graph,
+        List<Task> tasks,
+        List<Task> errors,
+        List<Task> _finally,
+        List<Task> afterExecution,
+        TaskRun parent,
+        Execution execution,
+        RelationType relationType
+    ) throws IllegalVariableEvaluationException {
         fillGraph(graph, tasks, relationType, parent, execution, null);
 
-        fillAlternativePaths(graph, errors, _finally, parent, execution, null);
+        fillAlternativePaths(graph, errors, _finally, afterExecution, parent, execution, null);
     }
 
     private static void fillAlternativePaths(
         GraphCluster graph,
         List<Task> errors,
         List<Task> _finally,
+        List<Task> afterExecution,
         TaskRun parent,
         Execution execution,
         String value
     ) throws IllegalVariableEvaluationException {
         // error cases
-        if (errors != null && !errors.isEmpty()) {
+        if (!ListUtils.isEmpty(errors)) {
             fillGraph(graph, errors, RelationType.ERROR, parent, execution, value);
         }
 
         // finally cases
-        if (_finally != null && !_finally.isEmpty()) {
+        if (!ListUtils.isEmpty(_finally)) {
             fillGraph(graph, _finally, RelationType.FINALLY, parent, execution, value);
         } else {
             removeFinally(graph);
         }
+
+        // afterExecution cases
+        if (!ListUtils.isEmpty(afterExecution)) {
+            fillGraph(graph, afterExecution, RelationType.AFTER_EXECUTION, parent, execution, value);
+        } else {
+            removeAfterExecution(graph);
+        }
     }
 
     private static void removeFinally(GraphCluster graph) {
-        // we don't have finally case, so we remove the node, and link all previous link to finally to the end
+        // we don't have finally case, so we remove the node, and link all previous links to finally to the end
         graph.getGraph().edges()
             .forEach(edge -> {
-                if (edge.getSource() instanceof GraphClusterFinally && edge.getTarget() instanceof GraphClusterEnd) {
+                if (edge.getSource() instanceof GraphClusterFinally && edge.getTarget() instanceof GraphClusterAfterExecution) {
                     graph.getGraph().edges().remove(edge);
                 }
 
                 if (edge.getTarget() instanceof GraphClusterFinally) {
                     graph.getGraph().edges().remove(edge);
-                    graph.addEdge(edge.getSource(), graph.getEnd(), edge.getValue());
+                    graph.addEdge(edge.getSource(), graph.getAfterExecution(), edge.getValue());
                 }
             });
 
         graph.getGraph().removeNode(graph.getFinally());
+    }
+
+    private static void removeAfterExecution(GraphCluster graph) {
+        // we don't have afterExecution, so we remove the node, and link all previous links to afterExecution to the end
+        graph.getGraph().edges()
+            .forEach(edge -> {
+                if (edge.getSource() instanceof GraphClusterAfterExecution && edge.getTarget() instanceof GraphClusterEnd) {
+                    graph.getGraph().edges().remove(edge);
+                }
+
+                if (edge.getTarget() instanceof GraphClusterAfterExecution) {
+                    graph.getGraph().edges().remove(edge);
+                    graph.addEdge(edge.getSource(), graph.getEnd(), edge.getValue());
+                }
+            });
+
+        graph.getGraph().removeNode(graph.getAfterExecution());
     }
 
     private static void fillGraph(
@@ -298,7 +350,12 @@ public class GraphUtils {
         if (relationType == RelationType.FINALLY) {
             previous = graph.getFinally();
 
-            graph.getGraph().removeEdge(graph.getFinally(), graph.getEnd());
+            graph.getGraph().removeEdge(graph.getFinally(), graph.getAfterExecution());
+        }
+        if (relationType == RelationType.AFTER_EXECUTION) {
+            previous = graph.getAfterExecution();
+
+            graph.getGraph().removeEdge(graph.getAfterExecution(), graph.getEnd());
         }
 
         boolean isFirst = true;
@@ -337,7 +394,7 @@ public class GraphUtils {
                 // add the node
                 graph.addNode(currentGraph);
 
-                if (relationType == RelationType.ERROR || relationType == RelationType.FINALLY) {
+                if (relationType == RelationType.ERROR || relationType == RelationType.FINALLY || relationType == RelationType.AFTER_EXECUTION) {
                     currentGraph.updateWithChildren(AbstractGraph.BranchType.valueOf(relationType.name()));
                 }
 
@@ -360,18 +417,19 @@ public class GraphUtils {
                     previous = currentGraph;
                 }
 
-                // link to end task
+                // link to next edge
+                AbstractGraph nextEdge = relationType ==  RelationType.AFTER_EXECUTION ? graph.getEnd() : (relationType == RelationType.FINALLY ? graph.getAfterExecution() : graph.getFinally());
                 if (GraphUtils.isAllLinkToEnd(relationType)) {
                     if (currentGraph instanceof GraphCluster && ((GraphCluster) currentGraph).getEnd() != null) {
                         graph.addEdge(
                             ((GraphCluster) currentGraph).getEnd(),
-                            relationType == RelationType.FINALLY ? graph.getEnd() : graph.getFinally(),
+                            nextEdge,
                             new Relation()
                         );
                     } else {
                         graph.addEdge(
                             currentGraph,
-                            relationType == RelationType.FINALLY ? graph.getEnd() : graph.getFinally(),
+                            nextEdge,
                             new Relation()
                         );
                     }
@@ -382,7 +440,7 @@ public class GraphUtils {
                 if (!iterator.hasNext() && !isAllLinkToEnd(relationType)) {
                     graph.addEdge(
                         currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getEnd() : currentGraph,
-                        relationType == RelationType.FINALLY ? graph.getEnd() : graph.getFinally(),
+                        nextEdge,
                         new Relation()
                     );
                 }

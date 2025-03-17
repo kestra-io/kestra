@@ -52,6 +52,7 @@
     "Add flow": "Add flow",
     "add": "Add",
     "copy": "Copy",
+    "copy_to_clipboard": "Copy to clipboard",
     "Per page": "per page",
     "new": "New",
     "edit": "Edit",
@@ -613,6 +614,9 @@
     "advanced configuration": "Other properties",
     "all executions": "All executions",
     "trigger execution id": "Trigger Execution Id",
+    "execution_status": "Execution is: ",
+    "no_tasks_running": "No tasks are running yet.",
+    "execution_starts_progress": "Once the execution starts, you'll see progress updates here.",
     "triggers_state": {
       "state": "State",
       "options": {
@@ -1134,7 +1138,8 @@
         "tasks": "Tasks",
         "triggers": "Triggers",
         "error_handlers": "Error Handlers",
-        "finally": "Finally"
+        "finally": "Finally",
+        "after_execution": "After Execution"
       },
       "fields": {
         "main": {
@@ -1158,13 +1163,15 @@
         "tasks": "Add a task",
         "triggers": "Add a trigger",
         "error handlers": "Add an error handler",
-        "finally": "Add a finally block"
+        "finally": "Add a finally block",
+        "after execution": "Add an after execution block"
       },
       "save": {
         "tasks": "Save task",
         "triggers": "Save trigger",
         "error handlers": "Save error handler",
         "finally": "Save task",
+        "after execution": "Save task",
         "input": "Save input"
       }
     },

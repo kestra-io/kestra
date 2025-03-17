@@ -18,7 +18,6 @@ import io.micronaut.core.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -144,18 +143,10 @@ public class ConditionService {
             });
     }
 
-    public boolean isTerminatedWithListeners(Flow flow, Execution execution) {
-        if (!execution.getState().isTerminated()) {
-            return false;
-        }
-
-        return execution.isTerminated(this.findValidListeners(flow, execution));
-    }
-
     @SuppressWarnings("deprecation")
     public List<ResolvedTask> findValidListeners(Flow flow, Execution execution) {
         if (flow == null || flow.getListeners() == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
         ConditionContext conditionContext = this.conditionContext(

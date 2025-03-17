@@ -16,6 +16,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.flow.Sleep;
 import io.micronaut.context.ApplicationContext;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -99,6 +100,17 @@ abstract public class AbstractSchedulerTest {
 
         Flow flow = builder.build();
         return FlowWithSource.of(flow, flow.generateSource());
+    }
+
+    protected static FlowWithSource createLongRunningFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
+        return createFlow(triggers, list)
+            .toBuilder()
+            .tasks(
+                Collections.singletonList(
+                    Sleep.builder().id("sleep").type(Sleep.class.getName()).duration(Duration.ofSeconds(125)).build()
+                )
+            )
+            .build();
     }
 
     protected static int COUNTER = 0;

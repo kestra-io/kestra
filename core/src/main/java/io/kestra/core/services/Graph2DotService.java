@@ -66,7 +66,7 @@ public class Graph2DotService {
     private static String label(AbstractGraph node) {
         String shape;
 
-        if (node instanceof GraphClusterRoot || node instanceof GraphClusterFinally || node instanceof GraphClusterEnd) {
+        if (node instanceof GraphClusterRoot || node instanceof GraphClusterFinally || node instanceof GraphClusterAfterExecution || node instanceof GraphClusterEnd) {
             shape = "point";
         } else {
             shape = "box";

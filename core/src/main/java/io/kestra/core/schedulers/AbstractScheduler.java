@@ -16,6 +16,7 @@ import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.*;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -67,7 +68,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     protected final ApplicationContext applicationContext;
     protected final QueueInterface<Execution> executionQueue;
     protected final QueueInterface<Trigger> triggerQueue;
-    private final QueueInterface<WorkerJob> workerTaskQueue;
+    private final QueueInterface<WorkerJob> workerJobQueue;
     private final WorkerTriggerResultQueueInterface workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
     @SuppressWarnings("rawtypes")
@@ -81,6 +82,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private final WorkerGroupService workerGroupService;
     private final LogService logService;
     protected SchedulerExecutionStateInterface executionState;
+    private final WorkerGroupExecutorInterface workerGroupExecutorInterface;
 
     // must be volatile as it's updated by the flow listener thread and read by the scheduleExecutor thread
     private volatile Boolean isReady = false;
@@ -114,7 +116,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.applicationContext = applicationContext;
         this.executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
-        this.workerTaskQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED));
+        this.workerJobQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED));
         this.executionKilledQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
         this.workerTriggerResultQueue = applicationContext.getBean(WorkerTriggerResultQueueInterface.class);
         this.clusterEventQueue = applicationContext.findBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.CLUSTER_EVENT_NAMED));
@@ -128,6 +130,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.logService = applicationContext.getBean(LogService.class);
         this.serviceStateEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.executionEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
+        this.workerGroupExecutorInterface = applicationContext.getBean(WorkerGroupExecutorInterface.class);
         setState(ServiceState.CREATED);
     }
 
@@ -269,6 +272,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
         flows
             .stream()
+            .map(flow -> pluginDefaultService.injectDefaults(flow, log))
+            .filter(Objects::nonNull)
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .flatMap(flow -> flow.getTriggers().stream().filter(trigger -> trigger instanceof WorkerTriggerInterface).map(trigger -> new FlowAndTrigger(flow, trigger)))
             .forEach(flowAndTrigger -> {
@@ -352,7 +357,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             case MAINTENANCE_ENTER -> {
                 this.executionQueue.pause();
                 this.triggerQueue.pause();
-                this.workerTaskQueue.pause();
+                this.workerJobQueue.pause();
                 this.workerTriggerResultQueue.pause();
                 this.executionKilledQueue.pause();
                 this.pauseAdditionalQueues();
@@ -363,7 +368,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             case MAINTENANCE_EXIT -> {
                 this.executionQueue.resume();
                 this.triggerQueue.resume();
-                this.workerTaskQueue.resume();
+                this.workerJobQueue.resume();
                 this.workerTriggerResultQueue.resume();
                 this.executionKilledQueue.resume();
                 this.resumeAdditionalQueues();
@@ -421,6 +426,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
         return flows
             .stream()
+            .map(flow -> pluginDefaultService.injectDefaults(flow, log))
+            .filter(Objects::nonNull)
             .filter(flow -> flowToKeep.contains(flow.getId()))
             .filter(flow -> flow.getTriggers() != null && !flow.getTriggers().isEmpty())
             .filter(flow -> !flow.isDisabled() && !(flow instanceof FlowWithException))
@@ -449,7 +456,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             logError(conditionContext, flow, abstractTrigger, e);
                             return null;
                         }
-                        this.triggerState.save(triggerContext, scheduleContext);
+                        this.triggerState.save(triggerContext, scheduleContext, "/kestra/services/scheduler/compute-schedulable/save/lastTrigger-nextDate-null");
                     } else {
                         triggerContext = lastTrigger;
                     }
@@ -576,7 +583,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                                 Trigger triggerRunning = Trigger.of(f.getTriggerContext(), now);
                                 var flowWithTrigger = f.toBuilder().triggerContext(triggerRunning).build();
                                 try {
-                                    this.triggerState.save(triggerRunning, scheduleContext);
+                                    this.triggerState.save(triggerRunning, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/polling");
                                     this.sendWorkerTriggerToWorker(flowWithTrigger);
                                 } catch (InternalException e) {
                                     logService.logTrigger(
@@ -601,7 +608,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                                         schedule.nextEvaluationDate(f.getConditionContext(), Optional.of(f.getTriggerContext()))
                                     );
                                     trigger = trigger.checkBackfill();
-                                    this.triggerState.save(trigger, scheduleContext);
+                                    this.triggerState.save(trigger, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-true/schedule");
                                 }
                             } else {
                                 logService.logTrigger(
@@ -619,7 +626,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                                 logError(f, e);
                             }
                             var trigger = f.getTriggerContext().toBuilder().nextExecutionDate(nextExecutionDate).build().checkBackfill();
-                            this.triggerState.save(trigger, scheduleContext);
+                            this.triggerState.save(trigger, scheduleContext, "/kestra/services/scheduler/handle/save/on-eval-false");
                         }
                     } catch (Exception ie) {
                         // validate schedule condition can fail to render variables
@@ -636,13 +643,14 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             .build();
                         ZonedDateTime nextExecutionDate = this.nextEvaluationDate(f.getAbstractTrigger());
                         var trigger = f.getTriggerContext().resetExecution(State.Type.FAILED, nextExecutionDate);
-                        this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
+                        this.saveLastTriggerAndEmitExecution(execution, trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handle/save/on-error"));
                     }
                 });
         });
     }
 
-    private void handleEvaluateWorkerTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime nextExecutionDate) {
+    private void handleEvaluateWorkerTriggerResult(SchedulerExecutionWithTrigger result, ZonedDateTime
+        nextExecutionDate) {
         Optional.ofNullable(result)
             .ifPresent(executionWithTrigger -> {
                     log(executionWithTrigger);
@@ -660,7 +668,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             );
     }
 
-    private void handleEvaluateSchedulingTriggerResult(Schedulable schedule, SchedulerExecutionWithTrigger result, ConditionContext conditionContext, ScheduleContextInterface scheduleContext) throws Exception {
+    private void handleEvaluateSchedulingTriggerResult(Schedulable schedule, SchedulerExecutionWithTrigger
+        result, ConditionContext conditionContext, ScheduleContextInterface scheduleContext) throws Exception {
         log(result);
         Trigger trigger = Trigger.of(
             result.getTriggerContext(),
@@ -676,10 +685,11 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
         // Schedule triggers are being executed directly from the handle method within the context where triggers are locked.
         // So we must save them by passing the scheduleContext.
-        this.saveLastTriggerAndEmitExecution(result.getExecution(), trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext));
+        this.saveLastTriggerAndEmitExecution(result.getExecution(), trigger, triggerToSave -> this.triggerState.save(triggerToSave, scheduleContext, "/kestra/services/scheduler/handleEvaluateSchedulingTriggerResult/save"));
     }
 
-    protected void saveLastTriggerAndEmitExecution(Execution execution, Trigger trigger, Consumer<Trigger> saveAction) {
+    protected void saveLastTriggerAndEmitExecution(Execution execution, Trigger
+        trigger, Consumer<Trigger> saveAction) {
         saveAction.accept(trigger);
         this.emitExecution(execution, trigger);
     }
@@ -855,7 +865,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         }
     }
 
-    private void logError(ConditionContext conditionContext, FlowWithSource flow, AbstractTrigger trigger, Throwable e) {
+    private void logError(ConditionContext conditionContext, FlowWithSource flow, AbstractTrigger
+        trigger, Throwable e) {
         Logger logger = conditionContext.getRunContext().logger();
 
         logService.logFlow(
@@ -893,7 +904,36 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             .conditionContext(flowWithTriggerWithDefault.conditionContext)
             .build();
         try {
-            this.workerTaskQueue.emit(workerGroupService.resolveGroupFromJob(workerTrigger).map(group -> group.getKey()).orElse(null), workerTrigger);
+            Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(workerTrigger);
+            if (workerGroup.isPresent()) {
+                // Check if the worker group exist
+                String tenantId = flowWithTrigger.getFlow().getTenantId();
+                RunContext runContext = flowWithTriggerWithDefault.conditionContext.getRunContext();
+                String workerGroupKey = runContext.render(workerGroup.get().getKey());
+                if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
+                    // Check whether at-least one worker is available
+                    if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroupKey)) {
+                        this.workerJobQueue.emit(workerGroupKey, workerTrigger);
+                    } else {
+                        WorkerGroup.Fallback fallback = workerGroup.map(wg -> wg.getFallback()).orElse(WorkerGroup.Fallback.WAIT);
+                        switch(fallback) {
+                            case FAIL -> runContext.logger()
+                                    .error("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
+                            case CANCEL -> runContext.logger()
+                                    .warn("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
+                            case WAIT -> {
+                                runContext.logger()
+                                    .info("No workers are available for worker group '{}', waiting for one to be available.", workerGroupKey);
+                                this.workerJobQueue.emit(workerGroupKey, workerTrigger);
+                            }
+                        };
+                    }
+                } else {
+                    runContext.logger().error("No worker group exist for key '{}', ignoring the trigger.", workerGroupKey);
+                }
+            } else {
+                this.workerJobQueue.emit(workerTrigger);
+            }
         } catch (QueueException e) {
             log.error("Unable to emit the Worker Trigger job", e);
         }
@@ -1027,5 +1067,13 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     @Override
     public ServiceState getState() {
         return state.get();
+    }
+
+    protected Trigger resetExecution(FlowWithSource flow, Execution execution, Trigger trigger) {
+        Flow flowWithDefaults = pluginDefaultService.injectDefaults(flow, execution);
+        RunContext runContext = runContextFactory.of(flowWithDefaults, flowWithDefaults.findTriggerByTriggerId(trigger.getTriggerId()));
+        ConditionContext conditionContext = conditionService.conditionContext(runContext, flowWithDefaults, null);
+
+        return trigger.resetExecution(flowWithDefaults, execution, conditionContext);
     }
 }

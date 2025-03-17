@@ -40,10 +40,9 @@ public class KvFunction implements Function {
         String flowNamespace = flow.get("namespace");
         String flowTenantId = flow.get("tenantId");
 
+        // we didn't check allowedNamespace here as it's checked in the kvStoreService itself
         if (namespace == null) {
             namespace = flowNamespace;
-        } else {
-            flowService.checkAllowedNamespace(flowTenantId, namespace, flowTenantId, flowNamespace);
         }
 
         Optional<KVValue> value;

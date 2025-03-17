@@ -72,7 +72,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
                 DSL.field("CONCAT_WS(',', consumers, ?)", String.class, queueType)
             )
             .set(AbstractJdbcRepository.field("updated"), LocalDateTime.now())
-            .where(AbstractJdbcRepository.field("offset").in(offsets.toArray(Integer[]::new)));
+            .where(AbstractJdbcRepository.field("offset").in(offsets));
 
         if (consumerGroup != null) {
             update = update.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));

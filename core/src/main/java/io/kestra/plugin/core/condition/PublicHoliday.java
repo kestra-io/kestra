@@ -31,13 +31,13 @@ import java.time.LocalDate;
             full = true,
             title = "Trigger condition to excute the flow only on public holidays.",
             code = """
-                id: schedule-condition-public-holiday
+                id: schedule_condition_public-holiday
                 namespace: company.team
 
                 tasks:
                   - id: log_message
                     type: io.kestra.plugin.core.log.Log
-                    message: "This flow will be executed only on the public holidays of France at 11:00 am."
+                    message: "This flow will execute only on the public holidays of France at 11:00 am."
 
                 triggers:
                   - id: schedule
@@ -58,7 +58,7 @@ import java.time.LocalDate;
                 tasks:
                   - id: log_message
                     type: io.kestra.plugin.core.log.Log
-                    message: "This flow will be executed only on the work days of France at 11:00 am."
+                    message: "This flow will execute only on the work days of France at 11:00 am."
 
                 triggers:
                   - id: schedule

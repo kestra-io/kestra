@@ -136,19 +136,26 @@
         methods: {
             properties(requiredFields) {
                 if (this.schema?.properties) {
-                    const properties = Object.entries(
-                        this.schema.properties,
-                    ).reduce((acc, [key, value]) => {
-                        if (
-                            requiredFields
-                                ? this.isRequired(key)
-                                : !this.isRequired(key)
-                        ) {
-                            acc[key] = value;
-                        }
-                        return acc;
-                    }, {});
+                    let properties = Object.entries(this.schema.properties).reduce(
+                        (acc, [key, value]) => {
+                            if (
+                                requiredFields
+                                    ? this.isRequired(key)
+                                    : !this.isRequired(key)
+                            ) {
+                                acc[key] = value;
+                            }
+                            return acc;
+                        },
+                        {},
+                    );
 
+                    if (requiredFields && !properties.id) {
+                        properties = {
+                            ...properties,
+                            id: {type: "string", $required: true},
+                        };
+                    }
                     return this.sortProperties(properties);
                 }
 

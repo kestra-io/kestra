@@ -31,13 +31,13 @@ import jakarta.validation.constraints.NotNull;
             title = "Trigger condition to execute the flow only on the first Monday of the month.",
             full = true,
             code = """
-                id: schedule-condition-dayweekinmonth
+                id: schedule_condition_dayweekinmonth
                 namespace: company.team
 
                 tasks:
                   - id: log_message
                     type: io.kestra.plugin.core.log.Log
-                    message: "This flow will be executed only on the first Monday of the month at 11:00 am."
+                    message: "This flow will execute only on the first Monday of the month at 11:00 am."
 
                 triggers:
                   - id: schedule

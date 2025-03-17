@@ -174,5 +174,45 @@ public class MultipleConditionTriggerCaseTest {
         Execution triggerExecution = flowTrigger.get();
         assertThat(triggerExecution.getTaskRunList().size(), is(1));
         assertThat(triggerExecution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(triggerExecution.getTrigger().getVariables().get("outputs"), notNullValue());
+        assertThat((Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs"), hasEntry("some", "value"));
+    }
+
+    public void flowTriggerPreconditionsMergeOutputs() throws QueueException, TimeoutException, InterruptedException {
+        // we do the same as in flowTriggerPreconditions() but we trigger flows in the opposite order to be sure that outputs are merged
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<Execution> flowTrigger = new AtomicReference<>();
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Execution execution = either.getLeft();
+            if (execution.getState().getCurrent() == State.Type.SUCCESS && execution.getFlowId()
+                .equals("flow-trigger-preconditions-flow-listen")) {
+                flowTrigger.set(execution);
+                countDownLatch.countDown();
+            }
+        });
+
+        // flowB
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
+            "flow-trigger-preconditions-flow-b", Duration.ofSeconds(60));
+        assertThat(execution.getTaskRunList().size(), is(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // flowA
+        execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
+            "flow-trigger-preconditions-flow-a", Duration.ofSeconds(60));
+        assertThat(execution.getTaskRunList().size(), is(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+
+        // trigger is done
+        assertTrue(countDownLatch.await(1, TimeUnit.SECONDS));
+        receive.blockLast();
+        assertThat(flowTrigger.get(), notNullValue());
+
+        Execution triggerExecution = flowTrigger.get();
+        assertThat(triggerExecution.getTaskRunList().size(), is(1));
+        assertThat(triggerExecution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(triggerExecution.getTrigger().getVariables().get("outputs"), notNullValue());
+        assertThat((Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs"), hasEntry("some", "value"));
     }
 }

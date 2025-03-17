@@ -16,6 +16,11 @@ on:
         description: 'Google Service Account'
         required: true
 
+permissions:
+  contents: write
+  checks: write
+  actions: read
+
 jobs:
   test:
     name: Backend - Tests
@@ -54,7 +59,7 @@ jobs:
 
       # report test
       - name: Test - Publish Test Results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v2
         if: always()
         with:
           name: Java Tests Report

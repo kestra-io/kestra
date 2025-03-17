@@ -28,6 +28,7 @@ import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -94,6 +95,9 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     @Deprecated
     List<Listener> listeners;
+
+    @Valid
+    List<Task> afterExecution;
 
     @Valid
     List<AbstractTrigger> triggers;
@@ -204,10 +208,10 @@ public class Flow extends AbstractFlow implements HasUID {
 
     public Stream<Task> allTasks() {
         return Stream.of(
-                this.tasks != null ? this.tasks : new ArrayList<Task>(),
-                this.errors != null ? this.errors : new ArrayList<Task>(),
-                this._finally != null ? this._finally : new ArrayList<Task>(),
-                this.listenersTasks()
+                this.tasks != null ? this.tasks : Collections.<Task>emptyList(),
+                this.errors != null ? this.errors : Collections.<Task>emptyList(),
+                this._finally != null ? this._finally : Collections.<Task>emptyList(),
+                this.afterExecutionTasks()
             )
             .flatMap(Collection::stream);
     }
@@ -287,6 +291,14 @@ public class Flow extends AbstractFlow implements HasUID {
             .orElse(null);
     }
 
+    public AbstractTrigger findTriggerByTriggerId(String triggerId) {
+        return this.triggers
+            .stream()
+            .filter(trigger -> trigger.getId().equals(triggerId))
+            .findFirst()
+            .orElse(null);
+    }
+
     /**
      * @deprecated should not be used
      */
@@ -329,15 +341,11 @@ public class Flow extends AbstractFlow implements HasUID {
         }
     }
 
-    private List<Task> listenersTasks() {
-        if (this.getListeners() == null) {
-            return new ArrayList<>();
-        }
-
-        return this.getListeners()
-            .stream()
-            .flatMap(listener -> listener.getTasks().stream())
-            .toList();
+    private List<Task> afterExecutionTasks() {
+        return ListUtils.concat(
+            ListUtils.emptyOnNull(this.getListeners()).stream().flatMap(listener -> listener.getTasks().stream()).toList(),
+            this.getAfterExecution()
+        );
     }
 
     public boolean equalsWithoutRevision(Flow o) {

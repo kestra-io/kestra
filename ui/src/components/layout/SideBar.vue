@@ -288,8 +288,12 @@
         }
 
         .vsm--link_open{
-            position:relative !important;
+            position: relative !important;
             z-index: 3;
+        }
+
+        &.vsm_collapsed .vsm--link_open{
+            position: static !important;
         }
 
         .vsm--child .vsm--link{

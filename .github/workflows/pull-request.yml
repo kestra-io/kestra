@@ -32,7 +32,7 @@ jobs:
   frontend:
     name: Frontend - Tests
     needs: [file-changes]
-    if: "needs.file-changes.outputs.ui == 'true' && !contains(github.event.title, 'docs-only')"
+    if: "needs.file-changes.outputs.ui == 'true'"
     uses: ./.github/workflows/workflow-frontend-test.yml
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -41,7 +41,7 @@ jobs:
   backend:
     name: Backend - Tests
     needs: file-changes
-    if: "needs.file-changes.outputs.backend == 'true' && !contains(github.event.title, 'docs-only')"
+    if: "needs.file-changes.outputs.backend == 'true'"
     uses: ./.github/workflows/workflow-backend-test.yml
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

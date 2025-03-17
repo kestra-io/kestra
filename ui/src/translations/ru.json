@@ -462,6 +462,8 @@
         "title": "Компоненты Workflow"
       }
     },
+    "execution_starts_progress": "Как только начнется выполнение, вы увидите здесь обновления о ходе выполнения.",
+    "execution_status": "Выполнение:",
     "executions": "Выполнения",
     "executions deleted": "<code>{executionCount}</code> выполнение(я) удалено",
     "executions duration (in minutes)": "Общая длительность выполнения (в минутах)",
@@ -824,6 +826,7 @@
     "no_logs_data": "Нет данных",
     "no_logs_data_description": "Либо никакие flows не выполняются, либо вам нужно изменить фильтры.",
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
+    "no_tasks_running": "Ещё нет запущенных tasks.",
     "now": "Сейчас",
     "of": "из",
     "ok": "ОК",

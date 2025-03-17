@@ -462,6 +462,8 @@
         "title": "Workflow-Komponenten"
       }
     },
+    "execution_starts_progress": "Sobald die Ausführung beginnt, sehen Sie hier Fortschrittsaktualisierungen.",
+    "execution_status": "Die Ausführung ist:",
     "executions": "Ausführungen",
     "executions deleted": "<code>{executionCount}</code> Ausführung(en) gelöscht",
     "executions duration (in minutes)": "Gesamte Ausführungsdauer (in Minuten)",
@@ -824,6 +826,7 @@
     "no_logs_data": "Keine Daten",
     "no_logs_data_description": "Entweder laufen keine Flows, oder Sie müssen Ihre Filter anpassen.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
+    "no_tasks_running": "Noch keine Tasks laufen.",
     "now": "Jetzt",
     "of": "von",
     "ok": "OK",

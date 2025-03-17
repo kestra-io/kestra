@@ -462,6 +462,8 @@
         "title": "वर्कफ़्लो घटक"
       }
     },
+    "execution_starts_progress": "जैसे ही execution शुरू होता है, आपको यहाँ प्रगति अपडेट दिखाई देंगे।",
+    "execution_status": "Execution है:",
     "executions": "निष्पादन",
     "executions deleted": "<code>{executionCount}</code> निष्पादन हटाए गए",
     "executions duration (in minutes)": "कुल निष्पादन अवधि (मिनटों में)",
@@ -824,6 +826,7 @@
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
+    "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
     "now": "अब",
     "of": "का",
     "ok": "ठीक है",

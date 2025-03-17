@@ -462,6 +462,8 @@
         "title": "Componentes del Workflow"
       }
     },
+    "execution_starts_progress": "Una vez que la ejecución comience, verás actualizaciones de progreso aquí.",
+    "execution_status": "La ejecución es:",
     "executions": "Ejecuciones",
     "executions deleted": "<code>{executionCount}</code> ejecución(es) eliminadas",
     "executions duration (in minutes)": "Duración total de ejecuciones (en minutos)",
@@ -824,6 +826,7 @@
     "no_logs_data": "Sin datos",
     "no_logs_data_description": "Ya sea que no haya flows en ejecución, o puede que necesite ajustar sus filtros.",
     "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
+    "no_tasks_running": "Todavía no hay tasks en ejecución.",
     "now": "Ahora",
     "of": "de",
     "ok": "OK",

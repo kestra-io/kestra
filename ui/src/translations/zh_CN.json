@@ -462,6 +462,8 @@
         "title": "工作流组件"
       }
     },
+    "execution_starts_progress": "一旦执行开始，您将在此处看到进度更新。",
+    "execution_status": "执行状态是：",
     "executions": "执行",
     "executions deleted": "<code>{executionCount}</code> 个执行已删除",
     "executions duration (in minutes)": "总执行持续时间（分钟）",
@@ -824,6 +826,7 @@
     "no_logs_data": "无数据",
     "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
+    "no_tasks_running": "尚无任务正在运行。",
     "now": "现在",
     "of": "的",
     "ok": "确定",

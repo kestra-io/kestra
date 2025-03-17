@@ -462,6 +462,8 @@
         "title": "ワークフローコンポーネント"
       }
     },
+    "execution_starts_progress": "実行が開始されると、ここに進行状況の更新が表示されます。",
+    "execution_status": "実行は:",
     "executions": "実行",
     "executions deleted": "<code>{executionCount}</code>件の実行が削除されました",
     "executions duration (in minutes)": "総実行時間（分単位）",
@@ -824,6 +826,7 @@
     "no_logs_data": "データなし",
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
+    "no_tasks_running": "タスクはまだ実行されていません。",
     "now": "現在",
     "of": "の",
     "ok": "OK",

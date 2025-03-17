@@ -22,7 +22,7 @@ class FlowValidationTest {
     @Inject
     private ModelValidator modelValidator;
     @Inject
-    private YamlParser yamlParser = new YamlParser();
+    private YamlParser yamlParser;
 
     @Test
     void invalidRecursiveFlow() {

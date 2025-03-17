@@ -313,13 +313,6 @@
             return;
         }
 
-        if (key === "Backspace" && select.value.states.inputValue === "") {
-            const lastItem = current.value.at(-1);
-            if (lastItem) {
-                removeItem(lastItem);
-            }
-        }
-
         if (key === "Enter") return;
 
         if (currentFilters.value.at(-1)?.label === "user") {
@@ -734,8 +727,7 @@
         if (value.persistent) return;
         currentFilters.value = currentFilters.value.filter(
             (item) => JSON.stringify(item) !== JSON.stringify(value),
-        );        
-
+        );
 
         triggerSearch();
     };

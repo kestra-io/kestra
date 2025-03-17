@@ -32,7 +32,7 @@
     const router = useRouter();
 
     import Utils, {useTheme} from "../../../../../utils/utils.js";
-
+    import {useScheme} from "../../../../../utils/scheme.js";
     import {
         defaultConfig,
         tooltip,
@@ -76,85 +76,27 @@
     });
 
     const theme = useTheme();
+    const scheme = useScheme();
 
     const tooltipContent = ref("");
 
     const parsedData = computed(() => {
-        function getRandomData(length, min = 0, max = 4) {
-            return Array.from(
-                {length},
-                () => Math.floor(Math.random() * (max - min + 1)) + min,
-            );
-        }
+        let datasets = props.data.reduce(function (accumulator, value) {
+            Object.keys(value.executionCounts).forEach(function (state) {
+                if (accumulator[state] === undefined) {
+                    accumulator[state] = {
+                        label: state,
+                        backgroundColor: scheme.value[state],
+                        yAxisID: "y",
+                        data: [],
+                    };
+                }
 
-        let datasets = {
-            RUNNING: {
-                label: "RUNNING",
-                backgroundColor: "#5bb8ff",
-                yAxisID: "y",
-                data: getRandomData(30),
-            },
-            RESTARTED: {
-                label: "RESTARTED",
-                backgroundColor: "#c7f0ff",
-                yAxisID: "y",
-                data: getRandomData(30),
-            },
-            WARNING: {
-                label: "WARNING",
-                backgroundColor: "#eeae7e",
-                yAxisID: "y",
-                data: getRandomData(30),
-            },
-            KILLING: {
-                label: "KILLING",
-                backgroundColor: "#a6a4ca",
-                yAxisID: "y",
-                data: getRandomData(30),
-            },
-            SUCCESS: {
-                label: "SUCCESS",
-                backgroundColor: "#21ce9c",
-                yAxisID: "y",
-                data: getRandomData(30),
-            },
-            PAUSED: {
-                label: "PAUSED",
-                backgroundColor: "#fde89d",
-                yAxisID: "y",
-                data: getRandomData(30),
-            },
-            FAILED: {
-                label: "FAILED",
-                backgroundColor: "#fd7278",
-                yAxisID: "y",
-                data: getRandomData(30),
-            },
-            QUEUED: {
-                label: "QUEUED",
-                backgroundColor: "#bda85d",
-                yAxisID: "y",
-                data: getRandomData(30),
-            },
-            KILLED: {
-                label: "KILLED",
-                backgroundColor: "#7e719f",
-                yAxisID: "y",
-                data: getRandomData(30),
-            },
-            CREATED: {
-                label: "CREATED",
-                backgroundColor: "#fd9297",
-                yAxisID: "y",
-                data: getRandomData(30),
-            },
-            CANCELLED: {
-                label: "CANCELLED",
-                backgroundColor: "#9a8eb4",
-                yAxisID: "y",
-                data: getRandomData(30),
-            },
-        };
+                accumulator[state].data.push(value.executionCounts[state]);
+            });
+
+            return accumulator;
+        }, Object.create(null));
 
         datasets = Object.values(datasets).sort((a, b) => {
             return ORDER.indexOf(a.label) - ORDER.indexOf(b.label);

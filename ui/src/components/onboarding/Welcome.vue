@@ -26,20 +26,19 @@
                     <p class="section-1-desc">
                         {{ $t("homeDashboard.start") }}
                     </p>
-                    <router-link :to="{name: 'flows/create'}">
-                        <el-button
-                            :icon="Plus"
-                            size="large"
-                            type="primary"
-                            class="px-3 p-4 section-1-link product-link"
-                        >
-                            {{ $t("welcome button create") }}
-                        </el-button>
-                    </router-link>
+                    <el-button
+                        @click="startTour"
+                        :icon="Plus"
+                        size="large"
+                        type="primary"
+                        class="px-3 p-4 section-1-link product-link"
+                    >
+                        {{ $t("welcome button create") }}
+                    </el-button>
                     <el-button
                         :icon="Play"
                         tag="a"
-                        href="https://www.youtube.com/watch?v=a2BZ7vOihjg"
+                        href="https://www.youtube.com/watch?v=waTpmiv4ZCs"
                         target="_blank"
                         class="p-3 px-4 mt-0 mb-lg-5 watch"
                     >
@@ -100,6 +99,13 @@
             canCreate() {
                 return this.user && this.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
             }
+        },
+        methods: {
+            startTour() {
+                localStorage.setItem("tourDoneOrSkip", undefined);
+                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
+                this.$tours["guidedTour"]?.start();
+            },
         }
     }
 </script>
@@ -141,6 +147,7 @@
         text-decoration: none;
         font-size: var(--el-font-size-small);
         width: 200px;
+        margin: 0;
         margin-bottom: 1rem;
     }
 

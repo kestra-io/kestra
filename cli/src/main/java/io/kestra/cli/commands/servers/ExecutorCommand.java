@@ -1,7 +1,6 @@
 package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.ExecutorInterface;
 import io.kestra.core.services.SkipExecutionService;
@@ -66,7 +65,6 @@ public class ExecutorCommand extends AbstractServerCommand {
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
 
         super.call();
-        this.shutdownHook(() -> KestraContext.getContext().shutdown());
 
         ExecutorInterface executorService = applicationContext.getBean(ExecutorInterface.class);
         executorService.run();

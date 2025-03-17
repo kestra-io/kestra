@@ -131,12 +131,14 @@
         <ExecutionsBar
             :data="graphData"
             :total="stats.total"
+            :loading="executionsLoading"
             class="card card-2/3"
         />
 
         <ExecutionsDoughnut
             :data="graphData"
             :total="stats.total"
+            :loading="executionsLoading"
             class="card card-1/3"
         />
 
@@ -158,17 +160,19 @@
                 >
                     <Markdown
                         :source="description"
+                        :html="false"
                         class="p-4 description"
                     />
                 </el-dialog>
             </span>
 
-            <Markdown :source="description" class="p-4 description" />
+            <Markdown :source="description" :html="false" class="p-4 description" />
         </div>
         <ExecutionsInProgress
             v-else
             :flow="props.flowId"
             :namespace="props.namespace"
+            :loading="executionsLoading"
             class="card card-1/2"
         />
 
@@ -176,23 +180,34 @@
             v-if="props.flow"
             :flow="props.flowId"
             :namespace="props.namespace"
+            :loading="executionsLoading"
             class="card card-1/2"
         />
         <ExecutionsNextScheduled
             v-else-if="isAllowedTriggers"
             :flow="props.flowId"
             :namespace="props.namespace"
+            :loading="executionsLoading"
             class="card card-1/2"
         />
 
-        <ExecutionsEmptyNextScheduled v-else class="card card-1/2" />
+        <ExecutionsEmptyNextScheduled 
+            v-else 
+            :loading="executionsLoading"
+            class="card card-1/2" 
+        />
         <ExecutionsNamespace
             v-if="!props.flow && Object.keys(namespaceExecutions).length > 1"
             class="card card-1"
             :data="namespaceExecutions"
             :total="stats.total"
         />
-        <Logs v-if="!props.flow" :data="logs" class="card card-1" />
+        <Logs 
+            v-if="!props.flow" 
+            :data="logs" 
+            :loading="executionsLoading"
+            class="card card-1" 
+        />
     </div>
 </template>
 
@@ -403,20 +418,22 @@
     const fetchExecutions = () => {
         executionsLoading.value = true;
 
-        store.dispatch("stat/daily", mergeQuery()).then((response) => {
-            const sorted = response.sort(
-                (a, b) => new Date(b.date) - new Date(a.date),
-            );
+        return store.dispatch("stat/daily", mergeQuery())
+            .then((response) => {
+                const sorted = response.sort(
+                    (a, b) => new Date(b.date) - new Date(a.date),
+                );
 
-            executions.value = {
-                raw: sorted,
-                all: transformer(sorted),
-                yesterday: sorted.at(-2),
-                today: sorted.at(-1),
-            };
-        }).finally(() => {
-            executionsLoading.value = false;
-        });
+                executions.value = {
+                    raw: sorted,
+                    all: transformer(sorted),
+                    yesterday: sorted.at(-2),
+                    today: sorted.at(-1),
+                };
+            })
+            .finally(() => {
+                executionsLoading.value = false;
+            });
     };
 
     const graphData = computed(() => store.state.stat.daily || []);
@@ -453,14 +470,17 @@
 
         if (!custom.value.shown) {
             try {
-                await Promise.any([
+                executionsLoading.value = true;
+                await Promise.all([
                     fetchNumbers(),
                     fetchExecutions(),
                     fetchNamespaceExecutions(),
                     fetchLogs(),
-                ]);
-            } catch (error) {
-                console.error("All promises failed:", error);
+                ]).catch(error => {
+                    console.error("Failed to fetch dashboard data:", error);
+                });
+            } finally {
+                executionsLoading.value = false;
             }
         }
     };
@@ -502,20 +522,19 @@ $spacing: 20px;
     }
 }
 
-$media-md: 600px;
-$media-lg: 1200px;
+$media-md: 500px;
+$media-lg: 1000px;
 
 .dashboard{
+    container-type: inline-size;
     padding-bottom: 1rem;
     margin: 1rem 0;
     width: 100%;
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    @media (min-width: $media-md) {
-        display: grid;
-        grid-template-columns: repeat(12, 1fr);
-    }
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
 }
 
 
@@ -528,40 +547,41 @@ $media-lg: 1200px;
     border-radius: $border-radius;
     overflow: hidden;
     flex-shrink: 0;
-    @media (min-width: $media-md) {
+    grid-column: span 12;
+    @container (width > #{$media-md}) {
         grid-column: span 6;
     }
-    @media (min-width: $media-lg) {
+    @container (width > #{$media-lg}) {
         grid-column: span 3;
     }
 }
 
-@media (min-width: $media-md) {
+@container (width > #{$media-md}) {
     .card-1\/2, .card-2\/3, .card-1\/3 {
         grid-column: span 12;
     }
 }
 
 .card-1\/2{
-    @media (min-width: $media-lg) {
+    @container (width > #{$media-lg}) {
         grid-column: span 6;
     }
 }
 
 .card-2\/3{
-    @media (min-width: $media-lg) {
+    @container (width > #{$media-lg}) {
         grid-column: span 8;
     }
 }
 
 .card-1\/3{
-    @media (min-width: $media-lg) {
+    @container (width > #{$media-lg}) {
         grid-column: span 4;
     }
 }
 
 .card-1{
-    @media (min-width: $media-md) {
+    @container (width > #{$media-md}) {
         grid-column: span 12;
     }
 }

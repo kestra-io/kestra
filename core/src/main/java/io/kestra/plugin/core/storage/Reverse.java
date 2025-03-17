@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Reserve a file from the Kestra's internal storage, last line first."
+    title = "Reverse a file from the Kestra's internal storage, last line first."
 )
 @Plugin(
     examples = {

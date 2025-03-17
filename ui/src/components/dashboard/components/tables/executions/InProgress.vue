@@ -22,7 +22,37 @@
             </RouterLink>
         </div>
 
-        <div class="pt-4" v-if="executions.results.length">
+        <div class="pt-4" v-if="loading">
+            <el-table :data="skeletonData" class="inprogress" :height="240">
+                <el-table-column :label="$t('dashboard.id')" width="80">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 60px" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('namespace')">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 100%" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('flow')">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 100%" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('duration')" width="100">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 60px" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('state')">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 80px" />
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+
+        <div class="pt-4" v-else-if="executions.results.length">
             <el-table
                 :data="executions.results"
                 class="inprogress"
@@ -148,6 +178,10 @@
             required: false,
             default: null,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
 
     const store = useStore();
@@ -155,6 +189,8 @@
 
     const executions = ref({results: [], total: 0});
     const currentPage = ref(1);
+
+    const skeletonData = Array(5).fill({});
 
     const loadExecutions = (page = 1) => {
         store
@@ -189,5 +225,9 @@ code {
 
 .inprogress {
     background: var(--ks-background-table-row);
+}
+
+:deep(.el-skeleton-item) {
+    background: var(--ks-background-skeleton);
 }
 </style>

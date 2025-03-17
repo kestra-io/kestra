@@ -4,7 +4,10 @@ import io.kestra.core.contexts.MavenPluginRepositoryConfig;
 import io.kestra.core.plugins.LocalPluginManager;
 import io.kestra.core.plugins.MavenPluginDownloader;
 import io.kestra.core.plugins.PluginArtifact;
+import io.kestra.core.plugins.PluginCatalogService;
 import io.kestra.core.plugins.PluginManager;
+import io.micronaut.http.client.HttpClient;
+import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.uri.UriBuilder;
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.utils.IdUtils;
@@ -15,6 +18,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import jakarta.inject.Inject;
 import picocli.CommandLine.Command;
@@ -31,7 +35,10 @@ public class PluginInstallCommand extends AbstractCommand {
     @Option(names = {"--locally"}, description = "Specifies if plugins must be installed locally. If set to false the installation depends on your Kestra configuration.")
     boolean locally = true;
 
-    @Parameters(index = "0..*", description = "Plugins to install. Represented as Maven artifact coordinates.")
+    @Option(names = {"--all"}, description = "Install all available plugins")
+    boolean all = false;
+
+    @Parameters(index = "0..*", description = "Plugins to install. Represented as Maven artifact coordinates (i.e., <groupId>:<artifactId>:(<version>|LATEST)")
     List<String> dependencies = new ArrayList<>();
 
     @Option(names = {"--repositories"}, description = "URL to additional Maven repositories")
@@ -42,6 +49,9 @@ public class PluginInstallCommand extends AbstractCommand {
 
     @Inject
     Provider<MavenPluginDownloader> mavenPluginRepositoryProvider;
+
+    @Inject
+    @Client("api") HttpClient httpClient;
 
     @Override
     public Integer call() throws Exception {
@@ -72,6 +82,16 @@ public class PluginInstallCommand extends AbstractCommand {
                     builder.url(UriBuilder.of(uri).userInfo(null).build().toString());
                     return builder.build();
                 }).toList();
+        }
+
+        if (all) {
+            PluginCatalogService service = new PluginCatalogService(httpClient, false, true);
+            dependencies = service.get().stream().map(Objects::toString).toList();
+        }
+
+        if (dependencies.isEmpty()) {
+            stdErr("Error: No plugin to install.");
+            return CommandLine.ExitCode.SOFTWARE;
         }
 
         final List<PluginArtifact> pluginArtifacts;

@@ -11,26 +11,25 @@
             <a class="el-button el-button--large el-button--primary" target="_blank" :href="getADemoUrl.href">
                 {{ $t("demos.get_a_demo_button") }}
             </a>
+            <el-button size="large" @click="store.commit('misc/setContextInfoBarOpenTab', 'docs')">
+                Learn More
+                <el-icon class="el-icon--right">
+                    <ArrowRightIcon />
+                </el-icon>
+            </el-button>
         </div>
     </EmptyTemplate>
 </template>
 
 <script lang="ts" setup>
-    import {onMounted, nextTick, computed} from "vue";
+    import {computed} from "vue";
     import {useStore} from "vuex";
     import {useRoute} from "vue-router";
+    import ArrowRightIcon from "vue-material-design-icons/ArrowRight.vue";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
 
     const store = useStore();
     const route = useRoute();
-
-    onMounted(() => {
-        store.commit("doc/setDocPath", "<reset>")
-        nextTick(() => {
-            store.commit("doc/setDocPath", "")
-            store.commit("misc/setContextInfoBarOpenTab", "docs")
-        })
-    });
 
     const getADemoUrl = computed(() => {
         const demoUrl = new URL("https://kestra.io/demo");
@@ -49,6 +48,7 @@
             source: string;
             alt: string;
         };
+        embed?: boolean;
     }>();
 </script>
 

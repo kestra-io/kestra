@@ -12,7 +12,6 @@ import yaml from "shiki/langs/yaml.mjs";
 import python from "shiki/langs/python.mjs";
 import javascript from "shiki/langs/javascript.mjs";
 import {createOnigurumaEngine} from "shiki/engine-oniguruma.mjs";
-import DOMPurify from "dompurify";
 
 const langs = [yaml, python, javascript]
 const onigurumaEngine = createOnigurumaEngine(() => import("shiki/wasm"));
@@ -29,6 +28,5 @@ export {
     githubLight,
     linkTag,
     langs,
-    onigurumaEngine,
-    DOMPurify
+    onigurumaEngine
 }

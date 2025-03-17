@@ -13,7 +13,13 @@
         </div>
 
         <Bar
-            v-if="props.data.length > 0"
+            v-if="loading"
+            :data="skeletonData"
+            :options="skeletonOptions"
+            class="tall"
+        />
+        <Bar
+            v-else-if="props.data.length > 0"
             :data="parsedData"
             :options="options"
             :plugins="[barLegend]"
@@ -46,6 +52,10 @@
             type: Array,
             required: true,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
 
     const theme = useTheme();
@@ -142,6 +152,53 @@
             },
         }, theme.value),
     );
+
+    // Add skeleton data
+    const skeletonData = computed(() => {
+        const barColor = theme.value === "dark" 
+            ? "rgba(255, 255, 255, 0.08)"
+            : "rgba(0, 0, 0, 0.06)";
+
+        return {
+            labels: Array(18).fill(""),
+            datasets: [{
+                data: Array(18).fill(0).map(() => Math.random() * 70 + 30),
+                backgroundColor: barColor,
+                borderRadius: 2,
+                barThickness: 12,
+            }]
+        };
+    });
+
+    // Add skeleton options
+    const skeletonOptions = computed(() => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                enabled: false
+            }
+        },
+        scales: {
+            x: {
+                display: false,
+                grid: {
+                    display: false
+                }
+            },
+            y: {
+                display: false,
+                grid: {
+                    display: false
+                },
+                min: 0,
+                max: 100
+            }
+        }
+    }));
 </script>
 
 <style lang="scss" scoped>

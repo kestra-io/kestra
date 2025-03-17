@@ -210,16 +210,12 @@
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
-    import YamlUtils from "../../utils/yamlUtils.js";
     import DurationPicker from "./DurationPicker.vue";
     import {inputsToFormDate} from "../../utils/submitTask"
 
     export default {
         computed: {
             ...mapState("auth", ["user"]),
-            YamlUtils() {
-                return YamlUtils
-            },
             inputErrors() {
                 // we only keep errors that don't target an input directly
                 const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);

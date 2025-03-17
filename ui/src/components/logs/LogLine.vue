@@ -85,7 +85,7 @@
             };
         },
         async created() {
-            this.renderedMarkdown = await Markdown.render(this.message, {onlyLink: true});
+            this.renderedMarkdown = await Markdown.render(this.message, {onlyLink: true, html: true});
         },
         computed: {
             logLineStyle() {

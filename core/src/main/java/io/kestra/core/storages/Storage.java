@@ -1,6 +1,5 @@
 package io.kestra.core.storages;
 
-import io.kestra.core.storages.kv.KVStore;
 import jakarta.annotation.Nullable;
 
 import java.io.File;

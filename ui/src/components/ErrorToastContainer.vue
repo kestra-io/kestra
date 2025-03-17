@@ -49,7 +49,7 @@
         components: {Slack},
         methods: {
             async renderMarkdown() {
-                return await Markdown.render(this.message.message || this.message.content.message);
+                return await Markdown.render(this.message.message || this.message.content.message, {html: true});
             },
         },
     };

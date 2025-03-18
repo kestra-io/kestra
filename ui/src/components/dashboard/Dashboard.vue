@@ -217,8 +217,6 @@
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
-    import moment from "moment";
-
     import {apiUrl} from "override/utils/route";
     import {State} from "@kestra-io/ui-libs"
 
@@ -454,20 +452,6 @@
     };
 
     const fetchAll = async () => {
-        route.query.startDate = route.query.timeRange
-            ? moment()
-                .subtract(
-                    moment.duration(route.query.timeRange).as("milliseconds"),
-                )
-                .toISOString(true)
-            : route.query.startDate ||
-                moment()
-                    .subtract(moment.duration("PT720H").as("milliseconds"))
-                    .toISOString(true);
-        route.query.endDate = route.query.timeRange
-            ? moment().toISOString(true)
-            : route.query.endDate || moment().toISOString(true);
-
         if (!custom.value.shown) {
             try {
                 executionsLoading.value = true;

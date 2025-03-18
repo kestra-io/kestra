@@ -29,16 +29,15 @@ export function useFilters(prefix: string) {
 
     const comparator = (which: string) => `filters.comparators.${which}`;
     const COMPARATORS: Record<string, Comparator> = {
-        EQUALS: buildComparator(t(comparator("is")), "$eq"),
-        NOT_EQUALS: buildComparator(t(comparator("is_not")), "$ne"),
-        CONTAINS: buildComparator(t(comparator("contains")), "$contains", true),
-        STARTS_WITH: buildComparator(t(comparator("starts_with")), "$startsWith"),
-        ENDS_WITH: buildComparator(t(comparator("ends_with")), "$endsWith"),
-        IN: buildComparator(t(comparator("in")), "$in", true),
-        NOT_IN: buildComparator(t(comparator("not_in")), "$notIn", true),
-        BETWEEN: buildComparator(t(comparator("between")), "$between"),
-        GREATER_THAN: buildComparator(t(comparator("greater_than")), "$gt"),
-        LESS_THAN: buildComparator(t(comparator("less_than")), "$lt"),
+        EQUALS: buildComparator(t(comparator("is")), "EQUALS"),
+        NOT_EQUALS: buildComparator(t(comparator("is_not")), "NOT_EQUALS"),
+        CONTAINS: buildComparator(t(comparator("contains")), "CONTAINS", true),
+        STARTS_WITH: buildComparator(t(comparator("starts_with")), "STARTS_WITH"),
+        ENDS_WITH: buildComparator(t(comparator("ends_with")), "ENDS_WITH"),
+        IN: buildComparator(t(comparator("in")), "IN", true),
+        NOT_IN: buildComparator(t(comparator("not_in")), "NOT_IN", true),
+        GREATER_THAN: buildComparator(t(comparator("greater_than")), "GREATER_THAN"),
+        LESS_THAN: buildComparator(t(comparator("less_than")), "LESS_THAN"),
     };
 
     const OPTIONS: Option[] = [

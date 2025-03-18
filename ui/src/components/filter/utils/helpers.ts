@@ -131,8 +131,8 @@ export const encodeSearchParams = (filters, OPTIONS) => {
             } else if (filter.value?.length > 0) {
                 const {startDate, endDate} = filter.value[0];
                 if(startDate && endDate) {
-                    query["filters[startDate][$gte]"] = startDate;
-                    query["filters[endDate][$lte]"] = endDate;
+                    query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = startDate;
+                    query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = endDate;
                 }
             }
         }
@@ -142,7 +142,7 @@ export const encodeSearchParams = (filters, OPTIONS) => {
 
 export const decodeSearchParams = (query, include, OPTIONS) => {
     const params = Object.entries(query)
-        .filter(([key]) => (key.startsWith("filters[") || key === "q") && (!key.startsWith("filters[startDate") && !key.startsWith("filters[endDate")) )
+        .filter(([key]) => (key.startsWith("filters[") || key === "q"))
         .map(([key, value]) => {
             const match = key.match(/filters\[(.*?)\]\[(.*?)\](?:\[(.*?)\])?/);
 
@@ -151,29 +151,16 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
             const [, field, operation, subKey] = match;
 
             if (field === "labels" && subKey) {
-                return {label: field, value: `${subKey}:${decodeURIComponent(value)}`, operation};
+                return {field: field, value: `${subKey}:${decodeURIComponent(value)}`, operation};
             }
 
             const label = field === "q" ? "text" : OPTIONS.find(o => o.key === field)?.value.label || field;
             const comparator = OPTIONS.find(o => o.key === field)?.comparators?.find(c => c.value === operation) || {value: operation};
 
-            return {label, value: [decodeURIComponent(value)], operation: comparator.value};
+            return {field: label, value: decodeURIComponent(value), operation: comparator.value};
         })
         .filter(Boolean);
 
-    // Handle date filter
-    if (query["filters[startDate][$gte]"] && query["filters[endDate][$lte]"]) {
-        params.push({
-            label: "absolute_date",
-            value: [{
-                startDate: query["filters[startDate][$gte]"],
-                endDate: query["filters[endDate][$lte]"]
-            }],
-            operation: "$between"
-        });
-    }
-
     return params;
 };
-
 export const isSearchPath = (name: string) => ["home", "flows/list", "executions/list", "logs/list", "namespaces/update", "admin/triggers"].includes(name);

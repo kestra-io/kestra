@@ -10,17 +10,17 @@ import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 @CommandLine.Command(
-    name = "create",
-    description = "create a single flow",
+    name = "delete",
+    description = "Delete a single flow",
     mixinStandardHelpOptions = true
 )
 @Slf4j
 public class FlowDeleteCommand extends AbstractApiCommand {
 
-    @CommandLine.Parameters(index = "0", description = "the namespace of the flow")
+    @CommandLine.Parameters(index = "0", description = "The namespace of the flow")
     public String namespace;
 
-    @CommandLine.Parameters(index = "1", description = "the id of the flow")
+    @CommandLine.Parameters(index = "1", description = "The ID of the flow")
     public String id;
 
     @SuppressWarnings("deprecation")

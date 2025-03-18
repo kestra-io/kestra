@@ -1,19 +1,25 @@
 <template>
-    <el-button data-component="FILENAME_PLACEHOLDER" data-test-id="execution-status" @click="$emit('click', $event)" class="status" :icon="icon" :size="size" :class="cls">
+    <el-button data-component="FILENAME_PLACEHOLDER" data-test-id="execution-status" @click="$emit('click', $event)" class="status" :size="size" :style="style">
         <template v-if="label">
-            {{ title || $filters.cap($filters.lower(status)) }}
+            {{ title || $filters.cap(status) }}
         </template>
     </el-button>
 </template>
 
 <script>
-    import State from "../utils/state";
+    import {State} from "@kestra-io/ui-libs"
+
+    const StatusRemap = {
+        "failed": "error",
+        "warn": "warning"
+    }
 
     export default {
         props: {
             status: {
                 type: String,
-                required: true
+                required: true,
+                default: undefined
             },
             size: {
                 type: String,
@@ -30,12 +36,13 @@
         },
         emits: ["click"],
         computed: {
-            cls() {
-                const bg = "status-" + State.colorClass()[this.status];
+            style() {
+                const statusVarname = (StatusRemap[this.status.toLowerCase()] ?? this.status)?.toLowerCase()
                 return {
-                    "no-label": !this.label,
-                    [bg]: true,
-                }
+                    color: `var(--ks-content-${statusVarname}) !important`,
+                    "border-color": `var(--ks-border-${statusVarname}) !important`,
+                    "background-color": `var(--ks-background-${statusVarname}) !important`
+                };
             },
             icon() {
                 return State.icon()[this.status];
@@ -46,14 +53,13 @@
 <style scoped lang="scss">
     .el-button {
         white-space: nowrap;
+        border-radius: var(--el-border-radius-base);
+        width: 7rem;
+        cursor: default;
 
         &.no-label {
-            padding: 8px;
+            padding: 0.5rem;
             line-height: 1;
-        }
-
-        &:not(.no-label) {
-            border-radius: var(--bs-border-radius-pill);
         }
     }
 </style>

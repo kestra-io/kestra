@@ -1,15 +1,17 @@
 <template>
     <template v-if="initialInputs">
         <el-form-item
-            v-for="input in filteredInputs || []"
+            v-for="input in inputsMetaData || []"
             :key="input.id"
-            :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
-            :rules="input.type === 'BOOLEAN' ? [requiredBooleanRule(input)] : undefined"
+            :rules="requiredRules(input)"
             :prop="input.id"
             :error="inputError(input.id)"
             :inline-message="true"
         >
+            <template #label>
+                <markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
+            </template>
             <editor
                 :full-height="false"
                 :input="true"
@@ -24,12 +26,13 @@
                 :full-height="false"
                 :input="true"
                 :navbar="false"
-                v-if="input.type === 'ENUM' || input.type === 'SELECT'"
+                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-test-id="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 :allow-create="input.allowCustomValue"
                 filterable
+                clearable
             >
                 <el-option
                     v-for="item in input.values"
@@ -37,9 +40,23 @@
                     :label="item"
                     :value="item"
                 >
-                    {{ item }}
+                    <markdown :source="item" />
                 </el-option>
             </el-select>
+            <el-radio-group
+                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.isRadio"
+                :data-test-id="`input-form-${input.id}`"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
+            >
+                <el-radio v-for="item in input.values" :key="item" :label="item" :value="item" />
+                <el-input
+                    v-if="input.allowCustomValue"
+                    v-model="inputsValues[input.id]"
+                    @update:model-value="onChange(input)"
+                    :placeholder="$t('custom value')"
+                />
+            </el-radio-group>
             <el-select
                 :full-height="false"
                 :input="true"
@@ -50,6 +67,7 @@
                 @update:model-value="onMultiSelectChange(input, $event)"
                 multiple
                 filterable
+                clearable
                 :allow-create="input.allowCustomValue"
             >
                 <el-option
@@ -58,7 +76,7 @@
                     :label="item"
                     :value="item"
                 >
-                    {{ item }}
+                    <markdown :source="item" />
                 </el-option>
             </el-select>
             <el-input
@@ -96,7 +114,7 @@
                 v-if="input.type === 'BOOLEAN'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
-                class="w-100"
+                class="w-100 boolean-inputs"
             >
                 <el-radio-button :label="$t('true')" :value="true" />
                 <el-radio-button :label="$t('false')" :value="false" />
@@ -179,7 +197,7 @@
         </div>
     </template>
 
-    <el-alert type="info" :show-icon="true" :closable="false" v-else>
+    <el-alert type="info" :show-icon="true" :closable="false" class="mb-3" v-else>
         {{ $t("no inputs") }}
     </el-alert>
 </template>
@@ -192,36 +210,20 @@
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
-    import YamlUtils from "../../utils/yamlUtils.js";
     import DurationPicker from "./DurationPicker.vue";
     import {inputsToFormDate} from "../../utils/submitTask"
 
     export default {
         computed: {
             ...mapState("auth", ["user"]),
-            YamlUtils() {
-                return YamlUtils
-            },
             inputErrors() {
                 // we only keep errors that don't target an input directly
-                const keepErrors = this.inputsMetaData.filter(it => it.inputId === undefined);
+                const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);
 
                 return keepErrors.filter(it => it.errors && it.errors.length > 0).length > 0 ?
                     keepErrors.filter(it => it.errors && it.errors.length > 0).flatMap(it => it.errors?.flatMap(err => err.message)) :
                     null
-            },
-            filteredInputs(){
-                const inputVisibility = this.inputsMetaData.reduce((acc, it) => {
-                    acc[it.inputId] = it.enabled;
-                    return acc;
-                }, {});
-                return this.initialInputs.filter(it => inputVisibility[it.id]);
-            },
-            /**
-             * To be able to compare values in a watcher, we need to return a new object
-             * We cannot compare proxied objects
-             * https://stackoverflow.com/questions/62729380/vue-watch-outputs-same-oldvalue-and-newvalue
-             */
+            }
         },
         components: {Editor, Markdown, DurationPicker},
         props: {
@@ -235,7 +237,7 @@
             },
             initialInputs: {
                 type: Array,
-                default: undefined
+                default: () => []
             },
             flow: {
                 type: Object,
@@ -249,16 +251,39 @@
         data() {
             return {
                 inputsValues: this.modelValue,
+                /**
+                 * To be able to compare values in a watcher, we need to return a new object
+                 * We cannot compare proxied objects, that is the sole purpose of this variable.
+                 * @see https://stackoverflow.com/questions/62729380/vue-watch-outputs-same-oldvalue-and-newvalue
+                 */
                 previousInputsValues: {},
                 inputsMetaData: [],
                 inputsValidation: [],
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
+                debouncedValidation: () => {}
             };
         },
         emits: ["update:modelValue", "confirm", "validation"],
         created() {
-            this.validateInputs();
+            this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
+            this.debouncedValidation = debounce(this.validateInputs, 500)
+
+            this.validateInputs().then(() => {
+                this.$watch("inputsValues", {
+                    handler(val) {
+                        // only revalidate if values have changed
+                        if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
+                            // only revalidate if values are stable for more than 500ms
+                            // to avoid too many calls to the server
+                            this.debouncedValidation();
+                            this.$emit("update:modelValue", this.inputsValues);
+                        }
+                        this.previousInputsValues = JSON.parse(JSON.stringify(val))
+                    },
+                    deep: true
+                });
+            });
         },
         mounted() {
             setTimeout(() => {
@@ -290,8 +315,8 @@
                 }
 
                 const errors = this.inputsMetaData
-                    .filter(({inputId, errors}) => {
-                        return inputId === id && errors && errors.length > 0;
+                    .filter((it) => {
+                        return it.id === id && it.errors && it.errors.length > 0;
                     })
                     .map(it => it.errors.map(err => err.message).join("\n"))
 
@@ -299,12 +324,12 @@
             },
             updateDefaults() {
                 for (const input of this.inputsMetaData || []) {
-                    if (this.inputsValues[input.inputId] === undefined || this.inputsValues[input.inputId] === null) {
-                        const {type, defaults} = this.initialInputs.find(it => it.id === input.inputId);
+                    if (this.inputsValues[input.id] === undefined || this.inputsValues[input.id] === null) {
+                        const {type, defaults} = input;
                         if (type === "MULTISELECT") {
                             this.multiSelectInputs[input.id] = input.defaults;
                         }
-                        this.inputsValues[input.inputId] = Inputs.normalize(type, defaults);
+                        this.inputsValues[input.id] = Inputs.normalize(type, defaults);
                     }
                 }
             },
@@ -320,7 +345,7 @@
                 this.$emit("confirm");
             },
             onMultiSelectChange(input, e) {
-                this.inputsValues[input.id] = JSON.stringify(e).toString();
+                this.inputsValues[input.id] = JSON.stringify(e);
                 this.onChange(input);
             },
             onFileChange(input, e) {
@@ -351,95 +376,94 @@
                     return `Maximum value is ${max}.`;
                 } else return false;
             },
-            validateInputs() {
-                if (this.initialInputs === undefined || this.initialInputs.length === 0) {
+            async validateInputs() {
+                if (this.inputsMetaData === undefined || this.inputsMetaData.length === 0) {
                     return;
                 }
 
-                const formData = inputsToFormDate(this, this.initialInputs, this.inputsValues);
+                const formData = inputsToFormDate(this, this.inputsMetaData, this.inputsValues);
+
+                const metadataCallback = (response) => {
+                    this.inputsMetaData = response.inputs.reduce((acc,it) => {
+                        if(it.enabled){
+                            acc.push({...it.input, errors: it.errors});
+                        }
+                        return acc;
+                    }, [])
+                    this.updateDefaults();
+                }
 
                 if (this.flow !== undefined) {
                     const options = {namespace: this.flow.namespace, id: this.flow.id};
-                    this.$store.dispatch("execution/validateExecution", {...options, formData})
-                        .then(response => {
-                            this.inputsMetaData = response.data.inputs.map(it => {
-                                return {
-                                    inputId: it.input?.id,
-                                    enabled: it.enabled,
-                                    errors: it.errors
-                                }
-                            })
-                            this.updateDefaults();
-                        });
+                    const {data} = await this.$store.dispatch("execution/validateExecution", {...options, formData})
+
+                    metadataCallback(data);
+
                 } else if (this.execution !== undefined) {
                     const options = {id: this.execution.id};
-                    this.$store.dispatch("execution/validateResume", {...options, formData})
-                        .then(response => {
-                            this.inputsMetaData = response.data.inputs.map(it => {
-                                return {
-                                    inputId: it.input?.id,
-                                    enabled: it.enabled,
-                                    errors: it.errors
-                                }
-                            })
-                            this.updateDefaults();
-                        });
+                    const {data} = await this.$store.dispatch("execution/validateResume", {...options, formData})
+
+                    metadataCallback(data);
                 } else {
                     this.$emit("validation", {
                         formData: formData,
                         callback: (response) => {
-                            this.inputsMetaData = response.inputs.map(it => {
-                                return {
-                                    inputId: it.input?.id,
-                                    enabled: it.enabled,
-                                    errors: it.errors
-                                }
-                            })
-                            this.updateDefaults();
+                            metadataCallback(response);
                         }
                     });
                 }
             },
-            requiredBooleanRule(input) {
-                return input.required !== false ? {
-                    validator: (_, val, callback) => {
-                        if(val === "undefined"){
-                            return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
+            requiredRules(input) {
+                if(input.required === false)
+                    return undefined
+
+                if(input.type === "BOOLEAN"){
+                    return [{
+                        validator: (_, val, callback) => {
+                            if(val === "undefined"){
+                                return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
+                            }
+                            callback()
+                        },
+                    }]
+                }
+
+                if(["ENUM", "SELECT", "MULTISELECT"].includes(input.type)){
+                    return [
+                        {
+                            required: true,
+                            validator: (_, __, callback) => {
+                                const val = input.type === "MULTISELECT" ? this.multiSelectInputs[input.id] : this.inputsValues[input.id]
+                                if(!val?.length){
+                                    return callback(new Error(this.$t("is required", {field: input.displayName || input.id})));
+                                }
+                                callback()
+                            },
+                            trigger: "change",
                         }
-                        callback()
-                    },
-                } : undefined
+                    ]
+                }
+
+                return undefined
             }
         },
         watch: {
-            inputsValues: {
-                handler(val) {
-                    // only revalidate if values have changed
-                    if(JSON.stringify(val) !== JSON.stringify(this.previousInputsValues)){
-                        // only revalidate if values are stable for more than 200ms
-                        // to avoid too many useless calls to the server
-                        debounce(this.validateInputs, 200)();
-                        this.$emit("update:modelValue", this.inputsValues);
-                    }
-                    this.previousInputsValues = JSON.parse(JSON.stringify(val))
-                },
-                deep: true
+            flow () {
+                this.validateInputs();
+
             },
-            flow: {
-                handler() {
-                    this.validateInputs()
-                }
-            },
-            execution: {
-                handler() {
-                    this.validateInputs()
-                }
+            execution () {
+                this.validateInputs();
             }
         }
     };
 </script>
 
 <style scoped lang="scss">
+.md-label {
+    height: 20px;
+}
+
 .hint {
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
@@ -450,4 +474,41 @@
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
 }
+</style>
+
+<style scoped lang="scss">
+    :deep(.boolean-inputs) {
+        display: flex;
+        align-items: center;
+
+        .el-radio-button {
+            &.is-active {
+                .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
+                    color: var(--ks-content-primary);
+                    background-color: var(--bs-gray-100);
+                    box-shadow: 0 0 0 0 var(--ks-border-active);
+                }
+            }
+
+            .el-radio-button__inner {
+                border: var(--ks-border-primary);
+                transition: 0.3s ease-in-out;
+
+                &:hover {
+                    color: var(--ks-content-secondary);
+                    border-color: var(--ks-border-active);
+                    background-color: var(--ks-background-card);
+                }
+
+                &:first-child {
+                    border-left: var(--ks-border-primary);
+                }
+            }
+        }
+    }
+
+    .el-input-file {
+        display: flex;
+        align-items: center;
+    }
 </style>

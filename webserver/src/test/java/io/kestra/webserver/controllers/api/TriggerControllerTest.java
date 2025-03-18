@@ -1,6 +1,18 @@
 package io.kestra.webserver.controllers.api;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasProperty;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
@@ -10,7 +22,6 @@ import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.plugin.core.trigger.Schedule;
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -21,21 +32,17 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-class TriggerControllerTest extends JdbcH2ControllerTest {
+@KestraTest(startRunner = true, startScheduler = true)
+class TriggerControllerTest {
     @Inject
     @Client("/")
     ReactorHttpClient client;
@@ -49,16 +56,10 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
     @Inject
     private JdbcTestUtils jdbcTestUtils;
 
-    @Override
     @BeforeEach
     protected void setup() {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
-
-        if (!runner.isRunning()) {
-            runner.setSchedulerEnabled(true);
-            runner.run();
-        }
     }
 
     @SuppressWarnings("unchecked")
@@ -80,10 +81,33 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
         jdbcTriggerRepository.save(trigger);
         jdbcTriggerRepository.save(trigger.toBuilder().triggerId("trigger-nextexec-polling").build());
 
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=schedule-trigger-search&namespace=io.kestra.tests&sort=triggerId:asc"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
+        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/triggers/search?filters[q][$eq]=schedule-trigger-search&filters[namespace][$startsWith]=io.kestra.tests&sort=triggerId:asc"),
+            Argument.of(PagedResults.class, TriggerController.Triggers.class)
+        );
         assertThat(triggers.getTotal(), greaterThanOrEqualTo(2L));
 
         assertThat(triggers.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList(), Matchers.hasItems(
+                allOf(
+                    hasProperty("triggerId", is("trigger-nextexec-schedule")),
+                    hasProperty("namespace", is(triggerNamespace)),
+                    hasProperty("flowId", is(triggerFlowId))
+                ),
+                allOf(
+                    hasProperty("triggerId", is("trigger-nextexec-polling")),
+                    hasProperty("namespace", is(triggerNamespace)),
+                    hasProperty("flowId", is(triggerFlowId))
+                )
+            )
+        );
+
+        PagedResults<TriggerController.Triggers> triggers_oldParameters = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/triggers/search?q=schedule-trigger-search&namespace=io.kestra.tests&sort=triggerId:asc"),
+            Argument.of(PagedResults.class, TriggerController.Triggers.class)
+        );
+        assertThat(triggers_oldParameters.getTotal(), greaterThanOrEqualTo(2L));
+
+        assertThat(triggers_oldParameters.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList(), Matchers.hasItems(
                 allOf(
                     hasProperty("triggerId", is("trigger-nextexec-schedule")),
                     hasProperty("namespace", is(triggerNamespace)),
@@ -347,11 +371,11 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
         Flow flow = generateFlow("flow-with-triggers");
         jdbcFlowRepository.create(flow, flow.generateSource(), flow);
         Await.until(
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 2,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?filters[q][$eq]=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 2,
             Duration.ofMillis(100),
             Duration.ofMinutes(2)
         );
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?q=trigger-nextexec"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
+        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?filters[q][$eq]=trigger-nextexec"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
         assertThat(triggers.getResults().getFirst().getTriggerContext().getNextExecutionDate(), notNullValue());
         assertThat(triggers.getResults().get(1).getTriggerContext().getNextExecutionDate(), notNullValue());
     }
@@ -363,7 +387,7 @@ class TriggerControllerTest extends JdbcH2ControllerTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("task")
                 .type(Return.class.getName())
-                .format("return data")
+                .format(Property.of("return data"))
                 .build()))
             .triggers(List.of(
                 Schedule.builder()

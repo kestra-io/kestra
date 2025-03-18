@@ -1,13 +1,15 @@
 package io.kestra.plugin.core.flow;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.core.junit.annotations.LoadFlows;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import org.junit.jupiter.api.Test;
@@ -24,12 +26,18 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class CorrelationIdTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+class CorrelationIdTest {
     @Inject
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     private QueueInterface<Execution> executionQueue;
+    @Inject
+    private RunnerUtils runnerUtils;
 
     @Test
+    @LoadFlows({"flows/valids/subflow-parent.yaml",
+        "flows/valids/subflow-child.yaml",
+        "flows/valids/subflow-grand-child.yaml"})
     void shouldHaveCorrelationId() throws QueueException, TimeoutException, InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(2);
         AtomicReference<Execution> child = new AtomicReference<>();
@@ -38,12 +46,12 @@ class CorrelationIdTest extends AbstractMemoryRunnerTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("subflow-child") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
                 child.set(execution);
+                countDownLatch.countDown();
             }
             if (execution.getFlowId().equals("subflow-grand-child") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
                 grandChild.set(execution);
+                countDownLatch.countDown();
             }
         });
 

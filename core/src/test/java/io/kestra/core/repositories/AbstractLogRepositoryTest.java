@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.statistics.LogStatistics;
@@ -13,6 +14,7 @@ import org.slf4j.event.Level;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import reactor.core.publisher.Flux;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
@@ -40,23 +42,28 @@ public abstract class AbstractLogRepositoryTest {
     void all() {
         LogEntry.LogEntryBuilder builder = logEntry(Level.INFO);
 
-        ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, null, null, null, null, null, null, null, null);
+        ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, null, null);
         assertThat(find.size(), is(0));
+
 
         LogEntry save = logRepository.save(builder.build());
 
-        find = logRepository.find(Pageable.UNPAGED, "doe", null, null, null, null, null, null, null);
+        find = logRepository.find(Pageable.UNPAGED, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getExecutionId(), is(save.getExecutionId()));
-
-        find = logRepository.find(Pageable.UNPAGED,  "doe", null, null, null, null, Level.WARN,null,  null);
+        var filters = List.of(QueryFilter.builder()
+                .field(QueryFilter.Field.MIN_LEVEL)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(Level.WARN)
+            .build());
+        find = logRepository.find(Pageable.UNPAGED,  "doe", filters);
         assertThat(find.size(), is(0));
 
-        find = logRepository.find(Pageable.UNPAGED, null, null, null, null, null, null, null, null);
+        find = logRepository.find(Pageable.UNPAGED, null, null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getExecutionId(), is(save.getExecutionId()));
 
-        logRepository.find(Pageable.UNPAGED, "kestra-io/kestra", null, null, null, null, null, null, null);
+        logRepository.find(Pageable.UNPAGED, "kestra-io/kestra", null);
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getExecutionId(), is(save.getExecutionId()));
 
@@ -195,5 +202,30 @@ public abstract class AbstractLogRepositoryTest {
         list = logRepository.statistics(null, null, null, "second", null, null, null, null);
         assertThat(list.size(), is(31));
         assertThat(list.stream().filter(logStatistics -> logStatistics.getCounts().get(Level.ERROR) == 13).count(), is(1L));
+    }
+
+    @Test
+    void findAsych() {
+        logRepository.save(logEntry(Level.INFO).build());
+        logRepository.save(logEntry(Level.ERROR).build());
+        logRepository.save(logEntry(Level.WARN).build());
+
+        ZonedDateTime startDate = ZonedDateTime.now().minusSeconds(1);
+
+        Flux<LogEntry> find = logRepository.findAsync(null, "io.kestra.unittest", Level.INFO, startDate);
+        List<LogEntry> logEntries = find.collectList().block();
+        assertThat(logEntries.size(), is(3));
+
+        find = logRepository.findAsync(null, null, Level.ERROR, startDate);
+        logEntries = find.collectList().block();
+        assertThat(logEntries.size(), is(1));
+
+        find = logRepository.findAsync(null, "io.kestra.unused", Level.INFO, startDate);
+        logEntries = find.collectList().block();
+        assertThat(logEntries.size(), is(0));
+
+        find = logRepository.findAsync(null, null, Level.INFO, startDate.plusSeconds(2));
+        logEntries = find.collectList().block();
+        assertThat(logEntries.size(), is(0));
     }
 }

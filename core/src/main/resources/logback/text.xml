@@ -23,19 +23,7 @@
             <level>WARN</level>
         </filter>
         <filter class="ch.qos.logback.core.filter.EvaluatorFilter">
-            <evaluator>
-                <!--
-                    - Disabling Liquibase outOfOrder warning
-                    - Disabling JooQ POSTGRES version support warning, see https://github.com/kestra-io/kestra/issues/3321#issuecomment-2017665833
-                    - Disabling Micronaut / Micrometer executor binding warning
-                    Warning: this needs to also be done on gcp.xml and ecs.xml
-                -->
-                <expression>
-                    return message.contains("outOfOrder mode is active. Migration of schema") ||
-                        message.contains("Database version is older than what dialect POSTGRES supports") ||
-                        message.contains("Failed to bind as java.util.concurrent.Executors$AutoShutdownDelegatedExecutorService is unsupported.");
-                </expression>
-            </evaluator>
+            <evaluator class="io.kestra.core.log.KestraLogFilter" />
             <OnMismatch>NEUTRAL</OnMismatch>
             <OnMatch>DENY</OnMatch>
         </filter>

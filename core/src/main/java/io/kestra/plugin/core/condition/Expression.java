@@ -29,13 +29,25 @@ import jakarta.validation.constraints.NotNull;
 @Plugin(
     examples = {
         @Example(
-            title = "A condition that will return false for a missing variable.",
+            title = "Trigger condition to execute the flow when the expression evaluates to true.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.Expression",
-                "      expression: {{ unknown is defined }}",
-            }
+            code = """
+                id: myflow
+                namespace: company.team
+                
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: Average value has gone below 10
+                
+                triggers:
+                  - id: expression_trigger
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "*/1 * * * *"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.Expression
+                        expression: "{{ kv('average_value') < 10 }}"    
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.VariableCondition", "io.kestra.plugin.core.condition.ExpressionCondition"}

@@ -53,19 +53,18 @@ public class JdbcWorkerTriggerResultQueueService implements Closeable {
                         JsonNode json = MAPPER.readTree(either.getRight().getRecord());
                         var triggerContext = MAPPER.treeToValue(json.get("triggerContext"), TriggerContext.class);
                         jdbcWorkerJobRunningRepository.deleteByKey(triggerContext.uid());
-                    } catch (JsonProcessingException e) {
+                    } catch (JsonProcessingException | DeserializationException e) {
                         // ignore the message if we cannot do anything about it
                         log.error("Unexpected exception when trying to handle a deserialization error", e);
                     }
-                    return;
+                } else {
+                    WorkerTriggerResult workerTriggerResult = either.getLeft();
+                    jdbcWorkerJobRunningRepository.deleteByKey(workerTriggerResult.getTriggerContext().uid());
                 }
-
-                WorkerTriggerResult workerTriggerResult = either.getLeft();
-                jdbcWorkerJobRunningRepository.deleteByKey(workerTriggerResult.getTriggerContext().uid());
+                consumer.accept(either);
             });
-
-            eithers.forEach(consumer);
         }));
+
         return disposable.get();
     }
 

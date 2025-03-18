@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.schedulers.ScheduleContextInterface;
 import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
@@ -56,24 +57,41 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
     }
 
     @Override
-    public Trigger create(Trigger trigger) {
+    public Trigger create(Trigger trigger, String headerContent) {
+        return this.triggerRepository.create(trigger);
+    }
 
+    @Override
+    public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface, String headerContent) {
+        this.triggerRepository.save(trigger, scheduleContextInterface);
+
+        return trigger;
+    }
+
+    @Override
+    public Trigger create(Trigger trigger) {
         return this.triggerRepository.create(trigger);
     }
 
     @Override
     public Trigger update(Trigger trigger) {
+        // here we save a trigger after evaluation, but as during its evaluation it can have been disabled in DB,
+        // we need to load it form DB and copy the disabled flag if set
+        Optional<Trigger> existing = findLast(trigger);
+        Trigger updated = trigger;
+        if (existing.isPresent() && existing.get().getDisabled()) {
+            updated = trigger.toBuilder().disabled(true).build();
+        }
 
-        return this.triggerRepository.update(trigger);
-    }
-
-    public Trigger updateExecution(Trigger trigger) {
-
-        return this.triggerRepository.updateExecution(trigger);
+        return this.triggerRepository.update(updated);
     }
 
     public Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) {
         return this.triggerRepository.update(flow, abstractTrigger, conditionContext);
+    }
+
+    public void delete(Trigger trigger) throws QueueException {
+        this.triggerRepository.delete(trigger);
     }
 
     @Override
@@ -85,7 +103,4 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
     public List<Trigger> findByNextExecutionDateReadyForGivenFlows(List<FlowWithSource> flows, ZonedDateTime now, ScheduleContextInterface scheduleContext) {
         throw new NotImplementedException();
     }
-
-    @Override
-    public void unlock(Trigger trigger) {}
 }

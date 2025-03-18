@@ -16,30 +16,30 @@ plugins {
     id "java"
     id 'java-library'
     id "idea"
-    id "com.gradleup.shadow" version "8.3.5"
+    id "com.gradleup.shadow" version "8.3.6"
     id "application"
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "5.1.0.4882"
+    id "org.sonarqube" version "6.0.1.5171"
     id 'jacoco-report-aggregation'
 
     // helper
-    id "com.github.ben-manes.versions" version "0.51.0"
+    id "com.github.ben-manes.versions" version "0.52.0"
 
     // front
-    id 'org.siouan.frontend-jdk21' version '9.1.0' apply false
+    id 'com.github.node-gradle.node' version '7.1.0'
 
     // release
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0"
-    id 'net.researchgate.release' version '3.0.2'
-    id "com.gorylenko.gradle-git-properties" version "2.4.2"
+    id 'net.researchgate.release' version '3.1.0'
+    id "com.gorylenko.gradle-git-properties" version "2.5.0"
     id 'signing'
     id 'ru.vyarus.pom' version '3.0.0' apply false
     id 'ru.vyarus.github-info' version '2.0.0' apply false
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "11.1.0" apply false
+    id "org.owasp.dependencycheck" version "12.1.0" apply false
 }
 
 idea {
@@ -123,6 +123,7 @@ allprojects {
             micronaut "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
             micronaut "io.micronaut:micronaut-http-client"
             micronaut "io.micronaut.reactor:micronaut-reactor-http-client"
+            micronaut "io.micronaut.tracing:micronaut-tracing-opentelemetry-http"
 
             // logs
             implementation "org.slf4j:slf4j-api"
@@ -132,6 +133,9 @@ allprojects {
             implementation group: 'org.slf4j', name: 'jul-to-slf4j'
             implementation group: 'org.slf4j', name: 'jcl-over-slf4j'
             implementation group: 'org.fusesource.jansi', name: 'jansi'
+
+            // OTEL
+            implementation "io.opentelemetry:opentelemetry-exporter-otlp"
 
             // jackson
             implementation group: 'com.fasterxml.jackson.core', name: 'jackson-core'
@@ -197,7 +201,8 @@ subprojects {
         test {
             useJUnitPlatform()
 
-            maxHeapSize = "4048m"
+            // set Xmx for test workers
+            maxHeapSize = '4g'
 
             // configure en_US default locale for tests
             systemProperty 'user.language', 'en'
@@ -274,7 +279,7 @@ subprojects {
         }
 
         dependencies {
-            agent "org.aspectj:aspectjweaver:1.9.22.1"
+            agent "org.aspectj:aspectjweaver:1.9.23"
         }
 
         test {
@@ -589,4 +594,13 @@ release {
     git {
         requireBranch.set('develop')
     }
+
+    // Dynamically set properties with default values
+    failOnSnapshotDependencies = (project.hasProperty('release.failOnSnapshotDependencies')
+            ? project.property('release.failOnSnapshotDependencies').toBoolean()
+            : true)
+
+    pushReleaseVersionBranch = (project.hasProperty('release.pushReleaseVersionBranch')
+            ? project.property('release.pushReleaseVersionBranch').toString()
+            : null)
 }

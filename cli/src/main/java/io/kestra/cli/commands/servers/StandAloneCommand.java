@@ -2,7 +2,6 @@ package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.services.FileChangedEventListener;
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.StandAloneRunner;
@@ -23,7 +22,7 @@ import java.util.Map;
 
 @CommandLine.Command(
     name = "standalone",
-    description = "start a standalone server"
+    description = "Start the standalone all-in-one server"
 )
 @Slf4j
 public class StandAloneCommand extends AbstractServerCommand {
@@ -46,7 +45,7 @@ public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Option(names = {"-f", "--flow-path"}, description = "the flow path containing flow to inject at startup (when running with a memory flow repository)")
     private File flowPath;
 
-    @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to two times the number of available processors. Set it to 0 to avoid starting a worker.")
+    @CommandLine.Option(names = {"--worker-thread"}, description = "the number of worker threads, defaults to four times the number of available processors. Set it to 0 to avoid starting a worker.")
     private int workerThread = defaultWorkerThread();
 
     @CommandLine.Option(names = {"--skip-executions"}, split=",", description = "a list of execution identifiers to skip, separated by a coma; for troubleshooting purpose only")
@@ -95,7 +94,6 @@ public class StandAloneCommand extends AbstractServerCommand {
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
 
         super.call();
-        this.shutdownHook(() -> KestraContext.getContext().shutdown());
 
         if (flowPath != null) {
             try {
@@ -123,8 +121,6 @@ public class StandAloneCommand extends AbstractServerCommand {
         if (fileWatcher != null) {
             fileWatcher.startListeningFromConfig();
         }
-
-        this.shutdownHook(standAloneRunner::close);
 
         Await.until(() -> !this.applicationContext.isRunning());
 

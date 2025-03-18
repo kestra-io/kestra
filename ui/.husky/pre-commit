@@ -1,0 +1,1 @@
+cd ui && npx lint-staged

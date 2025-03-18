@@ -49,7 +49,7 @@ public class NamespaceFileController {
     private FlowService flowService;
 
     private final List<Pattern> forbiddenPathPatterns = List.of(
-        Pattern.compile("/" + FLOWS_FOLDER + ".*")
+        Pattern.compile("/" + FLOWS_FOLDER + "(/.*)?$")
     );
 
 
@@ -193,7 +193,7 @@ public class NamespaceFileController {
             this.importFlow(tenantId, flowSource);
             return;
         }
-
+        forbiddenPathsGuard(path);
         storageInterface.put(tenantId, namespace, NamespaceFile.of(namespace, path).uri(), inputStream);
     }
 
@@ -258,9 +258,10 @@ public class NamespaceFileController {
         @Parameter(description = "The internal storage uri of the file / directory to delete") @QueryValue String path
     ) throws IOException, URISyntaxException {
         URI encodedPath = null;
-        if (path != null) {
-            encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
+        if (!path.startsWith("/")) {
+            path = "/" + path;
         }
+        encodedPath = new URI(URLEncoder.encode(path, StandardCharsets.UTF_8));
         ensureWritableNamespaceFile(encodedPath);
 
         String pathWithoutScheme = encodedPath.getPath();

@@ -1,17 +1,58 @@
 <template>
-    <div class="p-4">
+    <div class="h-100 p-4">
         <div class="d-flex justify-content-between align-items-center">
             <span class="fs-6 fw-bold">
                 {{ t("dashboard.executions_in_progress") }}
             </span>
-            <RouterLink :to="{name: 'executions/list'}">
+            <RouterLink
+                :to="{name: 'executions/list',
+                      query:{state:[
+                          State.RUNNING,
+                          State.RESTARTED,
+                          State.CREATED,
+                          State.PAUSED,
+                          State.RETRYING,
+                          State.QUEUED,
+                          State.KILLING
+                      ]}}"
+            >
                 <el-button type="primary" size="small" text>
                     {{ t("dashboard.see_all") }}
                 </el-button>
             </RouterLink>
         </div>
 
-        <div class="pt-4" v-if="executions.results.length">
+        <div class="pt-4" v-if="loading">
+            <el-table :data="skeletonData" class="inprogress" :height="240">
+                <el-table-column :label="$t('dashboard.id')" width="80">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 60px" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('namespace')">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 100%" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('flow')">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 100%" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('duration')" width="100">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 60px" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('state')">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 80px" />
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+
+        <div class="pt-4" v-else-if="executions.results.length">
             <el-table
                 :data="executions.results"
                 class="inprogress"
@@ -89,9 +130,9 @@
                         }}s
                     </template>
                 </el-table-column>
-                <el-table-column :label="$t('state')" width="100">
+                <el-table-column :label="$t('state')">
                     <template #default="scope">
-                        <States :label="scope.row.state.current" />
+                        <Status size="small" :status="scope.row.state.current" />
                     </template>
                 </el-table-column>
             </el-table>
@@ -119,7 +160,9 @@
 
     import moment from "moment";
 
-    import States from "../../States.vue";
+    import {State} from "@kestra-io/ui-libs";
+
+    import Status from "../../../../Status.vue";
     import NoData from "../../../../layout/NoData.vue";
 
     import {RouterLink} from "vue-router";
@@ -135,6 +178,10 @@
             required: false,
             default: null,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
 
     const store = useStore();
@@ -142,6 +189,8 @@
 
     const executions = ref({results: [], total: 0});
     const currentPage = ref(1);
+
+    const skeletonData = Array(5).fill({});
 
     const loadExecutions = (page = 1) => {
         store
@@ -161,8 +210,6 @@
             })
             .then((response) => {
                 if (!response) return;
-
-                console.log
                 executions.value = response;
             });
     };
@@ -173,19 +220,14 @@
 
 <style lang="scss" scoped>
 code {
-    color: var(--bs-code-color);
+    color: var(--ks-content-id);
 }
 
 .inprogress {
-    --el-table-tr-bg-color: var(--bs-body-bg) !important;
-    background: var(--bs-body-bg);
-    & a {
-        color: #8e71f7;
-
-        html.dark & {
-            color: #e0e0fc;
-        }
-    }
+    background: var(--ks-background-table-row);
 }
 
+:deep(.el-skeleton-item) {
+    background: var(--ks-background-skeleton);
+}
 </style>

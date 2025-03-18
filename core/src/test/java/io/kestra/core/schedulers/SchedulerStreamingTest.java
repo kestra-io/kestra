@@ -1,6 +1,7 @@
 package io.kestra.core.schedulers;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -33,15 +34,13 @@ import java.util.function.Consumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
 public class SchedulerStreamingTest extends AbstractSchedulerTest {
     @Inject
     protected FlowListeners flowListenersService;
-
-    @Inject
-    protected SchedulerTriggerStateInterface triggerState;
 
     private static Flow createFlow(Boolean failed) {
         RealtimeUnitTest schedule = RealtimeUnitTest.builder()
@@ -104,6 +103,7 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
                 assertThat(executionCount.size(), is(10));
                 assertThat(SchedulerStreamingTest.startedEvaluate.get(false), is(1));
                 assertThat(last.getTrigger().getVariables().get("startedEvaluate"), is(1));
+                assertTrue(last.getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
             }
         );
     }

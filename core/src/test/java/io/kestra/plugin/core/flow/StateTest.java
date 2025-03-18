@@ -1,25 +1,33 @@
 package io.kestra.plugin.core.flow;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
-import io.kestra.core.utils.IdUtils;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.TimeoutException;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
-class StateTest extends AbstractMemoryRunnerTest {
+import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.utils.IdUtils;
+import jakarta.inject.Inject;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeoutException;
+import org.junit.jupiter.api.Test;
+
+@KestraTest(startRunner = true)
+class StateTest {
+
+    @Inject
+    private RunnerUtils runnerUtils;
+
     @SuppressWarnings("unchecked")
     @Test
+    @LoadFlows({"flows/valids/state.yaml"})
     void set() throws TimeoutException, QueueException {
         String stateName = IdUtils.create();
 
@@ -41,6 +49,7 @@ class StateTest extends AbstractMemoryRunnerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    @LoadFlows({"flows/valids/state.yaml"})
     void each() throws TimeoutException, InternalException, QueueException {
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", "each"));

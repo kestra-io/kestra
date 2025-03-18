@@ -7,18 +7,20 @@
                     <KestraFilter
                         prefix="logs"
                         :include="['namespace', 'level', 'absolute_date', 'relative_date']"
-                        :refresh="{shown: true, callback: refresh}"
-                        :settings="{shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}"
+                        :buttons="{
+                            refresh: {shown: true, callback: refresh},
+                            settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
+                        }"
                     />
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <el-card shadow="never" class="mb-3" v-loading="!statsReady">
+                    <el-card class="mb-3 shadow" v-loading="!statsReady">
                         <div>
                             <template v-if="hasStatsData">
-                                <Logs :data="logDaily" />
+                                <Logs :data="logDaily" :loading="!statsReady" />
                             </template>
-                            <NoData v-else />
+                            <LogsNoData v-else />
                         </div>
                     </el-card>
                 </template>
@@ -26,14 +28,14 @@
                 <template #table v-if="logs !== undefined && logs.length > 0">
                     <div v-loading="isLoading">
                         <div class="logs-wrapper">
-                            <template v-for="(log, i) in logs" :key="`${log.taskRunId}-${i}`">
-                                <log-line
-                                    level="TRACE"
-                                    filter=""
-                                    :exclude-metas="isFlowEdit ? ['namespace', 'flowId'] : []"
-                                    :log="log"
-                                />
-                            </template>
+                            <log-line
+                                v-for="(log, i) in logs"
+                                :key="`${log.taskRunId}-${i}`"
+                                level="TRACE"
+                                filter=""
+                                :exclude-metas="isFlowEdit ? ['namespace', 'flowId'] : []"
+                                :log="log"
+                            />
                         </div>
                     </div>
                 </template>
@@ -50,17 +52,18 @@
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../../components/layout/DataTable.vue";
-    import NoData from "../layout/NoData.vue";
+    import LogsNoData from "../dashboard/components/charts/logs/LogsNoData.vue";
     import _merge from "lodash/merge";
     import Logs from "../dashboard/components/charts/logs/Bar.vue";
     import {storageKeys} from "../../utils/constants";
     import KestraFilter from "../filter/KestraFilter.vue"
+    import {decodeSearchParams} from "../filter/utils/helpers";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             KestraFilter,
-            DataTable, LogLine, TopNavBar, Logs, NoData},
+            DataTable, LogLine, TopNavBar, Logs, LogsNoData},
         props: {
             logLevel: {
                 type: String,
@@ -88,7 +91,7 @@
                 isDefaultNamespaceAllow: true,
                 task: undefined,
                 isLoading: false,
-                refreshDates: false,
+                lastRefreshDate: new Date(),
                 statsReady: false,
                 statsData: [],
                 canAutoRefresh: false,
@@ -113,7 +116,10 @@
                 return this.$route.name === "namespaces/update"
             },
             selectedLogLevel() {
-                return this.logLevel || this.$route.query.level || localStorage.getItem("defaultLogLevel") || "INFO";
+                const decodedParams = decodeSearchParams(this.$route.query, ["level"], []);
+                const levelFilters = decodedParams.filter(item => item.label === "level");
+                const decoded = levelFilters.length > 0 ? levelFilters[0].value : "INFO";
+                return this.logLevel || decoded || localStorage.getItem("defaultLogLevel") || "INFO";
             },
             endDate() {
                 if (this.$route.query.endDate) {
@@ -122,8 +128,10 @@
                 return undefined;
             },
             startDate() {
-                this.refreshDates;
-                if (this.$route.query.startDate) {
+                // we mention the last refresh date here to trick
+                // VueJs fine grained reactivity system and invalidate
+                // computed property startDate
+                if (this.$route.query.startDate && this.lastRefreshDate) {
                     return this.$route.query.startDate;
                 }
                 if (this.$route.query.timeRange) {
@@ -140,7 +148,7 @@
                 return this.$route.params.id;
             },
             countStats() {
-                return [...this.logDaily || []].reduce((a, b) => {
+                return [...(this.logDaily || [])].reduce((a, b) => {
                     return a + Object.values(b.counts).reduce((a, b) => a + b, 0);
                 }, 0);
             },
@@ -152,7 +160,7 @@
             const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
             const query = {...to.query};
             if (defaultNamespace) {
-                query.namespace = defaultNamespace; 
+                query.namespace = defaultNamespace;
             }
             next(vm => {
                 vm.$router?.replace({query});
@@ -173,12 +181,10 @@
                 }
             },
             refresh() {
-                this.refreshDates = !this.refreshDates;
+                this.lastRefreshDate = new Date();
                 this.load();
             },
             loadQuery(base) {
-                // eslint-disable-next-line no-unused-vars
-                const {triggerId, ...rest} = this.filters || {};
                 let queryFilter = this.filters ?? this.queryWithFilter();
 
                 if (this.isFlowEdit) {
@@ -200,7 +206,7 @@
             load() {
                 this.isLoading = true
 
-                // eslint-disable-next-line no-unused-vars
+
                 const data = {
                     page: this.filters ? this.internalPageNumber : this.$route.query.page || this.internalPageNumber,
                     size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,
@@ -222,10 +228,13 @@
             loadStats() {
                 this.statsReady = false;
                 this.$store
-                    .dispatch("stat/logDaily", this.loadQuery({
-                        startDate: this.$moment(this.startDate).toISOString(true),
-                        endDate: this.$moment(this.endDate).toISOString(true)
-                    }, true))
+                    .dispatch("stat/logDaily", {
+                        ...this.loadQuery({
+                            startDate: this.$moment(this.startDate).toISOString(true),
+                            endDate: this.$moment(this.endDate).toISOString(true)
+                        }),
+                        logLevel: this.selectedLogLevel
+                    })
                     .then(() => {
                         this.statsReady = true;
                     });
@@ -236,29 +245,33 @@
 <style lang="scss" scoped>
     @import "@kestra-io/ui-libs/src/scss/variables";
 
+    .shadow {
+        box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
+    }
+
     .log-panel {
         > div.log-content {
-            margin-bottom: var(--spacer);
+            margin-bottom: 1rem;
             .navbar {
-                border: 1px solid var(--bs-border-color);
+                border: 1px solid var(--ks-border-primary);
             }
         }
 
         .logs-wrapper {
-            margin-bottom: var(--spacer);
+            margin-bottom: 1rem;
             border-radius: var(--bs-border-radius-lg);
             overflow: hidden;
             padding: $spacer;
-            padding-top: calc($spacer/2);
-            background-color: var(--bs-white);
-            border: 1px solid var(--bs-border-color);
+            padding-top: .5rem;
+            background-color: var(--ks-background-card);
+            border: 1px solid var(--ks-border-primary);
 
             html.dark & {
                 background-color: var(--bs-gray-100);
             }
 
             > * + * {
-                border-top: 1px solid var(--bs-border-color);
+                border-top: 1px solid var(--ks-border-primary);
             }
         }
     }

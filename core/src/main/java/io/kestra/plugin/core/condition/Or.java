@@ -31,16 +31,29 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition to execute the flow when any of the condition is satisfied.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.Or",
-                "      conditions:",
-                "      -  type: io.kestra.plugin.core.condition.DayWeek",
-                "         dayOfWeek: \"MONDAY\"",
-                "      -  type: io.kestra.plugin.core.condition.DayWeek",
-                "         dayOfWeek: \"SUNDAY\"",
-            }
+            code = """
+                id: schedule_condition_or
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute on Sundays and Mondays at 11am."
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 11 * * *"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.Or
+                        conditions:
+                          - type: io.kestra.plugin.core.condition.DayWeek
+                            dayOfWeek: "MONDAY"
+                          - type: io.kestra.plugin.core.condition.DayWeek
+                            dayOfWeek: "SUNDAY"
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.OrCondition", "io.kestra.plugin.core.condition.OrCondition"}

@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.ion.IonObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -29,6 +30,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.yaml.snakeyaml.LoaderOptions;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
@@ -119,6 +121,9 @@ public final class JacksonMapper {
     }
 
     private static ObjectMapper configure(ObjectMapper mapper) {
+        SimpleModule durationDeserialization = new SimpleModule();
+        durationDeserialization.addDeserializer(Duration.class, new DurationDeserializer());
+
         return mapper
             .configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
             .setSerializationInclusion(JsonInclude.Include.NON_NULL)
@@ -128,6 +133,7 @@ public final class JacksonMapper {
             .registerModules(new GuavaModule())
             .registerModule(new PluginModule())
             .registerModule(new RunContextModule())
+            .registerModule(durationDeserialization)
             .setTimeZone(TimeZone.getDefault());
     }
 
@@ -157,7 +163,7 @@ public final class JacksonMapper {
         for (JsonNode patch : patches) {
             try {
                 // Required for ES
-                if (!patch.has("value")) {
+                if (patch.findValue("value") == null) {
                     ((ObjectNode) patch.get(0)).set("value", (JsonNode) null);
                 }
                 JsonNode current = MAPPER.valueToTree(object);

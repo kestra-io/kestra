@@ -11,30 +11,35 @@
                     </span>
                 </p>
                 <p class="m-0 fs-2">
-                    {{ total }}
+                    <el-skeleton v-if="loading" :rows="0" />
+                    <span v-else>{{ total }}</span>
                 </p>
             </div>
 
-            <div class="switch-container">
+            <div class="switch-container w-100">
                 <div
                     class="d-flex justify-content-end align-items-center switch-content"
                 >
-                    <span class="pe-2 fw-light small">{{ t("duration") }}</span>
                     <el-switch
                         v-model="duration"
-                        :active-icon="Check"
+                        :active-icon="CheckIcon"
                         inline-prompt
+                        :disabled="loading"
                     />
+                    <span class="d-flex align-items-center ps-2 fw-light small">{{ t("duration") }}</span>
                 </div>
-                <div id="executions" />
+                <div id="executions" class="w-100" />
             </div>
         </div>
 
-        <Bar
-            v-if="total > 0"
-            :data="parsedData"
-            :options="options"
+        <BarChart
+            v-if="total > 0 || loading"
+            :data="data"
+            :total="total"
+            :duration="duration"
             :plugins="[barLegend]"
+            :small="isSmallScreen"
+            :loading="loading"
             class="tall"
         />
 
@@ -43,26 +48,24 @@
 </template>
 
 <script setup>
-    import {computed, ref, onMounted, onUnmounted} from "vue";
+    import {ref} from "vue";
     import {useI18n} from "vue-i18n";
+    import CheckIcon from "vue-material-design-icons/Check.vue";
 
-    import moment from "moment";
-    import {Bar} from "vue-chartjs";
+    import {useMediaQuery} from "@vueuse/core";
 
     import {barLegend} from "../legend.js";
 
-    import Utils from "../../../../../utils/utils.js";
-    import {defaultConfig, getFormat} from "../../../../../utils/charts.js";
-    import {getScheme} from "../../../../../utils/scheme.js";
-
     import NoData from "../../../../layout/NoData.vue";
 
-    import Check from "vue-material-design-icons/Check.vue";
+    import BarChart from "./BarChart.vue";
 
     const {t} = useI18n({useScope: "global"});
-    const isSmallScreen = ref(window.innerWidth < 610);
+    const duration = ref(true);
 
-    const props = defineProps({
+    const isSmallScreen = useMediaQuery("(max-width: 610px)");
+
+    defineProps({
         data: {
             type: Object,
             required: true,
@@ -71,164 +74,13 @@
             type: Number,
             required: true,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
-
-    const parsedData = computed(() => {
-        let datasets = props.data.reduce(function (accumulator, value) {
-            Object.keys(value.executionCounts).forEach(function (state) {
-                if (accumulator[state] === undefined) {
-                    accumulator[state] = {
-                        label: state,
-                        backgroundColor: getScheme(state),
-                        yAxisID: "y",
-                        data: [],
-                    };
-                }
-
-                accumulator[state].data.push(value.executionCounts[state]);
-            });
-
-            return accumulator;
-        }, Object.create(null));
-
-        return {
-            labels: props.data.map((r) =>
-                moment(r.startDate).format(getFormat(r.groupBy)),
-            ),
-            datasets: duration.value
-                ? [
-                    {
-                        type: "line",
-                        label: t("duration"),
-                        fill: false,
-                        pointRadius: 0,
-                        borderWidth: 0.75,
-                        borderColor: "#A2CDFF",
-                        yAxisID: "yB",
-                        data: props.data.map((value) => {
-                            return value.duration.avg === 0
-                                ? 0
-                                : Utils.duration(value.duration.avg);
-                        }),
-                    },
-                    ...Object.values(datasets),
-                ]
-                : Object.values(datasets),
-        };
-    });
-
-    onMounted(() => {
-        const handleResize = () => {
-            isSmallScreen.value = window.innerWidth < 610;
-        };
-        window.addEventListener("resize", handleResize);
-
-        onUnmounted(() => {
-            window.removeEventListener("resize", handleResize);
-        });
-    });
-
-    const options = computed(() =>
-        defaultConfig({
-            barThickness: isSmallScreen.value ? 8 : 12,
-            skipNull: true,
-            borderSkipped: false,
-            borderColor: "transparent",
-            borderWidth: 2,
-            plugins: {
-                barLegend: {
-                    containerID: "executions",
-                },
-                tooltip: {
-                    enabled: true,
-                    filter: (value) => value.raw,
-                    callbacks: {
-                        label: (value) => {
-                            const {label, yAxisID} = value.dataset;
-                            return `${label.toLowerCase().capitalize()}: ${value.raw}${yAxisID === "yB" ? "s" : ""}`;
-                        },
-                    },
-                },
-            },
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: t("date"),
-                    },
-                    grid: {
-                        display: false,
-                    },
-                    position: "bottom",
-                    display: true,
-                    stacked: true,
-                    ticks: {
-                        maxTicksLimit: isSmallScreen.value ? 5 : 8,
-                        callback: function (value) {
-                            const label = this.getLabelForValue(value);
-
-                            if (
-                                moment(label, ["h:mm A", "HH:mm"], true).isValid()
-                            ) {
-                                // Handle time strings like "1:15 PM" or "13:15"
-                                return moment(label, ["h:mm A", "HH:mm"]).format(
-                                    "h:mm A",
-                                );
-                            } else if (moment(new Date(label)).isValid()) {
-                                // Handle date strings
-                                const date = moment(new Date(label));
-                                const isCurrentYear =
-                                    date.year() === moment().year();
-                                return date.format(
-                                    isCurrentYear ? "MM/DD" : "MM/DD/YY",
-                                );
-                            }
-
-                            // Return the label as-is if it's neither a valid date nor time
-                            return label;
-                        },
-                    },
-                },
-                y: {
-                    title: {
-                        display: !isSmallScreen.value,
-                        text: t("executions"),
-                    },
-                    grid: {
-                        display: false,
-                    },
-                    display: true,
-                    position: "left",
-                    stacked: true,
-                    ticks: {
-                        maxTicksLimit: isSmallScreen.value ? 5 : 8,
-                    },
-                },
-                yB: {
-                    title: {
-                        display: duration.value && !isSmallScreen.value,
-                        text: t("duration"),
-                    },
-                    grid: {
-                        display: false,
-                    },
-                    display: duration.value,
-                    position: "right",
-                    ticks: {
-                        maxTicksLimit: isSmallScreen.value ? 5 : 8,
-                        callback: function (value) {
-                            return `${this.getLabelForValue(value)}s`;
-                        },
-                    },
-                },
-            },
-        }),
-    );
-
-    const duration = ref(true);
 </script>
 
-Copy code
 <style lang="scss" scoped>
 @import "@kestra-io/ui-libs/src/scss/variables";
 
@@ -286,10 +138,6 @@ $height: 200px;
 
     .small {
         font-size: 0.75rem;
-    }
-
-    .pe-2 {
-        padding-right: 0.5rem;
     }
 }
 </style>

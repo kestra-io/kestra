@@ -1,12 +1,8 @@
 <template>
-    <el-row class="flex-grow-1 outputs">
-        <el-col
-            :xs="24"
-            :sm="24"
-            :md="multipleSelected || selectedValue ? 16 : 24"
-            :lg="multipleSelected || selectedValue ? 16 : 24"
-            :xl="multipleSelected || selectedValue ? 18 : 24"
-            class="d-flex flex-column"
+    <div class="outputs">
+        <div
+            class="d-flex flex-column left"
+            :style="{width: leftWidth + '%'}"
         >
             <el-cascader-panel
                 ref="cascader"
@@ -17,45 +13,63 @@
                 @expand-change="() => scrollRight()"
             >
                 <template #default="{data}">
-                    <div v-if="data.heading" @click="expandedValue = data.path" class="pe-none d-flex fs-5">
+                    <div
+                        v-if="data.heading"
+                        @click="expandedValue = data.path"
+                        class="pe-none d-flex fs-5"
+                    >
                         <component :is="data.component" class="me-2" />
                         <span>{{ data.label }}</span>
                     </div>
 
-                    <div v-else @click="expandedValue = data.path" class="w-100 d-flex justify-content-between">
+                    <div
+                        v-else
+                        @click="expandedValue = data.path"
+                        class="w-100 d-flex justify-content-between"
+                    >
                         <div class="pe-5 d-flex task">
-                            <TaskIcon v-if="data.icon" :icons="allIcons" :cls="icons[data.taskId]" only-icon />
-                            <span :class="{'ms-3': data.icon}">{{ data.label }}</span>
+                            <TaskIcon
+                                v-if="data.icon"
+                                :icons="allIcons"
+                                :cls="icons[data.taskId]"
+                                only-icon
+                            />
+                            <span :class="{'ms-3': data.icon}">{{
+                                data.label
+                            }}</span>
                         </div>
                         <code>
-                            <span :class="{regular: processedValue(data).regular}">
+                            <span
+                                :class="{
+                                    regular: processedValue(data).regular,
+                                }"
+                            >
                                 {{ processedValue(data).label }}
                             </span>
                         </code>
                     </div>
                 </template>
             </el-cascader-panel>
-        </el-col>
-        <el-col
-            v-if="multipleSelected || selectedValue"
-            :xs="24"
-            :sm="24"
-            :md="8"
-            :lg="8"
-            :xl="6"
-            class="d-flex p-3 wrapper"
-        >
-            <div class="w-100 overflow-auto">
+        </div>
+        <div class="slider" @mousedown="startDragging" />
+        <div class="right wrapper" :style="{width: 100 - leftWidth + '%'}">
+            <div
+                v-if="multipleSelected || selectedValue"
+                class="w-100 overflow-auto p-3"
+            >
                 <div class="d-flex justify-content-between pe-none fs-5 values">
                     <code class="d-block">
-                        {{ selectedNode()?.label ?? 'Value' }}
+                        {{ selectedNode()?.label ?? "Value" }}
                     </code>
                 </div>
 
-                <el-collapse v-model="debugCollapse" class="mb-3 debug bordered">
+                <el-collapse
+                    v-model="debugCollapse"
+                    class="mb-3 debug bordered"
+                >
                     <el-collapse-item name="debug">
                         <template #title>
-                            <span>{{ t('eval.title') }}</span>
+                            <span>{{ t("eval.title") }}</span>
                         </template>
 
                         <div class="d-flex flex-column p-3 debug">
@@ -71,10 +85,14 @@
 
                             <el-button
                                 type="primary"
-                                @click="onDebugExpression(debugEditor.editor.getValue())"
+                                @click="
+                                    onDebugExpression(
+                                        debugEditor.editor.getValue(),
+                                    )
+                                "
                                 class="mt-3"
                             >
-                                {{ t('eval.title') }}
+                                {{ t("eval.title") }}
                             </el-button>
 
                             <editor
@@ -83,7 +101,6 @@
                                 :input="true"
                                 :full-height="false"
                                 :navbar="false"
-                                :minimap="false"
                                 :model-value="debugExpression"
                                 :lang="isJSON ? 'json' : ''"
                                 class="mt-3"
@@ -92,20 +109,39 @@
                     </el-collapse-item>
                 </el-collapse>
 
-                <el-alert v-if="debugError" type="error" :closable="false" class="overflow-auto">
-                    <p><strong>{{ debugError }}</strong></p>
+                <el-alert
+                    v-if="debugError"
+                    type="error"
+                    :closable="false"
+                    class="overflow-auto"
+                >
+                    <p>
+                        <strong>{{ debugError }}</strong>
+                    </p>
                     <div class="my-2">
-                        <CopyToClipboard :text="debugError" label="Copy Error" class="d-inline-block me-2" />
-                        <CopyToClipboard :text="debugStackTrace" label="Copy Stack Trace" class="d-inline-block" />
+                        <CopyToClipboard
+                            :text="`${debugError}\n\n${debugStackTrace}`"
+                            label="Copy Error"
+                            class="d-inline-block me-2"
+                        />
                     </div>
-                    <pre class="mb-0" style="overflow: scroll;">{{ debugStackTrace }}</pre>
+                    <pre class="mb-0" style="overflow: scroll">{{
+                        debugStackTrace
+                    }}</pre>
                 </el-alert>
 
-                <VarValue v-if="displayVarValue()" :value="selectedValue" :execution="execution" />
-                <SubFlowLink v-if="selectedNode().label === 'executionId'" :execution-id="selectedNode().value" />
+                <VarValue
+                    v-if="displayVarValue()"
+                    :value="selectedValue"
+                    :execution="execution"
+                />
+                <SubFlowLink
+                    v-if="selectedNode().label === 'executionId'"
+                    :execution-id="selectedNode().value"
+                />
             </div>
-        </el-col>
-    </el-row>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -120,51 +156,70 @@
 
     import {apiUrl} from "override/utils/route";
 
-    import CopyToClipboard from "../../layout/CopyToClipboard.vue"
+    import CopyToClipboard from "../../layout/CopyToClipboard.vue";
 
     import Editor from "../../inputs/Editor.vue";
     const debugCollapse = ref("");
     const debugEditor = ref(null);
     const debugExpression = ref("");
     const computedDebugValue = computed(() => {
-        const task = selectedTask()?.taskId;
-        if(!task) return "";
+        const formatTask = (task) => {
+            if (!task) return "";
+            return task.includes("-") ? `["${task}"]` : `.${task}`;
+        };
 
-        const path = expandedValue.value;
-        if(!path) return `{{ outputs.${task} }}`
+        const formatPath = (path) => {
+            if (!path.includes("-")) return `.${path}`;
 
-        return `{{ outputs.${path} }}`
+            const bracketIndex = path.indexOf("[");
+            const task = path.substring(0, bracketIndex);
+            const rest = path.substring(bracketIndex);
+
+            return `["${task}"]${rest}`;
+        };
+
+        let task = selectedTask()?.taskId;
+        if (!task) return "";
+
+        let path = expandedValue.value;
+        if (!path) return `{{ outputs${formatTask(task)} }}`;
+
+        return `{{ outputs${formatPath(path)} }}`;
     });
+
     const debugError = ref("");
     const debugStackTrace = ref("");
     const isJSON = ref(false);
     const selectedTask = () => {
-        const filter = selected.value?.length ? selected.value[0] : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.label;
+        const filter = selected.value?.length
+            ? selected.value[0]
+            : (cascader.value as any).menuList?.[0]?.panel?.expandingNode?.label;
         const taskRunList = [...execution.value.taskRunList];
-        return taskRunList.find(e => e.taskId === filter);
+        return taskRunList.find((e) => e.taskId === filter);
     };
-    const onDebugExpression = (expression) => {
+    const onDebugExpression = (expression: string) => {
         const taskRun = selectedTask();
 
-        if(!taskRun) return
+        if (!taskRun) return;
 
         const URL = `${apiUrl(store)}/executions/${taskRun?.executionId}/eval/${taskRun.id}`;
         store.$http
-            .post(URL, expression, {headers: {"Content-type": "text/plain",}})
-            .then(response => {
+            .post(URL, expression, {headers: {"Content-type": "text/plain"}})
+            .then((response) => {
                 try {
                     const parsedResult = JSON.parse(response.data.result);
-                    const debugOutput = JSON.stringify(parsedResult, "  ", 2);
+                    const debugOutput = JSON.stringify(parsedResult, null, 2);
                     debugExpression.value = debugOutput;
 
                     selected.value.push(debugOutput);
 
                     isJSON.value = true;
-                } catch (e) {
+                } catch {
                     debugExpression.value = response.data.result;
 
                     // Parsing failed, therefore, copy raw result
-                    if (response.status === 200) selected.value.push(response.data.result);
+                    if (response.status === 200 && response.data.result)
+                        selected.value.push(response.data.result);
                 }
 
                 debugError.value = response.data.error;
@@ -175,14 +230,23 @@
     import VarValue from "../VarValue.vue";
     import SubFlowLink from "../../flows/SubFlowLink.vue";
 
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {TaskIcon} from "@kestra-io/ui-libs";
 
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
 
     const cascader = ref<InstanceType<typeof ElTree> | null>(null);
-    const scrollRight = () => setTimeout(() => (cascader.value as any).$el.scrollLeft = (cascader.value as any).$el.offsetWidth, 10);
-    const multipleSelected = computed(() => (cascader.value as any)?.menus?.length > 1);
+    const scrollRight = () =>
+        setTimeout(
+            () =>
+                ((cascader.value as any).$el.scrollLeft = (
+                    cascader.value as any
+                ).$el.offsetWidth),
+            10,
+        );
+    const multipleSelected = computed(
+        () => (cascader.value as any)?.menus?.length > 1,
+    );
 
     const execution = computed(() => store.state.execution.execution);
 
@@ -190,7 +254,7 @@
         try {
             new URL(url);
             return true;
-        } catch (e) {
+        } catch {
             return false;
         }
     }
@@ -204,20 +268,22 @@
             const message = (length) => ({label: `${length} items`, regular});
             const length = data.children.length;
 
-            return data.children[0].isFirstPass ? message(length - 1) : message(length);
+            return data.children[0].isFirstPass
+                ? message(length - 1)
+                : message(length);
         }
 
         // Check if the value is a valid URL and not an internal "kestra:///" link
         if (isValidURL(data.value)) {
-            return data.value.startsWith("kestra:///") 
-                ? {label: "Internal link", regular} 
+            return data.value.startsWith("kestra:///")
+                ? {label: "Internal link", regular}
                 : {label: "External link", regular};
         }
 
         return {label: trim(data.value), regular: true};
     };
 
-    const expandedValue = ref([])
+    const expandedValue = ref([]);
     const selected = ref<string[]>([]);
 
     onMounted(() => {
@@ -225,18 +291,26 @@
         if (!task) return;
 
         selected.value = [task.value];
-        
+        expandedValue.value = task.value;
+
         const child = task.children?.[1];
         if (child) {
             selected.value.push(child.value);
-            expandedValue.value = child.path
+            expandedValue.value = child.path;
+
+            const grandChild = child.children?.[1];
+            if (grandChild) {
+                selected.value.push(grandChild.value);
+                expandedValue.value = grandChild.path;
+            }
         }
 
         debugCollapse.value = "debug";
     });
 
     const selectedValue = computed(() => {
-        if (selected.value?.length) return selected.value[selected.value.length - 1];
+        if (selected.value?.length)
+            return selected.value[selected.value.length - 1];
         return undefined;
     });
     const selectedNode = () => {
@@ -250,7 +324,7 @@
     };
 
     const transform = (o, isFirstPass, path = "") => {
-        const result = Object.keys(o).map(key => {
+        const result = Object.keys(o).map((key) => {
             const value = o[key];
             const isObject = typeof value === "object" && value !== null;
 
@@ -258,14 +332,19 @@
 
             // If the value is an array with exactly one element, use that element as the value
             if (Array.isArray(value) && value.length === 1) {
-                return {label: key, value: value[0], children: [], path: currentPath};
+                return {
+                    label: key,
+                    value: value[0],
+                    children: [],
+                    path: currentPath,
+                };
             }
 
             return {
                 label: key,
                 value: isObject && !Array.isArray(value) ? key : value,
                 children: isObject ? transform(value, false, currentPath) : [],
-                path: currentPath
+                path: currentPath,
             };
         });
 
@@ -275,7 +354,7 @@
                 heading: true,
                 component: shallowRef(TextBoxSearchOutline),
                 isFirstPass: true,
-                path: path
+                path: path,
             };
             result.unshift(OUTPUTS);
         }
@@ -284,10 +363,22 @@
     };
     const outputs = computed(() => {
         const tasks = store.state.execution?.execution?.taskRunList?.map((task) => {
-            return {label: task.taskId, value: task.taskId, ...task, icon: true, children: task?.outputs ? transform(task.outputs, true, task.taskId) : []};
+            return {
+                label: task.taskId,
+                value: task.taskId,
+                ...task,
+                icon: true,
+                children: task?.outputs
+                    ? transform(task.outputs, true, task.taskId)
+                    : [],
+            };
         });
 
-        const HEADING = {label: t("tasks"), heading: true, component: shallowRef(TimelineTextOutline)};
+        const HEADING = {
+            label: t("tasks"),
+            heading: true,
+            component: shallowRef(TimelineTextOutline),
+        };
         tasks?.unshift(HEADING);
 
         return tasks;
@@ -295,8 +386,9 @@
 
     const allIcons = computed(() => store.state.plugin.icons);
     const icons = computed(() => {
+        // TODO: https://github.com/kestra-io/kestra/issues/5643
         const getTaskIcons = (tasks, mapped) => {
-            tasks.forEach(task => {
+            tasks.forEach((task) => {
                 mapped[task.id] = task.type;
                 if (task.tasks && task.tasks.length > 0) {
                     getTaskIcons(task.tasks, mapped);
@@ -307,17 +399,60 @@
         const mapped = {};
 
         getTaskIcons(store.state.execution?.flow?.tasks || [], mapped);
+        getTaskIcons(store.state.execution?.flow?.errors || [], mapped);
+        getTaskIcons(store.state.execution?.flow?.finally || [], mapped);
 
         return mapped;
     });
 
-    const trim = (value) => (typeof value !== "string" || value.length < 16) ? value : `${value.substring(0, 16)}...`;
-    const isFile = (value) => typeof(value) === "string" && value.startsWith("kestra:///");
-    const displayVarValue = () => isFile(selectedValue.value) || (selectedValue.value !== debugExpression.value)
+    const trim = (value) =>
+        typeof value !== "string" || value.length < 16
+            ? value
+            : `${value.substring(0, 16)}...`;
+    const isFile = (value) =>
+        typeof value === "string" && value.startsWith("kestra:///");
+    const displayVarValue = () =>
+        isFile(selectedValue.value) ||
+        selectedValue.value !== debugExpression.value;
+
+    const leftWidth = ref(70);
+    const startDragging = (event: MouseEvent) => {
+        const startX = event.clientX;
+        const startWidth = leftWidth.value;
+
+        const onMouseMove = (moveEvent: MouseEvent) => {
+            const delta = ((moveEvent.clientX - startX) / window.innerWidth) * 100;
+            leftWidth.value = Math.max(30, Math.min(70, startWidth + delta));
+        };
+
+        const onMouseUp = () => {
+            document.removeEventListener("mousemove", onMouseMove);
+            document.removeEventListener("mouseup", onMouseUp);
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+    };
 </script>
 
 <style lang="scss">
+.slider {
+    width: 3px;
+    cursor: ew-resize;
+    position: relative;
+    background-color: var(--ks-border-primary);
+    user-select: none;
+
+    &:hover {
+        background-color: var(--ks-border-active);
+    }
+}
+
 .outputs {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+
     .el-scrollbar.el-cascader-menu:nth-of-type(-n + 2) ul li:first-child,
     .values {
         pointer-events: none;
@@ -325,11 +460,11 @@
     }
 
     .debug {
-        background: var(--bs-gray-100);
+        background: var(--ks-background-body);
     }
 
     .bordered {
-        border: 1px solid var(--bs-border-color);
+        border: 1px solid var(--ks-border-primary);
     }
 
     .bordered > .el-collapse-item {
@@ -342,17 +477,17 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-button-background-primary);
             border-radius: 0px;
         }
     }
 
     .wrapper {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
     }
 
     .el-cascader-menu {
@@ -360,7 +495,7 @@
         max-width: 300px;
 
         &:last-child {
-            border-right: 1px solid var(--bs-border-color);
+            border-right: 1px solid var(--ks-border-primary);
         }
 
         .el-cascader-menu__wrap {
@@ -371,19 +506,19 @@
             height: 36px;
             line-height: 36px;
             font-size: var(--el-font-size-small);
-            color: var(--el-text-color-regular);
+            color: var(--ks-content-primary);
 
             &[aria-haspopup="false"] {
                 padding-right: 0.5rem !important;
             }
 
             &:hover {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
             }
 
             &.in-active-path,
             &.is-active {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
                 font-weight: normal;
             }
 
@@ -398,7 +533,7 @@
             }
 
             code span.regular {
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
         }
     }

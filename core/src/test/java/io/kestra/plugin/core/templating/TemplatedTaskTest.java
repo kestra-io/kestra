@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.templating;
 
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
@@ -28,9 +29,9 @@ class TemplatedTaskTest {
         TemplatedTask templatedTask = TemplatedTask.builder()
             .id("template")
             .type(TemplatedTask.class.getName())
-            .spec("""
+            .spec(new Property<>("""
                 type: {{ type }}
-                format: It's alive!""")
+                format: It's alive!"""))
             .build();
 
         Output output = templatedTask.run(runContext);
@@ -46,9 +47,9 @@ class TemplatedTaskTest {
         TemplatedTask templatedTask = TemplatedTask.builder()
             .id("template")
             .type(TemplatedTask.class.getName())
-            .spec("""
+            .spec(Property.of("""
                 type: io.kestra.plugin.core.flow.Pause
-                delay: PT10S""")
+                delay: PT10S"""))
             .build();
 
         var exception = assertThrows(IllegalArgumentException.class, () -> templatedTask.run(runContext));
@@ -61,9 +62,9 @@ class TemplatedTaskTest {
         TemplatedTask templatedTask = TemplatedTask.builder()
             .id("template")
             .type(TemplatedTask.class.getName())
-            .spec("""
+            .spec(Property.of("""
                 type: io.kestra.plugin.core.templating.TemplatedTask
-                spec: whatever""")
+                spec: whatever"""))
             .build();
 
         var exception = assertThrows(IllegalArgumentException.class, () -> templatedTask.run(runContext));

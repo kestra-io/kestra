@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.storage;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
@@ -49,8 +50,8 @@ class ConcatTest {
 
         Concat result = Concat.builder()
             .files(json ? JacksonMapper.ofJson().writeValueAsString(files) : files)
-            .separator("\n")
-            .extension(".yml")
+            .separator(Property.of("\n"))
+            .extension(Property.of(".yml"))
             .build();
 
         Concat.Output run = result.run(runContext);

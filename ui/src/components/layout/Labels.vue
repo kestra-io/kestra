@@ -1,97 +1,78 @@
 <template>
-    <span data-component="FILENAME_PLACEHOLDER" v-if="labels">
-        <!-- 'el-check-tag' would be a better fit but it currently lacks customization -->
-        <el-tag
-            v-for="(value, key) in labelMap"
-            :key="key"
-            :type="checked(key, value) ? 'primary' : 'info'"
-            class="me-1 labels"
-            size="small"
-            disable-transitions
+    <span v-if="props.labels.length">
+        <el-check-tag
+            v-for="(label, index) in props.labels"
+            :key="index"
+            :disabled="readOnly"
+            :checked="isChecked(label)"
+            @change="updateLabel(label)"
+            class="me-1 el-tag label"
         >
-            <router-link v-if="filterEnabled" :to="link(key, value)">
-                {{ key }}: {{ value }}
-            </router-link>
-            <template v-else>{{ key }}: {{ value }}</template>
-        </el-tag>
+            {{ label.key }}:{{ label.value }}
+        </el-check-tag>
     </span>
 </template>
 
-<script>
-    export default {
-        props: {
-            labels: {
-                type: Object,
-                default: () => {}
-            },
-            filterEnabled: {
-                type: Boolean,
-                default: true
-            }
-        },
-        // this is needed as flows uses a Map and Execution a List of Labels.
-        // if we align both of them this can be removed
-        computed: {
-            labelMap() {
-                if (Array.isArray(this.labels)) {
-                    return Object.fromEntries(this.labels.map(label => [label.key, label.value]));
-                } else {
-                    return this.labels;
-                }
-            }
-        },
-        methods: {
-            getLabelsFromQuery() {
-                const labels = new Map();
-                (this.$route.query.labels !== undefined ?
-                    (typeof(this.$route.query.labels) === "string" ? [this.$route.query.labels] : this.$route.query.labels)  :
-                    []
-                )
-                    .forEach(label => {
-                        const separatorIndex = label.indexOf(":");
+<script setup lang="ts">
+    import {watch} from "vue";
 
-                        if (separatorIndex === -1) {
-                            return;
-                        }
+    import {useRouter, useRoute} from "vue-router";
+    const router = useRouter();
+    const route = useRoute();
 
-                        labels.set(label.slice(0, separatorIndex), label.slice(separatorIndex + 1));
-                    })
+    interface Label {
+        key: string;
+        value: string;
+    }
 
-                return labels;
-            },
-            checked(key, value) {
-                return this.getLabelsFromQuery().has(key) && this.getLabelsFromQuery().get(key) === value;
-            },
-            link(key, value) {
-                const labels = this.getLabelsFromQuery();
+    const props = withDefaults(
+        defineProps<{ labels: Label[]; readOnly?: boolean }>(),
+        {labels: () => [], readOnly: false},
+    );
 
-                if (labels.has(key)) {
-                    labels.delete(key);
-                } else {
-                    labels.set(key, value);
-                }
+    import {decodeSearchParams} from "../../components/filter/utils/helpers";
+    let query: any[] = [];
+    watch(
+        () => route.query,
+        (q: any) => (query = decodeSearchParams(q, undefined, [])),
+        {immediate: true},
+    );
 
-                const qs = {
-                    ...this.$route.query,
-                    ...{"labels": Array.from(labels.keys()).map((key) => key + ":" + labels.get(key))}
-                };
+    const isChecked = (label: Label) => {
+        return query.some((l) => {
+            if (typeof l?.value !== "string") return false;
 
-                delete qs.page;
+            const [key, value] = l.value.split(":");
+            return key === label.key && value === label.value;
+        });
+    };
 
-                return {name: this.$route.name, params: this.$route.params, query: qs};
-            }
+    const updateLabel = (label: Label) => {
+        const getKey = (key: string) => `filters[labels][$eq][${key}]`;
+
+        if (isChecked(label)) {
+            const replacementQuery = {...route.query};
+            delete replacementQuery[getKey(label.key)];
+            router.replace({query: replacementQuery});
+        } else {
+            router.replace({
+                query: {...route.query, [getKey(label.key)]: label.value},
+            });
         }
     };
 </script>
 
-<style lang="scss" scoped>
-    :deep(.el-tag) {
-        & a, span {
-            color: var(--bs-white);
-        }
+<style scoped lang="scss">
+.label {
+    font-weight: normal;
 
-        &.el-tag--info {
-            background: var(--bs-gray-600);
-        }
+    &:hover {
+        background-color: var(--ks-tag-background-hover);
     }
+}
+
+.el-check-tag.el-check-tag--primary.is-checked {
+    background-color: var(--el-color-primary);
+    color: var(--ks-content-primary);
+}
 </style>

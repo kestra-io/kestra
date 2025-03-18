@@ -55,9 +55,8 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
     @Schema(
         title = "The file to be split."
     )
-    @PluginProperty(dynamic = true)
     @NotNull
-    private String from;
+    private Property<String> from;
 
     private Property<String> bytes;
 
@@ -70,7 +69,7 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
 
     @Override
     public Split.Output run(RunContext runContext) throws Exception {
-        URI from = new URI(runContext.render(this.from));
+        URI from = new URI(runContext.render(this.from).as(String.class).orElseThrow());
 
         return Split.Output.builder()
             .uris(StorageService.split(runContext, this, from))

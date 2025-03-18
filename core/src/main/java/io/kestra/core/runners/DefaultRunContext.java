@@ -8,6 +8,8 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.AbstractMetricEntry;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
@@ -15,17 +17,19 @@ import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
-import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.Introspected;
-import jakarta.inject.Inject;
-import jakarta.inject.Provider;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -42,24 +46,15 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
  */
 @Introspected
 public class DefaultRunContext extends RunContext {
-    // Injected
-    @Inject
+    // Injected manually inside init(ApplicationContext)
     private ApplicationContext applicationContext;
-
-    @Inject
     private VariableRenderer variableRenderer;
-
-    @Inject
     private MetricRegistry meterRegistry;
-
-    @Inject
-    private Provider<VersionProvider> version;
-
-    @Inject
+    private VersionProvider version;
     private KVStoreService kvStoreService;
-
-    @Value("${kestra.encryption.secret-key}")
     private Optional<String> secretKey;
+    private WorkingDir workingDir;
+    private Validator validator;
 
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
@@ -69,10 +64,14 @@ public class DefaultRunContext extends RunContext {
     private Storage storage;
     private Map<String, Object> pluginConfiguration;
     private List<String> secretInputs;
+    private String traceParent;
+
+    // those are only used to validate dynamic properties inside the RunContextProperty
+    private Task task;
+    private AbstractTrigger trigger;
 
     private final AtomicBoolean isInitialized = new AtomicBoolean(false);
 
-    private WorkingDir workingDir;
 
     /**
      * Creates a new {@link DefaultRunContext} instance.
@@ -109,18 +108,50 @@ public class DefaultRunContext extends RunContext {
         return secretInputs;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @JsonInclude
+    public String getTraceParent() {
+        return traceParent;
+    }
+
+    @Override
+    public void setTraceParent(String traceParent) {
+        this.traceParent = traceParent;
+    }
+
     @JsonIgnore
     public ApplicationContext getApplicationContext() {
         return applicationContext;
     }
 
+    @JsonIgnore
+    Task getTask() {
+        return task;
+    }
+
+    @JsonIgnore
+    AbstractTrigger getTrigger() {
+        return trigger;
+    }
+
     void init(final ApplicationContext applicationContext) {
         if (isInitialized.compareAndSet(false, true)) {
             this.applicationContext = applicationContext;
-            this.applicationContext.inject(this);
+
+            // init beans
             if (this.workingDir == null) {
+                // we only init the workingDir if not already init for the WorkingDirectory task to keep the same working directory
                 this.workingDir = applicationContext.getBean(WorkingDirFactory.class).createWorkingDirectory();
             }
+            this.variableRenderer = applicationContext.getBean(VariableRenderer.class);
+            this.meterRegistry = applicationContext.getBean(MetricRegistry.class);
+            this.version = applicationContext.getBean(VersionProvider.class);
+            this.kvStoreService = applicationContext.getBean(KVStoreService.class);
+            this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
+            this.validator = applicationContext.getBean(Validator.class);
         }
     }
 
@@ -137,6 +168,7 @@ public class DefaultRunContext extends RunContext {
 
         // this is used when a run context is re-hydrated so we need to add again the secrets from the inputs
         if (!ListUtils.isEmpty(secretInputs) && getVariables().containsKey("inputs")) {
+            @SuppressWarnings("unchecked")
             Map<String, Object> inputs = (Map<String, Object>) getVariables().get("inputs");
             for (String secretInput : secretInputs) {
                 String secret = (String) inputs.get(secretInput);
@@ -155,8 +187,12 @@ public class DefaultRunContext extends RunContext {
         this.triggerExecutionId = triggerExecutionId;
     }
 
-    void setWorkingDir(final WorkingDir workingDir) {
-        this.workingDir = workingDir;
+    void setTask(final Task task) {
+        this.task = task;
+    }
+
+    void setTrigger(final AbstractTrigger trigger) {
+        this.trigger = trigger;
     }
 
     /**
@@ -173,7 +209,7 @@ public class DefaultRunContext extends RunContext {
         runContext.storage = this.storage;
         runContext.pluginConfiguration = this.pluginConfiguration;
         runContext.secretInputs = this.secretInputs;
-        if (this.isInitialized.get()) {
+        if (this.isInitialized()) {
             //Inject all services
             runContext.init(applicationContext);
         }
@@ -208,36 +244,6 @@ public class DefaultRunContext extends RunContext {
     @SuppressWarnings("unchecked")
     public String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         return variableRenderer.render(inline, mergeWithNullableValues(this.variables, decryptVariables(variables)));
-    }
-
-    @Override
-    public <T> T render(Property<T> inline, Class<T> clazz) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.as(this, clazz);
-    }
-
-    @Override
-    public <T> T render(Property<T> inline, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.as(this, clazz, variables);
-    }
-
-    @Override
-    public <T, I> T renderList(Property<T> inline, Class<I> clazz) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.asList(this, clazz);
-    }
-
-    @Override
-    public <T, I> T  renderList(Property<T> inline, Class<I> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.asList(this, clazz, variables);
-    }
-
-    @Override
-    public <T, K, V> T renderMap(Property<T> inline, Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.asMap(this, keyClass, valueClass);
-    }
-
-    @Override
-    public <T, K, V> T  renderMap(Property<T> inline, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
-        return inline == null ? null : inline.asMap(this, keyClass, valueClass, variables);
     }
 
     /**
@@ -306,6 +312,16 @@ public class DefaultRunContext extends RunContext {
                 this.render(entry.getValue(), allVariables)
             )))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    @Override
+    public <T> void validate(T bean) {
+        // It can be null in unit test as init() is not always called there
+        Validator theValidator = validator != null ? validator : applicationContext.getBean(Validator.class);
+        Set<ConstraintViolation<T>> violations = theValidator.validate(bean);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
     }
 
     /**
@@ -474,6 +490,10 @@ public class DefaultRunContext extends RunContext {
         } catch (IOException ex) {
             logger().warn("Unable to cleanup worker task", ex);
         }
+
+        if (logger != null){
+            logger.resetMDC();
+        }
     }
 
     /**
@@ -526,12 +546,17 @@ public class DefaultRunContext extends RunContext {
      */
     @Override
     public String version() {
-        return isInitialized.get() ? version.get().getVersion() : null;
+        return this.isInitialized() ? version.getVersion() : null;
     }
 
     @Override
     public KVStore namespaceKv(String namespace) {
         return kvStoreService.get(this.flowInfo().tenantId(), namespace, this.flowInfo().namespace());
+    }
+
+    @Override
+    public boolean isInitialized() {
+        return isInitialized.get();
     }
 
     /**
@@ -555,6 +580,8 @@ public class DefaultRunContext extends RunContext {
         private RunContextLogger logger;
         private KVStoreService kvStoreService;
         private List<String> secretInputs;
+        private Task task;
+        private AbstractTrigger trigger;
 
         /**
          * Builds the new {@link DefaultRunContext} object.
@@ -575,6 +602,8 @@ public class DefaultRunContext extends RunContext {
             context.triggerExecutionId = triggerExecutionId;
             context.kvStoreService = kvStoreService;
             context.secretInputs = secretInputs;
+            context.task = task;
+            context.trigger = trigger;
             return context;
         }
     }

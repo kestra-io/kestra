@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.HasSource;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowScope;
@@ -28,6 +30,7 @@ import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
+import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -43,6 +46,7 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -53,15 +57,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
@@ -97,6 +97,7 @@ public class FlowController {
 
     @Inject
     private TenantService tenantService;
+
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/{id}/graph")
@@ -203,21 +204,39 @@ public class FlowController {
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
+        @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
+        // Deprecated params
+        @Parameter(description = "A string filter",deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
+        @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels
+
     ) throws HttpStatusException {
+        // If filters is empty, map old params to QueryFilter
+        if (filters == null || filters.isEmpty()) {
+            filters = RequestUtils.mapLegacyParamsToFilters(
+                query,
+                namespace,
+                null,
+                null,
+                null,
+                null,
+                null,
+                scope,
+                labels,
+                null,
+                null,
+                null,
+                null);
+        }
 
         return PagedResults.of(flowRepository.find(
             PageableUtils.from(page, size, sort),
-            query,
             tenantService.resolveTenant(),
-            scope,
-            namespace,
-            RequestUtils.toMap(labels)
+            filters
         ));
     }
+
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{namespace}")
@@ -260,6 +279,7 @@ public class FlowController {
     @Post(consumes = MediaType.ALL)
     @Operation(tags = {"Flows"}, summary = "Create a flow from json object", deprecated = true)
     @Deprecated(forRemoval = true, since = "0.18")
+    @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the YAML one.
     public HttpResponse<Flow> create(
         @Parameter(description = "The flow") @Body Flow flow
     ) throws ConstraintViolationException {
@@ -310,6 +330,7 @@ public class FlowController {
         deprecated = true
     )
     @Deprecated(forRemoval = true, since = "0.18")
+    @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the YAML one.
     public List<Flow> updateNamespace(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "A list of flows") @Body @Valid List<Flow> flows,
@@ -420,7 +441,7 @@ public class FlowController {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
         Flow flowParsed = yamlParser.parse(flow, Flow.class);
-
+        flowService.checkValidSubflows(flowParsed, tenantService.resolveTenant());
         return HttpResponse.ok(update(flowParsed, existingFlow.get(), flow));
     }
 
@@ -431,6 +452,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a flow", deprecated = true)
     @Deprecated(forRemoval = true, since = "0.18")
+    @Hidden // we hide it otherwise this is the one that will be included in the OpenAPI spec instead of the JSON one.
     public HttpResponse<Flow> update(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
@@ -481,6 +503,7 @@ public class FlowController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Flows"}, summary = "Update a single task on a flow", deprecated = true)
     @Deprecated(forRemoval = true, since = "0.18")
+    @SuppressWarnings("deprecated")
     public HttpResponse<Flow> updateTask(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
@@ -575,7 +598,7 @@ public class FlowController {
                     }
 
                     validateConstraintViolationBuilder.deprecationPaths(flowService.deprecationPaths(flowParse));
-                    validateConstraintViolationBuilder.warnings(flowService.warnings(flowParse));
+                    validateConstraintViolationBuilder.warnings(flowService.warnings(flowParse, tenantService.resolveTenant()));
                     validateConstraintViolationBuilder.infos(flowService.relocations(flow).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
                     validateConstraintViolationBuilder.flow(flowParse.getId());
                     validateConstraintViolationBuilder.namespace(flowParse.getNamespace());
@@ -692,7 +715,7 @@ public class FlowController {
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) throws IOException {
         var flows = flowRepository.findWithSource(query, tenantService.resolveTenant(), scope, namespace, RequestUtils.toMap(labels));
-        var bytes = zipFlows(flows);
+        var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "-" + flow.getId() + ".yml");
 
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
     }
@@ -709,24 +732,8 @@ public class FlowController {
         var flows = ids.stream()
             .map(id -> flowRepository.findByIdWithSource(tenantService.resolveTenant(), id.getNamespace(), id.getId()).orElseThrow())
             .toList();
-        var bytes = zipFlows(flows);
+        var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "." + flow.getId() + ".yml");
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
-    }
-
-    private static byte[] zipFlows(List<FlowWithSource> flows) throws IOException {
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             ZipOutputStream archive = new ZipOutputStream(bos)) {
-
-            for (var flow : flows) {
-                var zipEntry = new ZipEntry(flow.getNamespace() + "." + flow.getId() + ".yml");
-                archive.putNextEntry(zipEntry);
-                archive.write(flow.getSource().getBytes());
-                archive.closeEntry();
-            }
-
-            archive.finish();
-            return bos.toByteArray();
-        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -837,46 +844,26 @@ public class FlowController {
             When sending a ZIP archive, a list of files that couldn't be imported is returned.
         """
     )
-    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "200", description = "On success")
     public HttpResponse<List<String>> importFlows(
         @Parameter(description = "The file to import, can be a ZIP archive or a multi-objects YAML file")
         @Part CompletedFileUpload fileUpload
     ) throws IOException {
-        String fileName = fileUpload.getFilename().toLowerCase();
         String tenantId = tenantService.resolveTenant();
-        List<String> wrongFiles = new ArrayList<>();
-
-        if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
-            List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
-            for (String source : sources) {
+        final List<String> wrongFiles = new ArrayList<>();
+        try {
+            HasSource.readSourceFile(fileUpload, (source, name) -> {
                 try {
-                    this.importFlow(tenantId, source.trim());
+                    this.importFlow(tenantId, source);
                 } catch (Exception e) {
-                    wrongFiles.add(String.valueOf(sources.indexOf(source)));
+                    wrongFiles.add(name);
                 }
-                this.importFlow(tenantId, source.trim());
-            }
-        } else if (fileName.endsWith(".zip")) {
-            try (ZipInputStream archive = new ZipInputStream(fileUpload.getInputStream())) {
-                ZipEntry entry;
-                while ((entry = archive.getNextEntry()) != null) {
-                    if (entry.isDirectory() || !entry.getName().endsWith(".yml") && !entry.getName().endsWith(".yaml")) {
-                        continue;
-                    }
-
-                    String source = new String(archive.readAllBytes());
-                    try {
-                        this.importFlow(tenantId, source);
-                    } catch (Exception e) {
-                        wrongFiles.add(entry.getName());
-                    }
-                }
-            }
-        } else {
+            });
+        } catch (IOException e){
+            log.error("Unexpected error while importing flows", e);
             fileUpload.discard();
-            throw new IllegalArgumentException("Cannot import file of type " + fileName.substring(fileName.lastIndexOf('.')));
+            return HttpResponse.badRequest();
         }
-
         return HttpResponse.ok(wrongFiles);
     }
 

@@ -12,6 +12,7 @@
         :next-revision="flow.revision + 1"
     />
 </template>
+
 <script>
     import {mapGetters, mapState} from "vuex";
     import EditorView from "../inputs/EditorView.vue";

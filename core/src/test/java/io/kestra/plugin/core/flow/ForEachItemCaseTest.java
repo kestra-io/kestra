@@ -8,6 +8,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunnerUtils;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
@@ -36,6 +37,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
+import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
@@ -43,6 +45,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.matchesRegex;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.Matchers.nullValue;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @Singleton
@@ -62,6 +65,9 @@ public class ForEachItemCaseTest {
     @Inject
     private FlowInputOutput flowIO;
 
+    @Inject
+    private ExecutionService executionService;
+
     @SuppressWarnings("unchecked")
     public void forEachItem() throws TimeoutException, InterruptedException, URISyntaxException, IOException, QueueException {
         CountDownLatch countDownLatch = new CountDownLatch(26);
@@ -70,8 +76,8 @@ public class ForEachItemCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
                 triggered.set(execution);
+                countDownLatch.countDown();
             }
         });
 
@@ -132,8 +138,8 @@ public class ForEachItemCaseTest {
             if (execution.getFlowId().equals("for-each-item-subflow")) {
                 log.info("Received sub-execution " + execution.getId() + " with status " + execution.getState().getCurrent());
                 if (execution.getState().getCurrent().isTerminated()) {
-                    countDownLatch.countDown();
                     triggered.set(execution);
+                    countDownLatch.countDown();
                 }
             }
         });
@@ -180,8 +186,8 @@ public class ForEachItemCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow-failed") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
                 triggered.set(execution);
+                countDownLatch.countDown();
             }
         });
 
@@ -223,8 +229,8 @@ public class ForEachItemCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-outputs-subflow") && execution.getState().getCurrent().isTerminated()) {
-                countDownLatch.countDown();
                 triggered.set(execution);
+                countDownLatch.countDown();
             }
         });
 
@@ -267,6 +273,88 @@ public class ForEachItemCaseTest {
             // one line per sub-flows
             assertThat(br.lines().count(), is(26L));
         }
+    }
+
+    public void restartForEachItem() throws Exception {
+        CountDownLatch countDownLatch = new CountDownLatch(6);
+        Flux<Execution> receiveSubflows = TestsUtils.receive(executionQueue, either -> {
+            Execution subflowExecution = either.getLeft();
+            if (subflowExecution.getFlowId().equals("restart-child") && subflowExecution.getState().getCurrent().isFailed()) {
+                countDownLatch.countDown();
+            }
+        });
+
+        URI file = storageUpload();
+        Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 20);
+        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "restart-for-each-item", null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
+            Duration.ofSeconds(30));
+        assertThat(execution.getTaskRunList(), hasSize(3));
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+
+        // here we must have 1 failed subflows
+        assertTrue(countDownLatch.await(1, TimeUnit.MINUTES));
+        receiveSubflows.blockLast();
+
+        CountDownLatch successLatch = new CountDownLatch(6);
+        receiveSubflows = TestsUtils.receive(executionQueue, either -> {
+            Execution subflowExecution = either.getLeft();
+            if (subflowExecution.getFlowId().equals("restart-child") && subflowExecution.getState().getCurrent().isSuccess()) {
+                successLatch.countDown();
+            }
+        });
+        Execution restarted = executionService.restart(execution, null);
+        execution = runnerUtils.awaitExecution(
+            e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-for-each-item"),
+            throwRunnable(() -> executionQueue.emit(restarted)),
+            Duration.ofSeconds(10)
+        );
+        assertThat(execution.getTaskRunList(), hasSize(4));
+        assertTrue(successLatch.await(1, TimeUnit.MINUTES));
+        receiveSubflows.blockLast();
+    }
+
+    public void forEachItemInIf() throws TimeoutException, InterruptedException, URISyntaxException, IOException, QueueException {
+        CountDownLatch countDownLatch = new CountDownLatch(26);
+        AtomicReference<Execution> triggered = new AtomicReference<>();
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Execution execution = either.getLeft();
+            if (execution.getFlowId().equals("for-each-item-subflow") && execution.getState().getCurrent().isTerminated()) {
+                triggered.set(execution);
+                countDownLatch.countDown();
+            }
+        });
+
+        URI file = storageUpload();
+        Map<String, Object> inputs = Map.of("file", file.toString(), "batch", 4);
+        Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "for-each-item-in-if", null,
+            (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
+            Duration.ofSeconds(30));
+
+        // we should have triggered 26 subflows
+        assertThat(countDownLatch.await(1, TimeUnit.MINUTES), is(true));
+        receive.blockLast();
+
+        // assert on the main flow execution
+        assertThat(execution.getTaskRunList(), hasSize(5));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        Map<String, Object> outputs = execution.getTaskRunList().get(3).getOutputs();
+        assertThat(outputs.get("numberOfBatches"), is(26));
+        assertThat(outputs.get("iterations"), notNullValue());
+        Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
+        assertThat(iterations.get("CREATED"), is(0));
+        assertThat(iterations.get("RUNNING"), is(0));
+        assertThat(iterations.get("SUCCESS"), is(26));
+
+        // assert on the last subflow execution
+        assertThat(triggered.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(triggered.get().getFlowId(), is("for-each-item-subflow"));
+        assertThat((String) triggered.get().getInputs().get("items"), matchesRegex("kestra:///io/kestra/tests/for-each-item-in-if/executions/.*/tasks/each-split/.*\\.txt"));
+        assertThat(triggered.get().getTaskRunList(), hasSize(1));
+        Optional<Label> correlationId = triggered.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
+        assertThat(correlationId.isPresent(), is(true));
+        assertThat(correlationId.get().value(), is(execution.getId()));
     }
 
     private URI storageUpload() throws URISyntaxException, IOException {

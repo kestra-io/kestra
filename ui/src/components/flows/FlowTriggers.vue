@@ -1,10 +1,18 @@
 <template>
+    <KestraFilter
+        v-if="triggersWithType.length"
+        prefix="flow_triggers"
+        :buttons="{
+            refresh: {shown: true, callback: loadData},
+            settings: {shown: false}
+        }"
+    />
+
     <el-table
         v-if="triggersWithType.length"
         v-bind="$attrs"
         :data="triggersWithType"
         table-layout="auto"
-        @row-dblclick="triggerId = $event.id; isOpen = true"
         default-expand-all
     >
         <el-table-column type="expand">
@@ -40,12 +48,6 @@
         <el-table-column column-key="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
             <template #header>
                 {{ $t("backfill") }}
-                <refresh-button
-                    :can-auto-refresh="true"
-                    @refresh="loadData"
-                    size="small"
-                    custom-class="mx-1"
-                />
             </template>
             <template #default="scope">
                 <el-button
@@ -146,12 +148,7 @@
         </el-table-column>
     </el-table>
 
-    <empty-state
-        v-else
-        :title="$t('triggers-view.title_no_triggers')"
-        :description="$t('triggers-view.desc_no_triggers')"
-        :image="TriggersEmptyImage"
-    />
+    <Empty v-else type="triggers" />
 
     <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true">
         <template #header>
@@ -188,10 +185,25 @@
             :embed="true"
         />
         <template #footer>
+            <router-link
+                v-if="isSchedule(selectedTrigger.type)"
+                :to="{
+                    name: 'admin/triggers',
+                    query: {
+                        namespace: selectedTrigger.namespace,
+                        flowId: selectedTrigger.flowId,
+                        q: selectedTrigger.triggerId
+                    }
+                }"
+            >
+                <el-button class="me-2">
+                    {{ $t("backfill") }}
+                </el-button>
+            </router-link>
             <el-button
                 type="primary"
                 @click="postBackfill()"
-                :disabled="checkBackfill()"
+                :disabled="checkBackfill"
             >
                 {{ $t("execute backfill") }}
             </el-button>
@@ -221,9 +233,11 @@
     import Restart from "vue-material-design-icons/Restart.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
     import FlowRun from "./FlowRun.vue";
-    import RefreshButton from "../layout/RefreshButton.vue";
     import Id from "../Id.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
+
+    import KestraFilter from "../filter/KestraFilter.vue";
+    import Empty from "../layout/empty/Empty.vue";
 </script>
 
 <script>
@@ -237,11 +251,10 @@
     import action from "../../models/action";
     import moment from "moment";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    import EmptyState from "../layout/EmptyState.vue";
-    import TriggersEmptyImage from "../../assets/triggers_empty.svg";
+    import _isEqual from "lodash/isEqual";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, EmptyState},
+        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
         data() {
             return {
                 triggerId: undefined,
@@ -260,9 +273,19 @@
         created() {
             this.loadData();
         },
+        watch: {
+            $route(newValue, oldValue) {
+                if (oldValue.name === newValue.name && !_isEqual(newValue.query, oldValue.query)) {
+                    this.loadData();
+                }
+            }
+        },
         computed: {
             ...mapState("auth", ["user"]),
             ...mapGetters("flow", ["flow"]),
+            query() {
+                return Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
+            },
             modalData() {
                 return Object
                     .entries(this.triggersWithType.filter(trigger => trigger.triggerId === this.triggerId)[0])
@@ -285,31 +308,17 @@
                     return {...trigger, sourceDisabled: trigger.disabled ?? false}
                 })
                 if (flowTriggers) {
-                    return flowTriggers.map(flowTrigger => {
+                    const triggers = flowTriggers.map(flowTrigger => {
                         let pollingTrigger = this.triggers.find(trigger => trigger.triggerId === flowTrigger.id)
                         return {...flowTrigger, ...(pollingTrigger || {})}
                     })
+
+                    return !this.query ? triggers : triggers.filter(trigger => trigger.id.includes(this.query))
                 }
                 return this.triggers
             },
             cleanBackfill() {
                 return {...this.backfill, labels: this.backfill.labels.filter(label => label.key && label.value)}
-            }
-        },
-        methods: {
-            userCan(action) {
-                return this.user.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flow.namespace);
-            },
-            loadData() {
-                if(!this.triggersWithType.length) return;
-
-                this.$store
-                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length})
-                    .then(triggers => this.triggers = triggers.results);
-            },
-            setBackfillModal(trigger, bool) {
-                this.isBackfillOpen = bool
-                this.selectedTrigger = trigger
             },
             checkBackfill() {
                 if (!this.backfill.start) {
@@ -320,11 +329,12 @@
                 }
                 if (this.flow.inputs) {
                     const requiredInputs = this.flow.inputs.map(input => input.required !== false ? input.id : null).filter(i => i !== null)
+
                     if (requiredInputs.length > 0) {
                         if (!this.backfill.inputs) {
                             return true
                         }
-                        const fillInputs = Object.keys(this.backfill.inputs).filter(i => this.backfill.inputs[i])
+                        const fillInputs = Object.keys(this.backfill.inputs).filter(i => this.backfill.inputs[i] !== null && this.backfill.inputs[i] !== undefined);
                         if (requiredInputs.sort().join(",") !== fillInputs.sort().join(",")) {
                             return true
                         }
@@ -338,6 +348,22 @@
                     }
                 }
                 return false
+            },
+        },
+        methods: {
+            userCan(action) {
+                return this.user.isAllowed(permission.EXECUTION, action ? action : action.READ, this.flow.namespace);
+            },
+            loadData() {
+                if(!this.triggersWithType.length) return;
+
+                this.$store
+                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length, q: this.query})
+                    .then(triggers => this.triggers = triggers.results);
+            },
+            setBackfillModal(trigger, bool) {
+                this.isBackfillOpen = bool
+                this.selectedTrigger = trigger
             },
             postBackfill() {
                 this.$store.dispatch("trigger/update", {

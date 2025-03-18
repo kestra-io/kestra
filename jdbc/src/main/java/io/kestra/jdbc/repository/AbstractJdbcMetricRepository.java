@@ -1,5 +1,7 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
@@ -8,8 +10,12 @@ import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.jdbc.services.JdbcFilterService;
+import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.micrometer.common.lang.Nullable;
 import io.micronaut.data.model.Pageable;
+import lombok.Getter;
+import org.jooq.Record;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
@@ -18,16 +24,43 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface {
     protected io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository;
 
-    public AbstractJdbcMetricRepository(io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository) {
+    public AbstractJdbcMetricRepository(io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository,
+                                        JdbcFilterService filterService) {
         this.jdbcRepository = jdbcRepository;
+
+        this.filterService = filterService;
+    }
+
+    @Getter
+    private final JdbcFilterService filterService;
+
+    @Getter
+    private final Map<Metrics.Fields, String> fieldsMapping = Map.of(
+        Metrics.Fields.NAMESPACE, "namespace",
+        Metrics.Fields.FLOW_ID, "flow_id",
+        Metrics.Fields.TASK_ID, "task_id",
+        Metrics.Fields.EXECUTION_ID, "execution_d",
+        Metrics.Fields.TASK_RUN_ID, "taskrun_id",
+        Metrics.Fields.NAME, "metric_name",
+        Metrics.Fields.VALUE, "metric_value",
+        Metrics.Fields.DATE, "timestamp"
+    );
+
+    @Override
+    public Set<Metrics.Fields> dateFields() {
+        return Set.of(Metrics.Fields.DATE);
+    }
+
+    @Override
+    public Metrics.Fields dateFilterField() {
+        return Metrics.Fields.DATE;
     }
 
     @Override
@@ -309,5 +342,78 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         );
 
         return mapper::get;
+    }
+
+    @Override
+    public ArrayListTotal<Map<String, Object>> fetchData(
+        String tenantId,
+        DataFilter<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> descriptors,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        Pageable pageable
+    ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                Map<String, ? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
+                    .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                // Generate custom fields for date as they probably need formatting
+                List<Field<Date>> dateFields = generateDateFields(descriptors, fieldsMapping, startDate, endDate, dateFields());
+
+                // Init request
+                SelectConditionStep<Record> selectConditionStep = select(
+                    context,
+                    filterService,
+                    columnsWithoutDate,
+                    dateFields,
+                    this.getFieldsMapping(),
+                    this.jdbcRepository.getTable(),
+                    tenantId
+                );
+
+                // Apply Where filter
+                selectConditionStep = where(selectConditionStep, filterService, descriptors, fieldsMapping);
+
+                List<? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
+                    .filter(column -> column.getAgg() == null)
+                    .toList();
+
+                // Apply GroupBy for aggregation
+                SelectHavingStep<Record> selectHavingStep = groupBy(
+                    selectConditionStep,
+                    columnsWithoutDateWithOutAggs,
+                    dateFields,
+                    fieldsMapping
+                );
+
+                // Apply OrderBy
+                SelectSeekStepN<Record> selectSeekStep = orderBy(selectHavingStep, descriptors);
+
+                // Fetch and paginate if provided
+                return fetchSeekStep(selectSeekStep, pageable);
+            });
+    }
+
+    abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
+
+    protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
+        DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,
+        Map<F, String> fieldsMapping,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        Set<F> dateFields
+    ) {
+        return descriptors.getColumns().entrySet().stream()
+            .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
+            .map(entry -> {
+                Duration duration = Duration.between(startDate, endDate);
+                return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
+            })
+            .toList();
+
     }
 }

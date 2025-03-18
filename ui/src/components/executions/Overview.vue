@@ -1,15 +1,18 @@
 <template>
+    <Timeline :histories="execution.state.histories" />
     <div v-if="execution" class="execution-overview">
         <div v-if="isFailed()">
-            <el-alert type="error" :closable="false" class="mb-4 main-error">
+            <el-alert type="error" :closable="false" show-icon class="mb-4 main-error">
                 <template #title>
                     <div @click="isExpanded = !isExpanded">
-                        <alert-outline class="main-icon" />
-                        {{ $t('execution failed header', errorLast ? 0 : 1, {message: errorLast?.message}) }}
-                        <span v-if="errorLast" v-html="$t('execution failed message', {message: errorLast?.message})" />
+                        <Markdown
+                            v-if="errorLast && errorLast.message"
+                            :source="errorMessage"
+                            :html="false"
+                        />
                         <span class="toggle-icon" v-if="errorLogs">
-                            <menu-up v-if="isExpanded" />
-                            <menu-down v-else />
+                            <chevron-up v-if="isExpanded" />
+                            <chevron-down v-else />
                         </span>
                     </div>
                 </template>
@@ -19,7 +22,7 @@
                     </div>
                     <div class="text-end" v-if="errorLogsMore">
                         <router-link :to="{name: 'executions/update', params: {tenantId: execution.tenantId, id: execution.id, namespace: execution.namespace, flowId: execution.flowId, tab: 'logs'}, query: {level: 'ERROR'}}">
-                            <el-button type="danger" class="mt-3">
+                            <el-button class="mt-3">
                                 {{ $t('homeDashboard.errorLogs') }}
                             </el-button>
                         </router-link>
@@ -28,21 +31,49 @@
             </el-alert>
         </div>
 
+        <div v-if="isRestarted()">
+            <el-alert type="warning" :closable="false" class="mb-4 main-warning">
+                <template #title>
+                    <div>
+                        <alert class="main-icon" />
+                        {{ $t('execution restarted', {nbRestart: execution?.metadata?.attemptNumber - 1}) }}
+                    </div>
+                </template>
+            </el-alert>
+        </div>
+
+        <div v-if="isReplayed()">
+            <el-alert type="info" :closable="false" class="mb-4 main-info">
+                <template #title>
+                    <div>
+                        {{ $t('execution replayed') }}
+                    </div>
+                </template>
+            </el-alert>
+        </div>
+
+        <div v-if="isReplay()">
+            <el-alert type="info" :closable="false" class="mb-4 main-info">
+                <template #title>
+                    <div>
+                        <span v-html="$t('execution replay', {originalId: execution?.originalId})" />
+                    </div>
+                </template>
+            </el-alert>
+        </div>
+
         <el-row class="mb-3">
-            <el-col :span="12" class="crud-align">
-                <crud type="CREATE" permission="EXECUTION" :detail="{executionId: execution.id}" />
-            </el-col>
-            <el-col :span="12" class="d-flex gap-2 justify-content-end">
+            <el-col :span="24" class="gap-2 d-flex justify-content-end actions-buttons">
                 <set-labels :execution="execution" />
-                <restart is-replay :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
-                <restart :execution="execution" class="ms-0" @follow="forwardEvent('follow', $event)" />
+                <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
+                <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <change-execution-status :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <resume :execution="execution" />
                 <pause :execution="execution" />
-                <kill :execution="execution" class="ms-0" />
+                <kill :execution="execution" />
                 <unqueue :execution="execution" />
                 <force-run :execution="execution" />
-                <status :status="execution.state.current" class="ms-0" />
+                <status :status="execution.state.current" />
             </el-col>
         </el-row>
 
@@ -64,7 +95,7 @@
                         <duration :histories="scope.row.value" />
                     </span>
                     <span v-else-if="scope.row.key === $t('labels')">
-                        <labels :labels="scope.row.value" :filter-enabled="false" />
+                        <labels :labels="scope.row.value" read-only />
                     </span>
                     <span v-else>
                         <span v-if="scope.row.key === $t('revision')">
@@ -78,9 +109,32 @@
             </el-table-column>
         </el-table>
 
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <el-button
+                :disabled="!hasPreviousExecution"
+                @click="navigateToExecution('previous')"
+            >
+                <el-icon class="el-icon--left">
+                    <ChevronLeft />
+                </el-icon>
+                {{ $t('prev_execution') }}
+            </el-button>
+            
+            <el-button 
+                :disabled="!hasNextExecution" 
+                @click="navigateToExecution('next')"
+            >
+                {{ $t('next_execution') }}
+                <el-icon class="el-icon--right">
+                    <ChevronRight />
+                </el-icon>
+            </el-button>
+        </div>
+
         <div v-if="execution.trigger" class="my-5">
             <h5>{{ $t("trigger") }}</h5>
             <KestraCascader
+                id="triggers"
                 :options="transform({...execution.trigger, ...(execution.trigger.trigger ? execution.trigger.trigger : {})})"
                 :execution
                 class="overflow-auto"
@@ -90,6 +144,7 @@
         <div v-if="execution.inputs" class="my-5">
             <h5>{{ $t("inputs") }}</h5>
             <KestraCascader
+                id="inputs"
                 :options="transform(execution.inputs)"
                 :execution
                 class="overflow-auto"
@@ -99,6 +154,7 @@
         <div v-if="execution.variables" class="my-5">
             <h5>{{ $t("variables") }}</h5>
             <KestraCascader
+                id="variables"
                 :options="transform(execution.variables)"
                 :execution
                 class="overflow-auto"
@@ -108,6 +164,7 @@
         <div v-if="execution.outputs" class="my-5">
             <h5>{{ $t("outputs") }}</h5>
             <KestraCascader
+                id="outputs"
                 :options="transform(execution.outputs)"
                 :execution
                 class="overflow-auto"
@@ -125,23 +182,27 @@
     import Unqueue from "./Unqueue.vue";
     import ForceRun from "./ForceRun.vue";
     import Kill from "./Kill.vue";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
     import DateAgo from "../layout/DateAgo.vue";
-    import Crud from "override/components/auth/Crud.vue";
     import Duration from "../layout/Duration.vue";
+    import Timeline from "../layout/Timeline.vue";
     import Labels from "../layout/Labels.vue"
     import {toRaw} from "vue";
     import ChangeExecutionStatus from "./ChangeExecutionStatus.vue";
     import KestraCascader from "../../components/kestra/Cascader.vue"
     import LogLine from "../../components/logs/LogLine.vue"
-    import AlertOutline from "vue-material-design-icons/AlertOutline.vue";
-    import MenuDown from "vue-material-design-icons/MenuDown.vue";
-    import MenuUp from "vue-material-design-icons/MenuUp.vue";
+    import Alert from "vue-material-design-icons/Alert.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import Markdown from "../../components/layout/Markdown.vue";
 
     export default {
         components: {
             ChangeExecutionStatus,
             Duration,
+            Timeline,
             Status,
             SetLabels,
             Restart,
@@ -152,12 +213,14 @@
             Kill,
             DateAgo,
             Labels,
-            Crud,
             KestraCascader,
             LogLine,
-            AlertOutline,
-            MenuDown,
-            MenuUp
+            Alert,
+            ChevronDown,
+            ChevronUp,
+            ChevronLeft,
+            ChevronRight,
+            Markdown
         },
         emits: ["follow"],
         methods: {
@@ -200,6 +263,15 @@
             isFailed() {
                 return this.execution.state.current === State.FAILED;
             },
+            isRestarted() {
+                return this.execution.labels?.find( it => it.key === "system.restarted" && (it.value === "true" || it.value === true)) !== undefined;
+            },
+            isReplayed() {
+                return this.execution.labels?.find( it => it.key === "system.replayed" && (it.value === "true" || it.value === true)) !== undefined;
+            },
+            isReplay() {
+                return this.execution.labels?.find( it => it.key === "system.replay" && (it.value === "true" || it.value === true)) !== undefined;
+            },
             load() {
                 this.$store
                     .dispatch(
@@ -223,17 +295,76 @@
                         if (response && response.length >= 1) {
                             this.errorLogsMore = response.length > 3;
                             this.errorLast = response[response.length - 1];
-                            this.errorLogs = response.slice(1).slice(-3);
+                            this.errorLogs = response.length > 3 ? response.slice(1).slice(-3) : response;
 
                         } else {
                             this.errorLogs = undefined;
                             this.errorLogsMore = false;
                             this.errorLast = undefined;
                         }
-
-                        console.log(this.errorLast)
                     })
-            }
+            },
+            async getFlowExecutions() {
+                try {
+                    const params = {
+                        namespace: this.execution.namespace,
+                        flowId: this.execution.flowId,
+                        pageSize: 100,
+                        sort: "state.startDate:desc"
+                    };
+                    
+                    const result = await this.$store.dispatch("execution/findExecutions", params);
+                    if (!result || !result.results || !result.results.length) {
+                        return null;
+                    }
+
+                    const executions = result.results;
+                    const currentIndex = executions.findIndex(e => e.id === this.execution.id);
+                    if (currentIndex === -1) {
+                        return null;
+                    }
+
+                    return {executions, currentIndex};
+                } catch (error) {
+                    console.error("Failed to fetch executions:", error);
+                    return null;
+                }
+            },
+            async navigateToExecution(direction) {
+                const result = await this.getFlowExecutions();
+                if (!result) return;
+
+                const {executions, currentIndex} = result;
+                // Since executions are sorted by startDate desc here. (opposite of default ASC sort as in Execution Table)
+                // "next" means newer (lower index) and "previous" means older (higher index)
+                const targetIndex = direction === "previous" ? currentIndex + 1 : currentIndex - 1;
+
+                if (targetIndex >= 0 && targetIndex < executions.length) {
+                    const targetExecution = executions[targetIndex];
+                    this.$router.push({
+                        name: "executions/update",
+                        params: {
+                            namespace: targetExecution.namespace,
+                            flowId: targetExecution.flowId,
+                            id: targetExecution.id
+                        }
+                    });
+                }
+            },
+            async updateNavigationStatus() {
+                const result = await this.getFlowExecutions();
+                if (!result) {
+                    this.hasPreviousExecution = false;
+                    this.hasNextExecution = false;
+                    return;
+                }
+
+                const {executions, currentIndex} = result;
+                // Previous means we can go to older executions.
+                this.hasPreviousExecution = currentIndex < executions.length - 1;
+                // Next means we can go to newer executions.
+                this.hasNextExecution = currentIndex > 0;
+            },
         },
         mounted() {
             if (this.isFailed()) {
@@ -245,6 +376,14 @@
                 if (oldValue.name === newValue.name && this.execution.id !== this.$route.params.id) {
                     this.load();
                 }
+            },
+            execution: {
+                handler(newExecution) {
+                    if (newExecution) {
+                        this.updateNavigationStatus();
+                    }
+                },
+                immediate: true
             }
         },
         data() {
@@ -253,10 +392,15 @@
                 errorLogs: undefined,
                 errorLogsMore: false,
                 errorLast: undefined,
+                hasPreviousExecution: false,
+                hasNextExecution: false,
             };
         },
         computed: {
             ...mapState("execution", ["flow", "execution"]),
+            errorMessage() {
+                return `${this.$t("execution_failed")}: ${this.errorLast?.message}`;
+            },
             items() {
                 if (!this.execution) {
                     return []
@@ -327,11 +471,6 @@
 </script>
 
 <style lang="scss">
-.crud-align {
-    display: flex;
-    align-items: center;
-}
-
 .execution-overview {
     .cascader {
         &::-webkit-scrollbar {
@@ -339,17 +478,17 @@
         }
 
         &::-webkit-scrollbar-track {
-            background: var(--card-bg);
+            background: var(--ks-background-card);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-button-background-primary);
             border-radius: 0px;
         }
     }
 
     .wrapper {
-        background: var(--card-bg);
+        background: var(--ks-background-card);
     }
 
     .el-cascader-menu {
@@ -368,7 +507,7 @@
             height: 36px;
             line-height: 36px;
             font-size: var(--el-font-size-small);
-            color: var(--el-text-color-regular);
+            color: var(--ks-content-primary);
             padding: 0 30px 0 5px;
 
             &[aria-haspopup="false"] {
@@ -376,12 +515,12 @@
             }
 
             &:hover {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
             }
 
             &.in-active-path,
             &.is-active {
-                background-color: var(--bs-border-color);
+                background-color: var(--ks-border-primary);
                 font-weight: normal;
             }
 
@@ -396,26 +535,46 @@
             }
 
             code span.regular {
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
+        }
+    }
+
+    .actions-buttons {
+        .el-button {
+            margin-left: 0 !important;
+            margin-right: 0 !important;
         }
     }
 }
 
 .el-alert.main-error {
-    background-color: transparent;
-    padding: 0.5rem;
+    background-color: var(--ks-background-error) !important;
+    padding: 1rem;
 
+    .el-alert__icon.is-big {
+        margin-right: 1rem;
+    }
+
+    .el-button{
+        color: var(--ks-log-content-error);
+        background-color: var(--ks-log-background-error);
+        border-color: var(--ks-log-border-error);
+    }
     .el-alert__title {
         cursor: pointer;
         font-weight: bold;
         position: relative;
         line-height: 2rem;
-        color: var(--bs-body-color);
+        color: var(--ks-content-error) !important;
         font-size: var(--font-size-sm);
 
         span {
             font-weight: normal;
+        }
+
+        code{
+            color: var(--ks-log-content-error) !important;
         }
 
         > div {
@@ -423,7 +582,7 @@
         }
 
         .main-icon.material-design-icon  {
-            color: var(--el-color-danger);
+            color: var(--ks-content-alert);
             font-size: 1.25rem;
             position: relative;
             top: 4px;
@@ -432,7 +591,7 @@
 
         .toggle-icon {
             position: absolute;
-            color: var(--el-color-danger);
+            color: var(--ks-content-alert);
             right: 1rem;
             width: 1rem;
             height: 1rem;
@@ -443,7 +602,7 @@
     }
 
     .el-alert__description {
-        color: var(--bs-body-color);
+        color: var(--ks-content-primary);
     }
 
     .el-alert__content {
@@ -454,7 +613,7 @@
         }
 
         .text-end {
-            border-top: 1px solid var(--bs-border-color);
+            border-top: 1px solid var(--ks-log-background-error);
         }
     }
 }
@@ -463,8 +622,8 @@
     margin-bottom: 0;
 
     .line {
-        padding: calc(var(--spacer) / 2);
-        border-top: 1px solid var(--bs-border-color);
+        padding: .5rem;
+        border-top: 1px solid var(--ks-log-background-error);
     }
 }
 </style>

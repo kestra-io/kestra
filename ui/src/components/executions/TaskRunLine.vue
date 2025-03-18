@@ -1,5 +1,17 @@
 <template>
-    <div class="attempt-header">
+    <div class="taskrun-header">
+        <div>
+            <el-icon
+                v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
+                type="default"
+                @click.stop="() => forwardEvent('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
+            >
+                <ChevronDown
+                    v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
+                />
+                <ChevronRight v-else />
+            </el-icon>
+        </div>
         <div class="task-icon d-none d-md-inline-block me-1">
             <task-icon
                 :cls="taskType(currentTaskRun)"
@@ -8,6 +20,7 @@
                 :icons="icons"
             />
         </div>
+
         <div
             class="task-id flex-grow-1"
             :id="`attempt-${selectedAttemptNumberByTaskRunId[currentTaskRun.id]}-${currentTaskRun.id}`"
@@ -35,33 +48,19 @@
 
         <div class="task-duration d-none d-md-inline-block">
             <small class="me-1">
-                <duration :histories="selectedAttempt(currentTaskRun).state.histories" />
+                <duration :histories="currentTaskRun.state.histories" />
             </small>
         </div>
 
         <div class="task-status">
-            <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
+            <status size="small" :status="currentTaskRun.state.current" />
         </div>
 
         <slot name="buttons" />
 
-        <el-select
-            class="d-none d-md-inline-block attempt-select"
-            :model-value="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
-            @change="forwardEvent('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
-            :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
-        >
-            <el-option
-                v-for="(_, index) in attempts(currentTaskRun)"
-                :key="`attempt-${index}-${currentTaskRun.id}`"
-                :value="index"
-                :label="`${$t('attempt')} ${index + 1}`"
-            />
-        </el-select>
-
         <el-dropdown trigger="click">
-            <el-button type="default" class="more-dropdown-button">
-                <DotsHorizontal title="" />
+            <el-button type="default" class="task-run-buttons">
+                <DotsVertical title="" />
             </el-button>
             <template #dropdown>
                 <el-dropdown-menu>
@@ -124,40 +123,52 @@
                 </el-dropdown-menu>
             </template>
         </el-dropdown>
-
-        <el-button
-            v-if="!taskRunId && shouldDisplayChevron(currentTaskRun)"
-            class="border-0 expand-collapse"
-            type="default"
-            text
-            @click.stop="() => forwardEvent('toggleShowAttempt',(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])))"
+    </div>
+    <div class="attempt-header">
+        <el-select
+            class="d-none d-md-inline-block attempt-select"
+            :model-value="selectedAttemptNumberByTaskRunId[currentTaskRun.id]"
+            @change="forwardEvent('swapDisplayedAttempt', {taskRunId: currentTaskRun.id, attemptNumber: $event})"
+            :disabled="!currentTaskRun.attempts || currentTaskRun.attempts?.length <= 1"
         >
-            <ChevronUp
-                v-if="shownAttemptsUid.includes(attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
+            <el-option
+                v-for="(_, index) in attempts(currentTaskRun)"
+                :key="`attempt-${index}-${currentTaskRun.id}`"
+                :value="index"
+                :label="`${$t('attempt')} ${index + 1}`"
             />
-            <ChevronDown v-else />
-        </el-button>
+        </el-select>
+
+        <div class="task-status">
+            <status size="small" :status="selectedAttempt(currentTaskRun).state.current" />
+        </div>
+
+        <div class="task-duration d-none d-md-inline-block">
+            <small class="me-1">
+                <duration :histories="selectedAttempt(currentTaskRun).state.histories" />
+            </small>
+        </div>
     </div>
 </template>
 <script>
     import Restart from "./Restart.vue";
-    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import Metrics from "./Metrics.vue";
     import Status from "../Status.vue";
     import ChangeStatus from "./ChangeStatus.vue";
     import TaskEdit from "../flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue";
-    import DotsHorizontal from "vue-material-design-icons/DotsHorizontal.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import Clock from "vue-material-design-icons/Clock.vue";
     import Outputs from "./Outputs.vue";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
     import FlowUtils from "../../utils/flowUtils";
     import {mapState} from "vuex";
     import {SECTIONS} from "../../utils/constants";
     import Download from "vue-material-design-icons/Download.vue";
     import _groupBy from "lodash/groupBy";
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {TaskIcon} from "@kestra-io/ui-libs";
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
     import Delete from "vue-material-design-icons/Delete.vue";
@@ -170,13 +181,13 @@
             Outputs,
             Clock,
             ChevronDown,
-            DotsHorizontal,
+            DotsVertical,
             SubFlowLink,
             TaskEdit,
             ChangeStatus,
             Status,
             Metrics,
-            ChevronUp,
+            ChevronRight,
             Restart,
             Duration
         },
@@ -320,51 +331,19 @@
 <style scoped lang="scss">
     @import "@kestra-io/ui-libs/src/scss/variables";
 
-    .attempt-header {
+    .task-duration {
+        padding: .375rem 0;
+    }
+
+    .taskrun-header, .attempt-header {
         display: flex;
-        gap: calc(var(--spacer) / 2);
+        gap: .5rem;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--ks-border-primary);
 
         > * {
             display: flex;
             align-items: center;
-        }
-
-        .el-select {
-            width: 8rem;
-        }
-
-        .attempt-number {
-            background: var(--bs-gray-400);
-            padding: .375rem .75rem;
-            white-space: nowrap;
-
-            html.dark & {
-                color: var(--bs-gray-600);
-            }
-        }
-
-        .task-id, .task-duration {
-            padding: .375rem 0;
-        }
-
-        .task-id {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-
-            span span {
-                color: var(--bs-tertiary-color);
-
-                html:not(.dark) & {
-                    color: $black;
-                }
-            }
-        }
-
-        .task-icon {
-            width: 36px;
-            padding: 6px;
-            border-radius: $border-radius-lg;
         }
 
         small {
@@ -374,22 +353,64 @@
 
         .task-duration small {
             white-space: nowrap;
-
-            color: var(--bs-gray-800);
+            color: var(--ks-content-secondary);
         }
 
-        .more-dropdown-button {
-            padding: .5rem;
-            height: 100%; 
-            border: 1px solid rgba($white, .05);
+    }
 
+    .taskrun-header {
+        background-color: var(--ks-background-table-header);
+        .task-icon {
+            width: 36px;
+            padding: 6px 6px 6px 0;
+            border-radius: $border-radius-lg;
+            margin-left: -0.5rem;
+        }
+
+        .task-id {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            padding: .375rem 0;
+
+            span span {
+                color: var(--ks-content-primary);
+                font-size: 14px;
+
+                html:not(.dark) & {
+                    color: $black;
+                }
+            }
+        }
+
+        .task-run-buttons {
+            padding: 0 .5rem;
+            border: 1px solid rgba($white, .05);
+            background-color: var(--ks-button-background-secondary) !important;
+            // FIXME: what does this mean?
             &:not(:hover) {
                 background: rgba($white, .10);
             }
         }
+    }
 
-        .expand-collapse {
-            background-color: transparent !important;
+    .attempt-header {
+        .el-select {
+            width: 10rem;
+            height: 24px;
+            margin-top: 0.35rem;
+
+            :deep(.el-select__wrapper) {
+                height: 24px;
+                min-height: 24px;
+            }
+
+        }
+
+        .attempt-number {
+            background: var(--bs-gray-400);
+            padding: .375rem .75rem;
+            white-space: nowrap;
         }
     }
 </style>

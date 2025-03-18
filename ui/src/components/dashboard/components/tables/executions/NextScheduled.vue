@@ -1,17 +1,44 @@
 <template>
-    <div class="p-4">
+    <div class="h-100 p-4">
         <div class="d-flex justify-content-between align-items-center">
             <span class="fs-6 fw-bold">
                 {{ t("dashboard.next_scheduled_executions") }}
             </span>
-            <RouterLink :to="{name: 'admin/triggers'}">
+            <RouterLink
+                :to="{name: 'admin/triggers'}"
+            >
                 <el-button type="primary" size="small" text>
                     {{ t("dashboard.see_all") }}
                 </el-button>
             </RouterLink>
         </div>
 
-        <div class="pt-4" v-if="executions.results.length">
+        <div class="pt-4" v-if="loading">
+            <el-table :data="skeletonData" class="scheduled" :height="240">
+                <el-table-column :label="$t('dashboard.id')" width="100">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 80px" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('namespace')">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 100%" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('flow')">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 100%" />
+                    </template>
+                </el-table-column>
+                <el-table-column :label="$t('dashboard.next_execution_date')" width="120">
+                    <template #default>
+                        <el-skeleton-item variant="text" style="width: 100px" />
+                    </template>
+                </el-table-column>
+            </el-table>
+        </div>
+
+        <div class="pt-4" v-else-if="executions.results.length">
             <el-table
                 :data="executions.results"
                 class="nextscheduled"
@@ -61,7 +88,7 @@
                         </RouterLink>
                     </template>
                 </el-table-column>
-                <el-table-column :label="$t('namespace')">
+                <el-table-column :label="$t('namespace')" v-if="flow === null">
                     <template #default="scope">
                         <RouterLink
                             :to="{
@@ -82,7 +109,7 @@
                         </RouterLink>
                     </template>
                 </el-table-column>
-                <el-table-column :label="$t('flow')">
+                <el-table-column :label="$t('flow')" v-if="flow === null">
                     <template #default="scope">
                         <RouterLink
                             :to="{
@@ -107,21 +134,7 @@
                 </el-table-column>
                 <el-table-column :label="$t('dashboard.next_execution_date')">
                     <template #default="scope">
-                        <el-tooltip
-                            v-if="!scope.row.disabled"
-                            :content="scope.row.triggerContext.flowId"
-                            placement="right"
-                        >
-                            <span class="text-truncate">
-                                {{
-                                    moment(
-                                        scope.row.triggerContext
-                                            .nextExecutionDate,
-                                    ).format("lll")
-                                }}
-                            </span>
-                        </el-tooltip>
-                        <span v-else>-</span>
+                        <date-ago :date="scope.row.triggerContext.nextExecutionDate" />
                     </template>
                 </el-table-column>
             </el-table>
@@ -143,13 +156,12 @@
 </template>
 
 <script setup>
-    import {onBeforeMount, watch, ref} from "vue";
+    import {onBeforeMount, ref, watch} from "vue";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
 
-    import moment from "moment";
-
     import NoData from "../../../../layout/NoData.vue";
+    import DateAgo from "../../../../layout/DateAgo.vue";
 
     import Check from "vue-material-design-icons/Check.vue";
 
@@ -164,6 +176,10 @@
             required: false,
             default: null,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
 
     const store = useStore();
@@ -171,6 +187,8 @@
 
     const executions = ref({results: [], total: 0});
     const currentPage = ref(1);
+
+    const skeletonData = Array(5).fill({});
 
     const loadExecutions = (page = 1) => {
         store
@@ -188,7 +206,7 @@
                     results: response.results?.map(
                         ({abstractTrigger, triggerContext, ...rest}) => {
                             const disabled =
-                                abstractTrigger.disabled || triggerContext.disabled;
+                                abstractTrigger?.disabled ?? triggerContext.disabled;
                             const tooltip = !!abstractTrigger.disabled;
 
                             return {
@@ -219,22 +237,18 @@
 
 <style lang="scss">
 code {
-    color: var(--bs-code-color);
+    color: var(--ks-content-id);
 }
 
 .nextscheduled {
-    --el-table-tr-bg-color: var(--bs-body-bg) !important;
-    background: var(--bs-body-bg);
-    & a {
-        color: #8e71f7;
-
-        html.dark & {
-            color: #e0e0fc;
-        }
-    }
+    background: var(--ks-background-table-row);
 }
 
 .next-toggle {
     padding: 8px 0 0 0 !important;
+}
+
+:deep(.el-skeleton-item) {
+    background: var(--ks-background-skeleton);
 }
 </style>

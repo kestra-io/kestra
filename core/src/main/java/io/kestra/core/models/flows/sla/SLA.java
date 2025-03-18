@@ -7,7 +7,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.flows.sla.types.ExecutionConditionSLA;
+import io.kestra.core.models.flows.sla.types.ExecutionAssertionSLA;
 import io.kestra.core.models.flows.sla.types.MaxDurationSLA;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
@@ -30,7 +30,7 @@ import java.util.Optional;
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", visible = true, include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
     @JsonSubTypes.Type(value = MaxDurationSLA.class, name = "MAX_DURATION"),
-    @JsonSubTypes.Type(value = ExecutionConditionSLA.class, name = "EXECUTION_CONDITION"),
+    @JsonSubTypes.Type(value = ExecutionAssertionSLA.class, name = "EXECUTION_ASSERTION"),
 })
 public abstract class SLA {
     @NotNull
@@ -56,7 +56,7 @@ public abstract class SLA {
 
     public enum Type {
         MAX_DURATION,
-        EXECUTION_CONDITION,
+        EXECUTION_ASSERTION,
     }
 
     public enum Behavior {

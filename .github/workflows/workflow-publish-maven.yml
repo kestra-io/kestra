@@ -1,0 +1,57 @@
+name: Publish - Maven
+
+on:
+  workflow_call:
+    secrets:
+      SONATYPE_USER:
+        description: "The Sonatype username."
+        required: true
+      SONATYPE_PASSWORD:
+        description: "The Sonatype password."
+        required: true
+      SONATYPE_GPG_KEYID:
+        description: "The Sonatype GPG key id."
+        required: true
+      SONATYPE_GPG_PASSWORD:
+        description: "The Sonatype GPG password."
+        required: true
+      SONATYPE_GPG_FILE:
+        description: "The Sonatype GPG file."
+        required: true
+
+jobs:
+  publish:
+    name: Publish - Maven
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout - Current ref
+        uses: actions/checkout@v4
+
+      # Setup build
+      - name: Setup - Build
+        uses: kestra-io/actions/.github/actions/setup-build@main
+        id: build
+        with:
+          java-enabled: true
+          node-enabled: true
+
+      # Publish
+      - name: Publish - Release package to Maven Central
+        shell: bash
+        env:
+          ORG_GRADLE_PROJECT_sonatypeUsername: ${{ secrets.SONATYPE_USER }}
+          ORG_GRADLE_PROJECT_sonatypePassword: ${{ secrets.SONATYPE_PASSWORD }}
+          SONATYPE_GPG_KEYID: ${{ secrets.SONATYPE_GPG_KEYID }}
+          SONATYPE_GPG_PASSWORD: ${{ secrets.SONATYPE_GPG_PASSWORD }}
+          SONATYPE_GPG_FILE: ${{ secrets.SONATYPE_GPG_FILE}}
+        run: |
+          mkdir -p ~/.gradle/
+          echo "signing.keyId=${SONATYPE_GPG_KEYID}" > ~/.gradle/gradle.properties
+          echo "signing.password=${SONATYPE_GPG_PASSWORD}" >> ~/.gradle/gradle.properties
+          echo "signing.secretKeyRingFile=${HOME}/.gradle/secring.gpg" >> ~/.gradle/gradle.properties
+          echo ${SONATYPE_GPG_FILE} | base64 -d > ~/.gradle/secring.gpg
+          ./gradlew publishToSonatype ${{ startsWith(github.ref, 'refs/tags/v')  && 'closeAndReleaseSonatypeStagingRepository' || '' }}
+
+      # Gradle dependency
+      - name: Java - Gradle dependency graph
+        uses: gradle/actions/dependency-submission@v4

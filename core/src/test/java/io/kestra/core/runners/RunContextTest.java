@@ -2,6 +2,9 @@ package io.kestra.core.runners;
 
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
@@ -23,15 +26,16 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tasks.test.SleepTrigger;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
-import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.context.annotation.Value;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.NotNull;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -59,9 +63,11 @@ import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@KestraTest(startRunner = true)
 @Property(name = "kestra.tasks.tmp-dir.path", value = "/tmp/sub/dir/tmp/")
-class RunContextTest extends AbstractMemoryRunnerTest {
+class RunContextTest {
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     QueueInterface<LogEntry> workerTaskLogQueue;
@@ -91,7 +97,14 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     @Inject
     private FlowInputOutput flowIO;
 
+    @Inject
+    private RunnerUtils runnerUtils;
+
+    @Inject
+    protected LocalFlowRepositoryLoader repositoryLoader;
+
     @Test
+    @LoadFlows({"flows/valids/logs.yaml"})
     void logs() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         LogEntry matchingLog;
@@ -122,6 +135,7 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs-large.yaml"})
     void inputsLarge() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
@@ -152,9 +166,8 @@ class RunContextTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void variables() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "return");
-
+    @ExecuteFlow("flows/valids/return.yaml")
+    void variables(Execution execution) {
         assertThat(execution.getTaskRunList(), hasSize(3));
 
         assertThat(
@@ -228,9 +241,8 @@ class RunContextTest extends AbstractMemoryRunnerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void encryptedStringOutput() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "encrypted-string");
-
+    @ExecuteFlow("flows/valids/encrypted-string.yaml")
+    void encryptedStringOutput(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(2));
         TaskRun hello = execution.findTaskRunsByTaskId("hello").getFirst();
@@ -311,6 +323,22 @@ class RunContextTest extends AbstractMemoryRunnerTest {
         assertThat(Objects.requireNonNull(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null)).getMessage(), is("john ******** doe"));
     }
 
+    @Test
+    void shouldValidateABean() {
+        RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) runContextFactory.of());
+        TestBean testBean = new TestBean("someValue");
+
+        runContext.validate(testBean);
+    }
+
+    @Test
+    void shouldFailValidateABean() {
+        RunContext runContext = runContextInitializer.forExecutor((DefaultRunContext) runContextFactory.of());
+        TestBean testBean = new TestBean(null);
+
+        assertThrows(ConstraintViolationException.class, () -> runContext.validate(testBean));
+    }
+
     @SuperBuilder
     @ToString
     @EqualsAndHashCode
@@ -334,4 +362,6 @@ class RunContextTest extends AbstractMemoryRunnerTest {
             return null;
         }
     }
+
+    record TestBean(@NotNull String someValue) {}
 }

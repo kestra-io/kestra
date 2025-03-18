@@ -1,9 +1,11 @@
 package io.kestra.plugin.scripts.exec.scripts.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Output;
+import io.kestra.core.models.tasks.runners.TaskRunnerDetailResult;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,6 +21,7 @@ public class ScriptOutput implements Output {
     @Schema(
         title = "The value extracted from the output of the executed `commands`."
     )
+    @JsonInclude(JsonInclude.Include.ALWAYS) // always include vars so it's easier to reason about in expressions
     private final Map<String, Object> vars;
 
     @Schema(
@@ -41,6 +44,8 @@ public class ScriptOutput implements Output {
 
     @JsonIgnore
     private Boolean warningOnStdErr;
+
+    private TaskRunnerDetailResult taskRunner;
 
     @Override
     public Optional<State.Type> finalState() {

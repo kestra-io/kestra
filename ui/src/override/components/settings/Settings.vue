@@ -1,3 +1,7 @@
+<template>
+    <BasicSettings />
+</template>
+
 <script>
     import BasicSettings from "../../../components/settings/BasicSettings.vue";
 
@@ -5,7 +9,3 @@
         components: {BasicSettings}
     }
 </script>
-
-<template>
-    <BasicSettings />
-</template>

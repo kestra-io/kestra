@@ -1,3 +1,19 @@
+<template>
+    <div class="wrapper">
+        <div v-if="editing" class="inputs">
+            <el-input ref="titleInput" v-model="updatedTitle" @keyup.enter="renameBookmark" @keyup.esc="editing = false" />
+            <CheckCircle @click.stop="renameBookmark" class="save" />
+        </div>
+        <div class="buttons">
+            <PencilOutline @click="startEditBookmark" :title="t('edit')" />
+            <DeleteOutline @click="deleteBookmark" :title="t('delete')" />
+        </div>
+        <a :href="href" :title="updatedTitle">
+            {{ updatedTitle }}
+        </a>
+    </div>
+</template>
+
 <script lang="ts" setup>
     import {nextTick, ref} from "vue"
     import {useI18n} from "vue-i18n";
@@ -5,8 +21,9 @@
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import PencilOutline from "vue-material-design-icons/PencilOutline.vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
+    import {ElMessageBox} from "element-plus";
 
-    const {t} = useI18n();
+    const {t} = useI18n({useScope: "global"});
 
     const $store = useStore()
 
@@ -20,9 +37,13 @@
     const titleInput = ref<{focus: () => void, select: () => void} | null>(null)
 
     function deleteBookmark() {
-        $store.dispatch("bookmarks/remove", {
-            path: props.href
-        })
+        ElMessageBox.confirm(t("remove_bookmark"), t("confirmation"), {
+            type: "warning",
+            confirmButtonText: t("ok"),
+            cancelButtonText: t("close"),
+        }).then(() => {
+            $store.dispatch("bookmarks/remove", {path: props.href});
+        });
     }
 
     function startEditBookmark() {
@@ -42,39 +63,26 @@
     }
 </script>
 
-<template>
-    <div class="wrapper">
-        <div v-if="editing" class="inputs">
-            <el-input ref="titleInput" v-model="updatedTitle" @keyup.enter="renameBookmark" @keyup.esc="editing = false" />
-            <CheckCircle @click.stop="renameBookmark" class="save" />
-        </div>
-        <div class="buttons">
-            <PencilOutline @click="startEditBookmark" :title="t('edit')" />
-            <DeleteOutline @click="deleteBookmark" :title="t('delete')" />
-        </div>
-        <a :href="href" :title="updatedTitle">
-            {{ updatedTitle }}
-        </a>
-    </div>
-</template>
-
 <style scoped>
     .wrapper{
         position: relative;
         .buttons {
-            color: var(--el-text-color-regular);
+            color: var(--ks-content-primary);
             position: absolute;
+            align-items: center;
             z-index: 1;
             top: 0;
-            right: calc(.15 * var(--spacer));
+            right: 0;
+            bottom: 0;
             display: none;
-            gap: calc(.5 * var(--spacer));
-            background-color: var(--el-bg-color);
-            padding: calc(.35 * var(--spacer));
+            gap: .5rem;
+            background-color: var(--ks-background-button-secondary-hover);
+            padding: .5rem;
             > span{
                 cursor: pointer;
             }
         }
+
         &:hover .buttons {
             display: flex;
         }
@@ -95,28 +103,36 @@
 
             .save {
                 position: absolute;
-                top: calc(.5 * var(--spacer));
-                right: calc(.5 * var(--spacer));
+                top: .5rem;
+                right: .5rem;
                 z-index: 2;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
                 cursor: pointer;
             }
         }
-    }
-    a {
-        display: block;
-        padding: calc(.25 * var(--spacer)) calc(.5 * var(--spacer));
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        color: var(--el-text-color-regular);
-        font-size: 0.875em;
-        border-radius: 4px;
+
+        a {
+            display: block;
+            padding: .25rem .5rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--ks-content-primary);
+            font-size: 0.875em;
+            border-radius: 4px;
+            transition: none;
+            &:hover{
+                color: var(--ks-content-link);
+
+            }
+        }
+
+        &:hover a {
+            margin-right: 2.5rem;
+        }
+
         &:hover{
-            color: var(--el-text-color-secondary);
-            background-color: var(--el-bg-color);
+            background-color: var(--ks-button-background-secondary-hover);
         }
     }
-
-
 </style>

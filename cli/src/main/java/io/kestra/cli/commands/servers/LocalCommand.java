@@ -12,7 +12,7 @@ import java.util.Map;
 
 @CommandLine.Command(
     name = "local",
-    description = "start a local server"
+    description = "Start the local development server"
 )
 public class LocalCommand extends StandAloneCommand {
     // @FIXME: Keep it for bug in micronaut that need to have inject on top level command to inject on abstract classe

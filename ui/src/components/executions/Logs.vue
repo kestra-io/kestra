@@ -1,10 +1,23 @@
 <template>
     <div data-component="FILENAME_PLACEHOLDER">
-        <KestraFilter
-            prefix="execution_logs"
-            :include="['level']"
-        />
         <collapse>
+            <el-form-item>
+                <el-input
+                    v-model="filter"
+                    @update:model-value="onChange"
+                    :placeholder="$t('search')"
+                >
+                    <template #suffix>
+                        <magnify />
+                    </template>
+                </el-input>
+            </el-form-item>
+            <el-form-item>
+                <log-level-selector
+                    v-model="level"
+                    @update:model-value="onChange"
+                />
+            </el-form-item>
             <el-form-item v-for="logLevel in currentLevelOrLower" :key="logLevel">
                 <log-level-navigator
                     v-if="countByLogLevel[logLevel] > 0"
@@ -14,6 +27,7 @@
                     @previous="previousLogForLevel(logLevel)"
                     @next="nextLogForLevel(logLevel)"
                     @close="logCursor = undefined"
+                    class="w-100"
                 />
             </el-form-item>
             <el-form-item>
@@ -64,7 +78,7 @@
                 :items="temporalLogs"
                 :min-item-size="50"
                 key-field="index"
-                class="log-lines"
+                class="log-lines temporal"
                 :buffer="200"
                 :prerender="20"
             >
@@ -80,10 +94,10 @@
                             class="line"
                             :class="{['log-bg-' + cursorLogLevel?.toLowerCase()]: cursorLogLevel === item.level, 'opacity-40': cursorLogLevel && cursorLogLevel !== item.level}"
                             :cursor="item.index.toString() === logCursor"
+                            :exclude-metas="['namespace', 'flowId', 'executionId']"
                             :level="level"
                             :filter="filter"
                             :log="item"
-                            title
                         />
                     </DynamicScrollerItem>
                 </template>
@@ -96,30 +110,32 @@
     import TaskRunDetails from "../logs/TaskRunDetails.vue";
     import {mapState} from "vuex";
     import Download from "vue-material-design-icons/Download.vue";
+    import Magnify from "vue-material-design-icons/Magnify.vue";
     import Kicon from "../Kicon.vue";
+    import LogLevelSelector from "../logs/LogLevelSelector.vue";
     import LogLevelNavigator from "../logs/LogLevelNavigator.vue";
     import {DynamicScroller, DynamicScrollerItem} from "vue-virtual-scroller";
     import "vue-virtual-scroller/dist/vue-virtual-scroller.css"
     import Collapse from "../layout/Collapse.vue";
-    import State from "../../utils/state";
+    import {State, Utils as LibUtils} from "@kestra-io/ui-libs"
     import Utils from "../../utils/utils";
     import LogLine from "../logs/LogLine.vue";
     import Restart from "./Restart.vue";
     import LogUtils from "../../utils/logs";
-    import KestraFilter from "../filter/KestraFilter.vue"
 
     export default {
         components: {
             LogLine,
             TaskRunDetails,
+            LogLevelSelector,
             LogLevelNavigator,
             Kicon,
             Download,
+            Magnify,
             Collapse,
             Restart,
             DynamicScroller,
             DynamicScrollerItem,
-            KestraFilter
         },
         data() {
             return {
@@ -262,7 +278,7 @@
                     return;
                 }
 
-                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
+                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(LibUtils.distinctFilter).sort(this.sortLogsByViewOrder);
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) - 1] ?? sortedIndices[sortedIndices.length - 1];
             },
             nextLogForLevel(level) {
@@ -272,7 +288,7 @@
                     return;
                 }
 
-                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(Utils.distinctFilter).sort(this.sortLogsByViewOrder);
+                const sortedIndices = [...logIndicesForLevel, this.logCursor].filter(LibUtils.distinctFilter).sort(this.sortLogsByViewOrder);
                 this.logCursor = sortedIndices?.[sortedIndices.indexOf(this.logCursor) + 1] ?? sortedIndices[0];
             },
             scrollToLog(index) {
@@ -283,33 +299,26 @@
 </script>
 
 <style lang="scss" scoped>
-@import "@kestra-io/ui-libs/src/scss/variables";
+    @import "@kestra-io/ui-libs/src/scss/variables";
     .attempt-wrapper {
-        background-color: var(--bs-white);
+        background-color: var(--ks-background-card);
 
         :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
-            border-top: 1px solid var(--bs-border-color);
-        }
-
-        html.dark & {
-            background-color: var(--bs-gray-100);
+            border-top: 1px solid var(--ks-border-primary);
         }
 
         .attempt-wrapper & {
             border-radius: .25rem;
         }
-        }
+    }
+
     .log-lines {
         max-height: calc(100vh - 335px);
         transition: max-height 0.2s ease-out;
-        margin-top: calc(var(--spacer) / 2);
+        margin-top: .5rem;
 
         .line {
-            padding: calc(var(--spacer) / 2);
-
-            &.cursor {
-                background-color: var(--bs-gray-300)
-            }
+            padding: .5rem;
         }
 
         &::-webkit-scrollbar {
@@ -321,7 +330,13 @@
         }
 
         &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
+            background: var(--ks-button-background-primary);
         }
+    }
+
+    .temporal {
+        .line {
+            align-items: flex-start;
         }
+    }
 </style>

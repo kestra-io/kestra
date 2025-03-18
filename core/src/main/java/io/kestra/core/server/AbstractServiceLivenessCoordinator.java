@@ -9,6 +9,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.Random;
 import java.util.Set;
 
@@ -35,6 +37,8 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
 
     protected final ServiceLivenessStore store;
 
+    protected final ServiceRegistry serviceRegistry;
+
     // mutable for testing purpose
     protected String serverId = ServerInstance.INSTANCE_ID;
 
@@ -46,8 +50,10 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
      */
     @Inject
     public AbstractServiceLivenessCoordinator(final ServiceLivenessStore store,
+                                              final ServiceRegistry serviceRegistry,
                                               final ServerConfig serverConfig) {
         super(TASK_NAME, serverConfig);
+        this.serviceRegistry = serviceRegistry;
         this.store = store;
     }
 
@@ -56,6 +62,15 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
      **/
     @Override
     protected void onSchedule(Instant now) throws Exception {
+        if (Optional.ofNullable(serviceRegistry.get(Service.ServiceType.EXECUTOR))
+            .filter(service -> service.instance().is(RUNNING))
+            .isEmpty()) {
+            log.debug(
+                "The liveness coordinator task was temporarily disabled. Executor is not yet in the RUNNING state."
+            );
+            return;
+        }
+
         // Update all RUNNING but non-responding services to DISCONNECTED.
         handleAllNonRespondingServices(now);
 
@@ -129,6 +144,7 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
     protected List<ServiceInstance> filterAllNonRespondingServices(final List<ServiceInstance> instances,
                                                                    final Instant now) {
         return instances.stream()
+            .filter(instance -> Objects.nonNull(instance.config())) // protect against non-complete instance
             .filter(instance -> instance.config().liveness().enabled())
             .filter(instance -> instance.isSessionTimeoutElapsed(now))
             // exclude any service running on the same server as the executor, to prevent the latter from shutting down.

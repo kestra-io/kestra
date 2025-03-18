@@ -1,4 +1,5 @@
 <template>
+    <doc-id-display />
     <el-config-provider>
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
         <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded">
@@ -16,13 +17,16 @@
     import Utils from "./utils/utils";
     import VueTour from "./components/onboarding/VueTour.vue";
     import DefaultLayout from "./components/layout/DefaultLayout.vue";
+    import DocIdDisplay from "./components/DocIdDisplay.vue";
     import posthog from "posthog-js";
-
+    import "@kestra-io/ui-libs/style.css";
+    // Main App
     export default {
         name: "App",
         components: {
             ErrorToast,
             VueTour,
+            DocIdDisplay
         },
         data() {
             return {
@@ -44,7 +48,7 @@
             },
             isOSS(){
                 return true;
-            }
+            },
         },
         async created() {
             if (this.created === false) {
@@ -101,7 +105,7 @@
         },
         methods: {
             displayApp() {
-                Utils.switchTheme();
+                Utils.switchTheme(this.$store);
 
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";
@@ -220,4 +224,3 @@
     overflow: auto;
 }
 </style>
-

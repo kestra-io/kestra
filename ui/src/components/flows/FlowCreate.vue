@@ -6,12 +6,10 @@
             :flow-id="flowParsed?.id"
             :namespace="flowParsed?.namespace"
             :is-creating="true"
+            :flow-validation="flowValidation"
             :flow-graph="flowGraph"
             :is-read-only="false"
             :is-dirty="true"
-            :total="total"
-            :guided-properties="guidedProperties"
-            :flow-validation="flowValidation"
             :flow="sourceWrapper"
             :next-revision="1"
         />
@@ -19,12 +17,13 @@
 </template>
 
 <script>
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import EditorView from "../inputs/EditorView.vue";
-    import {mapGetters, mapState, mapMutations} from "vuex";
+    import {mapGetters, mapMutations, mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import {apiUrl} from "override/utils/route";
-    import {YamlUtils} from "@kestra-io/ui-libs";
+
+    import {getRandomFlowID} from "../../../scripts/product/flow";
 
     export default {
         mixins: [RouteContext],
@@ -40,7 +39,7 @@
         created() {
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
+                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
                 this.$tours["guidedTour"]?.start();
             }
             this.setupFlow()
@@ -53,17 +52,16 @@
         methods: {
             ...mapMutations("editor", ["closeAllTabs"]),
 
-            async queryBlueprint(blueprintId) {
-                return (await this.$http.get(`${this.blueprintUri}/${blueprintId}/flow`)).data;
-            },
             async setupFlow() {
+                const blueprintId = this.$route.query.blueprintId;
+                const blueprintSource = this.$route.query.blueprintSource;
                 if (this.$route.query.copy && this.flow){
                     this.source = this.flow.source;
-                } else if (this.$route.query.blueprintId && this.$route.query.blueprintSource) {
-                    this.source = await this.queryBlueprint(this.$route.query.blueprintId)
+                } else if (blueprintId && blueprintSource) {
+                    this.source = await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
                     const selectedNamespace = this.$route.query.namespace || "company.team";
-                    this.source = `id: myflow
+                    this.source = `id: ${getRandomFlowID()}
 namespace: ${selectedNamespace}
 
 tasks:
@@ -77,7 +75,7 @@ tasks:
             sourceWrapper() {
                 return {source: this.source};
             },
-            ...mapState("flow", ["flowGraph", "total"]),
+            ...mapState("flow", ["flowGraph"]),
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
@@ -87,11 +85,8 @@ tasks:
                     title: this.$t("flows")
                 };
             },
-            blueprintUri() {
-                return `${apiUrl(this.$store)}/blueprints/${this.$route.query.blueprintSource}`
-            },
             flowParsed() {
-                return YamlUtils.parse(this.source);
+                return YAML_UTILS.parse(this.source);
             }
         },
         beforeRouteLeave(to, from, next) {

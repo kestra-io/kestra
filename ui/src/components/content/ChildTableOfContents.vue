@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
     import {h, defineComponent} from "vue";
     import {useStore} from "vuex";
     import {RouterLink, useRoute} from "vue-router";
@@ -13,8 +13,15 @@
                 type: Number,
                 default: undefined
             },
+            renderLink: {
+                type: Function,
+                default: (link:{
+                    path:string,
+                    title:string
+                }) => h(RouterLink, {to: {path: "/" + link.path}}, () => link.title)
+            },
         },
-        async setup(props) {
+        async setup(props, ctx) {
             const store = useStore();
             const route = useRoute();
 
@@ -27,7 +34,7 @@
 
             currentPage = currentPage?.endsWith("/") ? currentPage.slice(0, -1) : currentPage;
 
-            let childrenWithMetadata = await store.dispatch("doc/children", currentPage);
+            let childrenWithMetadata = await store.dispatch("doc/children", currentPage) as Record<string, any>;
             childrenWithMetadata = Object.fromEntries(Object.entries(childrenWithMetadata).map(([url, metadata]) => [url, {...metadata, path: url}]));
             Object.entries(childrenWithMetadata)
                 .forEach(([url, metadata]) => {
@@ -40,13 +47,6 @@
                 });
 
             const dir = Object.entries(childrenWithMetadata)[0]?.[1]?.children;
-            return {dir};
-        },
-
-        render(ctx) {
-            const {dir, max} = ctx;
-
-            const renderLink = (link) => h(RouterLink, {to: {path: "/" + link.path}}, () => link.title);
 
             const renderLinks = (data, level) => {
                 return h(
@@ -54,20 +54,20 @@
                     level ? {"data-level": level} : null,
                     (data || []).map((link) => {
                         if (link.children &&
-                            (max === undefined || max <= level) &&
+                            (props.max === undefined || props.max <= level) &&
                             (link.children.length > 1 || link.children.length === 1 && link.children[0].path !== link.path)
                         ) {
-                            return h("li", null, [renderLink(link), renderLinks(link.children, level + 1)]);
+                            return h("li", null, [props.renderLink(link), renderLinks(link.children, level + 1)]);
                         }
 
-                        return h("li", null, renderLink(link));
+                        return h("li", null, props.renderLink(link));
                     })
                 );
             };
 
             const defaultNode = (data) => renderLinks(data, 0);
 
-            return this.$slots?.default ? this.$slots.default({dir, ...this.$attrs}) : defaultNode(dir);
-        }
+            return () => ctx.slots?.default ? ctx.slots.default({dir, ...ctx.attrs}) : defaultNode(dir);
+        },
     });
 </script>

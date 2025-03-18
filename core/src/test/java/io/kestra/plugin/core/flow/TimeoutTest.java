@@ -1,21 +1,22 @@
 package io.kestra.plugin.core.flow;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
+import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.PluginDefaultService;
-import io.kestra.core.tasks.test.Sleep;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -27,7 +28,8 @@ import java.util.concurrent.TimeoutException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-class TimeoutTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+class TimeoutTest {
     @Inject
     FlowRepositoryInterface flowRepository;
 
@@ -38,7 +40,10 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     private QueueInterface<LogEntry> workerTaskLogQueue;
 
-    @Test
+    @Inject
+    private RunnerUtils runnerUtils;
+
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     void timeout() throws TimeoutException, QueueException {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
@@ -50,8 +55,8 @@ class TimeoutTest extends AbstractMemoryRunnerTest {
             .tasks(Collections.singletonList(Sleep.builder()
                 .id("test")
                 .type(Sleep.class.getName())
-                .duration(100000L)
-                .timeout(Duration.ofNanos(100000))
+                .duration(Duration.ofSeconds(100))
+                .timeout(Property.of(Duration.ofNanos(100000)))
                 .build()))
             .build();
 

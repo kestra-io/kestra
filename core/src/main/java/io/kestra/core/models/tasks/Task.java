@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.flow.WorkingDirectory;
@@ -30,12 +31,14 @@ abstract public class Task implements TaskInterface {
 
     protected String type;
 
+    protected String version;
+
     private String description;
 
     @Valid
     protected AbstractRetry retry;
 
-    protected Duration timeout;
+    protected Property<Duration> timeout;
 
     @Builder.Default
     protected Boolean disabled = false;

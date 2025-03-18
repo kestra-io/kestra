@@ -79,7 +79,7 @@ type: "{{ cls }}"
 {% endif %}
 
 
-{% if outputs != null -%}
+{% if outputs != null and outputs|length > 0 -%}
 ## Outputs
     {%- for entry in outputs %}
 ### `{{ entry.key }}`
@@ -90,7 +90,7 @@ type: "{{ cls }}"
 {% endif %}
 
 
-{% if defs != null -%}
+{% if defs != null and defs|length > 0 -%}
 ## Definitions
     {%- for entry in defs %}
 ### `{{ entry.key }}`

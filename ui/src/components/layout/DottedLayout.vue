@@ -3,8 +3,8 @@
     <div class="blueprints" v-else>
         <nav class="header">
             <div class="image-box">
-                <img :src="image" :alt="alt">
-                <img :src="imageDark" :alt="alt" class="blueprint-dark">
+                <img :src="image" :alt="alt || phrase">
+                <img :src="imageDark" :alt="alt || phrase" class="blueprint-dark">
             </div>
             <h4 class="catch-phrase">
                 {{ phrase }}
@@ -17,15 +17,15 @@
 <script setup lang="ts">
     defineProps<{
         embed: boolean;
-        phrase:string;
-        alt:string;
-        image:string;
-        imageDark:string;
+        phrase: string;
+        alt?: string;
+        image: string;
+        imageDark: string;
     }>();
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables.scss";
+    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .blueprints {
         background: url('../../assets/dots-bg.jpg') no-repeat top left;
@@ -41,18 +41,18 @@
         display: flex;
         align-items: center;
         gap: 16px;
-        padding-top: calc(4 * var(--spacer));
-        padding-bottom: calc(1 * var(--spacer));
-        margin: 0 calc(2 * var(--spacer));
+        padding-top: 4rem;
+        padding-bottom: 1rem;
+        margin: 0 2rem;
 
         .catch-phrase {
-            color: var(--bs-heading-color);
+            color: var(--ks-content-primary);
             margin-bottom: 0;
         }
 
         .image-box{
-            border: 1px solid var(--bs-border-color);
-            background-color: var(--bs-card-bg);
+            border: 1px solid var(--ks-border-primary);
+            background-color: var(--ks-background-card);
             padding: 9px;
             border-radius: 7px;
             box-shadow:

@@ -1,11 +1,12 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.common.EncryptedString;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.micronaut.core.annotation.NonNull;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -17,16 +18,15 @@ import org.junit.jupiter.api.TestInstance;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-@KestraTest
+@KestraTest(startRunner = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class NoEncryptionConfiguredTest extends AbstractMemoryRunnerTest implements TestPropertyProvider {
+public class NoEncryptionConfiguredTest implements TestPropertyProvider {
     @Inject
     private FlowRepositoryInterface flowRepository;
 
@@ -43,9 +43,8 @@ public class NoEncryptionConfiguredTest extends AbstractMemoryRunnerTest impleme
 
     @SuppressWarnings("unchecked")
     @Test
-    void encryptedStringOutput() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "encrypted-string");
-
+    @ExecuteFlow("flows/valids/encrypted-string.yaml")
+    void encryptedStringOutput(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(2));
         TaskRun hello = execution.findTaskRunsByTaskId("hello").getFirst();
@@ -60,6 +59,7 @@ public class NoEncryptionConfiguredTest extends AbstractMemoryRunnerTest impleme
     }
 
     @Test
+    @LoadFlows({"flows/valids/inputs.yaml"})
     void secretInput() {
         assertThat(flowRepository.findById(null, "io.kestra.tests", "inputs").isPresent(), is(true));
 

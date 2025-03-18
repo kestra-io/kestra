@@ -1,6 +1,8 @@
 package io.kestra.plugin.core.flow;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -8,7 +10,6 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
@@ -42,11 +43,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class PauseTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+public class PauseTest {
+
+    @Inject
+    RunnerUtils runnerUtils;
     @Inject
     Suite suite;
 
     @Test
+    @LoadFlows({"flows/valids/pause.yaml"})
     void run() throws Exception {
         suite.run(runnerUtils);
     }
@@ -57,31 +63,41 @@ public class PauseTest extends AbstractMemoryRunnerTest {
     }
 
     @Disabled("This test is too flaky and it always pass in JDBC and Kafka")
+    void delayFromInput() throws Exception {
+        suite.runDelayFromInput(runnerUtils);
+    }
+
+    @Disabled("This test is too flaky and it always pass in JDBC and Kafka")
     void parallelDelay() throws Exception {
         suite.runParallelDelay(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause-timeout.yaml"})
     void timeout() throws Exception {
         suite.runTimeout(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause_no_tasks.yaml"})
     void runEmptyTasks() throws Exception {
         suite.runEmptyTasks(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
     void runOnResume() throws Exception {
         suite.runOnResume(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
     void runOnResumeMissingInputs() throws Exception {
         suite.runOnResumeMissingInputs(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause_on_resume_optional.yaml"})
     void runOnResumeOptionalInputs() throws Exception {
         suite.runOnResumeOptionalInputs(runnerUtils);
     }
@@ -128,6 +144,24 @@ public class PauseTest extends AbstractMemoryRunnerTest {
 
         public void runDelay(RunnerUtils runnerUtils) throws Exception {
             Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-delay", null, null, Duration.ofSeconds(30));
+            String executionId = execution.getId();
+
+            assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));
+            assertThat(execution.getTaskRunList(), hasSize(1));
+
+            execution = runnerUtils.awaitExecution(
+                e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.SUCCESS,
+                () -> {},
+                Duration.ofSeconds(5)
+            );
+
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count(), is(1L));
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count(), is(2L));
+            assertThat(execution.getTaskRunList(), hasSize(3));
+        }
+
+        public void runDelayFromInput(RunnerUtils runnerUtils) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-delay-from-input", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
 
             assertThat(execution.getState().getCurrent(), is(State.Type.PAUSED));

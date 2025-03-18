@@ -25,7 +25,7 @@ public class WorkerTaskCallable extends AbstractWorkerCallable {
     Output taskOutput;
 
     WorkerTaskCallable(WorkerTask workerTask, RunnableTask<?> task, RunContext runContext, MetricRegistry metricRegistry) {
-        super(runContext, task.getClass().getName(), task.getClass().getClassLoader());
+        super(runContext, task.getClass().getName(), workerTask.uid(), task.getClass().getClassLoader());
         this.workerTask = workerTask;
         this.task = task;
         this.metricRegistry = metricRegistry;
@@ -53,7 +53,7 @@ public class WorkerTaskCallable extends AbstractWorkerCallable {
 
     @Override
     public State.Type doCall() throws Exception {
-        final Duration workerTaskTimeout = workerTask.getTask().getTimeout();
+        final Duration workerTaskTimeout = workerTask.getRunContext().render(workerTask.getTask().getTimeout()).as(Duration.class).orElse(null);
 
         try {
             if (workerTaskTimeout != null) {

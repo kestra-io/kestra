@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
@@ -61,23 +62,23 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
             code = """
                 id: template
                 namespace: company.team
-                
+
                 inputs:
                   - id: with_string
                     type: STRING
-                
+
                 tasks:
                   - id: 1_return
                     type: io.kestra.plugin.core.debug.Return
                     format: "{{ task.id }} > {{ taskrun.startDate }}"
-                
+
                   - id: 2_template
                     type: io.kestra.plugin.core.flow.Template
                     namespace: company.team
                     templateId: template
                     args:
                       my_forward: "{{ inputs.with_string }}"
-                
+
                   - id: 3_end
                     type: io.kestra.plugin.core.debug.Return
                     format: "{{ task.id }} > {{ taskrun.startDate }}"
@@ -91,6 +92,15 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     @Valid
     @PluginProperty
     protected List<Task> errors;
+
+    @Valid
+    @JsonProperty("finally")
+    @Getter(AccessLevel.NONE)
+    protected List<Task> _finally;
+
+    public List<Task> getFinally() {
+        return this._finally;
+    }
 
     @NotNull
     @Schema(
@@ -137,6 +147,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
             subGraph,
             template.getTasks(),
             template.getErrors(),
+            template.getFinally(),
             taskRun,
             execution
         );
@@ -175,6 +186,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(template.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(template.getFinally(), parentTaskRun),
             parentTaskRun
         );
     }
@@ -235,6 +247,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
         }
     }
 
+    @SuppressWarnings("deprecated")
     public static Flow injectTemplate(Flow flow, Execution execution, TriFunction<String, String, String, io.kestra.core.models.templates.Template> provider) throws InternalException {
         AtomicReference<Flow> flowReference = new AtomicReference<>(flow);
 

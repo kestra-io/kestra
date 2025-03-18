@@ -3,7 +3,7 @@
         <el-form-item>
             <template #label>
                 <div class="type-div">
-                    <code>type</code>
+                    <code>{{ $t("type") }}</code>
                 </div>
             </template>
             <plugin-select
@@ -26,12 +26,13 @@
 </template>
 <script>
     import TaskRoot from "./tasks/TaskRoot.vue";
-    import YamlUtils from "../../utils/yamlUtils";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {mapGetters} from "vuex";
     import {SECTIONS} from "../../utils/constants.js";
 
     export default {
+        inheritAttrs: false,
         computed: {
             ...mapGetters("flow", ["taskError"]),
         },
@@ -80,7 +81,7 @@
         },
         methods: {
             setup() {
-                this.taskObject = YamlUtils.parse(this.modelValue);
+                this.taskObject = YAML_UTILS.parse(this.modelValue);
                 this.selectedTaskType = this.taskObject.type;
                 this.$store.dispatch("flow/validateTask", {task: this.modelValue, section: this.section})
 
@@ -101,7 +102,7 @@
             },
             onInput(value) {
                 this.taskObject = value;
-                this.$emit("update:modelValue", YamlUtils.stringify(value));
+                this.$emit("update:modelValue", YAML_UTILS.stringify(value));
             },
             onTaskTypeSelect() {
                 this.load();

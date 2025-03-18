@@ -1,6 +1,7 @@
 package io.kestra.jdbc;
 
 import io.kestra.core.models.Setting;
+import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
@@ -71,12 +72,6 @@ public class JdbcTableConfigsFactory {
     }
 
     @Bean
-    @Named("subflow-executions")
-    public InstantiableJdbcTableConfig subflowExecutions() {
-        return new InstantiableJdbcTableConfig("subflow-executions", SubflowExecution.class, "subflow_executions");
-    }
-
-    @Bean
     @Named("executorstate")
     public InstantiableJdbcTableConfig executorState() {
         return new InstantiableJdbcTableConfig("executorstate", ExecutorState.class, "executorstate");
@@ -122,6 +117,12 @@ public class JdbcTableConfigsFactory {
     @Named("slamonitor")
     public InstantiableJdbcTableConfig slaMonitor() {
         return new InstantiableJdbcTableConfig("slamonitor", SLAMonitor.class, "sla_monitor");
+    }
+
+    @Bean
+    @Named("dashboards")
+    public InstantiableJdbcTableConfig dashboards() {
+        return new InstantiableJdbcTableConfig("dashboards", Dashboard.class, "dashboards");
     }
 
     public static class InstantiableJdbcTableConfig extends JdbcTableConfig {

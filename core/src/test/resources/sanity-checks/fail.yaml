@@ -1,0 +1,8 @@
+id: fail
+namespace: sanitychecks
+
+tasks:
+  - id: fail
+    type: io.kestra.plugin.core.execution.Fail
+    allowFailure: true
+    allowWarning: true

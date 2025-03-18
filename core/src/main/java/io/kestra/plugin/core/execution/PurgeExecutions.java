@@ -4,6 +4,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.DefaultRunContext;
@@ -48,44 +49,38 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
         title = "Namespace whose flows need to be purged, or namespace of the flow that needs to be purged.",
         description = "If `flowId` isn't provided, this is a namespace prefix, else the namespace of the flow."
     )
-    @PluginProperty(dynamic = true)
-    private String namespace;
+    private Property<String> namespace;
 
     @Schema(
         title = "The flow ID to be purged.",
         description = "You need to provide the `namespace` properties if you want to purge a flow."
     )
-    @PluginProperty(dynamic = true)
-    private String flowId;
+    private Property<String> flowId;
 
     @Schema(
         title = "The minimum date to be purged.",
         description = "All data of flows executed after this date will be purged."
     )
-    @PluginProperty(dynamic = true)
-    private String startDate;
+    private Property<String> startDate;
 
     @Schema(
         title = "The maximum date to be purged.",
         description = "All data of flows executed before this date will be purged."
     )
-    @PluginProperty(dynamic = true)
     @NotNull
-    private String endDate;
+    private Property<String> endDate;
 
     @Schema(
         title = "The state of the executions to be purged.",
         description = "If not set, executions for any states will be purged."
     )
-    @PluginProperty
-    private List<State.Type> states;
+    private Property<List<State.Type>> states;
 
     @Schema(
         title = "Whether to purge executions."
     )
-    @PluginProperty
     @Builder.Default
-    private boolean purgeExecution = true;
+    private Property<Boolean> purgeExecution = Property.of(true);
 
     @Schema(
         title = "Whether to purge execution's logs.",
@@ -93,23 +88,20 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
             This will only purge logs from executions not from triggers, and it will do it execution by execution.
             The `io.kestra.plugin.core.log.PurgeLogs` task is a better fit to purge logs as it will purge logs in bulk, and will also purge logs not tied to an execution like trigger logs."""
     )
-    @PluginProperty
     @Builder.Default
-    private boolean purgeLog = true;
+    private Property<Boolean> purgeLog = Property.of(true);
 
     @Schema(
         title = "Whether to purge execution's metrics."
     )
-    @PluginProperty
     @Builder.Default
-    private boolean purgeMetric = true;
+    private Property<Boolean> purgeMetric = Property.of(true);
 
     @Schema(
         title = "Whether to purge execution's files from the Kestra's internal storage."
     )
-    @PluginProperty
     @Builder.Default
-    private boolean purgeStorage = true;
+    private Property<Boolean> purgeStorage = Property.of(true);
 
     @Override
     public PurgeExecutions.Output run(RunContext runContext) throws Exception {
@@ -118,23 +110,24 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
 
         // validate that this namespace is authorized on the target namespace / all namespaces
         var flowInfo = runContext.flowInfo();
-        if (namespace == null){
+        String renderedNamespace = runContext.render(this.namespace).as(String.class).orElse(null);
+        if (renderedNamespace == null){
             flowService.checkAllowedAllNamespaces(flowInfo.tenantId(), flowInfo.tenantId(), flowInfo.namespace());
-        } else if (!runContext.render(namespace).equals(flowInfo.namespace())) {
-            flowService.checkAllowedNamespace(flowInfo.tenantId(), runContext.render(namespace), flowInfo.tenantId(), flowInfo.namespace());
+        } else if (!renderedNamespace.equals(flowInfo.namespace())) {
+            flowService.checkAllowedNamespace(flowInfo.tenantId(), renderedNamespace, flowInfo.tenantId(), flowInfo.namespace());
         }
 
         ExecutionService.PurgeResult purgeResult = executionService.purge(
-            purgeExecution,
-            purgeLog,
-            purgeMetric,
-            purgeStorage,
+            runContext.render(this.purgeExecution).as(Boolean.class).orElseThrow(),
+            runContext.render(this.purgeLog).as(Boolean.class).orElseThrow(),
+            runContext.render(this.purgeMetric).as(Boolean.class).orElseThrow(),
+            runContext.render(this.purgeStorage).as(Boolean.class).orElseThrow(),
             flowInfo.tenantId(),
-            runContext.render(namespace),
-            runContext.render(flowId),
-            startDate != null ? ZonedDateTime.parse(runContext.render(startDate)) : null,
-            ZonedDateTime.parse(runContext.render(endDate)),
-            states
+            renderedNamespace,
+            runContext.render(flowId).as(String.class).orElse(null),
+            startDate != null ? ZonedDateTime.parse(runContext.render(startDate).as(String.class).orElseThrow()) : null,
+            ZonedDateTime.parse(runContext.render(endDate).as(String.class).orElseThrow()),
+            this.states == null ? null : runContext.render(this.states).asList(State.Type.class)
         );
 
         return Output.builder()

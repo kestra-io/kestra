@@ -11,7 +11,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "namespace",
-    description = "handle namespaces",
+    description = "Manage namespaces",
     mixinStandardHelpOptions = true,
     subcommands = {
         NamespaceFilesCommand.class,

@@ -1,0 +1,7 @@
+id: purge_logs_no_arguments
+namespace: io.kestra.tests
+
+tasks:
+  - id: purge_logs
+    type: io.kestra.plugin.core.log.PurgeLogs
+    endDate: "{{ now() | dateAdd(2, 'HOURS') }}"

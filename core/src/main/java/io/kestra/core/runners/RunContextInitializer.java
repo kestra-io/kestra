@@ -64,11 +64,23 @@ public class RunContextInitializer {
     }
 
     /**
+     * Initializes the given {@link RunContext} for the given {@link WorkerTask} for executor.
+     *
+     * @param runContext The runContext to initialize.
+     * @return The initialized runContext
+     */
+    public DefaultRunContext forExecutor(final DefaultRunContext runContext) {
+        runContext.init(applicationContext);
+
+        return runContext;
+    }
+
+    /**
      * Initializes the given {@link RunContext} for the given {@link WorkerTask}.
      *
      * @param runContext The runContext to initialize.
      * @param workerTask The {@link WorkerTask}.
-     * @return The runContext to initialize
+     * @return The initialized runContext
      */
     public DefaultRunContext forWorker(final DefaultRunContext runContext,
                                        final WorkerTask workerTask) {
@@ -122,6 +134,7 @@ public class RunContextInitializer {
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()));
         runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, flowService));
         runContext.setLogger(runContextLogger);
+        runContext.setTask(task);
 
         return runContext;
     }
@@ -214,6 +227,7 @@ public class RunContextInitializer {
         runContext.setStorage(storage);
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(trigger.getType(), trigger.getClass()));
         runContext.setTriggerExecutionId(triggerExecutionId);
+        runContext.setTrigger(trigger);
 
         return runContext;
     }

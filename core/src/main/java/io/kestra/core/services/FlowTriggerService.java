@@ -16,6 +16,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
 
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -82,12 +83,15 @@ public class FlowTriggerService {
                 .flatMap(flowWithFlowTrigger -> flowTriggerMultipleConditions(flowWithFlowTrigger)
                         .map(multipleCondition -> new FlowWithFlowTriggerAndMultipleCondition(
                                 flowWithFlowTrigger.getFlow(),
-                                multipleConditionStorage.get().getOrCreate(flowWithFlowTrigger.getFlow(), multipleCondition),
+                                multipleConditionStorage.get().getOrCreate(flowWithFlowTrigger.getFlow(), multipleCondition, execution.getOutputs()),
                                 flowWithFlowTrigger.getTrigger(),
                                 multipleCondition
                             )
                         )
-                ).toList();
+                )
+                // avoid evaluating expired windows (for ex for daily time window or deadline)
+                .filter(flowWithFlowTriggerAndMultipleCondition -> flowWithFlowTriggerAndMultipleCondition.getMultipleConditionWindow().isValid(ZonedDateTime.now()))
+                .toList();
 
             // evaluate multiple conditions
             multipleConditionWindowsByFlow = flowWithMultipleConditionsToEvaluate.stream().map(f -> {
@@ -131,6 +135,7 @@ public class FlowTriggerService {
                 )
             )
             .map(f -> f.getTrigger().evaluate(
+                multipleConditionStorage,
                 runContextFactory.of(f.getFlow(), execution),
                 f.getFlow(),
                 execution

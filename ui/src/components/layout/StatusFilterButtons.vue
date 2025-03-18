@@ -21,7 +21,7 @@
     </el-select>
 </template>
 <script>
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
     import Status from "../Status.vue";
 
     export default {

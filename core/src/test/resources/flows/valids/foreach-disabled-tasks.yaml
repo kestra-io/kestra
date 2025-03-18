@@ -1,0 +1,12 @@
+id: foreach-disabled-tasks
+namespace: io.kestra.tests
+
+tasks:
+  - id: for_each
+    type: io.kestra.plugin.core.flow.ForEach
+    values: ["value 1", "value 2", "value 3"]
+    tasks:
+      - id: log
+        type: io.kestra.plugin.core.log.Log
+        message: Processing {{taskrun.value}}, iteration {{taskrun.iteration}}
+        disabled: true

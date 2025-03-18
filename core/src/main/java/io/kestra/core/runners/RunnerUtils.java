@@ -8,7 +8,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.core.utils.Await;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -37,8 +37,7 @@ public class RunnerUtils {
     private FlowRepositoryInterface flowRepository;
 
     @Inject
-
-    private ConditionService conditionService;
+    private ExecutionService executionService;
 
     public Execution runOne(String tenantId, String namespace, String flowId) throws TimeoutException, QueueException {
         return this.runOne(tenantId, namespace, flowId, null, null, null, null);
@@ -152,15 +151,18 @@ public class RunnerUtils {
             }
         }, false);
 
-        executionEmitter.run();
+        try {
+            executionEmitter.run();
 
-        if (duration == null) {
-            Await.until(() -> receive.get() != null, Duration.ofMillis(10));
-        } else {
-            Await.until(() -> receive.get() != null, Duration.ofMillis(10), duration);
+            if (duration == null) {
+                Await.until(() -> receive.get() != null, Duration.ofMillis(10));
+            } else {
+                Await.until(() -> receive.get() != null, Duration.ofMillis(10), duration);
+            }
+        } finally {
+            cancel.run();
         }
 
-        cancel.run();
 
         return receive.get();
     }
@@ -171,7 +173,7 @@ public class RunnerUtils {
     }
 
     private Predicate<Execution> isTerminatedExecution(Execution execution, Flow flow) {
-        return e -> e.getId().equals(execution.getId()) && conditionService.isTerminatedWithListeners(flow, e);
+        return e -> e.getId().equals(execution.getId()) && executionService.isTerminated(flow, e);
     }
 
     private Predicate<Execution> isPausedExecution(Execution execution) {
@@ -183,6 +185,6 @@ public class RunnerUtils {
     }
 
     private Predicate<Execution> isTerminatedChildExecution(Execution parentExecution, Flow flow) {
-        return e -> e.getParentId() != null && e.getParentId().equals(parentExecution.getId()) && conditionService.isTerminatedWithListeners(flow, e);
+        return e -> e.getParentId() != null && e.getParentId().equals(parentExecution.getId()) && executionService.isTerminated(flow, e);
     }
 }

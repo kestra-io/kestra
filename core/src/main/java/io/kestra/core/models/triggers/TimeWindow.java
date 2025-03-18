@@ -3,15 +3,12 @@ package io.kestra.core.models.triggers;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.validations.TimeWindowValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.With;
 
 import java.time.Duration;
 import java.time.LocalTime;
-import java.time.OffsetTime;
-import java.time.ZonedDateTime;
 
 @Getter
 @Builder
@@ -21,7 +18,6 @@ public class TimeWindow {
         title = "The type of the SLA",
         description = "The default SLA is a sliding window (`DURATION_WINDOW`) with a window of 24 hours."
     )
-    @NotNull
     @Builder.Default
     @PluginProperty
     private TimeWindow.Type type = TimeWindow.Type.DURATION_WINDOW;
@@ -31,7 +27,7 @@ public class TimeWindow {
         description = "Use it only for `DAILY_TIME_DEADLINE` SLA."
     )
     @PluginProperty
-    private OffsetTime deadline;
+    private LocalTime deadline;
 
     @Schema(
         title = "The duration of the window",
@@ -60,14 +56,14 @@ public class TimeWindow {
         description = "Use it only for `DAILY_TIME_WINDOW` SLA."
     )
     @PluginProperty
-    private OffsetTime startTime;
+    private LocalTime startTime;
 
     @Schema(
         title = "SLA daily end time",
         description = "Use it only for `DAILY_TIME_WINDOW` SLA."
     )
     @PluginProperty
-    private OffsetTime endTime;
+    private LocalTime endTime;
 
     public enum Type {
         DAILY_TIME_DEADLINE,

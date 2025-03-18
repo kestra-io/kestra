@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.time.ZonedDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -117,7 +119,10 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 .selectCount()
                 .from(this.jdbcRepository.getTable())
                 .where(this.defaultFilter(tenantId))
-                .and(NAMESPACE_FIELD.eq(namespace))
+                .and(DSL.or(
+                    NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%"),
+                    NAMESPACE_FIELD.eq(namespace)
+                ))
                 .fetchOne(0, int.class));
     }
 
@@ -198,35 +203,6 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             });
     }
 
-    // update/reset execution need to be done in a transaction
-    // to be sure we get the correct date/nextDate when updating
-    public Trigger updateExecution(Trigger trigger) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-                Optional<Trigger> optionalTrigger = this.jdbcRepository.fetchOne(context.select(field("value"))
-                    .from(this.jdbcRepository.getTable())
-                    .where(
-                        field("key").eq(trigger.uid())
-                    ).forUpdate());
-
-                if (optionalTrigger.isPresent()) {
-                    Trigger current = optionalTrigger.get();
-                    current = current.toBuilder()
-                        .executionId(trigger.getExecutionId())
-                        .executionCurrentState(trigger.getExecutionCurrentState())
-                        .updatedDate(trigger.getUpdatedDate())
-                        .build();
-                    this.save(context, current);
-
-                    return current;
-                }
-
-                return null;
-            });
-    }
-
     // Allow to update a trigger from a flow & an abstract trigger
     // using forUpdate to avoid the lastTrigger to be updated by another thread
     // before doing the update
@@ -274,6 +250,28 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 }
 
                 return null;
+            });
+    }
+    @Override
+    public ArrayListTotal<Trigger> find(Pageable pageable,String tenantId, List<QueryFilter> filters) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+                // extract Query field from the filters list
+                String query = getQuery(filters);
+
+                // Base query with table and DSL fields
+                SelectConditionStep<?> select = context
+                    .select(field("value"))
+                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId))
+                    .and(this.fullTextCondition(query));
+
+                filter(select, filters, "next_execution_date");
+                // Return paginated results
+                return this.jdbcRepository.fetchPage(context, select, pageable);
             });
     }
 

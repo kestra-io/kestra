@@ -1,12 +1,13 @@
 package io.kestra.core.secret;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import jakarta.annotation.PostConstruct;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Singleton
@@ -17,6 +18,10 @@ public class SecretService {
 
     @PostConstruct
     private void postConstruct() {
+        this.decode();
+    }
+
+    public void decode() {
         decodedSecrets = System.getenv().entrySet().stream()
             .filter(entry -> entry.getKey().startsWith(SECRET_PREFIX))
             .<Map.Entry<String, String>>mapMulti((entry, consumer) -> {
@@ -34,6 +39,14 @@ public class SecretService {
     }
 
     public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
-        return decodedSecrets.get(key.toUpperCase());
+        String secret = decodedSecrets.get(key.toUpperCase());
+        if (secret == null) {
+            throw new SecretNotFoundException("Cannot find secret for key '" + key + "'.");
+        }
+        return secret;
+    }
+
+    public Map<String, Set<String>> inheritedSecrets(String tenantId, String namespace) throws IOException {
+        return Map.of(namespace, decodedSecrets.keySet());
     }
 }

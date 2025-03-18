@@ -356,7 +356,7 @@ class PluginDefaultServiceTest {
 
         FlowWithSource injected = pluginDefaultService.injectDefaults(flow);
 
-        assertThat(((Log) injected.getTasks().getFirst()).getLevel(), is(Level.INFO));
+        assertThat(((Log) injected.getTasks().getFirst()).getLevel().toString(), is(Level.INFO.name()));
     }
 
     @SuperBuilder

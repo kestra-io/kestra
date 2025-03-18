@@ -43,6 +43,14 @@ public abstract class RunContext {
     @JsonInclude
     public abstract List<String> getSecretInputs();
 
+    /**
+     * OpenTelemetry trace parent
+     */
+    @JsonInclude
+    public abstract String getTraceParent();
+
+    public abstract void setTraceParent(String traceParent);
+
     public abstract String render(String inline) throws IllegalVariableEvaluationException;
 
     public abstract Object renderTyped(String inline) throws IllegalVariableEvaluationException;
@@ -50,24 +58,6 @@ public abstract class RunContext {
     public abstract String render(String inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
     public abstract <T> RunContextProperty<T> render(Property<T> inline);
-
-    @Deprecated(forRemoval = true)
-    public abstract <T> T render(Property<T> inline, Class<T> clazz) throws IllegalVariableEvaluationException;
-
-    @Deprecated(forRemoval = true)
-    public abstract <T> T  render(Property<T> inline, Class<T> clazz, Map<String, Object> variables) throws IllegalVariableEvaluationException;
-
-    @Deprecated(forRemoval = true)
-    public abstract <T, I> T renderList(Property<T> inline, Class<I> itemClazz) throws IllegalVariableEvaluationException;
-
-    @Deprecated(forRemoval = true)
-    public abstract <T, I> T  renderList(Property<T> inline, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException;
-
-    @Deprecated(forRemoval = true)
-    public abstract <T, K, V> T renderMap(Property<T> inline, Class<K> keyClass, Class<V> valueClass) throws IllegalVariableEvaluationException;
-
-    @Deprecated(forRemoval = true)
-    public abstract <T, K, V> T  renderMap(Property<T> inline, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException;
 
     public abstract List<String> render(List<String> inline) throws IllegalVariableEvaluationException;
 
@@ -84,6 +74,11 @@ public abstract class RunContext {
     public abstract Map<String, String> renderMap(Map<String, String> inline) throws IllegalVariableEvaluationException;
 
     public abstract Map<String, String> renderMap(Map<String, String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
+
+    /**
+     * Validate a bean using Jakarta Bean Validation.
+     */
+    public abstract <T> void validate(T bean);
 
     public abstract String decrypt(String encrypted) throws GeneralSecurityException;
 
@@ -136,6 +131,7 @@ public abstract class RunContext {
 
     /**
      * Cleanup any temporary resources, files created through this context.
+     * Also reset logs MDC so the logger should not be used after this point.
      */
     public abstract void cleanup();
 
@@ -185,4 +181,6 @@ public abstract class RunContext {
 
     public record FlowInfo(String tenantId, String namespace, String id, Integer revision) {
     }
+
+    public abstract boolean isInitialized();
 }

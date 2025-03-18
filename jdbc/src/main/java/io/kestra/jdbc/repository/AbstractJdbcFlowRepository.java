@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.triggers.Trigger;
@@ -15,7 +16,6 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.jdbc.JdbcMapper;
@@ -23,14 +23,14 @@ import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.inject.qualifiers.Qualifiers;
+import jakarta.annotation.Nullable;
+import jakarta.validation.ConstraintViolationException;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.Record;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 
-import jakarta.annotation.Nullable;
-import jakarta.validation.ConstraintViolationException;
 import java.util.*;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -174,7 +174,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                             field("value", String.class)
                         )
                         .from(fromLastRevision(true))
-                        .where(allowDeleted ? this.revisionDefaultFilter(tenantId) :this.defaultFilter(tenantId))
+                        .where(allowDeleted ? this.revisionDefaultFilter(tenantId) : this.defaultFilter(tenantId))
                         .and(NAMESPACE_FIELD.eq(namespace))
                         .and(field("id", String.class).eq(id)));
                 Record2<String, String> fetched = from.fetchAny();
@@ -283,7 +283,10 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 .selectCount()
                 .from(fromLastRevision(true))
                 .where(this.defaultFilter(tenantId))
-                .and(NAMESPACE_FIELD.eq(namespace))
+                .and(DSL.or(
+                    NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%"),
+                    NAMESPACE_FIELD.eq(namespace)
+                ))
                 .fetchOne(0, int.class));
     }
 
@@ -477,6 +480,32 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     abstract protected Condition findCondition(String query, Map<String, String> labels);
+    abstract protected Condition findCondition(Object value, QueryFilter.Op operation);
+
+    @Override
+    public ArrayListTotal<Flow> find(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = this.fullTextSelect(tenantId, context, Collections.emptyList());
+
+                if (filters != null)
+                    for (QueryFilter filter : filters) {
+                        QueryFilter.Field field = filter.field();
+                        QueryFilter.Op operation = filter.operation();
+                        Object value = filter.value();
+                        if (field.equals(QueryFilter.Field.QUERY)) {
+                            select = select.and(this.findCondition(filter.value().toString(), Map.of()));
+                        } else if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
+                            select = select.and(findCondition(labels, operation));
+                        else
+                            select = getConditionOnField(select, field, value, operation, null);
+                    }
+                return this.jdbcRepository.fetchPage(context, select, pageable);
+            });
+    }
 
     public ArrayListTotal<Flow> find(
         Pageable pageable,
@@ -670,7 +699,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
         FlowWithSource deleted = flow.toDeleted();
 
-        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted);
+        Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted.toFlow());
         fields.put(field("source_code"), deleted.getSource());
 
         this.jdbcRepository.persist(deleted, fields);

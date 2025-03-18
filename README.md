@@ -25,6 +25,13 @@
 </p>
 
 <p align="center">
+  <a href="https://trendshift.io/repositories/2714" target="_blank">
+    <img src="https://trendshift.io/api/badge/repositories/2714" alt="kestra-io%2Fkestra | Trendshift" width="250" height="55"/>
+  </a>
+  <a href="https://www.producthunt.com/posts/kestra?embed=true&utm_source=badge-top-post-badge&utm_medium=badge&utm_souce=badge-kestra" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/top-post-badge.svg?post_id=612077&theme=light&period=daily&t=1740737506162" alt="Kestra - All&#0045;in&#0045;one&#0032;automation&#0032;&#0038;&#0032;orchestration&#0032;platform | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
+</p>
+
+<p align="center">
     <a href="https://go.kestra.io/video/product-overview" target="_blank">
         <img src="https://kestra.io/startvideo.png" alt="Get started in 4 minutes with Kestra" width="640px" />
     </a>
@@ -47,7 +54,7 @@ Kestra is an open-source, event-driven orchestration platform that makes both **
 - **Structure & Resilience**: tame chaos and bring resilience to your workflows with **namespaces**, **labels**, **subflows**, **retries**, **timeout**, **error handling**, **inputs**, **outputs** that generate artifacts in the UI, **variables**, **conditional branching**, **advanced scheduling**, **event triggers**, **backfills**, **dynamic tasks**, **sequential and parallel tasks**, and skip tasks or triggers when needed by setting the flag `disabled` to `true`.
 
 
-🧑‍💻 The YAML definition gets automatically adjusted any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is **always managed declaratively in code**, even if you modify your workflows in other ways (UI, CI/CD, Terraform, API calls). 
+🧑‍💻 The YAML definition gets automatically adjusted any time you make changes to a workflow from the UI or via an API call. Therefore, the orchestration logic is **always managed declaratively in code**, even if you modify your workflows in other ways (UI, CI/CD, Terraform, API calls).
 
 
 <p align="center">
@@ -72,6 +79,27 @@ Make sure that Docker is running. Then, start Kestra in a single command:
 docker run --pull=always --rm -it -p 8080:8080 --user=root \
   -v /var/run/docker.sock:/var/run/docker.sock \
   -v /tmp:/tmp kestra/kestra:latest server local
+```
+
+If you're on Windows and use PowerShell:
+```powershell
+docker run --pull=always --rm -it -p 8080:8080 --user=root `
+    -v "/var/run/docker.sock:/var/run/docker.sock" `
+    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+```
+
+If you're on Windows and use Command Prompt (CMD):
+```cmd
+docker run --pull=always --rm -it -p 8080:8080 --user=root ^
+    -v "/var/run/docker.sock:/var/run/docker.sock" ^
+    -v "C:/Temp:/tmp" kestra/kestra:latest server local
+```
+
+If you're on Windows and use WSL (Linux-based environment in Windows):
+```bash
+docker run --pull=always --rm -it -p 8080:8080 --user=root \
+    -v "/var/run/docker.sock:/var/run/docker.sock" \
+    -v "C:/Temp:/tmp" kestra/kestra:latest server local
 ```
 
 Check our [Installation Guide](https://kestra.io/docs/installation) for other deployment options (Docker Compose, Podman, Kubernetes, AWS, GCP, Azure, and more).
@@ -178,7 +206,7 @@ Stay connected and get support:
 We welcome contributions of all kinds!
 
 - **Report Issues:** Found a bug or have a feature request? Open an [issue on GitHub](https://github.com/kestra-io/kestra/issues).
-- **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/getting-started/contributing) for initial guidelines, and explore our [good first issues](https://go.kestra.io/contribute) for beginner-friendly tasks to tackle first.
+- **Contribute Code:** Check out our [Contributor Guide](https://kestra.io/docs/getting-started/contributing) for initial guidelines, and explore our [good first issues](https://go.kestra.io/contributing) for beginner-friendly tasks to tackle first.
 - **Develop Plugins:** Build and share plugins using our [Plugin Developer Guide](https://kestra.io/docs/plugin-developer-guide/).
 - **Contribute to our Docs:** Contribute edits or updates to keep our [documentation](https://github.com/kestra-io/docs) top-notch.
 

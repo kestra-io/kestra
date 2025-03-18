@@ -14,7 +14,7 @@ export default {
     computed: {
         localStorageName() {
             const tenant = this.$route.params.tenant;
-            return `${this.$route.name.replace("/", "_")}${tenant ? "_" + tenant : ""}_restore_url`
+            return `${this.$route.name?.replace("/", "_")}${tenant ? "_" + tenant : ""}_restore_url`
         },
 
         localStorageValue() {
@@ -72,7 +72,10 @@ export default {
             }
 
             if (change) {
-                this.$router.replace({query: query});
+                // wait for the router to be ready
+                this.$nextTick(() => {
+                    this.$router.replace({query: query});
+                });
             } else {
                 this.loadInit = true;
             }

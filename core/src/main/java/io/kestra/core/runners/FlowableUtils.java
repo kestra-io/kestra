@@ -31,18 +31,20 @@ public class FlowableUtils {
     public static List<NextTaskRun> resolveSequentialNexts(
         Execution execution,
         List<ResolvedTask> tasks,
-        List<ResolvedTask> errors
+        List<ResolvedTask> errors,
+        List<ResolvedTask> _finally
     ) {
-        return resolveSequentialNexts(execution, tasks, errors, null);
+        return resolveSequentialNexts(execution, tasks, errors, _finally, null);
     }
 
     public static List<NextTaskRun> resolveSequentialNexts(
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
         TaskRun parentTaskRun
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, parentTaskRun);
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun);
 
         return FlowableUtils.innerResolveSequentialNexts(execution, currentTasks, parentTaskRun);
     }
@@ -92,9 +94,10 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
         TaskRun parentTaskRun
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, parentTaskRun);
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun);
 
         // nothing
         if (currentTasks == null || currentTasks.isEmpty() || execution.getState().getCurrent() == State.Type.KILLING) {
@@ -140,12 +143,13 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         RunContext runContext,
         boolean allowFailure,
         boolean allowWarning
     ) {
-        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, parentTaskRun);
+        List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(tasks, errors, _finally, parentTaskRun);
 
         if (currentTasks == null) {
             runContext.logger().warn(
@@ -197,12 +201,15 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency
     ) {
         return resolveParallelNexts(
             execution,
-            tasks, errors,
+            tasks,
+            errors,
+            _finally,
             parentTaskRun,
             concurrency,
             (nextTaskRunStream, taskRuns) -> nextTaskRunStream
@@ -217,6 +224,7 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency
     ) {
@@ -227,8 +235,22 @@ public class FlowableUtils {
         List<ResolvedTask> allTasks = execution.findTaskDependingFlowState(
             tasks,
             errors,
+            _finally,
             parentTaskRun
         );
+
+        boolean isTasks = tasks.equals(allTasks);
+
+        // errors & finally must be run as sequential tasks
+        if (!isTasks) {
+            return resolveSequentialNexts(
+                execution,
+                tasks,
+                errors,
+                _finally,
+                parentTaskRun
+            );
+        }
 
         // all tasks run
         List<TaskRun> taskRuns = execution.findTaskRunByTasks(allTasks, parentTaskRun);
@@ -249,7 +271,8 @@ public class FlowableUtils {
         if (taskRuns.isEmpty()) {
             Map<String, List<ResolvedTask>> collect = allTasks
                 .stream()
-                .collect(Collectors.groupingBy(resolvedTask -> resolvedTask.getValue(), () -> new LinkedHashMap<>(), Collectors.toList()));
+                .collect(Collectors.groupingBy(ResolvedTask::getValue, LinkedHashMap::new, Collectors.toList()));
+
             return collect.values().stream()
                 .limit(concurrencySlots)
                 .map(resolvedTasks -> resolvedTasks.getFirst().toNextTaskRun(execution))
@@ -260,7 +283,8 @@ public class FlowableUtils {
         // start as many tasks as we have concurrency slots
         Map<String, List<ResolvedTask>> collect = allTasks
             .stream()
-            .collect(Collectors.groupingBy(resolvedTask -> resolvedTask.getValue(), () -> new LinkedHashMap<>(), Collectors.toList()));
+            .collect(Collectors.groupingBy(ResolvedTask::getValue, LinkedHashMap::new, Collectors.toList()));
+
         return collect.values().stream()
             .map(resolvedTasks -> filterCreated(resolvedTasks, taskRuns, parentTaskRun))
             .filter(resolvedTasks -> !resolvedTasks.isEmpty())
@@ -281,6 +305,7 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency,
         List<Dag.DagTask> taskDependencies
@@ -289,6 +314,7 @@ public class FlowableUtils {
             execution,
             tasks,
             errors,
+            _finally,
             parentTaskRun,
             concurrency,
             (nextTaskRunStream, taskRuns) -> nextTaskRunStream
@@ -321,6 +347,7 @@ public class FlowableUtils {
         Execution execution,
         List<ResolvedTask> tasks,
         List<ResolvedTask> errors,
+        List<ResolvedTask> _finally,
         TaskRun parentTaskRun,
         Integer concurrency,
         BiFunction<Stream<NextTaskRun>, List<TaskRun>, Stream<NextTaskRun>> nextTaskRunFunction
@@ -332,8 +359,22 @@ public class FlowableUtils {
         List<ResolvedTask> currentTasks = execution.findTaskDependingFlowState(
             tasks,
             errors,
+            _finally,
             parentTaskRun
         );
+
+        boolean isTasks = tasks.equals(currentTasks);
+
+        // errors & finally must be run as sequential tasks
+        if (!isTasks) {
+            return resolveSequentialNexts(
+                execution,
+                tasks,
+                errors,
+                _finally,
+                parentTaskRun
+            );
+        }
 
         // all tasks run
         List<TaskRun> taskRuns = execution.findTaskRunByTasks(currentTasks, parentTaskRun);
@@ -378,8 +419,7 @@ public class FlowableUtils {
         return Collections.emptyList();
     }
 
-    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {
-    };
+    private final static TypeReference<List<Object>> TYPE_REFERENCE = new TypeReference<>() {};
     private final static ObjectMapper MAPPER = JacksonMapper.ofJson();
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -431,20 +471,21 @@ public class FlowableUtils {
 
         ArrayList<ResolvedTask> result = new ArrayList<>();
 
+        int index = 0;
         for (Object current : distinctValue) {
-            for (Task task : tasks) {
-                try {
-                    String resolvedValue = current instanceof String stringValue ? stringValue : MAPPER.writeValueAsString(current);
-
+            try {
+                String resolvedValue = current instanceof String stringValue ? stringValue : MAPPER.writeValueAsString(current);
+                for (Task task : tasks) {
                     result.add(ResolvedTask.builder()
                         .task(task)
                         .value(resolvedValue)
+                        .iteration(index++)
                         .parentId(parentTaskRun.getId())
                         .build()
                     );
-                } catch (JsonProcessingException e) {
-                    throw new IllegalVariableEvaluationException(e);
                 }
+            } catch (JsonProcessingException e) {
+                throw new IllegalVariableEvaluationException(e);
             }
         }
 

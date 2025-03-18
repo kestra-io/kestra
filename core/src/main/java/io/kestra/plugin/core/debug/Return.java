@@ -1,12 +1,12 @@
 package io.kestra.plugin.core.debug;
 
 import io.kestra.core.models.annotations.Metric;
+import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -30,8 +30,9 @@ import java.util.Optional;
 @Plugin(
     examples = {
         @Example(
+            full = true,
             code = """
-                id:return_flow
+                id: debug_value
                 namespace: company.team
 
                 tasks:
@@ -63,8 +64,7 @@ public class Return extends Task implements RunnableTask<Return.Output> {
     @Schema(
         title = "The templated string to render."
     )
-    @PluginProperty(dynamic = true)
-    private String format;
+    private Property<String> format;
 
     @Override
     public Return.Output run(RunContext runContext) throws Exception {
@@ -72,14 +72,14 @@ public class Return extends Task implements RunnableTask<Return.Output> {
 
         Logger logger = runContext.logger();
 
-        String render = runContext.render(format);
+        String render = runContext.render(format).as(String.class).orElse(null);
         logger.debug(render);
 
         long end = System.nanoTime();
 
         runContext
-            .metric(Counter.of("length", Optional.ofNullable(render).map(String::length).orElse(0), "format", render))
-            .metric(Timer.of("duration", Duration.ofNanos(end - start), "format", render));
+            .metric(Counter.of("length", Optional.ofNullable(render).map(String::length).orElse(0)))
+            .metric(Timer.of("duration", Duration.ofNanos(end - start)));
 
         return Output.builder()
             .value(render)

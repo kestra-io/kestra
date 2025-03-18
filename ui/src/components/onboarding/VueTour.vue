@@ -146,13 +146,15 @@
 
     import {pageFromRoute} from "../../utils/eventsRouter";
 
-    import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
+    import {TaskIcon} from "@kestra-io/ui-libs";
     import Animation from "../../assets/onboarding/animation.gif";
 
     import LightningBolt from "../../assets/onboarding/icons/lightning-bolt.svg";
     import ArrowLeft from "../../assets/onboarding/icons/arrow-left.svg";
     import ArrowTop from "../../assets/onboarding/icons/arrow-top.svg";
     import ArrowRight from "../../assets/onboarding/icons/arrow-right.svg";
+
+    import {editorViewTypes} from "../../utils/constants";
 
     const router = useRouter();
     const store = useStore();
@@ -237,8 +239,6 @@
         case "business_processes":
         case "data_engineering_pipeline":
             return 94;
-        case "business_automation":
-            return 134;
         case "dwh_and_analytics":
         case "file_processing":
         case "infrastructure_automation":
@@ -261,14 +261,16 @@
         ...(p ? {primary: t(`onboarding.steps.${step}.primary`)} : {}),
         ...(s ? {secondary: t(`onboarding.steps.${step}.secondary`)} : {}),
     });
-    const wait = (time) =>
+    const wait = (time = 200) =>
         new Promise((resolve) => setTimeout(() => resolve(true), time));
 
     const toggleScroll = (enabled = true) => {
         const wrapper = document.getElementById("app");
-        enabled
-            ? wrapper?.classList.remove("no-scroll")
-            : wrapper?.classList.add("no-scroll");
+        if(enabled){
+            wrapper?.classList.remove("no-scroll")
+        }else{
+            wrapper?.classList.add("no-scroll");
+        }
     };
 
     const steps = [
@@ -284,7 +286,7 @@
                     fullscreen: true,
                 });
 
-                wait(1);
+                return wait();
             },
         },
         {
@@ -297,7 +299,7 @@
                     params: {
                         namespace: "tutorial",
                         id: flows.value[activeFlow.value]?.id,
-                        tab: "editor",
+                        tab: "edit",
                     },
                 });
                 store.commit("core/setGuidedProperties", {
@@ -305,13 +307,14 @@
                 });
             },
             before: () => {
-                store.commit("editor/updateOnboarding"),
+                store.commit("editor/updateOnboarding");
+
                 store.commit("core/setGuidedProperties", {
                     tourStarted: true,
                     template: flows.value[activeFlow.value]?.id,
                 });
 
-                wait(1);
+                return wait();
             },
         },
         {
@@ -322,7 +325,7 @@
             params: {...STEP_OPTIONS, placement: "right"},
             before: () => {
                 toggleScroll();
-                wait(1);
+                return wait();
             },
         },
         {
@@ -331,6 +334,9 @@
             target: ".combined-right-view.topology-display",
             highlightElement: ".combined-right-view.topology-display",
             params: {...STEP_OPTIONS, placement: "left"},
+            before: () => {
+                store.commit("editor/changeView", editorViewTypes.SOURCE_TOPOLOGY);
+            }
         },
         {
             ...properties(4, true, false),
@@ -342,7 +348,7 @@
             highlightElement: ".top-bar",
             params: {...STEP_OPTIONS, placement: "bottom"},
             before: () => {
-                wait(500);
+                return wait();
             },
         },
         {
@@ -354,10 +360,12 @@
             target: ".flow-run-trigger-button",
             highlightElement: "#execute-flow-dialog",
             params: {
-                modifiers: [{name: "offset", options: {offset: () => [0, 50]}}],
+                modifiers: [{name: "offset", options: {offset: () => [0, 70]}}],
                 placement: "bottom",
             },
-            before: () => wait(1),
+            before: () => {
+                return wait()
+            },
         },
         {
             ...properties(6, true, true, true),
@@ -373,7 +381,7 @@
                 ],
                 placement: "bottom",
             },
-            before: () => wait(1),
+            before: () => wait(),
         },
     ];
 
@@ -382,7 +390,11 @@
         dispatchEvent(tour.currentStep, "next");
 
         const nextStep = currentStep(tour).nextStep;
-        !nextStep ? TOURS[TOUR_NAME].nextStep() : nextStep();
+        if(nextStep) {
+            nextStep()
+        } else {
+            TOURS[TOUR_NAME].nextStep()
+        }
     };
     const previousStep = (current) => {
         dispatchEvent(current, "previous");

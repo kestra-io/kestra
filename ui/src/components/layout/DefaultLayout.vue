@@ -1,10 +1,8 @@
 <template>
     <left-menu v-if="configs" @menu-collapse="onMenuCollapse" />
     <main>
-        <slot v-if="!error" />
-        <template v-else>
-            Error: <errors :code="error" />
-        </template>
+        <errors v-if="error" :code="error" />
+        <slot v-else />
     </main>
     <context-info-bar v-if="configs" />
 </template>

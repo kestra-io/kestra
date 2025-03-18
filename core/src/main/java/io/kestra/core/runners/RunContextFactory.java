@@ -16,6 +16,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -54,6 +55,14 @@ public class RunContextFactory {
 
     @Value("${kestra.encryption.secret-key}")
     protected Optional<String> secretKey;
+
+    @Value("${kestra.environment.name}")
+    @Nullable
+    protected String kestraEnvironment;
+
+    @Value("${kestra.url}")
+    @Nullable
+    protected String kestraUrl;
 
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
@@ -114,6 +123,7 @@ public class RunContextFactory {
                 .build(runContextLogger))
             .withKvStoreService(kvStoreService)
             .withSecretInputs(secretInputsFromFlow(flow))
+            .withTask(task)
             .build();
     }
 
@@ -131,6 +141,7 @@ public class RunContextFactory {
                 .build(runContextLogger)
             )
             .withSecretInputs(secretInputsFromFlow(flow))
+            .withTrigger(trigger)
             .build();
     }
 
@@ -148,6 +159,11 @@ public class RunContextFactory {
 
     @VisibleForTesting
     public RunContext of(final Map<String, Object> variables) {
+        return of((Task) null, variables);
+    }
+
+    @VisibleForTesting
+    public RunContext of(final Task task, final Map<String, Object> variables) {
         RunContextLogger runContextLogger = new RunContextLogger();
         return newBuilder()
             .withLogger(runContextLogger)
@@ -177,6 +193,7 @@ public class RunContextFactory {
                 flowService
             ))
             .withVariables(variables)
+            .withTask(task)
             .build();
     }
 
@@ -210,6 +227,7 @@ public class RunContextFactory {
     protected RunVariables.Builder newRunVariablesBuilder() {
         return new RunVariables.DefaultBuilder(secretKey)
             .withEnvs(runContextCache.getEnvVars())
-            .withGlobals(runContextCache.getGlobalVars());
+            .withGlobals(runContextCache.getGlobalVars())
+            .withKestraConfiguration(new RunVariables.KestraConfiguration(kestraEnvironment, kestraUrl));
     }
 }

@@ -1,5 +1,5 @@
 <template>
-    <nav data-component="FILENAME_PLACEHOLDER" class="d-flex w-100 gap-3 top-bar" v-if="displayNavBar">
+    <nav data-component="FILENAME_PLACEHOLDER" class="d-flex w-100 gap-3 top-bar">
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <el-breadcrumb v-if="breadcrumb">
                 <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x">
@@ -8,7 +8,7 @@
                     </router-link>
                 </el-breadcrumb-item>
             </el-breadcrumb>
-            <h1 class="h5 fw-semibold m-0 d-inline-fle">
+            <h1 class="h5 fw-semibold m-0 d-inline-flex">
                 <slot name="title">
                     {{ title }}
                 </slot>
@@ -74,9 +74,6 @@
             ...mapState("bookmarks", ["pages"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
-            displayNavBar() {
-                return this.$route?.name !== "welcome";
-            },
             tourEnabled(){
                 // Temporary solution to not showing the tour menu item for EE
                 return this.tutorialFlows?.length && !Object.keys(this.user).length
@@ -108,7 +105,7 @@
         methods: {
             restartGuidedTour() {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
+                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
 
                 this.$tours["guidedTour"]?.start();
             },
@@ -125,7 +122,6 @@
                         path: this.currentFavURI
                     })
                 } else {
-                    console.log(this.title, this.breadcrumb)
                     this.$store.dispatch("bookmarks/add", {
                         path: this.currentFavURI,
                         label: this.breadcrumb?.length ? `${this.breadcrumb[this.breadcrumb.length-1].label}: ${this.title}` : this.title,
@@ -141,9 +137,9 @@
         top: 0;
         position: sticky;
         z-index: 1000;
-        padding: var(--spacer) calc(2 * var(--spacer));
-        border-bottom: 1px solid var(--bs-border-color);
-        background: var(--card-bg);
+        padding: 1rem 2rem;
+        border-bottom: 1px solid var(--ks-border-primary);
+        background: var(--ks-background-card);
 
         .top-title, h1, .el-breadcrumb {
             white-space: nowrap;
@@ -159,7 +155,7 @@
         }
 
         .star-button{
-            margin-left: var(--spacer);
+            margin-left: 1rem;
             border: none;
         }
 
@@ -186,7 +182,7 @@
                 button, :deep(button), a, :deep(a) {
                     border: none;
                     font-size: var(--font-size-lg);
-                    padding: calc(var(--spacer) / 4);
+                    padding: .25rem;
                 }
             }
 
@@ -195,7 +191,7 @@
                 list-style: none;
                 padding: 0;
                 margin: 0;
-                gap: calc(var(--spacer) / 2);
+                gap: .5rem;
                 align-items: center;
             }
         }

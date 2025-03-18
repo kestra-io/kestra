@@ -22,6 +22,7 @@
     import action from "../../models/action";
     import Tabs from "../../components/Tabs.vue";
     import ExecutionRootTopBar from "./ExecutionRootTopBar.vue";
+    import DemoAuditLogs from "../demo/AuditLogs.vue";
 
     import ExecutionMetric from "./ExecutionMetric.vue";
     import throttle from "lodash/throttle";
@@ -48,6 +49,7 @@
                             "execution/loadFlowForExecutionByExecutionId",
                             {
                                 id: execution.id,
+                                revision: this.$route.query.revision
                             }
                         );
                     }
@@ -57,6 +59,11 @@
             };
         },
         created() {
+            if(!this.$route.params.tab) {
+                const tab = localStorage.getItem("executeDefaultTab") || undefined;
+                this.$router.replace({name: "executions/update", params: {...this.$route.params, tab}});
+            }
+
             this.follow();
             window.addEventListener("popstate", this.follow)
         },
@@ -92,7 +99,10 @@
                             if (isEnd) {
                                 this.closeSSE();
                             }
-                            this.throttledExecutionUpdate(executionEvent);
+                            // we are receiving a first "fake" event to force initializing the connection: ignoring it
+                            if (executionEvent.lastEventId !== "start") {
+                                this.throttledExecutionUpdate(executionEvent);
+                            }
                             if (isEnd) {
                                 this.throttledExecutionUpdate.flush();
                             }
@@ -107,6 +117,12 @@
                                     variant: "error",
                                     title: this.$t("error"),
                                     message: this.$t("errors.404.flow or execution"),
+                                });
+                            } else {
+                                this.$store.dispatch("core/showMessage", {
+                                    variant: "error",
+                                    title: this.$t("error"),
+                                    message: this.$t("something_went_wrong.loading_execution"),
                                 });
                             }
                         }
@@ -154,7 +170,9 @@
                     },
                     {
                         name: "auditlogs",
+                        component: DemoAuditLogs,
                         title: title("auditlogs"),
+                        maximized: true,
                         locked: true
                     }
                 ];

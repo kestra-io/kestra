@@ -3,7 +3,7 @@
         :is="component"
         :icon="PauseBox"
         @click="click"
-        v-if="enabled"
+        :disabled="!enabled"
         class="ms-0 me-1"
     >
         {{ $t('pause') }}
@@ -29,7 +29,7 @@
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
 
     export default {
         props: {

@@ -2,6 +2,7 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.templates.Template;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
@@ -41,7 +42,7 @@ public abstract class AbstractTemplateRepositoryTest {
         return Template.builder()
             .id(IdUtils.create())
             .namespace(namespace == null ? "kestra.test" : namespace)
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format("test").build()));
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()));
     }
 
     @Test

@@ -3,9 +3,8 @@ package io.kestra.core.schedulers;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
@@ -17,27 +16,30 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
 
 public class SchedulerThreadTest extends AbstractSchedulerTest {
     @Inject
     protected FlowListeners flowListenersService;
 
     @Inject
-    protected SchedulerTriggerStateInterface triggerState;
+    protected SchedulerExecutionStateInterface executionState;
+
+    @Inject
+    protected FlowRepositoryInterface flowRepository;
 
     @Test
     void thread() throws Exception {
         Flow flow = createThreadFlow();
+        flowRepository.create(flow, flow.generateSource(), flow);
         CountDownLatch queueCount = new CountDownLatch(2);
 
         // wait for execution
@@ -54,11 +56,16 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
 
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-
+        SchedulerExecutionStateInterface schedulerExecutionStateSpy = spy(this.executionState);
 
         doReturn(Collections.singletonList(flow))
             .when(flowListenersServiceSpy)
             .flows();
+
+        // mock the backfill execution is ended
+        doAnswer(invocation -> Optional.of(Execution.builder().state(new State().withState(State.Type.SUCCESS)).build()))
+            .when(schedulerExecutionStateSpy)
+            .findById(any(), any());
 
         // scheduler
         try (

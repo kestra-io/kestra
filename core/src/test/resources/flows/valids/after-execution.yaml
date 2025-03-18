@@ -1,0 +1,13 @@
+id: after-execution
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+
+afterExecution:
+  - id: end
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      state: "{{execution.state}}"

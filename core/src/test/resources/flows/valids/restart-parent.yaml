@@ -1,0 +1,22 @@
+id: restart-parent
+namespace: io.kestra.tests
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello Parent 1
+
+  - id: each
+    type: io.kestra.plugin.core.flow.ForEach
+    values: ["1", "2", "3"]
+    tasks:
+      - id: callSubflow
+        type: io.kestra.plugin.core.flow.Subflow
+        namespace: io.kestra.tests
+        flowId: restart-child
+        wait: true
+        transmitFailed: true
+        inheritLabels: true
+
+  - id: helloParent2
+    type: io.kestra.plugin.core.log.Log
+    message: Hello Parent 2

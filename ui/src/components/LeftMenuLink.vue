@@ -1,35 +1,25 @@
 <template>
-    <div v-if="isLocked" v-bind="$attrs">
-        <span ref="slotContainer" class="d-none">
-            <slot />
-        </span>
-        <enterprise-tooltip v-if="term" :disabled="true" :term="term" content="left-menu">
-            <slot />
-        </enterprise-tooltip>
-    </div>
-    <a v-else-if="isHyperLink" v-bind="$attrs">
+    <a v-if="isHyperLink" v-bind="$attrs">
         <slot />
     </a>
-    <router-link v-else v-slot="{href, navigate}" custom :to="$attrs.href">
-        <a v-bind="$attrs" :href="href" @click="navigate">
-            <slot />
+    <router-link v-else :to="$attrs.href" custom v-slot="{href:linkHref, navigate}">
+        <a v-bind="$attrs" :href="linkHref" @click="navigate">
+            <enterprise-badge :enable="isLocked">
+                <slot />
+            </enterprise-badge>
         </a>
     </router-link>
 </template>
 
-<script>
-    export default {
-        name: "LeftMenuLink",
-        compatConfig: {
-            MODE: 3,
-            inheritAttrs: false,
-        },
-    }
-</script>
-
 <script setup>
-    import {computed, getCurrentInstance, ref, onMounted} from "vue"
-    import EnterpriseTooltip from "./EnterpriseTooltip.vue";
+    import {computed, ref, onMounted} from "vue"
+    import {useRouter} from "vue-router";
+    import EnterpriseBadge from "./EnterpriseBadge.vue";
+
+    defineOptions({
+        name: "LeftMenuLink",
+        inheritAttrs: false,
+    })
 
     const props = defineProps({
         item: {
@@ -38,7 +28,7 @@
         },
     })
 
-    const router = getCurrentInstance().appContext.config.globalProperties.$router
+    const router = useRouter()
 
     const isHyperLink = computed(() => {
         return !!(!props.item.href || props.item.external || !router)

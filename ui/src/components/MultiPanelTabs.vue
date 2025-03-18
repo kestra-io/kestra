@@ -417,6 +417,8 @@
         flex: 1;
         align-items: end;
         padding-bottom: 0;
+        font-size: .9rem;
+        line-height: 1.5rem;
         &.dragover {
             background-color: var(--ks-background-card-hover);
         }
@@ -437,7 +439,7 @@
         color: var(--ks-content-secondary);
         opacity: .6;
         .tab-icon{
-            color: var(--ks-content-secondary);
+            color: var(--ks-content-inactive);
         }
         &.active {
             opacity: 1;

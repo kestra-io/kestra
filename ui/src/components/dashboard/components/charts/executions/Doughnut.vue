@@ -9,7 +9,13 @@
         >
             <div class="w-75">
                 <Doughnut
-                    v-if="total > 0"
+                    v-if="loading"
+                    :data="skeletonData"
+                    :options="skeletonOptions"
+                    class="tall"
+                />
+                <Doughnut
+                    v-else-if="total > 0"
                     :data="parsedData"
                     :options="options"
                     :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
@@ -50,6 +56,10 @@
             type: Number,
             required: true,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
 
     const theme = useTheme();
@@ -81,8 +91,6 @@
             datasets: [{data, backgroundColor, thicknessScale, borderWidth: 0}],
         };
     });
-
-
 
     const options = computed(() =>
         defaultConfig({
@@ -161,6 +169,35 @@
             });
         },
     };
+
+    const skeletonData = computed(() => {
+        const barColor = theme.value === "dark" 
+            ? "rgba(255, 255, 255, 0.08)"
+            : "rgba(0, 0, 0, 0.06)";
+
+        return {
+            labels: ["Loading"],
+            datasets: [{
+                data: [100],
+                backgroundColor: [barColor],
+                borderWidth: 0
+            }]
+        };
+    });
+
+    const skeletonOptions = computed(() => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                enabled: false
+            }
+        },
+        cutout: "40%"
+    }));
 </script>
 
 <style lang="scss" scoped>

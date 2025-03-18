@@ -822,7 +822,11 @@ public class Execution implements DeletedInterface, TenantInterface {
             .forEach((taskId, taskRuns) -> {
                 Map<String, Object> taskOutputs = new HashMap<>();
                 for (TaskRun current : taskRuns) {
-                    taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                    if (current.getIteration() != null) {
+                        taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                    } else {
+                        taskOutputs.putAll(outputs(current, byIds));
+                    }
                 }
                 result.put(taskId, taskOutputs);
             });

@@ -41,7 +41,7 @@ export const InputTypes = {
             // eslint-disable-next-line @typescript-eslint/no-unused-expressions
             expect(editor).to.exist;
             return editor;
-        }, {timeout: 500, interval: 100});
+        }, {timeout: 2000, interval: 100});
         // wait for the setup to finish
         await waitFor(() => expect(typeof MonacoEditor.__setValueInTests).toBe("function"));
         MonacoEditor.__setValueInTests("foo@example.com")

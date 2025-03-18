@@ -1,5 +1,9 @@
 <template>
-    <el-card id="gantt" shadow="never" v-if="execution && flow">
+    <ExecutionPending 
+        v-if="!isExecutionStarted" 
+        :execution="execution"
+    />
+    <el-card id="gantt" shadow="never" v-else-if="execution && flow">
         <template #header>
             <div class="d-flex">
                 <duration class="th text-end" :histories="execution.state.histories" />
@@ -104,11 +108,21 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import Warning from "vue-material-design-icons/Alert.vue";
+    import ExecutionPending from "./ExecutionPending.vue";
 
     const ts = date => new Date(date).getTime();
     const TASKRUN_THRESHOLD = 50;
     export default {
-        components: {DynamicScroller,Warning, DynamicScrollerItem, TaskRunDetails, Duration, ChevronRight, ChevronDown},
+        components: {
+            DynamicScroller,
+            Warning, 
+            DynamicScrollerItem, 
+            TaskRunDetails, 
+            Duration, 
+            ChevronRight, 
+            ChevronDown,
+            ExecutionPending
+        },
         data() {
             return {
                 colors: State.colorClass(),
@@ -209,7 +223,10 @@
                 }
                 childrenSort(rootTasks)
                 return sortedTasks
-            }
+            },
+            isExecutionStarted() {
+                return this.execution?.state?.current && !["CREATED", "QUEUED"].includes(this.execution.state.current);
+            },
         },
         methods: {
             forwardEvent(type, event) {

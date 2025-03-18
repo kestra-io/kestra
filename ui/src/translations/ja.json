@@ -129,12 +129,6 @@
     "collapse": "折りたたむ",
     "collapse all": "すべて折りたたむ",
     "concurrency": "並行性",
-    "concurrency-view": {
-      "desc_no_executions": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Execution</a></strong>についての詳細は、ドキュメントをご覧ください。",
-      "desc_no_limit": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">並行性制限</a></strong>についての詳細は、ドキュメントをご覧ください。",
-      "title_no_executions": "このFlowに対する進行中のExecutionはありません。",
-      "title_no_limit": "このFlowには制限が設定されていません。"
-    },
     "conditions": "条件",
     "configure basic auth": "基本認証を設定",
     "confirm": "確認",
@@ -153,6 +147,7 @@
     "copy": "コピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",
+    "copy_to_clipboard": "クリップボードにコピー",
     "create": "作成",
     "create first task": "最初のtaskを作成",
     "create_custom_dashboard": "新しいダッシュボードを作成",
@@ -290,6 +285,10 @@
           "message": "Kestra Enterprise Editionでは、namespaceはシークレット、変数、プラグインのデフォルトの高度な分離とガバナンスを提供します。管理者は、カスタムシークレットマネージャー、分離されたストレージバックエンド、専用のworkerグループ、および詳細な権限をnamespaceごとに設定できます。これにより、シークレット、変数、およびプラグインの設定が異なるチームやプロジェクト間で安全かつ簡単に管理されることが保証されます。",
           "title": "名前空間管理をアップグレードする"
         },
+        "history": {
+          "message": "Kestra Enterprise Editionでは、Namespacesのリビジョン履歴を管理できます。",
+          "title": "一箇所でリビジョン履歴を管理"
+        },
         "plugin-defaults": {
           "message": "Kestra Enterprise Editionでは、namespace固有のプラグインデフォルトを設定でき、各flowでの重複した設定の必要性を減らします。この中央プラグインガバナンスは、一貫した設定を強制し、秘密情報や変数の安全な参照を可能にし、ワークフローのメンテナンスを簡素化します。",
           "title": "プラグインのデフォルトで設定を標準化する"
@@ -313,10 +312,6 @@
     "dependencies loaded": "依存関係が読み込まれました",
     "dependencies missing acls": "このflowには権限がありません",
     "dependency task": "Task {taskId}は他のtaskの依存関係です",
-    "dependency-view": {
-      "desc_no_deps": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。",
-      "title_no_deps": "このFlowには依存関係が設定されていません。"
-    },
     "description": "説明",
     "details": "詳細",
     "disable": "無効化",
@@ -366,6 +361,36 @@
     },
     "email": "メール",
     "email length constraint": "メールは256文字を超えてはいけません",
+    "empty": {
+      "announcements": {
+        "content": "お知らせを使用すると、ユーザーに変更を通知したり、計画されたメンテナンスのダウンタイムについて知らせたりすることができます。お知らせの種類、表示する日付範囲を選択し、お知らせメッセージを作成してください。",
+        "title": "お知らせはまだありません！"
+      },
+      "apps": {
+        "content": "外部からKestraと連携するアプリを作成し始めましょう。",
+        "title": "まだアプリがありません！"
+      },
+      "concurrency_executions": {
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> についての詳細は、ドキュメントをご覧ください。",
+        "title": "このFlowには進行中の実行はありません。"
+      },
+      "concurrency_limit": {
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">同時実行制限</a></strong>についての詳細は、ドキュメントをご覧ください。",
+        "title": "このFlowには制限が設定されていません。"
+      },
+      "dependencies": {
+        "content": "<a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a>についての詳細は、ドキュメントをご覧ください。",
+        "title": "このFlowには依存関係が設定されていません。"
+      },
+      "plugins": {
+        "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
+        "title": "このNamespaceにはプラグインのデフォルトが設定されていません。"
+      },
+      "triggers": {
+        "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
+        "title": "あなたのflowにはTriggerがありません。"
+      }
+    },
     "empty search": "検索結果がありません",
     "enable": "有効化",
     "enable concurrency": "同時実行を有効にする",
@@ -405,8 +430,6 @@
     "execute the flow": "Flow <code>{id}</code>を実行",
     "execution": "Execution",
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",
-    "execution failed header": "実行がFAILEDしました！",
-    "execution failed message": "最後のエラー: <code>{message}</code>",
     "execution labels": "実行ラベル",
     "execution not found": "実行<code>{executionId}</code>が見つかりません",
     "execution not in state FAILED": "実行<code>{executionId}</code>はFAILED状態ではありません",
@@ -423,6 +446,7 @@
       "metrics": "メトリクスを削除",
       "storage": "内部ストレージファイルを削除"
     },
+    "execution_failed": "実行に失敗しました！最後のエラーは",
     "execution_guide": {
       "get_started": {
         "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。",
@@ -437,6 +461,8 @@
         "title": "ワークフローコンポーネント"
       }
     },
+    "execution_starts_progress": "実行が開始されると、ここに進行状況の更新が表示されます。",
+    "execution_status": "実行は:",
     "executions": "実行",
     "executions deleted": "<code>{executionCount}</code>件の実行が削除されました",
     "executions duration (in minutes)": "総実行時間（分単位）",
@@ -722,7 +748,6 @@
       },
       "empty": {
         "create_message": "namespaceファイルを作成またはインポートできます。",
-        "message": "サイドバーからnamespaceファイルを作成またはインポートできます。また、エディターの紹介ビデオをチェックしてください。",
         "title": "現在開いているタブはありません",
         "video_message": "エディターの紹介ビデオをご覧いただけます。"
       }
@@ -747,6 +772,7 @@
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
       "creation": {
+        "after execution": "実行後ブロックを追加",
         "error handlers": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
         "select": "{section}を選択してください",
@@ -777,6 +803,7 @@
         "yaml": "YAMLエディター"
       },
       "save": {
+        "after execution": "タスクを保存",
         "error handlers": "エラーハンドラーを保存",
         "finally": "タスクを保存",
         "input": "入力を保存",
@@ -784,6 +811,7 @@
         "triggers": "トリガーを保存"
       },
       "sections": {
+        "after_execution": "実行後",
         "error_handlers": "エラーハンドラー",
         "finally": "最後に",
         "general": "一般プロパティ",
@@ -797,6 +825,7 @@
     "no_logs_data": "データなし",
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
+    "no_tasks_running": "タスクはまだ実行されていません。",
     "now": "現在",
     "of": "の",
     "ok": "OK",
@@ -1005,6 +1034,7 @@
             "editor_type": "デフォルトエディタータイプ",
             "execute_default_tab": "デフォルト実行タブ",
             "execute_flow": "Flowを実行",
+            "flow_default_tab": "デフォルト Flow タブ",
             "language": "言語",
             "log_display": "デフォルトLog表示",
             "log_level": "デフォルトLogレベル"
@@ -1121,6 +1151,7 @@
     "toggle output": "出力を切り替え",
     "toggle output display": "出力表示を切り替え",
     "toggle periodic refresh each 10 seconds": "10秒ごとに定期的に更新を切り替え",
+    "toggle_word_wrap": "ワードラップを切り替え",
     "topology": "トポロジー",
     "topology-graph": {
       "graph-orientation": "グラフの向き",
@@ -1148,10 +1179,6 @@
     "triggered done": "実行<em>{name}</em>が正常にトリガーされました",
     "triggerflow disabled": "Flow定義からTriggerが無効になっています",
     "triggers": "Triggers",
-    "triggers-view": {
-      "desc_no_triggers": "以下のリンクから、ドキュメント内の<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>についてさらに詳しくお読みください。",
-      "title_no_triggers": "あなたのflowにはTriggerがありません。"
-    },
     "triggers_state": {
       "options": {
         "disabled": "無効",

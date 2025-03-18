@@ -61,8 +61,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static io.kestra.core.utils.Rethrow.throwFunction;
-
 @Slf4j
 @Singleton
 @SuppressWarnings("this-escape")
@@ -70,7 +68,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     protected final ApplicationContext applicationContext;
     protected final QueueInterface<Execution> executionQueue;
     protected final QueueInterface<Trigger> triggerQueue;
-    private final QueueInterface<WorkerJob> workerTaskQueue;
+    private final QueueInterface<WorkerJob> workerJobQueue;
     private final WorkerTriggerResultQueueInterface workerTriggerResultQueue;
     private final QueueInterface<ExecutionKilled> executionKilledQueue;
     @SuppressWarnings("rawtypes")
@@ -84,6 +82,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private final WorkerGroupService workerGroupService;
     private final LogService logService;
     protected SchedulerExecutionStateInterface executionState;
+    private final WorkerGroupExecutorInterface workerGroupExecutorInterface;
 
     // must be volatile as it's updated by the flow listener thread and read by the scheduleExecutor thread
     private volatile Boolean isReady = false;
@@ -117,7 +116,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.applicationContext = applicationContext;
         this.executionQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.EXECUTION_NAMED));
         this.triggerQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.TRIGGER_NAMED));
-        this.workerTaskQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED));
+        this.workerJobQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.WORKERJOB_NAMED));
         this.executionKilledQueue = applicationContext.getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
         this.workerTriggerResultQueue = applicationContext.getBean(WorkerTriggerResultQueueInterface.class);
         this.clusterEventQueue = applicationContext.findBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.CLUSTER_EVENT_NAMED));
@@ -131,6 +130,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.logService = applicationContext.getBean(LogService.class);
         this.serviceStateEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
         this.executionEventPublisher = applicationContext.getBean(ApplicationEventPublisher.class);
+        this.workerGroupExecutorInterface = applicationContext.getBean(WorkerGroupExecutorInterface.class);
         setState(ServiceState.CREATED);
     }
 
@@ -357,7 +357,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             case MAINTENANCE_ENTER -> {
                 this.executionQueue.pause();
                 this.triggerQueue.pause();
-                this.workerTaskQueue.pause();
+                this.workerJobQueue.pause();
                 this.workerTriggerResultQueue.pause();
                 this.executionKilledQueue.pause();
                 this.pauseAdditionalQueues();
@@ -368,7 +368,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             case MAINTENANCE_EXIT -> {
                 this.executionQueue.resume();
                 this.triggerQueue.resume();
-                this.workerTaskQueue.resume();
+                this.workerJobQueue.resume();
                 this.workerTriggerResultQueue.resume();
                 this.executionKilledQueue.resume();
                 this.resumeAdditionalQueues();
@@ -904,10 +904,36 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             .conditionContext(flowWithTriggerWithDefault.conditionContext)
             .build();
         try {
-            Optional<WorkerGroup> maybeWorkerGroup = workerGroupService.resolveGroupFromJob(workerTrigger);
-            String workerGroupKey = maybeWorkerGroup.map(throwFunction(workerGroup -> flowWithTriggerWithDefault.conditionContext.getRunContext().render(workerGroup.getKey())))
-                .orElse(null);
-            this.workerTaskQueue.emit(workerGroupKey, workerTrigger);
+            Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(workerTrigger);
+            if (workerGroup.isPresent()) {
+                // Check if the worker group exist
+                String tenantId = flowWithTrigger.getFlow().getTenantId();
+                RunContext runContext = flowWithTriggerWithDefault.conditionContext.getRunContext();
+                String workerGroupKey = runContext.render(workerGroup.get().getKey());
+                if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
+                    // Check whether at-least one worker is available
+                    if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroupKey)) {
+                        this.workerJobQueue.emit(workerGroupKey, workerTrigger);
+                    } else {
+                        WorkerGroup.Fallback fallback = workerGroup.map(wg -> wg.getFallback()).orElse(WorkerGroup.Fallback.WAIT);
+                        switch(fallback) {
+                            case FAIL -> runContext.logger()
+                                    .error("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
+                            case CANCEL -> runContext.logger()
+                                    .warn("No workers are available for worker group '{}', ignoring the trigger.", workerGroupKey);
+                            case WAIT -> {
+                                runContext.logger()
+                                    .info("No workers are available for worker group '{}', waiting for one to be available.", workerGroupKey);
+                                this.workerJobQueue.emit(workerGroupKey, workerTrigger);
+                            }
+                        };
+                    }
+                } else {
+                    runContext.logger().error("No worker group exist for key '{}', ignoring the trigger.", workerGroupKey);
+                }
+            } else {
+                this.workerJobQueue.emit(workerTrigger);
+            }
         } catch (QueueException e) {
             log.error("Unable to emit the Worker Trigger job", e);
         }

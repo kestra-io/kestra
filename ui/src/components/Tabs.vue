@@ -158,6 +158,7 @@
             }),
             containerClass() {
                 const isEnterpriseTab = this.activeTab.locked;
+                const isGanttTab = this.activeTab.name === "gantt";
 
                 if (this.activeTab.containerClass) {
                     return {[this.activeTab.containerClass]: true};
@@ -166,7 +167,8 @@
                 return {
                     "container": !isEnterpriseTab,
                     "mt-4": !isEnterpriseTab,
-                    "px-0": isEnterpriseTab
+                    "px-0": isEnterpriseTab,
+                    "gantt-container": isGanttTab
                 };
             },
             activeTab() {
@@ -206,6 +208,11 @@
 </script>
 
 <style lang="scss" scoped>
+    section.container.mt-4:has(> section.empty) {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     :deep(.el-tabs) {
         .el-tabs__item.is-disabled {
             &:after {

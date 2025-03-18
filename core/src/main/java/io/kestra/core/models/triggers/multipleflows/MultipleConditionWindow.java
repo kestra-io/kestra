@@ -29,6 +29,8 @@ public class MultipleConditionWindow implements HasUID {
 
     Map<String, Boolean> results;
 
+    Map<String, Object> outputs;
+
 
     /** {@inheritDoc **/
     @Override
@@ -75,7 +77,8 @@ public class MultipleConditionWindow implements HasUID {
             this.conditionId,
             this.start,
             this.end,
-            finalResults
+            finalResults,
+            this.outputs
         );
     }
 }

@@ -129,12 +129,6 @@
     "collapse": "संक्षिप्त करें",
     "collapse all": "सभी संक्षिप्त करें",
     "concurrency": "समानांतरता",
-    "concurrency-view": {
-      "desc_no_executions": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> के बारे में अधिक पढ़ें।",
-      "desc_no_limit": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में और पढ़ें।",
-      "title_no_executions": "इस Flow के लिए कोई चल रही Executions नहीं हैं।",
-      "title_no_limit": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं की गई हैं।"
-    },
     "conditions": "शर्तें",
     "configure basic auth": "बेसिक प्रमाणीकरण कॉन्फ़िगर करें",
     "confirm": "पुष्टि करें",
@@ -153,6 +147,7 @@
     "copy": "कॉपी करें",
     "copy logs": "Logs कॉपी करें",
     "copy url": "URL कॉपी करें",
+    "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
     "create": "बनाएँ",
     "create first task": "अपना पहला Task बनाएं",
     "create_custom_dashboard": "नया डैशबोर्ड बनाएं",
@@ -290,6 +285,10 @@
           "message": "Kestra एंटरप्राइज एडिशन में, namespaces बड़े पैमाने पर secrets, variables और plugin डिफ़ॉल्ट्स के उन्नत अलगाव और शासन प्रदान करते हैं। प्रशासक कस्टम secrets प्रबंधकों, अलग storage बैकएंड्स, समर्पित worker समूहों, और प्रति-namespace आधार पर सूक्ष्म अनुमतियाँ कॉन्फ़िगर कर सकते हैं। यह सुनिश्चित करता है कि secrets, variables और plugin कॉन्फ़िगरेशन विभिन्न टीमों और परियोजनाओं में सुरक्षित और बनाए रखने में आसान रहें।",
           "title": "अपने Namespace प्रबंधन को अपग्रेड करें"
         },
+        "history": {
+          "message": "Kestra एंटरप्राइज एडिशन में, आप अपने Namespaces के संशोधन इतिहास का प्रबंधन कर सकते हैं।",
+          "title": "एक ही स्थान पर Revision History प्रबंधित करें"
+        },
         "plugin-defaults": {
           "message": "Kestra एंटरप्राइज एडिशन में, आप namespace-विशिष्ट प्लगइन डिफ़ॉल्ट सेट कर सकते हैं, जिससे प्रत्येक flow में डुप्लिकेट सेटअप की आवश्यकता कम हो जाती है। यह केंद्रीय प्लगइन गवर्नेंस सुसंगत कॉन्फ़िगरेशन को लागू करता है, गुप्त या वेरिएबल्स के सुरक्षित संदर्भ की अनुमति देता है, और आपके workflows के रखरखाव को सरल बनाता है।",
           "title": "प्लगइन डिफॉल्ट्स के साथ कॉन्फ़िगरेशन को मानकीकृत करें"
@@ -313,10 +312,6 @@
     "dependencies loaded": "निर्भरताएँ लोड की गईं",
     "dependencies missing acls": "इस flow पर कोई अनुमतियाँ नहीं हैं",
     "dependency task": "Task {taskId} किसी अन्य Task की निर्भरता है",
-    "dependency-view": {
-      "desc_no_deps": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।",
-      "title_no_deps": "इस Flow के लिए कोई निर्भरता निर्धारित नहीं की गई है।"
-    },
     "description": "विवरण",
     "details": "विवरण",
     "disable": "अक्षम करें",
@@ -366,6 +361,36 @@
     },
     "email": "ईमेल",
     "email length constraint": "ईमेल 256 वर्णों से अधिक नहीं होना चाहिए",
+    "empty": {
+      "announcements": {
+        "content": "घोषणाएँ आपको अपने उपयोगकर्ताओं को किसी भी परिवर्तन के बारे में सूचित करने या नियोजित रखरखाव डाउनटाइम के बारे में जानकारी देने की अनुमति देती हैं। बस घोषणा का प्रकार चुनें, वह तारीख सीमा चुनें जिसके लिए इसे प्रदर्शित किया जाना चाहिए, और घोषणा संदेश लिखें।",
+        "title": "आपके पास अभी तक कोई घोषणाएँ नहीं हैं!"
+      },
+      "apps": {
+        "content": "बाहरी दुनिया से Kestra के साथ इंटरैक्ट करने के लिए Apps बनाना शुरू करें।",
+        "title": "आपके पास अभी तक कोई ऐप्स नहीं हैं!"
+      },
+      "concurrency_executions": {
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> के बारे में अधिक पढ़ें।",
+        "title": "इस Flow के लिए कोई चल रही Executions नहीं हैं।"
+      },
+      "concurrency_limit": {
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
+        "title": "इस Flow के लिए कोई सीमाएँ निर्धारित नहीं हैं।"
+      },
+      "dependencies": {
+        "content": "हमारे दस्तावेज़ में <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> के बारे में अधिक पढ़ें।",
+        "title": "इस Flow के लिए कोई dependencies सेट नहीं हैं।"
+      },
+      "plugins": {
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
+        "title": "इस Namespace के लिए कोई प्लगइन डिफॉल्ट सेट नहीं हैं।"
+      },
+      "triggers": {
+        "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> के बारे में और पढ़ें।",
+        "title": "आपके flow में कोई Triggers नहीं हैं।"
+      }
+    },
     "empty search": "खोज परिणाम खाली हैं",
     "enable": "सक्षम करें",
     "enable concurrency": "concurrency सक्षम करें",
@@ -405,8 +430,6 @@
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "execution": "निष्पादन",
     "execution already finished": "निष्पादन <code>{executionId}</code> पहले ही समाप्त हो चुका है",
-    "execution failed header": "निष्पादन FAILED!",
-    "execution failed message": "अंतिम त्रुटि के साथ: <code>{message}</code>",
     "execution labels": "निष्पादन labels",
     "execution not found": "निष्पादन <code>{executionId}</code> नहीं मिला",
     "execution not in state FAILED": "निष्पादन <code>{executionId}</code> FAILED स्थिति में नहीं है",
@@ -423,6 +446,7 @@
       "metrics": "Metrics हटाएं",
       "storage": "आंतरिक स्टोरेज फाइलें हटाएं"
     },
+    "execution_failed": "निष्पादन FAILED! अंतिम त्रुटि थी",
     "execution_guide": {
       "get_started": {
         "text": "क्विकस्टार्ट गाइड का पालन करें ताकि आप Kestra को इंस्टॉल कर सकें और अपनी पहली workflows बनाना शुरू कर सकें।",
@@ -437,6 +461,8 @@
         "title": "वर्कफ़्लो घटक"
       }
     },
+    "execution_starts_progress": "जैसे ही execution शुरू होता है, आपको यहाँ प्रगति अपडेट दिखाई देंगे।",
+    "execution_status": "Execution है:",
     "executions": "निष्पादन",
     "executions deleted": "<code>{executionCount}</code> निष्पादन हटाए गए",
     "executions duration (in minutes)": "कुल निष्पादन अवधि (मिनटों में)",
@@ -722,7 +748,6 @@
       },
       "empty": {
         "create_message": "आप namespace फाइलें बना सकते हैं या आयात कर सकते हैं।",
-        "message": "आप साइडबार से namespace फाइलें बना या आयात कर सकते हैं और हमारे Editor के लिए परिचय वीडियो देख सकते हैं।",
         "title": "वर्तमान में कोई टैब्स खुले नहीं हैं",
         "video_message": "आप हमारे Editor के लिए परिचय वीडियो देख सकते हैं।"
       }
@@ -747,6 +772,7 @@
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",
       "creation": {
+        "after execution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
         "error handlers": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
         "select": "किसी {section} का चयन करें",
@@ -777,6 +803,7 @@
         "yaml": "YAML संपादक"
       },
       "save": {
+        "after execution": "टास्क सहेजें",
         "error handlers": "त्रुटि हैंडलर सहेजें",
         "finally": "कार्य सहेजें",
         "input": "इनपुट सहेजें",
@@ -784,6 +811,7 @@
         "triggers": "ट्रिगर सहेजें"
       },
       "sections": {
+        "after_execution": "Execution के बाद",
         "error_handlers": "त्रुटि हैंडलर",
         "finally": "अंत में",
         "general": "सामान्य गुणधर्म",
@@ -797,6 +825,7 @@
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
+    "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
     "now": "अब",
     "of": "का",
     "ok": "ठीक है",
@@ -1005,6 +1034,7 @@
             "editor_type": "डिफ़ॉल्ट एडिटर प्रकार",
             "execute_default_tab": "डिफ़ॉल्ट Execution टैब",
             "execute_flow": "Flow निष्पादित करें",
+            "flow_default_tab": "डिफ़ॉल्ट Flow टैब",
             "language": "भाषा",
             "log_display": "Log प्रदर्शन",
             "log_level": "Log स्तर"
@@ -1121,6 +1151,7 @@
     "toggle output": "आउटपुट टॉगल करें",
     "toggle output display": "आउटपुट प्रदर्शन टॉगल करें",
     "toggle periodic refresh each 10 seconds": "हर 10 सेकंड में आवधिक ताज़ा टॉगल करें",
+    "toggle_word_wrap": "शब्द रैप टॉगल करें",
     "topology": "टोपोलॉजी",
     "topology-graph": {
       "graph-orientation": "ग्राफ़ अभिविन्यास",
@@ -1148,10 +1179,6 @@
     "triggered done": "निष्पादन <em>{name}</em> सफलतापूर्वक ट्रिगर किया गया है",
     "triggerflow disabled": "Flow परिभाषा से Trigger अक्षम है",
     "triggers": "Triggers",
-    "triggers-view": {
-      "desc_no_triggers": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> के बारे में अधिक पढ़ें।",
-      "title_no_triggers": "आपके flow में कोई Triggers नहीं हैं।"
-    },
     "triggers_state": {
       "options": {
         "disabled": "अक्षम",

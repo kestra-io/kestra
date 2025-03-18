@@ -1174,12 +1174,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 SelectSeekStepN<Record> selectSeekStep = orderBy(selectHavingStep, descriptors);
 
                 // Fetch and paginate if provided
-                List<Map<String, Object>> results = fetchSeekStep(selectSeekStep, pageable);
-
-                // Fetch total count for pagination
-                int total = context.fetchCount(selectConditionStep);
-
-                return new ArrayListTotal<>(results, total);
+                return fetchSeekStep(selectSeekStep, pageable);
             });
     }
 

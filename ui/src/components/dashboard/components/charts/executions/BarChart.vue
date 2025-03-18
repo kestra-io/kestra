@@ -12,6 +12,13 @@
     >
         <div>
             <Bar
+                v-if="loading"
+                :class="small ? 'small' : ''"
+                :data="skeletonData"
+                :options="skeletonOptions"
+            />
+            <Bar
+                v-else
                 :class="small ? 'small' : ''"
                 :data="parsedData"
                 :options="options"
@@ -69,12 +76,61 @@
             type: Boolean,
             default: false,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
 
     const theme = useTheme()
     const scheme = useScheme();
 
     const tooltipContent = ref("")
+
+    const skeletonData = computed(() => {
+        const barColor = theme.value === "dark" 
+            ? "rgba(255, 255, 255, 0.08)"
+            : "rgba(0, 0, 0, 0.06)";
+
+        return {
+            labels: Array(18).fill(""),
+            datasets: [{
+                data: Array(18).fill(0).map(() => Math.random() * 70 + 30),
+                backgroundColor: barColor,
+                borderRadius: 2,
+                barThickness: props.small ? 8 : 12,
+            }]
+        };
+    });
+
+    const skeletonOptions = computed(() => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                enabled: false
+            }
+        },
+        scales: {
+            x: {
+                display: false,
+                grid: {
+                    display: false
+                }
+            },
+            y: {
+                display: false,
+                grid: {
+                    display: false
+                },
+                min: 0,
+                max: 100
+            }
+        }
+    }));
 
     const parsedData = computed(() => {
         let datasets = props.data.reduce(function (accumulator, value) {
@@ -240,8 +296,8 @@
     );
 </script>
 
-<style>
-.small{
+<style lang="scss" scoped>
+.small {
     height: 40px;
 }
 </style>

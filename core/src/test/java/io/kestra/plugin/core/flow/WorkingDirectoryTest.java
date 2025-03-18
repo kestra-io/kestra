@@ -86,10 +86,16 @@ public class WorkingDirectoryTest {
         suite.taskRunNested(runnerUtils);
     }
 
-    @RetryingTest(5)
+    @Test
     @LoadFlows({"flows/valids/working-directory-namespace-files.yaml"})
     void namespaceFiles() throws TimeoutException, IOException, QueueException {
         suite.namespaceFiles(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/working-directory-namespace-files-with-namespaces.yaml"})
+    void namespaceFilesWithNamespace() throws TimeoutException, IOException, QueueException {
+        suite.namespaceFilesWithNamespaces(runnerUtils);
     }
 
     @Test
@@ -275,6 +281,30 @@ public class WorkingDirectoryTest {
             assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value"), is("third"));
         }
 
+        public void namespaceFilesWithNamespaces(RunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
+            //fist namespace
+            put("/test/a/b/c/1.txt", "first in first namespace", "io.test.first");
+            put("/a/b/c/2.txt", "second in first namespace", "io.test.first");
+            put("/a/b/3.txt", "third in first namespace", "io.test.first");
+            put("/ignore/4.txt", "4th");
+
+            //second namespace
+            put("/test/a/b/c/1.txt", "first in second namespace", "io.test.second");
+            put("/a/b/c/2.txt", "second in second namespace", "io.test.second");
+
+            //third namespace
+            put("/test/a/b/c/1.txt", "first in third namespace", "io.test.third");
+
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-namespace-files-with-namespaces");
+
+            assertThat(execution.getTaskRunList(), hasSize(6));
+            assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
+            assertThat(execution.findTaskRunsByTaskId("t4").getFirst().getState().getCurrent(), is(State.Type.FAILED));
+            assertThat(execution.findTaskRunsByTaskId("t1").getFirst().getOutputs().get("value"), is("first in third namespace"));
+            assertThat(execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value"), is("second in second namespace"));
+            assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value"), is("third in first namespace"));
+        }
+
         @SuppressWarnings("unchecked")
         public void encryption(RunnerUtils runnerUtils, RunContextFactory runContextFactory) throws TimeoutException, GeneralSecurityException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun-encrypted");
@@ -289,10 +319,14 @@ public class WorkingDirectoryTest {
         }
 
         private void put(String path, String content) throws IOException {
+            put(path, content, "io.kestra.tests");
+        }
+
+        private void put(String path, String content, String namespace) throws IOException {
             storageInterface.put(
                 null,
                 null,
-                URI.create(StorageContext.namespaceFilePrefix("io.kestra.tests")  + path),
+                URI.create(StorageContext.namespaceFilePrefix(namespace)  + path),
                 new ByteArrayInputStream(content.getBytes())
             );
         }

@@ -17,7 +17,7 @@
 </template>
 
 <script>
-    import {YamlUtils} from "@kestra-io/ui-libs";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import EditorView from "../inputs/EditorView.vue";
     import {mapGetters, mapMutations, mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
@@ -86,7 +86,7 @@ tasks:
                 };
             },
             flowParsed() {
-                return YamlUtils.parse(this.source);
+                return YAML_UTILS.parse(this.source);
             }
         },
         beforeRouteLeave(to, from, next) {

@@ -1,26 +1,30 @@
 <template>
     <div class="button-top">
-        <el-button-group>
+        <el-button-group class="view-buttons">
             <el-tooltip :content="$t('source only')">
                 <el-button
+                    :type="buttonType(views.NONE)"
                     :icon="FileDocumentEditOutline"
                     @click="setView(views.NONE)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('documentation.documentation')">
                 <el-button
+                    :type="buttonType(views.DOC)"
                     :icon="BookOpenVariant"
                     @click="setView(views.DOC)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('chart preview')">
                 <el-button
+                    :type="buttonType(views.CHART)"
                     :icon="ChartBar"
                     @click="setView(views.CHART)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('dashboard.preview')">
                 <el-button
+                    :type="buttonType(views.DASHBOARD)"
                     :icon="ViewDashboard"
                     @click="setView(views.DASHBOARD)"
                 />
@@ -36,7 +40,7 @@
         <el-button
             :icon="ContentSave"
             @click="$emit('save', source)"
-            :type="buttonType"
+            :type="saveButtonType"
             :disabled="!allowSaveUnchanged && source === initialSource"
         >
             {{ $t("save") }}
@@ -153,6 +157,8 @@
     </div>
 </template>
 <script setup>
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
     import ValidationErrors from "../../flows/ValidationError.vue"
     import BookOpenVariant from "vue-material-design-icons/BookOpenVariant.vue";
@@ -166,7 +172,6 @@
 </script>
 <script>
     import Editor from "../../inputs/Editor.vue";
-    import YamlUtils from "../../../utils/yamlUtils.js";
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
@@ -181,10 +186,7 @@
             ContentSave() {
                 return ContentSave
             },
-            YamlUtils() {
-                return YamlUtils
-            },
-            buttonType() {
+            saveButtonType() {
                 if (this.errors) {
                     return "danger";
                 }
@@ -216,7 +218,7 @@
         methods: {
             async updatePluginDocumentation(event) {
                 if (this.currentView === this.views.DOC) {
-                    const type = YamlUtils.getTaskType(event.model.getValue(), event.position, this.plugins)
+                    const type = YAML_UTILS.getTaskType(event.model.getValue(), event.position, this.plugins)
                     if (type) {
                         this.$store.dispatch("plugin/load", {cls: type})
                             .then(plugin => {
@@ -226,7 +228,7 @@
                         this.$store.commit("plugin/setEditorPlugin", undefined);
                     }
                 } else if (this.currentView === this.views.CHART) {
-                    const chart = YamlUtils.getChartAtPosition(event.model.getValue(), event.position)
+                    const chart = YAML_UTILS.getChartAtPosition(event.model.getValue(), event.position)
                     if (chart && this.selectedChart?.id !== chart.id) {
                         const result = await this.loadChart(chart);
                         this.selectedChart = result.data;
@@ -261,6 +263,9 @@
                         }).flat();
                     })
             },
+            buttonType(view) {
+                return view === this.currentView ? "primary" : "default";
+            },
             setView(view) {
                 this.currentView = view;
 
@@ -270,7 +275,7 @@
             },
             async validateAndLoadAllCharts() {
                 this.charts = [];
-                const allCharts = YamlUtils.getAllCharts(this.source);
+                const allCharts = YAML_UTILS.getAllCharts(this.source);
                 for (const chart of allCharts) {
                     const loadedChart = await this.loadChart(chart);
                     this.charts.push(loadedChart);
@@ -321,6 +326,8 @@
                     .then(errors => {
                         if (errors.constraints) {
                             this.errors = [errors.constraints];
+                        } else {
+                            this.errors = undefined;
                         }
                     });
             }
@@ -334,7 +341,6 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     $spacing: 20px;
-
 
     .main-editor {
         padding: .5rem 0px;
@@ -441,5 +447,20 @@
         text-align: center;
         word-wrap: break-word; /* Ensures long words break and wrap to the next line */
         white-space: normal; /* Allows text to wrap to the next line */
+    }
+
+    .view-buttons {
+        .el-button {
+            &.el-button--primary {
+                color: var(--ks-content-link);
+                opacity: 1;
+            }
+
+            border: 0;
+            background: none;
+            opacity: 0.5;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
     }
 </style>

@@ -147,6 +147,9 @@ def main(language_code, target_language, input_file="ui/src/translations/en.json
         print(f"Translating {k}:{v} to {target_language} -> '{new_translation}'.")
 
     target_flat.update(translated_flat_dict)
+
+    target_flat = {k: v for k, v in target_flat.items() if k in remove_en_prefix(flatten_dict(load_en_dict(input_file)))}
+
     updated_target_dict = unflatten_dict(target_flat)
 
     # Sort keys to keep output stable

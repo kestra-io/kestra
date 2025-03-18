@@ -30,7 +30,7 @@ import java.util.Optional;
 @Plugin(
     examples = {
         @Example(
-            title = "Get value for `my_variable` key in `dev` namespace and fail if it's not present.",
+            title = "Get value for `my_variable` key in `dev` namespace and fail if it's not present. Note that you can accomplish the same using the `kv()` Pebble function, e.g. `{{kv('my_variable')}}`.",
             full = true,
             code = """
                 id: kv_store_get
@@ -40,7 +40,7 @@ import java.util.Optional;
                   - id: kv_get
                     type: io.kestra.plugin.core.kv.Get
                     key: my_variable
-                    namespace: dev # the current namespace of the flow will be used by default
+                    namespace: company # the current namespace is used by default
                     errorOnMissing: true
                 """
         )

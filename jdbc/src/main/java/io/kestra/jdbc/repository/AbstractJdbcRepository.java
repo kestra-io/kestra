@@ -7,6 +7,7 @@ import io.kestra.core.models.dashboards.Order;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
@@ -223,13 +224,17 @@ public abstract class AbstractJdbcRepository {
      * @param pageable       the pageable object containing the pagination information
      * @return the list of fetched results
      */
-    protected List<Map<String, Object>> fetchSeekStep(SelectSeekStepN<Record> selectSeekStep, @Nullable Pageable pageable) {
+    protected ArrayListTotal<Map<String, Object>> fetchSeekStep(SelectSeekStepN<Record> selectSeekStep, @Nullable Pageable pageable) {
 
-        return (pageable != null && pageable.getSize() != -1 ?
+        int totalCount = DSL.using(selectSeekStep.configuration())
+            .fetchCount(selectSeekStep);
+        var results =  (pageable != null && pageable.getSize() != -1 ?
             selectSeekStep.limit(pageable.getSize()).offset(pageable.getOffset() - pageable.getSize()) :
             selectSeekStep
         ).fetch()
             .intoMaps();
+
+        return new ArrayListTotal<>(results, totalCount);
     }
 
     protected <F extends Enum<F>> Field<?> columnToField(ColumnDescriptor<?> column, Map<F, String> fieldsMapping) {

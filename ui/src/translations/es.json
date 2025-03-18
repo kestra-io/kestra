@@ -129,12 +129,6 @@
     "collapse": "Colapsar",
     "collapse all": "Colapsar todo",
     "concurrency": "Concurrente",
-    "concurrency-view": {
-      "desc_no_executions": "Lea más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Ejecuciones</a></strong> en nuestra documentación.",
-      "desc_no_limit": "Lea más sobre los <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Límites de Concurrency</a></strong> en nuestra documentación.",
-      "title_no_executions": "No hay ejecuciones en curso para este Flow.",
-      "title_no_limit": "No se han establecido límites para este Flow."
-    },
     "conditions": "condiciones",
     "configure basic auth": "Configurar autenticación básica",
     "confirm": "Confirmar",
@@ -153,6 +147,7 @@
     "copy": "Copiar",
     "copy logs": "Copiar logs",
     "copy url": "Copiar URL",
+    "copy_to_clipboard": "Copiar al portapapeles",
     "create": "Crear",
     "create first task": "Crea tu primera task",
     "create_custom_dashboard": "Crear nuevo dashboard",
@@ -290,6 +285,10 @@
           "message": "En Kestra Enterprise Edition, los namespaces proporcionan aislamiento avanzado y gobernanza de secretos, variables y configuraciones predeterminadas de plugins a escala. Los administradores pueden configurar gestores de secretos personalizados, backends de almacenamiento aislados, grupos de workers dedicados y permisos detallados por cada namespace. Esto asegura que los secretos, variables y configuraciones de plugins permanezcan seguros y sean fáciles de mantener a través de diferentes equipos y proyectos.",
           "title": "Mejora la Gestión de tu Namespace"
         },
+        "history": {
+          "message": "En Kestra Enterprise Edition, puedes gestionar el historial de revisiones de tus Namespaces",
+          "title": "Gestionar el Historial de Revisiones en un Solo Lugar"
+        },
         "plugin-defaults": {
           "message": "En Kestra Enterprise Edition, puedes establecer valores predeterminados de plugins específicos del namespace, reduciendo la necesidad de configuraciones duplicadas en cada flow. Esta gobernanza central de plugins aplica configuraciones consistentes, permite la referencia segura de secretos o variables, y simplifica el mantenimiento de tus workflows.",
           "title": "Estandarizar la Configuración con Valores Predeterminados del Plugin"
@@ -313,10 +312,6 @@
     "dependencies loaded": "Dependencias cargadas",
     "dependencies missing acls": "Sin permisos en este flow",
     "dependency task": "Task {taskId} es una dependencia de otra task",
-    "dependency-view": {
-      "desc_no_deps": "Lee más sobre las <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Dependencias de Flow</a> en nuestra documentación.",
-      "title_no_deps": "No se han establecido dependencias para este Flow."
-    },
     "description": "Descripción",
     "details": "Detalles",
     "disable": "Deshabilitar",
@@ -366,6 +361,36 @@
     },
     "email": "Correo electrónico",
     "email length constraint": "El correo electrónico no debe exceder los 256 caracteres",
+    "empty": {
+      "announcements": {
+        "content": "Los anuncios te permiten notificar a tus usuarios sobre cualquier cambio o informarles sobre el tiempo de inactividad planificado para mantenimiento. Simplemente selecciona el tipo de anuncio, el rango de fechas en el que debe mostrarse y escribe el mensaje del anuncio.",
+        "title": "¡No tienes anuncios todavía!"
+      },
+      "apps": {
+        "content": "Comienza a crear Apps para interactuar con Kestra desde el mundo exterior.",
+        "title": "¡Aún no tienes aplicaciones!"
+      },
+      "concurrency_executions": {
+        "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Ejecuciones</a></strong> en nuestra documentación.",
+        "title": "No hay Ejecuciones en curso para este Flow."
+      },
+      "concurrency_limit": {
+        "content": "Lea más sobre los <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Límites de Concurrencia</a></strong> en nuestra documentación.",
+        "title": "No se han establecido límites para este Flow."
+      },
+      "dependencies": {
+        "content": "Lea más sobre <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> en nuestra documentación.",
+        "title": "No hay dependencias establecidas para este Flow."
+      },
+      "plugins": {
+        "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> en nuestra documentación.",
+        "title": "No se han establecido valores predeterminados de plugin para este Namespace."
+      },
+      "triggers": {
+        "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> en nuestra documentación.",
+        "title": "Tu flow no tiene ningún trigger."
+      }
+    },
     "empty search": "Resultados de búsqueda vacíos",
     "enable": "Habilitar",
     "enable concurrency": "Habilitar concurrencia",
@@ -405,8 +430,6 @@
     "execute the flow": "Ejecutar el flujo <code>{id}</code>",
     "execution": "Ejecución",
     "execution already finished": "Ejecución <code>{executionId}</code> ya finalizada",
-    "execution failed header": "¡Ejecución FAILED!",
-    "execution failed message": "Con el último error: <code>{message}</code>",
     "execution labels": "Etiquetas de ejecución",
     "execution not found": "Ejecución <code>{executionId}</code> no encontrada",
     "execution not in state FAILED": "Ejecución <code>{executionId}</code> no está en estado FAILED",
@@ -423,6 +446,7 @@
       "metrics": "Eliminar métricas",
       "storage": "Eliminar archivos de almacenamiento interno"
     },
+    "execution_failed": "¡La ejecución falló! El último error fue",
     "execution_guide": {
       "get_started": {
         "text": "Sigue la Guía de inicio rápido para instalar Kestra y comenzar a crear tus primeros flujos de trabajo.",
@@ -437,6 +461,8 @@
         "title": "Componentes del Workflow"
       }
     },
+    "execution_starts_progress": "Una vez que la ejecución comience, verás actualizaciones de progreso aquí.",
+    "execution_status": "La ejecución es:",
     "executions": "Ejecuciones",
     "executions deleted": "<code>{executionCount}</code> ejecución(es) eliminadas",
     "executions duration (in minutes)": "Duración total de ejecuciones (en minutos)",
@@ -722,7 +748,6 @@
       },
       "empty": {
         "create_message": "Puedes crear o importar archivos de namespace.",
-        "message": "Puedes crear o importar archivos de namespace desde la barra lateral y puedes ver el video de introducción para nuestro Editor.",
         "title": "No hay pestañas abiertas actualmente",
         "video_message": "Puedes ver el Video de Introducción para nuestro Editor."
       }
@@ -747,6 +772,7 @@
       "adding": "+ Agregar un {what}",
       "adding_default": "+ Añadir un nuevo value",
       "creation": {
+        "after execution": "Agregar un bloque después de la ejecución",
         "error handlers": "Agregar un manejador de errores",
         "finally": "Agregar un bloque finally",
         "select": "Seleccione una {section}",
@@ -777,6 +803,7 @@
         "yaml": "Editor YAML"
       },
       "save": {
+        "after execution": "Guardar task",
         "error handlers": "Guardar controlador de errores",
         "finally": "Guardar tarea",
         "input": "Guardar input",
@@ -784,6 +811,7 @@
         "triggers": "Guardar trigger"
       },
       "sections": {
+        "after_execution": "Después de la Ejecución",
         "error_handlers": "Manejadores de Errores",
         "finally": "Finalmente",
         "general": "Propiedades generales",
@@ -797,6 +825,7 @@
     "no_logs_data": "Sin datos",
     "no_logs_data_description": "Ya sea que no haya flows en ejecución, o puede que necesite ajustar sus filtros.",
     "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
+    "no_tasks_running": "Todavía no hay tasks en ejecución.",
     "now": "Ahora",
     "of": "de",
     "ok": "OK",
@@ -1005,6 +1034,7 @@
             "editor_type": "Tipo de Editor Predeterminado",
             "execute_default_tab": "Pestaña de Ejecución Predeterminada",
             "execute_flow": "Ejecutar el Flow",
+            "flow_default_tab": "Pestaña de Flow Predeterminada",
             "language": "Idioma",
             "log_display": "Visualización de Log Predeterminada",
             "log_level": "Nivel de Log Predeterminado"
@@ -1121,6 +1151,7 @@
     "toggle output": "Alternar salidas",
     "toggle output display": "Alternar visualización de salida",
     "toggle periodic refresh each 10 seconds": "Alternar actualización periódica cada 10 segundos",
+    "toggle_word_wrap": "Alternar ajuste de línea",
     "topology": "Topología",
     "topology-graph": {
       "graph-orientation": "Orientación del gráfico",
@@ -1148,10 +1179,6 @@
     "triggered done": "Ejecución <em>{name}</em> se ha activado exitosamente",
     "triggerflow disabled": "El trigger está deshabilitado en la definición del flujo",
     "triggers": "Triggers",
-    "triggers-view": {
-      "desc_no_triggers": "Lea más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> en nuestra documentación.",
-      "title_no_triggers": "Tu flow no tiene ningún trigger."
-    },
     "triggers_state": {
       "options": {
         "disabled": "Deshabilitado",

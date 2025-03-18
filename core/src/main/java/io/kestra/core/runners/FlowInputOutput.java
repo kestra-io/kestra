@@ -405,34 +405,34 @@ public class FlowInputOutput {
     private Object parseType(Execution execution, Type type, String id, Type elementType, Object current) throws Exception {
         try {
             return switch (type) {
-                case SELECT, ENUM, STRING, EMAIL -> current;
+                case SELECT, ENUM, STRING, EMAIL -> current.toString();
                 case SECRET -> {
                     if (secretKey.isEmpty()) {
                         throw new Exception("Unable to use a `SECRET` input/output as encryption is not configured");
                     }
-                    yield EncryptionService.encrypt(secretKey.get(), (String) current);
+                    yield EncryptionService.encrypt(secretKey.get(), current.toString());
                 }
-                case INT -> current instanceof Integer ? current : Integer.valueOf((String) current);
+                case INT -> current instanceof Integer ? current : Integer.valueOf(current.toString());
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation
                 case FLOAT -> current instanceof Float ? current : Float.valueOf(current.toString());
-                case BOOLEAN -> current instanceof Boolean ? current : Boolean.valueOf((String) current);
-                case DATETIME -> current instanceof Instant ? current : Instant.parse(((String) current));
-                case DATE -> current instanceof LocalDate ? current : LocalDate.parse(((String) current));
-                case TIME -> current instanceof LocalTime ? current : LocalTime.parse(((String) current));
-                case DURATION -> current instanceof Duration ? current : Duration.parse(((String) current));
+                case BOOLEAN -> current instanceof Boolean ? current : Boolean.valueOf(current.toString());
+                case DATETIME -> current instanceof Instant ? current : Instant.parse(current.toString());
+                case DATE -> current instanceof LocalDate ? current : LocalDate.parse(current.toString());
+                case TIME -> current instanceof LocalTime ? current : LocalTime.parse(current.toString());
+                case DURATION -> current instanceof Duration ? current : Duration.parse(current.toString());
                 case FILE -> {
-                    URI uri = URI.create(((String) current).replace(File.separator, "/"));
+                    URI uri = URI.create(current.toString().replace(File.separator, "/"));
 
                     if (uri.getScheme() != null && uri.getScheme().equals("kestra")) {
                         yield uri;
                     } else {
-                        yield storageInterface.from(execution, id, new File(((String) current)));
+                        yield storageInterface.from(execution, id, new File(current.toString()));
                     }
                 }
-                case JSON -> JacksonMapper.toObject(((String) current));
-                case YAML -> YAML_MAPPER.readValue((String) current, JacksonMapper.OBJECT_TYPE_REFERENCE);
+                case JSON -> JacksonMapper.toObject(current.toString());
+                case YAML -> YAML_MAPPER.readValue(current.toString(), JacksonMapper.OBJECT_TYPE_REFERENCE);
                 case URI -> {
-                    Matcher matcher = URI_PATTERN.matcher((String) current);
+                    Matcher matcher = URI_PATTERN.matcher(current.toString());
                     if (matcher.matches()) {
                         yield current;
                     } else {

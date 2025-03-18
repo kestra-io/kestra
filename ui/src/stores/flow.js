@@ -52,6 +52,7 @@ export default {
             }
 
             await dispatch("editor/saveAllTabs", {namespace: getters.namespace}, {root: true});
+            dispatch("saveWithoutRevisionGuard");
             commit("setFlowYamlOrigin", state.flowYaml);
         },
         async save({getters, dispatch, commit, state, rootState}, {content}){

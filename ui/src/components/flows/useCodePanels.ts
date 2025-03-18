@@ -53,6 +53,9 @@ export function useCodePanels(panels: Ref<Panel[]>) {
     const store = useStore()
 
     const codeEditorTabs = computed<EditorTab[]>(() => store.state.editor.tabs.filter((t:any) => !t.flow))
+    /**
+     * If the flow tab has recorded changes, show all representations as dirty
+     */
     const isFlowDirty = computed(() => store.state.editor.tabs.some((t:any) => t.flow && t.dirty))
     const currentTab = computed(() => store.state.editor.current.path)
 
@@ -77,27 +80,18 @@ export function useCodePanels(panels: Ref<Panel[]>) {
         }
     })
 
-
-    watch(isFlowDirty, (newVal) => {
-        for(const p of panels.value){
-            for(const t of p.tabs){
-                if(FLOW_RELATED_TABS.includes(t.value)){
-                    t.dirty = newVal
-                }
-            }
-        }
-    })
-
     const dirtyTabs = computed(() => codeEditorTabs.value.filter(t => t.dirty).map(t => t.path))
 
     // maintain sync between dirty states of tabs
     watch(dirtyTabs, (newVal) => {
         for(const p of panels.value) {
             for(const t of p.tabs) {
-                if(t.value.startsWith("code-") && newVal.includes(t.value.substring(5))){
-                    t.dirty = true
-                }else{
-                    t.dirty = false
+                if(t.value.startsWith("code-")){
+                    if(newVal.includes(t.value.substring(5))){
+                        t.dirty = true
+                    }else{
+                        t.dirty = false
+                    }
                 }
             }
         }

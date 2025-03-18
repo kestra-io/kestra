@@ -13,6 +13,7 @@ export default {
         saveAllTabs({dispatch, state}, {namespace}) {
             return Promise.all(
                 state.tabs.map(async (tab) => {
+                    if(tab.flow) return;
                     await dispatch("namespace/createFile", {
                         namespace,
                         path: tab.path ?? tab.name,

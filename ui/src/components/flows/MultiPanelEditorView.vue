@@ -13,11 +13,11 @@
         </div>
         <EditorButtonsWrapper />
     </div>
-    <MultiPanelTabs v-model="panels" @remove-tab="removeTab" />
+    <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch, onMounted} from "vue";
+    import {computed, watch} from "vue";
     import {useStorage} from "@vueuse/core";
     import {useStore} from "vuex";
 
@@ -28,9 +28,6 @@
 
     const store = useStore()
     const flow = computed(() => store.state.flow.flow)
-
-    const previousActiveTabs = ref(DEFAULT_ACTIVE_TABS)
-    const activeTabs = ref(DEFAULT_ACTIVE_TABS)
 
     /**
      * Focus or activate a tab from it's value
@@ -48,8 +45,12 @@
             focusTab(tabValue)
             return
         }
-
-        activeTabs.value = [...activeTabs.value, tabValue]
+        const {prepend, panel} = getPanelFromValue(tabValue)
+        if(prepend){
+            panels.value.unshift(panel)
+        }else{
+            panels.value.push(panel)
+        }
     }
 
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
@@ -65,18 +66,19 @@
             }
         }
     }
+
     const {setupInitialCodeTab} = useInitialCodeTabs()
 
     const panels = useStorage(
-        `key-${flow.value.namespace}-${flow.value.id}`,
-        [],
+        `panels-${flow.value.namespace}-${flow.value.id}`,
+        DEFAULT_ACTIVE_TABS.map((t) => getPanelFromValue(t)).filter(p => p.panel?.activeTab).map(p => p.panel) ?? [],
         undefined,
         {
             serializer: {
                 write: (v: Panel[]) =>
                     JSON.stringify(v.map(p => ({
                         tabs: p.tabs.map(t => t.value),
-                        activeTab: p.activeTab.value,
+                        activeTab: p.activeTab?.value,
                         size: p.size,
                     })))
                 ,
@@ -100,32 +102,21 @@
         },
     )
 
+    const activeTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
+
     const {onRemoveTab, isFlowDirty} = useCodePanels(panels)
 
-    function removeTab(tab: string){
-        activeTabs.value = activeTabs.value.filter(t => t !== tab)
-        onRemoveTab(tab)
-    }
-
-    onMounted(() => {
-        activeTabs.value = panels.value.flatMap(p => p.tabs.map(t => t.value))
-        previousActiveTabs.value = activeTabs.value
-        watch(activeTabs, (newVal) => {
-            const previous = previousActiveTabs.value
-
-            const tabIdsToAdd = newVal.filter(t => !previous.includes(t))
-
-            for(const t of tabIdsToAdd){
-                const {panel, prepend} = getPanelFromValue(t, isFlowDirty.value)
-                if(prepend){
-                    panels.value.unshift(panel)
-                }else{
-                    panels.value.push(panel)
+    watch(isFlowDirty, (dirty) => {
+        for(const panel of panels.value){
+            if(panel.activeTab && FLOW_RELATED_TABS.includes(panel.activeTab.value)){
+                panel.activeTab.dirty = dirty
+            }
+            for(const tab of panel.tabs){
+                if(FLOW_RELATED_TABS.includes(tab.value)){
+                    tab.dirty = dirty
                 }
             }
-
-            previousActiveTabs.value = newVal
-        })
+        }
     })
 </script>
 

@@ -20,7 +20,7 @@
                             v-if="!tab.potential"
                             class="editor-tab"
                             role="tab"
-                            :class="{active: tab.value === panel.activeTab.value}"
+                            :class="{active: tab.value === panel.activeTab?.value}"
                             draggable="true"
                             @dragstart="() => dragstart(panelIndex, tab.value)"
                             @dragend="cleanUp"
@@ -68,7 +68,7 @@
                 </button>
             </div>
             <div class="content-panel">
-                <component :is="panel.activeTab.component" />
+                <component :is="panel.activeTab?.component" />
                 <div
                     v-if="dragging"
                     class="editor-content-overlay"
@@ -316,7 +316,7 @@
         // account for cases where simulated tabs are present.
         // They will take a slot in the list
         if(targetPanelIndex === originalPanelIndex){
-            if (targetTabIndex === tabIndex) {
+            if (targetTabIndex === tabIndex || panels.value[targetPanelIndex].tabs.length <= 1) {
                 return
             }
 

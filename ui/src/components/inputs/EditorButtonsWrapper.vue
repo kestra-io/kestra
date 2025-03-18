@@ -13,7 +13,7 @@
             :can-delete="true"
             :is-allowed-edit="isAllowedEdit"
             :have-change="tabs.some(t => t.dirty === true)"
-            :flow-have-tasks="flowHaveTasks"
+            :flow-have-tasks="Boolean(flowHaveTasks)"
             :errors="flowErrors"
             :warnings="flowWarnings"
             @save="save"

@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue";
+    import {computed, ref, watch, onMounted} from "vue";
     import {useStorage} from "@vueuse/core";
     import {useStore} from "vuex";
 
@@ -69,8 +69,7 @@
 
     const panels = useStorage(
         `key-${flow.value.namespace}-${flow.value.id}`,
-        activeTabs.value.map((t: string) =>
-            getPanelFromValue(t)).sort((a) => a.prepend ? -1 : 1).map(p => p.panel),
+        [],
         undefined,
         {
             serializer: {
@@ -108,21 +107,25 @@
         onRemoveTab(tab)
     }
 
-    watch(activeTabs, (newVal) => {
-        const previous = previousActiveTabs.value
+    onMounted(() => {
+        activeTabs.value = panels.value.flatMap(p => p.tabs.map(t => t.value))
+        previousActiveTabs.value = activeTabs.value
+        watch(activeTabs, (newVal) => {
+            const previous = previousActiveTabs.value
 
-        const tabIdsToAdd = newVal.filter(t => !previous.includes(t))
+            const tabIdsToAdd = newVal.filter(t => !previous.includes(t))
 
-        for(const t of tabIdsToAdd){
-            const {panel, prepend} = getPanelFromValue(t, isFlowDirty.value)
-            if(prepend){
-                panels.value.unshift(panel)
-            }else{
-                panels.value.push(panel)
+            for(const t of tabIdsToAdd){
+                const {panel, prepend} = getPanelFromValue(t, isFlowDirty.value)
+                if(prepend){
+                    panels.value.unshift(panel)
+                }else{
+                    panels.value.push(panel)
+                }
             }
-        }
 
-        previousActiveTabs.value = newVal
+            previousActiveTabs.value = newVal
+        })
     })
 </script>
 

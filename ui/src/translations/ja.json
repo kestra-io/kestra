@@ -144,6 +144,7 @@
     "continue backfill": "backfillを続行",
     "continue backfills": "backfillを続行",
     "copied": "コピーされました",
+    "copied_logs_to_clipboard": "クリップボードにログをコピーしました。",
     "copy": "コピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",

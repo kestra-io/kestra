@@ -144,6 +144,7 @@
     "continue backfill": "Продолжить заполнение",
     "continue backfills": "Продолжить заполнения",
     "copied": "Скопировано",
+    "copied_logs_to_clipboard": "Скопированные logs в буфер обмена.",
     "copy": "Копировать",
     "copy logs": "Копировать логи",
     "copy url": "Скопировать URL",

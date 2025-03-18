@@ -144,6 +144,7 @@
     "continue backfill": "backfill 계속",
     "continue backfills": "backfill 계속",
     "copied": "복사됨",
+    "copied_logs_to_clipboard": "로그가 클립보드에 복사되었습니다.",
     "copy": "복사",
     "copy logs": "Logs 복사",
     "copy url": "URL 복사",

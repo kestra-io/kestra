@@ -17,22 +17,13 @@ export type Field = {
     disabled?: boolean;
 };
 
-export type LabelField = Omit<Field, "value"> & {
-    value: [string, string][];
+export type PairField = Omit<Field, "value"> & {
+    value: Record<string, string>;
+    property: string;
 };
 
 type InputField = Field & {
     inputs: any[];
-};
-
-type VariableField = Field & {
-    variables: any[];
-};
-
-type Main = {
-    id: Field;
-    namespace: Field;
-    description: Field;
 };
 
 type ConcurrencyField = Field & {
@@ -40,28 +31,28 @@ type ConcurrencyField = Field & {
     schema: object;
 };
 
-type General = {
-    retry: Field;
-    labels: LabelField;
-    inputs: InputField;
-    outputs: Field;
-    variables: VariableField;
-    concurrency: ConcurrencyField;
-    pluginDefaults: Field;
-    disabled: Field;
+type EditorField = Field & {
+    navbar: boolean;
+    input: boolean;
+    lang: string;
+    shouldFocus: boolean;
+    style: {
+        height: string;
+    };
 };
 
 export type Fields = {
-    main: Main;
-    general: General;
-};
-
-export type Breadcrumb = {
-    label: string;
-    to: {
-        name: RouteRecordName;
-        params: RouteParams;
-    };
+    id: Field;
+    namespace: Field;
+    description: Field;
+    retry: EditorField;
+    labels: PairField;
+    inputs: InputField;
+    outputs: EditorField;
+    variables: PairField;
+    concurrency: ConcurrencyField;
+    pluginDefaults: EditorField;
+    disabled: Field;
 };
 
 export type CollapseItem = {
@@ -69,7 +60,14 @@ export type CollapseItem = {
     elements?: Record<string, any>[];
 };
 
-export type Sections = {
-    main: CollapseItem[];
-    segments: CollapseItem[];
+export type Breadcrumb = {
+    label: string;
+    to: {
+        name?: RouteRecordName;
+        params?: RouteParams;
+    };
+    component?: ReturnType<typeof defineComponent>;
+    panel?: boolean;
 };
+
+export type Component = ReturnType<typeof defineComponent>;

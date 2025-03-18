@@ -1,6 +1,9 @@
 micronaut:
   application:
     name: kestra
+  # Disable Micronaut Open Telemetry
+  otel:
+    enabled: false
   router:
     static-resources:
       swagger:
@@ -71,6 +74,13 @@ micronaut:
       type: scheduled
       core-pool-size: 1
 
+  # Disable OpenTelemetry metrics by default, users that need it must enable it and configure the collector URL.
+  metrics:
+    export:
+      otlp:
+        enabled: false
+#        url: http://localhost:4318/v1/metrics
+
 jackson:
   serialization:
     writeDatesAsTimestamps: false
@@ -135,6 +145,11 @@ kestra:
       initial-delay: 1h
       fixed-delay: 1h
       retention: 7d
+      types:
+        - type : io.kestra.core.models.executions.LogEntry
+          retention: 1h
+        - type: io.kestra.core.models.executions.MetricEntry
+          retention: 1h
 
   plugins:
     repositories:
@@ -159,6 +174,9 @@ kestra:
 
   metrics:
     prefix: kestra
+
+  traces:
+    root: DISABLED
 
   server:
     basic-auth:
@@ -194,3 +212,12 @@ kestra:
     prefixes:
       - system.
       - internal.
+
+otel:
+  exclusions:
+    - /ping
+    - /metrics
+    - /health
+    - /env
+    - /prometheus
+  propagators: tracecontext, baggage

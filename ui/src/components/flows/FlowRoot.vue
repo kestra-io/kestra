@@ -11,6 +11,8 @@
 </template>
 
 <script>
+    import {h} from "vue";
+
     import Topology from "./Topology.vue";
     import FlowRevisions from "./FlowRevisions.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue"
@@ -22,13 +24,14 @@
     import Tabs from "../Tabs.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
-    import FlowNoDependencies from "./FlowNoDependencies.vue";
+    import Empty from "../layout/empty/Empty.vue";
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";
     import {apiUrl} from "override/utils/route";
     import FlowRootTopBar from "./FlowRootTopBar.vue";
     import FlowConcurrency from "./FlowConcurrency.vue";
+    import DemoAuditLogs from "../demo/AuditLogs.vue";
 
     export default {
         mixins: [RouteContext],
@@ -65,6 +68,11 @@
             },
         },
         created() {
+            if(!this.$route.params.tab) {
+                const tab = localStorage.getItem("flowDefaultTab") || undefined;
+                this.$router.replace({name: "flows/update", params: {...this.$route.params, tab}});
+            }
+
             this.load();
         },
         methods: {
@@ -267,6 +275,11 @@
                 tabs.push(                    {
                     name: "auditlogs",
                     title: this.$t("auditlogs"),
+                    component: DemoAuditLogs,
+                    maximize: true,
+                    props:{
+                        embed: true
+                    },
                     locked: true
                 });
 
@@ -330,7 +343,8 @@
                 return (this.flow.labels?.["system.readOnly"] === "true") || (this.flow.labels?.["system.readOnly"] === true);
             },
             routeFlowDependencies() {
-                return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;
+                const EMPTY = () => h(Empty, {type: "dependencies"});
+                return this.dependenciesCount > 0 ? FlowDependencies : EMPTY;
             }
         },
         unmounted() {

@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.collectors.Usage;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -71,6 +72,10 @@ public class MiscController {
     @Nullable
     protected String environmentColor;
 
+    @io.micronaut.context.annotation.Value("${kestra.url}")
+    @Nullable
+    protected String kestraUrl;
+
     @io.micronaut.context.annotation.Value("${kestra.server.preview.initial-rows:100}")
     private Integer initialPreviewRows;
 
@@ -101,7 +106,9 @@ public class MiscController {
                 .build()
             ).isBasicAuthEnabled(basicAuthService.isEnabled())
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
-            .hiddenLabelsPrefixes(hiddenLabelsPrefixes);
+            .resourceToFilters(QueryFilter.Resource.asResourceList())
+            .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
+            .url(kestraUrl);
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -159,6 +166,8 @@ public class MiscController {
 
         Environment environment;
 
+        String url;
+
         Preview preview;
 
         Boolean isBasicAuthEnabled;
@@ -166,6 +175,8 @@ public class MiscController {
         String systemNamespace;
 
         List<String> hiddenLabelsPrefixes;
+        // List of filter by component
+        List<QueryFilter.ResourceField> resourceToFilters;
     }
 
     @Value

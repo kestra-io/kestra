@@ -152,4 +152,12 @@ public class H2QueueFactory implements QueueFactoryInterface {
     public QueueInterface<SubflowExecutionResult> subflowExecutionResult() {
         return new H2Queue<>(SubflowExecutionResult.class, applicationContext);
     }
+
+    @Override
+    @Singleton
+    @Named(QueueFactoryInterface.SUBFLOWEXECUTIONEND_NAMED)
+    @Bean(preDestroy = "close")
+    public QueueInterface<SubflowExecutionEnd> subflowExecutionEnd() {
+        return new H2Queue<>(SubflowExecutionEnd.class, applicationContext);
+    }
 }

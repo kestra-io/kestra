@@ -10,6 +10,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.*;
@@ -19,12 +20,16 @@ import io.kestra.core.server.*;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.LogService;
 import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.trace.TraceUtils;
+import io.kestra.core.trace.Tracer;
+import io.kestra.core.trace.TracerFactory;
 import io.kestra.core.utils.*;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.annotation.Parameter;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
+import io.opentelemetry.api.common.Attributes;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
@@ -132,6 +137,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private final ExecutorService executorService;
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private final AtomicBoolean init = new AtomicBoolean(false);
 
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
 
@@ -141,6 +147,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private final Integer numThreads;
     private final AtomicInteger pendingJobCount = new AtomicInteger(0);
     private final AtomicInteger runningJobCount = new AtomicInteger(0);
+
+    @Inject
+    private TracerFactory tracerFactory;
+    private Tracer tracer;
 
     /**
      * Creates a new {@link Worker} instance.
@@ -167,12 +177,17 @@ public class Worker implements Service, Runnable, AutoCloseable {
     }
 
     @PostConstruct
-    void initMetrics() {
-        String[] tags = this.workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, this.workerGroup};
-        // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
-        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, numThreads, tags);
-        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, pendingJobCount, tags);
-        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT, runningJobCount, tags);
+    void initMetricsAndTracer() {
+        // the method is called twice due to how we create the bean, see https://github.com/micronaut-projects/micronaut-core/issues/11656
+        if (this.init.compareAndSet(false, true)) {
+            String[] tags = this.workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, this.workerGroup};
+            // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, numThreads, tags);
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, pendingJobCount, tags);
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT, runningJobCount, tags);
+
+            this.tracer = tracerFactory.getTracer(Worker.class, "WORKER");
+        }
     }
 
     @Override
@@ -261,6 +276,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
 
         setState(ServiceState.RUNNING);
+        log.info("Worker started with {} thread(s)", numThreads);
     }
 
     private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
@@ -387,8 +403,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     }
                 }
             } finally {
-                runContext.cleanup();
                 this.logTerminated(workerTask);
+                runContext.cleanup();
             }
         } else {
             throw new RuntimeException("Unable to process the task '" + workerTask.getTask().getId() + "' as it's not a runnable task");
@@ -559,8 +575,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     } catch (Exception e) {
                         this.handleTriggerError(workerTrigger, e);
                     } finally {
-                        workerTrigger.getConditionContext().getRunContext().cleanup();
-
                         logService.logTrigger(
                             workerTrigger.getTriggerContext(),
                             runContext.logger(),
@@ -569,6 +583,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             workerTrigger.getTrigger().getType(),
                             DurationFormatUtils.formatDurationHMS(stopWatch.getTime(TimeUnit.MILLISECONDS))
                         );
+
+                        workerTrigger.getConditionContext().getRunContext().cleanup();
                     }
 
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(-1);
@@ -680,12 +696,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
             }
             return workerTaskResult;
         } finally {
+            this.logTerminated(workerTask);
+
             // remove tmp directory
             if (cleanUp) {
                 workerTask.getRunContext().cleanup();
             }
-
-            this.logTerminated(workerTask);
         }
     }
 
@@ -819,7 +835,17 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
 
         try {
-            return workerSecurityService.callInSecurityContext(workerJobCallable);
+            return tracer.inCurrentContext(
+                workerJobCallable.runContext,
+                workerJobCallable.getType(),
+                Attributes.of(TraceUtils.ATTR_UID, workerJobCallable.getUid()),
+                () -> workerSecurityService.callInSecurityContext(workerJobCallable)
+            );
+        } catch(Exception e) {
+            // should only occur if it fails in the tracing code which should be unexpected
+            // we add the exception to have some log in that case
+            workerJobCallable.exception = e;
+            return State.Type.FAILED;
         } finally {
             synchronized (this) {
                 workerCallableReferences.remove(workerJobCallable);
@@ -997,6 +1023,17 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @VisibleForTesting
     public void shutdown() {
+        // initiate shutdown
+        shutdown.compareAndSet(false, true);
+
+        try {
+            // close the WorkerJob queue to stop receiving new JobTask execution.
+            workerJobQueue.close();
+        } catch (IOException e) {
+            log.error("Failed to close the WorkerJobQueue");
+        }
+
+        // close all queues and shutdown now
         this.receiveCancellations.forEach(Runnable::run);
         this.executorService.shutdownNow();
     }

@@ -5,6 +5,7 @@ public enum RelationType {
     CHOICE,
     ERROR,
     FINALLY,
+    AFTER_EXECUTION,
     PARALLEL,
     DYNAMIC
 }

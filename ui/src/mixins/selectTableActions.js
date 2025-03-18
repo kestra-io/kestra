@@ -6,13 +6,8 @@ export default {
         };
     },
     methods: {
-        handleSelectionChange(val) {
-            if (val.length === this.total) {
-                this.queryBulkAction = true
-            } else if (val.length < this.internalPageSize) {
-                this.queryBulkAction = false
-            }
-            this.selection = val.map(this.selectionMapper);
+        handleSelectionChange(value) {
+            this.selection = value.map(this.selectionMapper);
         },
         toggleAllUnselected() {
             this.elTable.clearSelection()

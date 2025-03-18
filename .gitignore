@@ -36,6 +36,7 @@ yarn.lock
 ui/coverage
 ui/stats.html
 ui/.frontend-gradle-plugin
+ui/utils/CHANGELOG.md
 
 ### Docker
 /.env

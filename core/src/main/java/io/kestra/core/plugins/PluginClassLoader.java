@@ -43,6 +43,7 @@ public class PluginClassLoader extends URLClassLoader {
         + "|com.fasterxml.jackson.dataformat.xml"
         + "|org.reactivestreams"
         + "|dev.failsafe"
+        + "|reactor"
         + ")\\..*$");
 
     private final ClassLoader parent;
@@ -99,6 +100,13 @@ public class PluginClassLoader extends URLClassLoader {
                         "Class '{}' not found on '{}' for plugin '{}', delegating to parent '{}'",
                         name,
                         this.getName(),
+                        pluginLocation,
+                        this.parent.getName()
+                    );
+                } catch (LinkageError e){
+                    log.debug(
+                        "Class '{}'already in classpath for plugin '{}', delegating to parent '{}'",
+                        name,
                         pluginLocation,
                         this.parent.getName()
                     );

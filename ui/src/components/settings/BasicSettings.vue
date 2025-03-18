@@ -38,7 +38,7 @@
                                         label: $t('no_code.labels.yaml'),
                                         value: 'YAML'
 
-                                    }, 
+                                    },
                                     {
                                         label: $t('no_code.labels.no_code'),
                                         value: 'NO_CODE'
@@ -71,6 +71,17 @@
                             />
                         </el-select>
                     </Column>
+
+                    <Column :label="$t('settings.blocks.configuration.fields.flow_default_tab')">
+                        <el-select :model-value="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
+                            <el-option
+                                v-for="item in flowDefaultTabOptions"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                            />
+                        </el-select>
+                    </Column>
                 </Row>
             </template>
         </Block>
@@ -78,7 +89,7 @@
         <Block :heading="$t('settings.blocks.theme.label')">
             <template #content>
                 <Row>
-                    <Column :label="$t('settings.blocks.theme.fields.mode')">
+                    <Column :label="$t('settings.blocks.theme.fields.theme')">
                         <el-select :model-value="pendingSettings.theme" @update:model-value="onTheme">
                             <el-option
                                 v-for="item in themesOptions"
@@ -102,23 +113,21 @@
                             />
                         </el-select>
                     </Column>
+
+                    <Column :label="$t('settings.blocks.theme.fields.logs_font_size')">
+                        <el-input-number
+                            :model-value="pendingSettings.logsFontSize"
+                            @update:model-value="onLogsFontSize"
+                            controls-position="right"
+                            :min="1"
+                            :max="50"
+                        />
+                    </Column>
+
                     <Column :label="$t('settings.blocks.theme.fields.editor_font_family')">
                         <el-select :model-value="pendingSettings.editorFontFamily" @update:model-value="onFontFamily">
                             <el-option
                                 v-for="item in fontFamilyOptions"
-                                :key="item.value"
-                                :label="item.text"
-                                :value="item.value"
-                            />
-                        </el-select>
-                    </Column>
-                </Row>
-
-                <Row>
-                    <Column :label="$t('settings.blocks.theme.fields.editor_theme')">
-                        <el-select :model-value="pendingSettings.editorTheme" @update:model-value="onEditorTheme">
-                            <el-option
-                                v-for="item in editorThemesOptions"
                                 :key="item.value"
                                 :label="item.text"
                                 :value="item.value"
@@ -130,16 +139,6 @@
                         <el-input-number
                             :model-value="pendingSettings.editorFontSize"
                             @update:model-value="onFontSize"
-                            controls-position="right"
-                            :min="1"
-                            :max="50"
-                        />
-                    </Column>
-                    
-                    <Column :label="$t('settings.blocks.theme.fields.logs_font_size')"> 
-                        <el-input-number
-                            :model-value="pendingSettings.logsFontSize"
-                            @update:model-value="onLogsFontSize"
                             controls-position="right"
                             :min="1"
                             :max="50"
@@ -283,7 +282,6 @@
                     editorType: undefined,
                     lang: undefined,
                     theme: undefined,
-                    editorTheme: undefined,
                     chartColor: undefined,
                     dateFormat: undefined,
                     timezone: undefined,
@@ -295,6 +293,7 @@
                     envName: undefined,
                     envColor: undefined,
                     executeDefaultTab: undefined,
+                    flowDefaultTab: undefined,
                     logsFontSize: undefined
                 },
                 settingsKeyMapping: {
@@ -312,7 +311,7 @@
                     };
                 }).sort((a, b) => a.offset - b.offset),
                 guidedTour: undefined,
-                now: this.$moment(), 
+                now: this.$moment(),
                 localeKey: this.$moment.locale(),
             };
         },
@@ -323,9 +322,8 @@
             this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
-            
+
             this.pendingSettings.theme = Utils.getTheme();
-            this.pendingSettings.editorTheme = Utils.getTheme("editorTheme")
 
             let scheme = localStorage.getItem("scheme") || "classic";
             if(scheme === "default") scheme = "classic";
@@ -340,6 +338,7 @@
             this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
+            this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
             this.pendingSettings.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
             this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
@@ -363,7 +362,7 @@
             },
             updateThemeBasedOnSystem() {
                 if (this.theme === "syncWithSystem") {
-                    Utils.switchTheme("syncWithSystem");
+                    Utils.switchTheme(this.$store, "syncWithSystem");
                 }
             },
             onDateFormat(value) {
@@ -371,9 +370,6 @@
             },
             onTimezone(value) {
                 this.pendingSettings.timezone = value;
-            },
-            onEditorTheme(value) {
-                this.pendingSettings.editorTheme = value;
             },
             onChartColor(value) {
                 this.pendingSettings.chartColor = value;
@@ -416,11 +412,15 @@
             onExecuteDefaultTabChange(value){
                 this.pendingSettings.executeDefaultTab = value;
             },
+            onFlowDefaultTabChange(value){
+                this.pendingSettings.flowDefaultTab = value;
+            },
             onLogsFontSize(value) {
                 this.pendingSettings.logsFontSize = value;
             },
-            saveAllSettings() {
-                Object.keys(this.pendingSettings).forEach((key) => {
+            async saveAllSettings() {
+                let refreshWhenSaved = false
+                for (const key in this.pendingSettings){
                     const storedKey = this.settingsKeyMapping[key]
                     switch(key) {
                     case "defaultNamespace":
@@ -445,10 +445,9 @@
                         break
                     case "logsFontSize":
                         localStorage.setItem(key, this.pendingSettings[key])
-                        this.$store.commit("layout/setLogsFontSize", this.pendingSettings[key])
-                        break   
+                        break
                     case "theme":
-                        Utils.switchTheme(this.pendingSettings[key]);
+                        Utils.switchTheme(this.$store, this.pendingSettings[key]);
                         localStorage.setItem(key, Utils.getTheme())
                         break
                     case "lang":
@@ -457,10 +456,17 @@
                             localStorage.setItem(key, this.pendingSettings[key])
                         }
 
-                        let newlang = Utils.getLang();
-                        this.$moment.locale(newlang);
-                        this.$i18n.locale = newlang;
-                        this.localeKey = this.$moment.locale();
+                        // For language change, we have to load a json file into i18n.
+                        // To get the new language applied, we refresh the page fully.
+                        // This avoids having to rewrite the language loading here
+                        // that we already wrote in `i18n.ts`.
+
+                        // NOTE: We cannot call it here directly as we don't have an
+                        // instance of VueI18n available.
+                        // NOTE2: We have to wait until all values are saved
+                        // before refreshing. If we don't, some values will be saved
+                        // but the page will refresh before all is saved.
+                        refreshWhenSaved = true
 
                         break;
                     }
@@ -474,7 +480,10 @@
                                 localStorage.setItem(key, this.pendingSettings[key])
                         }
                     }
-                })
+                }
+                if(refreshWhenSaved){
+                    document.location.assign(document.location.href)
+                }
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
             }
         },
@@ -508,13 +517,6 @@
             },
             themesOptions() {
                 return [
-                    {value: "light", text: "Light"},
-                    {value: "dark", text: "Dark"},
-                    {value: "syncWithSystem", text: "Sync With System"}
-                ]
-            },
-            editorThemesOptions() {
-                return  [
                     {value: "light", text: "Light"},
                     {value: "dark", text: "Dark"},
                     {value: "syncWithSystem", text: "Sync With System"}
@@ -600,18 +602,67 @@
                         label: this.$t("metrics")
                     }
                 ]
+            },
+            flowDefaultTabOptions() {
+                return [
+                    {
+                        value : "overview",
+                        label: this.$t("overview")
+                    },
+                    {
+                        value : "topology",
+                        label: this.$t("topology")
+                    },
+                    {
+                        value : "executions",
+                        label: this.$t("executions")
+                    },
+                    {
+                        value : "edit",
+                        label: this.$t("edit")
+                    },
+                    {
+                        value : "revisions",
+                        label: this.$t("revisions")
+                    },
+                    {
+                        value : "triggers",
+                        label: this.$t("triggers")
+                    },
+                    {
+                        value : "logs",
+                        label: this.$t("logs")
+                    },
+                    {
+                        value : "metrics",
+                        label: this.$t("metrics")
+                    },
+                    {
+                        value : "dependencies",
+                        label: this.$t("dependencies")
+                    },
+                    {
+                        value : "concurrency",
+                        label: this.$t("concurrency")
+                    },
+                    {
+                        value : "auditlogs",
+                        label: this.$t("auditlogs")
+                    },
+                ]
             }
         }
     };
 </script>
 <style>
-    .el-input-number {
+
+    .settings-wrapper .el-input-number {
         max-width: 20vw;
     }
 
     .el-input__count {
-        color: var(--bs-white) !important;
-        
+        color: var(--ks-content-primary) !important;
+
         .el-input__count-inner {
             background: none !important;
         }

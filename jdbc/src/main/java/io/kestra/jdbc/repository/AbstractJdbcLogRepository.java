@@ -1,5 +1,6 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.executions.Execution;
@@ -13,12 +14,13 @@ import io.kestra.jdbc.services.JdbcFilterService;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
-import java.util.stream.Stream;
 import lombok.Getter;
 import org.jooq.Record;
 import org.jooq.*;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -29,12 +31,9 @@ import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 import java.util.*;
 import java.util.stream.Collectors;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.FluxSink;
+import java.util.stream.Stream;
 
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository implements LogRepositoryInterface {
-
-    protected static final int FETCH_SIZE = 100;
 
     protected io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository;
 
@@ -63,19 +62,24 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         Logs.Fields.LEVEL, "level",
         Logs.Fields.MESSAGE, "message"
     );
+    @Override
+    public Set<Logs.Fields> dateFields() {
+        return Set.of(Logs.Fields.DATE);
+    }
+
+    @Override
+    public Logs.Fields dateFilterField() {
+        return Logs.Fields.DATE;
+    }
 
     @Override
     public ArrayListTotal<LogEntry> find(
         Pageable pageable,
-        @Nullable String query,
         @Nullable String tenantId,
-        @Nullable String namespace,
-        @Nullable String flowId,
-        @Nullable String triggerId,
-        @Nullable Level minLevel,
-        @Nullable ZonedDateTime startDate,
-        @Nullable ZonedDateTime endDate
+        @Nullable List<QueryFilter> filters
     ) {
+
+        String query = getQuery(filters);
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
@@ -85,9 +89,10 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .select(field("value"))
                     .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
+                    .where(this.defaultFilter(tenantId))
+                    .and(this.findCondition(query));
 
-                this.filter(select, query, namespace, flowId, triggerId, minLevel, startDate , endDate);
+               select = this.filter(select, filters, "timestamp");
 
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
@@ -167,7 +172,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 addMinLevel(select, minLevel);
                 select = select.and(field("timestamp").greaterThan(startDate.toOffsetDateTime()));
 
-                Select<Record1<Object>> query = this.jdbcRepository.buildPageQuery(context, select);
+                Select<Record1<Object>> query = this.jdbcRepository.buildQuery(context, select, "timestamp");
 
                 try (Stream<Record1<Object>> stream = query.fetchSize(FETCH_SIZE).stream()){
                     stream.map((Record record) -> jdbcRepository.map(record))
@@ -636,33 +641,64 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
+
+                Map<String, ? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
+                    .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                // Generate custom fields for date as they probably need formatting
+                List<Field<Date>> dateFields = generateDateFields(descriptors, fieldsMapping, startDate, endDate, dateFields());
+
                 // Init request
                 SelectConditionStep<Record> selectConditionStep = select(
                     context,
-                    this.getFilterService(),
-                    descriptors,
+                    filterService,
+                    columnsWithoutDate,
+                    dateFields,
                     this.getFieldsMapping(),
                     this.jdbcRepository.getTable(),
                     tenantId
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, this.getFilterService(), descriptors, fieldsMapping);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors, fieldsMapping);
+
+                List<? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
+                    .filter(column -> column.getAgg() == null)
+                    .toList();
 
                 // Apply GroupBy for aggregation
-                SelectHavingStep<Record> selectHavingStep = groupBy(selectConditionStep, descriptors, fieldsMapping);
+                SelectHavingStep<Record> selectHavingStep = groupBy(
+                    selectConditionStep,
+                    columnsWithoutDateWithOutAggs,
+                    dateFields,
+                    fieldsMapping
+                );
 
                 // Apply OrderBy
                 SelectSeekStepN<Record> selectSeekStep = orderBy(selectHavingStep, descriptors);
 
                 // Fetch and paginate if provided
-                List<Map<String, Object>> results = fetchSeekStep(selectSeekStep, pageable);
-
-
-                // Fetch total count for pagination
-                int total = context.fetchCount(selectConditionStep);
-
-                return new ArrayListTotal<>(results, total);
+                return fetchSeekStep(selectSeekStep, pageable);
             });
+    }
+
+    abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
+
+    protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
+        DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,
+        Map<F, String> fieldsMapping,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        Set<F> dateFields
+    ) {
+        return descriptors.getColumns().entrySet().stream()
+            .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
+            .map(entry -> {
+                Duration duration = Duration.between(startDate, endDate);
+                return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
+            })
+            .toList();
+
     }
 }

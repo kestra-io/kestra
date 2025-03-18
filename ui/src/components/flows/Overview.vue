@@ -1,12 +1,13 @@
 <template>
     <Dashboard
-        v-if="loaded && total"
+        v-if="loaded && total && flow"
         :restore-u-r-l="false"
         flow
-        :flow-i-d="flow?.id"
+        :flow-id="flow.id"
+        :namespace="flow.namespace"
         embed
     />
-    <NoExecutions v-else-if="loaded && !total" />
+    <NoExecutions v-else-if="loaded && flow && !total" />
 </template>
 
 <script setup lang="ts">
@@ -25,7 +26,7 @@
     onMounted(() => {
         if (flow.value?.id) {
             store
-                .dispatch("execution/findExecutions", {flowId: flow.value.id})
+                .dispatch("execution/findExecutions", {namespace: flow.value.namespace, flowId: flow.value.id})
                 .then((r) => {
                     total.value = r.total ?? 0;
                     loaded.value = true;

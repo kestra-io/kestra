@@ -5,20 +5,18 @@
             :key="tab.name"
             :label="tab.title"
             :name="tab.name || 'default'"
-            :disabled="tab.disabled || tab.locked"
+            :disabled="tab.disabled"
             :data-component="`FILENAME_PLACEHOLDER#${tab}`"
         >
             <template #label>
-                <component :is="embedActiveTab || tab.disabled || tab.locked ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">
+                <component :is="embedActiveTab || tab.disabled ? 'a' : 'router-link'" @click="embeddedTabChange(tab)" :to="embedActiveTab ? undefined : to(tab)" :data-test-id="tab.name">
                     <el-tooltip v-if="tab.disabled && tab.props && tab.props.showTooltip" :content="$t('add-trigger-in-editor')" placement="top">
                         <span><strong>{{ tab.title }}</strong></span>
                     </el-tooltip>
-                    <span v-if="!tab.hideTitle">
-                        <enterprise-tooltip :disabled="tab.locked" :term="tab.name" content="tabs">
-                            {{ tab.title }}
-                            <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
-                        </enterprise-tooltip>
-                    </span>
+                    <enterprise-badge :enable="tab.locked">
+                        {{ tab.title }}
+                        <el-badge :type="tab.count > 0 ? 'danger' : 'primary'" :value="tab.count" v-if="tab.count !== undefined" />
+                    </enterprise-badge>
                 </component>
             </template>
         </el-tab-pane>
@@ -51,10 +49,10 @@
     import {mapState, mapMutations} from "vuex";
 
     import EditorSidebar from "./inputs/EditorSidebar.vue";
-    import EnterpriseTooltip from "./EnterpriseTooltip.vue";
+    import EnterpriseBadge from "./EnterpriseBadge.vue";
 
     export default {
-        components: {EditorSidebar, EnterpriseTooltip},
+        components: {EditorSidebar, EnterpriseBadge},
         props: {
             tabs: {
                 type: Array,
@@ -111,7 +109,7 @@
             this.setActiveName();
         },
         methods: {
-            ...mapMutations("editor", ["changeExplorerWidth"]),
+            ...mapMutations("editor", ["changeExplorerWidth", "closeExplorer"]),
             dragSidebar(e){
                 const SELF = this;
 
@@ -159,18 +157,40 @@
                 explorerWidth: (state) => state.editor.explorerWidth,
             }),
             containerClass() {
+                const isEnterpriseTab = this.activeTab.locked;
+                const isGanttTab = this.activeTab.name === "gantt";
+
                 if (this.activeTab.containerClass) {
-                    return {[this.activeTab.containerClass] : true};
+                    return {[this.activeTab.containerClass]: true};
                 }
 
-                return {"container" : true, "mt-4": true};
+                return {
+                    "container": !isEnterpriseTab,
+                    "mt-4": !isEnterpriseTab,
+                    "px-0": isEnterpriseTab,
+                    "gantt-container": isGanttTab
+                };
             },
             activeTab() {
                 return this.tabs
                     .filter(tab => (this.embedActiveTab ?? this.$route.params.tab) === tab.name)[0] || this.tabs[0];
             },
             isEditorActiveTab() {
-                return this.activeTab.name === "edit";
+                const TAB = this.activeTab.name;
+                const ROUTE = this.$route.name;
+
+                if (["flows/update", "flows/create"].includes(ROUTE)) {
+                    return TAB === "edit";
+                } else if (
+                    ["namespaces/update", "namespaces/create"].includes(ROUTE)
+                ) {
+                    if (TAB === "files") return true;
+
+                    this.closeExplorer();
+                    return false;
+                }
+
+                return false;
             },
             isNamespaceEditor(){
                 return this.activeTab?.props?.isNamespace === true;
@@ -188,6 +208,11 @@
 </script>
 
 <style lang="scss" scoped>
+    section.container.mt-4:has(> section.empty) {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     :deep(.el-tabs) {
         .el-tabs__item.is-disabled {
             &:after {

@@ -33,6 +33,7 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
     private static final Logger log = LoggerFactory.getLogger(PluginDeserializer.class);
 
     private static final String TYPE = "type";
+    private static final String VERSION = "version";
 
     private volatile PluginRegistry pluginRegistry;
 
@@ -102,8 +103,8 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
             );
 
             if (DataChart.class.isAssignableFrom(pluginType)) {
-                Class<? extends Plugin> dataFilterClass = pluginRegistry.findClassByIdentifier(extractPluginRawIdentifier(node.get("data")));
-                ParameterizedType genericDataFilterClass = (ParameterizedType) pluginRegistry.findClassByIdentifier(extractPluginRawIdentifier(node.get("data"))).getGenericSuperclass();
+                final Class<? extends Plugin> dataFilterClass = pluginRegistry.findClassByIdentifier(extractPluginRawIdentifier(node.get("data")));
+                ParameterizedType genericDataFilterClass = (ParameterizedType) dataFilterClass.getGenericSuperclass();
                 Type dataFieldsEnum = genericDataFilterClass.getActualTypeArguments()[0];
                 TypeFactory typeFactory = JacksonMapper.ofJson().getTypeFactory();
                 Type chartAwareColumnDescriptorClass = ((ParameterizedType) ((WildcardType) ((ParameterizedType) ((TypeVariable<?>)
@@ -142,10 +143,13 @@ public final class PluginDeserializer<T extends Plugin> extends JsonDeserializer
     }
 
     static String extractPluginRawIdentifier(final JsonNode node) {
-        JsonNode type = node.get(TYPE);
-        if (type == null || type.textValue().isEmpty()) {
+        String type = Optional.ofNullable(node.get(TYPE)).map(JsonNode::textValue).orElse(null);
+        String version = Optional.ofNullable(node.get(VERSION)).map(JsonNode::textValue).orElse(null);
+
+        if (type == null || type.isEmpty()) {
             return null;
         }
-        return type.textValue();
+
+        return version != null && !version.isEmpty() ? type + ":" + version : type;
     }
 }

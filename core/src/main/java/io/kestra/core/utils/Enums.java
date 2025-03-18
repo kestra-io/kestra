@@ -101,6 +101,22 @@ public final class Enums {
             .collect(Collectors.toSet());
     }
 
+    /**
+     * Converts a string to its corresponding enum value based on a provided mapping.
+     *
+     * @param value    The string representation of the enum value.
+     * @param mapping  A map of string values to enum constants.
+     * @param typeName A descriptive name of the enum type (used in error messages).
+     * @param <T>      The type of the enum.
+     * @return The corresponding enum constant.
+     * @throws IllegalArgumentException If the string does not match any enum value.
+     */
+    public static <T extends Enum<T>> T fromString(String value, Map<String, T> mapping, String typeName) {
+        return Optional.ofNullable(mapping.get(value))
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Unsupported %s '%s'. Expected one of: %s".formatted(typeName, value, mapping.keySet())
+            ));
+    }
 
     private Enums() {
     }

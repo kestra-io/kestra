@@ -1,11 +1,13 @@
 package io.kestra.plugin.core.execution;
 
+import com.ctc.wstx.util.PrefixedName;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
@@ -49,14 +51,12 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
     @Schema(
         title = "Filter for a specific namespace in case `executionId` is set. In case you wonder why `executionId` is not enough — we require specifying the namespace to make permissions explicit. The Enterprise Edition of Kestra allows you to resume executions from another namespaces only if the permissions allow it. Check the [Allowed Namespaces](https://kestra.io/docs/enterprise/allowed-namespaces) documentation for more details."
     )
-    @PluginProperty(dynamic = true)
-    private String namespace;
+    private Property<String> namespace;
 
     @Schema(
         title = "Filter for a specific flow identifier in case `executionId` is set."
     )
-    @PluginProperty(dynamic = true)
-    private String flowId;
+    private Property<String> flowId;
 
     @Schema(
         title = "Filter for a specific execution.",
@@ -67,19 +67,22 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
 
             If `executionId` is not set, the task will use the ID of the current execution."""
     )
-    @PluginProperty(dynamic = true)
-    private String executionId;
+    private Property<String> executionId;
 
     @Schema(
         title = "Inputs to be passed to the execution when it's resumed."
     )
-    @PluginProperty(dynamic = true)
-    private Map<String, Object> inputs;
+    private Property<Map<String, Object>> inputs;
 
     @SuppressWarnings("unchecked")
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {
-        var executionInfo = PluginUtilsService.executionFromTaskParameters(runContext, this.namespace, this.flowId, this.executionId);
+        var executionInfo = PluginUtilsService.executionFromTaskParameters(
+            runContext,
+            runContext.render(this.namespace).as(String.class).orElse(null),
+            runContext.render(this.flowId).as(String.class).orElse(null),
+            runContext.render(this.executionId).as(String.class).orElse(null)
+        );
 
         ApplicationContext applicationContext = ((DefaultRunContext)runContext).getApplicationContext();
         ExecutionService executionService = applicationContext.getBean(ExecutionService.class);
@@ -90,7 +93,9 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
         Execution execution = executionRepository.findById(executionInfo.tenantId(), executionInfo.id())
             .orElseThrow(() -> new IllegalArgumentException("No execution found for execution id " + executionInfo.id()));
         Flow flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution id " + executionInfo.id()));
-        Map<String, Object> renderedInputs = inputs != null ? runContext.render(inputs) : null;
+
+        Map<String, Object> renderedInputs = runContext.render(this.inputs).asMap(String.class, Object.class);
+        renderedInputs = !renderedInputs.isEmpty() ? renderedInputs : null;
         Execution resumed = executionService.resume(execution, flow, State.Type.RUNNING, renderedInputs);
         executionQueue.emit(resumed);
 

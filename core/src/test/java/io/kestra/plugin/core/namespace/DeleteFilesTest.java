@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.namespace;
 
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.Namespace;
@@ -20,7 +21,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
 @KestraTest
-public class DeleteFilesTest {
+class DeleteFilesTest {
     @Inject
     RunContextFactory runContextFactory;
 
@@ -33,7 +34,7 @@ public class DeleteFilesTest {
             .id(DeleteFiles.class.getSimpleName())
             .type(DeleteFiles.class.getName())
             .files(List.of("**test1*"))
-            .namespace("{{ inputs.namespace }}")
+            .namespace(new Property<>("{{ inputs.namespace }}"))
             .build();
 
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, deleteFiles, Map.of("namespace", namespaceId));
@@ -60,8 +61,8 @@ public class DeleteFilesTest {
             .id(DeleteFiles.class.getSimpleName())
             .type(DeleteFiles.class.getName())
             .files(List.of("**/file.txt"))
-            .namespace("{{ inputs.namespace }}")
-            .deleteParentFolder(true)
+            .namespace(new Property<>("{{ inputs.namespace }}"))
+            .deleteParentFolder(Property.of(true))
             .build();
 
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, deleteFiles, Map.of("namespace", namespaceId));
@@ -88,8 +89,8 @@ public class DeleteFilesTest {
             .id(DeleteFiles.class.getSimpleName())
             .type(DeleteFiles.class.getName())
             .files(List.of("**/file.txt"))
-            .namespace("{{ inputs.namespace }}")
-            .deleteParentFolder(false)
+            .namespace(new Property<>("{{ inputs.namespace }}"))
+            .deleteParentFolder(Property.of(false))
             .build();
 
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, deleteFiles, Map.of("namespace", namespaceId));
@@ -116,8 +117,8 @@ public class DeleteFilesTest {
             .id(DeleteFiles.class.getSimpleName())
             .type(DeleteFiles.class.getName())
             .files(List.of("**/file1.txt"))
-            .namespace("{{ inputs.namespace }}")
-            .deleteParentFolder(true)
+            .namespace(new Property<>("{{ inputs.namespace }}"))
+            .deleteParentFolder(Property.of(true))
             .build();
 
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, deleteFiles, Map.of("namespace", namespaceId));

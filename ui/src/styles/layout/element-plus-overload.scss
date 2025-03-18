@@ -46,11 +46,12 @@
     }
 
     &.is-text {
-        font-weight: bold;
         border: 1px solid var(--ks-border-primary);
         height: 32px;
         line-height: 32px;
-        background-color: var(--ks-background-card) !important;
+        font-weight: normal;
+        --el-button-background-color: var(--ks-background-card);
+        --el-button-text-color: var(--ks-content-primary);
 
         &.version {
             --el-button-text-color: var(--ks-content-primary);
@@ -108,15 +109,19 @@
     }
 }
 
-
 .el-input-file.custom-upload {
     font-size: var(--el-font-size-base);
     border-radius: var(--el-border-radius-base);
     border: 1px solid var(--ks-border-primary);
     white-space: nowrap;
 
+    form {
+        line-height: 27px;
+    }
+
     .el-input__wrapper {
         background-color: transparent;
+        box-shadow: none;
     }
 
     label {
@@ -156,6 +161,8 @@
 
 
 .el-select {
+    --el-disabled-text-color: var(--ks-content-inactive);
+
     &.fit-text .el-select__input {
         width: fit-content !important;
     }
@@ -177,6 +184,12 @@
         &.is-disabled {
             html.dark & {
                 background-color: var(--bs-gray-400);
+            }
+
+            .el-select__suffix {
+                .el-select__caret {
+                    color: var(--ks-content-inactive);
+                }
             }
         }
     }
@@ -357,14 +370,10 @@ form.ks-horizontal {
     --el-table-border: 1px solid var(--ks-border-primary);
 
     --el-table-header-text-color: var(--ks-content-primary);
-    --el-table-row-hover-bg-color: var(--bs-gray-200);
-    --el-table-header-bg-color: #f5f5ff;
-    --el-table-tr-bg-color: var(--bs-white);
-
-    html.dark & {
-        --el-table-tr-bg-color: var(--ks-background-card);
-        --el-table-header-bg-color: var(--ks-background-input);
-    }
+    --el-table-header-bg-color: var(--ks-background-table-header);
+    --el-table-row-hover-bg-color: var(--ks-background-table-row-hover);
+    --el-table-header-bg-color: var(--ks-background-table-header);
+    --el-table-tr-bg-color: var(--ks-background-table-row);
 
     outline: 1px solid var(--ks-border-primary);
     border-radius: var(--bs-border-radius-lg);
@@ -388,9 +397,6 @@ form.ks-horizontal {
         font-weight: 400;
     }
 
-    .el-table__cell {
-        vertical-align: top;
-    }
 
 
     .el-table__inner-wrapper::before {
@@ -425,7 +431,6 @@ form.ks-horizontal {
             display: flex;
             justify-content: center;
             align-items: center;
-            background-color: var(--bs-gray-400);
 
             .material-design-icon__svg {
                 bottom: -0.125rem;
@@ -462,6 +467,19 @@ form.ks-horizontal {
             opacity: 0.5;
         }
     }
+
+    td {
+        .el-tag {
+            margin-right: .3rem;
+        }
+
+        a {
+            color: var(--ks-content-primary);
+            &:hover{
+                text-decoration: underline;
+            }
+        }
+    }
 }
 
 // tabs
@@ -487,7 +505,6 @@ form.ks-horizontal {
 
         &.is-active > * {
             background-color: var(--ks-content-link);
-            font-weight: bold;
         }
 
         &.is-disabled a {
@@ -502,7 +519,7 @@ form.ks-horizontal {
 
     html.dark & {
         .el-tabs__active-bar {
-            background-color: var(--ks-button-background-secondary-active);
+            background-color: var(--ks-button-background-secondary-hover);
         }
 
         .el-tabs__item {
@@ -568,21 +585,17 @@ form.ks-horizontal {
                 padding: .5rem 1rem;
             }
 
+            a:hover{
+                color: var(--ks-content-link);
+            }
+
             &.is-active > a {
-                font-weight: bold;
-                background: var(--ks-button-background-secondary-active);
+                background: var(--ks-button-background-secondary-hover);
+                color: var(--ks-content-link);
                 border-radius: var(--bs-border-radius);
             }
         }
 
-
-        html.dark & {
-            .el-tabs__item {
-                &.is-active > a {
-                    color: var(--ks-content-primary);
-                }
-            }
-        }
     }
 
     &.el-tabs--card{
@@ -972,9 +985,12 @@ form.ks-horizontal {
 // tags
 .el-tag {
     --el-tag-bg-color: var(--ks-tag-background);
-    --el-tag-hover-color: var(--bs-gray-600-darken-2);
     --el-tag-text-color: var(--ks-tag-content);
     border: 0;
+
+    a{
+        color: var(--ks-tag-content);
+    }
 
     @each $i in ($types) {
         &.el-tag--#{$i} {
@@ -1035,14 +1051,6 @@ form.ks-horizontal {
     }
 
     .el-dialog__title {
-        html.dark & {
-            color: $base-white
-        }
-    }
-
-    .el-dialog__headerbtn .el-dialog__close {
-        background-color: var(--ks-content-link);
-
         html.dark & {
             color: $base-white
         }
@@ -1191,4 +1199,8 @@ form.ks-horizontal {
 
 .text-base {
     font-size: var(--el-font-size-base);
+}
+
+.el-empty {
+    background-color: var(--ks-background-card);
 }

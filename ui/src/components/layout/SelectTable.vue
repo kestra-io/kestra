@@ -80,7 +80,7 @@
         position: absolute;
         height: var(--table-header-height);
         width: var(--table-header-width);
-        background-color: var(--bs-gray-100-darken-3);
+        background-color: var(--ks-background-table-header);
         border-radius: var(--bs-border-radius-lg) var(--bs-border-radius-lg) 0 0;
         border-bottom: 1px solid var(--ks-border-primary);
         overflow-x: auto;

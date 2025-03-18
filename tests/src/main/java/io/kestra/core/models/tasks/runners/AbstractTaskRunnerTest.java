@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
@@ -36,7 +37,9 @@ public abstract class AbstractTaskRunnerTest {
     protected void run() throws Exception {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")));
+        Mockito.when(commands.getCommands()).thenReturn(
+            Property.of(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
+        );
 
         var taskRunner = taskRunner();
         var result = taskRunner.run(runContext, commands, Collections.emptyList());
@@ -50,7 +53,9 @@ public abstract class AbstractTaskRunnerTest {
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getEnableOutputDirectory()).thenReturn(false);
         Mockito.when(commands.outputDirectoryEnabled()).thenReturn(false);
-        Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")));
+        Mockito.when(commands.getCommands()).thenReturn(Property.of(
+            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
+        );
 
         var taskRunner = taskRunner();
         assertThat(taskRunner.additionalVars(runContext, commands).containsKey(ScriptService.VAR_OUTPUT_DIR), is(false));
@@ -65,7 +70,8 @@ public abstract class AbstractTaskRunnerTest {
     protected void fail() throws IOException {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1")));
+        Mockito.when(commands.getCommands()).thenReturn(Property.of(
+            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1"))));
 
         var taskRunner = taskRunner();
         assertThrows(TaskException.class, () -> taskRunner.run(runContext, commands, Collections.emptyList()));
@@ -112,7 +118,7 @@ public abstract class AbstractTaskRunnerTest {
             )),
             taskRunner instanceof RemoteRunnerInterface
         );
-        Mockito.when(commands.getCommands()).thenReturn(renderedCommands);
+        Mockito.when(commands.getCommands()).thenReturn(Property.of(renderedCommands));
 
         List<String> filesToDownload = List.of("output.txt");
         TaskRunnerResult<?> run = taskRunner.run(runContext, commands, filesToDownload);
@@ -139,10 +145,10 @@ public abstract class AbstractTaskRunnerTest {
     protected void failWithInput() throws IOException {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(
+        Mockito.when(commands.getCommands()).thenReturn(Property.of(ScriptService.scriptCommands(
             List.of("/bin/sh", "-c"),
             Collections.emptyList(),
-            List.of("echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'", "return 1"))
+            List.of("echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'", "return 1")))
         );
 
         var taskRunner = taskRunner();

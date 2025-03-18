@@ -181,8 +181,6 @@ class FinallyTest {
         assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
-    // @FIXME
-    @Disabled("ForEach is not working with errors neither finally")
     @Test
     @LoadFlows({"flows/valids/finally-foreach.yaml"})
     void forEachWithoutErrors() throws QueueException, TimeoutException {
@@ -200,8 +198,6 @@ class FinallyTest {
         assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
     }
 
-    // @FIXME
-    @Disabled("ForEach is not working with errors neither finally")
     @Test
     @LoadFlows({"flows/valids/finally-foreach.yaml"})
     void forEachWithErrors() throws QueueException, TimeoutException {

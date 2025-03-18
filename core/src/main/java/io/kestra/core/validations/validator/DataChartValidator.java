@@ -4,6 +4,7 @@ import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.OrderBy;
 import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.DataChartValidation;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
@@ -33,7 +34,7 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
 
         List<String> violations = new ArrayList<>();
 
-        Set<String> dataColumns = dataChart.getData().getColumns().keySet();
+        Set<String> dataColumns = MapUtils.emptyOnNull(dataChart.getData().getColumns()).keySet();
         if (dataChart.getChartOptions() != null) {
             List<String> neededColumns = dataChart.getChartOptions().neededColumns();
             neededColumns.forEach(column -> {

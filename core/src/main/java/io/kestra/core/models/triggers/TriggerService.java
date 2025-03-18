@@ -10,6 +10,7 @@ import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -63,13 +64,18 @@ public abstract class TriggerService {
         RunContext runContext = conditionContext.getRunContext();
         ExecutionTrigger executionTrigger = ExecutionTrigger.of(trigger, variables);
 
+        List<Label> executionLabels = new ArrayList<>(ListUtils.emptyOnNull(labels));
+        if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
+            // add a correlation ID if none exist
+            executionLabels.add(new Label(Label.CORRELATION_ID, runContext.getTriggerExecutionId()));
+        }
         Execution execution = Execution.builder()
             .id(runContext.getTriggerExecutionId())
             .tenantId(context.getTenantId())
             .namespace(context.getNamespace())
             .flowId(context.getFlowId())
             .flowRevision(conditionContext.getFlow().getRevision())
-            .labels(labels)
+            .labels(executionLabels)
             .state(new State())
             .trigger(executionTrigger)
             .scheduleDate(scheduleDate.map(date -> date.toInstant()).orElse(null))
@@ -104,6 +110,11 @@ public abstract class TriggerService {
         ExecutionTrigger executionTrigger,
         Integer flowRevision
     ) {
+        List<Label> executionLabels = new ArrayList<>(ListUtils.emptyOnNull(trigger.getLabels()));
+        if (executionLabels.stream().noneMatch(label -> Label.CORRELATION_ID.equals(label.key()))) {
+            // add a correlation ID if none exist
+            executionLabels.add(new Label(Label.CORRELATION_ID, id));
+        }
         return Execution.builder()
             .id(id)
             .namespace(context.getNamespace())
@@ -111,7 +122,7 @@ public abstract class TriggerService {
             .flowRevision(flowRevision)
             .state(new State())
             .trigger(executionTrigger)
-            .labels(trigger.getLabels() == null ? null : trigger.getLabels())
+            .labels(executionLabels)
             .build();
     }
 }

@@ -30,6 +30,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
+
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
@@ -89,6 +91,12 @@ public abstract class AbstractRunnerTest {
 
     @Inject
     private SLATestCase slaTestCase;
+
+    @Inject
+    private ChangeStateTestCase changeStateTestCase;
+
+    @Inject
+    private AfterExecutionTestCase afterExecutionTestCase;
 
     @Test
     @ExecuteFlow("flows/valids/full.yaml")
@@ -173,6 +181,18 @@ public abstract class AbstractRunnerTest {
         restartCaseTest.restartMultiple();
     }
 
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
+    @LoadFlows({"flows/valids/restart_always_failed.yaml"})
+    void restartFailedThenFailureWithGlobalErrors() throws Exception {
+        restartCaseTest.restartFailedThenFailureWithGlobalErrors();
+    }
+
+    @RetryingTest(5)
+    @LoadFlows({"flows/valids/restart_local_errors.yaml"})
+    void restartFailedThenFailureWithLocalErrors() throws Exception {
+        restartCaseTest.restartFailedThenFailureWithLocalErrors();
+    }
+
     @Test
     @LoadFlows({"flows/valids/restart-parent.yaml", "flows/valids/restart-child.yaml"})
     void restartSubflow() throws Exception {
@@ -203,12 +223,12 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.trigger();
     }
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     @LoadFlows({"flows/valids/trigger-flow-listener-namespace-condition.yaml",
         "flows/valids/trigger-multiplecondition-flow-c.yaml",
         "flows/valids/trigger-multiplecondition-flow-d.yaml"})
     void multipleConditionTriggerFailed() throws Exception {
-            multipleConditionTriggerCaseTest.failed();
+        multipleConditionTriggerCaseTest.failed();
     }
 
     @Test
@@ -219,10 +239,18 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.flowTriggerPreconditions();
     }
 
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-preconditions-flow-listen.yaml",
+        "flows/valids/flow-trigger-preconditions-flow-a.yaml",
+        "flows/valids/flow-trigger-preconditions-flow-b.yaml"})
+    void flowTriggerPreconditionsMergeOutputs() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerPreconditionsMergeOutputs();
+    }
+
     @RetryingTest(5)
     @LoadFlows({"flows/valids/each-null.yaml"})
     void eachWithNull() throws Exception {
-        EachSequentialTest.eachNullTest(runnerUtils,logsQueue);
+        EachSequentialTest.eachNullTest(runnerUtils, logsQueue);
     }
 
     @Test
@@ -244,7 +272,7 @@ public abstract class AbstractRunnerTest {
         "flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml"})
     void flowWaitFailed() throws Exception {
-            flowCaseTest.waitFailed();
+        flowCaseTest.waitFailed();
     }
 
     @Test
@@ -342,6 +370,19 @@ public abstract class AbstractRunnerTest {
         forEachItemCaseTest.forEachItemWithSubflowOutputs();
     }
 
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
+    @LoadFlows({"flows/valids/restart-for-each-item.yaml", "flows/valids/restart-child.yaml"})
+    void restartForEachItem() throws Exception {
+        forEachItemCaseTest.restartForEachItem();
+    }
+
+    @RetryingTest(5)
+    @LoadFlows({"flows/valids/for-each-item-subflow.yaml",
+        "flows/valids/for-each-item-in-if.yaml"})
+    protected void forEachItemInIf() throws Exception {
+        forEachItemCaseTest.forEachItemInIf();
+    }
+
     @Test
     @LoadFlows({"flows/valids/flow-concurrency-cancel.yml"})
     void concurrencyCancel() throws Exception {
@@ -360,7 +401,7 @@ public abstract class AbstractRunnerTest {
         flowConcurrencyCaseTest.flowConcurrencyQueue();
     }
 
-    @Test
+    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     @LoadFlows({"flows/valids/flow-concurrency-queue-pause.yml"})
     void concurrencyQueuePause() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueuePause();
@@ -467,5 +508,41 @@ public abstract class AbstractRunnerTest {
 
         assertThat(execution.getTaskRunList(), hasSize(12));
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/failed-first.yaml")
+    public void changeStateShouldEndsInSuccess(Execution execution) throws Exception {
+        changeStateTestCase.changeStateShouldEndsInSuccess(execution);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/failed-first.yaml", "flows/valids/subflow-parent-of-failed.yaml"})
+    public void changeStateInSubflowShouldEndsParentFlowInSuccess() throws Exception {
+        changeStateTestCase.changeStateInSubflowShouldEndsParentFlowInSuccess();
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/after-execution.yaml")
+    public void shouldCallTasksAfterExecution(Execution execution) {
+        afterExecutionTestCase.shouldCallTasksAfterExecution(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/after-execution-finally.yaml")
+    public void shouldCallTasksAfterFinally(Execution execution) {
+        afterExecutionTestCase.shouldCallTasksAfterFinally(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/after-execution-error.yaml")
+    public void shouldCallTasksAfterError(Execution execution) {
+        afterExecutionTestCase.shouldCallTasksAfterError(execution);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/after-execution-listener.yaml")
+    public void shouldCallTasksAfterListener(Execution execution) {
+        afterExecutionTestCase.shouldCallTasksAfterListener(execution);
     }
 }

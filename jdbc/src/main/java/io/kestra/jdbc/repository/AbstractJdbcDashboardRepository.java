@@ -84,6 +84,25 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     }
 
     @Override
+    public List<Dashboard> findAll(String tenantId) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = context
+                    .select(
+                        field("value")
+                    )
+                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
+                    .from(jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId));
+
+                return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    @Override
     public Dashboard save(Dashboard previousDashboard, Dashboard dashboard, String source) throws ConstraintViolationException {
         dashboard = dashboard.toBuilder().sourceCode(source).build();
         if (previousDashboard != null && previousDashboard.equals(dashboard)) {
@@ -135,9 +154,14 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     public <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException {
         Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new HashMap<>();
 
+        @SuppressWarnings("unchecked")
         QueryBuilderInterface<F> queryBuilder = (QueryBuilderInterface<F>) queryBuilderByHandledFields.computeIfAbsent(
             dataChart.getData().repositoryClass(),
-            clazz -> queryBuilders.stream().filter(b -> clazz.isAssignableFrom(b.getClass())).findFirst().orElseThrow(() -> new UnsupportedOperationException("No query builder found for " + clazz))
+            clazz -> queryBuilders
+                .stream()
+                .filter(b -> clazz.isAssignableFrom(b.getClass()))
+                .findFirst()
+                .orElseThrow(() -> new UnsupportedOperationException("No query builder found for " + clazz))
         );
 
         return queryBuilder.fetchData(tenantId, dataChart.getData(), startDate, endDate, pageable);

@@ -1,5 +1,4 @@
-import axios from "axios";
-import YamlUtils from "../utils/yamlUtils";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 
@@ -62,9 +61,13 @@ export default {
         },
         loadFlow({commit}, options) {
             const httpClient = options.httpClient ?? this.$http
-            return httpClient.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}${options.source === undefined ? "?source=true" : ""}`,
+            return httpClient.get(`${apiUrl(this)}/flows/${options.namespace}/${options.id}`,
                 {
-                    params: options,
+                    params: {
+                        revision: options.revision,
+                        allowDeleted: options.allowDeleted,
+                        source: options.source === undefined ? true : undefined
+                    },
                     validateStatus: (status) => {
                         return options.deleted ? status === 200 || status === 404 : status === 200;
                     }
@@ -106,7 +109,7 @@ export default {
                 })
         },
         saveFlow({commit, _dispatch}, options) {
-            const flowData = YamlUtils.parse(options.flow)
+            const flowData = YAML_UTILS.parse(options.flow)
             return this.$http.put(`${apiUrl(this)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
                     if (response.status >= 300) {
@@ -162,16 +165,16 @@ export default {
         },
         loadGraphFromSource({commit, state}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
-            const flowParsed = YamlUtils.parse(options.flow);
+            const flowParsed = YAML_UTILS.parse(options.flow);
             let flowSource = options.flow
             if (!flowParsed.id || !flowParsed.namespace) {
-                flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
+                flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
-            return axios.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config, withCredentials: true})
+            return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config, withCredentials: true})
                 .then(response => {
                     commit("setFlowGraph", response.data)
 
-                    let flow = YamlUtils.parse(options.flow);
+                    let flow = YAML_UTILS.parse(options.flow);
                     flow.id = state.flow?.id ?? flow.id;
                     flow.namespace = state.flow?.namespace ?? flow.namespace;
                     flow.source = options.flow;
@@ -203,10 +206,10 @@ export default {
         },
         getGraphFromSourceResponse({_commit}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
-            const flowParsed = YamlUtils.parse(options.flow);
+            const flowParsed = YAML_UTILS.parse(options.flow);
             let flowSource = options.flow
             if (!flowParsed.id || !flowParsed.namespace) {
-                flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
+                flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
             return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config})
                 .then(response => response.data)
@@ -253,14 +256,14 @@ export default {
             return this.$http.delete(`${apiUrl(this)}/flows/delete/by-query`, {params: options})
         },
         validateFlow({commit}, options) {
-            return axios.post(`${apiUrl(this)}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
+            return this.$http.post(`${apiUrl(this)}/flows/validate`, options.flow, {...textYamlHeader, withCredentials: true})
                 .then(response => {
                     commit("setFlowValidation", response.data[0])
                     return response.data[0]
                 })
         },
         validateTask({commit}, options) {
-            return axios.post(`${apiUrl(this)}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
+            return this.$http.post(`${apiUrl(this)}/flows/validate/task`, options.task, {...textYamlHeader, withCredentials: true, params: {section: options.section}})
                 .then(response => {
                     commit("setTaskError", response.data.constraints)
                     return response.data

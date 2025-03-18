@@ -3,6 +3,7 @@ package io.kestra.jdbc.runner;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.CaseFormat;
+import com.google.common.collect.Iterables;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -24,6 +25,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.*;
 import org.jooq.Record;
+import org.jooq.exception.DataException;
 import org.jooq.impl.DSL;
 
 import java.io.IOException;
@@ -45,7 +47,7 @@ import static io.kestra.core.utils.Rethrow.throwRunnable;
 
 @Slf4j
 public abstract class JdbcQueue<T> implements QueueInterface<T> {
-    private static final int MAX_ASYNC_THREADS = Runtime.getRuntime().availableProcessors() * 2;
+    private static final int MAX_ASYNC_THREADS = Runtime.getRuntime().availableProcessors();
     protected static final ObjectMapper MAPPER = JdbcMapper.of();
 
     private final ExecutorService poolExecutor;
@@ -128,18 +130,22 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         Map<Field<Object>, Object> fields = this.produceFields(consumerGroup, key, message);
 
-        dslContextWrapper.transaction(configuration -> {
-            DSLContext context = DSL.using(configuration);
+        try {
+            dslContextWrapper.transaction(configuration -> {
+                DSLContext context = DSL.using(configuration);
 
-            if (!skipIndexer) {
-                jdbcQueueIndexer.accept(context, message);
-            }
+                if (!skipIndexer) {
+                    jdbcQueueIndexer.accept(context, message);
+                }
 
-            context
-                .insertInto(table)
-                .set(fields)
-                .execute();
-        });
+                context
+                    .insertInto(table)
+                    .set(fields)
+                    .execute();
+            });
+        } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
+            throw new QueueException("Unable to emit a message to the queue", e);
+        }
     }
 
     public void emitOnly(String consumerGroup, T message) throws QueueException{
@@ -161,6 +167,41 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         // Just do nothing!
         // The message will be removed by the indexer (synchronously if using the queue indexer, async otherwise),
         // and the queue has its own cleaner, which we better not mess with, as the 'queues' table is selected with a lock.
+    }
+
+    /**
+     * Delete all messages of the queue for this key.
+     * This is used to purge a queue for a specific key.
+     */
+    public void deleteByKey(String key) throws QueueException {
+        dslContextWrapper.transaction(configuration -> {
+            int deleted = DSL
+                .using(configuration)
+                .delete(this.table)
+                .where(buildTypeCondition(this.cls.getName()))
+                .and(AbstractJdbcRepository.field("key").eq(key))
+                .execute();
+            log.debug("Cleaned {} records for key {}", deleted, key);
+        });
+    }
+
+    /**
+     * Delete all messages of the queue for a set of keys.
+     * This is used to purge a queue for specific keys.
+     */
+    public void deleteByKeys(List<String> keys) throws QueueException {
+        // process in batches of 100 items to avoid too big IN clausecQueue
+        Iterables.partition(keys, 100).forEach(batch -> {
+            dslContextWrapper.transaction(configuration -> {
+                int deleted = DSL
+                    .using(configuration)
+                    .delete(this.table)
+                    .where(buildTypeCondition(this.cls.getName()))
+                    .and(AbstractJdbcRepository.field("key").in(batch))
+                    .execute();
+                log.debug("Cleaned {} records for keys {}", deleted, batch);
+            });
+        });
     }
 
     protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, Integer offset) {

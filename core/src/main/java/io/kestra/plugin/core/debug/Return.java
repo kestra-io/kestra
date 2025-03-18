@@ -25,15 +25,16 @@ import java.util.Optional;
 @Schema(
     title = "Return a value for debugging purposes.",
     description = """
-        This task is mostly useful for troubleshooting.
+        This task is intended for troubleshooting.
 
-        It allows you to return some templated functions, inputs or outputs."""
+        It allows you to return templated values, inputs or outputs."""
 )
 @Plugin(
     examples = {
         @Example(
+            full = true,
             code = """
-                id:return_flow
+                id: debug_value
                 namespace: company.team
 
                 tasks:
@@ -67,8 +68,8 @@ public class Return extends Task implements RunnableTask<Return.Output> {
         long end = System.nanoTime();
 
         runContext
-            .metric(Counter.of("length", Optional.ofNullable(render).map(String::length).orElse(0), "format", render))
-            .metric(Timer.of("duration", Duration.ofNanos(end - start), "format", render));
+            .metric(Counter.of("length", Optional.ofNullable(render).map(String::length).orElse(0)))
+            .metric(Timer.of("duration", Duration.ofNanos(end - start)));
 
         return Output.builder()
             .value(render)

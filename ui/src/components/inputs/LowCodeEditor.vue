@@ -95,7 +95,6 @@
                     :input="true"
                     :full-height="false"
                     :navbar="false"
-                    :minimap="false"
                     :model-value="selectedTask.runIf"
                     lang="yaml"
                     class="mt-3"
@@ -123,7 +122,7 @@
     import {Topology} from "@kestra-io/ui-libs";
 
     // Utils
-    import {YamlUtils} from "@kestra-io/ui-libs";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../utils/constants";
     import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
@@ -266,7 +265,7 @@
     // Source edit functions
 
     const onDelete = (event) => {
-        const flowParsed = YamlUtils.parse(props.source);
+        const flowParsed = YAML_UTILS.parse(props.source);
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             () => {
@@ -285,7 +284,7 @@
                 }
                 emit(
                     "on-edit",
-                    YamlUtils.deleteTask(props.source, event.id, section),
+                    YAML_UTILS.deleteTask(props.source, event.id, section),
                     true,
                 );
             },
@@ -293,10 +292,12 @@
         );
     };
 
-    const onCreateNewTask = () => {
+    const onCreateNewTask = (details) => {
         emit("openNoCode", {
             section: SECTIONS.TASKS.toLowerCase(),
             identifier: "new",
+            target: details[0],
+            position: details[1],
         });
     };
 
@@ -320,16 +321,16 @@
 
     const confirmEdit = (event) => {
         const source = props.source;
-        const task = YamlUtils.extractTask(props.source, YamlUtils.parse(event).id);
+        const task = YAML_UTILS.extractTask(props.source, YAML_UTILS.parse(event).id);
         if (
             task === undefined ||
-            (task && YamlUtils.parse(event).id === taskEditData.value.oldTaskId)
+            (task && YAML_UTILS.parse(event).id === taskEditData.value.oldTaskId)
         ) {
             switch (taskEditData.value.action) {
             case "create_task":
                 emit(
                     "on-edit",
-                    YamlUtils.insertTask(
+                    YAML_UTILS.insertTask(
                         source,
                         taskEditData.value.insertionDetails[0],
                         event,
@@ -341,7 +342,7 @@
             case "edit_task":
                 emit(
                     "on-edit",
-                    YamlUtils.replaceTaskInDocument(
+                    YAML_UTILS.replaceTaskInDocument(
                         source,
                         taskEditData.value.oldTaskId,
                         event,
@@ -352,7 +353,7 @@
             case "add_flowable_error":
                 emit(
                     "on-edit",
-                    YamlUtils.insertErrorInFlowable(
+                    YAML_UTILS.insertErrorInFlowable(
                         props.source,
                         event,
                         taskEditData.value.taskId,
@@ -366,7 +367,7 @@
                 variant: "error",
                 title: t("error detected"),
                 message: t("Task Id already exist in the flow", {
-                    taskId: YamlUtils.parse(event).id,
+                    taskId: YAML_UTILS.parse(event).id,
                 }),
             });
         }
@@ -379,13 +380,23 @@
         taskObject.value = null;
     };
 
+    const fitViewOrientation = () => {
+        const resizeObserver = new ResizeObserver(() => {
+            clearTimeout(timer.value);
+            nextTick(() => {
+                fitView();
+            });
+        });
+        resizeObserver.observe(vueFlow.value);
+    };
+
     const toggleOrientation = () => {
         localStorage.setItem(
             "topology-orientation",
             localStorage.getItem("topology-orientation") !== "0" ? "0" : "1",
         );
         isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
-        fitView();
+        fitViewOrientation();
     };
 
     const openFlow = (data) => {

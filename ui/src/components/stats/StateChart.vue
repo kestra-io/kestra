@@ -20,8 +20,9 @@
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {useRoute, useRouter} from "vue-router"
     import {Bar} from "vue-chartjs";
-    import Utils from "../../utils/utils.js";
-    import {defaultConfig, tooltip, chartClick, backgroundFromState, getFormat} from "../../utils/charts.js";
+    import Utils, {useTheme} from "../../utils/utils.js";
+    import {useScheme} from "../../utils/scheme.js";
+    import {defaultConfig, tooltip, chartClick, getFormat} from "../../utils/charts.js";
     import {useI18n} from "vue-i18n";
 
     export default defineComponent({
@@ -66,8 +67,11 @@
             const tooltipContent = ref("");
 
             const dataReady = computed(() => props.data.length > 0)
+            const theme = useTheme();
+            const scheme = useScheme();
 
             const options = computed(() => defaultConfig({
+                barThickness: 4,
                 onClick: (e, elements) => {
                     if (elements.length > 0 && elements[0].index !== undefined && elements[0].datasetIndex !== undefined) {
                         chartClick(
@@ -117,9 +121,9 @@
                         position: "right",
                     }
                 },
-            }))
+            }, theme.value));
 
-            const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
+            const darkTheme = computed(() => theme.value === "dark");
 
             const chartData = computed(() => {
                 let datasets = props.data
@@ -128,8 +132,7 @@
                             if (accumulator[state] === undefined) {
                                 accumulator[state] = {
                                     label: state,
-                                    backgroundColor: backgroundFromState(state),
-                                    borderRadius: 4,
+                                    backgroundColor: scheme.value[state],
                                     yAxisID: "y",
                                     data: []
                                 };
@@ -150,8 +153,8 @@
                             fill: "start",
                             pointRadius: 0,
                             borderWidth: 0.2,
-                            backgroundColor: Utils.hexToRgba(!darkTheme ? "#eaf0f9" : "#292e40", 0.5),
-                            borderColor: !darkTheme ? "#7081b9" : "#7989b4",
+                            backgroundColor: Utils.hexToRgba(!darkTheme.value ? "#eaf0f9" : "#292e40", 0.5),
+                            borderColor: !darkTheme.value ? "#7081b9" : "#7989b4",
                             yAxisID: "yB",
                             data: props.data
                                 .map((value) => {

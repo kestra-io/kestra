@@ -18,6 +18,9 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
@@ -51,6 +54,7 @@ public class DefaultRunContext extends RunContext {
     private KVStoreService kvStoreService;
     private Optional<String> secretKey;
     private WorkingDir workingDir;
+    private Validator validator;
 
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
@@ -60,6 +64,7 @@ public class DefaultRunContext extends RunContext {
     private Storage storage;
     private Map<String, Object> pluginConfiguration;
     private List<String> secretInputs;
+    private String traceParent;
 
     // those are only used to validate dynamic properties inside the RunContextProperty
     private Task task;
@@ -103,6 +108,20 @@ public class DefaultRunContext extends RunContext {
         return secretInputs;
     }
 
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    @JsonInclude
+    public String getTraceParent() {
+        return traceParent;
+    }
+
+    @Override
+    public void setTraceParent(String traceParent) {
+        this.traceParent = traceParent;
+    }
+
     @JsonIgnore
     public ApplicationContext getApplicationContext() {
         return applicationContext;
@@ -132,6 +151,7 @@ public class DefaultRunContext extends RunContext {
             this.version = applicationContext.getBean(VersionProvider.class);
             this.kvStoreService = applicationContext.getBean(KVStoreService.class);
             this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
+            this.validator = applicationContext.getBean(Validator.class);
         }
     }
 
@@ -148,6 +168,7 @@ public class DefaultRunContext extends RunContext {
 
         // this is used when a run context is re-hydrated so we need to add again the secrets from the inputs
         if (!ListUtils.isEmpty(secretInputs) && getVariables().containsKey("inputs")) {
+            @SuppressWarnings("unchecked")
             Map<String, Object> inputs = (Map<String, Object>) getVariables().get("inputs");
             for (String secretInput : secretInputs) {
                 String secret = (String) inputs.get(secretInput);
@@ -291,6 +312,16 @@ public class DefaultRunContext extends RunContext {
                 this.render(entry.getValue(), allVariables)
             )))
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    @Override
+    public <T> void validate(T bean) {
+        // It can be null in unit test as init() is not always called there
+        Validator theValidator = validator != null ? validator : applicationContext.getBean(Validator.class);
+        Set<ConstraintViolation<T>> violations = theValidator.validate(bean);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
     }
 
     /**
@@ -458,6 +489,10 @@ public class DefaultRunContext extends RunContext {
             workingDir.cleanup();
         } catch (IOException ex) {
             logger().warn("Unable to cleanup worker task", ex);
+        }
+
+        if (logger != null){
+            logger.resetMDC();
         }
     }
 

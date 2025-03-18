@@ -4,7 +4,7 @@
     <div class="mt-1 mb-2 wrapper">
         <drawer v-if="isEditOpen" v-model="isEditOpen">
             <template #header>
-                <code>variables</code>
+                <code>{{ $t("variables") }}</code>
             </template>
 
             <template #footer>
@@ -22,7 +22,7 @@
             <el-form label-position="top">
                 <el-form-item>
                     <template #label>
-                        <code>name</code>
+                        <code>{{ $t("name") }}</code>
                     </template>
                     <el-input
                         :model-value="newVariables[selectedIndex][0]"
@@ -33,7 +33,7 @@
                 </el-form-item>
                 <el-form-item>
                     <template #label>
-                        <code>value</code>
+                        <code>{{ $t("value") }}</code>
                     </template>
                     <editor
                         :model-value="newVariables[selectedIndex][1]"
@@ -48,7 +48,7 @@
                 </el-form-item>
             </el-form>
         </drawer>
-        <div v-if="variables">
+        <div v-if="variables" class="mb-3">
             <div
                 class="d-flex w-100 mb-2"
                 v-for="(value, index) in newVariables"
@@ -76,11 +76,10 @@
         <div v-else class="d-flex justify-content-center">
             <el-button
                 :icon="Plus"
-                type="success"
                 class="w-25"
                 @click="addVariable"
             >
-                Add
+                {{ $t("add") }}
             </el-button>
         </div>
     </div>

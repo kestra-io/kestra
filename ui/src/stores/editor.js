@@ -7,6 +7,7 @@ export default {
         current: undefined,
         tabs: [],
         view: undefined,
+        treeData: [],
     },
     mutations: {
         updateOnboarding(state) {
@@ -14,6 +15,9 @@ export default {
         },
         toggleExplorerVisibility(state, isVisible) {
             state.explorerVisible = isVisible ?? !state.explorerVisible;
+        },
+        closeExplorer(state) {
+            state.explorerVisible = false;
         },
         changeExplorerWidth(state, width) {
             state.explorerWidth = width > 40 ? 40 : width < 20 ? 20 : width;
@@ -90,8 +94,19 @@ export default {
             state.tabs = [];
             state.current = undefined
         },
+        reorderTabs(state, {from, to}) {
+            const tab = state.tabs.splice(from, 1)[0];
+            state.tabs.splice(to, 0, tab);
+        },
         changeView(state, view) {
             state.view = view;
+        },
+        refreshTree(state) {
+            state.explorerVisible = true;
+            state.treeRefresh = Date.now();
+        },
+        setTreeData(state, data) {
+            state.treeData = data;
         },
     },
 };

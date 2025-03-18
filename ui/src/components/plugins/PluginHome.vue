@@ -10,11 +10,11 @@
             <KestraFilter :placeholder="$t('pluginPage.search', {count: countPlugin})" :search-callback="(input)=> searchInput = input" />
         </el-row>
         <section class="px-3 plugins-container">
-            <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="index" effect="light">
+            <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="plugin.name + '-' + index" effect="light">
                 <template #content>
                     <div class="tasks-tooltips">
                         <p v-if="plugin?.tasks.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Tasks
+                            {{ $t('tasks') }}
                         </p>
                         <ul>
                             <li
@@ -25,7 +25,7 @@
                             </li>
                         </ul>
                         <p v-if="plugin?.triggers.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Triggers
+                            {{ $t('triggers') }}
                         </p>
                         <ul>
                             <li
@@ -36,7 +36,7 @@
                             </li>
                         </ul>
                         <p v-if="plugin?.conditions.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Conditions
+                            {{ $t('conditions') }}
                         </p>
                         <ul>
                             <li
@@ -47,8 +47,7 @@
                             </li>
                         </ul>
                         <p v-if="plugin?.taskRunners.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Task
-                            Runners
+                            {{ $t('task_runners') }}
                         </p>
                         <ul>
                             <li

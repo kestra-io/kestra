@@ -42,7 +42,9 @@
                     </el-select>
                 </el-form-item>
                 <el-form-item v-if="localFlow" :label="$t('inputs')">
-                    <flow-run @execution-trigger="closeModal" :redirect="true" />
+                    <div class="w-100">
+                        <flow-run @execution-trigger="closeModal" :redirect="true" />
+                    </div>
                 </el-form-item>
             </el-form>
         </el-dialog>

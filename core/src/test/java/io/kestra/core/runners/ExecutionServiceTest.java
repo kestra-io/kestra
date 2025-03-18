@@ -16,20 +16,25 @@ import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.utils.Await;
 import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.Test;
 import org.junitpioneer.jupiter.RetryingTest;
 import org.slf4j.event.Level;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+@Slf4j
 @KestraTest(startRunner = true)
 class ExecutionServiceTest {
     @Inject
@@ -322,6 +327,7 @@ class ExecutionServiceTest {
         Execution restart = executionService.markAs(execution, flow, execution.findTaskRunByTaskIdAndValue("2-1_seq", List.of("value 1")).getId(), State.Type.FAILED);
 
         assertThat(restart.getState().getCurrent(), is(State.Type.RESTARTED));
+        assertThat(restart.getMetadata().getAttemptNumber(), is(2));
         assertThat(restart.getState().getHistories(), hasSize(4));
         assertThat(restart.getTaskRunList(), hasSize(11));
         assertThat(restart.findTaskRunByTaskIdAndValue("1_each", List.of()).getState().getCurrent(), is(State.Type.RUNNING));
@@ -378,13 +384,14 @@ class ExecutionServiceTest {
 
     @Test
     @ExecuteFlow("flows/valids/logs.yaml")
-    void deleteExecution(Execution execution) throws IOException {
+    void deleteExecution(Execution execution) throws IOException, TimeoutException {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        Await.until(() -> logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.TRACE).size() == 5, Duration.ofMillis(10), Duration.ofSeconds(5));
 
         executionService.delete(execution, true, true, true);
 
         assertThat(executionRepository.findById(execution.getTenantId(),execution.getId()), is(Optional.empty()));
-        assertThat(logRepository.findByExecutionId(execution.getTenantId(),execution.getId(), Level.INFO), hasSize(0));
+        assertThat(logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.INFO), empty());
     }
 
     @Test
@@ -412,5 +419,17 @@ class ExecutionServiceTest {
         assertThat(killed.getState().getCurrent(), is(State.Type.RESTARTED));
         assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent(), is(State.Type.KILLED));
         assertThat(killed.getState().getHistories(), hasSize(4));
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/failed-first.yaml")
+    void shouldRestartAfterChangeTaskState(Execution execution) throws Exception {
+        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.FAILED));
+
+        Flow flow = flowRepository.findByExecution(execution);
+        Execution markedAs = executionService.markAs(execution, flow, execution.getTaskRunList().getFirst().getId(), State.Type.SUCCESS);
+        assertThat(markedAs.getState().getCurrent(), is(State.Type.RESTARTED));
     }
 }

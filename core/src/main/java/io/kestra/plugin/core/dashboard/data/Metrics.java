@@ -9,6 +9,7 @@ import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,7 @@ import java.util.List;
 @Plugin
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
+@Schema(title = "Metrics")
 public class Metrics<C extends ColumnDescriptor<Metrics.Fields>> extends DataFilter<Metrics.Fields, C> {
     @Override
     public Class<? extends QueryBuilderInterface<Metrics.Fields>> repositoryClass() {

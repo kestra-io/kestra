@@ -20,7 +20,7 @@
     import DocIdDisplay from "./components/DocIdDisplay.vue";
     import posthog from "posthog-js";
     import "@kestra-io/ui-libs/style.css";
-
+    // Main App
     export default {
         name: "App",
         components: {
@@ -105,7 +105,7 @@
         },
         methods: {
             displayApp() {
-                Utils.switchTheme();
+                Utils.switchTheme(this.$store);
 
                 document.getElementById("loader-wrapper").style.display = "none";
                 document.getElementById("app-container").style.display = "block";

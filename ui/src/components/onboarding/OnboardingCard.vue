@@ -30,7 +30,7 @@
 <script setup>
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import Monitor from "vue-material-design-icons/Monitor.vue";
-    import Slack from "vue-material-design-icons/Slack.vue";
+    import Slack from "./components/SlackLogo.vue";
     import PlayBox from "vue-material-design-icons/PlayBoxMultiple.vue";
 </script>
 <script>
@@ -64,17 +64,15 @@
                 }
             },
             getLink() {
-                // Define links for the specific categories
                 const links = {
                     help: "https://kestra.io/slack",
                 };
-                return links[this.category] || "#"; // Default to "#" if no link is found
+                return links[this.category] || "#";
             },
         },
         computed: {
             isOpenInNewCategory() {
-                // Define which categories should show the OpenInNew icon
-                return this.category === "help" || this.category === "docs";
+                return this.category === "help";
             },
         },
     };

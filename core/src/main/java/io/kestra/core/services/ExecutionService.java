@@ -14,6 +14,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.AbstractGraphTask;
 import io.kestra.core.models.hierarchies.GraphCluster;
+import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -27,6 +28,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.GraphUtils;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -48,15 +50,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -96,6 +90,9 @@ public class ExecutionService {
 
     @Inject
     private ConcurrencyLimitService concurrencyLimitService;
+
+    @Inject
+    private ConditionService conditionService;
 
     public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId, boolean withACL) {
         Execution execution = getExecution(tenant, executionId, withACL);
@@ -214,7 +211,7 @@ public class ExecutionService {
                 execution.withState(State.Type.RESTARTED).getState()
             );
 
-        List<Label> newLabels = new ArrayList<>(execution.getLabels());
+        List<Label> newLabels = new ArrayList<>(ListUtils.emptyOnNull(execution.getLabels()));
         if (!newLabels.contains(new Label(Label.RESTARTED, "true"))) {
             newLabels.add(new Label(Label.RESTARTED, "true"));
         }
@@ -297,7 +294,7 @@ public class ExecutionService {
             taskRunId == null ? new State() : execution.withState(State.Type.RESTARTED).getState()
         );
 
-        List<Label> newLabels = new ArrayList<>(execution.getLabels());
+        List<Label> newLabels = new ArrayList<>(ListUtils.emptyOnNull(execution.getLabels()));
         if (!newLabels.contains(new Label(Label.REPLAY, "true"))) {
             newLabels.add(new Label(Label.REPLAY, "true"));
         }
@@ -317,7 +314,7 @@ public class ExecutionService {
             taskRun -> taskRun.getId().equals(taskRunId)
         );
 
-        Execution newExecution = execution;
+        Execution newExecution = execution.withMetadata(execution.getMetadata().nextAttempt());
 
         for (String s : taskRunToRestart) {
             TaskRun originalTaskRun = newExecution.findTaskRunByTaskRunId(s);
@@ -486,7 +483,7 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task -> {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), execution, Map.of()));
+                    return Mono.just(flowInputOutput.resolveInputs(pauseTask.getOnResume(), flow, execution, Map.of()));
                 } else {
                     return Mono.just(Collections.emptyList());
                 }
@@ -507,7 +504,7 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task -> {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return flowInputOutput.validateExecutionInputs(pauseTask.getOnResume(), execution, inputs);
+                    return flowInputOutput.validateExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
                 } else {
                     return Mono.just(Collections.emptyList());
                 }
@@ -528,7 +525,7 @@ public class ExecutionService {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task -> {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
-                    return flowInputOutput.readExecutionInputs(pauseTask.getOnResume(), execution, inputs);
+                    return flowInputOutput.readExecutionInputs(pauseTask.getOnResume(), flow, execution, inputs);
                 } else {
                     return Mono.just(Collections.<String, Object>emptyMap());
                 }
@@ -834,5 +831,31 @@ public class ExecutionService {
         // for all other states, we just return the same execution,
         // it will be resent to the queue and forced re-processed.
         return execution;
+    }
+
+    /**
+     * Remove true if the execution is terminated, including listeners and afterExecution tasks.
+     */
+    public boolean isTerminated(Flow flow, Execution execution) {
+        if (!execution.getState().isTerminated()) {
+            return false;
+        }
+
+        List<ResolvedTask> validListeners = conditionService.findValidListeners(flow, execution);
+        List<ResolvedTask> afterExecution = resolveAfterExecutionTasks(flow);
+        return execution.isTerminated(validListeners) && execution.isTerminated(afterExecution);
+    }
+
+    /**
+     * Resolve afterExecution tasks from a flow definition.
+     */
+    public List<ResolvedTask> resolveAfterExecutionTasks(Flow flow) {
+        if (flow == null || flow.getAfterExecution() == null) {
+            return Collections.emptyList();
+        }
+
+        return flow.getAfterExecution().stream()
+            .map(ResolvedTask::of)
+            .toList();
     }
 }

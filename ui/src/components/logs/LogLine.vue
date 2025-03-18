@@ -1,14 +1,14 @@
 <template>
     <div
         class="py-2 line font-monospace"
-        :class="{['log-border-' + log.level.toLowerCase()]: cursor && log.level !== undefined}"
+        :class="{['log-border-' + log.level.toLowerCase()]: cursor && log.level !== undefined, ['key-' + $.vnode.key]: true}"
         v-if="filtered"
         :style="logLineStyle"
     >
         <el-icon v-if="cursor" class="icon_container" :style="{color: iconColor}" :size="25">
             <MenuRight />
         </el-icon>
-        <span :class="levelClasses" class="border header-badge log-level el-tag noselect">{{ log.level }}</span>
+        <span :style="levelStyle" class="el-tag log-level">{{ log.level }}</span>
         <div class="log-content d-inline-block">
             <span v-if="title" class="fw-bold">{{ log.taskId ?? log.flowId ?? "" }}</span>
             <div
@@ -30,7 +30,11 @@
                     </span>
                 </span>
             </div>
-            <v-runtime-template :template="markdownRenderer" />
+            <div
+                ref="lineContent"
+                :class="{'d-inline': metaWithValue.length === 0, 'me-3': metaWithValue.length === 0}"
+                v-html="renderedMarkdown"
+            />
         </div>
     </div>
 </template>
@@ -38,15 +42,14 @@
     import Convert from "ansi-to-html";
     import xss from "xss";
     import * as Markdown from "../../utils/markdown";
-    import VRuntimeTemplate from "vue3-runtime-template";
     import MenuRight from "vue-material-design-icons/MenuRight.vue";
+    import linkify from "./linkify";
 
 
     let convert = new Convert();
 
     export default {
         components: {
-            VRuntimeTemplate,
             MenuRight,
         },
         props: {
@@ -77,12 +80,12 @@
         },
         data() {
             return {
-                markdownRenderer: undefined,
+                renderedMarkdown: undefined,
                 logsFontSize: parseInt(localStorage.getItem("logsFontSize") || "12"),
             };
         },
         async created() {
-            this.markdownRenderer = await this.renderMarkdown();
+            this.renderedMarkdown = await Markdown.render(this.message, {onlyLink: true, html: true});
         },
         computed: {
             logLineStyle() {
@@ -132,9 +135,13 @@
                 }
                 return metaWithValue;
             },
-            levelClasses() {
+            levelStyle() {
                 const lowerCaseLevel = this.log?.level?.toLowerCase();
-                return `log-content-${lowerCaseLevel} log-border-${lowerCaseLevel} log-bg-${lowerCaseLevel}`;
+                return {
+                    "border-color": `var(--ks-log-border-${lowerCaseLevel})`,
+                    "color": `var(--ks-log-content-${lowerCaseLevel})`,
+                    "background-color": `var(--ks-log-background-${lowerCaseLevel})`,
+                };
             },
             filtered() {
                 return (
@@ -161,51 +168,61 @@
                 return logMessage;
             },
         },
-        methods: {
-            async renderMarkdown() {
-                let markdown = await Markdown.render(this.message, {onlyLink: true});
-
-                // Avoid rendering non-existent properties in the template by VRuntimeTemplate
-                markdown = markdown.replace(/{{/g, "&lcub;&lcub;").replace(/}}/g, "&rcub;&rcub;");
-
-                return markdown;
-            },
-        },
         mounted() {
             window.addEventListener("storage", (event) => {
                 if (event.key === "logsFontSize") {
                     this.logsFontSize = parseInt(event.newValue);
                 }
             });
+
+            setTimeout(() => {
+                linkify(this.$refs.lineContent, this.$router);
+            }, 200);
+        },
+        watch: {
+            renderedMarkdown() {
+                this.$nextTick(() => {
+                    linkify(this.$refs.lineContent, this.$router);
+                });
+            },
         },
     };
 </script>
 <style scoped lang="scss">
-@import "@kestra-io/ui-libs/src/scss/variables";
-
 div.line {
     cursor: text;
     white-space: pre-wrap;
     word-break: break-all;
     display: flex;
-    align-items: center;
-    gap: $spacer;
+    align-items: flex-start;
+    gap: 1rem;
 
     border-left-width: 2px !important;
     border-left-style: solid;
     border-left-color: transparent;
 
-    .icon_container{
+    border-top: 1px solid var(--ks-border-primary);
+
+    // hack for class containing 0
+    &[class*="-0"] {
+        border-top: 0;
+    }
+
+    .icon_container {
         margin-left: -0.90rem;
     }
 
     .log-level {
         padding: .25rem;
+        margin-top: 0.25rem;
     }
 
     .log-content {
+        // prevent Firefox word breaks 
+        flex-grow: 1;
+
         .header > * + * {
-            margin-left: $spacer;
+            margin-left: 1rem;
         }
     }
 
@@ -240,15 +257,6 @@ div.line {
         }
     }
 
-    .noselect {
-        user-select: none;
-        color: $white;
-
-        html:not(.dark) & {
-            color: $black;
-        }
-    }
-
     .message {
         line-height: 1.8;
     }
@@ -256,6 +264,12 @@ div.line {
     p, :deep(.log-content p) {
         display: inline;
         margin-bottom: 0;
+    }
+
+    .log-level {
+        padding: 0.25rem;
+        border: 1px solid var(--ks-border-primary);
+        user-select: none;
     }
 }
 </style>

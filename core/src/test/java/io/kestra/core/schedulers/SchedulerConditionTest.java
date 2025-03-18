@@ -1,14 +1,15 @@
 package io.kestra.core.schedulers;
 
-import io.kestra.core.utils.TestsUtils;
-import io.kestra.jdbc.runner.JdbcScheduler;
-import io.kestra.plugin.core.condition.DayWeekInMonth;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
-import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
+import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.runner.JdbcScheduler;
+import io.kestra.plugin.core.condition.DayWeekInMonth;
+import io.kestra.plugin.core.trigger.Schedule;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -36,6 +37,9 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
 
     @Inject
     protected SchedulerExecutionStateInterface executionState;
+
+    @Inject
+    protected FlowRepositoryInterface flowRepository;
 
     private static Flow createScheduleFlow() {
         Schedule schedule = Schedule.builder()
@@ -66,6 +70,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         CountDownLatch queueCount = new CountDownLatch(4);
 
         Flow flow = createScheduleFlow();
+        flowRepository.create(flow, flow.generateSource(), flow);
 
         triggerState.create(Trigger.builder()
             .namespace(flow.getNamespace())

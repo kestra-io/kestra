@@ -8,11 +8,12 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.GraphStyle;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
-import io.kestra.core.models.tasks.logs.LogRecord;
 import io.kestra.core.models.tasks.logs.LogExporter;
+import io.kestra.core.models.tasks.logs.LogRecord;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
@@ -25,18 +26,19 @@ import io.kestra.plugin.core.flow.Dag;
 import io.kestra.plugin.core.log.Log;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.inject.Inject;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import reactor.core.publisher.Flux;
 
 import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import reactor.core.publisher.Flux;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
@@ -239,6 +241,15 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void requiredAreRemovedIfThereIsADefault() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, RequiredWithDefault.class);
+        assertThat(generate, is(not(nullValue())));
+        assertThat((List<String>) generate.get("required"), not(containsInAnyOrder("requiredWithDefault")));
+        assertThat((List<String>) generate.get("required"), containsInAnyOrder("requiredWithNoDefault"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void dashboard() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) -> {
             Map<String, Object> generate = jsonSchemaGenerator.schemas(Dashboard.class);
@@ -323,7 +334,8 @@ class JsonSchemaGeneratorTest {
         }
 
         @Schema(title = "Test class")
-        private class TestClass {
+        @Builder
+        private static class TestClass {
             @Schema(title = "Test property")
             public String testProperty;
         }
@@ -335,9 +347,8 @@ class JsonSchemaGeneratorTest {
     @Getter
     @NoArgsConstructor
     private static abstract class ParentClass extends Task {
-        @PluginProperty
         @Builder.Default
-        private String stringWithDefault = "default";
+        private Property<String> stringWithDefault = Property.of("default");
     }
 
     @SuperBuilder
@@ -346,8 +357,7 @@ class JsonSchemaGeneratorTest {
     @Getter
     @NoArgsConstructor
     @Plugin(
-        beta = true,
-        examples = {}
+        beta = true
     )
     public static class BetaTask extends Task {
         @PluginProperty(beta = true)
@@ -360,5 +370,22 @@ class JsonSchemaGeneratorTest {
         public VoidOutput sendLogs(RunContext runContext, Flux<LogRecord> logRecord) throws Exception {
             return null;
         }
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    @Plugin
+    public static class RequiredWithDefault extends Task {
+        @PluginProperty
+        @NotNull
+        @Builder.Default
+        private Property<TaskWithEnum.TestClass> requiredWithDefault = Property.of(TaskWithEnum.TestClass.builder().testProperty("test").build());
+
+        @PluginProperty
+        @NotNull
+        private Property<TaskWithEnum.TestClass> requiredWithNoDefault;
     }
 }

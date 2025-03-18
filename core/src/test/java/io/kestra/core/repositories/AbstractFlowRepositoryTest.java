@@ -28,6 +28,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Getter;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -621,6 +622,57 @@ public abstract class AbstractFlowRepositoryTest {
             deleteFlow(flow);
             executionRepository.delete(execution);
         }
+    }
+
+    @Test
+    void shouldCountForNullTenant() {
+        FlowWithSource toDelete = null;
+        try {
+            // Given
+            Flow flow = createTestFlowForNamespace("io.kestra.unittest");
+            toDelete = flowRepository.create(flow, "", flow);
+            // When
+            int count = flowRepository.count(null);
+
+            // Then
+            Assertions.assertTrue(count > 0);
+        } finally {
+            Optional.ofNullable(toDelete).ifPresent(flow -> {
+                flowRepository.delete(flow);
+            });
+        }
+    }
+
+    @Test
+    void shouldCountForNullTenantGivenNamespace() {
+        List<FlowWithSource> toDelete = new ArrayList<>();
+        try {
+            toDelete.add(flowRepository.create(createTestFlowForNamespace("io.kestra.unittest.sub"), "", createTestFlowForNamespace("io.kestra.unittest.sub")));
+            toDelete.add(flowRepository.create(createTestFlowForNamespace("io.kestra.unittest.shouldcountbynamespacefornulltenant"), "", createTestFlowForNamespace("io.kestra.unittest.shouldcountbynamespacefornulltenant")));
+            toDelete.add(flowRepository.create(createTestFlowForNamespace("com.kestra.unittest"), "", createTestFlowForNamespace("com.kestra.unittest")));
+
+            int count = flowRepository.countForNamespace(null, "io.kestra.unittest.shouldcountbynamespacefornulltenant");
+            assertThat(count, is(1));
+
+            count = flowRepository.countForNamespace(null, "io.kestra.unittest");
+            assertThat(count, is(2));
+        } finally {
+            for (FlowWithSource flow : toDelete) {
+                flowRepository.delete(flow);
+            }
+        }
+    }
+
+    private static Flow createTestFlowForNamespace(String namespace) {
+        return Flow.builder()
+            .id(IdUtils.create())
+            .namespace(namespace)
+            .tasks(List.of(Return.builder()
+                .id(IdUtils.create())
+                .type(Return.class.getName())
+                .build()
+            ))
+            .build();
     }
 
     private void deleteFlow(Flow flow) {

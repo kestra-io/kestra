@@ -49,6 +49,36 @@ public class FlowCaseTest {
         this.run("OK", State.Type.SUCCESS, State.Type.SUCCESS, 2, "default > amazing", false);
     }
 
+    public void oldTaskName() throws Exception {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<Execution> triggered = new AtomicReference<>();
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Execution execution = either.getLeft();
+            if (execution.getFlowId().equals("minimal") && execution.getState().getCurrent().isTerminated()) {
+                triggered.set(execution);
+                countDownLatch.countDown();
+            }
+        });
+
+        Execution execution = runnerUtils.runOne(
+            null,
+            "io.kestra.tests",
+            "subflow-old-task-name"
+        );
+
+        countDownLatch.await(1, TimeUnit.MINUTES);
+        receive.blockLast();
+
+        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("executionId"), is(triggered.get().getId()));
+        assertThat(triggered.get().getTrigger().getType(), is("io.kestra.core.tasks.flows.Subflow"));
+        assertThat(triggered.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
+        assertThat(triggered.get().getTrigger().getVariables().get("flowId"), is(execution.getFlowId()));
+        assertThat(triggered.get().getTrigger().getVariables().get("namespace"), is(execution.getNamespace()));
+    }
+
     @SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})
     void run(String input, State.Type fromState, State.Type triggerState, int count, String outputs, boolean testInherited) throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -99,21 +129,24 @@ public class FlowCaseTest {
         assertThat(triggered.get().getState().getCurrent(), is(triggerState));
 
         if (testInherited) {
-            assertThat(triggered.get().getLabels().size(), is(5));
+            assertThat(triggered.get().getLabels().size(), is(6));
             assertThat(triggered.get().getLabels(), hasItems(
                 new Label(Label.CORRELATION_ID, execution.getId()),
                 new Label("mainFlowExecutionLabel", "execFoo"),
                 new Label("mainFlowLabel", "flowFoo"),
                 new Label("launchTaskLabel", "launchFoo"),
-                new Label("switchFlowLabel", "switchFoo")
+                new Label("switchFlowLabel", "switchFoo"),
+                new Label("overriding", "child")
             ));
         } else {
-            assertThat(triggered.get().getLabels().size(), is(3));
+            assertThat(triggered.get().getLabels().size(), is(4));
             assertThat(triggered.get().getLabels(), hasItems(
                 new Label(Label.CORRELATION_ID, execution.getId()),
                 new Label("launchTaskLabel", "launchFoo"),
-                new Label("switchFlowLabel", "switchFoo")
+                new Label("switchFlowLabel", "switchFoo"),
+                new Label("overriding", "child")
             ));
+            assertThat(triggered.get().getLabels(), not(hasItems(new Label("inherited", "label"))));
         }
     }
 }

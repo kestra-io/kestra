@@ -41,7 +41,7 @@
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
                         :items="logsWithIndexByAttemptUid[attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])] ?? []"
-                        :min-item-size="0.1"
+                        :min-item-size="1"
                         key-field="index"
                         class="log-lines"
                         :ref="el => logsScrollerRef(el, currentTaskRunIndex, attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
@@ -328,8 +328,6 @@
                 return Download
             },
             currentTaskRuns() {
-                // console.log(this.followedExecution?.taskRunList?.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true))
-                // return this.logs.map(log => log.taskRunId).filter(tr => this.taskRunId ? tr.id === this.taskRunId : true)
                 return this.followedExecution?.taskRunList?.filter(tr => this.taskRunId ? tr.id === this.taskRunId : true) ?? [];
             },
             params() {
@@ -505,6 +503,7 @@
                         this.logsSSE = sse;
 
                         this.logsSSE.onmessage = event => {
+
                             // we are receiving a first "fake" event to force initializing the connection: ignoring it
                             if (event.lastEventId !== "start") {
                                 this.logsBuffer = this.logsBuffer.concat(JSON.parse(event.data));
@@ -527,7 +526,16 @@
                                 this.scrollToBottomFailedTask();
                             }
                         }
+
+                        this.logsSSE.onerror = _ => {
+                            this.$store.dispatch("core/showMessage", {
+                                variant: "error",
+                                title: this.$t("error"),
+                                message: this.$t("something_went_wrong.loading_execution"),
+                            });
+                        }
                     })
+
             },
             isSubflow(taskRun) {
                 return taskRun.outputs?.executionId;
@@ -580,7 +588,7 @@
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
                             const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.forcedAttemptNumber ?? 0)
                             if (this.shownAttemptsUid.includes(`${taskRun.id}-${attemptNumber}`)) {
-                                this.logsScrollerRefs?.[`${taskRun.id}-${attemptNumber}`]?.[0]?.scrollToBottom();
+                                this.logsScrollerRefs?.[`${taskRun.id}-${attemptNumber}`]?.scrollToBottom();
                             }
                         }
                     });
@@ -684,19 +692,6 @@
             border-radius: 0px;
         }
 
-        &.even > div > .el-card {
-            background: var(--bs-gray-100);
-
-            html.dark & {
-                background: var(--bs-gray-200);
-            }
-
-            .task-icon {
-                border: none;
-                color: $white;
-            }
-        }
-
         :deep(> .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div) {
             padding-bottom: 1rem;
         }
@@ -706,18 +701,29 @@
         }
 
         .attempt-wrapper {
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-background-input);
+            margin-bottom: 0;
+            border: 1px solid var(--ks-border-primary);
 
-            :deep(.vue-recycle-scroller__item-view + .vue-recycle-scroller__item-view) {
-                border-top: 1px solid var(--ks-border-primary);
-            }
-
-            html.dark & {
-                background-color: var(--bs-gray-100);
+            :deep(.el-card__body) {
+                padding: 0;
             }
 
             .attempt-wrapper & {
                 border-radius: .25rem;
+            }
+
+            tbody:last-child & {
+                border-bottom: 1px solid var(--ks-border-primary);
+            }
+
+            .attempt-header {
+                padding: 0 .5rem .5rem;
+                border-bottom: 1px solid var(--ks-border-primary);
+            }
+
+            .line {
+                padding: .5rem;
             }
         }
 
@@ -736,10 +742,9 @@
         .log-lines {
             max-height: 50vh;
             transition: max-height 0.2s ease-out;
-            margin-top: .5rem;
 
             .line {
-                padding: .5rem;
+                padding: 1rem;
 
                 &.cursor {
                     background-color: var(--bs-gray-300)

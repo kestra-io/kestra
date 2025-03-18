@@ -1,5 +1,5 @@
 <template>
-    <center class="p-4">
+    <div class="p-4" style="text-align: center;">
         <div class="mb-4">
             <el-button size="large" @click="toast">
                 El Message
@@ -204,7 +204,24 @@
                 placeholder="Please Input"
             />
         </div>
-    </center>
+
+        <div class="el-input el-input-file custom-upload">
+            <form ref="importForm">
+                <div class="el-input__wrapper">
+                    <label for="importFlows">
+                        <Upload /> Import
+                    </label>
+                    <input
+                        id="importFlows"
+                        class="el-input__inner"
+                        type="file"
+                        accept=".zip, .yml, .yaml"
+                        ref="file"
+                    >
+                </div>
+            </form>
+        </div>
+    </div>
 </template>
 
 <script lang="ts" setup>
@@ -216,6 +233,7 @@
     import Message from "vue-material-design-icons/Message.vue"
     import Star from "vue-material-design-icons/Star.vue"
     import Delete from "vue-material-design-icons/Delete.vue"
+    import Upload from "vue-material-design-icons/Upload.vue";
     import Tabs from "../../../src/components/Tabs.vue"
 
     const app = getCurrentInstance()?.appContext.config.globalProperties as any

@@ -22,6 +22,7 @@
     import action from "../../models/action";
     import Tabs from "../../components/Tabs.vue";
     import ExecutionRootTopBar from "./ExecutionRootTopBar.vue";
+    import DemoAuditLogs from "../demo/AuditLogs.vue";
 
     import ExecutionMetric from "./ExecutionMetric.vue";
     import throttle from "lodash/throttle";
@@ -58,6 +59,11 @@
             };
         },
         created() {
+            if(!this.$route.params.tab) {
+                const tab = localStorage.getItem("executeDefaultTab") || undefined;
+                this.$router.replace({name: "executions/update", params: {...this.$route.params, tab}});
+            }
+
             this.follow();
             window.addEventListener("popstate", this.follow)
         },
@@ -112,6 +118,12 @@
                                     title: this.$t("error"),
                                     message: this.$t("errors.404.flow or execution"),
                                 });
+                            } else {
+                                this.$store.dispatch("core/showMessage", {
+                                    variant: "error",
+                                    title: this.$t("error"),
+                                    message: this.$t("something_went_wrong.loading_execution"),
+                                });
                             }
                         }
                     });
@@ -158,7 +170,9 @@
                     },
                     {
                         name: "auditlogs",
+                        component: DemoAuditLogs,
                         title: title("auditlogs"),
+                        maximized: true,
                         locked: true
                     }
                 ];

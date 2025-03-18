@@ -1,0 +1,16 @@
+id: request
+namespace: sanitycheck.plugin.core.http
+
+tasks:
+  - id: request
+    type: io.kestra.plugin.core.http.Request
+    uri: https://www.google.com
+    method: GET
+    options:
+      connectionPoolIdleTimeout: PT1M
+
+  - id: assert
+    type: io.kestra.plugin.core.execution.Assert
+    errorMessage: "Invalid response code {{ outputs.request.code }}"
+    conditions:
+      - "{{ outputs.request.code == 200 }}"

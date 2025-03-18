@@ -12,12 +12,12 @@ import java.nio.file.Path;
 
 @CommandLine.Command(
     name = "expand",
-    description = "deprecated - expand a flow"
+    description = "Deprecated - expand a flow"
 )
 @Deprecated
 public class FlowExpandCommand extends AbstractCommand {
 
-    @CommandLine.Parameters(index = "0", description = "the flow file to expand")
+    @CommandLine.Parameters(index = "0", description = "The flow file to expand")
     private Path file;
 
     @Inject

@@ -25,12 +25,15 @@ public class WaitForCaseTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList().getFirst().getOutputs(), notNullValue());
+        assertThat((Integer) execution.getTaskRunList().getFirst().getOutputs().get("iterationCount"), is(1));
     }
 
     public void waitforMaxIterations() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-max-iterations");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().getFirst().getOutputs(), notNullValue());
+        assertThat((Integer) execution.getTaskRunList().getFirst().getOutputs().get("iterationCount"), is(4));
     }
 
     public void waitforMaxDuration() throws TimeoutException, QueueException {
@@ -43,6 +46,8 @@ public class WaitForCaseTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "waitfor-no-success");
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().getFirst().getOutputs(), notNullValue());
+        assertThat((Integer) execution.getTaskRunList().getFirst().getOutputs().get("iterationCount"), is(5));
     }
 
     @SuppressWarnings("unchecked")
@@ -51,6 +56,8 @@ public class WaitForCaseTest {
 
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
 
+        assertThat(execution.getTaskRunList().getFirst().getOutputs(), notNullValue());
+        assertThat((Integer) execution.getTaskRunList().getFirst().getOutputs().get("iterationCount"), is(3));
         Map<String,Object> values = (Map<String, Object>) execution.getTaskRunList().getLast().getOutputs().get("values");
         assertThat(values.get("count"), is("4"));
     }

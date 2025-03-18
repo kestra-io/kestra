@@ -35,8 +35,11 @@
                 </div>
             </slot>
         </nav>
-        <slot name="absolute" />
-        <div class="editor-container" ref="container" :class="containerClass">
+        <div class="editor-absolute-container pe-none">
+            <slot name="absolute" />
+        </div>
+        <span v-if="label" class="label">{{ label }}</span>
+        <div class="editor-container" ref="container" :class="[containerClass, {'mb-2': label}]">
             <div ref="editorContainer" class="editor-wrapper position-relative">
                 <monaco-editor
                     ref="monacoEditor"
@@ -47,6 +50,7 @@
                     :original="original"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
+                    @tab-loaded="(...args) => $emit('tabLoaded', ...args)"
                     :language="lang"
                     :extension="extension"
                     :schema-type="schemaType"
@@ -73,12 +77,14 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
-    import {mapGetters} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
 
     const MonacoEditor = defineAsyncComponent(() => import("./MonacoEditor.vue"));
+
+    import Utils from "../../utils/utils";
 
     export default {
         props: {
@@ -95,9 +101,12 @@
             placeholder: {type: [String, Number], default: ""},
             diffSideBySide: {type: Boolean, default: true},
             readOnly: {type: Boolean, default: false},
+            wordWrap: {type: Boolean, default: true},
             lineNumbers: {type: Boolean, default: undefined},
             minimap: {type: Boolean, default: false},
             creating: {type: Boolean, default: false},
+            label: {type: String, default: undefined},
+            shouldFocus: {type: Boolean, default: true},
         },
         components: {
             MonacoEditor,
@@ -106,10 +115,11 @@
             "save",
             "execute",
             "focusout",
-            "tab",
+            "tabLoaded",
             "update:modelValue",
             "cursor",
             "confirm",
+            "tabLoaded",
         ],
         editor: undefined,
         data() {
@@ -125,24 +135,24 @@
                 editorDocumentation: undefined,
                 plugin: undefined,
                 taskType: undefined,
+                themeComputed: Utils.getTheme(),
             };
         },
         mounted() {
             this.$store.commit("doc/setDocId", "flowEditor");
         },
+        watch: {
+            mappedTheme: {
+                handler() {
+                    this.themeComputed = Utils.getTheme();
+                },
+                immediate: true,
+            },
+        },
         computed: {
+            ...mapState({mappedTheme: state => state.misc.theme}),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flowValidation"]),
-            themeComputed() {
-                const savedEditorTheme = localStorage.getItem("editorTheme");
-                return savedEditorTheme === "syncWithSystem"
-                    ? window.matchMedia("(prefers-color-scheme: dark)").matches
-                        ? "dark"
-                        : "light"
-                    : savedEditorTheme === "light"
-                        ? "light"
-                        : "dark";
-            },
             containerClass() {
                 return [
                     !this.input ? "" : "single-line",
@@ -165,7 +175,7 @@
             options() {
                 const options = {};
 
-                if (this.input) {
+                if (this.input && !this.lineNumbers) {
                     options.lineNumbers = "off";
                     options.folding = false;
                     options.renderLineHighlight = "none";
@@ -207,6 +217,7 @@
                         alwaysConsumeMouseWheel: false,
                     };
                     options.renderSideBySide = this.diffSideBySide;
+                    options.useInlineViewWhenSpaceIsLimited = false;
                 }
 
                 if (this.minimap === false) {
@@ -219,7 +230,7 @@
                     options.readOnly = true;
                 }
 
-                options.wordWrap = true;
+                options.wordWrap = this.wordWrap;
                 options.automaticLayout = true;
 
                 return {
@@ -260,17 +271,19 @@
                         this.focus = false;
                     });
 
-                    this.editor.onDidFocusEditorText?.(() => {
-                        this.focus = true;
-                    });
+                    if(this.shouldFocus){
+                        this.editor.onDidFocusEditorText?.(() => {
+                            this.focus = true;
+                        });
 
-                    this.$refs.monacoEditor.focus();
+                        this.$refs.monacoEditor.focus();
+                    }
                 }
 
                 if (!this.readOnly) {
                     this.editor.addAction({
                         id: "kestra-save",
-                        label: "Save",
+                        label: this.$t("save"),
                         keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
                         contextMenuGroupId: "navigation",
                         contextMenuOrder: 1.5,
@@ -286,7 +299,7 @@
 
                 this.editor.addAction({
                     id: "kestra-execute",
-                    label: "Execute the flow",
+                    label: this.$t("execute flow behaviour"),
                     keybindings: [KeyMod.CtrlCmd | KeyCode.KeyE],
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 1.5,
@@ -297,7 +310,7 @@
 
                 this.editor.addAction({
                     id: "confirm",
-                    label: "Confirm",
+                    label: this.$t("confirm"),
                     keybindings: [KeyMod.CtrlCmd | KeyCode.Enter],
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 1.5,
@@ -326,7 +339,7 @@
                 if (this.original === undefined && this.navbar && this.fullHeight) {
                     this.editor.addAction({
                         id: "fold-multiline",
-                        label: "Fold All Multi Lines",
+                        label: this.$t("fold_all_multi_lines"),
                         keybindings: [KeyCode.F10],
                         contextMenuGroupId: "fold",
                         contextMenuOrder: 1.5,
@@ -474,6 +487,10 @@
     };
 </script>
 
+<style scoped lang="scss">
+@import "../code/styles/code.scss";
+</style>
+
 <style lang="scss">
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 @import "../../styles/layout/root-dark.scss";
@@ -501,6 +518,17 @@
         html.dark & {
             background-color: var(--bs-gray-100);
         }
+    }
+
+    .editor-absolute-container {
+        position: absolute;
+        top: 8px;
+        right: 20px;
+        z-index: 10;
+    }
+
+    .editor-absolute-container > * {
+        pointer-events: auto;
     }
 
     .editor-container {

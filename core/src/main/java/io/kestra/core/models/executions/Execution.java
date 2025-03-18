@@ -29,6 +29,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.Instant;
@@ -105,6 +106,10 @@ public class Execution implements DeletedInterface, TenantInterface {
     @With
     @Nullable
     Instant scheduleDate;
+
+    @NonFinal
+    @Setter
+    String traceParent;
 
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
@@ -199,7 +204,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.traceParent
         );
     }
 
@@ -222,7 +228,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.traceParent
         );
     }
 
@@ -258,7 +265,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.traceParent
         );
     }
 
@@ -281,7 +289,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.trigger,
             this.deleted,
             this.metadata,
-            this.scheduleDate
+            this.scheduleDate,
+            this.traceParent
         );
     }
 
@@ -807,11 +816,20 @@ public class Execution implements DeletedInterface, TenantInterface {
         ));
 
         Map<String, Object> result = new HashMap<>();
-        for (TaskRun current : this.taskRunList) {
-            if (current.getOutputs() != null) {
-                result = MapUtils.merge(result, outputs(current, byIds));
-            }
-        }
+        this.taskRunList.stream()
+            .filter(taskRun -> taskRun.getOutputs() != null)
+            .collect(Collectors.groupingBy(taskRun -> taskRun.getTaskId()))
+            .forEach((taskId, taskRuns) -> {
+                Map<String, Object> taskOutputs = new HashMap<>();
+                for (TaskRun current : taskRuns) {
+                    if (current.getIteration() != null) {
+                        taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                    } else {
+                        taskOutputs.putAll(outputs(current, byIds));
+                    }
+                }
+                result.put(taskId, taskOutputs);
+            });
 
         return result;
     }
@@ -824,18 +842,17 @@ public class Execution implements DeletedInterface, TenantInterface {
 
         if (parents.isEmpty()) {
             if (taskRun.getValue() == null) {
-                return Map.of(taskRun.getTaskId(), taskRun.getOutputs());
+                return taskRun.getOutputs();
             } else {
-                return Map.of(taskRun.getTaskId(),
-                    Map.of(taskRun.getValue(), taskRun.getOutputs()));
+                return Map.of(taskRun.getValue(), taskRun.getOutputs());
             }
         }
 
-        Map<String, Object> result = MapUtils.newHashMap(1);
+        Map<String, Object> result = HashMap.newHashMap(1);
         Map<String, Object> current = result;
 
         for (TaskRun t : parents) {
-            HashMap<String, Object> item = MapUtils.newHashMap(1);
+            HashMap<String, Object> item = HashMap.newHashMap(1);
             current.put(t.getValue(), item);
             current = item;
         }
@@ -848,7 +865,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             }
         }
 
-        return Map.of(taskRun.getTaskId(), result);
+        return result;
     }
 
 

@@ -72,6 +72,7 @@
                 <div
                     v-if="dragging"
                     class="editor-content-overlay"
+                    :class="{dragover: panel.dragover}"
                     @dragleave.prevent="dragleavePanel"
                     @dragenter.prevent="dragoverContent"
                     @dragover.prevent
@@ -144,10 +145,10 @@
         dragging.value = false;
         nextTick(() => {
             movedTabInfo.value = null
-            panels.value.forEach((panel) => {
+            for(const panel of panels.value) {
                 panel.dragover = false;
                 panel.tabs = panel.tabs.filter((tab) => !tab.potential)
-            })
+            }
         })
     }
 
@@ -158,8 +159,6 @@
             if(targetPanelIndex < 0){
                 return
             }
-            panels.value[targetPanelIndex].dragover = true;
-
         } else {
             targetPanelIndex = parseInt(target.closest(".editor-tabs")?.getAttribute("data-panel-index") ?? "-1");
             if(targetPanelIndex < 0){
@@ -187,6 +186,9 @@
         // skip if the target is the same as the original panel
         if(fromPanel && movedTabInfo.value?.panelIndex === targetPanelIndex){
             return
+        }
+        if(fromPanel){
+            panels.value[targetPanelIndex].dragover = true;
         }
 
         const tabId = event.target.getAttribute("data-tab-id")
@@ -237,6 +239,7 @@
         if(targetPanelIndex === undefined){
             return
         }
+        panels.value[targetPanelIndex].dragover = false;
 
         // remove the simulated tab from the target panel
         panels.value[targetPanelIndex].tabs = panels.value[targetPanelIndex].tabs.filter((tab) => !tab.potential)
@@ -267,7 +270,7 @@
         }
 
         setTimeout(() => {
-            dragover(event, false);
+            dragover(event, true);
         }, 20)
     }
 
@@ -404,6 +407,9 @@
         bottom: 0;
         background-color: rgba(0, 0, 0, 0.1);
         z-index: 100;
+        &.dragover{
+            background-color: rgba(0, 0, 0, 0.3);
+        }
     }
 
     .editor-tabs {

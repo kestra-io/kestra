@@ -1265,6 +1265,7 @@
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."      
       }
     },
-    "toggle_word_wrap": "Toggle Word Wrap"
+    "toggle_word_wrap": "Toggle Word Wrap",
+    "copied_logs_to_clipboard": "Copied logs to clipboard."
   }
 }

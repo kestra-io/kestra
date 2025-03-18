@@ -109,6 +109,12 @@
                         :flow-source="flow?.source"
                     />
                     <el-dropdown-item
+                        :icon="Download"
+                        @click="downloadContent(currentTaskRun.id)"
+                    >
+                        {{ $t("download logs") }}
+                    </el-dropdown-item>
+                    <el-dropdown-item
                         :icon="Copy"
                         @click="copyContent(currentTaskRun.id)"
                     >
@@ -150,6 +156,13 @@
         </div>
     </div>
 </template>
+
+<script setup>
+    import Copy from "vue-material-design-icons/ContentCopy.vue";
+    import Delete from "vue-material-design-icons/Delete.vue";
+    import Download from "vue-material-design-icons/Download.vue";
+</script>
+
 <script>
     import Restart from "./Restart.vue";
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
@@ -169,8 +182,7 @@
     import _groupBy from "lodash/groupBy";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import Duration from "../layout/Duration.vue";
-    import Delete from "vue-material-design-icons/Delete.vue";
-    import Copy from "vue-material-design-icons/ContentCopy.vue";
+    import Utils from "../../utils/utils";
     import permission from "../../models/permission";
     import action from "../../models/action";
 
@@ -188,8 +200,7 @@
             Metrics,
             ChevronRight,
             Restart,
-            Duration,
-            
+            Duration
         },
         props: {
             currentTaskRun: {
@@ -230,12 +241,6 @@
             }
         },
         computed: {
-            Delete() {
-                return Delete
-            },
-            Copy() {
-                return Copy
-            },
             ...mapState("plugin", ["icons"]),
             ...mapState("auth", ["user"]),
             SECTIONS() {
@@ -285,20 +290,28 @@
                 }
                 return task ? task.type : undefined;
             },
+            downloadContent(currentTaskRunId) {
+                const params = this.params
+                this.$store.dispatch("execution/downloadLogs", {
+                    executionId: this.followedExecution.id,
+                    params: {...params, taskRunId: currentTaskRunId}
+                }).then((response) => {
+                    Utils.downloadUrl(window.URL.createObjectURL(new Blob([response])), this.downloadName(currentTaskRunId));
+                });
+            },
             copyContent(currentTaskRunId) {
                 const params = this.params
                 this.$store.dispatch("execution/downloadLogs", {
                     executionId: this.followedExecution.id,
                     params: {...params, taskRunId: currentTaskRunId}
                 }).then((response) => {
-                    navigator.clipboard.writeText(response)
-                        .then(() =>{
-                            this.$store.dispatch("core/showMessage", {
-                                variant: "success",
-                                title: this.$t("copied"),
-                                message: this.$t("Copied to clipboard"),
-                            });
+                    Utils.copy(response).then(() =>{
+                        this.$store.dispatch("core/showMessage", {
+                            variant: "success",
+                            title: this.$t("success"),
+                            message: this.$t("copied_logs_to_clipboard"),
                         });
+                    });
                 })
             },
             deleteLogs(currentTaskRunId) {

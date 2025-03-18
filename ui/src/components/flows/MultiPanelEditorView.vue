@@ -13,7 +13,7 @@
         </div>
         <EditorButtonsWrapper />
     </div>
-    <MultiPanelTabs v-model="panels" @remove-tab="onRemoveTab" />
+    <MultiPanelTabs style="padding-top:57px;" v-model="panels" @remove-tab="onRemoveTab" />
 </template>
 
 <script setup lang="ts">
@@ -126,6 +126,7 @@
         align-items: center;
         justify-content: space-between;
         border-bottom: 1px solid var(--ks-border-primary);
+        position: absolute;
     }
     .tabs{
         padding: .5rem 1rem;

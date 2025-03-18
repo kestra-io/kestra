@@ -13,6 +13,7 @@
                 <markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
             </template>
             <editor
+                class="edit-flow-input"
                 :full-height="false"
                 :input="true"
                 :navbar="false"
@@ -463,6 +464,11 @@
 .md-label {
     height: 20px;
 }
+
+.edit-flow-input {
+    max-height: 40vh;
+}
+
 
 .hint {
     font-size: var(--font-size-xs);

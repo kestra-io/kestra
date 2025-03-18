@@ -161,19 +161,19 @@
     import Copy from "vue-material-design-icons/ContentCopy.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import Download from "vue-material-design-icons/Download.vue";
+    import Clock from "vue-material-design-icons/Clock.vue";
+    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
 </script>
 
 <script>
     import Restart from "./Restart.vue";
-    import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import Metrics from "./Metrics.vue";
     import Status from "../Status.vue";
     import ChangeStatus from "./ChangeStatus.vue";
     import TaskEdit from "../flows/TaskEdit.vue";
     import SubFlowLink from "../flows/SubFlowLink.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
-    import Clock from "vue-material-design-icons/Clock.vue";
     import Outputs from "./Outputs.vue";
     import {State} from "@kestra-io/ui-libs"
     import FlowUtils from "../../utils/flowUtils";
@@ -190,15 +190,11 @@
         components: {
             TaskIcon,
             Outputs,
-            Clock,
-            ChevronDown,
-            DotsVertical,
             SubFlowLink,
             TaskEdit,
             ChangeStatus,
             Status,
             Metrics,
-            ChevronRight,
             Restart,
             Duration
         },

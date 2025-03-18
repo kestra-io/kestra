@@ -44,6 +44,10 @@
         embed: {
             type: Boolean,
             default: false
+        },
+        beta: {
+            type: Boolean,
+            default: false
         }
     })
 

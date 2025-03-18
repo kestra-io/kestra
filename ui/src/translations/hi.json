@@ -144,9 +144,11 @@
     "continue backfill": "Backfill जारी रखें",
     "continue backfills": "Backfills जारी रखें",
     "copied": "कॉपी किया गया",
+    "copied_logs_to_clipboard": "लॉग्स को क्लिपबोर्ड पर कॉपी किया गया।",
     "copy": "कॉपी करें",
     "copy logs": "Logs कॉपी करें",
     "copy url": "URL कॉपी करें",
+    "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
     "create": "बनाएँ",
     "create first task": "अपना पहला Task बनाएं",
     "create_custom_dashboard": "नया डैशबोर्ड बनाएं",
@@ -429,8 +431,6 @@
     "execute the flow": "Flow <code>{id}</code> निष्पादित करें",
     "execution": "निष्पादन",
     "execution already finished": "निष्पादन <code>{executionId}</code> पहले ही समाप्त हो चुका है",
-    "execution failed header": "निष्पादन FAILED!",
-    "execution failed message": "अंतिम त्रुटि के साथ: <code>{message}</code>",
     "execution labels": "निष्पादन labels",
     "execution not found": "निष्पादन <code>{executionId}</code> नहीं मिला",
     "execution not in state FAILED": "निष्पादन <code>{executionId}</code> FAILED स्थिति में नहीं है",
@@ -447,6 +447,7 @@
       "metrics": "Metrics हटाएं",
       "storage": "आंतरिक स्टोरेज फाइलें हटाएं"
     },
+    "execution_failed": "निष्पादन FAILED! अंतिम त्रुटि थी",
     "execution_guide": {
       "get_started": {
         "text": "क्विकस्टार्ट गाइड का पालन करें ताकि आप Kestra को इंस्टॉल कर सकें और अपनी पहली workflows बनाना शुरू कर सकें।",
@@ -461,6 +462,8 @@
         "title": "वर्कफ़्लो घटक"
       }
     },
+    "execution_starts_progress": "जैसे ही execution शुरू होता है, आपको यहाँ प्रगति अपडेट दिखाई देंगे।",
+    "execution_status": "Execution है:",
     "executions": "निष्पादन",
     "executions deleted": "<code>{executionCount}</code> निष्पादन हटाए गए",
     "executions duration (in minutes)": "कुल निष्पादन अवधि (मिनटों में)",
@@ -770,6 +773,7 @@
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",
       "creation": {
+        "after execution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
         "error handlers": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
         "select": "किसी {section} का चयन करें",
@@ -800,6 +804,7 @@
         "yaml": "YAML संपादक"
       },
       "save": {
+        "after execution": "टास्क सहेजें",
         "error handlers": "त्रुटि हैंडलर सहेजें",
         "finally": "कार्य सहेजें",
         "input": "इनपुट सहेजें",
@@ -807,6 +812,7 @@
         "triggers": "ट्रिगर सहेजें"
       },
       "sections": {
+        "after_execution": "Execution के बाद",
         "error_handlers": "त्रुटि हैंडलर",
         "finally": "अंत में",
         "general": "सामान्य गुणधर्म",
@@ -820,6 +826,7 @@
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
+    "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
     "now": "अब",
     "of": "का",
     "ok": "ठीक है",
@@ -1028,6 +1035,7 @@
             "editor_type": "डिफ़ॉल्ट एडिटर प्रकार",
             "execute_default_tab": "डिफ़ॉल्ट Execution टैब",
             "execute_flow": "Flow निष्पादित करें",
+            "flow_default_tab": "डिफ़ॉल्ट Flow टैब",
             "language": "भाषा",
             "log_display": "Log प्रदर्शन",
             "log_level": "Log स्तर"

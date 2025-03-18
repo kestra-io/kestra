@@ -52,6 +52,7 @@
     "Add flow": "Add flow",
     "add": "Add",
     "copy": "Copy",
+    "copy_to_clipboard": "Copy to clipboard",
     "Per page": "per page",
     "new": "New",
     "edit": "Edit",
@@ -613,6 +614,9 @@
     "advanced configuration": "Other properties",
     "all executions": "All executions",
     "trigger execution id": "Trigger Execution Id",
+    "execution_status": "Execution is: ",
+    "no_tasks_running": "No tasks are running yet.",
+    "execution_starts_progress": "Once the execution starts, you'll see progress updates here.",
     "triggers_state": {
       "state": "State",
       "options": {
@@ -754,7 +758,8 @@
             "editor_type": "Default Editor Type",
             "execute_flow": "Execute the Flow",
             "execute_default_tab": "Default Execution Tab",
-            "multi_panel_editor": "Multi Panel Editor"
+            "multi_panel_editor": "Multi Panel Editor",
+            "flow_default_tab": "Default Flow Tab"
           }
         },
         "theme": {
@@ -1039,8 +1044,7 @@
     "item": "item",
     "items": "items",
     "cron": "Cron",
-    "execution failed header": "Execution failed!",
-    "execution failed message": "With last error: <code>{message}</code>",
+    "execution_failed": "Execution failed! Last error was",
     "execution restarted": "This execution has been restarted {nbRestart} time(s).",
     "execution replay": "This execution is a replay of <code>{originalId}</code>.",
     "execution replayed": "This execution has been replayed.",
@@ -1135,7 +1139,8 @@
         "tasks": "Tasks",
         "triggers": "Triggers",
         "error_handlers": "Error Handlers",
-        "finally": "Finally"
+        "finally": "Finally",
+        "after_execution": "After Execution"
       },
       "fields": {
         "main": {
@@ -1159,13 +1164,15 @@
         "tasks": "Add a task",
         "triggers": "Add a trigger",
         "error handlers": "Add an error handler",
-        "finally": "Add a finally block"
+        "finally": "Add a finally block",
+        "after execution": "Add an after execution block"
       },
       "save": {
         "tasks": "Save task",
         "triggers": "Save trigger",
         "error handlers": "Save error handler",
         "finally": "Save task",
+        "after execution": "Save task",
         "input": "Save input"
       }
     },
@@ -1256,9 +1263,10 @@
       },
       "triggers": {
         "title": "Your flow doesn't have any Triggers.",
-        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."      
+        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."
       }
     },
-    "toggle_word_wrap": "Toggle Word Wrap"
+    "toggle_word_wrap": "Toggle Word Wrap",
+    "copied_logs_to_clipboard": "Copied logs to clipboard."
   }
 }

@@ -144,9 +144,11 @@
     "continue backfill": "Backfill fortsetzen",
     "continue backfills": "Backfills fortsetzen",
     "copied": "Kopiert",
+    "copied_logs_to_clipboard": "Logs in die Zwischenablage kopiert.",
     "copy": "Kopieren",
     "copy logs": "Logs kopieren",
     "copy url": "URL kopieren",
+    "copy_to_clipboard": "In die Zwischenablage kopieren",
     "create": "Erstellen",
     "create first task": "Erstellen Sie Ihren ersten Task",
     "create_custom_dashboard": "Neues Dashboard erstellen",
@@ -429,8 +431,6 @@
     "execute the flow": "Den Flow <code>{id}</code> ausführen",
     "execution": "Ausführung",
     "execution already finished": "Ausführung <code>{executionId}</code> bereits abgeschlossen",
-    "execution failed header": "Ausführung fehlgeschlagen!",
-    "execution failed message": "Mit letztem Fehler: <code>{message}</code>",
     "execution labels": "Ausführungs-Labels",
     "execution not found": "Ausführung <code>{executionId}</code> nicht gefunden",
     "execution not in state FAILED": "Ausführung <code>{executionId}</code> nicht im Zustand FAILED",
@@ -447,6 +447,7 @@
       "metrics": "Metriken löschen",
       "storage": "Interne Speicherdateien löschen"
     },
+    "execution_failed": "Ausführung fehlgeschlagen! Der letzte Fehler war",
     "execution_guide": {
       "get_started": {
         "text": "Befolgen Sie den Quickstart-Guide, um Kestra zu installieren und mit dem Erstellen Ihrer ersten Workflows zu beginnen.",
@@ -461,6 +462,8 @@
         "title": "Workflow-Komponenten"
       }
     },
+    "execution_starts_progress": "Sobald die Ausführung beginnt, sehen Sie hier Fortschrittsaktualisierungen.",
+    "execution_status": "Die Ausführung ist:",
     "executions": "Ausführungen",
     "executions deleted": "<code>{executionCount}</code> Ausführung(en) gelöscht",
     "executions duration (in minutes)": "Gesamte Ausführungsdauer (in Minuten)",
@@ -770,6 +773,7 @@
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",
       "creation": {
+        "after execution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
         "finally": "Fügen Sie einen Finally-Block hinzu",
         "select": "Wählen Sie einen {section} aus",
@@ -800,6 +804,7 @@
         "yaml": "YAML-Editor"
       },
       "save": {
+        "after execution": "Task speichern",
         "error handlers": "Fehlerbehandlungsroutine speichern",
         "finally": "Aufgabe speichern",
         "input": "Eingabe speichern",
@@ -807,6 +812,7 @@
         "triggers": "Speicher Trigger"
       },
       "sections": {
+        "after_execution": "Nach Ausführung",
         "error_handlers": "Fehlerbehandler",
         "finally": "Schließlich",
         "general": "Allgemeine Eigenschaften",
@@ -820,6 +826,7 @@
     "no_logs_data": "Keine Daten",
     "no_logs_data_description": "Entweder laufen keine Flows, oder Sie müssen Ihre Filter anpassen.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
+    "no_tasks_running": "Noch keine Tasks laufen.",
     "now": "Jetzt",
     "of": "von",
     "ok": "OK",
@@ -1028,6 +1035,7 @@
             "editor_type": "Standard-Editor-Typ",
             "execute_default_tab": "Standard-Ausführungs-Registerkarte",
             "execute_flow": "Flow ausführen",
+            "flow_default_tab": "Standard-Flow-Registerkarte",
             "language": "Sprache",
             "log_display": "Standard-Log-Anzeige",
             "log_level": "Standard-Log-Ebene"

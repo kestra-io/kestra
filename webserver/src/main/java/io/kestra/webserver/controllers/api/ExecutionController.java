@@ -34,6 +34,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
+import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.trigger.Webhook;
@@ -77,6 +78,8 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -189,7 +192,7 @@ public class ExecutionController {
     private Optional<String> kestraUrl;
 
     @Inject
-    private OpenTelemetry openTelemetry;
+    private Optional<OpenTelemetry> openTelemetry;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -572,8 +575,13 @@ public class ExecutionController {
 
         try {
             // inject the traceparent into the execution
-            var propagator = openTelemetry.getPropagators().getTextMapPropagator();
-            propagator.inject(Context.current(), result, ExecutionTextMapSetter.INSTANCE);
+            Optional<TextMapPropagator> propagator = openTelemetry
+                .map(OpenTelemetry::getPropagators)
+                .map(ContextPropagators::getTextMapPropagator);
+
+            if (propagator.isPresent()) {
+                propagator.get().inject(Context.current(), result, ExecutionTextMapSetter.INSTANCE);
+            }
 
             executionQueue.emit(result);
             eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
@@ -644,8 +652,10 @@ public class ExecutionController {
                 Execution executionWithInputs = current.withInputs(executionInputs);
                 try {
                     // inject the traceparent into the execution
-                    var propagator = openTelemetry.getPropagators().getTextMapPropagator();
-                    propagator.inject(Context.current(), executionWithInputs, ExecutionTextMapSetter.INSTANCE);
+                    openTelemetry
+                        .map(OpenTelemetry::getPropagators)
+                        .map(ContextPropagators::getTextMapPropagator)
+                        .ifPresent(propagator -> propagator.inject(Context.current(), executionWithInputs, ExecutionTextMapSetter.INSTANCE));
 
                     executionQueue.emit(executionWithInputs);
                     eventPublisher.publishEvent(new CrudEvent<>(executionWithInputs, CrudEventType.CREATE));
@@ -1638,16 +1648,14 @@ public class ExecutionController {
         }
 
         Map<String, String> newLabels = labels.stream().collect(Collectors.toMap(Label::key, Label::value));
-        if (execution.getLabels() != null) {
-            execution.getLabels().forEach(
+        existingSystemLabels.forEach(
                 label -> {
-                    // only add execution label if not updated
+                    // only add system labels
                     if (!newLabels.containsKey(label.key())) {
                         newLabels.put(label.key(), label.value());
                     }
                 }
             );
-        }
 
         Execution newExecution = execution
             .withLabels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).filter(label -> !label.key().isEmpty() || !label.value().isEmpty()).toList());

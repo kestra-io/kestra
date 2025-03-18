@@ -589,7 +589,7 @@ public class FlowController {
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
 
                 try {
-                    Flow flowParse = yamlParser.parse(flow, Flow.class);
+                    Flow flowParse = parseFlow(flow);
                     Integer sentRevision = flowParse.getRevision();
                     if (sentRevision != null) {
                         Integer lastRevision = Optional.ofNullable(flowRepository.lastRevision(tenantService.resolveTenant(), flowParse.getNamespace(), flowParse.getId()))
@@ -617,6 +617,10 @@ public class FlowController {
                 return validateConstraintViolationBuilder.build();
             })
             .collect(Collectors.toList());
+    }
+
+    protected Flow parseFlow(String flow) {
+        return yamlParser.parse(flow, Flow.class);
     }
 
     // This endpoint is not used by the Kestra UI nor our CLI but is provided for the API users for convenience

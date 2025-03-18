@@ -127,6 +127,8 @@ public final class RunVariables {
 
         Builder withSecretInputs(List<String> secretInputs);
 
+        Builder withKestraConfiguration(KestraConfiguration kestraConfiguration);
+
         /**
          * Builds the immutable map of run variables.
          *
@@ -135,6 +137,8 @@ public final class RunVariables {
          */
         Map<String, Object> build(final RunContextLogger logger);
     }
+
+    public record  KestraConfiguration(String environment, String url) { }
 
     /**
      * Default builder class for constructing variables.
@@ -155,6 +159,7 @@ public final class RunVariables {
         protected Map<?, ?> globals;
         private final Optional<String> secretKey;
         private List<String> secretInputs;
+        private KestraConfiguration kestraConfiguration;
 
         public DefaultBuilder() {
             this(Optional.empty());
@@ -313,6 +318,18 @@ public final class RunVariables {
                         .build();
                     builder.put("flow", RunVariables.of(flowFromExecution));
                 }
+            }
+
+            // Kestra configuration
+            if (kestraConfiguration != null) {
+                Map<String, String> kestra = new HashMap<>();
+                if (kestraConfiguration.environment() != null) {
+                    kestra.put("environment", kestraConfiguration.environment());
+                }
+                if (kestraConfiguration.url() != null) {
+                    kestra.put("url", kestraConfiguration.url());
+                }
+                builder.put("kestra", kestra);
             }
 
             // adds any additional variables

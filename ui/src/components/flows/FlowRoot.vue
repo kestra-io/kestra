@@ -67,6 +67,11 @@
             },
         },
         created() {
+            if(!this.$route.params.tab) {
+                const tab = localStorage.getItem("flowDefaultTab") || undefined;
+                this.$router.replace({name: "flows/update", params: {...this.$route.params, tab}});
+            }
+
             this.load();
         },
         methods: {

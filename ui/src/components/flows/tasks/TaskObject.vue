@@ -142,7 +142,13 @@
                 return undefined;
             },
             requiredProperties() {
-                return this.sortedProperties.filter(([p]) => this.isRequired(p));
+                const properties = this.sortedProperties.filter(([p]) => this.isRequired(p));
+                // if the field id is not found in the required fields,
+                // we need to add it
+                if(!properties.find(([field]) => field === "id")) {
+                    properties.unshift(["id", {type: "string", $required: true}]);
+                }
+                return properties;
             },
             optionalProperties() {
                 return this.sortedProperties.filter(([p]) => !this.isRequired(p));

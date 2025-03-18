@@ -144,9 +144,11 @@
     "continue backfill": "backfillを続行",
     "continue backfills": "backfillを続行",
     "copied": "コピーされました",
+    "copied_logs_to_clipboard": "クリップボードにログをコピーしました。",
     "copy": "コピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",
+    "copy_to_clipboard": "クリップボードにコピー",
     "create": "作成",
     "create first task": "最初のtaskを作成",
     "create_custom_dashboard": "新しいダッシュボードを作成",
@@ -429,8 +431,6 @@
     "execute the flow": "Flow <code>{id}</code>を実行",
     "execution": "Execution",
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",
-    "execution failed header": "実行がFAILEDしました！",
-    "execution failed message": "最後のエラー: <code>{message}</code>",
     "execution labels": "実行ラベル",
     "execution not found": "実行<code>{executionId}</code>が見つかりません",
     "execution not in state FAILED": "実行<code>{executionId}</code>はFAILED状態ではありません",
@@ -447,6 +447,7 @@
       "metrics": "メトリクスを削除",
       "storage": "内部ストレージファイルを削除"
     },
+    "execution_failed": "実行に失敗しました！最後のエラーは",
     "execution_guide": {
       "get_started": {
         "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。",
@@ -461,6 +462,8 @@
         "title": "ワークフローコンポーネント"
       }
     },
+    "execution_starts_progress": "実行が開始されると、ここに進行状況の更新が表示されます。",
+    "execution_status": "実行は:",
     "executions": "実行",
     "executions deleted": "<code>{executionCount}</code>件の実行が削除されました",
     "executions duration (in minutes)": "総実行時間（分単位）",
@@ -770,6 +773,7 @@
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
       "creation": {
+        "after execution": "実行後ブロックを追加",
         "error handlers": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
         "select": "{section}を選択してください",
@@ -800,6 +804,7 @@
         "yaml": "YAMLエディター"
       },
       "save": {
+        "after execution": "タスクを保存",
         "error handlers": "エラーハンドラーを保存",
         "finally": "タスクを保存",
         "input": "入力を保存",
@@ -807,6 +812,7 @@
         "triggers": "トリガーを保存"
       },
       "sections": {
+        "after_execution": "実行後",
         "error_handlers": "エラーハンドラー",
         "finally": "最後に",
         "general": "一般プロパティ",
@@ -820,6 +826,7 @@
     "no_logs_data": "データなし",
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
+    "no_tasks_running": "タスクはまだ実行されていません。",
     "now": "現在",
     "of": "の",
     "ok": "OK",
@@ -1028,6 +1035,7 @@
             "editor_type": "デフォルトエディタータイプ",
             "execute_default_tab": "デフォルト実行タブ",
             "execute_flow": "Flowを実行",
+            "flow_default_tab": "デフォルト Flow タブ",
             "language": "言語",
             "log_display": "デフォルトLog表示",
             "log_level": "デフォルトLogレベル"

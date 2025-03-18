@@ -19,7 +19,7 @@ class JdbcMapperTest {
             .build()
         );
 
-        assertThat(serialize, containsString("2019-10-06T18:27:49.000Z"));
+        assertThat(serialize, containsString("2019-10-06T18:27:49.000000Z"));
     }
 
     @Test

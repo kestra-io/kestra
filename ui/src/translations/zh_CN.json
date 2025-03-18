@@ -144,9 +144,11 @@
     "continue backfill": "继续回填",
     "continue backfills": "继续回填",
     "copied": "已复制",
+    "copied_logs_to_clipboard": "已将日志复制到剪贴板。",
     "copy": "复制",
     "copy logs": "复制日志",
     "copy url": "复制 URL",
+    "copy_to_clipboard": "复制到剪贴板",
     "create": "创建",
     "create first task": "创建你的第一个任务",
     "create_custom_dashboard": "创建新仪表板",
@@ -429,8 +431,6 @@
     "execute the flow": "执行流程 <code>{id}</code>",
     "execution": "执行",
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
-    "execution failed header": "执行失败！",
-    "execution failed message": "最后错误：<code>{message}</code>",
     "execution labels": "执行标签",
     "execution not found": "未找到执行 <code>{executionId}</code>",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
@@ -447,6 +447,7 @@
       "metrics": "删除指标",
       "storage": "删除内部存储文件"
     },
+    "execution_failed": "执行失败！最后的错误是",
     "execution_guide": {
       "get_started": {
         "text": "请按照快速入门指南安装Kestra并开始构建您的第一个工作流。",
@@ -461,6 +462,8 @@
         "title": "工作流组件"
       }
     },
+    "execution_starts_progress": "一旦执行开始，您将在此处看到进度更新。",
+    "execution_status": "执行状态是：",
     "executions": "执行",
     "executions deleted": "<code>{executionCount}</code> 个执行已删除",
     "executions duration (in minutes)": "总执行持续时间（分钟）",
@@ -770,6 +773,7 @@
       "adding": "+ 添加{what}",
       "adding_default": "+ 添加新value",
       "creation": {
+        "after execution": "添加执行后块",
         "error handlers": "添加错误处理程序",
         "finally": "添加一个finally块",
         "select": "选择一个{section}",
@@ -800,6 +804,7 @@
         "yaml": "YAML编辑器"
       },
       "save": {
+        "after execution": "保存task",
         "error handlers": "保存错误处理程序",
         "finally": "保存任务",
         "input": "保存输入",
@@ -807,6 +812,7 @@
         "triggers": "保存 trigger"
       },
       "sections": {
+        "after_execution": "执行后",
         "error_handlers": "错误处理程序",
         "finally": "最后",
         "general": "常规属性",
@@ -820,6 +826,7 @@
     "no_logs_data": "无数据",
     "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
+    "no_tasks_running": "尚无任务正在运行。",
     "now": "现在",
     "of": "的",
     "ok": "确定",
@@ -1028,6 +1035,7 @@
             "editor_type": "默认编辑器类型",
             "execute_default_tab": "默认执行选项卡",
             "execute_flow": "执行流程",
+            "flow_default_tab": "默认 Flow 标签页",
             "language": "语言",
             "log_display": "默认日志显示",
             "log_level": "默认日志级别"

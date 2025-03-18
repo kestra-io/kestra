@@ -8,7 +8,6 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
@@ -16,8 +15,6 @@ import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.ListUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -429,6 +426,14 @@ public class FlowService {
         if (!areAllowedAllNamespaces(tenant, fromTenant, fromNamespace)) {
             throw new IllegalArgumentException("All namespaces are not allowed, you should either filter on a namespace or configure all namespaces to allow your namespace.");
         }
+    }
+
+    /**
+     * Return true if require existing namespace is enabled and the namespace didn't already exist.
+     * As namespace management is an EE feature, this will always return false in OSS.
+     */
+    public boolean requireExistingNamespace(String tenant, String namespace) {
+        return false;
     }
 
     /**

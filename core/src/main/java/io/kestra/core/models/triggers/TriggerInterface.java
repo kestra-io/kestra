@@ -1,13 +1,14 @@
 package io.kestra.core.models.triggers;
 
 import io.kestra.core.models.Plugin;
+import io.kestra.core.models.PluginVersioning;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 
-public interface TriggerInterface extends Plugin {
+public interface TriggerInterface extends Plugin, PluginVersioning {
     @NotNull
     @NotBlank
     @Pattern(regexp="^[a-zA-Z0-9][a-zA-Z0-9_-]*")
@@ -19,9 +20,5 @@ public interface TriggerInterface extends Plugin {
     @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     @Schema(title = "The class name for this current trigger.")
     String getType();
-
-    @Pattern(regexp="\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9]+)|([a-zA-Z0-9]+)")
-    @Schema(title = "The class version for this trigger.")
-    String getVersion();
 
 }

@@ -17,7 +17,7 @@
 </template>
 
 <script>
-    import {YamlUtils} from "@kestra-io/ui-libs";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import EditorView from "../inputs/EditorView.vue";
     import {mapGetters, mapMutations, mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
@@ -66,7 +66,7 @@ tasks:
     message: Hello World! 🚀`);
                 }
 
-                this.$store.commit("flow/setFlow", {...YamlUtils.parse(this.flowYaml), source: this.flowYaml});
+                this.$store.commit("flow/setFlow", {...YAML_UTILS.parse(this.flowYaml), source: this.flowYaml});
             }
         },
         computed: {
@@ -80,6 +80,9 @@ tasks:
                     title: this.$t("flows")
                 };
             },
+            flowParsed() {
+                return YAML_UTILS.parse(this.source);
+            }
         },
         beforeRouteLeave(to, from, next) {
             this.$store.commit("flow/setFlow", null);

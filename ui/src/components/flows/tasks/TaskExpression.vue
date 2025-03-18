@@ -11,7 +11,7 @@
 <script>
     import Task from "./Task";
     import Editor from "../../../components/inputs/Editor.vue";
-    import YamlUtils from "../../../utils/yamlUtils";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     export default {
         mixins: [Task],
@@ -34,7 +34,7 @@
                     return value;
                 }
 
-                return YamlUtils.parse(value);
+                return YAML_UTILS.parse(value);
             }
         }
     };

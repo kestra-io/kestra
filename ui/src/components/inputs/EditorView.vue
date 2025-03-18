@@ -457,16 +457,14 @@
     import File from "vue-material-design-icons/File.vue";
     import Folder from "vue-material-design-icons/Folder.vue";
 
-    import {Utils} from "@kestra-io/ui-libs";
-
     import TypeIcon from "../utils/icons/Type.vue"
     import SwitchView from "./SwitchView.vue";
     import KeyShortcuts from "./KeyShortcuts.vue";
 
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import YamlUtils from "../../utils/yamlUtils";
     import {SECTIONS, storageKeys, editorViewTypes} from "../../utils/constants";
+    import {Utils, YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {apiUrl} from "override/utils/route";
     import localUtils from "../../utils/utils";
 
@@ -806,7 +804,7 @@
 
     const onSaveNewTrigger = () => {
         const source = flowYaml.value;
-        const existingTask = YamlUtils.checkTaskAlreadyExist(
+        const existingTask = YAML_UTILS.checkTaskAlreadyExist(
             source,
             newTrigger.value
         );
@@ -818,7 +816,7 @@
             });
             return;
         }
-        onEdit(YamlUtils.insertTrigger(source, newTrigger.value), true);
+        onEdit(YAML_UTILS.insertSection("triggers", source, newTrigger.value), true);
         newTrigger.value = null;
         isNewTriggerOpen.value = false;
         store.commit("flow/setHaveChange", true)
@@ -840,7 +838,7 @@
 
     const onSaveNewError = () => {
         const source = flowYaml.value;
-        const existingTask = YamlUtils.checkTaskAlreadyExist(
+        const existingTask = YAML_UTILS.checkTaskAlreadyExist(
             source,
             newError.value
         );
@@ -852,7 +850,7 @@
             });
             return;
         }
-        onEdit(YamlUtils.insertError(source, newError.value), true);
+        onEdit(YAML_UTILS.insertSection("errors", source, newError.value), true);
         newError.value = null;
         isNewErrorOpen.value = false;
     };

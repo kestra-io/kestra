@@ -144,9 +144,11 @@
     "continue backfill": "backfill 계속",
     "continue backfills": "backfill 계속",
     "copied": "복사됨",
+    "copied_logs_to_clipboard": "로그가 클립보드에 복사되었습니다.",
     "copy": "복사",
     "copy logs": "Logs 복사",
     "copy url": "URL 복사",
+    "copy_to_clipboard": "클립보드에 복사",
     "create": "생성",
     "create first task": "첫 번째 task 만들기",
     "create_custom_dashboard": "새 대시보드 생성",
@@ -429,8 +431,6 @@
     "execute the flow": "Flow <code>{id}</code> 실행",
     "execution": "실행",
     "execution already finished": "실행 <code>{executionId}</code>이(가) 이미 완료되었습니다",
-    "execution failed header": "실행 실패!",
-    "execution failed message": "마지막 오류: <code>{message}</code>",
     "execution labels": "실행 라벨",
     "execution not found": "실행 <code>{executionId}</code>을(를) 찾을 수 없습니다",
     "execution not in state FAILED": "실행 <code>{executionId}</code>이(가) FAILED 상태가 아닙니다",
@@ -447,6 +447,7 @@
       "metrics": "메트릭 삭제",
       "storage": "내부 저장소 파일 삭제"
     },
+    "execution_failed": "실행 실패! 마지막 오류는",
     "execution_guide": {
       "get_started": {
         "text": "Quickstart Guide를 따라 Kestra를 설치하고 첫 번째 workflow를 구축하세요.",
@@ -461,6 +462,8 @@
         "title": "워크플로우 구성 요소"
       }
     },
+    "execution_starts_progress": "실행이 시작되면, 여기에서 진행 상황 업데이트를 볼 수 있습니다.",
+    "execution_status": "실행 상태:",
     "executions": "실행",
     "executions deleted": "<code>{executionCount}</code> 개의 실행이 삭제되었습니다",
     "executions duration (in minutes)": "총 실행 시간 (분 단위)",
@@ -770,6 +773,7 @@
       "adding": "+ {what} 추가",
       "adding_default": "+ 새 value 추가",
       "creation": {
+        "after execution": "실행 후 블록 추가",
         "error handlers": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
         "select": "{section}을 선택하십시오",
@@ -800,6 +804,7 @@
         "yaml": "YAML 편집기"
       },
       "save": {
+        "after execution": "작업 저장",
         "error handlers": "오류 처리기 저장",
         "finally": "작업 저장",
         "input": "입력 저장",
@@ -807,6 +812,7 @@
         "triggers": "트리거 저장"
       },
       "sections": {
+        "after_execution": "실행 후",
         "error_handlers": "오류 처리기",
         "finally": "마지막으로",
         "general": "일반 속성",
@@ -820,6 +826,7 @@
     "no_logs_data": "데이터 없음",
     "no_logs_data_description": "흐름이 실행 중이지 않거나 필터를 조정해야 할 수 있습니다.",
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
+    "no_tasks_running": "아직 실행 중인 task가 없습니다.",
     "now": "지금",
     "of": "의",
     "ok": "확인",
@@ -1028,6 +1035,7 @@
             "editor_type": "기본 편집기 유형",
             "execute_default_tab": "기본 실행 탭",
             "execute_flow": "Flow 실행",
+            "flow_default_tab": "기본 Flow 탭",
             "language": "언어",
             "log_display": "기본 Log 표시",
             "log_level": "기본 Log 레벨"

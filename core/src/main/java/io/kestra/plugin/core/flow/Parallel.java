@@ -40,6 +40,9 @@ import jakarta.validation.constraints.NotNull;
     examples = {
         @Example(
             full = true,
+            title = """
+            Run tasks in parallel
+            """,
             code = """
                 id: parallel
                 namespace: company.team
@@ -60,6 +63,42 @@ import jakarta.validation.constraints.NotNull;
                     type: io.kestra.plugin.core.debug.Return
                     format: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
+        ),
+        @Example(
+            full = true,
+            title = """
+            Run two sequences in parallel
+            """,
+            code = """
+                id: parallel_sequences
+                namespace: company.team
+
+                tasks:
+                - id: parallel
+                    type: io.kestra.plugin.core.flow.Parallel
+                    tasks:
+                    - id: sequence1
+                        type: io.kestra.plugin.core.flow.Sequential
+                        tasks:
+                        - id: task1
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+
+                        - id: task2
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+
+                    - id: sequence2
+                        type: io.kestra.plugin.core.flow.Sequential
+                        tasks:
+                        - id: task3
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+
+                        - id: task4
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+            """
         )
     },
     aliases = "io.kestra.core.tasks.flows.Parallel"

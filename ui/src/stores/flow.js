@@ -2,7 +2,7 @@ import {h} from "vue";
 import {ElMessageBox} from "element-plus";
 import permission from "../models/permission";
 import action from "../models/action";
-import YamlUtils from "../utils/yamlUtils";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import Utils from "../utils/utils";
 import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
@@ -42,7 +42,7 @@ export default {
 
     actions: {
         onSaveMetadata({commit, state}){
-            commit("setFlowYaml", YamlUtils.updateMetadata(state.flowYaml, state.metadata));
+            commit("setFlowYaml", YAML_UTILS.updateMetadata(state.flowYaml, state.metadata));
             commit("setMetadata", null);
             commit("setHaveChange", true)
         },
@@ -113,7 +113,7 @@ export default {
                         title: this.$i18n.t("readonly property"),
                         message: this.$i18n.t("namespace and id readonly"),
                     }, {root: true});
-                    commit("setFlowYaml", YamlUtils.replaceIdAndNamespace(
+                    commit("setFlowYaml", YAML_UTILS.replaceIdAndNamespace(
                         source,
                         getters.id,
                         getters.namespace
@@ -330,7 +330,7 @@ export default {
                 })
         },
         saveFlow({commit}, options) {
-            const flowData = YamlUtils.parse(options.flow)
+            const flowData = YAML_UTILS.parse(options.flow)
             return this.$http.put(`${apiUrl(this)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
                     if (response.status >= 300) {
@@ -386,16 +386,16 @@ export default {
         },
         loadGraphFromSource({commit, state}, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
-            const flowParsed = YamlUtils.parse(options.flow);
+            const flowParsed = YAML_UTILS.parse(options.flow);
             let flowSource = options.flow
             if (!flowParsed.id || !flowParsed.namespace) {
-                flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
+                flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
             return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config, withCredentials: true})
                 .then(response => {
                     commit("setFlowGraph", response.data)
 
-                    let flow = YamlUtils.parse(options.flow);
+                    let flow = YAML_UTILS.parse(options.flow);
                     flow.id = state.flow?.id ?? flow.id;
                     flow.namespace = state.flow?.namespace ?? flow.namespace;
                     flow.source = options.flow;
@@ -427,10 +427,10 @@ export default {
         },
         getGraphFromSourceResponse(_, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
-            const flowParsed = YamlUtils.parse(options.flow);
+            const flowParsed = YAML_UTILS.parse(options.flow);
             let flowSource = options.flow
             if (!flowParsed.id || !flowParsed.namespace) {
-                flowSource = YamlUtils.updateMetadata(flowSource, {id: "default", namespace: "default"})
+                flowSource = YAML_UTILS.updateMetadata(flowSource, {id: "default", namespace: "default"})
             }
             return this.$http.post(`${apiUrl(this)}/flows/graph`, flowSource, {...config})
                 .then(response => response.data)
@@ -744,7 +744,7 @@ export default {
         flowHaveTasks(state, getters){
             if (getters.isFlow) {
                 const flow = state.isCreating ? getters.flow.source : state.flowYaml;
-                return flow ? YamlUtils.flowHaveTasks(flow) : false;
+                return flow ? YAML_UTILS.flowHaveTasks(flow) : false;
             } else return false;
         },
         nextRevision(_state, getters){
@@ -755,7 +755,7 @@ export default {
         },
         flowParsed(state){
             try{
-                return YamlUtils.parse(state.flowYaml)
+                return YAML_UTILS.parse(state.flowYaml)
             }catch{
                 return undefined
             }
@@ -767,7 +767,7 @@ export default {
             return state.flow.id;
         },
         flowYamlMetadata(state){
-            return YamlUtils.parseMetadata(state.flowYaml);
+            return YAML_UTILS.parseMetadata(state.flowYaml);
         }
     }
 }

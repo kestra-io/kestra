@@ -318,6 +318,9 @@ public class JsonSchemaGenerator {
                 if (pluginPropertyAnnotation.beta()) {
                     memberAttributes.put("$beta", true);
                 }
+                if (pluginPropertyAnnotation.internalStorageURI()) {
+                    memberAttributes.put("$internalStorageURI", true);
+                }
             }
 
             Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);

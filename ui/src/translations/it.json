@@ -144,9 +144,11 @@
     "continue backfill": "Continua il backfill",
     "continue backfills": "Continua i backfills",
     "copied": "Copiato",
+    "copied_logs_to_clipboard": "Log copiati negli appunti.",
     "copy": "Copia",
     "copy logs": "Copia logs",
     "copy url": "Copia URL",
+    "copy_to_clipboard": "Copia negli appunti",
     "create": "Crea",
     "create first task": "Crea il tuo primo task",
     "create_custom_dashboard": "Crea nuovo dashboard",
@@ -429,8 +431,6 @@
     "execute the flow": "Esegui il flow <code>{id}</code>",
     "execution": "Esecuzione",
     "execution already finished": "Esecuzione <code>{executionId}</code> già terminata",
-    "execution failed header": "Esecuzione fallita!",
-    "execution failed message": "Con ultimo errore: <code>{message}</code>",
     "execution labels": "Etichette di esecuzione",
     "execution not found": "Esecuzione <code>{executionId}</code> non trovata",
     "execution not in state FAILED": "Esecuzione <code>{executionId}</code> non in stato FAILED",
@@ -447,6 +447,7 @@
       "metrics": "Elimina metriche",
       "storage": "Elimina file di storage interni"
     },
+    "execution_failed": "Esecuzione fallita! L'ultimo errore è stato",
     "execution_guide": {
       "get_started": {
         "text": "Segui la Guida rapida per installare Kestra e iniziare a creare i tuoi primi workflow.",
@@ -461,6 +462,8 @@
         "title": "Componenti del Workflow"
       }
     },
+    "execution_starts_progress": "Una volta avviata l'esecuzione, vedrai gli aggiornamenti sul progresso qui.",
+    "execution_status": "L'esecuzione è:",
     "executions": "Esecuzioni",
     "executions deleted": "<code>{executionCount}</code> esecuzione/i eliminate",
     "executions duration (in minutes)": "Durata totale delle esecuzioni (in minuti)",
@@ -770,6 +773,7 @@
       "adding": "+ Aggiungi un {what}",
       "adding_default": "+ Aggiungi un nuovo value",
       "creation": {
+        "after execution": "Aggiungi un blocco after execution",
         "error handlers": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
         "select": "Seleziona una {section}",
@@ -800,6 +804,7 @@
         "yaml": "Editor YAML"
       },
       "save": {
+        "after execution": "Salva task",
         "error handlers": "Salva gestore errori",
         "finally": "Salva task",
         "input": "Salva input",
@@ -807,6 +812,7 @@
         "triggers": "Salva trigger"
       },
       "sections": {
+        "after_execution": "Dopo l'Esecuzione",
         "error_handlers": "Gestori degli Errori",
         "finally": "Infine",
         "general": "Proprietà generali",
@@ -820,6 +826,7 @@
     "no_logs_data": "Nessun dato",
     "no_logs_data_description": "O non ci sono flow in esecuzione, oppure potrebbe essere necessario modificare i filtri.",
     "no_namespaces": "Nessun namespace corrisponde ai criteri di ricerca.",
+    "no_tasks_running": "Nessun task è ancora in esecuzione.",
     "now": "Ora",
     "of": "di",
     "ok": "OK",
@@ -1028,6 +1035,7 @@
             "editor_type": "Tipo Editor Predefinito",
             "execute_default_tab": "Scheda di Esecuzione Predefinita",
             "execute_flow": "Esegui il Flow",
+            "flow_default_tab": "Scheda Flow Predefinita",
             "language": "Lingua",
             "log_display": "Visualizzazione Log predefinita",
             "log_level": "Livello di Log predefinito"

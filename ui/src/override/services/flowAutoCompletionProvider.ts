@@ -1,6 +1,6 @@
 import type {Store} from "vuex";
 import type {JSONSchema} from "@kestra-io/ui-libs";
-import YamlUtils, {YamlElement} from "../../utils/yamlUtils";
+import {YamlUtils as YAML_UTILS, YamlElement} from "@kestra-io/ui-libs";
 import {QUOTE, YamlNoAutoCompletion} from "../../services/autoCompletionProvider";
 import RegexProvider from "../../utils/regex";
 
@@ -33,16 +33,17 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion {
             "parents",
             "error",
             "secret(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:MY_SECRET}" + QUOTE + ")",
-            "kv(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:my_key}" + QUOTE + ")"
+            "kv(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:my_key}" + QUOTE + ")",
+            "kestra"
         ]);
     }
 
     private tasks(source: string): any[] {
-        const tasksFromTasksProp = YamlUtils.extractFieldFromMaps(source, "tasks")
+        const tasksFromTasksProp = YAML_UTILS.extractFieldFromMaps(source, "tasks")
             .flatMap(allTasks => allTasks.tasks);
-        const tasksFromTaskProp = YamlUtils.extractFieldFromMaps(source, "task")
+        const tasksFromTaskProp = YAML_UTILS.extractFieldFromMaps(source, "task")
             .map(task => task.task)
-            .flatMap(task => YamlUtils.pairsToMap(task) ?? [])
+            .flatMap(task => YAML_UTILS.pairsToMap(task) ?? [])
 
         return [...tasksFromTasksProp, ...tasksFromTaskProp]
             .filter(task => typeof task?.get === "function" && task?.get("id"));
@@ -102,6 +103,8 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion {
                 return Promise.resolve(["id", "startDate", "attemptsCount", "parentId", "value", "iteration"]);
             case "error":
                 return Promise.resolve(["taskId", "message", "stackTrace"]);
+            case "kestra":
+                return Promise.resolve(["environment", "url"]);
             default: {
                 const match = parentField.match(/^outputs\.([^.]+)$/);
                 if (match) {

@@ -17,4 +17,4 @@ tasks:
   - id: assert
     type: io.kestra.plugin.core.execution.Assert
     conditions:
-      - "{{ outputs.after.value | number - outputs.before.value | number > 5 }}"
+      - "{{ outputs.after.value | number - outputs.before.value | number >= 5 }}"

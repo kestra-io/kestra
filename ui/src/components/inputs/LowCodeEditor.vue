@@ -123,7 +123,7 @@
     import {Topology} from "@kestra-io/ui-libs";
 
     // Utils
-    import {YamlUtils} from "@kestra-io/ui-libs";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../utils/constants";
     import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
@@ -250,7 +250,7 @@
     // Source edit functions
 
     const onDelete = (event) => {
-        const flowParsed = YamlUtils.parse(props.source);
+        const flowParsed = YAML_UTILS.parse(props.source);
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             () => {
@@ -269,7 +269,7 @@
                 }
                 emit(
                     "on-edit",
-                    YamlUtils.deleteTask(props.source, event.id, section),
+                    YAML_UTILS.deleteTask(props.source, event.id, section),
                     true,
                 );
             },
@@ -306,16 +306,16 @@
 
     const confirmEdit = (event) => {
         const source = props.source;
-        const task = YamlUtils.extractTask(props.source, YamlUtils.parse(event).id);
+        const task = YAML_UTILS.extractTask(props.source, YAML_UTILS.parse(event).id);
         if (
             task === undefined ||
-            (task && YamlUtils.parse(event).id === taskEditData.value.oldTaskId)
+            (task && YAML_UTILS.parse(event).id === taskEditData.value.oldTaskId)
         ) {
             switch (taskEditData.value.action) {
             case "create_task":
                 emit(
                     "on-edit",
-                    YamlUtils.insertTask(
+                    YAML_UTILS.insertTask(
                         source,
                         taskEditData.value.insertionDetails[0],
                         event,
@@ -327,7 +327,7 @@
             case "edit_task":
                 emit(
                     "on-edit",
-                    YamlUtils.replaceTaskInDocument(
+                    YAML_UTILS.replaceTaskInDocument(
                         source,
                         taskEditData.value.oldTaskId,
                         event,
@@ -338,7 +338,7 @@
             case "add_flowable_error":
                 emit(
                     "on-edit",
-                    YamlUtils.insertErrorInFlowable(
+                    YAML_UTILS.insertErrorInFlowable(
                         props.source,
                         event,
                         taskEditData.value.taskId,
@@ -352,7 +352,7 @@
                 variant: "error",
                 title: t("error detected"),
                 message: t("Task Id already exist in the flow", {
-                    taskId: YamlUtils.parse(event).id,
+                    taskId: YAML_UTILS.parse(event).id,
                 }),
             });
         }

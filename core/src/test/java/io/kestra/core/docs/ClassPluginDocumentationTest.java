@@ -124,7 +124,7 @@ class ClassPluginDocumentationTest {
             PluginClassAndMetadata<? extends TaskRunner<?>> metadata = PluginClassAndMetadata.create(scan, Process.class, Process.class, null);
             ClassPluginDocumentation<? extends TaskRunner<?>> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
-            assertThat((Map<?, ?>) doc.getPropertiesSchema().get("properties"), anEmptyMap());
+            assertThat(((Map<?, ?>) doc.getPropertiesSchema().get("properties")).get("version"), notNullValue());
             assertThat(doc.getCls(), is("io.kestra.plugin.core.runner.Process"));
             assertThat(doc.getPropertiesSchema().get("title"), is("Task runner that executes a task as a subprocess on the Kestra host."));
             assertThat(doc.getDefs(), anEmptyMap());
@@ -146,7 +146,7 @@ class ClassPluginDocumentationTest {
             assertThat(doc.getCls(), is("io.kestra.core.models.property.DynamicPropertyExampleTask"));
             assertThat(doc.getDefs(), aMapWithSize(6));
             Map<String, Object> properties = (Map<String, Object>) doc.getPropertiesSchema().get("properties");
-            assertThat(properties, aMapWithSize(20));
+            assertThat(properties, aMapWithSize(21));
 
             Map<String, Object> number = (Map<String, Object>) properties.get("number");
             assertThat(number.get("oneOf"), notNullValue());
@@ -161,6 +161,10 @@ class ClassPluginDocumentationTest {
             assertThat(withDefault.get("type"), is("string"));
             assertThat(withDefault.get("default"), is("Default Value"));
             assertThat(withDefault.get("$dynamic"), is(true));
+
+            Map<String, Object> internalStorageURI = (Map<String, Object>) properties.get("uri");
+            assertThat(internalStorageURI.get("type"), is("string"));
+            assertThat(internalStorageURI.get("$internalStorageURI"), is(true));
         }));
     }
 }

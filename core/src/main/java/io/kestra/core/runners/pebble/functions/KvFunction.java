@@ -1,6 +1,5 @@
 package io.kestra.core.runners.pebble.functions;
 
-import io.kestra.core.services.FlowService;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVValue;
 import io.pebbletemplates.pebble.error.PebbleException;
@@ -18,26 +17,29 @@ import java.util.Optional;
 @Slf4j
 @Singleton
 public class KvFunction implements Function {
-    @Inject
-    private FlowService flowService;
+
+    private static final String KEY_ARGS = "key";
+    private static final String ERROR_ON_MISSING_ARG = "errorOnMissing";
+    private static final String NAMESPACE_ARG = "namespace";
 
     @Inject
     private KVStoreService kvStoreService;
 
     @Override
     public List<String> getArgumentNames() {
-        return List.of("key", "namespace", "errorOnMissing");
+        return List.of(KEY_ARGS, NAMESPACE_ARG, ERROR_ON_MISSING_ARG);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public Object execute(Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         String key = getKey(args, self, lineNumber);
-        String namespace = (String) args.get("namespace");
-        Boolean errorOnMissing = (Boolean) args.get("errorOnMissing");
+        String namespace = (String) args.get(NAMESPACE_ARG);
+
+        Boolean errorOnMissing = Optional.ofNullable((Boolean) args.get(ERROR_ON_MISSING_ARG)).orElse(true);
 
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
-        String flowNamespace = flow.get("namespace");
+        String flowNamespace = flow.get(NAMESPACE_ARG);
         String flowTenantId = flow.get("tenantId");
 
         // we didn't check allowedNamespace here as it's checked in the kvStoreService itself
@@ -60,10 +62,10 @@ public class KvFunction implements Function {
     }
 
     protected String getKey(Map<String, Object> args, PebbleTemplate self, int lineNumber) {
-        if (!args.containsKey("key")) {
+        if (!args.containsKey(KEY_ARGS)) {
             throw new PebbleException(null, "The 'kv' function expects an argument 'key'.", lineNumber, self.getName());
         }
 
-        return (String) args.get("key");
+        return (String) args.get(KEY_ARGS);
     }
 }

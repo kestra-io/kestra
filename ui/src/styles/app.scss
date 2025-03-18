@@ -47,8 +47,11 @@ html {
 
 * > {
     ::-webkit-scrollbar {
-        height: 5px !important;
-        width: 5px !important;
+        width: 15px !important;
+
+        :horizontal {
+            height: 15px !important;
+        }
     }
 
     ::-webkit-scrollbar-track {
@@ -57,7 +60,8 @@ html {
 
     ::-webkit-scrollbar-thumb {
         background: var(--ks-border-primary) !important;
-        border-radius: 5px !important;
+        border-radius: 8px !important;
+        border: 4px solid var(--ks-background-body) !important;
     }
 }
 

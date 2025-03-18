@@ -512,23 +512,11 @@
     .monaco-editor {
         .monaco-scrollable-element {
             > .scrollbar {
-                &.vertical {
-                    width: 5px !important;
-                    
-                    .slider {
-                        width: 5px !important;
-                        background: var(--ks-border-primary) !important;
-                        border-radius: 5px !important;
-                    }
-                }
-                
-                &.horizontal {
-                    height: 5px !important;
-                    
-                    .slider {
-                        background: var(--ks-border-primary) !important;
-                        border-radius: 5px !important;
-                    }
+                .slider {
+                    width: 13px !important;
+                    background: var(--ks-border-primary) !important;
+                    border-radius: 8px !important;
+                    border: 4px solid var(--ks-background-body) !important;
                 }
             }
         }

@@ -36,21 +36,7 @@
                 v-html="renderedMarkdown"
             />
         </div>
-        <el-tooltip 
-            :content="$t('copied')" 
-            :visible="isCopied"
-            placement="left"
-            trigger="manual"
-        >
-            <template #default>
-                <el-icon 
-                    class="copy-icon icon_container" 
-                    @click="copyToClipboard(log)"
-                >
-                    <component :is="'Copy'" />
-                </el-icon>
-            </template>
-        </el-tooltip>
+        <CopyToClipboard :text="`${log.level} ${log.timestamp} ${log.message}`" link />
     </div>
 </template>
 <script>
@@ -58,16 +44,15 @@
     import xss from "xss";
     import * as Markdown from "../../utils/markdown";
     import MenuRight from "vue-material-design-icons/MenuRight.vue";
-    import Copy from "vue-material-design-icons/ContentCopy.vue";
     import linkify from "./linkify";
-
+    import CopyToClipboard from "../layout/CopyToClipboard.vue";
 
     let convert = new Convert();
 
     export default {
         components: {
             MenuRight,
-            Copy
+            CopyToClipboard
         },
         props: {
             cursor: {
@@ -99,7 +84,6 @@
             return {
                 renderedMarkdown: undefined,
                 logsFontSize: parseInt(localStorage.getItem("logsFontSize") || "12"),
-                isCopied: false
             };
         },
         async created() {
@@ -204,18 +188,6 @@
                 });
             },
         },
-        methods: {
-            copyToClipboard(log){
-                let text = log.timestamp + " " +log.message;
-                navigator.clipboard.writeText(text)
-                    .then(()=>{
-                        this.isCopied = true;
-                        setTimeout(() =>{
-                            this.isCopied = false;
-                        }, 500);
-                    });
-            }
-        }
     };
 </script>
 <style scoped lang="scss">
@@ -226,7 +198,6 @@ div.line {
     display: flex;
     align-items: flex-start;
     gap: 1rem;
-    position: relative;
 
     border-left-width: 2px !important;
     border-left-style: solid;
@@ -241,18 +212,6 @@ div.line {
 
     .icon_container {
         margin-left: -0.90rem;
-    }
-    .copy-icon {
-    cursor: pointer;
-    position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
-    opacity: 0;
-    transition: opacity 0.2s ease-in-out;
-    }
-
-    &:hover .copy-icon {
-        opacity: 1;
     }
 
     .log-level {

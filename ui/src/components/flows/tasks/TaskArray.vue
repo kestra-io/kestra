@@ -28,7 +28,6 @@
     import {ref} from "vue";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../code/utils/icons";
-    import YamUtils from "../../../utils/yamlUtils";
 
     import InputText from "../../code/components/inputs/InputText.vue";
     import Add from "../../code/components/Add.vue";

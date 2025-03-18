@@ -1,5 +1,5 @@
 import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
-import YamlUtils from "../utils/yamlUtils";
+import {YamlUtils} from "@kestra-io/ui-libs";
 
 export default {
     namespaced: true,

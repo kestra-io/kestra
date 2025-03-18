@@ -34,9 +34,9 @@
         "reorder",
     ]);
 
-    const props = defineProps({
-        flow: {type: String, required: true},
-    });
+    const props = defineProps<{
+        flow: string;
+    }>();
 
     const flowBreadcrumbs = computed(() => YAML_UTILS.parse(props.flow) as Record<string, string>)
     const metadata = computed(() => YAML_UTILS.getMetadata(props.flow));

@@ -1034,6 +1034,7 @@
             "editor_type": "Standard-Editor-Typ",
             "execute_default_tab": "Standard-Ausführungs-Registerkarte",
             "execute_flow": "Flow ausführen",
+            "flow_default_tab": "Standard-Flow-Registerkarte",
             "language": "Sprache",
             "log_display": "Standard-Log-Anzeige",
             "log_level": "Standard-Log-Ebene"

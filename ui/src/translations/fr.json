@@ -1034,6 +1034,7 @@
             "editor_type": "Type d'Éditeur par Défaut",
             "execute_default_tab": "Onglet d'exécution par défaut",
             "execute_flow": "Exécuter le flow",
+            "flow_default_tab": "Onglet Flow par Défaut",
             "language": "Langue",
             "log_display": "Affichage des journaux par défaut",
             "log_level": "Niveau d'affichage des journaux par défaut"

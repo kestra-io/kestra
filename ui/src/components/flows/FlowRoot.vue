@@ -170,6 +170,7 @@
                         props: {
                             expandedSubflows: this.expandedSubflows,
                             isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
+                            beta: localStorage.getItem("multiPanelEditor") === "true"
                         },
                     });
                 }
@@ -311,6 +312,7 @@
                             },
                         },
                     ],
+                    beta: this.tabs.find(tab => tab.name === this.$route.params.tab)?.props?.beta,
                 };
             },
             tabs() {

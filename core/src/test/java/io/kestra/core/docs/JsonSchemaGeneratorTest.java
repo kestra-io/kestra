@@ -225,8 +225,9 @@ class JsonSchemaGeneratorTest {
     void testEnum() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(4));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(5));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("uri").get("$internalStorageURI"), is(true));
     }
 
     @SuppressWarnings("unchecked")
@@ -315,6 +316,9 @@ class JsonSchemaGeneratorTest {
         @PluginProperty
         @Schema(title = "Title from the attribute")
         private TestClass testClass;
+
+        @PluginProperty(internalStorageURI = true)
+        private String uri;
 
         @PluginProperty
         @Schema(

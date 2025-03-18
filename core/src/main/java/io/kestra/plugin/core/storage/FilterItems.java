@@ -59,10 +59,10 @@ import java.util.Map;
 public class FilterItems extends Task implements RunnableTask<FilterItems.Output> {
 
     @Schema(
-        title = "The file to be filtered.",
-        description = "Must be a `kestra://` internal storage URI."
+        title = "The file to be filtered."
     )
     @NotNull
+    @PluginProperty(internalStorageURI = true)
     private Property<String> from;
 
     @Schema(

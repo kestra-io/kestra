@@ -6,7 +6,7 @@
         The pattern is also defined in RunContextLogger.FileAppender.
         Be careful to change it in both places.
     -->
-    <property name="pattern" value="%d{ISO8601} %highlight(%-5.5level) %magenta(%-12.36thread) %cyan(%-12.36logger{36}) %msg%n" />
+    <property name="pattern" value="%date{HH:mm:ss}.%ms %highlight(%-5.5level) %magenta(%-12.36thread) %cyan(%-12.36logger{36}) %msg%n" />
 
     <logger name="io.kestra" level="INFO" />
     <logger name="flow" level="INFO" />

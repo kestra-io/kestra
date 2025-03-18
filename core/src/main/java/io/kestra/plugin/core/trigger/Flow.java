@@ -255,13 +255,19 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             }
         }
 
+        List<Label> labels = LabelService.fromTrigger(runContext, flow, this);
+        current.getLabels().stream()
+            .filter(label -> label.key().equals(Label.CORRELATION_ID))
+            .findFirst()
+            .ifPresent(label -> labels.add(label));
+
         Execution.ExecutionBuilder builder = Execution.builder()
             .id(IdUtils.create())
             .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
-            .labels(LabelService.fromTrigger(runContext, flow, this))
+            .labels(labels)
             .state(new State())
             .trigger(ExecutionTrigger.of(
                 this,

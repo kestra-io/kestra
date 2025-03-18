@@ -146,7 +146,7 @@ class ClassPluginDocumentationTest {
             assertThat(doc.getCls(), is("io.kestra.core.models.property.DynamicPropertyExampleTask"));
             assertThat(doc.getDefs(), aMapWithSize(6));
             Map<String, Object> properties = (Map<String, Object>) doc.getPropertiesSchema().get("properties");
-            assertThat(properties, aMapWithSize(20));
+            assertThat(properties, aMapWithSize(21));
 
             Map<String, Object> number = (Map<String, Object>) properties.get("number");
             assertThat(number.get("oneOf"), notNullValue());
@@ -161,6 +161,10 @@ class ClassPluginDocumentationTest {
             assertThat(withDefault.get("type"), is("string"));
             assertThat(withDefault.get("default"), is("Default Value"));
             assertThat(withDefault.get("$dynamic"), is(true));
+
+            Map<String, Object> internalStorageURI = (Map<String, Object>) properties.get("uri");
+            assertThat(internalStorageURI.get("type"), is("string"));
+            assertThat(internalStorageURI.get("$internalStorageURI"), is(true));
         }));
     }
 }

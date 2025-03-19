@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, watch} from "vue";
+    import {computed, Ref, watch} from "vue";
     import {useStorage} from "@vueuse/core";
     import {useStore} from "vuex";
 
@@ -50,7 +50,6 @@
             return
         }
         const {prepend, panel} = getPanelFromValue(tabValue)
-        panel.size = Math.max(100 / (panels.value.length + 1), 10)
         if(prepend){
             panels.value.unshift(panel)
         }else{
@@ -74,31 +73,38 @@
 
     const {setupInitialCodeTab} = useInitialCodeTabs()
 
-    const panels = useStorage(
+    const panels: Ref<Panel[]> = useStorage<any>(
         `panels-${flow.value.namespace}-${flow.value.id}`,
-        DEFAULT_ACTIVE_TABS.map((t) => getPanelFromValue(t)).filter(p => p.panel?.activeTab).map(p => p.panel) ?? [],
+        DEFAULT_ACTIVE_TABS
+            .map((t):Panel =>
+                ({
+                    ...getPanelFromValue(t).panel,
+                    size: 100 / DEFAULT_ACTIVE_TABS.length
+                })),
         undefined,
         {
             serializer: {
-                write: (v: Panel[]) =>
-                    JSON.stringify(v.map(p => ({
+                write(v: Panel[]){
+                    return JSON.stringify(v.map(p => ({
                         tabs: p.tabs.map(t => t.value),
                         activeTab: p.activeTab?.value,
                         size: p.size,
                     })))
-                ,
-                read: (v?: string) => {
+                },
+                read(v?: string) {
                     if(v){
-                        const panels = JSON.parse(v)
-                        return panels.map((p: {tabs: string[], activeTab: string, size: number}) => {
-                            const tabs = p.tabs.map(t => setupInitialCodeTab(t) ?? EDITOR_ELEMENTS.find(e => e.value === t)!)
-                            const activeTab = tabs.find(t => t.value === p.activeTab)!
-                            return {
-                                activeTab,
-                                tabs,
-                                size: p.size
-                            }
-                        })
+                        const panels: {tabs: string[], activeTab: string, size: number}[] = JSON.parse(v)
+                        return panels
+                            .filter((p) => p.tabs.length)
+                            .map((p):Panel => {
+                                const tabs = p.tabs.map(t => setupInitialCodeTab(t) ?? EDITOR_ELEMENTS.find(e => e.value === t)!)
+                                const activeTab = tabs.find(t => t.value === p.activeTab)!
+                                return {
+                                    activeTab,
+                                    tabs,
+                                    size: p.size
+                                }
+                            })
                     }else{
                         return null
                     }

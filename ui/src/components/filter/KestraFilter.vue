@@ -672,7 +672,7 @@
         (options) => {
             if (options.length || !dropdowns.value.first?.shown) return;
 
-            if (!getInputValue()?.startsWith(TEXT_PREFIX) && select.value) {
+            if (!getInputValue()?.startsWith(TEXT_PREFIX) && select.value && !props.searchCallback) {
                 select.value.states.inputValue = `${TEXT_PREFIX}${getInputValue()}`;
             }
         },
@@ -701,9 +701,10 @@
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
-                const index = currentFilters.value.findIndex(
-                    (i) => i.label === label,
-                );
+                const index = currentFilters.value.findIndex((i) => {
+                    console.log(i);
+                    return i.label === label;
+                });
 
                 const value = wholeSearchContent
                     .at(-1)

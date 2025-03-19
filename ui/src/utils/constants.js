@@ -38,6 +38,7 @@ export const storageKeys = {
     PAGINATION_SIZE: "paginationSize",
     IMPERSONATE: "impersonate",
     EDITOR_VIEW_TYPE: "editorViewType",
+    DASHBORD_SELECTED: "dashboardSelected"
 }
 
 export const executeFlowBehaviours = {

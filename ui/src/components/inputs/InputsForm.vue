@@ -516,14 +516,8 @@
                 const value = this.inputsValues[inputId];
                 if (!value) return [];
                 
-                try {
-                    if (typeof value === "string") {
-                        return JSON.parse(value);
-                    }
-                    return Array.isArray(value) ? value : [value];
-                } catch (error) {
-                    console.warn("Failed to parse array value:", error);
-                    return [];
+                if (typeof value === "string") {
+                    return JSON.parse(value);
                 }
             },
             addNewArrayItem(input) {
@@ -534,17 +528,9 @@
             },
             updateArrayValue(input) {
                 const validItems = this.editableItems[input.id]
-                    .filter(item => {
-                        if (input.itemType === "INT") {
-                            const parsed = parseInt(item);
-                            return !isNaN(parsed) && item.trim() !== "";
-                        }
-                        return item && item.trim() !== "";
-                    })
-                    .map(item => {
-                        const trimmed = item.trim();
-                        return input.itemType === "INT" ? parseInt(trimmed) : trimmed;
-                    });
+                    .filter(item => item && item.trim() !== "")
+                    .map(item => item.trim());
+                    
                 this.inputsValues[input.id] = JSON.stringify(validItems);
                 this.onChange(input);
             },
@@ -553,15 +539,13 @@
                 this.updateArrayValue(input);
             },
             toggleArrayEdit(inputId) {
-                if (this.editingArrayId === inputId) {
-                    if (this.editableItems[inputId]) {
-                        this.updateArrayValue(this.inputsMetaData.find(i => i.id === inputId));
-                    }
-                    this.editingArrayId = null;
-                } else {
-                    const values = this.parseArrayValue(inputId);
-                    this.editableItems[inputId] = values.map(v => v?.toString() || "");
-                    this.editingArrayId = inputId;
+                const isEditing = this.editingArrayId === inputId;
+                if (isEditing && this.editableItems[inputId]) {
+                    this.updateArrayValue(this.inputsMetaData.find(i => i.id === inputId));
+                }
+                this.editingArrayId = isEditing ? null : inputId;
+                if (!isEditing) {
+                    this.editableItems[inputId] = this.parseArrayValue(inputId).map(v => v?.toString() || "");
                 }
             },
             moveArrayItem(input, direction, index) {
@@ -658,7 +642,6 @@
         gap: 4px;
 
         :deep(.el-tag) {
-            margin: 0;
             display: inline-flex;
             align-items: center;
             border-radius: 4px;
@@ -682,7 +665,11 @@
 
             :deep(.el-input__inner) {
                 color: #eeae7e !important;
-                font-size: 12px !important;
+                font-size: var(--font-size-sm) !important;
+
+                html.light & {
+                    color: #dd5f00 !important;
+                }
             }
         }
 
@@ -706,7 +693,7 @@
             right: 2px;
             top: 50%;
             transform: translateY(-50%);
-            padding: 2px;
+            padding: 3px;
             border-left: 1px solid var(--ks-border-primary);
             color: var(--ks-content-secondary);
             background: transparent;

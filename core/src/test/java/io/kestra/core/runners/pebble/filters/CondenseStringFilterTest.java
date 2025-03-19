@@ -20,13 +20,6 @@ public class CondenseStringFilterTest {
     @Inject
     VariableRenderer variableRenderer;
 
-    static Stream<Arguments> source() {
-        return Stream.of(
-            Arguments.of("{{ \"hello\n world\" | condense }}", "hello world"),
-            Arguments.of("{{ {\"field\":\"hello\"} | condense }}", String.class.getName())
-        );
-    }
-
     @Test
     void condenseValidStringTest() throws IllegalVariableEvaluationException {
         String exp = "{{ \"hello\n world\" | condense }}";

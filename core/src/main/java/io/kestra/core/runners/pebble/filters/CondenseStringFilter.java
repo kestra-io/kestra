@@ -12,9 +12,11 @@ public class CondenseStringFilter implements Filter {
 
     @Override
     public Object apply(Object input, Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) throws PebbleException {
-        if (input instanceof String) return ((String) input).replace("\n", "");
+        if (input instanceof String str) {
+            return str.replace("\n", "");
+        }
 
-        throw new PebbleException(null, "condense can only be applied on strings");
+        throw new PebbleException(null, "condense can only be applied on strings", lineNumber, self.getName());
     }
 
     @Override

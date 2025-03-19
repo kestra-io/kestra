@@ -417,7 +417,7 @@
         flex: 1;
         align-items: end;
         padding-bottom: 0;
-        font-size: .9rem;
+        font-size: .8rem;
         line-height: 1.5rem;
         &.dragover {
             background-color: var(--ks-background-card-hover);

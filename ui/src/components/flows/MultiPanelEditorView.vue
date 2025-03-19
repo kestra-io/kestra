@@ -135,7 +135,7 @@
             background: none;
             border: none;
             padding: .5rem;
-            font-size: 1rem;
+            font-size: .8rem;
             color: var(--ks-color-text-primary);
             display: inline-flex;
             align-items: center;

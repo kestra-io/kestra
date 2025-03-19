@@ -57,7 +57,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
      * If the flow tab has recorded changes, show all representations as dirty
      */
     const isFlowDirty = computed(() => store.state.editor.tabs.some((t:any) => t.flow && t.dirty))
-    const currentTab = computed(() => store.state.editor.current.path)
+    const currentTab = computed(() => store.state.editor.current?.path)
 
     function getPanelsFromCodeEditorTabs(codeTabs: EditorTab[]){
         const tabs = codeTabs.map(getTabFromCodeTab)

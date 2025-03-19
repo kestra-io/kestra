@@ -187,8 +187,6 @@
                             <el-input
                                 v-model="editableItems[input.id][index]"
                                 class="array-cell"
-                                @blur="updateArrayValue(input)"
-                                @keyup.enter="$event.target.blur()"
                             />
                             <el-button @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
                             <div class="d-flex flex-column controls-input">

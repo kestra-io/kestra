@@ -1,7 +1,7 @@
 <template>
     <template v-if="ready">
-        <flow-root-top-bar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName()" />
-        <tabs
+        <FlowRootTopBar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName()" />
+        <Tabs
             @expand-subflow="updateExpandedSubflows"
             route-name="flows/update"
             ref="currentTab"

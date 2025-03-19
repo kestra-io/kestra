@@ -1,6 +1,6 @@
 <template>
     <Splitpanes class="default-theme" @resize="onResize">
-        <Pane v-for="(panel, panelIndex) in panels" :key="panelIndex" :size="panel.size">
+        <Pane v-for="(panel, panelIndex) in panels" min-size="10" :key="panelIndex" :size="panel.size">
             <div class="editor-tabs-container">
                 <div
                     class="editor-tabs"
@@ -365,7 +365,8 @@
         const panel = panels.value[panelIndex];
         const newPanel = {
             tabs: [panel.activeTab],
-            activeTab: panel.activeTab
+            activeTab: panel.activeTab,
+            size: Math.max(100 / (panels.value.length + 1), 10)
         }
         panels.value.splice(panelIndex + 1, 0, newPanel)
 
@@ -419,6 +420,8 @@
         padding-bottom: 0;
         font-size: .8rem;
         line-height: 1.5rem;
+        overflow-x: auto;
+        scrollbar-width: none;
         &.dragover {
             background-color: var(--ks-background-card-hover);
         }

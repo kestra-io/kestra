@@ -15,7 +15,7 @@
             <EditorButtonsWrapper />
         </div>
         <div class="editor-wrapper">
-            <MultiPanelTabs v-model="panels" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;" @remove-tab="onRemoveTab" />
+            <MultiPanelTabs v-model="panels" class="editor-panels" @remove-tab="onRemoveTab" />
         </div>
     </div>
 </template>
@@ -50,6 +50,7 @@
             return
         }
         const {prepend, panel} = getPanelFromValue(tabValue)
+        panel.size = Math.max(100 / (panels.value.length + 1), 10)
         if(prepend){
             panels.value.unshift(panel)
         }else{
@@ -135,6 +136,10 @@
     .editor-wrapper{
         flex: 1;
         position: relative;
+    }
+
+    .editor-panels{
+        position: absolute;
     }
 
     .tabs-wrapper{

@@ -1,19 +1,23 @@
 <template>
-    <div class="tabs-wrapper">
-        <div class="tabs">
-            <button
-                v-for="element of EDITOR_ELEMENTS"
-                :key="element.value"
-                :class="{active: activeTabs.includes(element.value)}"
-                @click="setTabValue(element.value)"
-            >
-                <component class="tabs-icon" :is="element.button.icon" />
-                {{ element.button.label }}
-            </button>
+    <div class="multi-panel-editor-wrapper">
+        <div class="tabs-wrapper">
+            <div class="tabs">
+                <button
+                    v-for="element of EDITOR_ELEMENTS"
+                    :key="element.value"
+                    :class="{active: activeTabs.includes(element.value)}"
+                    @click="setTabValue(element.value)"
+                >
+                    <component class="tabs-icon" :is="element.button.icon" />
+                    {{ element.button.label }}
+                </button>
+            </div>
+            <EditorButtonsWrapper />
         </div>
-        <EditorButtonsWrapper />
+        <div class="editor-wrapper">
+            <MultiPanelTabs v-model="panels" style="position: absolute; top: 0; left: 0; right: 0; bottom: 0;" @remove-tab="onRemoveTab" />
+        </div>
     </div>
-    <MultiPanelTabs style="padding-top:57px;" v-model="panels" @remove-tab="onRemoveTab" />
 </template>
 
 <script setup lang="ts">
@@ -121,12 +125,23 @@
 </script>
 
 <style lang="scss" scoped>
+
+    .multi-panel-editor-wrapper{
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+    }
+
+    .editor-wrapper{
+        flex: 1;
+        position: relative;
+    }
+
     .tabs-wrapper{
         display:flex;
         align-items: center;
         justify-content: space-between;
         border-bottom: 1px solid var(--ks-border-primary);
-        position: absolute;
     }
     .tabs{
         padding: .5rem 1rem;

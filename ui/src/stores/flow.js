@@ -144,8 +144,11 @@ export default {
             })
                 .then((value) => {
                     if (
+                        topologyVisible &&
                         getters.flowHaveTasks &&
-                        topologyVisible
+                        // avoid sending empty errors
+                        // they make the backend fail
+                        flowParsed && (!flowParsed.errors || flowParsed.errors.every(e => typeof e.id === "string"))
                     ) {
                         if(!value.constraints) dispatch("fetchGraph");
                     }

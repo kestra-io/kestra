@@ -62,9 +62,9 @@
     const tabs = computed<{dirty:boolean}[]>(() => store.state.editor.tabs)
 
     async function save(){
-        const result = await store.dispatch("flow/saveAll")
+        await store.dispatch("flow/saveAll")
 
-        if(result === "redirect_to_update"){
+        if(isCreating.value){
             await router.push({
                 name: "flows/update",
                 params: {

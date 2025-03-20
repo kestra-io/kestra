@@ -2,8 +2,8 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.Dashboard;
-import io.kestra.core.models.dashboards.GlobalFilter;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.validations.ModelValidator;
@@ -13,8 +13,10 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.webserver.models.GlobalFilter;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
+import io.kestra.webserver.utils.TimeLineSearch;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -36,6 +38,8 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static io.kestra.core.utils.DateUtils.validateTimeline;
 
 @Validated
 @Controller("/api/v1/dashboards")
@@ -156,16 +160,20 @@ public class DashboardController {
     public PagedResults<Map<String, Object>> dashboardChart(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The chart id") @PathVariable String chartId,
-        @Parameter(description = "The filters to apply, some can override chart definition like labels & namespace") @Body GlobalFilter globalFilter
+        @Parameter(description = "The filters to apply, some can override chart definition like labels & namespace") @Body @Nullable GlobalFilter globalFilter
     ) throws IOException {
         String tenantId = tenantService.resolveTenant();
+        List<QueryFilter> filters = globalFilter.getFilters();
         Dashboard dashboard = dashboardRepository.get(tenantId, id).orElse(null);
         if (dashboard == null) {
             return null;
         }
 
-        ZonedDateTime endDate = globalFilter.getEndDate();
-        ZonedDateTime startDate = globalFilter.getStartDate();
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+        validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
+
+        ZonedDateTime endDate = timeLineSearch.getEndDate();
+        ZonedDateTime startDate = timeLineSearch.getStartDate();
         if (startDate == null || endDate == null) {
             endDate = ZonedDateTime.now();
             startDate = endDate.minus(dashboard.getTimeWindow().getDefaultDuration());
@@ -190,7 +198,7 @@ public class DashboardController {
             Integer pageNumber = globalFilter.getPageNumber();
             Integer pageSize = globalFilter.getPageSize();
 
-            dataChart.getData().setGlobalFilter(globalFilter);
+            dataChart.getData().setGlobalFilter(filters, startDate, endDate);
 
             // StartDate & EndDate are only set in the globalFilter for JDBC
             // TODO: Check if we can remove them from generate() for ElasticSearch as they are already set in the where property

@@ -27,6 +27,15 @@ public class TimeLineSearch {
             }
         }
 
+        if ((startDate != null || endDate != null) && timeRange != null) {
+            throw new IllegalArgumentException("Parameters 'startDate'/'endDate' and 'timeRange' are mutually exclusive");
+        }
+
+        if (timeRange != null) {
+            startDate = ZonedDateTime.now().minus(timeRange);
+            endDate = ZonedDateTime.now();
+        }
+
         return new TimeLineSearch(startDate, endDate, timeRange);
     }
     private static Duration parseDuration(String duration) {

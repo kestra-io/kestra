@@ -1,11 +1,13 @@
-package io.kestra.core.models.dashboards;
+package io.kestra.webserver.models;
 
+import io.kestra.core.models.QueryFilter;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -19,4 +21,5 @@ public class GlobalFilter {
     private Integer pageNumber;
     private String namespace;
     private Map<String, String> labels;
+    private List<QueryFilter> filters;
 }

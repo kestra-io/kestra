@@ -1,12 +1,11 @@
 package io.kestra.plugin.core.dashboard.data;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
-import io.kestra.core.models.dashboards.GlobalFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.models.dashboards.filters.GreaterThanOrEqualTo;
 import io.kestra.core.models.dashboards.filters.LessThanOrEqualTo;
 import io.kestra.core.repositories.LogRepositoryInterface;
@@ -17,6 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -35,20 +35,28 @@ public class Logs<C extends ColumnDescriptor<Logs.Fields>> extends DataFilter<Lo
     }
 
     @Override
-    public void setGlobalFilter(GlobalFilter globalFilter) {
+    public void setGlobalFilter(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate) {
         List<AbstractFilter<Fields>> where = this.getWhere() != null ? new ArrayList<>(this.getWhere()) : new ArrayList<>();
 
-        if (globalFilter.getNamespace() != null) {
-            where.removeIf(f -> f.getField().equals(Fields.NAMESPACE));
-            where.add(EqualTo.<Fields>builder().field(Fields.NAMESPACE).value(globalFilter.getNamespace()).build());
+        if (filters == null) {
+            return;
         }
-        if (globalFilter.getStartDate() != null || globalFilter.getEndDate() != null) {
+
+        List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
+        if (!namespaceFilters.isEmpty()) {
+            where.removeIf(filter -> filter.getField().equals(Logs.Fields.NAMESPACE));
+            namespaceFilters.forEach(f -> {
+                where.add(f.toDashboardFilterBuilder(Logs.Fields.NAMESPACE, f.value()));
+            });
+        }
+
+        if (startDate != null || endDate != null) {
             where.removeIf(f -> f.getField().equals(Fields.DATE));
-            if (globalFilter.getStartDate() != null) {
-                where.add(GreaterThanOrEqualTo.<Fields>builder().field(Fields.DATE).value(globalFilter.getStartDate().toInstant()).build());
+            if (startDate != null) {
+                where.add(GreaterThanOrEqualTo.<Logs.Fields>builder().field(Fields.DATE).value(startDate.toInstant()).build());
             }
-            if (globalFilter.getEndDate() != null) {
-                where.add(LessThanOrEqualTo.<Fields>builder().field(Fields.DATE).value(globalFilter.getEndDate().toInstant()).build());
+            if (endDate != null) {
+                where.add(LessThanOrEqualTo.<Logs.Fields>builder().field(Fields.DATE).value(endDate.toInstant()).build());
             }
         }
 

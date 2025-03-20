@@ -1,5 +1,6 @@
 package io.kestra.core.schedulers;
 
+import com.devskiller.friendly_id.FriendlyId;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.PluginDefault;
@@ -527,7 +528,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     void recoverLASTLongRunningExecution() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        String triggerId = "recoverLASTLongRunningExecution";
+        String triggerId = FriendlyId.createFriendlyId();
         Schedule schedule = Schedule.builder().id(triggerId).type(Schedule.class.getName()).cron("*/5 * * * * *").withSeconds(true).build();
         FlowWithSource flow = createLongRunningFlow(
             Collections.singletonList(schedule),
@@ -598,7 +599,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     void recoverNONELongRunningExecution() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        String triggerId = "recoverNONELongRunningExecution";
+        String triggerId = FriendlyId.createFriendlyId();
         Schedule schedule = Schedule.builder().id(triggerId).type(Schedule.class.getName()).cron("*/5 * * * * *").withSeconds(true).build();
         FlowWithSource flow = createLongRunningFlow(
             Collections.singletonList(schedule),

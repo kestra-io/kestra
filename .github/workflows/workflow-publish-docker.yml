@@ -38,12 +38,12 @@ jobs:
       matrix:
         image:
           - tag: ${{ needs.build-artifacts.outputs.docker-tag }}-no-plugins
-            packages: ""
+            packages: jattach
             python-libraries: ""
 
           - tag: ${{ needs.build-artifacts.outputs.docker-tag }}
             plugins: ${{ needs.build-artifacts.outputs.plugins }}
-            packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
+            packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip jattach
             python-libraries: kestra
     steps:
       - name: Checkout - Current ref

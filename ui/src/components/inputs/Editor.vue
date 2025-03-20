@@ -1,5 +1,5 @@
 <template>
-    <div class="ks-editor edit-flow-editor" :class="editorInputStyle">
+    <div class="ks-editor edit-flow-editor">
         <nav v-if="original === undefined && navbar" class="top-nav">
             <slot name="nav">
                 <div class="text-nowrap">
@@ -136,7 +136,6 @@
                 plugin: undefined,
                 taskType: undefined,
                 themeComputed: Utils.getTheme(),
-                editorInputStyle:"edit-flow-input"
             };
         },
         mounted() {

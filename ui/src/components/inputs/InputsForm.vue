@@ -13,7 +13,6 @@
                 <markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
             </template>
             <editor
-                class="edit-flow-input"
                 :full-height="false"
                 :input="true"
                 :navbar="false"
@@ -465,11 +464,6 @@
     height: 20px;
 }
 
-.edit-flow-input {
-    max-height: 40vh;
-}
-
-
 .hint {
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
@@ -513,6 +507,11 @@
         }
     }
 
+    :deep(.editor-container){
+        max-height: 200px;
+        overflow-y: scroll;
+    }
+    
     .el-input-file {
         display: flex;
         align-items: center;

@@ -8,8 +8,6 @@ import io.kestra.core.serializers.JacksonMapper;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Validator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.List;
@@ -22,31 +20,36 @@ import java.util.stream.Stream;
 /**
  * Factor class for constructing {@link StorageInterface} objects.
  */
-public final class StorageInterfaceFactory {
-
-    private static final Logger log = LoggerFactory.getLogger(StorageInterfaceFactory.class);
+public class StorageInterfaceFactory {
+    
     public static final String KESTRA_STORAGE_TYPE_CONFIG = "kestra.storage.type";
+
+    private final PluginRegistry pluginRegistry;
+    private final Validator validator;
+
+    public StorageInterfaceFactory(final PluginRegistry pluginRegistry,
+                                   final Validator validator) {
+        this.pluginRegistry = pluginRegistry;
+        this.validator = validator;
+    }
 
     /**
      * Factory method for constructing and validating new {@link StorageInterface} of the given type with the given configuration.
      *
-     * @param pluginRegistry      The {@link PluginRegistry}. cannot be {@code null}.
      * @param pluginId            The ID of the storage. cannot be {@code null}.
      * @param pluginConfiguration The configuration of the storage. cannot be {@code null}.
-     * @param validator           The {@link Validator}.
      * @return a new {@link StorageInterface}.
      * @throws KestraRuntimeException if no storage can be found.
      */
-    public static StorageInterface make(final PluginRegistry pluginRegistry,
-                                        final String pluginId,
-                                        final Map<String, Object> pluginConfiguration,
-                                        final Validator validator) {
+    public StorageInterface make(final StorageConfiguration storageConfiguration,
+                                 final String pluginId,
+                                 final Map<String, Object> pluginConfiguration) {
         Optional<Class<? extends StorageInterface>> optional = allStorageClasses(pluginRegistry)
             .filter(clazz -> Plugin.getId(clazz).map(id -> id.equalsIgnoreCase(pluginId)).orElse(false))
             .findFirst();
 
         if (optional.isEmpty()) {
-            String storageIds = getLoggableStorageIds(pluginRegistry);
+            String storageIds = getLoggableStorageIds();
             throw new KestraRuntimeException(String.format(
                 "No storage interface can be found for '%s=%s'. Supported types are: %s", KESTRA_STORAGE_TYPE_CONFIG, pluginId, storageIds
             ));
@@ -83,7 +86,7 @@ public final class StorageInterfaceFactory {
         }
 
         try {
-            plugin.init();
+            plugin = init(storageConfiguration, plugin);
         } catch (IOException e) {
             throw new KestraRuntimeException(String.format(
                 "Failed to initialize storage '%s'. Error: %s", pluginId, e.getMessage()), e
@@ -92,7 +95,13 @@ public final class StorageInterfaceFactory {
         return plugin;
     }
 
-    public static String getLoggableStorageIds(final PluginRegistry pluginRegistry) {
+    protected StorageInterface init(final StorageConfiguration storageConfiguration,
+                                    final StorageInterface plugin) throws IOException {
+        plugin.init();
+        return plugin;
+    }
+
+    public String getLoggableStorageIds() {
         return allIdsFor(allStorageClasses(pluginRegistry));
     }
 

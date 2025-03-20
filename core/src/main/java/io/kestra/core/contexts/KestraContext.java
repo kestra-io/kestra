@@ -25,7 +25,7 @@ public abstract class KestraContext {
     private static final AtomicReference<KestraContext> INSTANCE = new AtomicReference<>();
 
     // Properties
-    private static final String KESTRA_SERVER_TYPE = "kestra.server-type";
+    public static final String KESTRA_SERVER_TYPE = "kestra.server-type";
 
     /**
      * Gets the current {@link KestraContext}.

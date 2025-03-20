@@ -26,6 +26,7 @@ import io.kestra.core.runners.*;
 import io.kestra.core.server.ClusterEvent;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.Either;

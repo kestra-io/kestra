@@ -3,10 +3,10 @@ package io.kestra.jdbc.runner;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.server.AbstractServiceLivenessCoordinator;
 import io.kestra.core.server.ServerConfig;
-import io.kestra.core.server.Service;
 import io.kestra.core.server.Service.ServiceState;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceRegistry;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.jdbc.repository.AbstractJdbcServiceInstanceRepository;
 import io.micronaut.context.annotation.Requires;
@@ -69,7 +69,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
             final List<ServiceInstance> nonRunningWorkers = serviceInstanceRepository
                 .findAllNonRunningInstances(configuration, true)
                 .stream()
-                .filter(instance -> instance.is(Service.ServiceType.WORKER))
+                .filter(instance -> instance.is(ServiceType.WORKER))
                 .toList();
 
             // List of workers for which we don't know the actual state of tasks executions.
@@ -130,7 +130,7 @@ public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenes
 
             // Eventually restart workers tasks
             List<String> workerIdsHavingTasksToRestart = nonRespondingServices.stream()
-                .filter(instance -> instance.is(Service.ServiceType.WORKER))
+                .filter(instance -> instance.is(ServiceType.WORKER))
                 .filter(instance -> instance.config().workerTaskRestartStrategy().equals(WorkerTaskRestartStrategy.IMMEDIATELY))
                 .map(ServiceInstance::uid)
                 .toList();

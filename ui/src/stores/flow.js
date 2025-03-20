@@ -363,6 +363,63 @@ export default {
                 return response.data;
             })
         },
+        deleteFlowAndDependencies({getters, dispatch}){
+            const metadata = getters["flowYamlMetadata"];
+
+            return new Promise((resolve, reject) => this.$http
+                .get(
+                    `${apiUrl(this)}/flows/${metadata.namespace}/${
+                        metadata.id
+                    }/dependencies`,
+                    {params: {destinationOnly: true}}
+                )
+                .then((response) => {
+                    let warning = "";
+
+                    if (response.data && response.data.nodes) {
+                        const deps = response.data.nodes
+                            .filter(
+                                (n) =>
+                                    !(
+                                        n.namespace === metadata.namespace &&
+                                        n.id === metadata.id
+                                    )
+                            )
+                            .map(
+                                (n) =>
+                                    "<li>" +
+                                    n.namespace +
+                                    ".<code>" +
+                                    n.id +
+                                    "</code></li>"
+                            )
+                            .join("\n");
+
+                        if(deps.length){
+                            warning =
+                                "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
+                                "<div class=\"el-alert__content\">\n" +
+                                "<p class=\"el-alert__description\">\n" +
+                                this.$i18n.t("dependencies delete flow") +
+                                "<ul>\n" +
+                                deps +
+                                "</ul>\n" +
+                                "</p>\n" +
+                                "</div>\n" +
+                                "</div>";
+                        }
+                    }
+
+                    return this.$i18n.t("delete confirm", {name: metadata.id}) + warning;
+                })
+                .then((message) => {
+                    return this.$toast.bind({$t: this.$i18n.t})()
+                        .confirm(message, () => {
+                            resolve(dispatch("deleteFlow", metadata));
+                        })
+                }).catch(reject)
+            )
+        },
         deleteFlow({commit}, flow) {
             return this.$http.delete(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}`).then(() => {
                 commit("setFlow", null)
@@ -768,7 +825,7 @@ export default {
             return state.flow.id;
         },
         flowYamlMetadata(state){
-            return YAML_UTILS.parseMetadata(state.flowYaml);
+            return YAML_UTILS.getMetadata(state.flowYaml);
         }
     }
 }

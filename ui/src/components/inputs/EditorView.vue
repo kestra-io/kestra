@@ -465,7 +465,6 @@
     import action from "../../models/action";
     import {SECTIONS, storageKeys, editorViewTypes} from "../../utils/constants";
     import {Utils, YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    import {apiUrl} from "override/utils/route";
     import localUtils from "../../utils/utils";
 
     // editor components
@@ -486,7 +485,6 @@
     const emit = defineEmits(["follow", "expand-subflow"]);
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
-    const http = getCurrentInstance().appContext.config.globalProperties.$http;
     const tours = getCurrentInstance().appContext.config.globalProperties.$tours;
     const lowCodeEditorRef = ref(null);
     const tabsScrollRef = ref();
@@ -978,70 +976,17 @@
     };
 
     const deleteFlow = () => {
-        const metadata = store.getters["flow/flowYamlMetadata"];
-
-        return http
-            .get(
-                `${apiUrl(store)}/flows/${metadata.namespace}/${
-                    metadata.id
-                }/dependencies`,
-                {params: {destinationOnly: true}}
-            )
-            .then((response) => {
-                let warning = "";
-
-                if (response.data && response.data.nodes) {
-                    const deps = response.data.nodes
-                        .filter(
-                            (n) =>
-                                !(
-                                    n.namespace === metadata.namespace &&
-                                    n.id === metadata.id
-                                )
-                        )
-                        .map(
-                            (n) =>
-                                "<li>" +
-                                n.namespace +
-                                ".<code>" +
-                                n.id +
-                                "</code></li>"
-                        )
-                        .join("\n");
-
-                    if(deps.length){
-                        warning =
-                            "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
-                            "<div class=\"el-alert__content\">\n" +
-                            "<p class=\"el-alert__description\">\n" +
-                            t("dependencies delete flow") +
-                            "<ul>\n" +
-                            deps +
-                            "</ul>\n" +
-                            "</p>\n" +
-                            "</div>\n" +
-                            "</div>";
-                    }
-                }
-
-                return t("delete confirm", {name: metadata.id}) + warning;
-            })
-            .then((message) => {
-                toast.confirm(message, () => {
-                    return store
-                        .dispatch("flow/deleteFlow", metadata)
-                        .then(() => {
-                            return router.push({
-                                name: "flows/list",
-                                params: {
-                                    tenant: routeParams.tenant,
-                                },
-                            });
-                        })
-                        .then(() => {
-                            toast.deleted(metadata.id);
-                        });
+        store.dispatch("flow/deleteFlowAndDependencies")
+            .then(() => {
+                return router.push({
+                    name: "flows/list",
+                    params: {
+                        tenant: routeParams.tenant,
+                    },
                 });
+            })
+            .then(() => {
+                toast.deleted(metadata.value.id);
             });
     };
 

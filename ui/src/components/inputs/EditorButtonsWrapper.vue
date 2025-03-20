@@ -27,13 +27,14 @@
                     })
             "
             @export="exportYaml"
+            @delete-flow="deleteFlow"
             :is-namespace="false"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, getCurrentInstance} from "vue";
     import {useStore} from "vuex"
     import {useRouter, useRoute} from "vue-router";
     import EditorButtons from "./EditorButtons.vue";
@@ -60,6 +61,8 @@
     const flowInfos = computed(() => store.getters["flow/flowInfos"])
     const flowParsed = computed(() => store.getters["flow/flow"])
     const tabs = computed<{dirty:boolean}[]>(() => store.state.editor.tabs)
+    const metadata = computed(() => store.state.flow.metadata);
+    const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
 
     async function save(){
         await store.dispatch("flow/saveAll")
@@ -76,4 +79,19 @@
             });
         }
     }
+
+    const deleteFlow = () => {
+        store.dispatch("flow/deleteFlowAndDependencies")
+            .then(() => {
+                return router.push({
+                    name: "flows/list",
+                    params: {
+                        tenant: routeParams.value.tenant,
+                    },
+                });
+            })
+            .then(() => {
+                toast.deleted(metadata.value.id);
+            });
+    };
 </script>

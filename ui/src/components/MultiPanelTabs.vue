@@ -187,7 +187,7 @@
         if(fromPanel && movedTabInfo.value?.panelIndex === targetPanelIndex){
             return
         }
-        if(fromPanel){
+        if(fromPanel && panels.value[targetPanelIndex]){
             panels.value[targetPanelIndex].dragover = true;
         }
 

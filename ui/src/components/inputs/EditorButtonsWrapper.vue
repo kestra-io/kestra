@@ -51,7 +51,7 @@
     const route = useRoute()
     const routeParams = computed(() => route.params)
 
-    const isCreating = computed(() => store.getters["flow/isCreating"] === true)
+    const isCreating = computed(() => store.state.flow.isCreating === true)
     const isReadOnly = computed(() => store.getters["flow/isReadOnly"])
     const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"])
     const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"])

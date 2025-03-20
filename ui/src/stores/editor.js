@@ -96,7 +96,9 @@ export default {
         },
         setTabContent(state, payload) {
             const tab = state.tabs.find((tab) => tab.path === payload.path);
-            tab.content = payload.content;
+            if(tab){
+                tab.content = payload.content;
+            }
         },
         setTabs(state, payload) {
             state.tabs = payload;

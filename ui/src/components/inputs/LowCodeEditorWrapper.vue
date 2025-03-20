@@ -76,6 +76,7 @@
     };
 
     const onEdit = (source:string, currentIsFlow = false) => {
+        store.commit("flow/setFlowYaml", source)
         return store.dispatch("flow/onEdit", {
             source,
             currentIsFlow,

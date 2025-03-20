@@ -267,9 +267,10 @@
                     });
                     return;
                 }
+                const updatedYmlSource = YAML_UTILS.deleteTask(props.source, event.id, section)
                 emit(
                     "on-edit",
-                    YAML_UTILS.deleteTask(props.source, event.id, section),
+                    updatedYmlSource,
                     true,
                 );
             },

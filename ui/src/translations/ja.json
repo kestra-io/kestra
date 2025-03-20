@@ -244,7 +244,6 @@
     "delete backfill": "backfillを削除",
     "delete backfills": "backfillを削除",
     "delete confirm": "<code>{name}</code>を削除してもよろしいですか？",
-    "delete confirm multiple": "<code>{name}</code> KV(s) を削除してもよろしいですか？",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">この実行はまだRUNNINGです。削除しても停止しません。<br />実行を停止するには、実行をkillする必要があります。</div>",
     "delete logs": "Logsを削除",
     "delete ok": "削除されました",
@@ -639,6 +638,10 @@
     "killed done": "実行はキルのためにキューに入れられました",
     "kv": {
       "add": "新しいKey-Value",
+      "delete multiple": {
+        "confirm": "本当に削除しますか: <code>{name}</code> KV(s)?",
+        "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
+      },
       "duplicate": "このキーは既に存在します",
       "name": "KV Store",
       "type": "タイプ",

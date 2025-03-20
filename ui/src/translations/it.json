@@ -244,7 +244,6 @@
     "delete backfill": "Elimina il backfill",
     "delete backfills": "Elimina i backfills",
     "delete confirm": "Sei sicuro di voler eliminare <code>{name}</code>?",
-    "delete confirm multiple": "Sei sicuro di voler eliminare il/i <code>{name}</code> KV?",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Questa esecuzione è ancora RUNNING, eliminarla non la fermerà.<br />È necessario kill l'esecuzione per fermarla.</div>",
     "delete logs": "Elimina logs",
     "delete ok": "è eliminato",
@@ -639,6 +638,10 @@
     "killed done": "L'esecuzione è in coda per la terminazione",
     "kv": {
       "add": "Nuovo Key-Value",
+      "delete multiple": {
+        "confirm": "Sei sicuro di voler eliminare: <code>{name}</code> KV?",
+        "warning": "Non hai i permessi per quei namespace, quindi verranno omessi: <code>{namespaces}</code>"
+      },
       "duplicate": "Questo key esiste già",
       "name": "KV Store",
       "type": "Tipo",

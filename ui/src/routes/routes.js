@@ -29,6 +29,9 @@ export default [
     //TaskRuns
     {name: "taskruns/list", path: "/:tenant?/taskruns", component: () => import("../components/taskruns/TaskRuns.vue")},
 
+    //KV
+    {name: "kv/list", path: "/:tenant?/kv", component: () => import("../components/kv/KVs.vue")},
+
     //Blueprints
     {name: "blueprints", path: "/:tenant?/blueprints/:kind/:tab", component: () => import("override/components/flows/blueprints/Blueprints.vue"), props: true},
     {name: "blueprints/view", path: "/:tenant?/blueprints/:kind/:tab/:blueprintId", component: () => import("../components/flows/blueprints/BlueprintDetail.vue"), props: true},

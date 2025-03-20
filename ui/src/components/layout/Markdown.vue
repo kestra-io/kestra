@@ -26,6 +26,13 @@
         markdownRenderer.value = await renderMarkdown();
     }, {immediate: true})
 
+    const sourceWithReplacedAlerts = computed(() => {
+        return props.source.replace(
+            /(\n)?::alert\{type="(.*)"}\n([\s\S]*?)\n::(\n)?/g,
+            (_, newLine1, type, content, newLine2) => `${newLine1 ?? ""}::: ${type}\n${content}\n:::${newLine2 ?? ""}`
+        );
+    })
+
     async function renderMarkdown() {
         return await Markdown.render(sourceWithReplacedAlerts.value, {
             permalink: props.permalink,
@@ -33,12 +40,7 @@
         });
     }
 
-    const sourceWithReplacedAlerts = computed(() => {
-        return props.source.replace(
-            /(\n)?::alert\{type="(.*)"}\n([\s\S]*?)\n::(\n)?/g,
-            (_, newLine1, type, content, newLine2) => `${newLine1 ?? ""}::: ${type}\n${content}\n:::${newLine2 ?? ""}`
-        );
-    })
+
 
     const fontSizeCss = computed(() => {
         return `var(--${props.fontSizeVar})`;

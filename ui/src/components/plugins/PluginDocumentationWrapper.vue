@@ -1,5 +1,5 @@
 <template>
-    <div class="plugin-doc" :class="{editorPlugin: plugin}">
+    <div class="plugin-doc-wrapper" :class="{editorPlugin: plugin}">
         <PluginDocumentation :key="theme" />
     </div>
 </template>
@@ -14,13 +14,14 @@
 </script>
 
 <style scoped lang="scss">
-.plugin-doc {
-    padding: 1px .5rem;
+.plugin-doc-wrapper {
+    padding: 1px 1rem;
     background-color: var(--ks-background-body);
-    height: 100%;
+    padding-bottom: 5rem;
 }
 
 .editorPlugin{
-    padding: 1rem .5rem;
+    padding: 1rem ;
+    min-height: 100%;
 }
 </style>

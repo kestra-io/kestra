@@ -79,6 +79,7 @@ tasks:
                 }
 
                 this.$store.commit("flow/setFlow", {...YAML_UTILS.parse(this.flowYaml), source: this.flowYaml});
+                this.$store.dispatch("flow/initYamlSource", {});
             }
         },
         computed: {

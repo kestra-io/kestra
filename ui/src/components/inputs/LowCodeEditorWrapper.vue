@@ -84,7 +84,10 @@
     }
 
     const handleTopologyEditClick = (params: any) => {
-        router.replace({query: {...route.query, ...params}})
+        router.replace({query: {
+            ...route.query,
+            ...params
+        }})
     }
 </script>
 

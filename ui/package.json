@@ -50,7 +50,7 @@
     "moment-timezone": "^0.5.47",
     "nprogress": "^0.2.0",
     "path-browserify": "^1.0.1",
-    "pdfjs-dist": "^4.9.155",
+    "pdfjs-dist": "^5.0.375",
     "posthog-js": "^1.230.2",
     "rapidoc": "^9.3.8",
     "shiki": "^3.2.1",
@@ -121,12 +121,12 @@
     "@esbuild/darwin-arm64": "^0.25.1",
     "@esbuild/darwin-x64": "^0.25.1",
     "@esbuild/linux-x64": "^0.25.1",
-    "@rollup/rollup-darwin-arm64": "^4.35.0",
-    "@rollup/rollup-darwin-x64": "^4.35.0",
-    "@rollup/rollup-linux-x64-gnu": "^4.35.0",
-    "@swc/core-darwin-arm64": "^1.11.8",
-    "@swc/core-darwin-x64": "^1.11.8",
-    "@swc/core-linux-x64-gnu": "^1.11.8"
+    "@rollup/rollup-darwin-arm64": "^4.36.0",
+    "@rollup/rollup-darwin-x64": "^4.36.0",
+    "@rollup/rollup-linux-x64-gnu": "^4.36.0",
+    "@swc/core-darwin-arm64": "^1.11.11",
+    "@swc/core-darwin-x64": "^1.11.11",
+    "@swc/core-linux-x64-gnu": "^1.11.11"
   },
   "overrides": {
     "bootstrap": {

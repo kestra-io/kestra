@@ -22,10 +22,6 @@
 
     const markdownRenderer = ref()
 
-    watch(() => props.source, async () => {
-        markdownRenderer.value = await renderMarkdown();
-    }, {immediate: true})
-
     const sourceWithReplacedAlerts = computed(() => {
         return props.source.replace(
             /(\n)?::alert\{type="(.*)"}\n([\s\S]*?)\n::(\n)?/g,
@@ -40,7 +36,9 @@
         });
     }
 
-
+    watch(() => props.source, async () => {
+        markdownRenderer.value = await renderMarkdown();
+    }, {immediate: true})
 
     const fontSizeCss = computed(() => {
         return `var(--${props.fontSizeVar})`;

@@ -47,11 +47,11 @@ jobs:
         image:
           - name: "-no-plugins"
             plugins: ""
-            packages: ""
+            packages: jattach
             python-libs: ""
           - name: ""
             plugins: ${{needs.plugins.outputs.plugins}}
-            packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
+            packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip jattach
             python-libs: kestra
     steps:
       - uses: actions/checkout@v4

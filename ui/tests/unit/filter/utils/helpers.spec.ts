@@ -38,11 +38,7 @@ describe("Params Encoding & Decoding", () => {
 
         const decoded = decodeSearchParams(query, ["namespace"], OPTIONS);
         expect(decoded).toEqual([
-            {
-                field: "namespace",
-                operation: "$eq",
-                value: "test-namespace",
-            },
+            {field: "namespace", value: "test-namespace", operation: "$eq"},
         ]);
     });
 

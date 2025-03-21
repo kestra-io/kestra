@@ -62,7 +62,7 @@ jobs:
 
     - name: Build with Gradle
       if: ${{ matrix.language == 'java' }}
-      run: ./gradlew testClasses -x :ui:installFrontend -x :ui:assembleFrontend
+      run: ./gradlew testClasses -x :ui:assembleFrontend
 
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)

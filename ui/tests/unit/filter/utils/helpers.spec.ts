@@ -1,9 +1,5 @@
-import {describe, it, expect} from "vitest";
-import {
-    decodeSearchParams,
-    encodeSearchParams,
-    isSearchPath
-} from "../../../../src/components/filter/utils/helpers.ts";
+import {describe, expect, it} from "vitest";
+import {decodeSearchParams, encodeSearchParams, isSearchPath} from "../../../../src/components/filter/utils/helpers.ts";
 
 
 const COMPARATORS = {
@@ -38,7 +34,7 @@ describe("Params Encoding & Decoding", () => {
 
         const decoded = decodeSearchParams(query, ["namespace"], OPTIONS);
         expect(decoded).toEqual([
-            {label: "namespace", value: ["test-namespace"], operation: "$eq"},
+            {field: "namespace", value: "test-namespace", operation: "$eq"},
         ]);
     });
 

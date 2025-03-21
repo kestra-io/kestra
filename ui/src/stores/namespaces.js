@@ -22,10 +22,12 @@ export default {
     },
     actions: {
         search({commit}, options) {
+            const shouldCommit = !!options.commit;
+            delete options.commit;
             return this.$http.get(`${apiUrl(this)}/namespaces/search`, {params: options, ...VALIDATE})
                 .then(response => {
-                    if(response.status === 200) commit("setNamespaces", response.data.results)
-                    return response.data.results;
+                    if (response.status === 200 && shouldCommit) commit("setNamespaces", response.data.results)
+                    return response.data;
                 })
         },
         load({commit}, id) {

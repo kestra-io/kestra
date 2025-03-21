@@ -1,4 +1,4 @@
-import {shallowRef, computed} from "vue";
+import {computed, shallowRef} from "vue";
 import {useStore} from "vuex";
 import {useRouter} from "vue-router";
 import {useI18n} from "vue-i18n";
@@ -21,6 +21,7 @@ import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue
 import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
 import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
 import FormatListGroupPlus from "vue-material-design-icons/FormatListGroupPlus.vue";
+import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue";
 
 export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
@@ -117,6 +118,15 @@ export function useLeftMenu() {
                 title: t("namespaces"),
                 icon: {
                     element: shallowRef(DotsSquare),
+                    class: "menu-icon"
+                }
+            },
+            {
+                href: {name: "kv/list"},
+                routes: routeStartWith("kv"),
+                title: t("kv.name"),
+                icon: {
+                    element: shallowRef(DatabaseOutline),
                     class: "menu-icon"
                 }
             },

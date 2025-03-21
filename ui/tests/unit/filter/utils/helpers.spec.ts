@@ -1,9 +1,5 @@
-import {describe, it, expect} from "vitest";
-import {
-    decodeSearchParams,
-    encodeSearchParams,
-    isSearchPath
-} from "../../../../src/components/filter/utils/helpers.ts";
+import {describe, expect, it} from "vitest";
+import {decodeSearchParams, encodeSearchParams, isSearchPath} from "../../../../src/components/filter/utils/helpers.ts";
 
 
 const COMPARATORS = {

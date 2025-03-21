@@ -20,7 +20,6 @@
     "Default page": "Default page",
     "confirmation": "Confirmation",
     "delete confirm": "Are you sure you want to delete <code>{name}</code>?",
-    "delete confirm multiple": "Are you sure you want to delete <code>{name}</code> KV(s)?",
     "outdated revision save confirmation": {
       "confirm": "Do you want to overwrite it?",
       "update": {
@@ -939,7 +938,11 @@
       "type": "Type",
       "add": "New Key-Value",
       "update": "Update value for key '{key}'",
-      "duplicate": "This key already exists"
+      "duplicate": "This key already exists",
+      "delete multiple": {
+        "confirm": "Are you sure you want to delete: <code>{name}</code> KV(s)?",
+        "warning": "You don't have permissions for those namespaces so they would be omitted: <code>{namespaces}</code>"
+      }
     },
     "expiration": "Expiration",
     "failed to render pdf": "Failed to render the PDF preview",
@@ -1262,7 +1265,7 @@
       },
       "triggers": {
         "title": "Your flow doesn't have any Triggers.",
-        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."      
+        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",

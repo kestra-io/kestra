@@ -1,7 +1,10 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.tasks.FileExistComportment;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.PathMatcherPredicate;
+import java.nio.file.FileAlreadyExistsException;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
 import java.io.ByteArrayInputStream;
@@ -23,6 +26,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 /**
  * Default implementation of the {@link WorkingDir}.
  */
+@Slf4j
 public class LocalWorkingDir implements WorkingDir {
 
     private final Path workingDirPath;
@@ -175,7 +179,7 @@ public class LocalWorkingDir implements WorkingDir {
      * {@inheritDoc}
      **/
     @Override
-    public Path putFile(Path path, InputStream inputStream) throws IOException {
+    public Path putFile(Path path, InputStream inputStream, FileExistComportment comportment) throws IOException {
         if (path == null) {
             throw new IllegalArgumentException("Cannot create a working directory file with a null path");
         }
@@ -185,15 +189,25 @@ public class LocalWorkingDir implements WorkingDir {
         Path newFilePath = this.resolve(path);
         Files.createDirectories(newFilePath.getParent());
 
-        if (Files.notExists(newFilePath)) {
+        if (Files.exists(newFilePath)) {
+            switch (comportment) {
+                case OVERWRITE -> copyFile(inputStream, newFilePath);
+                case FAIL -> throw new FileAlreadyExistsException("File " + newFilePath + " already exist");
+                case WARN -> log.warn("File {} already exist. It will be ignore", newFilePath);
+                case IGNORE -> {}
+            }
+        } else {
             Files.createFile(newFilePath);
-        }
-
-        try (inputStream) {
-            Files.copy(inputStream, newFilePath, REPLACE_EXISTING);
+            copyFile(inputStream, newFilePath);
         }
 
         return newFilePath;
+    }
+
+    private static void copyFile(InputStream inputStream, Path path) throws IOException {
+        try(inputStream) {
+            Files.copy(inputStream, path, REPLACE_EXISTING);
+        }
     }
 
     /**

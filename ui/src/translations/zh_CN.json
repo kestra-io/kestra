@@ -244,7 +244,6 @@
     "delete backfill": "删除回填",
     "delete backfills": "删除回填",
     "delete confirm": "确定要删除 <code>{name}</code> 吗？",
-    "delete confirm multiple": "您确定要删除<code>{name}</code> KV吗？",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">此执行仍在运行，删除它不会停止它。<br />你需要终止执行以停止它。</div>",
     "delete logs": "删除日志",
     "delete ok": "已删除",
@@ -639,6 +638,10 @@
     "killed done": "执行已排队终止",
     "kv": {
       "add": "新建键值",
+      "delete multiple": {
+        "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
+        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
+      },
       "duplicate": "此键已存在",
       "name": "键值存储",
       "type": "类型",

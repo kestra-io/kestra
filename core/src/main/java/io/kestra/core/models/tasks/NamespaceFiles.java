@@ -42,4 +42,10 @@ public class NamespaceFiles {
     )
     @Builder.Default
     private Property<List<String>> namespaces = Property.of(List.of("{{flow.namespace}}"));
+
+    @Schema(
+        title = "Comportment of the task if a file already exist in the working directory."
+    )
+    @Builder.Default
+    private Property<FileExistComportment> ifExists = Property.of(FileExistComportment.OVERWRITE);
 }

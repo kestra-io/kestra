@@ -758,6 +758,7 @@
             "editor_type": "Default Editor Type",
             "execute_flow": "Execute the Flow",
             "execute_default_tab": "Default Execution Tab",
+            "multi_panel_editor": "Multi Panel Editor",
             "flow_default_tab": "Default Flow Tab"
           }
         },
@@ -1262,7 +1263,7 @@
       },
       "triggers": {
         "title": "Your flow doesn't have any Triggers.",
-        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."      
+        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",

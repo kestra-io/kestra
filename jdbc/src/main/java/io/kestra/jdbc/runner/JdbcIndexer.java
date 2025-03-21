@@ -74,6 +74,7 @@ public class JdbcIndexer implements IndexerInterface {
         log.debug("Starting the indexer");
         startQueues();
         setState(ServiceState.RUNNING);
+        log.info("Indexer started");
     }
 
     protected void startQueues() {

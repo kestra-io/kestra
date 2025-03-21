@@ -8,7 +8,6 @@ import io.kestra.core.services.StartExecutorService;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.util.Collections;
@@ -19,7 +18,6 @@ import java.util.Map;
     name = "executor",
     description = "Start the Kestra executor"
 )
-@Slf4j
 public class ExecutorCommand extends AbstractServerCommand {
     @Inject
     private ApplicationContext applicationContext;
@@ -68,8 +66,6 @@ public class ExecutorCommand extends AbstractServerCommand {
 
         ExecutorInterface executorService = applicationContext.getBean(ExecutorInterface.class);
         executorService.run();
-
-        log.info("Executor started");
 
         Await.until(() -> !this.applicationContext.isRunning());
 

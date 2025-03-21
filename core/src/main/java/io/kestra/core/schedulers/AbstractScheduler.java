@@ -1079,12 +1079,4 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     public ServiceState getState() {
         return state.get();
     }
-
-    protected Trigger resetExecution(FlowWithSource flow, Execution execution, Trigger trigger) {
-        Flow flowWithDefaults = pluginDefaultService.injectDefaults(flow, execution);
-        RunContext runContext = runContextFactory.of(flowWithDefaults, flowWithDefaults.findTriggerByTriggerId(trigger.getTriggerId()));
-        ConditionContext conditionContext = conditionService.conditionContext(runContext, flowWithDefaults, null);
-
-        return trigger.resetExecution(flowWithDefaults, execution, conditionContext);
-    }
 }

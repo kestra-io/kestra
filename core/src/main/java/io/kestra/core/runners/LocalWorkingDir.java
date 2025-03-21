@@ -179,6 +179,14 @@ public class LocalWorkingDir implements WorkingDir {
      * {@inheritDoc}
      **/
     @Override
+    public Path putFile(Path path, InputStream inputStream) throws IOException {
+        return putFile(path, inputStream, FileExistComportment.OVERWRITE);
+    }
+
+    /**
+     * {@inheritDoc}
+     **/
+    @Override
     public Path putFile(Path path, InputStream inputStream, FileExistComportment comportment) throws IOException {
         if (path == null) {
             throw new IllegalArgumentException("Cannot create a working directory file with a null path");

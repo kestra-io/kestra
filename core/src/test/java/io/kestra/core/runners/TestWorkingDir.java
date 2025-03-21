@@ -92,6 +92,12 @@ public final class TestWorkingDir implements WorkingDir {
     }
 
     @Override
+    public Path putFile(Path path, InputStream content) throws IOException {
+        return putFile(path, content, FileExistComportment.OVERWRITE);
+    }
+
+
+    @Override
     public Path putFile(Path path, InputStream content, FileExistComportment comportment) throws IOException {
         return captureCreateFileAndGet(delegate.putFile(path, content, comportment));
     }

@@ -3,7 +3,7 @@
     <section class="full-container">
         <editor-view
             v-if="flow"
-            :flow-id="flow"
+            :flow-id="flow?.id"
             :namespace="flow?.namespace"
             :flow-validation="flowValidation"
             :flow-graph="flowGraph"

@@ -30,8 +30,7 @@ export default (app, store, router) => {
     router.beforeEach(async (to, from) => {
         if (store.getters["core/unsavedChange"] && !routeEqualsExceptHash(from, to)) {
             if (confirm(confirmationMessage)) {
-                 store.commit("editor/changeOpenedTabs", {
-                     action: "dirty",
+                 store.commit("editor/setTabDirty", {
                      name: "Flow",
                      path: "Flow.yaml",
                      dirty: false,

@@ -35,7 +35,7 @@
 
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import {SECTIONS} from "../../../utils/constants.js";
+    import {SECTIONS} from "../../../utils/constants";
 </script>
 
 <script>

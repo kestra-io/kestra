@@ -1,4 +1,5 @@
 import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
+import {YamlUtils} from "@kestra-io/ui-libs";
 
 export default {
     namespaced: true,
@@ -117,8 +118,21 @@ export default {
             return this.$http.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
                 return response.data;
             })
+        },
+        updateDocumentation({commit, dispatch, getters}, options) {
+            const taskType = options.task !== undefined ? options.task : YamlUtils.getTaskType(
+                options.event.model.getValue(),
+                options.event.position,
+                getters["getPluginSingleList"]
+            );
+            if (taskType) {
+                dispatch("load", {cls: taskType}).then((plugin) => {
+                    commit("setEditorPlugin", {cls: taskType, ...plugin});
+                });
+            } else {
+                commit("setEditorPlugin", undefined);
+            }
         }
-
     },
     mutations: {
         setPlugin(state, plugin) {

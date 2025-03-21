@@ -4,7 +4,7 @@
 
 <script lang="ts">
     import {defineComponent} from "vue";
-    import {mapActions, mapMutations, mapState} from "vuex";
+    import {mapState, mapMutations} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
     import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
@@ -74,18 +74,16 @@
         },
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
-            ...mapState("core", ["autocompletionSource", "monacoYamlConfigured"]),
-            ...mapState({
-                currentTab: (state) => state.editor.current,
-                tabs: (state) => state.editor.tabs,
-                flow: (state) => state.flow.flow,
-                view: (state) => state.editor.view
-            }),
+            ...mapState("core", ["monacoYamlConfigured"]),
             prefix() {
                 return this.schemaType ? `${this.schemaType}-` : "";
             }
         },
         props: {
+            path: {
+                type: String,
+                default: undefined
+            },
             original: {
                 type: String,
                 default: undefined
@@ -132,6 +130,11 @@
             event: "change"
         },
         watch: {
+            path(newValue, oldValue) {
+                if (newValue !== oldValue) {
+                    this.changeTab(newValue, () => this.value);
+                }
+            },
             tabs(newValue, oldValue) {
                 if (newValue?.length < oldValue?.length) {
                     const openedTabPaths = newValue.map(tab => (tab.path ?? tab.name));
@@ -206,7 +209,7 @@
                 this.initMonaco(monaco)
             })
 
-            if (!this.monacoYamlConfigured && (this.creating || this.currentTab?.flow)) {
+            if (!this.monacoYamlConfigured && (this.creating || this.current?.flow)) {
                 this.$store.commit("core/setMonacoYamlConfigured", true);
                 configureMonacoYaml(monaco, {
                     enableSchemaRequest: true,
@@ -396,8 +399,7 @@
             this.destroy();
         },
         methods: {
-            ...mapMutations("editor", ["changeOpenedTabs"]),
-            ...mapActions("namespace", ["readFile"]),
+            ...mapMutations("editor", ["setTabDirty"]),
             initMonaco: async function () {
                 let self = this;
                 let options = {
@@ -452,14 +454,8 @@
 
                     this.editor = monaco.editor.create(this.$el, options);
 
-                    if (!this.input) {
-                        const name = this.currentTab?.path ?? this.currentTab?.name;
-                        const value = this.currentTab?.flow || this.creating ? this.value : this.readFile({
-                            namespace: this.$route.params.namespace || this.$route.params.id,
-                            path: name
-                        })
-
-                        await this.changeTab(name, () => value, false);
+                    if(!this.input){
+                        await this.changeTab(this.path, () => this.value, false);
                     }
                 }
 
@@ -470,10 +466,9 @@
                     if (self.value !== value) {
                         self.$emit("change", value, event);
 
-                        if (!self.input && self.currentTab && self.currentTab.name) {
-                            self.changeOpenedTabs({
-                                action: "dirty",
-                                ...self.currentTab,
+                        if (!self.input && self.current && self.current.name) {
+                            self.setTabDirty({
+                                ...self.current,
                                 dirty: true,
                             });
                         }

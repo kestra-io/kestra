@@ -13,7 +13,7 @@
     "test:cicd": "vitest run --coverage --exclude=\"**/translation.spec.js\"",
     "translations:check": "node ./src/translations/check.js",
     "lint": "eslint --fix",
-    "storybook": "storybook dev -p 6006",
+    "storybook": "cross-env NODE_ENV=storybook storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:storybook": "test-storybook",
     "prepare": "cd .. && husky ui/.husky && rm -f .git/hooks/*",

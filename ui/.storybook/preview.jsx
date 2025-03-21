@@ -33,8 +33,10 @@ const preview = {
   ]
 };
 
+window.KESTRA_BASE_PATH = "/ui";
+
 setup((app) => {
-  initApp(app, [], stores, en);
+    initApp(app, [], stores, en);
 });
 
 export default preview;

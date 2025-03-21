@@ -2,6 +2,7 @@ package io.kestra.core.utils;
 
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
+import io.kestra.core.models.tasks.FileExistComportment;
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.storages.NamespaceFile;
@@ -21,9 +22,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
@@ -49,6 +48,8 @@ public class NamespaceFilesUtils {
 
         List<String> include = runContext.render(namespaceFiles.getInclude()).asList(String.class);
         List<String> exclude = runContext.render(namespaceFiles.getExclude()).asList(String.class);
+        FileExistComportment fileExistComportment = runContext.render(namespaceFiles.getIfExists())
+            .as(FileExistComportment.class).orElse(FileExistComportment.OVERWRITE);
         List<String> namespaces = runContext.render(namespaceFiles.getNamespaces()).asList(String.class);
 
         Map<String, NamespaceFile> namespaceFileMap = new HashMap<>();
@@ -67,7 +68,7 @@ public class NamespaceFilesUtils {
         Flux.fromIterable(matchedNamespaceFiles)
             .doOnNext(throwConsumer(namespaceFile -> {
                 InputStream content = runContext.storage().getFile(namespaceFile.uri());
-                runContext.workingDir().putFile(Path.of(namespaceFile.path()), content);
+                runContext.workingDir().putFile(Path.of(namespaceFile.path()), content, fileExistComportment);
             }))
             .publishOn(Schedulers.fromExecutorService(executorService))
             .blockLast();

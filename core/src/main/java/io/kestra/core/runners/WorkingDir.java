@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.tasks.FileExistComportment;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileAlreadyExistsException;
@@ -132,12 +133,13 @@ public interface WorkingDir {
     /**
      * Creates a new file or replaces an existing one with the given content.
      *
-     * @param path    The path of the file.
-     * @param content The file content - may be {@code null}.
+     * @param path        The path of the file.
+     * @param content     The file content - may be {@code null}.
+     * @param comportment How to react if the file already exist in the working directory
      * @throws IOException              if an error happens while creating the file.
      * @throws IllegalArgumentException if the given path is {@code null}.
      */
-    Path putFile(Path path, InputStream content) throws IOException;
+    Path putFile(Path path, InputStream content, FileExistComportment comportment) throws IOException;
 
     /**
      * Finds all files  in the working directory that matches one of the given patterns.

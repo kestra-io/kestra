@@ -107,6 +107,7 @@
             creating: {type: Boolean, default: false},
             label: {type: String, default: undefined},
             shouldFocus: {type: Boolean, default: true},
+            showScroll: {type: Boolean, default: false},
         },
         components: {
             MonacoEditor,
@@ -173,8 +174,8 @@
                 );
             },
             options() {
-                const options = {};
-
+                const options = {};  
+                
                 if (this.input && !this.lineNumbers) {
                     options.lineNumbers = "off";
                     options.folding = false;
@@ -192,12 +193,12 @@
                     options.scrollBeyondLastColumn = 0;
                     options.overviewRulerLanes = 0;
                     options.scrollbar = {
-                        vertical: "hidden",
+                        vertical: !this.showScroll ? "hidden" : "visible",
                         horizontal: "hidden",
                         alwaysConsumeMouseWheel: false,
                         handleMouseWheel: true,
                         horizontalScrollbarSize: 0,
-                        verticalScrollbarSize: 0,
+                        verticalScrollbarSize: !this.showScroll ? 0 : 5,
                         useShadows: false,
                     };
                     options.stickyScroll = {

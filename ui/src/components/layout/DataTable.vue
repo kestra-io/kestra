@@ -9,7 +9,7 @@
         <el-container data-component="FILENAME_PLACEHOLDER#container" direction="vertical" v-loading="isLoading">
             <slot name="top" data-component="FILENAME_PLACEHOLDER#top" />
 
-            <pagination v-if="!embed && !hideTopPagination" :size="size" :top="true" :page="page" :total="total" @page-changed="onPageChanged">
+            <pagination v-if="embed && !hideTopPagination" :size="size" :top="true" :page="page" :total="total" @page-changed="onPageChanged">
                 <template #search>
                     <slot name="search" />
                 </template>

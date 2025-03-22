@@ -135,6 +135,16 @@ public interface WorkingDir {
      *
      * @param path        The path of the file.
      * @param content     The file content - may be {@code null}.
+     * @throws IOException              if an error happens while creating the file.
+     * @throws IllegalArgumentException if the given path is {@code null}.
+     */
+    Path putFile(Path path, InputStream content) throws IOException;
+
+    /**
+     * Creates a new file or replaces an existing one with the given content.
+     *
+     * @param path        The path of the file.
+     * @param content     The file content - may be {@code null}.
      * @param comportment How to react if the file already exist in the working directory
      * @throws IOException              if an error happens while creating the file.
      * @throws IllegalArgumentException if the given path is {@code null}.

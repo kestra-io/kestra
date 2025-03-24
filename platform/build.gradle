@@ -28,6 +28,7 @@ dependencies {
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
     // needed because httpclient fails to communicate with docker socket with > v5.4 (https://github.com/docker-java/docker-java/pull/2293#issuecomment-2435455322) and opensearch-java brings that version
     api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.3.1")
+    api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
     api platform("io.micronaut.platform:micronaut-platform:4.7.6")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
@@ -40,7 +41,6 @@ dependencies {
         // Forced dependencies
         // Temporal force to include https://github.com/micronaut-projects/micronaut-core/commit/9bb43ce55ea3fca97c12cb50c5f1baea28557729 as a potential fix for https://github.com/kestra-io/kestra/issues/3402
         api("io.micronaut:micronaut-core:4.7.15")
-        api("org.slf4j:slf4j-api:$slf4jVersion")
         // need to force this dep as mysql-connector brings a version incompatible with the Google Cloud libs
         api("com.google.protobuf:protobuf-java:$protobufVersion")
         api("com.google.protobuf:protobuf-java-util:$protobufVersion")

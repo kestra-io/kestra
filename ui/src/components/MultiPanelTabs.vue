@@ -173,10 +173,16 @@
         return targetPanelIndex
     }
 
+    const mousePosition = ref({clientX: 0, clientY: 0})
+
     function dragover(event: DragEvent, fromPanel: boolean = false) {
         if(!(event.target instanceof HTMLElement)){
             return
         }
+
+        const {clientX, clientY} = event;
+
+        mousePosition.value = {clientX, clientY}
 
         const targetPanelIndex = getPanelIndex(fromPanel, event.target);
         if(targetPanelIndex === undefined){
@@ -221,9 +227,11 @@
         }
 
         // avoid having multiple simulated tabs
-        if(panels.value[targetPanelIndex].tabs.some(t => t.value === tab.value)) {
-            // remove any already present simulated tab
-            panels.value[targetPanelIndex].tabs = panels.value[targetPanelIndex].tabs.filter((t) => !t.potential)
+        for(const p of panels.value){
+            if(p.tabs.some(t => t.value === tab.value)){
+                // remove any already present simulated tab
+                p.tabs = p.tabs.filter((t) => !t.potential)
+            }
         }
 
         panels.value[targetPanelIndex].tabs.splice(targetTabIndex, 0, tab);
@@ -232,6 +240,14 @@
 
     function dragleave(event: DragEvent, fromPanel: boolean = false) {
         if(!(event.target instanceof HTMLElement)) {
+            return
+        }
+
+        // is the mouse has not moved at all between over and leave events
+        // the leave is due to the tab disappearing when it should not. Let's
+        // recreate it instead
+        if(event.clientX === mousePosition.value.clientX && event.clientY === mousePosition.value.clientY){
+            dragover(event)
             return
         }
 
@@ -448,7 +464,11 @@
             color: var(--ks-content-primary);
         }
         &.simulated{
-            opacity: .5;
+            opacity: .2;
+            box-shadow: 0 0 0px 1px var(--ks-border-primary);
+            overflow: visible;
+            z-index: 1;
+            position: relative;
         }
         &.dirty-icon{
             font-size: 16px;

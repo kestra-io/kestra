@@ -23,6 +23,8 @@
     const total = ref(0);
     const loaded = ref(false);
 
+    defineEmits(["expand-subflow"]);
+
     onMounted(() => {
         if (flow.value?.id) {
             store

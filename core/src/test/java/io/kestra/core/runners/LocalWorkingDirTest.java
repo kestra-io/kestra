@@ -1,6 +1,8 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.tasks.FileExistComportment;
 import io.kestra.core.utils.IdUtils;
+import java.io.ByteArrayInputStream;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -119,5 +121,24 @@ class LocalWorkingDirTest {
         // Then
         assertThat(secondPath.toFile().exists(), is(true));
         assertThat(firtPath, equalTo(secondPath));
+    }
+
+    @Test
+    void should_put_file_into_local_dir() throws IOException {
+        LocalWorkingDir workingDir = new LocalWorkingDir(Path.of("/tmp/"), IdUtils.create());
+        workingDir.path(true);
+        Path file = workingDir.createFile("test.txt", new ByteArrayInputStream("First file".getBytes(StandardCharsets.UTF_8)));
+
+        assertThrows(FileAlreadyExistsException.class, () -> workingDir.putFile(file, new ByteArrayInputStream("Hello world".getBytes(StandardCharsets.UTF_8)), FileExistComportment.FAIL));
+        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8), is(List.of("First file")));
+
+        workingDir.putFile(file, new ByteArrayInputStream("Hello world".getBytes(StandardCharsets.UTF_8)), FileExistComportment.IGNORE);
+        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8), is(List.of("First file")));
+
+        workingDir.putFile(file, new ByteArrayInputStream("Hello world".getBytes(StandardCharsets.UTF_8)), FileExistComportment.WARN);
+        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8), is(List.of("First file")));
+
+        workingDir.putFile(file, new ByteArrayInputStream("New file".getBytes(StandardCharsets.UTF_8)), FileExistComportment.OVERWRITE);
+        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8), is(List.of("New file")));
     }
 }

@@ -244,7 +244,6 @@
     "delete backfill": "Supprimer le backfill",
     "delete backfills": "Supprimer les backfills",
     "delete confirm": "Êtes-vous sur de vouloir effacer <code>{name}</code> ?",
-    "delete confirm multiple": "Êtes-vous sûr de vouloir supprimer le(s) KV <code>{name}</code> ?",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
     "delete logs": "Supprimer les logs",
     "delete ok": "est effacé",
@@ -639,6 +638,10 @@
     "killed done": "L'exécution est en attente d'arrêt",
     "kv": {
       "add": "Nouveau couple de clé/valeur",
+      "delete multiple": {
+        "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
+        "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
+      },
       "duplicate": "Cette clé existe déjà",
       "name": "Stockage de clés/valeurs",
       "type": "Type",

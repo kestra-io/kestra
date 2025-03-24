@@ -1,3 +1,5 @@
+
+import {useStore} from "vuex";
 import PluginDocumentation from "../../../../src/components/plugins/PluginDocumentation.vue";
 
 export default {
@@ -9,8 +11,13 @@ export default {
 };
 
 const Template = (args) => ({
-    components: {PluginDocumentation},
     setup() {
+        const store = useStore()
+        store.$http = {
+            get(){
+                return  Promise.resolve({data: []})
+            }
+        }
         return () => <PluginDocumentation {...args} />
     }
 });

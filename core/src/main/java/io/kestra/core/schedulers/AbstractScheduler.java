@@ -260,6 +260,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(((QueueInterface<ClusterEvent>) clusterEventQueueInterface).receive(this::clusterEventQueue)));
 
         setState(ServiceState.RUNNING);
+        log.info("Scheduler started");
     }
 
     // Initialized local trigger state,

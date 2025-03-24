@@ -37,6 +37,7 @@ ui/coverage
 ui/stats.html
 ui/.frontend-gradle-plugin
 ui/utils/CHANGELOG.md
+ui/test-report.junit.xml
 
 ### Docker
 /.env

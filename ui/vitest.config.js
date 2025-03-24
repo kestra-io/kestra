@@ -12,7 +12,14 @@ export default defineConfig({
         },
     },
     test: {
-        environment: "jsdom"
+        environment: "jsdom",
+        reporters: [
+            ["default"],
+            ["junit"]
+        ],
+        outputFile: {
+            junit: "./test-report.junit.xml",
+        },
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

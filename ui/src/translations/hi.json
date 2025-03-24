@@ -244,7 +244,6 @@
     "delete backfill": "Backfill हटाएं",
     "delete backfills": "Backfills हटाएं",
     "delete confirm": "क्या आप वाकई <code>{name}</code> को हटाना चाहते हैं?",
-    "delete confirm multiple": "क्या आप वाकई <code>{name}</code> KV(s) को हटाना चाहते हैं?",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">यह निष्पादन अभी भी RUNNING है, इसे हटाने से यह बंद नहीं होगा।<br />इसे बंद करने के लिए आपको निष्पादन को kill करना होगा।</div>",
     "delete logs": "Logs हटाएं",
     "delete ok": "हटा दिया गया है",
@@ -639,6 +638,10 @@
     "killed done": "निष्पादन समाप्त करने के लिए कतारबद्ध है",
     "kv": {
       "add": "नया Key-Value",
+      "delete multiple": {
+        "confirm": "क्या आप वाकई हटाना चाहते हैं: <code>{name}</code> kv(s)?",
+        "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
+      },
       "duplicate": "यह key पहले से मौजूद है",
       "name": "KV Store",
       "type": "प्रकार",

@@ -1,3 +1,4 @@
+import {useStore} from "vuex";
 import LowCodeEditor from "../../../../src/components/inputs/LowCodeEditor.vue";
 
 export default {
@@ -6,15 +7,22 @@ export default {
 };
 
 const Template= (args) => ({
-    components: {LowCodeEditor},
     setup() {
+        const store = useStore()
+        store.$http = {
+            get(){
+                return  Promise.resolve({data: {}})
+            }
+        }
         return () => <LowCodeEditor {...args} />;
     }
 });
 
 export const Default = Template.bind({});
 Default.args = {
-    flowGraph: {},
+    flowGraph: {
+        nodes: []
+    },
     flowId: "flow1",
     namespace: "namespace1",
     execution: {},

@@ -150,12 +150,6 @@
                         {},
                     );
 
-                    if (requiredFields && !properties.id) {
-                        properties = {
-                            ...properties,
-                            id: {type: "string", $required: true},
-                        };
-                    }
                     return this.sortProperties(properties);
                 }
 

@@ -47,7 +47,7 @@ export default {
                 `${apiUrl(this)}/plugins/${options.cls}/versions/${options.version}` :
                 `${apiUrl(this)}/plugins/${options.cls}`;
 
-            return this.$http.get(url).then(response => {
+            return this.$http.get(url, {params: options}).then(response => {
                 if (options.commit !== false) {
                     if (options.all === true) {
                         commit("setPluginAllProps", response.data);

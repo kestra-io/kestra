@@ -809,12 +809,18 @@ form.ks-horizontal {
 .el-autocomplete-suggestion {
     .el-autocomplete-suggestion__wrap {
         max-height: 40vh;
+        padding: 10px 12px 10px 10px;
     }
 
     li {
         // highlight of keyboard selection & element plus hover
         --el-fill-color-light: var(--ks-select-hover);
         padding: 0 1rem;
+        border-radius: 5px;
+
+        &.highlighted {
+            margin-bottom: 3px;
+        }
 
         a {
             color: var(--ks-content-primary);

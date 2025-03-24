@@ -221,7 +221,7 @@ export const TabReorderTest: Story = {
             expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 2", "Tab 3", "Tab 1"]);
         }
 
-        const dragEnterOnPanelDropOnSimulatedTab = async () => {
+        const dragEnterOnPanelDropOnPanel = async () => {
             // Find the tab elements in the first panel
             const secondTab = canvas.getByText("Tab 2");
             const panel = canvas.getByRole("tablist")
@@ -231,36 +231,15 @@ export const TabReorderTest: Story = {
 
             await fireEvent.dragEnter(panel);
 
-            // Wait for the reorder to complete
-            await new Promise(resolve => setTimeout(resolve, 100));
-
             // Perform drop operation at the calculated position
-            await fireEvent.drop(canvas.getAllByText("Tab 2")[1]);
+            await fireEvent.drop(panel);
 
             expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 3", "Tab 1", "Tab 2"]);
         }
 
-        const dragEnterOnPanelDropOnPanel = async () => {
-            // Find the tab elements in the first panel
-            const thirdTab = canvas.getByText("Tab 3");
-            const panel = canvas.getByRole("tablist")
-
-            // Perform drag operation
-            await fireEvent.dragStart(thirdTab);
-
-            await fireEvent.dragEnter(panel);
-
-            // Perform drop operation at the calculated position
-            await fireEvent.drop(panel);
-
-            expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 1", "Tab 2", "Tab 3"]);
-        }
-
         await waitFor(dropBetweenTabs);
         await new Promise(resolve => setTimeout(resolve, 100));
-        await waitFor(dragEnterOnPanelDropOnSimulatedTab);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        // await waitFor(dragEnterOnPanelDropOnPanel);
+        await waitFor(dragEnterOnPanelDropOnPanel);
     }
 };
 

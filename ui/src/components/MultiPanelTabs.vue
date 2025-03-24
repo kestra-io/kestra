@@ -365,8 +365,7 @@
         const panel = panels.value[panelIndex];
         const newPanel = {
             tabs: [panel.activeTab],
-            activeTab: panel.activeTab,
-            size: Math.max(100 / (panels.value.length + 1), 10)
+            activeTab: panel.activeTab
         }
         panels.value.splice(panelIndex + 1, 0, newPanel)
 

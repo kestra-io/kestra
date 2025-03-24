@@ -302,6 +302,10 @@
           "title": "変数を中央で管理する"
         }
       },
+      "secrets": {
+        "message": "エンタープライズエディション (EE) では、UIで直接シークレットを追加、編集、または削除できます。インスタンスの再起動は不要です。シークレットをnamespaceごとに整理し、詳細なRBAC権限を設定し、親namespaceから子namespaceに継承します。EEは、HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager、Elasticsearchなどのシークレットマネージャーと統合します。namespace、テナント、またはインスタンスごとに専用のバックエンドを設定して、チーム間でシークレットを分離するか、外部のvaultに保存された読み取り専用のシークレットを有効にします。シークレットは、保存時および転送時に暗号化されたままです。オプションのキャッシュによりAPIコールが削減され、監査証跡がすべてのアクセスをログに記録します。",
+        "title": "シークレット管理をアップグレード"
+      },
       "tenants": {
         "message": "Kestra Enterprise Editionはマルチテナンシーをサポートしており、異なるチームやプロジェクトごとに完全に分離された環境を提供します。それぞれの環境には、専用のworkerグループやシークレット、内部ストレージバックエンドなどのリソースが含まれます。",
         "title": "隔離されたTenantでWorkflowを管理する"
@@ -1007,8 +1011,10 @@
     "search term in message": "メッセージ内の検索語",
     "seconds": "秒",
     "secret": {
+      "add": "新しいシークレット",
       "inherited": "継承されたsecrets",
-      "names": "Secrets"
+      "names": "Secrets",
+      "update": "シークレット '{name}' を更新"
     },
     "security_advice": {
       "content": "インスタンスを保護するために基本認証を有効にしてください。",

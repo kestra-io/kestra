@@ -11,6 +11,8 @@ import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.FlowTopologyRepositoryInterface;
 import io.kestra.plugin.core.log.Log;
+import io.kestra.webserver.models.api.secret.ApiSecretListResponse;
+import io.kestra.webserver.models.api.secret.ApiSecretMeta;
 import io.kestra.webserver.models.namespaces.NamespaceWithDisabled;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -115,6 +117,29 @@ public class NamespaceControllerTest {
 
         assertThat(retrieve.getNodes().size(), is(3));
         assertThat(retrieve.getEdges().size(), is(2));
+    }
+
+    @Test
+    void secrets() {
+        ApiSecretListResponse secrets = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/namespaces/any.ns/secrets?page=1&size=2"),
+            ApiSecretListResponse.class
+        );
+        assertThat(secrets.readOnly(), is(true));
+        assertThat(secrets.total(), is(4L));
+        assertThat(secrets.results(), is(List.of(
+            new ApiSecretMeta("WEBHOOK_KEY"),
+            new ApiSecretMeta("PASSWORD")
+        )));
+
+        secrets = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/namespaces/any.ns/secrets?page=2&size=2"),
+            ApiSecretListResponse.class
+        );
+        assertThat(secrets.results(), is(List.of(
+            new ApiSecretMeta("NEW_LINE"),
+            new ApiSecretMeta("MY_SECRET")
+        )));
     }
 
     @Test

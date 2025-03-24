@@ -193,10 +193,10 @@
             class="card card-1/2"
         />
 
-        <ExecutionsEmptyNextScheduled 
-            v-else 
+        <ExecutionsEmptyNextScheduled
+            v-else
             :loading="executionsLoading"
-            class="card card-1/2" 
+            class="card card-1/2"
         />
         <ExecutionsNamespace
             v-if="!props.flow && Object.keys(namespaceExecutions).length > 1"
@@ -204,11 +204,11 @@
             :data="namespaceExecutions"
             :total="stats.total"
         />
-        <Logs 
-            v-if="!props.flow" 
-            :data="logs" 
+        <Logs
+            v-if="!props.flow"
+            :data="logs"
             :loading="executionsLoading"
-            class="card card-1" 
+            class="card card-1"
         />
     </div>
 </template>
@@ -247,8 +247,8 @@
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import FileTree from "vue-material-design-icons/FileTree.vue";
     import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
-    import permission from "../../models/permission.js";
-    import action from "../../models/action.js";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
     import _cloneDeep from "lodash/cloneDeep.js";
 
     const router = useRouter();

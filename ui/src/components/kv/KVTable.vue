@@ -33,7 +33,7 @@
         />
         <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('key')">
             <template #default="scope">
-                <id :value="scope.row.key" :shrink="false" />
+                <id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
             </template>
         </el-table-column>
         <el-table-column
@@ -57,7 +57,7 @@
 
         <el-table-column column-key="copy" class-name="row-action">
             <template #default="scope">
-                <el-tooltip :content="$t('copy_to_clipboard')">
+                <el-tooltip v-if="scope.row.key !== undefined" :content="$t('copy_to_clipboard')">
                     <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)" />
                 </el-tooltip>
             </template>
@@ -65,13 +65,23 @@
 
         <el-table-column column-key="update" class-name="row-action">
             <template #default="scope">
-                <el-button v-if="canUpdate(scope.row)" :icon="FileDocumentEdit" link @click="updateKvModal(scope.row.namespace, scope.row.key)" />
+                <el-button
+                    v-if="canUpdate(scope.row)"
+                    :icon="FileDocumentEdit"
+                    link
+                    @click="updateKvModal(scope.row.namespace, scope.row.key)"
+                />
             </template>
         </el-table-column>
 
         <el-table-column column-key="delete" class-name="row-action">
             <template #default="scope">
-                <el-button v-if="canDelete(scope.row)" :icon="Delete" link @click="removeKv(scope.row.namespace, scope.row.key)" />
+                <el-button
+                    v-if="canDelete(scope.row)"
+                    :icon="Delete"
+                    link
+                    @click="removeKv(scope.row.namespace, scope.row.key)"
+                />
             </template>
         </el-table-column>
     </select-table>
@@ -83,7 +93,12 @@
     >
         <el-form class="ks-horizontal" :model="kv" :rules="rules" ref="form">
             <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
-                <namespace-select v-model="kv.namespace" :readonly="kv.update" data-type="flow" :include-system-namespace="true" />
+                <namespace-select
+                    v-model="kv.namespace"
+                    :readonly="kv.update"
+                    data-type="flow"
+                    :include-system-namespace="true"
+                />
             </el-form-item>
 
             <el-form-item :label="$t('key')" prop="key" required>
@@ -213,32 +228,6 @@
                 set(newValue) {
                     this.$emit("update:addKvModalVisible", newValue);
                 }
-            },
-            rules() {
-                return {
-                    key: [
-                        {required: true, trigger: "change"},
-                        {validator: this.kvKeyDuplicate, trigger: "change"},
-                    ],
-                    value: [
-                        {required: true, trigger: "change"},
-                        {
-                            validator: (rule, value, callback) => {
-                                if (this.kv.type === "DURATION") {
-                                    this.durationValidator(rule, value, callback);
-                                } else if (this.kv.type === "JSON") {
-                                    this.jsonValidator(rule, value, callback)
-                                } else {
-                                    callback();
-                                }
-                            },
-                            trigger: "change"
-                        }
-                    ],
-                    ttl: [
-                        {validator: this.durationValidator, trigger: "change"}
-                    ]
-                }
             }
         },
         mounted() {
@@ -284,14 +273,38 @@
                 kvs: undefined,
                 namespaceIterator: undefined,
                 search: "",
+                rules: {
+                    key: [
+                        {required: true, trigger: "change"},
+                        {validator: this.kvKeyDuplicate, trigger: "change"},
+                    ],
+                    value: [
+                        {required: true, trigger: "change"},
+                        {
+                            validator: (rule, value, callback) => {
+                                if (this.kv.type === "DURATION") {
+                                    this.durationValidator(rule, value, callback);
+                                } else if (this.kv.type === "JSON") {
+                                    this.jsonValidator(rule, value, callback)
+                                } else {
+                                    callback();
+                                }
+                            },
+                            trigger: "change"
+                        }
+                    ],
+                    ttl: [
+                        {validator: this.durationValidator, trigger: "change"}
+                    ]
+                }
             };
         },
         methods: {
             canUpdate(kv) {
-                return this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
+                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
             },
             canDelete(kv) {
-                return this.user.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
+                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
             },
             jsonValidator(rule, value, callback) {
                 try {

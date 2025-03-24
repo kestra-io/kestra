@@ -4,6 +4,7 @@ import {apiUrl} from "override/utils/route";
 function base(namespace) {
     return `${apiUrl(this)}/namespaces/${namespace}`;
 }
+
 const HEADERS = {headers: {"Content-Type": "multipart/form-data"}};
 
 const slashPrefix = (path) => (path.startsWith("/") ? path : `/${path}`);
@@ -18,11 +19,12 @@ export default {
         namespaces: undefined,
         namespace: undefined,
         inheritedSecrets: undefined,
+        secrets: undefined,
         kvs: undefined,
     },
     actions: {
         search({commit}, options) {
-            const shouldCommit = !!options.commit;
+            const shouldCommit = options.commit !== false;
             delete options.commit;
             return this.$http.get(`${apiUrl(this)}/namespaces/search`, {params: options, ...VALIDATE})
                 .then(response => {
@@ -33,7 +35,7 @@ export default {
         load({commit}, id) {
             return this.$http.get(`${apiUrl(this)}/namespaces/${id}`, VALIDATE)
                 .then(response => {
-                    if(response.status === 200) commit("setNamespace", response.data)
+                    if (response.status === 200) commit("setNamespace", response.data)
                     return response.data;
                 })
         },
@@ -62,10 +64,12 @@ export default {
                 .put(
                     `${apiUrl(this)}/namespaces/${payload.namespace}/kv/${payload.key}`,
                     payload.value,
-                    {headers: {
+                    {
+                        headers: {
                             "Content-Type": payload.contentType,
                             "ttl": payload.ttl
-                        }}
+                        }
+                    }
                 )
                 .then(() => {
                     return dispatch("kvsList", {id: payload.namespace})
@@ -80,7 +84,7 @@ export default {
         },
         deleteKvs({dispatch}, payload) {
             return this.$http
-                .delete(`${apiUrl(this)}/namespaces/${payload.namespace}/kv`,{
+                .delete(`${apiUrl(this)}/namespaces/${payload.namespace}/kv`, {
                     data: payload.request
                 })
                 .then(() => {
@@ -88,13 +92,30 @@ export default {
                 });
         },
 
-        inheritedSecrets({commit}, item) {
-            return this.$http.get(`${apiUrl(this)}/namespaces/${item.id}/inherited-secrets`, {validateStatus: (status) => status === 200 || status === 404})
-                .then(response => {
+        inheritedSecrets({commit}, {id, commit: shouldCommit, ...params}) {
+            return this.$http.get(`${apiUrl(this)}/namespaces/${id}/inherited-secrets`, {
+                validateStatus: (status) => status === 200 || status === 404,
+                params
+            }).then(response => {
+                if (shouldCommit !== false) {
                     commit("setInheritedSecrets", response.data)
+                }
 
-                    return response.data;
-                });
+                return response.data;
+            });
+        },
+
+        secrets({commit}, {id, commit: shouldCommit, ...params}) {
+            return this.$http.get(`${apiUrl(this)}/namespaces/${id}/secrets`, {
+                validateStatus: (status) => status === 200 || status === 404,
+                params
+            }).then(response => {
+                if (response.status === 200 && shouldCommit !== false) {
+                    commit("setSecrets", response.data.results);
+                }
+
+                return response.data;
+            });
         },
 
         // Create a directory
@@ -123,7 +144,7 @@ export default {
 
         // Get namespace file content
         async readFile(_, payload) {
-            if(!payload.path) return;
+            if (!payload.path) return;
 
             const URL = `${base.call(this, payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
             const request = await this.$http.get(URL, {transformResponse: response => response, responseType: "json"})
@@ -201,5 +222,8 @@ export default {
         setInheritedSecrets(state, secrets) {
             state.inheritedSecrets = secrets
         },
+        setSecrets(state, secrets) {
+            state.secrets = secrets
+        }
     },
 };

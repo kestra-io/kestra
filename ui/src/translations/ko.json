@@ -302,6 +302,10 @@
           "title": "변수를 중앙에서 관리하세요"
         }
       },
+      "secrets": {
+        "message": "Enterprise Edition (EE)는 UI에서 비밀을 직접 추가, 편집 또는 삭제할 수 있게 해줍니다. 인스턴스를 재시작할 필요가 없습니다. 비밀을 namespace별로 세분화된 RBAC 권한으로 구성하고, 상위 namespace에서 하위 namespace로 상속할 수 있습니다. EE는 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, Elasticsearch와 같은 비밀 관리자와 통합됩니다. namespace, tenant, 인스턴스별로 전용 백엔드를 설정하여 팀 간 비밀을 격리하거나 외부 vault에 저장된 읽기 전용 비밀을 활성화할 수 있습니다. 비밀은 저장 중 및 전송 중에 암호화된 상태로 유지됩니다. 선택적 캐싱은 API 호출을 줄이고, 감사 추적은 모든 접근을 log합니다.",
+        "title": "비밀 관리 업그레이드"
+      },
       "tenants": {
         "message": "Kestra Enterprise Edition은 멀티-tenancy를 지원하여, 각기 다른 팀이나 프로젝트를 위한 완전히 분리된 환경을 제공합니다. 각 환경은 전용 worker 그룹, 비밀 정보 및 내부 저장소 백엔드와 같은 자체 리소스를 갖추고 있습니다.",
         "title": "격리된 Tenant에서 Workflow 관리"
@@ -1007,8 +1011,10 @@
     "search term in message": "메시지에서 검색어 찾기",
     "seconds": "초",
     "secret": {
+      "add": "새 비밀",
       "inherited": "상속된 비밀",
-      "names": "비밀"
+      "names": "비밀",
+      "update": "비밀 '{name}' 업데이트"
     },
     "security_advice": {
       "content": "인스턴스를 보호하려면 기본 인증을 활성화하세요.",

@@ -302,6 +302,10 @@
           "title": "Gérez vos Variables de manière centralisée"
         }
       },
+      "secrets": {
+        "message": "L'Enterprise Edition (EE) vous permet d'ajouter, de modifier ou de supprimer des secrets directement dans l'UI, sans redémarrage de l'instance. Organisez les secrets par namespace avec des permissions RBAC granulaires, et héritez-les des namespaces parents aux namespaces enfants. EE s'intègre avec des gestionnaires de secrets comme HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager et Elasticsearch. Configurez des backends dédiés par namespace, tenant ou instance pour isoler les secrets entre les équipes, ou activez des secrets en lecture seule stockés dans des coffres externes. Les secrets restent chiffrés au repos et en transit. Un cache optionnel réduit les appels API, et les pistes d'audit loguent tous les accès.",
+        "title": "Améliorez votre gestion des Secrets"
+      },
       "tenants": {
         "message": "L'édition Kestra Enterprise prend en charge la multi-tenance, vous offrant des environnements entièrement isolés pour différentes équipes ou projets, chacun avec ses propres ressources telles que des groupes de workers dédiés ou des secrets et des backends de stockage internes.",
         "title": "Gérer les flux de travail dans des tenants isolés"
@@ -1007,8 +1011,10 @@
     "search term in message": "Chercher dans le message",
     "seconds": "Secondes",
     "secret": {
+      "add": "Nouveau secret",
       "inherited": "Secrets hérités",
-      "names": "Secrets"
+      "names": "Secrets",
+      "update": "Mettre à jour le secret '{name}'"
     },
     "security_advice": {
       "content": "Activer l'authentification basique pour protéger votre instance.",

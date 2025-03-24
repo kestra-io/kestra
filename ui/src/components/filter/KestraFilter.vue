@@ -203,8 +203,8 @@
     import {useStore} from "vuex";
     import {useRoute, useRouter} from "vue-router";
     import {useFilters} from "./composables/useFilters";
-    import action from "../../models/action.js";
-    import permission from "../../models/permission.js";
+    import action from "../../models/action";
+    import permission from "../../models/permission";
     import {useValues} from "./composables/useValues";
     import {decodeParams, encodeParams} from "./utils/helpers";
 

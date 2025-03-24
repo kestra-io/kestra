@@ -242,12 +242,13 @@
         },
         placeholder: {type: String, default: undefined},
         searchCallback: {type: Function, default: undefined},
+        isDefaultDashboard: {type: Boolean, default: false}
     });
 
     const TEXT_PREFIX = `${t("filters.text_search")}: `;
     const ITEMS_PREFIX = props.prefix ?? String(route.name);
 
-    const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX);
+    const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX, props.isDefaultDashboard);
 
     const prefixFilteredValueOptions = computed(() => {
         if (prefixFilter.value === "") {
@@ -642,6 +643,7 @@
                     q,
                     props.include,
                     OPTIONS,
+                    props.isDefaultDashboard
                 );
                 currentFilters.value = routeFilters;
             }
@@ -702,7 +704,6 @@
                 // Adding text search string
                 const label = t("filters.options.text");
                 const index = currentFilters.value.findIndex((i) => {
-                    console.log(i);
                     return i.label === label;
                 });
 
@@ -742,7 +743,7 @@
         if (props.searchCallback) return;
         else {
             router.push({
-                query: encodeParams(route.name, currentFilters.value, OPTIONS),
+                query: encodeParams(route.name, currentFilters.value, OPTIONS, props.isDefaultDashboard),
             });
         }
     };
@@ -755,6 +756,7 @@
                 route.query,
                 props.include,
                 OPTIONS,
+                props.isDefaultDashboard
             );
             currentFilters.value = decodedParams.map((item: any) => {
                 if (item.label === "absolute_date") {

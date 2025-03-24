@@ -12,7 +12,9 @@
     />
 
     <div class="dashboard-filters">
+        <!-- Force re-rendering when switching between custom and default -->
         <KestraFilter
+            :key="custom.shown"
             :prefix="custom.shown ? 'custom_dashboard' : 'dashboard'"
             :include="
                 custom.shown
@@ -21,7 +23,6 @@
                         'namespace',
                         'state',
                         'scope',
-                        'relative_date',
                         'absolute_date',
                     ]
             "
@@ -32,8 +33,9 @@
                 },
                 settings: {shown: false},
             }"
-            :dashboards="{shown: customDashboardsEnabled}"
+            :dashboards="{shown: customDashboardsEnabled && route.name === 'home'}"
             @dashboard="(v) => handleCustomUpdate(v)"
+            :is-default-dashboard="!custom.shown"
         />
     </div>
 
@@ -292,7 +294,7 @@
         if (route.name === "home") {
             router.replace({
                 params: {...route.params, id: v?.id ?? "default"},
-                query: {...route.query},
+                query: route.params.id != v?.id ? {} : {...route.query},
             });
             if (v && v.id !== "default") {
                 dashboard = await store.dispatch("dashboard/load", v.id);

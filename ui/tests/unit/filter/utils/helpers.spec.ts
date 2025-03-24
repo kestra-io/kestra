@@ -3,13 +3,12 @@ import {decodeSearchParams, encodeSearchParams, isSearchPath} from "../../../../
 
 
 const COMPARATORS = {
-    EQUALS: {label: "is", value: "$eq"},
-    NOT_EQUALS: {label: "is not", value: "$ne"},
+    EQUALS: {label: "is", value: "EQUALS"}
 };
 
 const OPTIONS = [
     {key: "namespace", label: "Namespace", value: {label: "namespace", comparator: undefined, value: []}, comparators: [COMPARATORS.EQUALS]},
-    {key: "state", label: "State", value: {label: "state", comparator: undefined, value: []}, comparators: [COMPARATORS.EQUALS, COMPARATORS.NOT_EQUALS]},
+    {key: "state", label: "State", value: {label: "state", comparator: undefined, value: []}, comparators: [COMPARATORS.EQUALS]},
 ];
 
 
@@ -24,17 +23,17 @@ describe("Params Encoding & Decoding", () => {
         ];
 
         const encoded = encodeSearchParams(filters, OPTIONS);
-        expect(encoded).toHaveProperty("filters[namespace][$eq]");
+        expect(encoded).toHaveProperty("filters[namespace][EQUALS]");
     });
 
     it("should decode search parameters correctly", () => {
         const query = {
-            "filters[namespace][$eq]": "test-namespace",
+            "filters[namespace][EQUALS]": "test-namespace",
         };
 
         const decoded = decodeSearchParams(query, ["namespace"], OPTIONS);
         expect(decoded).toEqual([
-            {field: "namespace", value: "test-namespace", operation: "$eq"},
+            {field: "namespace", value: "test-namespace", operation: "EQUALS"},
         ]);
     });
 

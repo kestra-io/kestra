@@ -1041,7 +1041,8 @@
             "flow_default_tab": "Aba Padrão do Flow",
             "language": "Idioma",
             "log_display": "Exibição de Log Padrão",
-            "log_level": "Nível de Log Padrão"
+            "log_level": "Nível de Log Padrão",
+            "multi_panel_editor": "Editor de Painel Múltiplo"
           },
           "label": "Configuração Principal"
         },

@@ -1041,7 +1041,8 @@
             "flow_default_tab": "Domyślna karta Flow",
             "language": "Język",
             "log_display": "Domyślne Wyświetlanie Log",
-            "log_level": "Domyślna Poziom Logs"
+            "log_level": "Domyślna Poziom Logs",
+            "multi_panel_editor": "Edytor Wielopanelowy"
           },
           "label": "Główna konfiguracja"
         },

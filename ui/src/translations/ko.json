@@ -1041,7 +1041,8 @@
             "flow_default_tab": "기본 Flow 탭",
             "language": "언어",
             "log_display": "기본 Log 표시",
-            "log_level": "기본 Log 레벨"
+            "log_level": "기본 Log 레벨",
+            "multi_panel_editor": "멀티 패널 편집기"
           },
           "label": "기본 구성"
         },

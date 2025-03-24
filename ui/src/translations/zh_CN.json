@@ -1041,7 +1041,8 @@
             "flow_default_tab": "默认 Flow 标签页",
             "language": "语言",
             "log_display": "默认日志显示",
-            "log_level": "默认日志级别"
+            "log_level": "默认日志级别",
+            "multi_panel_editor": "多面板编辑器"
           },
           "label": "主要配置"
         },

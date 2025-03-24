@@ -1041,7 +1041,8 @@
             "flow_default_tab": "デフォルト Flow タブ",
             "language": "言語",
             "log_display": "デフォルトLog表示",
-            "log_level": "デフォルトLogレベル"
+            "log_level": "デフォルトLogレベル",
+            "multi_panel_editor": "マルチパネルエディタ"
           },
           "label": "メイン設定"
         },

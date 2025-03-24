@@ -1041,7 +1041,8 @@
             "flow_default_tab": "Onglet Flow par Défaut",
             "language": "Langue",
             "log_display": "Affichage des journaux par défaut",
-            "log_level": "Niveau d'affichage des journaux par défaut"
+            "log_level": "Niveau d'affichage des journaux par défaut",
+            "multi_panel_editor": "Éditeur Multi-Panneaux"
           },
           "label": "Configuration Principale"
         },

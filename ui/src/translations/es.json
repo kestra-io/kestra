@@ -1041,7 +1041,8 @@
             "flow_default_tab": "Pestaña de Flow Predeterminada",
             "language": "Idioma",
             "log_display": "Visualización de Log Predeterminada",
-            "log_level": "Nivel de Log Predeterminado"
+            "log_level": "Nivel de Log Predeterminado",
+            "multi_panel_editor": "Editor de Panel Múltiple"
           },
           "label": "Configuración Principal"
         },

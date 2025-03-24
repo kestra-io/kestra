@@ -1041,7 +1041,8 @@
             "flow_default_tab": "डिफ़ॉल्ट Flow टैब",
             "language": "भाषा",
             "log_display": "Log प्रदर्शन",
-            "log_level": "Log स्तर"
+            "log_level": "Log स्तर",
+            "multi_panel_editor": "मल्टी पैनल एडिटर"
           },
           "label": "मुख्य कॉन्फ़िगरेशन"
         },

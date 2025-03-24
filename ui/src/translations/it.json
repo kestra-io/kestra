@@ -1041,7 +1041,8 @@
             "flow_default_tab": "Scheda Flow Predefinita",
             "language": "Lingua",
             "log_display": "Visualizzazione Log predefinita",
-            "log_level": "Livello di Log predefinito"
+            "log_level": "Livello di Log predefinito",
+            "multi_panel_editor": "Editor Multi Pannello"
           },
           "label": "Configurazione principale"
         },

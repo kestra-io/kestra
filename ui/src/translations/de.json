@@ -1041,7 +1041,8 @@
             "flow_default_tab": "Standard-Flow-Registerkarte",
             "language": "Sprache",
             "log_display": "Standard-Log-Anzeige",
-            "log_level": "Standard-Log-Ebene"
+            "log_level": "Standard-Log-Ebene",
+            "multi_panel_editor": "Multi-Panel-Editor"
           },
           "label": "Hauptkonfiguration"
         },

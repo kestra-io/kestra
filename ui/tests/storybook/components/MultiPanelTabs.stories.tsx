@@ -318,7 +318,9 @@ export const SplitPanel: Story = {
 
         expect(canvas.getAllByRole("tablist")).toHaveLength(1)
 
-        userEvent.click(canvas.getByTitle("Split panel"))
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        await userEvent.click(canvas.getByTitle("Split panel"))
 
         await new Promise(resolve => setTimeout(resolve, 100));
 

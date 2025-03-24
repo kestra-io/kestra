@@ -21,7 +21,7 @@ import jakarta.validation.ConstraintViolationException;
 
 @CommandLine.Command(
     name = "update",
-    description = "handle namespace templates",
+    description = "Update namespace templates",
     mixinStandardHelpOptions = true
 )
 @Slf4j

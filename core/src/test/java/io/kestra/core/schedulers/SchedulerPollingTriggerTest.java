@@ -1,5 +1,7 @@
 package io.kestra.core.schedulers;
 
+import io.kestra.core.models.Label;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.condition.Expression;
@@ -30,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -41,11 +44,10 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
     private SchedulerTriggerStateInterface triggerState;
 
     @Inject
-    private SchedulerExecutionState schedulerExecutionState;
-
-    @Inject
     private FlowListeners flowListenersService;
 
+    @Inject
+    protected FlowRepositoryInterface flowRepository;
 
     @Test
     void pollingTrigger() throws Exception {
@@ -80,6 +82,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
 
             assertThat(queueCount.getCount(), is(0L));
             assertThat(last.get(), notNullValue());
+            assertTrue(last.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
         }
     }
 
@@ -92,6 +95,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
             .toBuilder()
             .tasks(List.of(Fail.builder().id("fail").type(Fail.class.getName()).build()))
             .build();
+        flowRepository.create(flow, flow.generateSource(), flow);
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -123,6 +127,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
 
             assertThat(queueCount.getCount(), is(0L));
             assertThat(last.get(), notNullValue());
+            assertTrue(last.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
 
             // Assert that the trigger is now disabled.
             // It needs to await on assertion as it will be disabled AFTER we receive a success execution.

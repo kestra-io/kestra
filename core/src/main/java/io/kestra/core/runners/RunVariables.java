@@ -15,13 +15,11 @@ import lombok.AllArgsConstructor;
 import lombok.With;
 
 import java.security.GeneralSecurityException;
-import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * Class for building {@link RunContext} variables.
@@ -129,6 +127,8 @@ public final class RunVariables {
 
         Builder withSecretInputs(List<String> secretInputs);
 
+        Builder withKestraConfiguration(KestraConfiguration kestraConfiguration);
+
         /**
          * Builds the immutable map of run variables.
          *
@@ -137,6 +137,8 @@ public final class RunVariables {
          */
         Map<String, Object> build(final RunContextLogger logger);
     }
+
+    public record  KestraConfiguration(String environment, String url) { }
 
     /**
      * Default builder class for constructing variables.
@@ -157,6 +159,7 @@ public final class RunVariables {
         protected Map<?, ?> globals;
         private final Optional<String> secretKey;
         private List<String> secretInputs;
+        private KestraConfiguration kestraConfiguration;
 
         public DefaultBuilder() {
             this(Optional.empty());
@@ -211,6 +214,10 @@ public final class RunVariables {
 
                 executionMap.put("id", execution.getId());
 
+                if (execution.getState() != null) { // can occurs in tests
+                    executionMap.put("state", execution.getState().getCurrent());
+                }
+
                 Optional.ofNullable(execution.getState()).map(State::getStartDate)
                     .ifPresent(startDate -> executionMap.put("startDate", startDate));
 
@@ -235,6 +242,7 @@ public final class RunVariables {
                                 tasksMap.put(taskRun.getTaskId(), Map.of("state", taskRun.getState().getCurrent()));
                             } else {
                                 if (tasksMap.containsKey(taskRun.getTaskId())) {
+                                    @SuppressWarnings("unchecked")
                                     Map<String, Object> taskRunMap = new HashMap<>((Map<String, Object>) tasksMap.get(taskRun.getTaskId()));
                                     taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
                                     tasksMap.put(taskRun.getTaskId(), taskRunMap);
@@ -294,13 +302,7 @@ public final class RunVariables {
                 }
 
                 if (execution.getLabels() != null) {
-                    builder.put("labels", execution.getLabels()
-                        .stream()
-                        .filter(label -> label.value() != null && label.key() != null)
-                        .map(label -> mapLabel(label))
-                        // using an accumulator in case labels with the same key exists: the first is kept
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (first, second) -> first))
-                    );
+                    builder.put("labels", Label.toNestedMap(execution.getLabels()));
                 }
 
                 if (execution.getVariables() != null) {
@@ -318,6 +320,18 @@ public final class RunVariables {
                 }
             }
 
+            // Kestra configuration
+            if (kestraConfiguration != null) {
+                Map<String, String> kestra = new HashMap<>();
+                if (kestraConfiguration.environment() != null) {
+                    kestra.put("environment", kestraConfiguration.environment());
+                }
+                if (kestraConfiguration.url() != null) {
+                    kestra.put("url", kestraConfiguration.url());
+                }
+                builder.put("kestra", kestra);
+            }
+
             // adds any additional variables
             if (variables != null) {
                 builder.putAll(variables);
@@ -328,23 +342,6 @@ public final class RunVariables {
             }
 
             return builder.build();
-        }
-    }
-
-    private static Map.Entry<String, Object> mapLabel(Label label) {
-        if (label.key().startsWith(Label.SYSTEM_PREFIX)) {
-            return Map.entry(
-                label.key().substring(0, Label.SYSTEM_PREFIX.length() - 1),
-                Map.entry(
-                    label.key().substring(Label.SYSTEM_PREFIX.length()),
-                    label.value()
-                )
-            );
-        } else {
-            return Map.entry(
-                label.key(),
-                label.value()
-            );
         }
     }
 

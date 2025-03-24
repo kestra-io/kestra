@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
@@ -12,12 +14,16 @@ import java.util.concurrent.TimeoutException;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-public class EmptyVariablesTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+public class EmptyVariablesTest {
 
+    @Inject
+    private RunnerUtils runnerUtils;
     @Inject
     private FlowInputOutput flowIO;
 
     @Test
+    @LoadFlows({"flows/valids/empty-variables.yml"})
     void emptyVariables() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,

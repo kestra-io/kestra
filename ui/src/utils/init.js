@@ -1,7 +1,7 @@
 import {createStore} from "vuex";
 import {createRouter, createWebHistory} from "vue-router";
 import VueGtag from "vue-gtag";
-import {createI18n} from "vue-i18n";
+import {setI18nLanguage, loadLocaleMessages, setupI18n} from "../translations/i18n";
 import moment from "moment-timezone";
 import "moment/dist/locale/de"
 import "moment/dist/locale/es"
@@ -31,7 +31,6 @@ import {
     ArcElement,
     DoughnutController,
 } from "chart.js";
-import {TreemapController, TreemapElement} from "chartjs-chart-treemap"
 import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
 
@@ -62,7 +61,7 @@ import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
 import TaskTaskRunner from "../components/flows/tasks/TaskTaskRunner.vue";
 
-export default (app, routes, stores, translations) => {
+export default async (app, routes, stores, translations, additionalTranslations = {}) => {
     // charts
     Chart.register(
         CategoryScale,
@@ -78,19 +77,17 @@ export default (app, routes, stores, translations) => {
         Tooltip,
         Legend,
         CategoryScale,
-        LinearScale,
-        TreemapController,
-        TreemapElement
+        LinearScale
     );
 
     // store
     let store = createStore(stores);
     app.use(store);
 
-    /* eslint-disable no-undef */
+
     // router
     let router = createRouter({
-        history: createWebHistory(KESTRA_UI_PATH),
+        history: createWebHistory(window.KESTRA_UI_PATH),
         routes
     });
 
@@ -117,33 +114,42 @@ export default (app, routes, stores, translations) => {
         window.dispatchEvent(new CustomEvent("KestraRouterAfterEach", to))
     })
 
-    app.use(router)
+    // avoid loading router in storybook
+    // as it conflicts with storybook's
+    if(routes.length){
+        app.use(router)
+    }
 
     // Google Analytics
-    if (KESTRA_GOOGLE_ANALYTICS !== null) {
+    if (window.KESTRA_GOOGLE_ANALYTICS !== null) {
         app.use(
             VueGtag,
             {
-                config: {id: KESTRA_GOOGLE_ANALYTICS}
+                config: {id: window.KESTRA_GOOGLE_ANALYTICS}
             },
             router
         );
     }
-    /* eslint-enable no-undef */
+
 
 
     // l18n
     let locale = Utils.getLang();
 
-    let i18n = createI18n({
-        locale: locale,
+    let i18n = setupI18n({
+        locale: "en",
         messages: translations,
         allowComposition: true,
         legacy: false,
         warnHtmlMessage: false,
     });
 
+    if(locale !== "en"){
+        await loadLocaleMessages(i18n, locale, additionalTranslations);
+        await setI18nLanguage(i18n, locale);
+    }
     app.use(i18n);
+    store.$i18n = i18n.global;
 
     // moment
     moment.locale(locale);
@@ -155,6 +161,9 @@ export default (app, routes, stores, translations) => {
     app.provide("Toast", Toast)
     app.use(Vue3Tour)
     app.use(VueVirtualScroller)
+
+    // Passing toast to VUEX store to be used in modules
+    store.$toast = app.config.globalProperties.$toast;
 
     // filters
     app.config.globalProperties.$filters = filters;

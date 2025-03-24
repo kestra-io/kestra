@@ -1,0 +1,89 @@
+name: Run Gradle Release
+run-name: "Releasing Kestra ${{ github.event.inputs.releaseVersion }} 🚀"
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: 'The release version (e.g., 0.21.0-rc1)'
+        required: true
+        type: string
+      nextVersion:
+        description: 'The next version (e.g., 0.22.0-SNAPSHOT)'
+        required: true
+        type: string
+env:
+  RELEASE_VERSION: "${{ github.event.inputs.releaseVersion }}"
+  NEXT_VERSION: "${{ github.event.inputs.nextVersion }}"
+jobs:
+  release:
+    name: Release Kestra
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/develop'
+    steps:
+      # Checks
+      - name: Check Inputs
+        run: |
+          if ! [[ "$RELEASE_VERSION" =~ ^[0-9]+(\.[0-9]+)\.0-rc[01](-SNAPSHOT)?$ ]]; then
+            echo "Invalid release version. Must match regex: ^[0-9]+(\.[0-9]+)\.0-rc[01](-SNAPSHOT)?$"
+            exit 1
+          fi
+            
+          if ! [[ "$NEXT_VERSION" =~ ^[0-9]+(\.[0-9]+)\.0-SNAPSHOT$ ]]; then
+            echo "Invalid next version. Must match regex: ^[0-9]+(\.[0-9]+)\.0-SNAPSHOT$"
+            exit 1;
+          fi
+      # Checkout
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Checkout GitHub Actions
+      - uses: actions/checkout@v4
+        with:
+          repository: kestra-io/actions
+          path: actions
+          ref: main
+
+      # Setup build
+      - uses: ./actions/.github/actions/setup-build
+        id: build
+        with:
+          java-enabled: true
+          node-enabled: true
+          python-enabled: true
+          caches-enabled: true
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      # Execute
+      - name: Run Gradle Release
+        env:
+          GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
+        run: |          
+          # Extract the major and minor versions
+          BASE_VERSION=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+)\..*/\1/')
+          PUSH_RELEASE_BRANCH="releases/v${BASE_VERSION}.x"
+  
+          # Create and push release branch
+          git checkout -b "$PUSH_RELEASE_BRANCH";
+          git push -u origin "$PUSH_RELEASE_BRANCH";
+      
+          # Run gradle release
+          git checkout develop;
+      
+          if [[ "$RELEASE_VERSION" == *"-SNAPSHOT" ]]; then
+            # -SNAPSHOT qualifier maybe used to test release-candidates
+            ./gradlew release -Prelease.useAutomaticVersion=true \
+            -Prelease.releaseVersion="${RELEASE_VERSION}" \
+            -Prelease.newVersion="${NEXT_VERSION}" \
+            -Prelease.pushReleaseVersionBranch="${PUSH_RELEASE_BRANCH}" \
+            -Prelease.failOnSnapshotDependencies=false
+          else
+            ./gradlew release -Prelease.useAutomaticVersion=true \
+            -Prelease.releaseVersion="${RELEASE_VERSION}" \
+            -Prelease.newVersion="${NEXT_VERSION}" \
+            -Prelease.pushReleaseVersionBranch="${PUSH_RELEASE_BRANCH}"
+          fi

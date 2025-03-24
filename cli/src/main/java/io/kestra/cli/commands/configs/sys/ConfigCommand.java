@@ -8,7 +8,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "configs",
-    description = "handle configs",
+    description = "Manage configuration",
     mixinStandardHelpOptions = true,
     subcommands = {
         ConfigPropertiesCommand.class,

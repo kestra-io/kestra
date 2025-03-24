@@ -1,0 +1,25 @@
+id: for-each-item-in-if
+namespace: io.kestra.tests
+
+inputs:
+  - id: file
+    type: FILE
+  - id: batch
+    type: INT
+
+tasks:
+  - id: if
+    type: io.kestra.plugin.core.flow.If
+    condition: "true"
+    then:
+    - id: each
+      type: io.kestra.plugin.core.flow.ForEachItem
+      items: "{{ inputs.file }}"
+      batch:
+        rows: "{{inputs.batch}}"
+      namespace: io.kestra.tests
+      flowId: for-each-item-subflow
+      wait: true
+      transmitFailed: true
+      inputs:
+        items: "{{ taskrun.items }}"

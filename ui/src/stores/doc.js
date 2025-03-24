@@ -30,7 +30,7 @@ export default {
                     }
                 });
         },
-        async fetchAppId({getters}, docId) {
+        async fetchDocId({getters}, docId) {
             const url = getters["resourceUrl"]()
             const response = await axios.get(`${url}/doc/${docId}`)
 

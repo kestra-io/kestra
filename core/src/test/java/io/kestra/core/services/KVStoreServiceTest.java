@@ -2,12 +2,15 @@ package io.kestra.core.services;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.storages.kv.KVStoreException;
+import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.storages.kv.*;
 import io.micronaut.test.annotation.MockBean;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.Optional;
 
 @KestraTest
@@ -19,7 +22,7 @@ class KVStoreServiceTest {
     KVStoreService storeService;
 
     @Inject
-    FlowRepositoryInterface flowRepository;
+    StorageInterface storageInterface;
 
     @Test
     void shouldGetKVStoreForExistingNamespaceGivenFromNull() {
@@ -35,6 +38,13 @@ class KVStoreServiceTest {
     @Test
     void shouldGetKVStoreForAnyNamespaceWhenAccessingFromChildNamespace() {
         Assertions.assertNotNull(storeService.get(null, "io.kestra", TEST_EXISTING_NAMESPACE));
+    }
+
+    @Test
+    void shouldGetKVStoreFromNonExistingNamespaceWithAKV() throws IOException {
+        KVStore kvStore = new InternalKVStore(null, "system", storageInterface);
+        kvStore.put("key", new KVValueAndMetadata(new KVMetadata(Duration.ofHours(1)), "value"));
+        Assertions.assertNotNull(storeService.get(null, "system", null));
     }
 
     @MockBean(NamespaceService.class)

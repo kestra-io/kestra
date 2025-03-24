@@ -1,0 +1,417 @@
+{
+    "results": [
+        {
+            "id": "airbyte-sync",
+            "flowId": "airbyte-sync",
+            "state": {
+                "current": "RUNNING",
+                "duration": "PT30.337S",
+                "endDate": "2025-01-15T13:57:42.734Z",
+                "startDate": "2025-01-15T13:57:12.397Z"
+            },
+            "namespace": "company.team",
+            "revision": 1,
+            "disabled": false,
+            "deleted": false,
+            "tasks": [
+                {
+                    "id": "data_ingestion",
+                    "type": "io.kestra.plugin.airbyte.connections.Sync",
+                    "url": "http://host.docker.internal:8000/",
+                    "username": "{{ secret('AIRBYTE_USERNAME') }}",
+                    "password": "{{ secret('AIRBYTE_PASSWORD') }}",
+                    "connectionId": "e3b1ce92-547c-436f-b1e8-23b6936c12ab"
+                }
+            ],
+            "triggers": [
+                {
+                    "id": "every_minute",
+                    "type": "io.kestra.plugin.core.trigger.Schedule",
+                    "cron": "*/1 * * * *"
+                }
+            ],
+            "labels": [
+                {"key":"airbyte", "value":"007"},
+                {"key":"sync", "value":"false"}
+            ]
+        },
+        {
+            "id": "blob-sync",
+            "flowId": "blob-sync",
+            "state": {
+                "current": "KILLED",
+                "duration": "PT30.337S",
+                "endDate": "2025-01-15T13:57:42.734Z",
+                "startDate": "2025-01-15T13:57:12.397Z"
+            },
+            "namespace": "company.team",
+            "revision": 1,
+            "disabled": false,
+            "deleted": false,
+            "triggers": [
+                {
+                    "id": "every_minute",
+                    "type": "io.kestra.plugin.core.trigger.Schedule",
+                    "cron": "*/1 * * * *"
+                }
+            ]
+        },
+        {
+            "id": "child",
+            "flowId": "child",
+            "state": {
+                "current": "FAILED",
+                "duration": "PT30.337S",
+                "endDate": "2025-01-15T13:57:42.734Z",
+                "startDate": "2025-01-15T13:57:12.397Z"
+            },
+            "namespace": "company.team",
+            "revision": 1,
+            "disabled": false,
+            "deleted": false,
+            "tasks": [
+                {
+                    "id": "hello",
+                    "type": "io.kestra.plugin.core.log.Log",
+                    "message": "Hello from {{ flow.id }}"
+                }
+            ],
+            "labels": [
+                {"key":"kestra", "value":"42"}
+            ]
+        },
+        {
+            "id": "myflow",
+            "namespace": "company.team.my.deep.namespace",
+            "flowId": "myflow",
+            "state": {
+                "current": "SKIPPED",
+                "duration": "PT30.337S",
+                "endDate": "2025-01-15T13:57:42.734Z",
+                "startDate": "2025-01-15T13:57:12.397Z"
+            },
+            "revision": 1,
+            "disabled": false,
+            "deleted": false,
+            "tasks": [
+                {
+                    "id": "hello",
+                    "type": "io.kestra.plugin.core.log.Log",
+                    "message": "Hello World! \uD83D\uDE80"
+                }
+            ],
+            "labels": [
+                {"key":"labelwithNoValue"}
+            ]
+        },
+        {
+            "id": "myflow",
+            "namespace": "company.team",
+            "revision": 3,
+            "flowId": "myflow",
+            "inputs": [
+                {
+                    "id": "api_url",
+                    "type": "STRING",
+                    "required": true
+                }
+            ],
+            "state": {
+                "current": "WARN",
+                "duration": "PT30.337S",
+                "endDate": "2025-01-15T13:57:42.734Z",
+                "startDate": "2025-01-15T13:57:12.397Z"
+            },
+            "disabled": false,
+            "deleted": false,
+            "tasks": [
+                {
+                    "id": "hello",
+                    "type": "io.kestra.plugin.core.log.Log",
+                    "message": "Hello World! \uD83D\uDE80"
+                }
+            ]
+        },
+        {
+            "id": "myflow-editable",
+            "namespace": "company.team",
+            "revision": 8,
+            "flowId": "myflow-editable",
+            "inputs": [
+                {
+                    "id": "api_url",
+                    "type": "STRING",
+                    "required": true
+                }
+            ],
+            "state": {
+                "current": "RETRIED",
+                "duration": "PT30.337S",
+                "endDate": "2025-01-15T13:57:42.734Z",
+                "startDate": "2025-01-15T13:57:12.397Z"
+            },
+            "disabled": false,
+            "deleted": false,
+            "tasks": [
+                {
+                    "id": "hello",
+                    "type": "io.kestra.plugin.core.log.Log",
+                    "message": "Hello World! \uD83D\uDE80"
+                }
+            ],
+            "labels": [
+                {"key":"long label with a value", "value":"this is a long value"}
+            ]
+        },
+        {
+            "id": "parentflow",
+            "namespace": "company.team",
+            "revision": 1,
+            "flowId": "parentflow",
+            "state": {
+                "current": "RETRYING",
+                "duration": "PT30.337S",
+                "endDate": "2025-01-15T13:57:42.734Z",
+                "startDate": "2025-01-15T13:57:12.397Z"
+            },
+            "disabled": false,
+            "deleted": false,
+            "tasks": [
+                {
+                    "id": "hello",
+                    "type": "io.kestra.plugin.core.log.Log",
+                    "message": "Hello World!"
+                }
+            ],
+            "triggers": [
+                {
+                    "id": "flow_trigger",
+                    "type": "io.kestra.plugin.core.trigger.Flow",
+                    "preconditions": {
+                        "id": "child_flow",
+                        "flows": [
+                            {
+                                "namespace": "company.team",
+                                "flowId": "child",
+                                "states": [
+                                    "SUCCESS"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            ]
+        },
+        {
+            "id": "repro_bool",
+            "namespace": "company.team",
+            "flowId": "repro_bool",
+            "state": {
+                "current": "RESTARTED",
+                "duration": "PT30.337S",
+                "endDate": "2025-01-15T13:57:42.734Z",
+                "startDate": "2025-01-15T13:57:12.397Z"
+            },
+            "revision": 3,
+            "inputs": [
+                {
+                    "id": "mybool",
+                    "type": "BOOLEAN",
+                    "description": "This will not show up in the UI at all unless you mark it as required",
+                    "required": false,
+                    "defaults": false
+                }
+            ],
+            "disabled": false,
+            "deleted": false,
+            "tasks": [
+                {
+                    "id": "return_null",
+                    "type": "io.kestra.plugin.core.debug.Return",
+                    "format": "{{inputs}}"
+                }
+            ]
+        },
+        {
+            "id": "request_resources",
+            "namespace": "company.team",
+            "revision": 1,
+            "flowId": "request_resources",
+            "state": {
+                "current": "PAUSED",
+                "duration": "PT30.337S",
+                "endDate": "2025-01-15T13:57:42.734Z",
+                "startDate": "2025-01-15T13:57:12.397Z"
+            },
+            "inputs": [
+                {
+                    "id": "resource_type",
+                    "type": "SELECT",
+                    "required": true,
+                    "displayName": "Resource Type",
+                    "values": [
+                        "Access permissions",
+                        "SaaS applications",
+                        "Development tool",
+                        "Cloud VM"
+                    ],
+                    "allowCustomValue": false,
+                    "isRadio": false
+                },
+                {
+                    "id": "access_permissions",
+                    "type": "SELECT",
+                    "dependsOn": {
+                        "inputs": [
+                            "resource_type"
+                        ],
+                        "condition": "{{ inputs.resource_type equals 'Access permissions' }}"
+                    },
+                    "required": true,
+                    "displayName": "Access Permissions",
+                    "values": [
+                        "Admin",
+                        "Developer",
+                        "Editor",
+                        "Launcher",
+                        "Viewer"
+                    ],
+                    "allowCustomValue": true,
+                    "isRadio": false
+                },
+                {
+                    "id": "saas_applications",
+                    "type": "MULTISELECT",
+                    "dependsOn": {
+                        "inputs": [
+                            "resource_type"
+                        ],
+                        "condition": "{{ inputs.resource_type equals 'SaaS applications' }}"
+                    },
+                    "required": true,
+                    "displayName": "SaaS Applications",
+                    "values": [
+                        "Slack",
+                        "Notion",
+                        "HubSpot",
+                        "GitHub",
+                        "Jira"
+                    ],
+                    "itemType": "STRING",
+                    "allowCustomValue": true
+                },
+                {
+                    "id": "development_tools",
+                    "type": "SELECT",
+                    "dependsOn": {
+                        "inputs": [
+                            "resource_type"
+                        ],
+                        "condition": "{{ inputs.resource_type equals 'Development tool' }}"
+                    },
+                    "required": true,
+                    "displayName": "Development Tool",
+                    "values": [
+                        "Cursor",
+                        "IntelliJ IDEA",
+                        "PyCharm Professional",
+                        "Datagrip"
+                    ],
+                    "allowCustomValue": true,
+                    "isRadio": false
+                },
+                {
+                    "id": "cloud_provider",
+                    "type": "SELECT",
+                    "dependsOn": {
+                        "inputs": [
+                            "resource_type"
+                        ],
+                        "condition": "{{ inputs.resource_type equals 'Cloud VM' }}"
+                    },
+                    "required": true,
+                    "displayName": "Cloud Provider",
+                    "values": [
+                        "AWS",
+                        "GCP",
+                        "Azure"
+                    ],
+                    "allowCustomValue": true,
+                    "isRadio": false
+                },
+                {
+                    "id": "deadline",
+                    "type": "DATE",
+                    "required": true,
+                    "displayName": "Deadline for the resources"
+                },
+                {
+                    "id": "comment",
+                    "type": "STRING",
+                    "required": true,
+                    "displayName": "Provide details about the resources you need"
+                }
+            ],
+            "disabled": false,
+            "deleted": false,
+            "variables": {
+                "slack_message": "New form submission! Click on the Resume button here to approve or reject the request\n"
+            },
+            "tasks": [
+                {
+                    "id": "get_service_catalog",
+                    "type": "io.kestra.plugin.core.http.Download",
+                    "uri": "https://huggingface.co/datasets/kestra/datasets/resolve/main/ion/catalog.ion"
+                },
+                {
+                    "id": "send_approval_request",
+                    "type": "io.kestra.plugin.notifications.slack.SlackIncomingWebhook",
+                    "url": "https://reqres.in/api/slack",
+                    "payload": "{\n  \"channel\": \"#devops\",\n  \"text\": {{ render(vars.slack_message) | toJson }}\n}\n"
+                },
+                {
+                    "id": "wait_for_approval",
+                    "type": "io.kestra.plugin.core.flow.Pause",
+                    "onResume": [
+                        {
+                            "id": "provisioning_status",
+                            "type": "BOOLEAN",
+                            "description": "Whether the resources were able to be provisioned",
+                            "required": true,
+                            "defaults": true,
+                            "displayName": "Provisioning Status"
+                        },
+                        {
+                            "id": "comment",
+                            "type": "STRING",
+                            "description": "Extra comments about the provisioned resources",
+                            "required": true,
+                            "defaults": "All requested resources have been provisioned",
+                            "displayName": "Approval Comment"
+                        }
+                    ]
+                },
+                {
+                    "id": "approve",
+                    "type": "io.kestra.plugin.core.http.Request",
+                    "uri": "https://reqres.in/api/resources",
+                    "method": "POST",
+                    "body": "{{ inputs }}"
+                },
+                {
+                    "id": "log",
+                    "type": "io.kestra.plugin.core.log.Log",
+                    "message": "Status of the request {{ outputs.wait_for_approval.onResume.comment }}.\nProcess finished with {{ outputs.approve.body }}.\n"
+                }
+            ],
+            "outputs": [
+                {
+                    "id": "catalog",
+                    "value": "{{ outputs.get_service_catalog.uri }}",
+                    "type": "FILE"
+                }
+            ]
+        }
+    ],
+    "total": 8
+}

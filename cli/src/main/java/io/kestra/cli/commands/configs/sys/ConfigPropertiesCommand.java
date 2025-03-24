@@ -10,7 +10,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "properties",
-    description = {"Display actual configurations properties."}
+    description = {"Display current configuration properties."}
 )
 @Slf4j
 public class ConfigPropertiesCommand extends AbstractCommand {

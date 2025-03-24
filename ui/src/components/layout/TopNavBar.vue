@@ -8,9 +8,10 @@
                     </router-link>
                 </el-breadcrumb-item>
             </el-breadcrumb>
-            <h1 class="h5 fw-semibold m-0 d-inline-fle">
+            <h1 class="h5 fw-semibold m-0 d-inline-flex">
                 <slot name="title">
                     {{ title }}
+                    <BetaBadge v-if="beta" />
                 </slot>
                 <el-button
                     class="star-button"
@@ -48,14 +49,15 @@
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
-
+    import BetaBadge from "../global/BetaBadge.vue";
 
     export default {
         components: {
             Auth,
             GlobalSearch,
             TrashCan,
-            Impersonating
+            Impersonating,
+            BetaBadge
         },
         props: {
             title: {
@@ -65,6 +67,10 @@
             breadcrumb: {
                 type: Array,
                 default: undefined
+            },
+            beta: {
+                type: Boolean,
+                required: false
             },
         },
         computed: {
@@ -105,7 +111,7 @@
         methods: {
             restartGuidedTour() {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
+                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
 
                 this.$tours["guidedTour"]?.start();
             },
@@ -122,7 +128,6 @@
                         path: this.currentFavURI
                     })
                 } else {
-                    console.log(this.title, this.breadcrumb)
                     this.$store.dispatch("bookmarks/add", {
                         path: this.currentFavURI,
                         label: this.breadcrumb?.length ? `${this.breadcrumb[this.breadcrumb.length-1].label}: ${this.title}` : this.title,
@@ -138,9 +143,9 @@
         top: 0;
         position: sticky;
         z-index: 1000;
-        padding: var(--spacer) calc(2 * var(--spacer));
-        border-bottom: 1px solid var(--bs-border-color);
-        background: var(--card-bg);
+        padding: 1rem 2rem;
+        border-bottom: 1px solid var(--ks-border-primary);
+        background: var(--ks-background-card);
 
         .top-title, h1, .el-breadcrumb {
             white-space: nowrap;
@@ -156,7 +161,7 @@
         }
 
         .star-button{
-            margin-left: var(--spacer);
+            margin-left: 1rem;
             border: none;
         }
 
@@ -183,7 +188,7 @@
                 button, :deep(button), a, :deep(a) {
                     border: none;
                     font-size: var(--font-size-lg);
-                    padding: calc(var(--spacer) / 4);
+                    padding: .25rem;
                 }
             }
 
@@ -192,7 +197,7 @@
                 list-style: none;
                 padding: 0;
                 margin: 0;
-                gap: calc(var(--spacer) / 2);
+                gap: .5rem;
                 align-items: center;
             }
         }

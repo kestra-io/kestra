@@ -26,31 +26,28 @@
                     <p class="section-1-desc">
                         {{ $t("homeDashboard.start") }}
                     </p>
-                    <router-link :to="{name: 'flows/create'}">
-                        <el-button
-                            :icon="Plus"
-                            size="large"
-                            type="primary"
-                            class="px-3 p-4 section-1-link product-link"
-                        >
-                            {{ $t("welcome button create") }}
-                        </el-button>
-                    </router-link>
+                    <el-button
+                        @click="startTour"
+                        :icon="Plus"
+                        size="large"
+                        type="primary"
+                        class="px-3 p-4 section-1-link product-link"
+                    >
+                        {{ $t("welcome button create") }}
+                    </el-button>
                     <el-button
                         :icon="Play"
                         tag="a"
-                        href="https://www.youtube.com/watch?v=a2BZ7vOihjg"
+                        href="https://www.youtube.com/watch?v=waTpmiv4ZCs"
                         target="_blank"
                         class="p-3 px-4 mt-0 mb-lg-5 watch"
                     >
-                        Watch Video
+                        {{ $t("watch_video") }}
                     </el-button>
                 </div>
-                <div class="mid-bar mb-3">
-                    <div class="title title--center-line">
-                        {{ $t("homeDashboard.guide") }}
-                    </div>
-                </div>
+                <el-divider>
+                    {{ $t("homeDashboard.guide") }}
+                </el-divider>
                 <onboarding-bottom />
             </div>
         </div>
@@ -102,16 +99,21 @@
             canCreate() {
                 return this.user && this.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
             }
+        },
+        methods: {
+            startTour() {
+                localStorage.setItem("tourDoneOrSkip", undefined);
+                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
+                this.$tours["guidedTour"]?.start();
+            },
         }
     }
-
 </script>
 
 <style scoped lang="scss">
-
     .main {
         padding: 3rem 1rem 1rem;
-        background: var(--el-text-color-primary);
+        background: var(--ks-background-body);
         background: radial-gradient(ellipse at top, rgba(102,51,255,0.6) 0%, rgba(253, 253, 253, 0) 20%);
         background-size: 4000px;
         background-position: center;
@@ -140,23 +142,18 @@
     }
 
     .product-link, .watch {
-        background: var(--el-button-bg-color);
-        color: var(--el-button-text-color);
         font-weight: 700;
         border-radius: 5px;
-        border: 1px solid var(--el-button-border-color);
         text-decoration: none;
         font-size: var(--el-font-size-small);
         width: 200px;
-        margin-bottom: calc(var(--spacer));
-
-
+        margin: 0;
+        margin-bottom: 1rem;
     }
 
     .watch {
         font-weight: 500;
-        background-color: var(--el-bg-color);
-        color: var(--el-text-color-regular);
+        background-color: var(--ks-button-background-secondary);
         font-size: var(--el-font-size-small);
     }
 
@@ -179,7 +176,7 @@
                 text-align: center;
                 font-size: var(--el-font-size-extra-large);
                 font-weight: 600;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
 
             .section-1-desc {
@@ -187,43 +184,15 @@
                 font-weight: 500;
                 font-size: 1rem;
                 text-align: center;
-                color: var(--el-text-color-regular);
+                color: var(--ks-content-primary);
             }
         }
+    }
 
-        .mid-bar {
-            margin-top: 50px;
-
-            .title {
-                font-weight: 500;
-                color: var(--bs-gray-900-lighten-5);
-                display: flex;
-                align-items: center;
-                white-space: nowrap;
-                font-size: var(--el-font-size-extra-small);
-
-                &--center-line {
-                    text-align: center;
-                    padding: 0;
-
-                    &::before,
-                    &::after {
-                        content: "";
-                        background-color: var(--bs-gray-600-lighten-10);
-                        height: 2px;
-                        width: 50%;
-                    }
-
-                    &::before {
-                        margin-right: 1rem;
-                    }
-
-                    &::after {
-                        margin-left: 1rem;
-                    }
-                }
-            }
-        }
+    :deep(.el-divider__text) {
+        color: var(--ks-content-secondary);
+        white-space: nowrap;
+        font-size: var(--el-font-size-extra-small);
     }
 
     @container (max-width: 20px) {
@@ -239,13 +208,6 @@
 
         .section-1 .section-1-main .container {
             width: 76%;
-        }
-
-        .title--center-line {
-            &::before,
-            &::after {
-                width: 50%;
-            }
         }
     }
 

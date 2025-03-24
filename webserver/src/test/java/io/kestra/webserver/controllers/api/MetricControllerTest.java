@@ -1,9 +1,9 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
-import io.kestra.jdbc.repository.AbstractJdbcMetricRepository;
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
@@ -18,18 +18,17 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
-class MetricControllerTest extends JdbcH2ControllerTest {
+@KestraTest(startRunner = true)
+class MetricControllerTest {
     private static final String TESTS_FLOW_NS = "io.kestra.tests";
 
     @Inject
     @Client("/")
     ReactorHttpClient client;
 
-    @Inject
-    AbstractJdbcMetricRepository jdbcMetricRepository;
-
     @SuppressWarnings("unchecked")
     @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
     void findByExecution() {
         Execution result = triggerExecution(TESTS_FLOW_NS, "minimal", null, true);
         assertThat(result, notNullValue());

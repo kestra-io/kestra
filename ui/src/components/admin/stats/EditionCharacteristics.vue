@@ -82,7 +82,7 @@
                 list-style: none;
                 padding: 0;
                 margin: 0;
-                gap: calc(var(--spacer) / 2);
+                gap: .5rem;
             }
         }
     }

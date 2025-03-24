@@ -2,6 +2,7 @@ package io.kestra.core.models.tasks.runners;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.Slugify;
@@ -85,12 +86,24 @@ public final class ScriptService {
         List<String> commands,
         boolean replaceWithRelativePath
     ) throws IOException, IllegalVariableEvaluationException {
-        return commands
+        return ListUtils.emptyOnNull(commands)
             .stream()
             .map(throwFunction(c -> runContext.render(c, additionalVars)))
             .map(throwFunction(c -> ScriptService.replaceInternalStorage(runContext, c, replaceWithRelativePath)))
             .toList();
 
+    }
+
+    public static List<String> replaceInternalStorage(
+        RunContext runContext,
+        Map<String, Object> additionalVars,
+        Property<List<String>> commands,
+        boolean replaceWithRelativePath
+    ) throws IOException, IllegalVariableEvaluationException {
+        return commands == null ? Collections.emptyList() :
+            runContext.render(commands).asList(String.class, additionalVars).stream()
+                .map(throwFunction(c -> ScriptService.replaceInternalStorage(runContext, c, replaceWithRelativePath)))
+                .toList();
     }
 
     public static List<String> replaceInternalStorage(

@@ -1,6 +1,6 @@
 <template>
     <div class="state">
-        <span class="circle" :style="{backgroundColor: getScheme(label)}" />
+        <span class="circle" :style="{backgroundColor: scheme[label]}" />
 
         <p class="m-0 fw-light small">
             {{ label.toLowerCase().capitalize() }}
@@ -9,7 +9,9 @@
 </template>
 
 <script setup>
-    import {getScheme} from "../../../utils/scheme.js";
+    import {useScheme} from "../../../utils/scheme.js";
+
+    const scheme = useScheme();
 
     defineProps({
         label: {

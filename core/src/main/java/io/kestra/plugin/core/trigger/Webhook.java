@@ -88,7 +88,7 @@ import jakarta.validation.constraints.Size;
                     type: io.kestra.plugin.core.trigger.Webhook
                     key: 4wjtkzwVGBM9yKnjm3yv8r
                     conditions:
-                      - type: io.kestra.plugin.core.condition.ExpressionCondition
+                      - type: io.kestra.plugin.core.condition.Expression
                         expression: "{{ trigger.body.hello == 'world' }}"
                 """,
             full = true

@@ -1,5 +1,5 @@
 import moment from "moment/moment";
-import YamlUtils from "./yamlUtils.js";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
 export default class Inputs {
     static normalize(type, value) {
@@ -19,7 +19,7 @@ export default class Inputs {
             }
         } else if (type === "YAML") {
             if(typeof res !== "string") {
-                res = YamlUtils.stringify(res).toString();
+                res = YAML_UTILS.stringify(res).toString();
             }
         } else if (type === "STRING" && Array.isArray(res)){
             res = res.toString();

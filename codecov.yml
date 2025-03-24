@@ -1,0 +1,76 @@
+component_management:
+  individual_components:
+    - component_id: cli
+      name: Cli
+      paths:
+        - cli/**
+    - component_id: core
+      name: Core
+      paths:
+        - core/**
+    - component_id: e2e-tests
+      name: End to End
+      paths:
+        - e2e-tests/**
+    - component_id: jdbc
+      name: Jdbc
+      paths:
+        - jdbc/**
+    - component_id: jdbc-h2
+      name: Jdbc H2
+      paths:
+        - jdbc-h2/**
+    - component_id: jdbc-mysql
+      name: Jdbc Mysql
+      paths:
+        - jdbc-mysql/**
+    - component_id: jdbc-postgres
+      name: Jdbc Postgres
+      paths:
+        - jdbc-postgres/**
+    - component_id: model
+      name: Model
+      paths:
+        - model/**
+    - component_id: processor
+      name: Processor
+      paths:
+        - processor/**
+    - component_id: repository-memory
+      name: Repository Memory
+      paths:
+        - repository-memory/**
+    - component_id: runner-memory
+      name: Runner Memory
+      paths:
+        - runner-memory/**
+    - component_id: script
+      name: Script
+      paths:
+        - script/**
+    - component_id: storage-local
+      name: Storage Local
+      paths:
+        - storage-local/**
+    - component_id: tests
+      name: Tests
+      paths:
+        - tests/**
+    - component_id: ui
+      name: Ui
+      paths:
+        - ui/**
+    - component_id: webserver
+      name: Webserver
+      paths:
+        - webserver/**
+
+flag_management:
+  default_rules:
+    carryforward: true
+    statuses:
+      - type: project
+        target: 80%
+        threshold: 1%
+      - type: patch
+        target: 90%

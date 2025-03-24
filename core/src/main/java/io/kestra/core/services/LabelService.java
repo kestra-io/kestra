@@ -6,6 +6,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.ListUtils;
+import jakarta.annotation.Nullable;
 
 import java.util.*;
 
@@ -54,9 +55,9 @@ public final class LabelService {
         }
     }
 
-    public static boolean containsAll(List<Label> labelsContainer, List<Label> labelsThatMustBeIncluded) {
-        Map<String, String> labelsContainerMap = labelsContainer.stream().collect(HashMap::new, (m, label)-> m.put(label.key(), label.value()), HashMap::putAll);
+    public static boolean containsAll(@Nullable List<Label> labelsContainer, @Nullable List<Label> labelsThatMustBeIncluded) {
+        Map<String, String> labelsContainerMap = ListUtils.emptyOnNull(labelsContainer).stream().collect(HashMap::new, (m, label)-> m.put(label.key(), label.value()), HashMap::putAll);
 
-        return labelsThatMustBeIncluded.stream().allMatch(label -> Objects.equals(labelsContainerMap.get(label.key()), label.value()));
+        return ListUtils.emptyOnNull(labelsThatMustBeIncluded).stream().allMatch(label -> Objects.equals(labelsContainerMap.get(label.key()), label.value()));
     }
 }

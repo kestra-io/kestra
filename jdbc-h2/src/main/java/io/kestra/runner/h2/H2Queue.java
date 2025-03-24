@@ -8,6 +8,7 @@ import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.jooq.impl.SQLDataType;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public class H2Queue<T> extends JdbcQueue<T> {
@@ -53,7 +54,6 @@ public class H2Queue<T> extends JdbcQueue<T> {
             .getFirst();
     }
 
-    @SuppressWarnings("RedundantCast")
     @Override
     protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
         var update = ctx.update(DSL.table(table.getName()))
@@ -65,7 +65,8 @@ public class H2Queue<T> extends JdbcQueue<T> {
                     (Object) new String[]{queueType}
                 )
             )
-            .where(AbstractJdbcRepository.field("offset").in((Object[]) offsets.toArray(Integer[]::new)));
+            .set(AbstractJdbcRepository.field("updated"), LocalDateTime.now())
+            .where(AbstractJdbcRepository.field("offset").in(offsets.toArray(Integer[]::new)));
 
         if (consumerGroup != null) {
             update = update.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));

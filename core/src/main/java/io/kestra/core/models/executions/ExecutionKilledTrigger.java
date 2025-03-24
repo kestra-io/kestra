@@ -3,9 +3,9 @@ package io.kestra.core.models.executions;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.runners.WorkerTask;
 import io.kestra.core.utils.IdUtils;
 import jakarta.validation.constraints.NotNull;
+import java.util.Objects;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -30,7 +30,7 @@ public class ExecutionKilledTrigger extends ExecutionKilled implements TenantInt
     String triggerId;
 
     public boolean isEqual(TriggerContext triggerContext) {
-        return (triggerContext.getTenantId() == null || triggerContext.getTenantId().equals(this.tenantId)) &&
+        return (triggerContext.getTenantId() == null || Objects.equals(triggerContext.getTenantId(), this.tenantId)) &&
             triggerContext.getNamespace().equals(this.namespace) &&
             triggerContext.getFlowId().equals(this.flowId) &&
             triggerContext.getTriggerId().equals(this.triggerId);

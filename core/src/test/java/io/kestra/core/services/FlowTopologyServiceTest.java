@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.property.Property;
 import io.kestra.plugin.core.condition.ExecutionFlow;
 import io.kestra.plugin.core.condition.ExecutionStatus;
 import io.kestra.plugin.core.condition.MultipleCondition;
@@ -242,7 +243,7 @@ class FlowTopologyServiceTest {
         return Return.builder()
             .id("return")
             .type(Return.class.getName())
-            .format("ok")
+            .format(Property.of("ok"))
             .build();
     }
 

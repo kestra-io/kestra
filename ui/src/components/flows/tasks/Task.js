@@ -1,4 +1,4 @@
-import YamlUtils from "../../../utils/yamlUtils";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
 export default {
     props: {
@@ -84,8 +84,8 @@ export default {
 
             return property.type || "expression";
         },
-        // eslint-disable-next-line no-unused-vars
-        onShow(key) {
+
+        onShow() {
         },
 
         onInput(value) {
@@ -105,7 +105,7 @@ export default {
                 return this.values;
             }
 
-            return YamlUtils.stringify(this.values);
+            return YAML_UTILS.stringify(this.values);
         },
         info() {
             return `${this.schema.title || this.schema.type}`

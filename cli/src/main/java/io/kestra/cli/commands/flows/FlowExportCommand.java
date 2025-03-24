@@ -18,7 +18,7 @@ import java.nio.file.Path;
 
 @CommandLine.Command(
     name = "export",
-    description = "export flows to a zip file",
+    description = "Export flows to a ZIP file",
     mixinStandardHelpOptions = true
 )
 @Slf4j
@@ -29,10 +29,10 @@ public class FlowExportCommand extends AbstractApiCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @CommandLine.Option(names = {"--namespace"}, description = "the namespace of flows to export")
+    @CommandLine.Option(names = {"--namespace"}, description = "The namespace of flows to export")
     public String namespace;
 
-    @CommandLine.Parameters(index = "0", description = "the directory to export the file to")
+    @CommandLine.Parameters(index = "0", description = "The directory to export the ZIP file to")
     public Path directory;
 
     @Override

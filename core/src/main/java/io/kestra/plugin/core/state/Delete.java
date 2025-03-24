@@ -2,7 +2,7 @@ package io.kestra.plugin.core.state;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -45,17 +45,16 @@ public class Delete extends AbstractState implements RunnableTask<Delete.Output>
     @Schema(
         title = "Raise an error if the state is not found."
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private final Boolean errorOnMissing = false;
+    private final Property<Boolean> errorOnMissing = Property.of(false);
 
     @Override
     public Output run(RunContext runContext) throws Exception {
 
         boolean delete = this.delete(runContext);
 
-        if (errorOnMissing && !delete) {
-            throw new FileNotFoundException("Unable to find the state file '" + runContext.render(this.name) + "'");
+        if (Boolean.TRUE.equals(runContext.render(errorOnMissing).as(Boolean.class).orElseThrow()) && !delete) {
+            throw new FileNotFoundException("Unable to find the state file '" + runContext.render(this.name).as(String.class).orElseThrow() + "'");
         }
 
         return Output.builder()

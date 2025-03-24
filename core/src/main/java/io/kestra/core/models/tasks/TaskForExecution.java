@@ -16,6 +16,8 @@ public class TaskForExecution implements TaskInterface {
 
     protected String type;
 
+    protected String version;
+
     protected List<TaskForExecution> tasks;
 
     protected List<Input<?>> inputs;

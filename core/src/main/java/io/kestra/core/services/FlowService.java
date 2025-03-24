@@ -13,10 +13,8 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.ListUtils;
-import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
@@ -111,6 +109,14 @@ public class FlowService {
         return flowRepository.get().findByNamespace(tenantId, namespace);
     }
 
+    public Optional<Flow> findById(String tenantId, String namespace, String flowId) {
+        if (flowRepository.isEmpty()) {
+            throw noRepositoryException();
+        }
+
+        return flowRepository.get().findById(tenantId, namespace, flowId);
+    }
+
     public Stream<FlowWithSource> keepLastVersion(Stream<FlowWithSource> stream) {
         return keepLastVersionCollector(stream);
     }
@@ -119,21 +125,13 @@ public class FlowService {
         return deprecationTraversal("", flow).toList();
     }
 
-    public List<String> warnings(Flow flow) {
+
+    public List<String> warnings(Flow flow, String tenantId) {
         if (flow == null) {
             return Collections.emptyList();
         }
 
-        List<String> warnings = new ArrayList<>();
-        List<io.kestra.plugin.core.trigger.Flow> flowTriggers = ListUtils.emptyOnNull(flow.getTriggers()).stream()
-            .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
-            .map(io.kestra.plugin.core.trigger.Flow.class::cast)
-            .toList();
-        flowTriggers.forEach(flowTrigger -> {
-            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
-                warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId() + "'.");
-            }
-        });
+        List<String> warnings = new ArrayList<>(checkValidSubflows(flow, tenantId));
 
         return warnings;
     }
@@ -150,6 +148,35 @@ public class FlowService {
             return Collections.emptyList();
         }
     }
+
+    // check if subflow is present in given namespace
+    public List<String> checkValidSubflows(Flow flow, String tenantId) {
+        List<io.kestra.plugin.core.flow.Subflow> subFlows = ListUtils.emptyOnNull(flow.getTasks()).stream()
+            .filter(io.kestra.plugin.core.flow.Subflow.class::isInstance)
+            .map(io.kestra.plugin.core.flow.Subflow.class::cast)
+            .toList();
+
+        List<String> violations = new ArrayList<>();
+
+        subFlows.forEach(subflow -> {
+            String regex = ".*\\{\\{.+}}.*"; // regex to check if string contains pebble
+            String subflowId = subflow.getFlowId();
+            String namespace = subflow.getNamespace();
+            if (subflowId.matches(regex) || namespace.matches(regex)) {
+                return;
+            }
+            Optional<Flow> optional = findById(tenantId, subflow.getNamespace(), subflow.getFlowId());
+
+            if (optional.isEmpty()) {
+                violations.add("The subflow '" + subflow.getFlowId() + "' not found in namespace '" + subflow.getNamespace() + "'.");
+            } else if (optional.get().isDisabled()) {
+                violations.add("The subflow '" + subflow.getFlowId() + "' is disabled in namespace '" + subflow.getNamespace() + "'.");
+            }
+        });
+
+        return violations;
+    }
+
     public record Relocation(String from, String to) {}
 
     @SuppressWarnings("unchecked")
@@ -399,6 +426,14 @@ public class FlowService {
         if (!areAllowedAllNamespaces(tenant, fromTenant, fromNamespace)) {
             throw new IllegalArgumentException("All namespaces are not allowed, you should either filter on a namespace or configure all namespaces to allow your namespace.");
         }
+    }
+
+    /**
+     * Return true if require existing namespace is enabled and the namespace didn't already exist.
+     * As namespace management is an EE feature, this will always return false in OSS.
+     */
+    public boolean requireExistingNamespace(String tenant, String namespace) {
+        return false;
     }
 
     /**

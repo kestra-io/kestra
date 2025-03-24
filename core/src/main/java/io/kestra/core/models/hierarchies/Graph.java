@@ -33,6 +33,12 @@ public class Graph<T, V> {
         return this;
     }
 
+    public Graph<T, V> removeEdge(T previous, T next) {
+        this.graph.removeEdge(previous, next);
+
+        return this;
+    }
+
     public Set<T> nodes() {
         return this.graph.nodes();
     }

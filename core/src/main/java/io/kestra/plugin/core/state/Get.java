@@ -2,7 +2,7 @@ package io.kestra.plugin.core.state;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -46,9 +46,8 @@ public class Get extends AbstractState implements RunnableTask<Get.Output> {
     @Schema(
         title = "Raise an error if the state file is not found."
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private final Boolean errorOnMissing = false;
+    private final Property<Boolean> errorOnMissing = Property.of(false);
 
     @Override
     public Output run(RunContext runContext) throws Exception {
@@ -57,7 +56,7 @@ public class Get extends AbstractState implements RunnableTask<Get.Output> {
         try {
             data = this.get(runContext);
         } catch (FileNotFoundException e) {
-            if (this.errorOnMissing) {
+            if (Boolean.TRUE.equals(runContext.render(this.errorOnMissing).as(Boolean.class).orElseThrow())) {
                 throw e;
             }
 

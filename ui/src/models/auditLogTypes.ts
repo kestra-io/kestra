@@ -1,0 +1,23 @@
+export const auditLogTypes = [
+    {value: "io.kestra.core.models.dashboards.Dashboard", label: "Dashboard"},
+    {value: "io.kestra.core.models.executions.Execution", label: "Execution"},
+    {value: "io.kestra.core.models.executions.LogEntry", label: "LogEntry"},
+    {value: "io.kestra.core.models.flows.Flow", label: "Flow"},
+    {value: "io.kestra.core.models.templates.Template", label: "Template"},
+    {value: "io.kestra.core.models.Setting", label: "Setting"},
+    {value: "io.kestra.ee.apps.AppEvent", label: "AppEvent"},
+    {value: "io.kestra.ee.apps.AppSource", label: "AppSource"},
+    {value: "io.kestra.ee.models.acls.Role", label: "Role"},
+    {value: "io.kestra.ee.models.Namespace", label: "Namespace"},
+    {
+        value: "io.kestra.ee.models.security.SecurityIntegration",
+        label: "SecurityIntegration",
+    },
+    {value: "io.kestra.ee.models.server.WorkerGroup", label: "WorkerGroup"},
+    {value: "io.kestra.ee.models.tenants.Tenant", label: "Tenant"},
+    {value: "io.kestra.ee.models.users.Binding", label: "Binding"},
+    {value: "io.kestra.ee.models.users.Group", label: "Group"},
+    {value: "io.kestra.ee.models.users.Invitation", label: "Invitation"},
+    {value: "io.kestra.ee.models.users.User", label: "User"},
+    {value: "io.kestra.ee.secret.SecretEvent", label: "SecretEvent"},
+];

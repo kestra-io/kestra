@@ -97,4 +97,55 @@ public abstract class AbstractTriggerRepositoryTest {
         assertThat(find.size(), is(1));
         assertThat(find.getFirst().getTriggerId(), is(searchedTrigger.getTriggerId()));
     }
+
+    @Test
+    void shouldCountForNullTenant() {
+        // Given
+        triggerRepository.save(Trigger
+            .builder()
+            .triggerId(IdUtils.create())
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest")
+            .build()
+        );
+        // When
+        int count = triggerRepository.count(null);
+        // Then
+        assertThat(count, is(1));
+    }
+
+    @Test
+    void shouldCountForNullTenantGivenNamespace() {
+        // Given
+        triggerRepository.save(Trigger
+            .builder()
+            .triggerId(IdUtils.create())
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest.p2")
+            .build()
+        );
+
+        triggerRepository.save(Trigger
+            .builder()
+            .triggerId(IdUtils.create())
+            .flowId(IdUtils.create())
+            .namespace("io.kestra.unittest.shouldcountbynamespacefornulltenant")
+            .build()
+        );
+
+        triggerRepository.save(Trigger
+            .builder()
+            .triggerId(IdUtils.create())
+            .flowId(IdUtils.create())
+            .namespace("com.kestra.unittest")
+            .build()
+        );
+
+        // When
+        int count = triggerRepository.countForNamespace(null, "io.kestra.unittest.shouldcountbynamespacefornulltenant");
+        assertThat(count, is(1));
+
+        count = triggerRepository.countForNamespace(null, "io.kestra.unittest");
+        assertThat(count, is(2));
+    }
 }

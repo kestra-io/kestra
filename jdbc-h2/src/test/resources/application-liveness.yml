@@ -4,6 +4,6 @@ kestra:
     liveness:
       enabled: true
       interval: 1s
-      timeout: 5s
+      timeout: 3s
       initialDelay: 0s
       heartbeatInterval: 1s

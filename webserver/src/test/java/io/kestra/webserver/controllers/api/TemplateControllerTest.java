@@ -1,12 +1,20 @@
 package io.kestra.webserver.controllers.api;
 
+import static io.micronaut.http.HttpRequest.DELETE;
+import static io.micronaut.http.HttpRequest.POST;
+import static io.micronaut.http.HttpRequest.PUT;
+import static io.micronaut.http.HttpStatus.NO_CONTENT;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.templates.Template;
-import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.repository.AbstractJdbcTemplateRepository;
+import io.kestra.plugin.core.debug.Return;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.context.annotation.Property;
@@ -21,25 +29,18 @@ import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.List;
 import java.util.zip.ZipFile;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static io.micronaut.http.HttpRequest.*;
-import static io.micronaut.http.HttpStatus.NO_CONTENT;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
-@Property(name = "kestra.templates.enabled", value = StringUtils.TRUE)
-class TemplateControllerTest extends JdbcH2ControllerTest {
+@KestraTest
+@io.micronaut.context.annotation.Property(name = "kestra.templates.enabled", value = StringUtils.TRUE)
+class TemplateControllerTest {
     @Inject
     @Client("/")
     ReactorHttpClient client;
@@ -48,16 +49,14 @@ class TemplateControllerTest extends JdbcH2ControllerTest {
     AbstractJdbcTemplateRepository templateRepository;
 
     @BeforeEach
-    protected void init() throws IOException, URISyntaxException {
+    protected void init() {
         templateRepository.findAll(null)
             .forEach(templateRepository::delete);
-
-        super.setup();
     }
 
     private Template createTemplate() {
-        Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format("test").build();
-        Task t2 = Return.builder().id("task-2").type(Return.class.getName()).format("test").build();
+        Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build();
+        Task t2 = Return.builder().id("task-2").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build();
         return Template.builder()
             .id(IdUtils.create())
             .namespace("kestra.test")
@@ -66,8 +65,8 @@ class TemplateControllerTest extends JdbcH2ControllerTest {
     }
 
     private Template createTemplate(String friendlyId, String namespace) {
-        Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format("test").build();
-        Task t2 = Return.builder().id("task-2").type(Return.class.getName()).format("test").build();
+        Task t1 = Return.builder().id("task-1").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build();
+        Task t2 = Return.builder().id("task-2").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build();
         return Template.builder()
             .id(friendlyId)
             .namespace(namespace)
@@ -133,7 +132,7 @@ class TemplateControllerTest extends JdbcH2ControllerTest {
         client.toBlocking().retrieve(POST("/api/v1/templates", template), Template.class);
         Template createdTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
         assertThat(template.getTasks().size(), is(2));
-        Task t3 = Return.builder().id("task-3").type(Return.class.getName()).format("test").build();
+        Task t3 = Return.builder().id("task-3").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build();
         Template updateTemplate = Template.builder().id(template.getId()).namespace(template.getNamespace()).description("My new template description").tasks(Arrays.asList(t3)).build();
         client.toBlocking().retrieve(PUT("/api/v1/templates/" + template.getNamespace() + "/" + template.getId(), updateTemplate), Template.class);
         Template updatedTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
@@ -150,7 +149,7 @@ class TemplateControllerTest extends JdbcH2ControllerTest {
             Template t1 = Template.builder()
             .id(IdUtils.create())
             .namespace("kestra.template.custom")
-            .tasks(Arrays.asList(Return.builder().id("task").type(Return.class.getName()).format("test").build()))
+            .tasks(Arrays.asList(Return.builder().id("task").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build()))
             .build();
         client.toBlocking().retrieve(POST("/api/v1/templates", t1), Template.class);
         client.toBlocking().retrieve(POST("/api/v1/templates", createTemplate()), Template.class);

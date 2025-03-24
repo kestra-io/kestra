@@ -9,7 +9,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "namespace",
-    description = "handle namespace flows",
+    description = "Manage namespace flows",
     mixinStandardHelpOptions = true,
     subcommands = {
         FlowNamespaceUpdateCommand.class,

@@ -9,7 +9,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "server",
-    description = "handle servers",
+    description = "Manage servers",
     mixinStandardHelpOptions = true,
     subcommands = {
         ExecutorCommand.class,

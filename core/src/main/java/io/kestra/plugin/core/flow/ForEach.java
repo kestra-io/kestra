@@ -16,6 +16,7 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.PositiveOrZero;
@@ -47,7 +48,7 @@ import java.util.Optional;
 
 
         You can access the current iteration value using the variable `{{ taskrun.value }}` \
-        or `{{ parent.taskrun.value }}` if you are in a nested child task. \
+        or `{{ parent.taskrun.value }}` if you are in a nested child task. You can access the batch or iteration number with `{{ taskrun.iteration }}`. \
 
 
         If you need to execute more than 2-5 tasks for each value, we recommend triggering a subflow for each value for better performance and modularity. \
@@ -138,6 +139,61 @@ import java.util.Optional;
                             - sleep {{ parent.taskrun.value }}
                 """
         ),
+        @Example(
+            full = true,
+            title = """
+                This example demonstrates processing data across nested loops of S3 buckets, years, and months. \
+                It generates structured identifiers (e.g., `bucket1_2025_March`) by combining values from each loop level, \
+                while accessing parent loop values like years and buckets, which can be useful for partitioned \
+                storage paths or time-based datasets. The flow uses dynamic expressions referencing parent context.""",
+            code = """
+                id: loop_multiple_times
+                namespace: company.team
+
+                inputs:
+                  - id: s3_buckets
+                    type: ARRAY
+                    itemType: STRING
+                    defaults:
+                      - bucket1
+                      - bucket2
+
+                  - id: years
+                    type: ARRAY
+                    itemType: INT
+                    defaults:
+                      - 2025
+                      - 2026
+
+                  - id: months
+                    type: ARRAY
+                    itemType: STRING
+                    defaults:
+                      - March
+                      - April
+
+                tasks:
+                  - id: buckets
+                    type: io.kestra.plugin.core.flow.ForEach
+                    values: "{{inputs.s3_buckets}}"
+                    tasks:
+                      - id: year
+                        type: io.kestra.plugin.core.flow.ForEach
+                        values: "{{inputs.years}}"
+                        tasks:
+                          - id: month
+                            type: io.kestra.plugin.core.flow.ForEach
+                            values: "{{inputs.months}}"
+                            tasks:
+                              - id: full_table_name
+                                type: io.kestra.plugin.core.log.Log
+                                message: |
+                                  Full table name: {{parents[1].taskrun.value }}_{{parent.taskrun.value}}_{{taskrun.value}}
+                                  Direct/current loop (months): {{taskrun.value}}
+                                  Value of loop one higher up (years): {{parents[0].taskrun.value}}
+                                  Further up (table types): {{parents[1].taskrun.value}}
+                """
+        ),
     }
 )
 public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
@@ -173,6 +229,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
                 subGraph,
                 this.getTasks(),
                 this.getErrors(),
+                this.getFinally(),
                 taskRun,
                 execution
             );
@@ -180,7 +237,8 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
             GraphUtils.parallel(
                 subGraph,
                 this.getTasks(),
-                this.getErrors(),
+                this.errors,
+                this._finally,
                 taskRun,
                 execution
             );
@@ -196,7 +254,9 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
+        List<ResolvedTask> childTasks = ListUtils.emptyOnNull(this.childTasks(runContext, parentTaskRun)).stream()
+            .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
+            .toList();
 
         if (childTasks.isEmpty()) {
             return Optional.of(State.Type.SUCCESS);
@@ -206,6 +266,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
             parentTaskRun,
             runContext,
             this.isAllowFailure(),
@@ -220,6 +281,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
                 execution,
                 this.childTasks(runContext, parentTaskRun),
                 FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+                FlowableUtils.resolveTasks(this._finally, parentTaskRun),
                 parentTaskRun
             );
         }
@@ -228,6 +290,7 @@ public class ForEach extends Sequential implements FlowableTask<VoidOutput> {
             execution,
             FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.values),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+            FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
             this.concurrencyLimit
         );

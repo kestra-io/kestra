@@ -19,7 +19,7 @@ import java.nio.file.Path;
 
 @CommandLine.Command(
     name = "export",
-    description = "export templates to a zip file",
+    description = "Export templates to a ZIP file",
     mixinStandardHelpOptions = true
 )
 @Slf4j
@@ -31,10 +31,10 @@ public class TemplateExportCommand extends AbstractApiCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @CommandLine.Option(names = {"--namespace"}, description = "the namespace of templates to export")
+    @CommandLine.Option(names = {"--namespace"}, description = "The namespace of templates to export")
     public String namespace;
 
-    @CommandLine.Parameters(index = "0", description = "the directory to export the file to")
+    @CommandLine.Parameters(index = "0", description = "The directory to export the file to")
     public Path directory;
 
     @Override

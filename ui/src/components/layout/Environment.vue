@@ -6,7 +6,7 @@
 
 <script>
     import {mapGetters} from "vuex";
-    import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
+    import {cssVariable} from "@kestra-io/ui-libs";
 
     export default {
         computed: {
@@ -39,7 +39,7 @@
     strong {
         border: 1px solid v-bind('color');
         border-radius: var(--bs-border-radius);
-        color: var(--bs-body-color);
+        color: var(--ks-content-primary);
         padding: 0.125rem 0.25rem;
         font-size: var(--font-size-sm);
         white-space: nowrap;

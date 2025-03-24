@@ -1,5 +1,6 @@
 package io.kestra.core.models.dashboards;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.repositories.QueryBuilderInterface;
@@ -9,8 +10,10 @@ import jakarta.validation.constraints.Pattern;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,8 +30,10 @@ public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F
     @Pattern(regexp = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     private String type;
 
+
     private Map<String, C> columns;
 
+    @Setter
     private List<AbstractFilter<F>> where;
 
     private List<OrderBy> orderBy;
@@ -38,4 +43,7 @@ public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F
     }
 
     public abstract Class<? extends QueryBuilderInterface<F>> repositoryClass();
+
+    public abstract void setGlobalFilter(List<QueryFilter> queryFilterList, ZonedDateTime startDate, ZonedDateTime endDate);
+
 }

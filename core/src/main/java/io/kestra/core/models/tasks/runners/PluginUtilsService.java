@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.AbstractMetricEntry;
-import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
@@ -13,9 +12,9 @@ import io.kestra.core.services.FlowService;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.event.Level;
-import org.slf4j.helpers.BasicMarker;
 import org.slf4j.spi.LoggingEventBuilder;
 
 import java.io.*;
@@ -24,11 +23,12 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.Duration;
+import java.time.Instant;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static io.kestra.core.runners.RunContextLogger.ORIGINAL_TIMESTAMP_KEY;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 abstract public class PluginUtilsService {
@@ -66,7 +66,8 @@ abstract public class PluginUtilsService {
                     if (isDir) {
                         tempFile = Files.createTempDirectory(tempDirectory, s + "_").toFile();
                     } else {
-                        tempFile = File.createTempFile(s + "_", null, tempDirectory.toFile());
+                        String prefix = StringUtils.leftPad(s + "_", 3, "_");
+                        tempFile = File.createTempFile(prefix, null, tempDirectory.toFile());
                     }
 
                     result.put(s, additionalVars.get("workingDir") + "/" + tempFile.getName());
@@ -166,7 +167,7 @@ abstract public class PluginUtilsService {
         }
     }
 
-    public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr)  {
+    public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr, Instant customInstant) {
         Matcher m = PATTERN.matcher(line);
         Map<String, Object> outputs = new HashMap<>();
 
@@ -187,8 +188,8 @@ abstract public class PluginUtilsService {
                         try {
                             LoggingEventBuilder builder = runContext
                                 .logger()
-                                .atLevel(logLine.getLevel());
-
+                                .atLevel(logLine.getLevel())
+                                .addKeyValue(ORIGINAL_TIMESTAMP_KEY, customInstant);
                             builder.log(logLine.getMessage());
                         } catch (Exception e) {
                             logger.warn("Invalid log '{}'", m.group(1), e);
@@ -201,7 +202,7 @@ abstract public class PluginUtilsService {
             }
         } else {
             if (isStdErr) {
-                runContext.logger().warn(line);
+                runContext.logger().error(line);
             } else {
                 runContext.logger().info(line);
             }

@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.storage;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
@@ -37,7 +38,7 @@ class ReverseTest {
 
 
         Reverse result = Reverse.builder()
-            .from(put.toString())
+            .from(Property.of(put.toString()))
             .build();
 
         Reverse.Output run = result.run(runContext);

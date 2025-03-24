@@ -1,6 +1,8 @@
 package io.kestra.plugin.core.flow;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
@@ -8,7 +10,6 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
@@ -42,11 +43,16 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class PauseTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+public class PauseTest {
+
+    @Inject
+    RunnerUtils runnerUtils;
     @Inject
     Suite suite;
 
     @Test
+    @LoadFlows({"flows/valids/pause.yaml"})
     void run() throws Exception {
         suite.run(runnerUtils);
     }
@@ -67,26 +73,31 @@ public class PauseTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause-timeout.yaml"})
     void timeout() throws Exception {
         suite.runTimeout(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause_no_tasks.yaml"})
     void runEmptyTasks() throws Exception {
         suite.runEmptyTasks(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
     void runOnResume() throws Exception {
         suite.runOnResume(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause_on_resume.yaml"})
     void runOnResumeMissingInputs() throws Exception {
         suite.runOnResumeMissingInputs(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause_on_resume_optional.yaml"})
     void runOnResumeOptionalInputs() throws Exception {
         suite.runOnResumeOptionalInputs(runnerUtils);
     }

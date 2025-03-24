@@ -1,14 +1,19 @@
 package io.kestra.webserver.controllers.api;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.core.Is.is;
+
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.kv.KVType;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
-import io.kestra.core.storages.kv.*;
+import io.kestra.core.storages.kv.InternalKVStore;
+import io.kestra.core.storages.kv.KVEntry;
+import io.kestra.core.storages.kv.KVStore;
 import io.kestra.webserver.controllers.api.KVController.ApiDeleteBulkRequest;
 import io.kestra.webserver.controllers.api.KVController.ApiDeleteBulkResponse;
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.HttpRequest;
 import io.micronaut.http.HttpResponse;
@@ -18,14 +23,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -36,15 +33,17 @@ import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
-
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.core.Is.is;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 
 @KestraTest(resolveParameters = false)
-class KVControllerTest extends JdbcH2ControllerTest {
+class KVControllerTest {
     private static final String NAMESPACE = "io.namespace";
 
     @Inject
@@ -57,8 +56,6 @@ class KVControllerTest extends JdbcH2ControllerTest {
     @BeforeEach
     public void init() throws IOException {
         storageInterface.delete(null, null, toKVUri(NAMESPACE, null));
-
-        super.setup();
     }
 
     @SuppressWarnings("unchecked")

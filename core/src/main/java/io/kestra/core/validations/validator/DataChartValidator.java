@@ -4,7 +4,10 @@ import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.OrderBy;
 import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.validations.DataChartValidation;
+import io.kestra.plugin.core.dashboard.data.Executions;
+import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.AnnotationValue;
 import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.NonNull;
@@ -22,6 +25,9 @@ import java.util.stream.Collectors;
 @Singleton
 @Introspected
 public class DataChartValidator implements ConstraintValidator<DataChartValidation, DataChart<?, ?>> {
+    @Value("${kestra.repository.type}")
+    private String repositoryType;
+
     @Override
     public boolean isValid(
         @Nullable DataChart<?, ?> dataChart,
@@ -33,7 +39,7 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
 
         List<String> violations = new ArrayList<>();
 
-        Set<String> dataColumns = dataChart.getData().getColumns().keySet();
+        Set<String> dataColumns = MapUtils.emptyOnNull(dataChart.getData().getColumns()).keySet();
         if (dataChart.getChartOptions() != null) {
             List<String> neededColumns = dataChart.getChartOptions().neededColumns();
             neededColumns.forEach(column -> {
@@ -85,6 +91,11 @@ public class DataChartValidator implements ConstraintValidator<DataChartValidati
         Set<String> usedFields = dataChart.getData().getColumns().values().stream().map(c -> c.getAgg() + "-" + c.getField() + "-" + c.getLabelKey()).collect(Collectors.toSet());
         if (usedFields.size() != dataChart.getData().getColumns().size()) {
             violations.add("Fields can only appear once in `data.columns`.");
+        }
+
+        if (dataChart.getData().getColumns().entrySet().stream().anyMatch(entry -> entry.getValue().getField() != null && entry.getValue().getField().equals(Executions.Fields.LABELS))
+        && !repositoryType.equals("elasticsearch")) {
+            violations.add("LABELS column is only supported with an ElasticSearch database.");
         }
 
         if (!violations.isEmpty()) {

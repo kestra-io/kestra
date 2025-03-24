@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.storage;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
@@ -57,7 +58,7 @@ class LocalFilesTest {
                 "execution.txt", "{{toto}}",
                 "application-test.yml", storageFile.toString()
             ))
-            .outputs(List.of("hello-input.txt"))
+            .outputs(Property.of(List.of("hello-input.txt")))
             .build();
         var outputs = task.run(runContext);
 
@@ -91,7 +92,7 @@ class LocalFilesTest {
                 "test/sub/dir/2/execution.txt", "{{toto}}",
                 "test/sub/dir/3/application-test.yml", storageFile.toString()
             ))
-            .outputs(List.of("test/**"))
+            .outputs(Property.of(List.of("test/**")))
             .build();
         var outputs = task.run(runContext);
 

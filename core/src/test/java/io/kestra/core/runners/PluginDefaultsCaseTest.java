@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
@@ -15,16 +16,12 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -66,6 +63,15 @@ public class PluginDefaultsCaseTest {
         protected List<Task> errors;
 
         @Valid
+        @JsonProperty("finally")
+        @Getter(AccessLevel.NONE)
+        protected List<Task> _finally;
+
+        public List<Task> getFinally() {
+            return this._finally;
+        }
+
+        @Valid
         @NotEmpty
         private List<Task> tasks;
 
@@ -79,6 +85,7 @@ public class PluginDefaultsCaseTest {
                 subGraph,
                 this.tasks,
                 this.errors,
+                this._finally,
                 taskRun,
                 execution
             );
@@ -91,7 +98,10 @@ public class PluginDefaultsCaseTest {
             return Stream
                 .concat(
                     this.tasks != null ? this.tasks.stream() : Stream.empty(),
-                    this.errors != null ? this.errors.stream() : Stream.empty()
+                    Stream.concat(
+                        this.errors != null ? this.errors.stream() : Stream.empty(),
+                        this._finally != null ? this._finally.stream() : Stream.empty()
+                    )
                 )
                 .toList();
         }
@@ -107,6 +117,7 @@ public class PluginDefaultsCaseTest {
                 execution,
                 this.childTasks(runContext, parentTaskRun),
                 FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+                FlowableUtils.resolveTasks(this._finally, parentTaskRun),
                 parentTaskRun
             );
         }

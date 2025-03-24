@@ -72,12 +72,6 @@ public class JdbcTableConfigsFactory {
     }
 
     @Bean
-    @Named("subflow-executions")
-    public InstantiableJdbcTableConfig subflowExecutions() {
-        return new InstantiableJdbcTableConfig("subflow-executions", SubflowExecution.class, "subflow_executions");
-    }
-
-    @Bean
     @Named("executorstate")
     public InstantiableJdbcTableConfig executorState() {
         return new InstantiableJdbcTableConfig("executorstate", ExecutorState.class, "executorstate");

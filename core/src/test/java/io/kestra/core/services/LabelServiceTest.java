@@ -10,11 +10,14 @@ import io.kestra.plugin.core.trigger.Schedule;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
 class LabelServiceTest {
@@ -64,5 +67,16 @@ class LabelServiceTest {
 
         assertThat(labels, hasSize(2));
         assertThat(labels, hasItems(new Label("key", "value"), new Label("scheduleLabel", "scheduleValue")));
+    }
+
+    @Test
+    void containsAll() {
+        assertFalse(LabelService.containsAll(null, List.of(new Label("key", "value"))));
+        assertFalse(LabelService.containsAll(Collections.emptyList(), List.of(new Label("key", "value"))));
+        assertFalse(LabelService.containsAll(List.of(new Label("key1", "value1")), List.of(new Label("key2", "value2"))));
+        assertTrue(LabelService.containsAll(List.of(new Label("key", "value")), null));
+        assertTrue(LabelService.containsAll(List.of(new Label("key", "value")), Collections.emptyList()));
+        assertTrue(LabelService.containsAll(List.of(new Label("key1", "value1")), List.of(new Label("key1", "value1"))));
+        assertTrue(LabelService.containsAll(List.of(new Label("key1", "value1"), new Label("key2", "value2")), List.of(new Label("key1", "value1"))));
     }
 }

@@ -1,6 +1,11 @@
 id: flow-trigger-preconditions-flow-b
 namespace: io.kestra.tests.trigger.preconditions
 
+outputs:
+  - id: some
+    type: STRING
+    value: value
+
 tasks:
   - id: only
     type: io.kestra.plugin.core.debug.Return

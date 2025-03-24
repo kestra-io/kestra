@@ -15,18 +15,18 @@ import java.nio.file.Path;
 
 @CommandLine.Command(
     name = "update",
-    description = "update a single flow",
+    description = "Update a single flow",
     mixinStandardHelpOptions = true
 )
 @Slf4j
 public class FlowUpdateCommand extends AbstractApiCommand {
-    @CommandLine.Parameters(index = "0", description = "the file containing the flow")
+    @CommandLine.Parameters(index = "0", description = "The file containing the flow")
     public Path flowFile;
 
-    @CommandLine.Parameters(index = "1", description = "the namespace of the flow")
+    @CommandLine.Parameters(index = "1", description = "The namespace of the flow")
     public String namespace;
 
-    @CommandLine.Parameters(index = "2", description = "the id of the flow")
+    @CommandLine.Parameters(index = "2", description = "The ID of the flow")
     public String id;
 
     @SuppressWarnings("deprecation")

@@ -3,22 +3,25 @@ package io.kestra.webserver.controllers.api;
 import com.google.common.collect.ImmutableList;
 import io.kestra.core.Helpers;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
-import io.kestra.plugin.core.debug.Return;
-import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
+import io.kestra.plugin.core.debug.Return;
+import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -53,7 +56,8 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-class FlowControllerTest extends JdbcH2ControllerTest {
+@KestraTest
+class FlowControllerTest {
     @Inject
     @Client("/")
     ReactorHttpClient client;
@@ -61,17 +65,23 @@ class FlowControllerTest extends JdbcH2ControllerTest {
     @Inject
     AbstractJdbcFlowRepository jdbcFlowRepository;
 
+    @Inject
+    private JdbcTestUtils jdbcTestUtils;
+
+    @Inject
+    protected LocalFlowRepositoryLoader repositoryLoader;
+
     @BeforeAll
     public static void beforeAll() {
         Helpers.loadExternalPluginsFromClasspath();
     }
 
     @BeforeEach
-    protected void init() {
-        jdbcFlowRepository.findAllWithSource(null)
-            .forEach(jdbcFlowRepository::delete);
+    protected void init() throws IOException, URISyntaxException {
+        jdbcTestUtils.drop();
+        jdbcTestUtils.migrate();
 
-        super.setup();
+        TestsUtils.loads(repositoryLoader);
     }
 
     @Test
@@ -140,8 +150,11 @@ class FlowControllerTest extends JdbcH2ControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     void findAll() {
-        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?filters[q][EQUALS]=*"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal(), equalTo(Helpers.FLOWS_COUNT));
+
+        PagedResults<Flow> flows_oldParameters = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows_oldParameters.getTotal(), equalTo(Helpers.FLOWS_COUNT));
     }
 
     @Test
@@ -380,7 +393,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         );
 
         assertThat(get.getId(), is(flow.getId()));
-        assertThat(((Return) get.findTaskByTaskId("test2")).getFormat(), is("updated task"));
+        assertThat(((Return) get.findTaskByTaskId("test2")).getFormat().toString(), is("updated task"));
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () -> {
             client.toBlocking().retrieve(
@@ -762,8 +775,12 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
-            .GET("/api/v1/flows/search?labels=" + encodedCommaWithinLabel);
+            .GET("/api/v1/flows/search?filters[labels][EQUALS][project]=foo,bar");
         assertDoesNotThrow(() -> client.toBlocking().retrieve(searchRequest, PagedResults.class));
+
+        MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
+            .GET("/api/v1/flows/search?labels=project:foo,bar");
+        assertDoesNotThrow(() -> client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class));
 
         MutableHttpRequest<Object> exportRequest = HttpRequest
             .GET("/api/v1/flows/export/by-query?labels=" + encodedCommaWithinLabel);
@@ -784,16 +801,18 @@ class FlowControllerTest extends JdbcH2ControllerTest {
 
     @Test
     void commaInOneOfMultiLabels() {
-        String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
-        String encodedRegularLabel = URLEncoder.encode("status:test", StandardCharsets.UTF_8);
 
         Map<String, Object> flow = JacksonMapper.toMap(generateFlow("io.kestra.unittest", "a"));
         flow.put("labels", Map.of("project", "foo,bar", "status", "test"));
 
         parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
 
-        var flows = client.toBlocking().retrieve(GET("/api/v1/flows/search?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel), Argument.of(PagedResults.class, Flow.class));
+        var flows = client.toBlocking().retrieve(GET("/api/v1/flows/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal(), is(1L));
+
+        flows = client.toBlocking().retrieve(GET("/api/v1/flows/search?labels=project:foo,bar" + "&labels=status:test"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal(), is(1L));
+
     }
 
     @Test
@@ -920,7 +939,7 @@ class FlowControllerTest extends JdbcH2ControllerTest {
         return Return.builder()
             .id(id)
             .type(Return.class.getName())
-            .format(format)
+            .format(new Property<>(format))
             .build();
     }
 

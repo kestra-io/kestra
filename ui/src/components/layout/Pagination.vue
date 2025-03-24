@@ -24,17 +24,13 @@
                 size="small"
                 layout="prev, pager, next"
                 :pager-count="5"
-                :total="Math.min((max || total ),total)"
+                :total="total"
                 @current-change="pageChanged"
                 class="my-0"
             />
         </div>
 
-        <small v-if="max" class="d-md-none d-lg-block total ms-2">
-            {{ $t('Max displayable') }}: {{ max }}
-        </small>
-
-        <small class="total text-total ms-2">
+        <small class="total ms-2">
             {{ $t('Total') }}: {{ total }}
         </small>
     </div>
@@ -45,7 +41,6 @@
     export default {
         props: {
             total: {type: Number, default: 0},
-            max: {type: Number, default: undefined},
             size: {type: Number, required: true, default: 25},
             page: {type: Number, required: true},
             top: {type: Boolean, required: false, default: false}
@@ -115,10 +110,10 @@
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
 
     .pagination {
-        margin-top: var(--spacer);
+        margin-top: 1rem;
 
         &.top {
-            margin-bottom: var(--spacer);
+            margin-bottom: 1rem;
             margin-top: 0;
         }
 
@@ -132,17 +127,23 @@
             }
         }
 
-        .text-total {
-            color: var(--el-text-primary);
-            font-weight: normal;
-        }
-
         .total {
             padding: 0 4px;
             line-height: 1.85;
             font-size: var(--el-font-size-extra-small);
-            color: var(--bs-purple);
+            color: var(--ks-content-secondary);
             white-space: nowrap;
+        }
+
+        :deep(.el-pagination .el-pager li) {
+            background-color: var(--ks-button-background-secondary);
+            border: 1px solid var(--ks-border-primary);
+            color: var(--ks-content-primary);
+
+            &:hover, &.is-active {
+                background-color: var(--ks-button-background-secondary-hover);
+                border: 1px solid var(--ks-border-active);
+            }
         }
     }
 </style>

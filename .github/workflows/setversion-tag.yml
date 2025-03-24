@@ -1,0 +1,58 @@
+name: Set Version and Tag
+run-name: "Set version and Tag Kestra to ${{ github.event.inputs.releaseVersion }} 🚀"
+on:
+  workflow_dispatch:
+    inputs:
+      releaseVersion:
+        description: 'The release version (e.g., 0.21.1)'
+        required: true
+        type: string
+env:
+  RELEASE_VERSION: "${{ github.event.inputs.releaseVersion }}"
+jobs:
+  release:
+    name: Release Kestra
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/heads/releases/v')
+    steps:
+      # Checks
+      - name: Check Inputs
+        run: |
+          if ! [[ "$RELEASE_VERSION" =~ ^[0-9]+(\.[0-9]+)(\.[0-9]+)(-rc[0-9])?(-SNAPSHOT)?$ ]]; then
+            echo "Invalid release version. Must match regex: ^[0-9]+(\.[0-9]+)(\.[0-9]+)-(rc[0-9])?(-SNAPSHOT)?$"
+            exit 1
+          fi
+          
+          CURRENT_BRANCH="{{ github.ref }}"
+          
+          # Extract the major and minor versions
+          BASE_VERSION=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+)\..*/\1/')
+          RELEASE_BRANCH="refs/heads/releases/v${BASE_VERSION}.x"
+          
+          if ! [[ "$CURRENT_BRANCH" == "$RELEASE_BRANCH" ]]; then
+            echo "Invalid release branch. Expected $RELEASE_BRANCH, was $CURRENT_BRANCH"
+            exit 1
+          fi
+
+      # Checkout
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+
+      # Execute
+      - name: Run Gradle Release
+        env:
+          GITHUB_PAT: ${{ secrets.GH_PERSONAL_TOKEN }}
+        run: |
+          # Update version
+          sed -i "s/^version=.*/version=$RELEASE_VERSION/" ./gradle.properties
+          git add ./gradle.properties
+          git commit -m"chore(version): update to version '$RELEASE_VERSION'"
+          git push
+          git tag -a "v$RELEASE_VERSION" -m"v$RELEASE_VERSION"
+          git push origin "v$RELEASE_VERSION"

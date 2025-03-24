@@ -4,6 +4,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.metrics.Counter;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -75,8 +76,7 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
     @Schema(
         title = "The namespace from which you want to download files."
     )
-    @PluginProperty(dynamic = true)
-    private String namespace;
+    private Property<String> namespace;
 
     @NotNull
     @Schema(
@@ -90,17 +90,16 @@ public class DownloadFiles extends Task implements RunnableTask<DownloadFiles.Ou
     @Schema(
         title = "The folder where the downloaded files will be stored"
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private String destination = "";
+    private Property<String> destination = Property.of("");
 
 
     @Override
     @SuppressWarnings("unchecked")
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
-        String renderedNamespace = runContext.render(this.namespace);
-        String renderedDestination = runContext.render(destination);
+        String renderedNamespace = runContext.render(this.namespace).as(String.class).orElseThrow();
+        String renderedDestination = runContext.render(destination).as(String.class).orElseThrow();
 
         final Namespace namespace = runContext.storage().namespace(renderedNamespace);
 

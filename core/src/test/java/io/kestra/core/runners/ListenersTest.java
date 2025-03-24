@@ -1,7 +1,10 @@
 package io.kestra.core.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.LocalFlowRepositoryLoader;
+import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
@@ -16,7 +19,15 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 
-public class ListenersTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+public class ListenersTest {
+
+    @Inject
+    private RunnerUtils runnerUtils;
+
+    @Inject
+    private LocalFlowRepositoryLoader repositoryLoader;
+
     @BeforeEach
     void initListeners() throws IOException, URISyntaxException {
         repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners.yaml")));

@@ -3,6 +3,7 @@
         class="fit-text"
         :model-value="value"
         @update:model-value="onInput"
+        :disabled="readonly"
         clearable
         :placeholder="$t('Select namespace')"
         :persistent="false"
@@ -19,7 +20,7 @@
     </el-select>
 </template>
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import _uniqBy from "lodash/uniqBy";
     import permission from "../../models/permission";
     import action from "../../models/action";
@@ -41,6 +42,14 @@
             isFilter: {
                 type: Boolean,
                 default: true
+            },
+            includeSystemNamespace: {
+                type: Boolean,
+                default: false
+            },
+            readonly: {
+                type: Boolean,
+                default: false
             }
         },
         emits: ["update:modelValue"],
@@ -49,13 +58,14 @@
                 this.$store
                     .dispatch("namespace/loadNamespacesForDatatype", {dataType: this.dataType})
                     .then(() => {
-                        this.groupedNamespaces = this.groupNamespaces(this.datatypeNamespaces).filter(namespace => namespace.code !== "system");
+                        this.groupedNamespaces = this.groupNamespaces(this.datatypeNamespaces).filter(namespace => this.includeSystemNamespace || (namespace.code !== (this.configs?.systemNamespace || "system")));
                     });
             }
         },
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
             ...mapState("auth", ["user"]),
+            ...mapGetters("misc", ["configs"]),
         },
         data() {
             return {

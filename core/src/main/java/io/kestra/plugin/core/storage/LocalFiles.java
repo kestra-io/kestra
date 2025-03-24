@@ -3,6 +3,7 @@ package io.kestra.plugin.core.storage;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -132,13 +133,12 @@ public class LocalFiles extends Task implements RunnableTask<LocalFiles.LocalFil
         title = "The files from the local filesystem to be sent to the Kestra's internal storage.",
         description = "Must be a list of [glob](https://en.wikipedia.org/wiki/Glob_(programming)) expressions relative to the current working directory, some examples: `my-dir/**`, `my-dir/*/**` or `my-dir/my-file.txt`."
     )
-    @PluginProperty(dynamic = true)
-    private List<String> outputs;
+    private Property<List<String>> outputs;
 
     @Override
     public LocalFilesOutput run(RunContext runContext) throws Exception {
         FilesService.inputFiles(runContext, this.inputs);
-        Map<String, URI> outputFiles = FilesService.outputFiles(runContext, this.outputs);
+        Map<String, URI> outputFiles = FilesService.outputFiles(runContext, runContext.render(this.outputs).asList(String.class));
 
         return LocalFilesOutput.builder()
             .uris(outputFiles)

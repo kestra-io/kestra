@@ -1,27 +1,21 @@
-$background: var(--card-bg);
-$color: var(--bs-heading-color);
-$active: #8405ff;
-$height: 50px;
-$full: 100%;
-
-:deep(.main) {
+.main {
     padding: 1rem 2rem;
 }
 
-:deep(.alternative) {
-    background: $background;
+.alternative {
+    background: var(--ks-background-card);
 
     &:hover {
-        border: 1px solid $active;
-        background-color: var(--card-bg);
+        border: 1px solid var(--ks-border-active);
+        background-color: var(--ks-background-card);
         opacity: 0.9;
     }
 }
 
-:deep(.high) {
-    height: $height;
+.high {
+    height: 50px;
 }
 
-:deep(.full) {
-    width: $full;
+.full {
+    width: 100%;
 }

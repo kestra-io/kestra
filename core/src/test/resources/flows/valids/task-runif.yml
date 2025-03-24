@@ -15,6 +15,12 @@ tasks:
     runIf: "{{ outputs.output['values']['taskrun_data'] == 2 }}"
     message:
       - "should not be printed"
+  - id: notexecutedflowable
+    type: io.kestra.plugin.core.flow.Subflow
+    runIf: "false"
+    wait: true
+    flowId: dummy_flow
+    namespace: dummy_namespace
   - id: willfailedtheflow
     type: io.kestra.plugin.core.log.Log
     runIf: "{{ outputs.notexists == 2 }}"

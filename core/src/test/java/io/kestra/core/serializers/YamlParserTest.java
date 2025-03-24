@@ -198,7 +198,7 @@ class YamlParserTest {
             () -> this.parse("flows/invalids/invalid-property.yaml")
         );
 
-        assertThat(exception.getMessage(), is("Unrecognized field \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable (13 known properties: \"logLevel\", \"timeout\", \"retry\", \"allowWarning\", \"format\", \"type\", \"id\", \"description\", \"workerGroup\", \"runIf\", \"logToFile\", \"disabled\", \"allowFailure\"])"));
+        assertThat(exception.getMessage(), is("Unrecognized field \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable (14 known properties: \"logLevel\", \"timeout\", \"retry\", \"allowWarning\", \"format\", \"version\", \"type\", \"id\", \"description\", \"workerGroup\", \"runIf\", \"logToFile\", \"disabled\", \"allowFailure\"])"));
         assertThat(exception.getConstraintViolations().size(), is(1));
         assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString(), is("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.plugin.core.debug.Return[\"invalid\"]"));
     }

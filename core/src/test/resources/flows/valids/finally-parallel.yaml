@@ -1,0 +1,49 @@
+id: finally-parallel
+namespace: io.kestra.tests
+
+inputs:
+  - id: failed
+    type: BOOLEAN
+    defaults: false
+
+tasks:
+  - id: seq
+    type: io.kestra.plugin.core.flow.Parallel
+    tasks:
+      - id: p1
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"
+      - id: p2
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"
+      - id: p3
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"
+      - id: if
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ inputs.failed == false }}"
+        then:
+          - id: ok
+            type: io.kestra.plugin.core.debug.Return
+            format: "{{ task.id }}"
+        else:
+          - id: ko
+            type: io.kestra.plugin.core.execution.Fail
+
+    errors:
+      - id: e1
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"
+
+      - id: e2
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"
+
+    finally:
+      - id: a1
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"
+
+      - id: a2
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"

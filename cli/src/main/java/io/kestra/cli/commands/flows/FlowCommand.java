@@ -10,7 +10,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "flow",
-    description = "handle flows",
+    description = "Manage flows",
     mixinStandardHelpOptions = true,
     subcommands = {
         FlowValidateCommand.class,

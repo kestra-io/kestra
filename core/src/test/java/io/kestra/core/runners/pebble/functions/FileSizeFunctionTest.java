@@ -3,6 +3,7 @@ package io.kestra.core.runners.pebble.functions;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
@@ -51,6 +52,17 @@ public class FileSizeFunctionTest {
     }
 
     @Test
+    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
+        String namespace = "io.kestra.tests";
+        String filePath = "file.txt";
+        storageInterface.createDirectory(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream(FILE_TEXT.getBytes()));
+
+        String render = variableRenderer.render("{{ fileSize('" + filePath + "', namespace='" + namespace + "') }}", Map.of("flow", Map.of("namespace", "flow.namespace")));
+        assertThat(render, is(FILE_SIZE));
+    }
+
+    @Test
     void returnsCorrectSize_givenStringUri_andParentExecution() throws IOException, IllegalVariableEvaluationException {
         String executionId = IdUtils.create();
         URI internalStorageURI = getInternalStorageURI(executionId);
@@ -73,7 +85,7 @@ public class FileSizeFunctionTest {
     }
 
     @Test
-    void shouldThrowIllegalArgumentException_givenMissingTrigger_andParentExecution() throws IOException {
+    void shouldReadFromAnotherExecution() throws IOException, IllegalVariableEvaluationException {
         String executionId = IdUtils.create();
         URI internalStorageURI = getInternalStorageURI(executionId);
         URI internalStorageFile = getInternalStorageFile(internalStorageURI);
@@ -85,12 +97,8 @@ public class FileSizeFunctionTest {
             "execution", Map.of("id", IdUtils.create())
         );
 
-        Exception ex = assertThrows(
-            IllegalArgumentException.class,
-            () -> variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables)
-        );
-
-        assertTrue(ex.getMessage().startsWith("Unable to read the file"), "Exception message doesn't match expected one");
+        String size = variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables);
+        assertThat(size, is(FILE_SIZE));
     }
 
     @Test

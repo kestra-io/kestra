@@ -1,8 +1,7 @@
 package io.kestra.core.utils;
 
-import com.google.common.base.Charsets;
 import com.google.common.hash.HashCode;
-import com.google.common.hash.Hasher;
+import java.nio.charset.StandardCharsets;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -62,6 +61,6 @@ public final class Hashing {
     }
 
     private static HashCode getHashString(String value) {
-        return com.google.common.hash.Hashing.murmur3_128().hashString(value, Charsets.UTF_8);
+        return com.google.common.hash.Hashing.murmur3_128().hashString(value, StandardCharsets.UTF_8);
     }
 }

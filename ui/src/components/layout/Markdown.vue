@@ -4,57 +4,50 @@
     </div>
 </template>
 
-<script>
-    import Markdown from "../../utils/markdown";
+<script setup lang="ts">
+    import {ref, computed, watch} from "vue";
+    import * as Markdown from "../../utils/markdown";
 
-    export default {
-        props: {
-            watches: {
-                type: Array,
-                default: () => ["source", "show", "toc"],
-            },
-            source: {
-                type: String,
-                default: "",
-            },
-            permalink: {
-                type: Boolean,
-                default: false,
-            },
-            fontSizeVar: {
-                type: String,
-                default: "font-size-sm"
-            }
-        },
-        data() {
-            return {
-                markdownRenderer: undefined
-            }
-        },
-        async created() {
-            this.markdownRenderer = await this.renderMarkdown();
-        },
-        watch: {
-            async source() {
-                this.markdownRenderer = await this.renderMarkdown();
-            }
-        },
-        methods: {
-            async renderMarkdown() {
-                return  await Markdown.render(this.source, {
-                    permalink: this.permalink,
-                });
-            },
-        },
-        computed: {
-            fontSizeCss() {
-                return `var(--${this.fontSizeVar})`;
-            },
-            permalinkCss() {
-                return this.permalink ? "-20px" : "0";
-            }
-        },
-    };
+    const props = withDefaults(defineProps<{
+        source?: string;
+        permalink?: boolean;
+        fontSizeVar?: string;
+        html?: boolean;
+    }>(), {
+        source: "",
+        permalink: false,
+        fontSizeVar: "font-size-sm",
+        html: true
+    });
+
+    const markdownRenderer = ref()
+
+    const sourceWithReplacedAlerts = computed(() => {
+        return props.source.replace(
+            /(\n)?::alert\{type="(.*)"}\n([\s\S]*?)\n::(\n)?/g,
+            (_, newLine1, type, content, newLine2) => `${newLine1 ?? ""}::: ${type}\n${content}\n:::${newLine2 ?? ""}`
+        );
+    })
+
+    async function renderMarkdown() {
+        return await Markdown.render(sourceWithReplacedAlerts.value, {
+            permalink: props.permalink,
+            html: props.html
+        });
+    }
+
+    watch(() => props.source, async () => {
+        markdownRenderer.value = await renderMarkdown();
+    }, {immediate: true})
+
+    const fontSizeCss = computed(() => {
+        return `var(--${props.fontSizeVar})`;
+    })
+
+    const permalinkCss = computed(() => {
+        return props.permalink ? "-20px" : "0";
+    })
+
 </script>
 
 <style lang="scss">
@@ -64,12 +57,12 @@
         table {
             border-collapse: collapse;
             width: 100%;
-            color: var(--bs-body-color);
+            color: var(--ks-content-primary);
         }
 
         table,
         th {
-            border-bottom: 2px solid var(--bs-border-color);
+            border-bottom: 2px solid var(--ks-border-primary);
         }
 
         th,
@@ -82,18 +75,18 @@
         }
 
         a.header-anchor {
-            color: var(--bs-gray-600);
+            color: var(--ks-content-secondary);
             font-size: var(--font-size-base);
             font-weight: normal;
         }
 
         .warning {
-            background-color: var(--el-color-warning-light-9);
-            border: 1px solid var(--el-color-warning-light-5);
+            background-color: var(--ks-background-warning);
+            border: 1px solid var(--ks-border-warning);
+            color: var(--ks-content-warning);
             padding: 8px 16px;
-            color: var(--el-color-warning);
             border-radius: var(--el-border-radius-base);
-            margin-bottom: var(--spacer);
+            margin-bottom: 1rem;
 
             p:last-child {
                 margin-bottom: 0;
@@ -101,12 +94,12 @@
         }
 
         .info {
-            background-color: var(--el-color-info-light-9);
-            border: 1px solid var(--el-color-info-light-5);
+            background-color: var(--ks-background-info);
+            border: 1px solid var(--ks-border-info);
+            color: var(--ks-content-info);
             padding: 8px 16px;
-            color: var(--el-color-info);
             border-radius: var(--el-border-radius-base);
-            margin-bottom: var(--spacer);
+            margin-bottom: 1rem;
 
             p:last-child {
                 margin-bottom: 0;
@@ -115,7 +108,7 @@
 
         pre {
             border-radius: var(--bs-border-radius-lg);
-            border: 1px solid var(--bs-border-color);
+            border: 1px solid var(--ks-border-primary);
         }
 
         blockquote {
@@ -123,27 +116,31 @@
         }
 
         mark {
-            background: var(--bs-success);
-            color: var(--bs-white);
+            background: var(--ks-background-success);
+            color: var(--ks-content-success);
             font-size: var(--font-size-sm);
             padding: 2px 8px 2px 8px;
             border-radius: var(--bs-border-radius-sm);
 
             * {
-                color: var(--bs-white) !important;
+                color: var(--ks-content-success) !important;
             }
         }
 
+        .dark & h1 img{
+            filter: invert(1);
+        }
+
         h2 {
-            margin-top: calc(var(--spacer) * 2);
+            margin-top: 2rem;
         }
 
         h3 {
-            margin-top: calc(var(--spacer) * 1.5);
+            margin-top: 1.5rem;
         }
 
         h4 {
-            margin-top: calc(var(--spacer) * 1.25);
+            margin-top: 1.25rem;
         }
 
         h2, h3, h4, h5 {
@@ -160,7 +157,7 @@
                 }
             }
             padding: 5px ;
-            border-left: 4px solid var(--bs-border-color);
+            border-left: 4px solid var(--ks-border-primary);
         }
 
         strong > code,
@@ -168,23 +165,19 @@
         td > code,
         p > code{
             border-radius: var(--bs-border-radius-sm);
-            border: 1px solid var(--bs-border-color);
-            color: var(--bs-body-color);
+            border: 1px solid var(--ks-border-primary);
+            color: var(--ks-content-primary);
         }
 
         h3, h4, h5 {
             code {
-                background: var(--bs-white);
+                background: var(--ks-background-card);
                 font-size: 0.65em;
                 padding: 2px 8px;
                 font-weight: 400;
                 border-radius: var(--bs-border-radius-sm);
-                border: 1px solid var(--bs-border-color);
-                color: var(--bs-body-color);
-
-                html.dark & {
-                    background: var(--bs-gray-100);
-                }
+                border: 1px solid var(--ks-border-primary);
+                color: var(--ks-content-primary);
             }
         }
     }

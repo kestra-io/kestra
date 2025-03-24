@@ -65,7 +65,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input1", "value1", "input2", "value2");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(
@@ -98,7 +98,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input1", "v1", "input2", "v2", "input3", "v3");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(
@@ -132,7 +132,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input1", "v1", "input2", "v2", "input3", "v3");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(
@@ -162,7 +162,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input1", "value1", "input2", "value2");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(
@@ -191,7 +191,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input1", "value1", "input2", "value2");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(2, values.size());
@@ -211,7 +211,7 @@ class FlowInputOutputTest {
         Publisher<CompletedPart> data = Mono.just(new MemoryCompletedFileUpload("input", "input", "???".getBytes(StandardCharsets.UTF_8)));
 
         // When
-        List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), DEFAULT_TEST_EXECUTION, data).block();
+        List<InputAndValue> values = flowInputOutput.validateExecutionInputs(List.of(input), null, DEFAULT_TEST_EXECUTION, data).block();
 
         // Then
         Assertions.assertNull(values.getFirst().exception());
@@ -238,7 +238,7 @@ class FlowInputOutputTest {
         Map<String, Object> data = Map.of("input42", "foo");
 
         // When
-        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, DEFAULT_TEST_EXECUTION, data);
+        List<InputAndValue> values = flowInputOutput.resolveInputs(inputs, null, DEFAULT_TEST_EXECUTION, data);
 
         // Then
         Assertions.assertEquals(

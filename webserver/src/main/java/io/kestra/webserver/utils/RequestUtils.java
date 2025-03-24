@@ -1,11 +1,16 @@
 package io.kestra.webserver.utils;
 
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.flows.FlowScope;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.exceptions.HttpStatusException;
+import org.slf4j.event.Level;
 
-import java.util.AbstractMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Duration;
+import java.time.ZonedDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RequestUtils {
@@ -25,4 +30,148 @@ public class RequestUtils {
             })
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
+
+    public static List<QueryFilter> mapLegacyParamsToFilters(
+        String query,
+        String namespace,
+        String flowId,
+        String triggerId,
+        Level minLevel,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        List<FlowScope> scope,
+        List<String> labels,
+        Duration timeRange,
+        ExecutionRepositoryInterface.ChildFilter childFilter,
+        List<State.Type> state,
+        String workerId
+    ) {
+
+        List<QueryFilter> filters = new ArrayList<>();
+
+        if (query != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.QUERY)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(query)
+                .build());
+        }
+
+        if (namespace != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.NAMESPACE)
+                .operation(QueryFilter.Op.STARTS_WITH)
+                .value(namespace)
+                .build());
+        }
+
+        if (flowId != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.FLOW_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(flowId)
+                .build());
+        }
+
+        if (triggerId != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.TRIGGER_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(triggerId)
+                .build());
+        }
+
+        if (minLevel != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.MIN_LEVEL)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(minLevel.name())
+                .build());
+        }
+
+        if (startDate != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.START_DATE)
+                .operation(QueryFilter.Op.GREATER_THAN)
+                .value(startDate.toString())
+                .build());
+        }
+
+        if (endDate != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.END_DATE)
+                .operation(QueryFilter.Op.LESS_THAN)
+                .value(endDate.toString())
+                .build());
+        }
+        if (scope != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.SCOPE)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(scope)
+                .build());
+        }
+        if (labels != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.LABELS)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(RequestUtils.toMap(labels))
+                .build());
+        }
+        if(timeRange != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.TIME_RANGE)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(timeRange)
+                .build());
+        }
+        if(childFilter != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.CHILD_FILTER)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(childFilter)
+                .build());
+        }
+        if(state != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.STATE)
+                .operation(QueryFilter.Op.IN)
+                .value(state)
+                .build());
+        }
+        if(workerId != null) {
+            filters.add(QueryFilter.builder()
+                .field(QueryFilter.Field.WORKER_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(workerId)
+                .build());
+        }
+
+        return filters;
+    }
+
+    public static List<FlowScope> toFlowScopes(List<String> values) {
+        return Arrays.stream(values.getFirst().split(","))
+            .map(valueStr -> {
+                try {
+                    return FlowScope.valueOf(valueStr.toUpperCase());
+                } catch (IllegalArgumentException e) {
+                    throw new IllegalArgumentException("Invalid FlowScope value: " + valueStr, e);
+                }
+            })
+            .collect(Collectors.toList());
+    }
+
+
+    public static ZonedDateTime resolveAbsoluteDateTime(ZonedDateTime absoluteDateTime, Duration timeRange, ZonedDateTime now) {
+        if (timeRange != null) {
+            if (absoluteDateTime != null) {
+                throw new IllegalArgumentException("Parameters 'startDate' and 'timeRange' are mutually exclusive");
+            }
+            return now.minus(timeRange.abs());
+        }
+
+        return absoluteDateTime;
+    }
+
 }

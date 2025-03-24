@@ -12,7 +12,7 @@ import java.util.List;
 
 @CommandLine.Command(
     name = "reindex",
-    description = "reindex all records of a type: read them from the database then update them",
+    description = "Reindex all records of a type: read them from the database then update them",
     mixinStandardHelpOptions = true
 )
 @Slf4j

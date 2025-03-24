@@ -16,6 +16,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -28,12 +30,12 @@ import jakarta.inject.Singleton;
 public class FlowListeners implements FlowListenersInterface {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
-    private Boolean isStarted = false;
+    private final AtomicBoolean isStarted = new AtomicBoolean(false);
     private final QueueInterface<FlowWithSource> flowQueue;
     private final List<FlowWithSource> flows;
-    private final List<Consumer<List<FlowWithSource>>> consumers = new ArrayList<>();
+    private final List<Consumer<List<FlowWithSource>>> consumers = new CopyOnWriteArrayList<>();
 
-    private final List<BiConsumer<FlowWithSource, FlowWithSource>> consumersEach = new ArrayList<>();
+    private final List<BiConsumer<FlowWithSource, FlowWithSource>> consumersEach = new CopyOnWriteArrayList<>();
 
     @Inject
     public FlowListeners(
@@ -47,9 +49,7 @@ public class FlowListeners implements FlowListenersInterface {
     @Override
     public void run() {
         synchronized (this) {
-            if (!this.isStarted) {
-                this.isStarted = true;
-
+            if (this.isStarted.compareAndSet(false, true)) {
                 this.flowQueue.receive(either -> {
                     FlowWithSource flow;
                     if (either.isRight()) {
@@ -97,7 +97,8 @@ public class FlowListeners implements FlowListenersInterface {
     }
 
     private Optional<FlowWithSource> previous(FlowWithSource flow) {
-        return flows
+        List<FlowWithSource> copy = new ArrayList<>(flows);
+        return copy
             .stream()
             .filter(r -> Objects.equals(r.getTenantId(), flow.getTenantId()) && r.getNamespace().equals(flow.getNamespace()) && r.getId().equals(flow.getId()))
             .findFirst();

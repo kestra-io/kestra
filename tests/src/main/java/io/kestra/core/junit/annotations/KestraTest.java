@@ -19,6 +19,11 @@ import java.lang.annotation.*;
 @Requires(condition = TestActiveCondition.class)
 @Executable
 public @interface KestraTest {
+
+    boolean startRunner() default false;
+
+    boolean startScheduler() default false;
+
     Class<?> application() default void.class;
 
     String[] environments() default {};

@@ -15,14 +15,14 @@ import java.nio.file.Path;
 
 @CommandLine.Command(
     name = "dot",
-    description = "generate a dot graph from a file"
+    description = "Generate a DOT graph from a file"
 )
 @Slf4j
 public class FlowDotCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @CommandLine.Parameters(index = "0", description = "the flow file to display")
+    @CommandLine.Parameters(index = "0", description = "The flow file to display")
     private Path file;
 
     @Override

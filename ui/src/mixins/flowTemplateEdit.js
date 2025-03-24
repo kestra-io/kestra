@@ -5,11 +5,10 @@ import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
 import Editor from "../components/inputs/Editor.vue";
 import RouteContext from "./routeContext";
-import YamlUtils from "../utils/yamlUtils";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import action from "../models/action";
 import permission from "../models/permission";
 import {pageFromRoute} from "../utils/eventsRouter";
-import yamlUtils from "../utils/yamlUtils";
 import {apiUrl} from "override/utils/route";
 
 export default {
@@ -104,7 +103,7 @@ export default {
             }
 
             if (this.dataType === "template") {
-                this.content = YamlUtils.stringify(this.template);
+                this.content = YAML_UTILS.stringify(this.template);
                 this.previousContent = this.content;
             } else {
                 if (this.flow) {
@@ -200,7 +199,7 @@ export default {
             if (this.item) {
                 let item;
                 try {
-                    item = YamlUtils.parse(this.content);
+                    item = YAML_UTILS.parse(this.content);
                 } catch (err) {
                     this.$toast().warning(
                         err.message,
@@ -221,8 +220,8 @@ export default {
                 this.previousContent = this.content;
                 saveFlowTemplate(this, this.content, this.dataType)
                     .then((flow) => {
-                        this.previousContent = YamlUtils.stringify(flow);
-                        this.content = YamlUtils.stringify(flow);
+                        this.previousContent = YAML_UTILS.stringify(flow);
+                        this.content = YAML_UTILS.stringify(flow);
                         this.onChange();
 
                         this.loadFile();
@@ -230,7 +229,7 @@ export default {
             } else {
                 let item;
                 try {
-                    item = YamlUtils.parse(this.content);
+                    item = YAML_UTILS.parse(this.content);
                 } catch (err) {
                     this.$toast().warning(
                         err.message,
@@ -239,12 +238,12 @@ export default {
 
                     return;
                 }
-                this.previousContent = YamlUtils.stringify(this.item);
+                this.previousContent = YAML_UTILS.stringify(this.item);
                 this.$store
                     .dispatch(`${this.dataType}/create${this.dataType.capitalize()}`, {[this.dataType]: this.content})
                     .then((data) => {
-                        this.previousContent = data.source ? data.source : YamlUtils.stringify(data);
-                        this.content = data.source ? data.source : YamlUtils.stringify(data);
+                        this.previousContent = data.source ? data.source : YAML_UTILS.stringify(data);
+                        this.content = data.source ? data.source : YAML_UTILS.stringify(data);
                         this.onChange();
 
                         this.$router.push({
@@ -262,11 +261,11 @@ export default {
             }
         },
         updatePluginDocumentation(event) {
-            const taskType = yamlUtils.getTaskType(event.model.getValue(), event.position)
-            if (taskType && this.pluginSingleList.includes(taskType)) {
+            const taskType = YAML_UTILS.getTaskType(event.model.getValue(), event.position, this.pluginSingleList)
+            if (taskType) {
                 this.$store.dispatch("plugin/load", {cls: taskType})
                     .then(plugin => {
-                        this.$store.commit("plugin/setEditorPlugin", plugin);
+                        this.$store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
                     });
             } else {
                 this.$store.commit("plugin/setEditorPlugin", undefined);

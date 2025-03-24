@@ -1,0 +1,20 @@
+id: each-error
+namespace: io.kestra.tests
+
+tasks:
+  - id: each
+    type: io.kestra.plugin.core.flow.ForEach
+    values: '["1", "2", "3"]'
+    concurrencyLimit: 0
+    tasks:
+      - id: ko
+        type: io.kestra.plugin.core.execution.Fail
+
+    errors:
+      - id: e1
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"
+
+      - id: e2
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"

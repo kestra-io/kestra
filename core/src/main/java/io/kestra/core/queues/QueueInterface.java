@@ -1,12 +1,13 @@
 package io.kestra.core.queues;
 
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.models.Pauseable;
 import io.kestra.core.utils.Either;
 
 import java.io.Closeable;
 import java.util.function.Consumer;
 
-public interface QueueInterface<T> extends Closeable {
+public interface QueueInterface<T> extends Closeable, Pauseable {
     default void emit(T message) throws QueueException {
         emit(null, message);
     }
@@ -44,5 +45,4 @@ public interface QueueInterface<T> extends Closeable {
     }
 
     Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate);
-
 }

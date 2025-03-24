@@ -12,19 +12,29 @@ import java.util.function.Consumer;
 
 @Slf4j
 public class MysqlWorkerJobQueue implements WorkerJobQueueInterface {
-    private final JdbcWorkerJobQueueService jdbcworkerjobQueueService;
+    private final JdbcWorkerJobQueueService jdbcWorkerJobQueueService;
 
     public MysqlWorkerJobQueue(ApplicationContext applicationContext) {
-        this.jdbcworkerjobQueueService = applicationContext.getBean(JdbcWorkerJobQueueService.class);
+        this.jdbcWorkerJobQueueService = applicationContext.getBean(JdbcWorkerJobQueueService.class);
     }
 
     @Override
     public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerJob, DeserializationException>> consumer) {
-        return jdbcworkerjobQueueService.receive(consumerGroup, queueType, consumer);
+        return jdbcWorkerJobQueueService.receive(consumerGroup, queueType, consumer);
     }
 
     @Override
     public void close() {
-        jdbcworkerjobQueueService.close();
+        jdbcWorkerJobQueueService.close();
+    }
+
+    @Override
+    public void pause() {
+        jdbcWorkerJobQueueService.pause();
+    }
+
+    @Override
+    public void resume() {
+        jdbcWorkerJobQueueService.resume();
     }
 }

@@ -4,7 +4,6 @@ import io.kestra.core.utils.Enums;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -71,17 +70,6 @@ public interface Service extends AutoCloseable {
     }
 
     /**
-     * Supported service types.
-     */
-    enum ServiceType {
-        EXECUTOR,
-        INDEXER,
-        SCHEDULER,
-        WEBSERVER,
-        WORKER,
-    }
-
-    /**
      * {@link ServiceState} are the possible states that a Kestra's Service can be in.
      * An instance must only be in one state at a time.
      * The expected state transition with the following defined states is:
@@ -124,14 +112,15 @@ public interface Service extends AutoCloseable {
      */
     enum ServiceState {
         CREATED(1, 2, 3),               // 0
-        RUNNING(2, 3, 4),               // 1
+        RUNNING(2, 3, 4, 9),            // 1
         ERROR(4),                       // 2
         DISCONNECTED(4, 7),             // 3
         TERMINATING(5, 6, 7),           // 4
         TERMINATED_GRACEFULLY(7),       // 5
         TERMINATED_FORCED(7),           // 6
         NOT_RUNNING(8),                 // 7
-        EMPTY();                                    // 8
+        EMPTY(),                                       // 8
+        MAINTENANCE(1, 2, 3, 4);                 // 9
 
         private final Set<Integer> validTransitions = new HashSet<>();
 
@@ -160,7 +149,7 @@ public interface Service extends AutoCloseable {
         }
 
         public static Set<ServiceState> allRunningStates() {
-            return Set.of(CREATED, RUNNING);
+            return Set.of(CREATED, RUNNING, MAINTENANCE);
         }
 
         public static Set<ServiceState> allNonRunningStates() {

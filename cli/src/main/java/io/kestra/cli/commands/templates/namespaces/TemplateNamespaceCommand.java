@@ -10,7 +10,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = "namespace",
-    description = "handle namespace templates",
+    description = "Manage namespace templates",
     mixinStandardHelpOptions = true,
     subcommands = {
         TemplateNamespaceUpdateCommand.class,

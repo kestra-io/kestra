@@ -1,13 +1,13 @@
 <template>
     <div class="empty-state-container">
         <div class="empty-state-image">
-            <img :src="image" :alt="title">
+            <img :src="image" :alt="title" width="150px">
         </div>
         <div class="empty-state-content">
-            <h4 class="empty-state-title">
+            <h5 class="empty-state-title mt-3">
                 {{ title }}
-            </h4>
-            <div
+            </h5>
+            <p
                 class="empty-state-description"
                 :class="themeClass"
                 v-html="description"
@@ -53,12 +53,11 @@
 }
 
 .empty-state-image {
-    margin-top: 2rem;
+    margin-top: 4rem;
     margin-bottom: 2rem;
 }
 
 .empty-state-image img {
-    max-width: 200px;
     height: auto;
 }
 
@@ -67,13 +66,14 @@
 }
 
 .empty-state-title {
-    color: var(--el-text-color-regular);
+    color: var(--ks-content-primary);
+    font-weight: 700;
+    font-size: var(--el-font-size-large);
 }
 
 .empty-state-description {
-    font-size: var(--el-font-size);
-    margin-bottom: 16px;
-    color: var(--el-text-color-regular);
+    font-size: var(--el-font-size-small);
+    color: var(--ks-content-primary);
 }
 
 .theme-light {

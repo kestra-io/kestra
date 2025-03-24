@@ -4,6 +4,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.repositories.ServiceInstanceRepositoryInterface;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceType;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -60,7 +61,7 @@ public record ServiceUsage(
                                   final Duration interval) {
 
         List<DailyServiceStatistics> statistics = Arrays
-            .stream(Service.ServiceType.values())
+            .stream(ServiceType.values())
             .map(type -> of(from, to, repository, type, interval))
             .toList();
         return new ServiceUsage(statistics);
@@ -69,13 +70,13 @@ public record ServiceUsage(
     private static DailyServiceStatistics of(final Instant from,
                                              final Instant to,
                                              final ServiceInstanceRepositoryInterface repository,
-                                             final Service.ServiceType serviceType,
+                                             final ServiceType serviceType,
                                              final Duration interval) {
         return of(serviceType, interval, repository.findAllInstancesBetween(serviceType, from, to));
     }
 
     @VisibleForTesting
-    static DailyServiceStatistics of(final Service.ServiceType serviceType,
+    static DailyServiceStatistics of(final ServiceType serviceType,
                                      final Duration interval,
                                      final List<ServiceInstance> instances) {
         // Compute the number of running service per time-interval.

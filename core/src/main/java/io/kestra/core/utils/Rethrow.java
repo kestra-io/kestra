@@ -1,6 +1,5 @@
 package io.kestra.core.utils;
 
-import java.util.concurrent.Callable;
 import java.util.function.*;
 
 public final class Rethrow {
@@ -110,16 +109,6 @@ public final class Rethrow {
                 runnable.run();
             } catch (Exception exception) {
                 throwException(exception);
-            }
-        };
-    }
-
-    public static <R, E extends Exception> Callable<R> throwCallable(CallableChecked<R, E> runnable) throws E {
-        return () -> {
-            try {
-                return runnable.call();
-            } catch (Exception exception) {
-                return throwException(exception);
             }
         };
     }

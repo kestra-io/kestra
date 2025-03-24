@@ -1,48 +1,58 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
     <section class="full-container">
-        <editor-view
-            v-if="source"
-            :flow-id="flowParsed?.id"
-            :namespace="flowParsed?.namespace"
-            :is-creating="true"
-            :flow-validation="flowValidation"
-            :flow-graph="flowGraph"
-            :is-read-only="false"
-            :is-dirty="true"
-            :flow="sourceWrapper"
-            :next-revision="1"
-        />
+        <template v-if="multiPanelEditor">
+            <MultiPanelEditorView v-if="flow" />
+        </template>
+        <template v-else>
+            <editor-view
+                v-if="flow"
+                :flow-id="flow?.id"
+                :namespace="flow?.namespace"
+                :flow-validation="flowValidation"
+                :flow-graph="flowGraph"
+                :is-read-only="false"
+                is-creating
+                is-dirty
+                :flow="flow"
+                :next-revision="1"
+            />
+        </template>
     </section>
 </template>
 
 <script>
-    import EditorView from "../inputs/EditorView.vue";
     import {mapGetters, mapMutations, mapState} from "vuex";
+    import {useStorage} from "@vueuse/core";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import {apiUrl} from "override/utils/route";
-    import {YamlUtils} from "@kestra-io/ui-libs";
+    import EditorView from "../inputs/EditorView.vue";
+    import MultiPanelEditorView from "./MultiPanelEditorView.vue";
+
+    import {getRandomFlowID} from "../../../scripts/product/flow";
 
     export default {
         mixins: [RouteContext],
         components: {
+            MultiPanelEditorView,
             EditorView,
             TopNavBar
         },
-        data() {
+
+        setup() {
             return {
-                source: null
+                multiPanelEditor: useStorage("multiPanelEditor", false)
             }
         },
         created() {
+            this.$store.commit("flow/setIsCreating", true);
             if (this.$route.query.reset) {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
+                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
                 this.$tours["guidedTour"]?.start();
             }
             this.setupFlow()
-
             this.closeAllTabs()
         },
         beforeUnmount() {
@@ -51,44 +61,41 @@
         methods: {
             ...mapMutations("editor", ["closeAllTabs"]),
 
-            async queryBlueprint(blueprintId) {
-                return (await this.$http.get(`${this.blueprintUri}/${blueprintId}/flow`)).data;
-            },
             async setupFlow() {
+                const blueprintId = this.$route.query.blueprintId;
+                const blueprintSource = this.$route.query.blueprintSource;
                 if (this.$route.query.copy && this.flow){
-                    this.source = this.flow.source;
-                } else if (this.$route.query.blueprintId && this.$route.query.blueprintSource) {
-                    this.source = await this.queryBlueprint(this.$route.query.blueprintId)
+                    this.$store.commit("flow/setFlowYaml", this.flow.source);
+                } else if (blueprintId && blueprintSource) {
+                    this.$store.commit("flow/setFlowYaml", await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId}));
                 } else {
                     const selectedNamespace = this.$route.query.namespace || "company.team";
-                    this.source = `id: myflow
+                    this.$store.commit("flow/setFlowYaml", `id: ${getRandomFlowID()}
 namespace: ${selectedNamespace}
 
 tasks:
   - id: hello
     type: io.kestra.plugin.core.log.Log
-    message: Hello World! 🚀`;
+    message: Hello World! 🚀`);
                 }
+
+                this.$store.commit("flow/setFlow", {...YAML_UTILS.parse(this.flowYaml), source: this.flowYaml});
+                this.$store.dispatch("flow/initYamlSource", {});
             }
         },
         computed: {
-            sourceWrapper() {
-                return {source: this.source};
-            },
+            ...mapState("flow", ["flowGraph"]),
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),
-            ...mapGetters("flow", ["flow", "flowValidation", "flowGraph", "total"]),
+            ...mapGetters("flow", ["flow", "flowValidation", "flowYaml"]),
             routeInfo() {
                 return {
                     title: this.$t("flows")
                 };
             },
-            blueprintUri() {
-                return `${apiUrl(this.$store)}/blueprints/${this.$route.query.blueprintSource}`
-            },
             flowParsed() {
-                return YamlUtils.parse(this.source);
+                return YAML_UTILS.parse(this.source);
             }
         },
         beforeRouteLeave(to, from, next) {

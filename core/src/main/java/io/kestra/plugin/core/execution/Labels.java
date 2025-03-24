@@ -64,7 +64,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
                 "    key: order_webhook",
                 "    type: io.kestra.plugin.core.trigger.Webhook",
                 "    conditions:",
-                "      - type: io.kestra.plugin.core.condition.ExpressionCondition",
+                "      - type: io.kestra.plugin.core.condition.Expression",
                 "        expression: \"{{ trigger.body.customerId is defined and trigger.body.orderId is defined and trigger.body.orderType is defined }}\""
             }
         )

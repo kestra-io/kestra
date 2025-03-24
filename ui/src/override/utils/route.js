@@ -1,5 +1,5 @@
-// eslint-disable-next-line no-undef
-let root = (import.meta.env.VITE_APP_API_URL || "") + KESTRA_BASE_PATH;
+
+let root = (import.meta.env.VITE_APP_API_URL || "") + window.KESTRA_BASE_PATH;
 if (root.endsWith("/")) {
     root = root.substring(0, root.length - 1);
 }

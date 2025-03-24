@@ -27,19 +27,19 @@ import java.util.concurrent.TimeoutException;
 
 @CommandLine.Command(
     name = "test",
-    description = "test a flow"
+    description = "Test a flow"
 )
 @Slf4j
 public class FlowTestCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
-    @CommandLine.Parameters(index = "0", description = "the flow file to test")
+    @CommandLine.Parameters(index = "0", description = "The flow file to test")
     private Path file;
 
     @CommandLine.Parameters(
         index = "1..*",
-        description = "the inputs to pass as key pair value separated by space, " +
+        description = "The inputs to pass as key pair value separated by space, " +
             "for input type file, you need to pass an absolute path."
     )
     private List<String> inputs = new ArrayList<>();

@@ -15,8 +15,6 @@ import jakarta.inject.Singleton;
 import lombok.Getter;
 
 import java.io.IOException;
-import java.io.StringWriter;
-import java.io.Writer;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -56,8 +54,7 @@ public class VariableRenderer {
             return new IllegalVariableEvaluationException(
                 "Unable to find `" + current.getAttributeName() +
                     "` used in the expression `" + current.getFileName() +
-                    "` at line " + current.getLineNumber(),
-                e
+                    "` at line " + current.getLineNumber()
             );
         }
 

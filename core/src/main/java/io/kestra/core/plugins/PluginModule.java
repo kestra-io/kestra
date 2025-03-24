@@ -7,6 +7,7 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.serdes.PluginDeserializer;
@@ -41,5 +42,6 @@ public class PluginModule extends SimpleModule {
         addDeserializer(StorageInterface.class, new PluginDeserializer<>());
         addDeserializer(SecretPluginInterface.class, new PluginDeserializer<>());
         addDeserializer(AppPluginInterface.class, new PluginDeserializer<>());
+        addDeserializer(LogExporter.class, new PluginDeserializer<>());
     }
 }

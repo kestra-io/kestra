@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -141,6 +142,12 @@ public interface FlowRepositoryInterface {
         @Nullable List<FlowScope> scope,
         @Nullable String namespace,
         @Nullable Map<String, String> labels
+    );
+
+    ArrayListTotal<Flow> find(
+        Pageable pageable,
+        @Nullable String tenantId,
+        @Nullable List<QueryFilter> filters
     );
 
     List<FlowWithSource> findWithSource(

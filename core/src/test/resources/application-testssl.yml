@@ -1,0 +1,7 @@
+micronaut:
+  server:
+    ssl:
+      enabled: true
+      build-self-signed: true
+      port: "${random.port}"
+    dual-protocol : true

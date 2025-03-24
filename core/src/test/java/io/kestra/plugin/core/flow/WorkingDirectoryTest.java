@@ -1,14 +1,25 @@
 package io.kestra.plugin.core.flow;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasKey;
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.startsWith;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.common.EncryptedString;
 import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.storages.InternalStorage;
@@ -16,9 +27,6 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.RetryingTest;
-
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URI;
@@ -28,65 +36,82 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+public class WorkingDirectoryTest {
     @Inject
     Suite suite;
 
     @Inject
     RunContextFactory runContextFactory;
 
+    @Inject
+    RunnerUtils runnerUtils;
+
     @Test
+    @LoadFlows({"flows/valids/working-directory.yaml"})
     void success() throws TimeoutException, QueueException {
        suite.success(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory.yaml"})
     void failed() throws TimeoutException, QueueException {
         suite.failed(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-each.yaml"})
     void each() throws TimeoutException, QueueException {
         suite.each(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-cache.yml"})
     void cache() throws TimeoutException, IOException, QueueException {
         suite.cache(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-taskrun.yml"})
     void taskrun() throws TimeoutException, InternalException, QueueException {
         suite.taskRun(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-taskrun-nested.yml"})
     void taskrunNested() throws TimeoutException, InternalException, QueueException {
         suite.taskRunNested(runnerUtils);
     }
 
-    @RetryingTest(5)
+    @Test
+    @LoadFlows({"flows/valids/working-directory-namespace-files.yaml"})
     void namespaceFiles() throws TimeoutException, IOException, QueueException {
         suite.namespaceFiles(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-namespace-files-with-namespaces.yaml"})
+    void namespaceFilesWithNamespace() throws TimeoutException, IOException, QueueException {
+        suite.namespaceFilesWithNamespaces(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/working-directory-inputs.yml"})
     void inputFiles() throws Exception {
         suite.inputFiles(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-outputs.yml"})
     void outputFiles() throws Exception {
         suite.outputFiles(runnerUtils);
     }
 
     @Test
+    @LoadFlows({"flows/valids/working-directory-taskrun-encrypted.yml"})
     void encryption() throws Exception {
         suite.encryption(runnerUtils, runContextFactory);
     }
@@ -256,6 +281,30 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
             assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value"), is("third"));
         }
 
+        public void namespaceFilesWithNamespaces(RunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
+            //fist namespace
+            put("/test/a/b/c/1.txt", "first in first namespace", "io.test.first");
+            put("/a/b/c/2.txt", "second in first namespace", "io.test.first");
+            put("/a/b/3.txt", "third in first namespace", "io.test.first");
+            put("/ignore/4.txt", "4th");
+
+            //second namespace
+            put("/test/a/b/c/1.txt", "first in second namespace", "io.test.second");
+            put("/a/b/c/2.txt", "second in second namespace", "io.test.second");
+
+            //third namespace
+            put("/test/a/b/c/1.txt", "first in third namespace", "io.test.third");
+
+            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-namespace-files-with-namespaces");
+
+            assertThat(execution.getTaskRunList(), hasSize(6));
+            assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
+            assertThat(execution.findTaskRunsByTaskId("t4").getFirst().getState().getCurrent(), is(State.Type.FAILED));
+            assertThat(execution.findTaskRunsByTaskId("t1").getFirst().getOutputs().get("value"), is("first in third namespace"));
+            assertThat(execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value"), is("second in second namespace"));
+            assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value"), is("third in first namespace"));
+        }
+
         @SuppressWarnings("unchecked")
         public void encryption(RunnerUtils runnerUtils, RunContextFactory runContextFactory) throws TimeoutException, GeneralSecurityException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun-encrypted");
@@ -270,10 +319,14 @@ public class WorkingDirectoryTest extends AbstractMemoryRunnerTest {
         }
 
         private void put(String path, String content) throws IOException {
+            put(path, content, "io.kestra.tests");
+        }
+
+        private void put(String path, String content, String namespace) throws IOException {
             storageInterface.put(
                 null,
                 null,
-                URI.create(StorageContext.namespaceFilePrefix("io.kestra.tests")  + path),
+                URI.create(StorageContext.namespaceFilePrefix(namespace)  + path),
                 new ByteArrayInputStream(content.getBytes())
             );
         }

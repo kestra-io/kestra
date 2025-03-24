@@ -2,6 +2,7 @@ package io.kestra.plugin.core.storage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
@@ -51,9 +52,9 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString())
+            .from(Property.of(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString()))
             .filterCondition(" {{ value % 2 == 0 }} ")
-            .filterType(FilterItems.FilterType.INCLUDE)
+            .filterType(Property.of(FilterItems.FilterType.INCLUDE))
             .build();
 
         // When
@@ -74,9 +75,9 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString())
+            .from(Property.of(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString()))
             .filterCondition(" {{ value % 2 == 0 }} ")
-            .filterType(FilterItems.FilterType.EXCLUDE)
+            .filterType(Property.of(FilterItems.FilterType.EXCLUDE))
             .build();
 
         // When
@@ -97,10 +98,10 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString())
+            .from(Property.of(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString()))
             .filterCondition(" {{ value % 2 == 0 }}")
-            .filterType(FilterItems.FilterType.INCLUDE)
-            .errorOrNullBehavior(FilterItems.ErrorOrNullBehavior.FAIL)
+            .filterType(Property.of(FilterItems.FilterType.INCLUDE))
+            .errorOrNullBehavior(Property.of(FilterItems.ErrorOrNullBehavior.FAIL))
             .build();
 
         // When/Then
@@ -114,10 +115,10 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString())
+            .from(Property.of(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString()))
             .filterCondition(" {{ value % 2 == 0 }}")
-            .filterType(FilterItems.FilterType.INCLUDE)
-            .errorOrNullBehavior(FilterItems.ErrorOrNullBehavior.INCLUDE)
+            .filterType(Property.of(FilterItems.FilterType.INCLUDE))
+            .errorOrNullBehavior(Property.of(FilterItems.ErrorOrNullBehavior.INCLUDE))
             .build();
 
         // When
@@ -138,10 +139,10 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString())
+            .from(Property.of(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString()))
             .filterCondition(" {{ value % 2 == 0 }}")
-            .filterType(FilterItems.FilterType.INCLUDE)
-            .errorOrNullBehavior(FilterItems.ErrorOrNullBehavior.EXCLUDE)
+            .filterType(Property.of(FilterItems.FilterType.INCLUDE))
+            .errorOrNullBehavior(Property.of(FilterItems.ErrorOrNullBehavior.EXCLUDE))
             .build();
 
         // When
@@ -162,10 +163,10 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString())
+            .from(Property.of(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString()))
             .filterCondition("{{ value }}")
-            .filterType(FilterItems.FilterType.INCLUDE)
-            .errorOrNullBehavior(FilterItems.ErrorOrNullBehavior.FAIL)
+            .filterType(Property.of(FilterItems.FilterType.INCLUDE))
+            .errorOrNullBehavior(Property.of(FilterItems.ErrorOrNullBehavior.FAIL))
             .build();
 
         // When

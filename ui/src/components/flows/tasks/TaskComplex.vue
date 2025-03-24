@@ -1,62 +1,51 @@
 <template>
-    <el-input
-        :model-value="JSON.stringify(values)"
-        :disabled="true"
-    >
+    <el-input :model-value="JSON.stringify(values)">
         <template #append>
-            <el-button :icon="TextSearch" @click="isOpen = true" />
+            <el-button
+                :icon="TextSearch"
+                @click="
+                    $store.commit('code/addBreadcrumbs', {
+                        breadcrumb: {
+                            label: root,
+                            to: {},
+                            component: h('task-object', {
+                                modelValue,
+                                schema: currentSchema,
+                                definitions,
+                                'onUpdate:modelValue': onInput,
+                            }),
+                        },
+                        position:
+                            breadcrumbs.length === 2 ? 2 : breadcrumbs.length,
+                    })
+                "
+            />
         </template>
     </el-input>
-
-    <drawer
-        v-if="isOpen"
-        v-model="isOpen"
-    >
-        <template #header>
-            <code>{{ root }}</code>
-        </template>
-        <el-form label-position="top">
-            <task-object
-                v-if="currentSchema"
-                :model-value="modelValue"
-                @update:model-value="onInput"
-                :schema="currentSchema"
-                :definitions="definitions"
-            />
-        </el-form>
-        <template #footer>
-            <el-button :icon="ContentSave" @click="isOpen = false" type="primary">
-                {{ $t('save') }}
-            </el-button>
-        </template>
-    </drawer>
 </template>
 
 <script setup>
+    import {h} from "vue";
+
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
 </script>
 
 <script>
-    import Task from "./Task"
-    import Drawer from "../../Drawer.vue"
+    import Task from "./Task";
+    import {mapState} from "vuex";
 
     export default {
         mixins: [Task],
-        components: {Drawer},
-        data() {
-            return {
-                isOpen: false,
-            };
-        },
         computed: {
+            ...mapState("code", ["breadcrumbs"]),
+
             currentSchema() {
                 let ref = this.schema.$ref.substring(8);
                 if (this.definitions[ref]) {
                     return this.definitions[ref];
                 }
                 return undefined;
-            }
+            },
         },
     };
 </script>

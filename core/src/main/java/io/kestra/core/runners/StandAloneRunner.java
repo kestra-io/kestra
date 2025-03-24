@@ -7,6 +7,7 @@ import io.kestra.core.utils.ExecutorsUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
+import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.Setter;
@@ -86,6 +87,7 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
         return this.running;
     }
 
+    @PreDestroy
     @Override
     public void close() throws Exception {
         this.poolExecutor.shutdown();

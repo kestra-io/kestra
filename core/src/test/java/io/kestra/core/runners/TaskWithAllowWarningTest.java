@@ -1,5 +1,8 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.junit.annotations.ExecuteFlow;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
@@ -23,31 +26,36 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
-public class TaskWithAllowWarningTest extends AbstractMemoryRunnerTest {
+@KestraTest(startRunner = true)
+public class TaskWithAllowWarningTest {
     @Inject
     private StorageInterface storageInterface;
 
     @Inject
     private FlowInputOutput flowIO;
 
-    @Test
-    void runnableTask() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-warning-runnable");
+    @Inject
+    private RunnerUtils runnerUtils;
 
+    @Test
+    @ExecuteFlow("flows/valids/task-allow-warning-runnable.yml")
+    void runnableTask(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(2));
         assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getAttempts().size(), is(3));
     }
 
     @Test
-    void executableTask_Flow() throws TimeoutException, QueueException {
+    @LoadFlows({"flows/valids/task-allow-warning-executable-flow.yml",
+        "flows/valids/for-each-item-subflow-failed.yaml"})
+    void executableTask_Flow() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-warning-executable-flow");
-
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(2));
     }
 
     @Test
+    @LoadFlows({"flows/valids/task-allow-warning-executable-foreachitem.yml"})
     void executableTask_ForEachItem() throws TimeoutException, QueueException, URISyntaxException, IOException {
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
@@ -58,9 +66,8 @@ public class TaskWithAllowWarningTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
-    void flowableTask() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-warning-flowable");
-
+    @ExecuteFlow("flows/valids/task-allow-warning-flowable.yml")
+    void flowableTask(Execution execution) {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList(), hasSize(3));
     }

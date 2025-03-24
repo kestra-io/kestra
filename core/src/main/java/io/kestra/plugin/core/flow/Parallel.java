@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -21,7 +22,6 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
@@ -40,10 +40,13 @@ import jakarta.validation.constraints.NotNull;
     examples = {
         @Example(
             full = true,
+            title = """
+            Run tasks in parallel
+            """,
             code = """
                 id: parallel
                 namespace: company.team
-                
+
                 tasks:
                   - id: parallel
                     type: io.kestra.plugin.core.flow.Parallel
@@ -55,11 +58,47 @@ import jakarta.validation.constraints.NotNull;
                       - id: 2nd
                         type: io.kestra.plugin.core.debug.Return
                         format: "{{ task.id }} > {{ taskrun.id }}"
-                
+
                   - id: last
                     type: io.kestra.plugin.core.debug.Return
                     format: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
+        ),
+        @Example(
+            full = true,
+            title = """
+            Run two sequences in parallel
+            """,
+            code = """
+                id: parallel_sequences
+                namespace: company.team
+
+                tasks:
+                - id: parallel
+                    type: io.kestra.plugin.core.flow.Parallel
+                    tasks:
+                    - id: sequence1
+                        type: io.kestra.plugin.core.flow.Sequential
+                        tasks:
+                        - id: task1
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+
+                        - id: task2
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+
+                    - id: sequence2
+                        type: io.kestra.plugin.core.flow.Sequential
+                        tasks:
+                        - id: task3
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+
+                        - id: task4
+                            type: io.kestra.plugin.core.debug.Return
+                            format: "{{ task.id }}"
+            """
         )
     },
     aliases = "io.kestra.core.tasks.flows.Parallel"
@@ -83,6 +122,15 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
     @Valid
     protected List<Task> errors;
 
+    @Valid
+    @JsonProperty("finally")
+    @Getter(AccessLevel.NONE)
+    protected List<Task> _finally;
+
+    public List<Task> getFinally() {
+        return this._finally;
+    }
+
     @Override
     public GraphCluster tasksTree(Execution execution, TaskRun taskRun, List<String> parentValues) throws IllegalVariableEvaluationException {
         GraphCluster subGraph = new GraphCluster(this, taskRun, parentValues, RelationType.PARALLEL);
@@ -91,6 +139,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
             subGraph,
             this.tasks,
             this.errors,
+            this._finally,
             taskRun,
             execution
         );
@@ -103,7 +152,10 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
         return Stream
             .concat(
                 this.tasks != null ? this.tasks.stream() : Stream.empty(),
-                this.errors != null ? this.errors.stream() : Stream.empty()
+                Stream.concat(
+                    this.errors != null ? this.errors.stream() : Stream.empty(),
+                    this._finally != null ? this._finally.stream() : Stream.empty()
+                )
             )
             .toList();
     }
@@ -119,6 +171,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
             execution,
             this.childTasks(runContext, parentTaskRun),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+            FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
             this.concurrent
         );

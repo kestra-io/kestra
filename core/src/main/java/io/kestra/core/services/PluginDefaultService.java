@@ -242,7 +242,7 @@ public class PluginDefaultService {
 
         Set<String> pluginDefaultProperties = pluginDefault.getValues().keySet();
         List<String> pluginProperties = Stream.of(classByIdentifier.getMethods())
-            .filter(method -> method.getName().startsWith("get") || method.getName().startsWith("if"))
+            .filter(method -> method.getName().startsWith("get") || method.getName().startsWith("is"))
             .map(method -> {
                 if (method.getName().startsWith("get")) {
                     return method.getName().substring(3).toLowerCase();

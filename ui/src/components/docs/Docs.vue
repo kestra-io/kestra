@@ -14,15 +14,13 @@
 </template>
 
 <script>
-    import useMarkdownParser from "@kestra-io/ui-libs/src/composables/useMarkdownParser";
-    import MDCRenderer from "@kestra-io/ui-libs/src/components/content/MDCRenderer.vue";
+    import {MDCRenderer, getMDCParser} from "@kestra-io/ui-libs";
     import TopNavBar from "../layout/TopNavBar.vue";
     import {mapGetters} from "vuex";
     import DocsLayout from "./DocsLayout.vue";
     import Toc from "./Toc.vue";
     import {getCurrentInstance} from "vue";
 
-    const parse = useMarkdownParser();
 
     export default {
         computed: {
@@ -79,6 +77,7 @@
                     if (!("canShare" in navigator)) {
                         content = content.replaceAll(/\s*web-share\s*/g, "");
                     }
+                    const parse = await getMDCParser();
                     this.ast = await parse(content);
                 },
                 immediate: true

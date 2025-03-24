@@ -7,6 +7,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
@@ -15,6 +16,7 @@ import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.flow.Sleep;
 import io.micronaut.context.ApplicationContext;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -89,7 +91,7 @@ abstract public class AbstractSchedulerTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format("{{ inputs.testInputs }}")
+                .format(new Property<>("{{ inputs.testInputs }}"))
                 .build()));
 
         if (list != null) {
@@ -98,6 +100,17 @@ abstract public class AbstractSchedulerTest {
 
         Flow flow = builder.build();
         return FlowWithSource.of(flow, flow.generateSource());
+    }
+
+    protected static FlowWithSource createLongRunningFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
+        return createFlow(triggers, list)
+            .toBuilder()
+            .tasks(
+                Collections.singletonList(
+                    Sleep.builder().id("sleep").type(Sleep.class.getName()).duration(Duration.ofSeconds(125)).build()
+                )
+            )
+            .build();
     }
 
     protected static int COUNTER = 0;

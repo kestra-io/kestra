@@ -13,6 +13,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @EqualsAndHashCode
+@Schema(title = "CONTAINS")
 public class Contains<F extends Enum<F>> extends AbstractFilter<F> {
     @NotNull
     @JsonInclude

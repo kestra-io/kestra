@@ -1,12 +1,13 @@
 package io.kestra.core.docs;
 
-import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.annotations.PluginSubGroup;
 import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.kestra.core.runners.pebble.Extension;
 import io.kestra.core.runners.pebble.JsonWriter;
@@ -28,6 +29,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.Writer;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -36,7 +38,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
 public class DocumentationGenerator {
-    private static PebbleEngine pebbleEngine;
+    private static final PebbleEngine PEBBLE_ENGINE;
 
     @Inject
     JsonSchemaGenerator jsonSchemaGenerator;
@@ -45,7 +47,7 @@ public class DocumentationGenerator {
         ClasspathLoader classpathLoader = new ClasspathLoader();
         classpathLoader.setPrefix("docs/");
 
-        pebbleEngine = new PebbleEngine.Builder()
+        PEBBLE_ENGINE = new PebbleEngine.Builder()
             .newLineTrimming(false)
             .loader(classpathLoader)
             .extension(new AbstractExtension() {
@@ -61,6 +63,7 @@ public class DocumentationGenerator {
             .build();
     }
 
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public List<Document> generate(RegisteredPlugin registeredPlugin) throws Exception {
         ArrayList<Document> result = new ArrayList<>();
 
@@ -69,7 +72,9 @@ public class DocumentationGenerator {
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTasks(), Task.class, "tasks"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getTriggers(), AbstractTrigger.class, "triggers"));
         result.addAll(this.generate(registeredPlugin, registeredPlugin.getConditions(), Condition.class, "conditions"));
-        result.addAll(this.generate(registeredPlugin, registeredPlugin.getTaskRunners(), TaskRunner.class, "task-runners"));
+        //noinspection unchecked
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getTaskRunners(), (Class) TaskRunner.class, "task-runners"));
+        result.addAll(this.generate(registeredPlugin, registeredPlugin.getLogExporters(), (Class) LogExporter.class, "log-exporters"));
 
         result.addAll(guides(registeredPlugin));
 
@@ -213,7 +218,15 @@ public class DocumentationGenerator {
     private <T> List<Document> generate(RegisteredPlugin registeredPlugin, List<Class<? extends T>> cls, Class<T> baseCls, String type) {
         return cls
             .stream()
-            .map(r -> ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, r, baseCls))
+            .map(pluginClass -> {
+                PluginClassAndMetadata<T> metadata = PluginClassAndMetadata.create(
+                    registeredPlugin,
+                    pluginClass,
+                    baseCls,
+                    null
+                );
+                return ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, true);
+            })
             .map(pluginDocumentation -> {
                 try {
                     return new Document(
@@ -243,21 +256,21 @@ public class DocumentationGenerator {
             classPluginDocumentation.getCls() + ".md";
     }
 
-    public static <T> String render(ClassPluginDocumentation<T> classPluginDocumentation) throws IOException {
+    public static String render(ClassPluginDocumentation<?> classPluginDocumentation) throws IOException {
         return render("task", JacksonMapper.toMap(classPluginDocumentation));
     }
 
-    public static <T> String render(AbstractClassDocumentation<T> classInputDocumentation) throws IOException {
+    public static String render(AbstractClassDocumentation classInputDocumentation) throws IOException {
         return render("task", JacksonMapper.toMap(classInputDocumentation));
     }
 
-    public static <T> String render(String templateName, Map<String, Object> vars) throws IOException {
+    public static String render(String templateName, Map<String, Object> vars) throws IOException {
         String pebbleTemplate = IOUtils.toString(
             Objects.requireNonNull(DocumentationGenerator.class.getClassLoader().getResourceAsStream("docs/" + templateName + ".peb")),
-            Charsets.UTF_8
+            StandardCharsets.UTF_8
         );
 
-        PebbleTemplate compiledTemplate = pebbleEngine.getLiteralTemplate(pebbleTemplate);
+        PebbleTemplate compiledTemplate = PEBBLE_ENGINE.getLiteralTemplate(pebbleTemplate);
 
         Writer writer = new JsonWriter();
         compiledTemplate.evaluate(writer, vars);

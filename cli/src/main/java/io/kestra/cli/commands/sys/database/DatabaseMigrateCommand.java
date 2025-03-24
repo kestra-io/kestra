@@ -1,6 +1,5 @@
 package io.kestra.cli.commands.sys.database;
 
-import ch.qos.logback.classic.Level;
 import io.kestra.cli.AbstractCommand;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;

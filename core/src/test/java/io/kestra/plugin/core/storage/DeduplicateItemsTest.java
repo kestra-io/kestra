@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.storage;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.JacksonMapper;
@@ -48,7 +49,7 @@ class DeduplicateItemsTest {
 
         DeduplicateItems task = DeduplicateItems
             .builder()
-            .from(generateKeyValueFile(values, runContext).toString())
+            .from(Property.of(generateKeyValueFile(values, runContext).toString()))
             .expr(" {{ key }} ")
             .build();
 
@@ -87,7 +88,7 @@ class DeduplicateItemsTest {
 
         DeduplicateItems task = DeduplicateItems
             .builder()
-            .from(generateKeyValueFile(values, runContext).toString())
+            .from(Property.of(generateKeyValueFile(values, runContext).toString()))
             .expr(" {{ key }}-{{ v1 }}")
             .build();
 

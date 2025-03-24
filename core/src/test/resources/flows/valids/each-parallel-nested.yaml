@@ -14,10 +14,10 @@ tasks:
         tasks:
         - id: 2-1-1_t1
           type: io.kestra.plugin.core.log.Log
-          message: "{task.id}} > {{ parents[0].taskrun.value }}"
+          message: "{{task.id}} > {{ parents[0].taskrun.value }}"
         - id: 2-1-2_t2
           type: io.kestra.plugin.core.log.Log
-          message: "{task.id}} > {{ parents[0].taskrun.value }}"
+          message: "{{task.id}} > {{ parents[0].taskrun.value }}"
   - id: 2_end
     type: io.kestra.plugin.core.debug.Return
     format: "{{task.id}} > {{taskrun.startDate}}"

@@ -11,12 +11,14 @@ import io.kestra.core.repositories.SaveRepositoryInterface;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.runners.IndexerInterface;
 import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import io.micronaut.context.event.ApplicationEventPublisher;
@@ -47,6 +49,8 @@ public class JdbcIndexer implements IndexerInterface {
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
     private final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher;
 
+    private final AtomicBoolean closed = new AtomicBoolean(false);
+
     @Inject
     public JdbcIndexer(
         LogRepositoryInterface logRepository,
@@ -71,6 +75,7 @@ public class JdbcIndexer implements IndexerInterface {
         log.debug("Starting the indexer");
         startQueues();
         setState(ServiceState.RUNNING);
+        log.info("Indexer started");
     }
 
     protected void startQueues() {
@@ -122,14 +127,19 @@ public class JdbcIndexer implements IndexerInterface {
     @PreDestroy
     @Override
     public void close() {
-        setState(ServiceState.TERMINATING);
-        this.receiveCancellations.forEach(Runnable::run);
-        try {
-            stopQueue();
-            setState(ServiceState.TERMINATED_GRACEFULLY);
-        } catch (IOException e) {
-            log.error("Failed to close the queue", e);
-            setState(ServiceState.TERMINATED_FORCED);
+        if (closed.compareAndSet(false, true)) {
+            setState(ServiceState.TERMINATING);
+            if (log.isDebugEnabled()) {
+                log.debug("Terminating");
+            }
+            this.receiveCancellations.forEach(Runnable::run);
+            try {
+                stopQueue();
+                setState(ServiceState.TERMINATED_GRACEFULLY);
+            } catch (IOException e) {
+                log.error("Failed to close the queue", e);
+                setState(ServiceState.TERMINATED_FORCED);
+            }
         }
     }
 

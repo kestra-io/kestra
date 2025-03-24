@@ -19,6 +19,7 @@
 <script>
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {Bar} from "vue-chartjs";
+    import {useStore} from "vuex";
     import Utils from "../../utils/utils.js";
     import {
         defaultConfig,
@@ -50,6 +51,8 @@
             const chartRef = ref();
             const tooltipContent = ref("");
             const dataReady = computed(() => props.data.length > 0)
+
+            const store = useStore();
 
             const options = computed(() => defaultConfig({
                 plugins: {
@@ -84,7 +87,7 @@
                         position: "right",
                     }
                 },
-            }))
+            }, store.getters["misc/theme"]));
 
             const chartData = computed(() => {
                 let datasets = props.data

@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.namespace;
 
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.Namespace;
@@ -35,7 +36,7 @@ public class DownloadFilesTest {
             .id(DownloadFiles.class.getSimpleName())
             .type(DownloadFiles.class.getName())
             .files(List.of("**test1.txt"))
-            .namespace("{{ inputs.namespace }}")
+            .namespace(new Property<>("{{ inputs.namespace }}"))
             .build();
 
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, downloadFiles, Map.of("namespace", namespaceId));

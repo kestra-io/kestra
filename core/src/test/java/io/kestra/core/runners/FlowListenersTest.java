@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.junit.annotations.KestraTest;
 import lombok.SneakyThrows;
@@ -35,7 +36,7 @@ abstract public class FlowListenersTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id(taskId)
                 .type(Return.class.getName())
-                .format("test")
+                .format(Property.of("test"))
                 .build()))
             .build();
         return flow.withSource(flow.generateSource());

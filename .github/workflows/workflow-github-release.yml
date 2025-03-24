@@ -1,0 +1,48 @@
+name: Github - Release
+
+on:
+  workflow_call:
+    secrets:
+      GH_PERSONAL_TOKEN:
+        description: "The Github personal token."
+        required: true
+
+jobs:
+  publish:
+    name: Github - Release
+    runs-on: ubuntu-latest
+    steps:
+      # Download Exec
+      - name: Artifacts - Download executable
+        uses: actions/download-artifact@v4
+        if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          name: exe
+          path: build/executable
+
+      # GitHub Release
+      - name: GitHub - Create release
+        id: create_github_release
+        uses: "marvinpinto/action-automatic-releases@latest"
+        if: startsWith(github.ref, 'refs/tags/v')
+        continue-on-error: true
+        with:
+          repo_token: "${{ secrets.GITHUB_TOKEN }}"
+          prerelease: false
+          files: |
+            build/executable/*
+
+      # Trigger gha workflow to bump helm chart version
+      - name: GitHub - Trigger the Helm chart version bump
+        uses: peter-evans/repository-dispatch@v3
+        if: steps.create_github_release.conclusion == 'success'
+        with:
+          token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          repository: kestra-io/helm-charts
+          event-type: update-helm-chart-version
+          client-payload: |-
+            {
+              "new_version": "${{ github.ref_name }}",
+              "github_repository": "${{ github.repository }}",
+              "github_actor": "${{ github.actor }}"
+            }

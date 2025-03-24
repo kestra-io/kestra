@@ -1,0 +1,7 @@
+id: sleep-long
+namespace: io.kestra.tests
+
+tasks:
+  - id: sleep-long
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: PT300S

@@ -1,0 +1,8 @@
+id: subflow-parent-of-failed
+namespace: io.kestra.tests
+
+tasks:
+  - id: subflow
+    type: io.kestra.plugin.core.flow.Subflow
+    namespace: io.kestra.tests
+    flowId: failed-first

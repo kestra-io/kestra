@@ -42,6 +42,7 @@ class ScheduleOnDatesTest {
         var later = now.plusMinutes(2).truncatedTo(ChronoUnit.SECONDS);
         var scheduleOnDates = ScheduleOnDates.builder()
             .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
             .interval(null)
             .dates(Property.of(List.of(before, after, later)))
             .build();
@@ -65,6 +66,7 @@ class ScheduleOnDatesTest {
         var later = now.plusMinutes(2).truncatedTo(ChronoUnit.SECONDS);
         var scheduleOnDates = ScheduleOnDates.builder()
             .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
             .interval(null)
             .dates(Property.of(List.of(before, after, later)))
             .build();
@@ -86,6 +88,7 @@ class ScheduleOnDatesTest {
         var next = now.plusMinutes(1).truncatedTo(ChronoUnit.SECONDS);
         var scheduleOnDates = ScheduleOnDates.builder()
             .id(IdUtils.create())
+            .type(ScheduleOnDates.class.getName())
             .interval(null)
             .dates(Property.of(List.of(first, before, next)))
             .build();

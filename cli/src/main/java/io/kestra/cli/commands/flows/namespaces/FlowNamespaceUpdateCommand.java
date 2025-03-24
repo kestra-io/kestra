@@ -22,7 +22,7 @@ import java.util.List;
 
 @CommandLine.Command(
     name = "update",
-    description = "handle namespace flows",
+    description = "Update flows in namespace",
     mixinStandardHelpOptions = true
 )
 @Slf4j
@@ -30,7 +30,7 @@ public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCo
     @Inject
     public YamlParser yamlParser;
 
-    @CommandLine.Option(names = {"--override-namespaces"}, negatable = true, description = "replace namespace of all flows by the one provided")
+    @CommandLine.Option(names = {"--override-namespaces"}, negatable = true, description = "Replace namespace of all flows by the one provided")
     public boolean override = false;
 
     @SuppressWarnings("deprecation")

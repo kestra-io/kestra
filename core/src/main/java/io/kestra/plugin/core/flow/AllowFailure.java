@@ -46,10 +46,38 @@ import java.util.Optional;
                        type: io.kestra.plugin.scripts.shell.Commands
                        commands:
                         - 'exit 1'
+
                   - id: last
                     type: io.kestra.plugin.core.debug.Return
                     format: "{{ task.id }} > {{ taskrun.startDate }}"
                 """
+        ),
+        @Example(
+            full = true,
+            title = "Allow failure of a group of tasks",
+            code = """
+                id: allow-failure-demo
+                namespace: company.team
+
+                tasks:
+                - id: allow_failure
+                    type: io.kestra.plugin.core.flow.AllowFailure
+                    tasks:
+                    - id: fail_silently
+                        type: io.kestra.plugin.scripts.shell.Commands
+                        taskRunner:
+                        type: io.kestra.plugin.core.runner.Process
+                        commands:
+                        - exit 1
+
+                - id: print_to_console
+                    type: io.kestra.plugin.scripts.shell.Commands
+                    taskRunner:
+                    type: io.kestra.plugin.core.runner.Process
+                    commands:
+                    - echo "this will run since previous failure was allowed ✅"
+
+            """
         )
     },
     aliases = "io.kestra.core.tasks.flows.AllowFailure"
@@ -59,11 +87,13 @@ public class AllowFailure extends Sequential implements FlowableTask<VoidOutput>
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         List<ResolvedTask> resolvedTasks = this.childTasks(runContext, parentTaskRun);
         List<ResolvedTask> resolvedErrors = FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun);
+        List<ResolvedTask> resolvedFinally = FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun);
 
         Optional<State.Type> type = FlowableUtils.resolveState(
             execution,
             resolvedTasks,
             resolvedErrors,
+            resolvedFinally,
             parentTaskRun,
             runContext,
             this.isAllowFailure(),
@@ -77,6 +107,7 @@ public class AllowFailure extends Sequential implements FlowableTask<VoidOutput>
                 execution,
                 resolvedTasks,
                 null,
+                resolvedFinally,
                 parentTaskRun,
                 runContext,
                 this.isAllowFailure(),

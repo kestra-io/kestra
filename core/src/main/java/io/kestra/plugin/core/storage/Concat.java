@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.storage;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.serializers.JacksonMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -93,27 +94,25 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
         title = "List of files to be concatenated.",
         description = "Must be a `kestra://` storage URIs, can be a list of string or json string"
     )
-    @PluginProperty(dynamic = true)
+    @PluginProperty(dynamic = true, internalStorageURI = true)
     @NotNull
     private Object files;
 
     @Schema(
         title = "The separator to used between files, default is no separator."
     )
-    @PluginProperty(dynamic = true)
-    private String separator;
+    private Property<String> separator;
 
     @Schema(
         title = "The extension of the created file, default is .tmp."
     )
-    @PluginProperty(dynamic = true)
     @Builder.Default
-    private String extension = ".tmp";
+    private Property<String> extension = Property.of(".tmp");
 
     @SuppressWarnings("unchecked")
     @Override
     public Concat.Output run(RunContext runContext) throws Exception {
-        File tempFile = runContext.workingDir().createTempFile(extension).toFile();
+        File tempFile = runContext.workingDir().createTempFile(runContext.render(extension).as(String.class).orElseThrow()).toFile();
         try (FileOutputStream fileOutputStream = new FileOutputStream(tempFile)) {
             List<String> finalFiles;
             if (this.files instanceof List<?> listValue) {
@@ -136,7 +135,7 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
                 }
 
                 if (separator != null) {
-                    IOUtils.copy(new ByteArrayInputStream(this.separator.getBytes()), fileOutputStream);
+                    IOUtils.copy(new ByteArrayInputStream(runContext.render(this.separator).as(String.class).orElseThrow().getBytes()), fileOutputStream);
                 }
             }));
         }

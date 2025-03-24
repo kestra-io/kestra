@@ -1,0 +1,12 @@
+micronaut:
+  io:
+    watch:
+      enabled: true
+      paths:
+        - build/file-watch
+
+kestra:
+  repository:
+    type: memory
+  queue:
+    type: memory

@@ -7,6 +7,7 @@ import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.FlowListenersInterface;
+import io.kestra.core.services.PluginDefaultService;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.scheduling.io.watch.FileWatchConfiguration;
@@ -37,6 +38,9 @@ public class FileChangedEventListener {
     private FlowRepositoryInterface flowRepositoryInterface;
 
     @Inject
+    private PluginDefaultService pluginDefaultService;
+
+    @Inject
     private YamlParser yamlParser;
 
     @Inject
@@ -64,7 +68,7 @@ public class FileChangedEventListener {
 
     public void startListeningFromConfig() throws IOException, InterruptedException {
         if (fileWatchConfiguration != null && fileWatchConfiguration.isEnabled()) {
-            this.flowFilesManager = new LocalFlowFileWatcher(flowRepositoryInterface);
+            this.flowFilesManager = new LocalFlowFileWatcher(flowRepositoryInterface, pluginDefaultService);
             List<Path> paths = fileWatchConfiguration.getPaths();
             this.setup(paths);
 
@@ -107,7 +111,6 @@ public class FileChangedEventListener {
         } else {
             log.info("File watching is disabled.");
         }
-
     }
 
     public void startListening(List<Path> paths) throws IOException, InterruptedException {
@@ -118,60 +121,64 @@ public class FileChangedEventListener {
         WatchKey key;
         while ((key = watchService.take()) != null) {
             for (WatchEvent<?> watchEvent : key.pollEvents()) {
-                WatchEvent.Kind<?> kind = watchEvent.kind();
-                Path entry = (Path) watchEvent.context();
+                try {
+                    WatchEvent.Kind<?> kind = watchEvent.kind();
+                    Path entry = (Path) watchEvent.context();
 
-                if (entry.toString().endsWith(".yml") || entry.toString().endsWith(".yaml")) {
+                    if (entry.toString().endsWith(".yml") || entry.toString().endsWith(".yaml")) {
 
-                    if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                        if (kind == StandardWatchEventKinds.ENTRY_CREATE || kind == StandardWatchEventKinds.ENTRY_MODIFY) {
 
-                        Path filePath = ((Path) key.watchable()).resolve(entry);
-                        if (Files.isDirectory(filePath)) {
-                            loadFlowsFromFolder(filePath);
-                        } else {
+                            Path filePath = ((Path) key.watchable()).resolve(entry);
+                            if (Files.isDirectory(filePath)) {
+                                loadFlowsFromFolder(filePath);
+                            } else {
 
-                            try {
-                                String content = Files.readString(filePath, Charset.defaultCharset());
+                                try {
+                                    String content = Files.readString(filePath, Charset.defaultCharset());
 
-                                Optional<Flow> flow = parseFlow(content, entry);
-                                if (flow.isPresent()) {
-                                    if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
-                                        // Check if we already have a file with the given path
-                                        if (flows.stream().anyMatch(flowWithPath -> flowWithPath.getPath().equals(filePath.toString()))) {
-                                            Optional<FlowWithPath> previous = flows.stream().filter(flowWithPath -> flowWithPath.getPath().equals(filePath.toString())).findFirst();
-                                            // Check if Flow from file has id/namespace updated
-                                            if (previous.isPresent() && !previous.get().uidWithoutRevision().equals(flow.get().uidWithoutRevision())) {
-                                                flows.removeIf(flowWithPath -> flowWithPath.getPath().equals(filePath.toString()));
-                                                flowFilesManager.deleteFlow(previous.get().getTenantId(), previous.get().getNamespace(), previous.get().getId());
+                                    Optional<Flow> flow = parseFlow(content, entry);
+                                    if (flow.isPresent()) {
+                                        if (kind == StandardWatchEventKinds.ENTRY_MODIFY) {
+                                            // Check if we already have a file with the given path
+                                            if (flows.stream().anyMatch(flowWithPath -> flowWithPath.getPath().equals(filePath.toString()))) {
+                                                Optional<FlowWithPath> previous = flows.stream().filter(flowWithPath -> flowWithPath.getPath().equals(filePath.toString())).findFirst();
+                                                // Check if Flow from file has id/namespace updated
+                                                if (previous.isPresent() && !previous.get().uidWithoutRevision().equals(flow.get().uidWithoutRevision())) {
+                                                    flows.removeIf(flowWithPath -> flowWithPath.getPath().equals(filePath.toString()));
+                                                    flowFilesManager.deleteFlow(previous.get().getTenantId(), previous.get().getNamespace(), previous.get().getId());
+                                                    flows.add(FlowWithPath.of(flow.get(), filePath.toString()));
+                                                }
+                                            } else {
                                                 flows.add(FlowWithPath.of(flow.get(), filePath.toString()));
                                             }
                                         } else {
                                             flows.add(FlowWithPath.of(flow.get(), filePath.toString()));
                                         }
-                                    } else {
-                                        flows.add(FlowWithPath.of(flow.get(), filePath.toString()));
+
+                                        flowFilesManager.createOrUpdateFlow(flow.get(), content);
+                                        log.info("Flow {} from file {} has been created or modified", flow.get().getId(), entry);
                                     }
 
-                                    flowFilesManager.createOrUpdateFlow(flow.get(), content);
-                                    log.info("Flow {} from file {} has been created or modified", flow.get().getId(), entry);
+                                } catch (NoSuchFileException e) {
+                                    log.error("File not found: {}", entry, e);
+                                } catch (IOException e) {
+                                    log.error("Error reading file: {}", entry, e);
                                 }
-
-                            } catch (NoSuchFileException e) {
-                                log.error("File not found: {}", entry, e);
-                            } catch (IOException e) {
-                                log.error("Error reading file: {}", entry, e);
                             }
+                        } else {
+                            Path filePath = ((Path) key.watchable()).resolve(entry);
+                            flows.stream()
+                                .filter(flow -> flow.getPath().equals(filePath.toString()))
+                                .findFirst()
+                                .ifPresent(flowWithPath -> {
+                                    flowFilesManager.deleteFlow(flowWithPath.getTenantId(), flowWithPath.getNamespace(), flowWithPath.getId());
+                                    this.flows.removeIf(fwp -> fwp.uidWithoutRevision().equals(flowWithPath.uidWithoutRevision()));
+                                });
                         }
-                    } else {
-                        Path filePath = ((Path) key.watchable()).resolve(entry);
-                        flows.stream()
-                            .filter(flow -> flow.getPath().equals(filePath.toString()))
-                            .findFirst()
-                            .ifPresent(flowWithPath -> {
-                                flowFilesManager.deleteFlow(flowWithPath.getTenantId(), flowWithPath.getNamespace(), flowWithPath.getId());
-                                this.flows.removeIf(fwp -> fwp.uidWithoutRevision().equals(flowWithPath.uidWithoutRevision()));
-                            });
                     }
+                } catch (Exception e) {
+                    log.error("Unexpected error while watching flows", e);
                 }
             }
             key.reset();
@@ -230,7 +237,8 @@ public class FileChangedEventListener {
     private Optional<Flow> parseFlow(String content, Path entry) {
         try {
             Flow flow = yamlParser.parse(content, Flow.class);
-            modelValidator.validate(flow);
+            FlowWithSource withPluginDefault = pluginDefaultService.injectDefaults(FlowWithSource.of(flow, content));
+            modelValidator.validate(withPluginDefault);
             return Optional.of(flow);
         } catch (ConstraintViolationException e) {
             log.warn("Error while parsing flow: {}", entry, e);

@@ -8,7 +8,7 @@ tasks:
     tasks:
       - id: log
         type: io.kestra.plugin.core.log.Log
-        message: Processing {{taskrun.value}}
+        message: Processing {{taskrun.value}}, iteration {{taskrun.iteration}}
       - id: shell
         type: io.kestra.plugin.core.log.Log
         message: 2nd task

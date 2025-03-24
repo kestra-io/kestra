@@ -17,21 +17,21 @@ import java.util.List;
 
 @CommandLine.Command(
     name = "update",
-    description = "update namespace files",
+    description = "Update namespace files",
     mixinStandardHelpOptions = true
 )
 @Slf4j
 public class NamespaceFilesUpdateCommand extends AbstractApiCommand {
-    @CommandLine.Parameters(index = "0", description = "the namespace to update")
+    @CommandLine.Parameters(index = "0", description = "The namespace to update")
     public String namespace;
 
-    @CommandLine.Parameters(index = "1", description = "the local directory containing files for current namespace")
+    @CommandLine.Parameters(index = "1", description = "The local directory containing files for current namespace")
     public Path from;
 
-    @CommandLine.Parameters(index = "2", description = "the remote namespace path to upload files to", defaultValue = "/")
+    @CommandLine.Parameters(index = "2", description = "The remote namespace path to upload files to", defaultValue = "/")
     public String to;
 
-    @CommandLine.Option(names = {"--delete"}, negatable = true, description = "if missing should be deleted")
+    @CommandLine.Option(names = {"--delete"}, negatable = true, description = "Whether missing should be deleted")
     public boolean delete = false;
 
     private static final String KESTRA_IGNORE_FILE = ".kestraignore";

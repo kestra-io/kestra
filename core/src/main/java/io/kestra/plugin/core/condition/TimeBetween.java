@@ -27,12 +27,26 @@ import java.time.OffsetTime;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition to execute the flow between two specific times.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.TimeBetween",
-                "      after: \"16:19:12+02:00\"",
-            }
+            code = """
+                id: schedule_condition_timebetween
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute every 5 minutes between 4pm and 8pm."
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "*/5 * * * *"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.TimeBetween
+                        after: "16:00:00+02:00"
+                        before: "20:00:00+02:00"
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.TimeBetweenCondition", "io.kestra.plugin.core.condition.TimeBetweenCondition"}

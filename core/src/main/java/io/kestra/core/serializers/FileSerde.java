@@ -7,6 +7,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.MappingIterator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SequenceWriter;
+import java.util.Objects;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.publisher.Mono;
@@ -23,6 +24,7 @@ public final class FileSerde {
     public static final int BUFFER_SIZE = 32 * 1024;
 
     private static final ObjectMapper DEFAULT_OBJECT_MAPPER = JacksonMapper.ofIon();
+    private static final ObjectMapper JSON_OBJECT_MAPPER = JacksonMapper.ofJson();
     private static final TypeReference<Object> DEFAULT_TYPE_REFERENCE = new TypeReference<>(){};
 
     private FileSerde() {}
@@ -135,11 +137,7 @@ public final class FileSerde {
      */
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, Reader reader, TypeReference<T> type) throws IOException {
         MappingIterator<T> mappingIterator = createMappingIterator(objectMapper, reader, type);
-        return Flux.<T>create(sink -> {
-                mappingIterator.forEachRemaining(t -> sink.next(t));
-                sink.complete();
-            }, FluxSink.OverflowStrategy.BUFFER)
-            .doFinally(throwConsumer(ignored -> mappingIterator.close()));
+        return readAll(mappingIterator);
     }
 
     /**
@@ -147,8 +145,12 @@ public final class FileSerde {
      */
     public static <T> Flux<T> readAll(ObjectMapper objectMapper, Reader reader, Class<T> type) throws IOException {
         MappingIterator<T> mappingIterator = createMappingIterator(objectMapper, reader, type);
+        return readAll(mappingIterator);
+    }
+
+    public static <T> Flux<T> readAll(MappingIterator<T> mappingIterator) throws IOException {
         return Flux.<T>create(sink -> {
-                mappingIterator.forEachRemaining(t -> sink.next(t));
+                mappingIterator.forEachRemaining(sink::next);
                 sink.complete();
             }, FluxSink.OverflowStrategy.BUFFER)
             .doFinally(throwConsumer(ignored -> mappingIterator.close()));
@@ -166,9 +168,13 @@ public final class FileSerde {
      */
     public static <T> Mono<Long> writeAll(ObjectMapper objectMapper, Writer writer, Flux<T> values) throws IOException {
         SequenceWriter seqWriter = createSequenceWriter(objectMapper, writer, new TypeReference<T>() {});
+        return writeAll(values, seqWriter);
+    }
+
+    public static <T> Mono<Long> writeAll(Flux<T> values, SequenceWriter seqWriter) throws IOException {
         return values
-            .filter(value -> value != null)
-            .doOnNext(throwConsumer(value -> seqWriter.write(value)))
+            .filter(Objects::nonNull)
+            .doOnNext(throwConsumer(seqWriter::write))
             .doFinally(throwConsumer(ignored -> seqWriter.flush())) // we should have called close() but it generates an exception, so we flush
             .count();
     }
@@ -197,5 +203,9 @@ public final class FileSerde {
 
     private static <T> SequenceWriter createSequenceWriter(ObjectMapper objectMapper, Writer writer, TypeReference<T> type) throws IOException {
         return objectMapper.writerFor(type).writeValues(writer);
+    }
+
+    public static <T> SequenceWriter createJsonSequenceWriter(Writer writer, TypeReference<T> type) throws IOException {
+        return JSON_OBJECT_MAPPER.writerFor(type).withRootValueSeparator("\n").writeValues(writer);
     }
 }

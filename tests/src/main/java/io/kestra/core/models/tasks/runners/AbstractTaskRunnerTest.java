@@ -1,17 +1,17 @@
 package io.kestra.core.models.tasks.runners;
 
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.FilesService;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -22,10 +22,12 @@ import java.io.IOException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.*;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.notNullValue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -37,7 +39,9 @@ public abstract class AbstractTaskRunnerTest {
     protected void run() throws Exception {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")));
+        Mockito.when(commands.getCommands()).thenReturn(
+            Property.of(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
+        );
 
         var taskRunner = taskRunner();
         var result = taskRunner.run(runContext, commands, Collections.emptyList());
@@ -51,7 +55,9 @@ public abstract class AbstractTaskRunnerTest {
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getEnableOutputDirectory()).thenReturn(false);
         Mockito.when(commands.outputDirectoryEnabled()).thenReturn(false);
-        Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")));
+        Mockito.when(commands.getCommands()).thenReturn(Property.of(
+            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
+        );
 
         var taskRunner = taskRunner();
         assertThat(taskRunner.additionalVars(runContext, commands).containsKey(ScriptService.VAR_OUTPUT_DIR), is(false));
@@ -66,7 +72,8 @@ public abstract class AbstractTaskRunnerTest {
     protected void fail() throws IOException {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1")));
+        Mockito.when(commands.getCommands()).thenReturn(Property.of(
+            ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1"))));
 
         var taskRunner = taskRunner();
         assertThrows(TaskException.class, () -> taskRunner.run(runContext, commands, Collections.emptyList()));
@@ -88,9 +95,15 @@ public abstract class AbstractTaskRunnerTest {
         // This is purely to showcase that no logs is sent as STDERR for now as CloudWatch doesn't seem to send such information.
         Map<String, Boolean> logsWithIsStdErr = new HashMap<>();
 
-        TaskRunner taskRunner = taskRunner();
+        TaskRunner<?> taskRunner = taskRunner();
 
         Mockito.when(commands.getLogConsumer()).thenReturn(new AbstractLogConsumer() {
+            @Override
+            public void accept(String line, Boolean isStdErr, Instant instant) {
+                logsWithIsStdErr.put(line, isStdErr);
+                defaultLogConsumer.accept(line, isStdErr);
+            }
+
             @Override
             public void accept(String log, Boolean isStdErr) {
                 logsWithIsStdErr.put(log, isStdErr);
@@ -113,10 +126,10 @@ public abstract class AbstractTaskRunnerTest {
             )),
             taskRunner instanceof RemoteRunnerInterface
         );
-        Mockito.when(commands.getCommands()).thenReturn(renderedCommands);
+        Mockito.when(commands.getCommands()).thenReturn(Property.of(renderedCommands));
 
         List<String> filesToDownload = List.of("output.txt");
-        RunnerResult run = taskRunner.run(runContext, commands, filesToDownload);
+        TaskRunnerResult<?> run = taskRunner.run(runContext, commands, filesToDownload);
 
         Map<String, URI> outputFiles = ScriptService.uploadOutputFiles(runContext, commands.getOutputDirectory());
         outputFiles.putAll(FilesService.outputFiles(runContext, filesToDownload));
@@ -140,10 +153,10 @@ public abstract class AbstractTaskRunnerTest {
     protected void failWithInput() throws IOException {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(ScriptService.scriptCommands(
+        Mockito.when(commands.getCommands()).thenReturn(Property.of(ScriptService.scriptCommands(
             List.of("/bin/sh", "-c"),
             Collections.emptyList(),
-            List.of("echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'", "return 1"))
+            List.of("echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'", "return 1")))
         );
 
         var taskRunner = taskRunner();
@@ -191,7 +204,7 @@ public abstract class AbstractTaskRunnerTest {
         return runContextFactory.of(mergedVars);
     }
 
-    protected abstract TaskRunner taskRunner();
+    protected abstract TaskRunner<?> taskRunner();
 
     protected String defaultImage() {
         return "ubuntu";

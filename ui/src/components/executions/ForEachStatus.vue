@@ -28,9 +28,9 @@
     </div>
 </template>
 <script>
-    import {cssVariable} from "@kestra-io/ui-libs/src/utils/global";
+    import {cssVariable} from "@kestra-io/ui-libs";
     import {stateDisplayValues} from "../../utils/constants";
-    import State from "../../utils/state";
+    import {State} from "@kestra-io/ui-libs"
     import throttle from "lodash/throttle"
 
     export default {
@@ -144,10 +144,7 @@
         align-items: flex-start;
         gap: 10px;
         border-radius: 2px;
-        background: var(--bs-gray-300);
-        html.dark & {
-            background: #21242E;
-        }
+        background-color: var(--ks-tag-background);
         font-size: 0.65rem;
         line-height: 1.0625rem;
     }

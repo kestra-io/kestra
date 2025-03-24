@@ -1,0 +1,31 @@
+id: finally-sequential
+namespace: io.kestra.tests
+
+inputs:
+  - id: failed
+    type: BOOLEAN
+    defaults: false
+
+tasks:
+  - id: seq
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: if
+        type: io.kestra.plugin.core.flow.If
+        condition: "{{ inputs.failed == false }}"
+        then:
+          - id: ok
+            type: io.kestra.plugin.core.debug.Return
+            format: "{{ task.id }}"
+        else:
+          - id: ko
+            type: io.kestra.plugin.core.execution.Fail
+
+    finally:
+      - id: a1
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"
+
+      - id: a2
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }}"

@@ -7,6 +7,6 @@ import lombok.Getter;
 @Getter
 public class GraphClusterEnd extends AbstractGraph {
     public GraphClusterEnd() {
-        super(IdUtils.create());
+        super("end-" + IdUtils.create());
     }
 }

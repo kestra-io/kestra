@@ -1,0 +1,51 @@
+{
+    "results": [
+        {
+            "id": "airbyte-sync",
+            "flowId": "airbyte-sync",
+            "namespace": "company.team",
+            "revision": 1,
+            "disabled": false,
+            "deleted": false,
+            "state": {
+                "current": "RUNNING"
+            },
+            "tasks": [
+                {
+                    "id": "data_ingestion",
+                    "type": "io.kestra.plugin.airbyte.connections.Sync",
+                    "url": "http://host.docker.internal:8000/",
+                    "username": "{{ secret('AIRBYTE_USERNAME') }}",
+                    "password": "{{ secret('AIRBYTE_PASSWORD') }}",
+                    "connectionId": "e3b1ce92-547c-436f-b1e8-23b6936c12ab"
+                }
+            ],
+            "triggers": [
+                {
+                    "id": "every_minute",
+                    "type": "io.kestra.plugin.core.trigger.Schedule",
+                    "cron": "*/1 * * * *"
+                }
+            ]
+        },
+        {
+            "id": "child",
+            "flowId": "airbyte-sync",
+            "namespace": "company.team",
+            "revision": 1,
+            "disabled": false,
+            "deleted": false,
+            "state": {
+                "current": "FAILED"
+            },
+            "tasks": [
+                {
+                    "id": "hello",
+                    "type": "io.kestra.plugin.core.log.Log",
+                    "message": "Hello from {{ flow.id }}"
+                }
+            ]
+        }
+    ],
+    "total": 2
+}

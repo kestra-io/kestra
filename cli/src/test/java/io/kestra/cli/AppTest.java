@@ -45,4 +45,20 @@ class AppTest {
             assertThat(out.toString(), startsWith("Usage: kestra server " + serverType));
         }
     }
+
+    @Test
+    void missingRequiredParamsPrintHelpInsteadOfException() {
+        final ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(out));
+
+        final String[] argsWithMissingParams = new String[]{"flow", "namespace", "update"};
+
+        try (ApplicationContext ctx = App.applicationContext(App.class, argsWithMissingParams)) {
+            new CommandLine(App.class, new MicronautFactory(ctx)).execute(argsWithMissingParams);
+
+            assertThat(out.toString(), startsWith("Missing required parameters: "));
+            assertThat(out.toString(), containsString("Usage: kestra flow namespace update "));
+            assertThat(out.toString(), not(containsString("MissingParameterException: ")));
+        }
+    }
 }

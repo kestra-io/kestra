@@ -13,7 +13,7 @@ abstract class AbstractWorkerTriggerCallable extends AbstractWorkerCallable {
     WorkerTrigger workerTrigger;
 
     AbstractWorkerTriggerCallable(RunContext runContext, String type, WorkerTrigger workerTrigger) {
-        super(runContext, type, workerTrigger.getTrigger().getClass().getClassLoader());
+        super(runContext, type, workerTrigger.uid(), workerTrigger.getTrigger().getClass().getClassLoader());
         this.workerTrigger = workerTrigger;
     }
 

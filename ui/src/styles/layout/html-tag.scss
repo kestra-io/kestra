@@ -22,14 +22,14 @@ button {
 pre {
     overflow: hidden;
     background: var(--bs-gray-200);
-    color: var(--bs-body-color);
-    padding: var(--spacer);
+    color: var(--ks-content-primary);
+    padding: 1rem;
 }
 
 blockquote {
     border-left: 5px solid var(--bs-gray-400);
-    margin-top: calc(var(--spacer) * 2);
-    padding: calc(var(--spacer) / 4)  0 calc(var(--spacer) / 4) var(--spacer);
+    margin-top: 2rem;
+    padding: .25rem  0 .25rem 1rem;
     color: var(--bs-gray-600);
     p {
         margin-bottom: 0;
@@ -41,6 +41,6 @@ blockquote {
 }
 
 hr {
-    border-color: var(--bs-border-color);
+    border-color: var(--ks-border-primary);
     opacity: 1;
 }

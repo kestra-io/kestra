@@ -12,7 +12,7 @@ import java.util.Collections;
 
 @CommandLine.Command(
     name = "validate",
-    description = "validate a template"
+    description = "Validate a template"
 )
 @TemplateEnabled
 public class TemplateValidateCommand extends AbstractValidateCommand {

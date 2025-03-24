@@ -55,9 +55,13 @@
                         </span>
                     </el-header>
                     <el-main>
-                        {{ warnings.join("\n") }}
-                        <br v-if="infos">
-                        {{ infos?.join("\n") }}
+                        <span v-for="(warning, index) in warnings" :key="index">
+                            {{ warning }}<br v-if="index < warnings.length - 1">
+                        </span>
+                        <br v-if="infos && infos.length > 0">
+                        <span v-for="(info, index) in infos" :key="index">
+                            {{ info }}<br v-if="index < infos.length - 1">
+                        </span>
                     </el-main>
                 </el-container>
             </template>
@@ -152,7 +156,7 @@
 </script>
 
 <style scoped lang="scss">
-    @import "@kestra-io/ui-libs/src/scss/variables.scss";
+    @import "@kestra-io/ui-libs/src/scss/variables";
 
     .el-button.el-button--default {
         transition: none;
@@ -163,7 +167,7 @@
         }
 
         &:hover, &:focus {
-            background-color: var(--el-button-bg-color);
+            background-color: var(--ks-button-background-secondary);
         }
 
         &.success {
@@ -171,16 +175,16 @@
         }
 
         &:not(.success) span:not(.material-design-icon) {
-            margin-left: calc(var(--spacer) / 2);
+            margin-left: .5rem;
             font-size: $font-size-sm;
         }
 
         &.warning {
-            border-color: rgb(var(--bs-warning-rgb));
+            border-color: var(--ks-border-warning);
         }
 
         &.error {
-            border-color: rgb(var(--bs-danger-rgb));
+            border-color: var(--ks-border-error);
         }
     }
 
@@ -203,23 +207,19 @@
 
         .el-header {
             padding: $spacer;
-            background-color: var(--bs-gray-200);
+            background-color: var(--ks-background-table-header);
             border-radius: $border-radius-lg $border-radius-lg 0 0;
             font-size: $font-size-sm;
             font-weight: $font-weight-bold;
 
-            html.dark & {
-                background-color: var(--bs-gray-500);
-            }
-
             .material-design-icon {
                 font-size: 1.5rem;
-                margin-right: calc(var(--spacer) / 2);
+                margin-right: .5rem;
             }
         }
 
         .el-main {
-            padding: calc(2 * var(--spacer)) $spacer !important;
+            padding: 2rem 1rem !important;
             font-family: $font-family-monospace;
             background-color: white;
             white-space: normal;

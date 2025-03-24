@@ -88,11 +88,12 @@ public class App implements Callable<Integer> {
             .environments(Environment.CLI);
 
         CommandLine cmd = new CommandLine(mainClass, CommandLine.defaultFactory());
+        continueOnParsingErrors(cmd);
 
         CommandLine.ParseResult parseResult = cmd.parseArgs(args);
         List<CommandLine> parsedCommands = parseResult.asCommandLineList();
 
-        CommandLine commandLine = parsedCommands.get(parsedCommands.size() - 1);
+        CommandLine commandLine = parsedCommands.getLast();
         Class<?> cls = commandLine.getCommandSpec().userObject().getClass();
 
         if (AbstractCommand.class.isAssignableFrom(cls)) {
@@ -114,13 +115,15 @@ public class App implements Callable<Integer> {
                 .stream()
                 .filter(argSpec -> ((Field) argSpec.userObject()).getName().equals("serverPort"))
                 .findFirst()
-                .ifPresent(argSpec -> {
-                    properties.put("micronaut.server.port", argSpec.getValue());
-                });
+                .ifPresent(argSpec -> properties.put("micronaut.server.port", argSpec.getValue()));
 
             builder.properties(properties);
         }
         return builder.build();
+    }
+
+    private static void continueOnParsingErrors(CommandLine cmd) {
+        cmd.getCommandSpec().parser().collectErrors(true);
     }
 
     @SuppressWarnings("unchecked")

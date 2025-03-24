@@ -83,7 +83,7 @@ public class FlowTriggerService {
                 .flatMap(flowWithFlowTrigger -> flowTriggerMultipleConditions(flowWithFlowTrigger)
                         .map(multipleCondition -> new FlowWithFlowTriggerAndMultipleCondition(
                                 flowWithFlowTrigger.getFlow(),
-                                multipleConditionStorage.get().getOrCreate(flowWithFlowTrigger.getFlow(), multipleCondition),
+                                multipleConditionStorage.get().getOrCreate(flowWithFlowTrigger.getFlow(), multipleCondition, execution.getOutputs()),
                                 flowWithFlowTrigger.getTrigger(),
                                 multipleCondition
                             )
@@ -135,6 +135,7 @@ public class FlowTriggerService {
                 )
             )
             .map(f -> f.getTrigger().evaluate(
+                multipleConditionStorage,
                 runContextFactory.of(f.getFlow(), execution),
                 f.getFlow(),
                 execution

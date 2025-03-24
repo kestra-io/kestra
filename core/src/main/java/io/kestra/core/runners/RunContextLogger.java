@@ -20,7 +20,6 @@ import io.kestra.core.queues.QueueInterface;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.io.*;
 import java.time.Instant;
@@ -29,15 +28,18 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class RunContextLogger implements Supplier<org.slf4j.Logger> {
-    private static final int MAX_MESSAGE_LENGTH = 1024*10;
+    private static final int MAX_MESSAGE_LENGTH = 1024 * 10;
+    public static final String ORIGINAL_TIMESTAMP_KEY = "originalTimestamp";
 
     private final String loggerName;
-    private Logger logger;
+    private volatile Logger logger; // must be volatile as it is built lazily via DCL
+
     private QueueInterface<LogEntry> logQueue;
     private LogEntry logEntry;
     private Level loglevel;
-    private List<String> useSecrets = new ArrayList<>();
+    private final List<String> useSecrets = new ArrayList<>();
     private final boolean logToFile;
+
     @Getter
     private File logFile;
     private OutputStream logFileOS;
@@ -54,6 +56,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         } else {
             this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getTriggerId();
         }
+
         this.logQueue = logQueue;
         this.logEntry = logEntry;
         this.loglevel = loglevel == null ? Level.TRACE : Level.toLevel(loglevel.toString());
@@ -87,7 +90,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                 .triggerId(logEntry.getTriggerId())
                 .level(level != null ? level : org.slf4j.event.Level.valueOf(event.getLevel().toString()))
                 .message(s)
-                .timestamp(Instant.ofEpochMilli(event.getTimeStamp()).plusMillis(i))
+                .timestamp(event.getInstant())
                 .thread(event.getThreadName())
                 .build()
             );
@@ -144,52 +147,65 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
 
     public org.slf4j.Logger logger() {
         if (this.logger == null) {
-            LoggerContext loggerContext = new LoggerContext();
-            LogbackMDCAdapter mdcAdapter = new LogbackMDCAdapter();
-
-            loggerContext.setMDCAdapter(mdcAdapter);
-            loggerContext.start();
-
-            this.logger = loggerContext.getLogger(this.loggerName);
-
-            if (this.logEntry != null) {
-                MDC.setContextMap(this.logEntry.toMap());
-            }
-
-            // unit tests don't always have the log queue as we construct a logger directly without it
-            if (this.logQueue != null && !this.logToFile) {
-                ContextAppender contextAppender = new ContextAppender(this, this.logger, this.logQueue, this.logEntry);
-                contextAppender.setContext(loggerContext);
-                contextAppender.start();
-
-                this.logger.addAppender(contextAppender);
-            }
-
-            if (this.logToFile) {
-                try {
-                    this.logFile = File.createTempFile("log", ".txt");
-                    this.logFileOS = new BufferedOutputStream(new FileOutputStream(logFile));
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
+            synchronized (this) {
+                if (this.logger == null) { // Double-Checked Locking (DCL) idiom
+                    this.logger = initializeLogger();
                 }
-                FileAppender fileAppender = new FileAppender(this, this.logger, this.logFileOS);
-                fileAppender.setContext(loggerContext);
-                fileAppender.start();
-
-                this.logger.addAppender(fileAppender);
             }
-
-            // forward flow logs to the server log
-            ForwardAppender forwardAppender = new ForwardAppender(this, this.logger);
-            forwardAppender.setContext(loggerContext);
-            forwardAppender.start();
-            this.logger.addAppender(forwardAppender);
-
-            this.logger.setLevel(this.loglevel);
-            this.logger.setAdditive(true);
         }
 
         return this.logger;
+    }
+
+    private Logger initializeLogger() {
+        LoggerContext loggerContext = new LoggerContext();
+        LogbackMDCAdapter mdcAdapter = new LogbackMDCAdapter();
+
+        loggerContext.setMDCAdapter(mdcAdapter);
+        loggerContext.start();
+
+        Logger newLogger = loggerContext.getLogger(this.loggerName);
+
+        if (this.logEntry != null) {
+            loggerContext.getMDCAdapter().setContextMap(this.logEntry.toMap());
+        }
+
+        // unit tests don't always have the log queue as we construct a logger directly without it
+        if (this.logQueue != null && !this.logToFile) {
+            ContextAppender contextAppender = new ContextAppender(this, newLogger, this.logQueue, this.logEntry);
+            contextAppender.setContext(loggerContext);
+            contextAppender.start();
+
+            newLogger.addAppender(contextAppender);
+        }
+
+        if (this.logToFile) {
+            try {
+                this.logFile = File.createTempFile("log", ".txt");
+                this.logFileOS = new BufferedOutputStream(new FileOutputStream(logFile));
+            } catch (IOException e) {
+                throw new UncheckedIOException(e);
+            }
+            FileAppender fileAppender = new FileAppender(this, newLogger, this.logFileOS);
+            fileAppender.setContext(loggerContext);
+            fileAppender.start();
+
+            newLogger.addAppender(fileAppender);
+        }
+
+        // forward flow logs to the server log
+        ForwardAppender forwardAppender = new ForwardAppender(this, newLogger);
+        forwardAppender.setContext(loggerContext);
+        forwardAppender.start();
+        newLogger.addAppender(forwardAppender);
+
+        newLogger.setLevel(this.loglevel);
+        newLogger.setAdditive(true);
+        return newLogger;
+    }
+
+    public void resetMDC() {
+        this.logger.getLoggerContext().getMDCAdapter().clear();
     }
 
     @Override
@@ -264,8 +280,18 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             try {
                 String message = replaceSecret(event.getMessage());
                 Object[] argumentArray = replaceSecret(event.getArgumentArray());
+                Instant customTimestamp = null;
 
-                return new LoggingEvent(
+                if (event.getKeyValuePairs() != null) {
+                    var originalTimestampKv = event.getKeyValuePairs().stream().filter((kv) -> kv.key.equals(ORIGINAL_TIMESTAMP_KEY)).findFirst();
+                    if (originalTimestampKv.isPresent()) {
+                        if (originalTimestampKv.get().value instanceof Instant instant) {
+                            customTimestamp = instant;
+                        }
+                    }
+                }
+
+                var lle = new LoggingEvent(
                     "ch.qos.logback.classic.Logger",
                     this.logger,
                     event.getLevel(),
@@ -273,6 +299,10 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     event.getThrowableProxy() instanceof ThrowableProxy throwableProxy ? throwableProxy.getThrowable() : null,
                     argumentArray
                 );
+                if (customTimestamp != null) {
+                    lle.setTimeStamp(customTimestamp.toEpochMilli());
+                }
+                return lle;
             } catch (Throwable e) {
                 log.warn("Unable to replace secret", e);
                 return event;
@@ -308,6 +338,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     public static class FileAppender extends BaseAppender {
         private static final ch.qos.logback.classic.Logger LOGGER = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("flow");
         private static final PatternLayout PATTERN_LAYOUT = new PatternLayout();
+
         static {
             // the pattern is the same as in core/src/main/base.xml except that we remove the coloring
             PATTERN_LAYOUT.setPattern("%d{ISO8601} %-5.5level %-12.36thread %-12.36logger{36} %msg%n");
@@ -336,10 +367,12 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     }
 
     public static class ForwardAppender extends BaseAppender {
-        private static final ch.qos.logback.classic.Logger LOGGER = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("flow");
+        private final ch.qos.logback.classic.Logger fowardLogger;
 
         protected ForwardAppender(RunContextLogger runContextLogger, Logger logger) {
             super(runContextLogger, logger);
+
+            fowardLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(runContextLogger.loggerName);
         }
 
         @Override
@@ -356,8 +389,8 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         protected void append(ILoggingEvent e) {
             e = this.transform(e);
 
-            if (LOGGER.isEnabledFor(e.getLevel())) {
-                LOGGER.callAppenders(e);
+            if (fowardLogger.isEnabledFor(e.getLevel())) {
+                fowardLogger.callAppenders(e);
             }
         }
     }

@@ -37,6 +37,10 @@ public class StaticFilter implements HttpServerFilter {
     protected String googleAnalytics;
 
     @Nullable
+    @Value("${kestra.webserver.html-title}")
+    protected String htmlTitle;
+
+    @Nullable
     @Value("${kestra.webserver.html-head}")
     protected String htmlHead;
 
@@ -56,7 +60,7 @@ public class StaticFilter implements HttpServerFilter {
                                 .filter(n -> n.getFile().getAbsoluteFile().toString().endsWith("ui/index.html"))
                                 .map(throwFunction(n -> IOUtils.toString(
                                     Objects.requireNonNull(StaticFilter.class.getClassLoader().getResourceAsStream("ui/index.html")),
-                                    Charsets.UTF_8
+                                    StandardCharsets.UTF_8
                                 )))
                         )
                         .filter(Optional::isPresent)
@@ -88,6 +92,10 @@ public class StaticFilter implements HttpServerFilter {
 
         if (googleAnalytics != null) {
             line = line.replace("KESTRA_GOOGLE_ANALYTICS = null;", "KESTRA_GOOGLE_ANALYTICS = '" + this.googleAnalytics + "';");
+        }
+
+        if (htmlTitle != null) {
+            line = line.replaceFirst("<title>(.*)</title>", "<title>" + this.htmlTitle + "</title>");
         }
 
         line = line.replace("<meta name=\"html-head\" content=\"replace\">", this.htmlHead == null ? "" : this.htmlHead);

@@ -1,19 +1,27 @@
 package io.kestra.plugin.core.flow;
 
-import com.google.common.collect.ImmutableMap;
-import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.QueueException;
-import io.kestra.core.runners.AbstractMemoryRunnerTest;
-import io.kestra.core.models.executions.Execution;
-import org.junit.jupiter.api.Test;
-
-import java.util.concurrent.TimeoutException;
-
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 
-class SwitchTest extends AbstractMemoryRunnerTest {
+import com.google.common.collect.ImmutableMap;
+import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.junit.annotations.LoadFlows;
+import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.State;
+import io.kestra.core.queues.QueueException;
+import io.kestra.core.runners.RunnerUtils;
+import jakarta.inject.Inject;
+import java.util.concurrent.TimeoutException;
+import org.junit.jupiter.api.Test;
+
+@KestraTest(startRunner = true)
+class SwitchTest {
+
+    @Inject
+    private RunnerUtils runnerUtils;
+
     @Test
+    @LoadFlows({"flows/valids/switch.yaml"})
     void switchFirst() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
@@ -29,6 +37,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/switch.yaml"})
     void switchSecond() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
@@ -45,6 +54,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/switch.yaml"})
     void switchThird() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
@@ -62,6 +72,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/switch.yaml"})
     void switchDefault() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,
@@ -77,6 +88,7 @@ class SwitchTest extends AbstractMemoryRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/switch-impossible.yaml"})
     void switchImpossible() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
             null,

@@ -15,16 +15,19 @@ export default {
     namespaced: true,
     state: {
         datatypeNamespaces: undefined,
-        namespaces: undefined,       
+        namespaces: undefined,
         namespace: undefined,
+        inheritedSecrets: undefined,
         kvs: undefined,
     },
     actions: {
         search({commit}, options) {
+            const shouldCommit = !!options.commit;
+            delete options.commit;
             return this.$http.get(`${apiUrl(this)}/namespaces/search`, {params: options, ...VALIDATE})
                 .then(response => {
-                    if(response.status === 200) commit("setNamespaces", response.data.results)
-                    return response.data.results;
+                    if (response.status === 200 && shouldCommit) commit("setNamespaces", response.data.results)
+                    return response.data;
                 })
         },
         load({commit}, id) {
@@ -85,6 +88,15 @@ export default {
                 });
         },
 
+        inheritedSecrets({commit}, item) {
+            return this.$http.get(`${apiUrl(this)}/namespaces/${item.id}/inherited-secrets`, {validateStatus: (status) => status === 200 || status === 404})
+                .then(response => {
+                    commit("setInheritedSecrets", response.data)
+
+                    return response.data;
+                });
+        },
+
         // Create a directory
         async createDirectory(_, payload) {
             const URL = `${base.call(this, payload.namespace)}/files/directory?path=${slashPrefix(payload.path)}`;
@@ -106,7 +118,7 @@ export default {
             DATA.append("fileContent", BLOB);
 
             const URL = `${base.call(this, payload.namespace)}/files?path=${slashPrefix(payload.path)}`;
-            await this.$http.post(URL, DATA, HEADERS);
+            await this.$http.post(URL, Utils.toFormData(DATA), HEADERS);
         },
 
         // Get namespace file content
@@ -176,7 +188,7 @@ export default {
     mutations: {
         setDatatypeNamespaces(state, datatypeNamespaces) {
             state.datatypeNamespaces = datatypeNamespaces;
-        },    
+        },
         setNamespaces(state, namespaces) {
             state.namespaces = namespaces
         },
@@ -185,6 +197,9 @@ export default {
         },
         setKvs(state, kvs) {
             state.kvs = kvs
+        },
+        setInheritedSecrets(state, secrets) {
+            state.inheritedSecrets = secrets
         },
     },
 };

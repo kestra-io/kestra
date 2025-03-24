@@ -1,3 +1,5 @@
+import {computed} from "vue";
+import {useStore} from "vuex";
 import moment from "moment";
 import humanizeDuration from "humanize-duration";
 
@@ -168,7 +170,34 @@ export default class Utils {
         document.body.removeChild(link);
     }
 
-    static switchTheme(theme) {
+    /**
+     * Extracts a filename from an HTTP 'Content-Disposition` header.
+     *
+     * @param header  the header value
+     * @returns {*|string|null}
+     */
+    static extratFileNameFromContentDisposition(header) {
+        if (!header) return null;
+
+        const filenameRegex = /filename\*=UTF-8''(.+)|filename="(.+?)"|filename=(.+)/;
+        const matches = header.match(filenameRegex);
+
+        // Check for UTF-8 encoded filename first
+        if (matches && matches[1]) {
+            return decodeURIComponent(matches[1]);
+        }
+        // Fallback to quoted or unquoted filename
+        if (matches && matches[2]) {
+            return matches[2];
+        }
+        if (matches && matches[3]) {
+            return matches[3];
+        }
+
+        return null; // Return null if no filename is found
+    }
+
+    static switchTheme(store, theme) {
         // default theme
         if (theme === undefined) {
             if (localStorage.getItem("theme")) {
@@ -183,7 +212,7 @@ export default class Utils {
         // class name
         let htmlClass = document.getElementsByTagName("html")[0].classList;
 
-        function removeClasses() 
+        function removeClasses()
         {
             htmlClass.forEach((cls) => {
             if (cls === "dark" || cls === "light" || cls === "syncWithSystem") {
@@ -202,16 +231,17 @@ export default class Utils {
             removeClasses();
             htmlClass.add(theme);
         }
+        store.commit("misc/setTheme", theme);
         localStorage.setItem("theme", theme);
     }
 
-    static getTheme(which = "theme") {
-        let theme = localStorage.getItem(which) || "light";
+    static getTheme() {
+        let theme = localStorage.getItem("theme") || "light";
 
         if(theme === "syncWithSystem") {
             theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         }
-        
+
         return theme;
     }
 
@@ -249,7 +279,39 @@ export default class Utils {
         document.body.removeChild(node);
     }
 
-    static distinctFilter(value, index, array) {
-        return array.indexOf(value) === index;
+    static toFormData(obj) {
+        if (!(obj instanceof FormData)) {
+            const formData = new FormData();
+            for (const key in obj) {
+                formData.append(key, obj[key]);
+            }
+            return formData;
+        }
+        return obj;
     }
+
+    static getDateFormat(startDate, endDate) {
+        if (!startDate || !endDate) {
+            return "yyyy-MM-DD";
+        }
+
+        const duration = moment.duration(moment(endDate).diff(moment(startDate)));
+
+        if (duration.asDays() > 365) {
+            return "yyyy-MM";
+        } else if (duration.asDays() > 180) {
+            return "yyyy-'W'ww";
+        } else if (duration.asDays() > 1) {
+            return "yyyy-MM-DD";
+        } else if (duration.asHours() > 1) {
+            return "yyyy-MM-DD:HH:00";
+        } else {
+            return "yyyy-MM-DD:HH:mm";
+        }
+    }
+}
+
+export const useTheme = () => {
+    const store = useStore();
+    return computed(() => store.getters["misc/theme"]);
 }

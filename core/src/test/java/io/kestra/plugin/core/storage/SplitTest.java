@@ -40,7 +40,7 @@ class SplitTest {
         URI put = storageUpload(1000);
 
         Split result = Split.builder()
-            .from(put.toString())
+            .from(Property.of(put.toString()))
             .partitions(Property.of(8))
             .build();
 
@@ -57,7 +57,7 @@ class SplitTest {
         URI put = storageUpload(1000);
 
         Split result = Split.builder()
-            .from(put.toString())
+            .from(Property.of(put.toString()))
             .rows(Property.of(10))
             .build();
 
@@ -73,7 +73,7 @@ class SplitTest {
         URI put = storageUpload(12288);
 
         Split result = Split.builder()
-            .from(put.toString())
+            .from(Property.of(put.toString()))
             .bytes(Property.of("1KB"))
             .build();
 

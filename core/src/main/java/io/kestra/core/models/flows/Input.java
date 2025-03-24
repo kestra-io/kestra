@@ -83,7 +83,6 @@ public abstract class Input<T> implements Data {
     @Schema(
         title = "The display name of the input."
     )
-    @Size(max = 64)
     String displayName;
 
     public abstract void validate(T input) throws ConstraintViolationException;

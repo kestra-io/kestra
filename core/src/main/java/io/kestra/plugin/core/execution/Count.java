@@ -7,6 +7,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.statistics.ExecutionCount;
 import io.kestra.core.models.executions.statistics.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -41,10 +42,10 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
             code = """
                 id: executions_count
                 namespace: company.team
-                
+
                 tasks:
                   - id: counts
-                    type: io.kestra.plugin.core.execution.Counts
+                    type: io.kestra.plugin.core.execution.Count
                     expression: "{{ count == 0 }}"
                     flows:
                       - namespace: company.team
@@ -64,7 +65,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                             "text": ":warning: Flow `{{ jq taskrun.value '.namespace' true }}`.`{{ jq taskrun.value '.flowId' true }}` has no execution for last 24h!"
                           }
                         url: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
-                
+
                 triggers:
                   - id: schedule
                     type: io.kestra.plugin.core.trigger.Schedule
@@ -86,21 +87,18 @@ public class Count extends Task implements RunnableTask<Count.Output> {
     @Schema(
         title = "A list of states to be filtered."
     )
-    @PluginProperty
-    protected List<State.Type> states;
+    protected Property<List<State.Type>> states;
 
     @NotNull
     @Schema(
         title = "The start date."
     )
-    @PluginProperty(dynamic = true)
-    protected String startDate;
+    protected Property<String> startDate;
 
     @Schema(
         title = "The end date."
     )
-    @PluginProperty(dynamic = true)
-    protected String endDate;
+    protected Property<String> endDate;
 
     @NotNull
     @Schema(
@@ -110,11 +108,10 @@ public class Count extends Task implements RunnableTask<Count.Output> {
             "- ```yaml {{ eq count 0 }} ```: no execution found\n" +
             "- ```yaml {{ gte count 5 }} ```: more than 5 executions\n"
     )
-    @PluginProperty(dynamic = true)
+    @PluginProperty(dynamic = true) // we cannot use `Property` as we render it multiple time with different variables, which is an issue for the property cache
     protected String expression;
 
-    @PluginProperty
-    protected List<String> namespaces;
+    protected Property<List<String>> namespaces;
 
     @Override
     public Output run(RunContext runContext) throws Exception {
@@ -134,17 +131,19 @@ public class Count extends Task implements RunnableTask<Count.Output> {
         if (flows != null) {
             flows.forEach(flow -> flowService.checkAllowedNamespace(flowInfo.tenantId(), flow.getNamespace(), flowInfo.tenantId(), flowInfo.namespace()));
         }
+
         if (namespaces != null) {
-            namespaces.forEach(namespace -> flowService.checkAllowedNamespace(flowInfo.tenantId(), namespace, flowInfo.tenantId(), flowInfo.namespace()));
+            var renderedNamespaces = runContext.render(this.namespaces).asList(String.class);
+            renderedNamespaces.forEach(namespace -> flowService.checkAllowedNamespace(flowInfo.tenantId(), namespace, flowInfo.tenantId(), flowInfo.namespace()));
         }
 
         List<ExecutionCount> executionCounts = executionRepository.executionCounts(
             flowInfo.tenantId(),
             flows,
-            this.states,
-            startDate != null ? ZonedDateTime.parse(runContext.render(startDate)) : null,
-            endDate != null ? ZonedDateTime.parse(runContext.render(endDate)) : null,
-            namespaces
+            runContext.render(this.states).asList(State.Type.class),
+            runContext.render(this.startDate).as(String.class).map(ZonedDateTime::parse).orElse(null),
+            runContext.render(this.endDate).as(String.class).map(ZonedDateTime::parse).orElse(null),
+            runContext.render(this.namespaces).asList(String.class)
         );
 
         logger.trace("{} flows matching filters", executionCounts.size());
@@ -152,10 +151,7 @@ public class Count extends Task implements RunnableTask<Count.Output> {
         List<Result> count = executionCounts
             .stream()
             .filter(throwPredicate(item -> runContext
-                .render(
-                    this.expression,
-                    ImmutableMap.of("count", item.getCount().intValue())
-                )
+                .render(this.expression, ImmutableMap.of("count", item.getCount().intValue()))
                 .equals("true")
             ))
             .map(item -> Result.builder()

@@ -16,6 +16,7 @@ import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -50,7 +51,7 @@ import java.util.Optional;
             code = """
                 id: each_parallel
                 namespace: company.team
-                
+
                 tasks:
                   - id: each_parallel
                     type: io.kestra.plugin.core.flow.EachParallel
@@ -67,7 +68,7 @@ import java.util.Optional;
             code = """
                 id: parallel_script
                 namespace: company.team
-                
+
                 tasks:
                   - id: each
                     type: io.kestra.plugin.core.flow.EachParallel
@@ -80,7 +81,7 @@ import java.util.Optional;
                         script: |
                           mkdir out
                           echo "{{ taskrun.value }}" > out/file_{{ taskrun.value }}.txt
-                
+
                   - id: process_all_files
                     type: io.kestra.plugin.scripts.shell.Script
                     inputFiles: "{{ outputs.script | jq('map(.outputFiles) | add') | first }}"
@@ -94,7 +95,7 @@ import java.util.Optional;
             code = """
                 id: parallel_task_groups
                 namespace: company.team
-                
+
                 tasks:
                   - id: for_each
                     type: io.kestra.plugin.core.flow.EachParallel
@@ -108,7 +109,7 @@ import java.util.Optional;
                             commands:
                               - echo "{{task.id}} > {{ parents[0].taskrun.value }}"
                               - sleep 1
-                
+
                           - id: task2
                             type: io.kestra.plugin.scripts.shell.Commands
                             commands:
@@ -147,6 +148,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
             subGraph,
             this.getTasks(),
             this.errors,
+            this._finally,
             taskRun,
             execution
         );
@@ -161,7 +163,9 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
 
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        List<ResolvedTask> childTasks = this.childTasks(runContext, parentTaskRun);
+        List<ResolvedTask> childTasks = ListUtils.emptyOnNull(this.childTasks(runContext, parentTaskRun)).stream()
+            .filter(resolvedTask -> !resolvedTask.getTask().getDisabled())
+            .toList();
 
         if (childTasks.isEmpty()) {
             return Optional.of(State.Type.SUCCESS);
@@ -171,6 +175,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
             execution,
             childTasks,
             FlowableUtils.resolveTasks(this.getErrors(), parentTaskRun),
+            FlowableUtils.resolveTasks(this.getFinally(), parentTaskRun),
             parentTaskRun,
             runContext,
             this.isAllowFailure(),
@@ -184,6 +189,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
             execution,
             FlowableUtils.resolveEachTasks(runContext, parentTaskRun, this.getTasks(), this.value),
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
+            FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
             this.concurrent
         );

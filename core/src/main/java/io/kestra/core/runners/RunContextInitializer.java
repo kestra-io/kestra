@@ -134,6 +134,7 @@ public class RunContextInitializer {
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(task.getType(), task.getClass()));
         runContext.setStorage(new InternalStorage(runContextLogger.logger(), StorageContext.forTask(taskRun), storageInterface, flowService));
         runContext.setLogger(runContextLogger);
+        runContext.setTask(task);
 
         return runContext;
     }
@@ -226,6 +227,7 @@ public class RunContextInitializer {
         runContext.setStorage(storage);
         runContext.setPluginConfiguration(pluginConfigurations.getConfigurationByPluginTypeOrAliases(trigger.getType(), trigger.getClass()));
         runContext.setTriggerExecutionId(triggerExecutionId);
+        runContext.setTrigger(trigger);
 
         return runContext;
     }

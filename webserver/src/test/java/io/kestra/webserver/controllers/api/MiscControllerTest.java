@@ -1,6 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
-import io.kestra.webserver.controllers.h2.JdbcH2ControllerTest;
+import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpRequest;
@@ -15,8 +15,9 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.notNullValue;
 
+@KestraTest
 @Property(name = "kestra.system-flows.namespace", value = "some.system.ns")
-class MiscControllerTest extends JdbcH2ControllerTest {
+class MiscControllerTest {
     @Inject
     @Client("/")
     ReactorHttpClient client;

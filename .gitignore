@@ -36,6 +36,8 @@ yarn.lock
 ui/coverage
 ui/stats.html
 ui/.frontend-gradle-plugin
+ui/utils/CHANGELOG.md
+ui/test-report.junit.xml
 
 ### Docker
 /.env
@@ -54,3 +56,6 @@ core/src/main/resources/gradle.properties
 
 # Allure Reports
 **/allure-results/*
+
+*storybook.log
+storybook-static

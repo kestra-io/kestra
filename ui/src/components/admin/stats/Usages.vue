@@ -159,8 +159,7 @@
                 try {
                     this.$router.resolve({name: "namespaces/list"})
                     return "namespaces/list";
-
-                } catch (error) {
+                } catch  {
                     return "flows/list"
                 }
             },
@@ -216,7 +215,7 @@
             }
 
             & .el-button, :slotted(&) .el-button {
-                color: var(--bs-body-color);
+                color: var(--ks-content-primary);
             }
         }
     }

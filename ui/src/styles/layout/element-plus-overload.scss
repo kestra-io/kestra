@@ -504,7 +504,8 @@ form.ks-horizontal {
         }
 
         &.is-active > * {
-            background-color: var(--ks-content-link);
+            background-color: var(--ks-button-background-primary);
+            color: var(--ks-button-content-primary);
         }
 
         &.is-disabled a {

@@ -127,7 +127,6 @@ public class KvFunctionTest {
         assertThat(rendered, is("{\"field\":\"value\"}"));
     }
 
-
     @Test
     void shouldGetEmptyGivenNonExistingKeyAndErrorOnMissingFalse() throws IllegalVariableEvaluationException {
         // Given

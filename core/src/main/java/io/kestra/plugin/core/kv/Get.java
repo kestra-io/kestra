@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.kv;
 
+import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
@@ -12,6 +13,7 @@ import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVValue;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import java.io.IOException;
 import java.util.Objects;
 import lombok.Builder;
 import lombok.Getter;
@@ -76,14 +78,9 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         String flowNamespace = runContext.flowInfo().namespace();
         String renderedKey = runContext.render(this.key).as(String.class).orElse(null);
 
-        Optional<KVValue> value = Optional.empty();
+        Optional<KVValue> value;
         if (Objects.equals(renderedNamespace, flowNamespace)) {
-            KVStoreService kvStoreService = ((DefaultRunContext) runContext).getApplicationContext().getBean(KVStoreService.class);
-            String inheritedNamespace = flowNamespace;
-            while (value.isEmpty() && inheritedNamespace.contains(".")) {
-                value = kvStoreService.get(runContext.flowInfo().tenantId(), inheritedNamespace, flowNamespace).getValue(renderedKey);
-                inheritedNamespace = inheritedNamespace.substring(0, inheritedNamespace.lastIndexOf('.'));
-            }
+            value = getValueWithInheritance(runContext, flowNamespace, renderedKey);
         } else {
             FlowService flowService = ((DefaultRunContext) runContext).getApplicationContext().getBean(FlowService.class);
             flowService.checkAllowedNamespace(runContext.flowInfo().tenantId(), renderedNamespace, runContext.flowInfo().tenantId(), runContext.flowInfo().namespace());
@@ -97,6 +94,21 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         return Output.builder()
             .value(value.map(KVValue::value).orElse(null))
             .build();
+    }
+
+    private Optional<KVValue> getValueWithInheritance(RunContext runContext, String flowNamespace, String renderedKey)
+            throws IOException, ResourceExpiredException {
+        Optional<KVValue> value = Optional.empty();
+        KVStoreService kvStoreService = ((DefaultRunContext) runContext).getApplicationContext().getBean(KVStoreService.class);
+        String inheritedNamespace = flowNamespace;
+        while (value.isEmpty()) {
+            value = kvStoreService.get(runContext.flowInfo().tenantId(), inheritedNamespace, flowNamespace).getValue(renderedKey);
+            if (!inheritedNamespace.contains(".")){
+                return value;
+            }
+            inheritedNamespace = inheritedNamespace.substring(0, inheritedNamespace.lastIndexOf('.'));
+        }
+        return value;
     }
 
     @Builder

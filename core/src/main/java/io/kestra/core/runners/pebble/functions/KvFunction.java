@@ -1,5 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
+import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.services.KVStoreService;
 import io.kestra.core.storages.kv.KVValue;
 import io.pebbletemplates.pebble.error.PebbleException;
@@ -8,6 +9,7 @@ import io.pebbletemplates.pebble.template.EvaluationContext;
 import io.pebbletemplates.pebble.template.PebbleTemplate;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -42,18 +44,13 @@ public class KvFunction implements Function {
         String flowNamespace = flow.get(NAMESPACE_ARG);
         String flowTenantId = flow.get("tenantId");
 
-        // we didn't check allowedNamespace here as it's checked in the kvStoreService itself
-
-        Optional<KVValue> value = Optional.empty();
+        Optional<KVValue> value;
         try {
             if (namespace == null) {
                 namespace = flowNamespace;
-                String inheritedNamespace = namespace;
-                while (value.isEmpty() && inheritedNamespace.contains(".")) {
-                    value = kvStoreService.get(flowTenantId, inheritedNamespace, flowNamespace).getValue(key);
-                    inheritedNamespace = inheritedNamespace.substring(0, inheritedNamespace.lastIndexOf('.'));
-                }
+                value = getValueWithInheritance(flowNamespace, key, flowTenantId);
             } else {
+                // we didn't check allowedNamespace here as it's checked in the kvStoreService itself
                 value = kvStoreService.get(flowTenantId, namespace, flowNamespace).getValue(key);
             }
         } catch (Exception e) {
@@ -65,6 +62,20 @@ public class KvFunction implements Function {
         }
 
         return value.map(KVValue::value).orElse(null);
+    }
+
+    private Optional<KVValue> getValueWithInheritance(String flowNamespace, String key, String tenantId)
+        throws IOException, ResourceExpiredException {
+        Optional<KVValue> value = Optional.empty();
+        String inheritedNamespace = flowNamespace;
+        while (value.isEmpty()) {
+            value = kvStoreService.get(tenantId, inheritedNamespace, flowNamespace).getValue(key);
+            if (!inheritedNamespace.contains(".")){
+                return value;
+            }
+            inheritedNamespace = inheritedNamespace.substring(0, inheritedNamespace.lastIndexOf('.'));
+        }
+        return value;
     }
 
     protected String getKey(Map<String, Object> args, PebbleTemplate self, int lineNumber) {

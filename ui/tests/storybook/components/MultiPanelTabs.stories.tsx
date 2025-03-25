@@ -287,6 +287,7 @@ export const TabMoveBetweenPanelsTest: Story = {
         async function dragOnContentPanel() {
             const secondTab = canvas.getByText("Tab 1");
 
+            userEvent.click(canvas.getByText("Tab 4"));
             const panelOverlay = canvas.getByText("Content for Tab 4").parentNode as HTMLElement;
 
             const br = panelOverlay.getBoundingClientRect();
@@ -312,7 +313,6 @@ export const TabMoveBetweenPanelsTest: Story = {
 
 
         await waitFor(dragOnTabsList);
-        await waitFor(() => canvas.getByText("Content for Tab 4"));
         await waitFor(dragOnContentPanel);
     }
 };

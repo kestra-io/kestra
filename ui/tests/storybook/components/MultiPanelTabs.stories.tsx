@@ -21,7 +21,8 @@ type Story = StoryObj<typeof MultiPanelTabs>;
 
 const render: Story["render"] = ({modelValue}) => ({
     setup() {
-        const modelValueRef = ref(modelValue);
+        const modelValueRef = ref();
+        modelValueRef.value = modelValue;
         return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-background-body)">
             <MultiPanelTabs modelValue={modelValueRef.value} />
             <pre>{JSON.stringify(modelValueRef.value.map(p => ({
@@ -54,59 +55,65 @@ const PlaceholderComponent = (props: {tabId:string}) => <div style={{
     background: BG_COLORS[parseInt(props.tabId)]
 }}>Content for Tab {props.tabId}</div>
 
-const args = {
-    modelValue: [
-        {
-            activeTab: {
-                button: {icon: markRaw(CodeTagsIcon), label: "Tab 1"},
-                value: "tab1",
-                component: () => <PlaceholderComponent tabId="1" />,
-            },
-            tabs: [
-                {
+
+const argGenerator = (index?: number) => {
+    const values =  {
+        modelValue: [
+            {
+                activeTab: {
                     button: {icon: markRaw(CodeTagsIcon), label: "Tab 1"},
                     value: "tab1",
                     component: () => <PlaceholderComponent tabId="1" />,
                 },
-                {
-                    button: {icon: markRaw(MouseRightClickIcon), label: "Tab 2"},
-                    value: "tab2",
-                    component: () => <PlaceholderComponent tabId="2" />,
-                },
-                {
-                    button: {icon: markRaw(FileTreeOutlineIcon), label: "Tab 3"},
-                    value: "tab3",
-                    component: () => <PlaceholderComponent tabId="3" />,
-                },
-            ],
-        },
-        {
-            activeTab: {
-                button: {icon: markRaw(FileDocumentIcon), label: "Tab 4"},
-                value: "tab4",
-                component: () => <PlaceholderComponent tabId="4" />,
+                tabs: [
+                    {
+                        button: {icon: markRaw(CodeTagsIcon), label: "Tab 1"},
+                        value: "tab1",
+                        component: () => <PlaceholderComponent tabId="1" />,
+                    },
+                    {
+                        button: {icon: markRaw(MouseRightClickIcon), label: "Tab 2"},
+                        value: "tab2",
+                        component: () => <PlaceholderComponent tabId="2" />,
+                    },
+                    {
+                        button: {icon: markRaw(FileTreeOutlineIcon), label: "Tab 3"},
+                        value: "tab3",
+                        component: () => <PlaceholderComponent tabId="3" />,
+                    },
+                ],
             },
-            tabs: [
-
-                {
+            {
+                activeTab: {
                     button: {icon: markRaw(FileDocumentIcon), label: "Tab 4"},
                     value: "tab4",
                     component: () => <PlaceholderComponent tabId="4" />,
                 },
-                {
-                    button: {icon: markRaw(DotsSquareIcon), label: "Tab 5"},
-                    value: "tab5",
-                    component: () => <PlaceholderComponent tabId="5" />,
-                },
-                {
-                    button: {icon: markRaw(BallotOutlineIcon), label: "Tab 6"},
-                    value: "tab6",
-                    component: () => <PlaceholderComponent tabId="6" />,
-                },
-            ],
-        },
-    ]
+                tabs: [
+
+                    {
+                        button: {icon: markRaw(FileDocumentIcon), label: "Tab 4"},
+                        value: "tab4",
+                        component: () => <PlaceholderComponent tabId="4" />,
+                    },
+                    {
+                        button: {icon: markRaw(DotsSquareIcon), label: "Tab 5"},
+                        value: "tab5",
+                        component: () => <PlaceholderComponent tabId="5" />,
+                    },
+                    {
+                        button: {icon: markRaw(BallotOutlineIcon), label: "Tab 6"},
+                        value: "tab6",
+                        component: () => <PlaceholderComponent tabId="6" />,
+                    },
+                ],
+            },
+        ]
+    }
+
+    return index === undefined ? values : {modelValue:[values.modelValue[index]]}
 }
+const args = argGenerator()
 
 export const Default: Story = {
     render: render.bind({}),
@@ -198,11 +205,9 @@ export const PanelResizeTest: Story = {
 // Test for reordering tabs within a panel using drag and drop
 export const TabReorderTest: Story = {
     render: render.bind({}),
-    args: {
-        modelValue: [args.modelValue[0]]
-    },
-    play: async ({canvasElement}) => {
-        const canvas = within(canvasElement);
+    args: argGenerator(0),
+    play: async ({mount}) => {
+        const canvas = await mount(render(argGenerator(0), {} as any));
 
         const dropBetweenTabs = async () => {
             // Find the tab elements in the first panel
@@ -254,8 +259,8 @@ export const TabReorderTest: Story = {
 export const TabMoveBetweenPanelsTest: Story = {
     render: render.bind({}),
     args,
-    play: async ({canvasElement}) => {
-        const canvas = within(canvasElement);
+    play: async ({mount}) => {
+        const canvas = await mount(render(argGenerator(), {} as any));
 
         // Wait for the component to render
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -323,11 +328,9 @@ export const TabMoveBetweenPanelsTest: Story = {
 // Test for reordering tabs within a panel using drag and drop
 export const SplitPanel: Story = {
     render: render.bind({}),
-    args: {
-        modelValue: [args.modelValue[0]]
-    },
-    play: async ({canvasElement}) => {
-        const canvas = within(canvasElement);
+    args: argGenerator(0),
+    play: async ({mount}) => {
+        const canvas = await mount(render(argGenerator(0), {} as any));
 
         expect(canvas.getAllByRole("tablist")).toHaveLength(1)
 

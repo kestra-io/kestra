@@ -74,7 +74,7 @@ dependencies {
  **********************************************************************************************************************/
 allprojects {
     if (it.name != 'platform') {
-        group "io.kestra"
+        group = "io.kestra"
 
         java {
             sourceCompatibility = targetJavaVersion

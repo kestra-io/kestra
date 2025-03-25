@@ -5,8 +5,8 @@ import io.kestra.core.models.Pauseable;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.runners.*;
-import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceRegistry;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.Either;
 import io.kestra.jdbc.repository.AbstractJdbcWorkerJobRunningRepository;
 import io.kestra.jdbc.runner.JdbcQueue;
@@ -43,7 +43,7 @@ public class JdbcWorkerJobQueueService implements Closeable, Pauseable {
 
         this.disposable.set(workerTaskQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
 
-            Worker worker = serviceRegistry.waitForServiceAndGet(Service.ServiceType.WORKER).unwrap();
+            Worker worker = serviceRegistry.waitForServiceAndGet(ServiceType.WORKER).unwrap();
 
             final WorkerInstance workerInstance = new WorkerInstance(worker.getId(), worker.getWorkerGroup());
 

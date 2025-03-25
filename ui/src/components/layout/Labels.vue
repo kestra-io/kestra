@@ -48,7 +48,7 @@
     };
 
     const updateLabel = (label: Label) => {
-        const getKey = (key: string) => `filters[labels][$eq][${key}]`;
+        const getKey = (key: string) => `filters[labels][EQUALS][${key}]`;
 
         if (isChecked(label)) {
             const replacementQuery = {...route.query};

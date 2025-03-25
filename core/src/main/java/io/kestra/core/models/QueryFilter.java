@@ -1,9 +1,15 @@
 package io.kestra.core.models;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonValue;
+import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.utils.Enums;
 import lombok.Builder;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -13,33 +19,63 @@ public record QueryFilter(
     Op operation,
     Object value
 ) {
+
+    @JsonCreator
+    public QueryFilter(
+        @JsonProperty("field") Field field,
+        @JsonProperty("operation") Op operation,
+        @JsonProperty("value") Object value
+    ) {
+        this.field = field;
+        this.operation = operation;
+        this.value = value;
+    }
+
     public enum Op {
-        EQUALS("$eq"),
-        NOT_EQUALS("$ne"),
-        GREATER_THAN("$gte"),
-        LESS_THAN("$lte"),
-        IN("$in"),
-        NOT_IN("$notIn"),
-        STARTS_WITH("$startsWith"),
-        ENDS_WITH("$endsWith"),
-        CONTAINS("$contains"),
-        REGEX("$regex");
+        EQUALS,
+        NOT_EQUALS,
+        GREATER_THAN,
+        LESS_THAN,
+        GREATER_THAN_OR_EQUAL_TO,
+        LESS_THAN_OR_EQUAL_TO,
+        IN,
+        NOT_IN,
+        STARTS_WITH,
+        ENDS_WITH,
+        CONTAINS,
+        REGEX;
+    }
 
-        private static final Map<String, Op> BY_VALUE = Arrays.stream(values())
-            .collect(Collectors.toMap(Op::value, Function.identity()));
 
-        private final String value;
-
-        Op(String value) {
-            this.value = value;
-        }
-
-        public static Op fromString(String value) {
-            return Enums.fromString(value, BY_VALUE, "operation");
-        }
-
-        public String value() {
-            return value;
+    @SuppressWarnings("unchecked")
+    public <T extends Enum<T>> AbstractFilter<T> toDashboardFilterBuilder(T field, Object value) {
+        switch (this.operation) {
+            case EQUALS:
+                return EqualTo.<T>builder().field(field).value(value).build();
+            case NOT_EQUALS:
+                return NotEqualTo.<T>builder().field(field).value(value).build();
+            case GREATER_THAN:
+                return GreaterThan.<T>builder().field(field).value(value).build();
+            case LESS_THAN:
+                return LessThan.<T>builder().field(field).value(value).build();
+            case GREATER_THAN_OR_EQUAL_TO:
+                return GreaterThanOrEqualTo.<T>builder().field(field).value(value).build();
+            case LESS_THAN_OR_EQUAL_TO:
+                return LessThanOrEqualTo.<T>builder().field(field).value(value).build();
+            case IN:
+                return In.<T>builder().field(field).values((List<Object>) value).build();
+            case NOT_IN:
+                return NotIn.<T>builder().field(field).values((List<Object>) value).build();
+            case STARTS_WITH:
+                return StartsWith.<T>builder().field(field).value(value.toString()).build();
+            case ENDS_WITH:
+                return EndsWith.<T>builder().field(field).value(value.toString()).build();
+            case CONTAINS:
+                return Contains.<T>builder().field(field).value(value.toString()).build();
+            case REGEX:
+                return Regex.<T>builder().field(field).value(value.toString()).build();
+            default:
+                throw new IllegalArgumentException("Unsupported operation: " + this.operation);
         }
     }
 
@@ -147,15 +183,16 @@ public record QueryFilter(
             this.value = value;
         }
 
+        @JsonCreator
         public static Field fromString(String value) {
             return Enums.fromString(value, BY_VALUE, "field");
         }
 
+        @JsonValue
         public String value() {
             return value;
         }
     }
-
 
     public enum Resource {
         FLOW {
@@ -239,12 +276,17 @@ public record QueryFilter(
         }
 
         private static Operation toOperation(Op op) {
-            return new Operation(op.name(), op.value());
+            return new Operation(op.name(), op.name());
         }
     }
 
-    public record ResourceField(String name, List<FieldOp> fields) {}
-    public record FieldOp(String name, String value, List<Operation> operations) {}
-    public record Operation(String name, String value) {}
+    public record ResourceField(String name, List<FieldOp> fields) {
+    }
+
+    public record FieldOp(String name, String value, List<Operation> operations) {
+    }
+
+    public record Operation(String name, String value) {
+    }
 
 }

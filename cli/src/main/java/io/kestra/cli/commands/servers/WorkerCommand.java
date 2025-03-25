@@ -1,13 +1,11 @@
 package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
-import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -18,7 +16,6 @@ import java.util.UUID;
     name = "worker",
     description = "Start the Kestra worker"
 )
-@Slf4j
 public class WorkerCommand extends AbstractServerCommand {
 
     @Inject
@@ -50,13 +47,6 @@ public class WorkerCommand extends AbstractServerCommand {
         applicationContext.registerSingleton(worker);
 
         worker.run();
-
-        if (this.workerGroupKey != null) {
-            log.info("Worker started with {} thread(s) in group '{}'", this.thread, this.workerGroupKey);
-        }
-        else {
-            log.info("Worker started with {} thread(s)", this.thread);
-        }
 
         Await.until(() -> !this.applicationContext.isRunning());
 

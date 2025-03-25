@@ -313,7 +313,8 @@ public class FlowController {
                 .stream()
                 .map(flow -> FlowWithSource.of(yamlParser.parse(flow, Flow.class), flow.trim()))
                 .toList(),
-            delete
+            delete,
+            false
         );
     }
 
@@ -345,22 +346,24 @@ public class FlowController {
                     .stream()
                     .map(throwFunction(flow -> FlowWithSource.of(flow, flow.generateSource())))
                     .toList(),
-                delete
+                delete,
+                false
             )
             .stream()
             .map(FlowWithSource::toFlow)
             .toList();
     }
 
-    protected List<FlowWithSource> bulkUpdateOrCreate(@Nullable String namespace, List<FlowWithSource> flows, Boolean delete) {
+    protected List<FlowWithSource> bulkUpdateOrCreate(@Nullable String namespace, List<FlowWithSource> flows, Boolean delete, Boolean allowNamespaceChild) {
 
         if (namespace != null) {
             // control namespace to update
             Set<ManualConstraintViolation<Flow>> invalids = flows
                 .stream()
-                .filter(flow -> !flow.getNamespace().equals(namespace))
+                .filter(flow ->
+                    !flow.getNamespace().equals(namespace) && (!flow.getNamespace().startsWith(namespace) || !allowNamespaceChild))
                 .map(flow -> ManualConstraintViolation.of(
-                    "Flow namespace is invalid",
+                    String.format("%s - flow namespace is invalid", flow.uid()),
                     flow,
                     Flow.class,
                     "flow.namespace",
@@ -482,17 +485,20 @@ public class FlowController {
     )
     public List<FlowWithSource> bulkUpdate(
         @Parameter(description = "A list of flows") @Body @Nullable String flows,
-        @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
+        @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete,
+        @Parameter(description = "The namespace where to update flows") @QueryValue @Nullable String namespace,
+        @Parameter(description = "If namespace child should are allowed to be updated") @QueryValue(defaultValue = "false") Boolean allowNamespaceChild
     ) throws ConstraintViolationException {
         List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
 
         return this.bulkUpdateOrCreate(
-            null,
+            namespace,
             sources
                 .stream()
                 .map(flow -> FlowWithSource.of(yamlParser.parse(flow, Flow.class), flow.trim()))
                 .toList(),
-            delete
+            delete,
+            allowNamespaceChild
         );
     }
 
@@ -589,7 +595,7 @@ public class FlowController {
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
 
                 try {
-                    Flow flowParse = yamlParser.parse(flow, Flow.class);
+                    Flow flowParse = parseFlow(flow);
                     Integer sentRevision = flowParse.getRevision();
                     if (sentRevision != null) {
                         Integer lastRevision = Optional.ofNullable(flowRepository.lastRevision(tenantService.resolveTenant(), flowParse.getNamespace(), flowParse.getId()))
@@ -617,6 +623,10 @@ public class FlowController {
                 return validateConstraintViolationBuilder.build();
             })
             .collect(Collectors.toList());
+    }
+
+    protected Flow parseFlow(String flow) {
+        return yamlParser.parse(flow, Flow.class);
     }
 
     // This endpoint is not used by the Kestra UI nor our CLI but is provided for the API users for convenience

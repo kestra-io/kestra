@@ -144,6 +144,7 @@
     "continue backfill": "继续回填",
     "continue backfills": "继续回填",
     "copied": "已复制",
+    "copied_logs_to_clipboard": "已将日志复制到剪贴板。",
     "copy": "复制",
     "copy logs": "复制日志",
     "copy url": "复制 URL",
@@ -243,7 +244,6 @@
     "delete backfill": "删除回填",
     "delete backfills": "删除回填",
     "delete confirm": "确定要删除 <code>{name}</code> 吗？",
-    "delete confirm multiple": "您确定要删除<code>{name}</code> KV吗？",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">此执行仍在运行，删除它不会停止它。<br />你需要终止执行以停止它。</div>",
     "delete logs": "删除日志",
     "delete ok": "已删除",
@@ -301,6 +301,10 @@
           "message": "在 Kestra 企业版中，您可以定义和管理 namespace 级别的变量，以消除跨 flow 的重复配置。这些变量确保了一致性，简化了配置更新，并且可以被任何 task 或 trigger 轻松引用，从而实现更简洁、更易维护的工作流。",
           "title": "集中管理您的变量"
         }
+      },
+      "secrets": {
+        "message": "企业版 (EE) 允许您直接在UI中添加、编辑或删除秘密，无需重启实例。通过细粒度的RBAC权限按namespace组织秘密，并从父namespace继承到子namespace。EE与HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager和Elasticsearch等秘密管理器集成。为每个namespace、tenant或实例设置专用后端，以隔离团队之间的秘密，或启用存储在外部vault中的只读秘密。秘密在静态和传输中保持加密。可选的缓存减少API调用，并且审计跟踪记录所有访问。",
+        "title": "升级您的Secrets管理"
       },
       "tenants": {
         "message": "Kestra 企业版支持多租户，为不同的团队或项目提供完全隔离的环境，每个环境都有自己的资源，如专用的worker组、密钥和内部存储后端。",
@@ -638,6 +642,10 @@
     "killed done": "执行已排队终止",
     "kv": {
       "add": "新建键值",
+      "delete multiple": {
+        "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
+        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
+      },
       "duplicate": "此键已存在",
       "name": "键值存储",
       "type": "类型",
@@ -1003,8 +1011,11 @@
     "search term in message": "在消息中搜索术语",
     "seconds": "秒钟",
     "secret": {
+      "add": "新密钥",
       "inherited": "继承的秘密",
-      "names": "秘密"
+      "isReadOnly": "Secret 是只读的",
+      "names": "秘密",
+      "update": "更新密钥 '{name}'"
     },
     "security_advice": {
       "content": "启用基本认证来保护你的实例。",
@@ -1037,7 +1048,8 @@
             "flow_default_tab": "默认 Flow 标签页",
             "language": "语言",
             "log_display": "默认日志显示",
-            "log_level": "默认日志级别"
+            "log_level": "默认日志级别",
+            "multi_panel_editor": "多面板编辑器"
           },
           "label": "主要配置"
         },

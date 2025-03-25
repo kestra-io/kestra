@@ -144,6 +144,7 @@
     "continue backfill": "backfillを続行",
     "continue backfills": "backfillを続行",
     "copied": "コピーされました",
+    "copied_logs_to_clipboard": "クリップボードにログをコピーしました。",
     "copy": "コピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",
@@ -243,7 +244,6 @@
     "delete backfill": "backfillを削除",
     "delete backfills": "backfillを削除",
     "delete confirm": "<code>{name}</code>を削除してもよろしいですか？",
-    "delete confirm multiple": "<code>{name}</code> KV(s) を削除してもよろしいですか？",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">この実行はまだRUNNINGです。削除しても停止しません。<br />実行を停止するには、実行をkillする必要があります。</div>",
     "delete logs": "Logsを削除",
     "delete ok": "削除されました",
@@ -301,6 +301,10 @@
           "message": "Kestra Enterprise Editionでは、namespaceレベルの変数を定義および管理することで、flow全体での繰り返しの設定を排除できます。これらの変数は一貫性を確保し、設定の更新を簡素化し、どのtaskやtriggerからも簡単に参照できるため、よりクリーンで保守しやすいワークフローを実現します。",
           "title": "変数を中央で管理する"
         }
+      },
+      "secrets": {
+        "message": "エンタープライズエディション (EE) では、UIで直接シークレットを追加、編集、または削除できます。インスタンスの再起動は不要です。シークレットをnamespaceごとに整理し、詳細なRBAC権限を設定し、親namespaceから子namespaceに継承します。EEは、HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager、Elasticsearchなどのシークレットマネージャーと統合します。namespace、テナント、またはインスタンスごとに専用のバックエンドを設定して、チーム間でシークレットを分離するか、外部のvaultに保存された読み取り専用のシークレットを有効にします。シークレットは、保存時および転送時に暗号化されたままです。オプションのキャッシュによりAPIコールが削減され、監査証跡がすべてのアクセスをログに記録します。",
+        "title": "シークレット管理をアップグレード"
       },
       "tenants": {
         "message": "Kestra Enterprise Editionはマルチテナンシーをサポートしており、異なるチームやプロジェクトごとに完全に分離された環境を提供します。それぞれの環境には、専用のworkerグループやシークレット、内部ストレージバックエンドなどのリソースが含まれます。",
@@ -638,6 +642,10 @@
     "killed done": "実行はキルのためにキューに入れられました",
     "kv": {
       "add": "新しいKey-Value",
+      "delete multiple": {
+        "confirm": "本当に削除しますか: <code>{name}</code> KV(s)?",
+        "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
+      },
       "duplicate": "このキーは既に存在します",
       "name": "KV Store",
       "type": "タイプ",
@@ -1003,8 +1011,11 @@
     "search term in message": "メッセージ内の検索語",
     "seconds": "秒",
     "secret": {
+      "add": "新しいシークレット",
       "inherited": "継承されたsecrets",
-      "names": "Secrets"
+      "isReadOnly": "シークレットは読み取り専用です",
+      "names": "Secrets",
+      "update": "シークレット '{name}' を更新"
     },
     "security_advice": {
       "content": "インスタンスを保護するために基本認証を有効にしてください。",
@@ -1037,7 +1048,8 @@
             "flow_default_tab": "デフォルト Flow タブ",
             "language": "言語",
             "log_display": "デフォルトLog表示",
-            "log_level": "デフォルトLogレベル"
+            "log_level": "デフォルトLogレベル",
+            "multi_panel_editor": "マルチパネルエディタ"
           },
           "label": "メイン設定"
         },

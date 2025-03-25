@@ -1,6 +1,6 @@
 import axios from "axios";
 import NProgress from "nprogress"
-import {storageKeys} from "./constants.js";
+import {storageKeys} from "./constants";
 
 // nprogress
 let requestsTotal = 0
@@ -98,11 +98,13 @@ export default (callback, store, router) => {
 
             if (errorResponse.response.status === 401
                 && !store.getters["auth/isLogged"]) {
-                if (window.location.pathname.startsWith("/ui/login")) {
+                const base_path = window.KESTRA_BASE_PATH.endsWith("/") ? window.KESTRA_BASE_PATH.slice(0, -1) : window.KESTRA_BASE_PATH;
+
+                if (window.location.pathname.startsWith(base_path + "/ui/login")) {
                     return Promise.reject(errorResponse);
                 }
 
-                window.location = `/ui/login?from=${window.location.pathname +
+                window.location = `${base_path}/ui/login?from=${window.location.pathname +
                 (window.location.search ?? "")}`
             }
 

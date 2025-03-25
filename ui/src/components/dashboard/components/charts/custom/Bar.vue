@@ -22,10 +22,10 @@
     import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
-    import moment from "moment";
 
     import {useRoute} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
+    import {decodeSearchParams} from "../../../../filter/utils/helpers";
 
     const store = useStore();
 
@@ -156,28 +156,19 @@
     const generated = ref();
     const generate = async () => {
         if (!props.isPreview) {
-            const params = {
+            let params = {
                 id: dashboard.value.id,
-                chartId: props.chart.id,
-                startDate: route.query.timeRange
-                    ? moment()
-                        .subtract(
-                            moment.duration(route.query.timeRange).as("milliseconds"),
-                        )
-                        .toISOString(true)
-                    : route.query.startDate ||
-                        moment()
-                            .subtract(moment.duration("PT720H").as("milliseconds"))
-                            .toISOString(true),
-                endDate: route.query.timeRange
-                    ? moment().toISOString(true)
-                    : route.query.endDate || moment().toISOString(true),
+                chartId: props.chart.id
             };
             if (route.query.namespace) {
                 params.namespace = route.query.namespace;
             }
             if (route.query.labels) {
                 params.labels = Object.fromEntries(route.query.labels.map(l => l.split(":")));
+            }
+            let decodedParams = decodeSearchParams(route.query, undefined, []);
+            if (decodedParams) {
+                params = {...params, filters: decodedParams}
             }
             generated.value = await store.dispatch("dashboard/generate", params);
         }

@@ -1,21 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import static io.kestra.core.utils.Rethrow.throwRunnable;
-import static io.micronaut.http.HttpRequest.GET;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.hamcrest.Matchers.startsWith;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -61,15 +45,18 @@ import io.micronaut.reactor.http.client.ReactorHttpClient;
 import io.micronaut.reactor.http.client.ReactorSseClient;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import lombok.extern.slf4j.Slf4j;
+import org.hamcrest.Matcher;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
+import reactor.core.publisher.Flux;
+
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -77,12 +64,12 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import lombok.extern.slf4j.Slf4j;
-import org.hamcrest.Matcher;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.RetryingTest;
-import reactor.core.publisher.Flux;
+import static io.kestra.core.utils.Rethrow.throwRunnable;
+import static io.micronaut.http.HttpRequest.GET;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
 @KestraTest(startRunner = true)
@@ -1117,7 +1104,7 @@ class ExecutionControllerRunnerTest {
 
         // + is there to simulate that a space was added (this can be the case from UI autocompletion for eg.)
         executions = client.toBlocking().retrieve(
-            GET("/api/v1/executions/search?page=1&size=25&filters[labels][$eq][url]="+ENCODED_URL_LABEL_VALUE), PagedResults.class
+            GET("/api/v1/executions/search?page=1&size=25&filters[labels][EQUALS][url]="+ENCODED_URL_LABEL_VALUE), PagedResults.class
         );
 
         assertThat(executions.getTotal(), is(1L));
@@ -1130,7 +1117,7 @@ class ExecutionControllerRunnerTest {
 
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?filters[startDate][$eq]=2024-01-07T18:43:11.248%2B01:00&filters[timeRange][$eq]=PT12H"))
+            () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?filters[startDate][EQUALS]=2024-01-07T18:43:11.248%2B01:00&filters[timeRange][EQUALS]=PT12H"))
         );
 
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
@@ -1138,7 +1125,7 @@ class ExecutionControllerRunnerTest {
         assertThat(e.getResponse().getBody(String.class).get(), containsString("are mutually exclusive"));
 
         executions = client.toBlocking().retrieve(
-            GET("/api/v1/executions/search?filters[timeRange][$eq]=PT12H"), PagedResults.class
+            GET("/api/v1/executions/search?filters[timeRange][EQUALS]=PT12H"), PagedResults.class
         );
 
         assertThat(executions.getTotal(), is(1L));
@@ -1151,7 +1138,7 @@ class ExecutionControllerRunnerTest {
 
         e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?filters[timeRange][$eq]=P1Y"))
+            () -> client.toBlocking().retrieve(GET("/api/v1/executions/search?filters[timeRange][EQUALS]=P1Y"))
         );
         assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
 

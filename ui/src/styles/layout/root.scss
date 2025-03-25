@@ -112,6 +112,16 @@ $logLevels: "trace", "debug", "info", "warn", "error";
     min-width: auto !important;
 }
 
+.fill-height {
+    flex: 1;
+    min-height: 0;
+}
+
+.fill-width {
+    flex: 1;
+    min-width: 0;
+}
+
 .text-tertiary {
     color: var(--ks-content-tertiary);
 }

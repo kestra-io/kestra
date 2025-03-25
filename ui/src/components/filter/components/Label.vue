@@ -28,7 +28,7 @@
 
     const UNKNOWN = "unknown";
 
-    const label = computed(() => props.option.label);
+    const label = computed(() => props.option.label ?? props.option.field);
     const operation = computed(() => props.option?.operation ?? props.option?.comparator?.value ?? (props.option?.label === "text" ? "$eq" : undefined));
     const value = computed(() => {
         const {value, label, operation} = props.option;
@@ -38,6 +38,9 @@
             return Array.isArray(value) && value.length === 1 ? value[0] : value;
         }
         if (label !== "absolute_date" && operation !== "between") {
+            if (typeof value === "string") {
+                return value;
+            }
             return `${value.join(", ")}`;
         }
 

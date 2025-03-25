@@ -5,4 +5,5 @@ export default {
     NAMESPACE: "NAMESPACE",
     KVSTORE: "KVSTORE",
     DASHBOARD: "DASHBOARD",
+    SECRET: "SECRET",
 }

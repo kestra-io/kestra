@@ -91,7 +91,7 @@ public class PluginInstallCommand extends AbstractCommand {
 
         if (dependencies.isEmpty()) {
             stdErr("Error: No plugin to install.");
-            return CommandLine.ExitCode.SOFTWARE;
+            return CommandLine.ExitCode.OK;
         }
 
         final List<PluginArtifact> pluginArtifacts;

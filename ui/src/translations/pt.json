@@ -144,6 +144,7 @@
     "continue backfill": "Continuar o backfill",
     "continue backfills": "Continuar backfills",
     "copied": "Copiado",
+    "copied_logs_to_clipboard": "Logs copiados para a área de transferência.",
     "copy": "Copiar",
     "copy logs": "Copiar logs",
     "copy url": "Copiar URL",
@@ -243,7 +244,6 @@
     "delete backfill": "Deletar o backfill",
     "delete backfills": "Deletar backfills",
     "delete confirm": "Tem certeza de que deseja deletar <code>{name}</code>?",
-    "delete confirm multiple": "Tem certeza de que deseja excluir o(s) <code>{name}</code> KV(s)?",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Esta execução ainda está RUNNING, deletá-la não irá pará-la.<br />Você precisa matar a execução para pará-la.</div>",
     "delete logs": "Deletar logs",
     "delete ok": "está deletado",
@@ -301,6 +301,10 @@
           "message": "Na Kestra Enterprise Edition, você pode definir e gerenciar variáveis no nível do namespace para eliminar configurações repetitivas em flows. Essas variáveis garantem consistência, simplificam atualizações de configuração e podem ser facilmente referenciadas por qualquer task ou trigger para workflows mais limpos e fáceis de manter.",
           "title": "Governe Centralmente Suas Variáveis"
         }
+      },
+      "secrets": {
+        "message": "A Enterprise Edition (EE) permite adicionar, editar ou excluir segredos diretamente na UI—sem necessidade de reiniciar a instância. Organize segredos por namespace com permissões RBAC granulares e herde-os de namespaces pai para filho. A EE integra-se com gerenciadores de segredos como HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager e Elasticsearch. Configure backends dedicados por namespace, tenant ou instância para isolar segredos entre equipes, ou habilite segredos somente leitura armazenados em cofres externos. Os segredos permanecem criptografados em repouso e em trânsito. O cache opcional reduz chamadas de API, e trilhas de auditoria registram todo o acesso.",
+        "title": "Atualize seu Gerenciamento de Secrets"
       },
       "tenants": {
         "message": "A Kestra Enterprise Edition suporta multi-tenancy, proporcionando ambientes totalmente isolados para diferentes equipes ou projetos, cada um com seus próprios recursos, como grupos de worker dedicados ou segredos e backends de armazenamento interno.",
@@ -638,6 +642,10 @@
     "killed done": "Execução está na fila para ser morta",
     "kv": {
       "add": "Novo Key-Value",
+      "delete multiple": {
+        "confirm": "Tem certeza de que deseja excluir: <code>{name}</code> KV(s)?",
+        "warning": "Você não tem permissões para esses namespaces, então eles serão omitidos: <code>{namespaces}</code>"
+      },
       "duplicate": "Esta key já existe",
       "name": "KV Store",
       "type": "Tipo",
@@ -1003,8 +1011,11 @@
     "search term in message": "Termo de busca na mensagem",
     "seconds": "Segundos",
     "secret": {
+      "add": "Novo segredo",
       "inherited": "Segredos herdados",
-      "names": "Segredos"
+      "isReadOnly": "O segredo é somente leitura",
+      "names": "Segredos",
+      "update": "Atualizar segredo '{name}'"
     },
     "security_advice": {
       "content": "Ative a autenticação básica para proteger sua instância.",
@@ -1037,7 +1048,8 @@
             "flow_default_tab": "Aba Padrão do Flow",
             "language": "Idioma",
             "log_display": "Exibição de Log Padrão",
-            "log_level": "Nível de Log Padrão"
+            "log_level": "Nível de Log Padrão",
+            "multi_panel_editor": "Editor de Painel Múltiplo"
           },
           "label": "Configuração Principal"
         },

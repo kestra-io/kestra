@@ -3,6 +3,7 @@ package io.kestra.core.models;
 import io.kestra.core.utils.MapUtils;
 import jakarta.validation.constraints.NotNull;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -45,5 +46,20 @@ public record Label(@NotNull String key, @NotNull String value) {
             .stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();
+    }
+
+    /**
+     * Static helper method for converting a label string to a map.
+     *
+     * @param label The label string.
+     * @return The map of key/value labels.
+     */
+    public static Map<String, String> from(String label) {
+        Map<String, String> map = new HashMap<>();
+        String[] keyValueArray = label.split(":");
+        if (keyValueArray.length == 2) {
+            map.put(keyValueArray[0], keyValueArray[1]);
+        }
+        return map;
     }
 }

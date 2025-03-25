@@ -203,8 +203,8 @@
     import {useStore} from "vuex";
     import {useRoute, useRouter} from "vue-router";
     import {useFilters} from "./composables/useFilters";
-    import action from "../../models/action.js";
-    import permission from "../../models/permission.js";
+    import action from "../../models/action";
+    import permission from "../../models/permission";
     import {useValues} from "./composables/useValues";
     import {decodeParams, encodeParams} from "./utils/helpers";
 
@@ -242,12 +242,13 @@
         },
         placeholder: {type: String, default: undefined},
         searchCallback: {type: Function, default: undefined},
+        isDefaultDashboard: {type: Boolean, default: false}
     });
 
     const TEXT_PREFIX = `${t("filters.text_search")}: `;
     const ITEMS_PREFIX = props.prefix ?? String(route.name);
 
-    const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX);
+    const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX, props.isDefaultDashboard);
 
     const prefixFilteredValueOptions = computed(() => {
         if (prefixFilter.value === "") {
@@ -642,6 +643,7 @@
                     q,
                     props.include,
                     OPTIONS,
+                    props.isDefaultDashboard
                 );
                 currentFilters.value = routeFilters;
             }
@@ -672,7 +674,7 @@
         (options) => {
             if (options.length || !dropdowns.value.first?.shown) return;
 
-            if (!getInputValue()?.startsWith(TEXT_PREFIX) && select.value) {
+            if (!getInputValue()?.startsWith(TEXT_PREFIX) && select.value && !props.searchCallback) {
                 select.value.states.inputValue = `${TEXT_PREFIX}${getInputValue()}`;
             }
         },
@@ -701,9 +703,9 @@
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
-                const index = currentFilters.value.findIndex(
-                    (i) => i.label === label,
-                );
+                const index = currentFilters.value.findIndex((i) => {
+                    return i.label === label;
+                });
 
                 const value = wholeSearchContent
                     .at(-1)
@@ -741,7 +743,7 @@
         if (props.searchCallback) return;
         else {
             router.push({
-                query: encodeParams(route.name, currentFilters.value, OPTIONS),
+                query: encodeParams(route.name, currentFilters.value, OPTIONS, props.isDefaultDashboard),
             });
         }
     };
@@ -754,6 +756,7 @@
                 route.query,
                 props.include,
                 OPTIONS,
+                props.isDefaultDashboard
             );
             currentFilters.value = decodedParams.map((item: any) => {
                 if (item.label === "absolute_date") {

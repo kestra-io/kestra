@@ -54,8 +54,8 @@
     import {State} from "@kestra-io/ui-libs"
 
     import {filterLabels} from "./utils"
-    import permission from "../../models/permission.js";
-    import action from "../../models/action.js";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
 
     export default {
         components: {LabelInput},
@@ -76,7 +76,7 @@
         methods: {
             setLabels() {
                 let filtered = filterLabels(this.executionLabels)
-                
+
                 if(filtered.error) {
                     filtered.labels = filtered.labels.filter(obj => !(obj.key === null && obj.value === null));
                 }

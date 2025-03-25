@@ -130,8 +130,8 @@
 <style lang="scss" scoped>
 
     .multi-panel-editor-wrapper{
-        display: flex;
-        flex-direction: column;
+        display: grid;
+        grid-template-rows: auto 1fr;
         height: 100%;
     }
 

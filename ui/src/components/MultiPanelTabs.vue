@@ -435,6 +435,8 @@
     .default-theme{
         .splitpanes__pane {
             background-color: var(--ks-background-card);
+            display: grid;
+            grid-template-rows: auto 1fr;
         }
 
         :deep(.splitpanes__splitter){

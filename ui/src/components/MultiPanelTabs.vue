@@ -38,7 +38,7 @@
                     </template>
                 </div>
                 <button
-                    v-if="panel.tabs.length > 1"
+                    v-if="panel.tabs.filter(t => !t.potential).length > 1"
                     @click="splitPanel(panelIndex)"
                     class="split_right"
                     title="Split panel"

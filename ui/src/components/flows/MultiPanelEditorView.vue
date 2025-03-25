@@ -76,11 +76,7 @@
     const panels: Ref<Panel[]> = useStorage<any>(
         `panels-${flow.value.namespace}-${flow.value.id}`,
         DEFAULT_ACTIVE_TABS
-            .map((t):Panel =>
-                ({
-                    ...getPanelFromValue(t).panel,
-                    size: 100 / DEFAULT_ACTIVE_TABS.length
-                })),
+            .map((t):Panel => getPanelFromValue(t).panel),
         undefined,
         {
             serializer: {

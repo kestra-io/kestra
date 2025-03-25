@@ -10,6 +10,7 @@
                     @drop="drop"
                     :data-panel-index="panelIndex"
                     :class="{dragover: panel.dragover}"
+                    ref="tabContainerRefs"
                 >
                     <template
                         v-for="tab in panel.tabs"
@@ -24,7 +25,6 @@
                             @dragstart="() => dragstart(panelIndex, tab.value)"
                             @dragend="cleanUp"
                             :data-tab-id="tab.value"
-                            ref="tabRefs"
                             @click="panel.activeTab = tab"
                         >
                             <component :is="tab.button.icon" class="tab-icon" />
@@ -113,7 +113,7 @@
 
     const movedTabInfo = ref<TabInfo | null>(null);
     const dragging = ref(false);
-    const tabRefs = ref<HTMLDivElement[]>([]);
+    const tabContainerRefs = ref<HTMLDivElement[]>([]);
 
     function onResize(e: {size:number}[]) {
         let i = 0;
@@ -150,7 +150,16 @@
         }
     }
 
+    const mouseXRef = ref(0)
+
     function dragover(e: DragEvent) {
+        // if mouse has not moved vertically, stop the processing
+        // this will be triggered every few ms so perf and readability will be paramount
+        if(mouseXRef.value === e.clientX){
+            return
+        }
+        mouseXRef.value = e.clientX
+
         if(!movedTabInfo.value){
             return
         }
@@ -160,29 +169,32 @@
             return
         }
 
-        const refsInPanel = tabRefs.value.filter((ref) => (ref.parentNode as HTMLElement).dataset.panelIndex === panelIndex.toString());
+
+        const activePanel = tabContainerRefs.value.find((ref) => ref.dataset.panelIndex === panelIndex.toString());
+        const tabsInPanel = Array.from(activePanel?.querySelectorAll(".editor-tab") || []) as HTMLElement[];
 
         let insertTabAfterIndex = -1
         let i = 0;
-        for(const tab of refsInPanel){
+        const mouseX = e.clientX
+        for(const tab of tabsInPanel){
             const br = tab.getBoundingClientRect();
             // get the X position of the middle of the tab
             const middle = br.left + br.width / 2;
             // if we are beyond the middle of the last tab
-            if(e.clientX > middle && i === refsInPanel.length - 1){
+            if(mouseX > middle && i === tabsInPanel.length - 1){
                 insertTabAfterIndex = i;
                 break;
             } else
                 // if we are before the middle of the first tab
-                if(e.clientX < middle && i === 0){
+                if(mouseX < middle && i === 0){
                     insertTabAfterIndex = i - 1;
                     break;
                 }else
                     // figure out if we should insert the tab between the current and the next tab
-                    if(e.clientX > middle && refsInPanel[i + 1]){
-                        const nextBr = refsInPanel[i + 1].getBoundingClientRect();
+                    if(mouseX > middle && tabsInPanel[i + 1]){
+                        const nextBr = tabsInPanel[i + 1].getBoundingClientRect();
                         const middleNext = nextBr.left + nextBr.width / 2;
-                        if(e.clientX < middleNext){
+                        if(mouseX < middleNext){
                             insertTabAfterIndex = i;
                             break;
                         }

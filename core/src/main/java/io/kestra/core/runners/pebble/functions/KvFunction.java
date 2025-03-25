@@ -43,13 +43,19 @@ public class KvFunction implements Function {
         String flowTenantId = flow.get("tenantId");
 
         // we didn't check allowedNamespace here as it's checked in the kvStoreService itself
-        if (namespace == null) {
-            namespace = flowNamespace;
-        }
 
-        Optional<KVValue> value;
+        Optional<KVValue> value = Optional.empty();
         try {
-            value = kvStoreService.get(flowTenantId, namespace, flowNamespace).getValue(key);
+            if (namespace == null) {
+                namespace = flowNamespace;
+                String inheritedNamespace = namespace;
+                while (value.isEmpty() && inheritedNamespace.contains(".")) {
+                    value = kvStoreService.get(flowTenantId, inheritedNamespace, flowNamespace).getValue(key);
+                    inheritedNamespace = inheritedNamespace.substring(0, inheritedNamespace.lastIndexOf('.'));
+                }
+            } else {
+                value = kvStoreService.get(flowTenantId, namespace, flowNamespace).getValue(key);
+            }
         } catch (Exception e) {
             throw new PebbleException(e, e.getMessage(), lineNumber, self.getName());
         }

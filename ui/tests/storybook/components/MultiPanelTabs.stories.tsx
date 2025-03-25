@@ -308,6 +308,9 @@ export const TabMoveBetweenPanelsTest: Story = {
                 within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab")
                     .map(tab => tab.textContent?.trim())
             ).toMatchObject(["Tab 1", "Tab 4", "Tab 5", "Tab 6", "Tab 2"]);
+
+            // Verify that the original active tab is now changed
+            expect(canvas.getByText("Content for Tab 3")).toBeInTheDocument();
         }
 
 

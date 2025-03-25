@@ -285,7 +285,7 @@
             // we need to select another active tab
             if(panels.value[originalPanelIndex].activeTab.value === movedTab.value){
                 // if the tab at the same index is available, select it
-                if(tabIndex > 0 && panels.value[originalPanelIndex].tabs.length > tabIndex - 1){
+                if(tabIndex >= 0 && panels.value[originalPanelIndex].tabs.length > tabIndex){
                     panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[tabIndex];
                 } else
                     // if it would fall out of bounds, use the previous tab
@@ -378,6 +378,7 @@
         align-items: end;
         padding-bottom: 0;
         font-size: .8rem;
+        border-left: 1px solid var(--ks-border-primary);
         line-height: 1.5rem;
         overflow-x: auto;
         scrollbar-width: none;
@@ -389,7 +390,7 @@
     .editor-tabs .editor-tab{
         padding: 3px .5rem;
         border: none;
-        border-left: 1px solid var(--ks-border-primary);
+        border-right: 1px solid var(--ks-border-primary);
         border-radius: 2px 2px 0 0;
         border-bottom: none;
         background-color: var(--ks-background-card);
@@ -422,7 +423,7 @@
         z-index: 1;
         position: absolute;
         opacity: .6;
-        left: .5px;
+        left: -.5px;
         bottom: 0;
         border-radius: 2px 2px 0 0;
         width: 4px;

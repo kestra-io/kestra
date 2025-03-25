@@ -9,7 +9,6 @@ import io.kestra.core.models.executions.metrics.Timer;
 import io.micronaut.data.model.Pageable;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
@@ -17,6 +16,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
@@ -94,6 +94,20 @@ public abstract class AbstractMetricRepositoryTest {
          assertThat(taskMetricsNames.size(), is(1));
          assertThat(tasksWithMetrics.size(), is(2));
      }
+
+    @Test
+    void findAllAsync() {
+        String executionId = FriendlyId.createFriendlyId();
+        TaskRun taskRun1 = taskRun(executionId, "task");
+        MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"));
+        TaskRun taskRun2 = taskRun(executionId, "task");
+        MetricEntry timer = MetricEntry.of(taskRun2, timer());
+        metricRepository.save(counter);
+        metricRepository.save(timer);
+
+        List<MetricEntry> results = metricRepository.findAllAsync(null).collectList().block();
+        assertThat(results, hasSize(2));
+    }
 
     private Counter counter(String metricName) {
         return Counter.of(metricName, 1);

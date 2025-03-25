@@ -44,7 +44,7 @@
                         :min-item-size="1"
                         key-field="index"
                         class="log-lines"
-                        :style="{maxHeight: currentTaskRuns.length === 1 ? '100vh' : '50vh'}"
+                        :style="{maxHeight: currentTaskRuns.length === 1 ? 'calc(100vh - 350px)' : '50vh'}"
                         :ref="el => logsScrollerRef(el, currentTaskRunIndex, attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
                         @resize="scrollToBottomFailedTask"
                     >

@@ -41,10 +41,7 @@ import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -300,7 +297,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 } else if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
                     select = select.and(findCondition(labels, operation));
                 else
-                    select = getConditionOnField(select, field, value, operation, "start_date");
+                    select = getConditionOnField(select, field, value, operation, "\"start_date\"");
             }
 
         return select;

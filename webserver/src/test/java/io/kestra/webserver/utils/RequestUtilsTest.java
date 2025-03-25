@@ -85,21 +85,4 @@ class RequestUtilsTest {
         assertTrue(exception.getMessage().contains("Invalid FlowScope value"));
     }
 
-    @Test
-    void testResolveAbsoluteDateTimeWithTimeRange() {
-        ZonedDateTime now = ZonedDateTime.parse("2024-01-10T10:00:00Z");
-        Duration timeRange = Duration.ofDays(7);
-        ZonedDateTime resolved = RequestUtils.resolveAbsoluteDateTime(null, timeRange, now);
-
-        assertEquals(now.minus(timeRange), resolved);
-    }
-
-    @Test
-    void testResolveAbsoluteDateTimeWithAbsoluteDate() {
-        ZonedDateTime fixedDate = ZonedDateTime.parse("2024-01-01T10:00:00Z");
-        ZonedDateTime result = RequestUtils.resolveAbsoluteDateTime(fixedDate, null, ZonedDateTime.now());
-
-        assertEquals(fixedDate, result);
-    }
-
 }

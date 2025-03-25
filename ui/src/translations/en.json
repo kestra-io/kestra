@@ -1116,6 +1116,7 @@
       },
       "save": {
         "label": "Saved searches",
+        "remove": "Remove",
         "empty": "You still haven't saved any search.",
         "tooltip": "You can't save empty search criteria.",
         "dialog": {

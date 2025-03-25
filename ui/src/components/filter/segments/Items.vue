@@ -48,7 +48,9 @@
                             </div>
 
                             <div class="col-auto">
-                                <DeleteOutline @click.stop="remove(index)" />
+                                <KestraIcon @click.stop="remove(index)" :tooltip="$t('filters.save.remove')" placement="right">
+                                    <DeleteOutline />
+                                </KestraIcon>
                             </div>
                         </div>
                     </el-dropdown-item>
@@ -96,7 +98,7 @@
 @import "../styles/filter";
 
 .dropdown {
-    width: 400px;
+    width: 800px;
 }
 
 .items {

@@ -174,8 +174,8 @@
                 );
             },
             options() {
-                const options = {};  
-                
+                const options = {};
+
                 if (this.input && !this.lineNumbers) {
                     options.lineNumbers = "off";
                     options.folding = false;

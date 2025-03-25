@@ -512,7 +512,6 @@
         max-height: 200px;
     }
 
-    
     .el-input-file {
         display: flex;
         align-items: center;

@@ -274,7 +274,7 @@ export const TabMoveBetweenPanelsTest: Story = {
             // Perform drop operation at the calculated position
             await fireEvent.drop(panel);
 
-             // Wait for the reorder to complete
+            // Wait for the reorder to complete
             await new Promise(resolve => setTimeout(resolve, 100));
 
             // Verify the tabs have been reordered
@@ -286,6 +286,7 @@ export const TabMoveBetweenPanelsTest: Story = {
 
         async function dragOnContentPanel() {
             const secondTab = canvas.getByText("Tab 1");
+
             const panelOverlay = canvas.getByText("Content for Tab 4").parentNode as HTMLElement;
 
             const br = panelOverlay.getBoundingClientRect();
@@ -311,6 +312,7 @@ export const TabMoveBetweenPanelsTest: Story = {
 
 
         await waitFor(dragOnTabsList);
+        await waitFor(() => canvas.getByText("Content for Tab 4"));
         await waitFor(dragOnContentPanel);
     }
 };

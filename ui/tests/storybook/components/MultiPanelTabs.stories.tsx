@@ -228,17 +228,20 @@ export const TabReorderTest: Story = {
         const dragEnterOnPanelDropOnPanel = async () => {
             // Find the tab elements in the first panel
             const secondTab = canvas.getByText("Tab 2");
-            const panel = canvas.getByText("Content for Tab 1")
+            const panelOverlay = canvas.getByText("Content for Tab 1").parentNode!;
 
             // Perform drag operation
             await fireEvent.dragStart(secondTab);
 
-            await fireEvent.dragOver(panel, {clientX: 900});
+            await fireEvent.dragOver(panelOverlay, {clientX: 800});
 
             // Perform drop operation at the calculated position
-            // await fireEvent.drop(panel);
+            await fireEvent.drop(panelOverlay);
 
-            // expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 3", "Tab 1", "Tab 2"]);
+             // Wait for the reorder to complete
+             await new Promise(resolve => setTimeout(resolve, 100));
+
+            expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 3", "Tab 1", "Tab 2"]);
         }
 
         await waitFor(dropBetweenTabs);
@@ -257,58 +260,58 @@ export const TabMoveBetweenPanelsTest: Story = {
         // Wait for the component to render
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Find the tab elements in the first panel
-        const firstTab = canvas.getByText("Tab 1");
-
-        const fifthTab = canvas.getByText("Tab 5");
-
-
-        const dragInBetweenTabs = async () => {
-            // Perform drag operation
-            await fireEvent.dragStart(firstTab);
-
-            await fireEvent.dragEnter(fifthTab);
-
-            const simulatedFirstTab = canvas.getAllByText("Tab 1")[1]
-
-            // Perform drop operation at the calculated position
-            await fireEvent.drop(simulatedFirstTab);
-
-            // Wait for the reorder to complete
-            await new Promise(resolve => setTimeout(resolve, 100));
-
-            // Verify the tabs have been reordered
-            expect(
-                within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab")
-                    .map(tab => tab.textContent?.trim())
-            ).toMatchObject(["Tab 4", "Tab 1", "Tab 5", "Tab 6"]);
-        }
-
-        const dragOnPanel = async () => {
+        async function dragOnTabsList () {
             const secondTab = canvas.getByText("Tab 2");
             const panel = canvas.getAllByRole("tablist")[1];
+
+            const br = panel.getBoundingClientRect();
 
             // Perform drag operation
             await fireEvent.dragStart(secondTab);
 
-            await fireEvent.dragEnter(panel);
+            await fireEvent.dragOver(panel, {clientX: br.right - 10});
 
             // Perform drop operation at the calculated position
             await fireEvent.drop(panel);
 
-            // Wait for the reorder to complete
+             // Wait for the reorder to complete
             await new Promise(resolve => setTimeout(resolve, 100));
 
             // Verify the tabs have been reordered
             expect(
                 within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab")
                     .map(tab => tab.textContent?.trim())
-            ).toMatchObject(["Tab 4", "Tab 1", "Tab 5", "Tab 6", "Tab 2"]);
+            ).toMatchObject(["Tab 4", "Tab 5", "Tab 6", "Tab 2"]);
         }
 
-        await waitFor(dragInBetweenTabs);
-        await new Promise(resolve => setTimeout(resolve, 100));
-        await waitFor(dragOnPanel);
+        async function dragOnContentPanel() {
+            const secondTab = canvas.getByText("Tab 1");
+            const panelOverlay = canvas.getByText("Content for Tab 4").parentNode as HTMLElement;
+
+            const br = panelOverlay.getBoundingClientRect();
+
+            // Perform drag operation
+            fireEvent.dragStart(secondTab);
+
+            fireEvent.dragOver(panelOverlay, {clientX: br.left + 10});
+
+            // Perform drop operation at the calculated position
+            fireEvent.drop(panelOverlay);
+
+             // Wait for the reorder to complete
+             await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Verify the tabs have been reordered
+            expect(
+                within(canvas.getAllByRole("tablist")[1]).getAllByRole("tab")
+                    .map(tab => tab.textContent?.trim())
+            ).toMatchObject(["Tab 1", "Tab 4", "Tab 5", "Tab 6", "Tab 2"]);
+        }
+
+
+
+        await waitFor(dragOnTabsList);
+        await waitFor(dragOnContentPanel);
     }
 };
 

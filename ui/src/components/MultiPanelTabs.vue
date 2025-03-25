@@ -53,16 +53,19 @@
                     </svg>
                 </button>
             </div>
-            <div class="content-panel" @drop="drop">
+            <div
+                class="content-panel"
+                :data-panel-index="panelIndex"
+                @drop="drop"
+                @dragover.prevent="dragover"
+                @dragleave.prevent="removeAllPotentialTabs"
+                @dragenter.prevent
+            >
                 <component :is="panel.activeTab?.component" />
                 <div
                     v-if="dragging"
                     class="editor-content-overlay"
                     :class="{dragover: panel.dragover}"
-                    @dragover.prevent="dragover"
-                    @dragleave.prevent="removeAllPotentialTabs"
-                    @dragenter.prevent
-                    :data-panel-index="panelIndex"
                 />
             </div>
         </Pane>
@@ -123,6 +126,7 @@
         removeTab: [tab: string]
     }>()
 
+    const mouseXRef = ref(-1);
     const movedTabInfo = ref<TabInfo | null>(null);
     const dragging = ref(false);
     const tabContainerRefs = ref<HTMLDivElement[]>([]);
@@ -142,6 +146,7 @@
 
     function cleanUp(){
         dragging.value = false;
+        mouseXRef.value = -1;
         nextTick(() => {
             movedTabInfo.value = null
             for(const panel of panels.value) {
@@ -162,14 +167,13 @@
         }
     }
 
-    const mouseXRef = ref(0)
-
     function dragover(e: DragEvent) {
         // if mouse has not moved vertically, stop the processing
         // this will be triggered every few ms so perf and readability will be paramount
         if(mouseXRef.value === e.clientX){
             return
         }
+
         mouseXRef.value = e.clientX
 
         if(!movedTabInfo.value){
@@ -242,6 +246,7 @@
         if(!movedTabInfo.value){
             return
         }
+        console.log("drop")
 
         // find potential tab in panels.value tabs
         const potentialTabPanelIndex = panels.value.findIndex((panel) => panel.tabs.some((tab) => tab.potential));
@@ -376,19 +381,8 @@
         line-height: 1.5rem;
         overflow-x: auto;
         scrollbar-width: none;
-        position: relative;
         &.dragover {
             background-color: var(--ks-background-card-hover);
-        }
-        > .tabs-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 100;
-            background-color: rgba(255, 0, 0, 0.5);
-            cursor: ew-resize;
         }
     }
 
@@ -428,10 +422,11 @@
         z-index: 1;
         position: absolute;
         opacity: .6;
-        left: -4px;
+        left: .5px;
         bottom: 0;
         border-radius: 2px 2px 0 0;
-        width: 9px;
+        width: 4px;
+        transform: translateX(-50%);
         height: 85%;
         background-color: var(--ks-content-primary);
         pointer-events: none;

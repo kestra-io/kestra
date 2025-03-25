@@ -121,6 +121,10 @@ export const encodeSearchParams = (filters, OPTIONS) => {
     };
 
     return filters.reduce((query, filter) => {
+        if(filter.field === "labels" && filter.operation) {
+            Object.assign(query, encode(filter.value, "labels", "EQUALS"));
+        }
+
         const match = OPTIONS.find((o) => o.value.label === filter.label);
         const key = match ? match.key : filter.label === "text" ? "q" : null;
         const operation = filter.comparator?.value || match?.comparators?.find(c => c.value === filter.operation)?.value || "EQUALS";

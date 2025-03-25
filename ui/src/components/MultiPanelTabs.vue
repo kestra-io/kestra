@@ -6,7 +6,7 @@
                     class="editor-tabs"
                     role="tablist"
                     @dragover.prevent="dragover"
-                    @dragleave.prevent="removeAllPotentialTabs"
+                    @dragleave.prevent="throttle(removeAllPotentialTabs, 300)"
                     @drop="drop"
                     :data-panel-index="panelIndex"
                     :class="{dragover: panel.dragover}"
@@ -23,7 +23,7 @@
                             :class="{active: tab.value === panel.activeTab?.value}"
                             draggable="true"
                             @dragstart="() => dragstart(panelIndex, tab.value)"
-                            @dragend="cleanUp"
+                            @dragleave.prevent
                             :data-tab-id="tab.value"
                             @click="panel.activeTab = tab"
                         >
@@ -53,7 +53,7 @@
                     </svg>
                 </button>
             </div>
-            <div class="content-panel">
+            <div class="content-panel" @drop="drop">
                 <component :is="panel.activeTab?.component" />
                 <div
                     v-if="dragging"
@@ -62,7 +62,6 @@
                     @dragover.prevent="dragover"
                     @dragleave.prevent="removeAllPotentialTabs"
                     @dragenter.prevent
-                    @drop="drop"
                     :data-panel-index="panelIndex"
                 />
             </div>
@@ -76,6 +75,19 @@
     import {Splitpanes, Pane} from "splitpanes"
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
+
+    function throttle(callback: () => void, limit: number): () => void {
+        let waiting = false;
+        return function () {
+            if (!waiting) {
+                callback();
+                waiting = true;
+                setTimeout(function () {
+                    waiting = false;
+                }, limit);
+            }
+        }
+    }
 
     export interface Tab {
         button: {
@@ -235,12 +247,10 @@
         const potentialTabPanelIndex = panels.value.findIndex((panel) => panel.tabs.some((tab) => tab.potential));
         const potentialTabId = panels.value[potentialTabPanelIndex]?.tabs.find((tab) => tab.potential)?.value;
 
-        if(!potentialTabId){
-            cleanUp();
-            return
+        if(potentialTabId){
+            moveTab(movedTabInfo.value, potentialTabPanelIndex, potentialTabId);
         }
 
-        moveTab(movedTabInfo.value, potentialTabPanelIndex, potentialTabId);
         cleanUp();
     }
 
@@ -366,8 +376,19 @@
         line-height: 1.5rem;
         overflow-x: auto;
         scrollbar-width: none;
+        position: relative;
         &.dragover {
             background-color: var(--ks-background-card-hover);
+        }
+        > .tabs-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 100;
+            background-color: rgba(255, 0, 0, 0.5);
+            cursor: ew-resize;
         }
     }
 
@@ -401,17 +422,19 @@
     .potential-container{
         position: relative;
         height: 100%;
+        pointer-events: none;
     }
     .potential{
         z-index: 1;
         position: absolute;
         opacity: .6;
-        left: -1px;
+        left: -4px;
         bottom: 0;
         border-radius: 2px 2px 0 0;
-        width: 3px;
+        width: 9px;
         height: 85%;
         background-color: var(--ks-content-primary);
+        pointer-events: none;
     }
 
     .default-theme{

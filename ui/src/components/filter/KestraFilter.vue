@@ -308,6 +308,9 @@
 
     const getInputValue = () => select.value?.states.inputValue;
     const handleInputChange = (key) => {
+        if(key === "Backspace"){
+            removeItem(currentFilters.value[currentFilters.value.length - 1]);
+        }
         if (props.searchCallback) {
             props.searchCallback(getInputValue());
             return;
@@ -728,7 +731,6 @@
         currentFilters.value = currentFilters.value.filter(
             (item) => JSON.stringify(item) !== JSON.stringify(value),
         );
-
         triggerSearch();
     };
 

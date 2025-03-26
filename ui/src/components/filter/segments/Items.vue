@@ -41,7 +41,7 @@
                                         class="me-2"
                                     >
                                         <span class="small">
-                                            <Label :option="value" />
+                                            <Label :option="value" :prefix="props.prefix" />
                                         </span>
                                     </el-tag>
                                 </div>

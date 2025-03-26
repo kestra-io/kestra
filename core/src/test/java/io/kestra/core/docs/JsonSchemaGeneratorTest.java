@@ -270,7 +270,7 @@ class JsonSchemaGeneratorTest {
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("title"), is("integerPropertyWithDefault title"));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("description"), is("integerPropertyWithDefault description"));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("$deprecated"), is(true));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("default"), is(10000));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("default"), is("10000"));
     }
 
     @SuppressWarnings("unchecked")

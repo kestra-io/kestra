@@ -28,7 +28,7 @@
                 :navbar="false"
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-test-id="`input-form-${input.id}`"
-                v-model="selTrigger"
+                v-model="selTrigger[input.id]"
                 @update:model-value="onChange(input)"
                 :allow-create="input.allowCustomValue"
                 filterable
@@ -267,7 +267,7 @@
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
                 debouncedValidation: () => {},
-                selTrigger: toRaw(this.selectedTrigger.inputs.taxi)
+                selTrigger: toRaw(this.selectedTrigger.inputs)
             };
         },
         emits: ["update:modelValue", "confirm", "validation"],

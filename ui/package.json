@@ -100,7 +100,7 @@
     "cross-env": "^7.0.3",
     "decompress": "^4.2.1",
     "eslint": "^9.22.0",
-    "eslint-plugin-storybook": "^0.11.4",
+    "eslint-plugin-storybook": "^0.12.0",
     "eslint-plugin-vue": "^9.33.0",
     "globals": "^16.0.0",
     "husky": "^9.1.7",

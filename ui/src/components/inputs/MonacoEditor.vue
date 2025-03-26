@@ -69,12 +69,15 @@
         data() {
             return {
                 flowsInputsCache: {},
-                autoCompletionProviders: []
+                autoCompletionProviders: [] as monaco.IDisposable[],
+                editor: null,
             }
         },
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
             ...mapState("core", ["monacoYamlConfigured"]),
+            ...mapState("flow", ["flow"]),
+            ...mapState("editor", ["current", "tabs"]),
             prefix() {
                 return this.schemaType ? `${this.schemaType}-` : "";
             }
@@ -145,7 +148,7 @@
                     });
                 }
             },
-            async currentTab(newValue, oldValue) {
+            async current(newValue, oldValue) {
                 if (!newValue) return;
 
                 const newTabName = (newValue.path ?? newValue.name);
@@ -204,9 +207,8 @@
             }
         },
         mounted: async function () {
-            this.monaco = monaco;
             await document.fonts.ready.then(() => {
-                this.initMonaco(monaco)
+                this.initMonaco()
             })
 
             if (!this.monacoYamlConfigured && (this.creating || this.current?.flow)) {
@@ -506,9 +508,6 @@
                 this.editor.setModel(model);
 
                 return model
-            },
-            getEditor: function () {
-                return this.editor;
             },
             getModifiedEditor: function () {
                 return this.diffEditor ? this.editor.getModifiedEditor() : this.editor;

@@ -736,7 +736,7 @@
 
     const handleClickedItems = (value) => {
         if (value) currentFilters.value = value;
-        select.value?.focus();
+        triggerSearch();
     };
 
     const triggerSearch = () => {

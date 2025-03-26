@@ -547,6 +547,7 @@
         },
         "empty": "Sie haben noch keine Suche gespeichert.",
         "label": "Gespeicherte Suchen",
+        "remove": "Entfernen",
         "tooltip": "Sie können keine leeren Suchkriterien speichern."
       },
       "settings": {

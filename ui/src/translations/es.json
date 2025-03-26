@@ -547,6 +547,7 @@
         },
         "empty": "Todavía no has guardado ninguna búsqueda.",
         "label": "Búsquedas guardadas",
+        "remove": "Eliminar",
         "tooltip": "No puedes guardar criterios de búsqueda vacíos."
       },
       "settings": {

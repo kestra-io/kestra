@@ -547,6 +547,7 @@
         },
         "empty": "Non hai ancora salvato alcuna ricerca.",
         "label": "Ricerche salvate",
+        "remove": "Rimuovi",
         "tooltip": "Non puoi salvare criteri di ricerca vuoti."
       },
       "settings": {

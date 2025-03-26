@@ -547,6 +547,7 @@
         },
         "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania.",
         "label": "Zapisane wyszukiwania",
+        "remove": "Usuń",
         "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
       },
       "settings": {

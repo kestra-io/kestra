@@ -90,7 +90,7 @@
     "@types/js-yaml": "^4.0.9",
     "@types/path-browserify": "^1.0.3",
     "@types/splitpanes": "^2.2.6",
-    "@typescript-eslint/parser": "^8.26.1",
+    "@typescript-eslint/parser": "^8.28.0",
     "@vitejs/plugin-vue": "^5.2.1",
     "@vitejs/plugin-vue-jsx": "^4.1.1",
     "@vitest/coverage-v8": "^3.0.8",

@@ -48,7 +48,11 @@
                             </div>
 
                             <div class="col-auto">
-                                <KestraIcon @click.stop="remove(index)" :tooltip="$t('filters.save.remove')" placement="right">
+                                <KestraIcon
+                                    @click.stop="remove(index)"
+                                    :tooltip="$t('filters.save.remove')"
+                                    placement="right"
+                                >
                                     <DeleteOutline />
                                 </KestraIcon>
                             </div>
@@ -99,9 +103,14 @@
 
 .dropdown {
     width: 800px;
+
+    &:hover {
+        border-radius: 0;
+    }
 }
 
 .items {
+    background-color: var(--el-bg-color-overlay);
     max-height: 170px !important; // 5 visible items
 }
 </style>

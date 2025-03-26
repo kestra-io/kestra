@@ -30,7 +30,7 @@ export abstract class EntityIterator<T> {
      * If no buffer is available, fetches the next entity and returns the first entity while buffering the rest
      */
     async single(): Promise<T | undefined> {
-        if (this.total === this.alreadyFetched.length) {
+        if (this.total === this.alreadyFetched.length && this.buffered.length === 0) {
             return Promise.resolve(undefined);
         }
 

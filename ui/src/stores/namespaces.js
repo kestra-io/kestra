@@ -105,13 +105,17 @@ export default {
             });
         },
 
-        secrets({commit}, {id, commit: shouldCommit, ...params}) {
+        listSecrets({commit}, {id, commit: shouldCommit, ...params}) {
             return this.$http.get(`${apiUrl(this)}/namespaces/${id}/secrets`, {
-                validateStatus: (status) => status === 200 || status === 404,
+                ...VALIDATE,
                 params
             }).then(response => {
                 if (response.status === 200 && shouldCommit !== false) {
                     commit("setSecrets", response.data.results);
+                }
+
+                if (response.status === 404) {
+                    return {total: 0, results: [], readOnly: false}
                 }
 
                 return response.data;

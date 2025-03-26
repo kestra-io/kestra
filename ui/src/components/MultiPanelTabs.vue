@@ -5,12 +5,12 @@
                 <div
                     class="editor-tabs"
                     role="tablist"
-                    @dragleave.prevent="dragleavePanel"
-                    @dragenter.prevent="dragoverPanel"
-                    @dragover.prevent
+                    @dragover.prevent="dragover"
+                    @dragleave.prevent="throttle(removeAllPotentialTabs, 300)"
                     @drop="drop"
                     :data-panel-index="panelIndex"
                     :class="{dragover: panel.dragover}"
+                    ref="tabContainerRefs"
                 >
                     <template
                         v-for="tab in panel.tabs"
@@ -23,10 +23,7 @@
                             :class="{active: tab.value === panel.activeTab?.value}"
                             draggable="true"
                             @dragstart="() => dragstart(panelIndex, tab.value)"
-                            @dragend="cleanUp"
-                            @dragenter.prevent.stop="dragover"
-                            @dragover.prevent
-                            @drop.stop="drop"
+                            @dragleave.prevent
                             :data-tab-id="tab.value"
                             @click="panel.activeTab = tab"
                         >
@@ -35,24 +32,13 @@
                             <CircleMediumIcon v-if="tab.dirty" class="dirty-icon" />
                             <CloseIcon @click.stop="destroyTab(panelIndex, tab)" class="tab-icon" />
                         </button>
-                        <div
-                            v-else
-                            class="editor-tab simulated"
-                            @drop.stop="drop"
-                            :data-tab-id="tab.value"
-                        >
-                            <component
-                                :is="tab.button.icon"
-                                @dragover.prevent.stop
-                                @dragleave.prevent.stop
-                                @dragenter.prevent.stop
-                            />
-                            {{ tab.button.label }}
+                        <div v-else class="potential-container">
+                            <div class="potential" />
                         </div>
                     </template>
                 </div>
                 <button
-                    v-if="panel.tabs.length > 1"
+                    v-if="panel.tabs.filter(t => !t.potential).length > 1"
                     @click="splitPanel(panelIndex)"
                     class="split_right"
                     title="Split panel"
@@ -67,17 +53,19 @@
                     </svg>
                 </button>
             </div>
-            <div class="content-panel">
+            <div
+                class="content-panel"
+                :data-panel-index="panelIndex"
+                @drop="drop"
+                @dragover.prevent="dragover"
+                @dragleave.prevent="removeAllPotentialTabs"
+                @dragenter.prevent
+            >
                 <component :is="panel.activeTab?.component" />
                 <div
                     v-if="dragging"
                     class="editor-content-overlay"
                     :class="{dragover: panel.dragover}"
-                    @dragleave.prevent="dragleavePanel"
-                    @dragenter.prevent="dragoverContent"
-                    @dragover.prevent
-                    @drop="drop"
-                    :data-panel-index="panelIndex"
                 />
             </div>
         </Pane>
@@ -90,6 +78,19 @@
     import {Splitpanes, Pane} from "splitpanes"
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
+
+    function throttle(callback: () => void, limit: number): () => void {
+        let waiting = false;
+        return function () {
+            if (!waiting) {
+                callback();
+                waiting = true;
+                setTimeout(function () {
+                    waiting = false;
+                }, limit);
+            }
+        }
+    }
 
     export interface Tab {
         button: {
@@ -125,8 +126,10 @@
         removeTab: [tab: string]
     }>()
 
+    const mouseXRef = ref(-1);
     const movedTabInfo = ref<TabInfo | null>(null);
     const dragging = ref(false);
+    const tabContainerRefs = ref<HTMLDivElement[]>([]);
 
     function onResize(e: {size:number}[]) {
         let i = 0;
@@ -143,6 +146,7 @@
 
     function cleanUp(){
         dragging.value = false;
+        mouseXRef.value = -1;
         nextTick(() => {
             movedTabInfo.value = null
             for(const panel of panels.value) {
@@ -152,170 +156,82 @@
         })
     }
 
-    function getPanelIndex(fromPanel: boolean, target: HTMLElement): number | undefined {
-        let targetPanelIndex = 0;
-        if (fromPanel) {
-            targetPanelIndex = parseInt(target.getAttribute("data-panel-index") ?? "-1");
-            if(targetPanelIndex < 0){
-                return
-            }
-        } else {
-            targetPanelIndex = parseInt(target.closest(".editor-tabs")?.getAttribute("data-panel-index") ?? "-1");
-            if(targetPanelIndex < 0){
-                return
-            }
-            const targetTabId = target.getAttribute("data-tab-id") ?? ""
-            if(targetTabId === movedTabInfo.value?.tab?.value) {
-                return
-            }
-        }
-
-        return targetPanelIndex
+    function getPanelIndex(e: DragEvent): number {
+        const target = e.currentTarget as HTMLElement;
+        return parseInt(target.dataset.panelIndex ?? "-1")
     }
 
-    const mousePosition = ref({clientX: 0, clientY: 0})
-
-    function dragover(event: DragEvent, fromPanel: boolean = false) {
-        if(!(event.target instanceof HTMLElement)){
-            return
+    function removeAllPotentialTabs(){
+        for(const panel of panels.value){
+            panel.tabs = panel.tabs.filter((tab) => !tab.potential)
         }
-
-        const {clientX, clientY} = event;
-
-        mousePosition.value = {clientX, clientY}
-
-        const targetPanelIndex = getPanelIndex(fromPanel, event.target);
-        if(targetPanelIndex === undefined){
-            return
-        }
-
-        // skip if the target is the same as the original panel
-        if(fromPanel && movedTabInfo.value?.panelIndex === targetPanelIndex){
-            return
-        }
-        if(fromPanel && panels.value[targetPanelIndex]){
-            panels.value[targetPanelIndex].dragover = true;
-        }
-
-        const tabId = event.target.getAttribute("data-tab-id")
-
-        const targetTabIndex = tabId
-            ? panels.value[targetPanelIndex].tabs.findIndex((tab) => tab.value === tabId)
-            : panels.value[targetPanelIndex].tabs.length;
-
-        // avoid cloning the tab just beside itself
-        if(!fromPanel
-            && movedTabInfo.value?.panelIndex === targetPanelIndex
-            && (movedTabInfo.value?.tabIndex === targetTabIndex)){
-            return
-        }
-
-        const movedTabInfoVal = movedTabInfo.value;
-        if(!movedTabInfoVal?.tab) {
-            return;
-        }
-
-        // add a simulated tab to the target panel to see where the tab will be placed
-        const tab = {
-            component: () => null,
-            value: "simulated-" + movedTabInfoVal.tab.value,
-            fromPanel,
-            potential:true,
-            button: {
-                ...movedTabInfoVal.tab.button,
-            }
-        }
-
-        // avoid having multiple simulated tabs
-        for(const p of panels.value){
-            if(p.tabs.some(t => t.value === tab.value)){
-                // remove any already present simulated tab
-                p.tabs = p.tabs.filter((t) => !t.potential)
-            }
-        }
-
-        panels.value[targetPanelIndex].tabs.splice(targetTabIndex, 0, tab);
     }
 
-
-    function dragleave(event: DragEvent, fromPanel: boolean = false) {
-        if(!(event.target instanceof HTMLElement)) {
+    function dragover(e: DragEvent) {
+        // if mouse has not moved vertically, stop the processing
+        // this will be triggered every few ms so perf and readability will be paramount
+        if(mouseXRef.value === e.clientX){
             return
         }
 
-        // is the mouse has not moved at all between over and leave events
-        // the leave is due to the tab disappearing when it should not. Let's
-        // recreate it instead
-        if(event.clientX === mousePosition.value.clientX && event.clientY === mousePosition.value.clientY){
-            dragover(event)
+        mouseXRef.value = e.clientX
+
+        if(!movedTabInfo.value){
             return
         }
 
-        let targetPanelIndex = getPanelIndex(fromPanel, event.target)
-        if(targetPanelIndex === undefined){
-            return
-        }
-        panels.value[targetPanelIndex].dragover = false;
-
-        // remove the simulated tab from the target panel
-        panels.value[targetPanelIndex].tabs = panels.value[targetPanelIndex].tabs.filter((tab) => !tab.potential)
-    }
-
-    const panelTimeout = ref<any>(null);
-
-    function dragoverPanel(event: DragEvent) {
-        panelTimeout.value = setTimeout(() => {
-            dragover(event, true);
-        }, 50)
-    }
-
-    function dragoverContent(event: DragEvent) {
-        if(!event.target || !(event.target instanceof HTMLElement)) {
-            return;
-        }
-
-        let targetPanelIndex = getPanelIndex(true, event.target)
-
-        // if the target is the same as the original panel,
-        // we don't need to move the tab
-        // The tab should stay in place
-        if(targetPanelIndex === undefined
-            || !movedTabInfo.value
-            || movedTabInfo.value.panelIndex === targetPanelIndex){
+        const panelIndex = getPanelIndex(e);
+        if(panelIndex === -1) {
             return
         }
 
-        setTimeout(() => {
-            dragover(event, true);
-        }, 20)
-    }
 
-    function dragleavePanel(event: DragEvent) {
-        dragleave(event, true);
-    }
+        const activePanel = tabContainerRefs.value.find((ref) => ref.dataset.panelIndex === panelIndex.toString());
+        const tabsInPanel = Array.from(activePanel?.querySelectorAll(".editor-tab") || []) as HTMLElement[];
 
-    function drop(event: DragEvent) {
-        if(!event.target || !(event.target instanceof HTMLElement)) {
-            return;
+        let insertTabAfterIndex = -1
+        let i = 0;
+        const mouseX = e.clientX
+        for(const tab of tabsInPanel){
+            const br = tab.getBoundingClientRect();
+            // get the X position of the middle of the tab
+            const middle = br.left + br.width / 2;
+            // if we are beyond the middle of the last tab
+            if(mouseX > middle && i === tabsInPanel.length - 1){
+                insertTabAfterIndex = i;
+                break;
+            } else
+                // if we are before the middle of the first tab
+                if(mouseX < middle && i === 0){
+                    insertTabAfterIndex = i - 1;
+                    break;
+                }else
+                    // figure out if we should insert the tab between the current and the next tab
+                    if(mouseX > middle && tabsInPanel[i + 1]){
+                        const nextBr = tabsInPanel[i + 1].getBoundingClientRect();
+                        const middleNext = nextBr.left + nextBr.width / 2;
+                        if(mouseX < middleNext){
+                            insertTabAfterIndex = i;
+                            break;
+                        }
+                    }
+            i++;
         }
-        const targetPanelIndexAttrValue = event.target.getAttribute("data-panel-index") ?? event.target.closest(".editor-tabs")?.getAttribute("data-panel-index");
-        if(!targetPanelIndexAttrValue) {
-            return;
-        }
-        const targetPanelIndex = parseInt(targetPanelIndexAttrValue);
 
-        const targetTabId = (event.target.classList.contains("editor-tab") ? event.target.getAttribute("data-tab-id") : "") ?? ""
-
-        if(!movedTabInfo.value) {
-            return;
+        // if the potential tab is already inserted in the right place
+        if(panels.value[panelIndex].tabs[insertTabAfterIndex + 1]?.potential){
+            return
         }
 
-        if(!movedTabInfo.value.tab) {
-            throw new Error("Tab is not defined");
-        }
+        removeAllPotentialTabs()
 
-        moveTab(movedTabInfo.value, targetPanelIndex, targetTabId);
-        cleanUp();
+        // then insert the potential tab in the right place
+        panels.value[panelIndex].tabs.splice(insertTabAfterIndex + 1, 0, {
+            ...movedTabInfo.value.tab,
+            value: `potential-${movedTabInfo.value.tab.value}`,
+            potential: true,
+            fromPanel: panelIndex === movedTabInfo.value.panelIndex
+        });
     }
 
     function getTargetTabIndex(targetPanelIndex: number, targetTabId?: string): number {
@@ -326,13 +242,30 @@
         return targetTabIndex;
     }
 
+    function drop(){
+        if(!movedTabInfo.value){
+            return
+        }
+        console.log("drop")
+
+        // find potential tab in panels.value tabs
+        const potentialTabPanelIndex = panels.value.findIndex((panel) => panel.tabs.some((tab) => tab.potential));
+        const potentialTabId = panels.value[potentialTabPanelIndex]?.tabs.find((tab) => tab.potential)?.value;
+
+        if(potentialTabId){
+            moveTab(movedTabInfo.value, potentialTabPanelIndex, potentialTabId);
+        }
+
+        cleanUp();
+    }
+
     function moveTab(movedTabInfo: TabInfo, targetPanelIndex: number, targetTabId?: string){
         const {tab: movedTab, panelIndex: originalPanelIndex, tabIndex} = movedTabInfo
 
         const targetTabIndex = getTargetTabIndex(targetPanelIndex, targetTabId);
 
         // In case of reordering of tabs we have to
-        // account for cases where simulated tabs are present.
+        // account for cases where potential tabs are present.
         // They will take a slot in the list
         if(targetPanelIndex === originalPanelIndex){
             if (targetTabIndex === tabIndex || panels.value[targetPanelIndex].tabs.length <= 1) {
@@ -347,13 +280,24 @@
         } else {
             // remove the tab from the original panel
             panels.value[originalPanelIndex].tabs.splice(tabIndex, 1);
+
+            // if the tab has been removed from the panel
+            // we need to select another active tab
+            if(panels.value[originalPanelIndex].activeTab.value === movedTab.value){
+                // if the tab at the same index is available, select it
+                if(tabIndex >= 0 && panels.value[originalPanelIndex].tabs.length > tabIndex){
+                    panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[tabIndex];
+                } else
+                    // if it would fall out of bounds, use the previous tab
+                    // NOTE: no worries if it is null, it will select null instead
+                    if(tabIndex === panels.value[originalPanelIndex].tabs.length){
+                        panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[tabIndex - 1];
+                    }
+            }
         }
 
-        if(panels.value[originalPanelIndex].activeTab.value === movedTab.value){
-            panels.value[originalPanelIndex].activeTab = panels.value[originalPanelIndex].tabs[0];
-        }
 
-        // add the tab to the target panel in-place of the hovered simulated tab
+        // add the tab to the target panel in-place of the hovered potential tab
         panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab);
     }
 
@@ -434,6 +378,7 @@
         align-items: end;
         padding-bottom: 0;
         font-size: .8rem;
+        border-left: 1px solid var(--ks-border-primary);
         line-height: 1.5rem;
         overflow-x: auto;
         scrollbar-width: none;
@@ -445,7 +390,7 @@
     .editor-tabs .editor-tab{
         padding: 3px .5rem;
         border: none;
-        border-left: 1px solid var(--ks-border-primary);
+        border-right: 1px solid var(--ks-border-primary);
         border-radius: 2px 2px 0 0;
         border-bottom: none;
         background-color: var(--ks-background-card);
@@ -463,21 +408,36 @@
             opacity: 1;
             color: var(--ks-content-primary);
         }
-        &.simulated{
-            opacity: .2;
-            box-shadow: 0 0 0px 1px var(--ks-border-primary);
-            overflow: visible;
-            z-index: 1;
-            position: relative;
-        }
+
         &.dirty-icon{
             font-size: 16px;
         }
     }
 
+    .potential-container{
+        position: relative;
+        height: 100%;
+        pointer-events: none;
+    }
+    .potential{
+        z-index: 1;
+        position: absolute;
+        opacity: .6;
+        left: -.5px;
+        bottom: 0;
+        border-radius: 2px 2px 0 0;
+        width: 4px;
+        transform: translateX(-50%);
+        height: 85%;
+        background-color: var(--ks-content-primary);
+        pointer-events: none;
+    }
+
     .default-theme{
         .splitpanes__pane {
             background-color: var(--ks-background-card);
+            display: grid;
+            grid-template-rows: auto 1fr;
         }
 
         :deep(.splitpanes__splitter){

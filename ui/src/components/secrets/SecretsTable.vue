@@ -411,7 +411,7 @@
             },
             handleSort({prop, order}) {
                 if (prop && order) {
-                    this.secrets.sort((a, b) => {
+                    this.secrets?.sort((a, b) => {
                         const [valueA, valueB] = [a[prop] ?? "", b[prop] ?? ""];
                         const modifier = order === "ascending" ? 1 : -1;
 

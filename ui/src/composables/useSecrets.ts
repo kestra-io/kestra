@@ -16,7 +16,7 @@ export type SecretIterator = NamespaceSecretIterator | AllSecretIterator;
 
 export class NamespaceSecretIterator extends EntityIterator<NamespaceSecret>{
     private readonly store: Store<any>;
-    private readonly namespace: string;
+    readonly namespace: string;
     areNamespaceSecretsReadOnly: boolean | undefined = ref(undefined);
 
     constructor(store: Store<any>, namespace: string, fetchSize: number, options?: any) {
@@ -39,7 +39,7 @@ export class NamespaceSecretIterator extends EntityIterator<NamespaceSecret>{
     }
 
     private async doFetch(): Promise<{ total: number; results: NamespaceSecret[], readOnly: boolean }> {
-        const fetch = await this.store.dispatch("namespace/secrets", this.fetchOptions());
+        const fetch = await this.store.dispatch("namespace/listSecrets", this.fetchOptions());
         this.areNamespaceSecretsReadOnly = fetch.readOnly ?? true;
 
         return {
@@ -64,27 +64,31 @@ export class AllSecretIterator extends EntityIterator<NamespaceSecret>{
 
     async fetchCall(): Promise<{ total: number; results: NamespaceSecret[], readOnly: boolean }> {
         if (this.namespaceIterator === undefined) {
-            this.namespaceIterator = new NamespaceIterator(this.store, 20, this.fetchOptions());
+            this.namespaceIterator = new NamespaceIterator(this.store, 20, {
+                commit: false,
+                sort: "id:asc"
+            });
         }
 
-        while (this.namespaceSecretIterator === undefined) {
-            const namespace = await this.namespaceIterator.single();
+        while (true) {
+            if (this.namespaceSecretIterator === undefined) {
+                const namespace = await this.namespaceIterator.single();
+                if (namespace === undefined) {
+                    return Promise.resolve({total: 0, results: [], readOnly: false});
+                }
 
-            if (namespace === undefined) {
-                return Promise.resolve({total: 0, results: [], readOnly: false});
+                if (!this.user.hasAnyAction(permissions.SECRET, actions.READ, namespace.id)) {
+                    continue;
+                }
+
+                this.namespaceSecretIterator = new NamespaceSecretIterator(this.store, namespace.id, this.fetchSize, this.options);
             }
-
-            if (!this.user.hasAnyAction(permissions.SECRET, actions.READ, namespace.id)) {
-                continue;
-            }
-
-            this.namespaceSecretIterator = new NamespaceSecretIterator(this.store, namespace.id, this.fetchSize, this.options);
             const fetch = await this.namespaceSecretIterator.fetchCall();
             if (fetch.results.length > 0) {
-                this.areNamespaceSecretsReadOnly[namespace.id] = fetch.readOnly;
+                this.areNamespaceSecretsReadOnly[this.namespaceSecretIterator.namespace] = fetch.readOnly;
                 return {
                     ...fetch,
-                    results: fetch.results.map(secret => ({...secret, namespace: namespace.id}))
+                    results: fetch.results.map(secret => ({...secret, namespace: this.namespaceSecretIterator.namespace}))
                 };
             }
 

@@ -28,7 +28,8 @@
                 ],
             }"
             @change="(value) => changeCallback(value)"
-            @keyup="(e) => handleInputChange(e.key)"
+            @input="(e) => handleInputChange(e.key)"
+            @keyup.delete="() => handleBackspaceKey()"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
             @visible-change="(visible) => dropdownToggleCallback(visible)"
             @clear="handleClear"
@@ -246,7 +247,6 @@
 
     const TEXT_PREFIX = `${t("filters.text_search")}: `;
     const ITEMS_PREFIX = props.prefix ?? String(route.name);
-
     const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX);
 
     const prefixFilteredValueOptions = computed(() => {
@@ -279,7 +279,6 @@
     const triggerEnter = ref(true);
     const handleEnterKey = (option) => {
         if (!option) return;
-
         if (!triggerEnter.value) {
             triggerEnter.value = true;
             return;
@@ -304,6 +303,9 @@
         }
 
         prefixFilter.value = "";
+    };
+    const handleBackspaceKey = () => {
+        removeItem(currentFilters.value[currentFilters.value.length - 1]);
     };
 
     const getInputValue = () => select.value?.states.inputValue;
@@ -728,7 +730,6 @@
         currentFilters.value = currentFilters.value.filter(
             (item) => JSON.stringify(item) !== JSON.stringify(value),
         );
-
         triggerSearch();
     };
 

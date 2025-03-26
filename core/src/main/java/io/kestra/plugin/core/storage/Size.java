@@ -36,10 +36,10 @@ import java.net.URI;
 )
 public class Size extends Task implements RunnableTask<Size.Output> {
     @Schema(
-        title = "The file whose size needs to be fetched.",
-        description = "Must be a `kestra://` storage URI."
+        title = "The file whose size needs to be fetched."
     )
     @NotNull
+    @PluginProperty(internalStorageURI = true)
     private Property<String> uri;
 
     @Override

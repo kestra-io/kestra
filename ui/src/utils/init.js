@@ -149,6 +149,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
         await setI18nLanguage(i18n, locale);
     }
     app.use(i18n);
+    store.$i18n = i18n.global;
 
     // moment
     moment.locale(locale);
@@ -160,6 +161,9 @@ export default async (app, routes, stores, translations, additionalTranslations 
     app.provide("Toast", Toast)
     app.use(Vue3Tour)
     app.use(VueVirtualScroller)
+
+    // Passing toast to VUEX store to be used in modules
+    store.$toast = app.config.globalProperties.$toast;
 
     // filters
     app.config.globalProperties.$filters = filters;

@@ -147,22 +147,22 @@
             },
             toEditor() {
                 const query = this.blueprintKind === "flow" ?
-                    {blueprintId: this.blueprintId, blueprintSource: this.blueprintType} :
+                    {blueprintId: this.blueprintId, blueprintSource: this.$route.params.tab} :
                     {blueprintId: this.blueprintId};
                 return {name: `${this.blueprintKind}s/create`, query};
             }
         },
         async created() {
-            this.$store.dispatch("blueprints/getBlueprint", {type: this.blueprintType, kind: this.blueprintKind, id: this.blueprintId})
+            this.$store.dispatch("blueprints/getBlueprint", {type: this.$route.params.tab, kind: this.blueprintKind, id: this.blueprintId})
                 .then(data => {
                     this.blueprint = data;
                     if (this.kind === "flow") {
                         try {
-                            if (this.blueprintType === "community") {
+                            if (this.$route.params.tab === "community") {
                                 this.$store.dispatch(
                                     "blueprints/getBlueprintGraph",
                                     {
-                                        type: this.blueprintType,
+                                        type: this.$route.params.tab,
                                         kind: this.blueprintKind,
                                         id: this.blueprintId,
                                         validateStatus: (status) => {
@@ -202,9 +202,9 @@
                 }
             },
             blueprintKind() {
-                return this.blueprintType === "community" ? this.kind : undefined;
+                return this.kind;
             },
-        }
+        },
     };
 </script>
 <style scoped lang="scss">

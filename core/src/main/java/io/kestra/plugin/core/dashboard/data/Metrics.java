@@ -1,10 +1,10 @@
 package io.kestra.plugin.core.dashboard.data;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
-import io.kestra.core.models.dashboards.GlobalFilter;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.repositories.MetricRepositoryInterface;
@@ -15,6 +15,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,12 +33,19 @@ public class Metrics<C extends ColumnDescriptor<Metrics.Fields>> extends DataFil
     }
 
     @Override
-    public void setGlobalFilter(GlobalFilter globalFilter) {
+    public void setGlobalFilter(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate) {
         List<AbstractFilter<Fields>> where = this.getWhere() != null ? new ArrayList<>(this.getWhere()) : new ArrayList<>();
 
-        if (globalFilter.getNamespace() != null) {
-            where.removeIf(f -> f.getField().equals(Fields.NAMESPACE));
-            where.add(EqualTo.<Fields>builder().field(Fields.NAMESPACE).value(globalFilter.getNamespace()).build());
+        if (filters == null) {
+            return;
+        }
+
+        List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
+        if (!namespaceFilters.isEmpty()) {
+            where.removeIf(filter -> filter.getField().equals(Metrics.Fields.NAMESPACE));
+            namespaceFilters.forEach(f -> {
+                where.add(EqualTo.<Metrics.Fields>builder().field(Metrics.Fields.NAMESPACE).value(f.value()).build());
+            });
         }
 
         this.setWhere(where);

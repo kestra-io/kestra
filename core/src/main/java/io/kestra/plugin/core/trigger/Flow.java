@@ -37,6 +37,7 @@ import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.stream.Streams;
 import org.slf4j.Logger;
 
 import java.util.*;
@@ -255,13 +256,19 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             }
         }
 
+        List<Label> labels = LabelService.fromTrigger(runContext, flow, this);
+        Streams.of(current.getLabels())
+            .filter(label -> label.key().equals(Label.CORRELATION_ID))
+            .findFirst()
+            .ifPresent(label -> labels.add(label));
+
         Execution.ExecutionBuilder builder = Execution.builder()
             .id(IdUtils.create())
             .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .flowRevision(flow.getRevision())
-            .labels(LabelService.fromTrigger(runContext, flow, this))
+            .labels(labels)
             .state(new State())
             .trigger(ExecutionTrigger.of(
                 this,

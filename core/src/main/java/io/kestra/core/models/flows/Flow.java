@@ -38,8 +38,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -136,11 +134,6 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     @PluginProperty(beta = true)
     List<SLA> sla;
-
-
-    public Logger logger() {
-        return LoggerFactory.getLogger("flow." + this.id);
-    }
 
 
     /** {@inheritDoc **/

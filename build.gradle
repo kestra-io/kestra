@@ -74,7 +74,7 @@ dependencies {
  **********************************************************************************************************************/
 allprojects {
     if (it.name != 'platform') {
-        group "io.kestra"
+        group = "io.kestra"
 
         java {
             sourceCompatibility = targetJavaVersion
@@ -279,7 +279,7 @@ subprojects {
         }
 
         dependencies {
-            agent "org.aspectj:aspectjweaver:1.9.22.1"
+            agent "org.aspectj:aspectjweaver:1.9.23"
         }
 
         test {
@@ -596,11 +596,10 @@ release {
     }
 
     // Dynamically set properties with default values
-    failOnSnapshotDependencies = (project.hasProperty('release.failOnSnapshotDependencies')
-            ? project.property('release.failOnSnapshotDependencies').toBoolean()
-            : true)
+    failOnSnapshotDependencies = providers.gradleProperty("release.failOnSnapshotDependencies")
+            .map(val -> Boolean.parseBoolean(val))
+            .getOrElse(true)
 
-    pushReleaseVersionBranch = (project.hasProperty('release.pushReleaseVersionBranch')
-            ? project.property('release.pushReleaseVersionBranch').toString()
-            : null)
+    pushReleaseVersionBranch = providers.gradleProperty("release.pushReleaseVersionBranch")
+            .getOrElse(null)
 }

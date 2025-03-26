@@ -114,7 +114,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
                     queueCount.countDown();
 
                     if (execution.getLeft().getState().getCurrent() == State.Type.CREATED) {
-                        executionQueue.emit(execution.getLeft().withState(State.Type.FAILED));
+                        terminateExecution(execution.getLeft(), State.Type.FAILED, Trigger.of(flow, pollingTrigger), flow.withSource(flow.generateSource()));
                     }
                 }
             }));

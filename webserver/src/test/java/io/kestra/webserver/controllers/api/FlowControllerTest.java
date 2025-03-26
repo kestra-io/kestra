@@ -1,25 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import static io.micronaut.http.HttpRequest.DELETE;
-import static io.micronaut.http.HttpRequest.GET;
-import static io.micronaut.http.HttpRequest.PATCH;
-import static io.micronaut.http.HttpRequest.POST;
-import static io.micronaut.http.HttpRequest.PUT;
-import static io.micronaut.http.HttpStatus.NOT_FOUND;
-import static io.micronaut.http.HttpStatus.NO_CONTENT;
-import static io.micronaut.http.HttpStatus.OK;
-import static io.micronaut.http.HttpStatus.UNPROCESSABLE_ENTITY;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.everyItem;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import com.google.common.collect.ImmutableList;
 import io.kestra.core.Helpers;
 import io.kestra.core.exceptions.InternalException;
@@ -45,17 +25,18 @@ import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.hateoas.JsonError;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -65,16 +46,15 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.zip.ZipFile;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static io.micronaut.http.HttpRequest.*;
+import static io.micronaut.http.HttpStatus.*;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class FlowControllerTest {
@@ -170,7 +150,7 @@ class FlowControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     void findAll() {
-        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?filters[q][$eq]=*"), Argument.of(PagedResults.class, Flow.class));
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?filters[q][EQUALS]=*"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal(), equalTo(Helpers.FLOWS_COUNT));
 
         PagedResults<Flow> flows_oldParameters = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
@@ -795,7 +775,7 @@ class FlowControllerTest {
         String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
-            .GET("/api/v1/flows/search?filters[labels][$eq][project]=foo,bar");
+            .GET("/api/v1/flows/search?filters[labels][EQUALS][project]=foo,bar");
         assertDoesNotThrow(() -> client.toBlocking().retrieve(searchRequest, PagedResults.class));
 
         MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
@@ -827,7 +807,7 @@ class FlowControllerTest {
 
         parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
 
-        var flows = client.toBlocking().retrieve(GET("/api/v1/flows/search?filters[labels][$eq][project]=foo,bar" + "&filters[labels][$eq][status]=test"), Argument.of(PagedResults.class, Flow.class));
+        var flows = client.toBlocking().retrieve(GET("/api/v1/flows/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal(), is(1L));
 
         flows = client.toBlocking().retrieve(GET("/api/v1/flows/search?labels=project:foo,bar" + "&labels=status:test"), Argument.of(PagedResults.class, Flow.class));

@@ -144,6 +144,7 @@
     "continue backfill": "继续回填",
     "continue backfills": "继续回填",
     "copied": "已复制",
+    "copied_logs_to_clipboard": "已将日志复制到剪贴板。",
     "copy": "复制",
     "copy logs": "复制日志",
     "copy url": "复制 URL",
@@ -243,7 +244,6 @@
     "delete backfill": "删除回填",
     "delete backfills": "删除回填",
     "delete confirm": "确定要删除 <code>{name}</code> 吗？",
-    "delete confirm multiple": "您确定要删除<code>{name}</code> KV吗？",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">此执行仍在运行，删除它不会停止它。<br />你需要终止执行以停止它。</div>",
     "delete logs": "删除日志",
     "delete ok": "已删除",
@@ -301,6 +301,10 @@
           "message": "在 Kestra 企业版中，您可以定义和管理 namespace 级别的变量，以消除跨 flow 的重复配置。这些变量确保了一致性，简化了配置更新，并且可以被任何 task 或 trigger 轻松引用，从而实现更简洁、更易维护的工作流。",
           "title": "集中管理您的变量"
         }
+      },
+      "secrets": {
+        "message": "企业版 (EE) 允许您直接在UI中添加、编辑或删除秘密，无需重启实例。通过细粒度的RBAC权限按namespace组织秘密，并从父namespace继承到子namespace。EE与HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager和Elasticsearch等秘密管理器集成。为每个namespace、tenant或实例设置专用后端，以隔离团队之间的秘密，或启用存储在外部vault中的只读秘密。秘密在静态和传输中保持加密。可选的缓存减少API调用，并且审计跟踪记录所有访问。",
+        "title": "升级您的Secrets管理"
       },
       "tenants": {
         "message": "Kestra 企业版支持多租户，为不同的团队或项目提供完全隔离的环境，每个环境都有自己的资源，如专用的worker组、密钥和内部存储后端。",
@@ -430,8 +434,6 @@
     "execute the flow": "执行流程 <code>{id}</code>",
     "execution": "执行",
     "execution already finished": "执行 <code>{executionId}</code> 已完成",
-    "execution failed header": "执行失败！",
-    "execution failed message": "最后错误：<code>{message}</code>",
     "execution labels": "执行标签",
     "execution not found": "未找到执行 <code>{executionId}</code>",
     "execution not in state FAILED": "执行 <code>{executionId}</code> 未处于失败状态",
@@ -448,6 +450,7 @@
       "metrics": "删除指标",
       "storage": "删除内部存储文件"
     },
+    "execution_failed": "执行失败！最后的错误是",
     "execution_guide": {
       "get_started": {
         "text": "请按照快速入门指南安装Kestra并开始构建您的第一个工作流。",
@@ -462,6 +465,8 @@
         "title": "工作流组件"
       }
     },
+    "execution_starts_progress": "一旦执行开始，您将在此处看到进度更新。",
+    "execution_status": "执行状态是：",
     "executions": "执行",
     "executions deleted": "<code>{executionCount}</code> 个执行已删除",
     "executions duration (in minutes)": "总执行持续时间（分钟）",
@@ -542,6 +547,7 @@
         },
         "empty": "您还没有保存任何搜索。",
         "label": "已保存的搜索",
+        "remove": "移除",
         "tooltip": "您不能保存空的搜索条件。"
       },
       "settings": {
@@ -637,6 +643,10 @@
     "killed done": "执行已排队终止",
     "kv": {
       "add": "新建键值",
+      "delete multiple": {
+        "confirm": "您确定要删除：<code>{name}</code> kv 吗？",
+        "warning": "您没有这些namespace的权限，因此它们将被省略：<code>{namespaces}</code>"
+      },
       "duplicate": "此键已存在",
       "name": "键值存储",
       "type": "类型",
@@ -824,6 +834,7 @@
     "no_logs_data": "无数据",
     "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
+    "no_tasks_running": "尚无任务正在运行。",
     "now": "现在",
     "of": "的",
     "ok": "确定",
@@ -1001,8 +1012,11 @@
     "search term in message": "在消息中搜索术语",
     "seconds": "秒钟",
     "secret": {
+      "add": "新密钥",
       "inherited": "继承的秘密",
-      "names": "秘密"
+      "isReadOnly": "Secret 是只读的",
+      "names": "秘密",
+      "update": "更新密钥 '{name}'"
     },
     "security_advice": {
       "content": "启用基本认证来保护你的实例。",
@@ -1032,9 +1046,11 @@
             "editor_type": "默认编辑器类型",
             "execute_default_tab": "默认执行选项卡",
             "execute_flow": "执行流程",
+            "flow_default_tab": "默认 Flow 标签页",
             "language": "语言",
             "log_display": "默认日志显示",
-            "log_level": "默认日志级别"
+            "log_level": "默认日志级别",
+            "multi_panel_editor": "多面板编辑器"
           },
           "label": "主要配置"
         },

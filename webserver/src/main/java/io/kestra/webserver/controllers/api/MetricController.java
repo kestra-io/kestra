@@ -102,8 +102,8 @@ public class MetricController {
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow Id") @PathVariable String flowId,
         @Parameter(description = "The metric name") @PathVariable String metric,
-        @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
-        @Parameter(description = "The end datetime, default to now") @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
+        @Parameter(description = "The start datetime, default to now - 30 days") @Nullable @QueryValue @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime startDate,
+        @Parameter(description = "The end datetime, default to now") @Nullable @QueryValue @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") ZonedDateTime endDate,
         @Parameter(description = "The type of aggregation: avg, sum, min or max") @QueryValue(defaultValue = "sum") String aggregation
     ) {
         validateTimeline(startDate, endDate);

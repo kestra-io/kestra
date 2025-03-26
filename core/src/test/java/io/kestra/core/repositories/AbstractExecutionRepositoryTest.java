@@ -784,4 +784,12 @@ public abstract class AbstractExecutionRepositoryTest {
             .taskRunList(List.of())
             .build();
     }
+
+    @Test
+    protected void findAllAsync() {
+        inject();
+
+        List<Execution> executions = executionRepository.findAllAsync(null).collectList().block();
+        assertThat(executions, hasSize(28));
+    }
 }

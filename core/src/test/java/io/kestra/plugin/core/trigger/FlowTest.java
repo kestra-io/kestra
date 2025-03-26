@@ -53,6 +53,10 @@ class FlowTest {
             .flowId("flow-with-flow-trigger")
             .flowRevision(1)
             .state(State.of(State.Type.RUNNING, Collections.emptyList()))
+            .labels(List.of(
+                new Label("execution-label", "execution"),
+                new Label (Label.CORRELATION_ID, "correlationId")
+            ))
             .build();
         var flowTrigger = Flow.builder()
             .id("flow")
@@ -67,8 +71,10 @@ class FlowTest {
 
         assertThat(evaluate.isPresent(), is(true));
         assertThat(evaluate.get().getFlowId(), is("flow-with-flow-trigger"));
+        assertThat(evaluate.get().getLabels(), hasSize(3));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
+        assertThat(evaluate.get().getLabels(), hasItem(new Label (Label.CORRELATION_ID, "correlationId")));
     }
 
     @Test
@@ -97,6 +103,10 @@ class FlowTest {
             .flowId("flow-with-flow-trigger")
             .flowRevision(1)
             .state(State.of(State.Type.RUNNING, Collections.emptyList()))
+            .labels(List.of(
+                new Label("execution-label", "execution"),
+                new Label (Label.CORRELATION_ID, "correlationId")
+            ))
             .build();
         var flowTrigger = Flow.builder()
             .id("flow")
@@ -112,8 +122,10 @@ class FlowTest {
         assertThat(evaluate.isPresent(), is(true));
         assertThat(evaluate.get().getFlowId(), is("flow-with-flow-trigger"));
         assertThat(evaluate.get().getTenantId(), is("tenantId"));
+        assertThat(evaluate.get().getLabels(), hasSize(3));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
+        assertThat(evaluate.get().getLabels(), hasItem(new Label (Label.CORRELATION_ID, "correlationId")));
     }
 
     @Test
@@ -138,6 +150,10 @@ class FlowTest {
             .flowId("flow-with-flow-trigger")
             .flowRevision(1)
             .state(State.of(State.Type.RUNNING, Collections.emptyList()))
+            .labels(List.of(
+                new Label("execution-label", "execution"),
+                new Label (Label.CORRELATION_ID, "correlationId")
+            ))
             .build();
         var flowTrigger = Flow.builder()
             .id("flow")
@@ -153,11 +169,12 @@ class FlowTest {
         Optional<Execution> evaluate = flowTrigger.evaluate(multipleConditionStorage, runContextFactory.of(), flow, execution);
 
         assertThat(evaluate.isPresent(), is(true));
-        assertThat(evaluate.get().getLabels(), hasSize(5));
+        assertThat(evaluate.get().getLabels(), hasSize(6));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-1", "trigger-label-1")));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-2", "trigger-label-2")));
         assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-3", "")));
+        assertThat(evaluate.get().getLabels(), hasItem(new Label (Label.CORRELATION_ID, "correlationId")));
     }
 }

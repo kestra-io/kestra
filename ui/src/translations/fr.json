@@ -144,6 +144,7 @@
     "continue backfill": "Continuer le backfill",
     "continue backfills": "Continuer les backfills",
     "copied": "Copié",
+    "copied_logs_to_clipboard": "Logs copiés dans le presse-papiers.",
     "copy": "Copier",
     "copy logs": "Copier les logs",
     "copy url": "Copier l'URL",
@@ -243,7 +244,6 @@
     "delete backfill": "Supprimer le backfill",
     "delete backfills": "Supprimer les backfills",
     "delete confirm": "Êtes-vous sur de vouloir effacer <code>{name}</code> ?",
-    "delete confirm multiple": "Êtes-vous sûr de vouloir supprimer le(s) KV <code>{name}</code> ?",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
     "delete logs": "Supprimer les logs",
     "delete ok": "est effacé",
@@ -301,6 +301,10 @@
           "message": "Dans Kestra Enterprise Edition, vous pouvez définir et gérer des variables au niveau du namespace pour éliminer les configurations répétitives à travers les flows. Ces variables assurent la cohérence, simplifient les mises à jour de configuration et peuvent être facilement référencées par n'importe quel task ou trigger pour des workflows plus propres et plus faciles à maintenir.",
           "title": "Gérez vos Variables de manière centralisée"
         }
+      },
+      "secrets": {
+        "message": "L'Enterprise Edition (EE) vous permet d'ajouter, de modifier ou de supprimer des secrets directement dans l'UI, sans redémarrage de l'instance. Organisez les secrets par namespace avec des permissions RBAC granulaires, et héritez-les des namespaces parents aux namespaces enfants. EE s'intègre avec des gestionnaires de secrets comme HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager et Elasticsearch. Configurez des backends dédiés par namespace, tenant ou instance pour isoler les secrets entre les équipes, ou activez des secrets en lecture seule stockés dans des coffres externes. Les secrets restent chiffrés au repos et en transit. Un cache optionnel réduit les appels API, et les pistes d'audit loguent tous les accès.",
+        "title": "Améliorez votre gestion des Secrets"
       },
       "tenants": {
         "message": "L'édition Kestra Enterprise prend en charge la multi-tenance, vous offrant des environnements entièrement isolés pour différentes équipes ou projets, chacun avec ses propres ressources telles que des groupes de workers dédiés ou des secrets et des backends de stockage internes.",
@@ -430,8 +434,6 @@
     "execute the flow": "Exécuter le flow <code>{id}</code>",
     "execution": "Exécution",
     "execution already finished": "Exécution <code>{executionId}</code> déjà terminée",
-    "execution failed header": "Échec de l'exécution !",
-    "execution failed message": "Avec la dernière erreur : <code>{message}</code>",
     "execution labels": "Labels d'exécution",
     "execution not found": "Exécution <code>{executionId}</code> non trouvée",
     "execution not in state FAILED": "Exécution <code>{executionId}</code> n'est pas dans l'état FAILED",
@@ -448,6 +450,7 @@
       "metrics": "Supprimer les métriques",
       "storage": "Supprimer les fichiers de stockage interne"
     },
+    "execution_failed": "Échec de l'exécution ! La dernière erreur était",
     "execution_guide": {
       "get_started": {
         "text": "Suivez le Guide de démarrage rapide pour installer Kestra et commencer à créer vos premiers workflows.",
@@ -462,6 +465,8 @@
         "title": "Composants du Workflow"
       }
     },
+    "execution_starts_progress": "Une fois l'exécution commencée, vous verrez les mises à jour de progression ici.",
+    "execution_status": "L'exécution est :",
     "executions": "Exécutions",
     "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s)",
     "executions duration (in minutes)": "Durée totale d'exécutions (en minutes)",
@@ -542,6 +547,7 @@
         },
         "empty": "Vous n'avez pas encore enregistré de recherche.",
         "label": "Recherches enregistrées",
+        "remove": "Supprimer",
         "tooltip": "Vous ne pouvez pas enregistrer des critères de recherche vides."
       },
       "settings": {
@@ -637,6 +643,10 @@
     "killed done": "L'exécution est en attente d'arrêt",
     "kv": {
       "add": "Nouveau couple de clé/valeur",
+      "delete multiple": {
+        "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
+        "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
+      },
       "duplicate": "Cette clé existe déjà",
       "name": "Stockage de clés/valeurs",
       "type": "Type",
@@ -824,6 +834,7 @@
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Soit aucun flow n'est en cours d'exécution, soit vous devez ajuster vos filtres.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
+    "no_tasks_running": "Aucune tâche n'est encore en cours d'exécution.",
     "now": "Maintenant",
     "of": "de",
     "ok": "OK",
@@ -1001,8 +1012,11 @@
     "search term in message": "Chercher dans le message",
     "seconds": "Secondes",
     "secret": {
+      "add": "Nouveau secret",
       "inherited": "Secrets hérités",
-      "names": "Secrets"
+      "isReadOnly": "Le secret est en lecture seule",
+      "names": "Secrets",
+      "update": "Mettre à jour le secret '{name}'"
     },
     "security_advice": {
       "content": "Activer l'authentification basique pour protéger votre instance.",
@@ -1032,9 +1046,11 @@
             "editor_type": "Type d'Éditeur par Défaut",
             "execute_default_tab": "Onglet d'exécution par défaut",
             "execute_flow": "Exécuter le flow",
+            "flow_default_tab": "Onglet Flow par Défaut",
             "language": "Langue",
             "log_display": "Affichage des journaux par défaut",
-            "log_level": "Niveau d'affichage des journaux par défaut"
+            "log_level": "Niveau d'affichage des journaux par défaut",
+            "multi_panel_editor": "Éditeur Multi-Panneaux"
           },
           "label": "Configuration Principale"
         },

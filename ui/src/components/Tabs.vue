@@ -23,7 +23,7 @@
     </el-tabs>
 
     <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab, 'namespace-editor': isNamespaceEditor, 'maximized': activeTab.maximized}">
-        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${explorerWidth}% - 11px);`" :current-n-s="namespace" />
+        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${explorerWidth}% - 11px);`" :current-n-s="namespace" v-show="explorerVisible" />
         <div v-if="isEditorActiveTab && explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
         <div v-if="isEditorActiveTab" :style="`flex: 1 1 ${100 - (isEditorActiveTab && explorerVisible ? explorerWidth : 0)}%;`">
             <component
@@ -152,10 +152,7 @@
             },
         },
         computed: {
-            ...mapState({
-                explorerVisible: (state) => state.editor.explorerVisible,
-                explorerWidth: (state) => state.editor.explorerWidth,
-            }),
+            ...mapState("editor", ["explorerVisible", "explorerWidth"]),
             containerClass() {
                 const isEnterpriseTab = this.activeTab.locked;
                 const isGanttTab = this.activeTab.name === "gantt";

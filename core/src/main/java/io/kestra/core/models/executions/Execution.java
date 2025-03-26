@@ -122,6 +122,10 @@ public class Execution implements DeletedInterface, TenantInterface {
         return newExecution(flow, null, labels, Optional.empty());
     }
 
+    public List<Label> getLabels() {
+        return Optional.ofNullable(this.labels).orElse(new ArrayList<>());
+    }
+
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and
      * inputs.
@@ -822,7 +826,11 @@ public class Execution implements DeletedInterface, TenantInterface {
             .forEach((taskId, taskRuns) -> {
                 Map<String, Object> taskOutputs = new HashMap<>();
                 for (TaskRun current : taskRuns) {
-                    taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                    if (current.getIteration() != null) {
+                        taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                    } else {
+                        taskOutputs.putAll(outputs(current, byIds));
+                    }
                 }
                 result.put(taskId, taskOutputs);
             });

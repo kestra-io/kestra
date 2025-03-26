@@ -177,16 +177,28 @@ public class PluginDefaultService {
      */
     public FlowWithSource injectDefaults(FlowWithSource flow) throws ConstraintViolationException {
         try {
-            Map<String, Object> flowAsMap = OBJECT_MAPPER.readValue(flow.getSource(), JacksonMapper.MAP_TYPE_REFERENCE);
+            String source = flow.getSource();
+            if (source == null) {
+                // Flow revisions created from older Kestra versions may not be linked to their original source.
+                // In such cases, fall back to the generated source approach to enable plugin default injection.
+                source = flow.generateSource();
+            }
 
-            Flow withDefault =  innerInjectDefault(flow, flowAsMap);
+            if (source == null) {
+                // return immediately if source is still null (should never happen)
+                return flow;
+            }
+
+            Map<String, Object> flowAsMap = OBJECT_MAPPER.readValue(source, JacksonMapper.MAP_TYPE_REFERENCE);
+
+            Flow withDefault = innerInjectDefault(flow, flowAsMap);
 
             // revision and tenants are not in the source, so we copy them manually
             return withDefault.toBuilder()
                 .tenantId(flow.getTenantId())
                 .revision(flow.getRevision())
                 .build()
-                .withSource(flow.getSource());
+                .withSource(source);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }

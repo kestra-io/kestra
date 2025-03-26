@@ -29,7 +29,7 @@
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {mapGetters} from "vuex";
-    import {SECTIONS} from "../../utils/constants.js";
+    import {SECTIONS} from "../../utils/constants";
 
     export default {
         inheritAttrs: false,

@@ -162,6 +162,7 @@
                 :full-height="false"
                 :input="true"
                 :navbar="false"
+                :show-scroll="inputsValues[input.id]?.length > 530 ? true : false"
                 v-if="input.type === 'JSON' || input.type === 'ARRAY'"
                 :data-test-id="`input-form-${input.id}`"
                 lang="json"
@@ -511,6 +512,10 @@
                 }
             }
         }
+    }
+
+    :deep(.editor-container){
+        max-height: 200px;
     }
 
     .el-input-file {

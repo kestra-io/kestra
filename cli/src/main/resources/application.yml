@@ -1,6 +1,9 @@
 micronaut:
   application:
     name: kestra
+  # Disable Micronaut Open Telemetry
+  otel:
+    enabled: false
   router:
     static-resources:
       swagger:

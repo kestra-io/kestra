@@ -474,9 +474,6 @@
 
                 return model
             },
-            getEditor: function () {
-                return this.editor;
-            },
             getModifiedEditor: function () {
                 return this.diffEditor ? this.editor.getModifiedEditor() : this.editor;
             },

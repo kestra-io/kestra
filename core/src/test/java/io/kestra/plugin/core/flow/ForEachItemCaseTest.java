@@ -14,7 +14,6 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Flux;
@@ -138,7 +137,6 @@ public class ForEachItemCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow")) {
-                log.info("Received sub-execution " + execution.getId() + " with status " + execution.getState().getCurrent());
                 if (execution.getState().getCurrent().isTerminated()) {
                     triggered.set(execution);
                     countDownLatch.countDown();
@@ -280,11 +278,9 @@ public class ForEachItemCaseTest {
 
     public void restartForEachItem() throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(6);
-        List<String> executionIds = new CopyOnWriteArrayList<>();
         Flux<Execution> receiveSubflows = TestsUtils.receive(executionQueue, either -> {
             Execution subflowExecution = either.getLeft();
             if (subflowExecution.getFlowId().equals("restart-child") && subflowExecution.getState().getCurrent().isFailed()) {
-                executionIds.add(subflowExecution.getId());
                 countDownLatch.countDown();
             }
         });
@@ -294,7 +290,6 @@ public class ForEachItemCaseTest {
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "restart-for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
-        executionIds.add(execution.getId());
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(FAILED));
 

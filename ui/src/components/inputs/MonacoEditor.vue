@@ -17,7 +17,6 @@
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import {configureMonacoYaml} from "monaco-yaml";
     import {yamlSchemas} from "override/utils/yamlSchemas";
-    import {editorViewTypes} from "../../utils/constants";
     import Utils from "../../utils/utils";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {QUOTE, YamlNoAutoCompletion} from "../../services/autoCompletionProvider.js"
@@ -76,6 +75,7 @@
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
             ...mapState("core", ["monacoYamlConfigured"]),
+            ...mapState("editor", ["current"]),
             prefix() {
                 return this.schemaType ? `${this.schemaType}-` : "";
             },
@@ -84,11 +84,11 @@
         props: {
             path: {
                 type: String,
-                default: undefined
+                default: "",
             },
             original: {
                 type: String,
-                default: ""
+                default: "",
             },
             value: {
                 type: String,
@@ -134,7 +134,7 @@
         watch: {
             path(newValue, oldValue) {
                 if (newValue !== oldValue) {
-                    this.changeTab(newValue, () => this.value);
+                    this.changeTab(newValue, () => Promise.resolve(this.value));
                 }
             },
             options: {
@@ -251,7 +251,7 @@
                 }
             }));
 
-            const propertySuggestion = (value: string, position: Position, kind: monaco.languages.CompletionItemKind | undefined) => {
+            const propertySuggestion = (value: string, position: Position, kind?: monaco.languages.CompletionItemKind) => {
                 let label = value.split("(")[0];
                 if (label.startsWith(QUOTE) && label.endsWith(QUOTE)) {
                     label = label.substring(1, label.length - 1);
@@ -358,10 +358,10 @@
             }));
 
             // Exposing functions globally for testing purposes
-            window.pasteToEditor = (textToPaste) => {
+            (window as any).pasteToEditor = (textToPaste:string) => {
                 this.$options.editor.executeEdits("", [{range: this.$options.editor.getSelection(), text: textToPaste}])
             };
-            window.clearEditor = () => {
+            (window as any).clearEditor = () => {
                 this.$options.editor.getModel().setValue("")
             };
         },
@@ -425,11 +425,11 @@
                     this.$options.editor = monaco.editor.create(this.$el, options);
 
                     if(!this.input){
-                        await this.changeTab(this.path, () => this.value, false);
+                        await this.changeTab(this.path, () => Promise.resolve(this.value), false);
                     }
                 }
 
-                let editor = this.getModifiedEditor();
+                let editor: monaco.editor.IStandaloneCodeEditor = this.getModifiedEditor();
                 editor.onDidChangeModelContent(function (event) {
                     let value = editor.getValue();
 
@@ -448,7 +448,7 @@
                 setTimeout(() => monaco.editor.remeasureFonts(), 1)
                 this.$emit("editorDidMount", this.$options.editor);
             },
-            async changeTab(pathOrName, valueSupplier, useModelCache = true) {
+            async changeTab(pathOrName:string, valueSupplier: () => Promise<string>, useModelCache = true) {
                 let model;
                 if (this.input || pathOrName === undefined) {
                     model = monaco.editor.createModel(
@@ -476,9 +476,6 @@
 
                 return model
             },
-            getEditor: function () {
-                return this.$options.editor;
-            },
             getModifiedEditor: function () {
                 return this.diffEditor ? this.$options.editor.getModifiedEditor() : this.$options.editor;
             },
@@ -489,13 +486,11 @@
                 this.$options.editor.focus();
             },
             destroy: function () {
-                if (this.view === editorViewTypes.TOPOLOGY) return;
-
                 this.autoCompletionProviders.forEach(provider => provider.dispose());
                 this.$options.editor?.getModel()?.dispose?.();
                 this.$options.editor?.dispose?.();
             },
-            needReload: function (newValue, oldValue) {
+            needReload: function (newValue: {renderSideBySide: boolean}, oldValue: {renderSideBySide: boolean}) {
                 return oldValue.renderSideBySide !== newValue.renderSideBySide;
             },
             reload: function () {

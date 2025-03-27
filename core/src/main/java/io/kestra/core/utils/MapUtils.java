@@ -1,11 +1,15 @@
 package io.kestra.core.utils;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
+@Slf4j
 public class MapUtils {
+    private static final String CONFLICT_AT_KEY_MSG = "Conflict at key: '{}', ignoring it. Map keys are: {}";
+
     public static Map<String, Object> merge(Map<String, Object> a, Map<String, Object> b) {
         if (a == null && b == null) {
             return null;
@@ -136,9 +140,9 @@ public class MapUtils {
     }
 
     /**
-     * Utility method nested a flatten map.
+     * Utility method nested a flattened map.
      *
-     * @param flatMap the flatten map.
+     * @param flatMap the flattened map.
      * @return the nested map.
      *
      * @throws IllegalArgumentException if the given map contains conflicting keys.
@@ -156,13 +160,13 @@ public class MapUtils {
                     currentMap.put(key, new HashMap<>());
                 } else if (!(currentMap.get(key) instanceof Map)) {
                     var invalidKey = String.join(",", Arrays.copyOfRange(keys, 0, i));
-                    throw new IllegalArgumentException("Conflict at key: '" + invalidKey + "'. Map keys are: " + flatMap.keySet());
+                    log.error(CONFLICT_AT_KEY_MSG, invalidKey, flatMap.keySet());
                 }
                 currentMap = (Map<String, Object>) currentMap.get(key);
             }
             String lastKey = keys[keys.length - 1];
             if (currentMap.containsKey(lastKey)) {
-                throw new IllegalArgumentException("Conflict at key: '" + lastKey + "', Map keys are: " + flatMap.keySet());
+                log.error("Conflict at key: '{}', ignoring it. Map keys are: {}", lastKey, flatMap.keySet());
             }
             currentMap.put(lastKey, entry.getValue());
         }

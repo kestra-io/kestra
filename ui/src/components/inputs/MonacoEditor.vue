@@ -26,7 +26,7 @@
     import type {Position} from "monaco-editor"
 
     window.MonacoEnvironment = {
-        getWorker(_moduleId, label) {
+        getWorker(moduleId, label) {
             switch (label) {
             case "editorWorkerService":
                 return new EditorWorker();
@@ -43,10 +43,7 @@
     monaco.editor.defineTheme("dark", {
         base: "vs-dark",
         inherit: true,
-        rules: [{
-            token: "body",
-            background: "161822"
-        }],
+        rules: [{token: "", background: "161822"}],
         colors: {
             "minimap.background": "#161822",
         }
@@ -73,14 +70,12 @@
             return {
                 flowsInputsCache: {},
                 autoCompletionProviders: [] as monaco.IDisposable[],
-                editor: null,
+                editor: null as monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | null,
             }
         },
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
             ...mapState("core", ["monacoYamlConfigured"]),
-            ...mapState("flow", ["flow"]),
-            ...mapState("editor", ["current", "tabs"]),
             prefix() {
                 return this.schemaType ? `${this.schemaType}-` : "";
             }
@@ -141,40 +136,6 @@
                     this.changeTab(newValue, () => this.value);
                 }
             },
-            tabs(newValue, oldValue) {
-                if (newValue?.length < oldValue?.length) {
-                    const openedTabPaths = newValue.map(tab => (tab.path ?? tab.name));
-                    monaco.editor?.getModels().filter(model => {
-                        return !openedTabPaths.includes(model.uri?.path.substring(this.prefix.length + 1));
-                    }).forEach(model => {
-                        model.dispose();
-                    });
-                }
-            },
-            async current(newValue, oldValue) {
-                if (!newValue) return;
-
-                const newTabName = (newValue.path ?? newValue.name);
-                // Tab hasn't changed, it's probably only the dirty flag that changed
-                if (newTabName === (oldValue?.path ?? oldValue?.name)) {
-                    return;
-                }
-
-                let model
-                if (newValue.persistent && this.flow?.source) {
-                    model = await this.changeTab("Flow", () => this.flow.source);
-                } else {
-                    const payload = {
-                        namespace: this.$route.params.namespace || this.$route.params.id,
-                        path: newValue.path ?? newValue.name,
-                    };
-
-                    model = await this.changeTab(newTabName, () => this.readFile(payload));
-                }
-                const source = model.getValue()
-                this.$emit("change", source);
-                this.$emit("tabLoaded", newValue, source);
-            },
             options: {
                 deep: true,
                 handler: function (newValue, oldValue) {
@@ -210,8 +171,9 @@
             }
         },
         mounted: async function () {
+            this.monaco = monaco;
             await document.fonts.ready.then(() => {
-                this.initMonaco()
+                this.initMonaco(monaco)
             })
 
             if (!this.monacoYamlConfigured && (this.creating || this.current?.flow)) {
@@ -511,6 +473,9 @@
                 this.editor.setModel(model);
 
                 return model
+            },
+            getEditor: function () {
+                return this.editor;
             },
             getModifiedEditor: function () {
                 return this.diffEditor ? this.editor.getModifiedEditor() : this.editor;

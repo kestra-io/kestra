@@ -29,7 +29,7 @@ import java.util.stream.Stream;
 @Slf4j
 @Singleton
 public class FlowTopologyService {
-    public static final Label SIMULATED_EXECUTION = new Label(Label.SYSTEM_PREFIX + "simulatedExecution", "true");
+    public static final Label SIMULATED_EXECUTION = new Label(Label.SIMULATED_EXECUTION, "true");
 
     @Inject
     protected ConditionService conditionService;

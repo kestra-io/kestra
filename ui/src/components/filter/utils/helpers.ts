@@ -121,22 +121,22 @@ export const encodeSearchParams = (filters, OPTIONS) => {
     };
 
     return filters.reduce((query, filter) => {
-        if(filter.field === "labels" && filter.operation) {
-            Object.assign(query, encode(filter.value, "labels", "EQUALS"));
-        }
+        if(filter.operation) {
+            Object.assign(query, encode(filter.value, filter.field, filter.operation));
+        } else {
+            const match = OPTIONS.find((o) => o.value.label === filter.label);
+            const key = match ? match.key : filter.label === "text" ? "q" : null;
+            const operation = filter.comparator?.value || match?.comparators?.find(c => c.value === filter.operation)?.value || "EQUALS";
 
-        const match = OPTIONS.find((o) => o.value.label === filter.label);
-        const key = match ? match.key : filter.label === "text" ? "q" : null;
-        const operation = filter.comparator?.value || match?.comparators?.find(c => c.value === filter.operation)?.value || "EQUALS";
-
-        if (key) {
-            if (key !== "date") {
-                Object.assign(query, encode(filter.value, key, operation));
-            } else if (filter.value?.length > 0) {
-                const {startDate, endDate} = filter.value[0];
-                if(startDate && endDate) {
-                    query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = startDate;
-                    query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = endDate;
+            if (key) {
+                if (key !== "date") {
+                    Object.assign(query, encode(filter.value, key, operation));
+                } else if (filter.value?.length > 0) {
+                    const {startDate, endDate} = filter.value[0];
+                    if(startDate && endDate) {
+                        query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = startDate;
+                        query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = endDate;
+                    }
                 }
             }
         }

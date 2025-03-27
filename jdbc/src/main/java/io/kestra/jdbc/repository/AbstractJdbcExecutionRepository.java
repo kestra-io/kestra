@@ -48,6 +48,7 @@ import java.util.*;
 import java.util.Comparator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, JdbcQueueIndexerInterface<Execution> {
     private static final int FETCH_SIZE = 100;
@@ -341,6 +342,28 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         }
 
         return select;
+    }
+
+    @Override
+    public Flux<Execution> findAllAsync(@Nullable String tenantId) {
+        return Flux.create(emitter -> this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = context
+                    .select(field("value"))
+                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId));
+
+                try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()){
+                    stream.map((Record record) -> jdbcRepository.map(record))
+                        .forEach(emitter::next);
+                } finally {
+                    emitter.complete();
+                }
+            }), FluxSink.OverflowStrategy.BUFFER);
     }
 
     @Override

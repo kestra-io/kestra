@@ -179,7 +179,7 @@
                 this.initMonaco()
             })
 
-            if (!this.monacoYamlConfigured && (this.creating || this.current?.flow)) {
+            if (!this.monacoYamlConfigured && this.language === "yaml") {
                 this.$store.commit("core/setMonacoYamlConfigured", true);
                 configureMonacoYaml(monaco, {
                     enableSchemaRequest: true,

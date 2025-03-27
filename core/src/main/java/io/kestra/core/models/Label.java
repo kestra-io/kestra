@@ -19,6 +19,7 @@ public record Label(@NotNull String key, @NotNull String value) {
     public static final String RESTARTED = SYSTEM_PREFIX + "restarted";
     public static final String REPLAY = SYSTEM_PREFIX + "replay";
     public static final String REPLAYED = SYSTEM_PREFIX + "replayed";
+    public static final String SIMULATED_EXECUTION = SYSTEM_PREFIX + "simulatedExecution";
 
     /**
      * Static helper method for converting a list of labels to a nested map.

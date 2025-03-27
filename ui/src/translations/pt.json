@@ -547,6 +547,7 @@
         },
         "empty": "Você ainda não salvou nenhuma pesquisa.",
         "label": "Pesquisas salvas",
+        "remove": "Remover",
         "tooltip": "Você não pode salvar critérios de pesquisa vazios."
       },
       "settings": {

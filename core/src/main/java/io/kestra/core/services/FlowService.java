@@ -140,7 +140,11 @@ public class FlowService {
         try {
             Map<String, Class<?>> aliases = pluginRegistry.plugins().stream()
                 .flatMap(plugin -> plugin.getAliases().values().stream())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    (existing, duplicate) -> existing
+                ));
             Map<String, Object> stringObjectMap = JacksonMapper.ofYaml().readValue(flowSource, JacksonMapper.MAP_TYPE_REFERENCE);
             return relocations(aliases, stringObjectMap);
         } catch (JsonProcessingException e) {

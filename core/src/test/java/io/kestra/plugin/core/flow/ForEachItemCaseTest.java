@@ -1,19 +1,27 @@
 package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.Label;
+import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
+import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
+import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import reactor.core.publisher.Flux;
@@ -37,6 +45,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
+import static io.kestra.core.models.flows.State.Type.FAILED;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -67,6 +76,9 @@ public class ForEachItemCaseTest {
 
     @Inject
     private ExecutionService executionService;
+
+    @Inject
+    private ExecutionRepositoryInterface executionRepository;
 
     @SuppressWarnings("unchecked")
     public void forEachItem() throws TimeoutException, InterruptedException, URISyntaxException, IOException, QueueException {
@@ -204,8 +216,9 @@ public class ForEachItemCaseTest {
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getTaskRunList().get(2).getAttempts(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(
+            FAILED));
+        assertThat(execution.getState().getCurrent(), is(FAILED));
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
         assertThat(outputs.get("numberOfBatches"), is(26));
         assertThat(outputs.get("iterations"), notNullValue());
@@ -215,7 +228,7 @@ public class ForEachItemCaseTest {
         assertThat(iterations.get("FAILED"), is(26));
 
         // assert on the last subflow execution
-        assertThat(triggered.get().getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(triggered.get().getState().getCurrent(), is(FAILED));
         assertThat(triggered.get().getFlowId(), is("for-each-item-subflow-failed"));
         assertThat((String) triggered.get().getInputs().get("items"), matchesRegex("kestra:///io/kestra/tests/for-each-item-failed/executions/.*/tasks/each-split/.*\\.txt"));
         assertThat(triggered.get().getTaskRunList(), hasSize(1));
@@ -290,7 +303,7 @@ public class ForEachItemCaseTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
         assertThat(execution.getTaskRunList(), hasSize(3));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getState().getCurrent(), is(FAILED));
 
         // here we must have 1 failed subflows
         assertTrue(countDownLatch.await(1, TimeUnit.MINUTES));
@@ -303,10 +316,12 @@ public class ForEachItemCaseTest {
                 successLatch.countDown();
             }
         });
-        //Sleep before restarting to make sure the failed execution child tasks are persisted.
-        Thread.sleep(1000);
+
+        //Wait before restarting until the failed execution tasks are persisted.
+        Await.until(() -> executionRepository.find(Pageable.UNPAGED, null, List.of(
+            QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value(FAILED).build())).size() == 7, Duration.ofMillis(10), Duration.ofSeconds(10));
+
         Execution restarted = executionService.restart(execution, null);
-        execution.getTaskRunList().forEach(task -> log.info("-------------> restart task {} : {}", task.getTaskId(), task.getId()));
         execution = runnerUtils.awaitExecution(
             e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-for-each-item"),
             throwRunnable(() -> executionQueue.emit(restarted)),

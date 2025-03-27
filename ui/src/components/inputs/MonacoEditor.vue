@@ -76,7 +76,6 @@
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
             ...mapState("core", ["monacoYamlConfigured"]),
-            ...mapState("editor", ["current"]),
             prefix() {
                 return this.schemaType ? `${this.schemaType}-` : "";
             },

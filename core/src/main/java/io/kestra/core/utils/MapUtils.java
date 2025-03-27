@@ -160,13 +160,15 @@ public class MapUtils {
                     currentMap.put(key, new HashMap<>());
                 } else if (!(currentMap.get(key) instanceof Map)) {
                     var invalidKey = String.join(",", Arrays.copyOfRange(keys, 0, i));
-                    log.error(CONFLICT_AT_KEY_MSG, invalidKey, flatMap.keySet());
+                    log.warn(CONFLICT_AT_KEY_MSG, invalidKey, flatMap.keySet());
+                    continue;
                 }
                 currentMap = (Map<String, Object>) currentMap.get(key);
             }
             String lastKey = keys[keys.length - 1];
             if (currentMap.containsKey(lastKey)) {
-                log.error("Conflict at key: '{}', ignoring it. Map keys are: {}", lastKey, flatMap.keySet());
+                log.warn("Conflict at key: '{}', ignoring it. Map keys are: {}", lastKey, flatMap.keySet());
+                continue;
             }
             currentMap.put(lastKey, entry.getValue());
         }

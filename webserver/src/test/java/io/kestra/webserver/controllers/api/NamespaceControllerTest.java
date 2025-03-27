@@ -103,6 +103,13 @@ public class NamespaceControllerTest {
         );
         assertThat(list.getTotal(), is(3L));
         assertThat(list.getResults().size(), is(3));
+
+        list = client.toBlocking().retrieve(
+            HttpRequest.GET("/api/v1/namespaces/search?page=4&size=2&sort=id:desc"),
+            Argument.of(PagedResults.class, NamespaceWithDisabled.class)
+        );
+        assertThat(list.getTotal(), is(0L));
+        assertThat(list.getResults(), empty());
     }
 
     @Test

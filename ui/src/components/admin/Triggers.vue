@@ -219,13 +219,15 @@
                                 <el-switch
                                     v-if="!scope.row.missingSource"
                                     :active-text="$t('enabled')"
-                                    :model-value="!scope.row.disabled"
+                                    :inactive-text="$t('disabled')"
+                                    :model-value="!(scope.row.disabled || scope.row.codeDisabled)"
                                     @change="setDisabled(scope.row, $event)"
+                                    inline-prompt
                                     class="switch-text"
-                                    :active-action-icon="Check"
+                                    :disabled="scope.row.codeDisabled"
                                 />
-                                <el-tooltip v-else :content="'flow source not found'" effect="light">
-                                    <AlertCircle class="trigger-issue-icon" />
+                                <el-tooltip v-else :content="$t('flow source not found')" effect="light">
+                                    <AlertCircle />
                                 </el-tooltip>
                             </template>
                         </el-table-column>
@@ -255,7 +257,6 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TopNavBar from "../layout/TopNavBar.vue";
-    import Check from "vue-material-design-icons/Check.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
@@ -504,19 +505,28 @@
         }
     };
 </script>
-<style>
-    .trigger-issue-icon {
+<style lang="scss" scoped>
+    .alert-circle-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;
     }
-    .el-table__expanded-cell[class*=cell]{
-        padding: 0;
+    
+    :deep(.el-table__expand-icon) {
+        pointer-events: none;
+        .el-icon {
+            display: none;
+        }
     }
-    .no-expand .el-icon {
-        display: none; /* Hide the expand icon */
-    }
-
-    .no-expand .el-table__expand-icon {
-        pointer-events: none; /* Disable pointer events */
+    :deep(.el-switch) {
+        .is-text {
+            padding: 0 3px;
+            color: inherit;
+        }
+        
+        &.is-checked {
+            .is-text {
+                color: #ffffff;
+            }
+        }
     }
 </style>

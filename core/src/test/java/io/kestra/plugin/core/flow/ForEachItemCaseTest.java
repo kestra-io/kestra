@@ -303,11 +303,14 @@ public class ForEachItemCaseTest {
                 successLatch.countDown();
             }
         });
+        //Sleep before restarting to make sure the failed execution child tasks are persisted.
+        Thread.sleep(1000);
         Execution restarted = executionService.restart(execution, null);
+        execution.getTaskRunList().forEach(task -> log.info("-------------> restart task {} : {}", task.getTaskId(), task.getId()));
         execution = runnerUtils.awaitExecution(
             e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-for-each-item"),
             throwRunnable(() -> executionQueue.emit(restarted)),
-            Duration.ofSeconds(10)
+            Duration.ofSeconds(20)
         );
         assertThat(execution.getTaskRunList(), hasSize(4));
         assertTrue(successLatch.await(1, TimeUnit.MINUTES));

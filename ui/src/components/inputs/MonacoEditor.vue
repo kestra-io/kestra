@@ -70,15 +70,20 @@
             return {
                 flowsInputsCache: {},
                 autoCompletionProviders: [] as monaco.IDisposable[],
-                editor: null as monaco.editor.IStandaloneCodeEditor | monaco.editor.IStandaloneDiffEditor | null,
+                editor: null as monaco.editor.IStandaloneCodeEditor | null,
+                diff: null as monaco.editor.IStandaloneDiffEditor | null,
             }
         },
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
             ...mapState("core", ["monacoYamlConfigured"]),
+            ...mapState("editor", ["current"]),
             prefix() {
                 return this.schemaType ? `${this.schemaType}-` : "";
-            }
+            },
+            editorOrDiff() {
+                return this.diffEditor ? this.diff : this.editor;
+            },
         },
         props: {
             path: {
@@ -87,7 +92,7 @@
             },
             original: {
                 type: String,
-                default: undefined
+                default: ""
             },
             value: {
                 type: String,
@@ -142,7 +147,7 @@
                     if (this.editor && this.needReload(newValue, oldValue)) {
                         this.reload();
                     } else {
-                        this.editor.updateOptions(newValue);
+                        this.editorOrDiff?.updateOptions(newValue);
                     }
                 }
             },
@@ -171,9 +176,8 @@
             }
         },
         mounted: async function () {
-            this.monaco = monaco;
             await document.fonts.ready.then(() => {
-                this.initMonaco(monaco)
+                this.initMonaco()
             })
 
             if (!this.monacoYamlConfigured && (this.creating || this.current?.flow)) {
@@ -249,7 +253,7 @@
                 }
             }));
 
-            const propertySuggestion = (value: string, position: Position, kind: monaco.languages.CompletionItemKind | undefined) => {
+            const propertySuggestion = (value: string, position: Position, kind?: monaco.languages.CompletionItemKind) => {
                 let label = value.split("(")[0];
                 if (label.startsWith(QUOTE) && label.endsWith(QUOTE)) {
                     label = label.substring(1, label.length - 1);
@@ -357,10 +361,10 @@
 
             // Exposing functions globally for testing purposes
             window.pasteToEditor = (textToPaste) => {
-                this.editor.executeEdits("", [{range: this.editor.getSelection(), text: textToPaste}])
+                this.editor?.executeEdits("", [{range: this.editor.getSelection(), text: textToPaste}])
             };
             window.clearEditor = () => {
-                this.editor.getModel().setValue("")
+                this.editor?.getModel()?.setValue("")
             };
         },
         beforeUnmount: function () {
@@ -384,10 +388,10 @@
                 };
 
                 if (this.diffEditor) {
-                    this.editor = monaco.editor.createDiffEditor(this.$el, {...options, ignoreTrimWhitespace: false});
+                    this.diff = monaco.editor.createDiffEditor(this.$el, {...options, ignoreTrimWhitespace: false});
                     let originalModel = monaco.editor.createModel(this.original, this.language);
                     let modifiedModel = monaco.editor.createModel(this.value, this.language);
-                    this.editor.setModel({
+                    this.diff.setModel({
                         original: originalModel,
                         modified: modifiedModel
                     });
@@ -428,7 +432,7 @@
                 }
 
                 let editor = this.getModifiedEditor();
-                editor.onDidChangeModelContent(function (event) {
+                editor?.onDidChangeModelContent(function (event) {
                     let value = editor.getValue();
 
                     if (self.value !== value) {
@@ -470,18 +474,18 @@
                         model.setValue(await valueSupplier());
                     }
                 }
-                this.editor.setModel(model);
+                this.editor?.setModel(model);
 
                 return model
             },
             getModifiedEditor: function () {
-                return this.diffEditor ? this.editor.getModifiedEditor() : this.editor;
+                return this.diffEditor ? this.diff?.getModifiedEditor() : this.editor;
             },
             getOriginalEditor: function () {
-                return this.diffEditor ? this.editor.getOriginalEditor() : this.editor;
+                return this.diffEditor ? this.diff?.getOriginalEditor() : this.editor;
             },
             focus: function () {
-                this.editor.focus();
+                this.editor?.focus();
             },
             destroy: function () {
                 if (this.view === editorViewTypes.TOPOLOGY) return;

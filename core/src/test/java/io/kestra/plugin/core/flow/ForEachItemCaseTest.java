@@ -1,26 +1,19 @@
 package io.kestra.plugin.core.flow;
 
 import io.kestra.core.models.Label;
-import io.kestra.core.models.QueryFilter;
-import io.kestra.core.models.QueryFilter.Field;
-import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.services.ExecutionService;
 import io.kestra.core.storages.StorageInterface;
-import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
-import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
-import java.util.ArrayList;
 import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -76,9 +69,6 @@ public class ForEachItemCaseTest {
 
     @Inject
     private ExecutionService executionService;
-
-    @Inject
-    private ExecutionRepositoryInterface executionRepository;
 
     @SuppressWarnings("unchecked")
     public void forEachItem() throws TimeoutException, InterruptedException, URISyntaxException, IOException, QueueException {
@@ -290,9 +280,11 @@ public class ForEachItemCaseTest {
 
     public void restartForEachItem() throws Exception {
         CountDownLatch countDownLatch = new CountDownLatch(6);
+        List<String> executionIds = new CopyOnWriteArrayList<>();
         Flux<Execution> receiveSubflows = TestsUtils.receive(executionQueue, either -> {
             Execution subflowExecution = either.getLeft();
             if (subflowExecution.getFlowId().equals("restart-child") && subflowExecution.getState().getCurrent().isFailed()) {
+                executionIds.add(subflowExecution.getId());
                 countDownLatch.countDown();
             }
         });
@@ -302,6 +294,7 @@ public class ForEachItemCaseTest {
         Execution execution = runnerUtils.runOne(null, TEST_NAMESPACE, "restart-for-each-item", null,
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
+        executionIds.add(execution.getId());
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getState().getCurrent(), is(FAILED));
 
@@ -318,8 +311,7 @@ public class ForEachItemCaseTest {
         });
 
         //Wait before restarting until the failed execution tasks are persisted.
-        Await.until(() -> executionRepository.find(Pageable.UNPAGED, null, List.of(
-            QueryFilter.builder().field(Field.STATE).operation(Op.EQUALS).value(FAILED).build())).size() == 7, Duration.ofMillis(10), Duration.ofSeconds(10));
+        Thread.sleep(1000L);
 
         Execution restarted = executionService.restart(execution, null);
         execution = runnerUtils.awaitExecution(

@@ -17,7 +17,7 @@
             </div>
 
             <div 
-                v-if="total > 0 || loading"
+                v-if="total > 0"
                 class="switch-container w-100"
             >
                 <div

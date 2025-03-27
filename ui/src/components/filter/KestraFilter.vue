@@ -201,7 +201,7 @@
 
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
-    import {useRoute, useRouter} from "vue-router";
+    import {useRoute, useRouter, LocationQueryRaw} from "vue-router";
     import {useFilters} from "./composables/useFilters";
     import action from "../../models/action";
     import permission from "../../models/permission";
@@ -632,21 +632,9 @@
 
     watch(
         () => route.query,
-        (q: any) => {
-            // Handling change of label filters from direct click events
-            if (
-                Object.keys(q).length === 0 ||
-                Object.keys(q).some((key) => key.startsWith("filters[labels]"))
-            ) {
-                const routeFilters = decodeParams(
-                    route.name,
-                    q,
-                    props.include,
-                    OPTIONS,
-                    props.isDefaultDashboard
-                );
-                currentFilters.value = routeFilters;
-            }
+        (q: LocationQueryRaw) => {
+            const routeFilters = decodeParams(route.name, q, props.include, OPTIONS, props.isDefaultDashboard) as CurrentItem[];
+            currentFilters.value = routeFilters;
         },
         {immediate: true},
     );

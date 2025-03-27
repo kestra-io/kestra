@@ -2,6 +2,7 @@ package io.kestra.webserver.services;
 
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;

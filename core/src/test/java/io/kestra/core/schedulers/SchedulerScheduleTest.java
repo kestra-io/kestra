@@ -1,5 +1,6 @@
 package io.kestra.core.schedulers;
 
+import com.devskiller.friendly_id.FriendlyId;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.PluginDefault;
@@ -134,7 +135,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 executionId.add(execution.getId());
 
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    executionQueue.emit(execution.withState(State.Type.SUCCESS));
+                    terminateExecution(execution, trigger, flow.withSource(flow.generateSource()));
                 }
                 assertThat(execution.getFlowId(), is(flow.getId()));
                 queueCount.countDown();
@@ -450,7 +451,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 assertThat(execution.getFlowId(), is(flow.getId()));
 
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    executionQueue.emit(execution.withState(State.Type.SUCCESS));
+                    terminateExecution(execution, lastTrigger, flow.withSource(flow.generateSource()));
                 }
                 queueCount.countDown();
             }));
@@ -527,7 +528,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     void recoverLASTLongRunningExecution() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        String triggerId = "recoverLASTLongRunningExecution";
+        String triggerId = FriendlyId.createFriendlyId();
         Schedule schedule = Schedule.builder().id(triggerId).type(Schedule.class.getName()).cron("*/5 * * * * *").withSeconds(true).build();
         FlowWithSource flow = createLongRunningFlow(
             Collections.singletonList(schedule),
@@ -598,7 +599,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     void recoverNONELongRunningExecution() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        String triggerId = "recoverNONELongRunningExecution";
+        String triggerId = FriendlyId.createFriendlyId();
         Schedule schedule = Schedule.builder().id(triggerId).type(Schedule.class.getName()).cron("*/5 * * * * *").withSeconds(true).build();
         FlowWithSource flow = createLongRunningFlow(
             Collections.singletonList(schedule),
@@ -635,20 +636,17 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 assertThat(execution.getFlowId(), is(flow.getId()));
 
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    Thread.sleep(10000);
-                    executionQueue.emit(execution.withState(State.Type.SUCCESS)
-                        .toBuilder()
-                        .taskRunList(List.of(TaskRun.builder()
-                            .id("test")
-                            .executionId(execution.getId())
-                            .state(State.of(State.Type.SUCCESS,
-                                List.of(new State.History(
-                                    State.Type.SUCCESS,
-                                    lastTrigger.getNextExecutionDate().plusMinutes(3).toInstant()
-                                ))))
-                            .build()))
-                        .build()
-                    );
+                    Thread.sleep(11000);
+                    Execution terminated = execution.withTaskRunList(List.of(TaskRun.builder()
+                        .id("test")
+                        .executionId(execution.getId())
+                        .state(State.of(State.Type.SUCCESS,
+                            List.of(new State.History(
+                                State.Type.SUCCESS,
+                                lastTrigger.getNextExecutionDate().plusMinutes(3).toInstant()
+                            ))))
+                        .build()));
+                    terminateExecution(terminated, lastTrigger, flow.withSource(flow.generateSource()));
                 }
                 queueCount.countDown();
             }));

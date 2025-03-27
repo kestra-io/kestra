@@ -3,6 +3,7 @@
         class="fit-text"
         :model-value="value"
         @update:model-value="onInput"
+        :disabled="readonly"
         clearable
         :placeholder="$t('Select namespace')"
         :persistent="false"
@@ -41,6 +42,14 @@
             isFilter: {
                 type: Boolean,
                 default: true
+            },
+            includeSystemNamespace: {
+                type: Boolean,
+                default: false
+            },
+            readonly: {
+                type: Boolean,
+                default: false
             }
         },
         emits: ["update:modelValue"],
@@ -49,7 +58,7 @@
                 this.$store
                     .dispatch("namespace/loadNamespacesForDatatype", {dataType: this.dataType})
                     .then(() => {
-                        this.groupedNamespaces = this.groupNamespaces(this.datatypeNamespaces).filter(namespace => namespace.code !== (this.configs?.systemNamespace || "system"));
+                        this.groupedNamespaces = this.groupNamespaces(this.datatypeNamespaces).filter(namespace => this.includeSystemNamespace || (namespace.code !== (this.configs?.systemNamespace || "system")));
                     });
             }
         },

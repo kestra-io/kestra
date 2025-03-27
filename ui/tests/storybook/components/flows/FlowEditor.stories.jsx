@@ -46,12 +46,11 @@ const Template = (args) => ({
     const flow = YAML_UTILS.parse(args.flow)
     flow.source = args.flow
     store.commit("flow/setFlow", flow)
-    store.commit("editor/changeOpenedTabs", {
-        action:"open",
-        flow:true,
-        name:"Flow",
-        path :"Flow.yaml",
-        persistent:true,
+    store.dispatch("editor/openTab", {
+        flow: true,
+        name: "Flow",
+        path: "Flow.yaml",
+        persistent: true,
     })
 
     return () =>

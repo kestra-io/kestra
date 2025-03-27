@@ -352,6 +352,17 @@ class HttpClientTest {
     }
 
     @Test
+    void noErrorPost404() throws IOException, IllegalVariableEvaluationException, HttpClientException {
+        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowFailed(Property.of(true)).build()))) {
+            URI uri = URI.create(embeddedServerUri + "/http/post-error");
+
+            HttpResponse<Map<String, String>> response = client.request(HttpRequest.builder().uri(uri).method("POST").body(HttpRequest.StringRequestBody.builder().content("OK").build()).build());
+
+            assertThat(response.getStatus().getCode(), is(404));
+        }
+    }
+
+    @Test
     void specialContentType() throws IllegalVariableEvaluationException, HttpClientException, IOException {
         try (HttpClient client = client()) {
             HttpResponse<String> response = client.request(
@@ -426,6 +437,13 @@ class HttpClientTest {
 
         @Get("error")
         public io.micronaut.http.HttpResponse<Object> errors(@QueryValue int status) {
+            return io.micronaut.http.HttpResponse
+                .status(HttpStatus.valueOf(status))
+                .body(Map.of("status", status));
+        }
+
+        @Post("error")
+        public io.micronaut.http.HttpResponse<Object> postErrors(@QueryValue int status, @Body String body) {
             return io.micronaut.http.HttpResponse
                 .status(HttpStatus.valueOf(status))
                 .body(Map.of("status", status));

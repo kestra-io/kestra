@@ -40,7 +40,6 @@ class FlowWithSourceTest {
         FlowWithSource flowWithSource = FlowWithSource.of(flow, flow.generateSource());
 
         String source = flowWithSource.getSource();
-        System.out.println(source);
 
         assertThat(source, not(containsString("deleted: false")));
         assertThat(source, containsString("format: |\n"));

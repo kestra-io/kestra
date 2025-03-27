@@ -244,7 +244,6 @@
     "delete backfill": "Eliminar el backfill",
     "delete backfills": "Eliminar backfills",
     "delete confirm": "¿Estás seguro de eliminar <code>{name}</code>?",
-    "delete confirm multiple": "¿Está seguro de que desea eliminar el(los) <code>{name}</code> KV(s)?",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Esta ejecución aún está RUNNING, eliminarla no la detendrá.<br />Necesitas matar la ejecución para detenerla.</div>",
     "delete logs": "Eliminar logs",
     "delete ok": "está eliminado",
@@ -302,6 +301,10 @@
           "message": "En Kestra Enterprise Edition, puedes definir y gestionar variables a nivel de namespace para eliminar configuraciones repetitivas a través de los flows. Estas variables aseguran consistencia, simplifican las actualizaciones de configuración y pueden ser fácilmente referenciadas por cualquier task o trigger para flujos de trabajo más limpios y mantenibles.",
           "title": "Gobierne Centralmente Sus Variables"
         }
+      },
+      "secrets": {
+        "message": "La Enterprise Edition (EE) te permite agregar, editar o eliminar secretos directamente en la UI, sin necesidad de reiniciar la instancia. Organiza secretos por namespace con permisos RBAC granulares, y herédalos de namespaces padre a hijo. EE se integra con gestores de secretos como HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager y Elasticsearch. Configura backends dedicados por namespace, tenant o instancia para aislar secretos entre equipos, o habilita secretos de solo lectura almacenados en vaults externos. Los secretos permanecen cifrados en reposo y en tránsito. El almacenamiento en caché opcional reduce las llamadas a la API, y las auditorías registran todo el acceso.",
+        "title": "Mejora tu Gestión de Secrets"
       },
       "tenants": {
         "message": "La Edición Enterprise de Kestra admite la multi-tenancy, proporcionándote entornos completamente aislados para diferentes equipos o proyectos, cada uno con sus propios recursos, como grupos de worker dedicados o secretos y backends de almacenamiento interno.",
@@ -544,6 +547,7 @@
         },
         "empty": "Todavía no has guardado ninguna búsqueda.",
         "label": "Búsquedas guardadas",
+        "remove": "Eliminar",
         "tooltip": "No puedes guardar criterios de búsqueda vacíos."
       },
       "settings": {
@@ -639,6 +643,10 @@
     "killed done": "La ejecución está en cola para ser terminada",
     "kv": {
       "add": "Nuevo Key-Value",
+      "delete multiple": {
+        "confirm": "¿Está seguro de que desea eliminar: <code>{name}</code> kv(s)?",
+        "warning": "No tienes permisos para esos namespaces, por lo que se omitirán: <code>{namespaces}</code>"
+      },
       "duplicate": "Esta key ya existe",
       "name": "KV Store",
       "type": "Tipo",
@@ -1004,8 +1012,11 @@
     "search term in message": "Término de búsqueda en mensaje",
     "seconds": "Segundos",
     "secret": {
+      "add": "Nuevo secreto",
       "inherited": "Secrets heredados",
-      "names": "Secrets"
+      "isReadOnly": "El secreto es de solo lectura",
+      "names": "Secrets",
+      "update": "Actualizar secreto '{name}'"
     },
     "security_advice": {
       "content": "Habilita la autenticación básica para proteger tu instancia.",
@@ -1038,7 +1049,8 @@
             "flow_default_tab": "Pestaña de Flow Predeterminada",
             "language": "Idioma",
             "log_display": "Visualización de Log Predeterminada",
-            "log_level": "Nivel de Log Predeterminado"
+            "log_level": "Nivel de Log Predeterminado",
+            "multi_panel_editor": "Editor de Panel Múltiple"
           },
           "label": "Configuración Principal"
         },

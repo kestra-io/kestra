@@ -424,7 +424,9 @@ public abstract class AbstractJdbcRepository {
     ) {
         switch (operation) {
             case LESS_THAN -> select = select.and(DSL.field(fieldName).lessThan(dateTime));
+            case LESS_THAN_OR_EQUAL_TO -> select = select.and(DSL.field(fieldName).lessOrEqual(dateTime));
             case GREATER_THAN -> select = select.and(DSL.field(fieldName).greaterThan(dateTime));
+            case GREATER_THAN_OR_EQUAL_TO -> select = select.and(DSL.field(fieldName).greaterOrEqual(dateTime));
             case EQUALS -> select = select.and(DSL.field(fieldName).eq(dateTime));
             case NOT_EQUALS -> select = select.and(DSL.field(fieldName).ne(dateTime));
             default -> throw new UnsupportedOperationException("Unsupported operation for date condition: " + operation);

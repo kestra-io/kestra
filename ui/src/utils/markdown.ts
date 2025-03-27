@@ -1,6 +1,13 @@
-let highlighter = null;
+import {HighlighterCoreOptions, LanguageRegistration, RegexEngine, ThemeRegistrationRaw, HighlighterGeneric} from "shiki/core";
 
-async function getHighlighter(createHighlighterCore, langs, engine, githubDark, githubLight) {
+let highlighter: Promise<HighlighterGeneric<"yaml"| "python" | "javascript", "github-dark" | "github-light">> | null = null;
+
+async function getHighlighter(
+    createHighlighterCore: (options: HighlighterCoreOptions<false>) => Promise<HighlighterGeneric<"yaml"| "python" | "javascript", "github-dark" | "github-light">>,
+    langs: LanguageRegistration[][],
+    engine: Promise<RegexEngine>,
+    githubDark: ThemeRegistrationRaw,
+    githubLight: ThemeRegistrationRaw){
     if (!highlighter) {
         highlighter = createHighlighterCore({
             langs,
@@ -11,12 +18,14 @@ async function getHighlighter(createHighlighterCore, langs, engine, githubDark, 
     return highlighter;
 }
 
-export async function render(markdown, options = {}) {
+export async function render(markdown: string, options: {onlyLink?: boolean, permalink?: boolean, html?: boolean} = {}) {
     const {createHighlighterCore, githubDark, githubLight, markdownIt, mark, meta, anchor, container, fromHighlighter, linkTag, langs, onigurumaEngine} = await import( "./markdownDeps")
-    const highlighter = await getHighlighter(createHighlighterCore, langs, onigurumaEngine, githubDark, githubLight);
+    const highlighter = await getHighlighter(createHighlighterCore as any, langs, onigurumaEngine, githubDark, githubLight);
 
-    githubDark["colors"]["editor.background"] = "var(--bs-gray-500)";
-    githubLight["colors"]["editor.background"] = "var(--bs-white)";
+    if(githubDark["colors"] && githubLight["colors"]) {
+        githubDark["colors"]["editor.background"] = "var(--bs-gray-500)";
+        githubLight["colors"]["editor.background"] = "var(--bs-white)";
+    }
 
     const darkTheme = document.getElementsByTagName("html")[0].className.indexOf("dark") >= 0;
 

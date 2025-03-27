@@ -26,7 +26,7 @@
     import type {Position} from "monaco-editor"
 
     window.MonacoEnvironment = {
-        getWorker(moduleId, label) {
+        getWorker(_moduleId, label) {
             switch (label) {
             case "editorWorkerService":
                 return new EditorWorker();
@@ -70,8 +70,7 @@
             return {
                 flowsInputsCache: {},
                 autoCompletionProviders: [] as monaco.IDisposable[],
-                editor: null as monaco.editor.IStandaloneCodeEditor | null,
-                diff: null as monaco.editor.IStandaloneDiffEditor | null,
+                monaco: null as typeof monaco | null,
             }
         },
         computed: {
@@ -81,10 +80,8 @@
             prefix() {
                 return this.schemaType ? `${this.schemaType}-` : "";
             },
-            editorOrDiff() {
-                return this.diffEditor ? this.diff : this.editor;
-            },
         },
+
         props: {
             path: {
                 type: String,
@@ -144,15 +141,15 @@
             options: {
                 deep: true,
                 handler: function (newValue, oldValue) {
-                    if (this.editor && this.needReload(newValue, oldValue)) {
+                    if (this.$options.editor && this.needReload(newValue, oldValue)) {
                         this.reload();
                     } else {
-                        this.editorOrDiff?.updateOptions(newValue);
+                        this.$options.editor.updateOptions(newValue);
                     }
                 }
             },
             value: function (newValue) {
-                if (this.editor) {
+                if (this.$options.editor) {
                     let editor = this.getModifiedEditor();
 
                     if (newValue !== editor.getValue()) {
@@ -161,7 +158,7 @@
                 }
             },
             original: function (newValue) {
-                if (this.editor && this.diffEditor) {
+                if (this.$options.editor && this.diffEditor) {
                     let editor = this.getOriginalEditor();
 
                     if (newValue !== editor.getValue()) {
@@ -170,12 +167,14 @@
                 }
             },
             theme: function (newVal) {
-                if (this.editor) {
+                if (this.$options.editor) {
                     monaco.editor.setTheme(newVal);
                 }
             }
         },
         mounted: async function () {
+            // assign monaco so that it gets available outside of monacoeditor
+            this.monaco = monaco;
             await document.fonts.ready.then(() => {
                 this.initMonaco()
             })
@@ -253,7 +252,7 @@
                 }
             }));
 
-            const propertySuggestion = (value: string, position: Position, kind?: monaco.languages.CompletionItemKind) => {
+            const propertySuggestion = (value: string, position: Position, kind: monaco.languages.CompletionItemKind | undefined) => {
                 let label = value.split("(")[0];
                 if (label.startsWith(QUOTE) && label.endsWith(QUOTE)) {
                     label = label.substring(1, label.length - 1);
@@ -361,10 +360,10 @@
 
             // Exposing functions globally for testing purposes
             window.pasteToEditor = (textToPaste) => {
-                this.editor?.executeEdits("", [{range: this.editor.getSelection(), text: textToPaste}])
+                this.$options.editor.executeEdits("", [{range: this.$options.editor.getSelection(), text: textToPaste}])
             };
             window.clearEditor = () => {
-                this.editor?.getModel()?.setValue("")
+                this.$options.editor.getModel().setValue("")
             };
         },
         beforeUnmount: function () {
@@ -388,10 +387,10 @@
                 };
 
                 if (this.diffEditor) {
-                    this.diff = monaco.editor.createDiffEditor(this.$el, {...options, ignoreTrimWhitespace: false});
+                    this.$options.editor = monaco.editor.createDiffEditor(this.$el, {...options, ignoreTrimWhitespace: false});
                     let originalModel = monaco.editor.createModel(this.original, this.language);
                     let modifiedModel = monaco.editor.createModel(this.value, this.language);
-                    this.diff.setModel({
+                    this.$options.editor.setModel({
                         original: originalModel,
                         modified: modifiedModel
                     });
@@ -424,7 +423,7 @@
                         when: "editorFocus"
                     });
 
-                    this.editor = monaco.editor.create(this.$el, options);
+                    this.$options.editor = monaco.editor.create(this.$el, options);
 
                     if(!this.input){
                         await this.changeTab(this.path, () => this.value, false);
@@ -432,7 +431,7 @@
                 }
 
                 let editor = this.getModifiedEditor();
-                editor?.onDidChangeModelContent(function (event) {
+                editor.onDidChangeModelContent(function (event) {
                     let value = editor.getValue();
 
                     if (self.value !== value) {
@@ -448,7 +447,7 @@
                 });
 
                 setTimeout(() => monaco.editor.remeasureFonts(), 1)
-                this.$emit("editorDidMount", this.editor);
+                this.$emit("editorDidMount", this.$options.editor);
             },
             async changeTab(pathOrName, valueSupplier, useModelCache = true) {
                 let model;
@@ -474,25 +473,28 @@
                         model.setValue(await valueSupplier());
                     }
                 }
-                this.editor?.setModel(model);
+                this.$options.editor.setModel(model);
 
                 return model
             },
+            getEditor: function () {
+                return this.$options.editor;
+            },
             getModifiedEditor: function () {
-                return this.diffEditor ? this.diff?.getModifiedEditor() : this.editor;
+                return this.diffEditor ? this.$options.editor.getModifiedEditor() : this.$options.editor;
             },
             getOriginalEditor: function () {
-                return this.diffEditor ? this.diff?.getOriginalEditor() : this.editor;
+                return this.diffEditor ? this.$options.editor.getOriginalEditor() : this.$options.editor;
             },
             focus: function () {
-                this.editor?.focus();
+                this.$options.editor.focus();
             },
             destroy: function () {
                 if (this.view === editorViewTypes.TOPOLOGY) return;
 
                 this.autoCompletionProviders.forEach(provider => provider.dispose());
-                this.editor?.getModel()?.dispose?.();
-                this.editor?.dispose?.();
+                this.$options.editor?.getModel()?.dispose?.();
+                this.$options.editor?.dispose?.();
             },
             needReload: function (newValue, oldValue) {
                 return oldValue.renderSideBySide !== newValue.renderSideBySide;

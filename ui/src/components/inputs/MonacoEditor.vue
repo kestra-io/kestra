@@ -26,7 +26,7 @@
     import type {Position} from "monaco-editor"
 
     window.MonacoEnvironment = {
-        getWorker(moduleId, label) {
+        getWorker(_moduleId, label) {
             switch (label) {
             case "editorWorkerService":
                 return new EditorWorker();
@@ -43,7 +43,10 @@
     monaco.editor.defineTheme("dark", {
         base: "vs-dark",
         inherit: true,
-        rules: [{background: "161822"}],
+        rules: [{
+            token: "body",
+            background: "161822"
+        }],
         colors: {
             "minimap.background": "#161822",
         }

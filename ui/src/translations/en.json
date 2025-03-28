@@ -1253,7 +1253,7 @@
       "concurrency_limit": {
         "title": "No limits are set for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
-      },
+       },
       "dependencies": {
         "title": "No dependencies are set for this Flow.",
         "content": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."
@@ -1264,7 +1264,7 @@
       },
       "triggers": {
         "title": "Your flow doesn't have any Triggers.",
-        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."
+        "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in our documentation."      
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",

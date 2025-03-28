@@ -138,6 +138,9 @@ export function useLeftMenu() {
                 icon: {
                     element: shallowRef(ShieldKeyOutline),
                     class: "menu-icon"
+                },
+                 attributes: {
+                    locked: true
                 }
             },
             {

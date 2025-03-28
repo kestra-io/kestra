@@ -1,148 +1,150 @@
 <template>
-    <KestraFilter v-if="filterable" :placeholder="$t('search')" :decode="false" />
+    <div class="d-flex flex-column fill-height">
+        <KestraFilter v-if="filterable" :placeholder="$t('search')" :decode="false" />
 
-    <select-table
-        :data="secrets"
-        v-bind="$attrs"
-        ref="selectTable"
-        :default-sort="{prop: 'key', order: 'ascending'}"
-        table-layout="auto"
-        fixed
-        :selectable="false"
-        @sort-change="handleSort"
-        :infinite-scroll-load="namespace === undefined ? fetchSecrets : undefined"
-        class="fill-height"
-    >
-        <el-table-column
-            v-if="namespace === undefined"
-            prop="namespace"
-            sortable="custom"
-            :sort-orders="['ascending', 'descending']"
-            :label="$t('namespace')"
-        />
-        <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="keyOnly ? $t('secret.names') : $t('key')">
-            <template #default="scope">
-                <id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
-            </template>
-        </el-table-column>
+        <select-table
+            :data="secrets"
+            ref="selectTable"
+            :default-sort="{prop: 'key', order: 'ascending'}"
+            table-layout="auto"
+            fixed
+            :selectable="false"
+            @sort-change="handleSort"
+            :infinite-scroll-load="namespace === undefined ? fetchSecrets : undefined"
+            class="fill-height"
+        >
+            <el-table-column
+                v-if="namespace === undefined"
+                prop="namespace"
+                sortable="custom"
+                :sort-orders="['ascending', 'descending']"
+                :label="$t('namespace')"
+            />
+            <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="keyOnly ? $t('secret.names') : $t('key')">
+                <template #default="scope">
+                    <id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
+                </template>
+            </el-table-column>
 
-        <el-table-column v-if="!keyOnly" prop="description" :label="$t('description')">
-            <template #default="scope">
-                {{ scope.row.description }}
-            </template>
-        </el-table-column>
+            <el-table-column v-if="!keyOnly" prop="description" :label="$t('description')">
+                <template #default="scope">
+                    {{ scope.row.description }}
+                </template>
+            </el-table-column>
 
-        <el-table-column v-if="!keyOnly" prop="tags" :label="$t('tags')">
-            <template #default="scope">
-                <labels v-if="scope.row.tags !== undefined" :labels="scope.row.tags" read-only />
-            </template>
-        </el-table-column>
+            <el-table-column v-if="!keyOnly" prop="tags" :label="$t('tags')">
+                <template #default="scope">
+                    <labels v-if="scope.row.tags !== undefined" :labels="scope.row.tags" read-only />
+                </template>
+            </el-table-column>
 
-        <el-table-column column-key="locked" class-name="row-action">
-            <template #default="scope">
-                <el-tooltip v-if="scope.row.namespace !== undefined && areNamespaceSecretsReadOnly?.[scope.row.namespace]" transition="" :hide-after="0" :persistent="false" effect="light">
-                    <template #content>
-                        <span v-html="$t('secret.isReadOnly')" />
-                    </template>
-                    <Lock />
-                </el-tooltip>
-            </template>
-        </el-table-column>
+            <el-table-column column-key="locked" class-name="row-action">
+                <template #default="scope">
+                    <el-tooltip v-if="scope.row.namespace !== undefined && areNamespaceSecretsReadOnly?.[scope.row.namespace]" transition="" :hide-after="0" :persistent="false" effect="light">
+                        <template #content>
+                            <span v-html="$t('secret.isReadOnly')" />
+                        </template>
+                        <el-icon class="d-flex justify-content-center text-base">
+                            <Lock />
+                        </el-icon>
+                    </el-tooltip>
+                </template>
+            </el-table-column>
 
-        <el-table-column column-key="copy" class-name="row-action">
-            <template #default="scope">
-                <el-tooltip :content="$t('copy_to_clipboard')">
-                    <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ secret('${scope.row.key}') \}\}`)" />
-                </el-tooltip>
-            </template>
-        </el-table-column>
+            <el-table-column column-key="copy" class-name="row-action">
+                <template #default="scope">
+                    <el-tooltip :content="$t('copy_to_clipboard')">
+                        <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ secret('${scope.row.key}') \}\}`)" />
+                    </el-tooltip>
+                </template>
+            </el-table-column>
 
-        <el-table-column column-key="update" class-name="row-action">
-            <template #default="scope">
-                <el-button v-if="canUpdate(scope.row)" :icon="FileDocumentEdit" link @click="updateSecretModal(scope.row)" />
-            </template>
-        </el-table-column>
+            <el-table-column v-if="!keyOnly" column-key="update" class-name="row-action">
+                <template #default="scope">
+                    <el-button v-if="canUpdate(scope.row)" :icon="FileDocumentEdit" link @click="updateSecretModal(scope.row)" />
+                </template>
+            </el-table-column>
 
-        <el-table-column column-key="delete" class-name="row-action">
-            <template #default="scope">
-                <el-button v-if="canDelete(scope.row)" :icon="Delete" link @click="removeSecret(scope.row.key)" />
-            </template>
-        </el-table-column>
-    </select-table>
+            <el-table-column v-if="!keyOnly" column-key="delete" class-name="row-action">
+                <template #default="scope">
+                    <el-button v-if="canDelete(scope.row)" :icon="Delete" link @click="removeSecret(scope.row)" />
+                </template>
+            </el-table-column>
+        </select-table>
 
-    <drawer
-        v-if="addSecretDrawerVisible"
-        v-model="addSecretDrawerVisible"
-        :title="secretModalTitle"
-    >
-        <el-form class="ks-horizontal" :model="secret" :rules="rules" ref="form">
-            <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
-                <!--                TODO ADD FILTER ON NAMESPACES WITH READ-ONLY SECRETS, FOR NOW IT WOULD BE TOO COSTFUL AS IT REQUIRES 1 CALL PER NAMESPACE -->
-                <namespace-select
-                    v-model="secret.namespace"
-                    :readonly="secret.update"
-                    data-type="flow"
-                    :include-system-namespace="true"
-                />
-            </el-form-item>
-            <el-form-item :label="$t('secret.key')" prop="key">
-                <el-input v-model="secret.key" :readonly="secret.update" required />
-            </el-form-item>
-            <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value">
-                <el-input v-model="secret.value" :placeholder="secretModalTitle" autosize type="textarea" required />
-            </el-form-item>
-            <el-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
-                <el-col :span="20">
-                    <el-input
-                        v-model="secret.value"
-                        :placeholder="secretModalTitle"
-                        autosize
-                        type="textarea"
-                        required
-                        :disabled="!secret.updateValue"
+        <drawer
+            v-if="addSecretDrawerVisible"
+            v-model="addSecretDrawerVisible"
+            :title="secretModalTitle"
+        >
+            <el-form class="ks-horizontal" :model="secret" :rules="rules" ref="form">
+                <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
+                    <namespace-select
+                        v-model="secret.namespace"
+                        :readonly="secret.update"
+                        data-type="flow"
+                        :include-system-namespace="true"
                     />
-                </el-col>
-                <el-col class="px-2" :span="4">
-                    <el-switch
-                        size="large"
-                        inline-prompt
-                        v-model="secret.updateValue"
-                        :active-icon="PencilOutline"
-                        :inactive-icon="PencilOff"
-                    />
-                </el-col>
-            </el-form-item>
-            <el-form-item :label="$t('secret.description')" prop="description">
-                <el-input v-model="secret.description" :placeholder="$t('secret.descriptionPlaceholder')" required />
-            </el-form-item>
-            <el-form-item :label="$t('secret.tags')" prop="tags">
-                <el-row :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
-                    <el-col :span="8">
-                        <el-input required v-model="tag.key" :placeholder="$t('key')" />
-                    </el-col>
-                    <el-col :span="12">
-                        <el-input required v-model="tag.value" :placeholder="$t('value')" />
-                    </el-col>
-                    <el-button-group class="d-flex flex-nowrap">
-                        <el-button
-                            :icon="Delete"
-                            @click="removeSecretTag(index)"
-                            :disabled="secret.tags.length === 1"
+                </el-form-item>
+                <el-form-item :label="$t('secret.key')" prop="key">
+                    <el-input v-model="secret.key" :readonly="secret.update" required />
+                </el-form-item>
+                <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value">
+                    <el-input v-model="secret.value" :placeholder="secretModalTitle" autosize type="textarea" required />
+                </el-form-item>
+                <el-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
+                    <el-col :span="20">
+                        <el-input
+                            v-model="secret.value"
+                            :placeholder="secretModalTitle"
+                            autosize
+                            type="textarea"
+                            required
+                            :disabled="!secret.updateValue"
                         />
-                    </el-button-group>
-                </el-row>
-                <el-button :icon="Plus" @click="addSecretTag" type="primary">
-                    {{ $t('secret.addTag') }}
-                </el-button>
-            </el-form-item>
-        </el-form>
+                    </el-col>
+                    <el-col class="px-2" :span="4">
+                        <el-switch
+                            size="large"
+                            inline-prompt
+                            v-model="secret.updateValue"
+                            :active-icon="PencilOutline"
+                            :inactive-icon="PencilOff"
+                        />
+                    </el-col>
+                </el-form-item>
+                <el-form-item :label="$t('secret.description')" prop="description">
+                    <el-input v-model="secret.description" :placeholder="$t('secret.descriptionPlaceholder')" required />
+                </el-form-item>
+                <el-form-item :label="$t('secret.tags')" prop="tags">
+                    <el-row :gutter="20" v-for="(tag, index) in secret.tags" :key="index">
+                        <el-col :span="8">
+                            <el-input required v-model="tag.key" :placeholder="$t('key')" />
+                        </el-col>
+                        <el-col :span="12">
+                            <el-input required v-model="tag.value" :placeholder="$t('value')" />
+                        </el-col>
+                        <el-button-group class="d-flex flex-nowrap">
+                            <el-button
+                                :icon="Delete"
+                                @click="removeSecretTag(index)"
+                                :disabled="secret.tags.length === 1"
+                            />
+                        </el-button-group>
+                    </el-row>
+                    <el-button :icon="Plus" @click="addSecretTag" type="primary">
+                        {{ $t('secret.addTag') }}
+                    </el-button>
+                </el-form-item>
+            </el-form>
 
-        <template #footer>
-            <el-button :icon="ContentSave" @click="saveSecret($refs.form)" type="primary">
-                {{ $t('save') }}
-            </el-button>
-        </template>
-    </drawer>
+            <template #footer>
+                <el-button :icon="ContentSave" @click="saveSecret($refs.form)" type="primary">
+                    {{ $t('save') }}
+                </el-button>
+            </template>
+        </drawer>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -176,7 +178,6 @@
             Id,
             Drawer
         },
-        inheritAttrs: false,
         computed: {
             ...mapState("auth", ["user"]),
             secretModalTitle() {
@@ -219,12 +220,19 @@
             }
         },
         emits: [
-            "update:addSecretModalVisible"
+            "update:addSecretModalVisible",
+            "update:isSecretReadOnly",
+            "hasData"
         ],
         watch: {
             addSecretModalVisible(newValue) {
                 if (!newValue) {
                     this.resetForm();
+                }
+            },
+            hasData(newValue, oldValue) {
+                if (oldValue === undefined) {
+                    this.$emit("hasData", newValue);
                 }
             }
         },
@@ -263,7 +271,8 @@
                             required: false,
                         },
                     ]
-                }
+                },
+                hasData: undefined
             };
         },
         methods: {
@@ -288,9 +297,11 @@
                 }
 
                 if (fetch.length === 0) {
+                    this.hasData = false;
                     return undefined;
                 }
 
+                this.hasData = true;
                 this.secrets = [...(this.secrets || []), ...fetch];
 
                 return fetch;
@@ -338,26 +349,26 @@
             removeSecretTag(index) {
                 this.secret.tags.splice(index, 1);
             },
-            reloadSecrets() {
+            async reloadSecrets() {
                 this.secretsIterator = undefined;
+
+                const previousLength = this.secrets?.length ?? 0;
+                await this.$refs.selectTable.resetInfiniteScroll();
                 this.secrets = [];
-                this.$refs.selectTable.resetInfiniteScroll();
 
                 // If we are in the global Secrets view we let the infinite scroll handling the fetch
-                if (this.namespace !== undefined) {
+                if (this.namespace !== undefined || previousLength === 0) {
                     this.fetchSecrets();
                 }
             },
-            removeSecret(key) {
+            removeSecret({key, namespace}) {
                 this.$toast().confirm(this.$t("delete confirm", {name: key}), () => {
                     return this.$store
-                        .dispatch("namespace/deleteSecrets", {namespace: this.$route.params.id, key: key})
+                        .dispatch("namespace/deleteSecrets", {namespace: namespace, key})
                         .then(() => {
                             this.$toast().deleted(key);
                         })
-                        .then(() => {
-                            this.reloadSecrets();
-                        })
+                        .then(() => this.reloadSecrets())
                 });
             },
             isSecretValueUpdated() {

@@ -411,13 +411,15 @@
                         });
                     });
             },
-            reloadKvs() {
+            async reloadKvs() {
                 this.namespaceIterator = undefined;
+
+                const previousLength = this.secrets?.length ?? 0;
+                await this.$refs.selectTable.resetInfiniteScroll();
                 this.kvs = [];
-                this.$refs.selectTable.resetInfiniteScroll();
 
                 // If we are in the global KV view we let the infinite scroll handling the fetch
-                if (this.namespace !== undefined) {
+                if (this.namespace !== undefined || previousLength === 0) {
                     this.fetchKvs();
                 }
             },

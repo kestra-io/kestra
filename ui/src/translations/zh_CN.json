@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "应用蓝图",
       "community": "社区",
+      "create": "创建一个blueprint",
       "custom": "自定义blueprints",
       "dashboards": "仪表板 Blueprints",
+      "edit": "编辑蓝图",
       "empty": "没有可显示的blueprints。",
       "flows": "流程蓝图",
       "header": {

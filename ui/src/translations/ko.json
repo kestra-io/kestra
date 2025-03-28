@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "앱 Blueprints",
       "community": "커뮤니티",
+      "create": "블루프린트 생성",
       "custom": "사용자 정의 blueprints",
       "dashboards": "대시보드 Blueprints",
+      "edit": "블루프린트 편집",
       "empty": "블루프린트가 없습니다.",
       "flows": "플로우 Blueprints",
       "header": {

@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "ऐप Blueprints",
       "community": "समुदाय",
+      "create": "ब्लूप्रिंट बनाएं",
       "custom": "कस्टम blueprints",
       "dashboards": "डैशबोर्ड Blueprints",
+      "edit": "ब्लूप्रिंट संपादित करें",
       "empty": "कोई blueprints दिखाने के लिए नहीं हैं।",
       "flows": "फ्लो Blueprints",
       "header": {

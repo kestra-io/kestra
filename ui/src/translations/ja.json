@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "アプリケーション Blueprints",
       "community": "コミュニティ",
+      "create": "ブループリントを作成",
       "custom": "カスタムblueprint",
       "dashboards": "ダッシュボード Blueprints",
+      "edit": "ブループリントを編集する",
       "empty": "設計図が表示されていません。",
       "flows": "フローBlueprints",
       "header": {

@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "Черновики приложений",
       "community": "Сообщество",
+      "create": "Создать blueprint",
       "custom": "Пользовательские blueprints",
       "dashboards": "Панель управления Blueprints",
+      "edit": "Редактировать blueprint",
       "empty": "Нет blueprints для отображения.",
       "flows": "Черновики Flow",
       "header": {

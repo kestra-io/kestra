@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "Blueprints do Aplicativo",
       "community": "Comunidade",
+      "create": "Criar um blueprint",
       "custom": "Blueprints personalizados",
       "dashboards": "Blueprints do Dashboard",
+      "edit": "Editar um blueprint",
       "empty": "Nenhum blueprint para mostrar.",
       "flows": "Blueprints de Flow",
       "header": {

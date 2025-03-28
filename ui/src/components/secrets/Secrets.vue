@@ -40,6 +40,7 @@
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
     import {useStore} from "vuex";
+    import useRouteContext from "../../mixins/useRouteContext.js";
     import sourceImg from "../../assets/demo/secrets.png";
     import Layout from "../demo/Layout.vue";
 
@@ -51,6 +52,8 @@
 
     const {t} = useI18n({useScope: "global"});
     const routeInfo = computed(() => ({title: t("secret.names")}));
+
+    useRouteContext(routeInfo);
 </script>
 
 <style lang="scss" scoped>

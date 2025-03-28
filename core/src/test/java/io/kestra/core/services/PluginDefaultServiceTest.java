@@ -51,12 +51,32 @@ class PluginDefaultServiceTest {
             Map.of("id", "my-task", "type", "io.kestra.test")
         )
     );
+    public static final String TEST_LOG_FLOW_SOURCE = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+             - id: log
+               type: io.kestra.plugin.core.log.Log
+        """;
 
     @Inject
     private PluginDefaultService pluginDefaultService;
 
     @Inject
     private YamlParser yamlParser;
+
+    @Test
+    void shouldInjectGivenFlowWithNullSource() {
+        // Given
+        FlowWithSource flow = yamlParser.parse(TEST_LOG_FLOW_SOURCE, FlowWithSource.class);
+
+        // When
+        FlowWithSource result = pluginDefaultService.injectDefaults(flow);
+
+        // Then
+        Log task = (Log) result.getTasks().getFirst();
+        assertThat(task.getMessage(), is("This is a default message"));
+    }
 
     @Test
     void shouldInjectGivenDefaultsIncludingType() {

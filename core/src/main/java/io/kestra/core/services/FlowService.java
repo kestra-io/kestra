@@ -132,6 +132,15 @@ public class FlowService {
         }
 
         List<String> warnings = new ArrayList<>(checkValidSubflows(flow, tenantId));
+        List<io.kestra.plugin.core.trigger.Flow> flowTriggers = ListUtils.emptyOnNull(flow.getTriggers()).stream()
+            .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
+            .map(io.kestra.plugin.core.trigger.Flow.class::cast)
+            .toList();
+        flowTriggers.forEach(flowTrigger -> {
+            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
+                warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId() + "'.");
+            }
+        });
 
         return warnings;
     }
@@ -140,7 +149,11 @@ public class FlowService {
         try {
             Map<String, Class<?>> aliases = pluginRegistry.plugins().stream()
                 .flatMap(plugin -> plugin.getAliases().values().stream())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    (existing, duplicate) -> existing
+                ));
             Map<String, Object> stringObjectMap = JacksonMapper.ofYaml().readValue(flowSource, JacksonMapper.MAP_TYPE_REFERENCE);
             return relocations(aliases, stringObjectMap);
         } catch (JsonProcessingException e) {

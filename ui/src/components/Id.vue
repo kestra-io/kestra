@@ -16,9 +16,6 @@
     import Utils from "../utils/utils";
 
     export default {
-        components: {
-
-        },
         props: {
             value: {
                 type: String,

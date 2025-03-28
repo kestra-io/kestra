@@ -33,6 +33,9 @@ public class FlowUpdatesCommand extends AbstractApiCommand {
     @CommandLine.Option(names = {"--delete"}, negatable = true, description = "Whether missing should be deleted")
     public boolean delete = false;
 
+    @CommandLine.Option(names = {"--namespace"}, description = "The parent namespace of the flows, if not set, every namespace are allowed.")
+    public String namespace;
+
     @SuppressWarnings("deprecation")
     @Override
     public Integer call() throws Exception {
@@ -58,8 +61,12 @@ public class FlowUpdatesCommand extends AbstractApiCommand {
                 body = String.join("\n---\n", flows);
             }
             try(DefaultHttpClient client = client()) {
+                String namespaceQuery = "";
+                if (namespace != null) {
+                    namespaceQuery = "&namespace=" + namespace;
+                }
                 MutableHttpRequest<String> request = HttpRequest
-                    .POST(apiUri("/flows/bulk") + "?delete=" + delete, body).contentType(MediaType.APPLICATION_YAML);
+                    .POST(apiUri("/flows/bulk") + "?allowNamespaceChild=true&delete=" + delete + namespaceQuery, body).contentType(MediaType.APPLICATION_YAML);
 
                 List<UpdateResult> updated = client.toBlocking().retrieve(
                     this.requestOptions(request),

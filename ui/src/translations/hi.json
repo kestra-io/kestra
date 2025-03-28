@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "ऐप Blueprints",
       "community": "समुदाय",
+      "create": "ब्लूप्रिंट बनाएं",
       "custom": "कस्टम blueprints",
       "dashboards": "डैशबोर्ड Blueprints",
+      "edit": "ब्लूप्रिंट संपादित करें",
       "empty": "कोई blueprints दिखाने के लिए नहीं हैं।",
       "flows": "फ्लो Blueprints",
       "header": {
@@ -244,7 +246,6 @@
     "delete backfill": "Backfill हटाएं",
     "delete backfills": "Backfills हटाएं",
     "delete confirm": "क्या आप वाकई <code>{name}</code> को हटाना चाहते हैं?",
-    "delete confirm multiple": "क्या आप वाकई <code>{name}</code> KV(s) को हटाना चाहते हैं?",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">यह निष्पादन अभी भी RUNNING है, इसे हटाने से यह बंद नहीं होगा।<br />इसे बंद करने के लिए आपको निष्पादन को kill करना होगा।</div>",
     "delete logs": "Logs हटाएं",
     "delete ok": "हटा दिया गया है",
@@ -302,6 +303,18 @@
           "message": "Kestra Enterprise Edition में, आप namespace-स्तर के वेरिएबल्स को परिभाषित और प्रबंधित कर सकते हैं ताकि flows में दोहराव वाली कॉन्फ़िगरेशन को समाप्त किया जा सके। ये वेरिएबल्स स्थिरता सुनिश्चित करते हैं, कॉन्फ़िगरेशन अपडेट को सरल बनाते हैं, और किसी भी task या trigger द्वारा आसानी से संदर्भित किए जा सकते हैं, जिससे workflows को अधिक साफ और बनाए रखने योग्य बनाया जा सके।",
           "title": "अपने वेरिएबल्स को केंद्रीय रूप से प्रबंधित करें"
         }
+      },
+      "secrets": {
+        "add_env": {
+          "first": "<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">गुप्त value को Base64 में एन्कोड करें</a></strong>",
+          "intro": "नया Secret बनाने के लिए:",
+          "second": "'<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' नामक एक environment variable जोड़ें उपरोक्त value के साथ",
+          "third": "अपने Kestra instance को पुनः प्रारंभ करें"
+        },
+        "detected_env": "यहाँ instance start-time पर पहचाने गए secret-type environment variables हैं:",
+        "empty_env": "आपके वातावरण में अभी तक कोई Secrets नहीं हैं।",
+        "message": "एंटरप्राइज एडिशन (EE) आपको UI में सीधे secrets जोड़ने, संपादित करने या हटाने की अनुमति देता है—कोई instance पुनरारंभ की आवश्यकता नहीं है। secrets को namespace द्वारा संगठित करें, जिसमें सूक्ष्म RBAC अनुमतियाँ हों, और उन्हें parent से child namespaces में विरासत में लें। EE HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, और Elasticsearch जैसे secrets प्रबंधकों के साथ एकीकृत होता है। टीमों के बीच secrets को अलग करने के लिए namespace, tenant, या instance के अनुसार समर्पित बैकएंड सेट करें, या बाहरी vaults में संग्रहीत read-only secrets को सक्षम करें। secrets को आराम और ट्रांजिट में एन्क्रिप्टेड रखा जाता है। वैकल्पिक caching API कॉल्स को कम करता है, और audit trails सभी एक्सेस को log करते हैं।",
+        "title": "अपने Secrets Management को अपग्रेड करें"
       },
       "tenants": {
         "message": "Kestra एंटरप्राइज एडिशन मल्टी-टेनेंसी का समर्थन करता है, जो आपको विभिन्न टीमों या परियोजनाओं के लिए पूरी तरह से अलग वातावरण प्रदान करता है, जिनमें से प्रत्येक के पास अपने स्वयं के संसाधन होते हैं जैसे कि समर्पित worker समूह या secrets और आंतरिक storage backends।",
@@ -544,6 +557,7 @@
         },
         "empty": "आपने अभी तक कोई खोज सहेजी नहीं है।",
         "label": "सहेजे गए खोजें",
+        "remove": "हटाएं",
         "tooltip": "आप खाली खोज मानदंड सहेज नहीं सकते।"
       },
       "settings": {
@@ -639,6 +653,10 @@
     "killed done": "निष्पादन समाप्त करने के लिए कतारबद्ध है",
     "kv": {
       "add": "नया Key-Value",
+      "delete multiple": {
+        "confirm": "क्या आप वाकई हटाना चाहते हैं: <code>{name}</code> kv(s)?",
+        "warning": "आपके पास उन namespaces के लिए अनुमतियाँ नहीं हैं, इसलिए उन्हें हटा दिया जाएगा: <code>{namespaces}</code>"
+      },
       "duplicate": "यह key पहले से मौजूद है",
       "name": "KV Store",
       "type": "प्रकार",
@@ -1004,8 +1022,11 @@
     "search term in message": "संदेश में खोज शब्द",
     "seconds": "सेकंड्स",
     "secret": {
+      "add": "नया secret",
       "inherited": "Inherited secrets",
-      "names": "Secrets"
+      "isReadOnly": "सीक्रेट केवल पढ़ने के लिए है",
+      "names": "Secrets",
+      "update": "गुप्त जानकारी '{name}' अपडेट करें"
     },
     "security_advice": {
       "content": "अपनी instance की सुरक्षा के लिए बुनियादी प्रमाणीकरण सक्षम करें।",
@@ -1038,7 +1059,8 @@
             "flow_default_tab": "डिफ़ॉल्ट Flow टैब",
             "language": "भाषा",
             "log_display": "Log प्रदर्शन",
-            "log_level": "Log स्तर"
+            "log_level": "Log स्तर",
+            "multi_panel_editor": "मल्टी पैनल एडिटर"
           },
           "label": "मुख्य कॉन्फ़िगरेशन"
         },
@@ -1141,8 +1163,10 @@
     "templates deleted": "<code>{count}</code> template(s) हटाए गए",
     "templates deprecated": "templates अप्रचलित हैं। कृपया इसके बजाय subflows का उपयोग करें। यह समझाने वाला <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">माइग्रेशन अनुभाग</a> देखें कि आप टेम्पलेट्स से subflows में कैसे माइग्रेट कर सकते हैं।",
     "templates exported": "templates निर्यात किए गए",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "मंडल",
+      "names": "मंडल"
+    },
     "theme": "थीम",
     "this_task_has": "यह task है",
     "timezone": "समय क्षेत्र",

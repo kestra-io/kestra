@@ -1,11 +1,11 @@
 <template>
     <el-form label-position="top">
-        <template v-if="properties(true)">
+        <template v-if="sortedProperties">
             <!-- Required properties -->
             <el-form-item
-                :key="index"
+                :key="key"
                 :required="isRequired(key)"
-                v-for="(schema, key, index) in properties(true)"
+                v-for="[key, schema] in requiredProperties"
             >
                 <template #label>
                     <span v-if="getKey(key)" class="label">
@@ -35,7 +35,7 @@
                 </template>
                 <component
                     :is="`task-${getType(schema, key)}`"
-                    :model-value="getPropertiesValue(key)"
+                    :model-value="modelValue?.[key]"
                     :task="modelValue"
                     @update:model-value="onObjectInput(key, $event)"
                     :root="getKey(key)"
@@ -47,12 +47,12 @@
             </el-form-item>
 
             <!-- Non required properties shown collapsed-->
-            <el-collapse class="collapse">
+            <el-collapse v-if="optionalProperties?.length" class="collapse">
                 <el-collapse-item :title="$t('no_code.sections.optional')">
                     <el-form-item
-                        :key="index"
+                        :key="key"
                         :required="isRequired(key)"
-                        v-for="(schema, key, index) in properties(false)"
+                        v-for="[key, schema] in optionalProperties"
                     >
                         <template #label>
                             <span v-if="getKey(key)" class="label">
@@ -82,7 +82,7 @@
                         </template>
                         <component
                             :is="`task-${getType(schema, key)}`"
-                            :model-value="getPropertiesValue(key)"
+                            :model-value="modelValue?.[key]"
                             :task="modelValue"
                             @update:model-value="onObjectInput(key, $event)"
                             :root="getKey(key)"
@@ -133,39 +133,28 @@
             Markdown,
         },
         emits: ["update:modelValue"],
-        methods: {
-            properties(requiredFields) {
+        computed: {
+            sortedProperties() {
                 if (this.schema?.properties) {
-                    let properties = Object.entries(this.schema.properties).reduce(
-                        (acc, [key, value]) => {
-                            if (
-                                requiredFields
-                                    ? this.isRequired(key)
-                                    : !this.isRequired(key)
-                            ) {
-                                acc[key] = value;
-                            }
-                            return acc;
-                        },
-                        {},
-                    );
-
-                    if (requiredFields && !properties.id) {
-                        properties = {
-                            ...properties,
-                            id: {type: "string", $required: true},
-                        };
-                    }
-                    return this.sortProperties(properties);
+                    return this.sortProperties(this.schema.properties);
                 }
 
                 return undefined;
             },
-            getPropertiesValue(properties) {
-                return this.modelValue && this.modelValue[properties]
-                    ? this.modelValue[properties]
-                    : undefined;
+            requiredProperties() {
+                const properties = this.sortedProperties.filter(([p]) => this.isRequired(p));
+                // if the field id is not found in the required fields,
+                // we need to add it
+                if(!properties.find(([field]) => field === "id")) {
+                    properties.unshift(["id", {type: "string", $required: true}]);
+                }
+                return properties;
             },
+            optionalProperties() {
+                return this.sortedProperties.filter(([p]) => !this.isRequired(p));
+            },
+        },
+        methods: {
             sortProperties(properties) {
                 if (!properties) {
                     return properties;
@@ -203,10 +192,6 @@
 
                         return a[0].localeCompare(b[0]);
                     })
-                    .reduce((result, entry) => {
-                        result[entry[0]] = entry[1];
-                        return result;
-                    }, {});
             },
             onObjectInput(properties, value) {
                 const currentValue = this.modelValue || {};
@@ -216,7 +201,7 @@
             isValidated(key) {
                 return (
                     this.isRequired(key) &&
-                    !this.getPropertiesValue(key) &&
+                    !this.modelValue?.[key] &&
                     this.schema.properties[key].default === undefined
                 );
             },

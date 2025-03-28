@@ -163,7 +163,7 @@
 
 .dropdown {
     width: 300px;
-    background: var(--ks-select-background);
+    background: var(ks-select-background);
 
     :deep(li.el-dropdown-menu__item) {
         &:hover,

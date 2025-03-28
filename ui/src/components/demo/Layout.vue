@@ -8,39 +8,14 @@
             </div>
             <h2>{{ title }}</h2>
             <p><slot name="message" /></p>
-            <a class="el-button el-button--large el-button--primary" target="_blank" :href="getADemoUrl.href">
-                {{ $t("demos.get_a_demo_button") }}
-            </a>
-            <el-button size="large" @click="store.commit('misc/setContextInfoBarOpenTab', 'docs')">
-                Learn More
-                <el-icon class="el-icon--right">
-                    <ArrowRightIcon />
-                </el-icon>
-            </el-button>
+            <DemoButtons />
         </div>
     </EmptyTemplate>
 </template>
 
 <script lang="ts" setup>
-    import {computed} from "vue";
-    import {useStore} from "vuex";
-    import {useRoute} from "vue-router";
-    import ArrowRightIcon from "vue-material-design-icons/ArrowRight.vue";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
-
-    const store = useStore();
-    const route = useRoute();
-
-    const getADemoUrl = computed(() => {
-        const demoUrl = new URL("https://kestra.io/demo");
-        // set all utm params from the route query
-        for (const [key, value] of Object.entries(route.query)) {
-            if (key.startsWith("utm_")) {
-                demoUrl.searchParams.set(key, value as string);
-            }
-        }
-        return demoUrl;
-    });
+    import DemoButtons from "./DemoButtons.vue";
 
     defineProps<{
         title: string;

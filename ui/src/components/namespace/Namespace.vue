@@ -197,6 +197,9 @@
                         props: {
                             addKvModalVisible: this.modalAddKvVisible,
                         },
+                        query: {
+                            id: this.$route.query.id
+                        },
                         "v-on": {
                             "update:addKvModalVisible": (value) => {
                                 this.modalAddKvVisible = value

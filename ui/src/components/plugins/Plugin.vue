@@ -32,7 +32,7 @@
                 <div class="d-flex gap-3 mb-3 align-items-center">
                     <task-icon
                         class="plugin-icon"
-                        :cls="$route.params.cls"
+                        :cls="pluginType"
                         only-icon
                         :icons="icons"
                     />
@@ -41,7 +41,13 @@
                     </h4>
                 </div>
                 <Suspense v-loading="isLoading">
-                    <schema-to-html class="plugin-schema" :dark-mode="theme === 'dark'" :schema="plugin.schema" :props-initially-expanded="true" :plugin-type="$route.params.cls">
+                    <schema-to-html
+                        class="plugin-schema"
+                        :dark-mode="theme === 'dark'"
+                        :schema="plugin.schema"
+                        :props-initially-expanded="true"
+                        :plugin-type="pluginType"
+                    >
                         <template #markdown="{content}">
                             <markdown font-size-var="font-size-base" :source="content" />
                         </template>
@@ -69,12 +75,12 @@
     export default {
         mixins: [RouteContext],
         computed: {
-            ...mapState("plugin", ["plugin", "plugins",  "icons", "versions"]),
+            ...mapState("plugin", ["plugin", "plugins", "icons", "versions"]),
             ...mapGetters("misc", ["theme"]),
             routeInfo() {
                 return {
-                    title: this.$route.params.cls ? this.$route.params.cls : this.$t("plugins.names"),
-                    breadcrumb: !this.$route.params.cls ? undefined : [
+                    title: this.pluginType ?? this.$t("plugins.names"),
+                    breadcrumb: this.pluginType === undefined ? undefined : [
                         {
                             label: this.$t("plugins.names"),
                             link: {
@@ -85,17 +91,18 @@
                 }
             },
             pluginName() {
-                const split = this.$route.params.cls.split(".");
+                const split = this.pluginType?.split(".");
                 return split[split.length - 1];
             },
             pluginIsSelected() {
-                return this.plugin && this.$route.params.cls
+                return this.pluginType !== undefined && this.plugin !== undefined
             }
         },
         data() {
             return {
                 isLoading: false,
-                version: undefined
+                version: undefined,
+                pluginType: undefined
             };
         },
         created() {
@@ -103,10 +110,13 @@
             this.loadPlugin()
         },
         watch: {
-            $route(newValue, _oldValue) {
-                if (newValue.name.startsWith("plugins/")) {
-                    this.onRouterChange();
-                }
+            $route: {
+                handler(newValue, _oldValue) {
+                    if (newValue.name.startsWith("plugins/")) {
+                        this.onRouterChange();
+                    }
+                },
+                immediate: true
             }
         },
         methods: {
@@ -117,7 +127,7 @@
             },
 
             selectVersion(version) {
-                this.$router.push({name: "plugins/view", params: {cls: this.$route.params.cls, version: version}});
+                this.$router.push({name: "plugins/view", params: {cls: this.pluginType, version: version}});
             },
 
             loadPlugin() {
@@ -139,6 +149,7 @@
                             })
                     ]).finally(() => {
                         this.isLoading = false
+                        this.pluginType = params.cls;
                     });
                 }
             },
@@ -156,9 +167,10 @@
 
 <style scoped lang="scss">
     @import "../../styles/components/plugin-doc";
+
     .versions {
-      min-width: 200px;
-      display: inline-grid;
-      float: right;
+        min-width: 200px;
+        display: inline-grid;
+        float: right;
     }
 </style>

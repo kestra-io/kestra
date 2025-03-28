@@ -110,6 +110,33 @@ class FlowUpdatesCommandTest {
     }
 
     @Test
+    void invalidWithNamespace() {
+        URL directory = FlowUpdatesCommandTest.class.getClassLoader().getResource("flows");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(out));
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+
+            EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
+            embeddedServer.start();
+
+            String[] args = {
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "--namespace",
+                "io.kestra.cli",
+                "--delete",
+                directory.getPath(),
+            };
+            PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
+
+            assertThat(out.toString(), containsString("Invalid entity: flow.namespace: io.kestra.outsider_quattro_-1 - flow namespace is invalid"));
+        }
+    }
+
+    @Test
     void helper()  {
         URL directory = FlowUpdatesCommandTest.class.getClassLoader().getResource("helper");
         ByteArrayOutputStream out = new ByteArrayOutputStream();

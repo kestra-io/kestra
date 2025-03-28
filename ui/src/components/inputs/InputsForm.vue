@@ -218,6 +218,7 @@
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'JSON'"
+                :show-scroll="inputsValues[input.id]?.length > 530 ? true : false"
                 :data-test-id="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputsValues[input.id]"
@@ -718,4 +719,8 @@
         background-color: var(--ks-dropdown-background-active);
     }
 }
+
+:deep(.editor-container){
+        max-height: 200px;
+    }
 </style>

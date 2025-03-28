@@ -4,64 +4,50 @@
     </div>
 </template>
 
-<script>
+<script setup lang="ts">
+    import {ref, computed, watch} from "vue";
     import * as Markdown from "../../utils/markdown";
 
-    export default {
-        props: {
-            source: {
-                type: String,
-                default: "",
-            },
-            permalink: {
-                type: Boolean,
-                default: false,
-            },
-            fontSizeVar: {
-                type: String,
-                default: "font-size-sm"
-            },
-            html: {
-                type: Boolean,
-                default: true
-            }
-        },
-        data() {
-            return {
-                markdownRenderer: undefined
-            }
-        },
-        async created() {
-            this.markdownRenderer = await this.renderMarkdown();
-        },
-        watch: {
-            async source() {
-                this.markdownRenderer = await this.renderMarkdown();
-            }
-        },
-        methods: {
-            async renderMarkdown() {
-                return await Markdown.render(this.sourceWithReplacedAlerts, {
-                    permalink: this.permalink,
-                    html: this.html
-                });
-            },
-        },
-        computed: {
-            sourceWithReplacedAlerts() {
-                return this.source.replaceAll(
-                    /(\n)?::alert\{type="(.*)"}\n([\s\S]*?)\n::(\n)?/g,
-                    (_, newLine1, type, content, newLine2) => `${newLine1 ?? ""}::: ${type}\n${content}\n:::${newLine2 ?? ""}`
-                );
-            },
-            fontSizeCss() {
-                return `var(--${this.fontSizeVar})`;
-            },
-            permalinkCss() {
-                return this.permalink ? "-20px" : "0";
-            }
-        },
-    };
+    const props = withDefaults(defineProps<{
+        source?: string;
+        permalink?: boolean;
+        fontSizeVar?: string;
+        html?: boolean;
+    }>(), {
+        source: "",
+        permalink: false,
+        fontSizeVar: "font-size-sm",
+        html: true
+    });
+
+    const markdownRenderer = ref()
+
+    const sourceWithReplacedAlerts = computed(() => {
+        return props.source.replace(
+            /(\n)?::alert\{type="(.*)"}\n([\s\S]*?)\n::(\n)?/g,
+            (_, newLine1, type, content, newLine2) => `${newLine1 ?? ""}::: ${type}\n${content}\n:::${newLine2 ?? ""}`
+        );
+    })
+
+    async function renderMarkdown() {
+        return await Markdown.render(sourceWithReplacedAlerts.value, {
+            permalink: props.permalink,
+            html: props.html
+        });
+    }
+
+    watch(() => props.source, async () => {
+        markdownRenderer.value = await renderMarkdown();
+    }, {immediate: true})
+
+    const fontSizeCss = computed(() => {
+        return `var(--${props.fontSizeVar})`;
+    })
+
+    const permalinkCss = computed(() => {
+        return props.permalink ? "-20px" : "0";
+    })
+
 </script>
 
 <style lang="scss">

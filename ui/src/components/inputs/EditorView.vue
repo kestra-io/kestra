@@ -250,7 +250,7 @@
                 v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
                 class="combined-right-view enhance-readability"
             >
-                <Blueprints @loaded="blueprintsLoaded = true" embed kind="flow" />
+                <Blueprints @loaded="blueprintsLoaded = true" embed kind="flow" combined-view />
             </div>
 
             <div

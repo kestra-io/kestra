@@ -1153,8 +1153,10 @@
     "templates deleted": "<code>{count}</code> 个模板已删除",
     "templates deprecated": "模板已弃用。请使用子流程代替。查看 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">迁移部分</a> 了解如何从模板迁移到子流程。",
     "templates exported": "模板已导出",
-    "tenant": "租户",
-    "tenants": "租户",
+    "tenant": {
+      "name": "租户",
+      "names": "租户"
+    },
     "theme": "主题",
     "this_task_has": "此task已",
     "timezone": "时区",

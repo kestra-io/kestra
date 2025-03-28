@@ -233,7 +233,7 @@ export function useLeftMenu() {
                     {
                         href: {name: "admin/tenants/list"},
                         routes: routeStartWith("admin/tenants"),
-                        title: t("tenants"),
+                        title: t("tenant.names"),
                         icon: {
                             element: shallowRef(ShieldLockOutline),
                             class: "menu-icon"

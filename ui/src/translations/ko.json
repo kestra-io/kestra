@@ -1153,8 +1153,10 @@
     "templates deleted": "<code>{count}</code> 개의 템플릿이 삭제되었습니다",
     "templates deprecated": "템플릿은 사용 중지되었습니다. 대신 subflows를 사용하세요. 템플릿에서 subflows로 마이그레이션하는 방법을 설명하는 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">마이그레이션 섹션</a>을 참조하세요.",
     "templates exported": "템플릿이 내보내졌습니다",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "테넌트",
+      "names": "테넌트"
+    },
     "theme": "테마",
     "this_task_has": "이 task는",
     "timezone": "시간대",

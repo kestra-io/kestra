@@ -905,8 +905,10 @@
     "enable concurrency": "Enable concurrency",
     "auditlogs": "Audit Logs",
     "iam": "IAM",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "Tenant",
+      "names": "Tenants"
+    },
     "ee-tooltip": {
       "features-blocked": "This feature requires Enterprise Edition.",
       "button": "Talk to us"
@@ -1249,7 +1251,7 @@
     "task_runners": "Task Runners",
     "empty": {
       "announcements": {
-        "title": "You have no annoucements yet!",
+        "title": "You have no announcements yet!",
         "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."
       },
       "apps": {

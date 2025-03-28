@@ -1153,8 +1153,10 @@
     "templates deleted": "<code>{count}</code> Szablon(y) usunięte",
     "templates deprecated": "Szablony są przestarzałe. Proszę używać subflows. Zobacz <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sekcję migracji</a>, aby dowiedzieć się, jak migrować z szablonów do subflows.",
     "templates exported": "Szablony wyeksportowane",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "Mandant",
+      "names": "Najemcy"
+    },
     "theme": "Motyw",
     "this_task_has": "To zadanie ma",
     "timezone": "Strefa czasowa",

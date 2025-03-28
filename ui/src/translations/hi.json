@@ -1153,8 +1153,10 @@
     "templates deleted": "<code>{count}</code> template(s) हटाए गए",
     "templates deprecated": "templates अप्रचलित हैं। कृपया इसके बजाय subflows का उपयोग करें। यह समझाने वाला <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">माइग्रेशन अनुभाग</a> देखें कि आप टेम्पलेट्स से subflows में कैसे माइग्रेट कर सकते हैं।",
     "templates exported": "templates निर्यात किए गए",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "मंडल",
+      "names": "मंडल"
+    },
     "theme": "थीम",
     "this_task_has": "यह task है",
     "timezone": "समय क्षेत्र",

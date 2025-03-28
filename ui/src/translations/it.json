@@ -1153,8 +1153,10 @@
     "templates deleted": "<code>{count}</code> Template/i eliminati",
     "templates deprecated": "I templates sono deprecati. Si prega di utilizzare i subflows. Vedi la <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sezione Migrazioni</a> che spiega come migrare dai templates ai subflows.",
     "templates exported": "Template esportati",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "Mandante",
+      "names": "Mandanti"
+    },
     "theme": "Tema",
     "this_task_has": "Questo task ha",
     "timezone": "Fuso orario",

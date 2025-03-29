@@ -305,6 +305,7 @@
         prefixFilter.value = "";
     };
     const handleBackspaceKey = () => {
+        if (currentFilters.value.length === 0) return;
         removeItem(currentFilters.value[currentFilters.value.length - 1]);
     };
 

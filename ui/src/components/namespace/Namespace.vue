@@ -130,10 +130,9 @@
                         component: Flows,
                         title: this.$t("flows"),
                         props: {
-                            tab: "flows",
-                            embed: false,
+                            topbar: false,
                             restoreUrl: false,
-                            topBar: false,
+                            embed: false,
                             namespace: this.$route.params.id || this.$route.query.id
                         },
                         query: {
@@ -144,9 +143,9 @@
                         name: "executions",
                         component: Executions,
                         props: {
-                            embed: false,
+                            topbar: false,
                             restoreUrl: false,
-                            topBar: false,
+                            embed: false,
                             namespace: this.$route.params.id || this.$route.query.id,
                             hidden: ["selection","inputs","flowRevision","taskRunList.taskId"]
                         },

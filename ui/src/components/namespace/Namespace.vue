@@ -35,9 +35,9 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Overview from "./Overview.vue";
-    import Executions from "./Executions.vue";
+    import Executions from "../executions/Executions.vue"
     import NamespaceKV from "./NamespaceKV.vue";
-    import Flows from "./Flows.vue";
+    import Flows from "../flows/Flows.vue";
     import EditorView from "../inputs/EditorView.vue";
     import BlueprintsBrowser from "../../override/components/flows/blueprints/BlueprintsBrowser.vue";
     import DemoNamespace from "../demo/Namespace.vue";
@@ -132,6 +132,9 @@
                         props: {
                             tab: "flows",
                             embed: false,
+                            restoreUrl: false,
+                            topBar: false,
+                            namespace: this.$route.params.id || this.$route.query.id
                         },
                         query: {
                             id: this.$route.query.id
@@ -142,6 +145,10 @@
                         component: Executions,
                         props: {
                             embed: false,
+                            restoreUrl: false,
+                            topBar: false,
+                            namespace: this.$route.params.id || this.$route.query.id,
+                            hidden: ["selection","inputs","flowRevision","taskRunList.taskId"]
                         },
                         title: this.$t("executions"),
                         query: {

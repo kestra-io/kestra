@@ -209,6 +209,7 @@
     import permission from "../../models/permission";
 
     export default {
+        inheritAttrs: false,
         mixins: [SelectTableActions],
         components: {
             Id,

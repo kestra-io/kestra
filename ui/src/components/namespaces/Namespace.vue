@@ -36,7 +36,7 @@
     import action from "../../models/action";
     import Dashboard from "../dashboard/Dashboard.vue";
     import Executions from "../executions/Executions.vue"
-    import NamespaceKV from "./NamespaceKV.vue";
+    import KVTable from "../kv/KVTable.vue";
     import Flows from "../flows/Flows.vue";
     import EditorView from "../inputs/EditorView.vue";
     import BlueprintsBrowser from "../../override/components/flows/blueprints/BlueprintsBrowser.vue";
@@ -201,10 +201,11 @@
                     },
                     {
                         name: "kv",
-                        component: NamespaceKV,
+                        component: KVTable,
                         title: this.$t("kv.name"),
                         props: {
                             addKvModalVisible: this.modalAddKvVisible,
+                            namespace: this.$route.params.id || this.$route.query.id,
                         },
                         query: {
                             id: this.$route.query.id

@@ -28,7 +28,7 @@
 </script>
 
 <script>
-    import NamespaceDependencies from "./NamespaceDependencies.vue";
+    import Dependencies from "./Dependencies.vue";
     import Tabs from "../Tabs.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
@@ -158,7 +158,7 @@
                     },
                     {
                         name: "dependencies",
-                        component: NamespaceDependencies,
+                        component: Dependencies,
                         title: this.$t("dependencies"),
                         props: {
                             type: "dependencies",

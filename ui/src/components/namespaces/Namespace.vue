@@ -28,13 +28,13 @@
 </script>
 
 <script>
-    import NamespaceDependenciesWrapper from "./NamespaceDependenciesWrapper.vue";
+    import NamespaceDependencies from "./NamespaceDependencies.vue";
     import Tabs from "../Tabs.vue";
     import RouteContext from "../../mixins/routeContext";
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import Overview from "./Overview.vue";
+    import Dashboard from "../dashboard/Dashboard.vue";
     import Executions from "../executions/Executions.vue"
     import NamespaceKV from "./NamespaceKV.vue";
     import Flows from "../flows/Flows.vue";
@@ -108,12 +108,14 @@
                 tabs.push(...[
                     {
                         name: undefined,
-                        component: Overview,
+                        component: Dashboard,
                         title: this.$t("overview"),
                         containerClass: "full-container flex-grow-0 flex-shrink-0 flex-basis-0",
-                        query: {
-                            id: this.$route.query.id
-                        }
+                        params: {
+                            restoreUrl: false,
+                            embed: true,
+                            namespace: this.$route.params.id || this.$route.query.id                        
+                        },
                     },
                     {
                         name: "edit",
@@ -156,11 +158,12 @@
                     },
                     {
                         name: "dependencies",
-                        component: NamespaceDependenciesWrapper,
+                        component: NamespaceDependencies,
                         title: this.$t("dependencies"),
                         props: {
                             type: "dependencies",
                             tab: "dependencies",
+                            namespace: this.$route.params.id || this.$route.query.id,
                         },
                         query: {
                             id: this.$route.query.id

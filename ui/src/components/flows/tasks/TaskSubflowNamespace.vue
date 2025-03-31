@@ -8,7 +8,7 @@
 </template>
 <script>
     import Task from "./Task";
-    import NamespaceSelect from "../../namespace/NamespaceSelect.vue";
+    import NamespaceSelect from "../../namespaces/NamespaceSelect.vue";
     import {mapState} from "vuex";
     export default {
         components: {NamespaceSelect},

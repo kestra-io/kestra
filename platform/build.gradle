@@ -34,7 +34,7 @@ dependencies {
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.58.0')
     api platform("com.azure:azure-sdk-bom:1.2.33")
-    api platform('software.amazon.awssdk:bom:2.31.6')
+    api platform('software.amazon.awssdk:bom:2.31.11')
 
 
     constraints {

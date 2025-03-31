@@ -260,7 +260,8 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             } else if (object instanceof String string) {
                 return replaceSecret(string);
             } else {
-                return object;
+                // toString will be called anyway at some point so better to all it now
+                return replaceSecret(object.toString());
             }
         }
 

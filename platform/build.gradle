@@ -49,6 +49,7 @@ dependencies {
         // ugly hack on crypto plugin
         api("org.bouncycastle:bcprov-jdk18on:$bouncycastleVersion")
         api("org.bouncycastle:bcpg-jdk18on:$bouncycastleVersion")
+        api("org.bouncycastle:bcpkix-jdk18on:$bouncycastleVersion")
         // ugly hack for jackson: as enforcing platform didn't work (it didn't enforce everywhere, not in plugins), we had to force all jackson libs individually.
         api("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
         api("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")

@@ -560,7 +560,31 @@
 
     const baseOutdatedTranslationKey = computed(() => store.getters["flow/baseOutdatedTranslationKey"]);
     const flowErrors = computed(() => store.getters["flow/flowErrors"]);
-    const flowWarnings = computed(() => store.getters["flow/flowWarnings"]);
+    const flowWarnings = computed(() => {
+        if (isFlow.value) {
+            const outdatedWarning =
+                store.state.flow.flowValidation?.outdated && !store.state.flow.isCreating
+                    ? [store.getters["flow/outdatedMessage"]]
+                    : [];
+
+            const deprecationWarnings =
+                store.state.flow.flowValidation?.deprecationPaths?.map(
+                    (f) => `${f} ${t("is deprecated")}.`
+                ) ?? [];
+
+            const otherWarnings = store.state.flow.flowValidation?.warnings ?? [];
+
+            const warnings = [
+                ...outdatedWarning,
+                ...deprecationWarnings,
+                ...otherWarnings,
+            ];
+
+            return warnings.length === 0 ? undefined : warnings;
+        }
+
+        return undefined;
+    });
     const flowInfos = computed(() => store.getters["flow/flowInfos"]);
     const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"]);
 
@@ -862,33 +886,17 @@
 
     const onUpdateMetadata = (event, shouldSave) => {
         if(shouldSave) {
-            metadata.value = {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)};
-            onSaveMetadata();
-            validateFlow(flowYaml.value)
+            store.commit("flow/setMetadata", {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)});
+            store.dispatch("flow/onSaveMetadata");
+            store.dispatch("flow/validateFlow", {flow: flowYaml.value});
         } else {
-            metadata.value = event.concurrency?.limit === 0 ?  {concurrency: null} : event;
+            store.commit("flow/setMetadata", event.concurrency?.limit === 0 ?  {concurrency: null} : event);
         }
     };
 
     const onSaveMetadata = () => {
         store.dispatch("flow/onSaveMetadata");
         isEditMetadataOpen.value = false;
-    };
-
-    const validateFlow = (flow) => {
-        if(!flow) return;
-
-        return store
-            .dispatch("flow/validateFlow", {flow})
-            .then((value) => {
-                if (validationDomElement.value && editorDomElement.value) {
-                    validationDomElement.value.onResize(
-                        editorDomElement.value.$el.offsetWidth
-                    );
-                }
-
-                return value;
-            });
     };
 
     const handleReorder = (yaml) => {
@@ -953,7 +961,7 @@
 
     const  save = async () => {
         const result = await store.dispatch("flow/save", {
-            content: editorDomElement.value.$refs.monacoEditor.value,
+            content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
         })
         if(result === "redirect_to_update"){
             await router.push({

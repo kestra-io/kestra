@@ -23,9 +23,9 @@ public class RunContextResponseInterceptor implements HttpResponseInterceptor {
             response instanceof BasicClassicHttpResponse httpResponse
         ) {
             try {
-                // FIXME temporary fix for https://github.com/kestra-io/kestra/issues/8092
                 runContext.logger().debug(
-                    "Request " +  httpClientContext.getRequest().getUri() + " from '{}' with the response code '{}'",
+                    "Request '{}' from '{}' with the response code '{}'",
+                    httpClientContext.getRequest().getUri(),
                     httpClientContext.getEndpointDetails().getRemoteAddress(),
                     response.getCode()
                 );

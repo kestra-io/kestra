@@ -1,6 +1,6 @@
 <template>
     <Navbar :title="routeInfo.title">
-        <template #additional-right v-if="!isUserEmpty && user.hasAnyAction(permission.NAMESPACE, action.CREATE)">
+        <template #additional-right v-if="user && user.hasAnyAction(permission.NAMESPACE, action.CREATE)">
             <ul>
                 <li>
                     <el-button :icon="Plus" type="primary">
@@ -78,7 +78,6 @@
     useRouteContext(routeInfo);
 
     const user = computed(() => store.state.auth.user);
-    const isUserEmpty = computed(() => Object.keys(user.value).length === 0);
 
     const route = useRoute()
 

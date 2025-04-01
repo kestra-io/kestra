@@ -1,0 +1,11 @@
+#Organize Import Order
+#Last updated 2023/02/08
+0=java
+1=javax
+2=org
+3=com
+5=io.kestra
+#Empty means everything else
+6=
+#'\#' means static imports
+7=\#

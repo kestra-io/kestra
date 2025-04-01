@@ -40,6 +40,9 @@ plugins {
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.1.0" apply false
+
+    // Linter
+    id "com.diffplug.spotless" version "7.0.2"
 }
 
 idea {
@@ -148,7 +151,7 @@ allprojects {
 
             // kestra
             implementation group: 'com.devskiller.friendly-id', name: 'friendly-id'
-            implementation (group: 'net.thisptr', name: 'jackson-jq') {
+            implementation(group: 'net.thisptr', name: 'jackson-jq') {
                 exclude group: 'com.fasterxml.jackson.core'
             }
 
@@ -379,10 +382,10 @@ run.classpath += configurations.developmentOnly
 test.classpath += configurations.developmentOnly
 
 run.jvmArgs(
-    "-noverify",
-    "-XX:TieredStopAtLevel=1",
-    "-Dcom.sun.management.jmxremote",
-    '-Dmicronaut.environments=dev,override'
+        "-noverify",
+        "-XX:TieredStopAtLevel=1",
+        "-Dcom.sun.management.jmxremote",
+        '-Dmicronaut.environments=dev,override'
 )
 
 /**********************************************************************************************************************\
@@ -391,11 +394,11 @@ run.jvmArgs(
 jar {
     manifest {
         attributes(
-            "Main-Class": mainClassName,
-            "X-Kestra-Name": project.name,
-            "X-Kestra-Title": project.name,
-            "X-Kestra-Group": project.group,
-            "X-Kestra-Version": project.version
+                "Main-Class": mainClassName,
+                "X-Kestra-Name": project.name,
+                "X-Kestra-Title": project.name,
+                "X-Kestra-Group": project.group,
+                "X-Kestra-Version": project.version
         )
     }
 }
@@ -423,7 +426,7 @@ tasks.register('writeExecutableJar') {
     description "Write an executable jar from shadow jar"
     dependsOn = [shadowJar]
 
-    final shadowJarFile =  tasks.shadowJar.outputs.files.singleFile
+    final shadowJarFile = tasks.shadowJar.outputs.files.singleFile
     inputs.file shadowJarFile
     outputs.file executable
     outputs.cacheIf { true }
@@ -516,7 +519,7 @@ subprojects {
         description = 'Build the tests jar'
 
         archiveClassifier.set('tests')
-        if (sourceSets.matching { it.name == 'test'}) {
+        if (sourceSets.matching { it.name == 'test' }) {
             from sourceSets.named('test').get().output
         }
     }
@@ -550,7 +553,7 @@ subprojects {
 
                     artifact shadowJar
                     artifact executableJar
-                } else if (project.name.contains('platform')){
+                } else if (project.name.contains('platform')) {
                     groupId project.group
                     artifactId project.name
                 } else {
@@ -602,4 +605,22 @@ release {
 
     pushReleaseVersionBranch = providers.gradleProperty("release.pushReleaseVersionBranch")
             .getOrElse(null)
+}
+
+/**********************************************************************************************************************\
+ * Linter
+ **********************************************************************************************************************/
+subprojects {
+    if (it.name != 'platform') {
+        apply plugin: "com.diffplug.spotless"
+
+        spotless {
+            java {
+                toggleOffOn()
+                importOrderFile(rootProject.file('eclipse-kestra.importorder'))
+                removeUnusedImports()
+                eclipse().configFile(rootProject.file("eclipse-java-kestra-style.xml"))
+            }
+        }
+    }
 }

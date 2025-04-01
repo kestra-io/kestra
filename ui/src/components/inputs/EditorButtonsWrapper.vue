@@ -37,10 +37,13 @@
     import {computed, getCurrentInstance} from "vue";
     import {useStore} from "vuex"
     import {useRouter, useRoute} from "vue-router";
+    import {useI18n} from "vue-i18n";
     import EditorButtons from "./EditorButtons.vue";
     import ValidationError from "../flows/ValidationError.vue";
 
     import localUtils from "../../utils/utils";
+
+    const {t} = useI18n();
 
     const exportYaml = () => {
         const blob = new Blob([store.getters["flow/flowYaml"]], {type: "text/yaml"});
@@ -57,12 +60,33 @@
     const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"])
     const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"])
     const flowErrors = computed(() => store.getters["flow/flowErrors"])
-    const flowWarnings = computed(() => store.getters["flow/flowWarnings"])
     const flowInfos = computed(() => store.getters["flow/flowInfos"])
     const flowParsed = computed(() => store.getters["flow/flow"])
     const tabs = computed<{dirty:boolean}[]>(() => store.state.editor.tabs)
     const metadata = computed(() => store.state.flow.metadata);
-    const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
+    const toast = getCurrentInstance()?.appContext.config.globalProperties.$toast();
+    const flowWarnings = computed(() => {
+
+        const outdatedWarning =
+            store.state.flow.flowValidation?.outdated && !store.state.flow.isCreating
+                ? [store.getters["flow/outdatedMessage"]]
+                : [];
+
+        const deprecationWarnings =
+            store.state.flow.flowValidation?.deprecationPaths?.map(
+                (f: string) => `${f} ${t("is deprecated")}.`
+            ) ?? [];
+
+        const otherWarnings = store.state.flow.flowValidation?.warnings ?? [];
+
+        const warnings = [
+            ...outdatedWarning,
+            ...deprecationWarnings,
+            ...otherWarnings,
+        ];
+
+        return warnings.length === 0 ? undefined : warnings;
+    });
 
     async function save(){
         await store.dispatch("flow/saveAll")

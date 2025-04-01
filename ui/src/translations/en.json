@@ -310,6 +310,8 @@
     "blueprints": {
       "community": "Community",
       "custom": "Custom blueprints",
+      "create": "Create a blueprint",
+      "edit": "Edit a blueprint",
       "title": "Blueprints",
       "empty": "No blueprints to show.",
       "header": {
@@ -807,7 +809,15 @@
       "get_a_demo_button": "Get a Demo",
       "secrets": {
         "title": "Upgrade your Secrets Management",
-        "message": "The Enterprise Edition (EE) lets you add, edit, or delete secrets directly in the UI—no instance restarts needed. Organize secrets by namespace with granular RBAC permissions, and inherit them from parent to child namespaces. EE integrates with secrets managers like HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, and Elasticsearch. Set up dedicated backends per namespace, tenant, or instance to isolate secrets across teams, or enable read-only secrets stored in external vaults. Secrets stay encrypted at rest and in transit. Optional caching reduces API calls, and audit trails log all access."
+        "message": "The Enterprise Edition (EE) lets you add, edit, or delete secrets directly in the UI—no instance restarts needed. Organize secrets by namespace with granular RBAC permissions, and inherit them from parent to child namespaces. EE integrates with secrets managers like HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, and Elasticsearch. Set up dedicated backends per namespace, tenant, or instance to isolate secrets across teams, or enable read-only secrets stored in external vaults. Secrets stay encrypted at rest and in transit. Optional caching reduces API calls, and audit trails log all access.",
+        "detected_env": "Here are secret-type environment variables identified at instance start-time:",
+        "empty_env": "You don't have any Secrets in your environment yet.",
+        "add_env": {
+          "intro": "To create a new Secret:",
+          "first": "Encode the <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">secret value in Base64</a></strong>",
+          "second": "Add an environment variable named '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' with the above value",
+          "third": "Restart your Kestra instance"
+        }
       },
       "apps": {
         "title": "Build custom Apps with Kestra",
@@ -905,8 +915,10 @@
     "enable concurrency": "Enable concurrency",
     "auditlogs": "Audit Logs",
     "iam": "IAM",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "Tenant",
+      "names": "Tenants"
+    },
     "ee-tooltip": {
       "features-blocked": "This feature requires Enterprise Edition.",
       "button": "Talk to us"
@@ -1249,7 +1261,7 @@
     "task_runners": "Task Runners",
     "empty": {
       "announcements": {
-        "title": "You have no annoucements yet!",
+        "title": "You have no announcements yet!",
         "content": "Announcements allow you to notify your users about any changes or inform them about planned maintenance downtime. Simply select the announcement type, the date range for which it should be displayed, and write the announcement message."
       },
       "apps": {
@@ -1263,7 +1275,7 @@
       "concurrency_limit": {
         "title": "No limits are set for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/concurrency\" target=\"_blank\">Concurrency Limits</a></strong> in our documentation."
-       },
+      },
       "dependencies": {
         "title": "No dependencies are set for this Flow.",
         "content": "Read more about <a href=\"https://kestra.io/docs/ui/flows#dependencies\" target=\"_blank\">Flow Dependencies</a> in our documentation."

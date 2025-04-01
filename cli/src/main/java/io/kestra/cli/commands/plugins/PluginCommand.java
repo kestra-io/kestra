@@ -12,6 +12,7 @@ import picocli.CommandLine.Command;
     mixinStandardHelpOptions = true,
     subcommands = {
         PluginInstallCommand.class,
+        PluginUninstallCommand.class,
         PluginListCommand.class,
         PluginDocCommand.class,
         PluginSearchCommand.class

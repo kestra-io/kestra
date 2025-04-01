@@ -37,6 +37,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 
+import static io.kestra.core.models.flows.State.Type.FAILED;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
@@ -136,7 +137,6 @@ public class ForEachItemCaseTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
             if (execution.getFlowId().equals("for-each-item-subflow")) {
-                log.info("Received sub-execution " + execution.getId() + " with status " + execution.getState().getCurrent());
                 if (execution.getState().getCurrent().isTerminated()) {
                     triggered.set(execution);
                     countDownLatch.countDown();
@@ -204,8 +204,9 @@ public class ForEachItemCaseTest {
         // assert on the main flow execution
         assertThat(execution.getTaskRunList(), hasSize(3));
         assertThat(execution.getTaskRunList().get(2).getAttempts(), hasSize(1));
-        assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent(), is(
+            FAILED));
+        assertThat(execution.getState().getCurrent(), is(FAILED));
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
         assertThat(outputs.get("numberOfBatches"), is(26));
         assertThat(outputs.get("iterations"), notNullValue());
@@ -215,7 +216,7 @@ public class ForEachItemCaseTest {
         assertThat(iterations.get("FAILED"), is(26));
 
         // assert on the last subflow execution
-        assertThat(triggered.get().getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(triggered.get().getState().getCurrent(), is(FAILED));
         assertThat(triggered.get().getFlowId(), is("for-each-item-subflow-failed"));
         assertThat((String) triggered.get().getInputs().get("items"), matchesRegex("kestra:///io/kestra/tests/for-each-item-failed/executions/.*/tasks/each-split/.*\\.txt"));
         assertThat(triggered.get().getTaskRunList(), hasSize(1));
@@ -290,7 +291,7 @@ public class ForEachItemCaseTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs),
             Duration.ofSeconds(30));
         assertThat(execution.getTaskRunList(), hasSize(3));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getState().getCurrent(), is(FAILED));
 
         // here we must have 1 failed subflows
         assertTrue(countDownLatch.await(1, TimeUnit.MINUTES));
@@ -303,11 +304,15 @@ public class ForEachItemCaseTest {
                 successLatch.countDown();
             }
         });
+
+        //Wait before restarting until the failed execution tasks are persisted.
+        Thread.sleep(1000L);
+
         Execution restarted = executionService.restart(execution, null);
         execution = runnerUtils.awaitExecution(
             e -> e.getState().getCurrent() == State.Type.SUCCESS && e.getFlowId().equals("restart-for-each-item"),
             throwRunnable(() -> executionQueue.emit(restarted)),
-            Duration.ofSeconds(10)
+            Duration.ofSeconds(20)
         );
         assertThat(execution.getTaskRunList(), hasSize(4));
         assertTrue(successLatch.await(1, TimeUnit.MINUTES));

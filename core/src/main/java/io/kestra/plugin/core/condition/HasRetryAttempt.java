@@ -29,13 +29,25 @@ import jakarta.validation.Valid;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition when any flow task on retry enters the state specified in the `in` states under the HasRetryAttempt condition.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.HasRetryAttempt",
-                "      in:",
-                "        - KILLED",
-            }
+            code = """
+                id: flow_condition_hasretryattempt
+                namespace: company.team
+    
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute when any flow task on retry enters a specific state(s)."
+    
+                triggers:
+                  - id: flow_condition
+                    type: io.kestra.plugin.core.trigger.Flow
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.HasRetryAttempt
+                        in:
+                          - FAILED
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.HasRetryAttemptCondition", "io.kestra.plugin.core.condition.HasRetryAttemptCondition"}

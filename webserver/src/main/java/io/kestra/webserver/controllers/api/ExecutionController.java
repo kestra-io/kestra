@@ -309,6 +309,8 @@ public class ExecutionController {
 
     private String runContextRender(Flow flow, Task task, Execution execution, TaskRun taskRun, String expression) throws IllegalVariableEvaluationException {
         RunContext runContext = runContextFactory.of(flow, task, execution, taskRun, false);
+        String baseRender = runContext.render(expression);
+
         if (expression.contains("{")) { // fast backoff from regex
             Matcher matcher = SECRET_FUNCTION.matcher(expression);
             String maskedExpression = expression;
@@ -318,7 +320,8 @@ public class ExecutionController {
             }
             return runContext.render(maskedExpression);
         }
-        return runContext.render(expression);
+
+        return baseRender;
     }
 
     @SuperBuilder

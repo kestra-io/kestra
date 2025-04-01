@@ -140,7 +140,14 @@ public class PluginDefaultService {
         try {
             return this.injectDefaults(flow);
         } catch (Exception e) {
-            logger.warn(e.getMessage(), e);
+            logger.warn(
+                "Can't inject plugin defaults on tenant {}, namespace '{}', flow '{}' with errors '{}'",
+                flow.getTenantId(),
+                flow.getNamespace(),
+                flow.getId(),
+                e.getMessage(),
+                e
+            );
             return flow;
         }
     }
@@ -153,7 +160,14 @@ public class PluginDefaultService {
         try {
             return this.injectDefaults(flow);
         } catch (Exception e) {
-            logger.warn(e.getMessage(), e);
+            logger.warn(
+                "Can't inject plugin defaults on tenant {}, namespace '{}', flow '{}' with errors '{}'",
+                flow.getTenantId(),
+                flow.getNamespace(),
+                flow.getId(),
+                e.getMessage(),
+                e
+            );
             return flow;
         }
     }

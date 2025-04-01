@@ -1488,11 +1488,23 @@ class ExecutionControllerRunnerTest {
     void shouldMaskSecretWhenEvalPebbleExpression(Execution execution) {
         ExecutionController.EvalResult evalResult = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().getFirst().getId(), "{{ secret('KEY') }}")
+                .POST("/api/v1/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().getFirst().getId(), "{{ secret('MY_SECRET') }}")
                 .contentType(MediaType.TEXT_PLAIN),
             ExecutionController.EvalResult.class
         );
+        assertThat(evalResult.getError(), nullValue());
+        assertThat(evalResult.getStackTrace(), nullValue());
         assertThat(evalResult.getResult(), is("******"));
+
+        evalResult = client.toBlocking().retrieve(
+            HttpRequest
+                .POST("/api/v1/executions/" + execution.getId() + "/eval/" + execution.getTaskRunList().getFirst().getId(), "{{ secret('NON_EXISTING_KEY') }}")
+                .contentType(MediaType.TEXT_PLAIN),
+            ExecutionController.EvalResult.class
+        );
+        assertThat(evalResult.getError(), is("io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)"));
+        assertThat(evalResult.getStackTrace(), startsWith("io.kestra.core.exceptions.IllegalVariableEvaluationException: io.pebbletemplates.pebble.error.PebbleException: Cannot find secret for key 'NON_EXISTING_KEY'. ({{ secret('NON_EXISTING_KEY') }}:1)"));
+        assertThat(evalResult.getResult(), is(nullValue()));
     }
 
     private ExecutionController.EvalResult eval(Execution execution, String expression, int index) {

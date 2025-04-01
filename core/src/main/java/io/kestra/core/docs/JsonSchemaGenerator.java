@@ -81,7 +81,7 @@ public class JsonSchemaGenerator {
                 objectNode.put("type", "array");
             }
             replaceAnyOfWithOneOf(objectNode);
-            pullOfDefaultFromOneOf(objectNode);
+            pullDocumentationAndDefaultFromOneOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
 
             return JacksonMapper.toMap(objectNode);
@@ -122,22 +122,35 @@ public class JsonSchemaGenerator {
     // This hack exists because for Property we generate a oneOf for properties that are not strings.
     // By default, the 'default' is in each oneOf which Monaco editor didn't take into account.
     // So, we pull off the 'default' from any of the oneOf to the parent.
-    private void pullOfDefaultFromOneOf(ObjectNode objectNode) {
+    // same thing for documentation fields: 'title', 'description', '$deprecated'
+    private void pullDocumentationAndDefaultFromOneOf(ObjectNode objectNode) {
         objectNode.findParents("oneOf").forEach(jsonNode -> {
             if (jsonNode instanceof ObjectNode oNode) {
                 JsonNode oneOf = oNode.get("oneOf");
                 if (oneOf instanceof ArrayNode arrayNode) {
                     Iterator<JsonNode> it = arrayNode.elements();
-                    JsonNode defaultNode = null;
-                    while (it.hasNext() && defaultNode == null) {
+                    var nodesToPullUp = new HashMap<String, Optional<JsonNode>>(Map.ofEntries(
+                        Map.entry("default", Optional.empty()),
+                        Map.entry("title", Optional.empty()),
+                        Map.entry("description", Optional.empty()),
+                        Map.entry("$deprecated", Optional.empty())
+                    ));
+                    // find nodes to pull up
+                    while (it.hasNext() && nodesToPullUp.containsValue(Optional.<JsonNode>empty())) {
                         JsonNode next = it.next();
                         if (next instanceof ObjectNode nextAsObj) {
-                            defaultNode = nextAsObj.get("default");
+                            nodesToPullUp.entrySet().stream()
+                                .filter(node -> node.getValue().isEmpty())
+                                .forEach(node -> node
+                                    .setValue(Optional.ofNullable(
+                                        nextAsObj.get(node.getKey())
+                                    )));
                         }
                     }
-                    if (defaultNode != null) {
-                        oNode.set("default", defaultNode);
-                    }
+                    // create nodes on parent
+                    nodesToPullUp.entrySet().stream()
+                        .filter(node -> node.getValue().isPresent())
+                        .forEach(node -> oNode.set(node.getKey(), node.getValue().get()));
                 }
             }
         });
@@ -629,7 +642,7 @@ public class JsonSchemaGenerator {
         try {
             ObjectNode objectNode = generator.generateSchema(cls);
             replaceAnyOfWithOneOf(objectNode);
-            pullOfDefaultFromOneOf(objectNode);
+            pullDocumentationAndDefaultFromOneOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
 
             return JacksonMapper.toMap(extractMainRef(objectNode));

@@ -10,7 +10,7 @@ import jakarta.validation.constraints.Pattern;
  */
 public interface PluginVersioning {
 
-    @Pattern(regexp="\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9]+)?|([a-zA-Z0-9]+)")
+    @Pattern(regexp="\\d+\\.\\d+\\.\\d+(-[a-zA-Z0-9-]+)?|([a-zA-Z0-9]+)")
     @Schema(title = "The version of the plugin to use.")
     String getVersion();
 }

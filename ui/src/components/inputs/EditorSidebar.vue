@@ -1148,7 +1148,7 @@
             height: 30px;
             padding: 16px;
             font-size: var(--el-font-size-small);
-            color: $gray-900;
+            color: var(--ks-content-primary);
 
             &:hover {
                 color: var(--ks-content-secondary);

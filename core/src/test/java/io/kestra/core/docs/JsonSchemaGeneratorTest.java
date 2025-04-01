@@ -251,6 +251,30 @@ class JsonSchemaGeneratorTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void testDocumentation() {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithDynamicDocumentedFields.class);
+        assertThat(generate, is(not(nullValue())));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringProperty").get("title"), is("stringProperty title"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringProperty").get("description"), is("stringProperty description"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringProperty").get("$deprecated"), is(true));
+
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerProperty").get("title"), is("integerProperty title"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerProperty").get("description"), is("integerProperty description"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerProperty").get("$deprecated"), is(true));
+
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault").get("title"), is("stringPropertyWithDefault title"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault").get("description"), is("stringPropertyWithDefault description"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault").get("$deprecated"), is(true));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringPropertyWithDefault").get("default"), is("my string"));
+
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("title"), is("integerPropertyWithDefault title"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("description"), is("integerPropertyWithDefault description"));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("$deprecated"), is(true));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("integerPropertyWithDefault").get("default"), is("10000"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void dashboard() throws URISyntaxException {
         Helpers.runApplicationContext((applicationContext) -> {
             Map<String, Object> generate = jsonSchemaGenerator.schemas(Dashboard.class);
@@ -314,10 +338,11 @@ class JsonSchemaGeneratorTest {
         private TestEnum testEnum;
 
         @PluginProperty
-        @Schema(title = "Title from the attribute")
+        @Schema(title = "Title from the attribute", description = "Description from the attribute")
         private TestClass testClass;
 
         @PluginProperty(internalStorageURI = true)
+        @Schema(title = "Title from the attribute", description = "Description from the attribute")
         private String uri;
 
         @PluginProperty
@@ -392,4 +417,49 @@ class JsonSchemaGeneratorTest {
         @NotNull
         private Property<TaskWithEnum.TestClass> requiredWithNoDefault;
     }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    public static class TaskWithDynamicDocumentedFields extends Task implements RunnableTask<VoidOutput>  {
+
+        @Deprecated(since="deprecation_version_1", forRemoval=true)
+        @Schema(
+            title = "integerPropertyWithDefault title",
+            description = "integerPropertyWithDefault description"
+        )
+        @Builder.Default
+        protected Property<Integer> integerPropertyWithDefault = Property.of(10000);
+
+        @Deprecated(since="deprecation_version_1", forRemoval=true)
+        @Schema(
+            title = "stringPropertyWithDefault title",
+            description = "stringPropertyWithDefault description"
+        )
+        @Builder.Default
+        protected Property<String> stringPropertyWithDefault = Property.of("my string");
+
+
+        @Deprecated(since="deprecation_version_1", forRemoval=true)
+        @Schema(
+            title = "stringProperty title",
+            description = "stringProperty description"
+        )
+        protected Property<String> stringProperty;
+
+        @Deprecated(since="deprecation_version_1", forRemoval=true)
+        @Schema(
+            title = "integerProperty title",
+            description = "integerProperty description"
+        )
+        protected Property<Integer> integerProperty;
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            return null;
+        }
+    }
+
 }

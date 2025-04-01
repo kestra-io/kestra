@@ -356,6 +356,7 @@
             .findIndex((item) => item.label === option.value.label);
         if (existingFilterIndex !== -1) {
             // If it exists, update current filter index
+            dropdowns.value.first = {shown: false, value: option};
             dropdowns.value.second = {shown: true, index: existingFilterIndex};
             activeParentFilter.value = option.value.label;
             lastClickedParent.value = option.value.label;
@@ -459,8 +460,12 @@
                 } else {
                     const values = currentFilters.value[parentIndex].value;
                     const index = values.indexOf(filter.value);
-                    if (index === -1) values.push(filter.value);
-                    else values.splice(index, 1);
+                    if (index === -1) {
+                        values.push(filter.value);
+                    }else{ 
+                        if(currentFilters.value[index].value.length === 1)currentFilters.value.splice(index, 1);
+                        else values.splice(index,1)
+                    }
                 }
             }
         } else {

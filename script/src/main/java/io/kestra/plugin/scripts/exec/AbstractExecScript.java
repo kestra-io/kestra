@@ -13,6 +13,7 @@ import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import io.kestra.plugin.scripts.runner.docker.Docker;
+import io.kestra.plugin.scripts.runner.docker.PullPolicy;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -50,6 +51,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     @Valid
     protected TaskRunner<?> taskRunner = Docker.builder()
         .type(Docker.class.getName())
+        .pullPolicy(Property.of(PullPolicy.IF_NOT_PRESENT))
         .build();
 
     @Schema(

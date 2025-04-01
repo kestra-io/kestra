@@ -11,6 +11,8 @@ import io.kestra.core.utils.TestsUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -26,6 +28,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
 public class FlowConcurrencyCaseTest {
+
+    private static final Logger LOG = LoggerFactory.getLogger(FlowConcurrencyCaseTest.class);
     @Inject
     private RunnerUtils runnerUtils;
 
@@ -132,11 +136,13 @@ public class FlowConcurrencyCaseTest {
     }
 
     public void flowConcurrencyQueuePause() throws TimeoutException, QueueException, InterruptedException {
+        LOG.info("------> first flow");
         Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-queue-pause", null, null, Duration.ofSeconds(30));
         Flow flow = flowRepository
             .findById(null, "io.kestra.tests", "flow-concurrency-queue-pause", Optional.empty())
             .orElseThrow();
         Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
+        LOG.info("------> emmit second flow");
         executionQueue.emit(execution2);
 
         assertThat(execution1.getState().isRunning(), is(true));
@@ -174,8 +180,12 @@ public class FlowConcurrencyCaseTest {
         receive.blockLast();
 
         assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        LOG.info("--------------------> result 1 states");
+        executionResult1.get().getState().getHistories().forEach(state -> LOG.info("------------> {} - {}", state.getState(), state.getDate()));
         assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(executionResult2.get().getState().getHistories().getFirst().getState(), is(State.Type.CREATED));
+        LOG.info("--------------------> result 2 states");
+        executionResult2.get().getState().getHistories().forEach(state -> LOG.info("------------> {} - {}", state.getState(), state.getDate()));
         assertThat(executionResult2.get().getState().getHistories().get(1).getState(), is(State.Type.QUEUED));
         assertThat(executionResult2.get().getState().getHistories().get(2).getState(), is(State.Type.RUNNING));
     }
@@ -206,6 +216,7 @@ public class FlowConcurrencyCaseTest {
             }
 
             if (e.getLeft().getId().equals(execution2.getId())) {
+                LOG.info("------------> execution 2 state {}", e.getLeft().getState().getCurrent());
                 executionResult2.set(e.getLeft());
                 if (e.getLeft().getState().getCurrent() == State.Type.CANCELLED) {
                     latch2.countDown();

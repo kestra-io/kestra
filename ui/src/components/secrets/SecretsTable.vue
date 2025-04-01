@@ -1,9 +1,14 @@
 <template>
     <div class="d-flex flex-column fill-height">
-        <KestraFilter v-if="filterable" :placeholder="$t('search')" :decode="false" />
+        <template v-if="filterable">
+            <KestraFilter v-if="namespace" :placeholder="$t('search')" :decode="false" />
+            <section v-else class="d-inline-flex mb-3 filters">
+                <el-input v-model="search" :placeholder="$t('search')" />
+            </section>
+        </template>
 
         <select-table
-            :data="secrets"
+            :data="filteredSecrets"
             ref="selectTable"
             :default-sort="{prop: 'key', order: 'ascending'}"
             table-layout="auto"
@@ -180,6 +185,11 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            filteredSecrets() {
+                return this.namespace === undefined
+                    ? this.secrets?.filter((secret: {key: string}) => !this.search || secret.key.toLowerCase().includes(this.search.toLowerCase()))
+                    : this.secrets;
+            },
             secretModalTitle() {
                 return this.secret?.update ? this.$t("secret.update", {name: this.secret.key}) : this.$t("secret.add");
             },
@@ -234,6 +244,22 @@
                 if (oldValue === undefined) {
                     this.$emit("hasData", newValue);
                 }
+            },
+            search(newValue) {
+                if (newValue !== undefined) {
+                    this.$router.push({query: {
+                        q: newValue
+                    }})
+                }
+            },
+            "$route.query.q"(newValue, oldValue) {
+                if (newValue !== undefined && newValue !== oldValue) {
+                    if (this.namespace === undefined && this.search !== newValue) {
+                        this.search = newValue;
+
+                        this.reloadSecrets();
+                    }
+                }
             }
         },
         data() {
@@ -272,7 +298,8 @@
                         },
                     ]
                 },
-                hasData: undefined
+                hasData: undefined,
+                search: this.$route.query?.q ?? ""
             };
         },
         methods: {
@@ -284,7 +311,14 @@
             },
             async fetchSecrets() {
                 if (this.secretsIterator === undefined) {
-                    this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.$store, 20) : useNamespaceSecrets(this.$store, this.namespace, 20);
+                    this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.$store, 20) : useNamespaceSecrets(this.$store, this.namespace, 20, {
+                        sort: this.$route.query.sort || "key:asc",
+                        ...(this.$route.query.q === undefined ? {} : {filters: {
+                            q: {
+                                STARTS_WITH: this.$route.query.q[0]
+                            }
+                        }})
+                    });
                 }
 
                 let emitReadOnly = false;
@@ -303,6 +337,10 @@
 
                 this.hasData = true;
                 this.secrets = [...(this.secrets || []), ...fetch];
+
+                if (this.filteredSecrets.length === 0) {
+                    return this.fetchSecrets();
+                }
 
                 return fetch;
             },

@@ -768,31 +768,6 @@ export default {
 
             return undefined;
         },
-        flowWarnings(state, getters){
-            if (getters.isFlow) {
-                const outdatedWarning =
-                    state.flowValidation?.outdated && !state.isCreating
-                        ? [getters.outdatedMessage]
-                        : [];
-
-                const deprecationWarnings =
-                    state.flowValidation?.deprecationPaths?.map(
-                        (f) => `${f} ${this.$i18n.t("is deprecated")}.`
-                    ) ?? [];
-
-                const otherWarnings = state.flowValidation?.warnings ?? [];
-
-                const warnings = [
-                    ...outdatedWarning,
-                    ...deprecationWarnings,
-                    ...otherWarnings,
-                ];
-
-                return warnings.length === 0 ? undefined : warnings;
-            }
-
-            return undefined;
-        },
         flowInfos(state, getters){
             if (getters.isFlow) {
                 const infos = state.flowValidation?.infos ?? [];

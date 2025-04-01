@@ -21,7 +21,7 @@ dependencies {
     def kafkaVersion = "3.9.0"
     def opensearchVersion = "2.22.0"
     def opensearchRestVersion = "2.19.1"
-    def flyingSaucerVersion = "9.11.4"
+    def flyingSaucerVersion = "9.11.5"
     def jacksonVersion = "2.18.3"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
@@ -32,9 +32,9 @@ dependencies {
     api platform("io.micronaut.platform:micronaut-platform:4.7.6")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.57.0')
-    api platform("com.azure:azure-sdk-bom:1.2.32")
-    api platform('software.amazon.awssdk:bom:2.31.6')
+    api platform('com.google.cloud:libraries-bom:26.58.0')
+    api platform("com.azure:azure-sdk-bom:1.2.33")
+    api platform('software.amazon.awssdk:bom:2.31.11')
 
 
     constraints {
@@ -49,6 +49,7 @@ dependencies {
         // ugly hack on crypto plugin
         api("org.bouncycastle:bcprov-jdk18on:$bouncycastleVersion")
         api("org.bouncycastle:bcpg-jdk18on:$bouncycastleVersion")
+        api("org.bouncycastle:bcpkix-jdk18on:$bouncycastleVersion")
         // ugly hack for jackson: as enforcing platform didn't work (it didn't enforce everywhere, not in plugins), we had to force all jackson libs individually.
         api("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
         api("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
@@ -68,7 +69,7 @@ dependencies {
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.36.3'
+        api 'software.amazon.awssdk.crt:aws-crt:0.37.0'
 
         // we need at least 0.14, it could be removed when Micronaut contains a recent only version in their BOM
         api "io.micrometer:micrometer-core:1.14.5"

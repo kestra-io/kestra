@@ -87,7 +87,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
         var update = ctx.update(DSL.table(table.getName()))
             .set(AbstractJdbcRepository.field("consumer_" + queueType), true)
             .set(AbstractJdbcRepository.field("updated"), LocalDateTime.now())
-            .where(AbstractJdbcRepository.field("offset").in(offsets.toArray(Integer[]::new)));
+            .where(AbstractJdbcRepository.field("offset").in(offsets));
 
         if (consumerGroup != null) {
             update = update.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));

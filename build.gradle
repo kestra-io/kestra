@@ -615,11 +615,21 @@ subprojects {
         apply plugin: "com.diffplug.spotless"
 
         spotless {
+            enforceCheck false
             java {
                 toggleOffOn()
                 importOrderFile(rootProject.file('eclipse-kestra.importorder'))
                 removeUnusedImports()
                 eclipse().configFile(rootProject.file("eclipse-java-kestra-style.xml"))
+
+                suppressLintsFor {
+                    step = 'removeUnusedImports'
+                }
+
+
+                if (project.hasProperty('targetFile')) {
+                    target project.property('targetFile')
+                }
             }
         }
     }

@@ -1,18 +1,23 @@
 #!/bin/sh
 
 staged_files=$(git --no-pager diff --cached --name-only | grep '\.java')
+echo "Staged Java files: $staged_files"
+if [ -n "$staged_files" ]; then
+  echo "Running spotlessApply on Java files..."
 
-#if [ -n "$staged_files" ]; then
-#  echo "Running spotlessApply Java files..."
-#    ./gradlew spotlessApply "$file"
-#  done
-#
-#  git add $staged_files
-#
-#  echo "spotlessApply completed."
-#else
-#  echo "No Java files modified. Skipping spotlessApply."
-#fi
+  for file in $staged_files; do
+    # Remove the first directory from the file path
+    relative_file=$(echo "$file" | cut -d'/' -f2-)
+    ./gradlew --no-build-cache spotlessApply -PtargetFile="$relative_file" --continue
+
+  done
+
+  git add $staged_files
+
+  echo "spotlessApply completed."
+else
+  echo "No Java files modified. Skipping spotlessApply."
+fi
 
 echo "Linting UI"
 cd ui && npx lint-staged

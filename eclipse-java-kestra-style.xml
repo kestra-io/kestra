@@ -77,7 +77,7 @@
         <setting id="org.eclipse.jdt.core.formatter.comment.indent_root_tags" value="true"/>
         <setting id="org.eclipse.jdt.core.formatter.comment.insert_new_line_before_root_tags" value="insert"/>
         <setting id="org.eclipse.jdt.core.formatter.comment.insert_new_line_for_parameter" value="do not insert"/>
-        <setting id="org.eclipse.jdt.core.formatter.comment.line_length" value="128"/>
+        <setting id="org.eclipse.jdt.core.formatter.comment.line_length" value="192"/>
         <setting id="org.eclipse.jdt.core.formatter.comment.new_lines_at_block_boundaries" value="true"/>
         <setting id="org.eclipse.jdt.core.formatter.comment.new_lines_at_javadoc_boundaries" value="true"/>
         <setting id="org.eclipse.jdt.core.formatter.comment.preserve_white_space_between_code_and_line_comments" value="false"/>

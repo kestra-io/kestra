@@ -28,6 +28,8 @@ class FlowUpdatesCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -41,6 +43,8 @@ class FlowUpdatesCommandTest {
             out.reset();
 
             args = new String[]{
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -70,6 +74,8 @@ class FlowUpdatesCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -84,6 +90,8 @@ class FlowUpdatesCommandTest {
 
             // no "delete" arg should behave as no-delete
             args = new String[]{
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -96,6 +104,8 @@ class FlowUpdatesCommandTest {
             out.reset();
 
             args = new String[]{
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -121,6 +131,8 @@ class FlowUpdatesCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -148,6 +160,8 @@ class FlowUpdatesCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",

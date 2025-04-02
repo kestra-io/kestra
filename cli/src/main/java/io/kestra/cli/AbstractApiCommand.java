@@ -46,6 +46,13 @@ public abstract class AbstractApiCommand extends AbstractCommand {
     @Nullable
     private HttpClientConfiguration httpClientConfiguration;
 
+    /**
+     * {@inheritDoc}
+     */
+    protected boolean loadExternalPlugins() {
+        return false;
+    }
+
     protected DefaultHttpClient client() throws URISyntaxException {
         DefaultHttpClient defaultHttpClient = DefaultHttpClient.builder()
             .uri(server.toURI())

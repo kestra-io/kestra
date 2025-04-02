@@ -354,8 +354,9 @@ class ScheduleTest {
             .timezone("Europe/Paris")
             .conditions(List.of(
                 DateTimeBetween.builder()
+                    .type(DateTimeBetween.class.getName())
                     .before(ZonedDateTime.parse("2021-08-03T12:00:00+02:00"))
-                    .date("{{ trigger.date }}")
+                    .date(new Property<>("{{ trigger.date }}"))
                     .build()
             ))
             .build();

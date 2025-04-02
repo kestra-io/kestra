@@ -314,7 +314,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             FlowWithWorkerTrigger flowWithWorkerTrigger = FlowWithWorkerTrigger.builder()
                                 .flow(flowAndTrigger.flow())
                                 .abstractTrigger(flowAndTrigger.trigger())
-                                .workerTrigger((WorkerTriggerInterface) flowAndTrigger.trigger())
                                 .conditionContext(conditionContext)
                                 .triggerContext(newTrigger)
                                 .build();
@@ -346,7 +345,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                             FlowWithWorkerTrigger flowWithWorkerTrigger = FlowWithWorkerTrigger.builder()
                                 .flow(flowAndTrigger.flow())
                                 .abstractTrigger(flowAndTrigger.trigger())
-                                .workerTrigger((WorkerTriggerInterface) flowAndTrigger.trigger())
                                 .conditionContext(conditionContext)
                                 .triggerContext(lastUpdate)
                                 .build();
@@ -481,7 +479,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                         flow,
                         abstractTrigger,
                         triggerContext,
-                        runContext,
                         conditionContext.withVariables(
                             ImmutableMap.of("trigger",
                                 ImmutableMap.of("date", triggerContext.getNextExecutionDate() != null ?
@@ -507,7 +504,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     flows.get(trigger.flowUid()),
                     ListUtils.emptyOnNull(flows.get(trigger.flowUid()).getTriggers()).stream().filter(t -> t.getId().equals(trigger.getTriggerId())).findFirst().orElse(null),
                     trigger,
-                    null,
                     null
                 )
             ).toList();
@@ -555,7 +551,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 .map(flowWithTriggers -> FlowWithWorkerTrigger.builder()
                     .flow(flowWithTriggers.getFlow())
                     .abstractTrigger(flowWithTriggers.getAbstractTrigger())
-                    .workerTrigger((WorkerTriggerInterface) flowWithTriggers.getAbstractTrigger())
                     .conditionContext(flowWithTriggers.getConditionContext())
                     .triggerContext(flowWithTriggers.triggerContext
                         .toBuilder()
@@ -611,7 +606,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                                         e
                                     );
                                 }
-                            } else if (f.getWorkerTrigger() instanceof Schedulable schedule) {
+                            } else if (f.getAbstractTrigger() instanceof Schedulable schedule) {
                                 // This is the Schedule, all other triggers should have an interval.
                                 // So we evaluate it now as there is no need to send it to the worker.
                                 // Schedule didn't use the triggerState to allow backfill.
@@ -833,7 +828,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 flowWithWorkerTrigger.getAbstractTrigger()
             );
 
-            Optional<Execution> evaluate = ((Schedulable) flowWithWorkerTrigger.getWorkerTrigger()).evaluate(
+            Optional<Execution> evaluate = ((Schedulable) flowWithWorkerTrigger.getAbstractTrigger()).evaluate(
                 flowWithWorkerTrigger.getConditionContext(),
                 flowWithWorkerTrigger.getTriggerContext()
             );
@@ -990,7 +985,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private static class FlowWithWorkerTrigger {
         private FlowWithSource flow;
         private AbstractTrigger abstractTrigger;
-        private WorkerTriggerInterface workerTrigger;
         private Trigger triggerContext;
         private ConditionContext conditionContext;
 
@@ -1004,7 +998,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             return this.toBuilder()
                 .flow(flow)
                 .abstractTrigger(abstractTrigger)
-                .workerTrigger((WorkerTriggerInterface) abstractTrigger)
                 .build();
         }
     }
@@ -1019,7 +1012,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             return FlowWithWorkerTriggerNextDate.builder()
                 .flow(f.getFlow())
                 .abstractTrigger(f.getAbstractTrigger())
-                .workerTrigger(f.getWorkerTrigger())
                 .conditionContext(f.getConditionContext())
                 .triggerContext(Trigger.builder()
                     .tenantId(f.getTriggerContext().getTenantId())
@@ -1044,7 +1036,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         private final FlowWithSource flow;
         private final AbstractTrigger abstractTrigger;
         private final Trigger triggerContext;
-        private final RunContext runContext;
         private final ConditionContext conditionContext;
 
         public String uid() {

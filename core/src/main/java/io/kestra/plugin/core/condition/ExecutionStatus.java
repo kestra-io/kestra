@@ -46,7 +46,7 @@ import jakarta.validation.Valid;
                         in:
                           - FAILED
                           - KILLED
-            """
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.ExecutionStatusCondition", "io.kestra.plugin.core.condition.ExecutionStatusCondition"}

@@ -125,12 +125,13 @@ class MapUtilsTest {
     }
 
     @Test
-    void shouldThrowExceptionWhenNestingMapGivenFlattenMapWithConflicts() {
-        Assertions.assertThrows(IllegalArgumentException.class, () -> {
-            MapUtils.flattenToNestedMap(Map.of(
-                "k1.k2", "v1",
-                "k1.k2.k3", "v2"
-            ));
-        });
+    void shouldReturnMapAndIgnoreConflicts() {
+        Map<String, Object> results = MapUtils.flattenToNestedMap(Map.of(
+            "k1.k2", "v1",
+            "k1.k2.k3", "v2"
+        ));
+
+        assertThat(results, aMapWithSize(1));
+        // due to ordering change on each JVM restart, the result map would be different as different entries will be skipped
     }
 }

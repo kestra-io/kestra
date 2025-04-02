@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-class Me {
+export class Me {
 
     hasAny(permission, namespace) {
         return true;
@@ -48,7 +48,7 @@ export default {
         isLogged: () => {
             return true;
         },
-        user: (state) => {
+        user: (state): Me => {
             return state.user;
         }
     }

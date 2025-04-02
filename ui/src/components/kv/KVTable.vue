@@ -1,5 +1,7 @@
 <template>
-    <KestraFilter :placeholder="$t('search')" :search-callback="(input) => search = input" :decode="false" />
+    <section class="d-inline-flex mb-3 filters">
+        <el-input v-model="search" :placeholder="$t('search')" />
+    </section>
 
     <select-table
         :data="filteredKvs"
@@ -33,7 +35,7 @@
         />
         <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('key')">
             <template #default="scope">
-                <id :value="scope.row.key" :shrink="false" />
+                <id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
             </template>
         </el-table-column>
         <el-table-column
@@ -57,7 +59,7 @@
 
         <el-table-column column-key="copy" class-name="row-action">
             <template #default="scope">
-                <el-tooltip :content="$t('copy_to_clipboard')">
+                <el-tooltip v-if="scope.row.key !== undefined" :content="$t('copy_to_clipboard')">
                     <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)" />
                 </el-tooltip>
             </template>
@@ -65,13 +67,23 @@
 
         <el-table-column column-key="update" class-name="row-action">
             <template #default="scope">
-                <el-button v-if="canUpdate(scope.row)" :icon="FileDocumentEdit" link @click="updateKvModal(scope.row.namespace, scope.row.key)" />
+                <el-button
+                    v-if="canUpdate(scope.row)"
+                    :icon="FileDocumentEdit"
+                    link
+                    @click="updateKvModal(scope.row.namespace, scope.row.key)"
+                />
             </template>
         </el-table-column>
 
         <el-table-column column-key="delete" class-name="row-action">
             <template #default="scope">
-                <el-button v-if="canDelete(scope.row)" :icon="Delete" link @click="removeKv(scope.row.namespace, scope.row.key)" />
+                <el-button
+                    v-if="canDelete(scope.row)"
+                    :icon="Delete"
+                    link
+                    @click="removeKv(scope.row.namespace, scope.row.key)"
+                />
             </template>
         </el-table-column>
     </select-table>
@@ -83,7 +95,12 @@
     >
         <el-form class="ks-horizontal" :model="kv" :rules="rules" ref="form">
             <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
-                <namespace-select v-model="kv.namespace" :readonly="kv.update" data-type="flow" :include-system-namespace="true" />
+                <namespace-select
+                    v-model="kv.namespace"
+                    :readonly="kv.update"
+                    data-type="flow"
+                    :include-system-namespace="true"
+                />
             </el-form-item>
 
             <el-form-item :label="$t('key')" prop="key" required>
@@ -175,7 +192,6 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import Check from "vue-material-design-icons/Check.vue";
-    import KestraFilter from "../filter/KestraFilter.vue";
     import NamespaceSelect from "../namespace/NamespaceSelect.vue";
 
     import Utils from "../../utils/utils";
@@ -213,32 +229,6 @@
                 set(newValue) {
                     this.$emit("update:addKvModalVisible", newValue);
                 }
-            },
-            rules() {
-                return {
-                    key: [
-                        {required: true, trigger: "change"},
-                        {validator: this.kvKeyDuplicate, trigger: "change"},
-                    ],
-                    value: [
-                        {required: true, trigger: "change"},
-                        {
-                            validator: (rule, value, callback) => {
-                                if (this.kv.type === "DURATION") {
-                                    this.durationValidator(rule, value, callback);
-                                } else if (this.kv.type === "JSON") {
-                                    this.jsonValidator(rule, value, callback)
-                                } else {
-                                    callback();
-                                }
-                            },
-                            trigger: "change"
-                        }
-                    ],
-                    ttl: [
-                        {validator: this.durationValidator, trigger: "change"}
-                    ]
-                }
             }
         },
         mounted() {
@@ -269,6 +259,13 @@
                 if (this.$refs.form) {
                     this.$refs.form.clearValidate("value");
                 }
+            },
+            search(newValue) {
+                if (newValue !== undefined) {
+                    this.$router.push({query: {
+                        q: newValue
+                    }})
+                }
             }
         },
         data() {
@@ -283,15 +280,39 @@
                 },
                 kvs: undefined,
                 namespaceIterator: undefined,
-                search: "",
+                search: this.$route.query?.q ?? "",
+                rules: {
+                    key: [
+                        {required: true, trigger: "change"},
+                        {validator: this.kvKeyDuplicate, trigger: "change"},
+                    ],
+                    value: [
+                        {required: true, trigger: "change"},
+                        {
+                            validator: (rule, value, callback) => {
+                                if (this.kv.type === "DURATION") {
+                                    this.durationValidator(rule, value, callback);
+                                } else if (this.kv.type === "JSON") {
+                                    this.jsonValidator(rule, value, callback)
+                                } else {
+                                    callback();
+                                }
+                            },
+                            trigger: "change"
+                        }
+                    ],
+                    ttl: [
+                        {validator: this.durationValidator, trigger: "change"}
+                    ]
+                }
             };
         },
         methods: {
             canUpdate(kv) {
-                return this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
+                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
             },
             canDelete(kv) {
-                return this.user.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
+                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
             },
             jsonValidator(rule, value, callback) {
                 try {
@@ -344,6 +365,10 @@
                 }
 
                 this.kvs = this.kvs?.concat(kvFetch) ?? kvFetch;
+
+                if (this.filteredKvs.length === 0) {
+                    return this.fetchKvs();
+                }
 
                 return kvFetch;
             },
@@ -398,13 +423,15 @@
                         });
                     });
             },
-            reloadKvs() {
+            async reloadKvs() {
                 this.namespaceIterator = undefined;
+
+                const previousLength = this.secrets?.length ?? 0;
+                await this.$refs.selectTable.resetInfiniteScroll();
                 this.kvs = [];
-                this.$refs.selectTable.resetInfiniteScroll();
 
                 // If we are in the global KV view we let the infinite scroll handling the fetch
-                if (this.namespace !== undefined) {
+                if (this.namespace !== undefined || previousLength === 0) {
                     this.fetchKvs();
                 }
             },

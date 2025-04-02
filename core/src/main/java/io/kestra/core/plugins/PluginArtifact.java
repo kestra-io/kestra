@@ -38,7 +38,7 @@ public record PluginArtifact(
         "([^: ]+):([^: ]+)(:([^: ]*)(:([^: ]+))?)?:([^: ]+)"
     );
     private static final Pattern FILENAME_PATTERN = Pattern.compile(
-        "^(?<groupId>[\\w_]+)__(?<artifactId>[\\w-_]+)(?:__(?<classifier>[\\w-_]+))?__(?<version>\\d+_\\d+_\\d+(-[a-zA-Z0-9]+)?|([a-zA-Z0-9]+))\\.jar$"
+        "^(?<groupId>[\\w_]+)__(?<artifactId>[\\w-_]+)(?:__(?<classifier>[\\w-_]+))?__(?<version>\\d+_\\d+_\\d+(-[a-zA-Z0-9-]+)?|([a-zA-Z0-9]+))\\.jar$"
     );
 
     public static final String JAR_EXTENSION = "jar";

@@ -5,6 +5,7 @@
             v-model="filter"
             @select="goTo"
             :fetch-suggestions="search"
+            highlight-first-item
             popper-class="global-search-popper"
             :placeholder="$t('jump to...')"
         >

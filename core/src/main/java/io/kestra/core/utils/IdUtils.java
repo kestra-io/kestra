@@ -6,6 +6,7 @@ import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -32,7 +33,7 @@ abstract public class IdUtils {
 
     public static String fromPartsAndSeparator(char separator, String... parts) {
         return Arrays.stream(parts)
-            .filter(part -> part != null)
+            .filter(Objects::nonNull)
             .collect(Collectors.joining(String.valueOf(separator)));
     }
 }

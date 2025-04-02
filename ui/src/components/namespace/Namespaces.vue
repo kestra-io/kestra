@@ -60,6 +60,7 @@
     import {useRoute} from "vue-router";
     import useNamespaces, {Namespace} from "../../composables/useNamespaces";
     import {useI18n} from "vue-i18n";
+    import useRouteContext from "../../mixins/useRouteContext.ts";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -74,6 +75,8 @@
     }
 
     const routeInfo = computed(() => ({title: t("namespaces")}));
+    useRouteContext(routeInfo);
+
     const user = computed(() => store.state.auth.user);
     const isUserEmpty = computed(() => Object.keys(user.value).length === 0);
 

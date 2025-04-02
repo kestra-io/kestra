@@ -32,6 +32,9 @@ export default [
     //KV
     {name: "kv/list", path: "/:tenant?/kv", component: () => import("../components/kv/KVs.vue")},
 
+    //Secrets
+    {name: "secrets/list", path: "/:tenant?/secrets", component: () => import("../components/secrets/Secrets.vue")},
+
     //Blueprints
     {name: "blueprints", path: "/:tenant?/blueprints/:kind/:tab", component: () => import("override/components/flows/blueprints/Blueprints.vue"), props: true},
     {name: "blueprints/view", path: "/:tenant?/blueprints/:kind/:tab/:blueprintId", component: () => import("../components/flows/blueprints/BlueprintDetail.vue"), props: true},

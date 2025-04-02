@@ -1,5 +1,5 @@
-export const encodeParams = (route, filters, OPTIONS) => {
-    if(isSearchPath(route)) { return encodeSearchParams(filters, OPTIONS); }
+export const encodeParams = (route, filters, OPTIONS, isDefaultDashboard) => {
+    if(isSearchPath(route) && !isDefaultDashboard) { return encodeSearchParams(filters, OPTIONS); }
 
     const encode = (values, key) => {
         return values
@@ -44,8 +44,8 @@ export const encodeParams = (route, filters, OPTIONS) => {
     }, {});
 };
 
-export const decodeParams = (route, query, include, OPTIONS) => {
-    if(isSearchPath(route)) {return decodeSearchParams(query, include, OPTIONS); }
+export const decodeParams = (route, query, include, OPTIONS, isDefaultDashboard) => {
+    if(isSearchPath(route) && !isDefaultDashboard) {return decodeSearchParams(query, include, OPTIONS); }
 
 
     let params = Object.entries(query)
@@ -121,18 +121,22 @@ export const encodeSearchParams = (filters, OPTIONS) => {
     };
 
     return filters.reduce((query, filter) => {
-        const match = OPTIONS.find((o) => o.value.label === filter.label);
-        const key = match ? match.key : filter.label === "text" ? "q" : null;
-        const operation = filter.comparator?.value || match?.comparators?.find(c => c.value === filter.operation)?.value || "$eq";
+        if(filter.operation) {
+            Object.assign(query, encode(filter.value, filter.field, filter.operation));
+        } else {
+            const match = OPTIONS.find((o) => o.value.label === filter.label);
+            const key = match ? match.key : filter.label === "text" ? "q" : null;
+            const operation = filter.comparator?.value || match?.comparators?.find(c => c.value === filter.operation)?.value || "EQUALS";
 
-        if (key) {
-            if (key !== "date") {
-                Object.assign(query, encode(filter.value, key, operation));
-            } else if (filter.value?.length > 0) {
-                const {startDate, endDate} = filter.value[0];
-                if(startDate && endDate) {
-                    query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = startDate;
-                    query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = endDate;
+            if (key) {
+                if (key !== "date") {
+                    Object.assign(query, encode(filter.value, key, operation));
+                } else if (filter.value?.length > 0) {
+                    const {startDate, endDate} = filter.value[0];
+                    if(startDate && endDate) {
+                        query["filters[startDate][GREATER_THAN_OR_EQUAL_TO]"] = startDate;
+                        query["filters[endDate][LESS_THAN_OR_EQUAL_TO]"] = endDate;
+                    }
                 }
             }
         }
@@ -163,4 +167,4 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
 
     return params;
 };
-export const isSearchPath = (name: string) => ["home", "flows/list", "executions/list", "logs/list", "namespaces/update", "admin/triggers"].includes(name);
+export const isSearchPath = (name: string) => ["home", "flows/list", "executions/list", "logs/list", "admin/triggers"].includes(name);

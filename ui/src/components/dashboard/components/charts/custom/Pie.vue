@@ -46,7 +46,7 @@
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: Number, required: true},
+        identifier: {type: [Number, String], required: true},
         chart: {type: Object, required: true},
         isPreview: {type: Boolean, required: false, default: false}
     });

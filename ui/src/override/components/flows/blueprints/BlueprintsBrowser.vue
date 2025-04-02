@@ -57,7 +57,7 @@
                                         class="ps-0 title" 
                                         :class="{'embed-title': embed, 'text-truncate': embed}"
                                     >
-                                        {{ blueprint.title }}
+                                        {{ blueprint.title ?? blueprint.id }}
                                     </div>
                                     <div v-if="embed" class="tags-w-icons-container">
                                         <div class="tags-w-icons">

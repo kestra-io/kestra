@@ -2,7 +2,6 @@ package io.kestra.core.runners;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -10,11 +9,9 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.flow.EachSequentialTest;
 import io.kestra.plugin.core.flow.FlowCaseTest;
 import io.kestra.plugin.core.flow.ForEachItemCaseTest;
@@ -23,20 +20,12 @@ import io.kestra.plugin.core.flow.WaitForCaseTest;
 import io.kestra.plugin.core.flow.WorkingDirectoryTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
-import org.slf4j.event.Level;
-import reactor.core.publisher.Flux;
 
 @KestraTest(startRunner = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -370,7 +359,7 @@ public abstract class AbstractRunnerTest {
         forEachItemCaseTest.forEachItemWithSubflowOutputs();
     }
 
-    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
+    @Test
     @LoadFlows({"flows/valids/restart-for-each-item.yaml", "flows/valids/restart-child.yaml"})
     void restartForEachItem() throws Exception {
         forEachItemCaseTest.restartForEachItem();

@@ -16,7 +16,7 @@
                 </p>
             </div>
 
-            <div class="switch-container w-100">
+            <div v-if="total > 0" class="switch-container w-100">
                 <div
                     class="d-flex justify-content-end align-items-center switch-content"
                 >

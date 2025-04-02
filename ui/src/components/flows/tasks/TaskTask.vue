@@ -39,7 +39,7 @@
     import Task from "./Task"
     import TaskEditor from "../TaskEditor.vue"
     import Drawer from "../../Drawer.vue"
-    import {SECTIONS as SECTION} from "../../../utils/constants.js";
+    import {SECTIONS as SECTION} from "../../../utils/constants";
 
     export default {
         mixins: [Task],

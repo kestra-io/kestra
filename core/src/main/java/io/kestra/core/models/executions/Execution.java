@@ -122,6 +122,10 @@ public class Execution implements DeletedInterface, TenantInterface {
         return newExecution(flow, null, labels, Optional.empty());
     }
 
+    public List<Label> getLabels() {
+        return Optional.ofNullable(this.labels).orElse(new ArrayList<>());
+    }
+
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and
      * inputs.

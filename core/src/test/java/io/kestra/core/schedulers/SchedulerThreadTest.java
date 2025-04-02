@@ -4,6 +4,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
@@ -49,7 +50,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             assertThat(execution.getFlowId(), is(flow.getId()));
 
             if (execution.getState().getCurrent() != State.Type.SUCCESS) {
-                executionQueue.emit(execution.withState(State.Type.SUCCESS));
+                terminateExecution(execution, Trigger.of(flow, flow.getTriggers().getFirst()), flow.withSource(flow.generateSource()));
                 queueCount.countDown();
             }
         }));

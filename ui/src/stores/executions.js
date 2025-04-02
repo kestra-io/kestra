@@ -62,7 +62,8 @@ export default {
         bulkReplayExecution(_, options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/replay/by-ids`,
-                options.executionsId
+                options.executionsId,
+                {params: options}
             )
         },
         bulkChangeExecutionStatus(_, options) {

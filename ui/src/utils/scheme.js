@@ -1,5 +1,5 @@
 import {computed} from "vue";
-import {useLocalStorage} from "@vueuse/core";
+import {useStorage} from "@vueuse/core";
 import {useTheme} from "./utils"
 import {cssVariable} from "@kestra-io/ui-libs";
 
@@ -56,7 +56,7 @@ export const getScheme = (theme, state, type = "executions") => {
 };
 
 export const useScheme = (type = "executions") => {
-    const scheme = useLocalStorage(SCHEME, "classic");
+    const scheme = useStorage(SCHEME, "classic");
     const theme = useTheme();
 
     return computed(() => OPTIONS[scheme.value]?.[theme.value]?.[type]);

@@ -5,6 +5,7 @@ import io.kestra.core.server.ServerInstance;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceStateTransition;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Network;
@@ -226,7 +227,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
             );
             return new ServiceInstance(
                 IdUtils.create(),
-                Service.ServiceType.WORKER,
+                ServiceType.WORKER,
                 state,
                 new ServerInstance(
                     ServerInstance.Type.STANDALONE,

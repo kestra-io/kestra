@@ -162,16 +162,4 @@ public class RequestUtils {
             .collect(Collectors.toList());
     }
 
-
-    public static ZonedDateTime resolveAbsoluteDateTime(ZonedDateTime absoluteDateTime, Duration timeRange, ZonedDateTime now) {
-        if (timeRange != null) {
-            if (absoluteDateTime != null) {
-                throw new IllegalArgumentException("Parameters 'startDate' and 'timeRange' are mutually exclusive");
-            }
-            return now.minus(timeRange.abs());
-        }
-
-        return absoluteDateTime;
-    }
-
 }

@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
 @JsonInclude
 public record ServiceInstance(
     @JsonProperty("id") String uid,
-    Service.ServiceType type,
+    ServiceType type,
     ServiceState state,
     ServerInstance server,
     Instant createdAt,
@@ -54,7 +54,7 @@ public record ServiceInstance(
      * @return a new {@link ServiceInstance}.
      */
     public static ServiceInstance create(final String id,
-                                         final Service.ServiceType type,
+                                         final ServiceType type,
                                          final ServerInstance server,
                                          final Instant createdAt,
                                          final Instant updatedAt,
@@ -77,7 +77,7 @@ public record ServiceInstance(
 
     public ServiceInstance(
         String id,
-        Service.ServiceType type,
+        ServiceType type,
         ServiceState state,
         ServerInstance server,
         Instant createdAt,
@@ -96,7 +96,7 @@ public record ServiceInstance(
      * @param type the type to check.
      * @return {@code true} if this instance is of the given type.
      */
-    public boolean is(final Service.ServiceType type) {
+    public boolean is(final ServiceType type) {
         return this.type.equals(type);
     }
 

@@ -157,6 +157,7 @@
                 input: true,
                 lang: "yaml",
                 shouldFocus: false,
+                showScroll: true,
                 style: {height: "100px"},
             },
             labels: {
@@ -179,6 +180,7 @@
                 input: true,
                 lang: "yaml",
                 shouldFocus: false,
+                showScroll: true,
                 style: {height: "100px"},
             },
             variables: {
@@ -215,6 +217,7 @@
                 input: true,
                 lang: "yaml",
                 shouldFocus: false,
+                showScroll: true,
                 style: {height: "100px"},
             },
             disabled: {

@@ -1,4 +1,5 @@
 import net.e175.klaus.zip.ZipPrefixer
+import org.gradle.nativeplatform.platform.internal.DefaultNativePlatform
 import org.owasp.dependencycheck.gradle.extension.AnalyzerExtension
 
 buildscript {
@@ -608,8 +609,24 @@ release {
 }
 
 /**********************************************************************************************************************\
- * Linter
+ * Formatting
  **********************************************************************************************************************/
+tasks.register('setupHooks', Exec) {
+    commandLine 'git', 'config', 'core.hooksPath', '.hooks'
+    doLast { //need to be done in the do last however not done
+        exec {
+            commandLine 'chmod', '+x', '.hooks/pre-commit'
+        }
+    }
+
+    onlyIf {
+        !DefaultNativePlatform.currentOperatingSystem.isWindows()
+    }
+}
+tasks.named('build') {
+    dependsOn tasks.named('setupHooks')
+}
+
 subprojects {
     if (it.name != 'platform') {
         apply plugin: "com.diffplug.spotless"
@@ -634,3 +651,4 @@ subprojects {
         }
     }
 }
+

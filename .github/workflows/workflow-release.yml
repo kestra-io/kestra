@@ -8,6 +8,11 @@ on:
         default: 'LATEST'
         required: false
         type: string
+      publish-docker:
+        description: "Publish Docker image"
+        default: 'false'
+        required: false
+        type: string
   workflow_call:
     inputs:
       plugin-version:
@@ -48,6 +53,7 @@ jobs:
     name: Publish Docker
     needs: build-artifacts
     uses: ./.github/workflows/workflow-publish-docker.yml
+    if: startsWith(github.ref, 'refs/heads/develop') || github.event.inputs.publish-docker == 'true'
     with:
       plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
     secrets:

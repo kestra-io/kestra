@@ -33,21 +33,35 @@ import java.util.List;
 @Plugin(
     examples = {
         @Example(
+            full = true,
             title = "Purge all logs that has been created more than one month ago.",
-            code = {
-                "endDate: \"{{ now() | dateAdd(-1, 'MONTHS') }}\""
-            }
+            code = """
+                id: purge_logs
+                namespace: company.team
+
+                tasks:
+                  - id: purge_logs
+                    type: io.kestra.plugin.core.log.PurgeLogs
+                    endDate: "{{ now() | dateAdd(-1, 'MONTHS') }}"
+            """
         ),
         @Example(
+            full = true,
             title = "Purge all logs that has been created more than one month ago, but keep error logs.",
-            code = {
-                "endDate: \"{{ now() | dateAdd(-1, 'MONTHS') }}\"",
-                "logLevels:",
-                "  - TRACE",
-                "  - DEBUG",
-                "  - INFO",
-                "  - WARN",
-            }
+            code = """
+                id: purge_logs
+                namespace: company.team
+                
+                tasks:
+                  - id: purge_logs
+                    type: io.kestra.plugin.core.log.PurgeLogs
+                    endDate: "{{ now() | dateAdd(-1, 'MONTHS') }}"
+                    logLevels:
+                      - TRACE
+                      - DEBUG
+                      - INFO
+                      - WARN
+                """
         )
     }
 )

@@ -30,10 +30,18 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Plugin(
     examples = {
         @Example(
-            code = {
-                "level: DEBUG",
-                "message: \"{{ task.id }} > {{ taskrun.startDate }}\""
-            }
+            full = true,
+            title = "Log message at the DEBUG level",
+            code = """
+                id: debug_log
+                namespace: company.team
+
+                tasks:
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    level: DEBUG
+                    message: "{{ task.id }} > {{ taskrun.startDate }}"
+            """
         ),
         @Example(
             title = "Log one or more messages to the console.",
@@ -47,7 +55,8 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
                     type: io.kestra.plugin.core.log.Log
                     message:
                       - Kestra team wishes you a great day 👋
-                      - If you need some help, reach out via Slack"""
+                      - If you need some help, reach out via Slack
+            """
         ),
     },
     aliases = "io.kestra.core.tasks.log.Log"

@@ -36,18 +36,50 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Plugin(
     examples = {
         @Example(
-            code = {
-                "level: INFO",
-                "executionId: \"{{ trigger.executionId }}\""
-            }
+            full = true,
+            title = "Fetch logs from another workflow when it finishes successfully",
+            code = """
+                id: fetch_logs
+                namespace: company.team
+
+                tasks:
+                  - id: fetch
+                    type: io.kestra.plugin.core.log.Fetch
+                    level: INFO
+                    executionId: "{{ trigger.executionId }}"
+
+                triggers:
+                  - id: flow_trigger
+                    type: io.kestra.plugin.core.trigger.Flow
+                    preconditions:
+                      id: flows
+                      flows:
+                        - namespace: company.team
+                          flowId: example
+                          states: [SUCCESS]
+            """
         ),
         @Example(
-            code = {
-                "level: WARN",
-                "executionId: \"{{ execution.id }}\"",
-                "tasksId: ",
-                "  - \"previous_task_id\""
-            }
+            full = true,
+            title = "Fetch logs from current execution with lowest log level set to WARN",
+            code = """
+                id: fetch_logs
+                namespace: company.team
+
+                tasks:
+                  - id: warning
+                    type: io.kestra.plugin.core.log.Log
+                    level: WARN
+                    message: "This is a warning"
+
+                  - id: fetch
+                    type: io.kestra.plugin.core.log.Fetch
+                    level: WARN
+                    executionId: "{{ execution.id }}"
+                    tasksId:
+                      - "warning"
+
+            """
         )
     },
     aliases = "io.kestra.core.tasks.log.Fetch"

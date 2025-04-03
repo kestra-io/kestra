@@ -216,16 +216,22 @@
 
                         <el-table-column :label="$t('actions')" column-key="disable" class-name="row-action">
                             <template #default="scope">
-                                <el-switch
+                                <el-tooltip
                                     v-if="!scope.row.missingSource"
-                                    :active-text="$t('enabled')"
-                                    :inactive-text="$t('disabled')"
-                                    :model-value="!(scope.row.disabled || scope.row.codeDisabled)"
-                                    @change="setDisabled(scope.row, $event)"
-                                    inline-prompt
-                                    class="switch-text"
-                                    :disabled="scope.row.codeDisabled"
-                                />
+                                    :content="$t('trigger disabled')"
+                                    :disabled="!scope.row.codeDisabled"
+                                    effect="light"
+                                >
+                                    <el-switch
+                                        :active-text="$t('enabled')"
+                                        :inactive-text="$t('disabled')"
+                                        :model-value="!(scope.row.disabled || scope.row.codeDisabled)"
+                                        @change="setDisabled(scope.row, $event)"
+                                        inline-prompt
+                                        class="switch-text"
+                                        :disabled="scope.row.codeDisabled"
+                                    />
+                                </el-tooltip>
                                 <el-tooltip v-else :content="$t('flow source not found')" effect="light">
                                     <AlertCircle />
                                 </el-tooltip>

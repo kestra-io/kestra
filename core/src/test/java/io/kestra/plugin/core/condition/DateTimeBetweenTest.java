@@ -42,8 +42,8 @@ class DateTimeBetweenTest {
 
         DateTimeBetween build = DateTimeBetween.builder()
             .date(new Property<>(date))
-            .before(before)
-            .after(after)
+            .before(Property.of(before))
+            .after(Property.of(after))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

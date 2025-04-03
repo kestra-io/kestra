@@ -355,7 +355,7 @@ class ScheduleTest {
             .conditions(List.of(
                 DateTimeBetween.builder()
                     .type(DateTimeBetween.class.getName())
-                    .before(ZonedDateTime.parse("2021-08-03T12:00:00+02:00"))
+                    .before(Property.of(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
                     .date(new Property<>("{{ trigger.date }}"))
                     .build()
             ))

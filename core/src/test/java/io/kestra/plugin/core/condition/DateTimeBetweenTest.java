@@ -41,7 +41,7 @@ class DateTimeBetweenTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         DateTimeBetween build = DateTimeBetween.builder()
-            .date(date)
+            .date(Property.of(date))
             .before(Property.of(before))
             .after(Property.of(after))
             .build();

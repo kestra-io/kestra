@@ -323,7 +323,7 @@ class ScheduleTest {
                     .type(DayWeekInMonth.class.getName())
                     .dayOfWeek(Property.of(DayOfWeek.MONDAY))
                     .dayInMonth(Property.of(DayWeekInMonth.DayInMonth.FIRST))
-                    .date("{{ trigger.date }}")
+                    .date(new Property<>("{{ trigger.date }}"))
                     .build()
             ))
             .build();
@@ -357,7 +357,7 @@ class ScheduleTest {
                 DateTimeBetween.builder()
                     .type(DateTimeBetween.class.getName())
                     .before(Property.of(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
-                    .date("{{ trigger.date }}")
+                    .date(new Property<>("{{ trigger.date }}"))
                     .build()
             ))
             .build();

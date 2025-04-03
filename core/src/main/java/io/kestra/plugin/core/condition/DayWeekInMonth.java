@@ -63,8 +63,7 @@ public class DayWeekInMonth extends Condition implements ScheduleCondition {
         description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
-    @PluginProperty(dynamic = true)
-    private final String date = "{{ trigger.date }}";
+    private final Property<String> date = new Property<>("{{ trigger.date }}");
 
     @NotNull
     @Schema(title = "The day of week.")
@@ -79,7 +78,7 @@ public class DayWeekInMonth extends Condition implements ScheduleCondition {
         Map<String, Object> vars = conditionContext.getVariables();
         RunContext runContext = conditionContext.getRunContext();
 
-        String render = runContext.render(date, vars);
+        String render = runContext.render(date).as(String.class, vars).orElse(null);
         LocalDate currentDate = DateUtils.parseLocalDate(render);
         LocalDate computed;
 

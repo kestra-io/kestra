@@ -25,7 +25,6 @@ import java.util.List;
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-@Plugin
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
 @Schema(

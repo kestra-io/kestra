@@ -1,6 +1,7 @@
 package io.kestra.core.repositories;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.statistics.LogStatistics;
@@ -8,6 +9,7 @@ import io.kestra.core.utils.IdUtils;
 import io.micronaut.data.model.Pageable;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
+import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
@@ -56,7 +58,12 @@ public abstract class AbstractLogRepositoryTest {
                 .field(QueryFilter.Field.MIN_LEVEL)
                 .operation(QueryFilter.Op.EQUALS)
                 .value(Level.WARN)
-            .build());
+                .build(),
+            QueryFilter.builder()
+                .field(Field.START_DATE)
+                .operation(QueryFilter.Op.GREATER_THAN)
+                .value(Instant.now().minus(1, ChronoUnit.HOURS))
+                .build());
         find = logRepository.find(Pageable.UNPAGED,  "doe", filters);
         assertThat(find.size(), is(0));
 

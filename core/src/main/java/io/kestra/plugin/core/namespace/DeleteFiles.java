@@ -44,6 +44,7 @@ import java.util.TreeSet;
                 """
                 id: delete_files
                 namespace: company.team
+                
                 tasks:
                   - id: delete
                     type: io.kestra.plugin.core.namespace.DeleteFiles
@@ -60,6 +61,7 @@ import java.util.TreeSet;
                 """
                 id: delete_all_files
                 namespace: company.team
+                
                 tasks:
                   - id: delete
                     type: io.kestra.plugin.core.namespace.DeleteFiles

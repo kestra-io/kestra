@@ -34,49 +34,44 @@ import java.util.Optional;
     examples = {
         @Example(
             full = true,
+            title = "Allow a task to fail independently to the rest of the flow",
             code = """
-                id: allow_failure
+                id: allow_failure_demo
                 namespace: company.team
 
                 tasks:
-                  - id: sequential
+                  - id: allow_failure
                     type: io.kestra.plugin.core.flow.AllowFailure
                     tasks:
-                     - id: ko
-                       type: io.kestra.plugin.scripts.shell.Commands
-                       commands:
-                        - 'exit 1'
+                      - id: fail
+                        type: io.kestra.plugin.core.execution.Fail
 
-                  - id: last
-                    type: io.kestra.plugin.core.debug.Return
-                    format: "{{ task.id }} > {{ taskrun.startDate }}"
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This will run"
                 """
         ),
         @Example(
             full = true,
             title = "Allow failure of a group of tasks",
             code = """
-                id: allow-failure-demo
+                id: allow_failure_group_demo
                 namespace: company.team
 
                 tasks:
-                - id: allow_failure
+                  - id: allow_failure
                     type: io.kestra.plugin.core.flow.AllowFailure
                     tasks:
-                    - id: fail_silently
-                        type: io.kestra.plugin.scripts.shell.Commands
-                        taskRunner:
-                        type: io.kestra.plugin.core.runner.Process
-                        commands:
-                        - exit 1
+                      - id: fail_silently
+                        type: io.kestra.plugin.core.execution.Fail
 
-                - id: print_to_console
-                    type: io.kestra.plugin.scripts.shell.Commands
-                    taskRunner:
-                    type: io.kestra.plugin.core.runner.Process
-                    commands:
-                    - echo "this will run since previous failure was allowed ✅"
+                      - id: silence
+                        type: io.kestra.plugin.core.log.Log
+                        message: "This won't run"
 
+                  - id: log
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This will run"
             """
         )
     },

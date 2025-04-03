@@ -29,8 +29,14 @@ import java.util.concurrent.TimeUnit;
 @Plugin(
     examples = {
         @Example(
+            full = true,
+            title = "Sleep the flow for 5 seconds"
             code = """
-                    id: sleep
+                id: sleep_flow
+                namespace: company.team
+
+                tasks:
+                  - id: sleep
                     type: io.kestra.plugin.core.flow.Sleep
                     duration: "PT5S"
                 """

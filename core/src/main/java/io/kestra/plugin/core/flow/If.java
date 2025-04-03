@@ -42,6 +42,7 @@ import java.util.stream.Stream;
     examples = {
         @Example(
             full = true,
+            title = "Check the value of an input to decide which task should run",
             code = """
                 id: if
                 namespace: company.team

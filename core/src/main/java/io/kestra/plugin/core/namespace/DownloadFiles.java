@@ -44,6 +44,7 @@ import java.util.stream.Collectors;
                 """
                 id: download_file
                 namespace: company.team
+
                 tasks:
                   - id: download
                     type: io.kestra.plugin.core.namespace.DownloadFiles
@@ -60,6 +61,7 @@ import java.util.stream.Collectors;
                 """
                 id: download_all_files
                 namespace: company.team
+                
                 tasks:
                   - id: download
                     type: io.kestra.plugin.core.namespace.DownloadFiles

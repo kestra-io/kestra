@@ -31,6 +31,7 @@ import java.util.List;
     examples = {
         @Example(
             full = true,
+            title = "Publish an output value as a metric",
             code = """
                 id: publish_metric
                 namespace: company.team

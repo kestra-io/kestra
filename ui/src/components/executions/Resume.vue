@@ -1,7 +1,7 @@
 <template>
     <component
         :is="component"
-        :icon="PlayBox"
+        :icon="Play"
         @click="click"
         v-if="enabled"
         class="ms-0 me-1"
@@ -28,7 +28,7 @@
 </template>
 
 <script setup>
-    import PlayBox from "vue-material-design-icons/PlayBox.vue";
+    import Play from "vue-material-design-icons/Play.vue";
 </script>
 
 <script>
@@ -147,5 +147,7 @@
 <style lang="scss" scoped>
     button.el-button {
         cursor: pointer !important;
+        border-color: var(--ks-border-success);
+        color: var(--ks-content-success);
     }
 </style>

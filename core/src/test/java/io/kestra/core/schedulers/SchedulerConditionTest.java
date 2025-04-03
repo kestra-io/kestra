@@ -3,6 +3,7 @@ package io.kestra.core.schedulers;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
@@ -55,8 +56,8 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
                 DayWeekInMonth.builder()
                     .type(DayWeekInMonth.class.getName())
                     .date("{{ trigger.date }}")
-                    .dayOfWeek(DayOfWeek.MONDAY)
-                    .dayInMonth(DayWeekInMonth.DayInMonth.FIRST)
+                    .dayOfWeek(Property.of(DayOfWeek.MONDAY))
+                    .dayInMonth(Property.of(DayWeekInMonth.DayInMonth.FIRST))
                     .build()
             ))
             .build();

@@ -4,6 +4,7 @@ import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
@@ -83,7 +84,8 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
         description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
-    private final Property<String> date = new Property<>("{{ trigger.date }}");
+    @PluginProperty(dynamic = true)
+    private final String date = "{{ trigger.date }}";
 
     @Schema(
         title = "The date to test must be after this one.",
@@ -100,7 +102,7 @@ public class DateTimeBetween extends Condition implements ScheduleCondition {
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
         Map<String, Object> vars = conditionContext.getVariables();
-        String render = conditionContext.getRunContext().render(date).as(String.class, vars).orElseThrow();
+        String render = conditionContext.getRunContext().render(date, vars);
         ZonedDateTime currentDate = DateUtils.parseZonedDateTime(render);
 
         ZonedDateTime afterRendered = conditionContext.getRunContext().render(this.after).as(ZonedDateTime.class, vars).orElse(null);

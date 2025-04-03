@@ -320,8 +320,9 @@ class ScheduleTest {
             .timezone("Europe/Paris")
             .conditions(List.of(
                 DayWeekInMonth.builder()
-                    .dayOfWeek(DayOfWeek.MONDAY)
-                    .dayInMonth(DayWeekInMonth.DayInMonth.FIRST)
+                    .type(DayWeekInMonth.class.getName())
+                    .dayOfWeek(Property.of(DayOfWeek.MONDAY))
+                    .dayInMonth(Property.of(DayWeekInMonth.DayInMonth.FIRST))
                     .date("{{ trigger.date }}")
                     .build()
             ))
@@ -356,7 +357,7 @@ class ScheduleTest {
                 DateTimeBetween.builder()
                     .type(DateTimeBetween.class.getName())
                     .before(Property.of(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
-                    .date(new Property<>("{{ trigger.date }}"))
+                    .date("{{ trigger.date }}")
                     .build()
             ))
             .build();

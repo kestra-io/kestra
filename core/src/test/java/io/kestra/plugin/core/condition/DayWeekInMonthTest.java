@@ -45,8 +45,8 @@ class DayWeekInMonthTest {
 
         DayWeekInMonth build = DayWeekInMonth.builder()
             .date(date)
-            .dayOfWeek(dayOfWeek)
-            .dayInMonth(dayInMonth)
+            .dayOfWeek(Property.of(dayOfWeek))
+            .dayInMonth(Property.of(dayInMonth))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

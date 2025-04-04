@@ -164,7 +164,7 @@
     import Utils from "../../utils/utils";
     import Labels from "../layout/Labels.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
-    import NamespaceSelect from "../namespaces/NamespaceSelect.vue";
+    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 </script>
 
 <script lang="ts">

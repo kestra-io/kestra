@@ -158,11 +158,11 @@ class RunContextTest {
         assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
 
-        List<LogEntry> logEntries = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()), count -> count > 1);
+        List<LogEntry> logEntries = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()), count -> count > 3);
         receive.blockLast();
         logEntries.sort(Comparator.comparingLong(value -> value.getTimestamp().toEpochMilli()));
 
-        assertThat(logEntries.getFirst().getTimestamp().toEpochMilli() + 1, is(logEntries.get(1).getTimestamp().toEpochMilli()));
+        assertThat(logEntries.getFirst().getTimestamp().toEpochMilli(), is(logEntries.get(1).getTimestamp().toEpochMilli()));
     }
 
     @Test

@@ -1,19 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import static io.micronaut.http.HttpRequest.GET;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasItems;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
@@ -21,23 +7,25 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowForExecution;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
-import io.kestra.core.queues.QueueException;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.MutableHttpRequest;
+import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
+import lombok.SneakyThrows;
+import lombok.extern.slf4j.Slf4j;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+
 import java.io.File;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -50,14 +38,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.TimeoutException;
 
-import lombok.SneakyThrows;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
+import static io.micronaut.http.HttpRequest.GET;
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Slf4j
 @KestraTest
@@ -332,7 +318,7 @@ class ExecutionControllerTest {
     void badDate() {
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
             client.toBlocking().retrieve(GET(
-                "/api/v1/executions/search?filters[startDate][$eq]=2024-06-03T00:00:00.000%2B02:00&filters[endDate][$eq]=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
+                "/api/v1/executions/search?filters[startDate][EQUALS]=2024-06-03T00:00:00.000%2B02:00&filters[endDate][EQUALS]=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
         assertThat(exception.getStatus().getCode(), is(422));
         assertThat(exception.getMessage(),is("Illegal argument: Start date must be before End Date"));
 
@@ -382,7 +368,7 @@ class ExecutionControllerTest {
         assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels(), hasItem(new Label("project", "foo,bar")));
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
-            .GET("/api/v1/executions/search?filters[labels][$eq][project]=foo,bar");
+            .GET("/api/v1/executions/search?filters[labels][EQUALS][project]=foo,bar");
         assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal(), is(2L));
 
         MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
@@ -404,7 +390,7 @@ class ExecutionControllerTest {
         ));
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
-            .GET("/api/v1/executions/search?filters[labels][$eq][project]=foo,bar" + "&filters[labels][$eq][status]=test");
+            .GET("/api/v1/executions/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test");
         assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal(), is(1L));
 
         MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest

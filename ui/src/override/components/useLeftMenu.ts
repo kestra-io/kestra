@@ -1,4 +1,4 @@
-import {shallowRef, computed} from "vue";
+import {computed, shallowRef} from "vue";
 import {useStore} from "vuex";
 import {useRouter} from "vue-router";
 import {useI18n} from "vue-i18n";
@@ -21,6 +21,8 @@ import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue
 import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
 import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
 import FormatListGroupPlus from "vue-material-design-icons/FormatListGroupPlus.vue";
+import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue";
+import ShieldKeyOutline from "vue-material-design-icons/ShieldKeyOutline.vue";
 
 export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
@@ -121,6 +123,27 @@ export function useLeftMenu() {
                 }
             },
             {
+                href: {name: "kv/list"},
+                routes: routeStartWith("kv"),
+                title: t("kv.name"),
+                icon: {
+                    element: shallowRef(DatabaseOutline),
+                    class: "menu-icon"
+                }
+            },
+            {
+                href: {name: "secrets/list"},
+                routes: routeStartWith("secrets"),
+                title: t("secret.names"),
+                icon: {
+                    element: shallowRef(ShieldKeyOutline),
+                    class: "menu-icon"
+                },
+                 attributes: {
+                    locked: true
+                }
+            },
+            {
                 routes: routeStartWith("blueprints"),
                 title: t("blueprints.title"),
                 icon: {
@@ -213,7 +236,7 @@ export function useLeftMenu() {
                     {
                         href: {name: "admin/tenants/list"},
                         routes: routeStartWith("admin/tenants"),
-                        title: t("tenants"),
+                        title: t("tenant.names"),
                         icon: {
                             element: shallowRef(ShieldLockOutline),
                             class: "menu-icon"

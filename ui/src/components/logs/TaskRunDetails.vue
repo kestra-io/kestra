@@ -67,7 +67,6 @@
                                     </el-button-group>
                                 </Teleport>
                                 <log-line
-                                    @click="emitLogCursor(`${currentTaskRunIndex}/${index}`)"
                                     class="line"
                                     :cursor="logCursor === `${currentTaskRunIndex}/${index}`"
                                     :class="{['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level, 'opacity-40': levelToHighlight && levelToHighlight !== item.level}"
@@ -131,7 +130,7 @@
             LogLine,
             DynamicScroller,
             DynamicScrollerItem,
-            Download
+            Download,
         },
         emits: ["opened-taskruns-count", "follow", "reset-expand-collapse-all-switch", "log-cursor", "log-indices-by-level"],
         props: {

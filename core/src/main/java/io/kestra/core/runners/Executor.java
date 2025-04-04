@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,7 +21,7 @@ public class Executor {
     private Long offset;
     @JsonIgnore
     private boolean executionUpdated = false;
-    private Flow flow;
+    private FlowWithSource flow;
     private final List<TaskRun> nexts = new ArrayList<>();
     private final List<WorkerTask> workerTasks = new ArrayList<>();
     private final List<ExecutionDelay> executionDelays = new ArrayList<>();
@@ -88,7 +89,7 @@ public class Executor {
         return !(this.getException() != null || this.getFlow() == null || this.getFlow() instanceof FlowWithException || this.getFlow().getTasks() == null || this.getExecution().isDeleted() || this.getExecution().getState().isPaused());
     }
 
-    public Executor withFlow(Flow flow) {
+    public Executor withFlow(FlowWithSource flow) {
         this.flow = flow;
 
         return this;

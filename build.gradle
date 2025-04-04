@@ -21,7 +21,7 @@ plugins {
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "6.0.1.5171"
+    id "org.sonarqube" version "6.1.0.5360"
     id 'jacoco-report-aggregation'
 
     // helper
@@ -74,7 +74,7 @@ dependencies {
  **********************************************************************************************************************/
 allprojects {
     if (it.name != 'platform') {
-        group "io.kestra"
+        group = "io.kestra"
 
         java {
             sourceCompatibility = targetJavaVersion
@@ -596,11 +596,10 @@ release {
     }
 
     // Dynamically set properties with default values
-    failOnSnapshotDependencies = (project.hasProperty('release.failOnSnapshotDependencies')
-            ? project.property('release.failOnSnapshotDependencies').toBoolean()
-            : true)
+    failOnSnapshotDependencies = providers.gradleProperty("release.failOnSnapshotDependencies")
+            .map(val -> Boolean.parseBoolean(val))
+            .getOrElse(true)
 
-    pushReleaseVersionBranch = (project.hasProperty('release.pushReleaseVersionBranch')
-            ? project.property('release.pushReleaseVersionBranch').toString()
-            : null)
+    pushReleaseVersionBranch = providers.gradleProperty("release.pushReleaseVersionBranch")
+            .getOrElse(null)
 }

@@ -20,13 +20,13 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @SuppressWarnings("try")
 @Slf4j
 @Singleton
 @Requires(missingBeans = RunnerInterface.class)
 public class StandAloneRunner implements RunnerInterface, AutoCloseable {
-    private ExecutorService poolExecutor;
     @Setter protected int workerThread = Math.max(3, Runtime.getRuntime().availableProcessors());
     @Setter protected boolean schedulerEnabled = true;
     @Setter protected boolean workerEnabled = true;
@@ -43,11 +43,13 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
 
     private final List<Service> servers = new ArrayList<>();
 
-    private boolean running = false;
+    private final AtomicBoolean running = new AtomicBoolean(false);
+
+    private volatile ExecutorService poolExecutor;
 
     @Override
     public void run() {
-        this.running = true;
+        running.set(true);
 
         poolExecutor = executorsUtils.cachedThreadPool("standalone-runner");
         poolExecutor.execute(applicationContext.getBean(ExecutorInterface.class));
@@ -84,12 +86,14 @@ public class StandAloneRunner implements RunnerInterface, AutoCloseable {
     }
 
     public boolean isRunning() {
-        return this.running;
+        return this.running.get();
     }
 
     @PreDestroy
     @Override
     public void close() throws Exception {
-        this.poolExecutor.shutdown();
+        if (this.poolExecutor != null) {
+            this.poolExecutor.shutdown();
+        }
     }
 }

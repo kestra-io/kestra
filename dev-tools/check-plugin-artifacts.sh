@@ -139,10 +139,11 @@ do
 
   # Convert groupId to Maven repository path
   GROUP_PATH="${GROUP_ID//./\/}"
-  ARTIFACT_URL="${GROUP_PATH}/${ARTIFACT_ID}/${VERSION}/${ARTIFACT_ID}-${VERSION}.jar"
   if [[ "$VERSION" == *"-SNAPSHOT" ]]; then
+    ARTIFACT_URL="${GROUP_PATH}/${ARTIFACT_ID}/${VERSION}/maven-metadata.xml"
     ARTIFACT_URL="${SONATYPE_SNAPSHOT}/${ARTIFACT_URL}"
   else  
+    ARTIFACT_URL="${GROUP_PATH}/${ARTIFACT_ID}/${VERSION}/${ARTIFACT_ID}-${VERSION}.jar"
     ARTIFACT_URL="${MAVEN_CENTRAL}/${ARTIFACT_URL}"
   fi
 

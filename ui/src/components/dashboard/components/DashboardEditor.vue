@@ -112,11 +112,12 @@
         >
             <PluginDocumentation
                 v-if="currentView === views.DOC"
-                class="plugin-doc combined-right-view enhance-readability"
+                class="combined-right-view enhance-readability"
                 :override-intro="intro"
+                absolute
             />
             <div
-                class="d-flex justify-content-center align-items-center w-100 p-5"
+                class="d-flex justify-content-center align-items-center w-100 p-3"
                 v-else-if="currentView === views.CHART"
             >
                 <div v-if="selectedChart" class="w-100">
@@ -129,7 +130,7 @@
                         <small>{{ selectedChart.chartOptions.description }}</small>
                     </p>
 
-                    <div class="w-100">
+                    <div :style="`position: relative; width:calc(${100}% - 10px)`">
                         <component
                             :key="selectedChart.id"
                             :is="types[selectedChart.type]"
@@ -171,6 +172,8 @@
     defineEmits(["save"])
 </script>
 <script>
+    import {shallowRef} from "vue";
+
     import Editor from "../../inputs/Editor.vue";
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
@@ -312,11 +315,11 @@
                 charts: [],
                 chartError: null,
                 types: {
-                    "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
-                    "io.kestra.plugin.core.dashboard.chart.Bar": Bar,
-                    "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
-                    "io.kestra.plugin.core.dashboard.chart.Table": Table,
-                    "io.kestra.plugin.core.dashboard.chart.Pie": Pie,
+                    "io.kestra.plugin.core.dashboard.chart.TimeSeries": shallowRef(TimeSeries),
+                    "io.kestra.plugin.core.dashboard.chart.Bar": shallowRef(Bar),
+                    "io.kestra.plugin.core.dashboard.chart.Markdown": shallowRef(Markdown),
+                    "io.kestra.plugin.core.dashboard.chart.Table": shallowRef(Table),
+                    "io.kestra.plugin.core.dashboard.chart.Pie": shallowRef(Pie),
                 }
             }
         },

@@ -54,6 +54,15 @@
                     </el-button>
                 </el-button-group>
             </el-form-item>
+            <el-form-item>
+                <el-button-group class="min-w-auto">
+                    <el-button @click="loadLogs()">
+                        <kicon :tooltip="$t('refresh')">
+                            <refresh />
+                        </kicon>
+                    </el-button>
+                </el-button-group>
+            </el-form-item>
         </collapse>
 
         <task-run-details
@@ -122,6 +131,7 @@
     import LogLine from "../logs/LogLine.vue";
     import Restart from "./Restart.vue";
     import LogUtils from "../../utils/logs";
+    import Refresh from "vue-material-design-icons/Refresh.vue";
 
     export default {
         components: {
@@ -136,6 +146,7 @@
             Restart,
             DynamicScroller,
             DynamicScrollerItem,
+            Refresh
         },
         data() {
             return {
@@ -156,10 +167,7 @@
             level: {
                 handler() {
                     if (this.raw_view) {
-                        this.$store.dispatch("execution/loadLogs", {
-                            executionId: this.execution.id,
-                            minLevel: this.level
-                        })
+                        this.loadLogs();
                     }
                 }
             },
@@ -228,6 +236,12 @@
             }
         },
         methods: {
+            loadLogs(){
+                this.$store.dispatch("execution/loadLogs", {
+                    executionId: this.execution.id,
+                    minLevel: this.level
+                })            
+            },
             downloadContent() {
                 this.$store.dispatch("execution/downloadLogs", {
                     executionId: this.execution.id,

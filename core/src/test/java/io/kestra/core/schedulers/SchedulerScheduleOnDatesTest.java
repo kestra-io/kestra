@@ -107,7 +107,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
                 executionId.add(execution.getId());
 
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    executionQueue.emit(execution.withState(State.Type.SUCCESS));
+                    terminateExecution(execution, trigger, flow.withSource(flow.generateSource()));
                 }
                 assertThat(execution.getFlowId(), is(flow.getId()));
                 queueCount.countDown();

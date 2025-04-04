@@ -338,7 +338,7 @@ public class ServiceLivenessManager extends AbstractServiceLivenessTask {
                                                  final boolean isLivenessEnabled) {
             // Never shutdown STANDALONE server or WEB_SERVER service.
             if (instance.server().type().equals(ServerInstance.Type.STANDALONE) ||
-                instance.is(Service.ServiceType.WEBSERVER)) {
+                instance.is(ServiceType.WEBSERVER)) {
                 // Force the RUNNING state.
                 return Optional.of(instance.state(Service.ServiceState.RUNNING, now, null));
             }

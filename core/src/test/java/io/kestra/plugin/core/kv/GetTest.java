@@ -61,6 +61,36 @@ class GetTest {
     }
 
     @Test
+    void shouldGetGivenExistingKeyWithInheritance() throws Exception {
+        // Given
+        String namespaceId = "io.kestra." + IdUtils.create();
+        RunContext runContext = this.runContextFactory.of(Map.of(
+            "flow", Map.of("namespace", namespaceId),
+            "inputs", Map.of(
+                "key", TEST_KV_KEY
+            )
+        ));
+
+        var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
+
+        Get get = Get.builder()
+            .id(Get.class.getSimpleName())
+            .type(Get.class.getName())
+            .key(new Property<>("{{ inputs.key }}"))
+            .build();
+
+
+        final KVStore kv = runContext.namespaceKv("io.kestra");
+
+        // When
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, value));
+
+        // Then
+        Get.Output run = get.run(runContext);
+        assertThat(run.getValue(), is(value));
+    }
+
+    @Test
     void shouldGetGivenNonExistingKey() throws Exception {
         // Given
         String namespaceId = "io.kestra." + IdUtils.create();

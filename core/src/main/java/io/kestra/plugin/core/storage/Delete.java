@@ -37,10 +37,10 @@ import java.util.NoSuchElementException;
 )
 public class Delete extends Task implements RunnableTask<Delete.Output> {
     @Schema(
-        title = "The file to be deleted.",
-        description = "Must be a `kestra://` storage URI."
+        title = "The file to be deleted."
     )
     @NotNull
+    @PluginProperty(internalStorageURI = true)
     private Property<String> uri;
 
     @Schema(

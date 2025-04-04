@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.condition.ExecutionFlow;
 import io.kestra.plugin.core.condition.ExecutionNamespace;
@@ -51,11 +52,11 @@ class ConditionServiceTest {
 
         List<Condition> conditions = Arrays.asList(
             ExecutionFlow.builder()
-                .namespace(flow.getNamespace())
-                .flowId(flow.getId())
+                .namespace(Property.of(flow.getNamespace()))
+                .flowId(Property.of(flow.getId()))
                 .build(),
             ExecutionNamespace.builder()
-                .namespace(flow.getNamespace())
+                .namespace(Property.of(flow.getNamespace()))
                 .build()
         );
 
@@ -78,8 +79,8 @@ class ConditionServiceTest {
 
         List<Condition> conditions = Collections.singletonList(
             ExecutionFlow.builder()
-                .namespace(flow.getNamespace())
-                .flowId(flow.getId())
+                .namespace(Property.of(flow.getNamespace()))
+                .flowId(Property.of(flow.getId()))
                 .build()
         );
 

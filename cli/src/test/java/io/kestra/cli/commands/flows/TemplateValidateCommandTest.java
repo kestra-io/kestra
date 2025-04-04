@@ -46,6 +46,8 @@ class TemplateValidateCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",

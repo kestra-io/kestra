@@ -7,6 +7,7 @@ import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceLivenessStore;
 import io.kestra.core.server.ServiceLivenessUpdater;
 import io.kestra.core.server.ServiceStateTransition;
+import io.kestra.core.server.ServiceType;
 import io.micronaut.data.model.Pageable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -99,7 +100,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
      * {@inheritDoc}
      **/
     @Override
-    public List<ServiceInstance> findAllInstancesBetween(final Service.ServiceType type, final Instant from, final Instant to) {
+    public List<ServiceInstance> findAllInstancesBetween(final ServiceType type, final Instant from, final Instant to) {
         return jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
             SelectConditionStep<Record1<Object>> query = using(configuration)
                 .select(VALUE)
@@ -121,7 +122,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             .where(STATE.in(states.stream().map(Enum::name).toList()));
 
         return isForUpdate ?
-            this.jdbcRepository.fetch(query.forUpdate()) :
+            this.jdbcRepository.fetch(query.forUpdate().skipLocked()) :
             this.jdbcRepository.fetch(query);
     }
 
@@ -149,7 +150,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             .where(STATE.notIn(Service.ServiceState.CREATED.name(), Service.ServiceState.RUNNING.name()));
 
         return isForUpdate ?
-            this.jdbcRepository.fetch(query.forUpdate()) :
+            this.jdbcRepository.fetch(query.forUpdate().skipLocked()) :
             this.jdbcRepository.fetch(query);
     }
 
@@ -177,7 +178,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             .where(STATE.eq(Service.ServiceState.NOT_RUNNING.name()));
 
         return isForUpdate ?
-            this.jdbcRepository.fetch(query.forUpdate()) :
+            this.jdbcRepository.fetch(query.forUpdate().skipLocked()) :
             this.jdbcRepository.fetch(query);
     }
 
@@ -241,7 +242,7 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
     @Override
     public ArrayListTotal<ServiceInstance> find(final Pageable pageable,
                                                 final Set<Service.ServiceState> states,
-                                                final Set<Service.ServiceType> types) {
+                                                final Set<ServiceType> types) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {

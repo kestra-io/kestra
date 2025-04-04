@@ -31,6 +31,7 @@ jobs:
   release:
     name: Release
     needs: [tests]
+    if: "!startsWith(github.ref, 'refs/heads/releases')"
     uses: ./.github/workflows/workflow-release.yml
     with:
         plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}

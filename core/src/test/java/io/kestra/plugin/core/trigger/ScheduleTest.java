@@ -315,12 +315,14 @@ class ScheduleTest {
     void conditions() throws Exception {
         Schedule trigger = Schedule.builder()
             .id("schedule")
+            .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
                 DayWeekInMonth.builder()
-                    .dayOfWeek(DayOfWeek.MONDAY)
-                    .dayInMonth(DayWeekInMonth.DayInMonth.FIRST)
+                    .type(DayWeekInMonth.class.getName())
+                    .dayOfWeek(Property.of(DayOfWeek.MONDAY))
+                    .dayInMonth(Property.of(DayWeekInMonth.DayInMonth.FIRST))
                     .date("{{ trigger.date }}")
                     .build()
             ))
@@ -348,11 +350,13 @@ class ScheduleTest {
     void impossibleNextConditions() throws Exception {
         Schedule trigger = Schedule.builder()
             .id("schedule")
+            .type(Schedule.class.getName())
             .cron("0 12 * * 1")
             .timezone("Europe/Paris")
             .conditions(List.of(
                 DateTimeBetween.builder()
-                    .before(ZonedDateTime.parse("2021-08-03T12:00:00+02:00"))
+                    .type(DateTimeBetween.class.getName())
+                    .before(Property.of(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
                     .date("{{ trigger.date }}")
                     .build()
             ))

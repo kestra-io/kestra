@@ -63,7 +63,7 @@ class LogControllerTest {
         assertThat(logs.getTotal(), is(3L));
 
         logs = client.toBlocking().retrieve(
-            GET("/api/v1/logs/search?filters[level][$eq]=INFO"),
+            GET("/api/v1/logs/search?filters[level][EQUALS]=INFO"),
             Argument.of(PagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal(), is(2L));

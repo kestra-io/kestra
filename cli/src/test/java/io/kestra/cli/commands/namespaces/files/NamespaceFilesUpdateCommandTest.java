@@ -31,6 +31,8 @@ class NamespaceFilesUpdateCommandTest {
 
             String to = "/some/directory";
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -61,6 +63,8 @@ class NamespaceFilesUpdateCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -90,6 +94,8 @@ class NamespaceFilesUpdateCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",

@@ -18,6 +18,8 @@ import lombok.Getter;
 import org.jooq.Record;
 import org.jooq.*;
 import org.jooq.impl.DSL;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.FluxSink;
 
 import java.time.Duration;
 import java.time.ZoneId;
@@ -27,6 +29,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface {
     protected io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository;
@@ -90,6 +93,28 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 .and(field("taskrun_id").eq(taskRunId)),
             pageable
         );
+    }
+
+    @Override
+    public Flux<MetricEntry> findAllAsync(@io.micronaut.core.annotation.Nullable String tenantId) {
+        return Flux.create(emitter -> this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = context
+                    .select(field("value"))
+                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId));
+
+                try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()){
+                    stream.map((Record record) -> jdbcRepository.map(record))
+                        .forEach(emitter::next);
+                } finally {
+                    emitter.complete();
+                }
+            }), FluxSink.OverflowStrategy.BUFFER);
     }
 
     @Override

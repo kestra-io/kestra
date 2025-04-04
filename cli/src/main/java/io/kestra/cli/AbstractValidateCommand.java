@@ -31,6 +31,12 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
     @CommandLine.Parameters(index = "0", description = "the directory containing files to check")
     protected Path directory;
 
+    /** {@inheritDoc} **/
+    @Override
+    protected boolean loadExternalPlugins() {
+        return local;
+    }
+
     public static void handleException(ConstraintViolationException e, String resource) {
         stdErr("\t@|fg(red) Unable to parse {0} due to the following error(s):|@", resource);
         e.getConstraintViolations()

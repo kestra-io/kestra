@@ -185,6 +185,12 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     @Value("${kestra.jdbc.executor.thread-count:0}")
     private int threadCount;
 
+    @Value("${kestra.jdbc.executor.clean.execution-queue:true}")
+    private boolean cleanExecutionQueue;
+
+    @Value("${kestra.jdbc.executor.clean.worker-queue:true}")
+    private boolean cleanWorkerJobQueue;
+
     private final Tracer tracer;
 
     private final FlowRepositoryInterface flowRepository;
@@ -970,7 +976,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             // purge the executionQueue
             // IMPORTANT: this must be done before emitting the last execution message so that all consumers are notified that the execution ends.
             // NOTE: we may also purge ExecutionKilled events, but as there may not be a lot of them, it may not be worth it.
-            if (isTerminated) {
+            if (cleanExecutionQueue && isTerminated) {
                 ((JdbcQueue<Execution>) executionQueue).deleteByKey(executor.getExecution().getId());
             }
 
@@ -1030,7 +1036,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 // IMPORTANT: this is safe as only the executor is listening to WorkerTaskResult,
                 // and we are sure at this stage that all WorkerJob has been listened and processed by the Worker.
                 // If any of these assumptions changed, this code would not be safe anymore.
-                if (!ListUtils.isEmpty(executor.getExecution().getTaskRunList())) {
+                if (cleanWorkerJobQueue && !ListUtils.isEmpty(executor.getExecution().getTaskRunList())) {
                     List<String> taskRunKeys = executor.getExecution().getTaskRunList().stream()
                         .map(taskRun -> taskRun.getId())
                         .toList();

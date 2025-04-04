@@ -27,7 +27,7 @@
     import {useStore} from "vuex";
 
     import Navbar from "../layout/TopNavBar.vue";
-    import Create from "./buttons/Create.vue";
+    import Create from "./components/buttons/Create.vue";
     import Tabs from "../Tabs.vue";
 
     const {tabs, details} = useTabs();

@@ -66,7 +66,7 @@
     import {useI18n} from "vue-i18n";
 
     import Navbar from "../layout/TopNavBar.vue";
-    import Create from "./buttons/Create.vue";
+    import Create from "./components/buttons/Create.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
 
     import permission from "../../models/permission";

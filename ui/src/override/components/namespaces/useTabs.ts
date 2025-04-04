@@ -9,7 +9,7 @@ import BlueprintsBrowser from "../flows/blueprints/BlueprintsBrowser.vue";
 import Dashboard from "../../../components/dashboard/Dashboard.vue";
 import Flows from "../../../components/flows/Flows.vue";
 import Executions from "../../../components/executions/Executions.vue";
-import Dependencies from "../../../components/namespaces/Dependencies.vue";
+import Dependencies from "../../../components/namespaces/components/content/Dependencies.vue";
 import KVTable from "../../../components/kv/KVTable.vue";
 import EditorView from "../../../components/inputs/EditorView.vue";
 

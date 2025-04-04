@@ -1,277 +1,48 @@
 <template>
-    <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb">
+    <Navbar :title="details.title" :breadcrumb="details.breadcrumb">
         <template #additional-right>
-            <ul v-if="$route.params.tab === 'kv'">
-                <li>
-                    <el-button :icon="Plus" type="primary" @click="modalAddKvVisible = true">
-                        {{ $t('kv.add') }}
-                    </el-button>
-                </li>
-            </ul>
-            <ul v-if="$route.params.tab === 'flows'">
-                <li>
-                    <router-link :to="{name: 'flows/create', query: {namespace: $route.params.id}}" v-if="canCreateFlow">
-                        <el-button :icon="Plus" type="primary">
-                            {{ $t('create_flow') }}
-                        </el-button>
-                    </router-link>
-                </li>
-            </ul>
+            <router-link
+                v-if="tab === 'flows'"
+                :to="{name: 'flows/create', query: {namespace}}"
+            >
+                <Create :label="$t('create_flow')" />
+            </router-link>
+
+            <Create
+                v-if="tab === 'kv'"
+                :label="$t('kv.add')"
+                @click="store.commit('namespace/changeKVModalVisibility', true)"
+            />
         </template>
-    </top-nav-bar>
-    <tabs :route-name="$route.param && $route.param.id ? 'namespaces/update' : ''" :tabs="tabs" :namespace="$route.params.id" />
+    </Navbar>
+    <Tabs :tabs :route-name="namespace ? 'namespaces/update' : ''" :namespace />
 </template>
 
-<script setup>
-    import TopNavBar from "../layout/TopNavBar.vue";
-    import Plus from "vue-material-design-icons/Plus.vue";
-</script>
+<script setup lang="ts">
+    import {ref, computed, Ref, onMounted} from "vue";
+    import {useTabs} from "override/components/namespaces/useTabs";
+    import {useRoute} from "vue-router";
+    import useRouteContext from "../../mixins/useRouteContext";
+    import {useStore} from "vuex";
 
-<script>
-    import Dependencies from "./Dependencies.vue";
+    import Navbar from "../layout/TopNavBar.vue";
+    import Create from "./buttons/Create.vue";
     import Tabs from "../Tabs.vue";
-    import RouteContext from "../../mixins/routeContext";
-    import {mapState} from "vuex";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
-    import Dashboard from "../dashboard/Dashboard.vue";
-    import Executions from "../executions/Executions.vue"
-    import KVTable from "../kv/KVTable.vue";
-    import Flows from "../flows/Flows.vue";
-    import EditorView from "../inputs/EditorView.vue";
-    import BlueprintsBrowser from "../../override/components/flows/blueprints/BlueprintsBrowser.vue";
-    import DemoNamespace from "../demo/Namespace.vue";
 
-    export default {
-        mixins: [RouteContext],
-        components: {
-            Tabs
-        },
-        data() {
-            return {
-                modalAddSecretVisible: false,
-                modalInheritedSecretsVisible: false,
-                modalBindingsVisible: false,
-                modalAddKvVisible: false,
-            }
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            ...mapState("namespace", ["dependencies"]),
-            canCreateSecret() {
-                return this.$route.params.id && this.user &&
-                    this.user.isAllowed(permission.SECRET, action.CREATE, this.$route.params.id);
-            },
-            canCreateKv() {
-                return this.$route.params.id;
-            },
-            canCreateFlow() {
-                return this.user && this.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
-            },
-            routeInfo() {
-                const parts = this.$route.params.id?.split(".") || [];
-                return {
-                    title: parts?.[parts.length - 1] || this.$t("namespaces"),
-                    breadcrumb: [
-                        {
-                            label: this.$t("namespaces"),
-                            link: {
-                                name: "namespaces"
-                            }
-                        },
-                        ...parts.map((part, index) => ({
-                            label: part,
-                            link: {
-                                name: "namespaces/update",
-                                params: {id: parts.slice(0, index + 1).join(".")},
-                            },
-                        })),
-                    ]
-                };
-            },
-            tabs() {
-                const tabs = [];
+    const {tabs, details} = useTabs();
 
-                if(this.$route.params.id === "system"){
-                    tabs.push({
-                        name: "blueprints",
-                        component: BlueprintsBrowser,
-                        title: this.$t("blueprints.title"),
-                        props: {
-                            embed: this.embed,
-                            system: true,
-                            tab: "community"
-                        }
-                    })
-                }
+    const route = useRoute();
 
-                tabs.push(...[
-                    {
-                        name: undefined,
-                        component: Dashboard,
-                        title: this.$t("overview"),
-                        containerClass: "full-container flex-grow-0 flex-shrink-0 flex-basis-0",
-                        params: {
-                            restoreUrl: false,
-                            embed: true,
-                            namespace: this.$route.params.id || this.$route.query.id                        
-                        },
-                    },
-                    {
-                        name: "edit",
-                        component: DemoNamespace,
-                        title: this.$t("edit"),
-                        maximize: true,
-                        props: {
-                            tab: "edit",
-                        },
-                        locked: true
-                    },
-                    {
-                        name: "flows",
-                        component: Flows,
-                        title: this.$t("flows"),
-                        props: {
-                            topbar: false,
-                            restoreUrl: false,
-                            embed: false,
-                            namespace: this.$route.params.id || this.$route.query.id
-                        },
-                        query: {
-                            id: this.$route.query.id
-                        }
-                    },
-                    {
-                        name: "executions",
-                        component: Executions,
-                        props: {
-                            topbar: false,
-                            restoreUrl: false,
-                            embed: false,
-                            namespace: this.$route.params.id || this.$route.query.id,
-                            hidden: ["selection","inputs","flowRevision","taskRunList.taskId"]
-                        },
-                        title: this.$t("executions"),
-                        query: {
-                            id: this.$route.query.id
-                        }
-                    },
-                    {
-                        name: "dependencies",
-                        component: Dependencies,
-                        title: this.$t("dependencies"),
-                        props: {
-                            type: "dependencies",
-                            tab: "dependencies",
-                            namespace: this.$route.params.id || this.$route.query.id,
-                        },
-                        query: {
-                            id: this.$route.query.id
-                        }
-                    },
-                    {
-                        name: "secrets",
-                        component: DemoNamespace,
-                        title: this.$t("secret.names"),
-                        maximize: true,
-                        props: {
-                            tab: "secrets",
-                        },
-                        locked: true
-                    },
-                    {
-                        name: "variables",
-                        component: DemoNamespace,
-                        title: this.$t("variables"),
-                        maximize: true,
-                        props: {
-                            tab: "variables",
-                        },
-                        locked: true
-                    },
-                    {
-                        name: "plugin-defaults",
-                        component: DemoNamespace,
-                        title: this.$t("plugin defaults"),
-                        maximize: true,
-                        props: {
-                            tab: "plugin-defaults",
-                        },
-                        locked: true
-                    },
-                    {
-                        name: "kv",
-                        component: KVTable,
-                        title: this.$t("kv.name"),
-                        props: {
-                            addKvModalVisible: this.modalAddKvVisible,
-                            namespace: this.$route.params.id || this.$route.query.id,
-                        },
-                        query: {
-                            id: this.$route.query.id
-                        },
-                        "v-on": {
-                            "update:addKvModalVisible": (value) => {
-                                this.modalAddKvVisible = value
-                            }
-                        }
-                    },
-                    {
-                        name: "files",
-                        component: EditorView,
-                        title: this.$t("files"),
-                        props: {
-                            tab: "files",
-                            isNamespace: true,
-                            namespace: this.$route.params.id,
-                            isReadOnly: false,
-                        },
-                        query: {
-                            id: this.$route.query.id
-                        }
-                    },
-                    {
-                        name: "history",
-                        component: DemoNamespace,
-                        title: this.$t("revisions"),
-                        maximize: true,
-                        props: {
-                            tab: "history",
-                        },
-                        locked: true
-                    },
-                    {
-                        name: "audit-logs",
-                        component: DemoNamespace,
-                        title: this.$t("auditlogs"),
-                        maximize: true,
-                        props: {
-                            tab: "audit-logs",
-                        },
-                        locked: true
-                    }
-                ])
+    const context = ref({title: details.title});
+    useRouteContext(context);
 
-                return tabs;
-            }
-        },
-        mounted () {
-            this.loadItem()
-        },
-        methods: {
-            loadItem() {
-                if (this.$route.params.id) {
-                    this.$store.dispatch("namespace/load",this.$route.params.id)
-                }
-            },
+    const namespace = computed(() => route.params?.id) as Ref<string>;
+    const tab = computed(() => route.params?.tab);
+
+    const store = useStore();
+    onMounted(() => {
+        if (namespace.value) {
+            store.dispatch("namespace/load", namespace.value);
         }
-    };
+    });
 </script>
-
-<style lang="scss">
-section#namespaces div {
-    &:has(div.namespace-form) {
-        display: flex;
-    }
-}
-</style>

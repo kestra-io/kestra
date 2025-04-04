@@ -204,7 +204,7 @@
     import {NamespaceIterator} from "../../composables/useNamespaces";
     import useNamespaces from "../../composables/useNamespaces";
     import {groupBy} from "lodash";
-    import {mapState} from "vuex";
+    import {mapState, mapMutations} from "vuex";
     import action from "../../models/action";
     import permission from "../../models/permission";
 
@@ -217,6 +217,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapState("namespace", ["addKvModalVisible"]),
             filteredKvs() {
                 return this.kvs?.filter(kv => !this.search || kv.key.toLowerCase().includes(this.search.toLowerCase()));
             },
@@ -228,7 +229,7 @@
                     return this.addKvModalVisible;
                 },
                 set(newValue) {
-                    this.$emit("update:addKvModalVisible", newValue);
+                    this.changeKVModalVisibility(newValue);
                 }
             }
         },
@@ -238,18 +239,11 @@
             }
         },
         props: {
-            addKvModalVisible: {
-                type: Boolean,
-                default: false
-            },
             namespace: {
                 type: String,
                 default: undefined
             }
         },
-        emits: [
-            "update:addKvModalVisible"
-        ],
         watch: {
             addKvDrawerVisible(newValue) {
                 if (!newValue) {
@@ -309,6 +303,8 @@
             };
         },
         methods: {
+            ...mapMutations("namespace", ["changeKVModalVisibility"]),
+
             canUpdate(kv) {
                 return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
             },

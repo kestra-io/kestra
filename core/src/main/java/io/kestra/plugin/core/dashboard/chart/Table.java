@@ -6,6 +6,7 @@ import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.plugin.core.dashboard.chart.tables.TableColumnDescriptor;
 import io.kestra.plugin.core.dashboard.chart.tables.TableOption;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -17,5 +18,8 @@ import lombok.experimental.SuperBuilder;
 @Plugin
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
+@Schema(
+    title = "Display structured execution data in a clear, sortable table."
+    )
 public class Table<F extends Enum<F>, D extends DataFilter<F, ? extends TableColumnDescriptor<F>>> extends DataChart<TableOption, D> {
 }

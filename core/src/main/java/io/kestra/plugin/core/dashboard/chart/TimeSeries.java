@@ -7,6 +7,7 @@ import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.validations.TimeSeriesChartValidation;
 import io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor;
 import io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesOption;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +20,9 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
 @TimeSeriesChartValidation
+@Schema(
+    title = "Track trends over time with dynamic time series charts."
+    )
 public class TimeSeries<F extends Enum<F>, D extends DataFilter<F, ? extends TimeSeriesColumnDescriptor<F>>> extends DataChart<TimeSeriesOption, D> {
     @Override
     public Integer minNumberOfAggregations() {

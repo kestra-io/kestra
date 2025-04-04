@@ -41,9 +41,23 @@ import java.util.Map;
 @Plugin(
     examples = {
         @Example(
-            code = {
-                "executionId: \"{{ trigger.executionId }}\""
-            }
+            full = true,
+            title = "Start a Subflow which will pause, and resume it in the parent flow.",
+            code = """
+                id: resume_subflow
+                namespace: company.team
+
+                tasks:
+                  - id: subflow
+                    type: io.kestra.plugin.core.flow.Subflow
+                    namespace: company.team
+                    flowId: paused_flow
+                    wait: false
+
+                  - id: resume
+                    type: io.kestra.plugin.core.execution.Resume
+                    executionId: "{{ outputs.subflow.executionId }}"
+            """
         )
     }
 )

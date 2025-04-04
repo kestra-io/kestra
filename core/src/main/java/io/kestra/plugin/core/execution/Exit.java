@@ -37,6 +37,7 @@ import java.util.Optional;
     examples = {
         @Example(
             full = true,
+            title = "The execution will stop before the end if the END input is selected as it will be `KILLED`.",
             code = """
                 id: exit
                 namespace: company.team

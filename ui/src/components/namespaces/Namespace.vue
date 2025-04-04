@@ -20,6 +20,7 @@
 
 <script setup lang="ts">
     import {ref, computed, Ref, onMounted} from "vue";
+
     import {useTabs} from "override/components/namespaces/useTabs";
     import {useRoute} from "vue-router";
     import useRouteContext from "../../mixins/useRouteContext";

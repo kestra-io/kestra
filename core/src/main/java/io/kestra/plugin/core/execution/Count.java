@@ -37,7 +37,34 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Plugin(
     examples = {
         @Example(
-            title = "Send a slack notification if there is no execution for a flow for the last 24 hours.",
+            title = "Check if there are no executions for a flow in the last 24 hours.",
+            full = true,
+            code = """
+                id: executions_count
+                namespace: company.team
+
+                inputs:
+                  - id: flow_id
+                    type: STRING
+                    defaults: logs
+
+                tasks:
+                  - id: counts
+                    type: io.kestra.plugin.core.execution.Count
+                    expression: "{{ count == 0 }}"
+                    flows:
+                      - flowId: "{{ inputs.flow_id }}"
+                        namespace: company.team
+                    startDate: "{{ now() | dateAdd(-1, 'DAYS') }}"
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 4 * * * "
+                """
+        ),
+        @Example(
+            title = "Check how many executions in the `company.team` namespace have over 5",
             full = true,
             code = """
                 id: executions_count
@@ -46,32 +73,16 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
                 tasks:
                   - id: counts
                     type: io.kestra.plugin.core.execution.Count
-                    expression: "{{ count == 0 }}"
-                    flows:
-                      - namespace: company.team
-                        flowId: logs
+                    expression: "{{ count > 5 }}"
+                    namespaces:
+                      - company.team
                     startDate: "{{ now() | dateAdd(-1, 'DAYS') }}"
-
-                  - id: for_each
-                    type: io.kestra.plugin.core.flow.ForEach
-                    concurrencyLimit: 0
-                    values: "{{ jq outputs.counts.results '. | select(. != null) | .[]' }}"
-                    tasks:
-                      - id: slack_incoming_webhook
-                        type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
-                        payload: |
-                          {
-                            "channel": "#run-channel",
-                            "text": ":warning: Flow `{{ jq taskrun.value '.namespace' true }}`.`{{ jq taskrun.value '.flowId' true }}` has no execution for last 24h!"
-                          }
-                        url: "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
 
                 triggers:
                   - id: schedule
                     type: io.kestra.plugin.core.trigger.Schedule
-                    backfill: {}
                     cron: "0 4 * * * "
-                """
+            """
         )
     },
     aliases = "io.kestra.core.tasks.executions.Counts"
@@ -102,11 +113,11 @@ public class Count extends Task implements RunnableTask<Count.Output> {
 
     @NotNull
     @Schema(
-        title = "The expression to look at against each flow.",
-        description = "The expression is such that expression must return `true` in order to keep the current line.\n" +
+        title = "The expression to evaluate against each flow.",
+        description = "The expression must return `true` in order to consider executions.\n" +
             "Some examples: \n" +
-            "- ```yaml {{ eq count 0 }} ```: no execution found\n" +
-            "- ```yaml {{ gte count 5 }} ```: more than 5 executions\n"
+            "- ```{{ count == 0 }} ```: no execution found\n" +
+            "- ```{{ count > 5 }} ```: more than 5 executions\n"
     )
     @PluginProperty(dynamic = true) // we cannot use `Property` as we render it multiple time with different variables, which is an issue for the property cache
     protected String expression;

@@ -64,7 +64,7 @@ export const Default = Template.bind({});
 Default.args = {
   flow: `
 id: allow-failure-demo
-namespace: sanitychecks.core.flows.blueprints
+namespace: sanitychecks.flows.blueprints
 tasks:
   - id: allow_failure
     type: io.kestra.plugin.core.flow.AllowFailure
@@ -88,7 +88,7 @@ export const EmptyFlow = Template.bind({});
 EmptyFlow.args = {
   flow: `
 id: empty
-namespace: sanitychecks.core.flows.blueprints
+namespace: sanitychecks.flows.blueprints
 `.trim(),
 };
 

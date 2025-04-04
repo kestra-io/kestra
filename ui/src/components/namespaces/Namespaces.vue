@@ -202,10 +202,10 @@
         height: 2.25rem;
         overflow: hidden;
         background: transparent;
+        border-radius: var(--bs-border-radius-lg);
 
         &:hover {
             background: var(--ks-background-body);
-            color: var(--ks-content-link);
         }
 
         .icon {
@@ -218,7 +218,7 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 0 1rem;
+        padding: 0 0.5rem;
         color: var(--ks-content-primary);
 
         &:hover {

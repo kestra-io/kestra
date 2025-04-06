@@ -183,36 +183,30 @@
                                 </el-button>
                             </template>
                         </el-table-column>
-                        <el-table-column
-                            v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
-                            column-key="restart"
-                            class-name="row-action"
-                        >
+                        <el-table-column :label="$t('backfill')" column-key="backfill">
                             <template #default="scope">
-                                <el-button>
-                                    <kicon
-                                        :tooltip="$t(`restart trigger.tooltip`)"
-                                        placement="left"
+                                <div class="flex items-center gap-2">
+                                    <span v-if="scope.row.backfill">
+                                        <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
+                                            <play-box />
+                                        </el-tooltip>
+                                        <el-tooltip v-else :content="$t('backfill paused')">
+                                            <pause-box />
+                                        </el-tooltip>
+                                    </span>
+
+                                    <el-button
+                                        v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                         @click="restart(scope.row)"
                                     >
-                                        <Restart />
-                                    </kicon>
-                                </el-button>
+                                        <kicon :tooltip="$t(`restart trigger.tooltip`)" placement="left">
+                                            <Restart />
+                                        </kicon>
+                                    </el-button>
+                                </div>
                             </template>
                         </el-table-column>
 
-                        <el-table-column :label="$t('backfill')" column-key="backfill">
-                            <template #default="scope">
-                                <span v-if="scope.row.backfill">
-                                    <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
-                                        <play-box />
-                                    </el-tooltip>
-                                    <el-tooltip v-else :content="$t('backfill paused')">
-                                        <pause-box />
-                                    </el-tooltip>
-                                </span>
-                            </template>
-                        </el-table-column>
 
                         <el-table-column :label="$t('actions')" column-key="disable" class-name="row-action">
                             <template #default="scope">

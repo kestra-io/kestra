@@ -9,7 +9,11 @@ $code-font-sm: var(--el-font-size-small);
 
 .no-code {
     :deep(.ks-monaco-editor){
-        overflow-x: auto;
+        overflow-x: hidden;
+    }
+
+    :deep(.editor-container) {
+        padding: 7px !important;
     }
 
     &::-webkit-scrollbar {

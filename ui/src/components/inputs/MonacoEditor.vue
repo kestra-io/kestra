@@ -89,7 +89,7 @@
         theme?: "light" | "dark",
         language?: string,
         extension?: string,
-        options?: monaco.editor.IStandaloneEditorConstructionOptions & {renderSideBySide?: boolean},
+        options?: monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean },
         schemaType?: string,
         diffEditor?: boolean,
         input?: boolean,
@@ -433,6 +433,69 @@
         }));
 
         autoCompletionProviders.value.push(monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
+            triggerCharacters: ["{"],
+            async provideCompletionItems(model, position) {
+                if (!isInsidePebbleBlock(model, position)) {
+                    return {suggestions: []};
+                }
+
+                const lineContent = model.getLineContent(position.lineNumber);
+                const beforeCursor = lineContent.substring(0, position.column);
+                const afterCursor = lineContent.substring(position.column);
+
+                const lastOpen = beforeCursor.lastIndexOf("{{");
+                const nextClose = afterCursor.indexOf("}}");
+
+                const openIndex = lastOpen + 2;
+                const closeIndex = nextClose !== -1 ? position.column + nextClose : lineContent.length;
+                const fullContent = lineContent.substring(openIndex, closeIndex).trim();
+
+                const word = fullContent;
+
+                const suggestions = (await yamlAutoCompletionProvider.pebbleFunctionAutoCompletion())
+                    .filter(func => func.toLowerCase().includes(word.toLowerCase()))
+                    .map(func => ({
+                        kind: monaco.languages.CompletionItemKind.Function,
+                        label: func,
+                        insertText: func,
+                        documentation: "Pebble function",
+                        range: {
+                            startLineNumber: position.lineNumber,
+                            endLineNumber: position.lineNumber,
+                            startColumn: openIndex + 1,
+                            endColumn: closeIndex
+                        }
+                    }));
+
+                return {suggestions};
+            }
+        }));
+
+        const isInsidePebbleBlock = (model, position) => {
+            const lineContent = model.getLineContent(position.lineNumber);
+            const beforeCursor = lineContent.substring(0, position.column);
+            const afterCursor = lineContent.substring(position.column);
+
+            const lastOpen = beforeCursor.lastIndexOf("{{");
+            const nextClose = afterCursor.indexOf("}}");
+
+            return (
+                lastOpen !== -1 &&
+                (nextClose !== -1 || !afterCursor.includes("}}")) &&
+                position.column > lastOpen + 2
+            );
+        }
+
+        localEditor.onDidChangeCursorSelection((e) => {
+            const position = e.selection.getPosition();
+            const model = localEditor.getModel();
+
+            if (isInsidePebbleBlock(model, position)) {
+                localEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
+            }
+        });
+
+        autoCompletionProviders.value.push(monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
             triggerCharacters: ["("],
             async provideCompletionItems(model, position) {
                 const source = model.getValue();
@@ -590,12 +653,12 @@
         });
 
         const $el = editorRef.value
-        if($el !== null) {
+        if ($el !== null) {
             suggestWidgetResizeObserver.value.observe($el.querySelector(".overflowingContentWidgets")!, {childList: true})
         }
     }
 
-    async function initMonaco () {
+    async function initMonaco() {
         let options = {
             ...{
                 value: props.value,
@@ -610,7 +673,7 @@
         };
 
         if (props.diffEditor) {
-            if(editorRef.value){
+            if (editorRef.value) {
                 localDiffEditor = monaco.editor.createDiffEditor(editorRef.value, {
                     ...options,
                     ignoreTrimWhitespace: false
@@ -651,7 +714,7 @@
                 when: "editorFocus"
             });
 
-            if(editorRef.value){
+            if (editorRef.value) {
                 localEditor = monaco.editor.create(editorRef.value, options);
             }
 
@@ -731,7 +794,7 @@
     function destroy() {
         disposeObservers();
         autoCompletionProviders.value.forEach(provider => provider.dispose());
-        if(props.diffEditor) {
+        if (props.diffEditor) {
             localDiffEditor?.getModel()?.modified?.dispose();
             localDiffEditor?.getModel()?.original?.dispose();
             localDiffEditor?.dispose();
@@ -752,20 +815,20 @@
 </script>
 
 <style scoped lang="scss">
-.ks-monaco-editor {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    outline: none;
-}
+    .ks-monaco-editor {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        outline: none;
+    }
 
-.main-editor>#editorWrapper .monaco-editor {
-    padding: 1rem 0 0 1rem;
-}
+    .main-editor > #editorWrapper .monaco-editor {
+        padding: 1rem 0 0 1rem;
+    }
 </style>
 
 <style lang="scss">
-@import "../../styles/layout/root-dark";
+    @import "../../styles/layout/root-dark";
 
     .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
         background-color: $input-bg;

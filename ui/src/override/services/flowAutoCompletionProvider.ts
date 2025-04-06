@@ -216,4 +216,44 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion {
         }
         return Promise.resolve([]);
     }
+
+    pebbleFunctionAutoCompletion(): Promise<string[]> {
+        return Promise.resolve([
+            // File-related functions
+            "fileExists",
+            "fileSize",
+            "isFileEmpty",
+            "read",
+            "fileURI",
+            
+            // Data format functions
+            "json",
+            "fromJson",
+            "yaml",
+            "fromIon",
+            
+            // Context and logging functions
+            "printContext",
+            "fetchContext",
+            "errorLogs",
+            "render",
+            "renderOnce",
+            "currentEachOutput",
+            
+            // Utility functions
+            "uuid",
+            "id",
+            "now",
+            
+            // Security functions
+            "secret",
+            "kv",
+            "encrypt",
+            "decrypt",
+            
+            // Random functions
+            "randomInt",
+            "randomPort"
+        ]);
+    }
 }

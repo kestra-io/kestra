@@ -42,9 +42,7 @@ export function useTabs() {
             name: "overview",
             title: t("overview"),
             component: Dashboard,
-            props: {
-                containerClass: "full-container flex-grow-0 flex-shrink-0",
-            },
+            props: {containerClass: "full-container flex-0"},
         },
         {
             ...lockedProps("edit"),

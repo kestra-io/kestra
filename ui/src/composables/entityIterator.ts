@@ -33,6 +33,7 @@ export abstract class EntityIterator<T> {
     abstract fetchCall(): Promise<FetchResult<T>>;
 
     stopCondition() {
+        console.log("stopCondition", this.total, this.alreadyFetched.length);
         return this.total === this.alreadyFetched.length;
     }
 

@@ -334,6 +334,7 @@
                 let kvFetch;
                 if (this.namespace === undefined) {
                     if (this.namespaceIterator === undefined) {
+                        console.log("Creating namespace iterator");
                         this.namespaceIterator = useNamespaces(this.$store, 20);
                     }
 

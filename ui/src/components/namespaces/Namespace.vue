@@ -1,18 +1,7 @@
 <template>
     <Navbar :title="details.title" :breadcrumb="details.breadcrumb">
         <template #additional-right>
-            <router-link
-                v-if="tab === 'flows'"
-                :to="{name: 'flows/create', query: {namespace}}"
-            >
-                <Create :label="$t('create_flow')" />
-            </router-link>
-
-            <Create
-                v-if="tab === 'kv'"
-                :label="$t('kv.add')"
-                @click="store.commit('namespace/changeKVModalVisibility', true)"
-            />
+            <Actions />
         </template>
     </Navbar>
     <Tabs :tabs :route-name="namespace ? 'namespaces/update' : ''" :namespace />
@@ -28,7 +17,7 @@
     import {useStore} from "vuex";
 
     import Navbar from "../layout/TopNavBar.vue";
-    import Create from "./components/buttons/Create.vue";
+    import Actions from "override/components/namespaces/Actions.vue";
     import Tabs from "../Tabs.vue";
 
     const {tabs} = useTabs();
@@ -40,7 +29,6 @@
     useRouteContext(context);
 
     const namespace = computed(() => route.params?.id) as Ref<string>;
-    const tab = computed(() => route.params?.tab);
 
     const store = useStore();
     onMounted(() => {

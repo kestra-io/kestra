@@ -1,7 +1,11 @@
 <template>
     <Navbar :title="details.title">
         <template #additional-right>
-            <Create v-if="canCreate" :label="t('create')" />
+            <Action
+                v-if="canCreate"
+                :label="t('create')"
+                :to="{name: 'namespaces/create', params: {tab: 'edit'}}"
+            />
         </template>
     </Navbar>
 
@@ -66,7 +70,7 @@
     import {useI18n} from "vue-i18n";
 
     import Navbar from "../layout/TopNavBar.vue";
-    import Create from "./components/buttons/Create.vue";
+    import Action from "./components/buttons/Action.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
 
     import permission from "../../models/permission";

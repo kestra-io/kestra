@@ -113,7 +113,7 @@
     "patch-package": "^8.0.0",
     "prettier": "^3.5.3",
     "rollup-plugin-copy": "^3.5.0",
-    "sass": "^1.85.0",
+    "sass": "^1.86.3",
     "storybook": "^8.6.9",
     "storybook-vue3-router": "^5.0.0",
     "typescript": "^5.7.2",

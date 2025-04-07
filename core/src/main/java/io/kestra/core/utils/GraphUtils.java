@@ -361,6 +361,10 @@ public class GraphUtils {
         boolean isFirst = true;
         while (iterator.hasNext()) {
             Task currentTask = iterator.next();
+            if (currentTask == null) {
+                continue;
+            }
+
             for (TaskRun currentTaskRun : findTaskRuns(currentTask, execution, parent)) {
                 AbstractGraph currentGraph;
                 List<String> parentValues = null;

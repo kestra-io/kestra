@@ -3,6 +3,7 @@ import mark from "markdown-it-mark";
 import meta from "markdown-it-meta";
 import anchor from "markdown-it-anchor";
 import container from "markdown-it-container";
+import mila from "markdown-it-link-attributes";
 import {fromHighlighter} from "@shikijs/markdown-it/core";
 import {createHighlighterCore} from "shiki/core";
 import githubDark from "shiki/themes/github-dark.mjs";
@@ -22,6 +23,7 @@ export {
     meta,
     anchor,
     container,
+    mila,
     fromHighlighter,
     createHighlighterCore,
     githubDark,

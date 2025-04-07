@@ -43,6 +43,7 @@
     "markdown-it": "^14.1.0",
     "markdown-it-anchor": "^9.2.0",
     "markdown-it-container": "^4.0.0",
+    "markdown-it-link-attributes": "^4.0.1",
     "markdown-it-mark": "^4.0.0",
     "markdown-it-meta": "^0.0.1",
     "material-file-icons": "^2.4.0",

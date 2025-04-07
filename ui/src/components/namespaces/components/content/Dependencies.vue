@@ -56,7 +56,7 @@
     import {cssVariable} from "@kestra-io/ui-libs";
     import {DependenciesNode} from "@kestra-io/ui-libs";
 
-    import {linkedElements} from "../../utils/vueFlow";
+    import {linkedElements} from "../../../../utils/vueFlow";
     import {apiUrl} from "override/utils/route";
 
     const {

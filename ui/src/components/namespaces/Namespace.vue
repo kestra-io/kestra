@@ -22,6 +22,7 @@
     import {ref, computed, Ref, onMounted} from "vue";
 
     import {useTabs} from "override/components/namespaces/useTabs";
+    import {useHelpers} from "./utils/useHelpers";
     import {useRoute} from "vue-router";
     import useRouteContext from "../../mixins/useRouteContext";
     import {useStore} from "vuex";
@@ -30,7 +31,8 @@
     import Create from "./components/buttons/Create.vue";
     import Tabs from "../Tabs.vue";
 
-    const {tabs, details} = useTabs();
+    const {tabs} = useTabs();
+    const {details} = useHelpers();
 
     const route = useRoute();
 

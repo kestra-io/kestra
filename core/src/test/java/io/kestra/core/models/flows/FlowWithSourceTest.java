@@ -40,7 +40,6 @@ class FlowWithSourceTest {
         FlowWithSource flowWithSource = FlowWithSource.of(flow, flow.generateSource());
 
         String source = flowWithSource.getSource();
-        System.out.println(source);
 
         assertThat(source, not(containsString("deleted: false")));
         assertThat(source, containsString("format: |\n"));
@@ -111,7 +110,7 @@ class FlowWithSourceTest {
             ))
             .listeners(List.of(
                 Listener.builder()
-                    .conditions(List.of(Expression.builder().expression("true").build()))
+                    .conditions(List.of(Expression.builder().expression(Property.of("true")).build()))
                     .build()
             ))
             .triggers(List.of(

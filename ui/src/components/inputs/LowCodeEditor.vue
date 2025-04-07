@@ -7,7 +7,7 @@
             :is-read-only="isReadOnly"
             :is-allowed-edit="isAllowedEdit"
             :source="source"
-            :toggle-orientation-button="['topology'].includes(viewType)"
+            :toggle-orientation-button="toggleOrientationButton"
             :flow-graph="props.flowGraph"
             :flow-id="flowId"
             :namespace="namespace"
@@ -105,11 +105,12 @@
 </template>
 
 <script setup>
-// Core
+    // Core
     import {getCurrentInstance, nextTick, onMounted, ref, watch} from "vue";
     import {useStore} from "vuex";
-    import {useVueFlow} from "@vue-flow/core";
+    import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
+    import {useVueFlow} from "@vue-flow/core";
 
     import TaskEdit from "../flows/TaskEdit.vue";
     import SearchField from "../layout/SearchField.vue";
@@ -165,9 +166,13 @@
             type: Boolean,
             default: false,
         },
-        viewType: {
-            type: String,
+        horizontalDefault: {
+            type: Boolean,
             default: undefined,
+        },
+        toggleOrientationButton: {
+            type: Boolean,
+            default: false,
         },
         expandedSubflows: {
             type: Array,
@@ -189,17 +194,9 @@
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
 
-    // Init variables functions
-    const isHorizontalDefault = () => {
-        return props.viewType === "source-topology"
-            ? false
-            : props.viewType?.indexOf("blueprint") !== -1
-                ? true
-                : localStorage.getItem("topology-orientation") === "1";
-    };
-
     // Components variables
-    const isHorizontal = ref(isHorizontalDefault());
+    const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault);
+    const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value === "true"));
     const vueFlow = ref(null);
     const timer = ref(null);
     const icons = ref(store.getters["plugin/getIcons"]);
@@ -231,18 +228,6 @@
                 isShowLogsOpen.value = false;
                 selectedTask.value = null;
             }
-        },
-    );
-
-    watch(
-        () => props.viewType,
-        () => {
-            isHorizontal.value =
-                props.viewType === "source-topology"
-                    ? false
-                    : props.viewType?.indexOf("blueprint") !== -1
-                        ? true
-                        : localStorage.getItem("topology-orientation") === "1";
         },
     );
 
@@ -282,9 +267,10 @@
                     });
                     return;
                 }
+                const updatedYmlSource = YAML_UTILS.deleteTask(props.source, event.id, section)
                 emit(
                     "on-edit",
-                    YAML_UTILS.deleteTask(props.source, event.id, section),
+                    updatedYmlSource,
                     true,
                 );
             },
@@ -391,11 +377,8 @@
     };
 
     const toggleOrientation = () => {
-        localStorage.setItem(
-            "topology-orientation",
-            localStorage.getItem("topology-orientation") !== "0" ? "0" : "1",
-        );
-        isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
+        isHorizontal.value = !isHorizontal.value;
+        isHorizontalLS.value = isHorizontal.value;
         fitViewOrientation();
     };
 

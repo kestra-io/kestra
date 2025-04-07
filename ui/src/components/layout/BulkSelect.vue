@@ -5,13 +5,13 @@
             @change="toggle"
             :indeterminate="partialCheck"
         >
-            <span v-html="$t('selection.selected', {count: selectAll ? total : selections.length})" />
+            <span v-html="$t('selection.selected', {count: selectAll && total !== undefined ? total : selections.length})" />
         </el-checkbox>
         <el-button-group>
             <el-button
                 :type="selectAll ? 'primary' : 'default'"
                 @click="toggleAll"
-                v-if="selections.length < total"
+                v-if="total !== undefined && selections.length < total"
             >
                 <span v-html="$t('selection.all', {count: total})" />
             </el-button>
@@ -22,7 +22,7 @@
 <script>
     export default {
         props: {
-            total: {type: Number, required: true},
+            total: {type: Number, required: false, default: undefined},
             selections: {type: Array, required: true},
             selectAll: {type: Boolean, required: true},
         },
@@ -39,7 +39,7 @@
         },
         computed: {
             partialCheck() {
-                return !this.selectAll && this.selections.length < this.total;
+                return !this.selectAll && (this.total === undefined || this.selections.length < this.total);
             },
         }
     }

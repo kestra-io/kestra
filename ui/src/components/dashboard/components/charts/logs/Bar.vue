@@ -43,7 +43,7 @@
     import Logs from "../../../../../utils/logs.js";
 
     import LogsNoData from "./LogsNoData.vue";
-    import {useTheme} from "../../../../../utils/utils.js";
+    import {useTheme} from "../../../../../utils/utils";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -155,7 +155,7 @@
 
     // Add skeleton data
     const skeletonData = computed(() => {
-        const barColor = theme.value === "dark" 
+        const barColor = theme.value === "dark"
             ? "rgba(255, 255, 255, 0.08)"
             : "rgba(0, 0, 0, 0.06)";
 

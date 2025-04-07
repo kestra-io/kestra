@@ -1,6 +1,8 @@
 package io.kestra.plugin.core.metric;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.annotations.Example;
+import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -24,6 +26,29 @@ import java.util.List;
 @Schema(
     title = "Publish metrics.",
     description = "This task is useful to easily publish metrics for a flow."
+)
+@Plugin(
+    examples = {
+        @Example(
+            full = true,
+            code = """
+                id: publish_metric
+                namespace: company.team
+
+                tasks:
+                  - id: random
+                    type: io.kestra.plugin.core.output.OutputValues
+                    values:
+                      metric: "{{randomInt(0, 10)}}"
+                  - id: metric
+                    type: io.kestra.plugin.core.metric.Publish
+                    metrics:
+                      - name: myMetric
+                        type: counter
+                        value: "{{outputs.random.values.metric}}"
+                """
+        )
+    }
 )
 public class Publish extends Task implements RunnableTask<VoidOutput> {
 

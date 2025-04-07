@@ -2,6 +2,7 @@ package io.kestra.plugin.core.condition;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -27,7 +28,7 @@ class ExecutionStatusTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionStatus build = ExecutionStatus.builder()
-            .in(Collections.singletonList(State.Type.SUCCESS))
+            .in(Property.of(Collections.singletonList(State.Type.SUCCESS)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -41,7 +42,7 @@ class ExecutionStatusTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionStatus build = ExecutionStatus.builder()
-            .notIn(Collections.singletonList(State.Type.SUCCESS))
+            .notIn(Property.of(Collections.singletonList(State.Type.SUCCESS)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -55,8 +56,8 @@ class ExecutionStatusTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionStatus build = ExecutionStatus.builder()
-            .in(Collections.singletonList(State.Type.CREATED))
-            .notIn(Collections.singletonList(State.Type.SUCCESS))
+            .in(Property.of(Collections.singletonList(State.Type.CREATED)))
+            .notIn(Property.of(Collections.singletonList(State.Type.SUCCESS)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

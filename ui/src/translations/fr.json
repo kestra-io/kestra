@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "Plans d'application",
       "community": "Communauté",
+      "create": "Créer un blueprint",
       "custom": "Plans personnalisés",
       "dashboards": "Tableaux de bord Blueprints",
+      "edit": "Modifier un blueprint",
       "empty": "Aucun blueprint à afficher.",
       "flows": "Plans de Flow",
       "header": {
@@ -244,7 +246,6 @@
     "delete backfill": "Supprimer le backfill",
     "delete backfills": "Supprimer les backfills",
     "delete confirm": "Êtes-vous sur de vouloir effacer <code>{name}</code> ?",
-    "delete confirm multiple": "Êtes-vous sûr de vouloir supprimer le(s) KV <code>{name}</code> ?",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
     "delete logs": "Supprimer les logs",
     "delete ok": "est effacé",
@@ -302,6 +303,18 @@
           "message": "Dans Kestra Enterprise Edition, vous pouvez définir et gérer des variables au niveau du namespace pour éliminer les configurations répétitives à travers les flows. Ces variables assurent la cohérence, simplifient les mises à jour de configuration et peuvent être facilement référencées par n'importe quel task ou trigger pour des workflows plus propres et plus faciles à maintenir.",
           "title": "Gérez vos Variables de manière centralisée"
         }
+      },
+      "secrets": {
+        "add_env": {
+          "first": "Encodez la <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valeur secrète en Base64</a></strong>",
+          "intro": "Pour créer un nouveau Secret :",
+          "second": "Ajoutez une variable d'environnement nommée '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' avec la valeur ci-dessus.",
+          "third": "Redémarrez votre instance Kestra"
+        },
+        "detected_env": "Voici les variables d'environnement de type secret identifiées au démarrage de l'instance :",
+        "empty_env": "Vous n'avez pas encore de Secrets dans votre environnement.",
+        "message": "L'Enterprise Edition (EE) vous permet d'ajouter, de modifier ou de supprimer des secrets directement dans l'UI, sans redémarrage de l'instance. Organisez les secrets par namespace avec des permissions RBAC granulaires, et héritez-les des namespaces parents aux namespaces enfants. EE s'intègre avec des gestionnaires de secrets comme HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager et Elasticsearch. Configurez des backends dédiés par namespace, tenant ou instance pour isoler les secrets entre les équipes, ou activez des secrets en lecture seule stockés dans des coffres externes. Les secrets restent chiffrés au repos et en transit. Un cache optionnel réduit les appels API, et les pistes d'audit loguent tous les accès.",
+        "title": "Améliorez votre gestion des Secrets"
       },
       "tenants": {
         "message": "L'édition Kestra Enterprise prend en charge la multi-tenance, vous offrant des environnements entièrement isolés pour différentes équipes ou projets, chacun avec ses propres ressources telles que des groupes de workers dédiés ou des secrets et des backends de stockage internes.",
@@ -544,6 +557,7 @@
         },
         "empty": "Vous n'avez pas encore enregistré de recherche.",
         "label": "Recherches enregistrées",
+        "remove": "Supprimer",
         "tooltip": "Vous ne pouvez pas enregistrer des critères de recherche vides."
       },
       "settings": {
@@ -639,6 +653,10 @@
     "killed done": "L'exécution est en attente d'arrêt",
     "kv": {
       "add": "Nouveau couple de clé/valeur",
+      "delete multiple": {
+        "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
+        "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
+      },
       "duplicate": "Cette clé existe déjà",
       "name": "Stockage de clés/valeurs",
       "type": "Type",
@@ -1004,8 +1022,11 @@
     "search term in message": "Chercher dans le message",
     "seconds": "Secondes",
     "secret": {
+      "add": "Nouveau secret",
       "inherited": "Secrets hérités",
-      "names": "Secrets"
+      "isReadOnly": "Le secret est en lecture seule",
+      "names": "Secrets",
+      "update": "Mettre à jour le secret '{name}'"
     },
     "security_advice": {
       "content": "Activer l'authentification basique pour protéger votre instance.",
@@ -1038,7 +1059,8 @@
             "flow_default_tab": "Onglet Flow par Défaut",
             "language": "Langue",
             "log_display": "Affichage des journaux par défaut",
-            "log_level": "Niveau d'affichage des journaux par défaut"
+            "log_level": "Niveau d'affichage des journaux par défaut",
+            "multi_panel_editor": "Éditeur Multi-Panneaux"
           },
           "label": "Configuration Principale"
         },
@@ -1141,8 +1163,10 @@
     "templates deleted": "<code>{count}</code> Template(s) supprimé(s)",
     "templates deprecated": "Les templates sont obsolètes. Veuillez utiliser des sous-flux au lieu des templates. Consultez <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">section Migrations</a> expliquant comment vous pouvez migrer vers les sous-flux.",
     "templates exported": "Templates exportés",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "Mandant",
+      "names": "Mandants"
+    },
     "theme": "Thème",
     "this_task_has": "Cette tâche a",
     "timezone": "Fuseau horaire",

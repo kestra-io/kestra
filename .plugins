@@ -32,6 +32,7 @@
 #plugin-git:io.kestra.plugin:plugin-git:LATEST
 #plugin-github:io.kestra.plugin:plugin-github:LATEST
 #plugin-googleworkspace:io.kestra.plugin:plugin-googleworkspace:LATEST
+#plugin-graalvm:io.kestra.plugin:plugin-graalvm:LATEST
 #plugin-hightouch:io.kestra.plugin:plugin-hightouch:LATEST
 #plugin-hubspot:io.kestra.plugin:plugin-hubspot:LATEST
 #plugin-huggingface:io.kestra.plugin:plugin-huggingface:LATEST

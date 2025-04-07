@@ -64,8 +64,10 @@ public class EncryptionService {
      * The IV is recovered from the beginning of the string.
      *
      * @see #decrypt(String, byte[])
+     * @throws IllegalArgumentException when the cipherText cannot be BASE64 decoded.
+     *         This may indicate that the cipherText was not encrypted at first so a caller may use this as an indication as it tries to decode a text that was not encoded.
      */
-    public static String decrypt(String key, String cipherText) throws GeneralSecurityException {
+    public static String decrypt(String key, String cipherText) throws GeneralSecurityException, IllegalArgumentException {
         if (cipherText == null || cipherText.isEmpty()) {
             return cipherText;
         }

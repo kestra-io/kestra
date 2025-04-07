@@ -57,7 +57,7 @@
                 </el-card>
                 <template v-if="blueprint.description">
                     <h4>{{ $t('about_this_blueprint') }}</h4>
-                    <div v-if="!system" class="tags text-uppercase">
+                    <div class="tags text-uppercase">
                         <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
                             <el-tag type="info" size="small">
                                 {{ tag }}
@@ -130,6 +130,10 @@
                 type: String,
                 default: "flow",
             },
+            combinedView: {
+                type: Boolean,
+                default: false
+            },
         },
         methods: {
             goBack() {
@@ -147,22 +151,26 @@
             },
             toEditor() {
                 const query = this.blueprintKind === "flow" ?
-                    {blueprintId: this.blueprintId, blueprintSource: this.blueprintType} :
+                    {blueprintId: this.blueprintId, blueprintSource: this.$route.params.tab} :
                     {blueprintId: this.blueprintId};
                 return {name: `${this.blueprintKind}s/create`, query};
             }
         },
         async created() {
-            this.$store.dispatch("blueprints/getBlueprint", {type: this.blueprintType, kind: this.blueprintKind, id: this.blueprintId})
+            this.$store.dispatch("blueprints/getBlueprint", {
+                type: this.combinedView ? this.blueprintType : this.$route.params.tab,
+                kind: this.blueprintKind,
+                id: this.blueprintId
+            })
                 .then(data => {
                     this.blueprint = data;
                     if (this.kind === "flow") {
                         try {
-                            if (this.blueprintType === "community") {
+                            if (this.$route.params.tab === "community") {
                                 this.$store.dispatch(
                                     "blueprints/getBlueprintGraph",
                                     {
-                                        type: this.blueprintType,
+                                        type: this.$route.params.tab,
                                         kind: this.blueprintKind,
                                         id: this.blueprintId,
                                         validateStatus: (status) => {
@@ -202,9 +210,9 @@
                 }
             },
             blueprintKind() {
-                return this.blueprintType === "community" ? this.kind : undefined;
+                return this.kind;
             },
-        }
+        },
     };
 </script>
 <style scoped lang="scss">

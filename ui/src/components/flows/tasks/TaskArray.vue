@@ -35,7 +35,11 @@
     defineOptions({inheritAttrs: false});
 
     const emits = defineEmits(["update:modelValue"]);
-    const props = defineProps({modelValue: {type: Array, default: undefined}});
+    const props = withDefaults(defineProps<{
+        modelValue?: (string | number | boolean | undefined)[]
+    }>(), {
+        modelValue: undefined
+    });
 
     const items = ref(
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,

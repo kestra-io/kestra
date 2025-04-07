@@ -31,6 +31,7 @@ The table below describes all these properties in detail.
 | `sla`                     | The list of [SLA conditions](https://kestra.io/docs/workflow-components/sla) specifying an execution `behavior` if the workflow doesn't satisfy the assertion defined in the SLA. This feature is currently in Beta so some properties might change in the next releases.                                                                                                                                                                                                                                                                                                                                                                                                                                             |
 | `errors`                     | The list of [error tasks](https://kestra.io/docs/workflow-components/errors) that will run if there is an error in the current execution.                                                                                                                                                                                                                                                                                                          |
 | `finally`                    | The list of [finally tasks](https://kestra.io/docs/workflow-components/finally) that will run after the workflow is complete. These tasks will run regardless of whether the workflow was successful or not.                                                                                                                                                                                               |
+| `afterExecution`             | The list of [afterExecution](https://kestra.io/docs/workflow-components/afterexecution) tasks that will run after the workflow is complete. These tasks will run after execution of the workflow reaches a final state, including the execution of the finally tasks.                                                                                                                                                                                               |
 | `disabled`                   | Set it to `true` to temporarily [disable](https://kestra.io/docs/workflow-components/disabled) any new executions of the flow. This is useful when you want to stop a flow from running (even manually) without deleting it. Once you set this property to true, nobody will be able to trigger any execution of that flow, whether from the UI or via an API call, until the flow is reenabled by setting this property back to `false` (default behavior) or by deleting this property.                                                                                              |
 | `revision`                   | The [flow version](https://kestra.io/docs/concepts/revision), managed internally by Kestra, and incremented upon each modification. You should **not** manually set it.                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `triggers`                   | The list of [triggers](https://kestra.io/docs/workflow-components/triggers) which automatically start a flow execution based on events, such as a scheduled date, a new file arrival, a new message in a queue, or the completion event of another flow's execution.                                                                                                                                                                                                                                                                                                                   |
@@ -149,6 +150,16 @@ tasks:
     type: io.kestra.plugin.core.debug.Return
     format: fallback output
 
+finally:
+  - id: finally_log 
+    type: io.kestra.plugin.core.log.Log
+    message: "This task runs after all the tasks are run, irrespective of whether the tasks ran successfully or failed. Execution {{ execution.state }}" # Execution RUNNING
+
+afterExecution:
+  - id: afterExecution_log 
+    type: io.kestra.plugin.core.log.Log
+    message: "This task runs after the flow execution is complete. Execution {{ execution.state }}" # Execution FAILED / SUCCESS
+
 outputs:
   - id: flow_output
     type: STRING
@@ -205,6 +216,8 @@ The table below lists common Pebble expressions and functions.
 | `{{ trigger.flowId }}`                                                                             | The ID of the flow that triggers the current flow.                                                                              |
 | `{{ trigger.flowRevision }}`                                                                       | The revision of the flow that triggers the current flow.                                                                        |
 | `{{ envs.foo }}`                                                                                   | Accesses environment variable `KESTRA_FOO`.                                                                                     |
+| `{{ kestra.environment }}`                                                                                   | Accesses Environment variables such as `kestra.environment.name.`                                                                                     |
+| `{{ kestra.url }}`                                                                                   | Accesses Environment URL variable.                                                                                     |
 | `{{ globals.foo }}`                                                                                | Accesses global variable `foo`.                                                                                                 |
 | `{{ vars.my_variable }}`                                                                           | Accesses flow variable `my_variable`.                                                                                           |
 | `{{ inputs.myInput }}`                                                                             | Accesses flow input `myInput`.                                                                                                  |

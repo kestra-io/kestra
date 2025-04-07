@@ -2,6 +2,7 @@ package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.services.FileChangedEventListener;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.StandAloneRunner;
@@ -11,7 +12,6 @@ import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -24,7 +24,6 @@ import java.util.Map;
     name = "standalone",
     description = "Start the standalone all-in-one server"
 )
-@Slf4j
 public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -90,8 +89,9 @@ public class StandAloneCommand extends AbstractServerCommand {
         this.skipExecutionService.setSkipFlows(skipFlows);
         this.skipExecutionService.setSkipNamespaces(skipNamespaces);
         this.skipExecutionService.setSkipTenants(skipTenants);
-
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
+
+        KestraContext.getContext().injectWorkerConfigs(workerThread, null);
 
         super.call();
 

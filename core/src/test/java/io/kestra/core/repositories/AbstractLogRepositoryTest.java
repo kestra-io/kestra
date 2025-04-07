@@ -1,6 +1,7 @@
 package io.kestra.core.repositories;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.statistics.LogStatistics;
@@ -8,6 +9,7 @@ import io.kestra.core.utils.IdUtils;
 import io.micronaut.data.model.Pageable;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
+import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
@@ -17,6 +19,7 @@ import java.util.List;
 import reactor.core.publisher.Flux;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
 
 @KestraTest
@@ -55,7 +58,12 @@ public abstract class AbstractLogRepositoryTest {
                 .field(QueryFilter.Field.MIN_LEVEL)
                 .operation(QueryFilter.Op.EQUALS)
                 .value(Level.WARN)
-            .build());
+                .build(),
+            QueryFilter.builder()
+                .field(Field.START_DATE)
+                .operation(QueryFilter.Op.GREATER_THAN)
+                .value(Instant.now().minus(1, ChronoUnit.HOURS))
+                .build());
         find = logRepository.find(Pageable.UNPAGED,  "doe", filters);
         assertThat(find.size(), is(0));
 
@@ -205,7 +213,7 @@ public abstract class AbstractLogRepositoryTest {
     }
 
     @Test
-    void findAsych() {
+    void findAsync() {
         logRepository.save(logEntry(Level.INFO).build());
         logRepository.save(logEntry(Level.ERROR).build());
         logRepository.save(logEntry(Level.WARN).build());
@@ -214,18 +222,29 @@ public abstract class AbstractLogRepositoryTest {
 
         Flux<LogEntry> find = logRepository.findAsync(null, "io.kestra.unittest", Level.INFO, startDate);
         List<LogEntry> logEntries = find.collectList().block();
-        assertThat(logEntries.size(), is(3));
+        assertThat(logEntries, hasSize(3));
 
         find = logRepository.findAsync(null, null, Level.ERROR, startDate);
         logEntries = find.collectList().block();
-        assertThat(logEntries.size(), is(1));
+        assertThat(logEntries, hasSize(1));
 
         find = logRepository.findAsync(null, "io.kestra.unused", Level.INFO, startDate);
         logEntries = find.collectList().block();
-        assertThat(logEntries.size(), is(0));
+        assertThat(logEntries, hasSize(0));
 
         find = logRepository.findAsync(null, null, Level.INFO, startDate.plusSeconds(2));
         logEntries = find.collectList().block();
-        assertThat(logEntries.size(), is(0));
+        assertThat(logEntries, hasSize(0));
+    }
+
+    @Test
+    void findAllAsync() {
+        logRepository.save(logEntry(Level.INFO).build());
+        logRepository.save(logEntry(Level.ERROR).build());
+        logRepository.save(logEntry(Level.WARN).build());
+
+        Flux<LogEntry> find = logRepository.findAllAsync(null);
+        List<LogEntry> logEntries = find.collectList().block();
+        assertThat(logEntries, hasSize(3));
     }
 }

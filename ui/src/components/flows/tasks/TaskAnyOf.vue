@@ -9,7 +9,7 @@
                             breadcrumb: {
                                 label: root,
                                 to: {},
-                                component: h(OneOfContent, {
+                                component: h(AnyOfContent, {
                                     modelValue,
                                     schema,
                                     definitions,
@@ -31,7 +31,7 @@
 <script setup>
     import {h} from "vue";
     import Eye from "vue-material-design-icons/Eye.vue";
-    import OneOfContent from "./OneOfContent.vue";
+    import AnyOfContent from "./AnyOfContent.vue";
 </script>
 
 <script>

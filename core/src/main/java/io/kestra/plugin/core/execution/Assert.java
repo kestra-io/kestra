@@ -51,7 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
                 "    required: true\n" +
                 "\n" +
                 "tasks:\n" +
-                "  - id: fail\\n\" +\n" +
+                "  - id: fail\n" +
                 "    type: io.kestra.plugin.core.execution.Assert\n" +
                 "    conditions:\n" +
                 "     - \"{{ inputs.param == 'ok' }}\"\n" +

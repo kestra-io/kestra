@@ -12,13 +12,20 @@ import java.util.List;
 public class QueryFilterUtils {
 
     public static List<QueryFilter> updateFilters(List<QueryFilter> filters, ZonedDateTime resolvedStartDate) {
+        boolean hasStartDateFilter = filters.stream().anyMatch(QueryFilterUtils::isStartDateFilter);
 
-        return filters.stream()
+        List<QueryFilter> updatedFilters = new java.util.ArrayList<>(filters.stream()
             .filter(filter -> !isTimeRangeFilter(filter)) // Remove TIME_RANGE filter
             .map(filter -> isStartDateFilter(filter)
                 ? createUpdatedStartDateFilter(filter, resolvedStartDate)
                 : filter)
-            .toList();
+            .toList());
+
+        if (!hasStartDateFilter && resolvedStartDate != null) {
+            updatedFilters.add(createUpdatedStartDateFilter(null, resolvedStartDate));
+        }
+
+        return updatedFilters;
     }
 
     private static boolean isStartDateFilter(QueryFilter filter) {
@@ -32,7 +39,7 @@ public class QueryFilterUtils {
     private static QueryFilter createUpdatedStartDateFilter(QueryFilter filter, ZonedDateTime resolvedStartDate) {
         return QueryFilter.builder()
             .field(QueryFilter.Field.START_DATE)
-            .operation(filter.operation())
+            .operation(filter != null ?filter.operation() : QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
             .value(resolvedStartDate.toString())
             .build();
     }

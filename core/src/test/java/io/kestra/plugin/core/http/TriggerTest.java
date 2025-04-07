@@ -6,7 +6,6 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.schedulers.AbstractScheduler;
-import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -21,7 +20,6 @@ import reactor.core.publisher.Flux;
 import java.util.Objects;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -29,9 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class TriggerTest {
     @Inject
     private ApplicationContext applicationContext;
-
-    @Inject
-    private SchedulerTriggerStateInterface triggerState;
 
     @Inject
     private FlowListenersInterface flowListenersService;
@@ -56,13 +51,9 @@ class TriggerTest {
                 );
                 Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         ) {
-            AtomicReference<Execution> last = new AtomicReference<>();
-
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
                 if (execution.getLeft().getFlowId().equals("http-listen")) {
-                    last.set(execution.getLeft());
-
                     queueCount.countDown();
                 }
             });
@@ -81,21 +72,17 @@ class TriggerTest {
         // mock flow listeners
         CountDownLatch queueCount = new CountDownLatch(1);
 
-        Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         // scheduler
         try (
             AbstractScheduler scheduler = new JdbcScheduler(
                 this.applicationContext,
                 this.flowListenersService
             );
+            Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, null);
         ) {
-            AtomicReference<Execution> last = new AtomicReference<>();
-
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, execution -> {
                 if (execution.getLeft().getFlowId().equals("http-listen-encrypted")) {
-                    last.set(execution.getLeft());
-
                     queueCount.countDown();
                 }
             });

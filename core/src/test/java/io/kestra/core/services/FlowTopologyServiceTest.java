@@ -109,11 +109,11 @@ class FlowTopologyServiceTest {
                 io.kestra.plugin.core.trigger.Flow.builder()
                     .conditions(List.of(
                         ExecutionFlow.builder()
-                            .namespace("io.kestra.ee")
-                            .flowId("parent")
+                            .namespace(Property.of("io.kestra.ee"))
+                            .flowId(Property.of("parent"))
                             .build(),
                         ExecutionStatus.builder()
-                            .in(List.of(State.Type.SUCCESS))
+                            .in(Property.of(List.of(State.Type.SUCCESS)))
                             .build()
                     ))
                     .build()
@@ -151,23 +151,23 @@ class FlowTopologyServiceTest {
                 io.kestra.plugin.core.trigger.Flow.builder()
                     .conditions(List.of(
                         ExecutionStatus.builder()
-                            .in(List.of(State.Type.SUCCESS))
+                            .in(Property.of(List.of(State.Type.SUCCESS)))
                             .build(),
                         MultipleCondition.builder()
                             .conditions(Map.of(
                                 "first", ExecutionFlow.builder()
-                                    .namespace("io.kestra.ee")
-                                    .flowId("parent")
+                                    .namespace(Property.of("io.kestra.ee"))
+                                    .flowId(Property.of("parent"))
                                     .build(),
                                 "second", ExecutionFlow.builder()
-                                    .namespace("io.kestra.others")
-                                    .flowId("invalid")
+                                    .namespace(Property.of("io.kestra.others"))
+                                    .flowId(Property.of("invalid"))
                                     .build(),
                                 "filtered", ExecutionStatus.builder()
-                                    .in(List.of(State.Type.SUCCESS))
+                                    .in(Property.of(List.of(State.Type.SUCCESS)))
                                     .build(),
                                 "variables", Expression.builder()
-                                    .expression("{{ true }}")
+                                    .expression(new Property<>("{{ true }}"))
                                     .build()
                             ))
                             .build()

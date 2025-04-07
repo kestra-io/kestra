@@ -3,6 +3,7 @@ package io.kestra.core.schedulers;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
 class SchedulerConditionTest extends AbstractSchedulerTest {
@@ -41,6 +43,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
     @Inject
     protected FlowRepositoryInterface flowRepository;
 
+
     private static Flow createScheduleFlow() {
         Schedule schedule = Schedule.builder()
             .id("hourly")
@@ -53,8 +56,8 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
                 DayWeekInMonth.builder()
                     .type(DayWeekInMonth.class.getName())
                     .date("{{ trigger.date }}")
-                    .dayOfWeek(DayOfWeek.MONDAY)
-                    .dayInMonth(DayWeekInMonth.DayInMonth.FIRST)
+                    .dayOfWeek(Property.of(DayOfWeek.MONDAY))
+                    .dayInMonth(Property.of(DayWeekInMonth.DayInMonth.FIRST))
                     .build()
             ))
             .build();
@@ -72,13 +75,13 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         Flow flow = createScheduleFlow();
         flowRepository.create(flow, flow.generateSource(), flow);
 
-        triggerState.create(Trigger.builder()
+        Trigger trigger = Trigger.builder()
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .triggerId("hourly")
             .date(ZonedDateTime.parse("2021-09-06T02:00:00+01:00[Europe/Paris]"))
-            .build()
-        );
+            .build();
+        triggerState.create(trigger);
 
         doReturn(Collections.singletonList(flow))
             .when(flowListenersServiceSpy)
@@ -98,7 +101,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    executionQueue.emit(execution.withState(State.Type.SUCCESS));
+                    terminateExecution(execution, trigger, flow.withSource(flow.generateSource()));
 
                     queueCount.countDown();
                     if (queueCount.getCount() == 0) {
@@ -109,11 +112,8 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             }));
 
             scheduler.run();
-            queueCount.await(15, TimeUnit.SECONDS);
-
+            assertTrue(queueCount.await(15, TimeUnit.SECONDS));
             receive.blockLast();
-
-            assertThat(queueCount.getCount(), is(0L));
         }
     }
 }

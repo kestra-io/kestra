@@ -1,6 +1,7 @@
 package io.kestra.core.schedulers;
 
 import io.kestra.core.models.Label;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
@@ -114,7 +115,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
                     queueCount.countDown();
 
                     if (execution.getLeft().getState().getCurrent() == State.Type.CREATED) {
-                        executionQueue.emit(execution.getLeft().withState(State.Type.FAILED));
+                        terminateExecution(execution.getLeft(), State.Type.FAILED, Trigger.of(flow, pollingTrigger), flow.withSource(flow.generateSource()));
                     }
                 }
             }));
@@ -145,7 +146,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
                 List.of(
                     Expression.builder()
                         .type(Expression.class.getName())
-                        .expression("{{ trigger.date | date() < now() }}")
+                        .expression(new Property<>("{{ trigger.date | date() < now() }}"))
                         .build()
                 ))
             .build();

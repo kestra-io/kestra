@@ -28,6 +28,8 @@ class FlowUpdatesCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -41,6 +43,8 @@ class FlowUpdatesCommandTest {
             out.reset();
 
             args = new String[]{
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -70,6 +74,8 @@ class FlowUpdatesCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -84,6 +90,8 @@ class FlowUpdatesCommandTest {
 
             // no "delete" arg should behave as no-delete
             args = new String[]{
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -96,6 +104,8 @@ class FlowUpdatesCommandTest {
             out.reset();
 
             args = new String[]{
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -106,6 +116,35 @@ class FlowUpdatesCommandTest {
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
             assertThat(out.toString(), containsString("1 flow(s)"));
+        }
+    }
+
+    @Test
+    void invalidWithNamespace() {
+        URL directory = FlowUpdatesCommandTest.class.getClassLoader().getResource("flows");
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        System.setErr(new PrintStream(out));
+
+        try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
+
+            EmbeddedServer embeddedServer = ctx.getBean(EmbeddedServer.class);
+            embeddedServer.start();
+
+            String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
+                "--server",
+                embeddedServer.getURL().toString(),
+                "--user",
+                "myuser:pass:word",
+                "--namespace",
+                "io.kestra.cli",
+                "--delete",
+                directory.getPath(),
+            };
+            PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
+
+            assertThat(out.toString(), containsString("Invalid entity: flow.namespace: io.kestra.outsider_quattro_-1 - flow namespace is invalid"));
         }
     }
 
@@ -121,6 +160,8 @@ class FlowUpdatesCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",

@@ -2,15 +2,14 @@ package io.kestra.core.docs;
 
 import io.kestra.core.Helpers;
 import io.kestra.core.models.property.DynamicPropertyExampleTask;
-import io.kestra.core.models.tasks.runners.TaskRunner;
-import io.kestra.core.models.triggers.TriggerInterface;
-import io.kestra.core.plugins.PluginClassAndMetadata;
-import io.kestra.plugin.core.runner.Process;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.plugin.core.trigger.Schedule;
+import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.core.plugins.PluginScanner;
 import io.kestra.core.plugins.RegisteredPlugin;
+import io.kestra.plugin.core.runner.Process;
+import io.kestra.plugin.core.trigger.Schedule;
 import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
@@ -149,13 +148,13 @@ class ClassPluginDocumentationTest {
             assertThat(properties, aMapWithSize(21));
 
             Map<String, Object> number = (Map<String, Object>) properties.get("number");
-            assertThat(number.get("oneOf"), notNullValue());
-            List<Map<String, Object>> oneOf = (List<Map<String, Object>>) number.get("oneOf");
-            assertThat(oneOf, hasSize(2));
-            assertThat(oneOf.getFirst().get("type"), is("integer"));
-            assertThat(oneOf.getFirst().get("$dynamic"), is(true));
-            assertThat(oneOf.get(1).get("type"), is("string"));
-//            assertThat(oneOf.get(1).get("pattern"), is(".*{{.*}}.*"));
+            assertThat(number.get("anyOf"), notNullValue());
+            List<Map<String, Object>> anyOf = (List<Map<String, Object>>) number.get("anyOf");
+            assertThat(anyOf, hasSize(2));
+            assertThat(anyOf.getFirst().get("type"), is("integer"));
+            assertThat(anyOf.getFirst().get("$dynamic"), is(true));
+            assertThat(anyOf.get(1).get("type"), is("string"));
+//            assertThat(anyOf.get(1).get("pattern"), is(".*{{.*}}.*"));
 
             Map<String, Object> withDefault = (Map<String, Object>) properties.get("withDefault");
             assertThat(withDefault.get("type"), is("string"));

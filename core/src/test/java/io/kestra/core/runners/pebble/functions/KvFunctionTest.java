@@ -70,6 +70,45 @@ public class KvFunctionTest {
     }
 
     @Test
+    void shouldGetValueFromKVGivenExistingKeyWithInheritance() throws IllegalVariableEvaluationException, IOException {
+        // Given
+        KVStore kv = new InternalKVStore(null, "my.company", storageInterface);
+        kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
+
+        KVStore firstKv = new InternalKVStore(null, "my", storageInterface);
+        firstKv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "firstValue")));
+
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "kv",
+                "namespace", "my.company.team")
+        );
+
+        // When
+        String rendered = variableRenderer.render("{{ kv('my-key') }}", variables);
+
+        // Then
+        assertThat(rendered, is("{\"field\":\"value\"}"));
+    }
+
+    @Test
+    void shouldNotGetValueFromKVWithGivenNamespaceAndInheritance() throws IOException {
+        // Given
+        KVStore kv = new InternalKVStore(null, "kv", storageInterface);
+        kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
+
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "kv",
+                "namespace", "my.company.team")
+        );
+
+        // When
+        Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
+            variableRenderer.render("{{ kv('my-key', namespace='kv.inherited') }}", variables));
+    }
+
+    @Test
     void shouldGetValueFromKVGivenExistingAndNamespace() throws IllegalVariableEvaluationException, IOException {
         // Given
         KVStore kv = new InternalKVStore(null, "kv", storageInterface);
@@ -87,7 +126,6 @@ public class KvFunctionTest {
         // Then
         assertThat(rendered, is("{\"field\":\"value\"}"));
     }
-
 
     @Test
     void shouldGetEmptyGivenNonExistingKeyAndErrorOnMissingFalse() throws IllegalVariableEvaluationException {

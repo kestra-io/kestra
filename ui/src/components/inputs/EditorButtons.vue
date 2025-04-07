@@ -32,15 +32,15 @@
                     >
                         {{ $t("copy") }}
                     </el-dropdown-item>
-                </el-dropdown-menu> 
+                </el-dropdown-menu>
             </template>
         </el-dropdown>
     </div>
     <div>
         <el-button
+            v-if="isAllowedEdit"
             :icon="ContentSave"
             @click="forwardEvent('save', $event)"
-            v-if="isAllowedEdit"
             :type="buttonType"
             :disabled="hasErrors || !haveChange && !isCreating"
             class="edit-flow-save-button"
@@ -49,80 +49,42 @@
         </el-button>
     </div>
 </template>
-<script setup>
+<script lang="ts" setup>
+    import {computed} from "vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
-    
+
     import Delete from "vue-material-design-icons/Delete.vue";
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Download from "vue-material-design-icons/Download.vue";
-</script>
-<script>
-    import {defineComponent} from "vue";
 
-    export default defineComponent({
-        emits: [
-            "delete-flow",
-            "copy",
-            "save",
-            "export"
-        ],
-        props: {
-            isCreating: {
-                type: Boolean,
-                default: false
-            },
-            isReadOnly: {
-                type: Boolean,
-                default: false
-            },
-            canDelete: {
-                type: Boolean,
-                default: false
-            },
-            isAllowedEdit: {
-                type: Boolean,
-                default: false
-            },
-            haveChange: {
-                type: Boolean,
-                default: false
-            },
-            flowHaveTasks: {
-                type: Boolean,
-                default: false
-            },
-            errors: {
-                type: Array,
-                default: undefined
-            },
-            warnings: {
-                type: Array,
-                default: undefined
-            },
-            isNamespace: {
-                type: Boolean,
-                default: false
-            }
-        },
-        computed: {
-            hasErrors(){
-                return this.errors && this.errors.length > 0;
-            },
-            buttonType() {
-                if (this.errors) {
-                    return "danger";
-                }
+    const props = defineProps<{
+        isCreating: boolean;
+        isReadOnly: boolean;
+        canDelete: boolean;
+        isAllowedEdit: boolean;
+        haveChange: boolean;
+        flowHaveTasks: boolean;
+        errors: string[] | undefined;
+        warnings: string[] | undefined;
+        isNamespace: boolean;
+    }>()
 
-                return this.warnings
-                    ? "warning"
-                    : "primary";
-            }
-        },
-        methods: {
-            forwardEvent(type, event) {
-                this.$emit(type, event);
-            }
+    const forwardEvent = defineEmits([
+        "delete-flow",
+        "copy",
+        "save",
+        "export"
+    ])
+
+    const hasErrors = computed(() => props.errors && props.errors.length > 0);
+    const buttonType = computed(() => {
+        if (props.errors) {
+            return "danger";
         }
+
+        return props.warnings
+            ? "warning"
+            : "primary";
     })
 </script>

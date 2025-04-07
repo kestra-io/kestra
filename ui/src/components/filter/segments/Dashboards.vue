@@ -77,6 +77,7 @@
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
     import {useRouter, useRoute} from "vue-router";
+    import {storageKeys} from "../../../utils/constants";
 
     const {t} = useI18n({useScope: "global"});
     const store = useStore();
@@ -110,6 +111,11 @@
 
     const selectDashboard = (dashboard: any) => {
         selectedDashboard.value = dashboard?.title;
+        if (dashboard?.id) {
+            localStorage.setItem(storageKeys.DASHBORD_SELECTED + "_" + routeTenant.value, dashboard.id);
+        } else {
+            localStorage.removeItem(storageKeys.DASHBORD_SELECTED + "_" + routeTenant.value);
+        }
         emits("dashboard", dashboard)
     }
 
@@ -122,15 +128,20 @@
             .dispatch("dashboard/list", {})
             .then((response: { results: { id: string; title: string }[] }) => {
                 dashboards.value = response.results;
-                if (route.params?.id) {
-                    const dashboard = dashboards.value.find(d => d.id === route.params.id);
+                const lastSelected =  fetchLastDashboard() ?? route.params?.id;
+                if (lastSelected) {
+                    const dashboard = dashboards.value.find(d => d.id === lastSelected);
                     if (dashboard) {
-                        selectedDashboard.value = dashboard.title;
+                        selectDashboard(dashboard);
                     } else {
                         selectedDashboard.value = null;
                     }
                 }
             });
+    }
+
+    const fetchLastDashboard = () => {
+        return localStorage.getItem(storageKeys.DASHBORD_SELECTED + "_" + routeTenant.value)
     }
 
     onBeforeMount(() => {
@@ -152,7 +163,7 @@
 
 .dropdown {
     width: 300px;
-    background: var(--ks-select-background);
+    background: var(ks-select-background);
 
     :deep(li.el-dropdown-menu__item) {
         &:hover,

@@ -22,8 +22,8 @@
 <script>
     import {mapState, mapGetters} from "vuex";
     import _uniqBy from "lodash/uniqBy";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
+    import permission from "../../../models/permission";
+    import action from "../../../models/action";
 
     export default {
         props: {

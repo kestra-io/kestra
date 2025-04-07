@@ -505,10 +505,6 @@ public class JsonSchemaGenerator {
             builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
                 final Class<?> pluginType = scope.getType().getErasedType();
                 if (pluginType.getAnnotation(Plugin.class) != null) {
-                    JsonNode additionalProperties = collectedTypeAttributes.get("additionalProperties");
-                    if (additionalProperties == null) {
-                        collectedTypeAttributes.put("additionalProperties", false);
-                    }
                     ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
                     if (properties != null) {
                         properties.set("type", context.getGeneratorConfig().createObjectNode()

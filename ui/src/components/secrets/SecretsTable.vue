@@ -338,7 +338,7 @@
                 this.hasData = true;
                 this.secrets = [...(this.secrets || []), ...fetch];
 
-                if (this.filteredSecrets.length === 0) {
+                if (this.namespace === undefined && this.filteredSecrets.length === 0) {
                     return this.fetchSecrets();
                 }
 

@@ -364,7 +364,7 @@
 
                 this.kvs = this.kvs?.concat(kvFetch) ?? kvFetch;
 
-                if (this.filteredKvs.length === 0) {
+                if (this.namespace === undefined && this.filteredKvs.length === 0) {
                     return this.fetchKvs();
                 }
 

@@ -9,7 +9,6 @@ const components = (folder) => `src/components/${folder}/**/*.vue`;
 export default [
     {
         files: ["**/*.{js,mjs,cjs,ts,vue}"],
-        ignores: ["node_modules", "node"],
     },
     {languageOptions: {globals: globals.browser}},
     pluginJs.configs.recommended,
@@ -81,4 +80,7 @@ export default [
         files: [components("filter"), components("code")],
         rules: {"vue/component-api-style": ["error", ["script-setup"]]},
     },
+    {
+        ignores: ["public", "node_modules", "node", "storybook-static", ".storybook"],
+    }
 ];

@@ -35,7 +35,7 @@
             };
         },
         created() {
-            this.schemas = this.schema?.oneOf ?? [];
+            this.schemas = this.schema?.anyOf ?? [];
 
             const schema = this.schemaOptions.find((item) =>
                 typeof this.modelValue === "string"

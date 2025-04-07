@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.condition;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
@@ -27,7 +28,7 @@ class ExecutionNamespaceTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionNamespace build = ExecutionNamespace.builder()
-            .namespace(flow.getNamespace())
+            .namespace(Property.of(flow.getNamespace()))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -36,8 +37,8 @@ class ExecutionNamespaceTest {
 
         // Explicit
         build = ExecutionNamespace.builder()
-            .namespace(flow.getNamespace())
-            .comparison(ExecutionNamespace.Comparison.EQUALS)
+            .namespace(Property.of(flow.getNamespace()))
+            .comparison(Property.of(ExecutionNamespace.Comparison.EQUALS))
             .build();
 
         test = conditionService.isValid(build, flow, execution);
@@ -50,7 +51,7 @@ class ExecutionNamespaceTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionNamespace build = ExecutionNamespace.builder()
-            .namespace(flow.getNamespace() + "a")
+            .namespace(Property.of(flow.getNamespace() + "a"))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -73,16 +74,16 @@ class ExecutionNamespaceTest {
         assertThat(test, is(true));
 
         build = ExecutionNamespace.builder()
-            .namespace(flow.getNamespace().substring(0, 3))
-            .comparison(ExecutionNamespace.Comparison.PREFIX)
+            .namespace(Property.of(flow.getNamespace().substring(0, 3)))
+            .comparison(Property.of(ExecutionNamespace.Comparison.PREFIX))
             .build();
 
         test = conditionService.isValid(build, flow, execution);
         assertThat(test, is(true));
 
         build = ExecutionNamespace.builder()
-            .namespace(flow.getNamespace().substring(0, 3))
-            .prefix(true)
+            .namespace(Property.of(flow.getNamespace().substring(0, 3)))
+            .prefix(Property.of(true))
             .build();
 
         test = conditionService.isValid(build, flow, execution);
@@ -96,7 +97,7 @@ class ExecutionNamespaceTest {
 
         // Should use EQUALS if prefix is not set
         ExecutionNamespace build = ExecutionNamespace.builder()
-            .namespace(flow.getNamespace().substring(0, 3))
+            .namespace(Property.of(flow.getNamespace().substring(0, 3)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -109,8 +110,8 @@ class ExecutionNamespaceTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionNamespace build = ExecutionNamespace.builder()
-            .namespace(flow.getNamespace().substring(flow.getNamespace().length() - 4))
-            .comparison(ExecutionNamespace.Comparison.SUFFIX)
+            .namespace(Property.of(flow.getNamespace().substring(flow.getNamespace().length() - 4)))
+            .comparison(Property.of(ExecutionNamespace.Comparison.SUFFIX))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

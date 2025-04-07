@@ -2,6 +2,7 @@ package io.kestra.core.models.triggers.multipleflows;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
 import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.Test;
 import io.kestra.plugin.core.condition.ExecutionFlow;
@@ -237,12 +238,12 @@ public abstract class AbstractMultipleConditionStorageTest {
             .id("condition-multiple")
             .conditions(ImmutableMap.of(
                 "flow-a", ExecutionFlow.builder()
-                    .flowId("flow-a")
-                    .namespace(NAMESPACE)
+                    .flowId(Property.of("flow-a"))
+                    .namespace(Property.of(NAMESPACE))
                     .build(),
                 "flow-b", ExecutionFlow.builder()
-                    .flowId("flow-b")
-                    .namespace(NAMESPACE)
+                    .flowId(Property.of("flow-b"))
+                    .namespace(Property.of(NAMESPACE))
                     .build()
             ))
             .timeWindow(sla)

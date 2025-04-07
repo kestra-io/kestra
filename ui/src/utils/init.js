@@ -1,7 +1,7 @@
 import {createStore} from "vuex";
 import {createRouter, createWebHistory} from "vue-router";
 import VueGtag from "vue-gtag";
-import {setI18nLanguage, loadLocaleMessages, setupI18n} from "../translations/i18n";
+import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n";
 import moment from "moment-timezone";
 import "moment/dist/locale/de"
 import "moment/dist/locale/es"
@@ -17,19 +17,19 @@ import "moment/dist/locale/zh-cn"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
 import {
-    Chart,
-    CategoryScale,
-    LinearScale,
-    BarElement,
+    ArcElement,
     BarController,
-    LineElement,
-    LineController,
-    PointElement,
-    Tooltip,
+    BarElement,
+    CategoryScale,
+    Chart,
+    DoughnutController,
     Filler,
     Legend,
-    ArcElement,
-    DoughnutController,
+    LinearScale,
+    LineController,
+    LineElement,
+    PointElement,
+    Tooltip,
 } from "chart.js";
 import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
@@ -52,7 +52,7 @@ import TaskNumber from "../components/flows/tasks/TaskNumber.vue";
 import TaskObject from "../components/flows/tasks/TaskObject.vue";
 import TaskString from "../components/flows/tasks/TaskString.vue";
 import TaskTask from "../components/flows/tasks/TaskTask.vue";
-import TaskOneOf from "../components/flows/tasks/TaskOneOf.vue";
+import TaskAnyOf from "../components/flows/tasks/TaskAnyOf.vue";
 import TaskSubflowNamespace from "../components/flows/tasks/TaskSubflowNamespace.vue";
 import TaskSubflowId from "../components/flows/tasks/TaskSubflowId.vue";
 import TaskSubflowInputs from "../components/flows/tasks/TaskSubflowInputs.vue";
@@ -187,7 +187,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
     app.component("TaskComplex", TaskComplex)
     app.component("TaskString", TaskString)
     app.component("TaskTask", TaskTask)
-    app.component("TaskOneOf", TaskOneOf)
+    app.component("TaskAnyOf", TaskAnyOf)
     app.component("TaskSubflowNamespace", TaskSubflowNamespace)
     app.component("TaskSubflowId", TaskSubflowId)
     app.component("TaskSubflowInputs", TaskSubflowInputs)

@@ -176,7 +176,7 @@ class PluginDefaultServiceTest {
     }
 
     @Test
-    public void injectFlowAndGlobals() {
+    void injectFlowAndGlobals() {
         String source = """
             id: default-test
             namespace: io.kestra.tests
@@ -222,7 +222,7 @@ class PluginDefaultServiceTest {
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getProperty().getLists().getFirst().getVal().size(), is(1));
         assertThat(((DefaultTester) injected.getTasks().getFirst()).getProperty().getLists().getFirst().getVal().get("key"), is("test"));
         assertThat(((DefaultTriggerTester) injected.getTriggers().getFirst()).getSet(), is(123));
-        assertThat(((Expression) injected.getTriggers().getFirst().getConditions().getFirst()).getExpression(), is("{{ test }}"));
+        assertThat(((Expression) injected.getTriggers().getFirst().getConditions().getFirst()).getExpression().toString(), is("{{ test }}"));
     }
 
     @Test

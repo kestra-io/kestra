@@ -6,6 +6,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -41,7 +42,7 @@ class HasRetryAttemptTest {
         ));
 
         HasRetryAttempt build = HasRetryAttempt.builder()
-            .in(Collections.singletonList(State.Type.KILLED))
+            .in(Property.of(Collections.singletonList(State.Type.KILLED)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -49,7 +50,7 @@ class HasRetryAttemptTest {
         assertThat(test, is(true));
 
         build = HasRetryAttempt.builder()
-            .in(Collections.singletonList(State.Type.FAILED))
+            .in(Property.of(Collections.singletonList(State.Type.FAILED)))
             .build();
 
         test = conditionService.isValid(build, flow, execution);

@@ -32,6 +32,8 @@ class FlowExportCommandTest {
 
             // we use the update command to add flows to extract
             String[] updateArgs = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -44,6 +46,8 @@ class FlowExportCommandTest {
 
             // then we export them
             String[] exportArgs = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",

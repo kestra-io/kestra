@@ -1,5 +1,5 @@
 import {computed} from "vue";
-import {useStore} from "vuex";
+import {Store, useStore} from "vuex";
 import moment from "moment";
 import humanizeDuration from "humanize-duration";
 
@@ -43,24 +43,22 @@ export default class Utils {
             Date.now().toString(16).slice(4);
     }
 
-    static flatten(object) {
-        return Object.assign({}, ...function _flatten(child, path = []) {
+    static flatten(object: Record<string, any>) {
+        return Object.assign({}, function _flatten(child: Record<string, any> | null, path: string[] = []): Record<string, any> {
             if (child === null) {
                 return {[path.join(".")]: null};
             }
 
-            return []
-                .concat(...Object
-                    .keys(child === null ? [] : child)
+            return Object
+                    .keys(child)
                     .map(key => typeof child[key] === "object" ?
                         _flatten(child[key], path.concat([key])) :
                         ({[path.concat([key]).join(".")]: child[key]})
-                    )
-                );
+                    );
         }(object));
     }
 
-    static executionVars(data) {
+    static executionVars(data: Record<string, any>) {
         if (data === undefined) {
             return [];
         }
@@ -68,13 +66,13 @@ export default class Utils {
         const flat = Utils.flatten(data);
 
         return Object.keys(flat).map(key => {
-            let rawValue = flat[key];
+            const rawValue = flat[key];
             if (key === "variables.executionId") {
                 return {key, value: rawValue, subflow: true};
             }
 
             if (typeof rawValue === "string" && rawValue.match(/\d{4}-\d{2}-\d{2}/)) {
-                let date = moment(rawValue, moment.ISO_8601);
+                const date = moment(rawValue, moment.ISO_8601);
                 if (date.isValid()) {
                     return {key, value: rawValue, date: true};
                 }
@@ -99,7 +97,7 @@ export default class Utils {
      *
      * @return Formatted string.
      */
-    static humanFileSize(bytes, si = false, dp = 1) {
+    static humanFileSize(bytes: number, si = false, dp = 1) {
         if (bytes === undefined) {
            // when the size is 0 it arrives as undefined here!
            return "0B";
@@ -125,11 +123,11 @@ export default class Utils {
         return bytes.toFixed(dp) + " " + units[u];
     }
 
-    static duration(isoString) {
-        return moment.duration(isoString, moment.ISO_8601).asMilliseconds() / 1000
+    static duration(isoString: string) {
+        return moment.duration(isoString).asMilliseconds() / 1000
     }
 
-    static humanDuration(value, options) {
+    static humanDuration(value: string | number, options: humanizeDuration.HumanizerOptions) {
         options = options || {maxDecimalPoints: 2};
         options.spacer = "";
         options.language = Utils.getLang();
@@ -140,15 +138,16 @@ export default class Utils {
             value = Utils.duration(value);
         }
 
-        return humanizeDuration(value * 1000, options).replace(/\.([0-9])s$/i, ".$10s")
+        const humanizer = humanizeDuration.humanizer(options);
+        return humanizer(value * 1000).replace(/\.([0-9])s$/i, ".$10s")
     }
 
-    static number(number) {
+    static number(number: number) {
         return number.toString().replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1 ");
     }
 
-    static hexToRgba(hex, opacity) {
-        let c;
+    static hexToRgba(hex: string, opacity: number) {
+        let c: any;
         if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
             c = hex.substring(1).split("");
             if (c.length === 3) {
@@ -160,7 +159,7 @@ export default class Utils {
         throw new Error("Bad Hex");
     }
 
-    static downloadUrl(url, filename) {
+    static downloadUrl(url: string, filename: string) {
         const link = document.createElement("a");
         link.href = url;
         link.setAttribute("download", filename);
@@ -171,12 +170,11 @@ export default class Utils {
     }
 
     /**
-     * Extracts a filename from an HTTP 'Content-Disposition` header.
+     * Extracts a filename from an HTTP `Content-Disposition` header.
      *
      * @param header  the header value
-     * @returns {*|string|null}
      */
-    static extratFileNameFromContentDisposition(header) {
+    static extractFileNameFromContentDisposition(header: string | null | undefined): string | null {
         if (!header) return null;
 
         const filenameRegex = /filename\*=UTF-8''(.+)|filename="(.+?)"|filename=(.+)/;
@@ -197,11 +195,11 @@ export default class Utils {
         return null; // Return null if no filename is found
     }
 
-    static switchTheme(store, theme) {
+    static switchTheme(store: Store<any>, theme: string | undefined) {
         // default theme
         if (theme === undefined) {
             if (localStorage.getItem("theme")) {
-                theme =  localStorage.getItem("theme");
+                theme = localStorage.getItem("theme")!;
             } else if (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches) {
                 theme = "dark";
             } else {
@@ -210,7 +208,7 @@ export default class Utils {
         }
 
         // class name
-        let htmlClass = document.getElementsByTagName("html")[0].classList;
+        const htmlClass = document.getElementsByTagName("html")[0].classList;
 
         function removeClasses()
         {
@@ -249,11 +247,11 @@ export default class Utils {
         return localStorage.getItem("lang") || "en";
     }
 
-    static splitFirst(str, separator){
+    static splitFirst(str: string, separator: string){
         return str.split(separator).slice(1).join(separator);
     }
 
-    static asArray(objOrArray) {
+    static asArray(objOrArray: any | any[]) {
         if(objOrArray === undefined) {
             return [];
         }
@@ -261,7 +259,7 @@ export default class Utils {
         return Array.isArray(objOrArray) ? objOrArray : [objOrArray];
     }
 
-    static async copy(text) {
+    static async copy(text: string) {
         if(navigator.clipboard) {
             await navigator.clipboard.writeText(text);
             return;
@@ -279,7 +277,7 @@ export default class Utils {
         document.body.removeChild(node);
     }
 
-    static toFormData(obj) {
+    static toFormData(obj: FormData | Record<string, any>) {
         if (!(obj instanceof FormData)) {
             const formData = new FormData();
             for (const key in obj) {
@@ -290,7 +288,7 @@ export default class Utils {
         return obj;
     }
 
-    static getDateFormat(startDate, endDate) {
+    static getDateFormat(startDate: moment.MomentInput, endDate: moment.MomentInput) {
         if (!startDate || !endDate) {
             return "yyyy-MM-DD";
         }

@@ -54,7 +54,8 @@ public class TaskWithAllowFailureTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/task-allow-failure-executable-foreachitem.yml"})
+    @LoadFlows({"flows/valids/task-allow-failure-executable-foreachitem.yml",
+        "flows/valids/for-each-item-subflow-failed.yaml"})
     void executableTask_ForEachItem() throws TimeoutException, QueueException, URISyntaxException, IOException {
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());

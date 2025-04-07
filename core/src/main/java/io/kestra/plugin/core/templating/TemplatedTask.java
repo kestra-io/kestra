@@ -32,7 +32,7 @@ import lombok.experimental.SuperBuilder;
             code = {
                 """
                     spec: |
-                      type: io.kestra.plugin.fs.http.Download
+                      type: io.kestra.plugin.core.http.Download
                       {{ task.property }}: {{ task.value }}"""
             }
         )

@@ -1,6 +1,7 @@
 package io.kestra.core.schedulers;
 
 import io.kestra.core.models.Label;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
@@ -145,7 +146,7 @@ public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
                 List.of(
                     Expression.builder()
                         .type(Expression.class.getName())
-                        .expression("{{ trigger.date | date() < now() }}")
+                        .expression(new Property<>("{{ trigger.date | date() < now() }}"))
                         .build()
                 ))
             .build();

@@ -12,11 +12,11 @@ import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.scheduling.io.watch.FileWatchConfiguration;
 import jakarta.inject.Inject;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Singleton;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.charset.Charset;
 import java.nio.file.*;

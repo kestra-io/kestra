@@ -677,7 +677,7 @@ class ExecutionControllerRunnerTest {
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("a")).isEqualTo(1);
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("b")).isEqualTo(true);
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("parameters")).get("name")).isEqualTo(List.of("john"));
-        assertThat(((Map<String, List<Integer>>) execution.getTrigger().getVariables().get("parameters")).get("age")).containsExactlyInAnyOrder(12, 13);
+        assertThat(((Map<String, List<String>>) execution.getTrigger().getVariables().get("parameters")).get("age")).containsExactlyInAnyOrder("12", "13");
         assertThat(execution.getLabels().getFirst()).isEqualTo(new Label("flow-label-1", "flow-label-1"));
         assertThat(execution.getLabels().get(1)).isEqualTo(new Label("flow-label-2", "flow-label-2"));
 

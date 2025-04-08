@@ -60,6 +60,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import static org.apache.commons.lang3.ArrayUtils.toPrimitive;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -152,7 +153,7 @@ class HttpClientTest {
             );
 
             assertThat(response.getStatus().getCode()).isEqualTo(200);
-            assertThat(response.getBody()).isEqualTo("pong".getBytes(StandardCharsets.UTF_8));
+            assertThat(toPrimitive(response.getBody())).isEqualTo("pong".getBytes(StandardCharsets.UTF_8));
         }
     }
 

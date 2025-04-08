@@ -154,8 +154,8 @@ public class InputsTest {
         assertThat(typeds.get("validatedTime")).isEqualTo(LocalTime.parse("11:27:49"));
         assertThat(typeds.get("secret")).isNotEqualTo("secret"); // secret inputs are encrypted
         assertThat(typeds.get("array")).isInstanceOf(List.class);
-        assertThat((List<String>) typeds.get("array")).hasSize(3);
-        assertThat((List<String>) typeds.get("array")).containsExactly("1", "2", "3");
+        assertThat((List<Integer>) typeds.get("array")).hasSize(3);
+        assertThat((List<Integer>) typeds.get("array")).isEqualTo(List.of(1, 2, 3));
         assertThat(typeds.get("yaml")).isEqualTo(Map.of(
             "some", "property",
             "alist", List.of("of", "values")));

@@ -417,6 +417,7 @@ public class FlowInputOutput {
                 // Assuming that after the render we must have a double/int, so we can safely use its toString representation
                 case FLOAT -> current instanceof Float ? current : Float.valueOf(current.toString());
                 case BOOLEAN -> current instanceof Boolean ? current : Boolean.valueOf(current.toString());
+                case BOOL -> current instanceof Boolean ? current : Boolean.valueOf(current.toString());
                 case DATETIME -> current instanceof Instant ? current : Instant.parse(current.toString());
                 case DATE -> current instanceof LocalDate ? current : LocalDate.parse(current.toString());
                 case TIME -> current instanceof LocalTime ? current : LocalTime.parse(current.toString());

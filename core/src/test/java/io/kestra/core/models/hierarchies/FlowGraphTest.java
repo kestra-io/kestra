@@ -36,8 +36,6 @@ import static org.hamcrest.Matchers.*;
 
 @KestraTest(startRunner = true)
 class FlowGraphTest {
-    @Inject
-    private YamlParser yamlParser = new YamlParser();
 
     @Inject
     private GraphService graphService;
@@ -379,7 +377,7 @@ class FlowGraphTest {
 
         File file = new File(resource.getFile());
 
-        return yamlParser.parse(file, Flow.class).withSource(Files.readString(file.toPath()));
+        return YamlParser.parse(file, FlowWithSource.class).toBuilder().source(Files.readString(file.toPath())).build();
     }
 
     private static AbstractGraph node(FlowGraph flowGraph, String taskId) {

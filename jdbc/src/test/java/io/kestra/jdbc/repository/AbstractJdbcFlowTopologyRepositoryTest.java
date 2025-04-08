@@ -23,12 +23,11 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
 
     @Test
     void saveMultiple() {
-        FlowWithSource flow = Flow.builder()
+        FlowWithSource flow = FlowWithSource.builder()
             .id("flow-a")
             .namespace("io.kestra.tests")
             .revision(1)
-            .build()
-            .withSource(null);
+            .build();
 
         flowTopologyRepository.save(
             flow,

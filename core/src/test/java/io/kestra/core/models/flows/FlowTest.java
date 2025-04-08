@@ -25,8 +25,6 @@ import static org.hamcrest.Matchers.*;
 
 @KestraTest
 class FlowTest {
-    @Inject
-    YamlParser yamlParser = new YamlParser();
 
     @Inject
     ModelValidator modelValidator;
@@ -197,6 +195,6 @@ class FlowTest {
 
         File file = new File(resource.getFile());
 
-        return yamlParser.parse(file, Flow.class);
+        return YamlParser.parse(file, Flow.class);
     }
 }

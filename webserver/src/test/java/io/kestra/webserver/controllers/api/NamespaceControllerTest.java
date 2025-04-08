@@ -3,6 +3,7 @@ package io.kestra.webserver.controllers.api;
 import com.devskiller.friendly_id.FriendlyId;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.namespaces.Namespace;
 import io.kestra.core.models.topologies.FlowNode;
 import io.kestra.core.models.topologies.FlowRelation;
@@ -171,7 +172,7 @@ public class NamespaceControllerTest {
                     .build()
             ))
             .build();
-        return flowRepository.create(flow, flow.generateSource(), flow);
+        return flowRepository.create(GenericFlow.of(flow));
     }
 
     protected FlowTopology createSimpleFlowTopology(String flowA, String flowB) {

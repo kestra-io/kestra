@@ -28,8 +28,6 @@ import org.junit.jupiter.api.Test;
 
 @KestraTest(startRunner = true)
 public class DagTest {
-    @Inject
-    YamlParser yamlParser = new YamlParser();
 
     @Inject
     ModelValidator modelValidator;
@@ -96,6 +94,6 @@ public class DagTest {
 
         File file = new File(resource.getFile());
 
-        return yamlParser.parse(file, Flow.class);
+        return YamlParser.parse(file, Flow.class);
     }
 }

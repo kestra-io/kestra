@@ -95,18 +95,11 @@
                     <el-input v-model="secret.key" :readonly="secret.update" required />
                 </el-form-item>
                 <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value">
-                    <el-input v-model="secret.value" :placeholder="secretModalTitle" autosize type="textarea" required />
+                    <MultilineSecret v-model="secret.value" :placeholder="secretModalTitle" />
                 </el-form-item>
                 <el-form-item v-if="secret.update" :label="$t('secret.name')" prop="value">
                     <el-col :span="20">
-                        <el-input
-                            v-model="secret.value"
-                            :placeholder="secretModalTitle"
-                            autosize
-                            type="textarea"
-                            required
-                            :disabled="!secret.updateValue"
-                        />
+                        <MultilineSecret v-model="secret.value" :placeholder="secretModalTitle" :disabled="!secret.updateValue" />
                     </el-col>
                     <el-col class="px-2" :span="4">
                         <el-switch
@@ -165,6 +158,7 @@
     import Labels from "../layout/Labels.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
+    import MultilineSecret from "./MultilineSecret.vue";
 </script>
 
 <script lang="ts">
@@ -267,7 +261,7 @@
                 secret: {
                     namespace: this.namespace,
                     key: undefined,
-                    value: undefined,
+                    value: "",
                     description: undefined,
                     tags: [{key:undefined,value:undefined}],
                     update: undefined,
@@ -448,7 +442,7 @@
                 this.secret = {
                     namespace: this.namespace,
                     key: undefined,
-                    value: undefined,
+                    value: "",
                     description: undefined,
                     tags: [{key:undefined,value:undefined}],
                     update: undefined,

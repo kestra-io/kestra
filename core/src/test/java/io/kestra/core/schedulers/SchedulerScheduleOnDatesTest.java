@@ -2,7 +2,9 @@ package io.kestra.core.schedulers;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Trigger;
@@ -51,7 +53,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             ));
     }
 
-    private Flow createScheduleFlow(String zone, String triggerId) {
+    private FlowWithSource createScheduleFlow(String zone, String triggerId) {
         var now = ZonedDateTime.now();
         var before = now.minusSeconds(3).truncatedTo(ChronoUnit.SECONDS);
         var after = now.plusSeconds(3).truncatedTo(ChronoUnit.SECONDS);
@@ -78,8 +80,8 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
         Set<String> executionId = new HashSet<>();
 
         // then flow should be executed 4 times
-        Flow flow = createScheduleFlow("Europe/Paris", "schedule");
-        flowRepository.create(flow, flow.generateSource(), flow);
+        FlowWithSource flow = createScheduleFlow("Europe/Paris", "schedule");
+        flowRepository.create(GenericFlow.of(flow));
 
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
@@ -107,7 +109,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
                 executionId.add(execution.getId());
 
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    terminateExecution(execution, trigger, flow.withSource(flow.generateSource()));
+                    terminateExecution(execution, trigger, flow);
                 }
                 assertThat(execution.getFlowId(), is(flow.getId()));
                 queueCount.countDown();

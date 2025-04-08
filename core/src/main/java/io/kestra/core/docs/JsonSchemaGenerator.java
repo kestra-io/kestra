@@ -4,6 +4,8 @@ import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.members.HierarchicType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -47,9 +49,17 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
+
 @Singleton
 public class JsonSchemaGenerator {
     private static final List<Class<?>> TYPES_RESOLVED_AS_STRING = List.of(Duration.class, LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, OffsetDateTime.class, OffsetTime.class);
+
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
+        .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
+
+    private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
+        .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
 
     private final PluginRegistry pluginRegistry;
 
@@ -92,7 +102,7 @@ public class JsonSchemaGenerator {
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
 
-            return JacksonMapper.toMap(objectNode);
+            return MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
@@ -176,7 +186,7 @@ public class JsonSchemaGenerator {
 
             try {
                 sb.append("Default value is : `")
-                    .append(JacksonMapper.ofYaml().writeValueAsString(collectedTypeAttributes.get("default")).trim())
+                    .append(YAML_MAPPER.writeValueAsString(collectedTypeAttributes.get("default")).trim())
                     .append("`");
             } catch (JsonProcessingException ignored) {
 
@@ -216,6 +226,7 @@ public class JsonSchemaGenerator {
     }
 
     protected void build(SchemaGeneratorConfigBuilder builder, boolean draft7) {
+//        builder.withObjectMapper(builder.getObjectMapper().configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false));
         builder
             .with(new JakartaValidationModule(
                 JakartaValidationOption.NOT_NULLABLE_METHOD_IS_REQUIRED,
@@ -645,7 +656,7 @@ public class JsonSchemaGenerator {
             pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
 
-            return JacksonMapper.toMap(extractMainRef(objectNode));
+            return MAPPER.convertValue(extractMainRef(objectNode), MAP_TYPE_REFERENCE);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }

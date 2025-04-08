@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.tasks.test.PollingTrigger;
@@ -64,7 +65,7 @@ class TriggerControllerTest {
         String triggerNamespace = "io.kestra.tests.schedule";
 
         Flow flow = generateFlow(triggerFlowId);
-        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
             .flowId(triggerFlowId)
@@ -166,7 +167,7 @@ class TriggerControllerTest {
     @Test
     void updated() {
         Flow flow = generateFlow("flow-with-triggers-updated");
-        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
             .flowId(flow.getId())
@@ -195,7 +196,7 @@ class TriggerControllerTest {
     @Test
     void restart() {
         Flow flow = generateFlow("flow-with-triggers");
-        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
             .flowId(flow.getId())
@@ -364,7 +365,7 @@ class TriggerControllerTest {
     @Test
     void nextExecutionDate() throws InterruptedException, TimeoutException {
         Flow flow = generateFlow("flow-with-triggers");
-        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
         Await.until(
             () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?filters[q][EQUALS]=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 2,
             Duration.ofMillis(100),

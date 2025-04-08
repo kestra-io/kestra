@@ -3,8 +3,10 @@ package io.kestra.core.schedulers;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
@@ -39,8 +41,8 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
 
     @Test
     void thread() throws Exception {
-        Flow flow = createThreadFlow();
-        flowRepository.create(flow, flow.generateSource(), flow);
+        FlowWithSource flow = createThreadFlow();
+        flowRepository.create(GenericFlow.of(flow));
         CountDownLatch queueCount = new CountDownLatch(2);
 
         // wait for execution
@@ -50,7 +52,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             assertThat(execution.getFlowId(), is(flow.getId()));
 
             if (execution.getState().getCurrent() != State.Type.SUCCESS) {
-                terminateExecution(execution, Trigger.of(flow, flow.getTriggers().getFirst()), flow.withSource(flow.generateSource()));
+                terminateExecution(execution, Trigger.of(flow, flow.getTriggers().getFirst()), flow);
                 queueCount.countDown();
             }
         }));

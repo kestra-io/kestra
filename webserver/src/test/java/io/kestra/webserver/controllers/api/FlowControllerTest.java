@@ -7,6 +7,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.Type;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.property.Property;
@@ -58,6 +59,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
 class FlowControllerTest {
+    private static final String TEST_NAMESPACE = "io.kestra.unittest";
+
     @Inject
     @Client("/")
     ReactorHttpClient client;
@@ -87,7 +90,7 @@ class FlowControllerTest {
     @Test
     void id() {
         String result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), String.class);
-        Flow flow = new YamlParser().parse(result, Flow.class);
+        Flow flow = YamlParser.parse(result, Flow.class);
         assertThat(flow.getId(), is("full"));
         assertThat(flow.getTasks().size(), is(5));
     }
@@ -281,7 +284,7 @@ class FlowControllerTest {
 
     @Test
     void createFlow() {
-        Flow flow = generateFlow("io.kestra.unittest", "a");
+        Flow flow = generateFlow(TEST_NAMESPACE, "a");
 
         Flow result = parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
 
@@ -295,7 +298,7 @@ class FlowControllerTest {
 
     @Test
     void createFlowWithJsonLabels() {
-        Map<String, Object> flow = JacksonMapper.toMap(generateFlow("io.kestra.unittest", "a"));
+        Map<String, Object> flow = JacksonMapper.toMap(generateFlow(TEST_NAMESPACE, "a"));
         flow.put("labels", Map.of("a", "b"));
 
         Flow result = parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
@@ -307,7 +310,7 @@ class FlowControllerTest {
 
     @Test
     void deletedFlow() {
-        Flow flow = generateFlow("io.kestra.unittest", "a");
+        Flow flow = generateFlow(TEST_NAMESPACE, "a");
 
         FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), FlowWithSource.class);
         assertThat(result.getId(), is(flow.getId()));
@@ -327,7 +330,7 @@ class FlowControllerTest {
         assertThat(e.getStatus(), is(NOT_FOUND));
 
         String deletedResult = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId() + "?allowDeleted=true"), String.class);
-        Flow deletedFlow = new YamlParser().parse(deletedResult, Flow.class);
+        Flow deletedFlow = YamlParser.parse(deletedResult, Flow.class);
 
         assertThat(deletedFlow.isDeleted(), is(true));
     }
@@ -336,14 +339,14 @@ class FlowControllerTest {
     void updateFlow() {
         String flowId = IdUtils.create();
 
-        Flow flow = generateFlow(flowId, "io.kestra.unittest", "a");
+        Flow flow = generateFlow(flowId, TEST_NAMESPACE, "a");
 
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
 
         assertThat(result.getId(), is(flow.getId()));
         assertThat(result.getInputs().getFirst().getId(), is("a"));
 
-        flow = generateFlow(flowId, "io.kestra.unittest", "b");
+        flow = generateFlow(flowId, TEST_NAMESPACE, "b");
 
         Flow get = client.toBlocking().retrieve(
             PUT("/api/v1/flows/" + flow.getNamespace() + "/" + flow.getId(), flow),
@@ -366,7 +369,7 @@ class FlowControllerTest {
     void updateFlowMultilineJson() {
         String flowId = IdUtils.create();
 
-        Flow flow = generateFlowWithFlowable(flowId, "io.kestra.unittest", "\n \n a         \nb\nc");
+        Flow flow = generateFlowWithFlowable(flowId, TEST_NAMESPACE, "\n \n a         \nb\nc");
 
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
         assertThat(result.getId(), is(flow.getId()));
@@ -380,7 +383,7 @@ class FlowControllerTest {
     void updateTaskFlow() throws InternalException {
         String flowId = IdUtils.create();
 
-        Flow flow = generateFlowWithFlowable(flowId, "io.kestra.unittest", "a");
+        Flow flow = generateFlowWithFlowable(flowId, TEST_NAMESPACE, "a");
 
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
         assertThat(result.getId(), is(flow.getId()));
@@ -417,7 +420,7 @@ class FlowControllerTest {
     void invalidUpdateFlow() {
         String flowId = IdUtils.create();
 
-        Flow flow = generateFlow(flowId, "io.kestra.unittest", "a");
+        Flow flow = generateFlow(flowId, TEST_NAMESPACE, "a");
         Flow result = client.toBlocking().retrieve(POST("/api/v1/flows", flow), Flow.class);
 
         assertThat(result.getId(), is(flow.getId()));
@@ -450,7 +453,7 @@ class FlowControllerTest {
 
     @Test
     void createFlowFromString() {
-        String flow = generateFlowAsString("io.kestra.unittest","a");
+        String flow = generateFlowAsString(TEST_NAMESPACE,"a");
         Flow assertFlow = parseFlow(flow);
 
         FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
@@ -482,7 +485,7 @@ class FlowControllerTest {
 
     @Test
     void updateFlowFromString() throws IOException {
-        String flow = generateFlowAsString("updatedFlow","io.kestra.unittest","a");
+        String flow = generateFlowAsString("updatedFlow", TEST_NAMESPACE,"a");
         Flow assertFlow = parseFlow(flow);
 
         FlowWithSource result = client.toBlocking().retrieve(POST("/api/v1/flows", flow).contentType(MediaType.APPLICATION_YAML), FlowWithSource.class);
@@ -490,7 +493,7 @@ class FlowControllerTest {
         assertThat(result.getId(), is(assertFlow.getId()));
         assertThat(result.getInputs().getFirst().getId(), is("a"));
 
-        flow = generateFlowAsString("updatedFlow","io.kestra.unittest","b");
+        flow = generateFlowAsString("updatedFlow", TEST_NAMESPACE,"b");
 
         FlowWithSource get = client.toBlocking().retrieve(
             PUT("/api/v1/flows/io.kestra.unittest/updatedFlow", flow).contentType(MediaType.APPLICATION_YAML),
@@ -574,9 +577,9 @@ class FlowControllerTest {
 
     @Test
     void importFlowsWithYaml() throws IOException {
-        var yaml = generateFlowAsString("io.kestra.unittest","a") + "---" +
-            generateFlowAsString("io.kestra.unittest","b") + "---" +
-            generateFlowAsString("io.kestra.unittest","c");
+        var yaml = generateFlowAsString(TEST_NAMESPACE,"a") + "---" +
+            generateFlowAsString(TEST_NAMESPACE,"b") + "---" +
+            generateFlowAsString(TEST_NAMESPACE,"c");
 
         var temp = File.createTempFile("flows", ".yaml");
         Files.writeString(temp.toPath(), yaml);
@@ -722,8 +725,7 @@ class FlowControllerTest {
         String flow = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
 
         String firstFlowSource = flow.split("(?m)^---")[0];
-        Flow firstFlow = parseFlow(firstFlowSource);
-        jdbcFlowRepository.create(firstFlow, firstFlowSource, firstFlow);
+        jdbcFlowRepository.create(GenericFlow.fromYaml(null, firstFlowSource));
 
         HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate", flow).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
 
@@ -757,8 +759,7 @@ class FlowControllerTest {
         URL resource = TestsUtils.class.getClassLoader().getResource("flows/warningsAndInfos.yaml");
         String source = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
 
-        Flow flow = parseFlow(source);
-        jdbcFlowRepository.create(flow, source, flow);
+        jdbcFlowRepository.create(GenericFlow.fromYaml(null, source));
 
         HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate", source).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
 
@@ -802,7 +803,7 @@ class FlowControllerTest {
     @Test
     void commaInOneOfMultiLabels() {
 
-        Map<String, Object> flow = JacksonMapper.toMap(generateFlow("io.kestra.unittest", "a"));
+        Map<String, Object> flow = JacksonMapper.toMap(generateFlow(TEST_NAMESPACE, "a"));
         flow.put("labels", Map.of("project", "foo,bar", "status", "test"));
 
         parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
@@ -944,37 +945,27 @@ class FlowControllerTest {
     }
 
     private Flow parseFlow(String flow) {
-        return new YamlParser().parse(flow, Flow.class);
+        return YamlParser.parse(flow, Flow.class);
     }
 
-    private String generateFlowAsString(String friendlyId, String namespace, String format) {
-        return String.format("id: %s\n" +
-            "# Comment i added\n" +
-            "namespace: %s\n" +
-            "inputs:\n" +
-            "  - id: %s\n" +
-            "    type: STRING\n" +
-            "tasks:\n" +
-            "  - id: test\n" +
-            "    type: io.kestra.plugin.core.debug.Return\n" +
-            "    format: test\n" +
-            "disabled: false\n" +
-            "deleted: false", friendlyId,namespace, format);
-
+    private String generateFlowAsString(String id, String namespace, String format) {
+        return """
+            id: %s
+            # Comment i added
+            namespace: %s
+            inputs:
+              - id: %s
+                type: STRING
+            tasks:
+              - id: test
+                type: io.kestra.plugin.core.debug.Return
+                format: test
+            disabled: false
+            deleted: false
+            """.formatted(id, namespace, format);
     }
     private String generateFlowAsString(String namespace, String format) {
-        return String.format("id: %s\n" +
-            "# Comment i added\n" +
-            "namespace: %s\n" +
-            "inputs:\n" +
-            "  - id: %s\n" +
-            "    type: STRING\n" +
-            "tasks:\n" +
-            "  - id: test\n" +
-            "    type: io.kestra.plugin.core.debug.Return\n" +
-            "    format: test\n" +
-            "disabled: false\n" +
-            "deleted: false", IdUtils.create(),namespace, format);
+        return generateFlowAsString(IdUtils.create(), namespace, format);
 
     }
 

@@ -1,16 +1,15 @@
 package io.kestra.cli.commands.sys.statestore;
 
-import com.devskiller.friendly_id.FriendlyId;
 import io.kestra.core.exceptions.MigrationRequiredException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StateStore;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.Hashing;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Slugify;
 import io.kestra.plugin.core.log.Log;
 import io.micronaut.configuration.picocli.PicocliRunner;
@@ -27,7 +26,6 @@ import java.util.List;
 import java.util.Map;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.core.Is.is;
 
 class StateStoreMigrateCommandTest {
@@ -45,7 +43,7 @@ class StateStoreMigrateCommandTest {
                 .namespace("some.valid.namespace." + ((int) (Math.random() * 1000000)))
                 .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("logging").build()))
                 .build();
-            flowRepository.create(flow, flow.generateSource(), flow);
+            flowRepository.create(GenericFlow.of(flow));
 
             StorageInterface storage = ctx.getBean(StorageInterface.class);
             String tenantId = flow.getTenantId();

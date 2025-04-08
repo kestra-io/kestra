@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Data;
 import io.kestra.core.models.flows.DependsOn;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.RenderableInput;
 import io.kestra.core.models.flows.Type;
@@ -110,7 +111,7 @@ public class FlowInputOutput {
      * @param data      The Execution's inputs data.
      * @return The Map of typed inputs.
      */
-    public Mono<Map<String, Object>> readExecutionInputs(final Flow flow,
+    public Mono<Map<String, Object>> readExecutionInputs(final FlowInterface flow,
                                                          final Execution execution,
                                                          final Publisher<CompletedPart> data) {
         return this.readExecutionInputs(flow.getInputs(), flow, execution, data);
@@ -125,7 +126,7 @@ public class FlowInputOutput {
      * @return The Map of typed inputs.
      */
     public Mono<Map<String, Object>> readExecutionInputs(final List<Input<?>> inputs,
-                                                         final Flow flow,
+                                                         final FlowInterface flow,
                                                          final Execution execution,
                                                          final Publisher<CompletedPart> data) {
         return readData(inputs, execution, data, true).map(inputData -> this.readExecutionInputs(inputs, flow, execution, inputData));
@@ -189,7 +190,7 @@ public class FlowInputOutput {
      * @return The Map of typed inputs.
      */
     public Map<String, Object> readExecutionInputs(
-        final Flow flow,
+        final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data
     ) {
@@ -198,7 +199,7 @@ public class FlowInputOutput {
 
     private Map<String, Object> readExecutionInputs(
         final List<Input<?>> inputs,
-        final Flow flow,
+        final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data
     ) {
@@ -227,7 +228,7 @@ public class FlowInputOutput {
     @VisibleForTesting
     public List<InputAndValue> resolveInputs(
         final List<Input<?>> inputs,
-        final Flow flow,
+        final FlowInterface flow,
         final Execution execution,
         final Map<String, ?> data
     ) {
@@ -251,7 +252,7 @@ public class FlowInputOutput {
     @SuppressWarnings({"unchecked", "rawtypes"})
     private InputAndValue resolveInputValue(
         final @NotNull ResolvableInput resolvable,
-        final Flow flow,
+        final FlowInterface flow,
         final @NotNull Execution execution,
         final @NotNull Map<String, ResolvableInput> inputs) {
 
@@ -329,7 +330,7 @@ public class FlowInputOutput {
         return resolvable.get();
     }
 
-    private RunContext buildRunContextForExecutionAndInputs(final Flow flow, final Execution execution, Map<String, InputAndValue> dependencies) {
+    private RunContext buildRunContextForExecutionAndInputs(final FlowInterface flow, final Execution execution, Map<String, InputAndValue> dependencies) {
         Map<String, Object> flattenInputs = MapUtils.flattenToNestedMap(dependencies.entrySet()
             .stream()
             .collect(HashMap::new, (m, v) -> m.put(v.getKey(), v.getValue().value()), HashMap::putAll)
@@ -337,7 +338,7 @@ public class FlowInputOutput {
         return runContextFactory.of(flow, execution, vars -> vars.withInputs(flattenInputs));
     }
 
-    private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final Flow flow, final Execution execution, final Map<String, ResolvableInput> inputs) {
+    private Map<String, InputAndValue> resolveAllDependentInputs(final Input<?> input, final FlowInterface flow, final Execution execution, final Map<String, ResolvableInput> inputs) {
         return Optional.ofNullable(input.getDependsOn())
             .map(DependsOn::inputs)
             .stream()
@@ -350,7 +351,7 @@ public class FlowInputOutput {
     }
 
     public Map<String, Object> typedOutputs(
-        final Flow flow,
+        final FlowInterface flow,
         final Execution execution,
         final Map<String, Object> in
     ) {

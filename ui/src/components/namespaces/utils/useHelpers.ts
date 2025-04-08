@@ -81,31 +81,31 @@ export function useHelpers() {
             name: "overview",
             title: t("overview"),
             component: Dashboard,
-            props: {containerClass: "full-container flex-0"},
+            props: {namespace, containerClass: "full-container flex-0"},
         },
         {
             name: "flows",
             title: t("flows"),
             component: Flows,
-            props: {topbar: false},
+            props: {namespace, topbar: false},
         },
         {
             name: "executions",
             title: t("executions"),
             component: Executions,
-            props: {topbar: false, visibleCharts: true},
+            props: {namespace, topbar: false, visibleCharts: true},
         },
         {
             name: "dependencies",
             title: t("dependencies"),
             component: Dependencies,
-            props: {type: "dependencies", namespace},
+            props: {namespace, type: "dependencies"},
         },
         {
             name: "files",
             title: t("files"),
             component: EditorView,
-            props: {isNamespace: true, isReadOnly: false},
+            props: {namespace, isNamespace: true, isReadOnly: false},
         },
     ];
 

@@ -1,6 +1,7 @@
 FROM ubuntu:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive
+ARG TARGETPLATFORM
 
 USER root
 WORKDIR /root
@@ -31,9 +32,18 @@ ENV SHELL=/bin/zsh
 # --------------------------------------
 # Java
 # --------------------------------------
-RUN wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.deb
-RUN dpkg -i ./jdk-21_linux-x64_bin.deb
-ENV JAVA_HOME=/usr/java/jdk-21-oracle-x64
+ARG PLATFORM_ARCHITECTURE
+RUN case "$TARGETPLATFORM" in \
+  "linux/amd64") PLATFORM_ARCHITECTURE="linux-x64" ;; \
+  "linux/arm64") PLATFORM_ARCHITECTURE="linux-aarch64" ;; \
+  "darwin/arm64") PLATFORM_ARCHITECTURE="macos-aarch64" ;; \
+  *) echo "Unsupported TARGETPLATFORM: $TARGETPLATFORM" && exit 1 ;; \
+  esac && \
+  wget https://download.java.net/java/GA/jdk21.0.2/f2283984656d49d69e91c558476027ac/13/GPL/openjdk-21.0.2_${PLATFORM_ARCHITECTURE}_bin.tar.gz && \
+  mv openjdk-21.0.2_${PLATFORM_ARCHITECTURE}_bin.tar.gz openjdk-21.0.2_bin.tar.gz \
+  tar -xzvf openjdk-21.0.2_bin.tar.gz \
+  mv jdk-21.0.2 /usr/java/jdk-21.0.2
+ENV JAVA_HOME=/usr/java/jdk-21.0.2
 ENV PATH="$PATH:$JAVA_HOME/bin"
 # Will load a custom configuration file for Micronaut
 ENV MICRONAUT_ENVIRONMENTS=local,override

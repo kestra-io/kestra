@@ -498,7 +498,7 @@
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 @import "../../styles/layout/root-dark.scss";
 
-:not(.namespace-form, .el-drawer__body) > .ks-editor {
+:not(.namespace-defaults, .el-drawer__body) > .ks-editor {
     flex-direction: column;
     height: 100%;
 }

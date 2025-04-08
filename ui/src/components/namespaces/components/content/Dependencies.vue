@@ -1,8 +1,9 @@
 <template>
-    <el-card shadow="never" v-loading="isLoading">
+    <el-card v-loading="isLoading">
         <el-alert v-if="!hasNodes" type="info" :closable="false">
             {{ $t("no result") }}
         </el-alert>
+
         <VueFlow
             v-else
             :default-marker-color="cssVariable('--bs-cyan')"
@@ -12,6 +13,7 @@
             :elevate-nodes-on-select="false"
         >
             <Background />
+
             <template #node-flow="nodeProps">
                 <DependenciesNode
                     v-bind="nodeProps"

@@ -12,10 +12,6 @@ $code-font-sm: var(--el-font-size-small);
         overflow-x: hidden;
     }
 
-    :deep(.editor-container) {
-        padding: 7px !important;
-    }
-
     &::-webkit-scrollbar {
         height: 5px;
         width: 5px;

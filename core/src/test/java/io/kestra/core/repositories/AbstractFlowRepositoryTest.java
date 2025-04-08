@@ -36,8 +36,7 @@ import java.util.*;
 import java.util.concurrent.TimeoutException;
 import jakarta.validation.ConstraintViolationException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -83,11 +82,11 @@ public abstract class AbstractFlowRepositoryTest {
         flow = flowRepository.create(GenericFlow.of(flow));
         try {
             Optional<Flow> full = flowRepository.findById(null, flow.getNamespace(), flow.getId());
-            assertThat(full.isPresent(), is(true));
-            assertThat(full.get().getRevision(), is(1));
+            assertThat(full.isPresent()).isEqualTo(true);
+            assertThat(full.get().getRevision()).isEqualTo(1);
 
             full = flowRepository.findById(null, flow.getNamespace(), flow.getId(), Optional.empty());
-            assertThat(full.isPresent(), is(true));
+            assertThat(full.isPresent()).isEqualTo(true);
         } finally {
             deleteFlow(flow);
         }
@@ -101,11 +100,11 @@ public abstract class AbstractFlowRepositoryTest {
         flow = flowRepository.create(GenericFlow.of(flow));
         try {
             Optional<Flow> full = flowRepository.findByIdWithoutAcl(null, flow.getNamespace(), flow.getId(), Optional.empty());
-            assertThat(full.isPresent(), is(true));
-            assertThat(full.get().getRevision(), is(1));
+            assertThat(full.isPresent()).isEqualTo(true);
+            assertThat(full.get().getRevision()).isEqualTo(1);
 
             full = flowRepository.findByIdWithoutAcl(null, flow.getNamespace(), flow.getId(), Optional.empty());
-            assertThat(full.isPresent(), is(true));
+            assertThat(full.isPresent()).isEqualTo(true);
         } finally {
             deleteFlow(flow);
         }
@@ -121,12 +120,12 @@ public abstract class AbstractFlowRepositoryTest {
 
         try {
             Optional<FlowWithSource> full = flowRepository.findByIdWithSource(null, flow.getNamespace(), flow.getId());
-            assertThat(full.isPresent(), is(true));
+            assertThat(full.isPresent()).isEqualTo(true);
 
             full.ifPresent(current -> {
-                assertThat(full.get().getRevision(), is(1));
-                assertThat(full.get().getSource(), containsString("# comment"));
-                assertThat(full.get().getSource(), not(containsString("revision:")));
+                assertThat(full.get().getRevision()).isEqualTo(1);
+                assertThat(full.get().getSource()).contains("# comment");
+                assertThat(full.get().getSource()).doesNotContain("revision:");
             });
         } finally {
             deleteFlow(flow);
@@ -139,7 +138,7 @@ public abstract class AbstractFlowRepositoryTest {
         FlowWithSource save = flowRepository.create(GenericFlow.of(flow));
 
         try {
-            assertThat(save.getRevision(), is(1));
+            assertThat(save.getRevision()).isEqualTo(1);
         } finally {
             deleteFlow(save);
         }
@@ -151,7 +150,7 @@ public abstract class AbstractFlowRepositoryTest {
         FlowWithSource save = flowRepository.create(GenericFlow.of(flow));
 
         try {
-            assertThat(save.getRevision(), is(1));
+            assertThat(save.getRevision()).isEqualTo(1);
         } finally {
             deleteFlow(save);
         }
@@ -162,52 +161,52 @@ public abstract class AbstractFlowRepositoryTest {
     void findAll() {
         List<Flow> save = flowRepository.findAll(null);
 
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test
     void findAllWithSource() {
         List<FlowWithSource> save = flowRepository.findAllWithSource(null);
 
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test
     void findAllForAllTenants() {
         List<Flow> save = flowRepository.findAllForAllTenants();
 
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test
     void findAllWithSourceForAllTenants() {
         List<FlowWithSource> save = flowRepository.findAllWithSourceForAllTenants();
 
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test
     void findByNamespace() {
         List<Flow> save = flowRepository.findByNamespace(null, "io.kestra.tests");
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 20));
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 20);
 
         save = flowRepository.findByNamespace(null, "io.kestra.tests2");
-        assertThat((long) save.size(), is(1L));
+        assertThat((long) save.size()).isEqualTo(1L);
 
         save = flowRepository.findByNamespace(null, "io.kestra.tests.minimal.bis");
-        assertThat((long) save.size(), is(1L));
+        assertThat((long) save.size()).isEqualTo(1L);
     }
 
     @Test
     void findByNamespacePrefix() {
         List<Flow> save = flowRepository.findByNamespacePrefix(null, "io.kestra.tests");
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 1);
 
         save = flowRepository.findByNamespace(null, "io.kestra.tests2");
-        assertThat((long) save.size(), is(1L));
+        assertThat((long) save.size()).isEqualTo(1L);
 
         save = flowRepository.findByNamespace(null, "io.kestra.tests.minimal.bis");
-        assertThat((long) save.size(), is(1L));
+        assertThat((long) save.size()).isEqualTo(1L);
     }
 
     @Test
@@ -220,9 +219,9 @@ public abstract class AbstractFlowRepositoryTest {
 
         try {
             List<FlowWithSource> save = flowRepository.findByNamespaceWithSource(null, flow.getNamespace());
-            assertThat((long) save.size(), is(1L));
+            assertThat((long) save.size()).isEqualTo(1L);
 
-            assertThat(save.getFirst().getSource(), is(FlowService.cleanupSource(flowSource)));
+            assertThat(save.getFirst().getSource()).isEqualTo(FlowService.cleanupSource(flowSource));
         } finally {
             deleteFlow(flow);
         }
@@ -231,40 +230,40 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     protected void find() {
         List<Flow> save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), null, null, null, null, null);
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 1);
 
         save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), null, null, null, null, null);
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT));
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT);
 
         save = flowRepository.find(Pageable.from(1), null, null, null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
-        assertThat((long) save.size(), is(1L));
+        assertThat((long) save.size()).isEqualTo(1L);
 
         save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, null, null, null, Map.of("country", "FR"));
-        assertThat(save.size(), is(1));
+        assertThat(save.size()).isEqualTo(1);
 
         save = flowRepository.find(Pageable.from(1), null, null, null, "io.kestra.tests", Map.of("key2", "value2"));
-        assertThat((long) save.size(), is(1L));
+        assertThat((long) save.size()).isEqualTo(1L);
 
         save = flowRepository.find(Pageable.from(1), null, null, null, "io.kestra.tests", Map.of("key1", "value2"));
-        assertThat((long) save.size(), is(0L));
+        assertThat((long) save.size()).isEqualTo(0L);
     }
 
     @Test
     protected void findSpecialChars() {
         ArrayListTotal<SearchResult<Flow>> save = flowRepository.findSourceCode(Pageable.unpaged(), "https://api.chucknorris.io", null, null);
-        assertThat((long) save.size(), is(2L));
+        assertThat((long) save.size()).isEqualTo(2L);
     }
 
     @Test
     void findWithSource() {
         List<FlowWithSource> save = flowRepository.findWithSource(null, null, null, "io.kestra.tests", Collections.emptyMap());
-        assertThat((long) save.size(), is(Helpers.FLOWS_COUNT - 1));
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 1);
 
         save = flowRepository.findWithSource(null, null, null, "io.kestra.tests2", Collections.emptyMap());
-        assertThat((long) save.size(), is(1L));
+        assertThat((long) save.size()).isEqualTo(1L);
 
         save = flowRepository.findWithSource(null, null, null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
-        assertThat((long) save.size(), is(1L));
+        assertThat((long) save.size()).isEqualTo(1L);
     }
 
     @Test
@@ -274,7 +273,7 @@ public abstract class AbstractFlowRepositoryTest {
         FlowWithSource save = flowRepository.create(GenericFlow.of(flow));
 
         try {
-            assertThat(flowRepository.findById(null, save.getNamespace(), save.getId()).isPresent(), is(true));
+            assertThat(flowRepository.findById(null, save.getNamespace(), save.getId()).isPresent()).isEqualTo(true);
         } catch (Throwable e) {
             deleteFlow(save);
             throw e;
@@ -282,11 +281,11 @@ public abstract class AbstractFlowRepositoryTest {
 
         Flow delete = flowRepository.delete(save);
 
-        assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent(), is(false));
-        assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId(), Optional.of(save.getRevision())).isPresent(), is(true));
+        assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent()).isEqualTo(false);
+        assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId(), Optional.of(save.getRevision())).isPresent()).isEqualTo(true);
 
         List<FlowWithSource> revisions = flowRepository.findRevisions(null, flow.getNamespace(), flow.getId());
-        assertThat(revisions.getLast().getRevision(), is(delete.getRevision()));
+        assertThat(revisions.getLast().getRevision()).isEqualTo(delete.getRevision());
     }
 
     @Test
@@ -303,7 +302,7 @@ public abstract class AbstractFlowRepositoryTest {
         Flow save = flowRepository.create(GenericFlow.of(flow));
 
         try {
-            assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent(), is(true));
+            assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent()).isEqualTo(true);
 
             Flow update = Flow.builder()
                 .id(IdUtils.create())
@@ -318,7 +317,7 @@ public abstract class AbstractFlowRepositoryTest {
                 () -> flowRepository.update(GenericFlow.of(update), flow)
             );
 
-            assertThat(e.getConstraintViolations().size(), is(2));
+            assertThat(e.getConstraintViolations().size()).isEqualTo(2);
         } finally {
             deleteFlow(save);
         }
@@ -340,7 +339,7 @@ public abstract class AbstractFlowRepositoryTest {
 
         flow = flowRepository.create(GenericFlow.of(flow));
         try {
-            assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent(), is(true));
+            assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent()).isEqualTo(true);
 
             Flow update = Flow.builder()
                 .id(flowId)
@@ -350,15 +349,15 @@ public abstract class AbstractFlowRepositoryTest {
             ;
 
             Flow updated = flowRepository.update(GenericFlow.of(update), flow);
-            assertThat(updated.getTriggers(), is(nullValue()));
+            assertThat(updated.getTriggers()).isNull();
         } finally {
             deleteFlow(flow);
         }
 
         Await.until(() -> FlowListener.getEmits().size() == 3, Duration.ofMillis(100), Duration.ofSeconds(5));
-        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count(), is(1L));
-        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.UPDATE).count(), is(1L));
-        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count(), is(1L));
+        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count()).isEqualTo(1L);
+        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.UPDATE).count()).isEqualTo(1L);
+        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count()).isEqualTo(1L);
     }
 
 
@@ -378,20 +377,20 @@ public abstract class AbstractFlowRepositoryTest {
 
         Flow save = flowRepository.create(GenericFlow.of(flow));
         try {
-            assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent(), is(true));
+            assertThat(flowRepository.findById(null, flow.getNamespace(), flow.getId()).isPresent()).isEqualTo(true);
         } finally {
             deleteFlow(save);
         }
 
         Await.until(() -> FlowListener.getEmits().size() == 2, Duration.ofMillis(100), Duration.ofSeconds(5));
-        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count(), is(1L));
-        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count(), is(1L));
+        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count()).isEqualTo(1L);
+        assertThat(FlowListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count()).isEqualTo(1L);
     }
 
     @Test
     void findDistinctNamespace() {
         List<String> distinctNamespace = flowRepository.findDistinctNamespace(null);
-        assertThat((long) distinctNamespace.size(), is(7L));
+        assertThat((long) distinctNamespace.size()).isEqualTo(7L);
     }
 
     @SuppressWarnings("deprecation")
@@ -421,9 +420,9 @@ public abstract class AbstractFlowRepositoryTest {
         try {
             Optional<Flow> found = flowRepository.findById(null, flow.getNamespace(), flow.getId());
 
-            assertThat(found.isPresent(), is(true));
-            assertThat(found.get() instanceof FlowWithException, is(true));
-            assertThat(((FlowWithException) found.get()).getException(), containsString("Templates are disabled"));
+            assertThat(found.isPresent()).isEqualTo(true);
+            assertThat(found.get() instanceof FlowWithException).isEqualTo(true);
+            assertThat(((FlowWithException) found.get()).getException()).contains("Templates are disabled");
         } finally {
             deleteFlow(flow);
         }
@@ -431,7 +430,7 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     protected void shouldReturnNullRevisionForNonExistingFlow() {
-        assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, IdUtils.create()), nullValue());
+        assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, IdUtils.create())).isNull();
     }
 
     @Test
@@ -445,8 +444,8 @@ public abstract class AbstractFlowRepositoryTest {
             Integer result = flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId);
 
             // Then
-            assertThat(result, is(1));
-            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId), is(1));
+            assertThat(result).isEqualTo(1);
+            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId)).isEqualTo(1);
         } finally {
             toDelete.forEach(this::deleteFlow);
         }
@@ -457,13 +456,13 @@ public abstract class AbstractFlowRepositoryTest {
         // Given
         final String flowId = IdUtils.create();
         FlowWithSource created = flowRepository.create(createTestingLogFlow(flowId, "first"));
-        assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size(), is(1));
+        assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size()).isEqualTo(1);
 
         // When
         flowRepository.delete(created);
 
         // Then
-        assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size(), is(2));
+        assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size()).isEqualTo(2);
     }
 
     @Test
@@ -481,8 +480,8 @@ public abstract class AbstractFlowRepositoryTest {
             toDelete.add(flowRepository.create(createTestingLogFlow(flowId, "second")));
 
             // Then
-            assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size(), is(3));
-            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId), is(3));
+            assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size()).isEqualTo(3);
+            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId)).isEqualTo(3);
         } finally {
             toDelete.forEach(this::deleteFlow);
         }
@@ -505,8 +504,8 @@ public abstract class AbstractFlowRepositoryTest {
             flowRepository.delete(updated);
 
             // Then
-            assertThat(flowRepository.findById(TEST_TENANT_ID, TEST_NAMESPACE, flowId, Optional.empty()), is(Optional.empty()));
-            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId), is(nullValue()));
+            assertThat(flowRepository.findById(TEST_TENANT_ID, TEST_NAMESPACE, flowId, Optional.empty())).isEqualTo(Optional.empty());
+            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId)).isNull();
         } finally {
             toDelete.forEach(this::deleteFlow);
         }
@@ -529,8 +528,8 @@ public abstract class AbstractFlowRepositoryTest {
             flowRepository.delete(updated);
 
             // Then
-            assertThat(flowRepository.findById(TEST_TENANT_ID, TEST_NAMESPACE, flowId, Optional.empty()), is(Optional.empty()));
-            assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size(), is(3));
+            assertThat(flowRepository.findById(TEST_TENANT_ID, TEST_NAMESPACE, flowId, Optional.empty())).isEqualTo(Optional.empty());
+            assertThat(flowRepository.findRevisions(TEST_TENANT_ID, TEST_NAMESPACE, flowId).size()).isEqualTo(3);
         } finally {
             toDelete.forEach(this::deleteFlow);
         }
@@ -551,8 +550,8 @@ public abstract class AbstractFlowRepositoryTest {
             toDelete.add(updated);
 
             // Then
-            assertThat(updated.getRevision(), is(2));
-            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId), is(2));
+            assertThat(updated.getRevision()).isEqualTo(2);
+            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId)).isEqualTo(2);
 
         } finally {
             toDelete.forEach(this::deleteFlow);
@@ -574,8 +573,8 @@ public abstract class AbstractFlowRepositoryTest {
             toDelete.add(updated);
 
             // Then
-            assertThat(updated.getRevision(), is(1));
-            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId), is(1));
+            assertThat(updated.getRevision()).isEqualTo(1);
+            assertThat(flowRepository.lastRevision(TEST_TENANT_ID, TEST_NAMESPACE, flowId)).isEqualTo(1);
 
         } finally {
             toDelete.forEach(this::deleteFlow);
@@ -585,8 +584,8 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void shouldReturnForFindGivenQueryWildcard() {
         ArrayListTotal<Flow> flows = flowRepository.find(Pageable.from(1, 10), "*", null, null, null, Map.of());
-        assertThat(flows.size(), is(10));
-        assertThat(flows.getTotal(), is(Helpers.FLOWS_COUNT));
+        assertThat(flows.size()).isEqualTo(10);
+        assertThat(flows.getTotal()).isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test
@@ -595,8 +594,8 @@ public abstract class AbstractFlowRepositoryTest {
            QueryFilter.builder().field(QueryFilter.Field.QUERY).operation(QueryFilter.Op.EQUALS).value("*").build()
         );
         ArrayListTotal<Flow> flows = flowRepository.find(Pageable.from(1, 10), null, filters);
-        assertThat(flows.size(), is(10));
-        assertThat(flows.getTotal(), is(Helpers.FLOWS_COUNT));
+        assertThat(flows.size()).isEqualTo(10);
+        assertThat(flows.getTotal()).isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test
@@ -616,14 +615,14 @@ public abstract class AbstractFlowRepositoryTest {
 
         try {
             Flow full = flowRepository.findByExecution(execution);
-            assertThat(full, notNullValue());
-            assertThat(full.getNamespace(), is(flow.getNamespace()));
-            assertThat(full.getId(), is(flow.getId()));
+            assertThat(full).isNotNull();
+            assertThat(full.getNamespace()).isEqualTo(flow.getNamespace());
+            assertThat(full.getId()).isEqualTo(flow.getId());
 
             full = flowRepository.findByExecutionWithoutAcl(execution);
-            assertThat(full, notNullValue());
-            assertThat(full.getNamespace(), is(flow.getNamespace()));
-            assertThat(full.getId(), is(flow.getId()));
+            assertThat(full).isNotNull();
+            assertThat(full.getNamespace()).isEqualTo(flow.getNamespace());
+            assertThat(full.getId()).isEqualTo(flow.getId());
         } finally {
             deleteFlow(flow);
             executionRepository.delete(execution);
@@ -646,14 +645,14 @@ public abstract class AbstractFlowRepositoryTest {
 
         try {
             Flow full = flowRepository.findByExecution(execution);
-            assertThat(full, notNullValue());
-            assertThat(full.getNamespace(), is(flow.getNamespace()));
-            assertThat(full.getId(), is(flow.getId()));
+            assertThat(full).isNotNull();
+            assertThat(full.getNamespace()).isEqualTo(flow.getNamespace());
+            assertThat(full.getId()).isEqualTo(flow.getId());
 
             full = flowRepository.findByExecutionWithoutAcl(execution);
-            assertThat(full, notNullValue());
-            assertThat(full.getNamespace(), is(flow.getNamespace()));
-            assertThat(full.getId(), is(flow.getId()));
+            assertThat(full).isNotNull();
+            assertThat(full.getNamespace()).isEqualTo(flow.getNamespace());
+            assertThat(full.getId()).isEqualTo(flow.getId());
         } finally {
             deleteFlow(flow);
             executionRepository.delete(execution);
@@ -688,10 +687,10 @@ public abstract class AbstractFlowRepositoryTest {
             toDelete.add(flowRepository.create(GenericFlow.of(createTestFlowForNamespace("com.kestra.unittest"))));
 
             int count = flowRepository.countForNamespace(null, "io.kestra.unittest.shouldcountbynamespacefornulltenant");
-            assertThat(count, is(1));
+            assertThat(count).isEqualTo(1);
 
             count = flowRepository.countForNamespace(null, TEST_NAMESPACE);
-            assertThat(count, is(2));
+            assertThat(count).isEqualTo(2);
         } finally {
             for (FlowWithSource flow : toDelete) {
                 flowRepository.delete(flow);

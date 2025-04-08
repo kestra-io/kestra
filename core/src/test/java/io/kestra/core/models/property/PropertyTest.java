@@ -21,8 +21,7 @@ import java.util.List;
 import java.util.Map;
 
 import static java.util.Map.entry;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -74,16 +73,16 @@ class PropertyTest {
 
         var output = task.run(runContext);
 
-        assertThat(output, notNullValue());
-        assertThat(output.getValue(), is("test - 9 - not-default - PT1M"));
-        assertThat(output.getLevel(), is(Level.INFO));
-        assertThat(output.getList(), containsInAnyOrder("item1", "item2"));
-        assertThat(output.getMap(), aMapWithSize(2));
-        assertThat(output.getMap().get("key1"), is("value1"));
-        assertThat(output.getMap().get("key2"), is("value2"));
-        assertThat(output.getMessages(), hasSize(1));
-        assertThat(output.getMessages().getFirst().getKey(), is("mapKey"));
-        assertThat(output.getMessages().getFirst().getValue(), is("mapValue"));
+        assertThat(output).isNotNull();
+        assertThat(output.getValue()).isEqualTo("test - 9 - not-default - PT1M");
+        assertThat(output.getLevel()).isEqualTo(Level.INFO);
+        assertThat(output.getList()).containsExactlyInAnyOrder("item1", "item2");
+        assertThat(output.getMap()).hasSize(2);
+        assertThat(output.getMap().get("key1")).isEqualTo("value1");
+        assertThat(output.getMap().get("key2")).isEqualTo("value2");
+        assertThat(output.getMessages()).hasSize(1);
+        assertThat(output.getMessages().getFirst().getKey()).isEqualTo("mapKey");
+        assertThat(output.getMessages().getFirst().getValue()).isEqualTo("mapValue");
     }
 
     @Test
@@ -132,18 +131,18 @@ class PropertyTest {
 
         var output = task.run(runContext);
 
-        assertThat(output, notNullValue());
-        assertThat(output.getValue(), is("test - 9 - Default Value - PT1M"));
-        assertThat(output.getLevel(), is(Level.INFO));
-        assertThat(output.getList(), containsInAnyOrder("item1", "item2"));
-        assertThat(output.getMap(), aMapWithSize(2));
-        assertThat(output.getMap().get("key1"), is("value1"));
-        assertThat(output.getMap().get("key2"), is("value2"));
-        assertThat(output.getMessages(), hasSize(2));
-        assertThat(output.getMessages().getFirst().getKey(), is("mapKey1"));
-        assertThat(output.getMessages().getFirst().getValue(), is("mapValue1"));
-        assertThat(output.getMessages().get(1).getKey(), is("mapKey2"));
-        assertThat(output.getMessages().get(1).getValue(), is("mapValue2"));
+        assertThat(output).isNotNull();
+        assertThat(output.getValue()).isEqualTo("test - 9 - Default Value - PT1M");
+        assertThat(output.getLevel()).isEqualTo(Level.INFO);
+        assertThat(output.getList()).containsExactlyInAnyOrder("item1", "item2");
+        assertThat(output.getMap()).hasSize(2);
+        assertThat(output.getMap().get("key1")).isEqualTo("value1");
+        assertThat(output.getMap().get("key2")).isEqualTo("value2");
+        assertThat(output.getMessages()).hasSize(2);
+        assertThat(output.getMessages().getFirst().getKey()).isEqualTo("mapKey1");
+        assertThat(output.getMessages().getFirst().getValue()).isEqualTo("mapValue1");
+        assertThat(output.getMessages().get(1).getKey()).isEqualTo("mapKey2");
+        assertThat(output.getMessages().get(1).getValue()).isEqualTo("mapValue2");
     }
 
     @Test
@@ -189,18 +188,18 @@ class PropertyTest {
 
         var output = task.run(runContext);
 
-        assertThat(output, notNullValue());
-        assertThat(output.getValue(), is("test - 9 - not-default - PT1M"));
-        assertThat(output.getLevel(), is(Level.INFO));
-        assertThat(output.getList(), containsInAnyOrder("item1", "item2"));
-        assertThat(output.getMap(), aMapWithSize(2));
-        assertThat(output.getMap().get("key1"), is("value1"));
-        assertThat(output.getMap().get("key2"), is("value2"));
-        assertThat(output.getMessages(), hasSize(2));
-        assertThat(output.getMessages().getFirst().getKey(), is("key1"));
-        assertThat(output.getMessages().getFirst().getValue(), is("value1"));
-        assertThat(output.getMessages().get(1).getKey(), is("key2"));
-        assertThat(output.getMessages().get(1).getValue(), is("value2"));
+        assertThat(output).isNotNull();
+        assertThat(output.getValue()).isEqualTo("test - 9 - not-default - PT1M");
+        assertThat(output.getLevel()).isEqualTo(Level.INFO);
+        assertThat(output.getList()).containsExactlyInAnyOrder("item1", "item2");
+        assertThat(output.getMap()).hasSize(2);
+        assertThat(output.getMap().get("key1")).isEqualTo("value1");
+        assertThat(output.getMap().get("key2")).isEqualTo("value2");
+        assertThat(output.getMessages()).hasSize(2);
+        assertThat(output.getMessages().getFirst().getKey()).isEqualTo("key1");
+        assertThat(output.getMessages().getFirst().getValue()).isEqualTo("value1");
+        assertThat(output.getMessages().get(1).getKey()).isEqualTo("key2");
+        assertThat(output.getMessages().get(1).getValue()).isEqualTo("value2");
     }
 
     @Test
@@ -265,14 +264,14 @@ class PropertyTest {
         ));
 
         var exception = assertThrows(ConstraintViolationException.class, () -> task.run(runContext));
-        assertThat(exception.getConstraintViolations().size(), is(1));
-        assertThat(exception.getMessage(), is("number: must be greater than or equal to 0"));
+        assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
+        assertThat(exception.getMessage()).isEqualTo("number: must be greater than or equal to 0");
     }
 
     @Test
     void of() {
         var prop = Property.of(TestObj.builder().key("key").value("value").build());
-        assertThat(prop, notNullValue());
+        assertThat(prop).isNotNull();
     }
 
     @Test
@@ -291,11 +290,11 @@ class PropertyTest {
 
         var output = task.run(runContext);
 
-        assertThat(output, notNullValue());
-        assertThat(output.getList(), containsInAnyOrder("arrayValue1", "arrayValue2"));
-        assertThat(output.getMap(), aMapWithSize(2));
-        assertThat(output.getMap().get("mapKey1"), is("mapValue1"));
-        assertThat(output.getMap().get("mapKey2"), is("mapValue2"));
+        assertThat(output).isNotNull();
+        assertThat(output.getList()).containsExactlyInAnyOrder("arrayValue1", "arrayValue2");
+        assertThat(output.getMap()).hasSize(2);
+        assertThat(output.getMap().get("mapKey1")).isEqualTo("mapValue1");
+        assertThat(output.getMap().get("mapKey2")).isEqualTo("mapValue2");
     }
 
     @Test
@@ -318,8 +317,8 @@ class PropertyTest {
 
         var output = task.run(runContext);
 
-        assertThat(output, notNullValue());
-        assertThat(output.getList(), containsInAnyOrder("python test.py --input1 \"item1\" --input2 \"item2\"", "'gs://bucket/table/file_*.csv.gz'"));
+        assertThat(output).isNotNull();
+        assertThat(output.getList()).containsExactlyInAnyOrder("python test.py --input1 \"item1\" --input2 \"item2\"", "'gs://bucket/table/file_*.csv.gz'");
     }
 
     @Builder

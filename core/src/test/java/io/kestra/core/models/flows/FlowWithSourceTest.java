@@ -16,8 +16,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class FlowWithSourceTest {
     @Test
@@ -41,8 +40,8 @@ class FlowWithSourceTest {
 
         String source = flow.getSource();
 
-        assertThat(source, not(containsString("deleted: false")));
-        assertThat(source, containsString("format: |\n"));
+        assertThat(source).doesNotContain("deleted: false");
+        assertThat(source).contains("format: |\n");
     }
 
     @Test
@@ -65,8 +64,8 @@ class FlowWithSourceTest {
 
         String source = flow.getSource();
 
-        assertThat(source, containsString("message: Hello World"));
-        assertThat(source, containsString("  cron: 0 1 9 * * *"));
+        assertThat(source).contains("message: Hello World");
+        assertThat(source).contains("  cron: 0 1 9 * * *");
     }
 
     @SuppressWarnings("deprecation")
@@ -135,7 +134,7 @@ class FlowWithSourceTest {
         String expectedSource = flow.sourceOrGenerateIfNull() + " # additional comment";
         FlowWithSource of = FlowWithSource.of(flow, expectedSource);
 
-        assertThat(of.equalsWithoutRevision(flow), is(true));
-        assertThat(of.getSource(), is(expectedSource));
+        assertThat(of.equalsWithoutRevision(flow)).isEqualTo(true);
+        assertThat(of.getSource()).isEqualTo(expectedSource);
     }
 }

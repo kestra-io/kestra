@@ -192,10 +192,8 @@ subprojects {
             testImplementation "org.junit-pioneer:junit-pioneer"
             testImplementation 'org.mockito:mockito-junit-jupiter'
 
-            // hamcrest
-            testImplementation 'org.hamcrest:hamcrest'
-            testImplementation 'org.hamcrest:hamcrest-library'
-            testImplementation 'org.exparity:hamcrest-date'
+            //assertj
+            testImplementation 'org.assertj:assertj-core'
         }
 
         test {

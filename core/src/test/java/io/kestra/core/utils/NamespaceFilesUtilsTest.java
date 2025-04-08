@@ -26,8 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class NamespaceFilesUtilsTest {
@@ -63,9 +62,9 @@ class NamespaceFilesUtilsTest {
         List<LogEntry> logEntry = TestsUtils.awaitLogs(logs, 1);
         receive.blockLast();
 
-        assertThat(logEntry.getFirst().getMessage(), containsString("Loaded 100 namespace files"));
-        assertThat(runContext.metrics().stream().filter(m -> m.getName().equals("namespacefiles.count")).findFirst().orElseThrow().getValue(), is(100D));
-        assertThat((Duration) runContext.metrics().stream().filter(m -> m.getName().equals("namespacefiles.duration")).findFirst().orElseThrow().getValue(), isA(Duration.class));
+        assertThat(logEntry.getFirst().getMessage()).contains("Loaded 100 namespace files");
+        assertThat(runContext.metrics().stream().filter(m -> m.getName().equals("namespacefiles.count")).findFirst().orElseThrow().getValue()).isEqualTo(100D);
+        assertThat((Duration) runContext.metrics().stream().filter(m -> m.getName().equals("namespacefiles.duration")).findFirst().orElseThrow().getValue()).isInstanceOf(Duration.class);
     }
 
     @Test
@@ -87,9 +86,9 @@ class NamespaceFilesUtilsTest {
         List<LogEntry> logEntry = TestsUtils.awaitLogs(logs, 1);
         receive.blockLast();
 
-        assertThat(logEntry.getFirst().getMessage(), containsString("Loaded 100 namespace files"));
-        assertThat(runContext.metrics().stream().filter(m -> m.getName().equals("namespacefiles.count")).findFirst().orElseThrow().getValue(), is(100D));
-        assertThat((Duration) runContext.metrics().stream().filter(m -> m.getName().equals("namespacefiles.duration")).findFirst().orElseThrow().getValue(), isA(Duration.class));
+        assertThat(logEntry.getFirst().getMessage()).contains("Loaded 100 namespace files");
+        assertThat(runContext.metrics().stream().filter(m -> m.getName().equals("namespacefiles.count")).findFirst().orElseThrow().getValue()).isEqualTo(100D);
+        assertThat((Duration) runContext.metrics().stream().filter(m -> m.getName().equals("namespacefiles.duration")).findFirst().orElseThrow().getValue()).isInstanceOf(Duration.class);
     }
 
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {

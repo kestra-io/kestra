@@ -17,8 +17,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 abstract public class FlowListenersTest {
@@ -52,15 +51,15 @@ abstract public class FlowListenersTest {
 
         // initial state
         wait(ref, () -> {
-            assertThat(count.get(), is(0));
-            assertThat(flowListenersService.flows().size(), is(0));
+            assertThat(count.get()).isEqualTo(0);
+            assertThat(flowListenersService.flows().size()).isEqualTo(0);
         });
 
         // resend on startup done for kafka
         if (flowListenersService.getClass().getName().equals("io.kestra.ee.runner.kafka.KafkaFlowListeners")) {
             wait(ref, () -> {
-                assertThat(count.get(), is(0));
-                assertThat(flowListenersService.flows().size(), is(0));
+                assertThat(count.get()).isEqualTo(0);
+                assertThat(flowListenersService.flows().size()).isEqualTo(0);
             });
         }
 
@@ -71,15 +70,15 @@ abstract public class FlowListenersTest {
 
         flowRepository.create(GenericFlow.of(first));
         wait(ref, () -> {
-            assertThat(count.get(), is(1));
-            assertThat(flowListenersService.flows().size(), is(1));
+            assertThat(count.get()).isEqualTo(1);
+            assertThat(flowListenersService.flows().size()).isEqualTo(1);
         });
 
         // create the same id than first, no additional flows
         first = flowRepository.update(GenericFlow.of(firstUpdated), first);
         wait(ref, () -> {
-            assertThat(count.get(), is(1));
-            assertThat(flowListenersService.flows().size(), is(1));
+            assertThat(count.get()).isEqualTo(1);
+            assertThat(flowListenersService.flows().size()).isEqualTo(1);
             //assertThat(flowListenersService.flows().getFirst().getFirst().getId(), is("test2"));
         });
 
@@ -87,29 +86,29 @@ abstract public class FlowListenersTest {
         // create a new one
         flowRepository.create(GenericFlow.of(second));
         wait(ref, () -> {
-            assertThat(count.get(), is(2));
-            assertThat(flowListenersService.flows().size(), is(2));
+            assertThat(count.get()).isEqualTo(2);
+            assertThat(flowListenersService.flows().size()).isEqualTo(2);
         });
 
         // delete first
         FlowWithSource deleted = flowRepository.delete(first);
         wait(ref, () -> {
-            assertThat(count.get(), is(1));
-            assertThat(flowListenersService.flows().size(), is(1));
+            assertThat(count.get()).isEqualTo(1);
+            assertThat(flowListenersService.flows().size()).isEqualTo(1);
         });
 
         // restore must works
         flowRepository.create(GenericFlow.of(first));
         wait(ref, () -> {
-            assertThat(count.get(), is(2));
-            assertThat(flowListenersService.flows().size(), is(2));
+            assertThat(count.get()).isEqualTo(2);
+            assertThat(flowListenersService.flows().size()).isEqualTo(2);
         });
 
         FlowWithSource withTenant = first.toBuilder().tenantId("some-tenant").build();
         flowRepository.create(GenericFlow.of(withTenant));
         wait(ref, () -> {
-            assertThat(count.get(), is(3));
-            assertThat(flowListenersService.flows().size(), is(3));
+            assertThat(count.get()).isEqualTo(3);
+            assertThat(flowListenersService.flows().size()).isEqualTo(3);
         });
     }
 

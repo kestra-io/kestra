@@ -16,8 +16,7 @@ import java.time.OffsetTime;
 import java.time.ZonedDateTime;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class TimeBetweenTest {
@@ -48,6 +47,6 @@ class TimeBetweenTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(result));
+        assertThat(test).isEqualTo(result);
     }
 }

@@ -21,8 +21,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @WireMockTest(httpPort = 28181)
 class BasicAuthServiceTest {
@@ -59,7 +58,7 @@ class BasicAuthServiceTest {
 
     @Test
     void initFromYamlConfig() throws TimeoutException, QueueException {
-        assertThat(basicAuthService.isEnabled(), is(true));
+        assertThat(basicAuthService.isEnabled()).isEqualTo(true);
 
         assertConfigurationMatchesApplicationYaml();
 
@@ -73,7 +72,7 @@ class BasicAuthServiceTest {
             () -> basicAuthService.save(basicAuthConfiguration.withUsernamePassword("not-an-email", "password"))
         );
 
-        assertThat(illegalArgumentException.getMessage(), is("Invalid username for Basic Authentication. Please provide a valid email address."));
+        assertThat(illegalArgumentException.getMessage()).isEqualTo("Invalid username for Basic Authentication. Please provide a valid email address.");
 
         assertConfigurationMatchesApplicationYaml();
 
@@ -83,20 +82,20 @@ class BasicAuthServiceTest {
 
     @Test
     void unsecure() {
-        assertThat(basicAuthService.isEnabled(), is(true));
+        assertThat(basicAuthService.isEnabled()).isEqualTo(true);
         BasicAuthService.SaltedBasicAuthConfiguration previousConfiguration = basicAuthService.configuration();
 
         basicAuthService.unsecure();
 
-        assertThat(basicAuthService.isEnabled(), is(false));
+        assertThat(basicAuthService.isEnabled()).isEqualTo(false);
         BasicAuthService.SaltedBasicAuthConfiguration newConfiguration = basicAuthService.configuration();
 
 
-        assertThat(newConfiguration.getEnabled(), is(false));
-        assertThat(newConfiguration.getUsername(), is(previousConfiguration.getUsername()));
-        assertThat(newConfiguration.getPassword(), is(previousConfiguration.getPassword()));
-        assertThat(newConfiguration.getRealm(), is(previousConfiguration.getRealm()));
-        assertThat(newConfiguration.getOpenUrls(), is(previousConfiguration.getOpenUrls()));
+        assertThat(newConfiguration.getEnabled()).isEqualTo(false);
+        assertThat(newConfiguration.getUsername()).isEqualTo(previousConfiguration.getUsername());
+        assertThat(newConfiguration.getPassword()).isEqualTo(previousConfiguration.getPassword());
+        assertThat(newConfiguration.getRealm()).isEqualTo(previousConfiguration.getRealm());
+        assertThat(newConfiguration.getOpenUrls()).isEqualTo(previousConfiguration.getOpenUrls());
     }
 
     private void assertConfigurationMatchesApplicationYaml() {
@@ -105,11 +104,11 @@ class BasicAuthServiceTest {
             actualConfiguration.getSalt(),
             basicAuthConfiguration
         );
-        assertThat(actualConfiguration, is(applicationYamlConfiguration));
+        assertThat(actualConfiguration).isEqualTo(applicationYamlConfiguration);
 
         Optional<Setting> maybeSetting = settingRepositoryInterface.findByKey(BasicAuthService.BASIC_AUTH_SETTINGS_KEY);
-        assertThat(maybeSetting.isPresent(), is(true));
-        assertThat(maybeSetting.get().getValue(), is(JacksonMapper.toMap(applicationYamlConfiguration)));
+        assertThat(maybeSetting.isPresent()).isEqualTo(true);
+        assertThat(maybeSetting.get().getValue()).isEqualTo(JacksonMapper.toMap(applicationYamlConfiguration));
     }
 
     private void awaitOssAuthEventApiCall(String email) throws TimeoutException {

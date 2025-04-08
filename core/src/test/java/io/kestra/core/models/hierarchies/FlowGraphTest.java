@@ -31,8 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class FlowGraphTest {
@@ -51,17 +50,17 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/return.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(5));
-        assertThat(flowGraph.getEdges().size(), is(4));
-        assertThat(flowGraph.getClusters().size(), is(0));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(5);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(4);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(0);
 
-        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getTask().getId(), is("date"));
-        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getRelationType(), is(RelationType.SEQUENTIAL));
-        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getValues(), is(nullValue()));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getTask().getId()).isEqualTo("date");
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getValues()).isNull();
 
-        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getTask().getId(), is("task-id"));
-        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getRelationType(), is(RelationType.SEQUENTIAL));
-        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getValues(), is(nullValue()));
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getTask().getId()).isEqualTo("task-id");
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
+        assertThat(((AbstractGraphTask) flowGraph.getNodes().get(3)).getValues()).isNull();
     }
 
     @Test
@@ -69,15 +68,15 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/sequential.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(19));
-        assertThat(flowGraph.getEdges().size(), is(18));
-        assertThat(flowGraph.getClusters().size(), is(3));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(19);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(18);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(3);
 
-        assertThat(edge(flowGraph, ".*1-3-2-1").getTarget(), matchesPattern(".*1-3-2-2_end"));
-        assertThat(edge(flowGraph, ".*1-3-2-1").getRelation().getRelationType(), is(RelationType.SEQUENTIAL));
+        assertThat(edge(flowGraph, ".*1-3-2-1").getTarget()).matches(".*1-3-2-2_end");
+        assertThat(edge(flowGraph, ".*1-3-2-1").getRelation().getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
 
-        assertThat(edge(flowGraph, ".*1-seq").getTarget(), matchesPattern(".*1-1"));
-        assertThat(edge(flowGraph, ".*1-3-2_seq").getTarget(), matchesPattern(".*1-3-2-1"));
+        assertThat(edge(flowGraph, ".*1-seq").getTarget()).matches(".*1-1");
+        assertThat(edge(flowGraph, ".*1-3-2_seq").getTarget()).matches(".*1-3-2-1");
     }
 
     @Test
@@ -85,12 +84,12 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/errors.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(17));
-        assertThat(flowGraph.getEdges().size(), is(17));
-        assertThat(flowGraph.getClusters().size(), is(4));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(17);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(17);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(4);
 
-        assertThat(edge(flowGraph, cluster(flowGraph, "root").getStart(), ".*t2").getRelation().getRelationType(), is(RelationType.ERROR));
-        assertThat(edge(flowGraph, cluster(flowGraph, "root").getStart(), ".*failed").getRelation().getRelationType(), is(nullValue()));
+        assertThat(edge(flowGraph, cluster(flowGraph, "root").getStart(), ".*t2").getRelation().getRelationType()).isEqualTo(RelationType.ERROR);
+        assertThat(edge(flowGraph, cluster(flowGraph, "root").getStart(), ".*failed").getRelation().getRelationType()).isNull();
     }
 
     @Test
@@ -98,16 +97,16 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/parallel.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(12));
-        assertThat(flowGraph.getEdges().size(), is(16));
-        assertThat(flowGraph.getClusters().size(), is(1));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(12);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(16);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(1);
 
-        assertThat(edge(flowGraph, ".*parent", ".*t2").getRelation().getRelationType(), is(RelationType.PARALLEL));
-        assertThat(edge(flowGraph, ".*parent", ".*t6").getRelation().getRelationType(), is(RelationType.PARALLEL));
+        assertThat(edge(flowGraph, ".*parent", ".*t2").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
+        assertThat(edge(flowGraph, ".*parent", ".*t6").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
 
         String parallelEnd = cluster(flowGraph, "root\\.parent").getEnd();
-        assertThat(edge(flowGraph, ".*t1", parallelEnd).getSource(), matchesPattern(".*parent\\.t1"));
-        assertThat(edge(flowGraph, ".*t4", parallelEnd).getSource(), matchesPattern(".*parent\\.t4"));
+        assertThat(edge(flowGraph, ".*t1", parallelEnd).getSource()).matches(".*parent\\.t1");
+        assertThat(edge(flowGraph, ".*t4", parallelEnd).getSource()).matches(".*parent\\.t4");
     }
 
     @Test
@@ -115,13 +114,13 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/parallel-nested.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(19));
-        assertThat(flowGraph.getEdges().size(), is(23));
-        assertThat(flowGraph.getClusters().size(), is(3));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(19);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(23);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(3);
 
-        assertThat(edge(flowGraph, ".*1_par", ".*1-4_end").getRelation().getRelationType(), is(RelationType.PARALLEL));
-        assertThat(edge(flowGraph, ".*1_par", cluster(flowGraph, ".*1-3_par").getStart()).getRelation().getRelationType(), is(RelationType.PARALLEL));
-        assertThat(edge(flowGraph, ".*1-3-2_par", ".*1-3-2-1").getRelation().getRelationType(), is(RelationType.SEQUENTIAL));
+        assertThat(edge(flowGraph, ".*1_par", ".*1-4_end").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
+        assertThat(edge(flowGraph, ".*1_par", cluster(flowGraph, ".*1-3_par").getStart()).getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
+        assertThat(edge(flowGraph, ".*1-3-2_par", ".*1-3-2-1").getRelation().getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
     }
 
     @Test
@@ -129,17 +128,17 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/switch.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(17));
-        assertThat(flowGraph.getEdges().size(), is(20));
-        assertThat(flowGraph.getClusters().size(), is(3));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(17);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(20);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(3);
 
-        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.[^.]*").getRelation().getRelationType(), is(RelationType.CHOICE));
-        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.t3\\.[^.]*").getRelation().getValue(), is("THIRD"));
-        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.t1").getRelation().getRelationType(), is(RelationType.CHOICE));
-        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.t1").getRelation().getValue(), is("FIRST"));
-        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.default").getRelation().getRelationType(), is(RelationType.CHOICE));
-        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.default").getRelation().getValue(), is("defaults"));
-        assertThat(edge(flowGraph, ".*t2", ".*t2_sub").getRelation().getRelationType(), is(RelationType.SEQUENTIAL));
+        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.[^.]*").getRelation().getRelationType()).isEqualTo(RelationType.CHOICE);
+        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.t3\\.[^.]*").getRelation().getValue()).isEqualTo("THIRD");
+        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.t1").getRelation().getRelationType()).isEqualTo(RelationType.CHOICE);
+        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.t1").getRelation().getValue()).isEqualTo("FIRST");
+        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.default").getRelation().getRelationType()).isEqualTo(RelationType.CHOICE);
+        assertThat(edge(flowGraph, ".*parent-seq", ".*parent-seq\\.default").getRelation().getValue()).isEqualTo("defaults");
+        assertThat(edge(flowGraph, ".*t2", ".*t2_sub").getRelation().getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
     }
 
     @Test
@@ -147,12 +146,12 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/each-sequential-nested.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(13));
-        assertThat(flowGraph.getEdges().size(), is(12));
-        assertThat(flowGraph.getClusters().size(), is(2));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(13);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(12);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(2);
 
-        assertThat(edge(flowGraph, ".*1-1_return", cluster(flowGraph, ".*1-2_each").getStart()).getRelation().getRelationType(), is(RelationType.DYNAMIC));
-        assertThat(edge(flowGraph, ".*1-2_each", ".*1-2-1_return").getRelation().getRelationType(), is(RelationType.DYNAMIC));
+        assertThat(edge(flowGraph, ".*1-1_return", cluster(flowGraph, ".*1-2_each").getStart()).getRelation().getRelationType()).isEqualTo(RelationType.DYNAMIC);
+        assertThat(edge(flowGraph, ".*1-2_each", ".*1-2-1_return").getRelation().getRelationType()).isEqualTo(RelationType.DYNAMIC);
     }
 
     @Test
@@ -160,12 +159,12 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/each-parallel-nested.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(11));
-        assertThat(flowGraph.getEdges().size(), is(10));
-        assertThat(flowGraph.getClusters().size(), is(2));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(11);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(10);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(2);
 
-        assertThat(edge(flowGraph, ".*1_each", cluster(flowGraph, ".*2-1_seq").getStart()).getRelation().getRelationType(), is(RelationType.DYNAMIC));
-        assertThat(flowGraph.getClusters().get(1).getNodes().size(), is(5));
+        assertThat(edge(flowGraph, ".*1_each", cluster(flowGraph, ".*2-1_seq").getStart()).getRelation().getRelationType()).isEqualTo(RelationType.DYNAMIC);
+        assertThat(flowGraph.getClusters().get(1).getNodes().size()).isEqualTo(5);
     }
 
     @Test
@@ -173,9 +172,9 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/all-flowable.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(38));
-        assertThat(flowGraph.getEdges().size(), is(42));
-        assertThat(flowGraph.getClusters().size(), is(7));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(38);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(42);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(7);
     }
 
     @Test
@@ -184,18 +183,18 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/parallel.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, execution);
 
-        assertThat(flowGraph.getNodes().size(), is(12));
-        assertThat(flowGraph.getEdges().size(), is(16));
-        assertThat(flowGraph.getClusters().size(), is(1));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(12);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(16);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(1);
 
-        assertThat(edge(flowGraph, ".*parent", ".*t2").getRelation().getRelationType(), is(RelationType.PARALLEL));
-        assertThat(edge(flowGraph, ".*parent", ".*t6").getRelation().getRelationType(), is(RelationType.PARALLEL));
+        assertThat(edge(flowGraph, ".*parent", ".*t2").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
+        assertThat(edge(flowGraph, ".*parent", ".*t6").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
 
-        assertThat(edge(flowGraph, ".*t1", ((GraphCluster) flowGraph.getClusters().getFirst().getCluster()).getEnd().getUid()).getSource(), matchesPattern(".*t1"));
-        assertThat(edge(flowGraph, ".*t4", ((GraphCluster) flowGraph.getClusters().getFirst().getCluster()).getEnd().getUid()).getSource(), matchesPattern(".*t4"));
+        assertThat(edge(flowGraph, ".*t1", ((GraphCluster) flowGraph.getClusters().getFirst().getCluster()).getEnd().getUid()).getSource()).matches(".*t1");
+        assertThat(edge(flowGraph, ".*t4", ((GraphCluster) flowGraph.getClusters().getFirst().getCluster()).getEnd().getUid()).getSource()).matches(".*t4");
 
-        assertThat(((AbstractGraphTask) node(flowGraph, "t1")).getTaskRun(), is(notNullValue()));
-        assertThat(((AbstractGraphTask) node(flowGraph, "t4")).getTaskRun(), is(notNullValue()));
+        assertThat(((AbstractGraphTask) node(flowGraph, "t1")).getTaskRun()).isNotNull();
+        assertThat(((AbstractGraphTask) node(flowGraph, "t4")).getTaskRun()).isNotNull();
     }
 
     @Test
@@ -204,15 +203,15 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/each-sequential.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, execution);
 
-        assertThat(flowGraph.getNodes().size(), is(21));
-        assertThat(flowGraph.getEdges().size(), is(22));
-        assertThat(flowGraph.getClusters().size(), is(4));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(21);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(22);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(4);
 
-        assertThat(edge(flowGraph, ".*1-1_value 1", ".*1-1_value 2").getRelation().getValue(), is("value 2"));
-        assertThat(edge(flowGraph, ".*1-1_value 2", ".*1-1_value 3").getRelation().getValue(), is("value 3"));
-        assertThat(edge(flowGraph, ".*1-2_value 3", cluster(flowGraph, ".*1_each\\.failed", "value 3").getEnd()), is(notNullValue()));
+        assertThat(edge(flowGraph, ".*1-1_value 1", ".*1-1_value 2").getRelation().getValue()).isEqualTo("value 2");
+        assertThat(edge(flowGraph, ".*1-1_value 2", ".*1-1_value 3").getRelation().getValue()).isEqualTo("value 3");
+        assertThat(edge(flowGraph, ".*1-2_value 3", cluster(flowGraph, ".*1_each\\.failed", "value 3").getEnd())).isNotNull();
 
-        assertThat(edge(flowGraph, ".*failed_value 1", ".*1-2_value 1").getTarget(), matchesPattern(".*1-2_value 1"));
+        assertThat(edge(flowGraph, ".*failed_value 1", ".*1-2_value 1").getTarget()).matches(".*1-2_value 1");
     }
 
     @Test
@@ -224,11 +223,11 @@ class FlowGraphTest {
 
         FlowGraph flowGraph = graphService.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(6));
-        assertThat(flowGraph.getEdges().size(), is(5));
-        assertThat(flowGraph.getClusters().size(), is(1));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(6);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(5);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(1);
         AbstractGraph triggerGraph = flowGraph.getNodes().stream().filter(e -> e instanceof GraphTrigger).findFirst().orElseThrow();
-        assertThat(((GraphTrigger) triggerGraph).getTrigger().getDisabled(), is(true));
+        assertThat(((GraphTrigger) triggerGraph).getTrigger().getDisabled()).isEqualTo(true);
     }
 
     @Test
@@ -236,9 +235,9 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/trigger-flow-listener-no-inputs.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(7));
-        assertThat(flowGraph.getEdges().size(), is(7));
-        assertThat(flowGraph.getClusters().size(), is(1));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(7);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(7);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(1);
     }
 
 
@@ -247,16 +246,16 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/dag.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(11));
-        assertThat(flowGraph.getEdges().size(), is(13));
-        assertThat(flowGraph.getClusters().size(), is(1));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(11);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(13);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(1);
 
-        assertThat(edge(flowGraph, ".*root..*", ".*dag.root..*").getRelation().getRelationType(), is(nullValue()));
-        assertThat(edge(flowGraph, ".*root.dag.*", ".*dag.task1.*").getRelation().getRelationType(), is(RelationType.PARALLEL));
-        assertThat(edge(flowGraph, ".*dag.task2.*", ".*dag.task4.*").getRelation().getRelationType(), is(RelationType.PARALLEL));
-        assertThat(edge(flowGraph, ".*dag.task2.*", ".*dag.task6.*").getRelation().getRelationType(), is(RelationType.PARALLEL));
-        assertThat(edge(flowGraph, ".*dag.task6", ".*dag.end.*").getRelation().getRelationType(), is(nullValue()));
-        assertThat(edge(flowGraph, ".*dag.task5", ".*dag.end.*").getRelation().getRelationType(), is(nullValue()));
+        assertThat(edge(flowGraph, ".*root..*", ".*dag.root..*").getRelation().getRelationType()).isNull();
+        assertThat(edge(flowGraph, ".*root.dag.*", ".*dag.task1.*").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
+        assertThat(edge(flowGraph, ".*dag.task2.*", ".*dag.task4.*").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
+        assertThat(edge(flowGraph, ".*dag.task2.*", ".*dag.task6.*").getRelation().getRelationType()).isEqualTo(RelationType.PARALLEL);
+        assertThat(edge(flowGraph, ".*dag.task6", ".*dag.end.*").getRelation().getRelationType()).isNull();
+        assertThat(edge(flowGraph, ".*dag.task5", ".*dag.end.*").getRelation().getRelationType()).isNull();
     }
 
     @Test
@@ -266,29 +265,29 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/task-flow.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(6));
-        assertThat(flowGraph.getEdges().size(), is(5));
-        assertThat(flowGraph.getClusters().size(), is(1));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(6);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(5);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(1);
 
         flowGraph = graphService.flowGraph(flow, Collections.singletonList("root.launch"));
 
-        assertThat(flowGraph.getNodes().size(), is(23));
-        assertThat(flowGraph.getEdges().size(), is(26));
-        assertThat(flowGraph.getClusters().size(), is(5));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(23);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(26);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(5);
 
-        assertThat(((SubflowGraphTask) ((SubflowGraphCluster) cluster(flowGraph, "root\\.launch").getCluster()).getTaskNode()).executableTask().subflowId().flowId(), is("switch"));
+        assertThat(((SubflowGraphTask) ((SubflowGraphCluster) cluster(flowGraph, "root\\.launch").getCluster()).getTaskNode()).executableTask().subflowId().flowId()).isEqualTo("switch");
         SubflowGraphTask subflowGraphTask = (SubflowGraphTask) nodeByUid(flowGraph, "root.launch");
-        assertThat(subflowGraphTask.getTask(), instanceOf(SubflowGraphTask.SubflowTaskWrapper.class));
-        assertThat(subflowGraphTask.getRelationType(), is(RelationType.SEQUENTIAL));
+        assertThat(subflowGraphTask.getTask()).isInstanceOf(SubflowGraphTask.SubflowTaskWrapper.class);
+        assertThat(subflowGraphTask.getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
 
         GraphTask switchNode = (GraphTask) nodeByUid(flowGraph, "root.launch.parent-seq");
-        assertThat(switchNode.getTask(), instanceOf(Switch.class));
-        assertThat(switchNode.getRelationType(), is(RelationType.CHOICE));
+        assertThat(switchNode.getTask()).isInstanceOf(Switch.class);
+        assertThat(switchNode.getRelationType()).isEqualTo(RelationType.CHOICE);
 
         GraphTrigger flowTrigger = (GraphTrigger) nodeByUid(flowGraph, "root.Triggers.schedule");
-        assertThat(flowTrigger.getTriggerDeclaration(), instanceOf(Schedule.class));
+        assertThat(flowTrigger.getTriggerDeclaration()).isInstanceOf(Schedule.class);
         GraphTrigger subflowTrigger = (GraphTrigger) nodeByUid(flowGraph, "root.launch.Triggers.schedule");
-        assertThat(subflowTrigger.getTriggerDeclaration(), instanceOf(Schedule.class));
+        assertThat(subflowTrigger.getTriggerDeclaration()).isInstanceOf(Schedule.class);
     }
 
     @Test
@@ -298,7 +297,7 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/task-flow-dynamic.yaml").toBuilder().revision(1).build();
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> graphService.flowGraph(flow, Collections.singletonList("root.launch")));
-        assertThat(illegalArgumentException.getMessage(), is("Can't expand subflow task 'launch' because namespace and/or flowId contains dynamic values. This can only be viewed on an execution."));
+        assertThat(illegalArgumentException.getMessage()).isEqualTo("Can't expand subflow task 'launch' because namespace and/or flowId contains dynamic values. This can only be viewed on an execution.");
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-flow-dynamic", 1, (f, e) -> Map.of(
             "namespace", f.getNamespace(),
@@ -306,9 +305,9 @@ class FlowGraphTest {
         ));
         FlowGraph flowGraph = graphService.flowGraph(flow, Collections.singletonList("root.launch"), execution);
 
-        assertThat(flowGraph.getNodes().size(), is(20));
-        assertThat(flowGraph.getEdges().size(), is(23));
-        assertThat(flowGraph.getClusters().size(), is(4));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(20);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(23);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(4);
     }
 
     @Test
@@ -316,13 +315,13 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/finally-sequential.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(13));
-        assertThat(flowGraph.getEdges().size(), is(13));
-        assertThat(flowGraph.getClusters().size(), is(2));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(13);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(13);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(2);
 
-        assertThat(edge(flowGraph, ".*seq.finally.*", ".*seq.a1").getRelation().getRelationType(), is(RelationType.SEQUENTIAL));
-        assertThat(edge(flowGraph, ".*seq.a1", ".*seq.a2").getRelation().getRelationType(), is(RelationType.FINALLY));
-        assertThat(edge(flowGraph, ".*seq.a2", ".*seq.end.*").getRelation().getRelationType(), is(nullValue()));
+        assertThat(edge(flowGraph, ".*seq.finally.*", ".*seq.a1").getRelation().getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
+        assertThat(edge(flowGraph, ".*seq.a1", ".*seq.a2").getRelation().getRelationType()).isEqualTo(RelationType.FINALLY);
+        assertThat(edge(flowGraph, ".*seq.a2", ".*seq.end.*").getRelation().getRelationType()).isNull();
     }
 
     @Test
@@ -330,15 +329,15 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/finally-sequential-error.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(15));
-        assertThat(flowGraph.getEdges().size(), is(16));
-        assertThat(flowGraph.getClusters().size(), is(2));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(15);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(16);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(2);
 
-        assertThat(edge(flowGraph, ".*seq.e1", ".*seq.e2").getRelation().getRelationType(), is(RelationType.ERROR));
-        assertThat(edge(flowGraph, ".*seq.e2", ".*seq.finally.*").getRelation().getRelationType(), is(nullValue()));
-        assertThat(edge(flowGraph, ".*seq.finally.*", ".*seq.a1").getRelation().getRelationType(), is(RelationType.SEQUENTIAL));
-        assertThat(edge(flowGraph, ".*seq.a1", ".*seq.a2").getRelation().getRelationType(), is(RelationType.FINALLY));
-        assertThat(edge(flowGraph, ".*seq.a2", ".*seq.end.*").getRelation().getRelationType(), is(nullValue()));
+        assertThat(edge(flowGraph, ".*seq.e1", ".*seq.e2").getRelation().getRelationType()).isEqualTo(RelationType.ERROR);
+        assertThat(edge(flowGraph, ".*seq.e2", ".*seq.finally.*").getRelation().getRelationType()).isNull();
+        assertThat(edge(flowGraph, ".*seq.finally.*", ".*seq.a1").getRelation().getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
+        assertThat(edge(flowGraph, ".*seq.a1", ".*seq.a2").getRelation().getRelationType()).isEqualTo(RelationType.FINALLY);
+        assertThat(edge(flowGraph, ".*seq.a2", ".*seq.end.*").getRelation().getRelationType()).isNull();
     }
 
     @Test
@@ -346,16 +345,16 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/finally-dag.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(17));
-        assertThat(flowGraph.getEdges().size(), is(18));
-        assertThat(flowGraph.getClusters().size(), is(2));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(17);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(18);
+        assertThat(flowGraph.getClusters().size()).isEqualTo(2);
 
-        assertThat(edge(flowGraph, ".*dag.e1", ".*dag.e2").getRelation().getRelationType(), is(RelationType.ERROR));
-        assertThat(edge(flowGraph, ".*dag.e2", ".*dag.finally.*").getRelation().getRelationType(), is(nullValue()));
-        assertThat(edge(flowGraph, ".*dag.t3.end..*", ".*dag.finally.*").getRelation().getRelationType(), is(nullValue()));
-        assertThat(edge(flowGraph, ".*dag.finally.*", ".*dag.a1").getRelation().getRelationType(), is(RelationType.DYNAMIC));
-        assertThat(edge(flowGraph, ".*dag.a1", ".*dag.a2").getRelation().getRelationType(), is(RelationType.DYNAMIC));
-        assertThat(edge(flowGraph, ".*dag.a2", ".*dag.end.*").getRelation().getRelationType(), is(nullValue()));
+        assertThat(edge(flowGraph, ".*dag.e1", ".*dag.e2").getRelation().getRelationType()).isEqualTo(RelationType.ERROR);
+        assertThat(edge(flowGraph, ".*dag.e2", ".*dag.finally.*").getRelation().getRelationType()).isNull();
+        assertThat(edge(flowGraph, ".*dag.t3.end..*", ".*dag.finally.*").getRelation().getRelationType()).isNull();
+        assertThat(edge(flowGraph, ".*dag.finally.*", ".*dag.a1").getRelation().getRelationType()).isEqualTo(RelationType.DYNAMIC);
+        assertThat(edge(flowGraph, ".*dag.a1", ".*dag.a2").getRelation().getRelationType()).isEqualTo(RelationType.DYNAMIC);
+        assertThat(edge(flowGraph, ".*dag.a2", ".*dag.end.*").getRelation().getRelationType()).isNull();
     }
 
     @Test
@@ -363,12 +362,12 @@ class FlowGraphTest {
         FlowWithSource flow = this.parse("flows/valids/after-execution.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
-        assertThat(flowGraph.getNodes().size(), is(5));
-        assertThat(flowGraph.getEdges().size(), is(4));
+        assertThat(flowGraph.getNodes().size()).isEqualTo(5);
+        assertThat(flowGraph.getEdges().size()).isEqualTo(4);
 
-        assertThat(edge(flowGraph, "root.root.*", "root.hello.*"), notNullValue());
-        assertThat(edge(flowGraph, "root.hello.*", "root.after-execution.*"), notNullValue());
-        assertThat(edge(flowGraph, "root.after-execution.*", "root.end.*"), notNullValue());
+        assertThat(edge(flowGraph, "root.root.*", "root.hello.*")).isNotNull();
+        assertThat(edge(flowGraph, "root.hello.*", "root.after-execution.*")).isNotNull();
+        assertThat(edge(flowGraph, "root.after-execution.*", "root.end.*")).isNotNull();
     }
 
     private FlowWithSource parse(String path) throws IOException {

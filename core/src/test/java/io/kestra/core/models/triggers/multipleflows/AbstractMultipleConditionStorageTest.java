@@ -20,8 +20,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public abstract class AbstractMultipleConditionStorageTest {
@@ -39,13 +38,13 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
 
-        assertThat(window.getStart().toLocalTime(), is(LocalTime.parse("00:00:00")));
-        assertThat(window.getStart().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
+        assertThat(window.getStart().toLocalTime()).isEqualTo(LocalTime.parse("00:00:00"));
+        assertThat(window.getStart().toLocalDate()).isEqualTo(ZonedDateTime.now().toLocalDate());
 
-        assertThat(window.getEnd().toLocalTime(), is(LocalTime.parse("23:59:59.999")));
-        assertThat(window.getEnd().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
+        assertThat(window.getEnd().toLocalTime()).isEqualTo(LocalTime.parse("23:59:59.999"));
+        assertThat(window.getEnd().toLocalDate()).isEqualTo(ZonedDateTime.now().toLocalDate());
     }
 
     @Test
@@ -56,13 +55,13 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
 
-        assertThat(window.getStart().toLocalTime(), is(LocalTime.parse("00:00:00")));
-        assertThat(window.getStart().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
+        assertThat(window.getStart().toLocalTime()).isEqualTo(LocalTime.parse("00:00:00"));
+        assertThat(window.getStart().toLocalDate()).isEqualTo(ZonedDateTime.now().toLocalDate());
 
-        assertThat(window.getEnd().toLocalTime(), is(LocalTime.parse("23:59:59.999")));
-        assertThat(window.getEnd().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
+        assertThat(window.getEnd().toLocalTime()).isEqualTo(LocalTime.parse("23:59:59.999"));
+        assertThat(window.getEnd().toLocalDate()).isEqualTo(ZonedDateTime.now().toLocalDate());
     }
 
     @Test
@@ -73,13 +72,13 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
 
-        assertThat(window.getStart().toLocalTime(), is(LocalTime.parse("20:00:00")));
-        assertThat(window.getStart().toLocalDate(), is(ZonedDateTime.now().minusDays(1).toLocalDate()));
+        assertThat(window.getStart().toLocalTime()).isEqualTo(LocalTime.parse("20:00:00"));
+        assertThat(window.getStart().toLocalDate()).isEqualTo(ZonedDateTime.now().minusDays(1).toLocalDate());
 
-        assertThat(window.getEnd().toLocalTime(), is(LocalTime.parse("19:59:59.999")));
-        assertThat(window.getEnd().toLocalDate(), is(ZonedDateTime.now().toLocalDate()));
+        assertThat(window.getEnd().toLocalTime()).isEqualTo(LocalTime.parse("19:59:59.999"));
+        assertThat(window.getEnd().toLocalDate()).isEqualTo(ZonedDateTime.now().toLocalDate());
     }
 
     @Test
@@ -90,14 +89,14 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
 
-        assertThat(window.getStart().toLocalTime().getHour(), is(ZonedDateTime.now().minusHours(4).getHour()));
-        assertThat(window.getStart().toLocalDate(), is(ZonedDateTime.now().minusHours(4).toLocalDate()));
+        assertThat(window.getStart().toLocalTime().getHour()).isEqualTo(ZonedDateTime.now().minusHours(4).getHour());
+        assertThat(window.getStart().toLocalDate()).isEqualTo(ZonedDateTime.now().minusHours(4).toLocalDate());
 
-        assertThat(window.getEnd().toLocalTime().getHour(), is(ZonedDateTime.now().minusHours(4).getHour()));
-        assertThat(window.getEnd().toLocalTime().getMinute(), is(59));
-        assertThat(window.getEnd().toLocalDate(), is(ZonedDateTime.now().minusHours(4).toLocalDate()));
+        assertThat(window.getEnd().toLocalTime().getHour()).isEqualTo(ZonedDateTime.now().minusHours(4).getHour());
+        assertThat(window.getEnd().toLocalTime().getMinute()).isEqualTo(59);
+        assertThat(window.getEnd().toLocalDate()).isEqualTo(ZonedDateTime.now().minusHours(4).toLocalDate());
     }
 
     @Test
@@ -108,9 +107,9 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
-        assertThat(window.getStart().getMinute(), is(in(Arrays.asList(10, 25, 40, 55))));
-        assertThat(window.getEnd().getMinute(), is(in(Arrays.asList(9, 24, 39, 54))));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
+        assertThat(window.getStart().getMinute()).isIn(Arrays.asList(10, 25, 40, 55));
+        assertThat(window.getEnd().getMinute()).isIn(Arrays.asList(9, 24, 39, 54));
     }
 
     @Test
@@ -121,20 +120,17 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
         this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
-        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
         window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getResults().get("a"), is(true));
+        assertThat(window.getResults().get("a")).isEqualTo(true);
 
         Thread.sleep(2005);
 
         MultipleConditionWindow next = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(
-            next.getStart().format(DateTimeFormatter.ISO_DATE_TIME),
-            is(not(window.getStart().format(DateTimeFormatter.ISO_DATE_TIME)))
-        );
-        assertThat(next.getResults().containsKey("a"), is(false));
+        assertThat(next.getStart().format(DateTimeFormatter.ISO_DATE_TIME)).isNotEqualTo(window.getStart().format(DateTimeFormatter.ISO_DATE_TIME));
+        assertThat(next.getResults().containsKey("a")).isEqualTo(false);
     }
 
     @Test
@@ -145,18 +141,18 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
         this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
-        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
         window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getResults().get("a"), is(true));
+        assertThat(window.getResults().get("a")).isEqualTo(true);
 
         List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
-        assertThat(expired.size(), is(0));
+        assertThat(expired.size()).isEqualTo(0);
 
         Thread.sleep(2005);
 
         expired = multipleConditionStorage.expired(null);
-        assertThat(expired.size(), is(1));
+        assertThat(expired.size()).isEqualTo(1);
     }
 
     @Test
@@ -167,18 +163,18 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
         this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
-        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
         window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getResults().get("a"), is(true));
+        assertThat(window.getResults().get("a")).isEqualTo(true);
 
         List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
-        assertThat(expired.size(), is(0));
+        assertThat(expired.size()).isEqualTo(0);
 
         Thread.sleep(2005);
 
         expired = multipleConditionStorage.expired(null);
-        assertThat(expired.size(), is(1));
+        assertThat(expired.size()).isEqualTo(1);
     }
 
     @Test
@@ -189,13 +185,13 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
         this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
-        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
         window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getResults(), anEmptyMap());
+        assertThat(window.getResults()).isEmpty();
 
         List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
-        assertThat(expired.size(), is(1));
+        assertThat(expired.size()).isEqualTo(1);
     }
 
     @Test
@@ -207,13 +203,13 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
         this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
-        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
         window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getResults().get("a"), is(true));
+        assertThat(window.getResults().get("a")).isEqualTo(true);
 
         List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
-        assertThat(expired.size(), is(0));
+        assertThat(expired.size()).isEqualTo(0);
     }
 
     @Test
@@ -224,13 +220,13 @@ public abstract class AbstractMultipleConditionStorageTest {
 
         MultipleConditionWindow window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
         this.save(multipleConditionStorage, pair.getLeft(), Collections.singletonList(window.with(ImmutableMap.of("a", true))));
-        assertThat(window.getFlowId(), is(pair.getLeft().getId()));
+        assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
         window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getResults().get("a"), is(true));
+        assertThat(window.getResults().get("a")).isEqualTo(true);
 
         List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
-        assertThat(expired.size(), is(0));
+        assertThat(expired.size()).isEqualTo(0);
     }
 
     private static Pair<Flow, MultipleCondition> mockFlow(TimeWindow sla) {

@@ -105,7 +105,7 @@ export function useHelpers() {
             name: "files",
             title: t("files"),
             component: EditorView,
-            props: {namespace, isNamespace: true, isReadOnly: false},
+            props: {namespace, isNamespace: true, isReadOnly: false, maximized: true},
         },
     ];
 

@@ -1,5 +1,5 @@
 <template>
-    <el-dropdown v-if="enabled">
+    <el-dropdown v-if="enabled" placement="bottom-end">
         <el-button type="default" :icon="Circle" @click="kill(true)">
             {{ $t("kill") }}
         </el-button>
@@ -75,8 +75,10 @@
         border-color: var(--ks-border-error);
         color: var(--ks-content-error);
     }
-    :deep(.el-dropdown-menu__item){
-        &:hover{
+    .m-dropdown-menu {
+        width: fit-content !important;
+        
+        :deep(.el-dropdown-menu__item:hover) {
             background-color: var(--ks-log-background-error) !important;
             color: var(--ks-content-error) !important;
         }

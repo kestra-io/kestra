@@ -175,7 +175,8 @@
                         props: {
                             expandedSubflows: this.expandedSubflows,
                             isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
-                            beta: localStorage.getItem("multiPanelEditor") === "true"
+                            beta: localStorage.getItem("multiPanelEditor") === "true",
+                            maximized: true
                         },
                     });
                 }

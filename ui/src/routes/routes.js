@@ -52,8 +52,9 @@ export default [
     {name: "logs/list", path: "/:tenant?/logs", component: () => import("../components/logs/LogsWrapper.vue")},
 
     //Namespaces
-    {name: "namespaces", path: "/:tenant?/namespaces", component: () => import("../components/namespace/Namespaces.vue")},
-    {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespace/Namespace.vue")},
+    {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("../components/namespaces/Namespaces.vue")},
+    {name: "namespaces/create", path: "/:tenant?/namespaces/new/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
+    {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
 
     //Docs
     {name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: () => import("../components/docs/Docs.vue"), meta: {layout: OnlyLeftMenuLayout}},

@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.runners.*;
@@ -42,7 +43,7 @@ public interface QueueFactoryInterface {
 
     QueueInterface<MetricEntry> metricEntry();
 
-    QueueInterface<FlowWithSource> flow();
+    QueueInterface<FlowInterface> flow();
 
     QueueInterface<ExecutionKilled> kill();
 

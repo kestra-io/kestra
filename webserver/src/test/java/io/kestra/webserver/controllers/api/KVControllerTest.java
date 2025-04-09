@@ -1,8 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -70,12 +68,12 @@ class KVControllerTest {
 
         List<KVEntry> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv"), Argument.of(List.class, KVEntry.class));
         res.stream().forEach(entry -> {
-            assertThat(entry.creationDate().isAfter(before) && entry.creationDate().isBefore(after), is(true));
-            assertThat(entry.updateDate().isAfter(before) && entry.updateDate().isBefore(after), is(true));
+            assertThat(entry.creationDate().isAfter(before) && entry.creationDate().isBefore(after)).isEqualTo(true);
+            assertThat(entry.updateDate().isAfter(before) && entry.updateDate().isBefore(after)).isEqualTo(true);
         });
 
-        assertThat(res.stream().filter(entry -> entry.key().equals("my-key")).findFirst().get().expirationDate(), is(myKeyExpirationDate));
-        assertThat(res.stream().filter(entry -> entry.key().equals("my-second-key")).findFirst().get().expirationDate(), is(mySecondKeyExpirationDate));
+        assertThat(res.stream().filter(entry -> entry.key().equals("my-key")).findFirst().get().expirationDate()).isEqualTo(myKeyExpirationDate);
+        assertThat(res.stream().filter(entry -> entry.key().equals("my-second-key")).findFirst().get().expirationDate()).isEqualTo(mySecondKeyExpirationDate);
     }
 
     static Stream<Arguments> kvGetArgs() {
@@ -107,15 +105,15 @@ class KVControllerTest {
         );
 
         String res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key"), String.class);
-        assertThat(res, containsString("\"type\":\"" + expectedType + "\""));
-        assertThat(res, containsString("\"value\":" + expectedValue));
+        assertThat(res).contains("\"type\":\"" + expectedType + "\"");
+        assertThat(res).contains("\"value\":" + expectedValue);
     }
 
     @Test
     void getNotFound() {
         HttpClientResponseException httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key")));
-        assertThat(httpClientResponseException.getStatus(), is(HttpStatus.NOT_FOUND));
-        assertThat(httpClientResponseException.getMessage(), is("Not Found: No value found for key 'my-key' in namespace '" + NAMESPACE + "'"));
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(httpClientResponseException.getMessage()).isEqualTo("Not Found: No value found for key 'my-key' in namespace '" + NAMESPACE + "'");
     }
 
     @Test
@@ -131,8 +129,8 @@ class KVControllerTest {
         );
 
         HttpClientResponseException httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key")));
-        assertThat(httpClientResponseException.getStatus().getCode(), is(HttpStatus.GONE.getCode()));
-        assertThat(httpClientResponseException.getMessage(), is("Resource has expired: The requested value has expired"));
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.GONE.getCode());
+        assertThat(httpClientResponseException.getMessage()).isEqualTo("Resource has expired: The requested value has expired");
     }
 
     static Stream<Arguments> kvPutArgs() {
@@ -157,13 +155,13 @@ class KVControllerTest {
 
         KVStore kvStore = new InternalKVStore(null, NAMESPACE, storageInterface);
         Class<?> valueClazz = kvStore.getValue("my-key").get().value().getClass();
-        assertThat("Expected value to be a " + expectedClass + " but was " + valueClazz, expectedClass.isAssignableFrom(valueClazz), is(true));
+        assertThat(expectedClass.isAssignableFrom(valueClazz)).as("Expected value to be a " + expectedClass + " but was " + valueClazz).isEqualTo(true);
 
         List<KVEntry> list = kvStore.list();
-        assertThat(list.size(), is(1));
+        assertThat(list.size()).isEqualTo(1);
         KVEntry kvEntry = list.get(0);
-        assertThat(kvEntry.expirationDate().isAfter(Instant.now().plus(Duration.ofMinutes(4))), is(true));
-        assertThat(kvEntry.expirationDate().isBefore(Instant.now().plus(Duration.ofMinutes(6))), is(true));
+        assertThat(kvEntry.expirationDate().isAfter(Instant.now().plus(Duration.ofMinutes(4)))).isEqualTo(true);
+        assertThat(kvEntry.expirationDate().isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isEqualTo(true);
     }
 
     @Test
@@ -178,10 +176,10 @@ class KVControllerTest {
             )
         );
 
-        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key")), is(true));
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isEqualTo(true);
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key"));
 
-        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key")), is(false));
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isEqualTo(false);
     }
 
     @Test
@@ -196,7 +194,7 @@ class KVControllerTest {
                 new ByteArrayInputStream("\"content\"".getBytes())
             )
         );
-        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key")), is(true));
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isEqualTo(true);
 
         // When
         HttpResponse<ApiDeleteBulkResponse> response = client.toBlocking()
@@ -217,7 +215,7 @@ class KVControllerTest {
         // Then
         Assertions.assertEquals(HttpStatus.OK, response.getStatus());
         Assertions.assertEquals(new ApiDeleteBulkResponse(List.of()), response.body());
-        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key")), is(false));
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isEqualTo(false);
     }
 
     @Test
@@ -225,16 +223,16 @@ class KVControllerTest {
         String expectedErrorMessage = "Illegal argument: Key must start with an alphanumeric character (uppercase or lowercase) and can contain alphanumeric characters (uppercase or lowercase), dots (.), underscores (_), and hyphens (-) only.";
 
         HttpClientResponseException httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv/bad$key")));
-        assertThat(httpClientResponseException.getStatus().getCode(), is(HttpStatus.UNPROCESSABLE_ENTITY.getCode()));
-        assertThat(httpClientResponseException.getMessage(), Matchers.is(expectedErrorMessage));
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
 
         httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.PUT("/api/v1/namespaces/" + NAMESPACE + "/kv/bad$key", "\"content\"").contentType(MediaType.APPLICATION_JSON)));
-        assertThat(httpClientResponseException.getStatus().getCode(), is(HttpStatus.UNPROCESSABLE_ENTITY.getCode()));
-        assertThat(httpClientResponseException.getMessage(), Matchers.is(expectedErrorMessage));
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
 
         httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/kv/bad$key")));
-        assertThat(httpClientResponseException.getStatus().getCode(), is(HttpStatus.UNPROCESSABLE_ENTITY.getCode()));
-        assertThat(httpClientResponseException.getMessage(), Matchers.is(expectedErrorMessage));
+        assertThat(httpClientResponseException.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
+        assertThat(httpClientResponseException.getMessage()).isEqualTo(expectedErrorMessage);
     }
 
     private URI toKVUri(String namespace, String key) {

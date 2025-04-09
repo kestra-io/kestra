@@ -9,9 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class JsonStringTest {
@@ -30,11 +28,11 @@ class JsonStringTest {
     void jsonString() throws Exception {
         JsonStringCls build = new JsonStringCls("{}");
 
-        assertThat(modelValidator.isValid(build).isEmpty(), is(true));
+        assertThat(modelValidator.isValid(build).isEmpty()).isEqualTo(true);
 
         build = new JsonStringCls("{\"invalid\"}");
 
-        assertThat(modelValidator.isValid(build).isPresent(), is(true));
-        assertThat(modelValidator.isValid(build).get().getMessage(), containsString("invalid json"));
+        assertThat(modelValidator.isValid(build).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).get().getMessage()).contains("invalid json");
     }
 }

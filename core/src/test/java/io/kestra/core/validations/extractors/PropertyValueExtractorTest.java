@@ -1,7 +1,6 @@
 package io.kestra.core.validations.extractors;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.kestra.core.models.property.Property;
@@ -27,9 +26,9 @@ public class PropertyValueExtractorTest {
 
         dto = new DynamicPropertyDto(Property.of(5), Property.of("Test"));
         violations = validator.validate(dto);
-        assertThat(violations.size(), is(1));
+        assertThat(violations.size()).isEqualTo(1);
         ConstraintViolation<DynamicPropertyDto> violation = violations.stream().findFirst().get();
-        assertThat(violation.getMessage(), is("must be greater than or equal to 10"));
+        assertThat(violation.getMessage()).isEqualTo("must be greater than or equal to 10");
     }
 
 }

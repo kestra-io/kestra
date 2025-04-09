@@ -26,7 +26,7 @@
 
     import {useRoute} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
-    import KestraUtils, {useTheme} from "../../../../../utils/utils.js"
+    import KestraUtils, {useTheme} from "../../../../../utils/utils"
     import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
 
     const store = useStore();
@@ -37,7 +37,7 @@
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: Number, required: true},
+        identifier: {type: [Number, String], required: true},
         chart: {type: Object, required: true},
         isPreview: {type: Boolean, required: false, default: false}
     });

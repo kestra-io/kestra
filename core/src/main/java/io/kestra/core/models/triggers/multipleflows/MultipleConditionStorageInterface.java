@@ -1,6 +1,7 @@
 package io.kestra.core.models.triggers.multipleflows;
 
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.TimeWindow;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -15,11 +16,11 @@ import java.util.Optional;
 import static io.kestra.core.models.triggers.TimeWindow.Type.DURATION_WINDOW;
 
 public interface MultipleConditionStorageInterface {
-    Optional<MultipleConditionWindow> get(Flow flow, String conditionId);
+    Optional<MultipleConditionWindow> get(FlowId flow, String conditionId);
 
     List<MultipleConditionWindow> expired(String tenantId);
 
-    default MultipleConditionWindow getOrCreate(Flow flow, MultipleCondition multipleCondition, Map<String, Object> outputs) {
+    default MultipleConditionWindow getOrCreate(FlowId flow, MultipleCondition multipleCondition, Map<String, Object> outputs) {
         ZonedDateTime now = ZonedDateTime.now().withNano(0);
         TimeWindow timeWindow = multipleCondition.getTimeWindow() != null ? multipleCondition.getTimeWindow() : TimeWindow.builder().build();
 

@@ -9,8 +9,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class FilesServiceTest {
@@ -25,21 +24,21 @@ class FilesServiceTest {
         FilesService.inputFiles(runContext, Map.of("file.txt", "overriden content"));
 
         String fileContent = FileUtils.readFileToString(runContext.workingDir().path().resolve("file.txt").toFile(), "UTF-8");
-        assertThat(fileContent, is("overriden content"));
+        assertThat(fileContent).isEqualTo("overriden content");
     }
 
     @Test
     void renderInputFile() throws Exception {
         RunContext runContext = runContextFactory.of(Map.of("filename", "file.txt", "content", "Hello World"));
         Map<String, String> content = FilesService.inputFiles(runContext, Map.of("{{filename}}", "{{content}}"));
-        assertThat(content.get("file.txt"), is("Hello World"));
+        assertThat(content.get("file.txt")).isEqualTo("Hello World");
     }
 
     @Test
     void renderRawFile() throws Exception {
         RunContext runContext = runContextFactory.of(Map.of("filename", "file.txt", "content", "Hello World"));
         Map<String, String> content = FilesService.inputFiles(runContext, Map.of("{{filename}}", "{% raw %}{{content}}{% endraw %}"));
-        assertThat(content.get("file.txt"), is("{{content}}"));
+        assertThat(content.get("file.txt")).isEqualTo("{{content}}");
     }
 
     @Test
@@ -48,7 +47,7 @@ class FilesServiceTest {
         Map<String, String> files = FilesService.inputFiles(runContext, Map.of("file.txt", "content"));
 
         Map<String, URI> outputs = FilesService.outputFiles(runContext, files.keySet().stream().toList());
-        assertThat(outputs.size(), is(1));
+        assertThat(outputs.size()).isEqualTo(1);
     }
 
     @Test
@@ -57,6 +56,6 @@ class FilesServiceTest {
         Map<String, String> files = FilesService.inputFiles(runContext, Map.of("file.txt", "content"));
 
         Map<String, URI> outputs = FilesService.outputFiles(runContext, List.of("*.{{extension}}"));
-        assertThat(outputs.size(), is(1));
+        assertThat(outputs.size()).isEqualTo(1);
     }
 }

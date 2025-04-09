@@ -7,9 +7,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class InputTest {
@@ -24,7 +22,7 @@ class InputTest {
             .validator("[A-Z]+")
             .build();
 
-        assertThat(modelValidator.isValid(validInput).isEmpty(), is(true));
+        assertThat(modelValidator.isValid(validInput).isEmpty()).isEqualTo(true);
     }
 
     @SuppressWarnings("deprecation")
@@ -36,8 +34,8 @@ class InputTest {
             .type(Type.STRING)
             .build();
 
-        assertThat(validInput.getId(), is(id));
-        assertThat(validInput.getName(), nullValue());
+        assertThat(validInput.getId()).isEqualTo(id);
+        assertThat(validInput.getName()).isNull();
 
         String newName = "newName";
         validInput = StringInput.builder()
@@ -46,7 +44,7 @@ class InputTest {
 
         validInput.setName(newName);
 
-        assertThat(validInput.getName(), is(newName));
-        assertThat(validInput.getId(), is(newName));
+        assertThat(validInput.getName()).isEqualTo(newName);
+        assertThat(validInput.getId()).isEqualTo(newName);
     }
 }

@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
@@ -87,8 +88,8 @@ public class PostgresQueueFactory implements QueueFactoryInterface {
     @Singleton
     @Named(QueueFactoryInterface.FLOW_NAMED)
     @Bean(preDestroy = "close")
-    public QueueInterface<FlowWithSource> flow() {
-        return new PostgresQueue<>(FlowWithSource.class, applicationContext);
+    public QueueInterface<FlowInterface> flow() {
+        return new PostgresQueue<>(FlowInterface.class, applicationContext);
     }
 
     @Override

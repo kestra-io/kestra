@@ -55,7 +55,7 @@ export default {
             commit("setFlowYamlOrigin", state.flowYaml);
             return dispatch("saveWithoutRevisionGuard");
         },
-        async save({getters, dispatch, commit, state, rootState}, {content}){
+        async save({getters, dispatch, commit, state, rootState}, {content, namespace}){
             if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
                 return;
             }
@@ -85,7 +85,7 @@ export default {
                 if(!currentTab.dirty) return;
 
                 await dispatch("namespace/createFile", {
-                    namespace: getters.namespace,
+                    namespace: namespace ?? getters.namespace,
                     path: currentTab.path ?? currentTab.name,
                     content,
                 }, {root: true});
@@ -764,31 +764,6 @@ export default {
                 const errors = [...flowExistsError, ...constraintsError];
 
                 return errors.length === 0 ? undefined : errors;
-            }
-
-            return undefined;
-        },
-        flowWarnings(state, getters){
-            if (getters.isFlow) {
-                const outdatedWarning =
-                    state.flowValidation?.outdated && !state.isCreating
-                        ? [getters.outdatedMessage]
-                        : [];
-
-                const deprecationWarnings =
-                    state.flowValidation?.deprecationPaths?.map(
-                        (f) => `${f} ${this.$i18n.t("is deprecated")}.`
-                    ) ?? [];
-
-                const otherWarnings = state.flowValidation?.warnings ?? [];
-
-                const warnings = [
-                    ...outdatedWarning,
-                    ...deprecationWarnings,
-                    ...otherWarnings,
-                ];
-
-                return warnings.length === 0 ? undefined : warnings;
             }
 
             return undefined;

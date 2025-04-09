@@ -2,8 +2,8 @@
     <nav data-component="FILENAME_PLACEHOLDER" class="d-flex w-100 gap-3 top-bar">
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <el-breadcrumb v-if="breadcrumb">
-                <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x">
-                    <router-link :to="item.link">
+                <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
+                    <router-link :to="!item.disabled ? item.link : {}">
                         {{ item.label }}
                     </router-link>
                 </el-breadcrumb-item>
@@ -192,7 +192,7 @@
                 }
             }
 
-            :slotted(ul) {
+            :slotted(ul), :deep(ul) {
                 display: flex;
                 list-style: none;
                 padding: 0;

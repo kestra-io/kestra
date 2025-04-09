@@ -172,10 +172,11 @@
                         component: FlowEditor,
                         title: this.$t("edit"),
                         containerClass: "full-container",
+                        maximized: true,
                         props: {
                             expandedSubflows: this.expandedSubflows,
                             isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
-                            beta: localStorage.getItem("multiPanelEditor") === "true"
+                            beta: localStorage.getItem("multiPanelEditor") === "true",
                         },
                     });
                 }

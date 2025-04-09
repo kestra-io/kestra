@@ -12,8 +12,7 @@ import org.junit.jupiter.api.Test;
 import java.io.FileNotFoundException;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -34,7 +33,7 @@ class StateTest {
         ));
 
         Get.Output getOutput = get.run(runContext);
-        assertThat(getOutput.getCount(), is(0));
+        assertThat(getOutput.getCount()).isEqualTo(0);
 
         Set set = Set.builder()
             .id(IdUtils.create())
@@ -44,15 +43,15 @@ class StateTest {
             )))
             .build();
         Set.Output setOutput = set.run(runContext);
-        assertThat(setOutput.getCount(), is(1));
+        assertThat(setOutput.getCount()).isEqualTo(1);
 
         get = Get.builder()
             .id(IdUtils.create())
             .type(Get.class.toString())
             .build();
         getOutput = get.run(runContext);
-        assertThat(getOutput.getCount(), is(1));
-        assertThat(getOutput.getData().get("test"), is("1"));
+        assertThat(getOutput.getCount()).isEqualTo(1);
+        assertThat(getOutput.getData().get("test")).isEqualTo("1");
 
         set = Set.builder()
             .id(IdUtils.create())
@@ -64,7 +63,7 @@ class StateTest {
             .build();
 
         setOutput = set.run(runContext);
-        assertThat(setOutput.getCount(), is(2));
+        assertThat(setOutput.getCount()).isEqualTo(2);
 
         get = Get.builder()
             .id(IdUtils.create())
@@ -73,9 +72,9 @@ class StateTest {
 
         getOutput = get.run(runContext);
 
-        assertThat(getOutput.getCount(), is(2));
-        assertThat(getOutput.getData().get("test"), is("2"));
-        assertThat(getOutput.getData().get("test2"), is("3"));
+        assertThat(getOutput.getCount()).isEqualTo(2);
+        assertThat(getOutput.getData().get("test")).isEqualTo("2");
+        assertThat(getOutput.getData().get("test2")).isEqualTo("3");
 
         Delete delete = Delete.builder()
             .id(IdUtils.create())
@@ -83,7 +82,7 @@ class StateTest {
             .build();
 
         Delete.Output deleteRun = delete.run(runContext);
-        assertThat(deleteRun.getDeleted(), is(true));
+        assertThat(deleteRun.getDeleted()).isEqualTo(true);
 
 
         get = Get.builder()
@@ -93,7 +92,7 @@ class StateTest {
 
         getOutput = get.run(runContext);
 
-        assertThat(getOutput.getCount(), is(0));
+        assertThat(getOutput.getCount()).isEqualTo(0);
     }
 
     @Test

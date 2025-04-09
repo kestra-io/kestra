@@ -42,7 +42,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
-import org.exparity.hamcrest.date.ZonedDateTimeMatchers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.slf4j.event.Level;
@@ -61,8 +60,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
@@ -112,26 +112,26 @@ class RunContextTest {
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
 
-        assertThat(execution.getTaskRunList(), hasSize(5));
+        assertThat(execution.getTaskRunList()).hasSize(5);
 
         matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().getFirst().getId()));
-        assertThat(matchingLog, notNullValue());
-        assertThat(matchingLog.getLevel(), is(Level.TRACE));
-        assertThat(matchingLog.getMessage(), is("first t1"));
+        assertThat(matchingLog).isNotNull();
+        assertThat(matchingLog.getLevel()).isEqualTo(Level.TRACE);
+        assertThat(matchingLog.getMessage()).isEqualTo("first t1");
 
         matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().get(1).getId()));
-        assertThat(matchingLog, notNullValue());
-        assertThat(matchingLog.getLevel(), is(Level.WARN));
-        assertThat(matchingLog.getMessage(), is("second io.kestra.plugin.core.log.Log"));
+        assertThat(matchingLog).isNotNull();
+        assertThat(matchingLog.getLevel()).isEqualTo(Level.WARN);
+        assertThat(matchingLog.getMessage()).isEqualTo("second io.kestra.plugin.core.log.Log");
 
         matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().get(2).getId()));
-        assertThat(matchingLog, notNullValue());
-        assertThat(matchingLog.getLevel(), is(Level.ERROR));
-        assertThat(matchingLog.getMessage(), is("third logs"));
+        assertThat(matchingLog).isNotNull();
+        assertThat(matchingLog.getLevel()).isEqualTo(Level.ERROR);
+        assertThat(matchingLog.getMessage()).isEqualTo("third logs");
 
         matchingLog = TestsUtils.awaitLog(logs, log -> Objects.equals(log.getTaskRunId(), execution.getTaskRunList().get(3).getId()));
         receive.blockLast();
-        assertThat(matchingLog, nullValue());
+        assertThat(matchingLog).isNull();
     }
 
     @Test
@@ -154,28 +154,27 @@ class RunContextTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(10));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(10);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         List<LogEntry> logEntries = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getTaskRunId() != null && logEntry.getTaskRunId().equals(execution.getTaskRunList().get(1).getId()), count -> count > 3);
         receive.blockLast();
         logEntries.sort(Comparator.comparingLong(value -> value.getTimestamp().toEpochMilli()));
 
-        assertThat(logEntries.getFirst().getTimestamp().toEpochMilli(), is(logEntries.get(1).getTimestamp().toEpochMilli()));
+        assertThat(logEntries.getFirst().getTimestamp().toEpochMilli()).isEqualTo(logEntries.get(1).getTimestamp().toEpochMilli());
     }
 
     @Test
     @ExecuteFlow("flows/valids/return.yaml")
     void variables(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(3));
+        assertThat(execution.getTaskRunList()).hasSize(3);
 
-        assertThat(
-            ZonedDateTime.from(ZonedDateTime.parse((String) execution.getTaskRunList().getFirst().getOutputs().get("value"))),
-            ZonedDateTimeMatchers.within(10, ChronoUnit.SECONDS, ZonedDateTime.now())
-        );
-        assertThat(execution.getTaskRunList().get(1).getOutputs().get("value"), is("task-id"));
-        assertThat(execution.getTaskRunList().get(2).getOutputs().get("value"), is("return"));
+        assertThat(ZonedDateTime.parse((String) execution.getTaskRunList().getFirst().getOutputs().get("value")))
+            .isCloseTo(ZonedDateTime.now(), within(10, ChronoUnit.SECONDS));
+
+        assertThat(execution.getTaskRunList().get(1).getOutputs().get("value")).isEqualTo("task-id");
+        assertThat(execution.getTaskRunList().get(2).getOutputs().get("value")).isEqualTo("return");
     }
 
     @Test
@@ -196,7 +195,7 @@ class RunContextTest {
         p.destroy();
 
         URI uri = runContext.storage().putFile(path.toFile());
-        assertThat(storageInterface.getAttributes(null, null, uri).getSize(), is(size + 1));
+        assertThat(storageInterface.getAttributes(null, null, uri).getSize()).isEqualTo(size + 1);
     }
 
     @Test
@@ -214,16 +213,16 @@ class RunContextTest {
         runContext.metric(Counter.of("counter", 123D, "key", "value"));
         runContext.metric(Timer.of("duration", Duration.ofSeconds(123), "key", "value"));
 
-        assertThat(runContext.metrics().get(runContext.metrics().indexOf(counter)).getValue(), is(42D));
-        assertThat(metricRegistry.counter("counter").count(), is(42D));
-        assertThat(runContext.metrics().get(runContext.metrics().indexOf(timer)).getValue(), is(Duration.ofSeconds(42)));
-        assertThat(metricRegistry.timer("duration").totalTime(TimeUnit.SECONDS), is(42D));
+        assertThat(runContext.metrics().get(runContext.metrics().indexOf(counter)).getValue()).isEqualTo(42D);
+        assertThat(metricRegistry.counter("counter").count()).isEqualTo(42D);
+        assertThat(runContext.metrics().get(runContext.metrics().indexOf(timer)).getValue()).isEqualTo(Duration.ofSeconds(42));
+        assertThat(metricRegistry.timer("duration").totalTime(TimeUnit.SECONDS)).isEqualTo(42D);
 
-        assertThat(runContext.metrics().get(2).getValue(), is(123D));
-        assertThat(runContext.metrics().get(2).getTags().size(), is(1));
+        assertThat(runContext.metrics().get(2).getValue()).isEqualTo(123D);
+        assertThat(runContext.metrics().get(2).getTags().size()).isEqualTo(1);
 
-        assertThat(runContext.metrics().get(3).getValue(), is(Duration.ofSeconds(123)));
-        assertThat(runContext.metrics().get(3).getTags().size(), is(1));
+        assertThat(runContext.metrics().get(3).getValue()).isEqualTo(Duration.ofSeconds(123));
+        assertThat(runContext.metrics().get(3).getTags().size()).isEqualTo(1);
     }
 
     @Test
@@ -235,25 +234,25 @@ class RunContextTest {
         String encrypted = runContext.encrypt(plainText);
         String decrypted = EncryptionService.decrypt(secretKey, encrypted);
 
-        assertThat(encrypted, not(plainText));
-        assertThat(decrypted, is(plainText));
+        assertThat(encrypted).isNotEqualTo(plainText);
+        assertThat(decrypted).isEqualTo(plainText);
     }
 
     @SuppressWarnings("unchecked")
     @Test
     @ExecuteFlow("flows/valids/encrypted-string.yaml")
     void encryptedStringOutput(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
         TaskRun hello = execution.findTaskRunsByTaskId("hello").getFirst();
         Map<String, String> valueOutput = (Map<String, String>) hello.getOutputs().get("value");
-        assertThat(valueOutput.size(), is(2));
-        assertThat(valueOutput.get("type"), is(EncryptedString.TYPE));
+        assertThat(valueOutput.size()).isEqualTo(2);
+        assertThat(valueOutput.get("type")).isEqualTo(EncryptedString.TYPE);
         // the value is encrypted so it's not the plaintext value of the task property
-        assertThat(valueOutput.get("value"), not("Hello World"));
+        assertThat(valueOutput.get("value")).isNotEqualTo("Hello World");
         TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst();
         // the output is automatically decrypted so the return has the decrypted value of the hello task output
-        assertThat(returnTask.getOutputs().get("value"), is("Hello World"));
+        assertThat(returnTask.getOutputs().get("value")).isEqualTo("Hello World");
     }
 
     @Test
@@ -263,7 +262,7 @@ class RunContextTest {
 
         RunContext runContext = runContextFactory.of(flow, execution);
 
-        assertThat(runContext.render("{{inputs.test}}"), is("test"));
+        assertThat(runContext.render("{{inputs.test}}")).isEqualTo("test");
     }
 
     @Test
@@ -273,7 +272,7 @@ class RunContextTest {
 
         RunContext runContext = runContextFactory.of(flow, execution);
 
-        assertThat(runContext.render("{{inputs.test}}"), is("test"));
+        assertThat(runContext.render("{{inputs.test}}")).isEqualTo("test");
     }
 
     @Test
@@ -284,13 +283,13 @@ class RunContextTest {
         ));
 
         Map<String, String> rendered = runContext.renderMap(Map.of("{{key}}", "{{value}}"));
-        assertThat(rendered.get("default"), is("default"));
+        assertThat(rendered.get("default")).isEqualTo("default");
 
         rendered = runContext.renderMap(Map.of("{{key}}", "{{value}}"), Map.of(
             "key", "key",
             "value", "value"
         ));
-        assertThat(rendered.get("key"), is("value"));
+        assertThat(rendered.get("key")).isEqualTo("value");
     }
 
 
@@ -320,7 +319,7 @@ class RunContextTest {
 
         matchingLog = TestsUtils.awaitLogs(logs, 3);
         receive.blockLast();
-        assertThat(Objects.requireNonNull(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null)).getMessage(), is("john ******** doe"));
+        assertThat(Objects.requireNonNull(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null)).getMessage()).isEqualTo("john ******** doe");
     }
 
     @Test

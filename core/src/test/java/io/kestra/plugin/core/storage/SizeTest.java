@@ -13,8 +13,7 @@ import java.util.Random;
 
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class SizeTest {
@@ -44,6 +43,6 @@ class SizeTest {
             .build();
 
         Size.Output run = bash.run(runContext);
-        assertThat(run.getSize(), is(size));
+        assertThat(run.getSize()).isEqualTo(size);
     }
 }

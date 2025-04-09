@@ -22,7 +22,10 @@
                             role="tab"
                             :class="{active: tab.value === panel.activeTab?.value}"
                             draggable="true"
-                            @dragstart="() => dragstart(panelIndex, tab.value)"
+                            @dragstart="(e) => {
+                                e.dataTransfer.effectAllowed = 'move';
+                                dragstart(panelIndex, tab.value);
+                            }"
                             @dragleave.prevent
                             :data-tab-id="tab.value"
                             @click="panel.activeTab = tab"
@@ -246,7 +249,6 @@
         if(!movedTabInfo.value){
             return
         }
-        console.log("drop")
 
         // find potential tab in panels.value tabs
         const potentialTabPanelIndex = panels.value.findIndex((panel) => panel.tabs.some((tab) => tab.potential));

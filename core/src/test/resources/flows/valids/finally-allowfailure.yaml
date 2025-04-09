@@ -3,7 +3,7 @@ namespace: io.kestra.tests
 
 inputs:
   - id: failed
-    type: BOOLEAN
+    type: BOOL
     defaults: false
 
 tasks:

@@ -21,7 +21,7 @@ plugins {
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "6.0.1.5171"
+    id "org.sonarqube" version "6.1.0.5360"
     id 'jacoco-report-aggregation'
 
     // helper
@@ -39,7 +39,7 @@ plugins {
     id 'ru.vyarus.github-info' version '2.0.0' apply false
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.1.0" apply false
+    id "org.owasp.dependencycheck" version "12.1.1" apply false
 }
 
 idea {
@@ -196,6 +196,9 @@ subprojects {
             testImplementation 'org.hamcrest:hamcrest'
             testImplementation 'org.hamcrest:hamcrest-library'
             testImplementation 'org.exparity:hamcrest-date'
+
+            //assertj
+            testImplementation 'org.assertj:assertj-core'
         }
 
         test {

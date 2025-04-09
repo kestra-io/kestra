@@ -19,8 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class StatsControllerTest {
@@ -38,7 +37,7 @@ class StatsControllerTest {
             Argument.listOf(DailyExecutionStatistics.class)
         );
 
-        assertThat(dailyStatistics, notNullValue());
+        assertThat(dailyStatistics).isNotNull();
     }
 
     @Test
@@ -50,7 +49,7 @@ class StatsControllerTest {
             Argument.listOf(LogStatistics.class)
         );
 
-        assertThat(dailyStatistics, notNullValue());
+        assertThat(dailyStatistics).isNotNull();
     }
 
     @Test
@@ -62,7 +61,7 @@ class StatsControllerTest {
             Argument.listOf(Execution.class)
         );
 
-        assertThat(dailyStatistics, notNullValue());
+        assertThat(dailyStatistics).isNotNull();
     }
 
 
@@ -75,7 +74,7 @@ class StatsControllerTest {
             Argument.listOf(Execution.class)
         );
 
-        assertThat(dailyStatistics, notNullValue());
+        assertThat(dailyStatistics).isNotNull();
     }
 
     @Test
@@ -92,7 +91,7 @@ class StatsControllerTest {
         );
 
         // Then
-        assertThat(response, notNullValue());
+        assertThat(response).isNotNull();
     }
 
     @Test
@@ -109,7 +108,7 @@ class StatsControllerTest {
         );
 
         // Then
-        assertThat(response, notNullValue());
+        assertThat(response).isNotNull();
     }
 
 }

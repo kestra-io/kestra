@@ -16,7 +16,7 @@
     import {ILanguageFeaturesService} from "monaco-editor/esm/vs/editor/common/services/languageFeatures"
     import {StandaloneServices} from "monaco-editor/esm/vs/editor/standalone/browser/standaloneServices"
     import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-    import {editor, IPosition, languages} from "monaco-editor/esm/vs/editor/editor.api";
+    import {editor as MonacoAPIEditor, IPosition, languages} from "monaco-editor/esm/vs/editor/editor.api";
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import YamlWorker from "./yaml.worker.js?worker";
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
@@ -28,7 +28,7 @@
     import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider.js";
     import RegexProvider from "../../utils/regex";
     import uniqBy from "lodash/uniqBy";
-    import IModel = editor.IModel;
+    import IModel = MonacoAPIEditor.IModel;
     import CompletionList = languages.CompletionList;
     import ProviderResult = languages.ProviderResult;
     import CompletionItem = languages.CompletionItem;
@@ -238,10 +238,6 @@
         }
     });
 
-    const monacoYamlConfigured = computed(() => {
-        return store.state.core.monacoYamlConfigured;
-    });
-
     onMounted(async function () {
         // assign monaco so that it gets available outside of monacoeditor
 
@@ -249,7 +245,7 @@
             initMonaco()
         })
 
-        if (!monacoYamlConfigured.value && props.language === "yaml") {
+        if (!store.state.core.monacoYamlConfigured && props.language === "yaml") {
             store.commit("core/setMonacoYamlConfigured", true);
             configureMonacoYaml(monaco, {
                 enableSchemaRequest: true,

@@ -23,7 +23,9 @@
                             :class="{active: tab.value === panel.activeTab?.value}"
                             draggable="true"
                             @dragstart="(e) => {
-                                e.dataTransfer.effectAllowed = 'move';
+                                if(e.dataTransfer){
+                                    e.dataTransfer.effectAllowed = 'move';
+                                }
                                 dragstart(panelIndex, tab.value);
                             }"
                             @dragleave.prevent

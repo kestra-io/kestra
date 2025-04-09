@@ -25,8 +25,8 @@ const render: Story["render"] = ({modelValue}) => ({
         modelValueRef.value = modelValue;
         return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-background-body)">
             <MultiPanelTabs modelValue={modelValueRef.value} />
-            <pre>{JSON.stringify(modelValueRef.value.map(p => ({
-                tabs:p.tabs.map(t => t.value),
+            <pre>{JSON.stringify(modelValueRef.value.map((p:any) => ({
+                tabs:p.tabs.map((t:any) => t.value),
                 size: p.size ? Math.round(p.size) : "<undefined>",
             })))}</pre>
         </div>

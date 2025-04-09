@@ -8,6 +8,10 @@ $code-border-color: var(--ks-border-primary);
 $code-font-sm: var(--el-font-size-small);
 
 .no-code {
+    :deep(.ks-monaco-editor){
+        overflow-x: hidden;
+    }
+
     &::-webkit-scrollbar {
         height: 5px;
         width: 5px;

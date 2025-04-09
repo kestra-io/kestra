@@ -18,9 +18,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -40,7 +38,7 @@ class ReadFileFunctionTest {
         storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello from {{ flow.namespace }}".getBytes()));
 
         String render = variableRenderer.render("{{ render(read('" + filePath + "')) }}", Map.of("flow", Map.of("namespace", namespace)));
-        assertThat(render, is("Hello from " + namespace));
+        assertThat(render).isEqualTo("Hello from " + namespace);
     }
 
     @Test
@@ -51,13 +49,13 @@ class ReadFileFunctionTest {
         storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello but not from flow.namespace".getBytes()));
 
         String render = variableRenderer.render("{{ read('" + filePath + "', namespace='" + namespace + "') }}", Map.of("flow", Map.of("namespace", "flow.namespace")));
-        assertThat(render, is("Hello but not from flow.namespace"));
+        assertThat(render).isEqualTo("Hello but not from flow.namespace");
     }
 
     @Test
     void readUnknownNamespaceFile() {
         IllegalVariableEvaluationException illegalVariableEvaluationException = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", Map.of("flow", Map.of("namespace", "io.kestra.tests"))));
-        assertThat(illegalVariableEvaluationException.getCause().getCause().getClass(), is(FileNotFoundException.class));
+        assertThat(illegalVariableEvaluationException.getCause().getCause().getClass()).isEqualTo(FileNotFoundException.class);
     }
 
     @Test
@@ -78,7 +76,7 @@ class ReadFileFunctionTest {
         );
 
         String render = variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables);
-        assertThat(render, is("Hello from a task output"));
+        assertThat(render).isEqualTo("Hello from a task output");
 
         // test for an authorized parent execution (execution trigger)
         variables = Map.of(
@@ -94,7 +92,7 @@ class ReadFileFunctionTest {
         );
 
         render = variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables);
-        assertThat(render, is("Hello from a task output"));
+        assertThat(render).isEqualTo("Hello from a task output");
     }
 
     @Test
@@ -116,7 +114,7 @@ class ReadFileFunctionTest {
         );
 
         String render = variableRenderer.render("{{ read(file) }}", variables);
-        assertThat(render, is("Hello from a task output"));
+        assertThat(render).isEqualTo("Hello from a task output");
 
         // test for an authorized parent execution (execution trigger)
         variables = Map.of(
@@ -132,7 +130,7 @@ class ReadFileFunctionTest {
         );
 
         render = variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables);
-        assertThat(render, is("Hello from a task output"));
+        assertThat(render).isEqualTo("Hello from a task output");
     }
 
     @Test
@@ -151,7 +149,7 @@ class ReadFileFunctionTest {
         );
 
         String render = variableRenderer.render("{{ read('" + internalStorageFile + "') }}", variables);
-        assertThat(render, is("Hello from a task output"));
+        assertThat(render).isEqualTo("Hello from a task output");
     }
 
     @Test
@@ -159,6 +157,6 @@ class ReadFileFunctionTest {
     @Disabled("Moved on the next release")
     void readFailOnNonWorkerNodes() {
         IllegalVariableEvaluationException exception = assertThrows(IllegalVariableEvaluationException.class, () -> variableRenderer.render("{{ read('unknown.txt') }}", Map.of("flow", Map.of("namespace", "io.kestra.tests"))));
-        assertThat(exception.getMessage(), containsString("The 'read' function can only be used in the Worker as it access the internal storage."));
+        assertThat(exception.getMessage()).contains("The 'read' function can only be used in the Worker as it access the internal storage.");
     }
 }

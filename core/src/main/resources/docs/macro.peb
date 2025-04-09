@@ -24,9 +24,9 @@ This property is currently in beta. While it is considered safe for use, please 
 * **Type:** {{ type(data) -}}
 {%- elseif data['$ref'] -%}
 * **Type:** {{ type(data) }}
-{%- elseif data.oneOf != null -%}
+{%- elseif data.anyOf != null -%}
 * **Type:**
-{%- for current in data.oneOf %}
+{%- for current in data.anyOf %}
   * {{ type(current) -}}
 {%- endfor -%}
 {%- else -%}
@@ -50,8 +50,8 @@ This property is currently in beta. While it is considered safe for use, please 
         {%- else -%}
             {%- set dynamic = "❌" -%}
         {% endif -%}
-    {%- elseif data.oneOf != null -%}
-        {%- for current in data.oneOf -%}
+    {%- elseif data.anyOf != null -%}
+        {%- for current in data.anyOf -%}
             {%- if current['$dynamic'] == true -%}
                 {%- set dynamic = "✔️" -%}
             {%- else -%}

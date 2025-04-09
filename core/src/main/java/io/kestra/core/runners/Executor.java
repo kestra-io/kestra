@@ -2,7 +2,6 @@ package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;

@@ -68,6 +68,7 @@ jobs:
           list-suites: 'failed'
           list-tests: 'failed'
           fail-on-error: 'false'
+          token: ${{ secrets.GITHUB_AUTH_TOKEN }}
 
       # Sonar
       - name: Test - Analyze with Sonar

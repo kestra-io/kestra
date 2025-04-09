@@ -245,7 +245,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         even if an image with the same tag already exists."""
     )
     @Builder.Default
-    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.ALWAYS);
+    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.IF_NOT_PRESENT);
 
     @Schema(
         title = "A list of device requests to be sent to device drivers."

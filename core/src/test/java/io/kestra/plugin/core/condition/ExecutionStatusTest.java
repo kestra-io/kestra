@@ -2,6 +2,7 @@ package io.kestra.plugin.core.condition;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.junit.annotations.KestraTest;
+import io.kestra.core.models.property.Property;
 import org.junit.jupiter.api.Test;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
@@ -13,8 +14,7 @@ import java.util.Collections;
 
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ExecutionStatusTest {
@@ -27,12 +27,12 @@ class ExecutionStatusTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionStatus build = ExecutionStatus.builder()
-            .in(Collections.singletonList(State.Type.SUCCESS))
+            .in(Property.of(Collections.singletonList(State.Type.SUCCESS)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 
     @Test
@@ -41,12 +41,12 @@ class ExecutionStatusTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionStatus build = ExecutionStatus.builder()
-            .notIn(Collections.singletonList(State.Type.SUCCESS))
+            .notIn(Property.of(Collections.singletonList(State.Type.SUCCESS)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
     }
 
     @Test
@@ -55,12 +55,12 @@ class ExecutionStatusTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionStatus build = ExecutionStatus.builder()
-            .in(Collections.singletonList(State.Type.CREATED))
-            .notIn(Collections.singletonList(State.Type.SUCCESS))
+            .in(Property.of(Collections.singletonList(State.Type.CREATED)))
+            .notIn(Property.of(Collections.singletonList(State.Type.SUCCESS)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 }

@@ -80,7 +80,7 @@ REM Java options that Kestra engineers think are best for Kestra, they should be
 REM -XX:MaxRAMPercentage=50.0: configure max heap to 50% of available RAM (default 25%)
 SET "KESTRA_JAVA_OPTS=-XX:MaxRAMPercentage=50.0"
 
-java %KESTRA_JAVA_OPTS %JAVA_OPTS% %JAVA_ADD_OPENS% -Djava.security.manager=allow -jar "%this%" %*
+java %KESTRA_JAVA_OPTS% %JAVA_OPTS% %JAVA_ADD_OPENS% -Djava.security.manager=allow -jar "%this%" %*
 
 ENDLOCAL
 

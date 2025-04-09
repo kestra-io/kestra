@@ -120,6 +120,13 @@
                 <el-radio-button :label="$t('false')" :value="false" />
                 <el-radio-button :label="$t('undefined')" value="undefined" />
             </el-radio-group>
+            <el-switch
+                :data-test-id="`input-form-${input.id}`"
+                v-if="input.type === 'BOOL'"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
+                class="w-100 boolean-inputs"
+            />
             <el-date-picker
                 :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'DATETIME'"

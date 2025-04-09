@@ -22,9 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class SplitTest {
@@ -46,9 +44,9 @@ class SplitTest {
 
         Split.Output run = result.run(runContext);
 
-        assertThat(run.getUris().size(), is(8));
-        assertThat(run.getUris().getFirst().getPath(), endsWith(".yml"));
-        assertThat(StringUtils.countMatches(readAll(run.getUris()), "\n"), is(1000));
+        assertThat(run.getUris().size()).isEqualTo(8);
+        assertThat(run.getUris().getFirst().getPath()).endsWith(".yml");
+        assertThat(StringUtils.countMatches(readAll(run.getUris()), "\n")).isEqualTo(1000);
     }
 
     @Test
@@ -63,8 +61,8 @@ class SplitTest {
 
         Split.Output run = result.run(runContext);
 
-        assertThat(run.getUris().size(), is(100));
-        assertThat(readAll(run.getUris()), is(String.join("\n", content(1000)) + "\n"));
+        assertThat(run.getUris().size()).isEqualTo(100);
+        assertThat(readAll(run.getUris())).isEqualTo(String.join("\n", content(1000)) + "\n");
     }
 
     @Test
@@ -79,8 +77,8 @@ class SplitTest {
 
         Split.Output run = result.run(runContext);
 
-        assertThat(run.getUris().size(), is(251));
-        assertThat(readAll(run.getUris()), is(String.join("\n", content(12288)) + "\n"));
+        assertThat(run.getUris().size()).isEqualTo(251);
+        assertThat(readAll(run.getUris())).isEqualTo(String.join("\n", content(12288)) + "\n");
     }
 
     private List<String> content(int count) {

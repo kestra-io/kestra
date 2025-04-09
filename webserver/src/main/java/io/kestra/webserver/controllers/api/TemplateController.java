@@ -244,7 +244,7 @@ public class TemplateController {
                 ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
                 try {
-                    Template templateParse = new YamlParser().<Template>parse(template, Template.class);
+                    Template templateParse = YamlParser.parse(template, Template.class);
 
                     validateConstraintViolationBuilder.flow(templateParse.getId());
                     validateConstraintViolationBuilder.namespace(templateParse.getNamespace());
@@ -354,7 +354,7 @@ public class TemplateController {
         if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
-                Template parsed = new YamlParser().parse(source, Template.class);
+                Template parsed = YamlParser.parse(source, Template.class);
                 importTemplate(parsed);
             }
         } else if (fileName.endsWith(".zip")) {
@@ -366,7 +366,7 @@ public class TemplateController {
                     }
 
                     String source = new String(archive.readAllBytes());
-                    Template parsed = new YamlParser().parse(source, Template.class);
+                    Template parsed = YamlParser.parse(source, Template.class);
                     importTemplate(parsed);
                 }
             }

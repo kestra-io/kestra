@@ -21,7 +21,7 @@ dependencies {
     def kafkaVersion = "3.9.0"
     def opensearchVersion = "2.22.0"
     def opensearchRestVersion = "2.19.1"
-    def flyingSaucerVersion = "9.11.4"
+    def flyingSaucerVersion = "9.11.5"
     def jacksonVersion = "2.18.3"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
@@ -32,9 +32,9 @@ dependencies {
     api platform("io.micronaut.platform:micronaut-platform:4.7.6")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.57.0')
-    api platform("com.azure:azure-sdk-bom:1.2.32")
-    api platform('software.amazon.awssdk:bom:2.31.6')
+    api platform('com.google.cloud:libraries-bom:26.59.0')
+    api platform("com.azure:azure-sdk-bom:1.2.33")
+    api platform('software.amazon.awssdk:bom:2.31.16')
 
 
     constraints {
@@ -49,6 +49,7 @@ dependencies {
         // ugly hack on crypto plugin
         api("org.bouncycastle:bcprov-jdk18on:$bouncycastleVersion")
         api("org.bouncycastle:bcpg-jdk18on:$bouncycastleVersion")
+        api("org.bouncycastle:bcpkix-jdk18on:$bouncycastleVersion")
         // ugly hack for jackson: as enforcing platform didn't work (it didn't enforce everywhere, not in plugins), we had to force all jackson libs individually.
         api("com.fasterxml.jackson.core:jackson-core:$jacksonVersion")
         api("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
@@ -68,7 +69,7 @@ dependencies {
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.36.3'
+        api 'software.amazon.awssdk.crt:aws-crt:0.37.0'
 
         // we need at least 0.14, it could be removed when Micronaut contains a recent only version in their BOM
         api "io.micrometer:micrometer-core:1.14.5"
@@ -82,7 +83,7 @@ dependencies {
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
         api group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
         api group: 'net.thisptr', name: 'jackson-jq', version: '1.2.0'
-        api group: 'com.google.guava', name: 'guava', version: '33.4.0-jre'
+        api group: 'com.google.guava', name: 'guava', version: '33.4.6-jre'
         api group: 'commons-io', name: 'commons-io', version: '2.18.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.17.0'
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
@@ -93,7 +94,7 @@ dependencies {
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-file', version: mavenResolverVersion
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-http', version: mavenResolverVersion
         api 'com.github.oshi:oshi-core:6.8.0'
-        api 'io.pebbletemplates:pebble:3.2.3'
+        api 'io.pebbletemplates:pebble:3.2.4'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion
         api group: 'de.focus-shift', name: 'jollyday-jaxb', version: jollydayVersion
@@ -125,7 +126,7 @@ dependencies {
         api 'org.codehaus.plexus:plexus-utils:3.0.24' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244
 
         // for jOOQ to the same version as we use in EE
-        api ("org.jooq:jooq:3.20.2")
+        api ("org.jooq:jooq:3.20.3")
 
         // Tests
         api "org.junit-pioneer:junit-pioneer:2.3.0"

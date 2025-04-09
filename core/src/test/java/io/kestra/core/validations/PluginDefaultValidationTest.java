@@ -11,8 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class PluginDefaultValidationTest {
@@ -27,7 +26,7 @@ class PluginDefaultValidationTest {
 
         Optional<ConstraintViolationException> validate = modelValidator.isValid(pluginDefault);
 
-        assertThat(validate.isPresent(), is(true));
+        assertThat(validate.isPresent()).isEqualTo(true);
     }
 
     @Test
@@ -41,7 +40,7 @@ class PluginDefaultValidationTest {
 
         Optional<ConstraintViolationException> validate = modelValidator.isValid(pluginDefault);
 
-        assertThat(validate.isPresent(), is(true));
+        assertThat(validate.isPresent()).isEqualTo(true);
     }
 
     @Test
@@ -53,7 +52,7 @@ class PluginDefaultValidationTest {
 
         Optional<ConstraintViolationException> validate = modelValidator.isValid(pluginDefault);
 
-        assertThat(validate.isPresent(), is(true));
+        assertThat(validate.isPresent()).isEqualTo(true);
     }
 
     @Test
@@ -65,7 +64,7 @@ class PluginDefaultValidationTest {
 
         Optional<ConstraintViolationException> validate = modelValidator.isValid(pluginDefault);
 
-        assertThat(validate.isEmpty(), is(true));
+        assertThat(validate.isEmpty()).isEqualTo(true);
     }
 
     @Test
@@ -77,7 +76,7 @@ class PluginDefaultValidationTest {
 
         Optional<ConstraintViolationException> validate = modelValidator.isValid(pluginDefault);
 
-        assertThat(validate.isEmpty(), is(true));
+        assertThat(validate.isEmpty()).isEqualTo(true);
     }
 
 }

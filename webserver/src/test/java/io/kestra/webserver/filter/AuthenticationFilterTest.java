@@ -12,8 +12,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -38,14 +37,14 @@ class AuthenticationFilterTest {
     void testAnonymous() {
         var response = client.toBlocking().exchange("/ping");
 
-        assertThat(response.getStatus(), is(HttpStatus.OK));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
     }
 
     @Test
     void testManagementEndpoint() {
         var response = client.toBlocking().exchange("/health");
 
-        assertThat(response.getStatus(), is(HttpStatus.OK));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
     }
 
     @Test
@@ -56,6 +55,6 @@ class AuthenticationFilterTest {
                 basicAuthConfiguration.getPassword()
             ));
 
-        assertThat(response.getStatus(), is(HttpStatus.OK));
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
     }
 }

@@ -2,6 +2,7 @@ package io.kestra.plugin.core.condition;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -10,8 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ExecutionOutputsTest {
@@ -27,12 +27,12 @@ class ExecutionOutputsTest {
             Map.of("test", "value"));
 
         ExecutionOutputs build = ExecutionOutputs.builder()
-            .expression("{{ trigger.outputs.test == 'value' }}")
+            .expression(new Property<>("{{ trigger.outputs.test == 'value' }}"))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
     }
 
     @Test
@@ -44,12 +44,12 @@ class ExecutionOutputsTest {
             Map.of("test", "value"));
 
         ExecutionOutputs build = ExecutionOutputs.builder()
-            .expression("{{ unknown is defined }}")
+            .expression(new Property<>("{{ unknown is defined }}"))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 
     @Test
@@ -58,11 +58,11 @@ class ExecutionOutputsTest {
         Execution execution = TestsUtils.mockExecution(flow, Map.of());
 
         ExecutionOutputs build = ExecutionOutputs.builder()
-            .expression("{{ not evaluated }}")
+            .expression(new Property<>("{{ not evaluated }}"))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 }

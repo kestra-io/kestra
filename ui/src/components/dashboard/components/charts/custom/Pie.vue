@@ -25,7 +25,7 @@
     import {computed, onMounted, ref, watch} from "vue";
 
     import NoData from "../../../../layout/NoData.vue";
-    import Utils, {useTheme} from "../../../../../utils/utils.js";
+    import Utils, {useTheme} from "../../../../../utils/utils";
 
     import {Doughnut, Pie} from "vue-chartjs";
 

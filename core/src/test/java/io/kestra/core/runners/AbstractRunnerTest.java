@@ -180,7 +180,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/restart-parent.yaml", "flows/valids/restart-child.yaml"})
-    void restartSubflow() throws Exception {
+    protected void restartSubflow() throws Exception {
         restartCaseTest.restartSubflow();
     }
 
@@ -388,13 +388,13 @@ public abstract class AbstractRunnerTest {
 
     @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
     @LoadFlows({"flows/valids/flow-concurrency-queue-pause.yml"})
-    void concurrencyQueuePause() throws Exception {
+    protected void concurrencyQueuePause() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueuePause();
     }
 
     @Test
     @LoadFlows({"flows/valids/flow-concurrency-cancel-pause.yml"})
-    void concurrencyCancelPause() throws Exception {
+    protected void concurrencyCancelPause() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyCancelPause();
     }
 

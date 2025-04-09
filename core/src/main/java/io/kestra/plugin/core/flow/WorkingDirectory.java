@@ -103,7 +103,6 @@ import jakarta.validation.constraints.NotNull;
                         containerImage: python:3.11-slim
                         beforeCommands:
                           - pip install requests kestra > /dev/null
-                        warningOnStdErr: false
                         script: |
                           import requests
                           import json

@@ -11,6 +11,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -69,12 +70,11 @@ import java.util.stream.Stream;
     aliases = "io.kestra.core.tasks.flows.If"
 )
 public class If extends Task implements FlowableTask<If.Output> {
-    @PluginProperty(dynamic = true)
     @Schema(
         title = "The `If` condition which can be any expression that evaluates to a boolean value.",
         description = "Boolean coercion allows 0, -0, null and '' to evaluate to false, all other values will evaluate to true."
     )
-    private String condition;
+    private Property<String> condition;
 
     @Valid
     @PluginProperty
@@ -205,7 +205,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     }
 
     private Boolean isTrue(RunContext runContext) throws IllegalVariableEvaluationException {
-        String rendered = runContext.render(condition);
+        String rendered = runContext.render(condition).as(String.class).orElse(null);
         return TruthUtils.isTruthy(rendered);
     }
 

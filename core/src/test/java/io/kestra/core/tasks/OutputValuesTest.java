@@ -1,8 +1,6 @@
 package io.kestra.core.tasks;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -23,11 +21,11 @@ class OutputValuesTest {
     @Test
     @ExecuteFlow("flows/valids/output-values.yml")
     void output(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         TaskRun outputValues = execution.getTaskRunList().getFirst();
         Map<String, Object> values = (Map<String, Object>) outputValues.getOutputs().get("values");
-        assertThat(values.get("output1"), is("xyz"));
-        assertThat(values.get("output2"), is("abc"));
+        assertThat(values.get("output1")).isEqualTo("xyz");
+        assertThat(values.get("output2")).isEqualTo("abc");
     }
 }

@@ -22,8 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
 public class SkipExecutionCaseTest {
@@ -50,9 +49,9 @@ public class SkipExecutionCaseTest {
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
         // the execution 2 should be in success and the 1 still created
-        assertThat(execution2.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         execution1 = Await.until(() -> executionRepository.findById(null, execution1Id).orElse(null), Duration.ofMillis(100), Duration.ofSeconds(1));
-        assertThat(execution1.getState().getCurrent(), is(State.Type.CREATED));
+        assertThat(execution1.getState().getCurrent()).isEqualTo(State.Type.CREATED);
     }
 
     private Flow createFlow() {

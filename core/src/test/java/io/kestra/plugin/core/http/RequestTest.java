@@ -37,8 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -66,9 +65,9 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("{ \"hello\": \"world\" }"));
-            assertThat(output.getEncryptedBody(), nullValue());
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
+            assertThat(output.getEncryptedBody()).isNull();
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -87,8 +86,8 @@ class RequestTest {
 
         Request.Output output = task.run(runContext);
 
-        assertThat(output.getUri(), is(URI.create(url)));
-        assertThat(output.getHeaders().get("content-length").getFirst(), is("512789"));
+        assertThat(output.getUri()).isEqualTo(URI.create(url));
+        assertThat(output.getHeaders().get("content-length").getFirst()).isEqualTo("512789");
     }
 
 
@@ -110,7 +109,7 @@ class RequestTest {
             () -> task.run(runContext)
         );
 
-        assertThat(exception.getResponse().getStatus().getCode(), is(404));
+        assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(404);
     }
 
     @Test
@@ -130,8 +129,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("{ \"hello\": \"world\" }"));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -156,7 +155,7 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getCode(), is(301));
+            assertThat(output.getCode()).isEqualTo(301);
         }
     }
 
@@ -181,8 +180,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("{ \"hello\": \"world\" }"));
-            assertThat(output.getCode(), is(417));
+            assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
+            assertThat(output.getCode()).isEqualTo(417);
         }
     }
 
@@ -206,7 +205,7 @@ class RequestTest {
                 () -> task.run(runContext)
             );
 
-            assertThat(exception.getResponse().getStatus().getCode(), is(417));
+            assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(417);
         }
     }
 
@@ -234,10 +233,10 @@ class RequestTest {
                 () -> task.run(runContext)
             );
 
-            assertThat(exception.getResponse().getStatus().getCode(), is(417));
-            assertThat(exception.getMessage(), containsString("hello world"));
+            assertThat(exception.getResponse().getStatus().getCode()).isEqualTo(417);
+            assertThat(exception.getMessage()).contains("hello world");
             byte[] content = ((io.kestra.core.http.HttpRequest.ByteArrayRequestBody) exception.getRequest().getBody()).getContent();
-            assertThat(new String(content) , containsString("hello web"));
+            assertThat(new String(content)).contains("hello web");
         }
     }
 
@@ -263,8 +262,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("{ \"hello\": \"world\" }"));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("{ \"hello\": \"world\" }");
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -293,7 +292,7 @@ class RequestTest {
                 () -> task.run(runContext)
             );
 
-            assertThat(exception.getMessage(), containsString("unable to find valid certification path"));
+            assertThat(exception.getMessage()).contains("unable to find valid certification path");
         }
     }
 
@@ -316,8 +315,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("{\"hello\":\"world\"}"));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("{\"hello\":\"world\"}");
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -347,8 +346,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("world > value"));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("world > value");
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -381,8 +380,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("world > " + IOUtils.toString(new FileInputStream(file), StandardCharsets.UTF_8)));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("world > " + IOUtils.toString(new FileInputStream(file), StandardCharsets.UTF_8));
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -415,8 +414,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("world > " + IOUtils.toString(new FileInputStream(file), StandardCharsets.UTF_8)));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("world > " + IOUtils.toString(new FileInputStream(file), StandardCharsets.UTF_8));
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -439,9 +438,9 @@ class RequestTest {
             Request.Output output = task.run(runContext);
 
             // when encrypted, this must not be the plaintext value
-            assertThat(output.getBody(), nullValue());
-            assertThat(output.getEncryptedBody(), not("{ \"hello\": \"world\" }"));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isNull();
+            assertThat(output.getEncryptedBody()).isNotEqualTo("{ \"hello\": \"world\" }");
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -461,7 +460,7 @@ class RequestTest {
             () -> task.run(runContext)
         );
 
-        assertThat(exception.getMessage(), containsString("Illegal unicode code"));
+        assertThat(exception.getMessage()).contains("Illegal unicode code");
     }
 
     @Test
@@ -485,8 +484,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("{\"hello\":\"John\"}"));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -512,8 +511,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("{\"hello\":\"John\"}"));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("{\"hello\":\"John\"}");
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -539,8 +538,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("{\"hello\":\"" + id + "\"}"));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("{\"hello\":\"" + id + "\"}");
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -565,8 +564,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("application/vnd.campaignsexport.v1+json"));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("application/vnd.campaignsexport.v1+json");
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 
@@ -587,8 +586,8 @@ class RequestTest {
 
             Request.Output output = task.run(runContext);
 
-            assertThat(output.getBody(), is("Hello World"));
-            assertThat(output.getCode(), is(200));
+            assertThat(output.getBody()).isEqualTo("Hello World");
+            assertThat(output.getCode()).isEqualTo(200);
         }
     }
 

@@ -37,7 +37,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
         map.put(
             AbstractJdbcRepository.field("type"),
-            DSL.field("CAST(? AS queue_type)", this.cls.getName())
+            DSL.field("CAST(? AS queue_type)", queueType())
         );
 
         return map;
@@ -59,7 +59,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
                 AbstractJdbcRepository.field("offset")
             )
             .from(this.table)
-            .where(DSL.condition("type = CAST(? AS queue_type)", this.cls.getName()))
+            .where(DSL.condition("type = CAST(? AS queue_type)", queueType()))
             .and(AbstractJdbcRepository.field("consumer_" + queueType, Boolean.class).isFalse());
 
         if (consumerGroup != null) {

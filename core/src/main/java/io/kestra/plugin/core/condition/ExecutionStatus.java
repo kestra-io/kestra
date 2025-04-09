@@ -3,6 +3,8 @@ package io.kestra.plugin.core.condition;
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -54,13 +56,11 @@ import jakarta.validation.Valid;
 public class ExecutionStatus extends Condition {
     @Valid
     @Schema(title = "List of states that are authorized.")
-    @PluginProperty
-    private List<State.Type> in;
+    private Property<List<State.Type>> in;
 
     @Valid
     @Schema(title = "List of states that aren't authorized.")
-    @PluginProperty
-    private List<State.Type> notIn;
+    private Property<List<State.Type>> notIn;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
@@ -70,11 +70,14 @@ public class ExecutionStatus extends Condition {
 
         boolean result = true;
 
-        if (this.in != null && !this.in.contains(conditionContext.getExecution().getState().getCurrent())) {
+        RunContext runContext = conditionContext.getRunContext();
+        var stateInRendered = runContext.render(this.in).asList(State.Type.class, conditionContext.getVariables());
+        if (!stateInRendered.isEmpty() && !stateInRendered.contains(conditionContext.getExecution().getState().getCurrent())) {
             result = false;
         }
 
-        if (this.notIn != null && this.notIn.contains(conditionContext.getExecution().getState().getCurrent())) {
+        var stateNotInRendered = runContext.render(this.notIn).asList(State.Type.class, conditionContext.getVariables());
+        if (!stateNotInRendered.isEmpty() && stateNotInRendered.contains(conditionContext.getExecution().getState().getCurrent())) {
             result = false;
         }
 

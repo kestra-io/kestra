@@ -20,8 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertThrows;
 
 @KestraTest(startRunner = true)
@@ -47,8 +46,8 @@ public class AssertTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, Map.of("key", "value"));
         task.run(runContext);
 
-        assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("success")).findFirst().orElseThrow().getValue(), is(2d));
-        assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("failed")).findFirst().orElseThrow().getValue(), is(0d));
+        assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("success")).findFirst().orElseThrow().getValue()).isEqualTo(2d);
+        assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("failed")).findFirst().orElseThrow().getValue()).isEqualTo(0d);
     }
 
     @Test
@@ -73,23 +72,23 @@ public class AssertTest {
 
         Exception exception = assertThrows(Exception.class, () -> task.run(runContext));
 
-        assertThat(exception.getMessage(), containsString("2 assertions failed"));
+        assertThat(exception.getMessage()).contains("2 assertions failed");
 
         List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 2);
         receive.blockLast();
 
 
-        assertThat(matchingLog.stream().filter(logEntry -> logEntry.getMessage().contains("inputs.key == 'value1'")).count(), is(1L));
-        assertThat(matchingLog.stream().filter(logEntry -> logEntry.getMessage().contains("inputs.key == 'value2'")).count(), is(1L));
+        assertThat(matchingLog.stream().filter(logEntry -> logEntry.getMessage().contains("inputs.key == 'value1'")).count()).isEqualTo(1L);
+        assertThat(matchingLog.stream().filter(logEntry -> logEntry.getMessage().contains("inputs.key == 'value2'")).count()).isEqualTo(1L);
 
-        assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("success")).findFirst().orElseThrow().getValue(), is(3d));
-        assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("failed")).findFirst().orElseThrow().getValue(), is(2d));
+        assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("success")).findFirst().orElseThrow().getValue()).isEqualTo(3d);
+        assertThat(runContext.metrics().stream().filter(e -> e.getName().equals("failed")).findFirst().orElseThrow().getValue()).isEqualTo(2d);
     }
 
     @Test
     @ExecuteFlow("flows/valids/assert.yaml")
     void dontFailOnCondition(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 }

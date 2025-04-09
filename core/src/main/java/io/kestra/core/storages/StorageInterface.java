@@ -4,7 +4,7 @@ import io.kestra.core.annotations.Retryable;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.Plugin;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;

@@ -55,13 +55,12 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
     @Override
     public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
         LoadFlows loadFlows = getLoadFlows(extensionContext);
-        FlowRepositoryInterface flowRepository = applicationContext.getBean(
-            FlowRepositoryInterface.class);
-        YamlParser yamlParser = applicationContext.getBean(YamlParser.class);
+        FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
+
         Set<String> flowIds = new HashSet<>();
         for (String path : loadFlows.value()) {
             URL resource = loadFile(path);
-            Flow flow = yamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
+            Flow flow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
             flowIds.add(flow.getId());
         }
         flowRepository.findAllForAllTenants().stream()

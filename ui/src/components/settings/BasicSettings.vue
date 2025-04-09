@@ -246,7 +246,7 @@
 <script>
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
+    import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import Utils from "../../utils/utils";
     import {mapGetters, mapState, useStore} from "vuex";

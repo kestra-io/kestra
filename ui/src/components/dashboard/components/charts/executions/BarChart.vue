@@ -38,7 +38,7 @@
     import {useRouter} from "vue-router";
     const router = useRouter();
 
-    import Utils, {useTheme} from "../../../../../utils/utils.js";
+    import Utils, {useTheme} from "../../../../../utils/utils";
     import {useScheme} from "../../../../../utils/scheme.js";
     import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts.js";
 
@@ -88,7 +88,7 @@
     const tooltipContent = ref("")
 
     const skeletonData = computed(() => {
-        const barColor = theme.value === "dark" 
+        const barColor = theme.value === "dark"
             ? "rgba(255, 255, 255, 0.08)"
             : "rgba(0, 0, 0, 0.06)";
 

@@ -49,7 +49,7 @@ public class FlowTriggerService {
             .map(io.kestra.plugin.core.trigger.Flow.class::cast);
     }
 
-    public List<Execution> computeExecutionsFromFlowTriggers(Execution execution, List<Flow> allFlows, Optional<MultipleConditionStorageInterface> multipleConditionStorage) {
+    public List<Execution> computeExecutionsFromFlowTriggers(Execution execution, List<? extends Flow> allFlows, Optional<MultipleConditionStorageInterface> multipleConditionStorage) {
         List<FlowWithFlowTrigger> validTriggersBeforeMultipleConditionEval = allFlows.stream()
             // prevent recursive flow triggers
             .filter(flow -> flowService.removeUnwanted(flow, execution))

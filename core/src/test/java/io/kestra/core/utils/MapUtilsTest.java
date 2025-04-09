@@ -8,8 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MapUtilsTest {
     @SuppressWarnings("unchecked")
@@ -38,12 +37,12 @@ class MapUtilsTest {
 
         Map<String, Object> merge = MapUtils.merge(a, b);
 
-        assertThat(((Map<String, Object>) merge.get("map")).size(), is(4));
-        assertThat(((Map<String, Object>) merge.get("map")).get("map_c"), is("e"));
-        assertThat(merge.get("string"), is("b"));
-        assertThat(merge.get("int"), is(1));
-        assertThat(merge.get("float"), is(1F));
-        assertThat((List<?>) merge.get("lists"), hasSize(2));
+        assertThat(((Map<String, Object>) merge.get("map")).size()).isEqualTo(4);
+        assertThat(((Map<String, Object>) merge.get("map")).get("map_c")).isEqualTo("e");
+        assertThat(merge.get("string")).isEqualTo("b");
+        assertThat(merge.get("int")).isEqualTo(1);
+        assertThat(merge.get("float")).isEqualTo(1F);
+        assertThat((List<?>) merge.get("lists")).hasSize(2);
     }
 
     @SuppressWarnings("unchecked")
@@ -68,9 +67,9 @@ class MapUtilsTest {
 
         Map<String, Object> merge = MapUtils.merge(a, b);
 
-        assertThat(((Map<String, Object>) merge.get("map")).size(), is(3));
-        assertThat(((Map<String, Object>) merge.get("map")).get("map_c"), is("e"));
-        assertThat(((Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) merge.get("map")).get("map_a")).get("sub")).get("null"), nullValue());
+        assertThat(((Map<String, Object>) merge.get("map")).size()).isEqualTo(3);
+        assertThat(((Map<String, Object>) merge.get("map")).get("map_c")).isEqualTo("e");
+        assertThat(((Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) merge.get("map")).get("map_a")).get("sub")).get("null")).isNull();
     }
 
     @Test
@@ -96,19 +95,19 @@ class MapUtilsTest {
     @Test
     void emptyOnNull() {
         var map = MapUtils.emptyOnNull(null);
-        assertThat(map, notNullValue());
-        assertThat(map, anEmptyMap());
+        assertThat(map).isNotNull();
+        assertThat(map).isEmpty();
 
         map = MapUtils.emptyOnNull(Map.of("key", "value"));
-        assertThat(map, notNullValue());
-        assertThat(map.size(), is(1));
+        assertThat(map).isNotNull();
+        assertThat(map.size()).isEqualTo(1);
     }
 
     @Test
     void isEmpty() {
-        assertThat(MapUtils.isEmpty(null), is(true));
-        assertThat(MapUtils.isEmpty(Collections.emptyMap()), is(true));
-        assertThat(MapUtils.isEmpty(Map.of("key", "value")), is(false));
+        assertThat(MapUtils.isEmpty(null)).isEqualTo(true);
+        assertThat(MapUtils.isEmpty(Collections.emptyMap())).isEqualTo(true);
+        assertThat(MapUtils.isEmpty(Map.of("key", "value"))).isEqualTo(false);
     }
 
 
@@ -131,7 +130,7 @@ class MapUtilsTest {
             "k1.k2.k3", "v2"
         ));
 
-        assertThat(results, aMapWithSize(1));
+        assertThat(results).hasSize(1);
         // due to ordering change on each JVM restart, the result map would be different as different entries will be skipped
     }
 }

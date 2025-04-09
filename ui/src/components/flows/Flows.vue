@@ -76,7 +76,11 @@
 
                 <template #top>
                     <el-card v-if="showStatChart()" class="mb-4 shadow">
-                        <ExecutionsBar :data="daily" :total="executionsCount" />
+                        <ExecutionsBar 
+                            :data="daily" 
+                            :total="executionsCount" 
+                            :loading="loading"
+                        />
                     </el-card>
                 </template>
 
@@ -394,6 +398,11 @@
                 required: false,
                 default: undefined,
             },
+            id: {
+                type: String,
+                required: false,
+                default: null,
+            },
         },
         data() {
             return {
@@ -440,6 +449,7 @@
                 showChart: ["true", null].includes(
                     localStorage.getItem(storageKeys.SHOW_FLOWS_CHART),
                 ),
+                loading: false,
             };
         },
         computed: {
@@ -817,6 +827,7 @@
             },
             loadStats() {
                 this.dailyReady = false;
+                this.loading = true;
 
                 if (this.user.hasAny(permission.EXECUTION) && this.showStatChart) {
                     this.$store
@@ -834,6 +845,7 @@
                         )
                         .then(() => {
                             this.dailyReady = true;
+                            this.loading = false;
                         });
                 }
             },
@@ -904,7 +916,7 @@
 
 <style lang="scss" scoped>
 .shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
 }
 
 :deep(nav .dropdown-menu) {

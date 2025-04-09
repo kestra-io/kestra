@@ -15,8 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.TimeZone;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class JacksonMapperTest {
     Pojo pojo() {
@@ -52,7 +51,7 @@ class JacksonMapperTest {
         Pojo original = pojo();
 
         String s = mapper.writeValueAsString(original);
-        assertThat(s, containsString("nullable:null"));
+        assertThat(s).contains("nullable:null");
         Pojo deserialize = mapper.readValue(s, Pojo.class);
         test(original, deserialize);
     }
@@ -63,16 +62,16 @@ class JacksonMapperTest {
 
         List<Object> integerList = JacksonMapper.toList(list);
 
-        assertThat(integerList.size(), is(3));
-        assertThat(integerList, containsInAnyOrder(1, 2, 3));
+        assertThat(integerList.size()).isEqualTo(3);
+        assertThat(integerList).containsExactlyInAnyOrder(1, 2, 3);
     }
 
     void test(Pojo original, Pojo deserialize) {
-        assertThat(deserialize.getString(), is(original.getString()));
-        assertThat(deserialize.getInstant().toEpochMilli(), is(original.getInstant().toEpochMilli()));
-        assertThat(deserialize.getInstant().toString(), is(original.getInstant().toString()));
-        assertThat(deserialize.getZonedDateTime().toEpochSecond(), is(original.getZonedDateTime().toEpochSecond()));
-        assertThat(deserialize.getZonedDateTime().getOffset(), is(original.getZonedDateTime().getOffset()));
+        assertThat(deserialize.getString()).isEqualTo(original.getString());
+        assertThat(deserialize.getInstant().toEpochMilli()).isEqualTo(original.getInstant().toEpochMilli());
+        assertThat(deserialize.getInstant().toString()).isEqualTo(original.getInstant().toString());
+        assertThat(deserialize.getZonedDateTime().toEpochSecond()).isEqualTo(original.getZonedDateTime().toEpochSecond());
+        assertThat(deserialize.getZonedDateTime().getOffset()).isEqualTo(original.getZonedDateTime().getOffset());
     }
 
     @Getter

@@ -55,10 +55,8 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
     public Class<QueryFilterFormat> getAnnotationType() {
         return QueryFilterFormat.class;
     }
-
     @Override
-    public BindingResult<List<QueryFilter>> bind(ArgumentConversionContext<List<QueryFilter>> context,
-                                                 HttpRequest<?> source) {
+    public BindingResult<List<QueryFilter>> bind(ArgumentConversionContext<List<QueryFilter>> context, HttpRequest<?> source) {
         Map<String, List<String>> queryParams = source.getParameters().asMap();
         List<QueryFilter> filters = getQueryFilters(queryParams);
 
@@ -71,7 +69,7 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         String nestedKey = matcher.group(3); // Extract nested key if present
 
         QueryFilter.Field field = QueryFilter.Field.fromString(fieldStr);
-        QueryFilter.Op operation = QueryFilter.Op.fromString(operationStr);
+        QueryFilter.Op operation = QueryFilter.Op.valueOf(operationStr);
 
         // For labels: Add the key-value to the appropriate operation's map
         if (field == QueryFilter.Field.LABELS && nestedKey != null) {

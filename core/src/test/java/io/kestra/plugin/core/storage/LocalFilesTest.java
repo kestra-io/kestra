@@ -19,9 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SuppressWarnings("deprecation")
@@ -62,19 +60,13 @@ class LocalFilesTest {
             .build();
         var outputs = task.run(runContext);
 
-        assertThat(outputs, notNullValue());
-        assertThat(outputs.getUris(), notNullValue());
-        assertThat(outputs.getUris().size(), is(1));
-        assertThat(
-            new String(storageInterface.get(null, null, outputs.getUris().get("hello-input.txt")).readAllBytes()),
-            is("Hello Input")
-        );
-        assertThat(runContext.workingDir().path().toFile().list().length, is(2));
-        assertThat(Files.readString(runContext.workingDir().path().resolve("execution.txt")), is("tata"));
-        assertThat(
-            Files.readString(runContext.workingDir().path().resolve("application-test.yml")),
-            is(new String(storageInterface.get(null, null, storageFile).readAllBytes()))
-        );
+        assertThat(outputs).isNotNull();
+        assertThat(outputs.getUris()).isNotNull();
+        assertThat(outputs.getUris().size()).isEqualTo(1);
+        assertThat(new String(storageInterface.get(null, null, outputs.getUris().get("hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
+        assertThat(runContext.workingDir().path().toFile().list().length).isEqualTo(2);
+        assertThat(Files.readString(runContext.workingDir().path().resolve("execution.txt"))).isEqualTo("tata");
+        assertThat(Files.readString(runContext.workingDir().path().resolve("application-test.yml"))).isEqualTo(new String(storageInterface.get(null, null, storageFile).readAllBytes()));
 
         runContext.cleanup();
     }
@@ -96,23 +88,14 @@ class LocalFilesTest {
             .build();
         var outputs = task.run(runContext);
 
-        assertThat(outputs, notNullValue());
-        assertThat(outputs.getUris(), notNullValue());
-        assertThat(outputs.getUris().size(), is(3));
-        assertThat(
-            new String(storageInterface.get(null, null, outputs.getUris().get("test/hello-input.txt")).readAllBytes()),
-            is("Hello Input")
-        );
-        assertThat(
-            new String(storageInterface.get(null, null, outputs.getUris().get("test/sub/dir/2/execution.txt"))
-                .readAllBytes()),
-            is("tata")
-        );
-        assertThat(
-            new String(storageInterface.get(null, null, outputs.getUris().get( "test/sub/dir/3/application-test.yml"))
-                .readAllBytes()),
-            is(new String(storageInterface.get(null, null, storageFile).readAllBytes()))
-        );
+        assertThat(outputs).isNotNull();
+        assertThat(outputs.getUris()).isNotNull();
+        assertThat(outputs.getUris().size()).isEqualTo(3);
+        assertThat(new String(storageInterface.get(null, null, outputs.getUris().get("test/hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
+        assertThat(new String(storageInterface.get(null, null, outputs.getUris().get("test/sub/dir/2/execution.txt"))
+            .readAllBytes())).isEqualTo("tata");
+        assertThat(new String(storageInterface.get(null, null, outputs.getUris().get("test/sub/dir/3/application-test.yml"))
+            .readAllBytes())).isEqualTo(new String(storageInterface.get(null, null, storageFile).readAllBytes()));
         runContext.cleanup();
     }
 

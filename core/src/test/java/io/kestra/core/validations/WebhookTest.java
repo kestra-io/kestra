@@ -9,9 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class WebhookTest {
@@ -31,7 +29,7 @@ public class WebhookTest {
             )
             .build();
 
-        assertThat(modelValidator.isValid(webhook).isPresent(), is(true));
-        assertThat(modelValidator.isValid(webhook).get().getMessage(), containsString("invalid webhook: conditions of type MultipleCondition are not supported"));
+        assertThat(modelValidator.isValid(webhook).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(webhook).get().getMessage()).contains("invalid webhook: conditions of type MultipleCondition are not supported");
     }
 }

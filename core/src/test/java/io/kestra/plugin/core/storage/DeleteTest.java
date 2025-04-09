@@ -14,8 +14,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -44,10 +43,10 @@ class DeleteTest {
             .build();
 
         Delete.Output run = bash.run(runContext);
-        assertThat(run.getDeleted(), is(true));
+        assertThat(run.getDeleted()).isEqualTo(true);
 
         run = bash.run(runContext);
-        assertThat(run.getDeleted(), is(false));
+        assertThat(run.getDeleted()).isEqualTo(false);
 
         assertThrows(NoSuchElementException.class, () -> {
             Delete error = Delete.builder()

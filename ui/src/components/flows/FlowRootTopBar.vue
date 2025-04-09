@@ -5,7 +5,10 @@
                 <Alert class="text-warning me-2" />{{ $t('deleted_label') }}:&nbsp;
             </template>
             <Lock v-else-if="!isAllowedEdit" class="me-2 gray-700" />
-            <span :class="{'body-color': deleted}">{{ routeInfo.title }}</span>
+            <span :class="{'body-color': deleted}">
+                {{ routeInfo.title }}
+                <BetaBadge v-if="routeInfo.beta" />
+            </span>
         </template>
         <template #additional-right v-if="displayButtons()">
             <ul>
@@ -38,10 +41,14 @@
 </template>
 
 <script setup>
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
+
+    import BetaBadge from "../global/BetaBadge.vue";
 </script>
 
 <script>
@@ -49,7 +56,6 @@
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import TriggerFlow from "../../components/flows/TriggerFlow.vue";
     import {mapState} from "vuex";
-    import yamlUtils from "../../utils/yamlUtils";
     import permission from "../../models/permission";
     import action from "../../models/action";
 
@@ -109,7 +115,7 @@
             restoreFlow() {
                 this.$store
                     .dispatch("flow/createFlow", {
-                        flow: yamlUtils.deleteMetadata(this.flow.source, "deleted"),
+                        flow: YAML_UTILS.deleteMetadata(this.flow.source, "deleted"),
                     })
                     .then((response) => {
                         this.$toast().saved(response.id);

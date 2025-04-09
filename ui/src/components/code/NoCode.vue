@@ -1,6 +1,6 @@
 <template>
     <div class="h-100 overflow-y-auto no-code">
-        <Breadcrumbs :flow="YamlUtils.parse(props.flow)" />
+        <Breadcrumbs :flow="flowBreadcrumbs" />
 
         <hr class="m-0">
 
@@ -22,7 +22,7 @@
 <script setup lang="ts">
     import {onBeforeMount, computed} from "vue";
 
-    import YamlUtils from "../../utils/yamlUtils";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
@@ -33,11 +33,13 @@
         "updateDocumentation",
         "reorder",
     ]);
-    const props = defineProps({
-        flow: {type: String, required: true},
-    });
 
-    const metadata = computed(() => YamlUtils.getMetadata(props.flow));
+    const props = defineProps<{
+        flow: string;
+    }>();
+
+    const flowBreadcrumbs = computed(() => YAML_UTILS.parse(props.flow) as Record<string, string>)
+    const metadata = computed(() => YAML_UTILS.getMetadata(props.flow));
 
     import {useRouter, useRoute} from "vue-router";
     const router = useRouter();

@@ -5,7 +5,6 @@
             'task',
             'metric',
             'aggregation',
-            'relative_date',
             'absolute_date',
         ]"
         :values="{
@@ -185,9 +184,7 @@
             },
             loadQuery(base) {
                 return {
-                    ...base,
-                    startDate: this.startDate,
-                    endDate: this.endDate,
+                    ...base
                 };
             },
             loadMetrics() {
@@ -234,6 +231,8 @@
                             metric: this.$route.query.metric,
                             aggregation: [this.$route.query.aggregation].flat().map(item => item.toLowerCase()),
                             taskId: this.$route.query.task,
+                            startDate: this.$route.query.startDate,
+                            endDate: this.$route.query.endDate
                         }),
                     );
                 } else {

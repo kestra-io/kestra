@@ -157,25 +157,32 @@ public class HttpRequest {
                 return null;
             }
 
-            Charset charset = entity.getContentEncoding() != null ? Charset.forName(entity.getContentEncoding()) : StandardCharsets.UTF_8;
-
-            if (entity.getContentType().equals(ContentType.APPLICATION_OCTET_STREAM.getMimeType())) {
+            String[] parts = entity.getContentType().split(";");
+            String mimeType = parts[0];
+            Charset charset = StandardCharsets.UTF_8;
+            for (String part : parts) {
+                String stripped = part.strip();
+                if (stripped.startsWith("charset")) {
+                    charset = Charset.forName(stripped.substring(stripped.lastIndexOf('=') + 1));
+                }
+            }
+            if (mimeType.equals(ContentType.APPLICATION_OCTET_STREAM.getMimeType())) {
                 return ByteArrayRequestBody.builder()
-                    .contentType(entity.getContentType())
+                    .contentType(mimeType)
                     .charset(charset)
                     .content(IOUtils.toByteArray(entity.getContent()))
                     .build();
             }
 
-            if (entity.getContentType().equals(ContentType.TEXT_PLAIN.getMimeType())) {
+            if (mimeType.equals(ContentType.TEXT_PLAIN.getMimeType())) {
                 return StringRequestBody.builder()
-                    .contentType(entity.getContentType())
+                    .contentType(mimeType)
                     .charset(charset)
                     .content(IOUtils.toString(entity.getContent(), charset))
                     .build();
             }
 
-            if (entity.getContentType().equals(ContentType.APPLICATION_JSON.getMimeType())) {
+            if (mimeType.equals(ContentType.APPLICATION_JSON.getMimeType())) {
                 return JsonRequestBody.builder()
                     .charset(charset)
                     .content(JacksonMapper.toObject(IOUtils.toString(entity.getContent(), charset)))
@@ -184,7 +191,7 @@ public class HttpRequest {
 
             return ByteArrayRequestBody.builder()
                 .charset(charset)
-                .contentType(entity.getContentType())
+                .contentType(mimeType)
                 .content(entity.getContent().readAllBytes())
                 .build();
         }

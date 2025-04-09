@@ -7,6 +7,7 @@ import io.kestra.core.models.dashboards.Order;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
@@ -223,13 +224,17 @@ public abstract class AbstractJdbcRepository {
      * @param pageable       the pageable object containing the pagination information
      * @return the list of fetched results
      */
-    protected List<Map<String, Object>> fetchSeekStep(SelectSeekStepN<Record> selectSeekStep, @Nullable Pageable pageable) {
+    protected ArrayListTotal<Map<String, Object>> fetchSeekStep(SelectSeekStepN<Record> selectSeekStep, @Nullable Pageable pageable) {
 
-        return (pageable != null && pageable.getSize() != -1 ?
+        int totalCount = DSL.using(selectSeekStep.configuration())
+            .fetchCount(selectSeekStep);
+        var results =  (pageable != null && pageable.getSize() != -1 ?
             selectSeekStep.limit(pageable.getSize()).offset(pageable.getOffset() - pageable.getSize()) :
             selectSeekStep
         ).fetch()
             .intoMaps();
+
+        return new ArrayListTotal<>(results, totalCount);
     }
 
     protected <F extends Enum<F>> Field<?> columnToField(ColumnDescriptor<?> column, Map<F, String> fieldsMapping) {
@@ -376,7 +381,7 @@ public abstract class AbstractJdbcRepository {
         };
     }
     protected Condition statesFilter(List<State.Type> state) {
-        return DSL.field(DSL.quotedName("state_current"))
+        return field("state_current")
             .in(state.stream().map(Enum::name).toList());
     }
 
@@ -385,8 +390,8 @@ public abstract class AbstractJdbcRepository {
         ChildFilter childFilter = (value instanceof String val)? ChildFilter.valueOf(val) : (ChildFilter) value;
 
         return switch (childFilter) {
-            case CHILD -> select.and(DSL.field(DSL.quotedName("trigger_execution_id")).isNotNull());
-            case MAIN -> select.and(DSL.field(DSL.quotedName("trigger_execution_id")).isNull());
+            case CHILD -> select.and(field("trigger_execution_id").isNotNull());
+            case MAIN -> select.and(field("trigger_execution_id").isNull());
         };
     }
 
@@ -418,10 +423,12 @@ public abstract class AbstractJdbcRepository {
         SelectConditionStep<T> select, OffsetDateTime dateTime, QueryFilter.Op operation,String fieldName
     ) {
         switch (operation) {
-            case LESS_THAN -> select = select.and(DSL.field(fieldName).lessThan(dateTime));
-            case GREATER_THAN -> select = select.and(DSL.field(fieldName).greaterThan(dateTime));
-            case EQUALS -> select = select.and(DSL.field(fieldName).eq(dateTime));
-            case NOT_EQUALS -> select = select.and(DSL.field(fieldName).ne(dateTime));
+            case LESS_THAN -> select = select.and(field(fieldName).lessThan(dateTime));
+            case LESS_THAN_OR_EQUAL_TO -> select = select.and(field(fieldName).lessOrEqual(dateTime));
+            case GREATER_THAN -> select = select.and(field(fieldName).greaterThan(dateTime));
+            case GREATER_THAN_OR_EQUAL_TO -> select = select.and(field(fieldName).greaterOrEqual(dateTime));
+            case EQUALS -> select = select.and(field(fieldName).eq(dateTime));
+            case NOT_EQUALS -> select = select.and(field(fieldName).ne(dateTime));
             default -> throw new UnsupportedOperationException("Unsupported operation for date condition: " + operation);
         }
         return select;

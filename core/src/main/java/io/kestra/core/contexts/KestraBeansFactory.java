@@ -3,7 +3,6 @@ package io.kestra.core.contexts;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.DefaultPluginRegistry;
 import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.plugins.serdes.PluginDeserializer;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageInterfaceFactory;
 import io.micronaut.context.annotation.Bean;
@@ -34,7 +33,7 @@ public class KestraBeansFactory {
     StorageConfig storageConfig;
 
     @Value("${kestra.storage.type}")
-    Optional<String> storageType;
+    protected Optional<String> storageType;
 
     @Requires(missingBeans = PluginRegistry.class)
     @Singleton
@@ -42,16 +41,25 @@ public class KestraBeansFactory {
         return DefaultPluginRegistry.getOrCreate();
     }
 
+    @Singleton
+    public StorageInterfaceFactory storageInterfaceFactory(final PluginRegistry pluginRegistry){
+        return new StorageInterfaceFactory(pluginRegistry, validator);
+    }
+
     @Requires(missingBeans = StorageInterface.class)
     @Singleton
     @Bean(preDestroy = "close")
-    public StorageInterface storageInterface(final PluginRegistry pluginRegistry) throws IOException {
-        String pluginId = storageType.orElseThrow(() -> new KestraRuntimeException(String.format(
+    public StorageInterface storageInterface(final StorageInterfaceFactory storageInterfaceFactory) throws IOException {
+        String pluginId = getStoragePluginId(storageInterfaceFactory);
+        return storageInterfaceFactory.make(null, pluginId, storageConfig.getStorageConfig(pluginId));
+    }
+
+    public String getStoragePluginId(StorageInterfaceFactory storageInterfaceFactory) {
+        return storageType.orElseThrow(() -> new KestraRuntimeException(String.format(
             "No storage configured through the application property '%s'. Supported types are: %s"
             , KESTRA_STORAGE_TYPE_CONFIG,
-            StorageInterfaceFactory.getLoggableStorageIds(pluginRegistry)
+            storageInterfaceFactory.getLoggableStorageIds()
         )));
-        return StorageInterfaceFactory.make(pluginRegistry, pluginId, storageConfig.getStorageConfig(pluginId), validator);
     }
 
     @ConfigurationProperties("kestra")
@@ -67,7 +75,7 @@ public class KestraBeansFactory {
          * @return the configuration.
          */
         @SuppressWarnings("unchecked")
-        private Map<String, Object> getStorageConfig(String type) {
+        public Map<String, Object> getStorageConfig(String type) {
             return (Map<String, Object>) storage.get(StringConvention.CAMEL_CASE.format(type));
         }
     }

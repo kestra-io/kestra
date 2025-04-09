@@ -8,6 +8,7 @@ public enum CrudEventType {
     LOGIN,
     LOGOUT,
     IMPERSONATE,
-    LOGIN_FAILURE
+    LOGIN_FAILURE,
+    ACCOUNT_LOCKED
 }
 

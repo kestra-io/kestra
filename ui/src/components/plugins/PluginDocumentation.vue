@@ -20,7 +20,7 @@
                 </schema-to-html>
             </Suspense>
         </template>
-        <markdown v-else :source="introContent" />
+        <markdown v-else :source="introContent" :class="{'position-absolute': absolute}" />
     </div>
 </template>
 
@@ -38,6 +38,10 @@
             overrideIntro: {
                 type: String,
                 default: null
+            },
+            absolute: {
+                type: Boolean,
+                default: false
             }
         },
         computed: {

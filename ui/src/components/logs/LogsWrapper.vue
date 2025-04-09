@@ -18,7 +18,7 @@
                     <el-card class="mb-3 shadow" v-loading="!statsReady">
                         <div>
                             <template v-if="hasStatsData">
-                                <Logs :data="logDaily" />
+                                <Logs :data="logDaily" :loading="!statsReady" />
                             </template>
                             <LogsNoData v-else />
                         </div>
@@ -246,7 +246,7 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .shadow {
-        box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+        box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
     }
 
     .log-panel {

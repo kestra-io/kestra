@@ -14,8 +14,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -33,8 +32,8 @@ class LabelServiceTest {
 
         List<Label> labels = LabelService.labelsExcludingSystem(flow);
 
-        assertThat(labels, hasSize(1));
-        assertThat(labels.getFirst(), is(new Label("key", "value")));
+        assertThat(labels).hasSize(1);
+        assertThat(labels.getFirst()).isEqualTo(new Label("key", "value"));
     }
 
     @Test
@@ -49,8 +48,8 @@ class LabelServiceTest {
 
         List<Label> labels = LabelService.fromTrigger(runContext, flow, trigger);
 
-        assertThat(labels, hasSize(3));
-        assertThat(labels, hasItems(new Label("key", "value"), new Label("scheduleLabel", "scheduleValue"), new Label("variable", "variableValue")));
+        assertThat(labels).hasSize(3);
+        assertThat(labels).contains(new Label("key", "value"), new Label("scheduleLabel", "scheduleValue"), new Label("variable", "variableValue"));
     }
 
     @Test
@@ -65,8 +64,8 @@ class LabelServiceTest {
 
         List<Label> labels = LabelService.fromTrigger(runContext, flow, trigger);
 
-        assertThat(labels, hasSize(2));
-        assertThat(labels, hasItems(new Label("key", "value"), new Label("scheduleLabel", "scheduleValue")));
+        assertThat(labels).hasSize(2);
+        assertThat(labels).contains(new Label("key", "value"), new Label("scheduleLabel", "scheduleValue"));
     }
 
     @Test

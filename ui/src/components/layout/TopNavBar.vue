@@ -2,8 +2,8 @@
     <nav data-component="FILENAME_PLACEHOLDER" class="d-flex w-100 gap-3 top-bar">
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <el-breadcrumb v-if="breadcrumb">
-                <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x">
-                    <router-link :to="item.link">
+                <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
+                    <router-link :to="!item.disabled ? item.link : {}">
                         {{ item.label }}
                     </router-link>
                 </el-breadcrumb-item>
@@ -11,6 +11,7 @@
             <h1 class="h5 fw-semibold m-0 d-inline-flex">
                 <slot name="title">
                     {{ title }}
+                    <BetaBadge v-if="beta" />
                 </slot>
                 <el-button
                     class="star-button"
@@ -48,14 +49,15 @@
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
-
+    import BetaBadge from "../global/BetaBadge.vue";
 
     export default {
         components: {
             Auth,
             GlobalSearch,
             TrashCan,
-            Impersonating
+            Impersonating,
+            BetaBadge
         },
         props: {
             title: {
@@ -65,6 +67,10 @@
             breadcrumb: {
                 type: Array,
                 default: undefined
+            },
+            beta: {
+                type: Boolean,
+                required: false
             },
         },
         computed: {
@@ -186,7 +192,7 @@
                 }
             }
 
-            :slotted(ul) {
+            :slotted(ul), :deep(ul) {
                 display: flex;
                 list-style: none;
                 padding: 0;

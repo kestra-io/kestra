@@ -8,6 +8,11 @@ on:
         default: 'LATEST'
         required: false
         type: string
+      force-download-artifact:
+        description: 'Force download artifact'
+        required: false
+        type: string
+        default: "true"
   workflow_call:
     inputs:
       plugin-version:
@@ -15,6 +20,11 @@ on:
         default: 'LATEST'
         required: false
         type: string
+      force-download-artifact:
+        description: 'Force download artifact'
+        required: false
+        type: string
+        default: "true"
     secrets:
       DOCKERHUB_USERNAME:
         description: "The Dockerhub username."
@@ -24,26 +34,39 @@ on:
         required: true
 
 jobs:
+  # ********************************************************************************************************************
+  # Build
+  # ********************************************************************************************************************
   build-artifacts:
-    name: Build - Artifacts
+    name: Build Artifacts
+    if: ${{ github.event.inputs.force-download-artifact == 'true' }}
     uses: ./.github/workflows/workflow-build-artifacts.yml
     with:
       plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
-
+  # ********************************************************************************************************************
+  # Docker
+  # ********************************************************************************************************************
   publish:
     name: Publish - Docker
-    needs: build-artifacts
     runs-on: ubuntu-latest
+    needs: build-artifacts
+    if: |
+      always() &&
+      (needs.build-artifacts.result == 'success' ||
+        github.event.inputs.force-download-artifact != 'true')
+    env:
+      PLUGIN_VERSION: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
     strategy:
       matrix:
         image:
-          - tag: ${{ needs.build-artifacts.outputs.docker-tag }}-no-plugins
-            packages: ""
+          - tag: -no-plugins
+            packages: jattach
+            plugins: false
             python-libraries: ""
 
-          - tag: ${{ needs.build-artifacts.outputs.docker-tag }}
-            plugins: ${{ needs.build-artifacts.outputs.plugins }}
-            packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip
+          - tag: ""
+            plugins: true
+            packages: python3 python3-venv python-is-python3 python3-pip nodejs npm curl zip unzip jattach
             python-libraries: kestra
     steps:
       - name: Checkout - Current ref
@@ -68,17 +91,34 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+
+#     # Get Plugins List
+      - name: Plugins - Get List
+        uses: ./.github/actions/plugins-list
+        id: plugins-list
+        if: ${{ matrix.image.plugins}}
+        with:
+          plugin-version: ${{ env.PLUGIN_VERSION }}
+
       # Vars
-      - name: Docker - Set image name
+      - name: Docker - Set variables
         shell: bash
         id: vars
         run: |
           TAG=${GITHUB_REF#refs/*/}
-          if [[ $TAG = "master" || $TAG == v* ]]; then
+          PLUGINS="${{ matrix.image.plugins == true && steps.plugins-list.outputs.plugins || '' }}"
+          if [[ $TAG == v* ]]; then
+            TAG="${TAG}";
             echo "plugins=${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
+          elif [[ $TAG = "develop" ]]; then
+            TAG="develop";
+            echo "plugins=--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots $PLUGINS" >> $GITHUB_OUTPUT
           else
-            echo "plugins=--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots ${{ matrix.image.plugins }}" >> $GITHUB_OUTPUT
+            TAG="build-${{ github.run_id }}";
+            echo "plugins=--repositories=https://s01.oss.sonatype.org/content/repositories/snapshots $PLUGINS" >> $GITHUB_OUTPUT
           fi
+          
+          echo "tag=${TAG}${{ matrix.image.tag }}" >> $GITHUB_OUTPUT
 
       # Build Docker Image
       - name: Artifacts - Download executable
@@ -98,7 +138,7 @@ jobs:
         with:
           context: .
           push: true
-          tags: kestra/kestra:${{ matrix.image.tag }}
+          tags: kestra/kestra:${{ steps.vars.outputs.tag }}
           platforms: linux/amd64,linux/arm64
           build-args: |
             KESTRA_PLUGINS=${{ steps.vars.outputs.plugins }}

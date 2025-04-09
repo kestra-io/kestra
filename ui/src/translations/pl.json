@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "Szablony aplikacji",
       "community": "Społeczność",
+      "create": "Utwórz blueprint",
       "custom": "Niestandardowe blueprints",
       "dashboards": "Dashboard Blueprinty",
+      "edit": "Edytuj blueprint",
       "empty": "Brak blueprintów do wyświetlenia.",
       "flows": "Schematy Flow",
       "header": {
@@ -144,9 +146,11 @@
     "continue backfill": "Kontynuuj backfill",
     "continue backfills": "Kontynuuj backfills",
     "copied": "Skopiowano",
+    "copied_logs_to_clipboard": "Skopiowano logi do schowka.",
     "copy": "Kopiuj",
     "copy logs": "Kopiuj logs",
     "copy url": "Kopiuj URL",
+    "copy_to_clipboard": "Kopiuj do schowka",
     "create": "Utwórz",
     "create first task": "Stwórz swój pierwszy task",
     "create_custom_dashboard": "Utwórz nowy dashboard",
@@ -242,7 +246,6 @@
     "delete backfill": "Usuń backfill",
     "delete backfills": "Usuń backfills",
     "delete confirm": "Czy na pewno chcesz usunąć <code>{name}</code>?",
-    "delete confirm multiple": "Czy na pewno chcesz usunąć <code>{name}</code> KV?",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">To wykonanie jest nadal w trakcie, usunięcie go nie zatrzyma procesu.<br />Musisz zabić wykonanie, aby je zatrzymać.</div>",
     "delete logs": "Usuń logs",
     "delete ok": "jest usunięty",
@@ -284,6 +287,10 @@
           "message": "W Kestra Enterprise Edition, namespaces zapewniają zaawansowaną izolację i zarządzanie tajemnicami, zmiennymi oraz domyślnymi ustawieniami pluginów na dużą skalę. Administratorzy mogą konfigurować niestandardowych menedżerów tajemnic, izolowane zaplecza pamięci, dedykowane grupy workerów oraz szczegółowe uprawnienia na poziomie namespace. To zapewnia, że tajemnice, zmienne i konfiguracje pluginów pozostają bezpieczne i łatwe do utrzymania w różnych zespołach i projektach.",
           "title": "Ulepsz zarządzanie Namespace"
         },
+        "history": {
+          "message": "W Kestra Enterprise Edition możesz zarządzać historią wersji swoich namespace.",
+          "title": "Zarządzaj historią wersji w jednym miejscu"
+        },
         "plugin-defaults": {
           "message": "W Kestra Enterprise Edition możesz ustawić domyślne wtyczki specyficzne dla namespace, co zmniejsza potrzebę powielania konfiguracji w każdym flow. To centralne zarządzanie wtyczkami zapewnia spójne konfiguracje, umożliwia bezpieczne odwoływanie się do sekretów lub zmiennych oraz upraszcza utrzymanie twoich workflow.",
           "title": "Standaryzuj konfigurację za pomocą domyślnych ustawień Pluginów"
@@ -296,6 +303,18 @@
           "message": "W Kestra Enterprise Edition możesz definiować i zarządzać zmiennymi na poziomie namespace, aby wyeliminować powtarzające się konfiguracje w różnych flow. Te zmienne zapewniają spójność, upraszczają aktualizacje konfiguracji i mogą być łatwo odwoływane przez dowolny task lub trigger, co prowadzi do czystszych i łatwiejszych w utrzymaniu workflow.",
           "title": "Centralnie Zarządzaj Swoimi Zmiennymi"
         }
+      },
+      "secrets": {
+        "add_env": {
+          "first": "Zakoduj <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">wartość secret w Base64</a></strong>",
+          "intro": "Aby utworzyć nowy Secret:",
+          "second": "Dodaj zmienną środowiskową o nazwie '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' z powyższą wartością",
+          "third": "Uruchom ponownie instancję Kestra"
+        },
+        "detected_env": "Oto zmienne środowiskowe typu secret zidentyfikowane podczas uruchamiania instancji:",
+        "empty_env": "Nie masz jeszcze żadnych Secrets w swoim środowisku.",
+        "message": "Edycja Enterprise (EE) pozwala na dodawanie, edytowanie lub usuwanie sekretów bezpośrednio w UI — bez potrzeby ponownego uruchamiania instancji. Organizuj sekrety według namespace z precyzyjnymi uprawnieniami RBAC i dziedzicz je z namespace nadrzędnych do podrzędnych. EE integruje się z menedżerami sekretów, takimi jak HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager i Elasticsearch. Skonfiguruj dedykowane backendy dla każdego namespace, mandanta lub instancji, aby izolować sekrety w zespołach, lub włącz sekrety tylko do odczytu przechowywane w zewnętrznych vaultach. Sekrety pozostają zaszyfrowane w spoczynku i podczas przesyłania. Opcjonalne buforowanie zmniejsza liczbę wywołań API, a ścieżki audytu logują cały dostęp.",
+        "title": "Ulepsz swoje zarządzanie Secrets Management"
       },
       "tenants": {
         "message": "Kestra Enterprise Edition obsługuje multi-tenancy, zapewniając w pełni izolowane środowiska dla różnych zespołów lub projektów, z własnymi zasobami, takimi jak dedykowane grupy workerów, sekrety i wewnętrzne magazyny danych.",
@@ -425,8 +444,6 @@
     "execute the flow": "Wykonaj flow <code>{id}</code>",
     "execution": "Wykonanie",
     "execution already finished": "Wykonanie <code>{executionId}</code> już zakończone",
-    "execution failed header": "Wykonanie nie powiodło się!",
-    "execution failed message": "Z ostatnim błędem: <code>{message}</code>",
     "execution labels": "Etykiety wykonania",
     "execution not found": "Wykonanie <code>{executionId}</code> nie znalezione",
     "execution not in state FAILED": "Wykonanie <code>{executionId}</code> nie jest w stanie FAILED",
@@ -443,6 +460,7 @@
       "metrics": "Usuń metrics",
       "storage": "Usuń wewnętrzne pliki storage"
     },
+    "execution_failed": "Wykonanie nie powiodło się! Ostatni błąd to",
     "execution_guide": {
       "get_started": {
         "text": "Postępuj zgodnie z Przewodnikiem Szybkiego Startu, aby zainstalować Kestra i rozpocząć tworzenie swoich pierwszych workflowów.",
@@ -457,6 +475,8 @@
         "title": "Komponenty Workflow"
       }
     },
+    "execution_starts_progress": "Gdy tylko rozpocznie się wykonanie, zobaczysz tutaj aktualizacje postępu.",
+    "execution_status": "Wykonanie jest:",
     "executions": "Wykonania",
     "executions deleted": "<code>{executionCount}</code> wykonanie(a) usunięte",
     "executions duration (in minutes)": "Całkowity czas trwania wykonania (w minutach)",
@@ -537,6 +557,7 @@
         },
         "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania.",
         "label": "Zapisane wyszukiwania",
+        "remove": "Usuń",
         "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
       },
       "settings": {
@@ -632,6 +653,10 @@
     "killed done": "Wykonanie jest w kolejce do zakończenia",
     "kv": {
       "add": "Nowy Key-Value",
+      "delete multiple": {
+        "confirm": "Czy na pewno chcesz usunąć: <code>{name}</code> kv?",
+        "warning": "Nie masz uprawnień do tych namespace, więc zostaną pominięte: <code>{namespaces}</code>"
+      },
       "duplicate": "Ten key już istnieje",
       "name": "KV Store",
       "type": "Typ",
@@ -766,6 +791,7 @@
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
       "creation": {
+        "after execution": "Dodaj blok po wykonaniu",
         "error handlers": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
         "select": "Wybierz {section}",
@@ -796,6 +822,7 @@
         "yaml": "Edytor YAML"
       },
       "save": {
+        "after execution": "Zapisz task",
         "error handlers": "Zapisz obsługę błędów",
         "finally": "Zapisz task",
         "input": "Zapisz input",
@@ -803,6 +830,7 @@
         "triggers": "Zapisz trigger"
       },
       "sections": {
+        "after_execution": "Po wykonaniu",
         "error_handlers": "Obsługa błędów",
         "finally": "Na koniec",
         "general": "Właściwości ogólne",
@@ -816,6 +844,7 @@
     "no_logs_data": "Brak danych",
     "no_logs_data_description": "Albo żadne flow nie są uruchomione, albo musisz dostosować swoje filtry.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
+    "no_tasks_running": "Jeszcze nie ma uruchomionych tasków.",
     "now": "Teraz",
     "of": "z",
     "ok": "OK",
@@ -993,8 +1022,11 @@
     "search term in message": "Wyszukaj termin w wiadomości",
     "seconds": "Sekundy",
     "secret": {
+      "add": "Nowy sekret",
       "inherited": "Dziedziczone secrets",
-      "names": "Secrets"
+      "isReadOnly": "Sekret jest tylko do odczytu",
+      "names": "Secrets",
+      "update": "Aktualizuj sekret '{name}'"
     },
     "security_advice": {
       "content": "Włącz podstawowe uwierzytelnianie, aby chronić swoją instancję.",
@@ -1024,9 +1056,11 @@
             "editor_type": "Domyślny typ edytora",
             "execute_default_tab": "Domyślna karta Execution",
             "execute_flow": "Wykonaj Flow",
+            "flow_default_tab": "Domyślna karta Flow",
             "language": "Język",
             "log_display": "Domyślne Wyświetlanie Log",
-            "log_level": "Domyślna Poziom Logs"
+            "log_level": "Domyślna Poziom Logs",
+            "multi_panel_editor": "Edytor Wielopanelowy"
           },
           "label": "Główna konfiguracja"
         },
@@ -1129,8 +1163,10 @@
     "templates deleted": "<code>{count}</code> Szablon(y) usunięte",
     "templates deprecated": "Szablony są przestarzałe. Proszę używać subflows. Zobacz <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sekcję migracji</a>, aby dowiedzieć się, jak migrować z szablonów do subflows.",
     "templates exported": "Szablony wyeksportowane",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "Mandant",
+      "names": "Najemcy"
+    },
     "theme": "Motyw",
     "this_task_has": "To zadanie ma",
     "timezone": "Strefa czasowa",
@@ -1140,6 +1176,7 @@
     "toggle output": "Przełącz wyjścia",
     "toggle output display": "Przełącz wyświetlanie wyjścia",
     "toggle periodic refresh each 10 seconds": "Przełącz okresowe odświeżanie co 10 sekund",
+    "toggle_word_wrap": "Przełącz zawijanie wierszy",
     "topology": "Topologia",
     "topology-graph": {
       "graph-orientation": "Orientacja grafu",

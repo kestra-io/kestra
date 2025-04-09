@@ -12,6 +12,9 @@ dependencies {
     implementation 'ch.qos.logback.contrib:logback-json-classic'
     implementation 'ch.qos.logback.contrib:logback-jackson'
 
+    // OTLP metrics
+    implementation "io.micronaut.micrometer:micronaut-micrometer-registry-otlp"
+
     // aether still use javax.inject
     compileOnly 'javax.inject:javax.inject:1'
 

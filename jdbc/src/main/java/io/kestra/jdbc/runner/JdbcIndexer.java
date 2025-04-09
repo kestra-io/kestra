@@ -11,6 +11,7 @@ import io.kestra.core.repositories.SaveRepositoryInterface;
 import io.kestra.core.runners.Indexer;
 import io.kestra.core.runners.IndexerInterface;
 import io.kestra.core.server.ServiceStateChangeEvent;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 
@@ -74,6 +75,7 @@ public class JdbcIndexer implements IndexerInterface {
         log.debug("Starting the indexer");
         startQueues();
         setState(ServiceState.RUNNING);
+        log.info("Indexer started");
     }
 
     protected void startQueues() {

@@ -10,9 +10,7 @@ import jakarta.inject.Singleton;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
 public class SLATestCase {
@@ -22,31 +20,31 @@ public class SLATestCase {
     public void maxDurationSLAShouldFail() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sla-max-duration-fail");
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     public void maxDurationSLAShouldPass() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sla-max-duration-ok");
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     public void executionConditionSLAShouldPass() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sla-execution-condition");
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     public void executionConditionSLAShouldCancel() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sla-execution-condition", null, (f, e) -> Map.of("string", "CANCEL"));
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.CANCELLED));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
     }
 
     public void executionConditionSLAShouldLabel() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "sla-execution-condition", null, (f, e) -> Map.of("string", "LABEL"));
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getLabels(), hasItem(new Label("sla", "violated")));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getLabels()).contains(new Label("sla", "violated"));
     }
 }

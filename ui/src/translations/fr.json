@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "Plans d'application",
       "community": "Communauté",
+      "create": "Créer un blueprint",
       "custom": "Plans personnalisés",
       "dashboards": "Tableaux de bord Blueprints",
+      "edit": "Modifier un blueprint",
       "empty": "Aucun blueprint à afficher.",
       "flows": "Plans de Flow",
       "header": {
@@ -144,9 +146,11 @@
     "continue backfill": "Continuer le backfill",
     "continue backfills": "Continuer les backfills",
     "copied": "Copié",
+    "copied_logs_to_clipboard": "Logs copiés dans le presse-papiers.",
     "copy": "Copier",
     "copy logs": "Copier les logs",
     "copy url": "Copier l'URL",
+    "copy_to_clipboard": "Copier dans le presse-papiers",
     "create": "Créer",
     "create first task": "Créer votre première tâche",
     "create_custom_dashboard": "Créer un nouveau tableau de bord",
@@ -242,7 +246,6 @@
     "delete backfill": "Supprimer le backfill",
     "delete backfills": "Supprimer les backfills",
     "delete confirm": "Êtes-vous sur de vouloir effacer <code>{name}</code> ?",
-    "delete confirm multiple": "Êtes-vous sûr de vouloir supprimer le(s) KV <code>{name}</code> ?",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">Cette exécution est en cours, l'effacer ne stoppera pas celle-ci.<br />Vous devez l'arrêter auparavant!</div>",
     "delete logs": "Supprimer les logs",
     "delete ok": "est effacé",
@@ -284,6 +287,10 @@
           "message": "Dans l'édition Kestra Enterprise, les namespaces offrent une isolation avancée et une gouvernance des secrets, variables et paramètres par défaut des plugins à grande échelle. Les administrateurs peuvent configurer des gestionnaires de secrets personnalisés, des stockages backends isolés, des groupes de workers dédiés, et des permissions fines par namespace. Cela garantit que les secrets, variables et configurations de plugins restent sécurisés et faciles à maintenir à travers différentes équipes et projets.",
           "title": "Améliorez la Gestion de votre Namespace"
         },
+        "history": {
+          "message": "Dans Kestra Enterprise Edition, vous pouvez gérer l'historique des révisions de vos namespaces",
+          "title": "Gérer l'historique des révisions en un seul endroit"
+        },
         "plugin-defaults": {
           "message": "Dans Kestra Enterprise Edition, vous pouvez définir des paramètres par défaut spécifiques au namespace pour les plugins, réduisant ainsi le besoin de configurations dupliquées dans chaque flow. Cette gouvernance centrale des plugins impose des configurations cohérentes, permet une référence sécurisée des secrets ou des variables, et simplifie la maintenance de vos workflows.",
           "title": "Standardiser la Configuration avec les Valeurs par Défaut du Plugin"
@@ -296,6 +303,18 @@
           "message": "Dans Kestra Enterprise Edition, vous pouvez définir et gérer des variables au niveau du namespace pour éliminer les configurations répétitives à travers les flows. Ces variables assurent la cohérence, simplifient les mises à jour de configuration et peuvent être facilement référencées par n'importe quel task ou trigger pour des workflows plus propres et plus faciles à maintenir.",
           "title": "Gérez vos Variables de manière centralisée"
         }
+      },
+      "secrets": {
+        "add_env": {
+          "first": "Encodez la <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valeur secrète en Base64</a></strong>",
+          "intro": "Pour créer un nouveau Secret :",
+          "second": "Ajoutez une variable d'environnement nommée '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' avec la valeur ci-dessus.",
+          "third": "Redémarrez votre instance Kestra"
+        },
+        "detected_env": "Voici les variables d'environnement de type secret identifiées au démarrage de l'instance :",
+        "empty_env": "Vous n'avez pas encore de Secrets dans votre environnement.",
+        "message": "L'Enterprise Edition (EE) vous permet d'ajouter, de modifier ou de supprimer des secrets directement dans l'UI, sans redémarrage de l'instance. Organisez les secrets par namespace avec des permissions RBAC granulaires, et héritez-les des namespaces parents aux namespaces enfants. EE s'intègre avec des gestionnaires de secrets comme HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager et Elasticsearch. Configurez des backends dédiés par namespace, tenant ou instance pour isoler les secrets entre les équipes, ou activez des secrets en lecture seule stockés dans des coffres externes. Les secrets restent chiffrés au repos et en transit. Un cache optionnel réduit les appels API, et les pistes d'audit loguent tous les accès.",
+        "title": "Améliorez votre gestion des Secrets"
       },
       "tenants": {
         "message": "L'édition Kestra Enterprise prend en charge la multi-tenance, vous offrant des environnements entièrement isolés pour différentes équipes ou projets, chacun avec ses propres ressources telles que des groupes de workers dédiés ou des secrets et des backends de stockage internes.",
@@ -425,8 +444,6 @@
     "execute the flow": "Exécuter le flow <code>{id}</code>",
     "execution": "Exécution",
     "execution already finished": "Exécution <code>{executionId}</code> déjà terminée",
-    "execution failed header": "Échec de l'exécution !",
-    "execution failed message": "Avec la dernière erreur : <code>{message}</code>",
     "execution labels": "Labels d'exécution",
     "execution not found": "Exécution <code>{executionId}</code> non trouvée",
     "execution not in state FAILED": "Exécution <code>{executionId}</code> n'est pas dans l'état FAILED",
@@ -443,6 +460,7 @@
       "metrics": "Supprimer les métriques",
       "storage": "Supprimer les fichiers de stockage interne"
     },
+    "execution_failed": "Échec de l'exécution ! La dernière erreur était",
     "execution_guide": {
       "get_started": {
         "text": "Suivez le Guide de démarrage rapide pour installer Kestra et commencer à créer vos premiers workflows.",
@@ -457,6 +475,8 @@
         "title": "Composants du Workflow"
       }
     },
+    "execution_starts_progress": "Une fois l'exécution commencée, vous verrez les mises à jour de progression ici.",
+    "execution_status": "L'exécution est :",
     "executions": "Exécutions",
     "executions deleted": "<code>{executionCount}</code> exécution(s) supprimée(s)",
     "executions duration (in minutes)": "Durée totale d'exécutions (en minutes)",
@@ -537,6 +557,7 @@
         },
         "empty": "Vous n'avez pas encore enregistré de recherche.",
         "label": "Recherches enregistrées",
+        "remove": "Supprimer",
         "tooltip": "Vous ne pouvez pas enregistrer des critères de recherche vides."
       },
       "settings": {
@@ -632,6 +653,10 @@
     "killed done": "L'exécution est en attente d'arrêt",
     "kv": {
       "add": "Nouveau couple de clé/valeur",
+      "delete multiple": {
+        "confirm": "Êtes-vous sûr de vouloir supprimer : <code>{name}</code> KV(s) ?",
+        "warning": "Vous n'avez pas les autorisations pour ces namespaces, ils seront donc omis : <code>{namespaces}</code>"
+      },
       "duplicate": "Cette clé existe déjà",
       "name": "Stockage de clés/valeurs",
       "type": "Type",
@@ -766,6 +791,7 @@
       "adding": "+ Ajouter un {what}",
       "adding_default": "+ Ajouter une nouvelle valeur",
       "creation": {
+        "after execution": "Ajouter un bloc après l'exécution",
         "error handlers": "Ajouter un gestionnaire d'erreurs",
         "finally": "Ajouter un bloc finally",
         "select": "Sélectionnez une {section}",
@@ -796,6 +822,7 @@
         "yaml": "Éditeur YAML"
       },
       "save": {
+        "after execution": "Enregistrer la task",
         "error handlers": "Enregistrer le gestionnaire d'erreurs",
         "finally": "Enregistrer la task",
         "input": "Enregistrer l'input",
@@ -803,6 +830,7 @@
         "triggers": "Enregistrer le trigger"
       },
       "sections": {
+        "after_execution": "Après l'Exécution",
         "error_handlers": "Gestionnaires d'erreurs",
         "finally": "Enfin",
         "general": "Propriétés générales",
@@ -816,6 +844,7 @@
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Soit aucun flow n'est en cours d'exécution, soit vous devez ajuster vos filtres.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
+    "no_tasks_running": "Aucune tâche n'est encore en cours d'exécution.",
     "now": "Maintenant",
     "of": "de",
     "ok": "OK",
@@ -993,8 +1022,11 @@
     "search term in message": "Chercher dans le message",
     "seconds": "Secondes",
     "secret": {
+      "add": "Nouveau secret",
       "inherited": "Secrets hérités",
-      "names": "Secrets"
+      "isReadOnly": "Le secret est en lecture seule",
+      "names": "Secrets",
+      "update": "Mettre à jour le secret '{name}'"
     },
     "security_advice": {
       "content": "Activer l'authentification basique pour protéger votre instance.",
@@ -1024,9 +1056,11 @@
             "editor_type": "Type d'Éditeur par Défaut",
             "execute_default_tab": "Onglet d'exécution par défaut",
             "execute_flow": "Exécuter le flow",
+            "flow_default_tab": "Onglet Flow par Défaut",
             "language": "Langue",
             "log_display": "Affichage des journaux par défaut",
-            "log_level": "Niveau d'affichage des journaux par défaut"
+            "log_level": "Niveau d'affichage des journaux par défaut",
+            "multi_panel_editor": "Éditeur Multi-Panneaux"
           },
           "label": "Configuration Principale"
         },
@@ -1129,8 +1163,10 @@
     "templates deleted": "<code>{count}</code> Template(s) supprimé(s)",
     "templates deprecated": "Les templates sont obsolètes. Veuillez utiliser des sous-flux au lieu des templates. Consultez <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">section Migrations</a> expliquant comment vous pouvez migrer vers les sous-flux.",
     "templates exported": "Templates exportés",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "Mandant",
+      "names": "Mandants"
+    },
     "theme": "Thème",
     "this_task_has": "Cette tâche a",
     "timezone": "Fuseau horaire",
@@ -1140,6 +1176,7 @@
     "toggle output": "Voir les sorties",
     "toggle output display": "Permuter l'affichage de sortie",
     "toggle periodic refresh each 10 seconds": "Activer le rafraîchissement toutes les 10 secondes",
+    "toggle_word_wrap": "Activer/Désactiver le retour à la ligne",
     "topology": "Topologie",
     "topology-graph": {
       "graph-orientation": "Orientation du graph",

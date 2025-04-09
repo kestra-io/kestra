@@ -1,6 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -18,6 +18,6 @@ class UUIDFunctionTest {
         String rendered =
             variableRenderer.render(
                 "{{ uuid() }}", Collections.emptyMap());
-        assertThat(rendered, !rendered.isEmpty());
+        assertThat(!rendered.isEmpty()).as(rendered).isTrue();
     }
 }

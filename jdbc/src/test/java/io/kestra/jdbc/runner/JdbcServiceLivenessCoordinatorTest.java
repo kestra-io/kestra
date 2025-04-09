@@ -45,8 +45,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
@@ -132,18 +131,18 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
 
         workerJobQueue.emit(workerTask(Duration.ofSeconds(5)));
         boolean runningLatchAwait = runningLatch.await(5, TimeUnit.SECONDS);
-        assertThat(runningLatchAwait, is(true));
+        assertThat(runningLatchAwait).isEqualTo(true);
         worker.shutdown(); // stop processing task
 
         // create second worker (this will revoke previously one).
         Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
         newWorker.run();
         boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
-        assertThat(resubmitLatchAwait, is(true));
+        assertThat(resubmitLatchAwait).isEqualTo(true);
         WorkerTaskResult workerTaskResult = receive.blockLast();
-        assertThat(workerTaskResult, notNullValue());
-        assertThat(workerTaskResult.getTaskRun().getState().getCurrent(), is(Type.SUCCESS));
-        assertThat(workerTaskResult.getTaskRun().getAttempts(), hasSize(2));
+        assertThat(workerTaskResult).isNotNull();
+        assertThat(workerTaskResult.getTaskRun().getState().getCurrent()).isEqualTo(Type.SUCCESS);
+        assertThat(workerTaskResult.getTaskRun().getAttempts()).hasSize(2);
         newWorker.shutdown();
     }
 
@@ -168,18 +167,18 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
 
         workerJobQueue.emit("workerGroupKey", workerTask(Duration.ofSeconds(5), "workerGroupKey"));
         boolean runningLatchAwait = runningLatch.await(5, TimeUnit.SECONDS);
-        assertThat(runningLatchAwait, is(true));
+        assertThat(runningLatchAwait).isEqualTo(true);
         worker.shutdown(); // stop processing task
 
         // create second worker (this will revoke previously one).
         Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, "workerGroupKey");
         newWorker.run();
         boolean resubmitLatchAwait = resubmitLatch.await(10, TimeUnit.SECONDS);
-        assertThat(resubmitLatchAwait, is(true));
+        assertThat(resubmitLatchAwait).isEqualTo(true);
         WorkerTaskResult workerTaskResult = receive.blockLast();
-        assertThat(workerTaskResult, notNullValue());
-        assertThat(workerTaskResult.getTaskRun().getState().getCurrent(), is(Type.SUCCESS));
-        assertThat(workerTaskResult.getTaskRun().getAttempts(), hasSize(2));
+        assertThat(workerTaskResult).isNotNull();
+        assertThat(workerTaskResult.getTaskRun().getState().getCurrent()).isEqualTo(Type.SUCCESS);
+        assertThat(workerTaskResult.getTaskRun().getAttempts()).hasSize(2);
         newWorker.shutdown();
     }
 
@@ -206,7 +205,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
 
         workerJobQueue.emit(workerTask);
         boolean runningLatchAwait = runningLatch.await(10, TimeUnit.SECONDS);
-        assertThat(runningLatchAwait, is(true));
+        assertThat(runningLatchAwait).isEqualTo(true);
         worker.shutdown();
 
         Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
@@ -216,7 +215,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Thread.sleep(500);
         receive.blockLast();
         newWorker.shutdown();
-        assertThat(receive.blockLast().getTaskRun().getState().getCurrent(), not(Type.SUCCESS));
+        assertThat(receive.blockLast().getTaskRun().getState().getCurrent()).isNotEqualTo(Type.SUCCESS);
     }
 
     @Test
@@ -243,14 +242,11 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         worker.shutdown();
 
         Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, null);
-        applicationContext.registerSingleton(newWorker);
         newWorker.run();
+        assertThat(countDownLatch.await(30, TimeUnit.SECONDS)).isEqualTo(true);
 
-        boolean lastAwait = countDownLatch.await(10, TimeUnit.SECONDS);
-
-        newWorker.shutdown();
         receive.blockLast();
-        assertThat(lastAwait, is(true));
+        newWorker.shutdown();
     }
 
     @Test
@@ -260,11 +256,11 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
 
         WorkerTrigger workerTrigger = workerTrigger(Duration.ofSeconds(5), "workerGroupKey");
 
-        // 2 trigger should happen because of the resubmit
+        // 2 triggers should happen because of the resubmit
         CountDownLatch countDownLatch = new CountDownLatch(2);
         Flux<WorkerTriggerResult> receive = TestsUtils.receive(workerTriggerResultQueue, workerTriggerResult -> countDownLatch.countDown());
 
-        // we wait that the worker receive the trigger
+        // we wait that the worker receives the trigger
         CountDownLatch triggerCountDownLatch = new CountDownLatch(1);
         Flux<Trigger> receiveTrigger = TestsUtils.receive(triggerQueue, either -> {
             if (either.getLeft().getWorkerId().equals(worker.getId())) {
@@ -277,14 +273,11 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         worker.shutdown();
 
         Worker newWorker = applicationContext.createBean(Worker.class, IdUtils.create(), 1, "workerGroupKey");
-        applicationContext.registerSingleton(newWorker);
         newWorker.run();
+        assertThat(countDownLatch.await(30, TimeUnit.SECONDS)).isEqualTo(true);
 
-        boolean lastAwait = countDownLatch.await(10, TimeUnit.SECONDS);
-
-        newWorker.shutdown();
         receive.blockLast();
-        assertThat(lastAwait, is(true));
+        newWorker.shutdown();
     }
 
     @MockBean(WorkerGroupService.class)

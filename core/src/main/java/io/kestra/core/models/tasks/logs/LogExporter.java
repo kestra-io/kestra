@@ -25,6 +25,6 @@ public abstract class LogExporter<T extends Output>  implements io.kestra.core.m
     @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     protected String type;
 
-    public abstract T sendLogs(RunContext runContext, Flux<LogRecord> logRecord) throws Exception;
+    public abstract T sendLogs(RunContext runContext, Flux<LogRecord> logRecords) throws Exception;
 
 }

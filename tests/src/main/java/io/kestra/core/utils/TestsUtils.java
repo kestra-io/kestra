@@ -9,6 +9,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
@@ -113,16 +114,16 @@ abstract public class TestsUtils {
             .build();
     }
 
-    public static Execution mockExecution(Flow flow, Map<String, Object> inputs) {
+    public static Execution mockExecution(FlowInterface flow, Map<String, Object> inputs) {
         return TestsUtils.mockExecution(Thread.currentThread().getStackTrace()[2], flow, inputs, null);
     }
 
-    public static Execution mockExecution(Flow flow, Map<String, Object> inputs, Map<String, Object> outputs) {
+    public static Execution mockExecution(FlowInterface flow, Map<String, Object> inputs, Map<String, Object> outputs) {
         return TestsUtils.mockExecution(Thread.currentThread().getStackTrace()[2], flow, inputs, outputs);
     }
 
     private static Execution mockExecution(StackTraceElement caller,
-                                           Flow flow,
+                                           FlowInterface flow,
                                            Map<String, Object> inputs,
                                            Map<String, Object> outputs) {
         return Execution.builder()
@@ -137,7 +138,7 @@ abstract public class TestsUtils {
             .withState(State.Type.RUNNING);
     }
 
-    public static TaskRun mockTaskRun(Flow flow, Execution execution, Task task) {
+    public static TaskRun mockTaskRun(FlowInterface flow, Execution execution, Task task) {
         return TestsUtils.mockTaskRun(Thread.currentThread().getStackTrace()[2], execution, task);
     }
 

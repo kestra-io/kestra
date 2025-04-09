@@ -16,7 +16,6 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
-import org.apache.hc.core5.http.ContentType;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -25,10 +24,8 @@ import java.io.OutputStream;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URLEncoder;
 import java.net.http.HttpHeaders;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.AbstractMap;
 import java.util.HashMap;
@@ -75,10 +72,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
             this.options = HttpConfiguration.builder()
                 .build();
         }
-
-        this.options = this.options.toBuilder()
-            .allowFailed(allowFailed)
-            .build();
+        this.options.setAllowFailed(allowFailed);
     }
 
     @Deprecated
@@ -92,9 +86,7 @@ public abstract class AbstractHttp extends Task implements HttpInterface {
         }
 
         this.sslOptions = sslOptions;
-        this.options = this.options.toBuilder()
-            .ssl(sslOptions)
-            .build();
+        this.options.setSsl(sslOptions);
     }
 
     protected HttpClient client(RunContext runContext) throws IllegalVariableEvaluationException, MalformedURLException, URISyntaxException {

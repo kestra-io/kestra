@@ -12,7 +12,6 @@ import io.kestra.core.utils.Await;
 import io.micronaut.context.ApplicationContext;
 import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
-import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.io.File;
@@ -25,7 +24,6 @@ import java.util.Map;
     name = "standalone",
     description = "Start the standalone all-in-one server"
 )
-@Slf4j
 public class StandAloneCommand extends AbstractServerCommand {
     @CommandLine.Spec
     CommandLine.Model.CommandSpec spec;
@@ -91,11 +89,11 @@ public class StandAloneCommand extends AbstractServerCommand {
         this.skipExecutionService.setSkipFlows(skipFlows);
         this.skipExecutionService.setSkipNamespaces(skipNamespaces);
         this.skipExecutionService.setSkipTenants(skipTenants);
-
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
 
+        KestraContext.getContext().injectWorkerConfigs(workerThread, null);
+
         super.call();
-        this.shutdownHook(() -> KestraContext.getContext().shutdown());
 
         if (flowPath != null) {
             try {
@@ -123,8 +121,6 @@ public class StandAloneCommand extends AbstractServerCommand {
         if (fileWatcher != null) {
             fileWatcher.startListeningFromConfig();
         }
-
-        this.shutdownHook(standAloneRunner::close);
 
         Await.until(() -> !this.applicationContext.isRunning());
 

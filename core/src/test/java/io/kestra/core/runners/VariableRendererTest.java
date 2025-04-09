@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.micronaut.context.ApplicationContext;
@@ -46,10 +45,10 @@ class VariableRendererTest {
         input.put("foo-3", input_value3);
 
         final Map<String, Object> result = variableRenderer.render(input, Map.of());
-        assertThat(result.keySet(), contains("foo-1", "foo-2", "foo-3"));
+        assertThat(result.keySet()).containsExactly("foo-1", "foo-2", "foo-3");
 
         final Map<String, Object> result_value3 = (Map<String, Object>) result.get("foo-3");
-        assertThat(result_value3.keySet(), contains("bar-1", "bar-2", "bar-3"));
+        assertThat(result_value3.keySet()).containsExactly("bar-1", "bar-2", "bar-3");
     }
 
     public static class TestVariableRenderer extends VariableRenderer {

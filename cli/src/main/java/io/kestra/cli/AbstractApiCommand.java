@@ -46,8 +46,18 @@ public abstract class AbstractApiCommand extends AbstractCommand {
     @Nullable
     private HttpClientConfiguration httpClientConfiguration;
 
+    /**
+     * {@inheritDoc}
+     */
+    protected boolean loadExternalPlugins() {
+        return false;
+    }
+
     protected DefaultHttpClient client() throws URISyntaxException {
-        DefaultHttpClient defaultHttpClient = new DefaultHttpClient(server.toURI(), httpClientConfiguration != null ? httpClientConfiguration : new DefaultHttpClientConfiguration());
+        DefaultHttpClient defaultHttpClient = DefaultHttpClient.builder()
+            .uri(server.toURI())
+            .configuration(httpClientConfiguration != null ? httpClientConfiguration : new DefaultHttpClientConfiguration())
+            .build();
         MessageBodyHandlerRegistry defaultHandlerRegistry = defaultHttpClient.getHandlerRegistry();
         if (defaultHandlerRegistry instanceof ContextlessMessageBodyHandlerRegistry modifiableRegistry) {
             modifiableRegistry.add(MediaType.TEXT_JSON_TYPE, new NettyJsonHandler<>(JsonMapper.createDefault()));

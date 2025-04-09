@@ -15,8 +15,9 @@ $filters-font-xs: var(--el-font-size-extra-small);
 
 .items {
     .el-tag {
-        background: $filters-border-color;
-        color: $filters-gray-900;
+        padding: 0;
+        color: var(--ks-tag-content);
+        background: var(--ks-tag-background-active);
     }
 
     .small {

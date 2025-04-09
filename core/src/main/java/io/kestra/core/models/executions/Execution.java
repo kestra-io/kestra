@@ -14,6 +14,7 @@ import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.runners.FlowableUtils;
@@ -122,6 +123,10 @@ public class Execution implements DeletedInterface, TenantInterface {
         return newExecution(flow, null, labels, Optional.empty());
     }
 
+    public List<Label> getLabels() {
+        return Optional.ofNullable(this.labels).orElse(new ArrayList<>());
+    }
+
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow} and
      * inputs.
@@ -131,8 +136,8 @@ public class Execution implements DeletedInterface, TenantInterface {
      * @param labels The Flow labels.
      * @return a new {@link Execution}.
      */
-    public static Execution newExecution(final Flow flow,
-        final BiFunction<Flow, Execution, Map<String, Object>> inputs,
+    public static Execution newExecution(final FlowInterface flow,
+        final BiFunction<FlowInterface, Execution, Map<String, Object>> inputs,
         final List<Label> labels,
         final Optional<ZonedDateTime> scheduleDate) {
         Execution execution = builder()
@@ -822,7 +827,11 @@ public class Execution implements DeletedInterface, TenantInterface {
             .forEach((taskId, taskRuns) -> {
                 Map<String, Object> taskOutputs = new HashMap<>();
                 for (TaskRun current : taskRuns) {
-                    taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                    if (current.getIteration() != null) {
+                        taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                    } else {
+                        taskOutputs.putAll(outputs(current, byIds));
+                    }
                 }
                 result.put(taskId, taskOutputs);
             });

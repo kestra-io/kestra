@@ -76,6 +76,7 @@
                             <editor
                                 ref="debugEditor"
                                 :full-height="false"
+                                :custom-height="20"
                                 :input="true"
                                 :navbar="false"
                                 :model-value="computedDebugValue"
@@ -100,6 +101,7 @@
                                 :read-only="true"
                                 :input="true"
                                 :full-height="false"
+                                :custom-height="20"
                                 :navbar="false"
                                 :model-value="debugExpression"
                                 :lang="isJSON ? 'json' : ''"

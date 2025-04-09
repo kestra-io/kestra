@@ -615,16 +615,19 @@ public class ExecutorService {
                 Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
 
                 if (task instanceof Pause pauseTask) {
-                    if (pauseTask.getDelay() != null || pauseTask.getTimeout() != null) {
+                    if (pauseTask.getPauseDuration() != null || pauseTask.getTimeout() != null) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        Duration delay = runContext.render(pauseTask.getDelay()).as(Duration.class).orElse(null);
+                        Duration duration = runContext.render(pauseTask.getPauseDuration()).as(Duration.class).orElse(null);
                         Duration timeout = runContext.render(pauseTask.getTimeout()).as(Duration.class).orElse(null);
-                        if (delay != null || timeout != null) { // rendering can lead to null, so we must re-check here
+                        Pause.Behavior behavior  = runContext.render(pauseTask.getBehavior()).as(Pause.Behavior.class).orElse(Pause.Behavior.RESUME);
+                        if (duration != null || timeout != null) { // rendering can lead to null, so we must re-check here
+                            // if duration is set, we use it, and we use the Pause behavior as a state
+                            // if no duration, we use the standard timeout property and use FAILED as the target state
                             return ExecutionDelay.builder()
                                 .taskRunId(workerTaskResult.getTaskRun().getId())
                                 .executionId(executor.getExecution().getId())
-                                .date(workerTaskResult.getTaskRun().getState().maxDate().plus(delay != null ? delay : timeout))
-                                .state(delay != null ? State.Type.RUNNING : State.Type.FAILED)
+                                .date(workerTaskResult.getTaskRun().getState().maxDate().plus(duration != null ? duration : timeout))
+                                .state(duration != null ? behavior.mapToState() : State.Type.FAILED)
                                 .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                                 .build();
                         }

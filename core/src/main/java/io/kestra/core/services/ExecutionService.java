@@ -344,7 +344,7 @@ public class ExecutionService {
                 }
 
                 // if it's a Pause task with no subtask, we terminate the task
-                if (task instanceof Pause pauseTask && pauseTask.getTasks() == null) {
+                if (task instanceof Pause pauseTask && ListUtils.isEmpty(pauseTask.getTasks())) {
                     if (newState == State.Type.RUNNING) {
                         newTaskRun = newTaskRun.withState(State.Type.SUCCESS);
                     } else if (newState == State.Type.KILLING) {
@@ -365,11 +365,12 @@ public class ExecutionService {
         }
 
         if (newExecution.getTaskRunList().stream().anyMatch(t -> t.getState().getCurrent() == State.Type.PAUSED)) {
-            // there is still some tasks paused, this can occur with parallel pause
+            // there are still some tasks paused, this can occur with parallel pause
             return newExecution;
         }
-        return newExecution
-            .withState(State.Type.RESTARTED);
+
+        // we need to cancel immediately or the executor will process the next task if it's restarted.
+        return newState == State.Type.CANCELLED ? newExecution.withState(State.Type.CANCELLED) : newExecution.withState(State.Type.RESTARTED);
     }
 
     public Execution markWithTaskRunAs(final Execution execution, String taskRunId, State.Type newState, Boolean markParents) throws Exception {
@@ -655,7 +656,7 @@ public class ExecutionService {
      *
      * @return the execution in a KILLING state if not already terminated
      */
-    public Execution kill(Execution execution, Flow flow) {
+    public Execution kill(Execution execution, FlowInterface flow) {
         if (execution.getState().getCurrent() == State.Type.KILLING || execution.getState().isTerminated()) {
             return execution;
         }

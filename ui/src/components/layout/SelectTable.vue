@@ -25,12 +25,9 @@
     </div>
 </template>
 
-<script setup>
-    import {default as vElTableInfiniteScroll} from "el-table-infinite-scroll";
-</script>
-
 <script>
     import NoData from "./NoData.vue";
+    import elTableInfiniteScroll from "el-table-infinite-scroll";
 
     export default {
         components: {NoData},
@@ -61,9 +58,13 @@
                 return this.infiniteScrollDisabled === false;
             }
         },
+        directives: {
+            elTableInfiniteScroll
+        },
         methods: {
             async resetInfiniteScroll() {
                 this.infiniteScrollDisabled = false;
+                this.tableHeight = await this.computeTableHeight();
             },
             async waitTableRender() {
                 if (this.tableView === undefined) {
@@ -82,18 +83,8 @@
                         }
                     });
 
-                    observer.observe(this.tableView.querySelector(".el-table__body > tbody"), {childList: true,});
+                    observer.observe(this.tableView.querySelector(".el-table__body > tbody"), {childList: true});
                 });
-            },
-            async hasScrollbar() {
-                const scrollEl = this.scrollWrapper;
-                if (scrollEl === undefined) {
-                    return false;
-                }
-
-                await this.waitTableRender();
-
-                return scrollEl.clientHeight < scrollEl.scrollHeight;
             },
             selectionChanged(selection) {
                 this.hasSelection = selection.length > 0;
@@ -112,6 +103,10 @@
 
                 if (this.infiniteScrollLoad === undefined || this.scrollWrapper === undefined) {
                     return "auto";
+                }
+
+                if (!this.stillHaveDataToFetch && this.data.length === 0) {
+                    return "calc(var(--table-header-height) + 60px)";
                 }
 
                 return this.stillHaveDataToFetch || this.tableView === undefined ? "100%" : `min(${this.tableView.scrollHeight}px, 100%)`;

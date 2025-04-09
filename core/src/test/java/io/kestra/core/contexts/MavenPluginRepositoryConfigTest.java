@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(environments = "maven")
 class MavenPluginRepositoryConfigTest {
@@ -19,20 +19,16 @@ class MavenPluginRepositoryConfigTest {
     @Test
     void shouldInjectAllMavenPluginRepositories() {
         Assertions.assertEquals(2, repositories.size());
-        assertThat(repositories, Matchers.containsInAnyOrder(
-            MavenPluginRepositoryConfig.builder()
-                .id("central")
-                .url("https://repo.maven.apache.org/maven2/")
-                .build(),
-
-            MavenPluginRepositoryConfig.builder()
-                .id("secured")
-                .url("https://registry.test.org/maven")
-                .basicAuth(new MavenPluginRepositoryConfig.BasicAuth(
-                    "username",
-                    "password"
-                ))
-                .build()
-        ));
+        assertThat(repositories).containsExactlyInAnyOrder(MavenPluginRepositoryConfig.builder()
+            .id("central")
+            .url("https://repo.maven.apache.org/maven2/")
+            .build(), MavenPluginRepositoryConfig.builder()
+            .id("secured")
+            .url("https://registry.test.org/maven")
+            .basicAuth(new MavenPluginRepositoryConfig.BasicAuth(
+                "username",
+                "password"
+            ))
+            .build());
     }
 }

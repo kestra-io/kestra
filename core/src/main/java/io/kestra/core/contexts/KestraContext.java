@@ -10,6 +10,8 @@ import io.micronaut.context.env.Environment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,6 +28,10 @@ public abstract class KestraContext {
 
     // Properties
     public static final String KESTRA_SERVER_TYPE = "kestra.server-type";
+
+    // Those properties are injected bases on the CLI args.
+    private static final String KESTRA_WORKER_MAX_NUM_THREADS = "kestra.worker.max-num-threads";
+    private static final String KESTRA_WORKER_GROUP_KEY = "kestra.worker.group-key";
 
     /**
      * Gets the current {@link KestraContext}.
@@ -53,6 +59,12 @@ public abstract class KestraContext {
      * @return The {@link ServerType}.
      */
     public abstract ServerType getServerType();
+
+    public abstract Optional<Integer> getWorkerMaxNumThreads();
+
+    public abstract Optional<String> getWorkerGroupKey();
+
+    public abstract void injectWorkerConfigs(Integer maxNumThreads, String workerGroupKey);
 
     /**
      * Returns the Kestra Version.
@@ -108,6 +120,34 @@ public abstract class KestraContext {
             return Optional.ofNullable(environment)
                 .flatMap(env -> env.getProperty(KESTRA_SERVER_TYPE, ServerType.class))
                 .orElse(ServerType.STANDALONE);
+        }
+
+        /** {@inheritDoc} **/
+        @Override
+        public Optional<Integer> getWorkerMaxNumThreads() {
+            return Optional.ofNullable(environment)
+                .flatMap(env -> env.getProperty(KESTRA_WORKER_MAX_NUM_THREADS, Integer.class));
+        }
+
+        /** {@inheritDoc} **/
+        @Override
+        public Optional<String> getWorkerGroupKey() {
+            return Optional.ofNullable(environment)
+                .flatMap(env -> env.getProperty(KESTRA_WORKER_GROUP_KEY, String.class));
+        }
+        /** {@inheritDoc} **/
+        @Override
+        public void injectWorkerConfigs(Integer maxNumThreads, String workerGroupKey) {
+            final Map<String, Object> configs = new HashMap<>();
+            Optional.ofNullable(maxNumThreads)
+                .ifPresent(val -> configs.put(KESTRA_WORKER_MAX_NUM_THREADS, val));
+
+            Optional.ofNullable(workerGroupKey)
+                .ifPresent(val -> configs.put(KESTRA_WORKER_GROUP_KEY, val));
+
+            if (!configs.isEmpty()) {
+                environment.addPropertySource("kestra-runtime", configs);
+            }
         }
 
         /** {@inheritDoc} **/

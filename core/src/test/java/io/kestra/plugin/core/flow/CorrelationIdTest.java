@@ -21,9 +21,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(startRunner = true)
@@ -56,21 +54,21 @@ class CorrelationIdTest {
         });
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "subflow-parent");
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         assertTrue(countDownLatch.await(1, TimeUnit.MINUTES));
         receive.blockLast();
 
-        assertThat(child.get(), notNullValue());
-        assertThat(child.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(child.get()).isNotNull();
+        assertThat(child.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Optional<Label> correlationId = child.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
-        assertThat(correlationId.isPresent(), is(true));
-        assertThat(correlationId.get().value(), is(execution.getId()));
+        assertThat(correlationId.isPresent()).isEqualTo(true);
+        assertThat(correlationId.get().value()).isEqualTo(execution.getId());
 
-        assertThat(grandChild.get(), notNullValue());
-        assertThat(grandChild.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(grandChild.get()).isNotNull();
+        assertThat(grandChild.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         correlationId = grandChild.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
-        assertThat(correlationId.isPresent(), is(true));
-        assertThat(correlationId.get().value(), is(execution.getId()));
+        assertThat(correlationId.isPresent()).isEqualTo(true);
+        assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 }

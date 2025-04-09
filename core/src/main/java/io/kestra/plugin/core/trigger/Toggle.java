@@ -43,7 +43,7 @@ import java.util.Optional;
 
                 inputs:
                   - id: toggle
-                    type: BOOLEAN
+                    type: BOOL
                     defaults: true
 
                 tasks:

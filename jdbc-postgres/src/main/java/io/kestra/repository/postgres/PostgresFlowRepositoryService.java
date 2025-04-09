@@ -2,6 +2,7 @@ package io.kestra.repository.postgres;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import org.jooq.Condition;
@@ -14,7 +15,7 @@ import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 import static io.kestra.jdbc.repository.AbstractJdbcTriggerRepository.NAMESPACE_FIELD;
 
 public abstract class PostgresFlowRepositoryService {
-    public static Condition findCondition(AbstractJdbcRepository<Flow> jdbcRepository, String query, Map<String, String> labels) {
+    public static Condition findCondition(AbstractJdbcRepository<? extends FlowInterface> jdbcRepository, String query, Map<String, String> labels) {
         List<Condition> conditions = new ArrayList<>();
 
         if (query != null) {
@@ -31,7 +32,7 @@ public abstract class PostgresFlowRepositoryService {
         return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 
-    public static Condition findSourceCodeCondition(AbstractJdbcRepository<Flow> jdbcRepository, String query) {
+    public static Condition findSourceCodeCondition(AbstractJdbcRepository<? extends FlowInterface> jdbcRepository, String query) {
         return jdbcRepository.fullTextCondition(Collections.singletonList("FULLTEXT_INDEX(source_code)"), query);
     }
 

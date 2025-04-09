@@ -8,6 +8,7 @@ import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -197,7 +198,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     public Optional<SubflowExecutionResult> createSubflowExecutionResult(
         RunContext runContext,
         TaskRun taskRun,
-        io.kestra.core.models.flows.Flow flow,
+        FlowInterface flow,
         Execution execution
     ) {
         // we only create a worker task result when the execution is terminated

@@ -19,9 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.anyOf;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
@@ -57,29 +55,34 @@ public class FlowTriggerCaseTest {
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-flow");
 
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         assertTrue(countDownLatch.await(15, TimeUnit.SECONDS));
         receive.blockLast();
 
-        assertThat(flowListener.get().getTaskRunList().size(), is(1));
-        assertThat(flowListener.get().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(flowListener.get().getTaskRunList().getFirst().getOutputs().get("value"), is("childs: from parents: " + execution.getId()));
-        assertThat(flowListener.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
-        assertThat(flowListener.get().getTrigger().getVariables().get("namespace"), is("io.kestra.tests.trigger"));
-        assertThat(flowListener.get().getTrigger().getVariables().get("flowId"), is("trigger-flow"));
+        assertThat(flowListener.get().getTaskRunList().size()).isEqualTo(1);
+        assertThat(flowListener.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(flowListener.get().getTaskRunList().getFirst().getOutputs().get("value")).isEqualTo("childs: from parents: " + execution.getId());
+        assertThat(flowListener.get().getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
+        assertThat(flowListener.get().getTrigger().getVariables().get("namespace")).isEqualTo("io.kestra.tests.trigger");
+        assertThat(flowListener.get().getTrigger().getVariables().get("flowId")).isEqualTo("trigger-flow");
 
-        assertThat(flowListenerNoInput.get().getTaskRunList().size(), is(1));
-        assertThat(flowListenerNoInput.get().getTrigger().getVariables().get("executionId"), is(execution.getId()));
-        assertThat(flowListenerNoInput.get().getTrigger().getVariables().get("namespace"), is("io.kestra.tests.trigger"));
-        assertThat(flowListenerNoInput.get().getTrigger().getVariables().get("flowId"), is("trigger-flow"));
-        assertThat(flowListenerNoInput.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(flowListenerNoInput.get().getTaskRunList().size()).isEqualTo(1);
+        assertThat(flowListenerNoInput.get().getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
+        assertThat(flowListenerNoInput.get().getTrigger().getVariables().get("namespace")).isEqualTo("io.kestra.tests.trigger");
+        assertThat(flowListenerNoInput.get().getTrigger().getVariables().get("flowId")).isEqualTo("trigger-flow");
+        assertThat(flowListenerNoInput.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        assertThat(flowListenerNamespace.get().getTaskRunList().size(), is(1));
-        assertThat(flowListenerNamespace.get().getTrigger().getVariables().get("namespace"), is("io.kestra.tests.trigger"));
+        assertThat(flowListenerNamespace.get().getTaskRunList().size()).isEqualTo(1);
+        assertThat(flowListenerNamespace.get().getTrigger().getVariables().get("namespace")).isEqualTo("io.kestra.tests.trigger");
         // it will be triggered for 'trigger-flow' or any of the 'trigger-flow-listener*', so we only assert that it's one of them
-        assertThat(flowListenerNamespace.get().getTrigger().getVariables().get("flowId"), anyOf(is("trigger-flow"), is("trigger-flow-listener-no-inputs"), is("trigger-flow-listener")));
+        assertThat(flowListenerNamespace.get().getTrigger().getVariables().get("flowId"))
+            .satisfiesAnyOf(
+                arg -> assertThat(arg).isEqualTo("trigger-flow"),
+                arg -> assertThat(arg).isEqualTo("trigger-flow-listener-no-inputs"),
+                arg -> assertThat(arg).isEqualTo("trigger-flow-listener")
+            );
     }
 
     public void triggerWithPause() throws InterruptedException, TimeoutException, QueueException {
@@ -96,16 +99,16 @@ public class FlowTriggerCaseTest {
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.pause", "trigger-flow-with-pause");
 
-        assertThat(execution.getTaskRunList().size(), is(3));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         assertTrue(countDownLatch.await(15, TimeUnit.SECONDS));
         receive.blockLast();
 
-        assertThat(flowListeners.size(), is(4));
-        assertThat(flowListeners.get(0).getOutputs().get("status"), is("RUNNING"));
-        assertThat(flowListeners.get(1).getOutputs().get("status"), is("PAUSED"));
-        assertThat(flowListeners.get(2).getOutputs().get("status"), is("RUNNING"));
-        assertThat(flowListeners.get(3).getOutputs().get("status"), is("SUCCESS"));
+        assertThat(flowListeners.size()).isEqualTo(4);
+        assertThat(flowListeners.get(0).getOutputs().get("status")).isEqualTo("RUNNING");
+        assertThat(flowListeners.get(1).getOutputs().get("status")).isEqualTo("PAUSED");
+        assertThat(flowListeners.get(2).getOutputs().get("status")).isEqualTo("RUNNING");
+        assertThat(flowListeners.get(3).getOutputs().get("status")).isEqualTo("SUCCESS");
     }
 }

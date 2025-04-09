@@ -9,8 +9,8 @@ import org.junit.jupiter.api.Test;
 import java.util.Arrays;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
+
 @KestraTest
 public class FlattenFilterTest {
     @Inject
@@ -34,6 +34,6 @@ public class FlattenFilterTest {
         String render = variableRenderer.render("{{ nestedList | flatten | first }}", vars);
         String expected = "You're doing great! Keep it up!";
 
-        assertThat(render, is(expected));
+        assertThat(render).isEqualTo(expected);
     }
 }

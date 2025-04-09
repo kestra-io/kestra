@@ -33,9 +33,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static io.kestra.core.utils.Rethrow.throwSupplier;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class WorkerTest {
@@ -79,13 +77,13 @@ class WorkerTest {
         receive.blockLast();
         worker.shutdown();
 
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(3));
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(3);
     }
 
     @Test
     void workerGroup() {
         Worker worker = applicationContext.createBean(Worker.class, IdUtils.create(), 8, "toto");
-        assertThat(worker.getWorkerGroup(), nullValue());
+        assertThat(worker.getWorkerGroup()).isNull();
     }
 
     @Test
@@ -138,7 +136,7 @@ class WorkerTest {
         receive.blockLast();
         worker.shutdown();
 
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(3));
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(3);
     }
 
     @Test
@@ -180,20 +178,20 @@ class WorkerTest {
             .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.KILLED)
             .findFirst()
             .orElseThrow();
-        assertThat(oneKilled.getTaskRun().getState().getHistories().size(), is(3));
-        assertThat(oneKilled.getTaskRun().getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(oneKilled.getTaskRun().getState().getHistories().size()).isEqualTo(3);
+        assertThat(oneKilled.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.KILLED);
 
         WorkerTaskResult oneNotKilled = workerTaskResult.stream()
             .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.SUCCESS)
             .findFirst()
             .orElseThrow();
-        assertThat(oneNotKilled.getTaskRun().getState().getHistories().size(), is(3));
-        assertThat(oneNotKilled.getTaskRun().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(oneNotKilled.getTaskRun().getState().getHistories().size()).isEqualTo(3);
+        assertThat(oneNotKilled.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // child process is stopped and we never received 3 logs
         Thread.sleep(1000);
         worker.shutdown();
-        assertThat(receiveLogs.toStream().filter(logEntry -> logEntry.getMessage().equals("3")).count(), is(0L));
+        assertThat(receiveLogs.toStream().filter(logEntry -> logEntry.getMessage().equals("3")).count()).isEqualTo(0L);
     }
 
     @Test

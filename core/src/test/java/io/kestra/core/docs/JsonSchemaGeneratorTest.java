@@ -93,8 +93,8 @@ class JsonSchemaGeneratorTest {
                     .get("tasks")
                     .get("items")
             );
-            assertThat(items.containsKey("anyOf"), is(false));
-            assertThat(items.containsKey("oneOf"), is(true));
+            assertThat(items.containsKey("anyOf"), is(true));
+            assertThat(items.containsKey("oneOf"), is(false));
 
             var bash = definitions.get(Log.class.getName());
             assertThat((List<String>) bash.get("required"), not(contains("level")));
@@ -123,7 +123,7 @@ class JsonSchemaGeneratorTest {
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
             var task = definitions.get(Task.class.getName());
-            Assertions.assertNotNull(task.get("oneOf"));
+            Assertions.assertNotNull(task.get("anyOf"));
         });
     }
 

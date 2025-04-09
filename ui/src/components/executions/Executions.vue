@@ -491,7 +491,16 @@
             isConcurrency: {
                 type: Boolean,
                 default: false
-            }
+            },
+            id: {
+                type: String,
+                required: false,
+                default: null,
+            },
+            visibleCharts: {
+                type: Boolean,
+                default: false
+            },
         },
         data() {
             return {
@@ -628,7 +637,8 @@
                 return this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
             },
             isDisplayedTop() {
-                return this.embed === false && this.filter
+                if(this.visibleCharts) return true;
+                else return this.embed === false && this.filter
             },
             states() {
                 return [ State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED,].map(value => {

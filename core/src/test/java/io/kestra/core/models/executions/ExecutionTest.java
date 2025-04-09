@@ -9,8 +9,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ExecutionTest {
     private static final TaskRun.TaskRunBuilder TASK_RUN = TaskRun.builder()
@@ -30,7 +29,7 @@ class ExecutionTest {
                 .withState(State.Type.RUNNING)
             ))
             .build()
-        ), is(true));
+        )).isEqualTo(true);
     }
 
     @Test
@@ -45,7 +44,7 @@ class ExecutionTest {
         assertThat(execution.hasTaskRunJoinable(TASK_RUN
             .state(new State())
             .build()
-        ), is(false));
+        )).isEqualTo(false);
     }
 
     @Test
@@ -62,7 +61,7 @@ class ExecutionTest {
         assertThat(execution.hasTaskRunJoinable(TASK_RUN
             .state(new State(State.Type.RUNNING, new State()))
             .build()
-        ), is(false));
+        )).isEqualTo(false);
     }
 
     @Test
@@ -82,7 +81,7 @@ class ExecutionTest {
                 .withState(State.Type.RUNNING)
             ))
             .build()
-        ), is(false));
+        )).isEqualTo(false);
     }
 
     @Test
@@ -103,7 +102,7 @@ class ExecutionTest {
                 .withState(State.Type.SUCCESS)
             ))
             .build()
-        ), is(true));
+        )).isEqualTo(true);
     }
 
     @Test
@@ -126,7 +125,7 @@ class ExecutionTest {
                 .withState(State.Type.RUNNING)
             ))
             .build()
-        ), is(true));
+        )).isEqualTo(true);
     }
 
     @Test
@@ -135,21 +134,21 @@ class ExecutionTest {
             .id(IdUtils.create())
             .state(new State())
             .build();
-        assertThat(execution.getOriginalId(), is(execution.getId()));
+        assertThat(execution.getOriginalId()).isEqualTo(execution.getId());
 
         Execution restart1 = execution.childExecution(
             IdUtils.create(),
             execution.getTaskRunList(),
             execution.withState(State.Type.RESTARTED).getState()
         );
-        assertThat(restart1.getOriginalId(), is(execution.getId()));
+        assertThat(restart1.getOriginalId()).isEqualTo(execution.getId());
 
         Execution restart2 = restart1.childExecution(
             IdUtils.create(),
             restart1.getTaskRunList(),
             restart1.withState(State.Type.PAUSED).getState()
         );
-        assertThat(restart2.getOriginalId(), is(execution.getId()));
+        assertThat(restart2.getOriginalId()).isEqualTo(execution.getId());
     }
 
     @Test
@@ -158,7 +157,7 @@ class ExecutionTest {
             .labels(List.of(new Label("test", "test-value")))
             .build();
 
-        assertThat(execution.getLabels().size(), is(1));
-        assertThat(execution.getLabels().getFirst(), is(new Label("test", "test-value")));
+        assertThat(execution.getLabels().size()).isEqualTo(1);
+        assertThat(execution.getLabels().getFirst()).isEqualTo(new Label("test", "test-value"));
     }
 }

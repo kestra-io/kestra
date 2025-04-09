@@ -13,7 +13,7 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.MapUtils;
 import org.apache.commons.lang3.SystemUtils;
 
-import javax.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;

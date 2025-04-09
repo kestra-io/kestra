@@ -12,8 +12,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractJdbcTemplateRepositoryTest extends io.kestra.core.repositories.AbstractTemplateRepositoryTest {
     @Inject
@@ -25,13 +24,13 @@ public abstract class AbstractJdbcTemplateRepositoryTest extends io.kestra.core.
         templateRepository.create(builder("com.kestra.test").build());
 
         List<Template> save = templateRepository.find(Pageable.from(1, 10, Sort.UNSORTED), null, null, null);
-        assertThat(save.size(), is(2));
+        assertThat(save.size()).isEqualTo(2);
 
         save = templateRepository.find(Pageable.from(1, 10, Sort.UNSORTED), "kestra", null, "com");
-        assertThat(save.size(), is(1));
+        assertThat(save.size()).isEqualTo(1);
 
         save = templateRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.asc("id"))), "kestra unit", null, null);
-        assertThat(save.size(), is(1));
+        assertThat(save.size()).isEqualTo(1);
     }
 
     @BeforeEach

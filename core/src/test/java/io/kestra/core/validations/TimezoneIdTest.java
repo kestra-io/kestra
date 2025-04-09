@@ -8,8 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class TimezoneIdTest {
@@ -28,14 +27,15 @@ class TimezoneIdTest {
     void inputValidation() {
         final TimezoneIdCls existingTimezone = new TimezoneIdCls("Europe/Paris");
 
-        assertThat(modelValidator.isValid(existingTimezone).isEmpty(), is(true));
+        assertThat(modelValidator.isValid(existingTimezone).isEmpty()).isEqualTo(true);
 
         final TimezoneIdCls invalidTimezone = new TimezoneIdCls("Foo/Bar");
 
-        assertThat(modelValidator.isValid(invalidTimezone).isPresent(), is(true));
-        assertThat(modelValidator.isValid(invalidTimezone).get().getMessage(), allOf(
-            startsWith("timezone"),
-            containsString("is not a valid time-zone ID")
-        ));
+        assertThat(modelValidator.isValid(invalidTimezone).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(invalidTimezone).get().getMessage())
+            .satisfies(
+                arg -> assertThat(arg).startsWith("timezone"),
+                arg -> assertThat(arg).contains("is not a valid time-zone ID")
+            );
     }
 }

@@ -22,9 +22,7 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 public class TaskWithAllowWarningTest {
@@ -40,9 +38,9 @@ public class TaskWithAllowWarningTest {
     @Test
     @ExecuteFlow("flows/valids/task-allow-warning-runnable.yml")
     void runnableTask(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getAttempts().size(), is(3));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getAttempts().size()).isEqualTo(3);
     }
 
     @Test
@@ -50,8 +48,8 @@ public class TaskWithAllowWarningTest {
         "flows/valids/for-each-item-subflow-failed.yaml"})
     void executableTask_Flow() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-warning-executable-flow");
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(2);
     }
 
     @Test
@@ -61,15 +59,15 @@ public class TaskWithAllowWarningTest {
         Map<String, Object> inputs = Map.of("file", file.toString());
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-warning-executable-foreachitem", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList(), hasSize(4));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(4);
     }
 
     @Test
     @ExecuteFlow("flows/valids/task-allow-warning-flowable.yml")
     void flowableTask(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList(), hasSize(3));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(3);
     }
 
     private URI storageUpload() throws URISyntaxException, IOException {

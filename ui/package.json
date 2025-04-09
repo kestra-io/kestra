@@ -26,7 +26,7 @@
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.2",
     "@vue-flow/core": "^1.42.2",
-    "@vueuse/core": "^13.0.0",
+    "@vueuse/core": "^13.1.0",
     "ansi-to-html": "^0.7.2",
     "axios": "^1.8.4",
     "bootstrap": "^5.3.3",

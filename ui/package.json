@@ -117,7 +117,7 @@
     "storybook": "^8.6.9",
     "storybook-vue3-router": "^5.0.0",
     "typescript": "^5.7.2",
-    "typescript-eslint": "^8.28.0",
+    "typescript-eslint": "^8.29.1",
     "vite": "^6.2.3",
     "vitest": "^3.0.5"
   },

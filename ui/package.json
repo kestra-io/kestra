@@ -87,7 +87,7 @@
     "@storybook/test": "^8.6.9",
     "@storybook/test-runner": "^0.22.0",
     "@storybook/vue3": "^8.6.9",
-    "@storybook/vue3-vite": "^8.6.9",
+    "@storybook/vue3-vite": "^8.6.12",
     "@types/humanize-duration": "^3.27.4",
     "@types/js-yaml": "^4.0.9",
     "@types/path-browserify": "^1.0.3",

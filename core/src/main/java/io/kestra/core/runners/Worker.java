@@ -184,9 +184,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
         if (this.init.compareAndSet(false, true)) {
             String[] tags = this.workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, this.workerGroup};
             // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
-            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, numThreads, tags);
-            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, pendingJobCount, tags);
-            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT, runningJobCount, tags);
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT_DESCRIPTION, numThreads, tags);
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT_DESCRIPTION, pendingJobCount, tags);
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT, MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT_DESCRIPTION, runningJobCount, tags);
 
             this.tracer = tracerFactory.getTracer(Worker.class, "WORKER");
         }
@@ -420,7 +420,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     private void publishTriggerExecution(WorkerTrigger workerTrigger, Optional<Execution> evaluate) {
         metricRegistry
-            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_EXECUTION_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
+            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_EXECUTION_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_EXECUTION_COUNT_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
             .increment();
 
         if (log.isDebugEnabled()) {
@@ -458,7 +458,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     private void handleTriggerError(WorkerTrigger workerTrigger, Throwable e) {
         metricRegistry
-            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
+            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
             .increment();
 
         logError(workerTrigger, e);
@@ -478,7 +478,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     private void handleRealtimeTriggerError(WorkerTrigger workerTrigger, Throwable e) {
         metricRegistry
-            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
+            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_ERROR_COUNT_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
             .increment();
 
         // We create a FAILED execution, so the user is aware that the realtime trigger failed to be created
@@ -518,7 +518,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     private void handleTrigger(WorkerTrigger workerTrigger) {
         metricRegistry
-            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
+            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
             .increment();
 
         // update the trigger so that it contains the workerId
@@ -531,13 +531,13 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
 
         this.metricRegistry
-            .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, metricRegistry.tags(workerTrigger, workerGroup))
+            .timer(MetricRegistry.METRIC_WORKER_TRIGGER_DURATION, MetricRegistry.METRIC_WORKER_TRIGGER_DURATION_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
             .record(() -> {
                     StopWatch stopWatch = new StopWatch();
                     stopWatch.start();
 
                     this.evaluateTriggerRunningCount.computeIfAbsent(workerTrigger.getTriggerContext().uid(), s -> metricRegistry
-                        .gauge(MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT, new AtomicInteger(0), metricRegistry.tags(workerTrigger, workerGroup)));
+                        .gauge(MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_RUNNING_COUNT_DESCRIPTION, new AtomicInteger(0), metricRegistry.tags(workerTrigger, workerGroup)));
                     this.evaluateTriggerRunningCount.get(workerTrigger.getTriggerContext().uid()).addAndGet(1);
 
                     DefaultRunContext runContext = (DefaultRunContext) workerTrigger.getConditionContext().getRunContext();
@@ -598,18 +598,18 @@ public class Worker implements Service, Runnable, AutoCloseable {
             );
 
         metricRegistry
-            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ENDED_COUNT, metricRegistry.tags(workerTrigger, workerGroup))
+            .counter(MetricRegistry.METRIC_WORKER_TRIGGER_ENDED_COUNT, MetricRegistry.METRIC_WORKER_TRIGGER_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(workerTrigger, workerGroup))
             .increment();
     }
 
     private WorkerTaskResult run(WorkerTask workerTask, Boolean cleanUp) {
         metricRegistry
-            .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, metricRegistry.tags(workerTask, workerGroup))
+            .counter(MetricRegistry.METRIC_WORKER_STARTED_COUNT, MetricRegistry.METRIC_WORKER_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(workerTask, workerGroup))
             .increment();
 
         if (workerTask.getTaskRun().getState().getCurrent() == CREATED) {
             metricRegistry
-                .timer(MetricRegistry.METRIC_WORKER_QUEUED_DURATION, metricRegistry.tags(workerTask, workerGroup))
+                .timer(MetricRegistry.METRIC_WORKER_QUEUED_DURATION, MetricRegistry.METRIC_WORKER_QUEUED_DURATION_DESCRIPTION, metricRegistry.tags(workerTask, workerGroup))
                 .record(Duration.between(
                     workerTask.getTaskRun().getState().getStartDate(), Instant.now()
                 ));
@@ -715,11 +715,11 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     private void logTerminated(WorkerTask workerTask) {
         metricRegistry
-            .counter(MetricRegistry.METRIC_WORKER_ENDED_COUNT, metricRegistry.tags(workerTask, workerGroup))
+            .counter(MetricRegistry.METRIC_WORKER_ENDED_COUNT, MetricRegistry.METRIC_WORKER_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(workerTask, workerGroup))
             .increment();
 
         metricRegistry
-            .timer(MetricRegistry.METRIC_WORKER_ENDED_DURATION, metricRegistry.tags(workerTask, workerGroup))
+            .timer(MetricRegistry.METRIC_WORKER_ENDED_DURATION, MetricRegistry.METRIC_WORKER_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(workerTask, workerGroup))
             .record(workerTask.getTaskRun().getState().getDuration());
 
         logService.logTaskRun(
@@ -866,6 +866,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         return this.metricRunningCount
             .computeIfAbsent(index, l -> metricRegistry.gauge(
                 MetricRegistry.METRIC_WORKER_RUNNING_COUNT,
+                MetricRegistry.METRIC_WORKER_RUNNING_COUNT_DESCRIPTION,
                 new AtomicInteger(0),
                 metricRegistry.tags(workerTask, workerGroup)
             ));

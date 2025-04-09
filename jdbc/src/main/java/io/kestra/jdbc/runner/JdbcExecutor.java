@@ -673,11 +673,11 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     TaskRun taskRun = message.getTaskRun();
                     if (taskRun.getState().isTerminated()) {
                         metricRegistry
-                            .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                            .counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(message))
                             .increment();
 
                         metricRegistry
-                            .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                            .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
                             .record(taskRun.getState().getDuration());
 
                         log.trace("TaskRun terminated: {}", taskRun);
@@ -772,12 +772,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                     // send metrics on parent taskRun terminated
                     if (taskRun.getState().isTerminated()) {
+                        // TODO maybe use a specific metric to track subflow instead of these two.
                         metricRegistry
-                            .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                            .counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(message))
                             .increment();
 
                         metricRegistry
-                            .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                            .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
                             .record(taskRun.getState().getDuration());
 
                         log.trace("TaskRun terminated: {}", taskRun);

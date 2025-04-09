@@ -84,47 +84,64 @@ public class MetricRegistry {
      * Tracks a monotonically increasing value.
      *
      * @param name The base metric name
+     * @param description The metric description
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      * @return A new or existing counter.
      */
-    public Counter counter(String name, String... tags) {
-        return this.meterRegistry.counter(metricName(name), tags);
+    public Counter counter(String name, String description, String... tags) {
+        return Counter.builder(metricName(name))
+            .description(description)
+            .tags(tags)
+            .register(this.meterRegistry);
     }
 
     /**
      * Register a gauge that reports the value of the {@link Number}.
      *
      * @param name   Name of the gauge being registered.
+     * @param description The metric description
      * @param number Thread-safe implementation of {@link Number} used to access the value.
      * @param tags   Sequence of dimensions for breaking down the name.
      * @param <T>    The type of the number from which the gauge value is extracted.
      * @return The number that was passed in so the registration can be done as part of an assignment
      * statement.
      */
-    public <T extends Number> T gauge(String name, T number, String... tags) {
-        return this.meterRegistry.gauge(metricName(name), Tags.of(tags), number);
+    public <T extends Number> T gauge(String name, String description, T number, String... tags) {
+        Gauge.builder(metricName(name), () -> number)
+            .description(description)
+            .tags(tags)
+            .register(this.meterRegistry);
+        return number;
     }
 
     /**
      * Measures the time taken for short tasks and the count of these tasks.
      *
      * @param name The base metric name
+     * @param description The metric description
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      * @return A new or existing timer.
      */
-    public Timer timer(String name, String... tags) {
-        return this.meterRegistry.timer(metricName(name), tags);
+    public Timer timer(String name, String description, String... tags) {
+        return Timer.builder(metricName(name))
+            .description(description)
+            .tags(tags)
+            .register(this.meterRegistry);
     }
 
     /**
      * Measures the distribution of samples.
      *
      * @param name The base metric name
+     * @param description The metric description
      * @param tags MUST be an even number of arguments representing key/value pairs of tags.
      * @return A new or existing distribution summary.
      */
-    public DistributionSummary summary(String name, String... tags) {
-        return this.meterRegistry.summary(metricName(name), tags);
+    public DistributionSummary summary(String name, String description, String... tags) {
+        return DistributionSummary.builder(metricName(name))
+            .description(description)
+            .tags(tags)
+            .register(this.meterRegistry);
     }
 
     /**

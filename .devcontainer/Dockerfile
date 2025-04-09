@@ -1,5 +1,6 @@
 FROM ubuntu:24.04
 
+ARG BUILDPLATFORM
 ARG DEBIAN_FRONTEND=noninteractive
 
 USER root
@@ -31,9 +32,23 @@ ENV SHELL=/bin/zsh
 # --------------------------------------
 # Java
 # --------------------------------------
-RUN wget https://download.oracle.com/java/21/latest/jdk-21_linux-x64_bin.deb
-RUN dpkg -i ./jdk-21_linux-x64_bin.deb
-ENV JAVA_HOME=/usr/java/jdk-21-oracle-x64
+ARG OS_ARCHITECTURE
+
+RUN mkdir -p /usr/java
+RUN echo "Building on platform: $BUILDPLATFORM"
+RUN case "$BUILDPLATFORM" in \
+  "linux/amd64") OS_ARCHITECTURE="linux-x64" ;; \
+  "linux/arm64") OS_ARCHITECTURE="linux-aarch64" ;; \
+  "darwin/amd64") OS_ARCHITECTURE="macos-x64" ;; \
+  "darwin/arm64") OS_ARCHITECTURE="macos-aarch64" ;; \
+  *) echo "Unsupported BUILDPLATFORM: $BUILDPLATFORM" && exit 1 ;; \
+  esac && \
+  wget "https://aka.ms/download-jdk/microsoft-jdk-21.0.6-$OS_ARCHITECTURE.tar.gz" && \
+  mv "microsoft-jdk-21.0.6-$OS_ARCHITECTURE.tar.gz" microsoft-jdk-21.0.6.tar.gz
+RUN tar -xzvf microsoft-jdk-21.0.6.tar.gz && \
+  mv jdk-21.0.6+7 jdk-21 && \
+  mv jdk-21 /usr/java/
+ENV JAVA_HOME=/usr/java/jdk-21
 ENV PATH="$PATH:$JAVA_HOME/bin"
 # Will load a custom configuration file for Micronaut
 ENV MICRONAUT_ENVIRONMENTS=local,override

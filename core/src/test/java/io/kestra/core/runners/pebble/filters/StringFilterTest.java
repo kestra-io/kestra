@@ -10,8 +10,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class StringFilterTest {
@@ -30,6 +29,6 @@ public class StringFilterTest {
     @MethodSource("source")
     void run(String exp, String expected) throws IllegalVariableEvaluationException {
         String render = variableRenderer.render(exp, Map.of());
-        assertThat(render, is(expected));
+        assertThat(render).isEqualTo(expected);
     }
 }

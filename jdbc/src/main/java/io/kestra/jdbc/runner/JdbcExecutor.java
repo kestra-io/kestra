@@ -97,7 +97,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
-    private QueueInterface<FlowWithSource> flowQueue;
+    private QueueInterface<FlowInterface> flowQueue;
 
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
@@ -240,7 +240,9 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             serviceLivenessCoordinator.setExecutor(this);
         }
         flowListeners.run();
-        flowListeners.listen(flows -> this.allFlows = flows);
+        flowListeners.listen(flows -> {
+            this.allFlows = flows.stream().map(flow -> pluginDefaultService.injectVersionDefaults(flow, true)).toList();
+        });
 
         Await.until(() -> this.allFlows != null, Duration.ofMillis(100), Duration.ofMinutes(5));
 
@@ -307,7 +309,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         this.receiveCancellations.addFirst(flowQueue.receive(
             FlowTopology.class,
             either -> {
-                FlowWithSource flow;
+                FlowInterface flow;
                 if (either.isRight()) {
                     log.error("Unable to deserialize a flow: {}", either.getRight().getMessage());
                     try {
@@ -329,7 +331,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             Stream.<FlowTopology>empty() :
                             flowTopologyService
                                 .topology(
-                                    flow,
+                                    pluginDefaultService.injectVersionDefaults(flow, true),
                                     this.allFlows.stream().filter(f -> Objects.equals(f.getTenantId(), flow.getTenantId())).toList()
                                 )
                         )
@@ -455,7 +457,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
             return tracer.inCurrentContext(
                 execution,
-                Flow.uidWithoutRevision(execution),
+                FlowId.uidWithoutRevision(execution),
                 () -> {
                     try {
 
@@ -995,7 +997,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             Execution execution = executor.getExecution();
             // handle flow triggers on state change
             if (!execution.getState().getCurrent().equals(executor.getOriginalState())) {
-                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows.stream().map(flow -> flow.toFlow()).toList(), Optional.of(multipleConditionStorage))
+                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
                     .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
             }
 
@@ -1072,7 +1074,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     flow,
                     execution,
                     (tenantId, namespace, id) -> templateExecutorInterface.get().findById(tenantId, namespace, id).orElse(null)
-                ).withSource(flow.getSource());
+                );
             } catch (InternalException e) {
                 log.warn("Failed to inject template", e);
             }

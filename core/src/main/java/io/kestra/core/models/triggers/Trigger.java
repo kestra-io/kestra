@@ -4,6 +4,8 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.trigger.Schedule;
@@ -81,13 +83,13 @@ public class Trigger extends TriggerContext implements HasUID {
     }
 
     public String flowUid() {
-        return Flow.uidWithoutRevision(this.getTenantId(), this.getNamespace(), this.getFlowId());
+        return FlowId.uidWithoutRevision(this.getTenantId(), this.getNamespace(), this.getFlowId());
     }
 
     /**
      * Create a new Trigger with no execution information and no evaluation lock.
      */
-    public static Trigger of(Flow flow, AbstractTrigger abstractTrigger) {
+    public static Trigger of(FlowInterface flow, AbstractTrigger abstractTrigger) {
         return Trigger.builder()
             .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
@@ -163,7 +165,7 @@ public class Trigger extends TriggerContext implements HasUID {
     }
 
     // Used to update trigger in flowListeners
-    public static Trigger of(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext, Optional<Trigger> lastTrigger) throws Exception {
+    public static Trigger of(FlowInterface flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext, Optional<Trigger> lastTrigger) throws Exception {
         ZonedDateTime nextDate = null;
 
         if (abstractTrigger instanceof PollingTriggerInterface pollingTriggerInterface) {

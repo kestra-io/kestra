@@ -10,8 +10,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class PublicHolidayTest {
@@ -26,20 +25,20 @@ class PublicHolidayTest {
         PublicHoliday publicHoliday = PublicHoliday.builder()
             .date(Property.of("2023-01-01"))
             .build();
-        assertThat(conditionService.isValid(publicHoliday, flow, execution), is(true));
+        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isEqualTo(true);
 
         publicHoliday = PublicHoliday.builder()
             .date(Property.of("2023-07-14"))
             .country(Property.of("FR"))
             .build();
-        assertThat(conditionService.isValid(publicHoliday, flow, execution), is(true));
+        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isEqualTo(true);
 
         publicHoliday = PublicHoliday.builder()
             .date(Property.of("2023-03-08"))
             .country(Property.of("DE"))
             .subDivision(Property.of("BE"))
             .build();
-        assertThat(conditionService.isValid(publicHoliday, flow, execution), is(true));
+        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isEqualTo(true);
     }
 
     @Test
@@ -51,12 +50,12 @@ class PublicHolidayTest {
             .date(Property.of("2023-01-02"))
             .country(Property.of("FR"))
             .build();
-        assertThat(conditionService.isValid(publicHoliday, flow, execution), is(false));
+        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isEqualTo(false);
 
         publicHoliday = PublicHoliday.builder()
             .date(Property.of("2023-03-08"))
             .country(Property.of("DE"))
             .build();
-        assertThat(conditionService.isValid(publicHoliday, flow, execution), is(false));
+        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isEqualTo(false);
     }
 }

@@ -38,7 +38,7 @@
     </div>
     <div>
         <el-button
-            v-if="isAllowedEdit"
+            v-if="isNamespace || isAllowedEdit"
             :icon="ContentSave"
             @click="forwardEvent('save', $event)"
             :type="buttonType"

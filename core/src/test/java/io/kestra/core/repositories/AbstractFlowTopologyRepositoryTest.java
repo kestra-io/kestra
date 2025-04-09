@@ -9,8 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public abstract class AbstractFlowTopologyRepositoryTest {
@@ -43,6 +42,6 @@ public abstract class AbstractFlowTopologyRepositoryTest {
 
         List<FlowTopology> list = flowTopologyRepository.findByFlow(null, "io.kestra.tests", "flow-a", false);
 
-        assertThat(list.size(), is(1));
+        assertThat(list.size()).isEqualTo(1);
     }
 }

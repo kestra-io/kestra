@@ -11,8 +11,7 @@ import io.kestra.core.utils.TestsUtils;
 
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ExpressionTest {
@@ -30,7 +29,7 @@ class ExpressionTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
     }
 
     @Test
@@ -44,6 +43,6 @@ class ExpressionTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 }

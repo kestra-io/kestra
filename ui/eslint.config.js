@@ -9,6 +9,7 @@ const components = (folder) => `src/components/${folder}/**/*.vue`;
 export default [
     {
         files: ["**/*.{js,mjs,cjs,ts,vue}"],
+        ignores: ["node_modules", "node"],
     },
     {languageOptions: {globals: globals.browser}},
     pluginJs.configs.recommended,
@@ -27,7 +28,7 @@ export default [
         files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],
         languageOptions: {parserOptions: {parser: tseslint.parser}},
         rules: {
-            "vue/this-in-template": ["error"],
+            "vue/this-in-template": "error",
             "vue/html-indent": [
                 "error",
                 4,
@@ -57,6 +58,12 @@ export default [
                     order: ["template", "script", "style"],
                 },
             ],
+            "@typescript-eslint/consistent-type-assertions": [
+                "error",
+                {
+                    assertionStyle: "as"
+                }
+            ],
         },
     },
     {
@@ -80,7 +87,4 @@ export default [
         files: [components("filter"), components("code")],
         rules: {"vue/component-api-style": ["error", ["script-setup"]]},
     },
-    {
-        ignores: ["public", "node_modules", "node", "storybook-static", ".storybook"],
-    }
 ];

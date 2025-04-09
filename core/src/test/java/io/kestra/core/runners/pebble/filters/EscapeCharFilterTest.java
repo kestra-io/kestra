@@ -12,8 +12,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -29,7 +28,7 @@ class EscapeCharFilterTest {
             Map.of()
         );
 
-        assertThat(render, is(expected));
+        assertThat(render).isEqualTo(expected);
     }
 
     @ParameterizedTest

@@ -34,8 +34,7 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
@@ -111,7 +110,7 @@ public class InputsTest {
         HashMap<String, Object> inputs = new HashMap<>(InputsTest.inputs);
         inputs.put("string", null);
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(inputs));
-        assertThat(e.getMessage(), containsString("Invalid input for `string`, missing required input, but received `null`"));
+        assertThat(e.getMessage()).contains("Invalid input for `string`, missing required input, but received `null`");
     }
 
     @Test
@@ -120,8 +119,8 @@ public class InputsTest {
         HashMap<String, Object> inputsWithMissingOptionalInput = new HashMap<>(inputs);
         inputsWithMissingOptionalInput.remove("bool");
 
-        assertThat(typedInputs(inputsWithMissingOptionalInput).containsKey("bool"), is(true));
-        assertThat(typedInputs(inputsWithMissingOptionalInput).get("bool"), nullValue());
+        assertThat(typedInputs(inputsWithMissingOptionalInput).containsKey("bool")).isEqualTo(true);
+        assertThat(typedInputs(inputsWithMissingOptionalInput).get("bool")).isNull();
     }
 
     @SuppressWarnings("unchecked")
@@ -130,39 +129,36 @@ public class InputsTest {
     void allValidInputs() throws URISyntaxException, IOException {
         Map<String, Object> typeds = typedInputs(inputs);
 
-        assertThat(typeds.get("string"), is("myString"));
-        assertThat(typeds.get("int"), is(42));
-        assertThat(typeds.get("float"), is(42.42F));
-        assertThat(typeds.get("bool"), is(false));
-        assertThat(typeds.get("instant"), is(Instant.parse("2019-10-06T18:27:49Z")));
-        assertThat(typeds.get("instantDefaults"), is(Instant.parse("2013-08-09T14:19:00Z")));
-        assertThat(typeds.get("date"), is(LocalDate.parse("2019-10-06")));
-        assertThat(typeds.get("time"), is(LocalTime.parse("18:27:49")));
-        assertThat(typeds.get("duration"), is(Duration.parse("PT5M6S")));
-        assertThat((URI) typeds.get("file"), is(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application-test.yml")));
-        assertThat(
-            CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, (URI) typeds.get("file")))),
-            is(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))))
-        );
-        assertThat(typeds.get("json"), is(Map.of("a", "b")));
-        assertThat(typeds.get("uri"), is("https://www.google.com"));
-        assertThat(((Map<String, Object>)typeds.get("nested")).get("string"), is("a string"));
-        assertThat(((Map<String, Object>)typeds.get("nested")).get("bool"), is(true));
-        assertThat(((Map<String, Object>)((Map<String, Object>)typeds.get("nested")).get("more")).get("int"), is(123));
-        assertThat(typeds.get("validatedString"), is("A123"));
-        assertThat(typeds.get("validatedInt"), is(12));
-        assertThat(typeds.get("validatedDate"), is(LocalDate.parse("2023-01-02")));
-        assertThat(typeds.get("validatedDateTime"), is(Instant.parse("2023-01-01T00:00:10Z")));
-        assertThat(typeds.get("validatedDuration"), is(Duration.parse("PT15S")));
-        assertThat(typeds.get("validatedFloat"), is(0.42F));
-        assertThat(typeds.get("validatedTime"), is(LocalTime.parse("11:27:49")));
-        assertThat(typeds.get("secret"), not("secret")); // secret inputs are encrypted
-        assertThat(typeds.get("array"), instanceOf(List.class));
-        assertThat((List<String>)typeds.get("array"), hasSize(3));
-        assertThat((List<String>)typeds.get("array"), contains(1, 2, 3));
-        assertThat(typeds.get("yaml"), is(Map.of(
+        assertThat(typeds.get("string")).isEqualTo("myString");
+        assertThat(typeds.get("int")).isEqualTo(42);
+        assertThat(typeds.get("float")).isEqualTo(42.42F);
+        assertThat(typeds.get("bool")).isEqualTo(false);
+        assertThat(typeds.get("instant")).isEqualTo(Instant.parse("2019-10-06T18:27:49Z"));
+        assertThat(typeds.get("instantDefaults")).isEqualTo(Instant.parse("2013-08-09T14:19:00Z"));
+        assertThat(typeds.get("date")).isEqualTo(LocalDate.parse("2019-10-06"));
+        assertThat(typeds.get("time")).isEqualTo(LocalTime.parse("18:27:49"));
+        assertThat(typeds.get("duration")).isEqualTo(Duration.parse("PT5M6S"));
+        assertThat((URI) typeds.get("file")).isEqualTo(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application-test.yml"));
+        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, (URI) typeds.get("file"))))).isEqualTo(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))));
+        assertThat(typeds.get("json")).isEqualTo(Map.of("a", "b"));
+        assertThat(typeds.get("uri")).isEqualTo("https://www.google.com");
+        assertThat(((Map<String, Object>) typeds.get("nested")).get("string")).isEqualTo("a string");
+        assertThat(((Map<String, Object>) typeds.get("nested")).get("bool")).isEqualTo(true);
+        assertThat(((Map<String, Object>) ((Map<String, Object>) typeds.get("nested")).get("more")).get("int")).isEqualTo(123);
+        assertThat(typeds.get("validatedString")).isEqualTo("A123");
+        assertThat(typeds.get("validatedInt")).isEqualTo(12);
+        assertThat(typeds.get("validatedDate")).isEqualTo(LocalDate.parse("2023-01-02"));
+        assertThat(typeds.get("validatedDateTime")).isEqualTo(Instant.parse("2023-01-01T00:00:10Z"));
+        assertThat(typeds.get("validatedDuration")).isEqualTo(Duration.parse("PT15S"));
+        assertThat(typeds.get("validatedFloat")).isEqualTo(0.42F);
+        assertThat(typeds.get("validatedTime")).isEqualTo(LocalTime.parse("11:27:49"));
+        assertThat(typeds.get("secret")).isNotEqualTo("secret"); // secret inputs are encrypted
+        assertThat(typeds.get("array")).isInstanceOf(List.class);
+        assertThat((List<Integer>) typeds.get("array")).hasSize(3);
+        assertThat((List<Integer>) typeds.get("array")).isEqualTo(List.of(1, 2, 3));
+        assertThat(typeds.get("yaml")).isEqualTo(Map.of(
             "some", "property",
-            "alist", List.of("of", "values"))));
+            "alist", List.of("of", "values")));
     }
 
     @Test
@@ -173,11 +169,11 @@ public class InputsTest {
         typeds.put("float", 42.42F);
         typeds.put("bool", false);
 
-        assertThat(typeds.get("string"), is("myString"));
-        assertThat(typeds.get("enum"), is("ENUM_VALUE"));
-        assertThat(typeds.get("int"), is(42));
-        assertThat(typeds.get("float"), is(42.42F));
-        assertThat(typeds.get("bool"), is(false));
+        assertThat(typeds.get("string")).isEqualTo("myString");
+        assertThat(typeds.get("enum")).isEqualTo("ENUM_VALUE");
+        assertThat(typeds.get("int")).isEqualTo(42);
+        assertThat(typeds.get("float")).isEqualTo(42.42F);
+        assertThat(typeds.get("bool")).isEqualTo(false);
     }
 
     @Test
@@ -191,22 +187,13 @@ public class InputsTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(14));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(
-            (String) execution.findTaskRunsByTaskId("file").getFirst().getOutputs().get("value"),
-            matchesRegex("kestra:///io/kestra/tests/inputs/executions/.*/inputs/file/application-test.yml")
-        );
+        assertThat(execution.getTaskRunList()).hasSize(14);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat((String) execution.findTaskRunsByTaskId("file").getFirst().getOutputs().get("value")).matches("kestra:///io/kestra/tests/inputs/executions/.*/inputs/file/application-test.yml");
         // secret inputs are decrypted to be used as task properties
-        assertThat(
-            (String) execution.findTaskRunsByTaskId("secret").getFirst().getOutputs().get("value"),
-            is("secret")
-        );
+        assertThat((String) execution.findTaskRunsByTaskId("secret").getFirst().getOutputs().get("value")).isEqualTo("secret");
         // null inputs are serialized
-        assertThat(
-            (String) execution.findTaskRunsByTaskId("optional").getFirst().getOutputs().get("value"),
-            emptyString()
-        );
+        assertThat((String) execution.findTaskRunsByTaskId("optional").getFirst().getOutputs().get("value")).isEmpty();
     }
 
     @Test
@@ -217,7 +204,7 @@ public class InputsTest {
 
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(map));
 
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedString`, it must match the pattern"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedString`, it must match the pattern");
     }
 
     @Test
@@ -226,14 +213,14 @@ public class InputsTest {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedInt", "9");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedInt`, it must be more than `10`, but received `9`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedInt`, it must be more than `10`, but received `9`");
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedInt", "21");
 
         e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedInt`, it must be less than `20`, but received `21`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedInt`, it must be less than `20`, but received `21`");
     }
 
     @Test
@@ -242,14 +229,14 @@ public class InputsTest {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDate", "2022-01-01");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedDate`, it must be after `2023-01-01`, but received `2022-01-01`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedDate`, it must be after `2023-01-01`, but received `2022-01-01`");
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedDate", "2024-01-01");
 
         e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedDate`, it must be before `2023-12-31`, but received `2024-01-01`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedDate`, it must be before `2023-12-31`, but received `2024-01-01`");
     }
 
     @Test
@@ -258,14 +245,14 @@ public class InputsTest {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDateTime", "2022-01-01T00:00:00Z");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedDateTime`, it must be after `2023-01-01T00:00:00Z`, but received `2022-01-01T00:00:00Z`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedDateTime`, it must be after `2023-01-01T00:00:00Z`, but received `2022-01-01T00:00:00Z`");
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedDateTime", "2024-01-01T00:00:00Z");
 
         e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedDateTime`, it must be before `2023-12-31T23:59:59Z`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedDateTime`, it must be before `2023-12-31T23:59:59Z`");
     }
 
     @Test
@@ -274,14 +261,14 @@ public class InputsTest {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedDuration", "PT1S");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedDuration`, It must be more than `PT10S`, but received `PT1S`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedDuration`, It must be more than `PT10S`, but received `PT1S`");
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedDuration", "PT30S");
 
         e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedDuration`, It must be less than `PT20S`, but received `PT30S`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedDuration`, It must be less than `PT20S`, but received `PT30S`");
     }
 
     @Test
@@ -290,14 +277,14 @@ public class InputsTest {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedFloat", "0.01");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedFloat`, it must be more than `0.1`, but received `0.01`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedFloat`, it must be more than `0.1`, but received `0.01`");
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedFloat", "1.01");
 
         e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedFloat`, it must be less than `0.5`, but received `1.01`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedFloat`, it must be less than `0.5`, but received `1.01`");
     }
 
     @Test
@@ -306,14 +293,14 @@ public class InputsTest {
         HashMap<String, Object> mapMin = new HashMap<>(inputs);
         mapMin.put("validatedTime", "00:00:01");
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMin));
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedTime`, it must be after `01:00`, but received `00:00:01`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedTime`, it must be after `01:00`, but received `00:00:01`");
 
         HashMap<String, Object> mapMax = new HashMap<>(inputs);
         mapMax.put("validatedTime", "14:00:00");
 
         e = assertThrows(ConstraintViolationException.class, () -> typedInputs(mapMax));
 
-        assertThat(e.getMessage(), containsString("Invalid input for `validatedTime`, it must be before `11:59:59`, but received `14:00:00`"));
+        assertThat(e.getMessage()).contains("Invalid input for `validatedTime`, it must be before `11:59:59`, but received `14:00:00`");
     }
 
     @Test
@@ -324,7 +311,7 @@ public class InputsTest {
 
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(map));
 
-        assertThat(e.getMessage(), containsString("Invalid input for `uri`, Expected `URI` but received `http:/bla`, but received `http:/bla`"));
+        assertThat(e.getMessage()).contains("Invalid input for `uri`, Expected `URI` but received `http:/bla`, but received `http:/bla`");
     }
 
     @Test
@@ -335,7 +322,7 @@ public class InputsTest {
 
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(map));
 
-        assertThat(e.getMessage(), is("enum: Invalid input for `enum`, it must match the values `[ENUM_VALUE, OTHER_ONE]`, but received `INVALID`"));
+        assertThat(e.getMessage()).isEqualTo("enum: Invalid input for `enum`, it must match the values `[ENUM_VALUE, OTHER_ONE]`, but received `INVALID`");
     }
 
     @Test
@@ -346,7 +333,7 @@ public class InputsTest {
 
         ConstraintViolationException e = assertThrows(ConstraintViolationException.class, () -> typedInputs(map));
 
-        assertThat(e.getMessage(), containsString("Invalid input for `array`, Unable to parse array element as `INT` on `s1`, but received `[\"s1\", \"s2\"]`"));
+        assertThat(e.getMessage()).contains("Invalid input for `array`, Unable to parse array element as `INT` on `s1`, but received `[\"s1\", \"s2\"]`");
     }
 
     @Test
@@ -357,8 +344,8 @@ public class InputsTest {
 
         Map<String, Object> typeds = typedInputs(map);
 
-        assertThat(typeds.get("json"), instanceOf(Map.class));
-        assertThat(((Map<?, ?>) typeds.get("json")).size(), is(0));
+        assertThat(typeds.get("json")).isInstanceOf(Map.class);
+        assertThat(((Map<?, ?>) typeds.get("json")).size()).isEqualTo(0);
     }
 
     @Test
@@ -375,12 +362,12 @@ public class InputsTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, map)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(14));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(14);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        assertThat(execution.getInputs().get("json"), instanceOf(Map.class));
-        assertThat(((Map<?, ?>) execution.getInputs().get("json")).size(), is(0));
-        assertThat((String) execution.findTaskRunsByTaskId("jsonOutput").getFirst().getOutputs().get("value"), is("{}"));
+        assertThat(execution.getInputs().get("json")).isInstanceOf(Map.class);
+        assertThat(((Map<?, ?>) execution.getInputs().get("json")).size()).isEqualTo(0);
+        assertThat((String) execution.findTaskRunsByTaskId("jsonOutput").getFirst().getOutputs().get("value")).isEqualTo("{}");
     }
 
     @RetryingTest(5) // it can happen that a log from another execution arrives first, so we enable retry
@@ -394,11 +381,11 @@ public class InputsTest {
             "input-log-secret"
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         var logEntry = receive.blockLast();
-        assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), is("This is my secret: ********"));
+        assertThat(logEntry).isNotNull();
+        assertThat(logEntry.getMessage()).isEqualTo("This is my secret: ********");
     }
 }

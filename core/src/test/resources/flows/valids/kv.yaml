@@ -6,7 +6,7 @@ inputs:
     required: false
     defaults: "io.kestra.tests"
   - name: errorOnMissing
-    type: BOOLEAN
+    type: BOOL
     required: false
     defaults: false
 tasks:

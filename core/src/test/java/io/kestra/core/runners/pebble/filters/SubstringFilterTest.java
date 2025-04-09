@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class SubstringFilterTest {
@@ -19,27 +18,27 @@ class SubstringFilterTest {
     @Test
     void substringBefore() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ 'a.b.c' | substringBefore('.') }}", Map.of());
-        assertThat(render, is("a"));
+        assertThat(render).isEqualTo("a");
     }
 
     @Test
     void substringAfter() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ 'a.b.c' | substringAfter(separator='.') }}", Map.of());
-        assertThat(render, is("b.c"));
+        assertThat(render).isEqualTo("b.c");
     }
 
     @Test
     void substringBeforeLast() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ 'a.b.c' | substringBeforeLast(separator='.') }}", Map.of());
-        assertThat(render, is("a.b"));
+        assertThat(render).isEqualTo("a.b");
 
         render = variableRenderer.render("{{ 'a.b.c' | substringBeforeLast('.') }}", Map.of());
-        assertThat(render, is("a.b"));
+        assertThat(render).isEqualTo("a.b");
     }
 
     @Test
     void substringAfterLast() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ 'a.b.c' | substringAfterLast('.') }}", Map.of());
-        assertThat(render, is("c"));
+        assertThat(render).isEqualTo("c");
     }
 }

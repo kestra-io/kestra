@@ -19,11 +19,8 @@ jobs:
     name: Frontend - Tests
     runs-on: ubuntu-latest
     steps:
-      - id: checkout
-        name: Checkout - Current ref
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
 
       - name: Npm - install
         shell: bash

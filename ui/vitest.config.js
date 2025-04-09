@@ -26,6 +26,8 @@ export default defineConfig({
                 ...coverageConfigDefaults.exclude,
                 "stylelint.config.mjs",
                 "storybook-static/**",
+                "**/.storybook/**",
+                "**/*.stories.*",
             ]
         }
     },

@@ -51,18 +51,10 @@ jobs:
         working-directory: ui
         run: npx playwright install --with-deps
 
-      - name: Storybook - Build
-        shell: bash
-        working-directory: ui
-        run: npm run build-storybook --quiet
-
       - name: Storybook - Run tests
         shell: bash
         working-directory: ui
-        run: |
-          npx concurrently -k -s first -n "SB,TEST" -c "magenta,blue" \
-            "npx http-server storybook-static --port 6006 --silent" \
-            "npx wait-on tcp:127.0.0.1:6006 && npm run test:storybook"
+        run: npm run test:storybook -- --coverage
 
       - name: Codecov - Upload coverage reports
         uses: codecov/codecov-action@v5

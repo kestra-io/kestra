@@ -33,7 +33,7 @@
     "buffer": "^6.0.3",
     "chart.js": "^4.4.7",
     "core-js": "^3.41.0",
-    "cronstrue": "^2.56.0",
+    "cronstrue": "^2.59.0",
     "dagre": "^0.8.5",
     "el-table-infinite-scroll": "^3.0.6",
     "element-plus": "^2.9.7",

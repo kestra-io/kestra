@@ -29,7 +29,7 @@
     "@vueuse/core": "^13.0.0",
     "ansi-to-html": "^0.7.2",
     "axios": "^1.8.4",
-    "bootstrap": "^5.3.3",
+    "bootstrap": "^5.3.5",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.7",
     "core-js": "^3.41.0",

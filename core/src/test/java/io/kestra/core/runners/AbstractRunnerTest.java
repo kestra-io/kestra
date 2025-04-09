@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -90,66 +89,63 @@ public abstract class AbstractRunnerTest {
     @Test
     @ExecuteFlow("flows/valids/full.yaml")
     void full(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(13));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(
-            (String) execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value"),
-            containsString("value1"));
+        assertThat(execution.getTaskRunList()).hasSize(13);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat((String) execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value")).contains("value1");
     }
 
     @Test
     @ExecuteFlow("flows/valids/logs.yaml")
     void logs(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(5));
+        assertThat(execution.getTaskRunList()).hasSize(5);
     }
 
     @Test
     @ExecuteFlow("flows/valids/sequential.yaml")
     void sequential(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(11));
+        assertThat(execution.getTaskRunList()).hasSize(11);
     }
 
     @Test
     @ExecuteFlow("flows/valids/parallel.yaml")
     void parallel(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(8));
+        assertThat(execution.getTaskRunList()).hasSize(8);
     }
 
     @RetryingTest(5)
     @ExecuteFlow("flows/valids/parallel-nested.yaml")
     void parallelNested(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(11));
+        assertThat(execution.getTaskRunList()).hasSize(11);
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-parallel-subflow-notfound.yml")
     void eachParallelWithSubflowMissing(Execution execution) {
-        assertThat(execution, notNullValue());
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution).isNotNull();
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         // on JDBC, when using an each parallel, the flow is failed even if not all subtasks of the each parallel are ended as soon as
         // there is one failed task FIXME https://github.com/kestra-io/kestra/issues/2179
         // so instead of asserting that all tasks FAILED we assert that at least two failed (the each parallel and one of its subtasks)
-        assertThat(
-            execution.getTaskRunList().stream().filter(taskRun -> taskRun.getState().isFailed())
-                .count(), greaterThanOrEqualTo(2L)); // Should be 3
+        assertThat(execution.getTaskRunList().stream().filter(taskRun -> taskRun.getState().isFailed())
+            .count()).isGreaterThanOrEqualTo(2L); // Should be 3
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-sequential-nested.yaml")
     void eachSequentialNested(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(23));
+        assertThat(execution.getTaskRunList()).hasSize(23);
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-parallel.yaml")
     void eachParallel(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(8));
+        assertThat(execution.getTaskRunList()).hasSize(8);
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-parallel-nested.yaml")
     void eachParallelNested(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(11));
+        assertThat(execution.getTaskRunList()).hasSize(11);
     }
 
     @Test
@@ -405,16 +401,16 @@ public abstract class AbstractRunnerTest {
     @Test
     @ExecuteFlow("flows/valids/executable-fail.yml")
     void badExecutable(Execution execution) {
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     @Test
     @ExecuteFlow("flows/valids/dynamic-task.yaml")
     void dynamicTask(Execution execution) {
-        assertThat(execution.getTaskRunList().size(), is(3));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -495,8 +491,8 @@ public abstract class AbstractRunnerTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if", null,
             (f, e) -> Map.of("if1", true, "if2", false, "if3", true));
 
-        assertThat(execution.getTaskRunList(), hasSize(12));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(12);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test

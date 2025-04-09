@@ -35,7 +35,8 @@ import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
 import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
@@ -145,8 +146,8 @@ public abstract class AbstractExecutionRepositoryTest {
         inject();
 
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10),  null, null);
-        assertThat(executions.getTotal(), is(28L));
-        assertThat(executions.size(), is(10));
+        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.size()).isEqualTo(10);
 
         List<QueryFilter> filters = List.of(QueryFilter.builder()
                 .field(QueryFilter.Field.STATE)
@@ -154,7 +155,7 @@ public abstract class AbstractExecutionRepositoryTest {
                 .value( List.of(State.Type.RUNNING, State.Type.FAILED))
                 .build());
         executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
-        assertThat(executions.getTotal(), is(8L));
+        assertThat(executions.getTotal()).isEqualTo(8L);
 
         filters = List.of(QueryFilter.builder()
             .field(QueryFilter.Field.LABELS)
@@ -162,7 +163,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .value(Map.of("key", "value"))
             .build());
         executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
-        assertThat(executions.getTotal(), is(1L));
+        assertThat(executions.getTotal()).isEqualTo(1L);
 
         filters = List.of(QueryFilter.builder()
             .field(QueryFilter.Field.LABELS)
@@ -170,7 +171,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .value(Map.of("key", "value2"))
             .build());
         executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
-        assertThat(executions.getTotal(), is(0L));
+        assertThat(executions.getTotal()).isEqualTo(0L);
 
         filters = List.of(QueryFilter.builder()
                 .field(QueryFilter.Field.LABELS)
@@ -179,7 +180,7 @@ public abstract class AbstractExecutionRepositoryTest {
                 .build()
         );
         executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
-        assertThat(executions.getTotal(), is(1L));
+        assertThat(executions.getTotal()).isEqualTo(1L);
 
         filters = List.of(QueryFilter.builder()
             .field(QueryFilter.Field.FLOW_ID)
@@ -187,7 +188,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .value("second")
             .build());
         executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
-        assertThat(executions.getTotal(), is(13L));
+        assertThat(executions.getTotal()).isEqualTo(13L);
 
         filters = List.of(QueryFilter.builder()
             .field(QueryFilter.Field.FLOW_ID)
@@ -201,7 +202,7 @@ public abstract class AbstractExecutionRepositoryTest {
                 .build()
             );
         executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
-        assertThat(executions.getTotal(), is(13L));
+        assertThat(executions.getTotal()).isEqualTo(13L);
 
         filters = List.of(QueryFilter.builder()
             .field(QueryFilter.Field.NAMESPACE)
@@ -209,7 +210,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .value("io.kestra")
             .build());
         executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
-        assertThat(executions.getTotal(), is(28L));
+        assertThat(executions.getTotal()).isEqualTo(28L);
     }
 
     @Test
@@ -225,9 +226,9 @@ public abstract class AbstractExecutionRepositoryTest {
             .value(executionTriggerId)
             .build());
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10), null, filters);
-        assertThat(executions.getTotal(), is(28L));
-        assertThat(executions.size(), is(10));
-        assertThat(executions.getFirst().getTrigger().getVariables().get("executionId"), is(executionTriggerId));
+        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.size()).isEqualTo(10);
+        assertThat(executions.getFirst().getTrigger().getVariables().get("executionId")).isEqualTo(executionTriggerId);
         filters = List.of(QueryFilter.builder()
             .field(QueryFilter.Field.CHILD_FILTER)
             .operation(QueryFilter.Op.EQUALS)
@@ -235,9 +236,9 @@ public abstract class AbstractExecutionRepositoryTest {
             .build());
 
         executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
-        assertThat(executions.getTotal(), is(28L));
-        assertThat(executions.size(), is(10));
-        assertThat(executions.getFirst().getTrigger().getVariables().get("executionId"), is(executionTriggerId));
+        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.size()).isEqualTo(10);
+        assertThat(executions.getFirst().getTrigger().getVariables().get("executionId")).isEqualTo(executionTriggerId);
 
         filters = List.of(QueryFilter.builder()
             .field(QueryFilter.Field.CHILD_FILTER)
@@ -246,12 +247,12 @@ public abstract class AbstractExecutionRepositoryTest {
             .build());
 
         executions = executionRepository.find(Pageable.from(1, 10),  null, filters );
-        assertThat(executions.getTotal(), is(28L));
-        assertThat(executions.size(), is(10));
-        assertThat(executions.getFirst().getTrigger(), is(nullValue()));
+        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.size()).isEqualTo(10);
+        assertThat(executions.getFirst().getTrigger()).isNull();
 
         executions = executionRepository.find(Pageable.from(1, 10),  null,null);
-        assertThat(executions.getTotal(), is(56L));
+        assertThat(executions.getTotal()).isEqualTo(56L);
     }
 
     @Test
@@ -259,8 +260,8 @@ public abstract class AbstractExecutionRepositoryTest {
         inject();
 
         ArrayListTotal<Execution> executions = executionRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.desc("id"))),  null, null);
-        assertThat(executions.getTotal(), is(28L));
-        assertThat(executions.size(), is(10));
+        assertThat(executions.getTotal()).isEqualTo(28L);
+        assertThat(executions.size()).isEqualTo(10);
 
         var filters = List.of(QueryFilter.builder()
             .field(QueryFilter.Field.STATE)
@@ -268,7 +269,7 @@ public abstract class AbstractExecutionRepositoryTest {
             .value(List.of(State.Type.RUNNING, State.Type.FAILED))
             .build());
         executions = executionRepository.find(Pageable.from(1, 10),  null, filters);
-        assertThat(executions.getTotal(), is(8L));
+        assertThat(executions.getTotal()).isEqualTo(8L);
     }
 
     @Test
@@ -276,8 +277,8 @@ public abstract class AbstractExecutionRepositoryTest {
         inject();
 
         ArrayListTotal<TaskRun> taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null);
-        assertThat(taskRuns.getTotal(), is(71L));
-        assertThat(taskRuns.size(), is(10));
+        assertThat(taskRuns.getTotal()).isEqualTo(71L);
+        assertThat(taskRuns.size()).isEqualTo(10);
 
         var filters = List.of(QueryFilter.builder()
             .field(QueryFilter.Field.LABELS)
@@ -286,8 +287,8 @@ public abstract class AbstractExecutionRepositoryTest {
             .build());
 
         taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, filters);
-        assertThat(taskRuns.getTotal(), is(1L));
-        assertThat(taskRuns.size(), is(1));
+        assertThat(taskRuns.getTotal()).isEqualTo(1L);
+        assertThat(taskRuns.size()).isEqualTo(1);
     }
 
 
@@ -296,10 +297,10 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
         Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
-        assertThat(full.isPresent(), is(true));
+        assertThat(full.isPresent()).isEqualTo(true);
 
         full.ifPresent(current -> {
-            assertThat(full.get().getId(), is(ExecutionFixture.EXECUTION_1.getId()));
+            assertThat(full.get().getId()).isEqualTo(ExecutionFixture.EXECUTION_1.getId());
         });
     }
 
@@ -308,12 +309,12 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
         Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
-        assertThat(full.isPresent(), is(true));
+        assertThat(full.isPresent()).isEqualTo(true);
 
         executionRepository.purge(ExecutionFixture.EXECUTION_1);
 
         full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
-        assertThat(full.isPresent(), is(false));
+        assertThat(full.isPresent()).isEqualTo(false);
     }
 
     @Test
@@ -321,12 +322,12 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
         Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
-        assertThat(full.isPresent(), is(true));
+        assertThat(full.isPresent()).isEqualTo(true);
 
         executionRepository.delete(ExecutionFixture.EXECUTION_1);
 
         full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
-        assertThat(full.isPresent(), is(false));
+        assertThat(full.isPresent()).isEqualTo(false);
     }
 
     @Test
@@ -336,7 +337,7 @@ public abstract class AbstractExecutionRepositoryTest {
 
         ArrayListTotal<Execution> page1 = executionRepository.findByFlowId(null, NAMESPACE, FLOW, Pageable.from(1, 10));
 
-        assertThat(page1.size(), is(2));
+        assertThat(page1.size()).isEqualTo(2);
     }
 
     @Test
@@ -362,23 +363,23 @@ public abstract class AbstractExecutionRepositoryTest {
             false
         );
 
-        assertThat(result.size(), is(1));
-        assertThat(result.get("io.kestra.unittest").size(), is(2));
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get("io.kestra.unittest").size()).isEqualTo(2);
 
         DailyExecutionStatistics full = result.get("io.kestra.unittest").get(FLOW).get(10);
         DailyExecutionStatistics second = result.get("io.kestra.unittest").get("second").get(10);
 
-        assertThat(full.getDuration().getAvg().toMillis(), greaterThan(0L));
-        assertThat(full.getExecutionCounts().size(), is(11));
-        assertThat(full.getExecutionCounts().get(State.Type.FAILED), is(3L));
-        assertThat(full.getExecutionCounts().get(State.Type.RUNNING), is(5L));
-        assertThat(full.getExecutionCounts().get(State.Type.SUCCESS), is(7L));
-        assertThat(full.getExecutionCounts().get(State.Type.CREATED), is(0L));
+        assertThat(full.getDuration().getAvg().toMillis()).isGreaterThan(0L);
+        assertThat(full.getExecutionCounts().size()).isEqualTo(11);
+        assertThat(full.getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L);
+        assertThat(full.getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L);
+        assertThat(full.getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(7L);
+        assertThat(full.getExecutionCounts().get(State.Type.CREATED)).isEqualTo(0L);
 
-        assertThat(second.getDuration().getAvg().toMillis(), greaterThan(0L));
-        assertThat(second.getExecutionCounts().size(), is(11));
-        assertThat(second.getExecutionCounts().get(State.Type.SUCCESS), is(13L));
-        assertThat(second.getExecutionCounts().get(State.Type.CREATED), is(0L));
+        assertThat(second.getDuration().getAvg().toMillis()).isGreaterThan(0L);
+        assertThat(second.getExecutionCounts().size()).isEqualTo(11);
+        assertThat(second.getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(13L);
+        assertThat(second.getExecutionCounts().get(State.Type.CREATED)).isEqualTo(0L);
 
         result = executionRepository.dailyGroupByFlowStatistics(
             null,
@@ -391,15 +392,15 @@ public abstract class AbstractExecutionRepositoryTest {
             true
         );
 
-        assertThat(result.size(), is(1));
-        assertThat(result.get("io.kestra.unittest").size(), is(1));
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get("io.kestra.unittest").size()).isEqualTo(1);
         full = result.get("io.kestra.unittest").get("*").get(10);
-        assertThat(full.getDuration().getAvg().toMillis(), greaterThan(0L));
-        assertThat(full.getExecutionCounts().size(), is(11));
-        assertThat(full.getExecutionCounts().get(State.Type.FAILED), is(3L));
-        assertThat(full.getExecutionCounts().get(State.Type.RUNNING), is(5L));
-        assertThat(full.getExecutionCounts().get(State.Type.SUCCESS), is(20L));
-        assertThat(full.getExecutionCounts().get(State.Type.CREATED), is(0L));
+        assertThat(full.getDuration().getAvg().toMillis()).isGreaterThan(0L);
+        assertThat(full.getExecutionCounts().size()).isEqualTo(11);
+        assertThat(full.getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L);
+        assertThat(full.getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L);
+        assertThat(full.getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(20L);
+        assertThat(full.getExecutionCounts().get(State.Type.CREATED)).isEqualTo(0L);
 
         result = executionRepository.dailyGroupByFlowStatistics(
             null,
@@ -412,9 +413,9 @@ public abstract class AbstractExecutionRepositoryTest {
             false
         );
 
-        assertThat(result.size(), is(1));
-        assertThat(result.get("io.kestra.unittest").size(), is(1));
-        assertThat(result.get("io.kestra.unittest").get(FLOW).size(), is(11));
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.get("io.kestra.unittest").size()).isEqualTo(1);
+        assertThat(result.get("io.kestra.unittest").get(FLOW).size()).isEqualTo(11);
     }
 
     @Test
@@ -477,17 +478,16 @@ public abstract class AbstractExecutionRepositoryTest {
                 )
         );
 
-        assertThat(result.size(), is(2));
-        assertThat(result, containsInAnyOrder(
-            allOf(
-                hasProperty("state", hasProperty("current", is(State.Type.FAILED))),
-                hasProperty("namespace", is(NAMESPACE))
-            ),
-            allOf(
-                hasProperty("state", hasProperty("current", is(State.Type.SUCCESS))),
-                hasProperty("namespace", is(anotherNamespace))
+        assertThat(result.size()).isEqualTo(2);
+        assertThat(result)
+            .extracting(
+                r -> r.getState().getCurrent(),
+                Execution::getNamespace
             )
-        ));
+            .containsExactlyInAnyOrder(
+                tuple(State.Type.FAILED, NAMESPACE),
+                tuple(State.Type.SUCCESS, anotherNamespace)
+            );
     }
 
     @Test
@@ -519,13 +519,13 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             false);
 
-        assertThat(result.size(), is(11));
-        assertThat(result.get(10).getExecutionCounts().size(), is(11));
-        assertThat(result.get(10).getDuration().getAvg().toMillis(), greaterThan(0L));
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().size()).isEqualTo(11);
+        assertThat(result.get(10).getDuration().getAvg().toMillis()).isGreaterThan(0L);
 
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED), is(3L));
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING), is(5L));
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(21L));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(21L);
 
         result = executionRepository.dailyStatistics(
             null,
@@ -539,8 +539,8 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             false);
 
-        assertThat(result.size(), is(11));
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(21L));
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(21L);
 
         result = executionRepository.dailyStatistics(
             null,
@@ -553,8 +553,8 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             null,
             false);
-        assertThat(result.size(), is(11));
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(20L));
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(20L);
 
         result = executionRepository.dailyStatistics(
             null,
@@ -567,8 +567,8 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             null,
             false);
-        assertThat(result.size(), is(11));
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(1L));
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(1L);
     }
 
     @Test
@@ -597,13 +597,13 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             true);
 
-        assertThat(result.size(), is(11));
-        assertThat(result.get(10).getExecutionCounts().size(), is(11));
-        assertThat(result.get(10).getDuration().getAvg().toMillis(), greaterThan(0L));
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().size()).isEqualTo(11);
+        assertThat(result.get(10).getDuration().getAvg().toMillis()).isGreaterThan(0L);
 
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED), is(3L * 2));
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING), is(5L * 2));
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(57L));
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.FAILED)).isEqualTo(3L * 2);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.RUNNING)).isEqualTo(5L * 2);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(57L);
 
         result = executionRepository.dailyStatistics(
             null,
@@ -617,8 +617,8 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             true);
 
-        assertThat(result.size(), is(11));
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(57L));
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(57L);
 
         result = executionRepository.dailyStatistics(
             null,
@@ -631,8 +631,8 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             null,
             true);
-        assertThat(result.size(), is(11));
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(55L));
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(55L);
 
         result = executionRepository.dailyStatistics(
             null,
@@ -645,8 +645,8 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             null,
             true);
-        assertThat(result.size(), is(11));
-        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS), is(2L));
+        assertThat(result.size()).isEqualTo(11);
+        assertThat(result.get(10).getExecutionCounts().get(State.Type.SUCCESS)).isEqualTo(2L);
     }
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
@@ -675,11 +675,11 @@ public abstract class AbstractExecutionRepositoryTest {
             ZonedDateTime.now(),
             null
         );
-        assertThat(result.size(), is(4));
-        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount(), is(2L));
-        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount(), is(3L));
-        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount(), is(9L));
-        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("missing")).findFirst().get().getCount(), is(0L));
+        assertThat(result.size()).isEqualTo(4);
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount()).isEqualTo(2L);
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount()).isEqualTo(3L);
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount()).isEqualTo(9L);
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("missing")).findFirst().get().getCount()).isEqualTo(0L);
 
         result = executionRepository.executionCounts(
             null,
@@ -693,10 +693,10 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             null
         );
-        assertThat(result.size(), is(3));
-        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount(), is(2L));
-        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount(), is(3L));
-        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount(), is(9L));
+        assertThat(result.size()).isEqualTo(3);
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("first")).findFirst().get().getCount()).isEqualTo(2L);
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("second")).findFirst().get().getCount()).isEqualTo(3L);
+        assertThat(result.stream().filter(executionCount -> executionCount.getFlowId().equals("third")).findFirst().get().getCount()).isEqualTo(9L);
 
         result = executionRepository.executionCounts(
             null,
@@ -706,8 +706,8 @@ public abstract class AbstractExecutionRepositoryTest {
             null,
             List.of(NAMESPACE)
         );
-        assertThat(result.size(), is(1));
-        assertThat(result.stream().filter(executionCount -> executionCount.getNamespace().equals(NAMESPACE)).findFirst().get().getCount(), is(14L));
+        assertThat(result.size()).isEqualTo(1);
+        assertThat(result.stream().filter(executionCount -> executionCount.getNamespace().equals(NAMESPACE)).findFirst().get().getCount()).isEqualTo(14L);
     }
 
     @Test
@@ -720,9 +720,9 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.update(updated);
 
         Optional<Execution> validation = executionRepository.findById(null, updated.getId());
-        assertThat(validation.isPresent(), is(true));
-        assertThat(validation.get().getLabels().size(), is(1));
-        assertThat(validation.get().getLabels().getFirst(), is(label));
+        assertThat(validation.isPresent()).isEqualTo(true);
+        assertThat(validation.get().getLabels().size()).isEqualTo(1);
+        assertThat(validation.get().getLabels().getFirst()).isEqualTo(label);
     }
 
     @Test
@@ -734,8 +734,8 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(latest);
 
         Optional<Execution> result = executionRepository.findLatestForStates(null, "io.kestra.unittest", "full", List.of(State.Type.CREATED));
-        assertThat(result.isPresent(), is(true));
-        assertThat(result.get().getId(), is(latest.getId()));
+        assertThat(result.isPresent()).isEqualTo(true);
+        assertThat(result.get().getId()).isEqualTo(latest.getId());
     }
 
     @Test
@@ -766,11 +766,11 @@ public abstract class AbstractExecutionRepositoryTest {
             null
         );
 
-        assertThat(data.getTotal(), is(1L));
-        assertThat(data.get(0).get("count"), is(1L));
-        assertThat(data.get(0).get("country"), is("FR"));
+        assertThat(data.getTotal()).isEqualTo(1L);
+        assertThat(data.get(0).get("count")).isEqualTo(1L);
+        assertThat(data.get(0).get("country")).isEqualTo("FR");
         Instant startDate = execution.getState().getStartDate();
-        assertThat(data.get(0).get("date"), is(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(ZonedDateTime.ofInstant(startDate, ZoneId.systemDefault()).withSecond(0).withNano(0))));
+        assertThat(data.get(0).get("date")).isEqualTo(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSXXX").format(ZonedDateTime.ofInstant(startDate, ZoneId.systemDefault()).withSecond(0).withNano(0)));
     }
 
     private static Execution buildWithCreatedDate(Instant instant) {
@@ -790,6 +790,6 @@ public abstract class AbstractExecutionRepositoryTest {
         inject();
 
         List<Execution> executions = executionRepository.findAllAsync(null).collectList().block();
-        assertThat(executions, hasSize(28));
+        assertThat(executions).hasSize(28);
     }
 }

@@ -21,8 +21,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public abstract class AbstractTemplateRepositoryTest {
@@ -51,12 +50,12 @@ public abstract class AbstractTemplateRepositoryTest {
         templateRepository.create(template);
 
         Optional<Template> full = templateRepository.findById(null, template.getNamespace(), template.getId());
-        assertThat(full.isPresent(), is(true));
-        assertThat(full.get().getId(), is(template.getId()));
+        assertThat(full.isPresent()).isEqualTo(true);
+        assertThat(full.get().getId()).isEqualTo(template.getId());
 
         full = templateRepository.findById(null, template.getNamespace(), template.getId());
-        assertThat(full.isPresent(), is(true));
-        assertThat(full.get().getId(), is(template.getId()));
+        assertThat(full.isPresent()).isEqualTo(true);
+        assertThat(full.get().getId()).isEqualTo(template.getId());
     }
 
     @Test
@@ -70,9 +69,9 @@ public abstract class AbstractTemplateRepositoryTest {
         templateRepository.create(template2);
 
         List<Template> templates = templateRepository.findByNamespace(null, template1.getNamespace());
-        assertThat(templates.size(), greaterThanOrEqualTo(1));
+        assertThat(templates.size()).isGreaterThanOrEqualTo(1);
         templates = templateRepository.findByNamespace(null, template2.getNamespace());
-        assertThat(templates.size(), is(1));
+        assertThat(templates.size()).isEqualTo(1);
     }
 
     @Test
@@ -80,7 +79,7 @@ public abstract class AbstractTemplateRepositoryTest {
         Template template = builder().build();
         Template save = templateRepository.create(template);
 
-        assertThat(save.getId(), is(template.getId()));
+        assertThat(save.getId()).isEqualTo(template.getId());
     }
 
     @Test
@@ -89,9 +88,9 @@ public abstract class AbstractTemplateRepositoryTest {
         Template template = builder().build();
         templateRepository.create(template);
         long size = templateRepository.findAll(null).size();
-        assertThat(size, greaterThan(saveCount));
+        assertThat(size).isGreaterThan(saveCount);
         templateRepository.delete(template);
-        assertThat((long) templateRepository.findAll(null).size(), is(saveCount));
+        assertThat((long) templateRepository.findAll(null).size()).isEqualTo(saveCount);
     }
 
     @Test
@@ -100,9 +99,9 @@ public abstract class AbstractTemplateRepositoryTest {
         Template template = builder().build();
         templateRepository.create(template);
         long size = templateRepository.findAllForAllTenants().size();
-        assertThat(size, greaterThan(saveCount));
+        assertThat(size).isGreaterThan(saveCount);
         templateRepository.delete(template);
-        assertThat((long) templateRepository.findAllForAllTenants().size(), is(saveCount));
+        assertThat((long) templateRepository.findAllForAllTenants().size()).isEqualTo(saveCount);
     }
 
     @Test
@@ -116,11 +115,11 @@ public abstract class AbstractTemplateRepositoryTest {
 
         // with pageable
         List<Template> save = templateRepository.find(Pageable.from(1, 10),null, null, "kestra.test");
-        assertThat((long) save.size(), greaterThanOrEqualTo(3L));
+        assertThat((long) save.size()).isGreaterThanOrEqualTo(3L);
 
         // without pageable
         save = templateRepository.find(null, null, "kestra.test");
-        assertThat((long) save.size(), greaterThanOrEqualTo(3L));
+        assertThat((long) save.size()).isGreaterThanOrEqualTo(3L);
 
         templateRepository.delete(template1);
         templateRepository.delete(template2);
@@ -134,11 +133,11 @@ public abstract class AbstractTemplateRepositoryTest {
         Template save = templateRepository.create(template);
         templateRepository.delete(save);
 
-        assertThat(templateRepository.findById(null, template.getNamespace(), template.getId()).isPresent(), is(false));
+        assertThat(templateRepository.findById(null, template.getNamespace(), template.getId()).isPresent()).isEqualTo(false);
 
-        assertThat(TemplateListener.getEmits().size(), is(2));
-        assertThat(TemplateListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count(), is(1L));
-        assertThat(TemplateListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count(), is(1L));
+        assertThat(TemplateListener.getEmits().size()).isEqualTo(2);
+        assertThat(TemplateListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count()).isEqualTo(1L);
+        assertThat(TemplateListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count()).isEqualTo(1L);
     }
 
     @Singleton

@@ -11,8 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.nio.channels.AlreadyBoundException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -27,7 +26,7 @@ class OverrideRetryInterceptorTest {
     void test() {
         assertThrows(AlreadyBoundException.class, retry::failedMethod);
 
-        assertThat(retryEvents.count, is(5));
+        assertThat(retryEvents.count).isEqualTo(5);
     }
 
     @Singleton

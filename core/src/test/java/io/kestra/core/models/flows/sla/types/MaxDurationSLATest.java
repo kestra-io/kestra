@@ -9,8 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,8 +28,8 @@ class MaxDurationSLATest {
 
         Optional<Violation> evaluate = maxDurationSLA.evaluate(null, execution);
         assertTrue(evaluate.isPresent());
-        assertThat(evaluate.get().reason(), containsString("execution duration of"));
-        assertThat(evaluate.get().reason(), containsString("exceed the maximum duration of PT0.05S."));
+        assertThat(evaluate.get().reason()).contains("execution duration of");
+        assertThat(evaluate.get().reason()).contains("exceed the maximum duration of PT0.05S.");
     }
 
     @Test

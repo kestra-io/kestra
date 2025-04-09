@@ -87,4 +87,9 @@ public class FlowUpdatesCommand extends AbstractApiCommand {
 
         return 0;
     }
+
+    @Override
+    protected boolean loadExternalPlugins() {
+        return false;
+    }
 }

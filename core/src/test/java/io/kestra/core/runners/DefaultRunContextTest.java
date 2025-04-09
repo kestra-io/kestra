@@ -13,8 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.security.GeneralSecurityException;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
 class DefaultRunContextTest {
@@ -44,6 +43,6 @@ class DefaultRunContextTest {
             "secret", Map.of("type", EncryptedString.TYPE, "value", encryptedSecret));
 
         String render = runContext.render("What ? {{secret}}", variables);
-        assertThat(render, is(("What ? It's a secret")));
+        assertThat(render).isEqualTo(("What ? It's a secret"));
     }
 }

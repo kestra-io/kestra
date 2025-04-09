@@ -22,8 +22,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.CoreMatchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ScheduleOnDatesTest {
@@ -54,7 +53,7 @@ class ScheduleOnDatesTest {
         ZonedDateTime nextDate = scheduleOnDates.nextEvaluationDate(conditionContext, Optional.of(trigger));
 
         // then
-        assertThat(nextDate, is(after));
+        assertThat(nextDate).isEqualTo(after);
     }
 
     @Test
@@ -76,7 +75,7 @@ class ScheduleOnDatesTest {
         ZonedDateTime nextDate = scheduleOnDates.nextEvaluationDate(conditionContext, Optional.empty());
 
         // then
-        assertThat(nextDate, is(before));
+        assertThat(nextDate).isEqualTo(before);
     }
 
     @Test
@@ -98,7 +97,7 @@ class ScheduleOnDatesTest {
         ZonedDateTime previousDate = scheduleOnDates.previousEvaluationDate(conditionContext);
 
         // then
-        assertThat(previousDate, is(before));
+        assertThat(previousDate).isEqualTo(before);
     }
 
     private ConditionContext conditionContext(AbstractTrigger trigger) {

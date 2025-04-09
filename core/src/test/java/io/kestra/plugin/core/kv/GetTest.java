@@ -16,9 +16,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class GetTest {
@@ -57,7 +55,7 @@ class GetTest {
 
         // Then
         Get.Output run = get.run(runContext);
-        assertThat(run.getValue(), is(value));
+        assertThat(run.getValue()).isEqualTo(value);
     }
 
     @Test
@@ -87,7 +85,7 @@ class GetTest {
 
         // Then
         Get.Output run = get.run(runContext);
-        assertThat(run.getValue(), is(value));
+        assertThat(run.getValue()).isEqualTo(value);
     }
 
     @Test
@@ -113,10 +111,10 @@ class GetTest {
         Get.Output run = get.run(runContext);
 
         // Then
-        assertThat(run.getValue(), nullValue());
+        assertThat(run.getValue()).isNull();
 
         Get finalGet = get.toBuilder().errorOnMissing(Property.of(true)).build();
         NoSuchElementException noSuchElementException = Assertions.assertThrows(NoSuchElementException.class, () -> finalGet.run(runContext));
-        assertThat(noSuchElementException.getMessage(), is("No value found for key 'my-key' in namespace '" + namespaceId + "' and `errorOnMissing` is set to true"));
+        assertThat(noSuchElementException.getMessage()).isEqualTo("No value found for key 'my-key' in namespace '" + namespaceId + "' and `errorOnMissing` is set to true");
     }
 }

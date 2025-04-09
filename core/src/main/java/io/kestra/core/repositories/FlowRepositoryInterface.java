@@ -5,8 +5,10 @@ import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowForExecution;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.micronaut.data.model.Pageable;
 
 import jakarta.annotation.Nullable;
@@ -176,9 +178,9 @@ public interface FlowRepositoryInterface {
             .toList();
     }
 
-    FlowWithSource create(Flow flow, String flowSource, Flow flowWithDefaults);
+    FlowWithSource create(GenericFlow flow);
 
-    FlowWithSource update(Flow flow, Flow previous, String flowSource, Flow flowWithDefaults) throws ConstraintViolationException;
+    FlowWithSource update(GenericFlow flow, FlowInterface previous) throws ConstraintViolationException;
 
-    FlowWithSource delete(FlowWithSource flow);
+    FlowWithSource delete(FlowInterface flow);
 }

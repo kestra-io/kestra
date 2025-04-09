@@ -4,10 +4,11 @@ import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.DateUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -15,6 +16,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.OffsetTime;
+import java.util.Map;
 
 @SuperBuilder
 @ToString
@@ -58,34 +60,37 @@ public class TimeBetween extends Condition implements ScheduleCondition {
         description = "Can be any variable or any valid ISO 8601 time. By default, it will use the trigger date."
     )
     @Builder.Default
-    @PluginProperty(dynamic = true)
-    private final String date = "{{ trigger.date }}";
+    private final Property<String> date = new Property<>("{{ trigger.date }}");
 
     @Schema(
         title = "The time to test must be after this one.",
         description = "Must be a valid ISO 8601 time with offset."
     )
-    @PluginProperty
-    private OffsetTime after;
+    private Property<OffsetTime> after;
 
     @Schema(
         title = "The time to test must be before this one.",
         description = "Must be a valid ISO 8601 time with offset."
     )
-    @PluginProperty
-    private OffsetTime before;
+    private Property<OffsetTime> before;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
-        String render = conditionContext.getRunContext().render(date, conditionContext.getVariables());
-        OffsetTime currentDate = DateUtils.parseZonedDateTime(render).toOffsetDateTime().toOffsetTime();
+        RunContext runContext = conditionContext.getRunContext();
+        Map<String, Object> variables = conditionContext.getVariables();
 
-        if (this.before != null && this.after != null) {
-            return currentDate.isAfter(after) && currentDate.isBefore(before);
-        } else if (this.before != null) {
-            return currentDate.isBefore(before);
-        } else if (this.after != null) {
-            return currentDate.isAfter(after);
+        String dateRendered = runContext.render(date).as(String.class, variables).orElseThrow();
+        OffsetTime currentDate = DateUtils.parseZonedDateTime(dateRendered).toOffsetDateTime().toOffsetTime();
+
+        OffsetTime beforeRendered = runContext.render(before).as(OffsetTime.class, variables).orElse(null);
+        OffsetTime afterRendered = runContext.render(after).as(OffsetTime.class, variables).orElse(null);
+
+        if (beforeRendered != null && afterRendered != null) {
+            return currentDate.isAfter(afterRendered) && currentDate.isBefore(beforeRendered);
+        } else if (beforeRendered != null) {
+            return currentDate.isBefore(beforeRendered);
+        } else if (afterRendered != null) {
+            return currentDate.isAfter(afterRendered);
         } else {
             throw new IllegalConditionEvaluation("Invalid condition with no before nor after");
         }

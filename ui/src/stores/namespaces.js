@@ -21,6 +21,7 @@ export default {
         inheritedSecrets: undefined,
         secrets: undefined,
         kvs: undefined,
+        addKvModalVisible: false
     },
     actions: {
         search({commit}, options) {
@@ -228,6 +229,9 @@ export default {
         },
         setSecrets(state, secrets) {
             state.secrets = secrets
-        }
+        },
+        changeKVModalVisibility(state, visible) {
+            state.addKvModalVisible = visible
+        },
     },
 };

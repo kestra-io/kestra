@@ -10,7 +10,6 @@ import io.micronaut.http.HttpRequest;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
-import jakarta.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
@@ -27,8 +26,6 @@ import jakarta.validation.ConstraintViolationException;
 @Slf4j
 @TemplateEnabled
 public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
-    @Inject
-    public YamlParser yamlParser;
 
     @Override
     public Integer call() throws Exception {
@@ -38,7 +35,7 @@ public class TemplateNamespaceUpdateCommand extends AbstractServiceNamespaceUpda
             List<Template> templates = files
                 .filter(Files::isRegularFile)
                 .filter(YamlParser::isValidExtension)
-                .map(path -> yamlParser.parse(path.toFile(), Template.class))
+                .map(path -> YamlParser.parse(path.toFile(), Template.class))
                 .toList();
 
             if (templates.isEmpty()) {

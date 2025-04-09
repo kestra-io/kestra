@@ -16,13 +16,12 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class FlowWithSourceTest {
     @Test
     void source() throws JsonProcessingException {
-        var flow = Flow.builder()
+        FlowWithSource flow = FlowWithSource.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .tasks(List.of(
@@ -37,12 +36,12 @@ class FlowWithSourceTest {
             ))
             .build();
 
-        FlowWithSource flowWithSource = FlowWithSource.of(flow, flow.generateSource());
+        flow = flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
 
-        String source = flowWithSource.getSource();
+        String source = flow.getSource();
 
-        assertThat(source, not(containsString("deleted: false")));
-        assertThat(source, containsString("format: |\n"));
+        assertThat(source).doesNotContain("deleted: false");
+        assertThat(source).contains("format: |\n");
     }
 
     @Test
@@ -60,20 +59,20 @@ class FlowWithSourceTest {
             .triggers(List.of(Schedule.builder().id("schedule").cron("0 1 9 * * *").build()));
 
         FlowWithSource flow = builder
-            .source(JacksonMapper.ofYaml().writeValueAsString(builder.build().toFlow()))
+            .source(JacksonMapper.ofYaml().writeValueAsString(builder.build()))
             .build();
 
         String source = flow.getSource();
 
-        assertThat(source, containsString("message: Hello World"));
-        assertThat(source, containsString("  cron: 0 1 9 * * *"));
+        assertThat(source).contains("message: Hello World");
+        assertThat(source).contains("  cron: 0 1 9 * * *");
     }
 
     @SuppressWarnings("deprecation")
     @Test
     void of() {
         // test that all fields are transmitted to FlowWithSource
-        Flow flow = Flow.builder()
+        FlowWithSource flow = FlowWithSource.builder()
             .tenantId("tenantId")
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
@@ -132,10 +131,10 @@ class FlowWithSourceTest {
                     .build()
             )
             .build();
-        String expectedSource = flow.generateSource() + " # additional comment";
+        String expectedSource = flow.sourceOrGenerateIfNull() + " # additional comment";
         FlowWithSource of = FlowWithSource.of(flow, expectedSource);
 
-        assertThat(of.equalsWithoutRevision(flow), is(true));
-        assertThat(of.getSource(), is(expectedSource));
+        assertThat(of.equalsWithoutRevision(flow)).isEqualTo(true);
+        assertThat(of.getSource()).isEqualTo(expectedSource);
     }
 }

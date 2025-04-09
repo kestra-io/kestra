@@ -33,8 +33,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
@@ -59,7 +58,7 @@ class ScheduleTest {
                 .build()
         );
 
-        assertThat(evaluate.isPresent(), is(false));
+        assertThat(evaluate.isPresent()).isEqualTo(false);
     }
 
     private static TriggerContext triggerContext(ZonedDateTime date, Schedule schedule) {
@@ -100,21 +99,21 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent(), is(true));
-        assertThat(evaluate.get().getLabels(), hasSize(3));
+        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.get().getLabels()).hasSize(3);
         assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
         var inputs = evaluate.get().getInputs();
 
-        assertThat(dateFromVars(vars.get("date"), date), is(date));
-        assertThat(dateFromVars(vars.get("next"), date), is(date.plusMonths(1)));
-        assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
-        assertThat(inputs.size(), is(2));
-        assertThat(inputs.get("input1"), nullValue());
-        assertThat(inputs.get("input2"), is("default"));
+        assertThat(dateFromVars(vars.get("date"), date)).isEqualTo(date);
+        assertThat(dateFromVars(vars.get("next"), date)).isEqualTo(date.plusMonths(1));
+        assertThat(dateFromVars(vars.get("previous"), date)).isEqualTo(date.minusMonths(1));
+        assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
+        assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-2", "flow-label-2"));
+        assertThat(inputs.size()).isEqualTo(2);
+        assertThat(inputs.get("input1")).isNull();
+        assertThat(inputs.get("input2")).isEqualTo("default");
     }
 
     @Test
@@ -134,15 +133,15 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent(), is(true));
-        assertThat(evaluate.get().getLabels(), hasSize(3));
+        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.get().getLabels()).hasSize(3);
         assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
 
         var inputs = evaluate.get().getInputs();
 
-        assertThat(inputs.size(), is(2));
-        assertThat(inputs.get("input1"), is("input1"));
-        assertThat(inputs.get("input2"), is("default"));
+        assertThat(inputs.size()).isEqualTo(2);
+        assertThat(inputs.get("input1")).isEqualTo("input1");
+        assertThat(inputs.get("input2")).isEqualTo("default");
     }
 
     @Test
@@ -168,10 +167,10 @@ class ScheduleTest {
 
         Optional<Execution> evaluate = scheduleTrigger.evaluate(conditionContext, triggerContext);
 
-        assertThat(evaluate.isPresent(), is(true));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-1", "trigger-label-1")));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-2", "trigger-label-2")));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-3", "")));
+        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-1", "trigger-label-1"));
+        assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-2", "trigger-label-2"));
+        assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-3", ""));
     }
 
     @SuppressWarnings("unchecked")
@@ -190,14 +189,14 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.isPresent()).isEqualTo(true);
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
 
 
-        assertThat(dateFromVars(vars.get("date"), date), is(date));
-        assertThat(dateFromVars(vars.get("next"), date), is(date.plus(Duration.ofMinutes(1))));
-        assertThat(dateFromVars(vars.get("previous"), date), is(date.minus(Duration.ofMinutes(1))));
+        assertThat(dateFromVars(vars.get("date"), date)).isEqualTo(date);
+        assertThat(dateFromVars(vars.get("next"), date)).isEqualTo(date.plus(Duration.ofMinutes(1)));
+        assertThat(dateFromVars(vars.get("previous"), date)).isEqualTo(date.minus(Duration.ofMinutes(1)));
     }
 
     @SuppressWarnings("unchecked")
@@ -214,14 +213,14 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.isPresent()).isEqualTo(true);
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
 
 
-        assertThat(dateFromVars(vars.get("date"), date), is(date));
-        assertThat(dateFromVars(vars.get("next"), date), is(date.plus(Duration.ofSeconds(1))));
-        assertThat(dateFromVars(vars.get("previous"), date), is(date.minus(Duration.ofSeconds(1))));
+        assertThat(dateFromVars(vars.get("date"), date)).isEqualTo(date);
+        assertThat(dateFromVars(vars.get("next"), date)).isEqualTo(date.plus(Duration.ofSeconds(1)));
+        assertThat(dateFromVars(vars.get("previous"), date)).isEqualTo(date.minus(Duration.ofSeconds(1)));
     }
 
     @Test
@@ -240,7 +239,7 @@ class ScheduleTest {
         Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
 
         // Then
-        assertThat(result.isEmpty(), is(true));
+        assertThat(result.isEmpty()).isEqualTo(true);
     }
 
     @Test
@@ -261,7 +260,7 @@ class ScheduleTest {
         Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
 
         // Then
-        assertThat(result.isPresent(), is(true));
+        assertThat(result.isPresent()).isEqualTo(true);
     }
 
     @Test
@@ -269,7 +268,7 @@ class ScheduleTest {
         Schedule trigger = Schedule.builder().id("schedule").cron("0 0 * * *").build();
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.empty());
 
-        assertThat(next.getDayOfMonth(), is(ZonedDateTime.now().plusDays(1).getDayOfMonth()));
+        assertThat(next.getDayOfMonth()).isEqualTo(ZonedDateTime.now().plusDays(1).getDayOfMonth());
     }
 
     @Test
@@ -278,7 +277,7 @@ class ScheduleTest {
         ZonedDateTime date = ZonedDateTime.parse("2020-01-01T00:00:00+01:00[Europe/Paris]");
         ZonedDateTime next = trigger.nextEvaluationDate(conditionContext(trigger), Optional.of(triggerContext(date, trigger)));
 
-        assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE), is(date.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE)));
+        assertThat(next.format(DateTimeFormatter.ISO_LOCAL_DATE)).isEqualTo(date.plusDays(1).format(DateTimeFormatter.ISO_LOCAL_DATE));
     }
 
     @Test
@@ -302,12 +301,12 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.isPresent()).isEqualTo(true);
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
-        assertThat(dateFromVars(vars.get("date"), expexted), is(expexted));
-        assertThat(dateFromVars(vars.get("next"), expexted), is(expexted.plusMonths(1)));
-        assertThat(dateFromVars(vars.get("previous"), expexted), is(expexted.minusMonths(1)));
+        assertThat(dateFromVars(vars.get("date"), expexted)).isEqualTo(expexted);
+        assertThat(dateFromVars(vars.get("next"), expexted)).isEqualTo(expexted.plusMonths(1));
+        assertThat(dateFromVars(vars.get("previous"), expexted)).isEqualTo(expexted.minusMonths(1));
     }
 
     @SuppressWarnings("unchecked")
@@ -337,12 +336,12 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.isPresent()).isEqualTo(true);
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
-        assertThat(dateFromVars(vars.get("date"), date), is(date));
-        assertThat(dateFromVars(vars.get("next"), next), is(next));
-        assertThat(dateFromVars(vars.get("previous"), previous), is(previous));
+        assertThat(dateFromVars(vars.get("date"), date)).isEqualTo(date);
+        assertThat(dateFromVars(vars.get("next"), next)).isEqualTo(next);
+        assertThat(dateFromVars(vars.get("previous"), previous)).isEqualTo(previous);
     }
 
     @SuppressWarnings("unchecked")
@@ -370,12 +369,12 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.isPresent()).isEqualTo(true);
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
-        assertThat(dateFromVars(vars.get("date"), date), is(date));
-        assertThat(dateFromVars(vars.get("previous"), previous), is(previous));
-        assertThat(vars.containsKey("next"), is(false));
+        assertThat(dateFromVars(vars.get("date"), date)).isEqualTo(date);
+        assertThat(dateFromVars(vars.get("previous"), previous)).isEqualTo(previous);
+        assertThat(vars.containsKey("next")).isEqualTo(false);
     }
 
     @Test
@@ -398,7 +397,7 @@ class ScheduleTest {
                 .build())
         );
 
-        assertThat(evaluate, is(expected));
+        assertThat(evaluate).isEqualTo(expected);
 
     }
 
@@ -422,9 +421,9 @@ class ScheduleTest {
                 .build()
         );
 
-        assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.isPresent()).isEqualTo(true);
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
-        assertThat(dateFromVars(vars.get("date"), date), is(date));
+        assertThat(dateFromVars(vars.get("date"), date)).isEqualTo(date);
     }
 
     @SuppressWarnings("unchecked")
@@ -448,14 +447,14 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent(), is(true));
+        assertThat(evaluate.isPresent()).isEqualTo(true);
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
 
-        assertThat(dateFromVars(vars.get("date"), date), is(date));
-        assertThat(ZonedDateTime.parse(vars.get("date")).getZone().getId(), is("-04:00"));
-        assertThat(dateFromVars(vars.get("next"), date), is(date.plusMonths(1)));
-        assertThat(dateFromVars(vars.get("previous"), date), is(date.minusMonths(1)));
+        assertThat(dateFromVars(vars.get("date"), date)).isEqualTo(date);
+        assertThat(ZonedDateTime.parse(vars.get("date")).getZone().getId()).isEqualTo("-04:00");
+        assertThat(dateFromVars(vars.get("next"), date)).isEqualTo(date.plusMonths(1));
+        assertThat(dateFromVars(vars.get("previous"), date)).isEqualTo(date.minusMonths(1));
     }
 
     @Test
@@ -478,7 +477,7 @@ class ScheduleTest {
         Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
 
         // Then
-        assertThat(result.isPresent(), is(true));
+        assertThat(result.isPresent()).isEqualTo(true);
     }
 
 

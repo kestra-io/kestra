@@ -18,22 +18,14 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 @FlowValidation
 public class FlowWithPath {
-    private FlowWithSource flow;
+    private FlowInterface flow;
     @Nullable
     private String tenantId;
     private String id;
     private String namespace;
     private String path;
 
-    public static FlowWithPath of(FlowWithSource flow, String path) {
-        return FlowWithPath.builder()
-            .id(flow.getId())
-            .namespace(flow.getNamespace())
-            .path(path)
-            .build();
-    }
-
-    public static FlowWithPath of(Flow flow, String path) {
+    public static FlowWithPath of(FlowInterface flow, String path) {
         return FlowWithPath.builder()
             .id(flow.getId())
             .namespace(flow.getNamespace())

@@ -16,8 +16,7 @@ import java.time.LocalDate;
 import java.util.stream.Stream;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class DayWeekTest {
@@ -44,6 +43,6 @@ class DayWeekTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(result));
+        assertThat(test).isEqualTo(result);
     }
 }

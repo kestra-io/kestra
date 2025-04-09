@@ -28,8 +28,7 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 @Property(name = "kestra.templates.enabled", value = StringUtils.TRUE)
@@ -74,8 +73,8 @@ public class TemplateTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(4));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(4);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         // FIXME plugin default injection into a template didn't work anymore, is it really an issue?
 //        LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().equals("myString") && logEntry.getLevel() == Level.ERROR);
         receive.blockLast();
@@ -95,11 +94,11 @@ public class TemplateTest {
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "with-failed-template", Duration.ofSeconds(60));
 
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().endsWith("Can't find flow template 'io.kestra.tests.invalid'") && logEntry.getLevel() == Level.ERROR);
         receive.blockLast();
-        assertThat(matchingLog, notNullValue());
+        assertThat(matchingLog).isNotNull();
     }
 
     @Test

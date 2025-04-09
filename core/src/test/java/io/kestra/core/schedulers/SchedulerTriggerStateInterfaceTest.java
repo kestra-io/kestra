@@ -9,8 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.time.ZonedDateTime;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public abstract class SchedulerTriggerStateInterfaceTest {
@@ -31,20 +30,20 @@ public abstract class SchedulerTriggerStateInterfaceTest {
         Trigger.TriggerBuilder<?, ?> builder = trigger();
 
         Optional<Trigger> find = triggerState.findLast(builder.build());
-        assertThat(find.isPresent(), is(false));
+        assertThat(find.isPresent()).isEqualTo(false);
 
         Trigger save = triggerState.update(builder.build());
 
         find = triggerState.findLast(save);
 
-        assertThat(find.isPresent(), is(true));
-        assertThat(find.get().getExecutionId(), is(save.getExecutionId()));
+        assertThat(find.isPresent()).isEqualTo(true);
+        assertThat(find.get().getExecutionId()).isEqualTo(save.getExecutionId());
 
         save = triggerState.update(builder.executionId(IdUtils.create()).build());
 
         find = triggerState.findLast(save);
 
-        assertThat(find.isPresent(), is(true));
-        assertThat(find.get().getExecutionId(), is(save.getExecutionId()));
+        assertThat(find.isPresent()).isEqualTo(true);
+        assertThat(find.get().getExecutionId()).isEqualTo(save.getExecutionId());
     }
 }

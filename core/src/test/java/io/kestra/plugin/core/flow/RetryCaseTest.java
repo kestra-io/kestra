@@ -21,8 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
 @Singleton
@@ -36,39 +35,39 @@ public class RetryCaseTest {
     protected RunnerUtils runnerUtils;
 
     public void retrySuccess(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(4));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts()).hasSize(4);
     }
 
     public void retrySuccessAtFirstAttempt(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(1));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts()).hasSize(1);
     }
 
     public void retryFailed(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(5));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts()).hasSize(5);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     public void retryRandom(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(3));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts()).hasSize(3);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     public void retryExpo(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(3));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts()).hasSize(3);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     public void retryFail(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.getTaskRunList().getFirst().getAttempts(), hasSize(3));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts()).hasSize(3);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
     }
 
@@ -96,7 +95,7 @@ public class RetryCaseTest {
 
         Await.until(() -> countDownLatch.getCount() == 0, Duration.ofSeconds(2), Duration.ofMinutes(1));
         receive.blockLast();
-        assertThat(stateHistory.get(), containsInAnyOrder(State.Type.RETRIED, State.Type.RETRIED, State.Type.FAILED));
+        assertThat(stateHistory.get()).containsExactlyInAnyOrder(State.Type.RETRIED, State.Type.RETRIED, State.Type.FAILED);
     }
 
     public void retryNewExecutionTaskAttempts() throws TimeoutException, QueueException {
@@ -123,7 +122,7 @@ public class RetryCaseTest {
 
         Await.until(() -> countDownLatch.getCount() == 0, Duration.ofSeconds(2), Duration.ofMinutes(1));
         receive.blockLast();
-        assertThat(stateHistory.get(), containsInAnyOrder(State.Type.RETRIED, State.Type.RETRIED, State.Type.FAILED));
+        assertThat(stateHistory.get()).containsExactlyInAnyOrder(State.Type.RETRIED, State.Type.RETRIED, State.Type.FAILED);
     }
 
     public void retryNewExecutionFlowDuration() throws TimeoutException, QueueException {
@@ -150,7 +149,7 @@ public class RetryCaseTest {
 
         Await.until(() -> countDownLatch.getCount() == 0, Duration.ofSeconds(2), Duration.ofMinutes(1));
         receive.blockLast();
-        assertThat(stateHistory.get(), containsInAnyOrder(State.Type.RETRIED, State.Type.RETRIED, State.Type.FAILED));
+        assertThat(stateHistory.get()).containsExactlyInAnyOrder(State.Type.RETRIED, State.Type.RETRIED, State.Type.FAILED);
     }
 
     public void retryNewExecutionFlowAttempts() throws TimeoutException, QueueException {
@@ -177,58 +176,58 @@ public class RetryCaseTest {
 
         Await.until(() -> countDownLatch.getCount() == 0, Duration.ofSeconds(2), Duration.ofMinutes(1));
         receive.blockLast();
-        assertThat(stateHistory.get(), containsInAnyOrder(State.Type.RETRIED, State.Type.RETRIED, State.Type.FAILED));
+        assertThat(stateHistory.get()).containsExactlyInAnyOrder(State.Type.RETRIED, State.Type.RETRIED, State.Type.FAILED);
     }
 
     public void retryFailedTaskDuration(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().getFirst().attemptNumber(), is(3));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().getFirst().attemptNumber()).isEqualTo(3);
     }
 
     public void retryFailedTaskAttempts(Execution execution) {
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().getFirst().attemptNumber(), is(4));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().getFirst().attemptNumber()).isEqualTo(4);
     }
 
     public void retryFailedFlowDuration(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().getFirst().attemptNumber(), is(3));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().getFirst().attemptNumber()).isEqualTo(3);
     }
 
     public void retryFailedFlowAttempts(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().getFirst().attemptNumber(), is(4));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().getFirst().attemptNumber()).isEqualTo(4);
     }
 
     public void retryFlowable(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(1).attemptNumber(), is(3));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().get(1).attemptNumber()).isEqualTo(3);
     }
 
     public void retrySubflow(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(0).getAttempts().size(), is(3));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().get(0).getAttempts().size()).isEqualTo(3);
     }
 
     public void retryFlowableChild(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(1).attemptNumber(), is(3));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().get(1).attemptNumber()).isEqualTo(3);
     }
 
     public void retryFlowableNestedChild(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(2).attemptNumber(), is(3));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().get(2).attemptNumber()).isEqualTo(3);
     }
 
     public void retryFlowableParallel(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(1).attemptNumber(), greaterThanOrEqualTo(2));
-        assertThat(execution.getTaskRunList().get(2).attemptNumber(), greaterThanOrEqualTo(2));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().get(1).attemptNumber()).isGreaterThanOrEqualTo(2);
+        assertThat(execution.getTaskRunList().get(2).attemptNumber()).isGreaterThanOrEqualTo(2);
     }
 
     public void retryDynamicTask(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
 }

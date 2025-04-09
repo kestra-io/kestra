@@ -4,8 +4,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class TenantServiceTest {
@@ -15,7 +14,7 @@ class TenantServiceTest {
     @Test
     void test() {
         var tenant = tenantService.resolveTenant();
-        assertThat(tenant, nullValue());
+        assertThat(tenant).isNull();
     }
 
 }

@@ -1,18 +1,22 @@
 package io.kestra.core.models.flows;
 
-import io.kestra.core.models.HasSource;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.micronaut.core.annotation.Introspected;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
 import lombok.experimental.SuperBuilder;
 
+import java.util.Objects;
+import java.util.regex.Pattern;
+
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
 @Introspected
 @ToString
-public class FlowWithSource extends Flow implements HasSource {
+public class FlowWithSource extends Flow {
+
     String source;
 
     @SuppressWarnings("deprecation")
@@ -42,15 +46,13 @@ public class FlowWithSource extends Flow implements HasSource {
             .build();
     }
 
-    private static String cleanupSource(String source) {
-        return source.replaceFirst("(?m)^revision: \\d+\n?","");
+    @Override
+    @JsonIgnore(value = false)
+    public String getSource() {
+        return this.source;
     }
 
-    public boolean equals(Flow flow, String flowSource) {
-        return this.equalsWithoutRevision(flow) &&
-            this.source.equals(cleanupSource(flowSource));
-    }
-
+    @Override
     public FlowWithSource toDeleted() {
         return this.toBuilder()
             .revision(this.revision + 1)
@@ -84,11 +86,5 @@ public class FlowWithSource extends Flow implements HasSource {
             .retry(flow.retry)
             .sla(flow.sla)
             .build();
-    }
-
-    /** {@inheritDoc} **/
-    @Override
-    public String source() {
-        return getSource();
     }
 }

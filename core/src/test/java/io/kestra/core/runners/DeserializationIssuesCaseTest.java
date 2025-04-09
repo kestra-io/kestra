@@ -1,10 +1,13 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
@@ -19,8 +22,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
 public class DeserializationIssuesCaseTest {
@@ -242,9 +244,9 @@ public class DeserializationIssuesCaseTest {
             Duration.ofMinutes(1)
         );
         receive.blockLast();
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(2));
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().getFirst().getState(), is(State.Type.CREATED));
-        assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(2);
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
+        assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException{
@@ -263,17 +265,20 @@ public class DeserializationIssuesCaseTest {
             Duration.ofMinutes(1)
         );
         receive.blockLast();
-        assertThat(workerTriggerResult.get().getSuccess(), is(Boolean.FALSE));
+        assertThat(workerTriggerResult.get().getSuccess()).isEqualTo(Boolean.FALSE);
     }
 
-    public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException{
+    public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws Exception {
         AtomicReference<List<FlowWithSource>> flows = new AtomicReference<>();
-        flowListeners.listen(newFlows -> flows.set(newFlows));
+        flowListeners.listen(flows::set);
 
-        sendToQueue.accept(new QueueMessage(FlowWithSource.class, INVALID_FLOW_KEY, INVALID_FLOW_VALUE));
+        sendToQueue.accept(new QueueMessage(FlowInterface.class, INVALID_FLOW_KEY, INVALID_FLOW_VALUE));
 
         Await.until(
-            () -> flows.get() != null && flows.get().stream().anyMatch(newFlow -> newFlow.uid().equals("company.team_hello-world_2") && (newFlow.getTasks() == null || newFlow.getTasks().isEmpty())),
+            () -> flows.get() != null && flows.get()
+                .stream()
+                .anyMatch(newFlow -> newFlow.uid().equals("company.team_hello-world_2"))
+            ,
             Duration.ofMillis(100),
             Duration.ofMinutes(1)
         );

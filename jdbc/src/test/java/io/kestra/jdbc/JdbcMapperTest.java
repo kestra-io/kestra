@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class JdbcMapperTest {
     @Test
@@ -19,7 +18,7 @@ class JdbcMapperTest {
             .build()
         );
 
-        assertThat(serialize, containsString("2019-10-06T18:27:49.000000Z"));
+        assertThat(serialize).contains("2019-10-06T18:27:49.000000Z");
     }
 
     @Test
@@ -29,7 +28,7 @@ class JdbcMapperTest {
             .build()
         );
 
-        assertThat(serialize, containsString("2013-09-08T16:19:12.000+02:00"));
+        assertThat(serialize).contains("2013-09-08T16:19:12.000+02:00");
     }
 
     @Test
@@ -39,6 +38,6 @@ class JdbcMapperTest {
             .build()
         );
 
-        assertThat(serialize, containsString("2013-09-08T16:19:12.001+02:00"));
+        assertThat(serialize).contains("2013-09-08T16:19:12.001+02:00");
     }
 }

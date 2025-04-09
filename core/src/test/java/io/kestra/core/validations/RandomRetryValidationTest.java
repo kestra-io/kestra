@@ -10,9 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class RandomRetryValidationTest {
@@ -29,7 +27,7 @@ public class RandomRetryValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
-        assertThat(valid.isEmpty(), is(true));
+        assertThat(valid.isEmpty()).isEqualTo(true);
     }
 
     @Test
@@ -42,9 +40,9 @@ public class RandomRetryValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
-        assertThat(valid.isEmpty(), is(false));
-        assertThat(valid.get().getConstraintViolations(), hasSize(1));
-        assertThat(valid.get().getMessage(), is(": 'minInterval' must be less than 'maxDuration' but is PT2S\n"));
+        assertThat(valid.isEmpty()).isEqualTo(false);
+        assertThat(valid.get().getConstraintViolations()).hasSize(1);
+        assertThat(valid.get().getMessage()).isEqualTo(": 'minInterval' must be less than 'maxDuration' but is PT2S\n");
 
         retry = Random.builder()
             .maxAttempt(3)
@@ -54,8 +52,8 @@ public class RandomRetryValidationTest {
             .build();
 
         valid = modelValidator.isValid(retry);
-        assertThat(valid.isEmpty(), is(false));
-        assertThat(valid.get().getConstraintViolations(), hasSize(1));
-        assertThat(valid.get().getMessage(), is(": 'minInterval' must be less than 'maxInterval' but is PT3S\n"));
+        assertThat(valid.isEmpty()).isEqualTo(false);
+        assertThat(valid.get().getConstraintViolations()).hasSize(1);
+        assertThat(valid.get().getMessage()).isEqualTo(": 'minInterval' must be less than 'maxInterval' but is PT3S\n");
     }
 }

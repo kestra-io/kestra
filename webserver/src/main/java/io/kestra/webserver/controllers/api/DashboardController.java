@@ -45,7 +45,6 @@ import static io.kestra.core.utils.DateUtils.validateTimeline;
 @Controller("/api/v1/dashboards")
 @Slf4j
 public class DashboardController {
-    protected static final YamlParser YAML_PARSER = new YamlParser();
 
     @Inject
     private DashboardRepositoryInterface dashboardRepository;
@@ -83,7 +82,7 @@ public class DashboardController {
     public HttpResponse<Dashboard> create(
         @Parameter(description = "The dashboard") @Body String dashboard
     ) throws ConstraintViolationException, JsonProcessingException {
-        Dashboard dashboardParsed = YAML_PARSER.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
+        Dashboard dashboardParsed = YamlParser.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
         modelValidator.validate(dashboardParsed);
 
         if (dashboardParsed.getId() != null) {
@@ -103,7 +102,7 @@ public class DashboardController {
         validateConstraintViolationBuilder.index(0);
 
         try {
-            Dashboard parsed = YAML_PARSER.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
+            Dashboard parsed = YamlParser.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
 
             modelValidator.validate(parsed);
         } catch (ConstraintViolationException e) {
@@ -215,7 +214,7 @@ public class DashboardController {
     public PagedResults<Map<String, Object>> previewChart(
         @Parameter(description = "The chart") @Body String chart
     ) throws IOException {
-        Chart<?> parsed = YAML_PARSER.parse(chart, Chart.class);
+        Chart<?> parsed = YamlParser.parse(chart, Chart.class);
 
         return PagedResults.of(this.dashboardRepository.generate(tenantService.resolveTenant(), (DataChart) parsed, ZonedDateTime.now().minusDays(8), ZonedDateTime.now(), null));
     }
@@ -230,7 +229,7 @@ public class DashboardController {
             validateConstraintViolationBuilder.index(0);
 
         try {
-            Chart<?> parsed = YAML_PARSER.parse(chart, Chart.class);
+            Chart<?> parsed = YamlParser.parse(chart, Chart.class);
 
             modelValidator.validate(parsed);
         } catch (ConstraintViolationException e) {

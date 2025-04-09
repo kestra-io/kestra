@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class PurgeCurrentExecutionFilesTest {
@@ -35,6 +34,6 @@ class PurgeCurrentExecutionFilesTest {
             .build();
         var output = purge.run(runContext);
 
-        assertThat(output.getUris().size(), is(2));
+        assertThat(output.getUris().size()).isEqualTo(2);
     }
 }

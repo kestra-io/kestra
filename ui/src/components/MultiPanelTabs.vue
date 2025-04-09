@@ -300,9 +300,14 @@
             }
         }
 
-
-        // add the tab to the target panel in-place of the hovered potential tab
-        panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab);
+        if(targetPanelIndex === originalPanelIndex){
+            // if moving tabs on the same panel, add the tab to the target panel in-place of the hovered potential tab
+            const insertIndex = targetTabIndex < tabIndex ? targetTabIndex + 1 : targetTabIndex;
+            panels.value[targetPanelIndex].tabs.splice(insertIndex, 0, movedTab);
+        } else {
+            // add the tab to the target panel in-place of the hovered potential tab
+            panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab);
+        }
     }
 
     function destroyTab(panelIndex:number, tab: Tab){

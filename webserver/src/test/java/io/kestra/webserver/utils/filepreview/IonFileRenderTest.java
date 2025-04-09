@@ -7,8 +7,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import java.io.*;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class IonFileRenderTest {
     @ParameterizedTest
@@ -25,6 +24,6 @@ class IonFileRenderTest {
         final InputStream is = new DataInputStream(new FileInputStream(tempFile));
         IonFileRender render = new IonFileRender("ion", is, 100);
 
-        assertThat(render.truncated, is(truncated));
+        assertThat(render.truncated).isEqualTo(truncated);
     }
 }

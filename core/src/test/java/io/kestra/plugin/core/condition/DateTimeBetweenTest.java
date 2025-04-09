@@ -3,6 +3,7 @@ package io.kestra.plugin.core.condition;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -14,8 +15,7 @@ import java.time.ZonedDateTime;
 import java.util.stream.Stream;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class DateTimeBetweenTest {
@@ -41,12 +41,12 @@ class DateTimeBetweenTest {
 
         DateTimeBetween build = DateTimeBetween.builder()
             .date(date)
-            .before(before)
-            .after(after)
+            .before(Property.of(before))
+            .after(Property.of(after))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(result));
+        assertThat(test).isEqualTo(result);
     }
 }

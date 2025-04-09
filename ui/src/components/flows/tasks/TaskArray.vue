@@ -11,7 +11,7 @@
         </el-col>
         <el-col :span="20">
             <InputText
-                :model-value="YamUtils.stringify(element)"
+                :model-value="element"
                 @update:model-value="(v) => handleInput(v, index)"
                 :placeholder="$t('value')"
                 class="w-100"
@@ -35,7 +35,11 @@
     defineOptions({inheritAttrs: false});
 
     const emits = defineEmits(["update:modelValue"]);
-    const props = defineProps({modelValue: {type: Array, default: undefined}});
+    const props = withDefaults(defineProps<{
+        modelValue?: (string | number | boolean | undefined)[]
+    }>(), {
+        modelValue: undefined
+    });
 
     const items = ref(
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,

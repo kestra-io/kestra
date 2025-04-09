@@ -24,9 +24,11 @@
     import Navbar from "../layout/TopNavBar.vue";
     import {useI18n} from "vue-i18n";
     import {computed, ref} from "vue";
+    import useRouteContext from "../../mixins/useRouteContext.js";
 
     const addKvModalVisible = ref(false);
 
     const {t} = useI18n({useScope: "global"});
     const routeInfo = computed(() => ({title: t("kv.name")}));
+    useRouteContext(routeInfo);
 </script>

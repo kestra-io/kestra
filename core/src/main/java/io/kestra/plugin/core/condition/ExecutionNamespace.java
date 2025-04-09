@@ -3,6 +3,8 @@ package io.kestra.plugin.core.condition;
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -56,22 +58,19 @@ public class ExecutionNamespace extends Condition {
     @Schema(
         title = "String against which to match the execution namespace depending on the provided comparison."
     )
-    @PluginProperty
-    private String namespace;
+    private Property<String> namespace;
 
     @Schema(
         title = "Comparison to use when checking if namespace matches. If not provided, it will use `EQUALS` by default."
     )
-    @PluginProperty
-    private Comparison comparison;
+    private Property<Comparison> comparison;
 
     @Schema(
         title = "Whether to look at the flow namespace by prefix. Shortcut for `comparison: PREFIX`.",
         description = "Only used when `comparison` is not set"
     )
-    @PluginProperty
     @Builder.Default
-    private boolean prefix = false;
+    private Property<Boolean> prefix = Property.of(false);
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
@@ -79,8 +78,13 @@ public class ExecutionNamespace extends Condition {
             throw new IllegalConditionEvaluation("Invalid condition with null execution");
         }
 
-        return Optional.ofNullable(this.comparison).orElse(prefix ? Comparison.PREFIX : Comparison.EQUALS)
-            .test(conditionContext.getExecution().getNamespace(), this.namespace);
+        RunContext runContext = conditionContext.getRunContext();
+        var renderedPrefix = runContext.render(this.prefix).as(Boolean.class).orElseThrow();
+        var renderedNamespace = runContext.render(this.namespace).as(String.class).orElseThrow();
+
+        return runContext.render(this.comparison).as(Comparison.class)
+            .orElse(Boolean.TRUE.equals(renderedPrefix) ? Comparison.PREFIX : Comparison.EQUALS)
+            .test(conditionContext.getExecution().getNamespace(), renderedNamespace);
     }
 
     public enum Comparison {

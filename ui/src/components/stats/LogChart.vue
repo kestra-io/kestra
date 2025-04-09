@@ -20,7 +20,7 @@
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {Bar} from "vue-chartjs";
     import {useStore} from "vuex";
-    import Utils from "../../utils/utils.js";
+    import Utils from "../../utils/utils";
     import {
         defaultConfig,
         tooltip,

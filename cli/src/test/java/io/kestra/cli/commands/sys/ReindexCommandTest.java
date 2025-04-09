@@ -11,9 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ReindexCommandTest {
     @Test
@@ -36,7 +34,7 @@ class ReindexCommandTest {
                 directory.getPath(),
             };
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, updateArgs);
-            assertThat(out.toString(), containsString("3 flow(s)"));
+            assertThat(out.toString()).contains("3 flow(s)");
 
             // then we reindex them
             String[] reindexArgs = {
@@ -44,9 +42,9 @@ class ReindexCommandTest {
                "flow",
             };
             Integer call = PicocliRunner.call(ReindexCommand.class, ctx, reindexArgs);
-            assertThat(call, is(0));
+            assertThat(call).isEqualTo(0);
             // in local it reindex 3 flows and in CI 4 for an unknown reason
-            assertThat(out.toString(), containsString("Successfully reindex"));
+            assertThat(out.toString()).contains("Successfully reindex");
         }
     }
 }

@@ -20,8 +20,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
@@ -40,8 +39,8 @@ public class FlowConcurrencyCaseTest {
         Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-cancel", null, null, Duration.ofSeconds(30));
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "flow-concurrency-cancel");
 
-        assertThat(execution1.getState().isRunning(), is(true));
-        assertThat(execution2.getState().getCurrent(), is(State.Type.CANCELLED));
+        assertThat(execution1.getState().isRunning()).isEqualTo(true);
+        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
 
         CountDownLatch latch1 = new CountDownLatch(1);
 
@@ -63,8 +62,8 @@ public class FlowConcurrencyCaseTest {
         Execution execution1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "flow-concurrency-fail", null, null, Duration.ofSeconds(30));
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "flow-concurrency-fail");
 
-        assertThat(execution1.getState().isRunning(), is(true));
-        assertThat(execution2.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution1.getState().isRunning()).isEqualTo(true);
+        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         CountDownLatch latch1 = new CountDownLatch(1);
 
@@ -90,8 +89,8 @@ public class FlowConcurrencyCaseTest {
         Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
         executionQueue.emit(execution2);
 
-        assertThat(execution1.getState().isRunning(), is(true));
-        assertThat(execution2.getState().getCurrent(), is(State.Type.CREATED));
+        assertThat(execution1.getState().isRunning()).isEqualTo(true);
+        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CREATED);
 
         var executionResult1  = new AtomicReference<Execution>();
         var executionResult2  = new AtomicReference<Execution>();
@@ -124,11 +123,11 @@ public class FlowConcurrencyCaseTest {
         assertTrue(latch3.await(1, TimeUnit.MINUTES));
         receive.blockLast();
 
-        assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(executionResult2.get().getState().getHistories().getFirst().getState(), is(State.Type.CREATED));
-        assertThat(executionResult2.get().getState().getHistories().get(1).getState(), is(State.Type.QUEUED));
-        assertThat(executionResult2.get().getState().getHistories().get(2).getState(), is(State.Type.RUNNING));
+        assertThat(executionResult1.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionResult2.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionResult2.get().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
+        assertThat(executionResult2.get().getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);
+        assertThat(executionResult2.get().getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
     }
 
     public void flowConcurrencyQueuePause() throws TimeoutException, QueueException, InterruptedException {
@@ -139,8 +138,8 @@ public class FlowConcurrencyCaseTest {
         Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
         executionQueue.emit(execution2);
 
-        assertThat(execution1.getState().isRunning(), is(true));
-        assertThat(execution2.getState().getCurrent(), is(State.Type.CREATED));
+        assertThat(execution1.getState().isRunning()).isEqualTo(true);
+        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CREATED);
 
         var executionResult1  = new AtomicReference<Execution>();
         var executionResult2  = new AtomicReference<Execution>();
@@ -173,11 +172,11 @@ public class FlowConcurrencyCaseTest {
         assertTrue(latch3.await(1, TimeUnit.MINUTES));
         receive.blockLast();
 
-        assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(executionResult2.get().getState().getHistories().getFirst().getState(), is(State.Type.CREATED));
-        assertThat(executionResult2.get().getState().getHistories().get(1).getState(), is(State.Type.QUEUED));
-        assertThat(executionResult2.get().getState().getHistories().get(2).getState(), is(State.Type.RUNNING));
+        assertThat(executionResult1.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionResult2.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionResult2.get().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
+        assertThat(executionResult2.get().getState().getHistories().get(1).getState()).isEqualTo(State.Type.QUEUED);
+        assertThat(executionResult2.get().getState().getHistories().get(2).getState()).isEqualTo(State.Type.RUNNING);
     }
 
     public void flowConcurrencyCancelPause() throws TimeoutException, QueueException, InterruptedException {
@@ -188,8 +187,8 @@ public class FlowConcurrencyCaseTest {
         Execution execution2 = Execution.newExecution(flow, null, null, Optional.empty());
         executionQueue.emit(execution2);
 
-        assertThat(execution1.getState().isRunning(), is(true));
-        assertThat(execution2.getState().getCurrent(), is(State.Type.CREATED));
+        assertThat(execution1.getState().isRunning()).isEqualTo(true);
+        assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.CREATED);
 
         var executionResult1  = new AtomicReference<Execution>();
         var executionResult2  = new AtomicReference<Execution>();
@@ -217,9 +216,9 @@ public class FlowConcurrencyCaseTest {
         assertTrue(latch2.await(1, TimeUnit.MINUTES));
         receive.blockLast();
 
-        assertThat(executionResult1.get().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(executionResult2.get().getState().getCurrent(), is(State.Type.CANCELLED));
-        assertThat(executionResult2.get().getState().getHistories().getFirst().getState(), is(State.Type.CREATED));
-        assertThat(executionResult2.get().getState().getHistories().get(1).getState(), is(State.Type.CANCELLED));
+        assertThat(executionResult1.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(executionResult2.get().getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        assertThat(executionResult2.get().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
+        assertThat(executionResult2.get().getState().getHistories().get(1).getState()).isEqualTo(State.Type.CANCELLED);
     }
 }

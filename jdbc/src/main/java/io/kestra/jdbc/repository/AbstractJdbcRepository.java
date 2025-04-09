@@ -381,7 +381,7 @@ public abstract class AbstractJdbcRepository {
         };
     }
     protected Condition statesFilter(List<State.Type> state) {
-        return DSL.field(DSL.quotedName("state_current"))
+        return field("state_current")
             .in(state.stream().map(Enum::name).toList());
     }
 
@@ -390,8 +390,8 @@ public abstract class AbstractJdbcRepository {
         ChildFilter childFilter = (value instanceof String val)? ChildFilter.valueOf(val) : (ChildFilter) value;
 
         return switch (childFilter) {
-            case CHILD -> select.and(DSL.field(DSL.quotedName("trigger_execution_id")).isNotNull());
-            case MAIN -> select.and(DSL.field(DSL.quotedName("trigger_execution_id")).isNull());
+            case CHILD -> select.and(field("trigger_execution_id").isNotNull());
+            case MAIN -> select.and(field("trigger_execution_id").isNull());
         };
     }
 
@@ -423,12 +423,12 @@ public abstract class AbstractJdbcRepository {
         SelectConditionStep<T> select, OffsetDateTime dateTime, QueryFilter.Op operation,String fieldName
     ) {
         switch (operation) {
-            case LESS_THAN -> select = select.and(DSL.field(fieldName).lessThan(dateTime));
-            case LESS_THAN_OR_EQUAL_TO -> select = select.and(DSL.field(fieldName).lessOrEqual(dateTime));
-            case GREATER_THAN -> select = select.and(DSL.field(fieldName).greaterThan(dateTime));
-            case GREATER_THAN_OR_EQUAL_TO -> select = select.and(DSL.field(fieldName).greaterOrEqual(dateTime));
-            case EQUALS -> select = select.and(DSL.field(fieldName).eq(dateTime));
-            case NOT_EQUALS -> select = select.and(DSL.field(fieldName).ne(dateTime));
+            case LESS_THAN -> select = select.and(field(fieldName).lessThan(dateTime));
+            case LESS_THAN_OR_EQUAL_TO -> select = select.and(field(fieldName).lessOrEqual(dateTime));
+            case GREATER_THAN -> select = select.and(field(fieldName).greaterThan(dateTime));
+            case GREATER_THAN_OR_EQUAL_TO -> select = select.and(field(fieldName).greaterOrEqual(dateTime));
+            case EQUALS -> select = select.and(field(fieldName).eq(dateTime));
+            case NOT_EQUALS -> select = select.and(field(fieldName).ne(dateTime));
             default -> throw new UnsupportedOperationException("Unsupported operation for date condition: " + operation);
         }
         return select;

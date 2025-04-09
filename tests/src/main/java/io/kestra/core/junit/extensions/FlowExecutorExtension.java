@@ -56,8 +56,8 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         }
         LocalFlowRepositoryLoader repositoryLoader = context.getBean(LocalFlowRepositoryLoader.class);
         TestsUtils.loads(repositoryLoader, Objects.requireNonNull(url));
-        YamlParser yamlParser = context.getBean(YamlParser.class);
-        Flow flow = yamlParser.parse(Paths.get(url.toURI()).toFile(), Flow.class);
+
+        Flow flow = YamlParser.parse(Paths.get(url.toURI()).toFile(), Flow.class);
         RunnerUtils runnerUtils = context.getBean(RunnerUtils.class);
         return runnerUtils.runOne(null, flow.getNamespace(), flow.getId(), Duration.parse(executeFlow.timeout()));
     }
@@ -66,10 +66,10 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
     public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
         ExecuteFlow executeFlow = getExecuteFlow(extensionContext);
         FlowRepositoryInterface flowRepository = context.getBean(FlowRepositoryInterface.class);
-        YamlParser yamlParser = context.getBean(YamlParser.class);
+
         String path = executeFlow.value();
         URL resource = loadFile(path);
-        Flow loadedFlow = yamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
+        Flow loadedFlow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
         flowRepository.findAllForAllTenants().stream()
             .filter(flow -> Objects.equals(flow.getId(), loadedFlow.getId()))
             .forEach(flow -> flowRepository.delete(FlowWithSource.of(flow, "unused")));

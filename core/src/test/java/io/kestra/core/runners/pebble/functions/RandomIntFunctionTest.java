@@ -1,6 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -34,7 +34,7 @@ class RandomIntFunctionTest {
     String rendered =
         variableRenderer.render(
             "{{ randomInt(lower, upper) }}", Map.of("lower", 1L, "upper", 10L));
-    assertThat(rendered, Long.parseLong(rendered) >= 1L && Long.parseLong(rendered) <= 10L);
+      assertThat(Long.parseLong(rendered) >= 1L && Long.parseLong(rendered) <= 10L).as(rendered).isTrue();
   }
 
     @Test
@@ -58,7 +58,7 @@ class RandomIntFunctionTest {
     String rendered =
         variableRenderer.render(
             "{{ randomInt(lower, upper) }}", Map.of("lower", -10L, "upper", -1L));
-    assertThat(rendered, Long.parseLong(rendered) >= -10L && Long.parseLong(rendered) <= -1L);
+      assertThat(Long.parseLong(rendered) >= -10L && Long.parseLong(rendered) <= -1L).as(rendered).isTrue();
   }
 
     @Test
@@ -66,6 +66,6 @@ class RandomIntFunctionTest {
         String rendered =
             variableRenderer.render(
                 "{{ randomInt(lower, upper) }}", Map.of("lower", 10L, "upper", 10L));
-        assertThat(rendered, Long.parseLong(rendered) == 10);
+        assertThat(Long.parseLong(rendered) == 10).as(rendered).isTrue();
     }
 }

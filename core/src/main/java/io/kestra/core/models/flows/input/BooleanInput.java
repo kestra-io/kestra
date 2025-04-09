@@ -10,6 +10,7 @@ import jakarta.validation.ConstraintViolationException;
 @SuperBuilder
 @Getter
 @NoArgsConstructor
+@Deprecated
 public class BooleanInput extends Input<Boolean> {
     @Override
     public void validate(Boolean input) throws ConstraintViolationException {

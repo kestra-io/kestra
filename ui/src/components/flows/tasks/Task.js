@@ -56,8 +56,8 @@ export default {
                 return "complex";
             }
 
-            if (Object.prototype.hasOwnProperty.call(property, "oneOf")) {
-                return "one-of";
+            if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
+                return "any-of";
             }
 
             if (Object.prototype.hasOwnProperty.call(property, "additionalProperties")) {

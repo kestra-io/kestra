@@ -48,7 +48,7 @@
 
 <script>
     import {mapState} from "vuex";
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
     import RouteContext from "../../mixins/routeContext";
     import DataTableActions from "../../mixins/dataTableActions";
     import RestoreUrl from "../../mixins/restoreUrl";

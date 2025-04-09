@@ -15,8 +15,7 @@ import java.util.List;
 import java.util.Map;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -59,21 +58,21 @@ class PebbleVariableRendererTest {
 
         Map<String, Object> render = variableRenderer.render(in, vars);
 
-        assertThat(render.get("string"), is("string"));
-        assertThat(render.get("int"), is("1"));
-        assertThat(render.get("float"), is("1.123"));
-        assertThat(render.get("list"), is("[\"string\",1,1.123]"));
-        assertThat(render.get("bool"), is("true"));
-        assertThat(render.get("date"), is("2013-09-08T16:19+02:00"));
-        assertThat((String) render.get("map"), containsString("\"int\":1"));
-        assertThat((String) render.get("map"), containsString("\"int\":1"));
-        assertThat((String) render.get("map"), containsString("\"float\":1.123"));
-        assertThat((String) render.get("map"), containsString("\"string\":\"string\""));
-        assertThat((String) render.get("map"), startsWith("{"));
-        assertThat((String) render.get("map"), endsWith("}"));
-        assertThat((String) render.get("escape"), containsString("[\"string\",1,1.123] // {"));
-        assertThat((String) render.get("empty"), is(""));
-        assertThat((String) render.get("concat"), is("applepearbanana"));
+        assertThat(render.get("string")).isEqualTo("string");
+        assertThat(render.get("int")).isEqualTo("1");
+        assertThat(render.get("float")).isEqualTo("1.123");
+        assertThat(render.get("list")).isEqualTo("[\"string\",1,1.123]");
+        assertThat(render.get("bool")).isEqualTo("true");
+        assertThat(render.get("date")).isEqualTo("2013-09-08T16:19+02:00");
+        assertThat((String) render.get("map")).contains("\"int\":1");
+        assertThat((String) render.get("map")).contains("\"int\":1");
+        assertThat((String) render.get("map")).contains("\"float\":1.123");
+        assertThat((String) render.get("map")).contains("\"string\":\"string\"");
+        assertThat((String) render.get("map")).startsWith("{");
+        assertThat((String) render.get("map")).endsWith("}");
+        assertThat((String) render.get("escape")).contains("[\"string\",1,1.123] // {");
+        assertThat((String) render.get("empty")).isEqualTo("");
+        assertThat((String) render.get("concat")).isEqualTo("applepearbanana");
     }
 
     @Test
@@ -94,11 +93,11 @@ class PebbleVariableRendererTest {
 
         Map<String, Object> render = variableRenderer.render(in, vars);
 
-        assertThat((String)render.get("map"), containsString("\"a\":\"1\""));
-        assertThat((String)render.get("map"), containsString("\"b\":\"2\""));
-        assertThat(render.get("collection"), is("[\"1\",\"2\",\"3\"]"));
-        assertThat(render.get("array"), is("[\"1\",\"2\",\"3\"]"));
-        assertThat(render.get("inta"), is("[1,2,3]"));
+        assertThat((String) render.get("map")).contains("\"a\":\"1\"");
+        assertThat((String) render.get("map")).contains("\"b\":\"2\"");
+        assertThat(render.get("collection")).isEqualTo("[\"1\",\"2\",\"3\"]");
+        assertThat(render.get("array")).isEqualTo("[\"1\",\"2\",\"3\"]");
+        assertThat(render.get("inta")).isEqualTo("[1,2,3]");
     }
 
     @Test
@@ -118,7 +117,7 @@ class PebbleVariableRendererTest {
             Map.of()
         );
 
-        assertThat(render, containsString("content"));
+        assertThat(render).contains("content");
     }
 
     @Test
@@ -128,7 +127,7 @@ class PebbleVariableRendererTest {
             Map.of("var",  1.232654F)
         );
 
-        assertThat(render, containsString("1.23"));
+        assertThat(render).contains("1.23");
     }
 
     @SuppressWarnings("unchecked")
@@ -147,9 +146,9 @@ class PebbleVariableRendererTest {
 
         Map<String, Object> render = variableRenderer.render(in, vars);
 
-        assertThat(render.get("string"), is("top"));
-        assertThat((List<String>) render.get("list"), containsInAnyOrder("top", "awesome"));
-        assertThat(render.get("int"), is(1));
+        assertThat(render.get("string")).isEqualTo("top");
+        assertThat((List<String>) render.get("list")).containsExactlyInAnyOrder("top", "awesome");
+        assertThat(render.get("int")).isEqualTo(1);
     }
 
     @Test
@@ -171,36 +170,36 @@ class PebbleVariableRendererTest {
         );
 
         String render = variableRenderer.render("{{ third }}", vars);
-        assertThat(render, is("{{second}}"));
+        assertThat(render).isEqualTo("{{second}}");
         render = variableRenderer.render("{{ render(third, recursive=false) }}", vars);
-        assertThat(render, is("{{first}}"));
+        assertThat(render).isEqualTo("{{first}}");
         render = variableRenderer.render("{{ render(third) }}", vars);
-        assertThat(render, is("1"));
+        assertThat(render).isEqualTo("1");
 
         // even if recursive = false in the underneath variable, we don't disable recursiveness since it's too hacky and an edge case
         render = variableRenderer.render("{{ render(fourth) }}", vars);
-        assertThat(render, is("1"));
+        assertThat(render).isEqualTo("1");
 
         render = variableRenderer.render("{{ map }}", vars);
-        assertThat(render, is("{\"third\":\"{{third}}\"}"));
+        assertThat(render).isEqualTo("{\"third\":\"{{third}}\"}");
         render = variableRenderer.render("{{ render(map, recursive=false) }}", vars);
-        assertThat(render, is("{\"third\":\"{{second}}\"}"));
+        assertThat(render).isEqualTo("{\"third\":\"{{second}}\"}");
         render = variableRenderer.render("{{ render(map) }}", vars);
-        assertThat(render, is("{\"third\":\"1\"}"));
+        assertThat(render).isEqualTo("{\"third\":\"1\"}");
 
         render = variableRenderer.render("{{ list }}", vars);
-        assertThat(render, is("[\"{{third}}\"]"));
+        assertThat(render).isEqualTo("[\"{{third}}\"]");
         render = variableRenderer.render("{{ render(list, recursive=false) }}", vars);
-        assertThat(render, is("[\"{{second}}\"]"));
+        assertThat(render).isEqualTo("[\"{{second}}\"]");
         render = variableRenderer.render("{{ render(list) }}", vars);
-        assertThat(render, is("[\"1\"]"));
+        assertThat(render).isEqualTo("[\"1\"]");
 
         render = variableRenderer.render("{{ set }}", vars);
-        assertThat(render, is("[\"{{third}}\"]"));
+        assertThat(render).isEqualTo("[\"{{third}}\"]");
         render = variableRenderer.render("{{ render(set, recursive=false) }}", vars);
-        assertThat(render, is("[\"{{second}}\"]"));
+        assertThat(render).isEqualTo("[\"{{second}}\"]");
         render = variableRenderer.render("{{ render(set) }}", vars);
-        assertThat(render, is("[\"1\"]"));
+        assertThat(render).isEqualTo("[\"1\"]");
     }
 
     @Test
@@ -214,7 +213,7 @@ class PebbleVariableRendererTest {
             IllegalVariableEvaluationException.class,
             () -> variableRenderer.render("{{ render(first) }}", vars)
         );
-        assertThat(illegalVariableEvaluationException.getMessage(), containsString("Too many rendering attempts"));
+        assertThat(illegalVariableEvaluationException.getMessage()).contains("Too many rendering attempts");
     }
 
     @Test
@@ -224,16 +223,16 @@ class PebbleVariableRendererTest {
         );
 
         String render = variableRenderer.render("See some code {% raw %}{{ var }}{% endraw %}", vars);
-        assertThat(render, is("See some code {{ var }}"));
+        assertThat(render).isEqualTo("See some code {{ var }}");
 
         render = variableRenderer.render("See some code {%raw%}{{ var }}{%endraw%}", vars);
-        assertThat(render, is("See some code {{ var }}"));
+        assertThat(render).isEqualTo("See some code {{ var }}");
 
         render = variableRenderer.render("See some code {%-  raw%}{{ var }}{%endraw -%}", vars);
-        assertThat(render, is("See some code {{ var }}"));
+        assertThat(render).isEqualTo("See some code {{ var }}");
 
         render = variableRenderer.render("See some code {% raw %}{{ var }}{% endraw %} and some other code {% raw %}{{ var2 }}{% endraw %}", vars);
-        assertThat(render, is("See some code {{ var }} and some other code {{ var2 }}"));
+        assertThat(render).isEqualTo("See some code {{ var }} and some other code {{ var2 }}");
     }
 
     @Test
@@ -245,7 +244,7 @@ class PebbleVariableRendererTest {
 
         String render = variableRenderer.render("{{ block[inner].child }}", vars);
 
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
     }
 
     @Test
@@ -257,11 +256,11 @@ class PebbleVariableRendererTest {
 
         String render = variableRenderer.render("{{ inner.bla is not defined ? block.test.child : null }}", vars);
 
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         render = variableRenderer.render("{{ block.test.child is defined ? block.test.child : inner.bla }}", vars);
 
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ missing is defined ? missing : missing2 }}", vars);
@@ -276,19 +275,19 @@ class PebbleVariableRendererTest {
         );
 
         String render = variableRenderer.render("{{ block.test.child is defined ? block.test.child : null }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         render = variableRenderer.render("{{ block[inner].child is defined ? block[inner].child : null }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         render = variableRenderer.render("{{ block[missing].child is defined ? null : block[inner].child }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         render = variableRenderer.render("{{ block[missing].child is not defined ? (block[missing2].child is not defined ? block[inner].child : null) : null }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         render = variableRenderer.render("{{ missing is defined ? null : block.test.child }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ missing is defined ? missing : missing2 }}", vars);
@@ -303,13 +302,13 @@ class PebbleVariableRendererTest {
         );
 
         String render = variableRenderer.render("{{ block['test'] }}", vars);
-        assertThat(render, is("{\"child\":\"awesome\"}"));
+        assertThat(render).isEqualTo("{\"child\":\"awesome\"}");
 
         render = variableRenderer.render("{{ block['test']['child'] }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         render = variableRenderer.render("{{ block[inner]['child'] }}", vars);
-        assertThat(render, is("awesome"));
+        assertThat(render).isEqualTo("awesome");
 
         assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ get missing }}", vars);
@@ -324,9 +323,6 @@ class PebbleVariableRendererTest {
         Map<String, Object> map = Map.of(
             "numbers", List.of(1, 2, 3)
         );
-        assertThat(
-            variableRenderer.render(map, Map.of()),
-            is(map)
-        );
+        assertThat(variableRenderer.render(map, Map.of())).isEqualTo(map);
     }
 }

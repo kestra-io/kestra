@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class KestraContextTest {
@@ -23,7 +22,7 @@ class KestraContextTest {
         context.injectWorkerConfigs(16, null);
 
         // Then
-        assertThat(KestraContext.getContext().getWorkerMaxNumThreads(), is(Optional.of(16)));
+        assertThat(KestraContext.getContext().getWorkerMaxNumThreads()).isEqualTo(Optional.of(16));
     }
 
     @Test
@@ -32,6 +31,6 @@ class KestraContextTest {
         context.injectWorkerConfigs(null, "my-key");
 
         // Then
-        assertThat(KestraContext.getContext().getWorkerGroupKey(), is(Optional.of("my-key")));
+        assertThat(KestraContext.getContext().getWorkerGroupKey()).isEqualTo(Optional.of("my-key"));
     }
 }

@@ -12,8 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class StateNamespaceTest {
@@ -39,7 +38,7 @@ class StateNamespaceTest {
             )))
             .build();
         Set.Output setOutput = set.run(runContextFlow1(set));
-        assertThat(setOutput.getCount(), is(1));
+        assertThat(setOutput.getCount()).isEqualTo(1);
 
         Get get = Get.builder()
             .id(IdUtils.create())
@@ -47,14 +46,14 @@ class StateNamespaceTest {
             .namespace(Property.of(true))
             .build();
         Get.Output getOutput = get.run(runContextFlow2(get));
-        assertThat(getOutput.getCount(), is(1));
-        assertThat(getOutput.getData().get("john"), is("doe"));
+        assertThat(getOutput.getCount()).isEqualTo(1);
+        assertThat(getOutput.getData().get("john")).isEqualTo("doe");
 
         get = Get.builder()
             .id(IdUtils.create())
             .type(Get.class.getSimpleName())
             .build();
         getOutput = get.run(runContextFlow2(get));
-        assertThat(getOutput.getCount(), is(0));
+        assertThat(getOutput.getCount()).isEqualTo(0);
     }
 }

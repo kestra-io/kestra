@@ -1,4 +1,4 @@
-import Utils from "../../../../utils/utils.js";
+import Utils from "../../../../utils/utils";
 import {cssVariable} from "@kestra-io/ui-libs";
 import {getConsistentHEXColor} from "../../../../utils/charts.js";
 

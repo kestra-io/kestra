@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts">
-    import {defineComponent} from "vue";
+    import {defineComponent, h, render} from "vue";
     import {mapMutations, mapState} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
@@ -21,10 +21,11 @@
     import {configureMonacoYaml} from "monaco-yaml";
     import {yamlSchemas} from "override/utils/yamlSchemas";
     import Utils from "../../utils/utils";
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import {TaskIcon, YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {QUOTE, YamlNoAutoCompletion} from "../../services/autoCompletionProvider.js"
     import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider.js";
     import RegexProvider from "../../utils/regex";
+    import uniqBy from "lodash/uniqBy";
     import IModel = editor.IModel;
     import CompletionList = languages.CompletionList;
     import ProviderResult = languages.ProviderResult;
@@ -76,18 +77,20 @@
                 flowsInputsCache: {},
                 autoCompletionProviders: [] as monaco.IDisposable[],
                 monaco: null as typeof monaco | null,
-                suggestWidgetObserver: undefined as MutationObserver | undefined
+                suggestWidgetResizeObserver: undefined as MutationObserver | undefined,
+                suggestWidgetIconsObserver: undefined as MutationObserver | undefined,
+                suggestWidget: undefined as HTMLElement | undefined,
             }
         },
         computed: {
             ...mapState("namespace", ["datatypeNamespaces"]),
             ...mapState("core", ["monacoYamlConfigured"]),
             ...mapState("editor", ["current"]),
+            ...mapState("plugin", ["icons"]),
             prefix() {
                 return this.schemaType ? `${this.schemaType}-` : "";
             },
         },
-
         props: {
             path: {
                 type: String,
@@ -176,6 +179,77 @@
                 if (this.$options.editor) {
                     monaco.editor.setTheme(newVal);
                 }
+            },
+            suggestWidget(newVal: HTMLElement | undefined) {
+                const replaceRowsIcons = (nodes: HTMLElement[]) => {
+                    nodes = uniqBy(nodes, node => node.id);
+                    for (let node of nodes) {
+                        const maybeTaskName = node?.getAttribute("aria-label");
+                        if (!maybeTaskName || node.getAttribute("data-index") === null) {
+                            continue;
+                        }
+
+                        const vsCodeIcon = node.querySelector(".suggest-icon") as HTMLElement;
+                        const taskIcon = node.querySelector(".wrapper:has(.icon)") as HTMLElement | null;
+
+                        if (maybeTaskName.includes(".")) {
+                            if (this.icons[maybeTaskName] !== undefined) {
+                                vsCodeIcon.style.display = "none";
+
+                                const tempContainer = document.createElement("div");
+                                render(h(TaskIcon, {
+                                    cls: maybeTaskName,
+                                    class: "w-auto h-auto me-1",
+                                    "only-icon": true,
+                                    icons: this.icons
+                                }), tempContainer);
+
+                                if (taskIcon !== null) {
+                                    taskIcon.replaceWith(tempContainer.firstElementChild!);
+                                } else {
+                                    vsCodeIcon.after(tempContainer.firstElementChild!);
+                                }
+                                tempContainer.remove();
+                            }
+                        } else {
+                            vsCodeIcon.style.display = "revert";
+                            taskIcon?.remove();
+                        }
+                    }
+                }
+
+                if (newVal !== undefined) {
+                    if (newVal.querySelector(".monaco-list-row") !== null) {
+                        replaceRowsIcons([...newVal.getElementsByClassName("monaco-list-row")] as HTMLElement[]);
+                    }
+
+                    this.suggestWidgetIconsObserver?.disconnect();
+                    this.suggestWidgetIconsObserver = undefined;
+
+                    this.suggestWidgetIconsObserver = new MutationObserver(mutations => {
+                        replaceRowsIcons(
+                            mutations.flatMap(({addedNodes}) => {
+                                const nodes = [...addedNodes] as (Node | HTMLElement)[];
+                                const maybeRows: HTMLElement[] = nodes.filter(n => (n as HTMLElement).classList?.contains("monaco-list-row")) as HTMLElement[];
+
+                                for(let node of nodes) {
+                                    let maybeRow: HTMLElement | null = null;
+                                    if (node instanceof Text) {
+                                        maybeRow = node.parentElement?.closest(".monaco-list-row") as HTMLElement | null;
+                                    }
+
+                                    if (maybeRow !== null) {
+                                        return [...maybeRows, maybeRow];
+                                    }
+                                }
+
+                                return maybeRows;
+                            })
+                        );
+                    })
+
+                    this.suggestWidgetIconsObserver.observe(newVal, {childList: true, subtree: true})
+                }
             }
         },
         mounted: async function () {
@@ -222,7 +296,8 @@
 
                             if (suggestion.label.includes(".")) {
                                 const dotSplit = suggestion.label.split(/\.(?=\w)/);
-                                suggestion.filterText = [dotSplit.pop(), ...dotSplit].join(".");
+                                const taskName = dotSplit.pop();
+                                suggestion.filterText = [taskName, ...dotSplit, taskName].join(".");
                             }
                         });
 
@@ -247,6 +322,17 @@
         },
         methods: {
             ...mapMutations("editor", ["setTabDirty"]),
+            disposeObservers() {
+                if (this.suggestWidgetResizeObserver !== undefined) {
+                    this.suggestWidgetResizeObserver!.disconnect();
+                    this.suggestWidgetResizeObserver = undefined;
+                }
+                if (this.suggestWidgetIconsObserver !== undefined) {
+                    this.suggestWidgetIconsObserver!.disconnect();
+                    this.suggestWidgetIconsObserver = undefined;
+                }
+                this.suggestWidget = undefined;
+            },
             async addKestraAutoCompletions() {
                 const NO_SUGGESTIONS = {suggestions: []};
 
@@ -440,17 +526,17 @@
              *  Once the resize has been done, the observer is disconnected and put back to undefined so that new instances of Monaco repeats the process to target the proper DOM element.
              */
             observeAndResizeSuggestWidget() {
-                if (this.suggestWidgetObserver !== undefined) {
+                if (this.suggestWidgetResizeObserver !== undefined) {
                     return;
                 }
 
-                this.suggestWidgetObserver = new MutationObserver(([{
+                this.suggestWidgetResizeObserver = new MutationObserver(([{
                     target,
                     addedNodes
                 }]) => {
                     const simulateResizeOnSashAndDisconnect = (resizer: HTMLElement) => {
-                        this.suggestWidgetObserver?.disconnect();
-                        this.suggestWidgetObserver = undefined;
+                        this.suggestWidgetResizeObserver?.disconnect();
+                        this.suggestWidgetResizeObserver = undefined;
 
                         const resizerInitialCoordinates = {
                             x: resizer.getBoundingClientRect().left,
@@ -505,19 +591,19 @@
 
                     const maybeSuggestWidgetHtmlElement = addedNodes?.[0] as HTMLElement;
                     if (maybeSuggestWidgetHtmlElement?.classList.contains("suggest-widget")) {
-                        const resizer = ([...maybeSuggestWidgetHtmlElement.querySelectorAll(".monaco-sash.vertical")] as HTMLElement[])
-                            .sort((a, b) => parseInt(b.style.left) - parseInt(a.style.left))[0];
+                        this.suggestWidget = maybeSuggestWidgetHtmlElement;
+                        const resizer = maybeSuggestWidgetHtmlElement.querySelector(".monaco-sash.vertical") as HTMLElement;
 
                         if (resizer.classList.contains("disabled")) {
-                            this.suggestWidgetObserver!.disconnect();
-                            this.suggestWidgetObserver?.observe(resizer, {attributeFilter: ["class"]})
+                            this.suggestWidgetResizeObserver!.disconnect();
+                            this.suggestWidgetResizeObserver?.observe(resizer, {attributeFilter: ["class"]})
                         } else {
                             simulateResizeOnSashAndDisconnect(resizer);
                         }
                     }
                 });
 
-                this.suggestWidgetObserver.observe(this.$el.querySelector(".overflowingContentWidgets"), {childList: true})
+                this.suggestWidgetResizeObserver.observe(this.$el.querySelector(".overflowingContentWidgets"), {childList: true})
             },
             initMonaco: async function () {
                 let self = this;
@@ -640,7 +726,7 @@
                 this.$options.editor.focus();
             },
             destroy: function () {
-                this.suggestWidgetObserver?.disconnect();
+                this.disposeObservers();
                 this.autoCompletionProviders.forEach(provider => provider.dispose());
                 this.$options.editor?.getModel()?.dispose?.();
                 this.$options.editor?.dispose?.();

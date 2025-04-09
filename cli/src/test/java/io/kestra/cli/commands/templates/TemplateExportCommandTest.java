@@ -15,9 +15,7 @@ import java.net.URL;
 import java.util.Map;
 import java.util.zip.ZipFile;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.StringContains.containsString;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class TemplateExportCommandTest {
     @Test
@@ -42,7 +40,7 @@ class TemplateExportCommandTest {
 
             };
             PicocliRunner.call(TemplateNamespaceUpdateCommand.class, ctx, args);
-            assertThat(out.toString(), containsString("3 template(s)"));
+            assertThat(out.toString()).contains("3 template(s)");
 
             // then we export them
             String[] exportArgs = {
@@ -56,9 +54,9 @@ class TemplateExportCommandTest {
             };
             PicocliRunner.call(TemplateExportCommand.class, ctx, exportArgs);
             File file = new File("/tmp/templates.zip");
-            assertThat(file.exists(), is(true));
+            assertThat(file.exists()).isEqualTo(true);
             ZipFile zipFile = new ZipFile(file);
-            assertThat(zipFile.stream().count(), is(3L));
+            assertThat(zipFile.stream().count()).isEqualTo(3L);
 
             file.delete();
         }

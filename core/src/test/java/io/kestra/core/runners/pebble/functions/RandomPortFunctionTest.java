@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class RandomPortFunctionTest {
@@ -18,6 +17,6 @@ class RandomPortFunctionTest {
     @Test
     void checkIsDefined() throws IllegalVariableEvaluationException {
         String rendered = variableRenderer.render("{{ randomPort() }}", Collections.emptyMap());
-        assertThat(Integer.parseInt(rendered), greaterThanOrEqualTo(0));
+        assertThat(Integer.parseInt(rendered)).isGreaterThanOrEqualTo(0);
     }
 }

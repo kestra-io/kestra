@@ -60,8 +60,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.apache.commons.lang3.ArrayUtils.toPrimitive;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -133,14 +133,14 @@ class HttpClientTest {
             );
 
 
-            assertThat(response.getStatus().getCode(), is(200));
-            assertThat(response.getBody(), is("pong"));
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody()).isEqualTo("pong");
 
             List<LogEntry> logEntries = TestsUtils.awaitLogs(logs, 6);
 
-            assertThat(logEntries.stream().filter(logEntry -> logEntry.getMessage().startsWith("request")).count(), is(3L));
-            assertThat(logEntries.stream().filter(logEntry -> logEntry.getMessage().contains("X-Unit: Test")).count(), is(1L));
-            assertThat(logEntries.stream().filter(logEntry -> logEntry.getMessage().startsWith("response")).count(), is(3L));
+            assertThat(logEntries.stream().filter(logEntry -> logEntry.getMessage().startsWith("request")).count()).isEqualTo(3L);
+            assertThat(logEntries.stream().filter(logEntry -> logEntry.getMessage().contains("X-Unit: Test")).count()).isEqualTo(1L);
+            assertThat(logEntries.stream().filter(logEntry -> logEntry.getMessage().startsWith("response")).count()).isEqualTo(3L);
         }
     }
 
@@ -152,8 +152,8 @@ class HttpClientTest {
                 Byte[].class
             );
 
-            assertThat(response.getStatus().getCode(), is(200));
-            assertThat(response.getBody(), is("pong".getBytes(StandardCharsets.UTF_8)));
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(toPrimitive(response.getBody())).isEqualTo("pong".getBytes(StandardCharsets.UTF_8));
         }
     }
 
@@ -165,8 +165,8 @@ class HttpClientTest {
                 String.class
             );
 
-            assertThat(response.getStatus().getCode(), is(204));
-            assertThat(response.getBody(), is(nullValue()));
+            assertThat(response.getStatus().getCode()).isEqualTo(204);
+            assertThat(response.getBody()).isNull();
         }
     }
 
@@ -177,9 +177,9 @@ class HttpClientTest {
                 HttpRequest.of(URI.create(embeddedServerUri + "/http/json"))
             );
 
-            assertThat(response.getStatus().getCode(), is(200));
-            assertThat(response.getBody().get("ping"), is("pong"));
-            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow(), is(MediaType.APPLICATION_JSON));
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody().get("ping")).isEqualTo("pong");
+            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow()).isEqualTo(MediaType.APPLICATION_JSON);
         }
     }
 
@@ -190,9 +190,9 @@ class HttpClientTest {
                 HttpRequest.of(URI.create(embeddedServerUri + "/http/json?array=true"))
             );
 
-            assertThat(response.getStatus().getCode(), is(200));
-            assertThat(response.getBody(), containsInAnyOrder(1, 2, 3));
-            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow(), is(MediaType.APPLICATION_JSON));
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody()).containsExactlyInAnyOrder(1, 2, 3);
+            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow()).isEqualTo(MediaType.APPLICATION_JSON);
         }
     }
 
@@ -204,9 +204,9 @@ class HttpClientTest {
                 String.class
             );
 
-            assertThat(response.getStatus().getCode(), is(200));
-            assertThat(response.getBody(), is("{\"ping\":\"pong\"}"));
-            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow(), is(MediaType.APPLICATION_JSON));
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody()).isEqualTo("{\"ping\":\"pong\"}");
+            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow()).isEqualTo(MediaType.APPLICATION_JSON);
         }
     }
 
@@ -237,9 +237,9 @@ class HttpClientTest {
                 HttpRequest.of(URI.create(embeddedServerUri + "/http/json-post"), "POST", requestBody)
             );
 
-            assertThat(response.getStatus().getCode(), is(200));
-            assertThat(response.getBody().get("ping"), is(UUID));
-            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow(), is(MediaType.APPLICATION_JSON));
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody().get("ping")).isEqualTo(UUID);
+            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow()).isEqualTo(MediaType.APPLICATION_JSON);
         }
     }
 
@@ -256,9 +256,9 @@ class HttpClientTest {
                 CustomObject.class
             );
 
-            assertThat(response.getStatus().getCode(), is(200));
-            assertThat(response.getBody().id, is(test.id));
-            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow(), is(MediaType.APPLICATION_JSON));
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody().id).isEqualTo(test.id);
+            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow()).isEqualTo(MediaType.APPLICATION_JSON);
         }
     }
 
@@ -281,13 +281,13 @@ class HttpClientTest {
                 HttpRequest.of(URI.create(embeddedServerUri + "/http/multipart"), "POST", HttpRequest.MultipartRequestBody.builder().content(multipart).build())
             );
 
-            assertThat(response.getStatus().getCode(), is(200));
-            assertThat(response.getBody().get("ping"), is("pong"));
-            assertThat(response.getBody().get("int"), is("1"));
-            assertThat((String) response.getBody().get("file"), containsString("logback"));
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody().get("ping")).isEqualTo("pong");
+            assertThat(response.getBody().get("int")).isEqualTo("1");
+            assertThat((String) response.getBody().get("file")).contains("logback");
             // @FIXME: Request seems to be correct, but not returned by micronaut
             // assertThat((String) response.getBody().get("inputStream"), containsString("logback"));
-            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow(), is(MediaType.APPLICATION_JSON));
+            assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow()).isEqualTo(MediaType.APPLICATION_JSON);
         }
     }
 
@@ -300,8 +300,8 @@ class HttpClientTest {
                 client.request(HttpRequest.of(uri));
             });
 
-            assertThat(e.getRequest().getUri(), is(uri));
-            assertThat(e.getMessage(), containsString("Connection refused"));
+            assertThat(e.getRequest().getUri()).isEqualTo(uri);
+            assertThat(e.getMessage()).contains("Connection refused");
         }
     }
 
@@ -310,7 +310,7 @@ class HttpClientTest {
         try (HttpClient client = client()) {
             HttpResponse<Map<String, String>> response = client.request(HttpRequest.of(URI.create(embeddedServerUri + "/http/error?status=305")));
 
-            assertThat(response.getStatus().getCode(), is(305));
+            assertThat(response.getStatus().getCode()).isEqualTo(305);
         }
     }
 
@@ -323,9 +323,9 @@ class HttpClientTest {
                 client.request(HttpRequest.of(uri));
             });
 
-            assertThat(Objects.requireNonNull(e.getResponse()).getStatus().getCode(), is(400));
-            assertThat(e.getMessage(), containsString("Required QueryValue [status]"));
-            assertThat(new String((byte[]) e.getResponse().getBody()), containsString("Required QueryValue [status]"));
+            assertThat(Objects.requireNonNull(e.getResponse()).getStatus().getCode()).isEqualTo(400);
+            assertThat(e.getMessage()).contains("Required QueryValue [status]");
+            assertThat(new String((byte[]) e.getResponse().getBody())).contains("Required QueryValue [status]");
         }
     }
 
@@ -338,7 +338,7 @@ class HttpClientTest {
                 client.request(HttpRequest.of(uri));
             });
 
-            assertThat(Objects.requireNonNull(e.getResponse()).getStatus().getCode(), is(404));
+            assertThat(Objects.requireNonNull(e.getResponse()).getStatus().getCode()).isEqualTo(404);
         }
     }
 
@@ -347,7 +347,7 @@ class HttpClientTest {
         try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowFailed(Property.of(true)).build()))) {
             HttpResponse<Map<String, String>> response = client.request(HttpRequest.of(URI.create(embeddedServerUri + "/http/error?status=404")));
 
-            assertThat(response.getStatus().getCode(), is(404));
+            assertThat(response.getStatus().getCode()).isEqualTo(404);
         }
     }
 
@@ -358,7 +358,7 @@ class HttpClientTest {
 
             HttpResponse<Map<String, String>> response = client.request(HttpRequest.builder().uri(uri).method("POST").body(HttpRequest.StringRequestBody.builder().content("OK").build()).build());
 
-            assertThat(response.getStatus().getCode(), is(404));
+            assertThat(response.getStatus().getCode()).isEqualTo(404);
         }
     }
 
@@ -372,8 +372,8 @@ class HttpClientTest {
                 String.class
             );
 
-            assertThat(response.getStatus().getCode(), is(200));
-            assertThat(response.getBody(), is("application/vnd.campaignsexport.v1+json"));
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody()).isEqualTo("application/vnd.campaignsexport.v1+json");
         }
     }
 
@@ -395,8 +395,8 @@ class HttpClientTest {
                 String.class
             );
 
-            assertThat(response.getStatus().getCode(), is(200));
-            assertThat(response.getBody(), containsString("<html"));
+            assertThat(response.getStatus().getCode()).isEqualTo(200);
+            assertThat(response.getBody()).contains("<html");
         }
     }
 

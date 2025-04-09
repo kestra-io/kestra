@@ -1,11 +1,16 @@
 package io.kestra.core.repositories;
 
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowInterface;
+import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.services.PluginDefaultService;
+import io.kestra.core.utils.Rethrow;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 
@@ -15,22 +20,22 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.Charset;
-import java.nio.file.*;
+import java.nio.file.FileSystem;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-
-import jakarta.validation.ConstraintViolationException;
+import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Singleton
 @Slf4j
 public class LocalFlowRepositoryLoader {
-    @Inject
-    private YamlParser yamlParser;
 
     @Inject
     private FlowRepositoryInterface flowRepository;
@@ -68,47 +73,32 @@ public class LocalFlowRepositoryLoader {
     }
 
     public void load(File basePath) throws IOException {
-        Map<String, Flow> flowByUidInRepository = flowRepository.findAllForAllTenants().stream()
-            .collect(Collectors.toMap(Flow::uidWithoutRevision, Function.identity()));
-        List<Path> list = Files.walk(basePath.toPath())
-            .filter(YamlParser::isValidExtension)
-            .toList();
+        Map<String, FlowInterface> flowByUidInRepository = flowRepository.findAllForAllTenants().stream()
+            .collect(Collectors.toMap(FlowId::uidWithoutRevision, Function.identity()));
 
-        for (Path file : list) {
-            try {
-                String flowSource = Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset());
-                Flow parse = yamlParser.parse(file.toFile(), Flow.class);
-                modelValidator.validate(parse);
+        try (Stream<Path> pathStream = Files.walk(basePath.toPath())) {
+            pathStream.filter(YamlParser::isValidExtension)
+                .forEach(Rethrow.throwConsumer(file -> {
+                    try {
+                        String source = Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset());
+                        GenericFlow parsed = GenericFlow.fromYaml(null, source);
 
-                Flow inRepository = flowByUidInRepository.get(parse.uidWithoutRevision());
+                        FlowWithSource flowWithSource = pluginDefaultService.injectAllDefaults(parsed, false);
+                        modelValidator.validate(flowWithSource);
 
-                if (inRepository == null) {
-                    this.createFlow(flowSource, parse);
-                } else {
-                    this.udpateFlow(flowSource, parse, inRepository);
-                }
-            } catch (ConstraintViolationException e) {
-                log.warn("Unable to create flow {}", file, e);
-            }
+                        FlowInterface existing = flowByUidInRepository.get(flowWithSource.uidWithoutRevision());
+
+                        if (existing == null) {
+                            flowRepository.create(parsed);
+                            log.trace("Created flow {}.{}", parsed.getNamespace(), parsed.getId());
+                        } else {
+                            flowRepository.update(parsed, existing);
+                            log.trace("Updated flow {}.{}", parsed.getNamespace(), parsed.getId());
+                        }
+                    } catch (ConstraintViolationException e) {
+                        log.warn("Unable to create flow {}", file, e);
+                    }
+                }));
         }
-    }
-
-    private void createFlow(String flowSource, Flow parse) {
-        flowRepository.create(
-            parse,
-            flowSource,
-            parse
-        );
-        log.trace("Created flow {}.{}", parse.getNamespace(), parse.getId());
-    }
-
-    private void udpateFlow(String flowSource, Flow parse, Flow previous) {
-        flowRepository.update(
-            parse,
-            previous,
-            flowSource,
-            parse
-        );
-        log.trace("Updated flow {}.{}", parse.getNamespace(), parse.getId());
     }
 }

@@ -5,6 +5,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.SecretInput;
@@ -73,7 +74,7 @@ public final class RunVariables {
      * @param flow The flow from which to create variables.
      * @return a new immutable {@link Map}.
      */
-    static Map<String, Object> of(final Flow flow) {
+    static Map<String, Object> of(final FlowInterface flow) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
         builder.put("id", flow.getId())
                .put("namespace", flow.getNamespace());
@@ -105,7 +106,7 @@ public final class RunVariables {
      */
     public interface Builder {
 
-        Builder withFlow(Flow flow);
+        Builder withFlow(FlowInterface flow);
 
         Builder withInputs(Map<String, Object> inputs);
 
@@ -147,7 +148,7 @@ public final class RunVariables {
     @With
     public static class DefaultBuilder implements RunVariables.Builder {
 
-        protected Flow flow;
+        protected FlowInterface flow;
         protected Task task;
         protected Execution execution;
         protected TaskRun taskRun;

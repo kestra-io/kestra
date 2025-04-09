@@ -14,8 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class DeleteTest {
@@ -50,7 +49,7 @@ class DeleteTest {
         Delete.Output run = delete.run(runContext);
 
         // Then
-        assertThat(run.isDeleted(), is(true));
+        assertThat(run.isDeleted()).isEqualTo(true);
     }
 
     @Test
@@ -75,10 +74,10 @@ class DeleteTest {
         // When
         Delete.Output run = delete.run(runContext);
 
-        assertThat(run.isDeleted(), is(false));
+        assertThat(run.isDeleted()).isEqualTo(false);
 
         Delete finalDelete = delete.toBuilder().errorOnMissing(Property.of(true)).build();
         NoSuchElementException noSuchElementException = Assertions.assertThrows(NoSuchElementException.class, () -> finalDelete.run(runContext));
-        assertThat(noSuchElementException.getMessage(), is("No value found for key 'my-key' in namespace '" + namespaceId + "' and `errorOnMissing` is set to true"));
+        assertThat(noSuchElementException.getMessage()).isEqualTo("No value found for key 'my-key' in namespace '" + namespaceId + "' and `errorOnMissing` is set to true");
     }
 }

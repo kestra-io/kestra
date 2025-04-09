@@ -17,8 +17,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class PluginDocCommandTest {
 
@@ -44,16 +43,16 @@ class PluginDocCommandTest {
 
             List<Path> files = Files.list(docPath).toList();
 
-            assertThat(files.size(), is(1));
-            assertThat(files.getFirst().getFileName().toString(), is("plugin-template-test"));
+            assertThat(files.size()).isEqualTo(1);
+            assertThat(files.getFirst().getFileName().toString()).isEqualTo("plugin-template-test");
             var directory = files.getFirst().toFile();
-            assertThat(directory.isDirectory(), is(true));
-            assertThat(directory.listFiles().length, is(3));
+            assertThat(directory.isDirectory()).isEqualTo(true);
+            assertThat(directory.listFiles().length).isEqualTo(3);
 
             var readme = directory.toPath().resolve("index.md");
             var readmeContent = new String(Files.readAllBytes(readme));
 
-            assertThat(readmeContent, containsString("""
+            assertThat(readmeContent).contains("""
                 ---
                 title: Template test
                 description: "Plugin template for Kestra"
@@ -61,18 +60,17 @@ class PluginDocCommandTest {
 
                 ---
                 # Template test
-                """));
+                """);
 
-            assertThat(readmeContent, containsString("""
+            assertThat(readmeContent).contains("""
                 Plugin template for Kestra
 
                 This is a more complex description of the plugin.
 
                 This is in markdown and will be inline inside the plugin page.
-                """));
+                """);
 
-            assertThat(readmeContent, containsString(
-                """
+            assertThat(readmeContent).contains("""
                     /> Subgroup title
 
                     Subgroup description
@@ -89,20 +87,20 @@ class PluginDocCommandTest {
                        \s
                     * [Reporting](./guides/reporting.md)
                        \s
-                    """));
+                    """);
 
             // check @PluginProperty from an interface
             var task = directory.toPath().resolve("tasks/io.kestra.plugin.templates.ExampleTask.md");
             String taskDoc = new String(Files.readAllBytes(task));
-            assertThat(taskDoc, containsString("""
+            assertThat(taskDoc).contains("""
                 ### `example`
                 * **Type:** ==string==
                 * **Dynamic:** ✔️
                 * **Required:** ❌
 
                 **Example interface**
-                """));
-            assertThat(taskDoc, containsString("""
+                """);
+            assertThat(taskDoc).contains("""
                 ### `from`
                 * **Type:**
                   * ==string==
@@ -110,12 +108,12 @@ class PluginDocCommandTest {
                   * [==Example==](#io.kestra.core.models.annotations.example)
                 * **Dynamic:** ✔️
                 * **Required:** ✔️
-                """));
+                """);
 
             var authenticationGuide = directory.toPath().resolve("guides/authentication.md");
-            assertThat(new String(Files.readAllBytes(authenticationGuide)), containsString("This is how to authenticate for this plugin:"));
+            assertThat(new String(Files.readAllBytes(authenticationGuide))).contains("This is how to authenticate for this plugin:");
             var reportingGuide = directory.toPath().resolve("guides/reporting.md");
-            assertThat(new String(Files.readAllBytes(reportingGuide)), containsString("This is the reporting of the plugin:"));
+            assertThat(new String(Files.readAllBytes(reportingGuide))).contains("This is the reporting of the plugin:");
         }
     }
 }

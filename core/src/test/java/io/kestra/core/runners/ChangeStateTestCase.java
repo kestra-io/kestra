@@ -17,8 +17,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
 public class ChangeStateTestCase {
@@ -36,9 +35,9 @@ public class ChangeStateTestCase {
     private RunnerUtils runnerUtils;
 
     public void changeStateShouldEndsInSuccess(Execution execution) throws Exception {
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // await for the last execution
         CountDownLatch latch = new CountDownLatch(1);
@@ -55,11 +54,11 @@ public class ChangeStateTestCase {
         Execution markedAs = executionService.markAs(execution, flow, execution.getTaskRunList().getFirst().getId(), State.Type.SUCCESS);
         executionQueue.emit(markedAs);
 
-        assertThat(latch.await(10, TimeUnit.SECONDS), is(true));
+        assertThat(latch.await(10, TimeUnit.SECONDS)).isEqualTo(true);
         receivedExecutions.blockLast();
-        assertThat(lastExecution.get().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(lastExecution.get().getTaskRunList(), hasSize(2));
-        assertThat(lastExecution.get().getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(lastExecution.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(lastExecution.get().getTaskRunList()).hasSize(2);
+        assertThat(lastExecution.get().getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     public void changeStateInSubflowShouldEndsParentFlowInSuccess() throws Exception {
@@ -76,16 +75,16 @@ public class ChangeStateTestCase {
 
         // run the parent flow
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "subflow-parent-of-failed");
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // assert on the subflow
-        assertThat(latch.await(10, TimeUnit.SECONDS), is(true));
+        assertThat(latch.await(10, TimeUnit.SECONDS)).isEqualTo(true);
         receivedExecutions.blockLast();
-        assertThat(lastExecution.get().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(lastExecution.get().getTaskRunList(), hasSize(1));
-        assertThat(lastExecution.get().getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(lastExecution.get().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(lastExecution.get().getTaskRunList()).hasSize(1);
+        assertThat(lastExecution.get().getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // await for the parent execution
         CountDownLatch parentLatch = new CountDownLatch(1);
@@ -104,10 +103,10 @@ public class ChangeStateTestCase {
         executionQueue.emit(markedAs);
 
         // assert for the parent flow
-        assertThat(parentLatch.await(10, TimeUnit.SECONDS), is(true));
+        assertThat(parentLatch.await(10, TimeUnit.SECONDS)).isEqualTo(true);
         receivedExecutions.blockLast();
-        assertThat(lastParentExecution.get().getState().getCurrent(), is(State.Type.FAILED)); // FIXME should be success but it's FAILED on unit tests
-        assertThat(lastParentExecution.get().getTaskRunList(), hasSize(1));
-        assertThat(lastParentExecution.get().getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(lastParentExecution.get().getState().getCurrent()).isEqualTo(State.Type.FAILED); // FIXME should be success but it's FAILED on unit tests
+        assertThat(lastParentExecution.get().getTaskRunList()).hasSize(1);
+        assertThat(lastParentExecution.get().getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 }

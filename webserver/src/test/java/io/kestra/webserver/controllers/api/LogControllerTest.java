@@ -22,9 +22,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static io.micronaut.http.HttpRequest.GET;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -60,20 +58,20 @@ class LogControllerTest {
             GET("/api/v1/logs/search"),
             Argument.of(PagedResults.class, LogEntry.class)
         );
-        assertThat(logs.getTotal(), is(3L));
+        assertThat(logs.getTotal()).isEqualTo(3L);
 
         logs = client.toBlocking().retrieve(
             GET("/api/v1/logs/search?filters[level][EQUALS]=INFO"),
             Argument.of(PagedResults.class, LogEntry.class)
         );
-        assertThat(logs.getTotal(), is(2L));
+        assertThat(logs.getTotal()).isEqualTo(2L);
 
         // Test with old parameters
         logs = client.toBlocking().retrieve(
             GET("/api/v1/logs/search?minLevel=INFO"),
             Argument.of(PagedResults.class, LogEntry.class)
         );
-        assertThat(logs.getTotal(), is(2L));
+        assertThat(logs.getTotal()).isEqualTo(2L);
 
 
         HttpClientResponseException e = assertThrows(
@@ -81,14 +79,14 @@ class LogControllerTest {
             () -> client.toBlocking().retrieve(GET("/api/v1/logs/search?page=1&size=-1"))
         );
 
-        assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
 
         e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(GET("/api/v1/logs/search?page=0"))
         );
 
-        assertThat(e.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 
     @SuppressWarnings("unchecked")
@@ -105,9 +103,9 @@ class LogControllerTest {
             GET("/api/v1/logs/" + log1.getExecutionId()),
             Argument.of(List.class, LogEntry.class)
         );
-        assertThat(logs.size(), is(2));
-        assertThat(logs.getFirst().getExecutionId(), is(log1.getExecutionId()));
-        assertThat(logs.get(1).getExecutionId(), is(log1.getExecutionId()));
+        assertThat(logs.size()).isEqualTo(2);
+        assertThat(logs.getFirst().getExecutionId()).isEqualTo(log1.getExecutionId());
+        assertThat(logs.get(1).getExecutionId()).isEqualTo(log1.getExecutionId());
     }
 
     @Test
@@ -123,8 +121,8 @@ class LogControllerTest {
             GET("/api/v1/logs/" + log1.getExecutionId() + "/download"),
             String.class
         );
-        assertThat(logs, containsString("john doe"));
-        assertThat(logs, containsString("another message"));
+        assertThat(logs).contains("john doe");
+        assertThat(logs).contains("another message");
     }
 
     @SuppressWarnings("unchecked")
@@ -140,13 +138,13 @@ class LogControllerTest {
         HttpResponse<?> delete = client.toBlocking().exchange(
             HttpRequest.DELETE("/api/v1/logs/" + log1.getExecutionId())
         );
-        assertThat(delete.getStatus(), is(HttpStatus.OK));
+        assertThat(delete.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
         List<LogEntry> logs = client.toBlocking().retrieve(
             GET("/api/v1/logs/" + log1.getExecutionId()),
             Argument.of(List.class, LogEntry.class)
         );
-        assertThat(logs.size(), is(0));
+        assertThat(logs.size()).isEqualTo(0);
     }
 
     @Test
@@ -161,13 +159,13 @@ class LogControllerTest {
         HttpResponse<?> delete = client.toBlocking().exchange(
             HttpRequest.DELETE("/api/v1/logs/" + log1.getNamespace() + "/" + log1.getFlowId())
         );
-        assertThat(delete.getStatus(), is(HttpStatus.OK));
+        assertThat(delete.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
         List<LogEntry> logs = client.toBlocking().retrieve(
             GET("/api/v1/logs/" + log1.getExecutionId()),
             Argument.of(List.class, LogEntry.class)
         );
-        assertThat(logs.size(), is(0));
+        assertThat(logs.size()).isEqualTo(0);
     }
 
     private static LogEntry logEntry(Level level) {

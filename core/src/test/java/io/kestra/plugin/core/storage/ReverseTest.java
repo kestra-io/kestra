@@ -13,9 +13,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ReverseTest {
@@ -43,7 +41,7 @@ class ReverseTest {
 
         Reverse.Output run = result.run(runContext);
 
-        assertThat(run.getUri().getPath(), endsWith(".yml"));
-        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, run.getUri()))), is("3\n2\n1\n"));
+        assertThat(run.getUri().getPath()).endsWith(".yml");
+        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, run.getUri())))).isEqualTo("3\n2\n1\n");
     }
 }

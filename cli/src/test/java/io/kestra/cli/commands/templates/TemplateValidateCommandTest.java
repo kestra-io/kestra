@@ -11,9 +11,7 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class TemplateValidateCommandTest {
     @Test
@@ -29,9 +27,9 @@ public class TemplateValidateCommandTest {
             };
             Integer call = PicocliRunner.call(TemplateValidateCommand.class, ctx, args);
 
-            assertThat(call, is(1));
-            assertThat(out.toString(), containsString("Unable to parse template"));
-            assertThat(out.toString(), containsString("must not be empty"));
+            assertThat(call).isEqualTo(1);
+            assertThat(out.toString()).contains("Unable to parse template");
+            assertThat(out.toString()).contains("must not be empty");
         }
     }
 
@@ -55,9 +53,9 @@ public class TemplateValidateCommandTest {
             };
             Integer call = PicocliRunner.call(TemplateValidateCommand.class, ctx, args);
 
-            assertThat(call, is(1));
-            assertThat(out.toString(), containsString("Unable to parse template"));
-            assertThat(out.toString(), containsString("must not be empty"));
+            assertThat(call).isEqualTo(1);
+            assertThat(out.toString()).contains("Unable to parse template");
+            assertThat(out.toString()).contains("must not be empty");
         }
     }
 }

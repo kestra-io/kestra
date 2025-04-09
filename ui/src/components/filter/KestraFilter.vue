@@ -320,7 +320,9 @@
             emits("input", getInputValue());
         }
 
+        console.log("getInputValue", getInputValue());
         if (getInputValue() === TEXT_PREFIX) {
+            // cons
             select.value!.states.inputValue = "";
         }
     };
@@ -662,7 +664,7 @@
         (options) => {
             if (options.length || !dropdowns.value.first?.shown) return;
 
-            if (!getInputValue()?.startsWith(TEXT_PREFIX) && select.value && !props.searchCallback) {
+            if (getInputValue() && !getInputValue()?.startsWith(TEXT_PREFIX) && select.value && !props.searchCallback) {
                 select.value.states.inputValue = `${TEXT_PREFIX}${getInputValue()}`;
             }
         },

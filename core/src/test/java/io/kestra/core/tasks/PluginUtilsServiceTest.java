@@ -14,9 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.startsWith;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -33,7 +31,7 @@ public class PluginUtilsServiceTest {
             new HashMap<>(Map.of("workingDir", tempDirectory.toAbsolutePath().toString()))
         );
 
-        assertThat(outputFilesMap.get("out"), startsWith(tempDirectory.resolve("out_").toString()));
+        assertThat(outputFilesMap.get("out")).startsWith(tempDirectory.resolve("out_").toString());
     }
 
     @Test
@@ -51,19 +49,19 @@ public class PluginUtilsServiceTest {
         var runContext = runContextFactory.of(variables);
 
         var executionInfo = PluginUtilsService.executionFromTaskParameters(runContext, null, null, null);
-        assertThat(executionInfo.namespace(), is("namespace"));
-        assertThat(executionInfo.flowId(), is("flow"));
-        assertThat(executionInfo.id(), is("execution"));
+        assertThat(executionInfo.namespace()).isEqualTo("namespace");
+        assertThat(executionInfo.flowId()).isEqualTo("flow");
+        assertThat(executionInfo.id()).isEqualTo("execution");
 
         executionInfo = PluginUtilsService.executionFromTaskParameters(runContext, null, null, "exec2");
-        assertThat(executionInfo.namespace(), is("namespace"));
-        assertThat(executionInfo.flowId(), is("flow"));
-        assertThat(executionInfo.id(), is("exec2"));
+        assertThat(executionInfo.namespace()).isEqualTo("namespace");
+        assertThat(executionInfo.flowId()).isEqualTo("flow");
+        assertThat(executionInfo.id()).isEqualTo("exec2");
 
         executionInfo = PluginUtilsService.executionFromTaskParameters(runContext, "ns2", "flow2", "exec2");
-        assertThat(executionInfo.namespace(), is("ns2"));
-        assertThat(executionInfo.flowId(), is("flow2"));
-        assertThat(executionInfo.id(), is("exec2"));
+        assertThat(executionInfo.namespace()).isEqualTo("ns2");
+        assertThat(executionInfo.flowId()).isEqualTo("flow2");
+        assertThat(executionInfo.id()).isEqualTo("exec2");
 
         assertThrows(IllegalArgumentException.class, () -> {
             PluginUtilsService.executionFromTaskParameters(runContext, "ns2", "flow2", null);

@@ -14,8 +14,10 @@ import java.io.*;
 import java.net.URI;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -29,10 +31,10 @@ class FromIonFunctionTest {
     @Test
     void ionDecodeFunction() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ fromIon('{date:2024-04-21T23:00:00.000Z, title:\"Main_Page\",views:109787}').title }}", Map.of());
-        assertThat(render, is("Main_Page"));
+        assertThat(render).isEqualTo("Main_Page");
 
         render = variableRenderer.render("{{ fromIon(null) }}", Map.of());
-        assertThat(render, emptyString());
+        assertThat(render).isEmpty();
     }
 
     @Test
@@ -55,11 +57,11 @@ class FromIonFunctionTest {
         URI internalStorageFile = storageInterface.put(null, "unit", internalStorageURI, new FileInputStream(tempFile));
 
         String render = variableRenderer.render("{{ fromIon(read('" + internalStorageFile + "'), allRows=true) }}", variables);
-        assertThat(render, containsString("\"id\":0"));
-        assertThat(render, containsString("\"id\":9"));
+        assertThat(render).contains("\"id\":0");
+        assertThat(render).contains("\"id\":9");
 
         render = variableRenderer.render("{{ fromIon(read('" + internalStorageFile + "')) }}", variables);
-        assertThat(render, containsString("\"id\":0"));
+        assertThat(render).contains("\"id\":0");
         assertThat(render, not((containsString("\"id\":9"))));
     }
 

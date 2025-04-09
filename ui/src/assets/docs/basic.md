@@ -96,7 +96,7 @@ inputs:
     description: This is an optional input — if not set at runtime, it will use the default value Kestrel
 
   - id: run_task
-    type: BOOLEAN
+    type: BOOL
     defaults: true
 
   - id: pokemon

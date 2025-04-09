@@ -98,7 +98,7 @@
     "@vitest/coverage-v8": "^3.0.8",
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/test-utils": "^2.4.6",
-    "@vueuse/router": "^13.0.0",
+    "@vueuse/router": "^13.1.0",
     "cross-env": "^7.0.3",
     "decompress": "^4.2.1",
     "eslint": "^9.23.0",

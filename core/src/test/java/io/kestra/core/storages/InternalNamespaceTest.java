@@ -17,8 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 
 class InternalNamespaceTest {
@@ -47,11 +46,10 @@ class InternalNamespaceTest {
         namespace.putFile(Path.of("/sub/dir/file3.txt"), new ByteArrayInputStream("3".getBytes()));
 
         // Then
-        assertThat(namespace.all(), containsInAnyOrder(
-            is(NamespaceFile.of(namespaceId, Path.of("sub/dir/file1.txt"))),
-            is(NamespaceFile.of(namespaceId, Path.of("sub/dir/file2.txt"))),
-            is(NamespaceFile.of(namespaceId, Path.of("sub/dir/file3.txt")))
-        ));
+        assertThat(namespace.all()).containsExactlyInAnyOrder(
+            NamespaceFile.of(namespaceId, Path.of("sub/dir/file1.txt")),
+            NamespaceFile.of(namespaceId, Path.of("sub/dir/file2.txt")),
+            NamespaceFile.of(namespaceId, Path.of("sub/dir/file3.txt")));
     }
 
     @Test
@@ -64,10 +62,10 @@ class InternalNamespaceTest {
         NamespaceFile namespaceFile = namespace.putFile(Path.of("/sub/dir/file.txt"), new ByteArrayInputStream("1".getBytes()));
 
         // Then
-        assertThat(namespaceFile, is(NamespaceFile.of(namespaceId, Path.of("sub/dir/file.txt"))));
+        assertThat(namespaceFile).isEqualTo(NamespaceFile.of(namespaceId, Path.of("sub/dir/file.txt")));
         // Then
         try (InputStream is  = namespace.getFileContent(Path.of(namespaceFile.path()))) {
-            assertThat(new String(is.readAllBytes()), is("1"));
+            assertThat(new String(is.readAllBytes())).isEqualTo("1");
         }
     }
 
@@ -86,7 +84,7 @@ class InternalNamespaceTest {
 
         // Then
         try (InputStream is  = namespace.getFileContent(Path.of(namespaceFile.path()))) {
-            assertThat(new String(is.readAllBytes()), is("2"));
+            assertThat(new String(is.readAllBytes())).isEqualTo("2");
         }
     }
 
@@ -122,7 +120,7 @@ class InternalNamespaceTest {
 
         // Then
         try (InputStream is  = namespace.getFileContent(Path.of(namespaceFile.path()))) {
-            assertThat(new String(is.readAllBytes()), is("1"));
+            assertThat(new String(is.readAllBytes())).isEqualTo("1");
         }
     }
 
@@ -146,11 +144,7 @@ class InternalNamespaceTest {
         );
 
         // Then
-        assertThat(namespaceFiles.stream().map(NamespaceFile::path).toList(), containsInAnyOrder(
-            is("a/b/c/1.sql"),
-            is("b/c/d/3.sql"),
-            is("c/5.sql")
-        ));
+        assertThat(namespaceFiles.stream().map(NamespaceFile::path).toList()).containsExactlyInAnyOrder("a/b/c/1.sql", "b/c/d/3.sql", "c/5.sql");
     }
 
     @Test
@@ -165,12 +159,12 @@ class InternalNamespaceTest {
 
         // When - Then
         List<NamespaceFile> allTenant1 = namespaceTenant1.all();
-        assertThat(allTenant1.size(), is(1));
-        assertThat(allTenant1, containsInAnyOrder(is(namespaceFile1)));
+        assertThat(allTenant1.size()).isEqualTo(1);
+        assertThat(allTenant1).containsExactlyInAnyOrder(namespaceFile1);
 
         List<NamespaceFile> allTenant2 = namespaceTenant2.all();
-        assertThat(allTenant2.size(), is(1));
-        assertThat(allTenant2, containsInAnyOrder(is(namespaceFile2)));
+        assertThat(allTenant2.size()).isEqualTo(1);
+        assertThat(allTenant2).containsExactlyInAnyOrder(namespaceFile2);
     }
 
     @Test
@@ -179,6 +173,6 @@ class InternalNamespaceTest {
         final String namespaceId = "io.kestra." + IdUtils.create();
         final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
         List<NamespaceFile> namespaceFiles = namespace.findAllFilesMatching((unused) -> true);
-        assertThat(namespaceFiles.size(), is(0));
+        assertThat(namespaceFiles.size()).isEqualTo(0);
     }
 }

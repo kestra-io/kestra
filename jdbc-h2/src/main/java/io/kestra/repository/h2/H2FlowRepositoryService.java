@@ -2,6 +2,7 @@ package io.kestra.repository.h2;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import org.jooq.*;
 import org.jooq.impl.DSL;
@@ -14,7 +15,7 @@ import static io.kestra.core.models.QueryFilter.Op.EQUALS;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
 
 public abstract class H2FlowRepositoryService {
-    public static Condition findCondition(AbstractJdbcRepository<Flow> jdbcRepository, String query, Map<String, String> labels) {
+    public static Condition findCondition(AbstractJdbcRepository<? extends FlowInterface> jdbcRepository, String query, Map<String, String> labels) {
         List<Condition> conditions = new ArrayList<>();
 
         if (query != null) {
@@ -35,7 +36,7 @@ public abstract class H2FlowRepositoryService {
         return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 
-    public static Condition findSourceCodeCondition(AbstractJdbcRepository<Flow> jdbcRepository, String query) {
+    public static Condition findSourceCodeCondition(AbstractJdbcRepository<? extends FlowInterface> jdbcRepository, String query) {
         return jdbcRepository.fullTextCondition(List.of("source_code"), query);
     }
 

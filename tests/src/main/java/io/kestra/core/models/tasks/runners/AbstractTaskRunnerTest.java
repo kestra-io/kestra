@@ -25,9 +25,7 @@ import java.nio.file.Path;
 import java.time.Instant;
 import java.util.*;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -45,8 +43,8 @@ public abstract class AbstractTaskRunnerTest {
 
         var taskRunner = taskRunner();
         var result = taskRunner.run(runContext, commands, Collections.emptyList());
-        assertThat(result, notNullValue());
-        assertThat(result.getExitCode(), is(0));
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isEqualTo(0);
     }
 
     @Test
@@ -60,12 +58,12 @@ public abstract class AbstractTaskRunnerTest {
         );
 
         var taskRunner = taskRunner();
-        assertThat(taskRunner.additionalVars(runContext, commands).containsKey(ScriptService.VAR_OUTPUT_DIR), is(false));
-        assertThat(taskRunner.env(runContext, commands).containsKey(ScriptService.ENV_OUTPUT_DIR), is(false));
+        assertThat(taskRunner.additionalVars(runContext, commands).containsKey(ScriptService.VAR_OUTPUT_DIR)).isEqualTo(false);
+        assertThat(taskRunner.env(runContext, commands).containsKey(ScriptService.ENV_OUTPUT_DIR)).isEqualTo(false);
 
         var result = taskRunner.run(runContext, commands, Collections.emptyList());
-        assertThat(result, notNullValue());
-        assertThat(result.getExitCode(), is(0));
+        assertThat(result).isNotNull();
+        assertThat(result.getExitCode()).isEqualTo(0);
     }
 
     @Test
@@ -135,18 +133,18 @@ public abstract class AbstractTaskRunnerTest {
         outputFiles.putAll(FilesService.outputFiles(runContext, filesToDownload));
 
         // Exit code for successful job
-        assertThat(run.getExitCode(), is(0));
+        assertThat(run.getExitCode()).isEqualTo(0);
 
         Set<Map.Entry<String, Boolean>> logEntries = logsWithIsStdErr.entrySet();
-        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello from internal storage")).findFirst().orElseThrow().getValue(), is(false));
-        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello World")).findFirst().orElseThrow().getValue(), is(false));
+        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello from internal storage")).findFirst().orElseThrow().getValue()).isEqualTo(false);
+        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello World")).findFirst().orElseThrow().getValue()).isEqualTo(false);
 
         // Verify outputFiles
-        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("output.txt")), StandardCharsets.UTF_8), is("Hello World"));
-        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("file.txt")), StandardCharsets.UTF_8), is("file from output dir"));
-        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("nested/file.txt")), StandardCharsets.UTF_8), is("nested file from output dir"));
+        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("output.txt")), StandardCharsets.UTF_8)).isEqualTo("Hello World");
+        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("file.txt")), StandardCharsets.UTF_8)).isEqualTo("file from output dir");
+        assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("nested/file.txt")), StandardCharsets.UTF_8)).isEqualTo("nested file from output dir");
 
-        assertThat(defaultLogConsumer.getOutputs().get("logOutput"), is("Hello World"));
+        assertThat(defaultLogConsumer.getOutputs().get("logOutput")).isEqualTo("Hello World");
     }
 
     @Test
@@ -161,7 +159,7 @@ public abstract class AbstractTaskRunnerTest {
 
         var taskRunner = taskRunner();
         TaskException taskException = assertThrows(TaskException.class, () -> taskRunner.run(runContext, commands, Collections.emptyList()));
-        assertThat(taskException.getLogConsumer().getOutputs().get("logOutput"), is("Hello World"));
+        assertThat(taskException.getLogConsumer().getOutputs().get("logOutput")).isEqualTo("Hello World");
     }
 
     protected RunContext runContext(RunContextFactory runContextFactory) {

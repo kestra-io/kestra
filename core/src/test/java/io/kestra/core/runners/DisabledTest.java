@@ -1,7 +1,6 @@
 package io.kestra.core.runners;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -13,18 +12,18 @@ public class DisabledTest {
     @Test
     @ExecuteFlow("flows/valids/disable-simple.yaml")
     void simple(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(2));
+        assertThat(execution.getTaskRunList()).hasSize(2);
     }
 
     @Test
     @ExecuteFlow("flows/valids/disable-error.yaml")
     void error(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(3));
+        assertThat(execution.getTaskRunList()).hasSize(3);
     }
 
     @Test
     @ExecuteFlow("flows/valids/disable-flowable.yaml")
     void flowable(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(10));
+        assertThat(execution.getTaskRunList()).hasSize(10);
     }
 }

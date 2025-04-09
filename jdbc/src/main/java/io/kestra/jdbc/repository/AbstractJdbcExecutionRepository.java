@@ -298,7 +298,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 } else if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
                     select = select.and(findCondition(labels, operation));
                 else
-                    select = getConditionOnField(select, field, value, operation, "\"start_date\"");
+                    select = getConditionOnField(select, field, value, operation, "start_date");
             }
 
         return select;

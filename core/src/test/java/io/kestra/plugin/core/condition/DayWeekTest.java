@@ -3,6 +3,7 @@ package io.kestra.plugin.core.condition;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.services.ConditionService;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -15,8 +16,7 @@ import java.time.LocalDate;
 import java.util.stream.Stream;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class DayWeekTest {
@@ -37,12 +37,12 @@ class DayWeekTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         DayWeek build = DayWeek.builder()
-            .date(date)
-            .dayOfWeek(dayOfWeek)
+            .date(Property.of(date))
+            .dayOfWeek(Property.of(dayOfWeek))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(result));
+        assertThat(test).isEqualTo(result);
     }
 }

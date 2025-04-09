@@ -1,7 +1,6 @@
+import type {Store} from "vuex";
 
-import {Store} from "vuex/types/index.d.ts";
-
-declare module "vue" {
+declare module "@vue/runtime-core" {
     interface State {
         api:any
         core:any

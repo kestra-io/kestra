@@ -13,8 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class WorkingDirectoryTest {
@@ -36,7 +35,7 @@ public class WorkingDirectoryTest {
             )
             .build();
 
-        assertThat(modelValidator.isValid(workingDirectory).isPresent(), is(false));
+        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isEqualTo(false);
     }
 
     @Test
@@ -47,8 +46,8 @@ public class WorkingDirectoryTest {
             .type(WorkingDirectory.class.getName())
             .build();
 
-        assertThat(modelValidator.isValid(workingDirectory).isPresent(), is(true));
-        assertThat(modelValidator.isValid(workingDirectory).get().getMessage(), containsString("The 'tasks' property cannot be empty"));
+        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(workingDirectory).get().getMessage()).contains("The 'tasks' property cannot be empty");
 
         // flowable task
         workingDirectory = WorkingDirectory.builder()
@@ -64,8 +63,8 @@ public class WorkingDirectoryTest {
             )
             .build();
 
-        assertThat(modelValidator.isValid(workingDirectory).isPresent(), is(true));
-        assertThat(modelValidator.isValid(workingDirectory).get().getMessage(), containsString("Only runnable tasks are allowed as children of a WorkingDirectory task"));
+        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(workingDirectory).get().getMessage()).contains("Only runnable tasks are allowed as children of a WorkingDirectory task");
 
         // worker group at the subtasks level
         workingDirectory = WorkingDirectory.builder()
@@ -82,8 +81,8 @@ public class WorkingDirectoryTest {
             )
             .build();
 
-        assertThat(modelValidator.isValid(workingDirectory).isPresent(), is(true));
-        assertThat(modelValidator.isValid(workingDirectory).get().getMessage(), containsString("Cannot set a Worker Group in any WorkingDirectory sub-tasks, it is only supported at the WorkingDirectory level"));
+        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(workingDirectory).get().getMessage()).contains("Cannot set a Worker Group in any WorkingDirectory sub-tasks, it is only supported at the WorkingDirectory level");
 
     }
 }

@@ -8,9 +8,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class RegexTest {
@@ -29,11 +27,11 @@ class RegexTest {
     void inputValidation() {
         final RegexCls validRegex = new RegexCls("[A-Z]+");
 
-        assertThat(modelValidator.isValid(validRegex).isEmpty(), is(true));
+        assertThat(modelValidator.isValid(validRegex).isEmpty()).isEqualTo(true);
 
         final RegexCls invalidRegex = new RegexCls("\\");
 
-        assertThat(modelValidator.isValid(invalidRegex).isPresent(), is(true));
-        assertThat(modelValidator.isValid(invalidRegex).get().getMessage(), containsString("invalid pattern"));
+        assertThat(modelValidator.isValid(invalidRegex).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(invalidRegex).get().getMessage()).contains("invalid pattern");
     }
 }

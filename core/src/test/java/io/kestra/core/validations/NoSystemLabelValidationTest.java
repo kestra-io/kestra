@@ -13,8 +13,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class NoSystemLabelValidationTest {
@@ -33,8 +32,8 @@ class NoSystemLabelValidationTest {
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
 
-        assertThat(valid.isPresent(), is(true));
-        assertThat(valid.get().getMessage(), is("labels[0].<list element>: System labels can only be set by Kestra itself, offending label: system.sla=violated.\n"));
+        assertThat(valid.isPresent()).isEqualTo(true);
+        assertThat(valid.get().getMessage()).isEqualTo("labels[0].<list element>: System labels can only be set by Kestra itself, offending label: system.sla=violated.\n");
     }
 
     @Test
@@ -49,6 +48,6 @@ class NoSystemLabelValidationTest {
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(sla);
 
-        assertThat(valid.isEmpty(), is(true));
+        assertThat(valid.isEmpty()).isEqualTo(true);
     }
 }

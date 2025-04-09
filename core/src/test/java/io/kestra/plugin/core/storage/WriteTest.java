@@ -10,8 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class WriteTest {
@@ -31,11 +30,11 @@ class WriteTest {
             .build();
 
         var output = write.run(runContext);
-        assertThat(output, notNullValue());
-        assertThat(output.getUri(), notNullValue());
+        assertThat(output).isNotNull();
+        assertThat(output.getUri()).isNotNull();
 
         InputStream inputStream = storageInterface.get(null, null, output.getUri());
-        assertThat(inputStream, notNullValue());
+        assertThat(inputStream).isNotNull();
         inputStream.close();
     }
 }

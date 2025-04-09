@@ -11,9 +11,7 @@ import jakarta.inject.Inject;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 @Property(name = "kestra.system-flows.namespace", value = "some.system.ns")
@@ -29,19 +27,19 @@ class MiscControllerTest {
     void ping() {
         var response = client.toBlocking().retrieve("/ping", String.class);
 
-        assertThat(response, is("pong"));
+        assertThat(response).isEqualTo("pong");
     }
 
     @Test
     void configuration() {
         var response = client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class);
 
-        assertThat(response, notNullValue());
-        assertThat(response.getUuid(), notNullValue());
-        assertThat(response.getIsTaskRunEnabled(), is(false));
-        assertThat(response.getIsAnonymousUsageEnabled(), is(true));
-        assertThat(response.getIsBasicAuthEnabled(), is(false));
-        assertThat(response.getSystemNamespace(), is("some.system.ns"));
+        assertThat(response).isNotNull();
+        assertThat(response.getUuid()).isNotNull();
+        assertThat(response.getIsTaskRunEnabled()).isEqualTo(false);
+        assertThat(response.getIsAnonymousUsageEnabled()).isEqualTo(true);
+        assertThat(response.getIsBasicAuthEnabled()).isEqualTo(false);
+        assertThat(response.getSystemNamespace()).isEqualTo("some.system.ns");
     }
 
     @Test

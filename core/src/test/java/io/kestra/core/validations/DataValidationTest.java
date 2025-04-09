@@ -11,9 +11,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class DataValidationTest {
@@ -23,13 +21,13 @@ public class DataValidationTest {
     @Test
     void valid() throws Exception {
         Data<?> data = Data.ofURI(URI.create("kestra:///uri"));
-        assertThat(modelValidator.isValid(data).isEmpty(), is(true));
+        assertThat(modelValidator.isValid(data).isEmpty()).isEqualTo(true);
 
         data = Data.ofMap(Map.of("key", "value"));
-        assertThat(modelValidator.isValid(data).isEmpty(), is(true));
+        assertThat(modelValidator.isValid(data).isEmpty()).isEqualTo(true);
 
         data = Data.ofList(List.of(Map.of("key1", "value11"), Map.of("key2", "value2")));
-        assertThat(modelValidator.isValid(data).isEmpty(), is(true));
+        assertThat(modelValidator.isValid(data).isEmpty()).isEqualTo(true);
     }
 
     @Test
@@ -39,7 +37,7 @@ public class DataValidationTest {
             .fromList(new Property<>())
             .build();
 
-        assertThat(modelValidator.isValid(data).isEmpty(), is(false));
-        assertThat(modelValidator.isValid(data).get().getMessage(), containsString("Only one of 'fromURI', 'fromMap' or 'fromList' can be set."));
+        assertThat(modelValidator.isValid(data).isEmpty()).isEqualTo(false);
+        assertThat(modelValidator.isValid(data).get().getMessage()).contains("Only one of 'fromURI', 'fromMap' or 'fromList' can be set.");
     }
 }

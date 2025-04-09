@@ -1,6 +1,6 @@
 import axios from "axios";
 import {apiUrl} from "override/utils/route";
-import Utils from "../utils/utils.js"
+import Utils from "../utils/utils"
 
 export default {
     namespaced: true,

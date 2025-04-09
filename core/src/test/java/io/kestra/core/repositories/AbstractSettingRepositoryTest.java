@@ -9,8 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public abstract class AbstractSettingRepositoryTest {
@@ -25,26 +24,26 @@ public abstract class AbstractSettingRepositoryTest {
             .build();
 
         Optional<Setting> find = settingRepository.findByKey(setting.getKey());
-        assertThat(find.isPresent(), is(false));
+        assertThat(find.isPresent()).isEqualTo(false);
 
         Setting save = settingRepository.save(setting);
 
         find = settingRepository.findByKey(save.getKey());
 
-        assertThat(find.isPresent(), is(true));
-        assertThat(find.get().getValue(), is(save.getValue()));
+        assertThat(find.isPresent()).isEqualTo(true);
+        assertThat(find.get().getValue()).isEqualTo(save.getValue());
 
         List<Setting> all = settingRepository.findAll();
-        assertThat(all.size(), is(1));
-        assertThat(all.getFirst().getValue(), is(setting.getValue()));
+        assertThat(all.size()).isEqualTo(1);
+        assertThat(all.getFirst().getValue()).isEqualTo(setting.getValue());
 
         Setting delete = settingRepository.delete(setting);
-        assertThat(delete.getValue(), is(setting.getValue()));
+        assertThat(delete.getValue()).isEqualTo(setting.getValue());
 
         all = settingRepository.findAll();
-        assertThat(all.size(), is(0));
+        assertThat(all.size()).isEqualTo(0);
 
         find = settingRepository.findByKey(setting.getKey());
-        assertThat(find.isPresent(), is(false));
+        assertThat(find.isPresent()).isEqualTo(false);
     }
 }

@@ -3,6 +3,7 @@ package io.kestra.core.models.triggers.multipleflows;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.kestra.core.models.HasUID;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.utils.IdUtils;
 import lombok.Builder;
 import lombok.Value;
@@ -44,7 +45,7 @@ public class MultipleConditionWindow implements HasUID {
         );
     }
 
-    public static String uid(Flow flow, String conditionId) {
+    public static String uid(FlowId flow, String conditionId) {
         return IdUtils.fromParts(
             flow.getTenantId(),
             flow.getNamespace(),

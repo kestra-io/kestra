@@ -43,6 +43,7 @@
             <div ref="editorContainer" class="editor-wrapper position-relative">
                 <monaco-editor
                     ref="monacoEditor"
+                    :path="path"
                     :theme="themeComputed"
                     :value="modelValue"
                     :options="options"
@@ -50,6 +51,7 @@
                     :original="original"
                     @change="onInput"
                     @editor-did-mount="editorDidMount"
+                    @tab-loaded="(...args) => $emit('tabLoaded', ...args)"
                     :language="lang"
                     :extension="extension"
                     :schema-type="schemaType"
@@ -76,7 +78,7 @@
     import UnfoldLessHorizontal from "vue-material-design-icons/UnfoldLessHorizontal.vue";
     import UnfoldMoreHorizontal from "vue-material-design-icons/UnfoldMoreHorizontal.vue";
     import Help from "vue-material-design-icons/Help.vue";
-    import {mapGetters} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import BookMultipleOutline from "vue-material-design-icons/BookMultipleOutline.vue";
     import Close from "vue-material-design-icons/Close.vue";
     import {TabFocus} from "monaco-editor/esm/vs/editor/browser/config/tabFocus.js";
@@ -90,21 +92,25 @@
             modelValue: {type: String, default: ""},
             original: {type: String, default: undefined},
             lang: {type: String, default: undefined},
+            path: {type: String, default: undefined},
             extension: {type: String, default: undefined},
             schemaType: {type: String, default: undefined},
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
+            keepFocused: {type: Boolean, default: undefined},
             fullHeight: {type: Boolean, default: true},
             customHeight: {type: Number, default: 7},
             theme: {type: String, default: undefined},
             placeholder: {type: [String, Number], default: ""},
             diffSideBySide: {type: Boolean, default: true},
             readOnly: {type: Boolean, default: false},
+            wordWrap: {type: Boolean, default: true},
             lineNumbers: {type: Boolean, default: undefined},
             minimap: {type: Boolean, default: false},
             creating: {type: Boolean, default: false},
             label: {type: String, default: undefined},
             shouldFocus: {type: Boolean, default: true},
+            showScroll: {type: Boolean, default: false},
         },
         components: {
             MonacoEditor,
@@ -113,10 +119,11 @@
             "save",
             "execute",
             "focusout",
-            "tab",
+            "tabLoaded",
             "update:modelValue",
             "cursor",
             "confirm",
+            "tabLoaded",
         ],
         editor: undefined,
         data() {
@@ -132,17 +139,24 @@
                 editorDocumentation: undefined,
                 plugin: undefined,
                 taskType: undefined,
+                themeComputed: Utils.getTheme(),
             };
         },
         mounted() {
             this.$store.commit("doc/setDocId", "flowEditor");
         },
+        watch: {
+            mappedTheme: {
+                handler() {
+                    this.themeComputed = Utils.getTheme();
+                },
+                immediate: true,
+            },
+        },
         computed: {
+            ...mapState({mappedTheme: state => state.misc.theme}),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("flow", ["flowValidation"]),
-            themeComputed() {
-                return Utils.getTheme();
-            },
             containerClass() {
                 return [
                     !this.input ? "" : "single-line",
@@ -165,7 +179,7 @@
             options() {
                 const options = {};
 
-                if (this.input) {
+                if (this.input && !this.lineNumbers) {
                     options.lineNumbers = "off";
                     options.folding = false;
                     options.renderLineHighlight = "none";
@@ -182,12 +196,12 @@
                     options.scrollBeyondLastColumn = 0;
                     options.overviewRulerLanes = 0;
                     options.scrollbar = {
-                        vertical: "hidden",
+                        vertical: !this.showScroll ? "hidden" : "visible",
                         horizontal: "hidden",
                         alwaysConsumeMouseWheel: false,
                         handleMouseWheel: true,
                         horizontalScrollbarSize: 0,
-                        verticalScrollbarSize: 0,
+                        verticalScrollbarSize: !this.showScroll ? 0 : 5,
                         useShadows: false,
                     };
                     options.stickyScroll = {
@@ -220,7 +234,7 @@
                     options.readOnly = true;
                 }
 
-                options.wordWrap = true;
+                options.wordWrap = this.wordWrap;
                 options.automaticLayout = true;
 
                 return {
@@ -261,11 +275,11 @@
                         this.focus = false;
                     });
 
-                    if(this.shouldFocus){                
+                    if(this.shouldFocus){
                         this.editor.onDidFocusEditorText?.(() => {
                             this.focus = true;
                         });
-                        
+
                         this.$refs.monacoEditor.focus();
                     }
                 }
@@ -273,7 +287,7 @@
                 if (!this.readOnly) {
                     this.editor.addAction({
                         id: "kestra-save",
-                        label: "Save",
+                        label: this.$t("save"),
                         keybindings: [KeyMod.CtrlCmd | KeyCode.KeyS],
                         contextMenuGroupId: "navigation",
                         contextMenuOrder: 1.5,
@@ -289,7 +303,7 @@
 
                 this.editor.addAction({
                     id: "kestra-execute",
-                    label: "Execute the flow",
+                    label: this.$t("execute flow behaviour"),
                     keybindings: [KeyMod.CtrlCmd | KeyCode.KeyE],
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 1.5,
@@ -300,7 +314,7 @@
 
                 this.editor.addAction({
                     id: "confirm",
-                    label: "Confirm",
+                    label: this.$t("confirm"),
                     keybindings: [KeyMod.CtrlCmd | KeyCode.Enter],
                     contextMenuGroupId: "navigation",
                     contextMenuOrder: 1.5,
@@ -311,7 +325,7 @@
 
                 // TabFocus is global to all editor so revert the behavior on non inputs
                 this.editor.onDidFocusEditorText?.(() => {
-                    TabFocus.setTabFocusMode(this.input);
+                    TabFocus.setTabFocusMode(this.keepFocused === undefined ? this.input : false);
                 });
 
                 if (this.input) {
@@ -329,7 +343,7 @@
                 if (this.original === undefined && this.navbar && this.fullHeight) {
                     this.editor.addAction({
                         id: "fold-multiline",
-                        label: "Fold All Multi Lines",
+                        label: this.$t("fold_all_multi_lines"),
                         keybindings: [KeyCode.F10],
                         contextMenuGroupId: "fold",
                         contextMenuOrder: 1.5,
@@ -485,7 +499,7 @@
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 @import "../../styles/layout/root-dark.scss";
 
-:not(.namespace-form, .el-drawer__body) > .ks-editor {
+:not(.namespace-defaults, .el-drawer__body) > .ks-editor {
     flex-direction: column;
     height: 100%;
 }

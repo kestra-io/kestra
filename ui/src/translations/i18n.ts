@@ -1,7 +1,7 @@
 import {nextTick} from "vue"
 import {createI18n, type I18n} from "vue-i18n"
 
-const translations = import.meta.glob("./*.json")
+const translations = import.meta.glob(["./*.json", "!./en.json"])
 
 export const SUPPORT_LOCALES = ["de","en","es","fr","hi","it","ja","ko","pl","pt","ru","zh_CN"] as const
 

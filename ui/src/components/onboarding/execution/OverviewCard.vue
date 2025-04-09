@@ -10,7 +10,7 @@
                         <markdown :source="$t(`execution_guide.${category}.text`)" />
                     </div>
                     <el-link :underline="false" :href="getLink()" target="_blank">
-                        {{ category === 'videos_tutorials' ? 'Watch' : 'Learn More' }}
+                        {{ category === 'videos_tutorials' ? $t('watch') : $t('learn_more') }}
                         <el-icon class="el-icon--right">
                             <OpenInNew />
                         </el-icon>

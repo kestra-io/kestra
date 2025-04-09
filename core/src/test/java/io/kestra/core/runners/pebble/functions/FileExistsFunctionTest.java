@@ -3,6 +3,7 @@ package io.kestra.core.runners.pebble.functions;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
@@ -53,7 +54,20 @@ class FileExistsFunctionTest {
     }
 
     @Test
-    void shouldReturnFalseForNonExistentFile() throws IOException, IllegalVariableEvaluationException {
+    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
+        String namespace = "io.kestra.tests";
+        String filePath = "file.txt";
+        storageInterface.createDirectory(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("NOT AN EMPTY FILE".getBytes()));
+
+        boolean render = Boolean.parseBoolean(
+            variableRenderer.render("{{ fileExists('" + filePath + "', namespace='" + namespace + "') }}",
+                Map.of("flow", Map.of("namespace", "flow.namespace"))));
+        assertTrue(render);
+    }
+
+    @Test
+    void shouldReturnFalseForNonExistentFile() throws IllegalVariableEvaluationException {
         String executionId = IdUtils.create();
         URI internalStorageURI = getInternalStorageURI(executionId);
         URI internalStorageFile = URI.create("kestra://" + internalStorageURI.getRawPath()); // Don't create file just pass the URI.

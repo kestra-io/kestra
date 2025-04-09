@@ -2,7 +2,8 @@ package io.kestra.plugin.core.condition;
 
 import io.kestra.core.exceptions.IllegalConditionEvaluation;
 import io.kestra.core.exceptions.InternalException;
-import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -27,13 +28,27 @@ import jakarta.validation.constraints.NotNull;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition to execute the flow based on execution of another flow.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.ExecutionFlow",
-                "      namespace: company.team",
-                "      flowId: my-current-flow"
-            }
+            code = """
+                id: flow_condition_executionflow
+                namespace: company.team
+                
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute when flow `flow_a` of namespace `company.team` enters RUNNING state."
+                
+                triggers:
+                  - id: flow_trigger
+                    type: io.kestra.plugin.core.trigger.Flow
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.ExecutionFlow
+                        flowId: flow_a
+                        namespace: company.team
+                    states:
+                      - RUNNING
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.ExecutionFlowCondition", "io.kestra.plugin.core.condition.ExecutionFlowCondition"}
@@ -41,13 +56,11 @@ import jakarta.validation.constraints.NotNull;
 public class ExecutionFlow extends Condition {
     @NotNull
     @Schema(title = "The namespace of the flow.")
-    @PluginProperty
-    private String namespace;
+    private Property<String> namespace;
 
     @NotNull
     @Schema(title = "The flow id.")
-    @PluginProperty
-    private String flowId;
+    private Property<String> flowId;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
@@ -55,6 +68,8 @@ public class ExecutionFlow extends Condition {
             throw new IllegalConditionEvaluation("Invalid condition with null execution");
         }
 
-        return conditionContext.getExecution().getNamespace().equals(this.namespace) && conditionContext.getExecution().getFlowId().equals(this.flowId);
+        RunContext runContext = conditionContext.getRunContext();
+        return conditionContext.getExecution().getNamespace().equals(runContext.render(this.namespace).as(String.class, conditionContext.getVariables()).orElseThrow())
+            && conditionContext.getExecution().getFlowId().equals(runContext.render(this.flowId).as(String.class, conditionContext.getVariables()).orElseThrow());
     }
 }

@@ -59,7 +59,12 @@
 
             <template #top>
                 <el-card v-if="showStatChart()" class="mb-4 shadow">
-                    <ExecutionsBar v-if="daily" :data="daily" :total="executionsCount" />
+                    <ExecutionsBar
+                        v-if="daily"
+                        :data="daily"
+                        :total="executionsCount"
+                        :loading="loading"
+                    />
                 </el-card>
             </template>
 
@@ -90,7 +95,7 @@
                             <el-button v-if="canUpdate" :icon="Restart" @click="restartExecutions()">
                                 {{ $t("restart") }}
                             </el-button>
-                            <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="replayExecutions()">
+                            <el-button v-if="canCreate" :icon="PlayBoxMultiple" @click="isOpenReplayModal = !isOpenReplayModal">
                                 {{ $t("replay") }}
                             </el-button>
                             <el-button v-if="canUpdate" :icon="StopCircleOutline" @click="killExecutions()">
@@ -300,8 +305,8 @@
                             </template>
                         </el-table-column>
 
-                        <el-table-column 
-                            column-key="action" 
+                        <el-table-column
+                            column-key="action"
                             class-name="row-action"
                             :label="$t('actions')"
                         >
@@ -354,6 +359,31 @@
             <el-button
                 type="primary"
                 @click="changeStatus()"
+            >
+                {{ $t('ok') }}
+            </el-button>
+        </template>
+    </el-dialog>
+
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="uuid" destroy-on-close :append-to-body="true">
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #default>
+            <p v-html="changeReplayToast()" />
+        </template>
+
+        <template #footer>
+            <el-button @click="isOpenReplayModal = false">
+                {{ $t('cancel') }}
+            </el-button>
+            <el-button @click="replayExecutions(true)">
+                {{ $t('replay latest revision') }}
+            </el-button>
+            <el-button
+                type="primary"
+                @click="replayExecutions(false)"
             >
                 {{ $t('ok') }}
             </el-button>
@@ -461,7 +491,16 @@
             isConcurrency: {
                 type: Boolean,
                 default: false
-            }
+            },
+            id: {
+                type: String,
+                required: false,
+                default: null,
+            },
+            visibleCharts: {
+                type: Boolean,
+                default: false
+            },
         },
         data() {
             return {
@@ -530,8 +569,10 @@
                 executionLabels: [],
                 actionOptions: {},
                 lastRefreshDate: new Date(),
+                isOpenReplayModal: false,
                 changeStatusDialogVisible: false,
-                selectedStatus: undefined
+                selectedStatus: undefined,
+                loading: false
             };
         },
         created() {
@@ -596,7 +637,8 @@
                 return this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
             },
             isDisplayedTop() {
-                return this.embed === false && this.filter
+                if(this.visibleCharts) return true;
+                else return this.embed === false && this.filter
             },
             states() {
                 return [ State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED,].map(value => {
@@ -704,6 +746,7 @@
             },
             loadStats() {
                 this.dailyReady = false;
+                this.loading = true;
 
                 this.$store
                     .dispatch("stat/daily", this.loadQuery({
@@ -712,6 +755,7 @@
                     }, true))
                     .then(() => {
                         this.dailyReady = true;
+                        this.loading = false;
                     });
             },
             loadData(callback) {
@@ -737,13 +781,16 @@
                     () => {}
                 );
             },
-            genericConfirmCallback(queryAction, byIdAction, success) {
+            genericConfirmCallback(queryAction, byIdAction, success, params) {
                 if (this.queryBulkAction) {
                     const query = this.loadQuery({
                         sort: this.$route.query.sort || "state.startDate:desc",
                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
                     }, false);
-                    const options = {...query, ...this.actionOptions};
+                    let options = {...query, ...this.actionOptions};
+                    if (params) {
+                        options = {...options, ...params}
+                    }
                     return this.$store
                         .dispatch(queryAction, options)
                         .then(r => {
@@ -752,7 +799,10 @@
                         })
                 } else {
                     const selection = {executionsId: this.selection};
-                    const options = {...selection, ...this.actionOptions};
+                    let options = {...selection, ...this.actionOptions};
+                    if (params) {
+                        options = {...options, ...params}
+                    }
                     return this.$store
                         .dispatch(byIdAction, options)
                         .then(r => {
@@ -805,13 +855,18 @@
                     "executions restarted"
                 );
             },
-            replayExecutions() {
-                this.genericConfirmAction(
-                    "bulk replay",
+            replayExecutions(latestRevision) {
+                this.isOpenReplayModal = false;
+
+                this.genericConfirmCallback(
                     "execution/queryReplayExecution",
                     "execution/bulkReplayExecution",
-                    "executions replayed"
+                    "executions replayed",
+                    {latestRevision: latestRevision}
                 );
+            },
+            changeReplayToast() {
+                return this.$t("bulk replay", {"executionCount": this.queryBulkAction ? this.total : this.selection.length});
             },
             changeStatus() {
                 this.changeStatusDialogVisible = false;
@@ -975,7 +1030,7 @@
 
 <style scoped lang="scss">
 .shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
 }
 
 .padding-bottom {

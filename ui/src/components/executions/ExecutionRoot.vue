@@ -59,6 +59,11 @@
             };
         },
         created() {
+            if(!this.$route.params.tab) {
+                const tab = localStorage.getItem("executeDefaultTab") || undefined;
+                this.$router.replace({name: "executions/update", params: {...this.$route.params, tab}});
+            }
+
             this.follow();
             window.addEventListener("popstate", this.follow)
         },

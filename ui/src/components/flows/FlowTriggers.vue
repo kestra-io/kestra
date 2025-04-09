@@ -1,5 +1,6 @@
 <template>
     <KestraFilter
+        v-if="triggersWithType.length"
         prefix="flow_triggers"
         :buttons="{
             refresh: {shown: true, callback: loadData},
@@ -147,12 +148,7 @@
         </el-table-column>
     </el-table>
 
-    <empty-state
-        v-else
-        :title="$t('triggers-view.title_no_triggers')"
-        :description="$t('triggers-view.desc_no_triggers')"
-        :image="TriggersEmptyImage"
-    />
+    <Empty v-else type="triggers" />
 
     <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true">
         <template #header>
@@ -241,6 +237,7 @@
     import TriggerAvatar from "./TriggerAvatar.vue";
 
     import KestraFilter from "../filter/KestraFilter.vue";
+    import Empty from "../layout/empty/Empty.vue";
 </script>
 
 <script>
@@ -254,12 +251,10 @@
     import action from "../../models/action";
     import moment from "moment";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    import EmptyState from "../layout/EmptyState.vue";
-    import TriggersEmptyImage from "../../assets/triggers_empty.svg";
     import _isEqual from "lodash/isEqual";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, EmptyState},
+        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
         data() {
             return {
                 triggerId: undefined,

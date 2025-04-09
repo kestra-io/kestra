@@ -1,6 +1,7 @@
 package io.kestra.core.docs;
 
 import com.google.common.base.CaseFormat;
+import io.kestra.core.models.Plugin;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import lombok.AllArgsConstructor;

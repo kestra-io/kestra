@@ -34,13 +34,28 @@ import java.util.Map;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition to execute the flow based on execution of another flow(s) with certain execution labels.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.ExecutionLabels",
-                "      labels:",
-                "         owner: john.doe"
-            }
+            code = """
+                id: flow_condition_executionlabels
+                namespace: company.team
+
+                tasks:
+                  - id: hello
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute when flow with specified labels enters FAILED state."
+                
+                triggers:
+                  - id: flow_trigger
+                    type: io.kestra.plugin.core.trigger.Flow
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.ExecutionLabels
+                        labels:
+                          owner: john.doe
+                          env: prod
+                    states:
+                      - FAILED
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.ExecutionLabelsCondition", "io.kestra.plugin.core.condition.ExecutionLabelsCondition"}

@@ -1,6 +1,6 @@
 package io.kestra.core.docs;
 
-import io.kestra.core.models.tasks.runners.TaskRunner;
+import io.kestra.core.plugins.PluginClassAndMetadata;
 import io.kestra.plugin.core.runner.Process;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.plugins.PluginScanner;
@@ -22,8 +22,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class DocumentationGeneratorTest {
@@ -40,16 +39,17 @@ class DocumentationGeneratorTest {
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
-        assertThat(scan.size(), is(1));
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class);
+        assertThat(scan.size()).isEqualTo(1);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("ExampleTask"));
-        assertThat(render, containsString("description: \"Short description for this task\""));
-        assertThat(render, containsString("`VALUE_1`"));
-        assertThat(render, containsString("`VALUE_2`"));
-        assertThat(render, containsString("This plugin is exclusively available on the Cloud and Enterprise editions of Kestra."));
+        assertThat(render).contains("ExampleTask");
+        assertThat(render).contains("description: \"Short description for this task\"");
+        assertThat(render).contains("`VALUE_1`");
+        assertThat(render).contains("`VALUE_2`");
+        assertThat(render).contains("This plugin is exclusively available on the Cloud and Enterprise editions of Kestra.");
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -59,14 +59,15 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class dag = scan.findClass(Dag.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, dag, Task.class);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan,dag, Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("Dag"));
-        assertThat(render, containsString("**Required:** ✔️"));
-        assertThat(render, containsString("`concurrent`"));
-        assertThat(render, not(containsString("requires an Enterprise Edition")));
+        assertThat(render).contains("Dag");
+        assertThat(render).contains("**Required:** ✔️");
+        assertThat(render).contains("`concurrent`");
+        assertThat(render).doesNotContain("requires an Enterprise Edition");
 
         int propertiesIndex = render.indexOf("Properties");
         int definitionsIndex = render.indexOf("Definitions");
@@ -84,7 +85,7 @@ class DocumentationGeneratorTest {
         int lastRequiredPropIndex = propertiesDoc.lastIndexOf("* **Required:** ✔️");
         int firstOptionalPropIndex = propertiesDoc.indexOf("* **Required:** ❌");
         if (lastRequiredPropIndex != -1 && firstOptionalPropIndex != -1) {
-            assertThat(lastRequiredPropIndex, lessThanOrEqualTo(firstOptionalPropIndex));
+            assertThat(lastRequiredPropIndex).isLessThanOrEqualTo(firstOptionalPropIndex);
         }
     }
 
@@ -95,15 +96,16 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class returnTask = scan.findClass(Return.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, returnTask, Task.class);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan, returnTask, Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("Return a value for debugging purposes."));
-        assertThat(render, containsString("is intended for troubleshooting"));
-        assertThat(render, containsString("## Metrics"));
-        assertThat(render, containsString("### `length`\n" + "* **Type:** ==counter== "));
-        assertThat(render, containsString("### `duration`\n" + "* **Type:** ==timer== "));
+        assertThat(render).contains("Return a value for debugging purposes.");
+        assertThat(render).contains("is intended for troubleshooting");
+        assertThat(render).contains("## Metrics");
+        assertThat(render).contains("### `length`\n" + "* **Type:** ==counter== ");
+        assertThat(render).contains("### `duration`\n" + "* **Type:** ==timer== ");
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -113,11 +115,12 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class bash = scan.findClass(Subflow.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan, bash, Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("* **Default:** `false`"));
+        assertThat(render).contains("* **Default:** `false`");
     }
 
     @SuppressWarnings({"unchecked", "deprecation"})
@@ -127,12 +130,13 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class<Echo> bash = scan.findClass(Echo.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, bash, Task.class);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan, bash, Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("Echo"));
-        assertThat(render, containsString("This feature is deprecated and will be removed in the future"));
+        assertThat(render).contains("Echo");
+        assertThat(render).contains("This feature is deprecated and will be removed in the future");
     }
 
     @SuppressWarnings("unchecked")
@@ -142,12 +146,13 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class<Set> set = scan.findClass(Set.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, set, Task.class);
+        PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan, set, Task.class, null);
+        ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("Set"));
-        assertThat(render, containsString("::alert{type=\"warning\"}\n"));
+        assertThat(render).contains("Set");
+        assertThat(render).contains("::alert{type=\"warning\"}\n");
     }
 
     @Test
@@ -157,8 +162,8 @@ class DocumentationGeneratorTest {
 
         List<Document> docs = documentationGenerator.generate(core);
         Document doc = docs.getFirst();
-        assertThat(doc.getIcon(), is(notNullValue()));
-        assertThat(doc.getBody(), containsString("## <img width=\"25\" src=\"data:image/svg+xml;base64,"));
+        assertThat(doc.getIcon()).isNotNull();
+        assertThat(doc.getBody()).contains("## <img width=\"25\" src=\"data:image/svg+xml;base64,");
     }
 
     @Test
@@ -170,7 +175,7 @@ class DocumentationGeneratorTest {
 
         List<Document> docs = documentationGenerator.generate(list.stream().filter(r -> r.license() != null).findFirst().orElseThrow());
         Document doc = docs.getFirst();
-        assertThat(doc.getBody(), containsString("This plugin is exclusively available on the Cloud and Enterprise editions of Kestra."));
+        assertThat(doc.getBody()).contains("This plugin is exclusively available on the Cloud and Enterprise editions of Kestra.");
     }
 
     @SuppressWarnings("unchecked")
@@ -180,11 +185,12 @@ class DocumentationGeneratorTest {
         RegisteredPlugin scan = pluginScanner.scan();
         Class<Process> processTaskRunner = scan.findClass(Process.class.getName()).orElseThrow();
 
-        ClassPluginDocumentation<Process> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, scan, processTaskRunner, Process.class);
+        PluginClassAndMetadata<Process> metadata = PluginClassAndMetadata.create(scan, processTaskRunner, Process.class, null);
+        ClassPluginDocumentation<Process> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
         String render = DocumentationGenerator.render(doc);
 
-        assertThat(render, containsString("title: Process"));
-        assertThat(render, containsString("Task runner that executes a task as a subprocess on the Kestra host."));
+        assertThat(render).contains("title: Process");
+        assertThat(render).contains("Task runner that executes a task as a subprocess on the Kestra host.");
     }
 }

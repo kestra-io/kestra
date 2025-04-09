@@ -56,6 +56,7 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
         title = "The file to be split."
     )
     @NotNull
+    @PluginProperty(internalStorageURI = true)
     private Property<String> from;
 
     private Property<String> bytes;

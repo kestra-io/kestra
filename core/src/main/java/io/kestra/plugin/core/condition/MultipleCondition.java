@@ -28,37 +28,45 @@ import java.util.*;
 @Schema(
     title = "Run a flow if the list of preconditions are met in a time window.",
     description = """
-        **This task is deprecated**, use io.kestra.plugin.core.condition.ExecutionsWindow or io.kestra.plugin.core.condition.FilteredExecutionsWindow instead.
+        **This task is deprecated**, use the `preconditions` property of the `io.kestra.plugin.core.trigger.Flow` trigger instead.
         Will trigger an executions when all the flows defined by the preconditions are successfully executed in a specific period of time.
-        The period is defined by the `timeSLA` property and is by default a duration window of 24 hours."""
+        The period is defined by the `timeWindow` property and is by default a duration window of 24 hours."""
 )
 @Plugin(
     examples = {
         @Example(
             full = true,
             title = "A flow that is waiting for 2 flows to run successfully in a day",
-            code = {
-                "triggers:",
-                "  - id: multiple-listen-flow",
-                "    type: io.kestra.plugin.core.trigger.Flow",
-                "    conditions:",
-                "      - type: io.kestra.plugin.core.condition.ExecutionStatus",
-                "        in:",
-                "        - SUCCESS",
-                "      - id: multiple",
-                "        type: io.kestra.plugin.core.condition.MultipleCondition",
-                "        sla:",
-                "          window: PT12H",
-                "        conditions:",
-                "          flow-a:",
-                "            type: io.kestra.plugin.core.condition.ExecutionFlow",
-                "            namespace: io.kestra.demo",
-                "            flowId: multiplecondition-flow-a",
-                "          flow-b:",
-                "            type: io.kestra.plugin.core.condition.ExecutionFlow",
-                "            namespace: io.kestra.demo",
-                "            flowId: multiplecondition-flow-b"
-            }
+            code = """
+                id: schedule_condition_multiplecondition
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute when `multiplecondition_flow_a` and `multiplecondition_flow_b` are successfully executed in the last 12 hours."
+                
+                triggers:
+                  - id: multiple_listen_flow
+                    type: io.kestra.plugin.core.trigger.Flow
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.ExecutionStatus
+                        in:
+                          - SUCCESS
+                      - id: multiple
+                        type: io.kestra.plugin.core.condition.MultipleCondition
+                        timeWindow:
+                          window: PT12H
+                        conditions:
+                          flow_a:
+                            type: io.kestra.plugin.core.condition.ExecutionFlow
+                            namespace: company.team
+                            flowId: multiplecondition_flow_a
+                          flow_b:
+                            type: io.kestra.plugin.core.condition.ExecutionFlow
+                            namespace: company.team
+                            flowId: multiplecondition_flow_b
+                """
         )
     },
     aliases = "io.kestra.core.models.conditions.types.MultipleCondition"
@@ -102,7 +110,7 @@ public class MultipleCondition extends Condition implements io.kestra.core.model
 
     @Schema(
         title = "The duration of the window",
-        description = "Deprecated, use `timeSLA.window` instead.")
+        description = "Deprecated, use `timeWindow.window` instead.")
     @PluginProperty
     @Deprecated
     private Duration window;
@@ -114,7 +122,7 @@ public class MultipleCondition extends Condition implements io.kestra.core.model
 
     @Schema(
         title = "The window advance duration",
-        description = "Deprecated, use `timeSLA.windowAdvance` instead.")
+        description = "Deprecated, use `timeWindow.windowAdvance` instead.")
     @PluginProperty
     @Deprecated
     private Duration windowAdvance;

@@ -2,17 +2,19 @@ package io.kestra.core.schedulers;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.RecoverMissedSchedules;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.runner.JdbcScheduler;
 import io.kestra.plugin.core.trigger.ScheduleOnDates;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
@@ -24,8 +26,9 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.oneOf;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -35,6 +38,9 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
 
     @Inject
     protected SchedulerTriggerStateInterface triggerState;
+
+    @Inject
+    protected FlowRepositoryInterface flowRepository;
 
     private ScheduleOnDates.ScheduleOnDatesBuilder<?, ?> createScheduleOnDatesTrigger(String zone, List<ZonedDateTime> dates, String triggerId) {
         return ScheduleOnDates.builder()
@@ -47,11 +53,11 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             ));
     }
 
-    private Flow createScheduleFlow(String zone, String triggerId) {
+    private FlowWithSource createScheduleFlow(String zone, String triggerId) {
         var now = ZonedDateTime.now();
-        var before = now.minusSeconds(1).truncatedTo(ChronoUnit.SECONDS);
-        var after = now.plusSeconds(1).truncatedTo(ChronoUnit.SECONDS);
-        var later = now.plusSeconds(2).truncatedTo(ChronoUnit.SECONDS);
+        var before = now.minusSeconds(3).truncatedTo(ChronoUnit.SECONDS);
+        var after = now.plusSeconds(3).truncatedTo(ChronoUnit.SECONDS);
+        var later = now.plusSeconds(6).truncatedTo(ChronoUnit.SECONDS);
         ScheduleOnDates schedule = createScheduleOnDatesTrigger(zone, List.of(before, after, later), triggerId).build();
 
         return createFlow(Collections.singletonList(schedule));
@@ -74,7 +80,8 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
         Set<String> executionId = new HashSet<>();
 
         // then flow should be executed 4 times
-        Flow flow = createScheduleFlow("Europe/Paris", "schedule");
+        FlowWithSource flow = createScheduleFlow("Europe/Paris", "schedule");
+        flowRepository.create(GenericFlow.of(flow));
 
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
@@ -95,16 +102,16 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             // wait for execution
             Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();
-                assertThat(execution.getInputs().get("testInputs"), is("test-inputs"));
-                assertThat(execution.getInputs().get("def"), is("awesome"));
+                assertThat(execution.getInputs().get("testInputs")).isEqualTo("test-inputs");
+                assertThat(execution.getInputs().get("def")).isEqualTo("awesome");
 
                 date.add((String) execution.getTrigger().getVariables().get("date"));
                 executionId.add(execution.getId());
 
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    executionQueue.emit(execution.withState(State.Type.SUCCESS));
+                    terminateExecution(execution, trigger, flow);
                 }
-                assertThat(execution.getFlowId(), is(flow.getId()));
+                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
                 queueCount.countDown();
             }));
 
@@ -113,7 +120,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
             receiveExecutions.blockLast();
 
-            assertThat(queueCount.getCount(), is(0L));
+            assertThat(queueCount.getCount()).isEqualTo(0L);
         }
     }
 
@@ -151,7 +158,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
-                assertThat(execution.getFlowId(), is(flow.getId()));
+                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
                 queueCount.countDown();
             });
 
@@ -161,10 +168,10 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
             receive.blockLast();
 
-            assertThat(queueCount.getCount(), is(0L));
+            assertThat(queueCount.getCount()).isEqualTo(0L);
             Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
-            assertThat(newTrigger.getDate().toLocalDateTime(), is(earlier.toLocalDateTime()));
-            assertThat(newTrigger.getNextExecutionDate().toLocalDateTime(), is(before.toLocalDateTime()));
+            assertThat(newTrigger.getDate().toLocalDateTime()).isEqualTo(earlier.toLocalDateTime());
+            assertThat(newTrigger.getNextExecutionDate().toLocalDateTime()).isEqualTo(before.toLocalDateTime());
         }
     }
 
@@ -202,7 +209,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             // wait for execution
             Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
                 Execution execution = either.getLeft();
-                assertThat(execution.getFlowId(), is(flow.getId()));
+                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
                 queueCount.countDown();
             });
 
@@ -212,7 +219,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             // needed for RetryingTest to work since there is no context cleaning between method => we have to clear assertion receiver manually
             receive.blockLast();
 
-           assertThat(queueCount.getCount(), is(0L));
+            assertThat(queueCount.getCount()).isEqualTo(0L);
             Trigger newTrigger = this.triggerState.findLast(lastTrigger).orElseThrow();
             // depending on the exact timing of events, the trigger date can be before or after
             assertThat(newTrigger.getDate().toLocalDateTime(), oneOf(before.toLocalDateTime(), after.toLocalDateTime()));

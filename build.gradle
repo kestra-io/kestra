@@ -21,7 +21,7 @@ plugins {
 
     // test
     id "com.adarshr.test-logger" version "4.0.0"
-    id "org.sonarqube" version "6.0.1.5171"
+    id "org.sonarqube" version "6.1.0.5360"
     id 'jacoco-report-aggregation'
 
     // helper
@@ -33,13 +33,13 @@ plugins {
     // release
     id "io.github.gradle-nexus.publish-plugin" version "2.0.0"
     id 'net.researchgate.release' version '3.1.0'
-    id "com.gorylenko.gradle-git-properties" version "2.4.2"
+    id "com.gorylenko.gradle-git-properties" version "2.5.0"
     id 'signing'
     id 'ru.vyarus.pom' version '3.0.0' apply false
     id 'ru.vyarus.github-info' version '2.0.0' apply false
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.0.2" apply false
+    id "org.owasp.dependencycheck" version "12.1.1" apply false
 }
 
 idea {
@@ -74,7 +74,7 @@ dependencies {
  **********************************************************************************************************************/
 allprojects {
     if (it.name != 'platform') {
-        group "io.kestra"
+        group = "io.kestra"
 
         java {
             sourceCompatibility = targetJavaVersion
@@ -121,7 +121,6 @@ allprojects {
             micronaut "io.micronaut:micronaut-management"
             micronaut "io.micrometer:micrometer-core"
             micronaut "io.micronaut.micrometer:micronaut-micrometer-registry-prometheus"
-            micronaut "io.micronaut.micrometer:micronaut-micrometer-registry-otlp"
             micronaut "io.micronaut:micronaut-http-client"
             micronaut "io.micronaut.reactor:micronaut-reactor-http-client"
             micronaut "io.micronaut.tracing:micronaut-tracing-opentelemetry-http"
@@ -197,6 +196,9 @@ subprojects {
             testImplementation 'org.hamcrest:hamcrest'
             testImplementation 'org.hamcrest:hamcrest-library'
             testImplementation 'org.exparity:hamcrest-date'
+
+            //assertj
+            testImplementation 'org.assertj:assertj-core'
         }
 
         test {
@@ -280,7 +282,7 @@ subprojects {
         }
 
         dependencies {
-            agent "org.aspectj:aspectjweaver:1.9.22.1"
+            agent "org.aspectj:aspectjweaver:1.9.23"
         }
 
         test {
@@ -597,11 +599,10 @@ release {
     }
 
     // Dynamically set properties with default values
-    failOnSnapshotDependencies = (project.hasProperty('release.failOnSnapshotDependencies')
-            ? project.property('release.failOnSnapshotDependencies').toBoolean()
-            : true)
+    failOnSnapshotDependencies = providers.gradleProperty("release.failOnSnapshotDependencies")
+            .map(val -> Boolean.parseBoolean(val))
+            .getOrElse(true)
 
-    pushReleaseVersionBranch = (project.hasProperty('release.pushReleaseVersionBranch')
-            ? project.property('release.pushReleaseVersionBranch').toString()
-            : null)
+    pushReleaseVersionBranch = providers.gradleProperty("release.pushReleaseVersionBranch")
+            .getOrElse(null)
 }

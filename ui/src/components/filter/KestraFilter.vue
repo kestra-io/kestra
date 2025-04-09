@@ -17,10 +17,19 @@
             :show-arrow="false"
             fit-input-width
             :popper-class="!!props.searchCallback ? 'd-none' : 'filters-select'"
+            :popper-options="{
+                modifiers: [
+                    {
+                        name: 'offset',
+                        options: {
+                            offset: [dropdownOffset, 12],
+                        },
+                    },
+                ],
+            }"
             @change="(value) => changeCallback(value)"
             @keyup="(e) => handleInputChange(e.key)"
             @keyup.enter="() => handleEnterKey(select?.hoverOption?.value)"
-            @remove-tag="(item) => removeItem(item)"
             @visible-change="(visible) => dropdownToggleCallback(visible)"
             @clear="handleClear"
             :class="{
@@ -32,12 +41,16 @@
             @focus="handleFocus"
             data-test-id="KestraFilter__select"
         >
-            <template #label="{value}">
-                <!--
-                    TODO: Find a way to have persistent tags for el-select.
-                    https://github.com/kestra-io/kestra/issues/6256
-                -->
-                <Label :option="value" :prefix="ITEMS_PREFIX" />
+            <template #tag>
+                <el-tag
+                    v-for="(option, index) in currentFilters"
+                    :key="index"
+                    :closable="!option.persistent"
+                    @close="() => removeItem(option)"
+                    :class="{disabled: option.persistent}"
+                >
+                    <Label :option :prefix="ITEMS_PREFIX" />
+                </el-tag>
             </template>
             <template #empty>
                 <span v-if="!isDatePickerShown">{{ emptyLabel }}</span>
@@ -122,6 +135,7 @@
         >
             <KestraIcon :tooltip="$t('search')" placement="bottom">
                 <el-button
+                    :disabled="!!props.searchCallback"
                     :icon="Magnify"
                     @click="triggerSearch"
                     class="rounded-0"
@@ -170,7 +184,7 @@
     import {computed, nextTick, onMounted, ref, shallowRef, watch} from "vue";
     import {ElSelect} from "element-plus";
 
-    import {Buttons, CurrentItem, Shown, Pair, Property} from "./utils/types";
+    import {Buttons, CurrentItem, Pair, Property, Shown} from "./utils/types";
 
     import Refresh from "../layout/RefreshButton.vue";
     import Items from "./segments/Items.vue";
@@ -187,10 +201,10 @@
 
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
-    import {useRoute, useRouter} from "vue-router";
+    import {useRoute, useRouter, LocationQueryRaw} from "vue-router";
     import {useFilters} from "./composables/useFilters";
-    import action from "../../models/action.js";
-    import permission from "../../models/permission.js";
+    import action from "../../models/action";
+    import permission from "../../models/permission";
     import {useValues} from "./composables/useValues";
     import {decodeParams, encodeParams} from "./utils/helpers";
 
@@ -228,18 +242,22 @@
         },
         placeholder: {type: String, default: undefined},
         searchCallback: {type: Function, default: undefined},
+        isDefaultDashboard: {type: Boolean, default: false}
     });
 
+    const TEXT_PREFIX = `${t("filters.text_search")}: `;
     const ITEMS_PREFIX = props.prefix ?? String(route.name);
 
-    const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX);
+    const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX, props.isDefaultDashboard);
 
     const prefixFilteredValueOptions = computed(() => {
         if (prefixFilter.value === "") {
             return valueOptions.value;
         }
-        return valueOptions.value.filter((o) =>
-            o.label.toLowerCase().startsWith(prefixFilter.value),
+        return (
+            valueOptions.value.filter((o) =>
+                o.label.toLowerCase().startsWith(prefixFilter.value),
+            ) || []
         );
     });
 
@@ -274,6 +292,7 @@
 
                 if (o.key === "timeRange") comparator = "relative_date";
                 if (o.key === "date") comparator = "absolute_date";
+                if (o.key === "childFilter") comparator = "child";
 
                 return comparator === option.label;
             })[0];
@@ -300,10 +319,18 @@
         if (currentFilters.value.at(-1)?.label === "user") {
             emits("input", getInputValue());
         }
+
+        console.log("getInputValue", getInputValue());
+        if (getInputValue() === TEXT_PREFIX) {
+            // cons
+            select.value!.states.inputValue = "";
+        }
     };
 
     const handleClear = () => {
-        currentFilters.value = [];
+        currentFilters.value = currentFilters.value.filter(
+            (item) => item.persistent,
+        );
         triggerSearch();
     };
 
@@ -326,9 +353,9 @@
         };
 
         // Check if parent filter already exists
-        const existingFilterIndex = currentFilters.value.findIndex(
-            (item) => item.label === option.value.label,
-        );
+        const existingFilterIndex = currentFilters.value
+            .filter((itm) => itm.label !== "labels")
+            .findIndex((item) => item.label === option.value.label);
         if (existingFilterIndex !== -1) {
             // If it exists, update current filter index
             dropdowns.value.second = {shown: true, index: existingFilterIndex};
@@ -357,6 +384,8 @@
                 comparatorCallback(option.comparators[0]);
             }
         }
+
+        updateHoveringIndex(0);
     };
     const comparatorCallback = (value) => {
         currentFilters.value[dropdowns.value.second.index].comparator = value;
@@ -375,6 +404,10 @@
         updateHoveringIndex(0);
     };
 
+    let dropdownOffset = ref(0);
+    const calculateDropdownOffset = (left: number = 0, halfWidth: number = 0) => {
+        return left > halfWidth ? Math.abs(halfWidth - left) : -(halfWidth - left);
+    };
     const dropdownToggleCallback = (visible) => {
         if (!visible) {
             dropdowns.value = {...INITIAL_DROPDOWNS};
@@ -385,15 +418,21 @@
             if (currentFilters.value?.at(-1)?.value?.length === 0)
                 currentFilters.value.pop();
         } else {
+            const {selectRef, inputRef} = select.value || {};
+            dropdownOffset.value = calculateDropdownOffset(
+                inputRef?.offsetLeft,
+                selectRef?.offsetWidth / 2,
+            );
+
             updateHoveringIndex(0);
         }
     };
     const isOptionDisabled = () => {
         if (!activeParentFilter.value) return false;
 
-        const parentIndex = currentFilters.value.findIndex(
-            (item) => item.label === activeParentFilter.value,
-        );
+        const parentIndex = currentFilters.value
+            .filter((itm) => itm.label !== "labels")
+            .findIndex((item) => item.label === activeParentFilter.value);
         if (parentIndex === -1) return false;
     };
     const valueCallback = (filter, isDate = false) => {
@@ -405,7 +444,7 @@
             );
             if (parentIndex !== -1) {
                 if (
-                    ["namespace", "log level"].includes(
+                    ["status", "log level"].includes(
                         lastClickedParent.value.toLowerCase(),
                     )
                 ) {
@@ -438,7 +477,9 @@
                     },
                 ];
             }
-            const index = currentFilters.value.findIndex((v) => v.label === "absolute_date");
+            const index = currentFilters.value.findIndex(
+                (v) => v.label === "absolute_date",
+            );
 
             if (index !== -1) {
                 if (!filter || !filter.startDate || !filter.endDate) {
@@ -593,9 +634,8 @@
 
     watch(
         () => route.query,
-        (q: any) => {
-            // Handling change of label filters from direct click events
-            const routeFilters = decodeParams(route.path, q, props.include, OPTIONS);
+        (q: LocationQueryRaw) => {
+            const routeFilters = decodeParams(route.name, q, props.include, OPTIONS, props.isDefaultDashboard) as CurrentItem[];
             currentFilters.value = routeFilters;
         },
         {immediate: true},
@@ -619,32 +659,50 @@
         });
     });
 
+    watch(
+        includedOptions,
+        (options) => {
+            if (options.length || !dropdowns.value.first?.shown) return;
+
+            if (getInputValue() && !getInputValue()?.startsWith(TEXT_PREFIX) && select.value && !props.searchCallback) {
+                select.value.states.inputValue = `${TEXT_PREFIX}${getInputValue()}`;
+            }
+        },
+        {immediate: true},
+    );
+
     const changeCallback = (wholeSearchContent) => {
         if (!Array.isArray(wholeSearchContent) || !wholeSearchContent.length)
             return;
 
         if (typeof wholeSearchContent.at(-1) === "string") {
             if (
-                ["labels", "details"].includes(wholeSearchContent.at(-2)?.label) ||
+                ["details"].includes(wholeSearchContent.at(-2)?.label) ||
                 wholeSearchContent.at(-2)?.value?.length === 0
             ) {
-                // Adding value to preceding empty filter
-                // TODO Provide a way for user to escape infinite labels & details loop (you can never fallback to a new filter, any further text will be added as a value to the filter)
-                wholeSearchContent.at(-2)?.value?.push(wholeSearchContent.at(-1));
+                if (wholeSearchContent.at(-2)?.label === "child") {
+                    if (typeof wholeSearchContent.at(-1) === "string")
+                        wholeSearchContent = [];
+                } else {
+                    // Adding value to preceding empty filter
+                    // TODO Provide a way for user to escape infinite labels & details loop (you can never fallback to a new filter, any further text will be added as a value to the filter)
+                    wholeSearchContent
+                        .at(-2)
+                        ?.value?.push(wholeSearchContent.at(-1));
+                }
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
-                const index = currentFilters.value.findIndex(
-                    (i) => i.label === label,
-                );
+                const index = currentFilters.value.findIndex((i) => {
+                    return i.label === label;
+                });
 
-                if (index !== -1)
-                    currentFilters.value[index].value = [wholeSearchContent.at(-1)];
-                else
-                    currentFilters.value.push({
-                        label,
-                        value: [wholeSearchContent.at(-1)],
-                    });
+                const value = wholeSearchContent
+                    .at(-1)
+                    ?.replace(new RegExp(`^${TEXT_PREFIX}\\s*`), "");
+
+                if (index !== -1) currentFilters.value[index].value = [value];
+                else currentFilters.value.push({label, value: [value]});
             }
 
             triggerSearch();
@@ -658,6 +716,7 @@
     };
 
     const removeItem = (value) => {
+        if (value.persistent) return;
         currentFilters.value = currentFilters.value.filter(
             (item) => JSON.stringify(item) !== JSON.stringify(value),
         );
@@ -667,20 +726,28 @@
 
     const handleClickedItems = (value) => {
         if (value) currentFilters.value = value;
-        select.value?.focus();
+        triggerSearch();
     };
 
     const triggerSearch = () => {
         if (props.searchCallback) return;
         else {
-            router.push({query: encodeParams(route.path, currentFilters.value, OPTIONS)});
+            router.push({
+                query: encodeParams(route.name, currentFilters.value, OPTIONS, props.isDefaultDashboard),
+            });
         }
     };
 
     // Include parameters from URL directly to filter
     onMounted(() => {
         if (props.decode) {
-            const decodedParams = decodeParams(route.path, route.query, props.include, OPTIONS);
+            const decodedParams = decodeParams(
+                route.name,
+                route.query,
+                props.include,
+                OPTIONS,
+                props.isDefaultDashboard
+            );
             currentFilters.value = decodedParams.map((item: any) => {
                 if (item.label === "absolute_date") {
                     return {
@@ -713,7 +780,7 @@
             currentFilters.value.push({
                 label: "namespace",
                 value: [namespace],
-                comparator: COMPARATORS.STARTS_WITH,
+                comparator: COMPARATORS.EQUALS,
                 persistent: true,
             });
         };
@@ -735,8 +802,8 @@
             // Single namespace page
             addNamespaceFilter(params.id);
         } else if (name === "admin/triggers") {
-            if(query.namespace) addNamespaceFilter(query.namespace);
-            if(query.flowId){
+            if (query.namespace) addNamespaceFilter(query.namespace);
+            if (query.flowId) {
                 currentFilters.value.push({
                     label: "flow",
                     value: [`${query.flowId}`],
@@ -744,14 +811,14 @@
                     persistent: true,
                 });
             }
-            if(query.q) {
+            if (query.q) {
                 currentFilters.value.push({
                     label: "text",
                     value: [`${query.q}`],
                     comparator: COMPARATORS.EQUALS,
                     persistent: true,
                 });
-            }            
+            }
         }
     });
 
@@ -973,9 +1040,13 @@ $properties: v-bind('props.propertiesWidth + "px"');
         & .el-tag {
             overflow: hidden;
             padding: 0 !important;
-            padding-right: 0.30rem !important;
+            padding-right: 0.3rem !important;
             color: var(--ks-tag-content);
             background: var(--ks-tag-background-active) !important;
+
+            &.disabled .el-tag__content {
+                cursor: not-allowed;
+            }
 
             &:hover {
                 background: var(--ks-tag-background-hover) !important;
@@ -984,7 +1055,7 @@ $properties: v-bind('props.propertiesWidth + "px"');
             & .el-tag__close {
                 color: var(--ks-content-link);
 
-                &:hover{
+                &:hover {
                     background: none !important;
                 }
             }
@@ -1025,6 +1096,15 @@ $properties: v-bind('props.propertiesWidth + "px"');
     }
 
     .el-select-dropdown__item {
+        &.is-selected {
+            background-color: var(--ks-background-hover);
+            font-weight: initial;
+
+            &::after {
+                display: none;
+            }
+        }
+
         &.disabled {
             opacity: 0.6;
 

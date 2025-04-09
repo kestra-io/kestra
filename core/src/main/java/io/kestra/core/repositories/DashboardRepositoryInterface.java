@@ -9,6 +9,7 @@ import jakarta.annotation.Nullable;
 
 import java.io.IOException;
 import java.time.ZonedDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -18,6 +19,8 @@ public interface DashboardRepositoryInterface {
     Optional<Dashboard> get(String tenantId, String id);
 
     ArrayListTotal<Dashboard> list(Pageable pageable, String tenantId, String query);
+
+    List<Dashboard> findAll(String tenantId);
 
     default Dashboard save(Dashboard dashboard, String source) {
         return this.save(null, dashboard, source);

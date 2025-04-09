@@ -54,7 +54,7 @@
                             <div class="left">
                                 <div class="blueprint">
                                     <div class="ps-0 title">
-                                        {{ blueprint.title }}
+                                        {{ blueprint.title ?? blueprint.id }}
                                     </div>
                                     <div v-if="!system" class="tags text-uppercase">
                                         <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
@@ -77,11 +77,10 @@
                                 <slot name="buttons" :blueprint="blueprint" />
                                 <el-tooltip v-if="embed" trigger="click" content="Copied" placement="left" :auto-close="2000" effect="light">
                                     <el-button
-                                        @click.prevent.stop="copy(blueprint.id)"
+                                        type="primary"
+                                        size="default"
                                         :icon="icon.ContentCopy"
-                                        size="large"
-                                        text
-                                        bg
+                                        @click.prevent.stop="copy(blueprint.id)"
                                     >
                                         {{ $t('copy') }}
                                     </el-button>

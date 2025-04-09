@@ -19,8 +19,31 @@ on:
         value: ${{ jobs.set-backend-status.outputs.backend_status }}
 
 jobs:
+  file-changes:
+    name: File changes detection
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    outputs:
+      ui: ${{ steps.changes.outputs.ui }}
+      backend: ${{ steps.changes.outputs.backend }}
+    steps:
+      - uses: actions/checkout@v4
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+      - uses: dorny/paths-filter@v3
+        if: "!startsWith(github.ref, 'refs/tags/v')"
+        id: changes
+        with:
+          filters: |
+            ui:
+              - 'ui/**'
+            backend:
+              - '!{ui,.github}/**'
+          token: ${{ secrets.GITHUB_TOKEN }}
+
   frontend:
     name: Frontend - Tests
+    needs: file-changes
+    if: "needs.file-changes.outputs.ui == 'true' || startsWith(github.ref, 'refs/tags/v')"
     uses: ./.github/workflows/workflow-frontend-test.yml
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -29,6 +52,8 @@ jobs:
 
   backend:
     name: Backend - Tests
+    needs: file-changes
+    if: "needs.file-changes.outputs.backend == 'true' || startsWith(github.ref, 'refs/tags/v')"
     uses: ./.github/workflows/workflow-backend-test.yml
     secrets:
       GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

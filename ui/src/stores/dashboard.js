@@ -36,7 +36,8 @@ export default {
             return this.$http.delete(`${apiUrl(this)}/dashboards/${id}`).then(response => response.data);
         },
         generate(_, {id, chartId, ...filters}) {
-            return this.$http.post(`${apiUrl(this)}/dashboards/${id}/charts/${chartId}`, filters).then(response => response.data);
+            const filtersObj = Object.keys(filters).length > 0 ? filters : null;
+            return this.$http.post(`${apiUrl(this)}/dashboards/${id}/charts/${chartId}`, filtersObj).then(response => response.data);
         },
         validate(_, source) {
             return this.$http.post(`${apiUrl(this)}/dashboards/validate`, source, yamlContentHeader).then(response => {

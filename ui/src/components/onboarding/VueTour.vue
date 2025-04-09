@@ -239,8 +239,6 @@
         case "business_processes":
         case "data_engineering_pipeline":
             return 94;
-        case "business_automation":
-            return 134;
         case "dwh_and_analytics":
         case "file_processing":
         case "infrastructure_automation":
@@ -263,7 +261,7 @@
         ...(p ? {primary: t(`onboarding.steps.${step}.primary`)} : {}),
         ...(s ? {secondary: t(`onboarding.steps.${step}.secondary`)} : {}),
     });
-    const wait = (time) =>
+    const wait = (time = 200) =>
         new Promise((resolve) => setTimeout(() => resolve(true), time));
 
     const toggleScroll = (enabled = true) => {
@@ -288,7 +286,7 @@
                     fullscreen: true,
                 });
 
-                return wait(1);
+                return wait();
             },
         },
         {
@@ -316,7 +314,7 @@
                     template: flows.value[activeFlow.value]?.id,
                 });
 
-                return wait(1);
+                return wait();
             },
         },
         {
@@ -327,7 +325,7 @@
             params: {...STEP_OPTIONS, placement: "right"},
             before: () => {
                 toggleScroll();
-                return wait(1);
+                return wait();
             },
         },
         {
@@ -350,7 +348,7 @@
             highlightElement: ".top-bar",
             params: {...STEP_OPTIONS, placement: "bottom"},
             before: () => {
-                return wait(200);
+                return wait();
             },
         },
         {
@@ -366,7 +364,7 @@
                 placement: "bottom",
             },
             before: () => {
-                return wait(200)
+                return wait()
             },
         },
         {
@@ -383,7 +381,7 @@
                 ],
                 placement: "bottom",
             },
-            before: () => wait(1),
+            before: () => wait(),
         },
     ];
 

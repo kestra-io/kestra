@@ -1,17 +1,21 @@
 id: parallel
 namespace: sanitychecks
 
+variables:
+  test: test
 tasks:
   - id: parallel
     type: io.kestra.plugin.core.flow.Parallel
     tasks:
       - id: 1st
         type: io.kestra.plugin.core.debug.Return
-        format: "{{ task.id }} > {{ taskrun.startDate }}"
+        format: "{{ task.id }}"
       - id: 2nd
         type: io.kestra.plugin.core.debug.Return
-        format: "{{ task.id }} > {{ taskrun.id }}"
+        format: "{{vars.test}}"
 
-  - id: last
-    type: io.kestra.plugin.core.debug.Return
-    format: "{{ task.id }} > {{ taskrun.startDate }}"
+  - id: assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs['1st'].value == '1st' }}"
+      - "{{ outputs['2nd'].value == 'test' }}"

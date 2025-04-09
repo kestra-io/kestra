@@ -148,30 +148,41 @@ public class HttpRequest {
 
         public abstract String getContentType() throws IOException;
 
+        protected ContentType entityContentType() throws IOException {
+            return this.getCharset() != null ? ContentType.create(this.getContentType(), this.getCharset()) : ContentType.create(this.getContentType());
+        }
+
         public static RequestBody from(HttpEntity entity) throws IOException {
             if (entity == null) {
                 return null;
             }
 
-            Charset charset = entity.getContentEncoding() != null ? Charset.forName(entity.getContentEncoding()) : StandardCharsets.UTF_8;
-
-            if (entity.getContentType().equals(ContentType.APPLICATION_OCTET_STREAM.getMimeType())) {
+            String[] parts = entity.getContentType().split(";");
+            String mimeType = parts[0];
+            Charset charset = StandardCharsets.UTF_8;
+            for (String part : parts) {
+                String stripped = part.strip();
+                if (stripped.startsWith("charset")) {
+                    charset = Charset.forName(stripped.substring(stripped.lastIndexOf('=') + 1));
+                }
+            }
+            if (mimeType.equals(ContentType.APPLICATION_OCTET_STREAM.getMimeType())) {
                 return ByteArrayRequestBody.builder()
-                    .contentType(entity.getContentType())
+                    .contentType(mimeType)
                     .charset(charset)
                     .content(IOUtils.toByteArray(entity.getContent()))
                     .build();
             }
 
-            if (entity.getContentType().equals(ContentType.TEXT_PLAIN.getMimeType())) {
+            if (mimeType.equals(ContentType.TEXT_PLAIN.getMimeType())) {
                 return StringRequestBody.builder()
-                    .contentType(entity.getContentType())
+                    .contentType(mimeType)
                     .charset(charset)
                     .content(IOUtils.toString(entity.getContent(), charset))
                     .build();
             }
 
-            if (entity.getContentType().equals(ContentType.APPLICATION_JSON.getMimeType())) {
+            if (mimeType.equals(ContentType.APPLICATION_JSON.getMimeType())) {
                 return JsonRequestBody.builder()
                     .charset(charset)
                     .content(JacksonMapper.toObject(IOUtils.toString(entity.getContent(), charset)))
@@ -180,7 +191,7 @@ public class HttpRequest {
 
             return ByteArrayRequestBody.builder()
                 .charset(charset)
-                .contentType(entity.getContentType())
+                .contentType(mimeType)
                 .content(entity.getContent().readAllBytes())
                 .build();
         }
@@ -193,13 +204,12 @@ public class HttpRequest {
         @Builder.Default
         private String contentType = ContentType.APPLICATION_OCTET_STREAM.getMimeType();
 
-        @Builder.Default
-        private Charset charset = StandardCharsets.UTF_8;
+        private Charset charset;
 
         private InputStream content;
 
-        public HttpEntity to() {
-            return new InputStreamEntity(content, ContentType.create(contentType, charset));
+        public HttpEntity to() throws IOException {
+            return new InputStreamEntity(content, this.entityContentType());
         }
     }
 
@@ -210,13 +220,12 @@ public class HttpRequest {
         @Builder.Default
         private String contentType = ContentType.TEXT_PLAIN.getMimeType();
 
-        @Builder.Default
-        private Charset charset = StandardCharsets.UTF_8;
+        private Charset charset;
 
         private String content;
 
-        public HttpEntity to() {
-            return new StringEntity(this.content, ContentType.create(contentType, charset));
+        public HttpEntity to() throws IOException {
+            return new StringEntity(this.content, this.entityContentType());
         }
     }
 
@@ -227,13 +236,12 @@ public class HttpRequest {
         @Builder.Default
         private String contentType = ContentType.APPLICATION_OCTET_STREAM.getMimeType();
 
-        @Builder.Default
-        private Charset charset = StandardCharsets.UTF_8;
+        private Charset charset;
 
         private byte[] content;
 
-        public HttpEntity to() {
-            return new ByteArrayEntity(content, ContentType.create(contentType, charset));
+        public HttpEntity to() throws IOException {
+            return new ByteArrayEntity(content, this.entityContentType());
         }
     }
 
@@ -241,8 +249,7 @@ public class HttpRequest {
     @AllArgsConstructor
     @SuperBuilder
     public static class JsonRequestBody extends RequestBody {
-        @Builder.Default
-        private Charset charset = StandardCharsets.UTF_8;
+        private Charset charset;
 
         private Object content;
 
@@ -255,7 +262,7 @@ public class HttpRequest {
             try {
                 return new StringEntity(
                     JacksonMapper.ofJson().writeValueAsString(content),
-                    ContentType.APPLICATION_JSON.withCharset(this.charset)
+                    this.charset != null ? ContentType.APPLICATION_JSON.withCharset(this.charset) : ContentType.APPLICATION_JSON
                 );
             } catch (JsonProcessingException e) {
                 throw new IOException(e);
@@ -267,8 +274,7 @@ public class HttpRequest {
     @AllArgsConstructor
     @SuperBuilder
     public static class UrlEncodedRequestBody extends RequestBody {
-        @Builder.Default
-        private Charset charset = StandardCharsets.UTF_8;
+        private Charset charset;
 
         private Map<String, Object> content;
 
@@ -278,13 +284,12 @@ public class HttpRequest {
         }
 
         public HttpEntity to() throws IOException {
-            return new UrlEncodedFormEntity(
-                this.content .entrySet()
-                    .stream()
-                    .map(e -> new BasicNameValuePair(e.getKey(), e.getValue().toString()))
-                    .toList(),
-                this.charset
-            );
+            List<BasicNameValuePair> list = this.content.entrySet()
+                .stream()
+                .map(e -> new BasicNameValuePair(e.getKey(), e.getValue().toString()))
+                .toList();
+
+            return this.charset != null ? new UrlEncodedFormEntity(list, this.charset) : new UrlEncodedFormEntity(list);
         }
     }
 
@@ -292,8 +297,7 @@ public class HttpRequest {
     @AllArgsConstructor
     @SuperBuilder
     public static class MultipartRequestBody extends RequestBody {
-        @Builder.Default
-        private Charset charset = StandardCharsets.UTF_8;
+        private Charset charset;
 
         private Map<String, Object> content;
 
@@ -304,8 +308,11 @@ public class HttpRequest {
 
         public HttpEntity to() throws IOException {
             MultipartEntityBuilder builder = MultipartEntityBuilder
-                .create()
-                .setCharset(this.charset);
+                .create();
+
+            if (this.charset != null) {
+                builder.setCharset(this.charset);
+            }
 
             content.forEach((key, value) -> {
                 switch (value) {

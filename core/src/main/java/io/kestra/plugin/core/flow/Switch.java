@@ -63,7 +63,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 
                 tasks:
                   - id: switch
-                    type: io.kestra.plugin.core.flows.Switch
+                    type: io.kestra.plugin.core.flow.Switch
                     value: "{{ inputs.string }}"
                     cases:
                       FIRST:
@@ -166,10 +166,10 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return cases
-            .entrySet()
+        final String value = rendererValue(runContext);
+        return cases.entrySet()
             .stream()
-            .filter(throwPredicate(entry -> entry.getKey().equals(rendererValue(runContext))))
+            .filter(throwPredicate(entry -> entry.getKey().equals(value)))
             .map(Map.Entry::getValue)
             .map(tasks -> FlowableUtils.resolveTasks(tasks, parentTaskRun))
             .findFirst()

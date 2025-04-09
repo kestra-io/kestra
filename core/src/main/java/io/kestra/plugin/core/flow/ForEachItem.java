@@ -14,6 +14,7 @@ import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
@@ -531,7 +532,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
         public Optional<SubflowExecutionResult> createSubflowExecutionResult(
             RunContext runContext,
             TaskRun taskRun,
-            Flow flow,
+            FlowInterface flow,
             Execution execution
         ) {
 
@@ -683,10 +684,12 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
         var outputVariables = (Map<String, Map<String, Object>>) runContext.getVariables().get("outputs");
         var splitTaskOutput = outputVariables.get(taskId);
         if (runContext.getVariables().containsKey("parent")) {
-            // get the parent taskrun value as the value is in the ForEachItem not in one of its subtasks
+            // get the parent taskrun value if exists as the value is in the ForEachItem not in one of its subtasks
             var parent = (Map<String, Map<String, Object>>) runContext.getVariables().get("parent");
-            String value = (String) parent.get("taskrun").get("value");
-            splitTaskOutput = (Map<String, Object>) splitTaskOutput.get(value);
+            if (parent.containsKey("taskrun")) {
+                String value = (String) parent.get("taskrun").get("value");
+                splitTaskOutput = (Map<String, Object>) splitTaskOutput.get(value);
+            }
         }
         return splitTaskOutput;
     }

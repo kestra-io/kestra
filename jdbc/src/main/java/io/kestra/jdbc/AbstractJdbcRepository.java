@@ -207,14 +207,13 @@ public abstract class AbstractJdbcRepository<T> {
     }
 
     @SuppressWarnings("unchecked")
-    public <R extends Record> Select<R> buildPageQuery(DSLContext context, SelectConditionStep<R> select){
+    public <R extends Record> Select<R> buildQuery(DSLContext context, SelectConditionStep<R> select, String orderField){
         return (Select<R>) context.select(DSL.asterisk())
-                .from(this
-                    .sort(select, Pageable.from(Sort.of(Order.asc("timestamp"))))
-                    .asTable("page")
-                )
-                .where(DSL.trueCondition());
-
+            .from(this
+                .sort(select, Pageable.from(Sort.of(Order.asc(orderField))))
+                .asTable("page")
+            )
+            .where(DSL.trueCondition());
     }
 
     @SneakyThrows
@@ -246,7 +245,7 @@ public abstract class AbstractJdbcRepository<T> {
         return Collections.singletonList(String.join("\n", fragments));
     }
 
-    protected <R extends Record> SelectConditionStep<R> sort(SelectConditionStep<R> select, Pageable pageable) {
+    public <R extends Record> SelectConditionStep<R> sort(SelectConditionStep<R> select, Pageable pageable) {
         if (pageable != null && pageable.getSort().isSorted()) {
             pageable
                 .getSort()

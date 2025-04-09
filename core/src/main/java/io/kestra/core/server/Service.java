@@ -70,17 +70,6 @@ public interface Service extends AutoCloseable {
     }
 
     /**
-     * Supported service types.
-     */
-    enum ServiceType {
-        EXECUTOR,
-        INDEXER,
-        SCHEDULER,
-        WEBSERVER,
-        WORKER,
-    }
-
-    /**
      * {@link ServiceState} are the possible states that a Kestra's Service can be in.
      * An instance must only be in one state at a time.
      * The expected state transition with the following defined states is:

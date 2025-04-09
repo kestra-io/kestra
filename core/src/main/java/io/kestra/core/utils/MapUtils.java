@@ -1,11 +1,15 @@
 package io.kestra.core.utils;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
 @SuppressWarnings({"rawtypes", "unchecked"})
+@Slf4j
 public class MapUtils {
+    private static final String CONFLICT_AT_KEY_MSG = "Conflict at key: '{}', ignoring it. Map keys are: {}";
+
     public static Map<String, Object> merge(Map<String, Object> a, Map<String, Object> b) {
         if (a == null && b == null) {
             return null;
@@ -25,7 +29,7 @@ public class MapUtils {
             .entrySet()
             .stream()
             .collect(
-                () -> newHashMap(copy.size()),
+                () -> HashMap.newHashMap(copy.size()),
                 (m, v) -> {
                     Object original = copy.get(v.getKey());
                     Object value = v.getValue();
@@ -55,7 +59,7 @@ public class MapUtils {
     }
 
     private static Collection mergeCollections(Collection collectionOriginal, Collection collectionValue) {
-        List<String> newList = new ArrayList<>(collectionOriginal.size() + collectionValue.size());
+        List<?> newList = new ArrayList<>(collectionOriginal.size() + collectionValue.size());
         newList.addAll(collectionOriginal);
         newList.addAll(collectionValue);
         return newList;
@@ -66,7 +70,7 @@ public class MapUtils {
             .entrySet()
             .stream()
             .collect(
-                () -> newHashMap(original.size()),
+                () -> HashMap.newHashMap(original.size()),
                 (map, entry) -> {
                     Object value = entry.getValue();
                     Object found;
@@ -136,22 +140,9 @@ public class MapUtils {
     }
 
     /**
-     * Creates a hash map that can hold <code>numMappings</code> entry.
-     * This is a copy of the same methods available starting with Java 19.
-     */
-    public static <K, V> HashMap<K, V> newHashMap(int numMappings) {
-        if (numMappings < 0) {
-            throw new IllegalArgumentException("Negative number of mappings: " + numMappings);
-        }
-
-        int hashMapCapacity = (int) Math.ceil(numMappings / 0.75d);
-        return new HashMap<>(hashMapCapacity);
-    }
-
-    /**
-     * Utility method nested a flatten map.
+     * Utility method nested a flattened map.
      *
-     * @param flatMap the flatten map.
+     * @param flatMap the flattened map.
      * @return the nested map.
      *
      * @throws IllegalArgumentException if the given map contains conflicting keys.
@@ -169,13 +160,15 @@ public class MapUtils {
                     currentMap.put(key, new HashMap<>());
                 } else if (!(currentMap.get(key) instanceof Map)) {
                     var invalidKey = String.join(",", Arrays.copyOfRange(keys, 0, i));
-                    throw new IllegalArgumentException("Conflict at key: '" + invalidKey + "'. Map keys are: " + flatMap.keySet());
+                    log.warn(CONFLICT_AT_KEY_MSG, invalidKey, flatMap.keySet());
+                    continue;
                 }
                 currentMap = (Map<String, Object>) currentMap.get(key);
             }
             String lastKey = keys[keys.length - 1];
             if (currentMap.containsKey(lastKey)) {
-                throw new IllegalArgumentException("Conflict at key: '" + lastKey + "', Map keys are: " + flatMap.keySet());
+                log.warn("Conflict at key: '{}', ignoring it. Map keys are: {}", lastKey, flatMap.keySet());
+                continue;
             }
             currentMap.put(lastKey, entry.getValue());
         }

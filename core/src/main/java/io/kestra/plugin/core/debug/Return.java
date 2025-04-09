@@ -68,8 +68,8 @@ public class Return extends Task implements RunnableTask<Return.Output> {
         long end = System.nanoTime();
 
         runContext
-            .metric(Counter.of("length", Optional.ofNullable(render).map(String::length).orElse(0), "format", render))
-            .metric(Timer.of("duration", Duration.ofNanos(end - start), "format", render));
+            .metric(Counter.of("length", Optional.ofNullable(render).map(String::length).orElse(0)))
+            .metric(Timer.of("duration", Duration.ofNanos(end - start)));
 
         return Output.builder()
             .value(render)

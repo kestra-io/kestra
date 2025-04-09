@@ -20,9 +20,9 @@ import io.kestra.core.server.*;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.LogService;
 import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
-import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.utils.*;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.annotation.Parameter;
@@ -131,12 +131,14 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @Getter
     private final String workerGroup;
+    private final String workerGroupKey;
 
     private final String id;
 
     private final ExecutorService executorService;
 
     private final AtomicBoolean shutdown = new AtomicBoolean(false);
+    private final AtomicBoolean init = new AtomicBoolean(false);
 
     private final AtomicReference<ServiceState> state = new AtomicReference<>();
 
@@ -169,21 +171,25 @@ public class Worker implements Service, Runnable, AutoCloseable {
     ) {
         this.id = workerId;
         this.numThreads = numThreads;
+        this.workerGroupKey = workerGroupKey;
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
         this.eventPublisher = eventPublisher;
-        this.executorService = executorsUtils.elasticCachedThreadPool(1, numThreads, EXECUTOR_NAME);
+        this.executorService = executorsUtils.maxCachedThreadPool(numThreads, EXECUTOR_NAME);
         this.setState(ServiceState.CREATED);
     }
 
     @PostConstruct
     void initMetricsAndTracer() {
-        String[] tags = this.workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, this.workerGroup};
-        // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
-        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, numThreads, tags);
-        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, pendingJobCount, tags);
-        this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT, runningJobCount, tags);
+        // the method is called twice due to how we create the bean, see https://github.com/micronaut-projects/micronaut-core/issues/11656
+        if (this.init.compareAndSet(false, true)) {
+            String[] tags = this.workerGroup == null ? new String[0] : new String[]{MetricRegistry.TAG_WORKER_GROUP, this.workerGroup};
+            // create metrics to store thread count, pending jobs and running jobs, so we can have autoscaling easily
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_THREAD_COUNT, numThreads, tags);
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_PENDING_COUNT, pendingJobCount, tags);
+            this.metricRegistry.gauge(MetricRegistry.METRIC_WORKER_JOB_RUNNING_COUNT, runningJobCount, tags);
 
-        this.tracer = tracerFactory.getTracer(Worker.class, "WORKER");
+            this.tracer = tracerFactory.getTracer(Worker.class, "WORKER");
+        }
     }
 
     @Override
@@ -272,7 +278,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
 
         setState(ServiceState.RUNNING);
-        log.info("Worker started with {} thread(s)", numThreads);
+        if (workerGroupKey != null) {
+            log.info("Worker started with {} thread(s) in group '{}'", numThreads, workerGroupKey);
+        }
+        else {
+            log.info("Worker started with {} thread(s)", numThreads);
+        }
     }
 
     private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
@@ -415,7 +426,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
         if (log.isDebugEnabled()) {
             logService.logTrigger(
                 workerTrigger.getTriggerContext(),
-                log,
                 Level.DEBUG,
                 "[type: {}] {}",
                 workerTrigger.getTrigger().getType(),
@@ -623,7 +633,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         logService.logTaskRun(
             workerTask.getTaskRun(),
-            workerTask.logger(),
             Level.INFO,
             "Type {} started",
             workerTask.getTask().getClass().getSimpleName()
@@ -720,7 +729,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         logService.logTaskRun(
             workerTask.getTaskRun(),
-            workerTask.logger(),
             Level.INFO,
             "Type {} with state {} completed in {}",
             workerTask.getTask().getClass().getSimpleName(),
@@ -839,6 +847,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
             );
         } catch(Exception e) {
             // should only occur if it fails in the tracing code which should be unexpected
+            // we add the exception to have some log in that case
+            workerJobCallable.exception = e;
             return State.Type.FAILED;
         } finally {
             synchronized (this) {
@@ -1017,6 +1027,17 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @VisibleForTesting
     public void shutdown() {
+        // initiate shutdown
+        shutdown.compareAndSet(false, true);
+
+        try {
+            // close the WorkerJob queue to stop receiving new JobTask execution.
+            workerJobQueue.close();
+        } catch (IOException e) {
+            log.error("Failed to close the WorkerJobQueue");
+        }
+
+        // close all queues and shutdown now
         this.receiveCancellations.forEach(Runnable::run);
         this.executorService.shutdownNow();
     }

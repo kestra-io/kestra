@@ -1,0 +1,9 @@
+export default {
+    FLOW: "FLOW",
+    EXECUTION: "EXECUTION",
+    TEMPLATE: "TEMPLATE",
+    NAMESPACE: "NAMESPACE",
+    KVSTORE: "KVSTORE",
+    DASHBOARD: "DASHBOARD",
+    SECRET: "SECRET",
+}

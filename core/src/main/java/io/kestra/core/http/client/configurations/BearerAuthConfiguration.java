@@ -21,7 +21,7 @@ public class BearerAuthConfiguration extends AbstractAuthConfiguration {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected Property<AuthType> type = Property.of(AuthType.BEARER);
+    protected AuthType type = AuthType.BEARER;
 
     @Schema(title = "The token for bearer token authentication.")
     private Property<String> token;

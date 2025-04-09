@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Singleton
 public class RunContextCache {
     // List of env variables that should be redacted from the execution run context variables to avoid information disclosure.
-    @Value("${kestra.variables.redacted-env-vars:KESTRA_PLUGINS_PATH,KESTRA_CONFIGURATION_PATH,KESTRA_CONFIGURATION}")
+    @Value("${kestra.variables.redacted-env-vars:KESTRA_PLUGINS_PATH,KESTRA_CONFIGURATION_PATH,KESTRA_CONFIGURATION,KESTRA_JAVA_OPTS}")
     private List<String> redactedEnvVar;
 
     @Inject

@@ -3,10 +3,11 @@ package io.kestra.plugin.core.condition;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
+import io.kestra.core.models.property.Property;
+import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.DateUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -27,12 +28,25 @@ import jakarta.validation.constraints.NotNull;
 @Plugin(
     examples = {
         @Example(
+            title = "Trigger condition to execute the flow only on a specific day of the week.",
             full = true,
-            code = {
-                "- conditions:",
-                "    - type: io.kestra.plugin.core.condition.DayWeek",
-                "      dayOfWeek: \"MONDAY\"",
-            }
+            code = """
+                id: schedule_condition_dayweek
+                namespace: company.team
+
+                tasks:
+                  - id: log_message
+                    type: io.kestra.plugin.core.log.Log
+                    message: "This flow will execute only on Mondays at 11:00 am."
+
+                triggers:
+                  - id: schedule
+                    type: io.kestra.plugin.core.trigger.Schedule
+                    cron: "0 11 * * *"
+                    conditions:
+                      - type: io.kestra.plugin.core.condition.DayWeek
+                        dayOfWeek: "MONDAY"
+                """
         )
     },
     aliases = {"io.kestra.core.models.conditions.types.DayWeekCondition", "io.kestra.plugin.core.condition.DayWeekCondition"}
@@ -44,19 +58,18 @@ public class DayWeek extends Condition implements ScheduleCondition {
         description = "Can be any variable or any valid ISO 8601 datetime. By default, it will use the trigger date."
     )
     @Builder.Default
-    @PluginProperty(dynamic = true)
-    private final String date = "{{ trigger.date }}";
+    private final Property<String> date = new Property<>("{{ trigger.date }}");
 
     @NotNull
     @Schema(title = "The day of week.")
-    @PluginProperty
-    private DayOfWeek dayOfWeek;
+    private Property<DayOfWeek> dayOfWeek;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
-        String render = conditionContext.getRunContext().render(date, conditionContext.getVariables());
+        RunContext runContext = conditionContext.getRunContext();
+        String render = runContext.render(date).as(String.class, conditionContext.getVariables()).orElseThrow();
         LocalDate currentDate = DateUtils.parseLocalDate(render);
 
-        return currentDate.getDayOfWeek().equals(this.dayOfWeek);
+        return currentDate.getDayOfWeek().equals(runContext.render(dayOfWeek).as(DayOfWeek.class, conditionContext.getVariables()).orElseThrow());
     }
 }

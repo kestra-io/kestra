@@ -15,8 +15,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class PurgeExecutionsTest {
@@ -47,7 +46,7 @@ class PurgeExecutionsTest {
         var runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", namespace, "id", flowId)));
         var output = purge.run(runContext);
 
-        assertThat(output.getExecutionsCount(), is(1));
+        assertThat(output.getExecutionsCount()).isEqualTo(1);
     }
 
     @Test
@@ -73,6 +72,6 @@ class PurgeExecutionsTest {
         var runContext = runContextFactory.of(Map.of("flow", Map.of("namespace", namespace, "id", flowId)));
         var output = purge.run(runContext);
 
-        assertThat(output.getExecutionsCount(), is(1));
+        assertThat(output.getExecutionsCount()).isEqualTo(1);
     }
 }

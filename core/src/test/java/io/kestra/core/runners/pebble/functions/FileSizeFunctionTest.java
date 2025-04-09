@@ -3,6 +3,7 @@ package io.kestra.core.runners.pebble.functions;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.VariableRenderer;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
@@ -13,8 +14,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hibernate.validator.internal.util.Contracts.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -47,7 +47,18 @@ public class FileSizeFunctionTest {
         );
 
         String size = variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables);
-        assertThat(size, is(FILE_SIZE));
+        assertThat(size).isEqualTo(FILE_SIZE);
+    }
+
+    @Test
+    void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
+        String namespace = "io.kestra.tests";
+        String filePath = "file.txt";
+        storageInterface.createDirectory(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream(FILE_TEXT.getBytes()));
+
+        String render = variableRenderer.render("{{ fileSize('" + filePath + "', namespace='" + namespace + "') }}", Map.of("flow", Map.of("namespace", "flow.namespace")));
+        assertThat(render).isEqualTo(FILE_SIZE);
     }
 
     @Test
@@ -69,11 +80,11 @@ public class FileSizeFunctionTest {
         );
 
         String size = variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables);
-        assertThat(size, is(FILE_SIZE));
+        assertThat(size).isEqualTo(FILE_SIZE);
     }
 
     @Test
-    void shouldThrowIllegalArgumentException_givenMissingTrigger_andParentExecution() throws IOException {
+    void shouldReadFromAnotherExecution() throws IOException, IllegalVariableEvaluationException {
         String executionId = IdUtils.create();
         URI internalStorageURI = getInternalStorageURI(executionId);
         URI internalStorageFile = getInternalStorageFile(internalStorageURI);
@@ -85,12 +96,8 @@ public class FileSizeFunctionTest {
             "execution", Map.of("id", IdUtils.create())
         );
 
-        Exception ex = assertThrows(
-            IllegalArgumentException.class,
-            () -> variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables)
-        );
-
-        assertTrue(ex.getMessage().startsWith("Unable to read the file"), "Exception message doesn't match expected one");
+        String size = variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables);
+        assertThat(size).isEqualTo(FILE_SIZE);
     }
 
     @Test
@@ -134,7 +141,7 @@ public class FileSizeFunctionTest {
         );
 
         String size = variableRenderer.render("{{ fileSize(file) }}", variables);
-        assertThat(size, is(FILE_SIZE));
+        assertThat(size).isEqualTo(FILE_SIZE);
     }
 
     @Test
@@ -157,7 +164,7 @@ public class FileSizeFunctionTest {
         );
 
         String size = variableRenderer.render("{{ fileSize(file) }}", variables);
-        assertThat(size, is(FILE_SIZE));
+        assertThat(size).isEqualTo(FILE_SIZE);
     }
 
     private URI getInternalStorageURI(String executionId) {

@@ -41,7 +41,7 @@
                     <DynamicScroller
                         v-if="shouldDisplayLogs(currentTaskRun)"
                         :items="logsWithIndexByAttemptUid[attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id])] ?? []"
-                        :min-item-size="0.1"
+                        :min-item-size="1"
                         key-field="index"
                         class="log-lines"
                         :ref="el => logsScrollerRef(el, currentTaskRunIndex, attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
@@ -67,7 +67,6 @@
                                     </el-button-group>
                                 </Teleport>
                                 <log-line
-                                    @click="emitLogCursor(`${currentTaskRunIndex}/${index}`)"
                                     class="line"
                                     :cursor="logCursor === `${currentTaskRunIndex}/${index}`"
                                     :class="{['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level, 'opacity-40': levelToHighlight && levelToHighlight !== item.level}"
@@ -118,8 +117,8 @@
     import FlowUtils from "../../utils/flowUtils";
     import throttle from "lodash/throttle";
     import FilePreview from "../executions/FilePreview.vue";
-    import {apiUrl} from "override/utils/route.js";
-    import Utils from "../../utils/utils.js";
+    import {apiUrl} from "override/utils/route";
+    import Utils from "../../utils/utils";
     import LogUtils from "../../utils/logs.js";
 
     export default {
@@ -131,7 +130,7 @@
             LogLine,
             DynamicScroller,
             DynamicScrollerItem,
-            Download
+            Download,
         },
         emits: ["opened-taskruns-count", "follow", "reset-expand-collapse-all-switch", "log-cursor", "log-indices-by-level"],
         props: {
@@ -588,7 +587,7 @@
                         if (taskRun.state.current === State.FAILED || taskRun.state.current === State.RUNNING) {
                             const attemptNumber = taskRun.attempts ? taskRun.attempts.length - 1 : (this.forcedAttemptNumber ?? 0)
                             if (this.shownAttemptsUid.includes(`${taskRun.id}-${attemptNumber}`)) {
-                                this.logsScrollerRefs?.[`${taskRun.id}-${attemptNumber}`]?.[0]?.scrollToBottom();
+                                this.logsScrollerRefs?.[`${taskRun.id}-${attemptNumber}`]?.scrollToBottom();
                             }
                         }
                     });

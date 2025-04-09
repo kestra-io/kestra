@@ -22,6 +22,10 @@ public interface SchedulerTriggerStateInterface {
 
     Trigger create(Trigger trigger) throws ConstraintViolationException;
 
+    Trigger save(Trigger trigger, ScheduleContextInterface scheduleContext, String headerContent) throws ConstraintViolationException;
+
+    Trigger create(Trigger trigger, String headerContent) throws ConstraintViolationException;
+
     Trigger update(Trigger trigger);
 
     Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) throws Exception;

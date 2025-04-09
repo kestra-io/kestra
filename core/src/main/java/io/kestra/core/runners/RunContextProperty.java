@@ -35,23 +35,11 @@ public class RunContextProperty<T> {
         this.trigger = ((DefaultRunContext) runContext).getTrigger();
     }
 
-    /**
-     * Validate a bean using Jakarta Bean Validation.
-     * TODO this seems useful as a general util so maybe move it to the RunContext
-     */
-    public <U> void validate(U bean) {
-        Validator validator = ((DefaultRunContext) runContext).getApplicationContext().getBean(Validator.class);
-        Set<ConstraintViolation<U>> violations = validator.validate(bean);
-        if (!violations.isEmpty()) {
-            throw new ConstraintViolationException(violations);
-        }
-    }
-
     private void validate() {
         if (task != null) {
-            validate(task);
+            runContext.validate(task);
         } else if (trigger != null) {
-            validate(trigger);
+            runContext.validate(trigger);
         } else if (log.isTraceEnabled()) {
             // this should never happen, but it happens a lot on unit test
             log.trace("Unable to do validation: no task or trigger found");

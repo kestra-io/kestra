@@ -3,9 +3,11 @@ package io.kestra.core.schedulers;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.PluginDefault;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.models.tasks.WorkerGroup;
+import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.TestMethodScopedWorker;
 import io.kestra.core.runners.Worker;
@@ -17,16 +19,14 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 import java.util.Collections;
-import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
 
 public class SchedulerThreadTest extends AbstractSchedulerTest {
     @Inject
@@ -35,19 +35,23 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
     @Inject
     protected SchedulerExecutionStateInterface executionState;
 
+    @Inject
+    protected FlowRepositoryInterface flowRepository;
+
     @Test
     void thread() throws Exception {
-        Flow flow = createThreadFlow();
+        FlowWithSource flow = createThreadFlow();
+        flowRepository.create(GenericFlow.of(flow));
         CountDownLatch queueCount = new CountDownLatch(2);
 
         // wait for execution
         Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
             Execution execution = either.getLeft();
 
-            assertThat(execution.getFlowId(), is(flow.getId()));
+            assertThat(execution.getFlowId()).isEqualTo(flow.getId());
 
             if (execution.getState().getCurrent() != State.Type.SUCCESS) {
-                executionQueue.emit(execution.withState(State.Type.SUCCESS));
+                terminateExecution(execution, Trigger.of(flow, flow.getTriggers().getFirst()), flow);
                 queueCount.countDown();
             }
         }));
@@ -79,11 +83,11 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             boolean sawSuccessExecution = queueCount.await(1, TimeUnit.MINUTES);
             Execution last = receive.blockLast();
 
-            assertThat("Countdown latch returned " + sawSuccessExecution, last, notNullValue());
-            assertThat(last.getTrigger().getVariables().get("defaultInjected"), is("done"));
-            assertThat(last.getTrigger().getVariables().get("counter"), is(3));
-            assertThat(last.getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
-            assertThat(last.getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
+            assertThat(last).as("Countdown latch returned " + sawSuccessExecution).isNotNull();
+            assertThat(last.getTrigger().getVariables().get("defaultInjected")).isEqualTo("done");
+            assertThat(last.getTrigger().getVariables().get("counter")).isEqualTo(3);
+            assertThat(last.getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
+            assertThat(last.getLabels()).contains(new Label("flow-label-2", "flow-label-2"));
             AbstractSchedulerTest.COUNTER = 0;
         }
     }

@@ -3,13 +3,15 @@
         <el-form-item
             v-for="input in inputsMetaData || []"
             :key="input.id"
-            :label="input.displayName ? input.displayName : input.id"
             :required="input.required !== false"
             :rules="requiredRules(input)"
             :prop="input.id"
             :error="inputError(input.id)"
             :inline-message="true"
         >
+            <template #label>
+                <markdown :source="input.displayName ? input.displayName : input.id" class="d-inline-flex md-label" />
+            </template>
             <editor
                 :full-height="false"
                 :input="true"
@@ -38,7 +40,7 @@
                     :label="item"
                     :value="item"
                 >
-                    {{ item }}
+                    <markdown :source="item" />
                 </el-option>
             </el-select>
             <el-radio-group
@@ -74,7 +76,7 @@
                     :label="item"
                     :value="item"
                 >
-                    {{ item }}
+                    <markdown :source="item" />
                 </el-option>
             </el-select>
             <el-input
@@ -118,6 +120,13 @@
                 <el-radio-button :label="$t('false')" :value="false" />
                 <el-radio-button :label="$t('undefined')" value="undefined" />
             </el-radio-group>
+            <el-switch
+                :data-test-id="`input-form-${input.id}`"
+                v-if="input.type === 'BOOL'"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
+                class="w-100 boolean-inputs"
+            />
             <el-date-picker
                 :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'DATETIME'"
@@ -160,6 +169,7 @@
                 :full-height="false"
                 :input="true"
                 :navbar="false"
+                :show-scroll="inputsValues[input.id]?.length > 530 ? true : false"
                 v-if="input.type === 'JSON' || input.type === 'ARRAY'"
                 :data-test-id="`input-form-${input.id}`"
                 lang="json"
@@ -208,16 +218,12 @@
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
-    import YamlUtils from "../../utils/yamlUtils.js";
     import DurationPicker from "./DurationPicker.vue";
     import {inputsToFormDate} from "../../utils/submitTask"
 
     export default {
         computed: {
             ...mapState("auth", ["user"]),
-            YamlUtils() {
-                return YamlUtils
-            },
             inputErrors() {
                 // we only keep errors that don't target an input directly
                 const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);
@@ -263,7 +269,7 @@
                 inputsValidation: [],
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
-                debouncedValidation: () => {}
+                debouncedValidation: () => {},
             };
         },
         emits: ["update:modelValue", "confirm", "validation"],
@@ -462,6 +468,10 @@
 </script>
 
 <style scoped lang="scss">
+.md-label {
+    height: 20px;
+}
+
 .hint {
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
@@ -503,6 +513,10 @@
                 }
             }
         }
+    }
+
+    :deep(.editor-container){
+        max-height: 200px;
     }
 
     .el-input-file {

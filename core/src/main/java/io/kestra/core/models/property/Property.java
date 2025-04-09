@@ -149,13 +149,15 @@ public class Property<T> {
                 if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
                     property.value = MAPPER.readValue(runContext.render(property.expression, variables), type);
                 }
-                // Otherwise if it's already a list, we read it as a list first then render it from run context which handle list rendering by rendering each item of the list
+                // Otherwise, if it's already a list, we read it as a list first then render it from run context which handle list rendering by rendering each item of the list
                 else {
-                    List<?> asRawList = MAPPER.readValue(runContext.render(property.expression, variables), List.class);
+                    List<?> asRawList = MAPPER.readValue(property.expression, List.class);
                     property.value = (T) asRawList.stream()
                         .map(throwFunction(item -> {
                             if (item instanceof String str) {
-                                return MAPPER.convertValue(str, itemClazz);
+                                return MAPPER.convertValue(runContext.render(str, variables), itemClazz);
+                            } else if (item instanceof Map map) {
+                                return MAPPER.convertValue(runContext.render(map, variables), itemClazz);
                             }
                             return item;
                         }))

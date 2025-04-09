@@ -43,7 +43,7 @@
                 ]
                 
                 if(this.includeNever){
-                    values.push({value: undefined, label: this.$t("datepicker.never")})
+                    values.push({value: undefined, label: "datepicker.never"})
                 }
                 
                 return values;

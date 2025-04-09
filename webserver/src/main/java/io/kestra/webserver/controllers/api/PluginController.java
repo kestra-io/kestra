@@ -1,15 +1,11 @@
 package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.docs.*;
-import io.kestra.core.models.dashboards.Dashboard;
-import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.PluginDefault;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
-import io.kestra.core.models.tasks.Task;
-import io.kestra.core.models.templates.Template;
-import io.kestra.core.models.triggers.AbstractTrigger;
+import io.kestra.core.plugins.DefaultPluginRegistry;
+import io.kestra.core.plugins.PluginIdentifier;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.plugins.RegisteredPlugin;
 import io.micronaut.cache.annotation.Cacheable;
@@ -45,7 +41,10 @@ public class PluginController {
     protected JsonSchemaGenerator jsonSchemaGenerator;
 
     @Inject
-    private PluginRegistry pluginRegistry;
+    protected PluginRegistry pluginRegistry;
+
+    @Inject
+    protected JsonSchemaCache jsonSchemaCache;
 
     @Get(uri = "schemas/{type}")
     @ExecuteOn(TaskExecutors.IO)
@@ -59,27 +58,8 @@ public class PluginController {
         @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf
     ) {
         return HttpResponse.ok()
-            .body(this.schemasCache(type, arrayOf))
+            .body(jsonSchemaCache.getSchemaForType(type, arrayOf))
             .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
-    }
-
-    @Cacheable("default")
-    protected Map<String, Object> schemasCache(SchemaType type, boolean arrayOf) {
-        if (type == SchemaType.flow) {
-            return jsonSchemaGenerator.schemas(Flow.class, arrayOf);
-        } else if (type == SchemaType.template) {
-            return jsonSchemaGenerator.schemas(Template.class, arrayOf);
-        } else if (type == SchemaType.task) {
-            return jsonSchemaGenerator.schemas(Task.class, arrayOf);
-        } else if (type == SchemaType.trigger) {
-            return jsonSchemaGenerator.schemas(AbstractTrigger.class, arrayOf);
-        } else if (type == SchemaType.plugindefault) {
-            return jsonSchemaGenerator.schemas(PluginDefault.class, arrayOf);
-        } else if (type == SchemaType.dashboard) {
-            return jsonSchemaGenerator.schemas(Dashboard.class, arrayOf);
-        } else {
-            throw new IllegalArgumentException("Invalid type " + type);
-        }
     }
 
     @Get(uri = "inputs")
@@ -119,7 +99,7 @@ public class PluginController {
     }
 
     @Cacheable("default")
-    protected ClassInputDocumentation inputDocumentation(Type type) throws ClassNotFoundException {
+    protected ClassInputDocumentation inputDocumentation(Type type) {
         Class<? extends Input<?>> inputCls = type.cls();
 
         return ClassInputDocumentation.of(jsonSchemaGenerator, inputCls);
@@ -208,7 +188,6 @@ public class PluginController {
         return icons;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @Get(uri = "{cls}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
@@ -216,11 +195,19 @@ public class PluginController {
         @Parameter(description = "The plugin full class name") @PathVariable String cls,
         @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") Boolean allProperties
     ) throws IOException {
-        ClassPluginDocumentation classPluginDocumentation = pluginDocumentation(
-            pluginRegistry.plugins(),
-            cls,
-            allProperties
-        );
+        return pluginVersions(cls, null, allProperties);
+    }
+
+    @Get(uri = "{cls}/versions/{version}")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
+    public HttpResponse<DocumentationWithSchema> pluginVersions(
+        @Parameter(description = "The plugin type") @PathVariable String cls,
+        @Parameter(description = "The plugin version") @PathVariable String version,
+        @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") Boolean allProperties
+    ) throws IOException {
+
+        ClassPluginDocumentation<?> classPluginDocumentation = pluginDocumentation(cls, version, allProperties);
 
         var doc = alertReplacement(DocumentationGenerator.render(classPluginDocumentation));
 
@@ -235,6 +222,19 @@ public class PluginController {
             ))
             .header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
     }
+
+    @Get(uri = "{cls}/versions")
+    @ExecuteOn(TaskExecutors.IO)
+    @Operation(
+        tags = {"Plugins"},
+        summary = "Get all versions for a plugin"
+    )
+    public HttpResponse<ApiPluginVersions> pluginVersions(
+        @Parameter(description = "The plugin type") @PathVariable String cls
+    ) {
+        return HttpResponse.ok(new ApiPluginVersions(cls, pluginRegistry.getAllVersionsForType(cls)));
+    }
+
 
     @Get("/groups/subgroups")
     @ExecuteOn(TaskExecutors.IO)
@@ -258,30 +258,25 @@ public class PluginController {
     }
 
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     @Cacheable("default")
-    protected ClassPluginDocumentation<?> pluginDocumentation(List<RegisteredPlugin> plugins, String className, Boolean allProperties) {
-        RegisteredPlugin registeredPlugin = plugins
-            .stream()
-            .filter(r -> r.hasClass(className))
-            .findFirst()
+    protected ClassPluginDocumentation<?> pluginDocumentation(String className, String version, Boolean allProperties) {
+        return pluginRegistry.findMetadataByIdentifier(getPluginIdentifier(className, version))
+            .map(metadata -> ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, allProperties))
             .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));
+    }
 
-        Class cls = registeredPlugin
-            .findClass(className)
-            .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));
-
-        Class baseCls = registeredPlugin.baseClass(className);
-        if(registeredPlugin.getAliases().containsKey(className.toLowerCase())) {
-            return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls, className);
-        } else {
-            return ClassPluginDocumentation.of(jsonSchemaGenerator, registeredPlugin, cls, allProperties ? null : baseCls);
-        }
+    protected String getPluginIdentifier(final String type, final String version) {
+        return type;
     }
 
     private String alertReplacement(@NonNull String original) {
         // we need to replace the NuxtJS ::alert{type=} :: with the more standard ::: warning :::
         return original.replaceAll("\n::alert\\{type=\"(.*)\"\\}\n", "\n::: $1\n")
             .replace("\n::\n", "\n:::\n");
+    }
+
+    public record ApiPluginVersions(
+        String type,
+        List<String> versions) {
     }
 }

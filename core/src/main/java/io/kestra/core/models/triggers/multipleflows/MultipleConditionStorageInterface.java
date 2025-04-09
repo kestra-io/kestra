@@ -1,6 +1,7 @@
 package io.kestra.core.models.triggers.multipleflows;
 
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.TimeWindow;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -9,18 +10,22 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import static io.kestra.core.models.triggers.TimeWindow.Type.DURATION_WINDOW;
+
 public interface MultipleConditionStorageInterface {
-    Optional<MultipleConditionWindow> get(Flow flow, String conditionId);
+    Optional<MultipleConditionWindow> get(FlowId flow, String conditionId);
 
     List<MultipleConditionWindow> expired(String tenantId);
 
-    default MultipleConditionWindow getOrCreate(Flow flow, MultipleCondition multipleCondition) {
+    default MultipleConditionWindow getOrCreate(FlowId flow, MultipleCondition multipleCondition, Map<String, Object> outputs) {
         ZonedDateTime now = ZonedDateTime.now().withNano(0);
         TimeWindow timeWindow = multipleCondition.getTimeWindow() != null ? multipleCondition.getTimeWindow() : TimeWindow.builder().build();
 
-        var startAndEnd = switch (timeWindow.getType()) {
+        TimeWindow.Type type = timeWindow.getType() != null ? timeWindow.getType() : DURATION_WINDOW;
+        var startAndEnd = switch (type) {
             case DURATION_WINDOW -> {
                 Duration window = timeWindow.getWindow() == null ? Duration.ofDays(1) : timeWindow.getWindow();
                 if (window.toDays() > 0) {
@@ -67,6 +72,7 @@ public interface MultipleConditionStorageInterface {
                 .start(startAndEnd.getLeft())
                 .end(startAndEnd.getRight())
                 .results(new HashMap<>())
+                .outputs(outputs)
                 .build()
             );
     }

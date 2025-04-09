@@ -13,6 +13,7 @@ import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import io.kestra.plugin.scripts.runner.docker.Docker;
+import io.kestra.plugin.scripts.runner.docker.PullPolicy;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -50,6 +51,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     @Valid
     protected TaskRunner<?> taskRunner = Docker.builder()
         .type(Docker.class.getName())
+        .pullPolicy(Property.of(PullPolicy.IF_NOT_PRESENT))
         .build();
 
     @Schema(
@@ -166,9 +168,14 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
             .withOutputFiles(runContext.render(this.getOutputFiles()).asList(String.class))
             .withEnableOutputDirectory(runContext.render(this.getOutputDirectory()).as(Boolean.class).orElse(null))
             .withTimeout(runContext.render(this.getTimeout()).as(Duration.class).orElse(null))
-            .withTargetOS(runContext.render(this.getTargetOS()).as(TargetOS.class).orElseThrow());
+            .withTargetOS(runContext.render(this.getTargetOS()).as(TargetOS.class).orElseThrow())
+            .withFailFast(runContext.render(this.getFailFast()).as(Boolean.class).orElse(false));
     }
 
+    /**
+     * Rendering of beforeCommands will be done in the CommandsWrapper to give access to the workingDir variable
+     */
+    @Deprecated(since = "0.22")
     protected List<String> getBeforeCommandsWithOptions(RunContext runContext) throws IllegalVariableEvaluationException {
         return mayAddExitOnErrorCommands(runContext.render(this.getBeforeCommands()).asList(String.class), runContext);
     }

@@ -71,7 +71,7 @@ public abstract class FilesService {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         if (runContext.logger().isTraceEnabled()) {
-            runContext.logger().trace("Captured {} output(s).", allFilesMatching.size());
+            runContext.logger().trace("Captured {} output file(s).", allFilesMatching.size());
         }
 
         return outputFiles;

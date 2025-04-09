@@ -1,9 +1,6 @@
 package io.kestra.plugin.core.trigger;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
@@ -65,13 +62,13 @@ class ToggleTest {
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-toggle");
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList(), hasSize(1));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(1);
 
         countDownLatch.await(10, TimeUnit.SECONDS);
-        assertThat(countDownLatch.getCount(), is(0L));
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
         Trigger lastTrigger = receive.blockLast();
-        assertThat(lastTrigger, notNullValue());
-        assertThat(lastTrigger.getDisabled(), is(false));
+        assertThat(lastTrigger).isNotNull();
+        assertThat(lastTrigger.getDisabled()).isEqualTo(false);
     }
 }

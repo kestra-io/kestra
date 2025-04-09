@@ -7,6 +7,7 @@ import io.kestra.core.models.dashboards.Order;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.core.utils.ListUtils;
@@ -34,6 +35,8 @@ import java.util.*;
 import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE;
 
 public abstract class AbstractJdbcRepository {
+
+    protected static final int FETCH_SIZE = 100;
 
     @Getter
     @Value("${kestra.system-flows.namespace:" + SYSTEM_FLOWS_DEFAULT_NAMESPACE + "}")
@@ -221,13 +224,17 @@ public abstract class AbstractJdbcRepository {
      * @param pageable       the pageable object containing the pagination information
      * @return the list of fetched results
      */
-    protected List<Map<String, Object>> fetchSeekStep(SelectSeekStepN<Record> selectSeekStep, @Nullable Pageable pageable) {
+    protected ArrayListTotal<Map<String, Object>> fetchSeekStep(SelectSeekStepN<Record> selectSeekStep, @Nullable Pageable pageable) {
 
-        return (pageable != null && pageable.getSize() != -1 ?
+        int totalCount = DSL.using(selectSeekStep.configuration())
+            .fetchCount(selectSeekStep);
+        var results =  (pageable != null && pageable.getSize() != -1 ?
             selectSeekStep.limit(pageable.getSize()).offset(pageable.getOffset() - pageable.getSize()) :
             selectSeekStep
         ).fetch()
             .intoMaps();
+
+        return new ArrayListTotal<>(results, totalCount);
     }
 
     protected <F extends Enum<F>> Field<?> columnToField(ColumnDescriptor<?> column, Map<F, String> fieldsMapping) {
@@ -334,7 +341,21 @@ public abstract class AbstractJdbcRepository {
             case STARTS_WITH -> select = select.and(NAMESPACE_FIELD.like(value + ".%")
                 .or(NAMESPACE_FIELD.eq((String) value)));
             case ENDS_WITH -> select = select.and(NAMESPACE_FIELD.like("%." + value));
-            default ->
+            case IN ->  {
+                if (value instanceof Collection<?> values) {
+                select = select.and(NAMESPACE_FIELD.in(values.stream()
+                    .map(String.class::cast)
+                    .toList()));
+                }
+             }
+             case NOT_IN ->  {
+                 if (value instanceof Collection<?> values) {
+                     select = select.and(NAMESPACE_FIELD.notIn(values.stream()
+                         .map(String.class::cast)
+                         .toList()));
+                 }
+             }
+             default ->
                 throw new UnsupportedOperationException("Unsupported operation '%s' for field 'namespace'.".formatted(operation));
         }
          return select;
@@ -360,7 +381,7 @@ public abstract class AbstractJdbcRepository {
         };
     }
     protected Condition statesFilter(List<State.Type> state) {
-        return DSL.field(DSL.quotedName("state_current"))
+        return field("state_current")
             .in(state.stream().map(Enum::name).toList());
     }
 
@@ -369,8 +390,8 @@ public abstract class AbstractJdbcRepository {
         ChildFilter childFilter = (value instanceof String val)? ChildFilter.valueOf(val) : (ChildFilter) value;
 
         return switch (childFilter) {
-            case CHILD -> select.and(DSL.field(DSL.quotedName("trigger_execution_id")).isNotNull());
-            case MAIN -> select.and(DSL.field(DSL.quotedName("trigger_execution_id")).isNull());
+            case CHILD -> select.and(field("trigger_execution_id").isNotNull());
+            case MAIN -> select.and(field("trigger_execution_id").isNull());
         };
     }
 
@@ -402,10 +423,12 @@ public abstract class AbstractJdbcRepository {
         SelectConditionStep<T> select, OffsetDateTime dateTime, QueryFilter.Op operation,String fieldName
     ) {
         switch (operation) {
-            case LESS_THAN -> select = select.and(DSL.field(fieldName).lessThan(dateTime));
-            case GREATER_THAN -> select = select.and(DSL.field(fieldName).greaterThan(dateTime));
-            case EQUALS -> select = select.and(DSL.field(fieldName).eq(dateTime));
-            case NOT_EQUALS -> select = select.and(DSL.field(fieldName).ne(dateTime));
+            case LESS_THAN -> select = select.and(field(fieldName).lessThan(dateTime));
+            case LESS_THAN_OR_EQUAL_TO -> select = select.and(field(fieldName).lessOrEqual(dateTime));
+            case GREATER_THAN -> select = select.and(field(fieldName).greaterThan(dateTime));
+            case GREATER_THAN_OR_EQUAL_TO -> select = select.and(field(fieldName).greaterOrEqual(dateTime));
+            case EQUALS -> select = select.and(field(fieldName).eq(dateTime));
+            case NOT_EQUALS -> select = select.and(field(fieldName).ne(dateTime));
             default -> throw new UnsupportedOperationException("Unsupported operation for date condition: " + operation);
         }
         return select;
@@ -438,15 +461,13 @@ public abstract class AbstractJdbcRepository {
 
         if (scopeValues.contains(FlowScope.USER)) {
             Condition userCondition = isEqualsOperation
-                ? DSL.field("namespace").ne(systemNamespace)
-                : DSL.field("namespace").eq(systemNamespace);
+                ? field("namespace").ne(systemNamespace)
+                : field("namespace").eq(systemNamespace);
             select = select.and(userCondition);
-        }
-
-        if (scopeValues.contains(FlowScope.SYSTEM)) {
+        } else if (scopeValues.contains(FlowScope.SYSTEM)) {
             Condition systemCondition = isEqualsOperation
-                ? DSL.field("namespace").eq(systemNamespace)
-                : DSL.field("namespace").ne(systemNamespace);
+                ? field("namespace").eq(systemNamespace)
+                : field("namespace").ne(systemNamespace);
             select = select.and(systemCondition);
         }
 

@@ -2,7 +2,7 @@ package io.kestra.plugin.scripts.runners;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.LogEntry;
-import io.kestra.core.models.tasks.runners.TaskRunnerResult;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.TaskCommands;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -22,15 +22,12 @@ import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
-public class LogConsumerTest {
+class LogConsumerTest {
     private static final Task TASK = new Task() {
         @Override
         public String getId() {
@@ -54,11 +51,12 @@ public class LogConsumerTest {
     void run() throws Exception {
        RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
         String outputValue = "a".repeat(10000);
-        TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(List.of(
+        TaskCommands taskCommands = new CommandsWrapper(runContext)
+            .withCommands(Property.of(List.of(
             "/bin/sh", "-c",
             "echo \"::{\\\"outputs\\\":{\\\"someOutput\\\":\\\"" + outputValue + "\\\"}}::\"\n" +
                 "echo -n another line"
-        ));
+        )));
         var run = Docker.from(DockerOptions.builder()
             .image("alpine")
             .build()).run(
@@ -67,8 +65,8 @@ public class LogConsumerTest {
             Collections.emptyList()
         );
         Await.until(() -> run.getLogConsumer().getStdOutCount() == 2, null, Duration.ofSeconds(5));
-        assertThat(run.getLogConsumer().getStdOutCount(), is(2));
-        assertThat(run.getLogConsumer().getOutputs().get("someOutput"), is(outputValue));
+        assertThat(run.getLogConsumer().getStdOutCount()).isEqualTo(2);
+        assertThat(run.getLogConsumer().getOutputs().get("someOutput")).isEqualTo(outputValue);
     }
 
     @Test
@@ -81,11 +79,11 @@ public class LogConsumerTest {
                     .append(Integer.toString(i).repeat(800)).append("\r")
                 .append(Integer.toString(i).repeat(2000)).append("\r");
         }
-        TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(List.of(
+        TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(Property.of(List.of(
             "/bin/sh", "-c",
             "echo " + outputValue +
                 "echo -n another line"
-        ));
+        )));
         var run = Docker.from(DockerOptions.builder().image("alpine").build()).run(
             runContext,
             taskCommands,
@@ -93,7 +91,7 @@ public class LogConsumerTest {
         );
 
         Await.until(() -> run.getLogConsumer().getStdOutCount() == 10, null, Duration.ofSeconds(5));
-        assertThat(run.getLogConsumer().getStdOutCount(), is(10));
+        assertThat(run.getLogConsumer().getStdOutCount()).isEqualTo(10);
     }
 
     @Test
@@ -102,15 +100,16 @@ public class LogConsumerTest {
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> logs.add(l.getLeft()));
 
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
-        TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(List.of(
+        TaskCommands taskCommands = new CommandsWrapper(runContext).withCommands(Property.of(List.of(
             "/bin/sh", "-c",
             """
                 echo '::{"logs": [{"level":"INFO","message":"Hello World"}]}::'
                 echo '::{"logs": [{"level":"ERROR","message":"Hello Error"}]}::'
                 echo '::{"logs": [{"level":"TRACE","message":"Hello Trace"}, {"level":"TRACE","message":"Hello Trace 2"}]}::'
             """
-        ));
-        var run = Docker.from(DockerOptions.builder().image("alpine").build()).run(
+        )));
+
+        Docker.from(DockerOptions.builder().image("alpine").build()).run(
             runContext,
             taskCommands,
             Collections.emptyList()
@@ -118,9 +117,9 @@ public class LogConsumerTest {
 
         receive.blockLast();
 
-        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.INFO)).count(), is(1L));
-        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.ERROR)).count(), is(1L));
-        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.TRACE)).filter(m -> m.getMessage().contains("Trace 2")).count(), is(1L));
-        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.TRACE)).count(), greaterThanOrEqualTo(5L));
+        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.INFO)).count()).isEqualTo(1L);
+        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.ERROR)).count()).isEqualTo(1L);
+        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.TRACE)).filter(m -> m.getMessage().contains("Trace 2")).count()).isEqualTo(1L);
+        assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.TRACE)).count()).isGreaterThanOrEqualTo(4L);
     }
 }

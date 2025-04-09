@@ -13,17 +13,12 @@
                 </template>
             </el-table-column>
         </el-table>
-        <el-pagination
+        <Pagination
             v-if="props.chart.chartOptions?.pagination?.enabled"
-            :current-page="currentPage"
-            :page-size="pageSize"
             :total="data.total"
-            @current-change="handlePageChange"
-            @size-change="handlePageSizeChange"
-            layout="prev, pager, next, sizes"
-            :page-sizes="[5, 10, 20, 50]"
-            :pager-count="5"
-            class="mt-3"
+            :size="pageSize"
+            :page="currentPage"
+            @page-changed="handlePageChange"
         />
     </template>
 
@@ -35,12 +30,13 @@
 
     import {useI18n} from "vue-i18n";
     import NoData from "../../../../layout/NoData.vue";
+    import Pagination from "../../../../layout/Pagination.vue";
 
     import {useStore} from "vuex";
-    import moment from "moment";
 
     import {useRoute} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
+    import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
 
     const {t} = useI18n({useScope: "global"});
 
@@ -50,7 +46,7 @@
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: Number, required: true},
+        identifier: {type: [Number, String], required: true},
         chart: {type: Object, required: true},
         isPreview: {type: Boolean, required: false, default: false}
     });
@@ -60,38 +56,20 @@
     const dashboard = computed(() => store.state.dashboard.dashboard);
 
     const currentPage = ref(1);
-    const pageSize = ref(5);
+    const pageSize = ref(10);
 
-    const handlePageChange = (page) => {
-        currentPage.value = page;
-        generate();
-    };
-
-    const handlePageSizeChange = (size) => {
-        currentPage.value = 1;
-        pageSize.value = size;
+    const handlePageChange = (options) => {
+        currentPage.value = options.page;
+        pageSize.value = options.size;
         generate();
     };
 
     const data = ref();
     const generate = async () => {
         if (!props.isPreview) {
-            const params = {
+            let params = {
                 id: dashboard.value.id,
-                chartId: props.chart.id,
-                startDate: route.query.timeRange
-                    ? moment()
-                        .subtract(
-                            moment.duration(route.query.timeRange).as("milliseconds"),
-                        )
-                        .toISOString(true)
-                    : route.query.startDate ||
-                        moment()
-                            .subtract(moment.duration("PT720H").as("milliseconds"))
-                            .toISOString(true),
-                endDate: route.query.timeRange
-                    ? moment().toISOString(true)
-                    : route.query.endDate || moment().toISOString(true),
+                chartId: props.chart.id
             };
             if (route.query.namespace) {
                 params.namespace = route.query.namespace;
@@ -104,7 +82,10 @@
                 params.pageNumber = currentPage.value;
                 params.pageSize = pageSize.value;
             }
-
+            let decodedParams = decodeSearchParams(route.query, undefined, []);
+            if (decodedParams) {
+                params = {...params, filters: decodedParams}
+            }
             data.value = await store.dispatch("dashboard/generate", params);
         } else {
             data.value = await store.dispatch("dashboard/chartPreview", props.chart.content)

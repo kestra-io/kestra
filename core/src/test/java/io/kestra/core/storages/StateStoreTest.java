@@ -18,8 +18,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
 public class StateStoreTest {
@@ -33,16 +32,16 @@ public class StateStoreTest {
         String state = IdUtils.create();
         runContext.stateStore().putState(state, "some-name", "my-taskrun-value", "my-value".getBytes());
 
-        assertThat(runContext.stateStore().getState(state, "some-name", "my-taskrun-value").readAllBytes(), is("my-value".getBytes()));
+        assertThat(runContext.stateStore().getState(state, "some-name", "my-taskrun-value").readAllBytes()).isEqualTo("my-value".getBytes());
 
         RunContext.FlowInfo flowInfo = runContext.flowInfo();
         String key = flowInfo.id() + "_states_" + state + "_some-name_" + Hashing.hashToString("my-taskrun-value");
-        assertThat(runContext.namespaceKv(flowInfo.namespace()).getValue(key).get().value(), is("my-value".getBytes()));
+        assertThat(runContext.namespaceKv(flowInfo.namespace()).getValue(key).get().value()).isEqualTo("my-value".getBytes());
 
         runContext.stateStore().deleteState(state, "some-name", "my-taskrun-value");
 
         FileNotFoundException fileNotFoundException = Assertions.assertThrows(FileNotFoundException.class, () -> runContext.stateStore().getState(state, "some-name", "my-taskrun-value"));
-        assertThat(fileNotFoundException.getMessage(), is("State " + key + " not found"));
+        assertThat(fileNotFoundException.getMessage()).isEqualTo("State " + key + " not found");
     }
 
     @Test
@@ -56,12 +55,12 @@ public class StateStoreTest {
         runContext.storage().putFile(new ByteArrayInputStream(expectedContent), oldStateStoreFileUri);
 
         String key = flowInfo.id() + "_states_" + state + "_some-name_" + Hashing.hashToString("my-taskrun-value");
-        assertThat(runContext.storage().getFile(oldStateStoreFileUri).readAllBytes(), is(expectedContent));
+        assertThat(runContext.storage().getFile(oldStateStoreFileUri).readAllBytes()).isEqualTo(expectedContent);
 
         MigrationRequiredException migrationRequiredException = Assertions.assertThrows(MigrationRequiredException.class, () -> runContext.stateStore().getState(state, "some-name", "my-taskrun-value"));
-        assertThat(migrationRequiredException.getMessage(), is("It looks like the State Store migration hasn't been run, please run the `/app/kestra sys state-store migrate` command before."));
+        assertThat(migrationRequiredException.getMessage()).isEqualTo("It looks like the State Store migration hasn't been run, please run the `/app/kestra sys state-store migrate` command before.");
 
-        assertThat(runContext.namespaceKv(flowInfo.namespace()).getValue(key).isEmpty(), is(true));
+        assertThat(runContext.namespaceKv(flowInfo.namespace()).getValue(key).isEmpty()).isEqualTo(true);
     }
 
     @Test
@@ -78,14 +77,14 @@ public class StateStoreTest {
         runContext.stateStore().putState(state, "a-name", null, "a0-value".getBytes());
         runContext.stateStore().putState(state, "b-name", null, "b0-value".getBytes());
 
-        assertThat(runContext.stateStore().getState(state, "a-name", "a-taskrun-value").readAllBytes(), is("aa-value".getBytes()));
-        assertThat(runContext.stateStore().getState(state, "a-name", "b-taskrun-value").readAllBytes(), is("ab-value".getBytes()));
-        assertThat(runContext.stateStore().getState(state, "b-name", "a-taskrun-value").readAllBytes(), is("ba-value".getBytes()));
-        assertThat(runContext.stateStore().getState(state, "b-name", "b-taskrun-value").readAllBytes(), is("bb-value".getBytes()));
-        assertThat(runContext.stateStore().getState(state, null, "a-taskrun-value").readAllBytes(), is("0a-value".getBytes()));
-        assertThat(runContext.stateStore().getState(state, null, "b-taskrun-value").readAllBytes(), is("0b-value".getBytes()));
-        assertThat(runContext.stateStore().getState(state, "a-name", null).readAllBytes(), is("a0-value".getBytes()));
-        assertThat(runContext.stateStore().getState(state, "b-name", null).readAllBytes(), is("b0-value".getBytes()));
+        assertThat(runContext.stateStore().getState(state, "a-name", "a-taskrun-value").readAllBytes()).isEqualTo("aa-value".getBytes());
+        assertThat(runContext.stateStore().getState(state, "a-name", "b-taskrun-value").readAllBytes()).isEqualTo("ab-value".getBytes());
+        assertThat(runContext.stateStore().getState(state, "b-name", "a-taskrun-value").readAllBytes()).isEqualTo("ba-value".getBytes());
+        assertThat(runContext.stateStore().getState(state, "b-name", "b-taskrun-value").readAllBytes()).isEqualTo("bb-value".getBytes());
+        assertThat(runContext.stateStore().getState(state, null, "a-taskrun-value").readAllBytes()).isEqualTo("0a-value".getBytes());
+        assertThat(runContext.stateStore().getState(state, null, "b-taskrun-value").readAllBytes()).isEqualTo("0b-value".getBytes());
+        assertThat(runContext.stateStore().getState(state, "a-name", null).readAllBytes()).isEqualTo("a0-value".getBytes());
+        assertThat(runContext.stateStore().getState(state, "b-name", null).readAllBytes()).isEqualTo("b0-value".getBytes());
     }
 
     private RunContext runContext() {

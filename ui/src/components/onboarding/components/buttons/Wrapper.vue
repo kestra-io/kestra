@@ -39,7 +39,7 @@ $max-width: 300px;
 .left,
 .right {
     z-index: 9999;
-    margin: 2rem;
+    margin: 2rem 5rem;
     position: fixed;
     bottom: 0;
 }

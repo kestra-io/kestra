@@ -3,24 +3,16 @@
         <template #additional-right>
             <ul>
                 <li>
-                    <div class="el-input el-input-file custom-upload">
-                        <form ref="importForm">
-                            <div class="el-input__wrapper">
-                                <label for="importFlows">
-                                    <Upload />
-                                    {{ $t("import") }}
-                                </label>
-                                <input
-                                    id="importFlows"
-                                    class="el-input__inner"
-                                    type="file"
-                                    accept=".zip, .yml, .yaml"
-                                    @change="importFlows()"
-                                    ref="file"
-                                >
-                            </div>
-                        </form>
-                    </div>
+                    <el-button :icon="Upload" @click="file?.click()">
+                        {{ $t("import") }}
+                    </el-button>
+                    <input
+                        ref="file"
+                        type="file"
+                        accept=".zip, .yml, .yaml"
+                        @change="importFlows()"
+                        class="d-none"
+                    >
                 </li>
                 <li>
                     <router-link :to="{name: 'flows/search'}">
@@ -84,7 +76,11 @@
 
                 <template #top>
                     <el-card v-if="showStatChart()" class="mb-4 shadow">
-                        <ExecutionsBar :data="daily" :total="executionsCount" />
+                        <ExecutionsBar 
+                            :data="daily" 
+                            :total="executionsCount" 
+                            :loading="loading"
+                        />
                     </el-card>
                 </template>
 
@@ -321,6 +317,7 @@
 </template>
 
 <script setup>
+    import {ref} from "vue";
     import moment from "moment";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
@@ -339,6 +336,8 @@
 
     const route = useRoute();
     const router = useRouter();
+
+    const file = ref(null);
 
     function tableChartClick(namespace, flowId, e, elements) {
         if (
@@ -399,6 +398,11 @@
                 required: false,
                 default: undefined,
             },
+            id: {
+                type: String,
+                required: false,
+                default: null,
+            },
         },
         data() {
             return {
@@ -432,7 +436,7 @@
                         label: this.$t("triggers"),
                         prop: "triggers",
                         default: true,
-                    }
+                    },
                 ],
                 displayColumns: [],
                 isDefaultNamespaceAllow: true,
@@ -445,6 +449,7 @@
                 showChart: ["true", null].includes(
                     localStorage.getItem(storageKeys.SHOW_FLOWS_CHART),
                 ),
+                loading: false,
             };
         },
         computed: {
@@ -822,6 +827,7 @@
             },
             loadStats() {
                 this.dailyReady = false;
+                this.loading = true;
 
                 if (this.user.hasAny(permission.EXECUTION) && this.showStatChart) {
                     this.$store
@@ -839,6 +845,7 @@
                         )
                         .then(() => {
                             this.dailyReady = true;
+                            this.loading = false;
                         });
                 }
             },
@@ -909,7 +916,7 @@
 
 <style lang="scss" scoped>
 .shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
+    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
 }
 
 :deep(nav .dropdown-menu) {

@@ -12,8 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class ExecutionLabelsTest {
@@ -35,7 +34,7 @@ public class ExecutionLabelsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
     }
 
     @Test
@@ -53,7 +52,7 @@ public class ExecutionLabelsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
     }
 
     @Test
@@ -68,7 +67,7 @@ public class ExecutionLabelsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 
     @Test
@@ -86,6 +85,6 @@ public class ExecutionLabelsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 }

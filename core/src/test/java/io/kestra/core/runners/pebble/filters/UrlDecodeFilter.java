@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class UrlDecodeFilter {
@@ -19,6 +18,6 @@ class UrlDecodeFilter {
     @Test
     void urldecode() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ 'Kestra rulez !' | urlencode | urldecode }}", Map.of());
-        assertThat(render, is("Kestra rulez !"));
+        assertThat(render).isEqualTo("Kestra rulez !");
     }
 }

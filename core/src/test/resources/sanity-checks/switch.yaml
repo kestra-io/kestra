@@ -26,7 +26,8 @@ tasks:
         type: io.kestra.plugin.core.debug.Return
         format: "{{ task.id }} > {{ taskrun.startDate }}"
 
-    finally:
-      - id: fail
-        type: io.kestra.plugin.core.execution.Fail
-        condition: "{{ outputs.third.value != 'third'}}"
+  - id: assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.switch.value == '3' }}"
+      - "{{ outputs.third.value == 'third' }}"

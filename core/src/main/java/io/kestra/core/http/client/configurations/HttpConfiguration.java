@@ -2,18 +2,17 @@ package io.kestra.core.http.client.configurations;
 
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
-import io.micronaut.http.client.HttpClientConfiguration;
 import io.micronaut.logging.LogLevel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.jackson.Jacksonized;
 
 import java.net.Proxy;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 @Builder(toBuilder = true)
 @Getter
@@ -30,6 +29,7 @@ public class HttpConfiguration {
     @Schema(title = "The authentification to use.")
     private AbstractAuthConfiguration auth;
 
+    @Setter
     @Schema(title = "The SSL request options")
     private SslOptions ssl;
 
@@ -37,6 +37,7 @@ public class HttpConfiguration {
     @Builder.Default
     private Property<Boolean> followRedirects = Property.of(true);
 
+    @Setter
     @Schema(title = "If true, allow a failed response code (response code >= 400)")
     @Builder.Default
     private Property<Boolean> allowFailed = Property.of(false);
@@ -62,14 +63,12 @@ public class HttpConfiguration {
     private final Duration connectTimeout;
 
     @Schema(title = "The maximum time allowed for reading data from the server before failing.")
-    @Builder.Default
     @Deprecated
-    private final Duration readTimeout = Duration.ofSeconds(HttpClientConfiguration.DEFAULT_READ_TIMEOUT_SECONDS);
+    private final Duration readTimeout;
 
     @Schema(title = "The type of proxy to use.")
-    @Builder.Default
     @Deprecated
-    private final Proxy.Type proxyType = Proxy.Type.DIRECT;
+    private final Proxy.Type proxyType;
 
     @Schema(title = "The address of the proxy server.")
     @Deprecated
@@ -102,19 +101,16 @@ public class HttpConfiguration {
 
     // Deprecated properties with no equivalent value to be kept, silently ignore
     @Schema(title = "The time allowed for a read connection to remain idle before closing it.")
-    @Builder.Default
     @Deprecated
-    private final Duration readIdleTimeout = Duration.of(HttpClientConfiguration.DEFAULT_READ_IDLE_TIMEOUT_MINUTES, ChronoUnit.MINUTES);
+    private final Duration readIdleTimeout;
 
     @Schema(title = "The time an idle connection can remain in the client's connection pool before being closed.")
-    @Builder.Default
     @Deprecated
-    private final Duration connectionPoolIdleTimeout = Duration.ofSeconds(HttpClientConfiguration.DEFAULT_CONNECTION_POOL_IDLE_TIMEOUT_SECONDS);
+    private final Duration connectionPoolIdleTimeout;
 
     @Schema(title = "The maximum content length of the response.")
-    @Builder.Default
     @Deprecated
-    private final Integer maxContentLength = HttpClientConfiguration.DEFAULT_MAX_CONTENT_LENGTH;
+    private final Integer maxContentLength;
 
     public static class HttpConfigurationBuilder {
         @Deprecated

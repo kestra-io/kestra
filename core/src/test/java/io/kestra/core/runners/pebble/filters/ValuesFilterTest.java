@@ -16,8 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ValuesFilterTest {
@@ -43,12 +42,12 @@ class ValuesFilterTest {
 
         String render = variableRenderer.render("{{ vars.second.map | values }}", vars);
         List<Object> list = JacksonMapper.ofJson().readValue(render, new TypeReference<>() {});
-        assertThat(list, hasItems("string"));
-        assertThat(list, hasItems(1.123));
+        assertThat(list).contains("string");
+        assertThat(list).contains(1.123);
 
         render = variableRenderer.render("{{ vars.second | values }}", vars);
         list = JacksonMapper.ofJson().readValue(render, new TypeReference<>() {});
-        assertThat(list, hasItems("string"));
-        assertThat(list, hasItems(true));
+        assertThat(list).contains("string");
+        assertThat(list).contains(true);
     }
 }

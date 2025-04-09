@@ -4,8 +4,8 @@ import {Value} from "../utils/types";
 
 import {State} from "@kestra-io/ui-libs";
 import {auditLogTypes} from "../../../models/auditLogTypes";
-import permission from "../../../models/permission.js";
-import action from "../../../models/action.js";
+import permission from "../../../models/permission";
+import action from "../../../models/action";
 
 const capitalize = (str: string): string => {
     return str.charAt(0).toUpperCase() + str.slice(1);

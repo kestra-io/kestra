@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class Sha512FilterTest {
@@ -20,6 +19,6 @@ public class Sha512FilterTest {
     void out() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ \"hello\" | sha512 }}", Map.of());
 
-        assertThat(render.equals("hello"), is(false));
+        assertThat(render.equals("hello")).isEqualTo(false);
     }
 }

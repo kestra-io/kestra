@@ -8,14 +8,14 @@
             @click="selectInput(input, index)"
         >
             <el-col :span="24" class="d-flex">
-                <InputText disabled :model-value="input.id" class="w-100" />
+                <InputText readonly :model-value="input.id" class="w-100" />
                 <DeleteOutline
                     @click.prevent.stop="deleteInput(index)"
                     class="ms-2 delete"
                 />
             </el-col>
         </el-row>
-        <Add @add="addInput(index)" />
+        <Add @add="addInput()" />
     </div>
 </template>
 
@@ -127,7 +127,7 @@
             },
             addInput() {
                 this.newInputs.push({type: "STRING"});
-                this.selectInput(this.newInputs.at(-1), 0);
+                this.selectInput(this.newInputs.at(-1), this.newInputs.length - 1);
             },
             onChangeType(value) {
                 this.loading = true;

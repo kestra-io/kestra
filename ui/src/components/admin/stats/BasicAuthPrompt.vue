@@ -1,8 +1,10 @@
 <template>
     <div class="d-flex" v-if="!configs.isBasicAuthEnabled">
-        <el-text>Your data is not protected. Don't loose it. <b>Enable our free security features or try our paid offering.</b></el-text>
+        <el-text>
+            <span v-html="$t('data_not_protected')" />
+        </el-text>
         <el-button class="ms-auto" @click="promptForCredentials">
-            <b>Activate Basic Authentication</b>
+            <b>{{ $t('activate_basic_auth') }}</b>
         </el-button>
 
         <el-dialog v-if="promptOAuthCredentials" v-model="promptOAuthCredentials" destroy-on-close :append-to-body="true">

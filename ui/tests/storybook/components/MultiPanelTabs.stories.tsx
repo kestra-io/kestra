@@ -29,7 +29,9 @@ const render: Story["render"] = ({modelValue}) => ({
             top: 0,
             left: "0",
             color: "white",
-            fontSize: "12px"
+            fontSize: "12px",
+            textAlign: "right",
+            padding: "0 1rem"
           };
           
         return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-background-body)">

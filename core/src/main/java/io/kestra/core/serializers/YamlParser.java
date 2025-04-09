@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import io.kestra.core.models.validations.ManualConstraintViolation;
-import jakarta.inject.Singleton;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
@@ -20,8 +19,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
-@Singleton
-public class YamlParser {
+public final class YamlParser {
     private static final ObjectMapper STRICT_MAPPER = JacksonMapper.ofYaml()
         .enable(JsonParser.Feature.STRICT_DUPLICATE_DETECTION)
         .disable(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE);
@@ -33,12 +31,11 @@ public class YamlParser {
         return FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yaml") || FilenameUtils.getExtension(path.toFile().getAbsolutePath()).equals("yml");
     }
 
-    public <T> T parse(String input, Class<T> cls) {
+    public static <T> T parse(String input, Class<T> cls) {
         return read(input, cls, type(cls));
     }
 
-
-    public <T> T parse(Map<String, Object> input, Class<T> cls, Boolean strict) {
+    public static  <T> T parse(Map<String, Object> input, Class<T> cls, Boolean strict) {
         ObjectMapper currentMapper = strict ? STRICT_MAPPER : NON_STRICT_MAPPER;
 
         try {
@@ -56,7 +53,7 @@ public class YamlParser {
         return cls.getSimpleName().toLowerCase();
     }
 
-    public <T> T parse(File file, Class<T> cls) throws ConstraintViolationException {
+    public static <T> T parse(File file, Class<T> cls) throws ConstraintViolationException {
         try {
             String input = IOUtils.toString(file.toURI(), StandardCharsets.UTF_8);
             return read(input, cls, type(cls));
@@ -77,13 +74,12 @@ public class YamlParser {
         }
     }
 
-    private <T> T read(String input, Class<T> objectClass, String resource) {
+    private static <T> T read(String input, Class<T> objectClass, String resource) {
         try {
             return STRICT_MAPPER.readValue(input, objectClass);
         } catch (JsonProcessingException e) {
             jsonProcessingExceptionHandler(input, resource, e);
         }
-
         return null;
     }
 

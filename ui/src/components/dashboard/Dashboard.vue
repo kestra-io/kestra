@@ -280,6 +280,16 @@
             type: Boolean,
             default: true,
         },
+        id: {
+            type: String,
+            required: false,
+            default: null,
+        },
+        containerClass: {
+            type: String,
+            required: false,
+            default: null,
+        },
     });
 
     const customDashboardsEnabled = computed(

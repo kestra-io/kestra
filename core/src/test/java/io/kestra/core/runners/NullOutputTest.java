@@ -13,8 +13,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class NullOutputTest {
@@ -36,10 +35,10 @@ public class NullOutputTest {
     void shouldIncludeNullOutput() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "null-output");
 
-        assertThat(execution, notNullValue());
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs(), aMapWithSize(1));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().containsKey("value"), is(true));
+        assertThat(execution).isNotNull();
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getOutputs()).hasSize(1);
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().containsKey("value")).isEqualTo(true);
     }
 }

@@ -9,8 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class RunVariablesTest {
 
@@ -18,10 +17,10 @@ class RunVariablesTest {
     @SuppressWarnings("unchecked")
     void shouldGetEmptyVariables() {
         Map<String, Object> variables = new RunVariables.DefaultBuilder().build(new RunContextLogger());
-        assertThat(variables.size(), is(3));
-        assertThat((Map<String, Object>) variables.get("envs"), is(Map.of()));
-        assertThat((Map<String, Object>) variables.get("globals"), is(Map.of()));
-        assertThat(variables.get("addSecretConsumer"), notNullValue());
+        assertThat(variables.size()).isEqualTo(3);
+        assertThat((Map<String, Object>) variables.get("envs")).isEqualTo(Map.of());
+        assertThat((Map<String, Object>) variables.get("globals")).isEqualTo(Map.of());
+        assertThat(variables.get("addSecretConsumer")).isNotNull();
     }
 
     @Test
@@ -104,10 +103,10 @@ class RunVariablesTest {
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
             .withKestraConfiguration(new RunVariables.KestraConfiguration("test", "http://localhost:8080"))
             .build(new RunContextLogger());
-        assertThat(variables.size(), is(4));
+        assertThat(variables.size()).isEqualTo(4);
         Map<String, Object> kestra = (Map<String, Object>) variables.get("kestra");
-        assertThat(kestra, aMapWithSize(2));
-        assertThat(kestra.get("environment"), is("test"));
-        assertThat(kestra.get("url"), is("http://localhost:8080"));
+        assertThat(kestra).hasSize(2);
+        assertThat(kestra.get("environment")).isEqualTo("test");
+        assertThat(kestra.get("url")).isEqualTo("http://localhost:8080");
     }
 }

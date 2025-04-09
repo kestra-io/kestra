@@ -9,8 +9,7 @@ import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class DefaultFileRenderTest {
     @ParameterizedTest
@@ -28,7 +27,7 @@ class DefaultFileRenderTest {
 
         DefaultFileRender render = new DefaultFileRender("txt", is, charset, 100);
 
-        assertThat(render.truncated, is(truncated));
+        assertThat(render.truncated).isEqualTo(truncated);
     }
 
     @ParameterizedTest
@@ -45,6 +44,6 @@ class DefaultFileRenderTest {
 
         DefaultFileRender render = new DefaultFileRender("txt", is, charset, 100);
 
-        assertThat(render.truncated, is(truncated));
+        assertThat(render.truncated).isEqualTo(truncated);
     }
 }

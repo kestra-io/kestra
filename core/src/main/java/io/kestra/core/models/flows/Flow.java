@@ -6,28 +6,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.introspect.AnnotatedMember;
 import com.fasterxml.jackson.databind.introspect.JacksonAnnotationIntrospector;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.HasUID;
-import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.listeners.Listener;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.retrys.AbstractRetry;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.validations.ManualConstraintViolation;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
-import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.kestra.core.services.FlowService;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.Introspected;
@@ -38,11 +30,18 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * A serializable flow with no source.
+ * <p>
+ * This class is planned for deprecation - use the {@link FlowWithSource}.
+ */
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
@@ -66,11 +65,6 @@ public class Flow extends AbstractFlow implements HasUID {
         });
 
     String description;
-
-    @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
-    @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
-    @Schema(implementation = Object.class, oneOf = {List.class, Map.class})
-    List<Label> labels;
 
     Map<String, Object> variables;
 
@@ -134,61 +128,6 @@ public class Flow extends AbstractFlow implements HasUID {
     @Valid
     @PluginProperty(beta = true)
     List<SLA> sla;
-
-
-    /** {@inheritDoc **/
-    @Override
-    @JsonIgnore
-    public String uid() {
-        return Flow.uid(this.getTenantId(), this.getNamespace(), this.getId(), Optional.ofNullable(this.revision));
-    }
-
-    @JsonIgnore
-    public String uidWithoutRevision() {
-        return Flow.uidWithoutRevision(this.getTenantId(), this.getNamespace(), this.getId());
-    }
-
-    public static String uid(Execution execution) {
-        return IdUtils.fromParts(
-            execution.getTenantId(),
-            execution.getNamespace(),
-            execution.getFlowId(),
-            String.valueOf(execution.getFlowRevision())
-        );
-    }
-
-    public static String uid(String tenantId, String namespace, String id, Optional<Integer> revision) {
-        return IdUtils.fromParts(
-            tenantId,
-            namespace,
-            id,
-            String.valueOf(revision.orElse(-1))
-        );
-    }
-
-    public static String uidWithoutRevision(String tenantId, String namespace, String id) {
-        return IdUtils.fromParts(
-            tenantId,
-            namespace,
-            id
-        );
-    }
-
-    public static String uid(Trigger trigger) {
-        return IdUtils.fromParts(
-            trigger.getTenantId(),
-            trigger.getNamespace(),
-            trigger.getFlowId()
-        );
-    }
-
-    public static String uidWithoutRevision(Execution execution) {
-        return IdUtils.fromParts(
-            execution.getTenantId(),
-            execution.getNamespace(),
-            execution.getFlowId()
-        );
-    }
 
     public Stream<String> allTypes() {
         return Stream.of(
@@ -341,7 +280,7 @@ public class Flow extends AbstractFlow implements HasUID {
         );
     }
 
-    public boolean equalsWithoutRevision(Flow o) {
+    public boolean equalsWithoutRevision(FlowInterface o) {
         try {
             return WITHOUT_REVISION_OBJECT_MAPPER.writeValueAsString(this).equals(WITHOUT_REVISION_OBJECT_MAPPER.writeValueAsString(o));
         } catch (JsonProcessingException e) {
@@ -381,14 +320,6 @@ public class Flow extends AbstractFlow implements HasUID {
         }
     }
 
-    /**
-     * Convenience method to generate the source of a flow.
-     * Equivalent to <code>FlowService.generateSource(this);</code>
-     */
-    public String generateSource() {
-        return FlowService.generateSource(this);
-    }
-
     public Flow toDeleted() {
         return this.toBuilder()
             .revision(this.revision + 1)
@@ -396,7 +327,13 @@ public class Flow extends AbstractFlow implements HasUID {
             .build();
     }
 
-    public FlowWithSource withSource(String source) {
-        return FlowWithSource.of(this, source);
+    /**
+     * {@inheritDoc}
+     * To be conservative a flow MUST not return any source.
+     */
+    @Override
+    @JsonIgnore
+    public String getSource() {
+        return null;
     }
 }

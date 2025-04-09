@@ -11,8 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlowTopologyRepositoryTest {
     @Inject
@@ -23,12 +22,11 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
 
     @Test
     void saveMultiple() {
-        FlowWithSource flow = Flow.builder()
+        FlowWithSource flow = FlowWithSource.builder()
             .id("flow-a")
             .namespace("io.kestra.tests")
             .revision(1)
-            .build()
-            .withSource(null);
+            .build();
 
         flowTopologyRepository.save(
             flow,
@@ -38,7 +36,7 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
         );
 
         List<FlowTopology> list = flowTopologyRepository.findByFlow(null, "io.kestra.tests", "flow-a", false);
-        assertThat(list.size(), is(1));
+        assertThat(list.size()).isEqualTo(1);
 
         flowTopologyRepository.save(
             flow,
@@ -49,8 +47,8 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
 
         list = flowTopologyRepository.findByFlow(null, "io.kestra.tests", "flow-a", false);
 
-        assertThat(list.size(), is(1));
-        assertThat(list.getFirst().getDestination().getId(), is("flow-c"));
+        assertThat(list.size()).isEqualTo(1);
+        assertThat(list.getFirst().getDestination().getId()).isEqualTo("flow-c");
 
         flowTopologyRepository.save(
             flow,
@@ -62,7 +60,7 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
 
         list = flowTopologyRepository.findByNamespace(null, "io.kestra.tests");
 
-        assertThat(list.size(), is(2));
+        assertThat(list.size()).isEqualTo(2);
     }
 
 

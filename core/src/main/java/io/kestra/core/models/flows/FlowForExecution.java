@@ -1,7 +1,7 @@
 package io.kestra.core.models.flows;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.TaskForExecution;
 import io.kestra.core.models.triggers.AbstractTriggerForExecution;
 import io.kestra.core.utils.ListUtils;
@@ -51,5 +51,11 @@ public class FlowForExecution extends AbstractFlow {
             .disabled(flow.isDisabled())
             .deleted(flow.isDeleted())
             .build();
+    }
+
+    @JsonIgnore
+    @Override
+    public String getSource() {
+        return null;
     }
 }

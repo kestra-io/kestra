@@ -11,9 +11,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class FlowCreateOrUpdateCommandTest {
     @RetryingTest(5) // flaky on CI but cannot be reproduced even with 100 repetitions
@@ -38,7 +36,7 @@ class FlowCreateOrUpdateCommandTest {
             };
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("4 flow(s)"));
+            assertThat(out.toString()).contains("4 flow(s)");
             out.reset();
 
             args = new String[]{
@@ -53,7 +51,7 @@ class FlowCreateOrUpdateCommandTest {
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
             // 2 delete + 1 update
-            assertThat(out.toString(), containsString("4 flow(s)"));
+            assertThat(out.toString()).contains("4 flow(s)");
         }
     }
 
@@ -80,7 +78,7 @@ class FlowCreateOrUpdateCommandTest {
             };
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("4 flow(s)"));
+            assertThat(out.toString()).contains("4 flow(s)");
             out.reset();
 
             // no "delete" arg should behave as no-delete
@@ -93,7 +91,7 @@ class FlowCreateOrUpdateCommandTest {
             };
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("1 flow(s)"));
+            assertThat(out.toString()).contains("1 flow(s)");
             out.reset();
 
             args = new String[]{
@@ -106,7 +104,7 @@ class FlowCreateOrUpdateCommandTest {
             };
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("1 flow(s)"));
+            assertThat(out.toString()).contains("1 flow(s)");
         }
     }
 
@@ -131,8 +129,8 @@ class FlowCreateOrUpdateCommandTest {
             };
             Integer call = PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(call, is(0));
-            assertThat(out.toString(), containsString("1 flow(s)"));
+            assertThat(call).isEqualTo(0);
+            assertThat(out.toString()).contains("1 flow(s)");
         }
     }
 }

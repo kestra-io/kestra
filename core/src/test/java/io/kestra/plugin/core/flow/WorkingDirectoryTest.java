@@ -1,12 +1,6 @@
 package io.kestra.plugin.core.flow;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.hasKey;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.startsWith;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -126,9 +120,9 @@ public class WorkingDirectoryTest {
                 (f, e) -> ImmutableMap.of("failed", "false"), Duration.ofSeconds(60)
             );
 
-            assertThat(execution.getTaskRunList(), hasSize(4));
-            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertThat((String) execution.getTaskRunList().get(3).getOutputs().get("value"), startsWith("kestra://"));
+            assertThat(execution.getTaskRunList()).hasSize(4);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat((String) execution.getTaskRunList().get(3).getOutputs().get("value")).startsWith("kestra://");
         }
 
         public void failed(RunnerUtils runnerUtils) throws TimeoutException, QueueException {
@@ -136,17 +130,17 @@ public class WorkingDirectoryTest {
                 (f, e) -> ImmutableMap.of("failed", "true"), Duration.ofSeconds(60)
             );
 
-            assertThat(execution.getTaskRunList(), hasSize(3));
-            assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-            assertThat(execution.findTaskRunsByTaskId("error-t1"), hasSize(1));
+            assertThat(execution.getTaskRunList()).hasSize(3);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("error-t1")).hasSize(1);
         }
 
         public void each(RunnerUtils runnerUtils) throws TimeoutException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-each", Duration.ofSeconds(60));
 
-            assertThat(execution.getTaskRunList(), hasSize(8));
-            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertThat((String) execution.findTaskRunsByTaskId("2_end").getFirst().getOutputs().get("value"), startsWith("kestra://"));
+            assertThat(execution.getTaskRunList()).hasSize(8);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat((String) execution.findTaskRunsByTaskId("2_end").getFirst().getOutputs().get("value")).startsWith("kestra://");
         }
 
         @SuppressWarnings("unchecked")
@@ -154,12 +148,12 @@ public class WorkingDirectoryTest {
 
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-outputs");
 
-            assertThat(execution.getTaskRunList(), hasSize(2));
-            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+            assertThat(execution.getTaskRunList()).hasSize(2);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
             TaskRun taskRun = execution.getTaskRunList().getFirst();
             Map<String, Object> outputs = taskRun.getOutputs();
-            assertThat(outputs, hasKey("outputFiles"));
+            assertThat(outputs).containsKey("outputFiles");
 
             StorageContext storageContext = StorageContext.forTask(taskRun);
             InternalStorage storage = new InternalStorage(
@@ -173,7 +167,7 @@ public class WorkingDirectoryTest {
                 .stream()
                 .map(URI::create)
                 .toList().getFirst();
-            assertThat(new String(storage.getFile(uri).readAllBytes()), is("Hello World"));
+            assertThat(new String(storage.getFile(uri).readAllBytes())).isEqualTo("Hello World");
         }
 
         @SuppressWarnings("unchecked")
@@ -181,8 +175,8 @@ public class WorkingDirectoryTest {
 
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-inputs");
 
-            assertThat(execution.getTaskRunList(), hasSize(2));
-            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+            assertThat(execution.getTaskRunList()).hasSize(2);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
             StorageContext storageContext = StorageContext.forTask(execution.getTaskRunList().get(1));
             InternalStorage storage = new InternalStorage(
@@ -194,12 +188,12 @@ public class WorkingDirectoryTest {
 
             TaskRun taskRun = execution.getTaskRunList().get(1);
             Map<String, Object> outputs = taskRun.getOutputs();
-            assertThat(outputs, hasKey("uris"));
+            assertThat(outputs).containsKey("uris");
 
             URI uri = URI.create(((Map<String, String>) outputs.get("uris")).get("input.txt"));
 
             assertTrue(uri.toString().endsWith("input.txt"));
-            assertThat(new String(storage.getFile(uri).readAllBytes()), is("Hello World"));
+            assertThat(new String(storage.getFile(uri).readAllBytes())).isEqualTo("Hello World");
         }
 
         @SuppressWarnings({"unchecked", "OptionalGetWithoutIsPresent"})
@@ -224,45 +218,41 @@ public class WorkingDirectoryTest {
 
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-cache");
 
-            assertThat(execution.getTaskRunList(), hasSize(3));
+            assertThat(execution.getTaskRunList()).hasSize(3);
             assertThat(execution.getTaskRunList().stream()
-                    .filter(t -> t.getTaskId().equals("exists"))
-                    .findFirst().get()
-                    .getOutputs(),
-                is(Map.of("uris", Collections.emptyMap()))
-            );
-            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+                .filter(t -> t.getTaskId().equals("exists"))
+                .findFirst().get()
+                .getOutputs()).isEqualTo(Map.of("uris", Collections.emptyMap()));
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
             assertTrue(storageInterface.exists(null, null, cacheURI));
 
             // a second run should use the cache so the task `exists` should output the cached file
             execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-cache");
 
-            assertThat(execution.getTaskRunList(), hasSize(3));
+            assertThat(execution.getTaskRunList()).hasSize(3);
             assertThat(((Map<String, String>) execution.getTaskRunList().stream()
-                    .filter(t -> t.getTaskId().equals("exists"))
-                    .findFirst().get()
-                    .getOutputs()
-                    .get("uris"))
-                    .containsKey("hello.txt"),
-                is(true)
-            );
-            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+                .filter(t -> t.getTaskId().equals("exists"))
+                .findFirst().get()
+                .getOutputs()
+                .get("uris"))
+                .containsKey("hello.txt")).isEqualTo(true);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         }
 
         public void taskRun(RunnerUtils runnerUtils) throws TimeoutException, InternalException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun");
 
-            assertThat(execution.getTaskRunList(), hasSize(3));
-            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertThat(((String) execution.findTaskRunByTaskIdAndValue("log-taskrun", List.of("1")).getOutputs().get("value")), containsString("1"));
+            assertThat(execution.getTaskRunList()).hasSize(3);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(((String) execution.findTaskRunByTaskIdAndValue("log-taskrun", List.of("1")).getOutputs().get("value"))).contains("1");
         }
 
         public void taskRunNested(RunnerUtils runnerUtils) throws TimeoutException, InternalException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun-nested");
 
-            assertThat(execution.getTaskRunList(), hasSize(6));
-            assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-            assertThat(((String) execution.findTaskRunByTaskIdAndValue("log-workerparent", List.of("1")).getOutputs().get("value")), containsString("{\"taskrun\":{\"value\":\"1\"}}"));
+            assertThat(execution.getTaskRunList()).hasSize(6);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(((String) execution.findTaskRunByTaskIdAndValue("log-workerparent", List.of("1")).getOutputs().get("value"))).contains("{\"taskrun\":{\"value\":\"1\"}}");
         }
 
         public void namespaceFiles(RunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
@@ -273,12 +263,12 @@ public class WorkingDirectoryTest {
 
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-namespace-files");
 
-            assertThat(execution.getTaskRunList(), hasSize(6));
-            assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
-            assertThat(execution.findTaskRunsByTaskId("t4").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-            assertThat(execution.findTaskRunsByTaskId("t1").getFirst().getOutputs().get("value"), is("first"));
-            assertThat(execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value"), is("second"));
-            assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value"), is("third"));
+            assertThat(execution.getTaskRunList()).hasSize(6);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+            assertThat(execution.findTaskRunsByTaskId("t4").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("t1").getFirst().getOutputs().get("value")).isEqualTo("first");
+            assertThat(execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value")).isEqualTo("second");
+            assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value")).isEqualTo("third");
         }
 
         public void namespaceFilesWithNamespaces(RunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
@@ -297,25 +287,25 @@ public class WorkingDirectoryTest {
 
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-namespace-files-with-namespaces");
 
-            assertThat(execution.getTaskRunList(), hasSize(6));
-            assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
-            assertThat(execution.findTaskRunsByTaskId("t4").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-            assertThat(execution.findTaskRunsByTaskId("t1").getFirst().getOutputs().get("value"), is("first in third namespace"));
-            assertThat(execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value"), is("second in second namespace"));
-            assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value"), is("third in first namespace"));
+            assertThat(execution.getTaskRunList()).hasSize(6);
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+            assertThat(execution.findTaskRunsByTaskId("t4").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+            assertThat(execution.findTaskRunsByTaskId("t1").getFirst().getOutputs().get("value")).isEqualTo("first in third namespace");
+            assertThat(execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value")).isEqualTo("second in second namespace");
+            assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value")).isEqualTo("third in first namespace");
         }
 
         @SuppressWarnings("unchecked")
         public void encryption(RunnerUtils runnerUtils, RunContextFactory runContextFactory) throws TimeoutException, GeneralSecurityException, QueueException {
             Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "working-directory-taskrun-encrypted");
 
-            assertThat(execution.getTaskRunList(), hasSize(3));
+            assertThat(execution.getTaskRunList()).hasSize(3);
             Map<String, Object> encryptedString = (Map<String, Object>) execution.findTaskRunsByTaskId("encrypted").getFirst().getOutputs().get("value");
-            assertThat(encryptedString.get("type"), is(EncryptedString.TYPE));
+            assertThat(encryptedString.get("type")).isEqualTo(EncryptedString.TYPE);
             String encryptedValue = (String) encryptedString.get("value");
-            assertThat(encryptedValue, is(not("Hello World")));
-            assertThat(runContextFactory.of().decrypt(encryptedValue), is("Hello World"));
-            assertThat(execution.findTaskRunsByTaskId("decrypted").getFirst().getOutputs().get("value"), is("Hello World"));
+            assertThat(encryptedValue).isNotEqualTo("Hello World");
+            assertThat(runContextFactory.of().decrypt(encryptedValue)).isEqualTo("Hello World");
+            assertThat(execution.findTaskRunsByTaskId("decrypted").getFirst().getOutputs().get("value")).isEqualTo("Hello World");
         }
 
         private void put(String path, String content) throws IOException {

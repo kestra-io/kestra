@@ -71,6 +71,22 @@
                             />
                         </el-select>
                     </Column>
+
+                    <Column :label="$t('settings.blocks.configuration.fields.flow_default_tab')">
+                        <el-select :model-value="pendingSettings.flowDefaultTab" @update:model-value="onFlowDefaultTabChange">
+                            <el-option
+                                v-for="item in flowDefaultTabOptions"
+                                :key="item.value"
+                                :label="item.label"
+                                :value="item.value"
+                            />
+                        </el-select>
+                    </Column>
+                </Row>
+                <Row>
+                    <Column :label="$t('settings.blocks.configuration.fields.multi_panel_editor')">
+                        <el-switch :aria-label="$t('settings.blocks.configuration.fields.multi_panel_editor')" :model-value="pendingSettings.multiPanelEditor" @update:model-value="onMultiPanelEditor" />
+                    </Column>
                 </Row>
             </template>
         </Block>
@@ -230,7 +246,7 @@
 <script>
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import NamespaceSelect from "../../components/namespace/NamespaceSelect.vue";
+    import NamespaceSelect from "../../components/namespaces/components/NamespaceSelect.vue";
     import LogLevelSelector from "../../components/logs/LogLevelSelector.vue";
     import Utils from "../../utils/utils";
     import {mapGetters, mapState, useStore} from "vuex";
@@ -282,6 +298,8 @@
                     envName: undefined,
                     envColor: undefined,
                     executeDefaultTab: undefined,
+                    multiPanelEditor: undefined,
+                    flowDefaultTab: undefined,
                     logsFontSize: undefined
                 },
                 settingsKeyMapping: {
@@ -326,9 +344,11 @@
             this.pendingSettings.editorFontFamily = localStorage.getItem("editorFontFamily") || "'Source Code Pro', monospace";
             this.pendingSettings.executeFlowBehaviour = localStorage.getItem("executeFlowBehaviour") || "same tab";
             this.pendingSettings.executeDefaultTab = localStorage.getItem("executeDefaultTab") || "gantt";
+            this.pendingSettings.flowDefaultTab = localStorage.getItem("flowDefaultTab") || "overview";
             this.pendingSettings.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
             this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
+            this.pendingSettings.multiPanelEditor = localStorage.getItem("multiPanelEditor") === "true";
         },
         methods: {
             onNamespaceSelect(value) {
@@ -399,6 +419,12 @@
             onExecuteDefaultTabChange(value){
                 this.pendingSettings.executeDefaultTab = value;
             },
+            onMultiPanelEditor(value) {
+                this.pendingSettings.multiPanelEditor = value;
+            },
+            onFlowDefaultTabChange(value){
+                this.pendingSettings.flowDefaultTab = value;
+            },
             onLogsFontSize(value) {
                 this.pendingSettings.logsFontSize = value;
             },
@@ -423,12 +449,6 @@
                         if (this.pendingSettings[key] !== this.configs?.environment?.color) {
                             this.$store.commit("layout/setEnvColor", this.pendingSettings[key])
                         }
-                        break
-                    case "autofoldTextEditor":
-                        localStorage.setItem(key, this.pendingSettings[key])
-                        break
-                    case "logsFontSize":
-                        localStorage.setItem(key, this.pendingSettings[key])
                         break
                     case "theme":
                         Utils.switchTheme(this.$store, this.pendingSettings[key]);
@@ -460,7 +480,7 @@
                                 localStorage.setItem(storedKey, this.pendingSettings[key])
                         }
                         else {
-                            if(this.pendingSettings[key])
+                            if(this.pendingSettings[key] !== undefined)
                                 localStorage.setItem(key, this.pendingSettings[key])
                         }
                     }
@@ -585,6 +605,54 @@
                         value : "metrics",
                         label: this.$t("metrics")
                     }
+                ]
+            },
+            flowDefaultTabOptions() {
+                return [
+                    {
+                        value : "overview",
+                        label: this.$t("overview")
+                    },
+                    {
+                        value : "topology",
+                        label: this.$t("topology")
+                    },
+                    {
+                        value : "executions",
+                        label: this.$t("executions")
+                    },
+                    {
+                        value : "edit",
+                        label: this.$t("edit")
+                    },
+                    {
+                        value : "revisions",
+                        label: this.$t("revisions")
+                    },
+                    {
+                        value : "triggers",
+                        label: this.$t("triggers")
+                    },
+                    {
+                        value : "logs",
+                        label: this.$t("logs")
+                    },
+                    {
+                        value : "metrics",
+                        label: this.$t("metrics")
+                    },
+                    {
+                        value : "dependencies",
+                        label: this.$t("dependencies")
+                    },
+                    {
+                        value : "concurrency",
+                        label: this.$t("concurrency")
+                    },
+                    {
+                        value : "auditlogs",
+                        label: this.$t("auditlogs")
+                    },
                 ]
             }
         }

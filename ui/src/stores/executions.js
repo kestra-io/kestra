@@ -1,6 +1,6 @@
 import axios from "axios";
 import {apiUrl} from "override/utils/route";
-import Utils from "../utils/utils.js"
+import Utils from "../utils/utils"
 
 export default {
     namespaced: true,
@@ -62,7 +62,8 @@ export default {
         bulkReplayExecution(_, options) {
             return this.$http.post(
                 `${apiUrl(this)}/executions/replay/by-ids`,
-                options.executionsId
+                options.executionsId,
+                {params: options}
             )
         },
         bulkChangeExecutionStatus(_, options) {

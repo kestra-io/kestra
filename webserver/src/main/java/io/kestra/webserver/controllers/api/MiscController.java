@@ -72,6 +72,10 @@ public class MiscController {
     @Nullable
     protected String environmentColor;
 
+    @io.micronaut.context.annotation.Value("${kestra.url}")
+    @Nullable
+    protected String kestraUrl;
+
     @io.micronaut.context.annotation.Value("${kestra.server.preview.initial-rows:100}")
     private Integer initialPreviewRows;
 
@@ -103,7 +107,8 @@ public class MiscController {
             ).isBasicAuthEnabled(basicAuthService.isEnabled())
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .resourceToFilters(QueryFilter.Resource.asResourceList())
-            .hiddenLabelsPrefixes(hiddenLabelsPrefixes);
+            .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
+            .url(kestraUrl);
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -160,6 +165,8 @@ public class MiscController {
         Boolean isTemplateEnabled;
 
         Environment environment;
+
+        String url;
 
         Preview preview;
 

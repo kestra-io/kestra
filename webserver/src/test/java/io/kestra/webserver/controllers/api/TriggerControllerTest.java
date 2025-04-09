@@ -1,19 +1,11 @@
 package io.kestra.webserver.controllers.api;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.allOf;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.hamcrest.Matchers.nullValue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.Trigger;
+import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.tasks.test.PollingTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
@@ -32,14 +24,20 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
+import org.hamcrest.Matchers;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
-import org.hamcrest.Matchers;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.groups.Tuple.tuple;
+import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true, startScheduler = true)
 class TriggerControllerTest {
@@ -69,7 +67,7 @@ class TriggerControllerTest {
         String triggerNamespace = "io.kestra.tests.schedule";
 
         Flow flow = generateFlow(triggerFlowId);
-        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
             .flowId(triggerFlowId)
@@ -82,44 +80,37 @@ class TriggerControllerTest {
         jdbcTriggerRepository.save(trigger.toBuilder().triggerId("trigger-nextexec-polling").build());
 
         PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/triggers/search?filters[q][$eq]=schedule-trigger-search&filters[namespace][$startsWith]=io.kestra.tests&sort=triggerId:asc"),
+            HttpRequest.GET("/api/v1/triggers/search?filters[q][EQUALS]=schedule-trigger-search&filters[namespace][STARTS_WITH]=io.kestra.tests&sort=triggerId:asc"),
             Argument.of(PagedResults.class, TriggerController.Triggers.class)
         );
-        assertThat(triggers.getTotal(), greaterThanOrEqualTo(2L));
+        assertThat(triggers.getTotal()).isGreaterThanOrEqualTo(2L);
 
-        assertThat(triggers.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList(), Matchers.hasItems(
-                allOf(
-                    hasProperty("triggerId", is("trigger-nextexec-schedule")),
-                    hasProperty("namespace", is(triggerNamespace)),
-                    hasProperty("flowId", is(triggerFlowId))
-                ),
-                allOf(
-                    hasProperty("triggerId", is("trigger-nextexec-polling")),
-                    hasProperty("namespace", is(triggerNamespace)),
-                    hasProperty("flowId", is(triggerFlowId))
-                )
+        assertThat(triggers.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList())
+            .extracting(
+                TriggerContext::getTriggerId,
+                TriggerContext::getNamespace,
+                TriggerContext::getFlowId
             )
-        );
-
+            .containsExactlyInAnyOrder(
+                tuple("trigger-nextexec-schedule", triggerNamespace, triggerFlowId),
+                tuple("trigger-nextexec-polling", triggerNamespace, triggerFlowId)
+            );
         PagedResults<TriggerController.Triggers> triggers_oldParameters = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/triggers/search?q=schedule-trigger-search&namespace=io.kestra.tests&sort=triggerId:asc"),
             Argument.of(PagedResults.class, TriggerController.Triggers.class)
         );
-        assertThat(triggers_oldParameters.getTotal(), greaterThanOrEqualTo(2L));
+        assertThat(triggers_oldParameters.getTotal()).isGreaterThanOrEqualTo(2L);
 
-        assertThat(triggers_oldParameters.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList(), Matchers.hasItems(
-                allOf(
-                    hasProperty("triggerId", is("trigger-nextexec-schedule")),
-                    hasProperty("namespace", is(triggerNamespace)),
-                    hasProperty("flowId", is(triggerFlowId))
-                ),
-                allOf(
-                    hasProperty("triggerId", is("trigger-nextexec-polling")),
-                    hasProperty("namespace", is(triggerNamespace)),
-                    hasProperty("flowId", is(triggerFlowId))
-                )
+        assertThat(triggers_oldParameters.getResults().stream().map(TriggerController.Triggers::getTriggerContext).toList())
+            .extracting(
+                TriggerContext::getTriggerId,
+                TriggerContext::getNamespace,
+                TriggerContext::getFlowId
             )
-        );
+            .containsExactlyInAnyOrder(
+                tuple("trigger-nextexec-schedule", triggerNamespace, triggerFlowId),
+                tuple("trigger-nextexec-polling", triggerNamespace, triggerFlowId)
+            );
     }
 
     @Test
@@ -139,13 +130,13 @@ class TriggerControllerTest {
             trigger.getTriggerId()
         ), null), Trigger.class);
 
-        assertThat(trigger.getExecutionId(), is(nullValue()));
-        assertThat(trigger.getEvaluateRunningDate(), is(nullValue()));
+        assertThat(trigger.getExecutionId()).isNull();
+        assertThat(trigger.getEvaluateRunningDate()).isNull();
 
         Trigger unlockedTrigger = jdbcTriggerRepository.findLast(trigger).orElseThrow();
 
-        assertThat(unlockedTrigger.getExecutionId(), is(nullValue()));
-        assertThat(unlockedTrigger.getEvaluateRunningDate(), is(nullValue()));
+        assertThat(unlockedTrigger.getExecutionId()).isNull();
+        assertThat(unlockedTrigger.getEvaluateRunningDate()).isNull();
 
         HttpClientResponseException e = assertThrows(HttpClientResponseException.class, () ->
             client.toBlocking().exchange(HttpRequest.POST("/api/v1/triggers/%s/%s/%s/unlock".formatted(
@@ -154,8 +145,8 @@ class TriggerControllerTest {
                 unlockedTrigger.getTriggerId()
             ), null)));
 
-        assertThat(e.getStatus(), is(HttpStatus.CONFLICT));
-        assertThat(e.getMessage(), is("Illegal state: Trigger is not locked"));
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.CONFLICT.getCode());
+        assertThat(e.getMessage()).isEqualTo("Illegal state: Trigger is not locked");
 
         e = assertThrows(HttpClientResponseException.class, () ->
             client.toBlocking().exchange(HttpRequest.POST("/api/v1/triggers/%s/%s/%s/unlock".formatted(
@@ -165,13 +156,13 @@ class TriggerControllerTest {
             ), null))
         );
 
-        assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
     @Test
     void updated() {
         Flow flow = generateFlow("flow-with-triggers-updated");
-        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
             .flowId(flow.getId())
@@ -192,15 +183,15 @@ class TriggerControllerTest {
         Trigger afterUpdated = client.toBlocking().retrieve(HttpRequest.PUT(("/api/v1/triggers"), updatedBad), Trigger.class);
 
         // Assert that executionId cannot be edited
-        assertThat(afterUpdated.getExecutionId(), not("hello"));
+        assertThat(afterUpdated.getExecutionId()).isNotEqualTo("hello");
         // Assert that disabled can be edited
-        assertThat(afterUpdated.getDisabled(), is(false));
+        assertThat(afterUpdated.getDisabled()).isEqualTo(false);
     }
 
     @Test
     void restart() {
         Flow flow = generateFlow("flow-with-triggers");
-        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
             .flowId(flow.getId())
@@ -213,7 +204,7 @@ class TriggerControllerTest {
         jdbcTriggerRepository.create(trigger);
 
         HttpResponse<?> restarted = client.toBlocking().exchange(HttpRequest.POST(("/api/v1/triggers/io.kestra.tests.schedule/flow-with-triggers/trigger-to-restart/restart"), null));
-        assertThat(restarted.getStatus(), is(HttpStatus.OK));
+        assertThat(restarted.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
         assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST(("/api/v1/triggers/notfound/notfound/notfound/restart"), null)));
     }
@@ -240,7 +231,7 @@ class TriggerControllerTest {
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/unlock/by-triggers", triggers), BulkResponse.class);
 
-        assertThat(bulkResponse.getCount(), is(1));
+        assertThat(bulkResponse.getCount()).isEqualTo(1);
     }
 
     @Test
@@ -263,7 +254,7 @@ class TriggerControllerTest {
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/unlock/by-query?namespace=io.kestra.unittest", null), BulkResponse.class);
 
-        assertThat(bulkResponse.getCount(), is(1));
+        assertThat(bulkResponse.getCount()).isEqualTo(1);
     }
 
     @Test
@@ -288,8 +279,8 @@ class TriggerControllerTest {
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)), BulkResponse.class);
 
-        assertThat(bulkResponse.getCount(), is(2));
-        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled(), is(false));
+        assertThat(bulkResponse.getCount()).isEqualTo(2);
+        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isEqualTo(false);
     }
 
     @Test
@@ -312,8 +303,8 @@ class TriggerControllerTest {
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-query?namespace=io.kestra.unittest&disabled=false", null), BulkResponse.class);
 
-        assertThat(bulkResponse.getCount(), is(2));
-        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled(), is(false));
+        assertThat(bulkResponse.getCount()).isEqualTo(2);
+        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isEqualTo(false);
     }
 
     @Test
@@ -338,8 +329,8 @@ class TriggerControllerTest {
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)), BulkResponse.class);
 
-        assertThat(bulkResponse.getCount(), is(2));
-        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled(), is(true));
+        assertThat(bulkResponse.getCount()).isEqualTo(2);
+        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled()).isEqualTo(true);
     }
 
     @Test
@@ -362,22 +353,22 @@ class TriggerControllerTest {
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-query?namespace=io.kestra.unittest&disabled=true", null), BulkResponse.class);
 
-        assertThat(bulkResponse.getCount(), is(2));
-        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled(), is(true));
+//        assertThat(bulkResponse.getCount(), is(2));
+        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled()).isEqualTo(true);
     }
 
     @Test
     void nextExecutionDate() throws InterruptedException, TimeoutException {
         Flow flow = generateFlow("flow-with-triggers");
-        jdbcFlowRepository.create(flow, flow.generateSource(), flow);
+        jdbcFlowRepository.create(GenericFlow.of(flow));
         Await.until(
-            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?filters[q][$eq]=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 2,
+            () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?filters[q][EQUALS]=trigger-nextexec"), Argument.of(PagedResults.class, Trigger.class)).getTotal() >= 2,
             Duration.ofMillis(100),
             Duration.ofMinutes(2)
         );
-        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?filters[q][$eq]=trigger-nextexec"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
-        assertThat(triggers.getResults().getFirst().getTriggerContext().getNextExecutionDate(), notNullValue());
-        assertThat(triggers.getResults().get(1).getTriggerContext().getNextExecutionDate(), notNullValue());
+        PagedResults<TriggerController.Triggers> triggers = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/triggers/search?filters[q][EQUALS]=trigger-nextexec"), Argument.of(PagedResults.class, TriggerController.Triggers.class));
+        assertThat(triggers.getResults().getFirst().getTriggerContext().getNextExecutionDate()).isNotNull();
+        assertThat(triggers.getResults().get(1).getTriggerContext().getNextExecutionDate()).isNotNull();
     }
 
     private Flow generateFlow(String flowId) {

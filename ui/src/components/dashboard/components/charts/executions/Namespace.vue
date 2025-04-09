@@ -40,7 +40,7 @@
 
     import {defaultConfig} from "../../../../../utils/charts.js";
     import {useScheme} from "../../../../../utils/scheme.js";
-    import {useTheme} from "../../../../../utils/utils.js";
+    import {useTheme} from "../../../../../utils/utils";
 
     import NoData from "../../../../layout/NoData.vue";
 

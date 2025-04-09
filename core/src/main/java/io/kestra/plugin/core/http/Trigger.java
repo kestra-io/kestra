@@ -135,6 +135,13 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
         RunContext runContext = conditionContext.getRunContext();
         Logger logger = runContext.logger();
 
+        if (this.options == null){
+            this.options = HttpConfiguration.builder().build();
+        }
+        // we allow failed status code as it is the condition that must determine whether we trigger the flow
+        options.setAllowFailed(Property.of(true));
+        options.setSsl(this.options.getSsl() != null ? this.options.getSsl() : this.sslOptions);
+
         var request = Request.builder()
             .uri(this.uri)
             .method(this.method)
@@ -142,12 +149,7 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
             .formData(this.formData)
             .contentType(this.contentType)
             .headers(this.headers)
-            .options((this.options == null ? HttpConfiguration.builder() : this.options.toBuilder())
-                // we allow failed status code as it is the condition that must determine whether we trigger the flow
-                .allowFailed(Property.of(true))
-                .ssl(this.options != null && this.options.getSsl() != null ? this.options.getSsl() : this.sslOptions)
-                .build()
-            )
+            .options(this.options)
             .encryptBody(this.encryptBody)
             .build();
         var output = request.run(runContext);
@@ -185,8 +187,6 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
         }
 
         this.sslOptions = sslOptions;
-        this.options = this.options.toBuilder()
-            .ssl(sslOptions)
-            .build();
+        this.options.setSsl(sslOptions);
     }
 }

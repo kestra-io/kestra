@@ -37,7 +37,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
             )
             // force using the dedicated index, or it made a scan of the PK index
             .from(this.table.useIndex("ix_type__consumers"))
-            .where(AbstractJdbcRepository.field("type").eq(this.cls.getName()))
+            .where(AbstractJdbcRepository.field("type").eq(queueType()))
             .and(DSL.or(List.of(
                 AbstractJdbcRepository.field("consumers").isNull(),
                 AbstractJdbcRepository.field("consumers").in(QUEUE_CONSUMERS.allForConsumerNotIn(queueType))

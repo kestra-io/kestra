@@ -29,6 +29,12 @@ export default [
     //TaskRuns
     {name: "taskruns/list", path: "/:tenant?/taskruns", component: () => import("../components/taskruns/TaskRuns.vue")},
 
+    //KV
+    {name: "kv/list", path: "/:tenant?/kv", component: () => import("../components/kv/KVs.vue")},
+
+    //Secrets
+    {name: "secrets/list", path: "/:tenant?/secrets", component: () => import("../components/secrets/Secrets.vue")},
+
     //Blueprints
     {name: "blueprints", path: "/:tenant?/blueprints/:kind/:tab", component: () => import("override/components/flows/blueprints/Blueprints.vue"), props: true},
     {name: "blueprints/view", path: "/:tenant?/blueprints/:kind/:tab/:blueprintId", component: () => import("../components/flows/blueprints/BlueprintDetail.vue"), props: true},
@@ -46,8 +52,9 @@ export default [
     {name: "logs/list", path: "/:tenant?/logs", component: () => import("../components/logs/LogsWrapper.vue")},
 
     //Namespaces
-    {name: "namespaces", path: "/:tenant?/namespaces", component: () => import("../components/namespace/Namespaces.vue")},
-    {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespace/Namespace.vue")},
+    {name: "namespaces/list", path: "/:tenant?/namespaces", component: () => import("../components/namespaces/Namespaces.vue")},
+    {name: "namespaces/create", path: "/:tenant?/namespaces/new/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
+    {name: "namespaces/update", path: "/:tenant?/namespaces/edit/:id/:tab?", component: () => import("../components/namespaces/Namespace.vue")},
 
     //Docs
     {name: "docs/view", path: "/:tenant?/docs/:path(.*)?", component: () => import("../components/docs/Docs.vue"), meta: {layout: OnlyLeftMenuLayout}},

@@ -20,7 +20,7 @@
     import {computed, defineComponent, ref, getCurrentInstance} from "vue";
     import {useRoute, useRouter} from "vue-router"
     import {Bar} from "vue-chartjs";
-    import Utils, {useTheme} from "../../utils/utils.js";
+    import Utils, {useTheme} from "../../utils/utils";
     import {useScheme} from "../../utils/scheme.js";
     import {defaultConfig, tooltip, chartClick, getFormat} from "../../utils/charts.js";
     import {useI18n} from "vue-i18n";

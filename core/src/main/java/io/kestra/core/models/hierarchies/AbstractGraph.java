@@ -55,6 +55,7 @@ public abstract class AbstractGraph {
 
     public enum BranchType {
         ERROR,
-        FINALLY
+        FINALLY,
+        AFTER_EXECUTION
     }
 }

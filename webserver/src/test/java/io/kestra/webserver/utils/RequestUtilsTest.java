@@ -11,8 +11,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RequestUtilsTest {
@@ -21,7 +20,7 @@ class RequestUtilsTest {
     void toMap() {
         final Map<String, String> resultMap = RequestUtils.toMap(List.of("timestamp:2023-12-18T14:32:14Z"));
 
-        assertThat(resultMap.get("timestamp"), is("2023-12-18T14:32:14Z"));
+        assertThat(resultMap.get("timestamp")).isEqualTo("2023-12-18T14:32:14Z");
     }
 
 
@@ -83,23 +82,6 @@ class RequestUtilsTest {
         );
 
         assertTrue(exception.getMessage().contains("Invalid FlowScope value"));
-    }
-
-    @Test
-    void testResolveAbsoluteDateTimeWithTimeRange() {
-        ZonedDateTime now = ZonedDateTime.parse("2024-01-10T10:00:00Z");
-        Duration timeRange = Duration.ofDays(7);
-        ZonedDateTime resolved = RequestUtils.resolveAbsoluteDateTime(null, timeRange, now);
-
-        assertEquals(now.minus(timeRange), resolved);
-    }
-
-    @Test
-    void testResolveAbsoluteDateTimeWithAbsoluteDate() {
-        ZonedDateTime fixedDate = ZonedDateTime.parse("2024-01-01T10:00:00Z");
-        ZonedDateTime result = RequestUtils.resolveAbsoluteDateTime(fixedDate, null, ZonedDateTime.now());
-
-        assertEquals(fixedDate, result);
     }
 
 }

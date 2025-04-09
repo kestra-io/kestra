@@ -34,6 +34,8 @@
 <script setup lang="ts">
     import {nextTick, PropType, ref} from "vue";
 
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+
     import {CollapseItem} from "../../utils/types";
 
     import Creation from "./buttons/Creation.vue";
@@ -57,7 +59,6 @@
         });
     }
 
-    import YamlUtils from "../../../../utils/yamlUtils";
     const removeElement = (title: string, index: number) => {
         props.items.forEach((item) => {
             if (item.title === title) {
@@ -67,7 +68,7 @@
                     item.elements?.splice(index, 1);
                     emits(
                         "remove",
-                        YamlUtils.deleteTask(props.flow, ID, title.toUpperCase()),
+                        YAML_UTILS.deleteTask(props.flow, ID, title.toUpperCase()),
                     );
                     expanded.value = expanded.value.filter((v) => v !== title);
                 });
@@ -75,7 +76,6 @@
         });
     };
 
-    import {YamlUtils as YAML_FROM_UI_LIBS} from "@kestra-io/ui-libs";
     const moveElement = (
         items: Record<string, any>[] | undefined,
         elementID: string,
@@ -92,7 +92,7 @@
         const newIndex = direction === "up" ? index - 1 : index + 1;
         emits(
             "reorder",
-            YAML_FROM_UI_LIBS.swapTasks(props.flow, elementID, items[newIndex].id),
+            YAML_UTILS.swapTasks(props.flow, elementID, items[newIndex].id),
         );
     };
 </script>

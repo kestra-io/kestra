@@ -120,6 +120,13 @@
                 <el-radio-button :label="$t('false')" :value="false" />
                 <el-radio-button :label="$t('undefined')" value="undefined" />
             </el-radio-group>
+            <el-switch
+                :data-test-id="`input-form-${input.id}`"
+                v-if="input.type === 'BOOL'"
+                v-model="inputsValues[input.id]"
+                @update:model-value="onChange(input)"
+                class="w-100 boolean-inputs"
+            />
             <el-date-picker
                 :data-test-id="`input-form-${input.id}`"
                 v-if="input.type === 'DATETIME'"
@@ -162,6 +169,7 @@
                 :full-height="false"
                 :input="true"
                 :navbar="false"
+                :show-scroll="inputsValues[input.id]?.length > 530 ? true : false"
                 v-if="input.type === 'JSON' || input.type === 'ARRAY'"
                 :data-test-id="`input-form-${input.id}`"
                 lang="json"
@@ -210,16 +218,12 @@
     import Editor from "../../components/inputs/Editor.vue";
     import Markdown from "../layout/Markdown.vue";
     import Inputs from "../../utils/inputs";
-    import YamlUtils from "../../utils/yamlUtils.js";
     import DurationPicker from "./DurationPicker.vue";
     import {inputsToFormDate} from "../../utils/submitTask"
 
     export default {
         computed: {
             ...mapState("auth", ["user"]),
-            YamlUtils() {
-                return YamlUtils
-            },
             inputErrors() {
                 // we only keep errors that don't target an input directly
                 const keepErrors = this.inputsMetaData.filter(it => it.id === undefined);
@@ -265,7 +269,7 @@
                 inputsValidation: [],
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
-                debouncedValidation: () => {}
+                debouncedValidation: () => {},
             };
         },
         emits: ["update:modelValue", "confirm", "validation"],
@@ -509,6 +513,10 @@
                 }
             }
         }
+    }
+
+    :deep(.editor-container){
+        max-height: 200px;
     }
 
     .el-input-file {

@@ -1,7 +1,7 @@
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import FlowEditor from "../../../../src/components/flows/FlowEditor.vue";
-import YamlUtils from "../../../../src/utils/yamlUtils";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
 
 
@@ -43,15 +43,14 @@ const Template = (args) => ({
             return {data: {}}
         }
     }
-    const flow = YamlUtils.parse(args.flow)
+    const flow = YAML_UTILS.parse(args.flow)
     flow.source = args.flow
     store.commit("flow/setFlow", flow)
-    store.commit("editor/changeOpenedTabs", {
-        action:"open",
-        flow:true,
-        name:"Flow",
-        path :"Flow.yaml",
-        persistent:true,
+    store.dispatch("editor/openTab", {
+        flow: true,
+        name: "Flow",
+        path: "Flow.yaml",
+        persistent: true,
     })
 
     return () =>

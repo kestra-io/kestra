@@ -11,9 +11,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class PreconditionFilterValidationTest {
@@ -30,7 +28,7 @@ class PreconditionFilterValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(condition);
-        assertThat(valid.isEmpty(), is(true));
+        assertThat(valid.isEmpty()).isEqualTo(true);
     }
 
     @ParameterizedTest
@@ -43,9 +41,9 @@ class PreconditionFilterValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(condition);
-        assertThat(valid.isEmpty(), is(false));
-        assertThat(valid.get().getConstraintViolations(), hasSize(1));
-        assertThat(valid.get().getMessage(), is(": `value` cannot be null for type " + type.name() + "\n"));
+        assertThat(valid.isEmpty()).isEqualTo(false);
+        assertThat(valid.get().getConstraintViolations()).hasSize(1);
+        assertThat(valid.get().getMessage()).isEqualTo(": `value` cannot be null for type " + type.name() + "\n");
     }
 
     @ParameterizedTest
@@ -59,9 +57,9 @@ class PreconditionFilterValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(condition);
-        assertThat(valid.isEmpty(), is(false));
-        assertThat(valid.get().getConstraintViolations(), hasSize(1));
-        assertThat(valid.get().getMessage(), is(": `values` must be null for type " + type.name() + "\n"));
+        assertThat(valid.isEmpty()).isEqualTo(false);
+        assertThat(valid.get().getConstraintViolations()).hasSize(1);
+        assertThat(valid.get().getMessage()).isEqualTo(": `values` must be null for type " + type.name() + "\n");
     }
 
     @ParameterizedTest
@@ -74,7 +72,7 @@ class PreconditionFilterValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(condition);
-        assertThat(valid.isEmpty(), is(true));
+        assertThat(valid.isEmpty()).isEqualTo(true);
     }
 
     @ParameterizedTest
@@ -87,8 +85,8 @@ class PreconditionFilterValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(condition);
-        assertThat(valid.isEmpty(), is(false));
-        assertThat(valid.get().getConstraintViolations(), hasSize(1));
-        assertThat(valid.get().getMessage(), is(": `value` must be null for type " + type.name() + "\n"));
+        assertThat(valid.isEmpty()).isEqualTo(false);
+        assertThat(valid.get().getConstraintViolations()).hasSize(1);
+        assertThat(valid.get().getMessage()).isEqualTo(": `value` must be null for type " + type.name() + "\n");
     }
 }

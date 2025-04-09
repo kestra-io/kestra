@@ -9,8 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.net.URISyntaxException;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class MiscUsageControllerTest {
     @Test
@@ -20,17 +19,17 @@ class MiscUsageControllerTest {
 
                 var response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/usages/all"), Usage.class);
 
-                assertThat(response.getUuid(), notNullValue());
-                assertThat(response.getVersion(), notNullValue());
-                assertThat(response.getStartTime(), notNullValue());
-                assertThat(response.getEnvironments(), hasItem("test"));
-                assertThat(response.getStartTime(), notNullValue());
-                assertThat(response.getHost().getUuid(), notNullValue());
-                assertThat(response.getHost().getHardware().getLogicalProcessorCount(), notNullValue());
-                assertThat(response.getHost().getJvm().getName(), notNullValue());
-                assertThat(response.getHost().getOs().getFamily(), notNullValue());
-                assertThat(response.getConfigurations().getRepositoryType(), is("h2"));
-                assertThat(response.getConfigurations().getQueueType(), is("h2"));
+                assertThat(response.getUuid()).isNotNull();
+                assertThat(response.getVersion()).isNotNull();
+                assertThat(response.getStartTime()).isNotNull();
+                assertThat(response.getEnvironments()).contains("test");
+                assertThat(response.getStartTime()).isNotNull();
+                assertThat(response.getHost().getUuid()).isNotNull();
+                assertThat(response.getHost().getHardware().getLogicalProcessorCount()).isNotNull();
+                assertThat(response.getHost().getJvm().getName()).isNotNull();
+                assertThat(response.getHost().getOs().getFamily()).isNotNull();
+                assertThat(response.getConfigurations().getRepositoryType()).isEqualTo("h2");
+                assertThat(response.getConfigurations().getQueueType()).isEqualTo("h2");
             }
         });
     }

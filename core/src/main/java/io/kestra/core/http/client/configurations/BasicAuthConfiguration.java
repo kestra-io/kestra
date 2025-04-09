@@ -22,7 +22,7 @@ public class BasicAuthConfiguration extends AbstractAuthConfiguration {
     @NotNull
     @JsonInclude
     @Builder.Default
-    protected Property<AuthType> type = Property.of(AuthType.BASIC);
+    protected AuthType type = AuthType.BASIC;
 
     @Schema(title = "The username for HTTP basic authentication.")
     private Property<String> username;

@@ -63,7 +63,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 
                 tasks:
                   - id: switch
-                    type: io.kestra.plugin.core.flows.Switch
+                    type: io.kestra.plugin.core.flow.Switch
                     value: "{{ inputs.string }}"
                     cases:
                       FIRST:

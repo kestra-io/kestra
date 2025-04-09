@@ -2,18 +2,17 @@ package io.kestra.core.http.client.configurations;
 
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
-import io.micronaut.http.client.HttpClientConfiguration;
 import io.micronaut.logging.LogLevel;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.jackson.Jacksonized;
 
 import java.net.Proxy;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
-import java.time.temporal.ChronoUnit;
 
 @Builder(toBuilder = true)
 @Getter
@@ -30,6 +29,7 @@ public class HttpConfiguration {
     @Schema(title = "The authentification to use.")
     private AbstractAuthConfiguration auth;
 
+    @Setter
     @Schema(title = "The SSL request options")
     private SslOptions ssl;
 
@@ -37,6 +37,7 @@ public class HttpConfiguration {
     @Builder.Default
     private Property<Boolean> followRedirects = Property.of(true);
 
+    @Setter
     @Schema(title = "If true, allow a failed response code (response code >= 400)")
     @Builder.Default
     private Property<Boolean> allowFailed = Property.of(false);

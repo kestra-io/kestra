@@ -8,13 +8,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.*;
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowForExecution;
-import io.kestra.core.models.flows.FlowScope;
-import io.kestra.core.models.flows.FlowWithException;
-import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.Input;
-import io.kestra.core.models.flows.State;
+import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.InputAndValue;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.storage.FileMetas;
@@ -54,19 +48,8 @@ import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.async.annotation.SingleResult;
 import io.micronaut.core.convert.format.Format;
-import io.micronaut.http.HttpRequest;
-import io.micronaut.http.HttpResponse;
-import io.micronaut.http.HttpStatus;
-import io.micronaut.http.MediaType;
-import io.micronaut.http.MutableHttpResponse;
-import io.micronaut.http.annotation.Body;
-import io.micronaut.http.annotation.Controller;
-import io.micronaut.http.annotation.Delete;
-import io.micronaut.http.annotation.Get;
-import io.micronaut.http.annotation.PathVariable;
-import io.micronaut.http.annotation.Post;
-import io.micronaut.http.annotation.Put;
-import io.micronaut.http.annotation.QueryValue;
+import io.micronaut.http.*;
+import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.http.server.exceptions.NotFoundException;
 import io.micronaut.http.server.multipart.MultipartBody;
@@ -77,6 +60,8 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.context.propagation.TextMapPropagator;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -189,7 +174,7 @@ public class ExecutionController {
     private Optional<String> kestraUrl;
 
     @Inject
-    private OpenTelemetry openTelemetry;
+    private Optional<OpenTelemetry> openTelemetry;
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
@@ -201,16 +186,16 @@ public class ExecutionController {
         @Parameter(description = "Filters") @QueryFilterFormat List<QueryFilter> filters,
         //Deprecated params
         @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "The scope of the executions to include",deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
-        @Parameter(description = "A namespace filter prefix",deprecated = true) @Nullable @QueryValue String namespace,
-        @Parameter(description = "A flow id filter",deprecated = true) @Nullable @QueryValue String flowId,
-        @Parameter(description = "The start datetime",deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
-        @Parameter(description = "The end datetime",deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
-        @Parameter(description = "A time range filter relative to the current time",deprecated = true, examples = {
+        @Parameter(description = "The scope of the executions to include", deprecated = true) @Nullable @QueryValue(value = "scope") List<FlowScope> scope,
+        @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Parameter(description = "A flow id filter", deprecated = true) @Nullable @QueryValue String flowId,
+        @Parameter(description = "The start datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime startDate,
+        @Parameter(description = "The end datetime", deprecated = true) @Nullable @Format("yyyy-MM-dd'T'HH:mm[:ss][.SSS][XXX]") @QueryValue ZonedDateTime endDate,
+        @Parameter(description = "A time range filter relative to the current time", deprecated = true, examples = {
             @ExampleObject(name = "Filter last 5 minutes", value = "PT5M"),
             @ExampleObject(name = "Filter last 24 hours", value = "P1D")
         }) @Nullable @QueryValue Duration timeRange,
-        @Parameter(description = "A state filter",deprecated = true) @Nullable @QueryValue List<State.Type> state,
+        @Parameter(description = "A state filter", deprecated = true) @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "The trigger execution id", deprecated = true) @Nullable @QueryValue String triggerExecutionId,
         @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
@@ -239,9 +224,7 @@ public class ExecutionController {
         TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
         validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
 
-        ZonedDateTime resolvedStartDate = resolveAbsoluteDateTime(timeLineSearch.getStartDate(),
-            timeLineSearch.getTimeRange(),
-            now);
+        ZonedDateTime resolvedStartDate = timeLineSearch.getStartDate();
 
         // Update filters with the resolved startDate
         filters = QueryFilterUtils.updateFilters(filters, resolvedStartDate);
@@ -285,7 +268,7 @@ public class ExecutionController {
 
                 return flow
                     .map(throwFunction(value ->
-                        graphService.flowGraph(value, subflows,  execution).forExecution()
+                        graphService.flowGraph(value, subflows, execution).forExecution()
                     ))
                     .orElse(null);
             }))
@@ -326,6 +309,8 @@ public class ExecutionController {
 
     private String runContextRender(Flow flow, Task task, Execution execution, TaskRun taskRun, String expression) throws IllegalVariableEvaluationException {
         RunContext runContext = runContextFactory.of(flow, task, execution, taskRun, false);
+        String baseRender = runContext.render(expression);
+
         if (expression.contains("{")) { // fast backoff from regex
             Matcher matcher = SECRET_FUNCTION.matcher(expression);
             String maskedExpression = expression;
@@ -335,7 +320,8 @@ public class ExecutionController {
             }
             return runContext.render(maskedExpression);
         }
-        return runContext.render(expression);
+
+        return baseRender;
     }
 
     @SuperBuilder
@@ -365,8 +351,8 @@ public class ExecutionController {
     public HttpResponse<Void> delete(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "Whether to delete execution logs") @QueryValue(defaultValue = "true") Boolean deleteLogs,
-        @Parameter(description = "Whether to delete execution metrics") @QueryValue(defaultValue = "true")  Boolean  deleteMetrics,
-        @Parameter(description = "Whether to delete execution files in the internal storage") @QueryValue(defaultValue = "true")  Boolean deleteStorage
+        @Parameter(description = "Whether to delete execution metrics") @QueryValue(defaultValue = "true") Boolean deleteMetrics,
+        @Parameter(description = "Whether to delete execution files in the internal storage") @QueryValue(defaultValue = "true") Boolean deleteStorage
     ) throws IOException {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isPresent()) {
@@ -386,8 +372,8 @@ public class ExecutionController {
         @Parameter(description = "The execution id") @Body List<String> executionsId,
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
         @Parameter(description = "Whether to delete execution logs") @QueryValue(defaultValue = "true") Boolean deleteLogs,
-        @Parameter(description = "Whether to delete execution metrics") @QueryValue(defaultValue = "true")  Boolean  deleteMetrics,
-        @Parameter(description = "Whether to delete execution files in the internal storage") @QueryValue(defaultValue = "true")  Boolean deleteStorage
+        @Parameter(description = "Whether to delete execution metrics") @QueryValue(defaultValue = "true") Boolean deleteMetrics,
+        @Parameter(description = "Whether to delete execution files in the internal storage") @QueryValue(defaultValue = "true") Boolean deleteStorage
     ) throws IOException {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
@@ -442,8 +428,8 @@ public class ExecutionController {
         @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
         @Parameter(description = "Whether to delete non-terminated executions") @Nullable @QueryValue(defaultValue = "false") Boolean includeNonTerminated,
         @Parameter(description = "Whether to delete execution logs") @QueryValue(defaultValue = "true") Boolean deleteLogs,
-        @Parameter(description = "Whether to delete execution metrics") @QueryValue(defaultValue = "true")  Boolean  deleteMetrics,
-        @Parameter(description = "Whether to delete execution files in the internal storage") @QueryValue(defaultValue = "true")  Boolean deleteStorage
+        @Parameter(description = "Whether to delete execution metrics") @QueryValue(defaultValue = "true") Boolean deleteMetrics,
+        @Parameter(description = "Whether to delete execution files in the internal storage") @QueryValue(defaultValue = "true") Boolean deleteStorage
     ) throws IOException {
         validateTimeline(startDate, endDate);
 
@@ -572,8 +558,13 @@ public class ExecutionController {
 
         try {
             // inject the traceparent into the execution
-            var propagator = openTelemetry.getPropagators().getTextMapPropagator();
-            propagator.inject(Context.current(), result, ExecutionTextMapSetter.INSTANCE);
+            Optional<TextMapPropagator> propagator = openTelemetry
+                .map(OpenTelemetry::getPropagators)
+                .map(ContextPropagators::getTextMapPropagator);
+
+            if (propagator.isPresent()) {
+                propagator.get().inject(Context.current(), result, ExecutionTextMapSetter.INSTANCE);
+            }
 
             executionQueue.emit(result);
             eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
@@ -594,7 +585,7 @@ public class ExecutionController {
     public Publisher<ExecutionResponse> trigger(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @Nullable @PathVariable String id,
-        @Parameter(description = "The inputs") @Nullable  @Body MultipartBody inputs,
+        @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs,
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
@@ -644,8 +635,10 @@ public class ExecutionController {
                 Execution executionWithInputs = current.withInputs(executionInputs);
                 try {
                     // inject the traceparent into the execution
-                    var propagator = openTelemetry.getPropagators().getTextMapPropagator();
-                    propagator.inject(Context.current(), executionWithInputs, ExecutionTextMapSetter.INSTANCE);
+                    openTelemetry
+                        .map(OpenTelemetry::getPropagators)
+                        .map(ContextPropagators::getTextMapPropagator)
+                        .ifPresent(propagator -> propagator.inject(Context.current(), executionWithInputs, ExecutionTextMapSetter.INSTANCE));
 
                     executionQueue.emit(executionWithInputs);
                     eventPublisher.publishEvent(new CrudEvent<>(executionWithInputs, CrudEventType.CREATE));
@@ -681,7 +674,8 @@ public class ExecutionController {
     }
 
     private URI executionUrl(Execution execution) {
-        return URI.create(kestraUrl.orElse("") + "/ui" + (execution.getTenantId() != null ? "/" + execution.getTenantId(): "")
+        String baseUrl = kestraUrl.map(url -> url.endsWith("/") ? url.substring(0, url.length() - 1) : url).orElse("");
+        return URI.create(baseUrl + "/ui" + (execution.getTenantId() != null ? "/" + execution.getTenantId() : "")
             + "/executions/"
             + execution.getNamespace() + "/"
             + execution.getFlowId() + "/"
@@ -726,7 +720,7 @@ public class ExecutionController {
     }
 
     protected List<Label> parseLabels(List<String> labels) {
-        List<Label> parsedLabels =  labels == null ? Collections.emptyList() : RequestUtils.toMap(labels).entrySet().stream()
+        List<Label> parsedLabels = labels == null ? Collections.emptyList() : RequestUtils.toMap(labels).entrySet().stream()
             .map(entry -> new Label(entry.getKey(), entry.getValue()))
             .toList();
 
@@ -1218,7 +1212,7 @@ public class ExecutionController {
     @ApiResponse(responseCode = "204", description = "On success")
     @ApiResponse(responseCode = "409", description = "if the executions is not paused")
     @SingleResult
-    public Publisher<ApiValidateExecutionInputsResponse>  validateInputsOnResume(
+    public Publisher<ApiValidateExecutionInputsResponse> validateInputsOnResume(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The inputs") @Nullable @Body MultipartBody inputs
     ) {
@@ -1471,13 +1465,14 @@ public class ExecutionController {
         @Parameter(description = "A state filter") @Nullable @QueryValue List<State.Type> state,
         @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
-        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
+        @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision
     ) throws Exception {
         validateTimeline(startDate, endDate);
 
         var ids = getExecutionIds(query, scope, namespace, flowId, startDate, endDate, timeRange, state, labels, triggerExecutionId, childFilter);
 
-        return replayByIds(ids);
+        return replayByIds(ids, latestRevision);
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -1486,7 +1481,8 @@ public class ExecutionController {
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
     @ApiResponse(responseCode = "422", description = "Replayed with errors", content = {@Content(schema = @Schema(implementation = BulkErrorResponse.class))})
     public MutableHttpResponse<?> replayByIds(
-        @Parameter(description = "The execution id") @Body List<String> executionsId
+        @Parameter(description = "The execution id") @Body List<String> executionsId,
+        @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision
     ) throws Exception {
         List<Execution> executions = new ArrayList<>();
         Set<ManualConstraintViolation<String>> invalids = new HashSet<>();
@@ -1516,9 +1512,13 @@ public class ExecutionController {
         }
 
         for (Execution execution : executions) {
-            innerReplay(execution, null, null);
+            if (latestRevision) {
+                Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
+                innerReplay(execution, null, flow.getRevision());
+            } else {
+                innerReplay(execution, null, null);
+            }
         }
-
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());
     }
 
@@ -1530,39 +1530,39 @@ public class ExecutionController {
     ) {
         String subscriberId = UUID.randomUUID().toString();
         return Flux.<Event<Execution>>create(emitter -> {
-            // Send initial event
-            emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
+                // Send initial event
+                emitter.next(Event.of(Execution.builder().id(executionId).build()).id("start"));
 
-            // Check if execution exists
-            try {
-                Execution execution = Await.until(
-                    () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
-                    Duration.ofMillis(500),
-                    Duration.ofSeconds(10)
-                );
+                // Check if execution exists
+                try {
+                    Execution execution = Await.until(
+                        () -> executionRepository.findById(tenantService.resolveTenant(), executionId).orElse(null),
+                        Duration.ofMillis(500),
+                        Duration.ofSeconds(10)
+                    );
 
-                Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
+                    Flow flow = flowRepository.findByExecutionWithoutAcl(execution);
 
-                // If execution is already complete, just send final state
-                if (streamingService.isStopFollow(flow, execution)) {
-                    emitter.next(Event.of(execution).id("end"));
-                    emitter.complete();
-                    return;
+                    // If execution is already complete, just send final state
+                    if (streamingService.isStopFollow(flow, execution)) {
+                        emitter.next(Event.of(execution).id("end"));
+                        emitter.complete();
+                        return;
+                    }
+
+                    // Send current state
+                    emitter.next(Event.of(execution).id("progress"));
+
+                    // Register for updates
+                    streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
+                } catch (TimeoutException e) {
+                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
+                        "Unable to find execution " + executionId));
+                } catch (IllegalStateException e) {
+                    emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
+                        "Unable to find flow for execution " + executionId));
                 }
-
-                // Send current state
-                emitter.next(Event.of(execution).id("progress"));
-
-                // Register for updates
-                streamingService.registerSubscriber(executionId, subscriberId, emitter, flow);
-            } catch (TimeoutException e) {
-                emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
-                    "Unable to find execution " + executionId));
-            } catch (IllegalStateException e) {
-                emitter.error(new HttpStatusException(HttpStatus.NOT_FOUND,
-                    "Unable to find flow for execution " + executionId));
-            }
-        }, FluxSink.OverflowStrategy.BUFFER)
+            }, FluxSink.OverflowStrategy.BUFFER)
             .doFinally(ignored -> streamingService.unregisterSubscriber(executionId, subscriberId));
     }
 
@@ -1638,16 +1638,14 @@ public class ExecutionController {
         }
 
         Map<String, String> newLabels = labels.stream().collect(Collectors.toMap(Label::key, Label::value));
-        if (execution.getLabels() != null) {
-            execution.getLabels().forEach(
-                label -> {
-                    // only add execution label if not updated
-                    if (!newLabels.containsKey(label.key())) {
-                        newLabels.put(label.key(), label.value());
-                    }
+        existingSystemLabels.forEach(
+            label -> {
+                // only add system labels
+                if (!newLabels.containsKey(label.key())) {
+                    newLabels.put(label.key(), label.value());
                 }
-            );
-        }
+            }
+        );
 
         Execution newExecution = execution
             .withLabels(newLabels.entrySet().stream().map(entry -> new Label(entry.getKey(), entry.getValue())).filter(label -> !label.key().isEmpty() || !label.value().isEmpty()).toList());

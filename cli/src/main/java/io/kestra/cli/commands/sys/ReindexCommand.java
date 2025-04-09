@@ -2,6 +2,7 @@ package io.kestra.cli.commands.sys;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -9,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 import java.util.List;
+import java.util.Objects;
 
 @CommandLine.Command(
     name = "reindex",
@@ -33,8 +35,8 @@ public class ReindexCommand extends AbstractCommand {
             List<Flow> allFlow = flowRepository.findAllForAllTenants();
             allFlow.stream()
                 .map(flow -> flowRepository.findByIdWithSource(flow.getTenantId(), flow.getNamespace(), flow.getId()).orElse(null))
-                .filter(flow -> flow != null)
-                .forEach(flow -> flowRepository.update(flow.toFlow(), flow.toFlow(), flow.getSource(), flow.toFlow()));
+                .filter(Objects::nonNull)
+                .forEach(flow -> flowRepository.update(GenericFlow.of(flow), flow));
 
             stdOut("Successfully reindex " + allFlow.size() + " flow(s).");
         }

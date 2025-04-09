@@ -180,7 +180,6 @@ abstract public class AbstractCommand implements Callable<Integer> {
                         logger.getName().startsWith("io.kestra") &&
                             !logger.getName().startsWith("io.kestra.ee.runner.kafka.services"))
                 )
-                    || logger.getName().startsWith("flow")
             )
             .forEach(
                 logger -> logger.setLevel(ch.qos.logback.classic.Level.valueOf(this.logLevel.name()))
@@ -230,10 +229,12 @@ abstract public class AbstractCommand implements Callable<Integer> {
         return false;
     }
 
-    protected void shutdownHook(Rethrow.RunnableChecked<Exception> run) {
+    protected void shutdownHook(boolean logShutdown, Rethrow.RunnableChecked<Exception> run) {
         Runtime.getRuntime().addShutdownHook(new Thread(
             () -> {
-                log.warn("Receiving shutdown ! Try to graceful exit");
+                if (logShutdown) {
+                    log.warn("Receiving shutdown ! Try to graceful exit");
+                }
                 try {
                     run.run();
                 } catch (Exception e) {

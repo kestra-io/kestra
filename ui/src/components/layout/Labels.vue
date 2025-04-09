@@ -8,7 +8,7 @@
             @change="updateLabel(label)"
             class="me-1 el-tag label"
         >
-            {{ label.key }}: {{ label.value }}
+            {{ label.key }}:{{ label.value }}
         </el-check-tag>
     </span>
 </template>
@@ -48,7 +48,7 @@
     };
 
     const updateLabel = (label: Label) => {
-        const getKey = (key: string) => `filters[labels][$eq][${key}]`;
+        const getKey = (key: string) => `filters[labels][EQUALS][${key}]`;
 
         if (isChecked(label)) {
             const replacementQuery = {...route.query};

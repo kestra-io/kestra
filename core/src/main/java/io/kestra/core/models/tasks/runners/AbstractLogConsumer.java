@@ -2,6 +2,7 @@ package io.kestra.core.models.tasks.runners;
 
 import lombok.Getter;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -18,6 +19,8 @@ public abstract class AbstractLogConsumer implements BiConsumer<String, Boolean>
 
     @Getter
     protected final Map<String, Object> outputs = new HashMap<>();
+
+    public abstract void accept(String line, Boolean isStdErr, Instant instant);
 
     public int getStdOutCount() {
         return this.stdOutCount.get();

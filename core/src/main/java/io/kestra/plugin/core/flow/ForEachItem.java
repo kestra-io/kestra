@@ -14,6 +14,7 @@ import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
@@ -531,7 +532,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
         public Optional<SubflowExecutionResult> createSubflowExecutionResult(
             RunContext runContext,
             TaskRun taskRun,
-            Flow flow,
+            FlowInterface flow,
             Execution execution
         ) {
 

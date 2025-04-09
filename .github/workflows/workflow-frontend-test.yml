@@ -41,20 +41,15 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: npm run build
 
-      - name: Run front-end unit tests
-        shell: bash
-        working-directory: ui
-        run: npm run test:cicd
-
       - name: Storybook - Install Playwright
         shell: bash
         working-directory: ui
         run: npx playwright install --with-deps
 
-      - name: Storybook - Run tests
+      - name: Run front-end unit tests
         shell: bash
         working-directory: ui
-        run: npm run test:storybook -- --coverage
+        run: npm run test:cicd
 
       - name: Codecov - Upload coverage reports
         uses: codecov/codecov-action@v5

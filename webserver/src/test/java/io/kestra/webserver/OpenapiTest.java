@@ -6,8 +6,7 @@ import org.junit.jupiter.api.Test;
 import java.net.URL;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class OpenapiTest {
 
@@ -15,6 +14,6 @@ class OpenapiTest {
     void generatedOpenapiSpecFile() {
         Optional<URL> openapiSpec = new ResourceResolver().getResource("classpath:META-INF/swagger/kestra.yml");
 
-        assertThat(openapiSpec.isPresent(), is(true));
+        assertThat(openapiSpec.isPresent()).isEqualTo(true);
     }
 }

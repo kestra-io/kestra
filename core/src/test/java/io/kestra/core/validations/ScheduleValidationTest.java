@@ -10,9 +10,7 @@ import jakarta.inject.Inject;
 
 import java.time.Duration;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ScheduleValidationTest {
@@ -27,15 +25,15 @@ class ScheduleValidationTest {
             .cron("* * * * *")
             .build();
 
-        assertThat(modelValidator.isValid(build).isEmpty(), is(true));
+        assertThat(modelValidator.isValid(build).isEmpty()).isEqualTo(true);
 
         build = Schedule.builder()
             .type(Schedule.class.getName())
             .cron("$ome Inv@lid Cr0n")
             .build();
 
-        assertThat(modelValidator.isValid(build).isPresent(), is(true));
-        assertThat(modelValidator.isValid(build).get().getMessage(), containsString("invalid cron expression"));
+        assertThat(modelValidator.isValid(build).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).get().getMessage()).contains("invalid cron expression");
     }
 
     @Test
@@ -46,7 +44,7 @@ class ScheduleValidationTest {
             .cron("@hourly")
             .build();
 
-        assertThat(modelValidator.isValid(build).isEmpty(), is(true));
+        assertThat(modelValidator.isValid(build).isEmpty()).isEqualTo(true);
     }
 
     @Test
@@ -58,7 +56,7 @@ class ScheduleValidationTest {
             .cron("* * * * * *")
             .build();
 
-        assertThat(modelValidator.isValid(build).isEmpty(), is(true));
+        assertThat(modelValidator.isValid(build).isEmpty()).isEqualTo(true);
 
         build = Schedule.builder()
             .id(IdUtils.create())
@@ -66,8 +64,8 @@ class ScheduleValidationTest {
             .cron("* * * * * *")
             .build();
 
-        assertThat(modelValidator.isValid(build).isPresent(), is(true));
-        assertThat(modelValidator.isValid(build).get().getMessage(), containsString("invalid cron expression"));
+        assertThat(modelValidator.isValid(build).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).get().getMessage()).contains("invalid cron expression");
     }
 
     @Test
@@ -79,7 +77,7 @@ class ScheduleValidationTest {
             .lateMaximumDelay(Duration.ofSeconds(10))
             .build();
 
-        assertThat(modelValidator.isValid(build).isPresent(), is(false));
+        assertThat(modelValidator.isValid(build).isPresent()).isEqualTo(false);
     }
 
     @Test
@@ -92,8 +90,8 @@ class ScheduleValidationTest {
             .build();
 
 
-        assertThat(modelValidator.isValid(build).isPresent(), is(true));
-        assertThat(modelValidator.isValid(build).get().getMessage(), containsString("interval: must be null"));
+        assertThat(modelValidator.isValid(build).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).get().getMessage()).contains("interval: must be null");
 
     }
 }

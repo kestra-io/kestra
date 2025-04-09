@@ -11,6 +11,7 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
 import io.kestra.core.models.tasks.FlowableTask;
@@ -248,7 +249,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     }
 
     @SuppressWarnings("deprecated")
-    public static Flow injectTemplate(Flow flow, Execution execution, TriFunction<String, String, String, io.kestra.core.models.templates.Template> provider) throws InternalException {
+    public static FlowWithSource injectTemplate(Flow flow, Execution execution, TriFunction<String, String, String, io.kestra.core.models.templates.Template> provider) throws InternalException {
         AtomicReference<Flow> flowReference = new AtomicReference<>(flow);
 
         boolean haveTemplate = true;
@@ -282,7 +283,8 @@ public class Template extends Task implements FlowableTask<Template.Output> {
             haveTemplate = !templates.isEmpty();
         }
 
-        return flowReference.get();
+        Flow f = flowReference.get();
+        return FlowWithSource.of(f, f.sourceOrGenerateIfNull());
     }
 
     /**

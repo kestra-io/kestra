@@ -2,7 +2,7 @@ package io.kestra.core.services;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.Label;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.ListUtils;
@@ -17,7 +17,7 @@ public final class LabelService {
     /**
      * Return flow labels excluding system labels.
      */
-    public static List<Label> labelsExcludingSystem(Flow flow) {
+    public static List<Label> labelsExcludingSystem(FlowInterface flow) {
         return ListUtils.emptyOnNull(flow.getLabels()).stream().filter(label -> !label.key().startsWith(Label.SYSTEM_PREFIX)).toList();
     }
 
@@ -27,7 +27,7 @@ public final class LabelService {
      * Trigger labels will be rendered via the run context but not flow labels.
      * In case rendering is not possible, the label will be omitted.
      */
-    public static List<Label> fromTrigger(RunContext runContext, Flow flow, AbstractTrigger trigger) {
+    public static List<Label> fromTrigger(RunContext runContext, FlowInterface flow, AbstractTrigger trigger) {
         final List<Label> labels = new ArrayList<>();
 
         if (flow.getLabels() != null) {

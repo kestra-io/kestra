@@ -201,7 +201,7 @@ public final class FileSerde {
         }
     }
 
-    private static <T> SequenceWriter createSequenceWriter(ObjectMapper objectMapper, Writer writer, TypeReference<T> type) throws IOException {
+    public static <T> SequenceWriter createSequenceWriter(ObjectMapper objectMapper, Writer writer, TypeReference<T> type) throws IOException {
         return objectMapper.writerFor(type).writeValues(writer);
     }
 

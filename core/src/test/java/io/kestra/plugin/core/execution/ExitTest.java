@@ -21,9 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(startRunner = true)
@@ -38,9 +36,9 @@ class ExitTest {
     @Test
     @ExecuteFlow("flows/valids/exit.yaml")
     void shouldExitTheExecution(Execution execution) {
-        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
-        assertThat(execution.getTaskRunList().size(), is(2));
-        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.WARNING));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        assertThat(execution.getTaskRunList().size()).isEqualTo(2);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
     }
 
     @Test
@@ -62,11 +60,11 @@ class ExitTest {
         executionQueue.emit(execution);
 
         assertTrue(countDownLatch.await(1, TimeUnit.MINUTES));
-        assertThat(killedExecution.get(), notNullValue());
-        assertThat(killedExecution.get().getState().getCurrent(), is(State.Type.KILLED));
-        assertThat(killedExecution.get().getTaskRunList().size(), is(2));
-        assertThat(killedExecution.get().getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.KILLED));
-        assertThat(killedExecution.get().getTaskRunList().get(1).getState().getCurrent(), is(State.Type.KILLED));
+        assertThat(killedExecution.get()).isNotNull();
+        assertThat(killedExecution.get().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(killedExecution.get().getTaskRunList().size()).isEqualTo(2);
+        assertThat(killedExecution.get().getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(killedExecution.get().getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.KILLED);
         receive.blockLast();
     }
 }

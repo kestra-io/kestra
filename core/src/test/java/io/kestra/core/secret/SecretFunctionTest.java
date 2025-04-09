@@ -1,6 +1,6 @@
 package io.kestra.core.secret;
 
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -30,7 +30,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import reactor.core.publisher.Flux;
 
-import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
@@ -58,15 +57,15 @@ public class SecretFunctionTest {
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "secrets");
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("value"), is("secretValue"));
-        assertThat(execution.getTaskRunList().get(2).getOutputs().get("value"), is("passwordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlong"));
-        assertThat(execution.getTaskRunList().get(3).getOutputs().get("value"), is("secretValue"));
-        assertThat(execution.getTaskRunList().get(4).getOutputs(), anEmptyMap());
-        assertThat(execution.getTaskRunList().get(4).getState().getCurrent(), is(State.Type.WARNING));
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("value")).isEqualTo("secretValue");
+        assertThat(execution.getTaskRunList().get(2).getOutputs().get("value")).isEqualTo("passwordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlong");
+        assertThat(execution.getTaskRunList().get(3).getOutputs().get("value")).isEqualTo("secretValue");
+        assertThat(execution.getTaskRunList().get(4).getOutputs()).isEmpty();
+        assertThat(execution.getTaskRunList().get(4).getState().getCurrent()).isEqualTo(State.Type.WARNING);
 
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getTaskId() != null && logEntry.getTaskId().equals("log-secret"));
         receive.blockLast();
-        assertThat(matchingLog.getMessage(), containsString("***"));
+        assertThat(matchingLog.getMessage()).contains("***");
     }
 
 
@@ -78,11 +77,11 @@ public class SecretFunctionTest {
         );
 
         // When / Then
-        assertThat(variableRenderer.render("{{ secret('json-secret', subkey='string') }}", context), is("value"));
-        assertThat(variableRenderer.render("{{ secret('json-secret', subkey='number') }}", context), is("42"));
-        assertThat(variableRenderer.render("{{ secret('json-secret', subkey='array') }}", context), is("[\"one\",\"two\",\"three\"]"));
-        assertThat(variableRenderer.render("{{ secret('json-secret', subkey='object') }}", context), is("{\"f1\":\"value1\",\"f2\":\"value2\"}"));
-        assertThat(variableRenderer.render("{{ secret('json-secret', subkey='boolean') }}", context), is("true"));
+        assertThat(variableRenderer.render("{{ secret('json-secret', subkey='string') }}", context)).isEqualTo("value");
+        assertThat(variableRenderer.render("{{ secret('json-secret', subkey='number') }}", context)).isEqualTo("42");
+        assertThat(variableRenderer.render("{{ secret('json-secret', subkey='array') }}", context)).isEqualTo("[\"one\",\"two\",\"three\"]");
+        assertThat(variableRenderer.render("{{ secret('json-secret', subkey='object') }}", context)).isEqualTo("{\"f1\":\"value1\",\"f2\":\"value2\"}");
+        assertThat(variableRenderer.render("{{ secret('json-secret', subkey='boolean') }}", context)).isEqualTo("true");
     }
 
     @Test
@@ -96,7 +95,7 @@ public class SecretFunctionTest {
         Throwable cause = Assertions.assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ secret('json-secret', subkey='missing') }}", context);
         }).getCause();
-        assertThat(cause.getMessage(), is("Cannot find secret sub-key 'missing' in secret 'json-secret'. ({{ secret('json-secret', subkey='missing') }}:1)"));
+        assertThat(cause.getMessage()).isEqualTo("Cannot find secret sub-key 'missing' in secret 'json-secret'. ({{ secret('json-secret', subkey='missing') }}:1)");
     }
 
     @Test
@@ -110,13 +109,13 @@ public class SecretFunctionTest {
         Throwable cause = Assertions.assertThrows(IllegalVariableEvaluationException.class, () -> {
             variableRenderer.render("{{ secret('string-secret', subkey='???') }}", context);
         }).getCause();
-        assertThat(cause.getMessage(), is("Failed to read secret sub-key '???' from secret 'string-secret'. Ensure the secret contains valid JSON value. ({{ secret('string-secret', subkey='???') }}:1)"));
+        assertThat(cause.getMessage()).isEqualTo("Failed to read secret sub-key '???' from secret 'string-secret'. Ensure the secret contains valid JSON value. ({{ secret('string-secret', subkey='???') }}:1)");
     }
 
     @Test
     void getUnknownSecret() {
         var exception = assertThrows(SecretNotFoundException.class, () -> secretService.findSecret(null, null, "unknown_secret_key"));
-        assertThat(exception.getMessage(), is("Cannot find secret for key 'unknown_secret_key'."));
+        assertThat(exception.getMessage()).isEqualTo("Cannot find secret for key 'unknown_secret_key'.");
     }
 
     @MockBean(SecretService.class)

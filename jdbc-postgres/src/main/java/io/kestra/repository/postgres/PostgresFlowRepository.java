@@ -2,6 +2,7 @@ package io.kestra.repository.postgres;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepository;
 import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
@@ -16,7 +17,7 @@ import java.util.Map;
 @PostgresRepositoryEnabled
 public class PostgresFlowRepository extends AbstractJdbcFlowRepository {
     @Inject
-    public PostgresFlowRepository(@Named("flows") PostgresRepository<Flow> repository,
+    public PostgresFlowRepository(@Named("flows") PostgresRepository<FlowInterface> repository,
                                   ApplicationContext applicationContext) {
         super(repository, applicationContext);
     }

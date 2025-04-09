@@ -14,8 +14,7 @@ import java.time.Duration;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class PublishTest {
@@ -45,7 +44,7 @@ public class PublishTest {
 
         publish.run(runContext);
 
-        assertThat(runContext.metrics().size(), is(2));
+        assertThat(runContext.metrics().size()).isEqualTo(2);
     }
 
 }

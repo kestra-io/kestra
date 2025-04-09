@@ -1,5 +1,5 @@
 import {Store} from "vuex";
-import {EntityIterator} from "./entityIterator.ts";
+import {EntityIterator, FetchResult} from "./entityIterator.ts";
 import {NamespaceIterator} from "./useNamespaces.ts";
 import {Me} from "../stores/auth";
 import permissions from "../models/permission";
@@ -14,10 +14,12 @@ export interface NamespaceSecret {
 
 export type SecretIterator = NamespaceSecretIterator | AllSecretIterator;
 
+type NamespaceSecretFetchResult = FetchResult<NamespaceSecret> & { readOnly: boolean };
+
 export class NamespaceSecretIterator extends EntityIterator<NamespaceSecret>{
     private readonly store: Store<any>;
     readonly namespace: string;
-    areNamespaceSecretsReadOnly: boolean | undefined = ref(undefined);
+    areNamespaceSecretsReadOnly = ref(undefined) as unknown as boolean | undefined;
 
     constructor(store: Store<any>, namespace: string, fetchSize: number, options?: any) {
         super(fetchSize, options);
@@ -34,12 +36,12 @@ export class NamespaceSecretIterator extends EntityIterator<NamespaceSecret>{
         };
     }
 
-    fetchCall(): Promise<{ total: number; results: NamespaceSecret[], readOnly: boolean }> {
+    fetchCall(): Promise<NamespaceSecretFetchResult> {
         return this.doFetch();
     }
 
-    private async doFetch(): Promise<{ total: number; results: NamespaceSecret[], readOnly: boolean }> {
-        const fetch = await this.store.dispatch("namespace/listSecrets", this.fetchOptions());
+    private async doFetch(): Promise<NamespaceSecretFetchResult> {
+        const fetch = (await this.store.dispatch("namespace/listSecrets", this.fetchOptions())) as NamespaceSecretFetchResult;
         this.areNamespaceSecretsReadOnly = fetch.readOnly ?? true;
 
         return {
@@ -52,9 +54,9 @@ export class NamespaceSecretIterator extends EntityIterator<NamespaceSecret>{
 export class AllSecretIterator extends EntityIterator<NamespaceSecret>{
     private readonly store: Store<any>;
     private readonly user: Me;
-    private namespaceIterator: NamespaceIterator;
-    private namespaceSecretIterator: NamespaceSecretIterator;
-    private areNamespaceSecretsReadOnly: {[namespace: string]: boolean} = ref({});
+    private namespaceIterator: NamespaceIterator | undefined;
+    private namespaceSecretIterator: NamespaceSecretIterator | undefined;
+    private areNamespaceSecretsReadOnly = ref({}) as unknown as {[namespace: string]: boolean};
 
     constructor(store: Store<any>, fetchSize: number, options?: any) {
         super(fetchSize, options);
@@ -62,7 +64,11 @@ export class AllSecretIterator extends EntityIterator<NamespaceSecret>{
         this.user = this.store.state?.["auth"]?.user;
     }
 
-    async fetchCall(): Promise<{ total: number; results: NamespaceSecret[], readOnly: boolean }> {
+    stopCondition(): boolean {
+        return this.total === 0;
+    }
+
+    async fetchCall(): Promise<FetchResult<NamespaceSecret>> {
         if (this.namespaceIterator === undefined) {
             this.namespaceIterator = new NamespaceIterator(this.store, 20, {
                 commit: false,
@@ -83,16 +89,25 @@ export class AllSecretIterator extends EntityIterator<NamespaceSecret>{
 
                 this.namespaceSecretIterator = new NamespaceSecretIterator(this.store, namespace.id, this.fetchSize, this.options);
             }
-            const fetch = await this.namespaceSecretIterator.fetchCall();
-            if (fetch.results.length > 0) {
-                this.areNamespaceSecretsReadOnly[this.namespaceSecretIterator.namespace] = fetch.readOnly;
-                return {
-                    ...fetch,
-                    results: fetch.results.map(secret => ({...secret, namespace: this.namespaceSecretIterator.namespace}))
-                };
+
+            const fetch = {
+                results: await this.namespaceSecretIterator.next(),
+                namespace: this.namespaceSecretIterator.namespace,
+                areNamespaceSecretsReadOnly: this.namespaceSecretIterator.areNamespaceSecretsReadOnly,
+                total: this.namespaceSecretIterator.total
+            };
+
+            if (this.namespaceSecretIterator.stopCondition()) {
+                this.namespaceSecretIterator = undefined;
             }
 
-            this.namespaceSecretIterator = undefined;
+            if (fetch.results.length > 0) {
+                this.areNamespaceSecretsReadOnly[fetch.namespace] = fetch.areNamespaceSecretsReadOnly!;
+                return {
+                    total: fetch.total!,
+                    results: fetch.results.map(secret => ({...secret, namespace: fetch.namespace}))
+                };
+            }
         }
     }
 }
@@ -101,6 +116,6 @@ export function useNamespaceSecrets(store: Store<any>, namespace: string, secret
     return new NamespaceSecretIterator(store, namespace, secretsFetchSize, options);
 }
 
-export function useAllSecrets(store: Store<any>, secretsFetchSize: number, options?: any): NamespaceSecretIterator {
+export function useAllSecrets(store: Store<any>, secretsFetchSize: number, options?: any): AllSecretIterator {
     return new AllSecretIterator(store, secretsFetchSize, options);
 }

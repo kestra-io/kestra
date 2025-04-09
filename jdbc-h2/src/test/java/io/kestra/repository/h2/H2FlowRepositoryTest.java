@@ -12,9 +12,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class H2FlowRepositoryTest extends AbstractJdbcFlowRepositoryTest {
 
@@ -31,7 +29,7 @@ public class H2FlowRepositoryTest extends AbstractJdbcFlowRepositoryTest {
 
         // FIXME since the big task renaming, H2 return 6 instead of 2
         //  as no core change this is a test artefact, or a latent bug in H2.
-        assertThat((long) search.size(), is(6L));
+        assertThat((long) search.size()).isEqualTo(6L);
 
         SearchResult<Flow> flow = search
             .stream()
@@ -40,7 +38,7 @@ public class H2FlowRepositoryTest extends AbstractJdbcFlowRepositoryTest {
                 .equals("trigger-multiplecondition-listener"))
             .findFirst()
             .orElseThrow();
-        assertThat(flow.getFragments().getFirst(), containsString("condition.MultipleCondition[/mark]"));
+        assertThat(flow.getFragments().getFirst()).contains("condition.MultipleCondition[/mark]");
     }
 
     @Override

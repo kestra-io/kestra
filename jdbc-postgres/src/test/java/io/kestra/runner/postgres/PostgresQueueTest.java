@@ -11,9 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class PostgresQueueTest extends JdbcQueueTest {
@@ -32,7 +30,7 @@ class PostgresQueueTest extends JdbcQueueTest {
             .build();
 
         var exception = assertThrows(QueueException.class, () -> workerTaskResultQueue.emit(workerTaskResult));
-        assertThat(exception.getMessage(), is("Unable to emit a message to the queue"));
-        assertThat(exception.getCause(), instanceOf(DataException.class));
+        assertThat(exception.getMessage()).isEqualTo("Unable to emit a message to the queue");
+        assertThat(exception.getCause()).isInstanceOf(DataException.class);
     }
 }

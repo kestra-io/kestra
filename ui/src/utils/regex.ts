@@ -6,7 +6,7 @@ const maybeParams = "((?:[^\\n\\(\\)~},:= ]+=[^\\n~},:= ]+(?: *, *)?)+)?['\"]?([
 const functionWithMaybeParams = "([^\\n\\(\\)},:~ ]+)\\(" + maybeParams
 
 export default {
-    beforeSeparator: (additionalSeparators = []) => `([^}:\\s${additionalSeparators.join("")}]*)`,
+    beforeSeparator: (additionalSeparators: string[] = []) => `([^}:\\s${additionalSeparators.join("")}]*)`,
     /** [fullMatch, dotForbiddenField] */
     capturePebbleVarRoot: `${pebbleStart}${maybeTextFollowedBySeparator}${fieldWithoutDotCapture}`,
     /** [fullMatch, parentFieldMaybeIncludingDots, childField] */

@@ -48,11 +48,11 @@ abstract public class AbstractSchedulerTest {
     @Inject
     protected ExecutionService executionService;
 
-    public static Flow createThreadFlow() {
+    public static FlowWithSource createThreadFlow() {
         return createThreadFlow(null);
     }
 
-    public static Flow createThreadFlow(String workerGroup) {
+    public static FlowWithSource createThreadFlow(String workerGroup) {
         UnitTest schedule = UnitTest.builder()
             .id("sleep")
             .type(UnitTest.class.getName())
@@ -72,7 +72,7 @@ abstract public class AbstractSchedulerTest {
     }
 
     protected static FlowWithSource createFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
-        Flow.FlowBuilder<?, ?> builder = Flow.builder()
+        FlowWithSource.FlowWithSourceBuilder<?, ?> builder = FlowWithSource.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .inputs(List.of(
@@ -107,8 +107,8 @@ abstract public class AbstractSchedulerTest {
             builder.pluginDefaults(list);
         }
 
-        Flow flow = builder.build();
-        return FlowWithSource.of(flow, flow.generateSource());
+        FlowWithSource flow = builder.build();
+        return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
     }
 
     protected static FlowWithSource createLongRunningFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {

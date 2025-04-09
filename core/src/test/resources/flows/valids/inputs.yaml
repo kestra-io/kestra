@@ -18,7 +18,7 @@ inputs:
 - id: int
   type: INT
 - id: bool
-  type: BOOLEAN
+  type: BOOL
   required: false
 - id: float
   type: FLOAT
@@ -54,7 +54,7 @@ inputs:
   type: INT
   required: false
 - id: nested.bool
-  type: BOOLEAN
+  type: BOOL
   required: false
 - id: validatedString
   type: STRING

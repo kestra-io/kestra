@@ -41,6 +41,11 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         run: npm run build
 
+      - name: Storybook - Install Playwright
+        shell: bash
+        working-directory: ui
+        run: npx playwright install --with-deps
+
       - name: Run front-end unit tests
         shell: bash
         working-directory: ui

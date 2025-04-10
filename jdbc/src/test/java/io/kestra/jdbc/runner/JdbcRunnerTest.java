@@ -144,7 +144,7 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
     }
 
     @RetryingTest(5)
-    @LoadFlows({"flows/valids/for-each-item-subflow.yaml",
+    @LoadFlows({"flows/valids/for-each-item-subflow-sleep.yaml",
         "flows/valids/for-each-item-no-wait.yaml"})
     protected void forEachItemNoWait() throws Exception {
         forEachItemCaseTest.forEachItemNoWait();

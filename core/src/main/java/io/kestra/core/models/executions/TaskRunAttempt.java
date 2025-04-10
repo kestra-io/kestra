@@ -1,5 +1,6 @@
 package io.kestra.core.models.executions;
 
+import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.Value;
 import io.kestra.core.models.flows.State;
@@ -18,11 +19,13 @@ public class TaskRunAttempt {
      */
     @Deprecated
     public void setMetrics(List<AbstractMetricEntry<?>> metrics) {
-
     }
 
     @NotNull
     State state;
+
+    @Nullable
+    String workerId;
 
     @With
     URI logFile;
@@ -30,6 +33,7 @@ public class TaskRunAttempt {
     public TaskRunAttempt withState(State.Type state) {
         return new TaskRunAttempt(
             this.state.withState(state),
+            this.workerId,
             this.logFile
         );
     }

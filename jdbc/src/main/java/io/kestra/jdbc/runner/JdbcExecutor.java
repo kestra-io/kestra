@@ -240,9 +240,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             serviceLivenessCoordinator.setExecutor(this);
         }
         flowListeners.run();
-        flowListeners.listen(flows -> {
-            this.allFlows = flows.stream().map(flow -> pluginDefaultService.injectVersionDefaults(flow, true)).toList();
-        });
+        flowListeners.listen(flows -> this.allFlows = flows);
 
         Await.until(() -> this.allFlows != null, Duration.ofMillis(100), Duration.ofMinutes(5));
 

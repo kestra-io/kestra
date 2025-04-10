@@ -1,7 +1,6 @@
 package io.kestra.plugin.core.dashboard.chart;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
@@ -51,7 +50,7 @@ import lombok.experimental.SuperBuilder;
             }
         )
     }
-) 
+)
 public class Bar<F extends Enum<F>, D extends DataFilter<F, ? extends ColumnDescriptor<F>>> extends DataChart<BarOption, D> {
     @Override
     public Integer minNumberOfAggregations() {

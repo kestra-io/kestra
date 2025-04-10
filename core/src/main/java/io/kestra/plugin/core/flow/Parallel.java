@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.annotations.PluginProperty;
+import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -110,8 +111,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
         title = "Number of concurrent parallel tasks that can be running at any point in time.",
         description = "If the value is `0`, no limit exist and all tasks will start at the same time."
     )
-    @PluginProperty
-    private final Integer concurrent = 0;
+    private final Property<Integer> concurrent = Property.of(0);
 
     @Valid
     @PluginProperty
@@ -173,7 +173,7 @@ public class Parallel extends Task implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
-            this.concurrent
+            runContext.render(this.concurrent).as(Integer.class).orElseThrow()
         );
     }
 }

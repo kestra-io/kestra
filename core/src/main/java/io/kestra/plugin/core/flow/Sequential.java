@@ -16,6 +16,7 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.GraphUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -76,7 +77,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
 
     @Valid
     @PluginProperty
-    // FIXME -> issue with Pause @NotEmpty
+    @NotEmpty(message = "The 'tasks' property cannot be empty")
     private List<Task> tasks;
 
     @Override

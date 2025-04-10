@@ -773,7 +773,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
         if (!(workerTask.getTask() instanceof RunnableTask<?> task)) {
             // This should never happen but better to deal with it than crashing the Worker
             var state = workerTask.getTask().isAllowFailure() ? workerTask.getTask().isAllowWarning() ? SUCCESS : WARNING : FAILED;
-            TaskRunAttempt attempt = TaskRunAttempt.builder().state(new io.kestra.core.models.flows.State().withState(state)).build();
+            TaskRunAttempt attempt = TaskRunAttempt.builder()
+                .state(new io.kestra.core.models.flows.State().withState(state))
+                .workerId(this.id)
+                .build();
             List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
             TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts);
             logger.error("Unable to execute the task '" + workerTask.getTask().getId() +
@@ -782,7 +785,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
 
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
-            .state(new io.kestra.core.models.flows.State().withState(RUNNING));
+            .state(new io.kestra.core.models.flows.State().withState(RUNNING))
+            .workerId(this.id);
 
         // emit the attempt so the execution knows that the task is in RUNNING
         this.workerTaskResultQueue.emit(new WorkerTaskResult(

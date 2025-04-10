@@ -1316,6 +1316,7 @@
     },
     "search_docs": "Search",
     "no_results_found": "No results found",
-    "searching": "Searching..."
+    "searching": "Searching...",
+    "worker information": "Worker Information"
   }
 }

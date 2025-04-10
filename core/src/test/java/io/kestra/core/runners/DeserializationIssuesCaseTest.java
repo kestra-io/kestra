@@ -22,8 +22,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
 public class DeserializationIssuesCaseTest {
@@ -245,9 +244,9 @@ public class DeserializationIssuesCaseTest {
             Duration.ofMinutes(1)
         );
         receive.blockLast();
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size(), is(2));
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().getFirst().getState(), is(State.Type.CREATED));
-        assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(2);
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
+        assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     public void workerTriggerDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws TimeoutException, QueueException{
@@ -266,7 +265,7 @@ public class DeserializationIssuesCaseTest {
             Duration.ofMinutes(1)
         );
         receive.blockLast();
-        assertThat(workerTriggerResult.get().getSuccess(), is(Boolean.FALSE));
+        assertThat(workerTriggerResult.get().getSuccess()).isEqualTo(Boolean.FALSE);
     }
 
     public void flowDeserializationIssue(Consumer<QueueMessage> sendToQueue) throws Exception {

@@ -26,10 +26,8 @@ dependencies {
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
-    // needed because httpclient fails to communicate with docker socket with > v5.4 (https://github.com/docker-java/docker-java/pull/2293#issuecomment-2435455322) and opensearch-java brings that version
-    api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.3.1")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
-    api platform("io.micronaut.platform:micronaut-platform:4.7.6")
+    api platform("io.micronaut.platform:micronaut-platform:4.8.0")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.59.0')
@@ -38,9 +36,6 @@ dependencies {
 
 
     constraints {
-        // Forced dependencies
-        // Temporal force to include https://github.com/micronaut-projects/micronaut-core/commit/9bb43ce55ea3fca97c12cb50c5f1baea28557729 as a potential fix for https://github.com/kestra-io/kestra/issues/3402
-        api("io.micronaut:micronaut-core:4.7.15")
         // need to force this dep as mysql-connector brings a version incompatible with the Google Cloud libs
         api("com.google.protobuf:protobuf-java:$protobufVersion")
         api("com.google.protobuf:protobuf-java-util:$protobufVersion")
@@ -108,8 +103,8 @@ dependencies {
         api 'com.h2database:h2:2.3.232'
         api 'mysql:mysql-connector-java:8.0.33'
         api 'org.postgresql:postgresql:42.7.5'
-        api 'com.github.docker-java:docker-java:3.4.2'
-        api 'com.github.docker-java:docker-java-transport-httpclient5:3.4.2'
+        api 'com.github.docker-java:docker-java:3.5.0'
+        api 'com.github.docker-java:docker-java-transport-httpclient5:3.5.0'
         api (group: 'org.opensearch.client', name: 'opensearch-java', version: "$opensearchVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-client', version: "$opensearchRestVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchRestVersion") // used by the elasticsearch plugin
@@ -133,7 +128,7 @@ dependencies {
         api 'org.hamcrest:hamcrest:3.0'
         api 'org.hamcrest:hamcrest-library:3.0'
         api group: 'org.exparity', name: 'hamcrest-date', version: '2.0.8'
-        api "org.wiremock:wiremock:3.10.0"
+        api "org.wiremock:wiremock-jetty12:3.12.1"
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
         api "com.microsoft.playwright:playwright:1.51.0"
 

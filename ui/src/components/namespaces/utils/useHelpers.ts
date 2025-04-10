@@ -15,6 +15,7 @@ export interface Tab {
     name: string;
     title: string;
     component: Component;
+    maximized?: boolean;
 
     props?: Record<string, any>;
 }
@@ -105,7 +106,8 @@ export function useHelpers() {
             name: "files",
             title: t("files"),
             component: EditorView,
-            props: {namespace, isNamespace: true, isReadOnly: false, maximized: true},
+            maximized: true,
+            props: {namespace, isNamespace: true, isReadOnly: false},
         },
     ];
 

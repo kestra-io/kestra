@@ -1,5 +1,5 @@
 id: namespace_files
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 tasks:
   - id: download

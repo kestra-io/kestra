@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.NextTaskRun;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.*;
 import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
@@ -93,8 +94,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
         title = "Number of concurrent parallel tasks that can be running at any point in time.",
         description = "If the value is `0`, no concurrency limit exists for the tasks in a DAG and all tasks that can run in parallel will start at the same time."
     )
-    @PluginProperty
-    private final Integer concurrent = 0;
+    private final Property<Integer> concurrent = Property.of(0);
 
     @Valid
     @NotEmpty
@@ -171,7 +171,7 @@ public class Dag extends Task implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
-            this.concurrent,
+            runContext.render(this.concurrent).as(Integer.class).orElseThrow(),
             this.tasks
         );
     }

@@ -25,8 +25,7 @@ import java.net.URI;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class StateStoreMigrateCommandTest {
     @Test
@@ -54,10 +53,7 @@ class StateStoreMigrateCommandTest {
                 oldStateStoreUri,
                 new ByteArrayInputStream("my-value".getBytes())
             );
-            assertThat(
-                storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri),
-                is(true)
-            );
+            assertThat(storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri)).isEqualTo(true);
 
             RunContext runContext = ctx.getBean(RunContextFactory.class).of(flow, Map.of("flow", Map.of(
                 "tenantId", tenantId,
@@ -70,13 +66,10 @@ class StateStoreMigrateCommandTest {
             String[] args = {};
             Integer call = PicocliRunner.call(StateStoreMigrateCommand.class, ctx, args);
 
-            assertThat(new String(stateStore.getState(true, "my-state", "sub-name", "my-taskrun-value").readAllBytes()), is("my-value"));
-            assertThat(
-                storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri),
-                is(false)
-            );
+            assertThat(new String(stateStore.getState(true, "my-state", "sub-name", "my-taskrun-value").readAllBytes())).isEqualTo("my-value");
+            assertThat(storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri)).isEqualTo(false);
 
-            assertThat(call, is(0));
+            assertThat(call).isEqualTo(0);
         }
     }
 }

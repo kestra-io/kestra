@@ -24,8 +24,7 @@ import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import reactor.core.publisher.Flux;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
@@ -63,23 +62,23 @@ public class MultipleConditionTriggerCaseTest {
         // first one
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger",
             "trigger-multiplecondition-flow-a", Duration.ofSeconds(60));
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // wait a little to be sure that the trigger is not launching execution
         Thread.sleep(1000);
-        assertThat(ended.size(), is(1));
+        assertThat(ended.size()).isEqualTo(1);
 
         // second one
         execution = runnerUtils.runOne(null, "io.kestra.tests.trigger",
             "trigger-multiplecondition-flow-b", Duration.ofSeconds(60));
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // trigger is done
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
         receive.blockLast();
-        assertThat(ended.size(), is(3));
+        assertThat(ended.size()).isEqualTo(3);
 
         Flow flow = flowRepository.findById(null, "io.kestra.tests.trigger",
             "trigger-multiplecondition-listener").orElseThrow();
@@ -90,15 +89,12 @@ public class MultipleConditionTriggerCaseTest {
             .map(Map.Entry::getValue)
             .orElseThrow();
 
-        assertThat(triggerExecution.getTaskRunList().size(), is(1));
-        assertThat(triggerExecution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
-        assertThat(triggerExecution.getTrigger().getVariables().get("executionId"),
-            is(execution.getId()));
-        assertThat(triggerExecution.getTrigger().getVariables().get("namespace"),
-            is("io.kestra.tests.trigger"));
-        assertThat(triggerExecution.getTrigger().getVariables().get("flowId"),
-            is("trigger-multiplecondition-flow-b"));
+        assertThat(triggerExecution.getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
+        assertThat(triggerExecution.getTrigger().getVariables().get("namespace")).isEqualTo("io.kestra.tests.trigger");
+        assertThat(triggerExecution.getTrigger().getVariables().get("flowId")).isEqualTo("trigger-multiplecondition-flow-b");
     }
 
     public void failed() throws InterruptedException, TimeoutException, QueueException {
@@ -116,24 +112,24 @@ public class MultipleConditionTriggerCaseTest {
         // first one
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger",
             "trigger-multiplecondition-flow-c", Duration.ofSeconds(60));
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // wait a little to be sure that the trigger is not launching execution
         Thread.sleep(1000);
-        assertThat(listener.get(), nullValue());
+        assertThat(listener.get()).isNull();
 
         // second one
         execution = runnerUtils.runOne(null, "io.kestra.tests.trigger",
             "trigger-multiplecondition-flow-d", Duration.ofSeconds(60));
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // trigger was not done
         assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
         receive.blockLast();
-        assertThat(listener.get(), notNullValue());
-        assertThat(listener.get().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(listener.get()).isNotNull();
+        assertThat(listener.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     public void flowTriggerPreconditions()
@@ -153,29 +149,29 @@ public class MultipleConditionTriggerCaseTest {
         // flowA
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
             "flow-trigger-preconditions-flow-a", Duration.ofSeconds(60));
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // flowB: we trigger it two times, as flow-trigger-flow-preconditions-flow-listen is configured with resetOnSuccess: false it should be triggered two times
         execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
             "flow-trigger-preconditions-flow-a", Duration.ofSeconds(60));
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
             "flow-trigger-preconditions-flow-b", Duration.ofSeconds(60));
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // trigger is done
         assertTrue(countDownLatch.await(1, TimeUnit.SECONDS));
         receive.blockLast();
-        assertThat(flowTrigger.get(), notNullValue());
+        assertThat(flowTrigger.get()).isNotNull();
 
         Execution triggerExecution = flowTrigger.get();
-        assertThat(triggerExecution.getTaskRunList().size(), is(1));
-        assertThat(triggerExecution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(triggerExecution.getTrigger().getVariables().get("outputs"), notNullValue());
-        assertThat((Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs"), hasEntry("some", "value"));
+        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(triggerExecution.getTrigger().getVariables().get("outputs")).isNotNull();
+        assertThat((Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs")).containsEntry("some", "value");
     }
 
     public void flowTriggerPreconditionsMergeOutputs() throws QueueException, TimeoutException, InterruptedException {
@@ -195,24 +191,24 @@ public class MultipleConditionTriggerCaseTest {
         // flowB
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
             "flow-trigger-preconditions-flow-b", Duration.ofSeconds(60));
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // flowA
         execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.preconditions",
             "flow-trigger-preconditions-flow-a", Duration.ofSeconds(60));
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // trigger is done
         assertTrue(countDownLatch.await(1, TimeUnit.SECONDS));
         receive.blockLast();
-        assertThat(flowTrigger.get(), notNullValue());
+        assertThat(flowTrigger.get()).isNotNull();
 
         Execution triggerExecution = flowTrigger.get();
-        assertThat(triggerExecution.getTaskRunList().size(), is(1));
-        assertThat(triggerExecution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(triggerExecution.getTrigger().getVariables().get("outputs"), notNullValue());
-        assertThat((Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs"), hasEntry("some", "value"));
+        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(triggerExecution.getTrigger().getVariables().get("outputs")).isNotNull();
+        assertThat((Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs")).containsEntry("some", "value");
     }
 }

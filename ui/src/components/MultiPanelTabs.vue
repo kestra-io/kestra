@@ -22,7 +22,12 @@
                             role="tab"
                             :class="{active: tab.value === panel.activeTab?.value}"
                             draggable="true"
-                            @dragstart="() => dragstart(panelIndex, tab.value)"
+                            @dragstart="(e) => {
+                                if(e.dataTransfer){
+                                    e.dataTransfer.effectAllowed = 'move';
+                                }
+                                dragstart(panelIndex, tab.value);
+                            }"
                             @dragleave.prevent
                             :data-tab-id="tab.value"
                             @click="panel.activeTab = tab"
@@ -246,7 +251,6 @@
         if(!movedTabInfo.value){
             return
         }
-        console.log("drop")
 
         // find potential tab in panels.value tabs
         const potentialTabPanelIndex = panels.value.findIndex((panel) => panel.tabs.some((tab) => tab.potential));
@@ -296,9 +300,14 @@
             }
         }
 
-
-        // add the tab to the target panel in-place of the hovered potential tab
-        panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab);
+        if(targetPanelIndex === originalPanelIndex){
+            // if moving tabs on the same panel, add the tab to the target panel in-place of the hovered potential tab
+            const insertIndex = targetTabIndex < tabIndex ? targetTabIndex + 1 : targetTabIndex;
+            panels.value[targetPanelIndex].tabs.splice(insertIndex, 0, movedTab);
+        } else {
+            // add the tab to the target panel in-place of the hovered potential tab
+            panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab);
+        }
     }
 
     function destroyTab(panelIndex:number, tab: Tab){

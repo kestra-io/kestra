@@ -13,8 +13,7 @@ import java.io.PrintStream;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @WireMockTest(httpPort = 28181)
 class PluginSearchCommandTest {
@@ -61,9 +60,9 @@ class PluginSearchCommandTest {
             PicocliRunner.call(PluginSearchCommand.class, ctx, args);
 
             String output = outputStreamCaptor.toString().trim();
-            assertThat(output, containsString("Found 1 plugins matching 'notifications'"));
-            assertThat(output, containsString("plugin-notifications"));
-            assertThat(output, not(containsString("plugin-scripts")));
+            assertThat(output).contains("Found 1 plugins matching 'notifications'");
+            assertThat(output).contains("plugin-notifications");
+            assertThat(output).doesNotContain("plugin-scripts");
         }
     }
 
@@ -97,9 +96,9 @@ class PluginSearchCommandTest {
             PicocliRunner.call(PluginSearchCommand.class, ctx, args);
 
             String output = outputStreamCaptor.toString().trim();
-            assertThat(output, containsString("Found 2 plugins"));
-            assertThat(output, containsString("plugin-notifications"));
-            assertThat(output, containsString("plugin-scripts"));
+            assertThat(output).contains("Found 2 plugins");
+            assertThat(output).contains("plugin-notifications");
+            assertThat(output).contains("plugin-scripts");
         }
     }
 }

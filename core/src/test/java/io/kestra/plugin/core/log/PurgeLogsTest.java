@@ -18,8 +18,7 @@ import org.slf4j.event.Level;
 
 import java.time.Instant;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(startRunner = true)
@@ -49,8 +48,8 @@ class PurgeLogsTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "purge_logs_no_arguments");
 
         assertTrue(execution.getState().isSuccess());
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("count"), is(1));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("count")).isEqualTo(1);
     }
 
 
@@ -63,8 +62,8 @@ class PurgeLogsTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "purge_logs_full_arguments");
 
         assertTrue(execution.getState().isSuccess());
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(failingReason, execution.getTaskRunList().getFirst().getOutputs().get("count"), is(resultCount));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("count")).as(failingReason).isEqualTo(resultCount);
     }
 
     static Stream<Arguments> buildArguments() {

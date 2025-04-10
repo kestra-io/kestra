@@ -9,9 +9,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class FlowDotCommandTest {
     @Test
@@ -26,8 +24,8 @@ class FlowDotCommandTest {
             };
             Integer call = PicocliRunner.call(FlowDotCommand.class, ctx, args);
 
-            assertThat(call, is(0));
-            assertThat(out.toString(), containsString("\"root.date\"[shape=box];"));
+            assertThat(call).isEqualTo(0);
+            assertThat(out.toString()).contains("\"root.date\"[shape=box];");
         }
     }
 }

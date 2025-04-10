@@ -25,9 +25,7 @@ import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class FlowTopologyServiceTest {
@@ -63,7 +61,7 @@ class FlowTopologyServiceTest {
             .tasks(List.of(returnTask()))
             .build();
 
-        assertThat(flowTopologyService.isChild(parent, child), is(FlowRelation.FLOW_TASK));
+        assertThat(flowTopologyService.isChild(parent, child)).isEqualTo(FlowRelation.FLOW_TASK);
     }
 
     @Test
@@ -82,7 +80,7 @@ class FlowTopologyServiceTest {
             .tasks(List.of(returnTask()))
             .build();
 
-        assertThat(flowTopologyService.isChild(parent, child), nullValue());
+        assertThat(flowTopologyService.isChild(parent, child)).isNull();
     }
 
     @Test
@@ -115,7 +113,7 @@ class FlowTopologyServiceTest {
             ))
             .build();
 
-        assertThat(flowTopologyService.isChild(parent, child), is(FlowRelation.FLOW_TRIGGER));
+        assertThat(flowTopologyService.isChild(parent, child)).isEqualTo(FlowRelation.FLOW_TRIGGER);
     }
 
     @Test
@@ -172,9 +170,9 @@ class FlowTopologyServiceTest {
             ))
             .build();
 
-        assertThat(flowTopologyService.isChild(parent, child), is(FlowRelation.FLOW_TRIGGER));
+        assertThat(flowTopologyService.isChild(parent, child)).isEqualTo(FlowRelation.FLOW_TRIGGER);
 
-        assertThat(flowTopologyService.isChild(noTrigger, child), nullValue());
+        assertThat(flowTopologyService.isChild(noTrigger, child)).isNull();
     }
 
     @Test
@@ -212,22 +210,22 @@ class FlowTopologyServiceTest {
             ))
             .build();
 
-        assertThat(flowTopologyService.isChild(parent, child), is(FlowRelation.FLOW_TRIGGER));
+        assertThat(flowTopologyService.isChild(parent, child)).isEqualTo(FlowRelation.FLOW_TRIGGER);
 
-        assertThat(flowTopologyService.isChild(noTrigger, child), nullValue());
+        assertThat(flowTopologyService.isChild(noTrigger, child)).isNull();
     }
 
     @Test
     void self1() throws IOException {
         Flow flow = parse("flows/valids/trigger-multiplecondition-listener.yaml").toBuilder().revision(1).build();
 
-        assertThat(flowTopologyService.isChild(flow, flow), nullValue());
+        assertThat(flowTopologyService.isChild(flow, flow)).isNull();
     }
 
     @Test
     void self() throws IOException {
         Flow flow = parse("flows/valids/trigger-flow-listener.yaml").toBuilder().revision(1).build();
-        assertThat(flowTopologyService.isChild(flow, flow), nullValue());
+        assertThat(flowTopologyService.isChild(flow, flow)).isNull();
     }
 
     private Return returnTask() {

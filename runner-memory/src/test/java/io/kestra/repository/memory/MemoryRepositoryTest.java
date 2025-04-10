@@ -6,8 +6,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public class MemoryRepositoryTest {
@@ -17,7 +16,7 @@ public class MemoryRepositoryTest {
 
     @Test
     void verifyMemoryFallbacksToH2() {
-        assertThat(flowRepositoryInterface.findAll(null).size(), is(0));
+        assertThat(flowRepositoryInterface.findAll(null).size()).isEqualTo(0);
 
         String flowSource = """
             id: some-flow
@@ -29,8 +28,8 @@ public class MemoryRepositoryTest {
          """;
         flowRepositoryInterface.create(GenericFlow.fromYaml(null, flowSource));
 
-        assertThat(flowRepositoryInterface.findAll(null).size(), is(1));
+        assertThat(flowRepositoryInterface.findAll(null).size()).isEqualTo(1);
 
-        assertThat(flowRepositoryInterface.findByIdWithSource(null, "some.namespace", "some-flow").get().getSource(), is(flowSource));
+        assertThat(flowRepositoryInterface.findByIdWithSource(null, "some.namespace", "some-flow").get().getSource()).isEqualTo(flowSource);
     }
 }

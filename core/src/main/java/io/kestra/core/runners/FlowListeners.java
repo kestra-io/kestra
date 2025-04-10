@@ -53,14 +53,15 @@ public class FlowListeners implements FlowListenersInterface {
                     FlowWithSource flow;
                     if (either.isRight()) {
                         flow = FlowWithException.from(either.getRight().getRecord(), either.getRight(), log).orElse(null);
-                        if (flow == null) {
-                            return;
-                        }
                     } else {
                         flow = pluginDefaultService.injectVersionDefaults(either.getLeft(), true);
                     }
 
-                    Optional<FlowWithSource> previous = this.previous(flow);
+                    if (flow == null) {
+                        return;
+                    }
+
+                    final FlowWithSource previous = this.previous(flow).orElse(null);
 
                     if (flow.isDeleted()) {
                         this.remove(flow);
@@ -77,7 +78,7 @@ public class FlowListeners implements FlowListenersInterface {
                         );
                     }
 
-                    this.notifyConsumersEach(flow, previous.orElse(null));
+                    this.notifyConsumersEach(flow, previous);
                     this.notifyConsumers();
                 });
 
@@ -109,7 +110,6 @@ public class FlowListeners implements FlowListenersInterface {
     private void upsert(FlowWithSource flow) {
         synchronized (this) {
             this.remove(flow);
-
             this.flows.add(flow);
         }
     }

@@ -35,7 +35,7 @@
     }>(), {
         path: "Flow.yaml",
         name: "Flow",
-        extension: "yaml",
+        extension: undefined,
         dirty: false,
         flow: true
     });

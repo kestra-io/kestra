@@ -20,8 +20,7 @@ import java.util.Optional;
 
 import jakarta.validation.ConstraintViolationException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class CollectorServiceTest {
@@ -33,25 +32,25 @@ class CollectorServiceTest {
             CollectorService collectorService = applicationContext.getBean(CollectorService.class);
             Usage metrics = collectorService.metrics(true);
 
-            assertThat(metrics.getUri(), is("https://mysuperhost.com/subpath"));
+            assertThat(metrics.getUri()).isEqualTo("https://mysuperhost.com/subpath");
 
-            assertThat(metrics.getUuid(), notNullValue());
-            assertThat(metrics.getVersion(), notNullValue());
-            assertThat(metrics.getStartTime(), notNullValue());
-            assertThat(metrics.getEnvironments(), hasItem("test"));
-            assertThat(metrics.getStartTime(), notNullValue());
-            assertThat(metrics.getHost().getUuid(), notNullValue());
-            assertThat(metrics.getHost().getHardware().getLogicalProcessorCount(), notNullValue());
-            assertThat(metrics.getHost().getJvm().getName(), notNullValue());
-            assertThat(metrics.getHost().getOs().getFamily(), notNullValue());
-            assertThat(metrics.getConfigurations().getRepositoryType(), is("memory"));
-            assertThat(metrics.getConfigurations().getQueueType(), is("memory"));
-            assertThat(metrics.getExecutions(), notNullValue());
+            assertThat(metrics.getUuid()).isNotNull();
+            assertThat(metrics.getVersion()).isNotNull();
+            assertThat(metrics.getStartTime()).isNotNull();
+            assertThat(metrics.getEnvironments()).contains("test");
+            assertThat(metrics.getStartTime()).isNotNull();
+            assertThat(metrics.getHost().getUuid()).isNotNull();
+            assertThat(metrics.getHost().getHardware().getLogicalProcessorCount()).isNotNull();
+            assertThat(metrics.getHost().getJvm().getName()).isNotNull();
+            assertThat(metrics.getHost().getOs().getFamily()).isNotNull();
+            assertThat(metrics.getConfigurations().getRepositoryType()).isEqualTo("memory");
+            assertThat(metrics.getConfigurations().getQueueType()).isEqualTo("memory");
+            assertThat(metrics.getExecutions()).isNotNull();
             // 1 per hour
-            assertThat(metrics.getExecutions().getDailyExecutionsCount().size(), greaterThan(0));
+            assertThat(metrics.getExecutions().getDailyExecutionsCount().size()).isGreaterThan(0);
             // no task runs as it's an empty instance
-            assertThat(metrics.getExecutions().getDailyTaskRunsCount(), nullValue());
-            assertThat(metrics.getInstanceUuid(), is(TestSettingRepository.instanceUuid));
+            assertThat(metrics.getExecutions().getDailyTaskRunsCount()).isNull();
+            assertThat(metrics.getInstanceUuid()).isEqualTo(TestSettingRepository.instanceUuid);
         }
     }
 

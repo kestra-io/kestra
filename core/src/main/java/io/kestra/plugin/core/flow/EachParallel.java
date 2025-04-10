@@ -10,6 +10,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.VoidOutput;
@@ -128,8 +129,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
         title = "Number of concurrent parallel tasks that can be running at any point in time.",
         description = "If the value is `0`, no limit exist and all the tasks will start at the same time."
     )
-    @PluginProperty
-    private final Integer concurrent = 0;
+    private final Property<Integer> concurrent = Property.of(0);
 
     @NotNull
     @PluginProperty(dynamic = true)
@@ -191,7 +191,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
             FlowableUtils.resolveTasks(this.errors, parentTaskRun),
             FlowableUtils.resolveTasks(this._finally, parentTaskRun),
             parentTaskRun,
-            this.concurrent
+            runContext.render(this.concurrent).as(Integer.class).orElseThrow()
         );
     }
 }

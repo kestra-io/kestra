@@ -24,8 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.any;
 
@@ -49,7 +48,7 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
         Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
             Execution execution = either.getLeft();
 
-            assertThat(execution.getFlowId(), is(flow.getId()));
+            assertThat(execution.getFlowId()).isEqualTo(flow.getId());
 
             if (execution.getState().getCurrent() != State.Type.SUCCESS) {
                 terminateExecution(execution, Trigger.of(flow, flow.getTriggers().getFirst()), flow);
@@ -84,11 +83,11 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             boolean sawSuccessExecution = queueCount.await(1, TimeUnit.MINUTES);
             Execution last = receive.blockLast();
 
-            assertThat("Countdown latch returned " + sawSuccessExecution, last, notNullValue());
-            assertThat(last.getTrigger().getVariables().get("defaultInjected"), is("done"));
-            assertThat(last.getTrigger().getVariables().get("counter"), is(3));
-            assertThat(last.getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
-            assertThat(last.getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
+            assertThat(last).as("Countdown latch returned " + sawSuccessExecution).isNotNull();
+            assertThat(last.getTrigger().getVariables().get("defaultInjected")).isEqualTo("done");
+            assertThat(last.getTrigger().getVariables().get("counter")).isEqualTo(3);
+            assertThat(last.getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
+            assertThat(last.getLabels()).contains(new Label("flow-label-2", "flow-label-2"));
             AbstractSchedulerTest.COUNTER = 0;
         }
     }

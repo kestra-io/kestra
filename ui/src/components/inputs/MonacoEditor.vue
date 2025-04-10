@@ -754,7 +754,6 @@
 <style scoped lang="scss">
 .ks-monaco-editor {
     position: absolute;
-    overflow-x: scroll;
     width: 100%;
     height: 100%;
     outline: none;
@@ -771,7 +770,7 @@
     .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
         background-color: $input-bg;
     }
-    
+
     .monaco-editor {
         .monaco-scrollable-element {
             > .scrollbar {

@@ -639,11 +639,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
         );
 
         workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(RUNNING));
-        try {
-            this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun()));
-        } catch (QueueException e) {
-            log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
-        }
 
         try {
             // run
@@ -784,20 +779,18 @@ public class Worker implements Service, Runnable, AutoCloseable {
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new io.kestra.core.models.flows.State().withState(RUNNING));
 
-        AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
-
-        metricRunningCount.incrementAndGet();
-
-        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry);
-
-        // emit attempts
+        // emit the attempt so the execution knows that the task is in RUNNING
         this.workerTaskResultQueue.emit(new WorkerTaskResult(
                 workerTask.getTaskRun()
                     .withAttempts(this.addAttempt(workerTask, builder.build()))
             )
         );
 
+        AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
+        metricRunningCount.incrementAndGet();
+
         // run it
+        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry);
         io.kestra.core.models.flows.State.Type state = callJob(workerTaskCallable);
 
         metricRunningCount.decrementAndGet();

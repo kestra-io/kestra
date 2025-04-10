@@ -6,8 +6,6 @@
     import {computed, h, onBeforeUnmount, onMounted, ref, render, watch} from "vue";
     import {useStore} from "vuex";
 
-    const store = useStore();
-
     import "monaco-editor/esm/vs/editor/editor.all.js";
     import "monaco-editor/esm/vs/editor/standalone/browser/iPadShowKeyboard/iPadShowKeyboard.js";
     import "monaco-editor/esm/vs/editor/standalone/browser/quickAccess/standaloneCommandsQuickAccess.js"
@@ -18,9 +16,10 @@
     import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
     import {editor as MonacoAPIEditor, IPosition, languages} from "monaco-editor/esm/vs/editor/editor.api";
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-    import YamlWorker from "./yaml.worker.js?worker";
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import {configureMonacoYaml} from "monaco-yaml";
+
+    import YamlWorker from "./yaml.worker.js?worker";
     import {yamlSchemas} from "override/utils/yamlSchemas";
     import Utils from "../../utils/utils";
     import {TaskIcon, YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
@@ -32,6 +31,8 @@
     import CompletionList = languages.CompletionList;
     import ProviderResult = languages.ProviderResult;
     import CompletionItem = languages.CompletionItem;
+
+    const store = useStore();
 
     window.MonacoEnvironment = {
         getWorker(_moduleId, label) {
@@ -80,10 +81,6 @@
     const suggestWidgetResizeObserver = ref<MutationObserver>()
     const suggestWidgetIconsObserver = ref<MutationObserver>()
     const suggestWidget = ref<HTMLElement>()
-
-    const prefix = computed(() => {
-        return props.schemaType ? `${props.schemaType}-` : "";
-    })
 
     const props = withDefaults(defineProps<{
         path?: string,
@@ -162,10 +159,6 @@
         }
     });
 
-    const icons = computed(() => {
-        return store.state.plugin.icons;
-    });
-
     watch(suggestWidget, (newVal) => {
         const replaceRowsIcons = (nodes: HTMLElement[]) => {
             nodes = uniqBy(nodes, node => node.id);
@@ -179,7 +172,7 @@
                 const taskIcon = node.querySelector(".wrapper:has(.icon)");
 
                 if (maybeTaskName.includes(".")) {
-                    if (icons.value[maybeTaskName] !== undefined) {
+                    if (store.state.plugin.icons[maybeTaskName] !== undefined) {
                         vsCodeIcon.style.display = "none";
 
                         const tempContainer = document.createElement("div");
@@ -187,7 +180,7 @@
                             cls: maybeTaskName,
                             class: "w-auto h-auto me-1",
                             "only-icon": true,
-                            icons: icons.value
+                            icons: store.state.plugin.icons
                         }), tempContainer);
 
                         if (taskIcon !== null) {
@@ -695,17 +688,18 @@
 
     async function changeTab(pathOrName: string, valueSupplier: () => Promise<string>, useModelCache = true) {
         let model;
+        const prefix = props.schemaType ? `${props.schemaType}-` : "";
         if (props.input || pathOrName === undefined) {
             model = monaco.editor.createModel(
                 await valueSupplier(),
                 props.language,
-                monaco.Uri.file(prefix.value + Utils.uid() + (props.language ? `.${props.language}` : ""))
+                monaco.Uri.file(prefix + Utils.uid() + (props.language ? `.${props.language}` : ""))
             );
         } else {
             if (!pathOrName.includes(".") && props.language) {
                 pathOrName = `${pathOrName}.${props.language}`;
             }
-            const fileUri = monaco.Uri.file(prefix.value + pathOrName);
+            const fileUri = monaco.Uri.file(prefix + pathOrName);
             model = monaco.editor.getModel(fileUri);
             if (model === null) {
                 model = monaco.editor.createModel(

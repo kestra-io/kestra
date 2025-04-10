@@ -10,7 +10,6 @@ import io.kestra.core.models.flows.State.History;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.micronaut.context.ApplicationContext;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,8 +28,6 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.hasProperty;
-import static org.hamcrest.Matchers.is;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @ExtendWith(MockitoExtension.class)
@@ -55,7 +52,7 @@ class SubflowTest {
     }
 
     @Test
-    void shouldNotReturnResultForExecutionNotTerminated() throws IllegalVariableEvaluationException {
+    void shouldNotReturnResultForExecutionNotTerminated() {
         TaskRun taskRun = TaskRun
             .builder()
             .state(State.of(State.Type.CREATED, Collections.emptyList()))
@@ -68,12 +65,12 @@ class SubflowTest {
             Execution.builder().build()
         );
 
-        assertThat(result).isEqualTo(Optional.empty());
+        assertThat(result).isEmpty();
     }
 
     @SuppressWarnings("deprecation")
     @Test
-    void shouldNotReturnOutputsForSubflowOutputsDisabled() throws IllegalVariableEvaluationException {
+    void shouldNotReturnOutputsForSubflowOutputsDisabled() {
         // Given
         Mockito.when(applicationContext.getProperty(Subflow.PLUGIN_FLOW_OUTPUTS_ENABLED, Boolean.class))
             .thenReturn(Optional.of(false));

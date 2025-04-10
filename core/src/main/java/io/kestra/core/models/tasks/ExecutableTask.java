@@ -1,6 +1,5 @@
 package io.kestra.core.models.tasks;
 
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;

@@ -1,8 +1,24 @@
+@import "@kestra-io/ui-libs/src/scss/_color-palette.scss";
+
+// Filter Tags
+:root {
+    #{--ks-tag-background}: $base-gray-50;
+    #{--ks-tag-background-active}: $base-gray-100;
+}
+
+html.dark{
+    #{--ks-tag-background}: $base-gray-700;
+    #{--ks-tag-background-active}: $base-gray-500;
+    #{--ks-tag-background-hover}: $base-gray-400;
+}
+
 // Coloring
 $filters-gray-700: var(--bs-gray-700);
 $filters-gray-900: var(--bs-gray-900);
 $filters-card-color: var(--ks-background-card);
 $filters-border-color: var(--ks-border-primary);
+$white: $base-white;
+$border-color: $base-gray-900;
 
 // Typography
 $filters-font-xs: var(--el-font-size-extra-small);

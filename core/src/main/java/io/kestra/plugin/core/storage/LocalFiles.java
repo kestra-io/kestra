@@ -46,7 +46,6 @@ import java.util.Map;
 
                       - id: git_python_scripts
                         type: io.kestra.plugin.scripts.python.Commands
-                        warningOnStdErr: false
                         runner: DOCKER
                         docker:
                           image: ghcr.io/kestra-io/pydata:latest

@@ -30,7 +30,7 @@ public class RunContextCache {
 
     @PostConstruct
     void init() {
-        String envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "KESTRA_");
+        String envPrefix = applicationContext.getProperty("kestra.variables.env-vars-prefix", String.class, "ENV_");
         envVars = this.envVariables(envPrefix);
 
         globalVars = applicationContext

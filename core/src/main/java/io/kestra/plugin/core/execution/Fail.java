@@ -32,82 +32,82 @@ import lombok.experimental.SuperBuilder;
             full = true,
             title = "Fail on a switch branch",
             code = """
-                id: fail_on_switch
-                namespace: company.team
-                
-                inputs:
-                  - id: param
-                    type: STRING
-                    required: true
-                
-                tasks:
-                  - id: switch
-                    type: io.kestra.plugin.core.flow.Switch
-                    value: "{{inputs.param}}"
-                    cases:
-                      case1:
-                        - id: case1
-                          type: io.kestra.plugin.core.log.Log
-                          message: Case 1
-                      case2:
-                        - id: case2
-                          type: io.kestra.plugin.core.log.Log
-                          message: Case 2
-                      notexist:
-                        - id: fail
-                          type: io.kestra.plugin.core.execution.Fail
-                      default:
-                        - id: default
-                          type: io.kestra.plugin.core.log.Log
-                          message: default
+            id: fail_on_switch
+            namespace: company.team
+            
+            inputs:
+              - id: param
+                type: STRING
+                required: true
+            
+            tasks:
+              - id: switch
+                type: io.kestra.plugin.core.flow.Switch
+                value: "{{inputs.param}}"
+                cases:
+                  case1:
+                    - id: case1
+                      type: io.kestra.plugin.core.log.Log
+                      message: Case 1
+                  case2:
+                    - id: case2
+                      type: io.kestra.plugin.core.log.Log
+                      message: Case 2
+                  notexist:
+                    - id: fail
+                      type: io.kestra.plugin.core.execution.Fail
+                  default:
+                    - id: default
+                      type: io.kestra.plugin.core.log.Log
+                      message: default
             """
         ),
         @Example(
             full = true,
             title = "Fail on a condition",
             code = """
-                id: fail_on_condition
-                namespace: company.team
-                
-                inputs:
-                  - name: param
-                    type: STRING
-                    required: true
-                
-                tasks:
-                  - id: before
-                    type: io.kestra.plugin.core.debug.Echo
-                    format: I'm before the fail on condition
+            id: fail_on_condition
+            namespace: company.team
+            
+            inputs:
+              - name: param
+                type: STRING
+                required: true
+            
+            tasks:
+              - id: before
+                type: io.kestra.plugin.core.debug.Echo
+                format: I'm before the fail on condition
 
-                  - id: fail
-                    type: io.kestra.plugin.core.execution.Fail
-                    condition: '{{ inputs.param == "fail" }}'
+              - id: fail
+                type: io.kestra.plugin.core.execution.Fail
+                condition: '{{ inputs.param == "fail" }}'
 
-                  - id: after
-                    type: io.kestra.plugin.core.debug.Echo
-                    format: I'm after the fail on condition
+              - id: after
+                type: io.kestra.plugin.core.debug.Echo
+                format: I'm after the fail on condition
             """
         ),
         @Example(
             full = true,
             title = "Using errorLogs function to send error message to Slack",
             code = """
-                id: error_logs
-                namespace: company.team
+            id: error_logs
+            namespace: company.team
 
-                tasks:
-                - id: fail
-                    type: io.kestra.plugin.core.execution.Fail
-                    errorMessage: Something went wrong, make sure to fix it asap!
+            tasks:
+            - id: fail
+                type: io.kestra.plugin.core.execution.Fail
+                errorMessage: Something went wrong, make sure to fix it asap!
 
-                errors:
-                - id: slack
-                    type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
-                    url: "{{ secret('SLACK_WEBHOOK') }}"
-                    payload: |
-                    {
-                        "text": "Failure alert for flow `{{ flow.namespace }}.{{ flow.id }}` with ID `{{ execution.id }}`. Here is a bit more context about why the execution failed: `{{ errorLogs()[0]['message'] }}`"
-                    }
+            errors:
+            - id: slack
+                type: io.kestra.plugin.notifications.slack.SlackIncomingWebhook
+                url: "{{ secret('SLACK_WEBHOOK') }}"
+                payload: |
+                {
+                    "text": "Failure alert for flow `{{ flow.namespace }}.{{ flow.id }}` with ID `{{ execution.id }}`. Here is a bit more context about why the execution failed: `{{ errorLogs()[0]['message'] }}`"
+                }
             """
         )
     },

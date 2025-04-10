@@ -402,6 +402,7 @@
                 label: label,
                 insertText: value,
                 insertTextRules: value.includes("${1:") ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
+                sortText: value.includes("(") ? "b" + value : "a" + value,
                 range: {
                     startLineNumber: position.lineNumber,
                     endLineNumber: position.lineNumber,
@@ -431,69 +432,6 @@
                 };
             }
         }));
-
-        autoCompletionProviders.value.push(monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
-            triggerCharacters: ["{"],
-            async provideCompletionItems(model, position) {
-                if (!isInsidePebbleBlock(model, position)) {
-                    return {suggestions: []};
-                }
-
-                const lineContent = model.getLineContent(position.lineNumber);
-                const beforeCursor = lineContent.substring(0, position.column);
-                const afterCursor = lineContent.substring(position.column);
-
-                const lastOpen = beforeCursor.lastIndexOf("{{");
-                const nextClose = afterCursor.indexOf("}}");
-
-                const openIndex = lastOpen + 2;
-                const closeIndex = nextClose !== -1 ? position.column + nextClose : lineContent.length;
-                const fullContent = lineContent.substring(openIndex, closeIndex).trim();
-
-                const word = fullContent;
-
-                const suggestions = (await yamlAutoCompletionProvider.pebbleFunctionAutoCompletion())
-                    .filter(func => func.toLowerCase().includes(word.toLowerCase()))
-                    .map(func => ({
-                        kind: monaco.languages.CompletionItemKind.Function,
-                        label: func,
-                        insertText: func,
-                        documentation: "Pebble function",
-                        range: {
-                            startLineNumber: position.lineNumber,
-                            endLineNumber: position.lineNumber,
-                            startColumn: openIndex + 1,
-                            endColumn: closeIndex
-                        }
-                    }));
-
-                return {suggestions};
-            }
-        }));
-
-        const isInsidePebbleBlock = (model, position) => {
-            const lineContent = model.getLineContent(position.lineNumber);
-            const beforeCursor = lineContent.substring(0, position.column);
-            const afterCursor = lineContent.substring(position.column);
-
-            const lastOpen = beforeCursor.lastIndexOf("{{");
-            const nextClose = afterCursor.indexOf("}}");
-
-            return (
-                lastOpen !== -1 &&
-                (nextClose !== -1 || !afterCursor.includes("}}")) &&
-                position.column > lastOpen + 2
-            );
-        }
-
-        localEditor.onDidChangeCursorSelection((e) => {
-            const position = e.selection.getPosition();
-            const model = localEditor.getModel();
-
-            if (isInsidePebbleBlock(model, position)) {
-                localEditor.trigger("keyboard", "editor.action.triggerSuggest", {});
-            }
-        });
 
         autoCompletionProviders.value.push(monaco.languages.registerCompletionItemProvider(["yaml", "plaintext"], {
             triggerCharacters: ["("],

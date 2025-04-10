@@ -1,6 +1,6 @@
 import type {Store} from "vuex";
 import type {JSONSchema} from "@kestra-io/ui-libs";
-import {YamlUtils as YAML_UTILS, YamlElement} from "@kestra-io/ui-libs";
+import {YamlElement, YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import {QUOTE, YamlNoAutoCompletion} from "../../services/autoCompletionProvider";
 import RegexProvider from "../../utils/regex";
 
@@ -32,9 +32,29 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion {
             "globals",
             "parents",
             "error",
+            "kestra",
             "secret(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:MY_SECRET}" + QUOTE + ")",
             "kv(namespace=${1:flow.namespace}, key=" + QUOTE + "${2:my_key}" + QUOTE + ")",
-            "kestra"
+            "currentEachOutput(outputs=${1:outputs.forEach})",
+            "decrypt(key=${1:secret('encryption_key')}, encrypted=${2:outputs.request.encryptedBody})",
+            "encrypt(key=${1:secret('encryption_key')}, plaintext=${2:'value_to_encrypt'})",
+            "errorLogs()",
+            "fetchContext()",
+            "isFileEmpty(namespace=${1:flow.namespace}, path=${2:outputs.download.uri})",
+            "fileExists(namespace=${1:flow.namespace}, path=${2:outputs.download.uri})",
+            "fileSize(namespace=${1:flow.namespace}, path=${2:outputs.download.uri})",
+            "read(namespace=${1:flow.namespace}, path=${2:'a/namespace/file'})",
+            "render(toRender=${1:inputs.inputWithPebble}, recursive=${2:true})",
+            "renderOnce(toRender=${1:inputs.inputWithPebble})",
+            "fileURI(path=${1:'a/namespace/file'})",
+            "fromIon(ion=${1:read('ion/namespace/file')})",
+            "fromJson(json=${1:read('json/namespace/file')})",
+            "yaml(yaml=${1:inputs.yamlInput})",
+            "uuid()",
+            "id()",
+            "now()",
+            "randomInt(lower=${1:0}, upper=${2:10})",
+            "randomPort()"
         ]);
     }
 
@@ -215,45 +235,5 @@ export class FlowAutoCompletion extends YamlNoAutoCompletion {
             }
         }
         return Promise.resolve([]);
-    }
-
-    pebbleFunctionAutoCompletion(): Promise<string[]> {
-        return Promise.resolve([
-            // File-related functions
-            "fileExists",
-            "fileSize",
-            "isFileEmpty",
-            "read",
-            "fileURI",
-            
-            // Data format functions
-            "json",
-            "fromJson",
-            "yaml",
-            "fromIon",
-            
-            // Context and logging functions
-            "printContext",
-            "fetchContext",
-            "errorLogs",
-            "render",
-            "renderOnce",
-            "currentEachOutput",
-            
-            // Utility functions
-            "uuid",
-            "id",
-            "now",
-            
-            // Security functions
-            "secret",
-            "kv",
-            "encrypt",
-            "decrypt",
-            
-            // Random functions
-            "randomInt",
-            "randomPort"
-        ]);
     }
 }

@@ -670,7 +670,7 @@
                 emit("change", value, event);
 
                 if (!props.input && current.value && current.value.name) {
-                    store.dispatch("editor/setTabDirty", {
+                    store.commit("editor/setTabDirty", {
                         ...current.value,
                         dirty: true,
                     });

@@ -157,7 +157,7 @@
     });
 
     watch(() => props.theme, (newVal) => {
-        if (localEditor) {
+        if (editorResolved.value) {
             monaco.editor.setTheme(newVal);
         }
     });

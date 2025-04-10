@@ -40,7 +40,7 @@ import static org.mockito.Mockito.spy;
 
 public class SchedulerPollingTriggerTest extends AbstractSchedulerTest {
     @Inject
-    private ApplicationContext applicationContext;
+    protected ApplicationContext applicationContext;
 
     @Inject
     private SchedulerTriggerStateInterface triggerState;

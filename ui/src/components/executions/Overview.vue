@@ -472,20 +472,6 @@
 
 <style lang="scss">
 .execution-overview {
-    .cascader {
-        &::-webkit-scrollbar {
-            height: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-card);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 0px;
-        }
-    }
 
     .wrapper {
         background: var(--ks-background-card);

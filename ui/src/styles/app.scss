@@ -47,33 +47,25 @@ html {
 
 * > {
     ::-webkit-scrollbar {
-        width: 0.5rem;
-        height: 0.5rem;
+        width: 15px !important;
+
+        &:horizontal {
+            height: 15px !important;
+        }
     }
 
     ::-webkit-scrollbar-track {
-        background: var(--bs-gray-200);
+        background: var(--ks-background-body) !important;
     }
 
     ::-webkit-scrollbar-thumb {
-        background: var(--bs-gray-300);
-        border-radius: var(--el-border-radius);
-
-        &:hover {
-            background: var(--bs-gray-400);
-        }
+        background: var(--ks-border-primary) !important;
+        border-radius: 8px !important;
+        border: 4px solid var(--ks-background-body) !important;
     }
-}
 
-html.dark {
-    * > {
-        ::-webkit-scrollbar-thumb {
-            background: var(--bs-gray-400);
-
-            &:hover {
-                background: var(--bs-gray-500);
-            }
-        }
+    ::-webkit-scrollbar-corner {
+        background: var(--ks-background-body) !important;   
     }
 }
 

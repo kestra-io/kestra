@@ -386,6 +386,6 @@ public class InputsTest {
 
         var logEntry = receive.blockLast();
         assertThat(logEntry).isNotNull();
-        assertThat(logEntry.getMessage()).isEqualTo("This is my secret: ********");
+        assertThat(logEntry.getMessage()).isEqualTo("This is my secret: ******");
     }
 }

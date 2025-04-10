@@ -20,6 +20,7 @@ export default [
             "**/*.spec.ts",
             "vite.config.js",
             "vitest.config.js",
+            "vitest.workspace.js",
         ],
         languageOptions: {globals: globals.node},
     },

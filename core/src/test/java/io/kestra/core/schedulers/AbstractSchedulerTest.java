@@ -116,7 +116,7 @@ abstract public class AbstractSchedulerTest {
             .toBuilder()
             .tasks(
                 Collections.singletonList(
-                    Sleep.builder().id("sleep").type(Sleep.class.getName()).duration(Duration.ofSeconds(125)).build()
+                    Sleep.builder().id("sleep").type(Sleep.class.getName()).duration(Property.of(Duration.ofSeconds(125))).build()
                 )
             )
             .build();

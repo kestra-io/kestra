@@ -290,9 +290,9 @@ public class PluginDefaultService {
         }
 
         FlowWithSource result;
-        String source = flow.getSource();
-        try {
 
+        try {
+            String source = flow.getSource();
             if (source == null) {
                 source = OBJECT_MAPPER.writeValueAsString(flow);
             }

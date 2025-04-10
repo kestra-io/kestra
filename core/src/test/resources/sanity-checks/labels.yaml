@@ -1,5 +1,5 @@
 id: labels
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 variables:
   label_1: test1

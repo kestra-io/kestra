@@ -319,7 +319,7 @@ class RunContextTest {
 
         matchingLog = TestsUtils.awaitLogs(logs, 3);
         receive.blockLast();
-        assertThat(Objects.requireNonNull(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null)).getMessage()).isEqualTo("john ******** doe");
+        assertThat(Objects.requireNonNull(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.INFO)).findFirst().orElse(null)).getMessage()).isEqualTo("john ****** doe");
     }
 
     @Test

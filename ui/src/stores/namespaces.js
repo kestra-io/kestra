@@ -152,7 +152,17 @@ export default {
             if (!payload.path) return;
 
             const URL = `${base.call(this, payload.namespace)}/files?path=${slashPrefix(safePath(payload.path))}`;
-            const request = await this.$http.get(URL, {transformResponse: response => response, responseType: "json"})
+            const request = await this.$http.get(URL, {
+                validateStatus: (status) => status === 200 || status === 404,
+                transformResponse: response => response, responseType: "json"
+            })
+
+            if(request.status === 404) {
+                const message = JSON.parse(request.data)?.message;
+                this.$toast.bind({$t: this.$i18n.t})().error(message ?? "File not found");
+
+                return [];
+            }
 
             return request.data ?? [];
         },

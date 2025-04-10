@@ -8,6 +8,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
@@ -107,7 +108,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 deserialize.allTasksWithChilds();
 
                 return deserialize;
-            } catch (DeserializationException | IOException | IllegalArgumentException e) {
+            } catch (DeserializationException | IOException | IllegalArgumentException | FlowProcessingException e) {
                 try {
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);
                     return FlowWithException.from(jsonNode, e)
@@ -682,10 +683,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.save(flow, CrudEventType.CREATE);
     }
 
-    @SneakyThrows(QueueException.class)
+    @SneakyThrows({QueueException.class, FlowProcessingException.class})
     @Override
     public FlowWithSource update(GenericFlow flow, FlowInterface previous) throws ConstraintViolationException {
-
         // Check Flow with defaults
         FlowWithSource flowWithDefault = pluginDefaultService.injectAllDefaults(flow, false);
         modelValidator.validate(flowWithDefault);
@@ -712,7 +712,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.save(flow, CrudEventType.UPDATE);
     }
 
-    @SneakyThrows
+    @SneakyThrows({QueueException.class, FlowProcessingException.class})
     @VisibleForTesting
     public FlowWithSource save(GenericFlow flow, CrudEventType crudEventType) throws ConstraintViolationException {
 

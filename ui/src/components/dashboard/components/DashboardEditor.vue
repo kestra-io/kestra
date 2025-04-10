@@ -413,20 +413,6 @@
             padding: calc(var(--spacer) * 1.5);
             background-color: var(--bs-gray-100);
         }
-
-        &::-webkit-scrollbar {
-            width: 10px;
-            height: 2px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--card-bg);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
-            border-radius: 20px;
-        }
     }
 
     .slider {

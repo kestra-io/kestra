@@ -1340,20 +1340,6 @@
             padding: 1.5rem;
             background-color: var(--bs-gray-100);
         }
-
-        &::-webkit-scrollbar {
-            width: 10px;
-            height: 2px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-card);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 20px;
-        }
     }
 
     .hide-view {

@@ -57,6 +57,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -106,7 +107,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 deserialize.allTasksWithChilds();
 
                 return deserialize;
-            } catch (DeserializationException | IOException e) {
+            } catch (DeserializationException | IOException | IllegalArgumentException e) {
                 try {
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);
                     return FlowWithException.from(jsonNode, e)
@@ -415,14 +416,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 // findAllWithSourceForAllTenants() is used in the backend, so we want it to work even if messy plugins exist.
                 // That's why we will try to deserialize each flow and log an error but not crash in case of exception.
-                return select.fetch().map(record -> {
+                return select.fetch().stream().map(record -> {
                     try {
                         return FlowWithSource.of((Flow)jdbcRepository.map(record), record.get("source_code", String.class));
                     } catch (Exception e) {
                         log.error("Unable to load the following flow:\n{}", record.get("value", String.class), e);
                         return null;
                     }
-                });
+                }).filter(Objects::nonNull).toList();
             });
     }
 

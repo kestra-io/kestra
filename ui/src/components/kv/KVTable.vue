@@ -228,7 +228,7 @@
                 get() {
                     return this.addKvModalVisible;
                 },
-                set(newValue) {
+                set(newValue:boolean) {
                     this.changeKVModalVisibility(newValue);
                 }
             }
@@ -304,7 +304,6 @@
         },
         methods: {
             ...mapMutations("namespace", ["changeKVModalVisibility"]),
-
             canUpdate(kv) {
                 return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
             },
@@ -334,7 +333,6 @@
                 let kvFetch;
                 if (this.namespace === undefined) {
                     if (this.namespaceIterator === undefined) {
-                        console.log("Creating namespace iterator");
                         this.namespaceIterator = useNamespaces(this.$store, 20);
                     }
 

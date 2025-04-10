@@ -82,6 +82,14 @@ export default {
                 return "subflow-inputs";
             }
 
+            if( property.type === "array") {
+                if (property.items && property.items.$ref.includes("tasks.Task")) {
+                    return "tasks";
+                }
+
+                return "array";
+            }
+
             return property.type || "expression";
         },
 

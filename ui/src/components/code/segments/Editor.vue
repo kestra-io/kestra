@@ -7,7 +7,7 @@
                     :model-value="panel.props.modelValue"
                     v-bind="panel.props"
                     @update:model-value="
-                        (value) => emits('updateMetadata', 'inputs', value)
+                        (value: any) => emits('updateMetadata', 'inputs', value)
                     "
                 />
             </template>
@@ -242,22 +242,29 @@
     })
 
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    const getSectionTitle = (label: string, elements = []) => {
+    const getSectionTitle = (label: string, elements: Record<string, any>[] = []) => {
         const title = t(`no_code.sections.${label}`);
         return {title, elements};
     };
     const sections = computed((): CollapseItem[] => {
+        const flow:{
+            tasks: Record<string, any>[][];
+            triggers: Record<string, any>[][];
+            errors: Record<string, any>[][];
+            finally: Record<string, any>[][];
+            afterExecution: Record<string, any>[][];
+        } = YAML_UTILS.parse(props.flow) as any;
         return [
-            getSectionTitle("tasks", YAML_UTILS.parse(props.flow)?.tasks ?? []),
-            getSectionTitle("triggers", YAML_UTILS.parse(props.flow)?.triggers ?? []),
+            getSectionTitle("tasks", flow?.tasks ?? []),
+            getSectionTitle("triggers", flow?.triggers ?? []),
             getSectionTitle(
                 "error_handlers",
-                YAML_UTILS.parse(props.flow)?.errors ?? [],
+                flow?.errors ?? [],
             ),
-            getSectionTitle("finally", YAML_UTILS.parse(props.flow)?.finally ?? []),
+            getSectionTitle("finally", flow?.finally ?? []),
             getSectionTitle(
                 "after_execution",
-                YAML_UTILS.parse(props.flow)?.afterExecution ?? [],
+                flow?.afterExecution ?? [],
             ),
         ];
     });

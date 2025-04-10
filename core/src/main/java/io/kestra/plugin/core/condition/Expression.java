@@ -7,6 +7,7 @@ import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
+import io.kestra.core.models.property.Property;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -54,13 +55,11 @@ import jakarta.validation.constraints.NotNull;
 )
 public class Expression extends Condition implements ScheduleCondition {
     @NotNull
-    @NotEmpty
-    @PluginProperty
-    private String expression;
+    private Property<String> expression;
 
     @Override
     public boolean test(ConditionContext conditionContext) throws InternalException {
-        String render = conditionContext.getRunContext().render(expression, conditionContext.getVariables());
-        return !(render.isBlank() || render.isEmpty() || render.trim().equals("false"));
+        String render = conditionContext.getRunContext().render(expression).as(String.class, conditionContext.getVariables()).orElseThrow();
+        return !(render.isBlank() || render.trim().equals("false"));
     }
 }

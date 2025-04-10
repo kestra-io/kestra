@@ -1,7 +1,7 @@
 import type {Store} from "vuex";
 import {describe, expect, it, Mock, vi} from "vitest"
 import {FlowAutoCompletion} from "override/services/flowAutoCompletionProvider";
-import YamlUtils from "../../../src/utils/yamlUtils";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
 const defaultFlow = `inputs:
   - id: input1
@@ -116,7 +116,7 @@ const mockedStore: MockStore<Record<string, any>> = {
 } as any
 
 const provider = new FlowAutoCompletion(mockedStore);
-const parsed = YamlUtils.parse(defaultFlow);
+const parsed = YAML_UTILS.parse(defaultFlow);
 
 describe("FlowAutoCompletionProvider", () => {
     it("root autocompletions", async () => {
@@ -136,6 +136,7 @@ describe("FlowAutoCompletionProvider", () => {
             "error",
             "secret(namespace=${1:flow.namespace}, key='${2:MY_SECRET}')",
             "kv(namespace=${1:flow.namespace}, key='${2:my_key}')",
+            "kestra"
         ]);
     })
 
@@ -150,6 +151,7 @@ describe("FlowAutoCompletionProvider", () => {
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "task")).toEqual(["id", "type"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "taskrun")).toEqual(["id", "startDate", "attemptsCount", "parentId", "value", "iteration"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "error")).toEqual(["taskId", "message", "stackTrace"]);
+        expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "kestra")).toEqual(["environment", "url"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs.task1")).toEqual(["values"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs.task2")).toEqual(["value"]);
         expect(await provider.nestedFieldAutoCompletion(defaultFlow, parsed, "outputs.task3")).toEqual([]);
@@ -159,19 +161,19 @@ describe("FlowAutoCompletionProvider", () => {
     it("value autocompletions", async () => {
         mockedStore.dispatch.mockClear();
 
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YamlUtils.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("namespace:") + "namespace:".length))).toEqual(["my.namespace", "another.namespace"]);
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YamlUtils.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("flowId:") + "flowId:".length))).toEqual(["flow-other-namespace", "another-flow-other-namespace"]);
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("namespace:") + "namespace:".length))).toEqual(["my.namespace", "another.namespace"]);
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, defaultFlow.indexOf("flowId:") + "flowId:".length))).toEqual(["flow-other-namespace", "another-flow-other-namespace"]);
 
         expect(mockedStore.dispatch.mock.calls.length).toBe(2);
         const firstInputIndex = defaultFlow.indexOf("first-input");
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YamlUtils.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
         expect(mockedStore.dispatch.mock.calls.length).toBe(3);
         // Subflow inputs cache kicks in
-        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YamlUtils.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
+        expect(await provider.valueAutoCompletion(defaultFlow, parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
         expect(mockedStore.dispatch.mock.calls.length).toBe(3);
 
         // With newline already inserted
-        expect(await provider.valueAutoCompletion(defaultFlow.substring(0, firstInputIndex) + "\n        " + defaultFlow.substring(firstInputIndex, defaultFlow.length), parsed, YamlUtils.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
+        expect(await provider.valueAutoCompletion(defaultFlow.substring(0, firstInputIndex) + "\n        " + defaultFlow.substring(firstInputIndex, defaultFlow.length), parsed, YAML_UTILS.localizeElementAtIndex(defaultFlow, firstInputIndex))).toEqual(["second-input:"]);
     })
 
     it("function autocompletions", async () => {

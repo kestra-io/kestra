@@ -5,6 +5,7 @@ import io.kestra.core.server.ServerInstance;
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
 import io.kestra.core.server.ServiceStateTransition;
+import io.kestra.core.server.ServiceType;
 import io.kestra.core.server.WorkerTaskRestartStrategy;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.Network;
@@ -26,7 +27,7 @@ import java.util.Set;
 
 import static io.kestra.core.server.ServiceStateTransition.Result.FAILED;
 import static io.kestra.core.server.ServiceStateTransition.Result.SUCCEEDED;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -95,7 +96,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
 
         // Then
         assertEquals(results.size(), AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().size());
-        assertThat(results, Matchers.containsInAnyOrder(AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().toArray()));
+        assertThat(results).containsExactlyInAnyOrder(AbstractJdbcServiceInstanceRepositoryTest.Fixtures.all().toArray(ServiceInstance[]::new));
     }
 
     @Test
@@ -108,7 +109,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
 
         // Then
         assertEquals(AbstractJdbcServiceInstanceRepositoryTest.Fixtures.allNonRunning().size(), results.size());
-        assertThat(results, Matchers.containsInAnyOrder(AbstractJdbcServiceInstanceRepositoryTest.Fixtures.allNonRunning().toArray()));
+        assertThat(results).containsExactlyInAnyOrder(AbstractJdbcServiceInstanceRepositoryTest.Fixtures.allNonRunning().toArray(ServiceInstance[]::new));
     }
 
     @Test
@@ -121,7 +122,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
 
         // Then
         assertEquals(AbstractJdbcServiceInstanceRepositoryTest.Fixtures.allInNotRunningState().size(), results.size());
-        assertThat(results, Matchers.containsInAnyOrder(AbstractJdbcServiceInstanceRepositoryTest.Fixtures.allInNotRunningState().toArray()));
+        assertThat(results).containsExactlyInAnyOrder(AbstractJdbcServiceInstanceRepositoryTest.Fixtures.allInNotRunningState().toArray(ServiceInstance[]::new));
     }
 
     @Test
@@ -226,7 +227,7 @@ public abstract class AbstractJdbcServiceInstanceRepositoryTest {
             );
             return new ServiceInstance(
                 IdUtils.create(),
-                Service.ServiceType.WORKER,
+                ServiceType.WORKER,
                 state,
                 new ServerInstance(
                     ServerInstance.Type.STANDALONE,

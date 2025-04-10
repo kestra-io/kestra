@@ -1,8 +1,10 @@
 package io.kestra.core.services;
 
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
@@ -10,7 +12,6 @@ import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
-import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
@@ -18,28 +19,26 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
 class FlowServiceTest {
+    private static final String TEST_NAMESPACE = "io.kestra.unittest";
+
     @Inject
     private FlowService flowService;
     @Inject
     private FlowRepositoryInterface flowRepository;
 
-    private static Flow create(String flowId, String taskId, Integer revision) {
-        return create(null, flowId, taskId, revision);
+    private static FlowWithSource create(String flowId, String taskId, Integer revision) {
+        return create(null, TEST_NAMESPACE, flowId, taskId, revision);
     }
 
-    private static Flow create(String tenantId, String flowId, String taskId, Integer revision) {
-        return Flow.builder()
+    private static FlowWithSource create(String tenantId, String namespace, String flowId, String taskId, Integer revision) {
+        FlowWithSource flow = FlowWithSource.builder()
             .id(flowId)
-            .namespace("io.kestra.unittest")
+            .namespace(namespace)
             .tenantId(tenantId)
             .revision(revision)
             .tasks(Collections.singletonList(Return.builder()
@@ -48,10 +47,12 @@ class FlowServiceTest {
                 .format(Property.of("test"))
                 .build()))
             .build();
+
+        return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
     }
 
     @Test
-    void importFlow() {
+    void importFlow() throws FlowProcessingException {
         String source = """
             id: import
             namespace: some.namespace
@@ -59,33 +60,33 @@ class FlowServiceTest {
             - id: task
               type: io.kestra.plugin.core.log.Log
               message: Hello""";
-        Flow importFlow = flowService.importFlow("my-tenant", source);
+        FlowWithSource importFlow = flowService.importFlow("my-tenant", source);
 
-        assertThat(importFlow.getId(), is("import"));
-        assertThat(importFlow.getNamespace(), is("some.namespace"));
-        assertThat(importFlow.getRevision(), is(1));
-        assertThat(importFlow.getTasks().size(), is(1));
-        assertThat(importFlow.getTasks().getFirst().getId(), is("task"));
+        assertThat(importFlow.getId()).isEqualTo("import");
+        assertThat(importFlow.getNamespace()).isEqualTo("some.namespace");
+        assertThat(importFlow.getRevision()).isEqualTo(1);
+        assertThat(importFlow.getTasks().size()).isEqualTo(1);
+        assertThat(importFlow.getTasks().getFirst().getId()).isEqualTo("task");
 
         Optional<FlowWithSource> fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import", Optional.empty());
-        assertThat(fromDb.isPresent(), is(true));
-        assertThat(fromDb.get().getRevision(), is(1));
-        assertThat(fromDb.get().getSource(), is(source));
+        assertThat(fromDb.isPresent()).isEqualTo(true);
+        assertThat(fromDb.get().getRevision()).isEqualTo(1);
+        assertThat(fromDb.get().getSource()).isEqualTo(source);
 
         source = source.replace("id: task", "id: replaced_task");
         importFlow = flowService.importFlow("my-tenant", source);
-        assertThat(importFlow.getRevision(), is(2));
-        assertThat(importFlow.getTasks().size(), is(1));
-        assertThat(importFlow.getTasks().getFirst().getId(), is("replaced_task"));
+        assertThat(importFlow.getRevision()).isEqualTo(2);
+        assertThat(importFlow.getTasks().size()).isEqualTo(1);
+        assertThat(importFlow.getTasks().getFirst().getId()).isEqualTo("replaced_task");
 
         fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import", Optional.empty());
-        assertThat(fromDb.isPresent(), is(true));
-        assertThat(fromDb.get().getRevision(), is(2));
-        assertThat(fromDb.get().getSource(), is(source));
+        assertThat(fromDb.isPresent()).isEqualTo(true);
+        assertThat(fromDb.get().getRevision()).isEqualTo(2);
+        assertThat(fromDb.get().getSource()).isEqualTo(source);
     }
 
     @Test
-    void importFlow_DryRun() {
+    void importFlow_DryRun() throws FlowProcessingException {
         String oldSource = """
             id: import_dry
             namespace: some.namespace
@@ -93,116 +94,118 @@ class FlowServiceTest {
             - id: task
               type: io.kestra.plugin.core.log.Log
               message: Hello""";
-        Flow importFlow = flowService.importFlow("my-tenant", oldSource);
+        FlowWithSource importFlow = flowService.importFlow("my-tenant", oldSource);
 
-        assertThat(importFlow.getId(), is("import_dry"));
-        assertThat(importFlow.getNamespace(), is("some.namespace"));
-        assertThat(importFlow.getRevision(), is(1));
-        assertThat(importFlow.getTasks().size(), is(1));
-        assertThat(importFlow.getTasks().getFirst().getId(), is("task"));
+        assertThat(importFlow.getId()).isEqualTo("import_dry");
+        assertThat(importFlow.getNamespace()).isEqualTo("some.namespace");
+        assertThat(importFlow.getRevision()).isEqualTo(1);
+        assertThat(importFlow.getTasks().size()).isEqualTo(1);
+        assertThat(importFlow.getTasks().getFirst().getId()).isEqualTo("task");
 
         Optional<FlowWithSource> fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import_dry", Optional.empty());
-        assertThat(fromDb.isPresent(), is(true));
-        assertThat(fromDb.get().getRevision(), is(1));
-        assertThat(fromDb.get().getSource(), is(oldSource));
+        assertThat(fromDb.isPresent()).isEqualTo(true);
+        assertThat(fromDb.get().getRevision()).isEqualTo(1);
+        assertThat(fromDb.get().getSource()).isEqualTo(oldSource);
 
         String newSource = oldSource.replace("id: task", "id: replaced_task");
         importFlow = flowService.importFlow("my-tenant", newSource, true);
-        assertThat(importFlow.getRevision(), is(2));
-        assertThat(importFlow.getTasks().size(), is(1));
-        assertThat(importFlow.getTasks().getFirst().getId(), is("replaced_task"));
+        assertThat(importFlow.getRevision()).isEqualTo(2);
+        assertThat(importFlow.getTasks().size()).isEqualTo(1);
+        assertThat(importFlow.getTasks().getFirst().getId()).isEqualTo("replaced_task");
 
         fromDb = flowRepository.findByIdWithSource("my-tenant", "some.namespace", "import_dry", Optional.empty());
-        assertThat(fromDb.isPresent(), is(true));
-        assertThat(fromDb.get().getRevision(), is(1));
-        assertThat(fromDb.get().getSource(), is(oldSource));
+        assertThat(fromDb.isPresent()).isEqualTo(true);
+        assertThat(fromDb.get().getRevision()).isEqualTo(1);
+        assertThat(fromDb.get().getSource()).isEqualTo(oldSource);
     }
 
     @Test
     void sameRevisionWithDeletedOrdered() {
-        var flow1 = create("test", "test", 1);
-        var flow2 = create("test", "test2", 2);
-        var flow3 = create("test", "test2", 2).toDeleted();
-        var flow4 = create("test", "test2", 4);
-        Stream<FlowWithSource> stream = Stream.of(
-            flow1.withSource(flow1.generateSource()),
-            flow2.withSource(flow2.generateSource()),
-            flow3.withSource(flow3.generateSource()),
-            flow4.withSource(flow4.generateSource())
+        Stream<FlowInterface> stream = Stream.of(
+            create("test", "test", 1),
+            create("test", "test2", 2),
+            create("test", "test2", 2).toDeleted(),
+            create("test", "test2", 4)
         );
 
-        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowInterface> collect = flowService.keepLastVersion(stream).toList();
 
-        assertThat(collect.size(), is(1));
-        assertThat(collect.getFirst().isDeleted(), is(false));
-        assertThat(collect.getFirst().getRevision(), is(4));
+        assertThat(collect.size()).isEqualTo(1);
+        assertThat(collect.getFirst().isDeleted()).isEqualTo(false);
+        assertThat(collect.getFirst().getRevision()).isEqualTo(4);
     }
 
     @Test
     void sameRevisionWithDeletedSameRevision() {
-        var flow1 = create("test2", "test2", 1);
-        var flow2 = create("test", "test", 1);
-        var flow3 = create("test", "test2", 2);
-        var flow4 = create("test", "test3", 3);
-        var flow5 = create("test", "test2", 2).toDeleted();
-        Stream<FlowWithSource> stream = Stream.of(
-            flow1.withSource(flow1.generateSource()),
-            flow2.withSource(flow2.generateSource()),
-            flow3.withSource(flow3.generateSource()),
-            flow4.withSource(flow4.generateSource()),
-            flow5.withSource(flow5.generateSource())
+
+        Stream<FlowInterface> stream = Stream.of(
+            create("test2", "test2", 1),
+            create("test", "test", 1),
+            create("test", "test2", 2),
+            create("test", "test3", 3),
+            create("test", "test2", 2).toDeleted()
         );
 
-        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowInterface> collect = flowService.keepLastVersion(stream).toList();
 
-        assertThat(collect.size(), is(1));
-        assertThat(collect.getFirst().isDeleted(), is(false));
-        assertThat(collect.getFirst().getId(), is("test2"));
+        assertThat(collect.size()).isEqualTo(1);
+        assertThat(collect.getFirst().isDeleted()).isEqualTo(false);
+        assertThat(collect.getFirst().getId()).isEqualTo("test2");
     }
 
     @Test
     void sameRevisionWithDeletedUnordered() {
-        var flow1 = create("test", "test", 1);
-        var flow2 = create("test", "test2", 2);
-        var flow3 = create("test", "test2", 4);
-        var flow4 = create("test", "test2", 2).toDeleted();
-        Stream<FlowWithSource> stream = Stream.of(
-            flow1.withSource(flow1.generateSource()),
-            flow2.withSource(flow2.generateSource()),
-            flow3.withSource(flow3.generateSource()),
-            flow4.withSource(flow4.generateSource())
+
+        Stream<FlowInterface> stream = Stream.of(
+            create("test", "test", 1),
+            create("test", "test2", 2),
+            create("test", "test2", 4),
+            create("test", "test2", 2).toDeleted()
         );
 
-        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowInterface> collect = flowService.keepLastVersion(stream).toList();
 
-        assertThat(collect.size(), is(1));
-        assertThat(collect.getFirst().isDeleted(), is(false));
-        assertThat(collect.getFirst().getRevision(), is(4));
+        assertThat(collect.size()).isEqualTo(1);
+        assertThat(collect.getFirst().isDeleted()).isEqualTo(false);
+        assertThat(collect.getFirst().getRevision()).isEqualTo(4);
     }
 
     @Test
     void multipleFlow() {
-        var flow1 = create("test", "test", 2);
-        var flow2 = create("test", "test2", 1);
-        var flow3 = create("test2", "test2", 1);
-        var flow4 = create("test2", "test3", 3);
-        var flow5 = create("test3", "test1", 2);
-        var flow6 = create("test3", "test2", 3);
-        Stream<FlowWithSource> stream = Stream.of(
-            flow1.withSource(flow1.generateSource()),
-            flow2.withSource(flow2.generateSource()),
-            flow3.withSource(flow3.generateSource()),
-            flow4.withSource(flow4.generateSource()),
-            flow5.withSource(flow5.generateSource()),
-            flow6.withSource(flow6.generateSource())
+
+        Stream<FlowInterface> stream = Stream.of(
+            create("test", "test", 2),
+            create("test", "test2", 1),
+            create("test2", "test2", 1),
+            create("test2", "test3", 3),
+            create("test3", "test1", 2),
+            create("test3", "test2", 3)
         );
 
-        List<FlowWithSource> collect = flowService.keepLastVersion(stream).toList();
+        List<FlowInterface> collect = flowService.keepLastVersion(stream).toList();
 
-        assertThat(collect.size(), is(3));
-        assertThat(collect.stream().filter(flow -> flow.getId().equals("test")).findFirst().orElseThrow().getRevision(), is(2));
-        assertThat(collect.stream().filter(flow -> flow.getId().equals("test2")).findFirst().orElseThrow().getRevision(), is(3));
-        assertThat(collect.stream().filter(flow -> flow.getId().equals("test3")).findFirst().orElseThrow().getRevision(), is(3));
+        assertThat(collect.size()).isEqualTo(3);
+        assertThat(collect.stream().filter(flow -> flow.getId().equals("test")).findFirst().orElseThrow().getRevision()).isEqualTo(2);
+        assertThat(collect.stream().filter(flow -> flow.getId().equals("test2")).findFirst().orElseThrow().getRevision()).isEqualTo(3);
+        assertThat(collect.stream().filter(flow -> flow.getId().equals("test3")).findFirst().orElseThrow().getRevision()).isEqualTo(3);
+    }
+
+    @Test
+    void warnings() {
+        FlowWithSource flow = create("test", "test", 1).toBuilder()
+            .namespace("system")
+            .triggers(List.of(
+                io.kestra.plugin.core.trigger.Flow.builder()
+                    .id("flow-trigger")
+                    .type(io.kestra.plugin.core.trigger.Flow.class.getName())
+                    .build()
+            ))
+            .build();
+
+        List<String> warnings = flowService.warnings(flow, null);
+
+        assertThat(warnings.size()).isEqualTo(1);
+        assertThat(warnings).containsExactlyInAnyOrder("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger 'flow-trigger'.");
     }
 
     @Test
@@ -229,17 +232,17 @@ class FlowServiceTest {
                     type: io.kestra.core.runners.test.task.Alias
                     message: Hello, {{taskrun.value}}""");
 
-        assertThat(warnings.size(), is(2));
-        assertThat(warnings.getFirst().from(), is("io.kestra.core.runners.test.task.Alias"));
-        assertThat(warnings.getFirst().to(), is("io.kestra.core.runners.test.TaskWithAlias"));
+        assertThat(warnings.size()).isEqualTo(2);
+        assertThat(warnings.getFirst().from()).isEqualTo("io.kestra.core.runners.test.task.Alias");
+        assertThat(warnings.getFirst().to()).isEqualTo("io.kestra.core.runners.test.TaskWithAlias");
     }
 
     @SuppressWarnings("deprecation")
     @Test
     void propertyRenamingDeprecation() {
-        Flow flow = Flow.builder()
+        FlowWithSource flow = FlowWithSource.builder()
             .id("flowId")
-            .namespace("io.kestra.unittest")
+            .namespace(TEST_NAMESPACE)
             .inputs(List.of(
                 StringInput.builder()
                     .id("inputWithId")
@@ -257,7 +260,7 @@ class FlowServiceTest {
                 .build()))
             .build();
 
-        assertThat(flowService.deprecationPaths(flow), containsInAnyOrder("inputs[1].name", "tasks[0]"));
+        assertThat(flowService.deprecationPaths(flow)).containsExactlyInAnyOrder("inputs[1].name", "tasks[0]");
     }
 
     @Test
@@ -282,35 +285,35 @@ class FlowServiceTest {
 
     @Test
     void delete() {
-        Flow flow = create("deleteTest", "test", 1);
-        FlowWithSource saved = flowRepository.create(flow, flow.generateSource(), flow);
-        assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent(), is(true));
+        FlowWithSource flow = create("deleteTest", "test", 1);
+        FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
+        assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent()).isEqualTo(true);
         flowService.delete(saved);
-        assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent(), is(false));
+        assertThat(flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId()).isPresent()).isEqualTo(false);
     }
 
     @Test
     void findByNamespacePrefix() {
-        Flow flow = create("findByTest", "test", 1).toBuilder().namespace("some.namespace").build();
-        flowRepository.create(flow, flow.generateSource(), flow);
-        assertThat(flowService.findByNamespacePrefix(null, "some.namespace").size(), is(1));
+        FlowWithSource flow = create(null, "some.namespace","findByTest", "test", 1);
+        flowRepository.create(GenericFlow.of(flow));
+        assertThat(flowService.findByNamespacePrefix(null, "some.namespace").size()).isEqualTo(1);
     }
 
     @Test
     void findById() {
-        Flow flow = create("findByIdTest", "test", 1);
-        FlowWithSource saved = flowRepository.create(flow, flow.generateSource(), flow);
-        assertThat(flowService.findById(null, saved.getNamespace(), saved.getId()).isPresent(), is(true));
+        FlowWithSource flow = create("findByIdTest", "test", 1);
+        FlowWithSource saved = flowRepository.create(GenericFlow.of(flow));
+        assertThat(flowService.findById(null, saved.getNamespace(), saved.getId()).isPresent()).isEqualTo(true);
     }
 
     @Test
     void checkSubflowNotFound() {
-        Flow flow = create("mainFlow", "task", 1).toBuilder()
+        FlowWithSource flow = create("mainFlow", "task", 1).toBuilder()
             .tasks(List.of(
                 io.kestra.plugin.core.flow.Subflow.builder()
                     .id("subflowTask")
                     .type(io.kestra.plugin.core.flow.Subflow.class.getName())
-                    .namespace("io.kestra.unittest")
+                    .namespace(TEST_NAMESPACE)
                     .flowId("nonExistentSubflow")
                     .build()
             ))
@@ -318,21 +321,21 @@ class FlowServiceTest {
 
         List<String> exceptions = flowService.checkValidSubflows(flow, null);
 
-        assertThat(exceptions.size(), is(1));
-        assertThat(exceptions.iterator().next(), is("The subflow 'nonExistentSubflow' not found in namespace 'io.kestra.unittest'."));
+        assertThat(exceptions.size()).isEqualTo(1);
+        assertThat(exceptions.iterator().next()).isEqualTo("The subflow 'nonExistentSubflow' not found in namespace 'io.kestra.unittest'.");
     }
 
     @Test
     void checkValidSubflow() {
-        Flow subflow = create("existingSubflow", "task", 1);
-        flowRepository.create(subflow, subflow.generateSource(), subflow);
+        FlowWithSource subflow = create("existingSubflow", "task", 1);
+        flowRepository.create(GenericFlow.of(subflow));
 
-        Flow flow = create("mainFlow", "task", 1).toBuilder()
+        FlowWithSource flow = create("mainFlow", "task", 1).toBuilder()
             .tasks(List.of(
                 io.kestra.plugin.core.flow.Subflow.builder()
                     .id("subflowTask")
                     .type(io.kestra.plugin.core.flow.Subflow.class.getName())
-                    .namespace("io.kestra.unittest")
+                    .namespace(TEST_NAMESPACE)
                     .flowId("existingSubflow")
                     .build()
             ))
@@ -340,6 +343,6 @@ class FlowServiceTest {
 
         List<String> exceptions = flowService.checkValidSubflows(flow, null);
 
-        assertThat(exceptions.size(), is(0));
+        assertThat(exceptions.size()).isEqualTo(0);
     }
 }

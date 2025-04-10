@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "アプリケーション Blueprints",
       "community": "コミュニティ",
+      "create": "ブループリントを作成",
       "custom": "カスタムblueprint",
       "dashboards": "ダッシュボード Blueprints",
+      "edit": "ブループリントを編集する",
       "empty": "設計図が表示されていません。",
       "flows": "フローBlueprints",
       "header": {
@@ -144,9 +146,11 @@
     "continue backfill": "backfillを続行",
     "continue backfills": "backfillを続行",
     "copied": "コピーされました",
+    "copied_logs_to_clipboard": "クリップボードにログをコピーしました。",
     "copy": "コピー",
     "copy logs": "Logsをコピー",
     "copy url": "URLをコピー",
+    "copy_to_clipboard": "クリップボードにコピー",
     "create": "作成",
     "create first task": "最初のtaskを作成",
     "create_custom_dashboard": "新しいダッシュボードを作成",
@@ -242,7 +246,6 @@
     "delete backfill": "backfillを削除",
     "delete backfills": "backfillを削除",
     "delete confirm": "<code>{name}</code>を削除してもよろしいですか？",
-    "delete confirm multiple": "<code>{name}</code> KV(s) を削除してもよろしいですか？",
     "delete execution running": "<div class=\"alert alert-warning mt-2 mb-0\">この実行はまだRUNNINGです。削除しても停止しません。<br />実行を停止するには、実行をkillする必要があります。</div>",
     "delete logs": "Logsを削除",
     "delete ok": "削除されました",
@@ -300,6 +303,18 @@
           "message": "Kestra Enterprise Editionでは、namespaceレベルの変数を定義および管理することで、flow全体での繰り返しの設定を排除できます。これらの変数は一貫性を確保し、設定の更新を簡素化し、どのtaskやtriggerからも簡単に参照できるため、よりクリーンで保守しやすいワークフローを実現します。",
           "title": "変数を中央で管理する"
         }
+      },
+      "secrets": {
+        "add_env": {
+          "first": "<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">シークレットの値をBase64でエンコード</a></strong>",
+          "intro": "新しいSecretを作成するには：",
+          "second": "`<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>`という名前の環境変数を上記の値で追加してください。",
+          "third": "Kestraインスタンスを再起動する"
+        },
+        "detected_env": "インスタンス開始時に識別されたシークレットタイプの環境変数は次のとおりです:",
+        "empty_env": "まだ環境にSecretsがありません。",
+        "message": "エンタープライズエディション (EE) では、UIで直接シークレットを追加、編集、または削除できます。インスタンスの再起動は不要です。シークレットをnamespaceごとに整理し、詳細なRBAC権限を設定し、親namespaceから子namespaceに継承します。EEは、HashiCorp Vault、AWS Secrets Manager、Azure Key Vault、Google Secret Manager、Elasticsearchなどのシークレットマネージャーと統合します。namespace、テナント、またはインスタンスごとに専用のバックエンドを設定して、チーム間でシークレットを分離するか、外部のvaultに保存された読み取り専用のシークレットを有効にします。シークレットは、保存時および転送時に暗号化されたままです。オプションのキャッシュによりAPIコールが削減され、監査証跡がすべてのアクセスをログに記録します。",
+        "title": "シークレット管理をアップグレード"
       },
       "tenants": {
         "message": "Kestra Enterprise Editionはマルチテナンシーをサポートしており、異なるチームやプロジェクトごとに完全に分離された環境を提供します。それぞれの環境には、専用のworkerグループやシークレット、内部ストレージバックエンドなどのリソースが含まれます。",
@@ -429,8 +444,6 @@
     "execute the flow": "Flow <code>{id}</code>を実行",
     "execution": "Execution",
     "execution already finished": "実行<code>{executionId}</code>はすでに終了しています",
-    "execution failed header": "実行がFAILEDしました！",
-    "execution failed message": "最後のエラー: <code>{message}</code>",
     "execution labels": "実行ラベル",
     "execution not found": "実行<code>{executionId}</code>が見つかりません",
     "execution not in state FAILED": "実行<code>{executionId}</code>はFAILED状態ではありません",
@@ -447,6 +460,7 @@
       "metrics": "メトリクスを削除",
       "storage": "内部ストレージファイルを削除"
     },
+    "execution_failed": "実行に失敗しました！最後のエラーは",
     "execution_guide": {
       "get_started": {
         "text": "クイックスタートガイドに従ってKestraをインストールし、最初のworkflowの構築を始めましょう。",
@@ -461,6 +475,8 @@
         "title": "ワークフローコンポーネント"
       }
     },
+    "execution_starts_progress": "実行が開始されると、ここに進行状況の更新が表示されます。",
+    "execution_status": "実行は:",
     "executions": "実行",
     "executions deleted": "<code>{executionCount}</code>件の実行が削除されました",
     "executions duration (in minutes)": "総実行時間（分単位）",
@@ -541,6 +557,7 @@
         },
         "empty": "検索をまだ保存していません。",
         "label": "保存済み検索",
+        "remove": "削除",
         "tooltip": "空の検索条件を保存することはできません。"
       },
       "settings": {
@@ -636,6 +653,10 @@
     "killed done": "実行はキルのためにキューに入れられました",
     "kv": {
       "add": "新しいKey-Value",
+      "delete multiple": {
+        "confirm": "本当に削除しますか: <code>{name}</code> KV(s)?",
+        "warning": "あなたはこれらのnamespaceに対する権限がないため、省略されます: <code>{namespaces}</code>"
+      },
       "duplicate": "このキーは既に存在します",
       "name": "KV Store",
       "type": "タイプ",
@@ -823,6 +844,7 @@
     "no_logs_data": "データなし",
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
+    "no_tasks_running": "タスクはまだ実行されていません。",
     "now": "現在",
     "of": "の",
     "ok": "OK",
@@ -1000,8 +1022,11 @@
     "search term in message": "メッセージ内の検索語",
     "seconds": "秒",
     "secret": {
+      "add": "新しいシークレット",
       "inherited": "継承されたsecrets",
-      "names": "Secrets"
+      "isReadOnly": "シークレットは読み取り専用です",
+      "names": "Secrets",
+      "update": "シークレット '{name}' を更新"
     },
     "security_advice": {
       "content": "インスタンスを保護するために基本認証を有効にしてください。",
@@ -1031,9 +1056,11 @@
             "editor_type": "デフォルトエディタータイプ",
             "execute_default_tab": "デフォルト実行タブ",
             "execute_flow": "Flowを実行",
+            "flow_default_tab": "デフォルト Flow タブ",
             "language": "言語",
             "log_display": "デフォルトLog表示",
-            "log_level": "デフォルトLogレベル"
+            "log_level": "デフォルトLogレベル",
+            "multi_panel_editor": "マルチパネルエディタ"
           },
           "label": "メイン設定"
         },
@@ -1136,8 +1163,10 @@
     "templates deleted": "<code>{count}</code>件のテンプレートが削除されました",
     "templates deprecated": "テンプレートは非推奨です。代わりにsubflowsを使用してください。テンプレートからsubflowsへの移行方法については、<a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">移行セクション</a>を参照してください。",
     "templates exported": "テンプレートがエクスポートされました",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "テナント",
+      "names": "テナント"
+    },
     "theme": "テーマ",
     "this_task_has": "このtaskは",
     "timezone": "タイムゾーン",

@@ -180,7 +180,6 @@ abstract public class AbstractCommand implements Callable<Integer> {
                         logger.getName().startsWith("io.kestra") &&
                             !logger.getName().startsWith("io.kestra.ee.runner.kafka.services"))
                 )
-                    || logger.getName().startsWith("flow")
             )
             .forEach(
                 logger -> logger.setLevel(ch.qos.logback.classic.Level.valueOf(this.logLevel.name()))

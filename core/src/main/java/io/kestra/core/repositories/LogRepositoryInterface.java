@@ -88,6 +88,8 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
         ZonedDateTime startDate
     );
 
+    Flux<LogEntry> findAllAsync(@Nullable String tenantId);
+
     List<LogStatistics> statistics(
         @Nullable String query,
         @Nullable String tenantId,

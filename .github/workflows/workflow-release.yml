@@ -8,6 +8,11 @@ on:
         default: 'LATEST'
         required: false
         type: string
+      publish-docker:
+        description: "Publish Docker image"
+        default: 'false'
+        required: false
+        type: string
   workflow_call:
     inputs:
       plugin-version:
@@ -38,9 +43,20 @@ on:
         description: "The Sonatype GPG file."
         required: true
 jobs:
+  build-artifacts:
+    name: Build - Artifacts
+    uses: ./.github/workflows/workflow-build-artifacts.yml
+    with:
+      plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
+
   Docker:
     name: Publish Docker
+    needs: build-artifacts
     uses: ./.github/workflows/workflow-publish-docker.yml
+    if: startsWith(github.ref, 'refs/heads/develop') || github.event.inputs.publish-docker == 'true'
+    with:
+      force-download-artifact: 'false'
+      plugin-version: ${{ github.event.inputs.plugin-version != null && github.event.inputs.plugin-version || 'LATEST' }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -57,6 +73,7 @@ jobs:
 
   Github:
     name: Github Release
+    needs: build-artifacts
     if: startsWith(github.ref, 'refs/tags/v')
     uses: ./.github/workflows/workflow-github-release.yml
     secrets:

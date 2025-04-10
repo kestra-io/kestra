@@ -1,22 +1,24 @@
 package io.kestra.core.services;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.triggers.AbstractTrigger;
-import io.kestra.core.models.validations.ManualConstraintViolation;
+import io.kestra.core.models.validations.ModelValidator;
+import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.JacksonMapper;
-import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.utils.ListUtils;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ClassUtils;
@@ -25,7 +27,17 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -33,20 +45,14 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 /**
- * Provides business logic to manipulate {@link Flow}
+ * Provides business logic for manipulating flow objects.
  */
 @Singleton
 @Slf4j
 public class FlowService {
-    private static final ObjectMapper NON_DEFAULT_OBJECT_MAPPER = JacksonMapper.ofJson()
-        .copy()
-        .setSerializationInclusion(JsonInclude.Include.NON_DEFAULT);
 
     @Inject
     Optional<FlowRepositoryInterface> flowRepository;
-
-    @Inject
-    YamlParser yamlParser;
 
     @Inject
     PluginDefaultService pluginDefaultService;
@@ -54,38 +60,122 @@ public class FlowService {
     @Inject
     PluginRegistry pluginRegistry;
 
-    public FlowWithSource importFlow(String tenantId, String source) {
+    @Inject
+    ModelValidator modelValidator;
+
+    /**
+     * Validates and creates the given flow.
+     * <p>
+     * The validation of the flow is done from the source after injecting all plugin default values.
+     *
+     * @param flow             The flow.
+     * @param strictValidation Specifies whether to perform a strict validation of the flow.
+     * @return The created {@link FlowWithSource}.
+     */
+    public FlowWithSource create(final GenericFlow flow, final boolean strictValidation) throws FlowProcessingException {
+        Objects.requireNonNull(flow, "Cannot create null flow");
+        if (flow.getSource() == null || flow.getSource().isBlank()) {
+            throw new IllegalArgumentException("Cannot create flow with null or blank source");
+        }
+
+        // Check Flow with defaults
+        FlowWithSource flowWithDefault = pluginDefaultService.injectAllDefaults(flow, strictValidation);
+        modelValidator.validate(flowWithDefault);
+
+        return repository().create(flow);
+    }
+
+    private FlowRepositoryInterface repository() {
+        return flowRepository
+            .orElseThrow(() -> new IllegalStateException("Cannot perform operation on flow. Cause: No FlowRepository"));
+    }
+
+    /**
+     * Validates the given flow source.
+     * <p>
+     * the YAML source can contain one or many objects.
+     *
+     * @param tenantId  The tenant identifier.
+     * @param flows     The YAML source.
+     * @return  The list validation constraint violations.
+     */
+    public List<ValidateConstraintViolation> validate(final String tenantId, final String flows) {
+        AtomicInteger index = new AtomicInteger(0);
+        return Stream
+            .of(flows.split("\\n+---\\n*?"))
+            .map(source -> {
+                ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
+                validateConstraintViolationBuilder.index(index.getAndIncrement());
+
+                try {
+                    FlowWithSource flow = pluginDefaultService.parseFlowWithAllDefaults(tenantId, source, true);
+                    Integer sentRevision = flow.getRevision();
+                    if (sentRevision != null) {
+                        Integer lastRevision = Optional.ofNullable(repository().lastRevision(tenantId, flow.getNamespace(), flow.getId()))
+                            .orElse(0);
+                        validateConstraintViolationBuilder.outdated(!sentRevision.equals(lastRevision + 1));
+                    }
+
+                    validateConstraintViolationBuilder.deprecationPaths(deprecationPaths(flow));
+                    validateConstraintViolationBuilder.warnings(warnings(flow, tenantId));
+                    validateConstraintViolationBuilder.infos(relocations(source).stream().map(relocation -> relocation.from() + " is replaced by " + relocation.to()).toList());
+                    validateConstraintViolationBuilder.flow(flow.getId());
+                    validateConstraintViolationBuilder.namespace(flow.getNamespace());
+
+                    modelValidator.validate(flow);
+                } catch (ConstraintViolationException e) {
+                    validateConstraintViolationBuilder.constraints(e.getMessage());
+                } catch (FlowProcessingException e) {
+                    if (e.getCause() instanceof ConstraintViolationException) {
+                        validateConstraintViolationBuilder.constraints(e.getMessage());
+                    } else {
+                        Throwable cause = e.getCause() != null ? e.getCause() : e;
+                        validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + cause.getMessage());
+                    }
+                } catch (RuntimeException re) {
+                    // In case of any error, we add a validation violation so the error is displayed in the UI.
+                    // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
+                    // in dev like incompatible plugin versions.
+                    log.error("Unable to validate the flow", re);
+                    validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + re.getMessage());
+                }
+                return validateConstraintViolationBuilder.build();
+            })
+            .collect(Collectors.toList());
+    }
+
+    public FlowWithSource importFlow(String tenantId, String source) throws FlowProcessingException {
         return this.importFlow(tenantId, source, false);
     }
 
-    public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) {
-        if (flowRepository.isEmpty()) {
-            throw noRepositoryException();
-        }
+    public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) throws FlowProcessingException {
 
-        FlowWithSource withTenant = yamlParser.parse(source, Flow.class).toBuilder()
-            .tenantId(tenantId)
-            .build()
-            .withSource(source);
+        final GenericFlow flow = GenericFlow.fromYaml(tenantId, source);
 
-        FlowRepositoryInterface flowRepository = this.flowRepository.get();
-        Optional<FlowWithSource> flowWithSource = flowRepository
-            .findByIdWithSource(withTenant.getTenantId(), withTenant.getNamespace(), withTenant.getId(), Optional.empty(), true);
+        Optional<FlowWithSource> maybeExisting = repository().findByIdWithSource(
+            flow.getTenantId(),
+            flow.getNamespace(),
+            flow.getId(),
+            Optional.empty(),
+            true
+        );
+
+        // Inject default plugin 'version' props before converting
+        // to flow to correctly resolve all plugin type.
+        FlowWithSource flowToImport = pluginDefaultService.injectVersionDefaults(flow, false);
+
         if (dryRun) {
-            return flowWithSource
-                .map(previous -> {
-                    if (previous.equals(withTenant, source) && !previous.isDeleted()) {
-                        return previous;
-                    } else {
-                        return FlowWithSource.of(withTenant.toBuilder().revision(previous.getRevision() + 1).build(), source);
-                    }
-                })
-                .orElseGet(() -> FlowWithSource.of(withTenant, source).toBuilder().revision(1).build());
+            return maybeExisting
+                .map(previous -> previous.isSameWithSource(flowToImport) && !previous.isDeleted() ?
+                    previous :
+                    FlowWithSource.of(flowToImport.toBuilder().revision(previous.getRevision() + 1).build(), source)
+                )
+                .orElseGet(() -> FlowWithSource.of(flowToImport, source).toBuilder().revision(1).build());
+        } else {
+            return maybeExisting
+                .map(previous -> repository().update(flow, previous))
+                .orElseGet(() -> repository().create(flow));
         }
-
-        return flowWithSource
-            .map(previous -> flowRepository.update(withTenant, previous, source, pluginDefaultService.injectDefaults(withTenant)))
-            .orElseGet(() -> flowRepository.create(withTenant, source, pluginDefaultService.injectDefaults(withTenant)));
     }
 
     public List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace) {
@@ -120,7 +210,7 @@ public class FlowService {
         return flowRepository.get().findById(tenantId, namespace, flowId);
     }
 
-    public Stream<FlowWithSource> keepLastVersion(Stream<FlowWithSource> stream) {
+    public Stream<FlowInterface> keepLastVersion(Stream<FlowInterface> stream) {
         return keepLastVersionCollector(stream);
     }
 
@@ -135,6 +225,15 @@ public class FlowService {
         }
 
         List<String> warnings = new ArrayList<>(checkValidSubflows(flow, tenantId));
+        List<io.kestra.plugin.core.trigger.Flow> flowTriggers = ListUtils.emptyOnNull(flow.getTriggers()).stream()
+            .filter(io.kestra.plugin.core.trigger.Flow.class::isInstance)
+            .map(io.kestra.plugin.core.trigger.Flow.class::cast)
+            .toList();
+        flowTriggers.forEach(flowTrigger -> {
+            if (ListUtils.emptyOnNull(flowTrigger.getConditions()).isEmpty() && flowTrigger.getPreconditions() == null) {
+                warnings.add("This flow will be triggered for EVERY execution of EVERY flow on your instance. We recommend adding the preconditions property to the Flow trigger '" + flowTrigger.getId() + "'.");
+            }
+        });
 
         return warnings;
     }
@@ -143,7 +242,11 @@ public class FlowService {
         try {
             Map<String, Class<?>> aliases = pluginRegistry.plugins().stream()
                 .flatMap(plugin -> plugin.getAliases().values().stream())
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                .collect(Collectors.toMap(
+                    Map.Entry::getKey,
+                    Map.Entry::getValue,
+                    (existing, duplicate) -> existing
+                ));
             Map<String, Object> stringObjectMap = JacksonMapper.ofYaml().readValue(flowSource, JacksonMapper.MAP_TYPE_REFERENCE);
             return relocations(aliases, stringObjectMap);
         } catch (JsonProcessingException e) {
@@ -252,17 +355,17 @@ public class FlowService {
             .filter(method -> !Modifier.isStatic(method.getModifiers()));
     }
 
-    public Collection<FlowWithSource> keepLastVersion(List<FlowWithSource> flows) {
+    public Collection<FlowInterface> keepLastVersion(List<FlowInterface> flows) {
         return keepLastVersionCollector(flows.stream()).toList();
     }
 
-    public Stream<FlowWithSource> keepLastVersionCollector(Stream<FlowWithSource> stream) {
+    public Stream<FlowInterface> keepLastVersionCollector(Stream<FlowInterface> stream) {
         // Use a Map to track the latest version of each flow
-        Map<String, FlowWithSource> latestFlows = new HashMap<>();
+        Map<String, FlowInterface> latestFlows = new HashMap<>();
 
         stream.forEach(flow -> {
             String uid = flow.uidWithoutRevision();
-            FlowWithSource existing = latestFlows.get(uid);
+            FlowInterface existing = latestFlows.get(uid);
 
             // Update only if the current flow has a higher revision
             if (existing == null || flow.getRevision() > existing.getRevision()) {
@@ -279,7 +382,7 @@ public class FlowService {
 
     protected boolean removeUnwanted(Flow f, Execution execution) {
         // we don't allow recursive
-        return !f.uidWithoutRevision().equals(Flow.uidWithoutRevision(execution));
+        return !f.uidWithoutRevision().equals(FlowId.uidWithoutRevision(execution));
     }
 
     public static List<AbstractTrigger> findRemovedTrigger(Flow flow, Flow previous) {
@@ -317,22 +420,6 @@ public class FlowService {
         return source + String.format("\ndisabled: %s", disabled);
     }
 
-    public static String generateSource(Flow flow) {
-        try {
-            String json = NON_DEFAULT_OBJECT_MAPPER.writeValueAsString(flow);
-
-            Object map = fixSnakeYaml(JacksonMapper.toMap(json));
-
-            String source = JacksonMapper.ofYaml().writeValueAsString(map);
-
-            // remove the revision from the generated source
-            return source.replaceFirst("(?m)^revision: \\d+\n?","");
-        } catch (JsonProcessingException e) {
-            log.warn("Unable to convert flow json '{}' '{}'({})", flow.getNamespace(), flow.getId(), flow.getRevision(), e);
-            return null;
-        }
-    }
-
     // Used in Git plugin
     public List<Flow> findByNamespacePrefix(String tenantId, String namespacePrefix) {
         if (flowRepository.isEmpty()) {
@@ -349,50 +436,6 @@ public class FlowService {
         }
 
         return flowRepository.get().delete(flow);
-    }
-
-    /**
-     * Dirty hack but only concern previous flow with no source code in org.yaml.snakeyaml.emitter.Emitter:
-     * <pre>
-     * if (previousSpace) {
-     *   spaceBreak = true;
-     * }
-     * </pre>
-     * This control will detect ` \n` as a no valid entry on a string and will break the multiline to transform in single line
-     *
-     * @param object the object to fix
-     * @return the modified object
-     */
-    private static Object fixSnakeYaml(Object object) {
-        if (object instanceof Map<?, ?> mapValue) {
-            return mapValue
-                .entrySet()
-                .stream()
-                .map(entry -> new AbstractMap.SimpleEntry<>(
-                    fixSnakeYaml(entry.getKey()),
-                    fixSnakeYaml(entry.getValue())
-                ))
-                .filter(entry -> entry.getValue() != null)
-                .collect(Collectors.toMap(
-                    Map.Entry::getKey,
-                    Map.Entry::getValue,
-                    (u, v) -> {
-                        throw new IllegalStateException(String.format("Duplicate key %s", u));
-                    },
-                    LinkedHashMap::new
-                ));
-        } else if (object instanceof Collection<?> collectionValue) {
-            return collectionValue
-                .stream()
-                .map(FlowService::fixSnakeYaml)
-                .toList();
-        } else if (object instanceof String item) {
-            if (item.contains("\n")) {
-                return item.replaceAll("\\s+\\n", "\\\n");
-            }
-        }
-
-        return object;
     }
 
     /**
@@ -429,6 +472,14 @@ public class FlowService {
         if (!areAllowedAllNamespaces(tenant, fromTenant, fromNamespace)) {
             throw new IllegalArgumentException("All namespaces are not allowed, you should either filter on a namespace or configure all namespaces to allow your namespace.");
         }
+    }
+
+    /**
+     * Return true if require existing namespace is enabled and the namespace didn't already exist.
+     * As namespace management is an EE feature, this will always return false in OSS.
+     */
+    public boolean requireExistingNamespace(String tenant, String namespace) {
+        return false;
     }
 
     /**

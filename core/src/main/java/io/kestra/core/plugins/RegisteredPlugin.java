@@ -173,7 +173,7 @@ public class RegisteredPlugin {
                 var pluginSubGroup = clazz.getPackage().getDeclaredAnnotation(PluginSubGroup.class);
 
                 // some plugins declare subgroup for main plugins
-                if (clazz.getPackageName().length() == this.group().length()) {
+                if (this.group() == null || clazz.getPackageName().length() == this.group().length()) {
                     pluginSubGroup = null;
                 }
 

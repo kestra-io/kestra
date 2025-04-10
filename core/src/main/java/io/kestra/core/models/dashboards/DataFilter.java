@@ -1,13 +1,9 @@
 package io.kestra.core.models.dashboards;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.repositories.QueryBuilderInterface;
-import io.kestra.plugin.core.dashboard.data.Executions;
-import io.kestra.plugin.core.dashboard.data.Logs;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -17,6 +13,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,6 +44,6 @@ public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F
 
     public abstract Class<? extends QueryBuilderInterface<F>> repositoryClass();
 
-    public abstract void setGlobalFilter(GlobalFilter globalFilter);
+    public abstract void setGlobalFilter(List<QueryFilter> queryFilterList, ZonedDateTime startDate, ZonedDateTime endDate);
 
 }

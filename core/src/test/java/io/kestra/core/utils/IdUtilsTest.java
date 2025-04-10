@@ -4,9 +4,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class IdUtilsTest {
     @ParameterizedTest
@@ -16,34 +14,34 @@ class IdUtilsTest {
     })
     void from(String from) {
         String convert = IdUtils.from(from);
-        assertThat(convert, is(IdUtils.from(from)));
+        assertThat(convert).isEqualTo(IdUtils.from(from));
     }
 
     @Test
     void create() {
         String id = IdUtils.create();
-        assertThat(id, notNullValue());
+        assertThat(id).isNotNull();
     }
 
     @Test
     void fromParts() {
         String id = IdUtils.fromParts("namespace", "flow");
-        assertThat(id, notNullValue());
-        assertThat(id, is("namespace_flow"));
+        assertThat(id).isNotNull();
+        assertThat(id).isEqualTo("namespace_flow");
 
         String idWithNull = IdUtils.fromParts(null, "namespace", "flow");
-        assertThat(idWithNull, notNullValue());
-        assertThat(idWithNull, is("namespace_flow"));
+        assertThat(idWithNull).isNotNull();
+        assertThat(idWithNull).isEqualTo("namespace_flow");
     }
 
     @Test
     void fromPartsAndSeparator() {
         String id = IdUtils.fromPartsAndSeparator('|', "namespace", "flow");
-        assertThat(id, notNullValue());
-        assertThat(id, is("namespace|flow"));
+        assertThat(id).isNotNull();
+        assertThat(id).isEqualTo("namespace|flow");
 
         String idWithNull = IdUtils.fromPartsAndSeparator('|', null, "namespace", "flow");
-        assertThat(idWithNull, notNullValue());
-        assertThat(idWithNull, is("namespace|flow"));
+        assertThat(idWithNull).isNotNull();
+        assertThat(idWithNull).isEqualTo("namespace|flow");
     }
 }

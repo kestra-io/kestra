@@ -1,7 +1,5 @@
 package io.kestra.plugin.core.flow;
 
-import static io.kestra.core.utils.NamespaceFilesUtils.loadNamespaceFiles;
-
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.annotations.Example;
@@ -19,11 +17,10 @@ import io.kestra.core.models.tasks.OutputFilesInterface;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
-import io.kestra.core.runners.FilesService;
-import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.WorkerTask;
+import io.kestra.core.runners.*;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.core.validations.WorkingDirectoryTaskValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.*;
@@ -106,7 +103,6 @@ import jakarta.validation.constraints.NotNull;
                         containerImage: python:3.11-slim
                         beforeCommands:
                           - pip install requests kestra > /dev/null
-                        warningOnStdErr: false
                         script: |
                           import requests
                           import json
@@ -238,7 +234,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     public void preExecuteTasks(RunContext runContext, TaskRun taskRun) throws Exception {
         if (cache != null) {
             // May download cached file if it exists and is not expired, and extract its content
-            var maybeCacheFile = runContext.storage().getCacheFile(getId(), taskRun.getValue(), cache.ttl);
+            var maybeCacheFile = runContext.storage().getCacheFile(getId(), taskRun.getValue(), runContext.render(cache.ttl).as(Duration.class).orElse(null));
             if (maybeCacheFile.isPresent()) {
                 runContext.logger().debug("Cache exist, downloading it");
                 // download the cache if exist and unzip all entries
@@ -264,7 +260,8 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         }
 
         if (this.namespaceFiles != null && !Boolean.FALSE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
-            loadNamespaceFiles(runContext, this.namespaceFiles);
+            NamespaceFilesUtils namespaceFilesUtils = ((DefaultRunContext) runContext).getApplicationContext().getBean(NamespaceFilesUtils.class);
+            namespaceFilesUtils.loadNamespaceFiles(runContext, this.namespaceFiles);
         }
 
         if (this.inputFiles != null) {
@@ -294,7 +291,7 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
         }
         try {
             // This is monolithic, maybe a cache entry by pattern would be better.
-            List<Path> matchesList = runContext.workingDir().findAllFilesMatching(cache.getPatterns());
+            List<Path> matchesList = runContext.workingDir().findAllFilesMatching(runContext.render(cache.getPatterns()).asList(String.class));
 
             // Check that some files has been updated since the start of the task
             // TODO we may need to allow excluding files as some files always changed for dependencies (for ex .package-log.json)
@@ -376,15 +373,13 @@ public class WorkingDirectory extends Sequential implements NamespaceFilesInterf
     @NoArgsConstructor
     public static class Cache {
         @Schema(title = "Cache TTL (Time To Live), after this duration the cache will be deleted.")
-        @PluginProperty
-        private Duration ttl;
+        private Property<Duration> ttl;
 
         @Schema(
             title = "List of file [glob](https://en.wikipedia.org/wiki/Glob_(programming)) patterns to include in the cache.",
             description = "For example, 'node_modules/**' will include all files of the node_modules directory including sub-directories."
         )
-        @PluginProperty
         @NotNull
-        private List<String> patterns;
+        private Property<List<String>> patterns;
     }
 }

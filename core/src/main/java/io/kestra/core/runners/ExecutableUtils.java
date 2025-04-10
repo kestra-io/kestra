@@ -6,6 +6,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
@@ -20,6 +21,8 @@ import io.kestra.core.utils.MapUtils;
 import io.kestra.core.trace.propagation.ExecutionTextMapSetter;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.context.propagation.TextMapPropagator;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.stream.Streams;
 
@@ -74,9 +77,13 @@ public final class ExecutableUtils {
         boolean inheritLabels,
         Property<ZonedDateTime> scheduleDate
     ) throws IllegalVariableEvaluationException {
+
         // extract a trace context for propagation
-        var openTelemetry = ((DefaultRunContext) runContext).getApplicationContext().getBean(OpenTelemetry.class);
-        var propagator = openTelemetry.getPropagators().getTextMapPropagator();
+        final Optional<TextMapPropagator> propagator = ((DefaultRunContext) runContext).getApplicationContext()
+            .findBean(OpenTelemetry.class)
+            .map(OpenTelemetry::getPropagators)
+            .map(ContextPropagators::getTextMapPropagator);
+
         var tracerFactory = ((DefaultRunContext) runContext).getApplicationContext().getBean(TracerFactory.class);
         var tracer = tracerFactory.getTracer(currentTask.getClass(), "EXECUTOR");
 
@@ -118,8 +125,10 @@ public final class ExecutableUtils {
                     ExecutionService executionService = ((DefaultRunContext) runContext).getApplicationContext().getBean(ExecutionService.class);
                     try {
                         Execution restarted = executionService.restart(subflowExecution, null);
+
                         // inject the traceparent into the new execution
-                        propagator.inject(Context.current(), restarted, ExecutionTextMapSetter.INSTANCE);
+                        propagator.ifPresent(pg -> pg.inject(Context.current(), restarted, ExecutionTextMapSetter.INSTANCE));
+
                         return Optional.of(SubflowExecution.builder()
                             .parentTask(currentTask)
                             .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))
@@ -135,7 +144,7 @@ public final class ExecutableUtils {
             String subflowId = runContext.render(currentTask.subflowId().flowId());
             Optional<Integer> subflowRevision = currentTask.subflowId().revision();
 
-            Flow flow = flowExecutorInterface.findByIdFromTask(
+            FlowInterface flow = flowExecutorInterface.findByIdFromTask(
                     currentExecution.getTenantId(),
                     subflowNamespace,
                     subflowId,
@@ -192,8 +201,10 @@ public final class ExecutableUtils {
                     .build()
                 )
                 .withScheduleDate(scheduleOnDate);
+
             // inject the traceparent into the new execution
-            propagator.inject(Context.current(), execution, ExecutionTextMapSetter.INSTANCE);
+            propagator.ifPresent(pg -> pg.inject(Context.current(), execution, ExecutionTextMapSetter.INSTANCE));
+
             return Optional.of(SubflowExecution.builder()
                 .parentTask(currentTask)
                 .parentTaskRun(currentTaskRun.withState(State.Type.RUNNING))
@@ -202,7 +213,7 @@ public final class ExecutableUtils {
         }));
     }
 
-    private static List<Label> filterLabels(List<Label> labels, Flow flow) {
+    private static List<Label> filterLabels(List<Label> labels, FlowInterface flow) {
         if (ListUtils.isEmpty(flow.getLabels())) {
             return labels;
         }
@@ -294,7 +305,7 @@ public final class ExecutableUtils {
         return State.Type.SUCCESS;
     }
 
-    public static SubflowExecutionResult subflowExecutionResultFromChildExecution(RunContext runContext, Flow flow, Execution execution, ExecutableTask<?> executableTask, TaskRun taskRun) {
+    public static SubflowExecutionResult subflowExecutionResultFromChildExecution(RunContext runContext, FlowInterface flow, Execution execution, ExecutableTask<?> executableTask, TaskRun taskRun) {
         try {
             return executableTask
                 .createSubflowExecutionResult(runContext, taskRun, flow, execution)

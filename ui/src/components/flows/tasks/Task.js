@@ -1,4 +1,4 @@
-import YamlUtils from "../../../utils/yamlUtils";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
 export default {
     props: {
@@ -33,7 +33,7 @@ export default {
             return this.root ? this.root + "." + addKey : addKey;
         },
         isRequired(key) {
-            return key === "id" || this.schema.required && this.schema.required.includes(key);
+            return this.schema.required && this.schema.required.includes(key);
         },
         getType(property, key) {
             if (property.enum !== undefined) {
@@ -56,8 +56,8 @@ export default {
                 return "complex";
             }
 
-            if (Object.prototype.hasOwnProperty.call(property, "oneOf")) {
-                return "one-of";
+            if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
+                return "any-of";
             }
 
             if (Object.prototype.hasOwnProperty.call(property, "additionalProperties")) {
@@ -80,6 +80,14 @@ export default {
 
             if (key === "inputs" && hasNamespaceProperty && properties.includes("flowId")) {
                 return "subflow-inputs";
+            }
+
+            if( property.type === "array") {
+                if (property.items && property.items.$ref.includes("tasks.Task")) {
+                    return "tasks";
+                }
+
+                return "array";
             }
 
             return property.type || "expression";
@@ -105,7 +113,7 @@ export default {
                 return this.values;
             }
 
-            return YamlUtils.stringify(this.values);
+            return YAML_UTILS.stringify(this.values);
         },
         info() {
             return `${this.schema.title || this.schema.type}`

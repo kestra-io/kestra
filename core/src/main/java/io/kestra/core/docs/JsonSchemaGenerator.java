@@ -4,6 +4,8 @@ import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.members.HierarchicType;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
@@ -47,9 +49,17 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
+
 @Singleton
 public class JsonSchemaGenerator {
     private static final List<Class<?>> TYPES_RESOLVED_AS_STRING = List.of(Duration.class, LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, OffsetDateTime.class, OffsetTime.class);
+
+    private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
+        .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
+
+    private static final ObjectMapper YAML_MAPPER = JacksonMapper.ofYaml().copy()
+        .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
 
     private final PluginRegistry pluginRegistry;
 
@@ -64,13 +74,21 @@ public class JsonSchemaGenerator {
         return this.schemas(cls, false);
     }
 
+    private void replaceOneOfWithAnyOf(ObjectNode objectNode) {
+        objectNode.findParents("oneOf").forEach(jsonNode -> {
+            if (jsonNode instanceof ObjectNode oNode) {
+                oNode.set("anyOf", oNode.remove("oneOf"));
+            }
+        });
+    }
+
     public <T> Map<String, Object> schemas(Class<? extends T> cls, boolean arrayOf) {
         SchemaGeneratorConfigBuilder builder = new SchemaGeneratorConfigBuilder(
             SchemaVersion.DRAFT_7,
             OptionPreset.PLAIN_JSON
         );
 
-        this.build(builder,true);
+        this.build(builder, true);
 
         SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
 
@@ -80,11 +98,11 @@ public class JsonSchemaGenerator {
             if (arrayOf) {
                 objectNode.put("type", "array");
             }
-            replaceAnyOfWithOneOf(objectNode);
-            pullOfDefaultFromOneOf(objectNode);
+            replaceOneOfWithAnyOf(objectNode);
+            pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
 
-            return JacksonMapper.toMap(objectNode);
+            return MAPPER.convertValue(objectNode, MAP_TYPE_REFERENCE);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
@@ -111,33 +129,38 @@ public class JsonSchemaGenerator {
         });
     }
 
-    private void replaceAnyOfWithOneOf(ObjectNode objectNode) {
+    // This hack exists because for Property we generate a anyOf for properties that are not strings.
+    // By default, the 'default' is in each anyOf which Monaco editor didn't take into account.
+    // So, we pull off the 'default' from any of the anyOf to the parent.
+    // same thing for documentation fields: 'title', 'description', '$deprecated'
+    private void pullDocumentationAndDefaultFromAnyOf(ObjectNode objectNode) {
         objectNode.findParents("anyOf").forEach(jsonNode -> {
             if (jsonNode instanceof ObjectNode oNode) {
-                oNode.set("oneOf", oNode.remove("anyOf"));
-            }
-        });
-    }
-
-    // This hack exists because for Property we generate a oneOf for properties that are not strings.
-    // By default, the 'default' is in each oneOf which Monaco editor didn't take into account.
-    // So, we pull off the 'default' from any of the oneOf to the parent.
-    private void pullOfDefaultFromOneOf(ObjectNode objectNode) {
-        objectNode.findParents("oneOf").forEach(jsonNode -> {
-            if (jsonNode instanceof ObjectNode oNode) {
-                JsonNode oneOf = oNode.get("oneOf");
-                if (oneOf instanceof ArrayNode arrayNode) {
+                JsonNode anyOf = oNode.get("anyOf");
+                if (anyOf instanceof ArrayNode arrayNode) {
                     Iterator<JsonNode> it = arrayNode.elements();
-                    JsonNode defaultNode = null;
-                    while (it.hasNext() && defaultNode == null) {
+                    var nodesToPullUp = new HashMap<String, Optional<JsonNode>>(Map.ofEntries(
+                        Map.entry("default", Optional.empty()),
+                        Map.entry("title", Optional.empty()),
+                        Map.entry("description", Optional.empty()),
+                        Map.entry("$deprecated", Optional.empty())
+                    ));
+                    // find nodes to pull up
+                    while (it.hasNext() && nodesToPullUp.containsValue(Optional.<JsonNode>empty())) {
                         JsonNode next = it.next();
                         if (next instanceof ObjectNode nextAsObj) {
-                            defaultNode = nextAsObj.get("default");
+                            nodesToPullUp.entrySet().stream()
+                                .filter(node -> node.getValue().isEmpty())
+                                .forEach(node -> node
+                                    .setValue(Optional.ofNullable(
+                                        nextAsObj.get(node.getKey())
+                                    )));
                         }
                     }
-                    if (defaultNode != null) {
-                        oNode.set("default", defaultNode);
-                    }
+                    // create nodes on parent
+                    nodesToPullUp.entrySet().stream()
+                        .filter(node -> node.getValue().isPresent())
+                        .forEach(node -> oNode.set(node.getKey(), node.getValue().get()));
                 }
             }
         });
@@ -163,7 +186,7 @@ public class JsonSchemaGenerator {
 
             try {
                 sb.append("Default value is : `")
-                    .append(JacksonMapper.ofYaml().writeValueAsString(collectedTypeAttributes.get("default")).trim())
+                    .append(YAML_MAPPER.writeValueAsString(collectedTypeAttributes.get("default")).trim())
                     .append("`");
             } catch (JsonProcessingException ignored) {
 
@@ -203,6 +226,7 @@ public class JsonSchemaGenerator {
     }
 
     protected void build(SchemaGeneratorConfigBuilder builder, boolean draft7) {
+//        builder.withObjectMapper(builder.getObjectMapper().configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false));
         builder
             .with(new JakartaValidationModule(
                 JakartaValidationOption.NOT_NULLABLE_METHOD_IS_REQUIRED,
@@ -274,11 +298,11 @@ public class JsonSchemaGenerator {
                 TypeContext context = target.getContext();
                 Class<?> erasedType = javaType.getTypeParameters().getFirst().getErasedType();
 
-                if(String.class.isAssignableFrom(erasedType)) {
+                if (String.class.isAssignableFrom(erasedType)) {
                     return List.of(
                         context.resolve(String.class)
                     );
-                } else if(Object.class.equals(erasedType)) {
+                } else if (Object.class.equals(erasedType)) {
                     return List.of(
                         context.resolve(Object.class)
                     );
@@ -317,6 +341,9 @@ public class JsonSchemaGenerator {
                 memberAttributes.put("$dynamic", pluginPropertyAnnotation.dynamic());
                 if (pluginPropertyAnnotation.beta()) {
                     memberAttributes.put("$beta", true);
+                }
+                if (pluginPropertyAnnotation.internalStorageURI()) {
+                    memberAttributes.put("$internalStorageURI", true);
                 }
             }
 
@@ -385,7 +412,7 @@ public class JsonSchemaGenerator {
                 // handle deprecated tasks
                 Schema schema = scope.getType().getErasedType().getAnnotation(Schema.class);
                 Deprecated deprecated = scope.getType().getErasedType().getAnnotation(Deprecated.class);
-                if ((schema != null && schema.deprecated()) || deprecated != null ) {
+                if ((schema != null && schema.deprecated()) || deprecated != null) {
                     collectedTypeAttributes.put("$deprecated", "true");
                 }
             });
@@ -410,7 +437,7 @@ public class JsonSchemaGenerator {
         });
 
         // Subtype resolver for all plugins
-        if(builder.build().getSchemaVersion() != SchemaVersion.DRAFT_2019_09) {
+        if (builder.build().getSchemaVersion() != SchemaVersion.DRAFT_2019_09) {
             builder.forTypesInGeneral()
                 .withSubtypeResolver((declaredType, context) -> {
                     TypeContext typeContext = context.getTypeContext();
@@ -599,7 +626,7 @@ public class JsonSchemaGenerator {
         if (property.has("allOf")) {
             for (Iterator<JsonNode> it = property.get("allOf").elements(); it.hasNext(); ) {
                 JsonNode child = it.next();
-                if(child.has("default")) {
+                if (child.has("default")) {
                     return true;
                 }
             }
@@ -613,7 +640,7 @@ public class JsonSchemaGenerator {
             OptionPreset.PLAIN_JSON
         );
 
-        this.build(builder,false);
+        this.build(builder, false);
 
         // we don't return base properties unless specified with @PluginProperty
         builder
@@ -625,11 +652,11 @@ public class JsonSchemaGenerator {
         SchemaGenerator generator = new SchemaGenerator(schemaGeneratorConfig);
         try {
             ObjectNode objectNode = generator.generateSchema(cls);
-            replaceAnyOfWithOneOf(objectNode);
-            pullOfDefaultFromOneOf(objectNode);
+            replaceOneOfWithAnyOf(objectNode);
+            pullDocumentationAndDefaultFromAnyOf(objectNode);
             removeRequiredOnPropsWithDefaults(objectNode);
 
-            return JacksonMapper.toMap(extractMainRef(objectNode));
+            return MAPPER.convertValue(extractMainRef(objectNode), MAP_TYPE_REFERENCE);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Unable to generate jsonschema for '" + cls.getName() + "'", e);
         }
@@ -737,7 +764,8 @@ public class JsonSchemaGenerator {
 
             field.setAccessible(true);
             return field.invoke(instance);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IllegalArgumentException ignored) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException |
+                 IllegalArgumentException ignored) {
 
         }
 
@@ -746,7 +774,8 @@ public class JsonSchemaGenerator {
 
             field.setAccessible(true);
             return field.invoke(instance);
-        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | IllegalArgumentException ignored) {
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException |
+                 IllegalArgumentException ignored) {
 
         }
 

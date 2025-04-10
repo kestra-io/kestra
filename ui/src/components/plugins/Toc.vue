@@ -183,19 +183,6 @@
             background-color: var(--bs-gray-100);
         }
 
-        &::-webkit-scrollbar {
-            width: 2px;
-        }
-
-        &::-webkit-scrollbar-track {
-            -webkit-border-radius: 10px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
-            background: var(--bs-gray-600);
-        }
-
         .el-collapse-item__header {
             font-size: 0.875rem;
         }

@@ -10,10 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.not;
-import static org.hamcrest.core.StringContains.containsString;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class FlowNamespaceUpdateCommandTest {
     @Test
@@ -39,7 +36,7 @@ class FlowNamespaceUpdateCommandTest {
             };
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("namespace 'io.kestra.cli' successfully updated"));
+            assertThat(out.toString()).contains("namespace 'io.kestra.cli' successfully updated");
             out.reset();
 
             args = new String[]{
@@ -55,7 +52,7 @@ class FlowNamespaceUpdateCommandTest {
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
             // 2 delete + 1 update
-            assertThat(out.toString(), containsString("namespace 'io.kestra.cli' successfully updated"));
+            assertThat(out.toString()).contains("namespace 'io.kestra.cli' successfully updated");
         }
     }
 
@@ -81,9 +78,9 @@ class FlowNamespaceUpdateCommandTest {
             };
             Integer call = PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(call, is(1));
-            assertThat(out.toString(), containsString("Unable to parse flows"));
-            assertThat(out.toString(), containsString("must not be empty"));
+            assertThat(call).isEqualTo(1);
+            assertThat(out.toString()).contains("Unable to parse flows");
+            assertThat(out.toString()).contains("must not be empty");
         }
     }
 
@@ -111,7 +108,7 @@ class FlowNamespaceUpdateCommandTest {
             };
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("3 flow(s)"));
+            assertThat(out.toString()).contains("3 flow(s)");
             out.reset();
 
             // no "delete" arg should behave as no-delete
@@ -125,7 +122,7 @@ class FlowNamespaceUpdateCommandTest {
             };
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("1 flow(s)"));
+            assertThat(out.toString()).contains("1 flow(s)");
             out.reset();
 
             args = new String[]{
@@ -139,7 +136,7 @@ class FlowNamespaceUpdateCommandTest {
             };
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("1 flow(s)"));
+            assertThat(out.toString()).contains("1 flow(s)");
         }
     }
 
@@ -165,8 +162,8 @@ class FlowNamespaceUpdateCommandTest {
             };
             Integer call = PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(call, is(0));
-            assertThat(out.toString(), containsString("1 flow(s)"));
+            assertThat(call).isEqualTo(0);
+            assertThat(out.toString()).contains("1 flow(s)");
         }
     }
 
@@ -195,8 +192,8 @@ class FlowNamespaceUpdateCommandTest {
             };
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("io.kestra.override"));
-            assertThat(out.toString(), not(containsString("io.kestra.cli")));
+            assertThat(out.toString()).contains("io.kestra.override");
+            assertThat(out.toString()).doesNotContain("io.kestra.cli");
 
         }
     }

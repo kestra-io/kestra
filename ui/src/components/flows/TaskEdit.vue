@@ -82,12 +82,13 @@
 </template>
 
 <script setup>
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+
     import CodeTags from "vue-material-design-icons/CodeTags.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 </script>
 
 <script>
-    import YamlUtils from "../../utils/yamlUtils";
     import Editor from "../inputs/Editor.vue";
     import TaskEditor from "./TaskEditor.vue";
     import Drawer from "../Drawer.vue";
@@ -158,7 +159,7 @@
             task: {
                 async handler() {
                     if (this.task) {
-                        this.taskYaml = YamlUtils.stringify(this.task);
+                        this.taskYaml = YAML_UTILS.stringify(this.task);
                         if (this.task.type) {
                             this.$store.dispatch("plugin/load", {cls: this.task.type})
                         }
@@ -170,7 +171,7 @@
             },
             taskYaml: {
                 handler() {
-                    const task = YamlUtils.parse(this.taskYaml);
+                    const task = YAML_UTILS.parse(this.taskYaml);
                     if (task?.type && task.type !== this.type) {
                         this.$store.dispatch("plugin/load", {cls: task.type})
                         this.type = task.type
@@ -199,7 +200,7 @@
                     }
                 }
 
-                return YamlUtils.extractTask(this.source, taskId).toString();
+                return YAML_UTILS.extractTask(this.source, taskId).toString();
             },
             saveTask() {
                 this.$emit("update:task", this.taskYaml);
@@ -211,7 +212,7 @@
                 if (this.taskId) {
                     this.taskYaml = await this.load(this.taskId ? this.taskId : this.task.id);
                 } else if (this.task) {
-                    this.taskYaml = YamlUtils.stringify(this.task);
+                    this.taskYaml = YAML_UTILS.stringify(this.task);
                 }
                 if (this.task?.type) {
                     this.$store
@@ -246,7 +247,7 @@
                 return this.taskError?.split(/, ?/)
             },
             pluginMardown() {
-                if (this.plugin && this.plugin.markdown && YamlUtils.parse(this.taskYaml)?.type) {
+                if (this.plugin && this.plugin.markdown && YAML_UTILS.parse(this.taskYaml)?.type) {
                     return this.plugin.markdown
                 }
                 return null

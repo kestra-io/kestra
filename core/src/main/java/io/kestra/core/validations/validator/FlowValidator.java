@@ -5,6 +5,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
+import io.kestra.core.services.FlowService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.validations.FlowValidation;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -13,6 +14,7 @@ import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.validation.validator.constraints.ConstraintValidator;
 import io.micronaut.validation.validator.constraints.ConstraintValidatorContext;
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 import java.util.ArrayList;
@@ -30,6 +32,9 @@ import static io.kestra.core.models.Label.SYSTEM_PREFIX;
 @Singleton
 @Introspected
 public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> {
+    @Inject
+    private FlowService flowService;
+
     @Override
     public boolean isValid(
         @Nullable Flow value,
@@ -40,6 +45,10 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
         }
 
         List<String> violations = new ArrayList<>();
+
+        if (flowService.requireExistingNamespace(value.getTenantId(), value.getNamespace())) {
+            violations.add("Namespace '" + value.getNamespace() + "' does not exist but is required to exist before a flow can be created in it.");
+        }
 
         // tasks unique id
         List<String> taskIds = value.allTasksWithChilds()

@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -26,6 +25,6 @@ class TaskRunControllerTest {
             () -> client.toBlocking().retrieve(HttpRequest.GET("/api/v1/taskruns/search"))
         );
 
-        assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 }

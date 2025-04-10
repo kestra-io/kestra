@@ -11,9 +11,12 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.flow.Sleep;
@@ -39,11 +42,17 @@ abstract public class AbstractSchedulerTest {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
 
-    public static Flow createThreadFlow() {
+    @Inject
+    protected Optional<SchedulerTriggerStateInterface> triggerState;
+
+    @Inject
+    protected ExecutionService executionService;
+
+    public static FlowWithSource createThreadFlow() {
         return createThreadFlow(null);
     }
 
-    public static Flow createThreadFlow(String workerGroup) {
+    public static FlowWithSource createThreadFlow(String workerGroup) {
         UnitTest schedule = UnitTest.builder()
             .id("sleep")
             .type(UnitTest.class.getName())
@@ -63,7 +72,7 @@ abstract public class AbstractSchedulerTest {
     }
 
     protected static FlowWithSource createFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
-        Flow.FlowBuilder<?, ?> builder = Flow.builder()
+        FlowWithSource.FlowWithSourceBuilder<?, ?> builder = FlowWithSource.builder()
             .id(IdUtils.create())
             .namespace("io.kestra.unittest")
             .inputs(List.of(
@@ -98,8 +107,8 @@ abstract public class AbstractSchedulerTest {
             builder.pluginDefaults(list);
         }
 
-        Flow flow = builder.build();
-        return FlowWithSource.of(flow, flow.generateSource());
+        FlowWithSource flow = builder.build();
+        return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
     }
 
     protected static FlowWithSource createLongRunningFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
@@ -107,11 +116,27 @@ abstract public class AbstractSchedulerTest {
             .toBuilder()
             .tasks(
                 Collections.singletonList(
-                    Sleep.builder().id("sleep").type(Sleep.class.getName()).duration(Duration.ofSeconds(125)).build()
+                    Sleep.builder().id("sleep").type(Sleep.class.getName()).duration(Property.of(Duration.ofSeconds(125))).build()
                 )
             )
             .build();
     }
+
+    protected void terminateExecution(Execution execution, Trigger trigger, FlowWithSource flow) throws QueueException {
+        terminateExecution(execution, State.Type.SUCCESS, trigger, flow);
+    }
+
+    protected void terminateExecution(Execution execution, State.Type newState, Trigger trigger, FlowWithSource flow) throws QueueException {
+        if (triggerState.isEmpty()) {
+            throw new IllegalStateException("No triggerState available in the bean factory");
+        }
+
+        Execution terminated = execution.withState(newState);
+        executionQueue.emit(terminated);
+        triggerState.get().findLast(trigger)
+            .ifPresent(t -> triggerState.get().update(executionService.resetExecution(flow, terminated, t)));
+    }
+
 
     protected static int COUNTER = 0;
 

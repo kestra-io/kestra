@@ -16,9 +16,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.nullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class GetTest {
@@ -57,7 +55,37 @@ class GetTest {
 
         // Then
         Get.Output run = get.run(runContext);
-        assertThat(run.getValue(), is(value));
+        assertThat(run.getValue()).isEqualTo(value);
+    }
+
+    @Test
+    void shouldGetGivenExistingKeyWithInheritance() throws Exception {
+        // Given
+        String namespaceId = "io.kestra." + IdUtils.create();
+        RunContext runContext = this.runContextFactory.of(Map.of(
+            "flow", Map.of("namespace", namespaceId),
+            "inputs", Map.of(
+                "key", TEST_KV_KEY
+            )
+        ));
+
+        var value = Map.of("date", Instant.now().truncatedTo(ChronoUnit.MILLIS), "int", 1, "string", "string");
+
+        Get get = Get.builder()
+            .id(Get.class.getSimpleName())
+            .type(Get.class.getName())
+            .key(new Property<>("{{ inputs.key }}"))
+            .build();
+
+
+        final KVStore kv = runContext.namespaceKv("io.kestra");
+
+        // When
+        kv.put(TEST_KV_KEY, new KVValueAndMetadata(null, value));
+
+        // Then
+        Get.Output run = get.run(runContext);
+        assertThat(run.getValue()).isEqualTo(value);
     }
 
     @Test
@@ -83,10 +111,10 @@ class GetTest {
         Get.Output run = get.run(runContext);
 
         // Then
-        assertThat(run.getValue(), nullValue());
+        assertThat(run.getValue()).isNull();
 
         Get finalGet = get.toBuilder().errorOnMissing(Property.of(true)).build();
         NoSuchElementException noSuchElementException = Assertions.assertThrows(NoSuchElementException.class, () -> finalGet.run(runContext));
-        assertThat(noSuchElementException.getMessage(), is("No value found for key 'my-key' in namespace '" + namespaceId + "' and `errorOnMissing` is set to true"));
+        assertThat(noSuchElementException.getMessage()).isEqualTo("No value found for key 'my-key' in namespace '" + namespaceId + "' and `errorOnMissing` is set to true");
     }
 }

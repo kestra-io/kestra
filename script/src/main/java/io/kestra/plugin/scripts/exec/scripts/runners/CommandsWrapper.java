@@ -7,6 +7,7 @@ import io.kestra.core.models.tasks.runners.DefaultLogConsumer;
 import io.kestra.core.models.tasks.runners.*;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContextInitializer;
+import io.kestra.core.utils.NamespaceFilesUtils;
 import io.kestra.plugin.core.runner.Process;
 import io.kestra.core.models.tasks.NamespaceFiles;
 import io.kestra.core.runners.FilesService;
@@ -27,7 +28,6 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.*;
 
-import static io.kestra.core.utils.NamespaceFilesUtils.loadNamespaceFiles;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @AllArgsConstructor
@@ -74,8 +74,8 @@ public class CommandsWrapper implements TaskCommands {
     private DockerOptions dockerOptions;
 
     @With
+    @Deprecated
     private Boolean warningOnStdErr;
-
     @With
     private NamespaceFiles namespaceFiles;
 
@@ -149,7 +149,8 @@ public class CommandsWrapper implements TaskCommands {
 
     public <T extends TaskRunnerDetailResult> ScriptOutput run() throws Exception {
         if (this.namespaceFiles != null && !Boolean.FALSE.equals(runContext.render(this.namespaceFiles.getEnabled()).as(Boolean.class).orElse(true))) {
-            loadNamespaceFiles(runContext, this.namespaceFiles);
+            NamespaceFilesUtils namespaceFilesUtils = ((DefaultRunContext) runContext).getApplicationContext().getBean(NamespaceFilesUtils.class);
+            namespaceFilesUtils.loadNamespaceFiles(runContext, this.namespaceFiles);
         }
 
         TaskRunner<T> realTaskRunner = this.getTaskRunner();
@@ -176,8 +177,7 @@ public class CommandsWrapper implements TaskCommands {
 
         this.commands = Property.of(finalCommands);
 
-        ScriptOutput.ScriptOutputBuilder scriptOutputBuilder = ScriptOutput.builder()
-            .warningOnStdErr(this.warningOnStdErr);
+        ScriptOutput.ScriptOutputBuilder scriptOutputBuilder = ScriptOutput.builder();
 
         try {
             TaskRunnerResult<T> taskRunnerResult = realTaskRunner.run(taskRunnerRunContext, this, this.outputFiles);

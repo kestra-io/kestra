@@ -10,8 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public class SingleFlowCommandsTest {
 
@@ -37,7 +36,7 @@ public class SingleFlowCommandsTest {
             };
             PicocliRunner.call(FlowDeleteCommand.class, ctx, deleteArgs);
 
-            assertThat(out.toString(), containsString("Flow successfully deleted !"));
+            assertThat(out.toString()).contains("Flow successfully deleted !");
             out.reset();
 
             String[] createArgs = {
@@ -49,7 +48,7 @@ public class SingleFlowCommandsTest {
             };
             PicocliRunner.call(FlowCreateCommand.class, ctx, createArgs);
 
-            assertThat(out.toString(), containsString("Flow successfully created !"));
+            assertThat(out.toString()).contains("Flow successfully created !");
 
 
             out.reset();String[] updateArgs = {
@@ -63,7 +62,7 @@ public class SingleFlowCommandsTest {
             };
             PicocliRunner.call(FlowUpdateCommand.class, ctx, updateArgs);
 
-            assertThat(out.toString(), containsString("Flow successfully updated !"));
+            assertThat(out.toString()).contains("Flow successfully updated !");
             out.reset();
         }
     }

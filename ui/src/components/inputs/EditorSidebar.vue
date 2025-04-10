@@ -1,6 +1,5 @@
 <template>
     <div
-        v-show="explorerVisible"
         class="p-2 sidebar"
         @click="$refs.tree.setCurrentKey(undefined)"
         @contextmenu.prevent="onTabContextMenu"
@@ -120,8 +119,7 @@
             @node-click="
                 (data, node) =>
                     data.leaf
-                        ? changeOpenedTabs({
-                            action: 'open',
+                        ? openTab({
                             name: data.fileName,
                             extension: data.fileName.split('.').pop(),
                             path: getPath(node),
@@ -425,7 +423,7 @@
                 function extractPaths(basePath = "", array) {
                     const paths = [];
 
-                    array.forEach((item) => {
+                    array?.forEach((item) => {
                         if (item.type === "Directory") {
                             const folderPath = `${basePath}${item.fileName}`;
                             paths.push(folderPath);
@@ -446,7 +444,11 @@
         methods: {
             ...mapMutations("editor", [
                 "toggleExplorerVisibility",
-                "changeOpenedTabs",
+                "setTabDirty",
+            ]),
+            ...mapActions("editor", [
+                "openTab",
+                "closeTab",
             ]),
             ...mapActions("namespace", [
                 "createDirectory",
@@ -557,8 +559,7 @@
                 return this.searchResults;
             },
             chooseSearchResults(item) {
-                this.changeOpenedTabs({
-                    action: "open",
+                this.openTab({
                     name: item.split("/").pop(),
                     extension: item.split(".").pop(),
                     path: item,
@@ -813,8 +814,7 @@
                         creation: true,
                     });
 
-                    this.changeOpenedTabs({
-                        action: "open",
+                    this.openTab({
                         name: NAME,
                         path,
                         extension: extension,
@@ -906,8 +906,7 @@
 
                 this.$refs.tree.remove(data.id);
 
-                this.changeOpenedTabs({
-                    action: "close",
+                this.closeTab({
                     name: data.fileName,
                 });
 
@@ -1048,8 +1047,7 @@
             flow: {
                 handler(flow) {
                     if (flow) {
-                        this.changeOpenedTabs({
-                            action: "open",
+                        this.openTab({
                             name: "Flow",
                             path: "Flow.yaml",
                             persistent: true,
@@ -1150,7 +1148,7 @@
             height: 30px;
             padding: 16px;
             font-size: var(--el-font-size-small);
-            color: $gray-900;
+            color: var(--ks-content-primary);
 
             &:hover {
                 color: var(--ks-content-secondary);
@@ -1166,15 +1164,6 @@
             height: auto;
         }
 
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 5px;
-
-            html.dark & {
-                background:  var(--ks-button-background-primary);
-            }
-        }
-
         .node {
             --el-tree-node-content-height: fit-content;
             --el-tree-node-hover-bg-color: transparent;
@@ -1183,13 +1172,14 @@
         .el-tree-node__content {
             margin-bottom: 2px !important;
             padding-left: 0 !important;
+            border: 1px solid transparent;
 
             &:last-child{
                 margin-bottom: 0px;
             }
 
             &:hover{
-                border: 1px solid $primary;
+                border: 1px solid var(--ks-border-active);
             }
         }
 

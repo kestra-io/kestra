@@ -90,8 +90,15 @@
         if (!("canShare" in navigator)) {
             content = content.replaceAll(/\s*web-share\s*/g, "");
         }
-        const parse = await getMDCParser()
-        ast.value = await parse(content);
+        const parse = await getMDCParser();
+        // this hack alleviates a little the parsing load of the first render on big docs
+        // by only rendering the first 50 lines of the doc on opening
+        // since they are the only ones visible in the beginning
+        const firstLinesOfContent = content.split("---\n")[2].split("\n").slice(0, 50).join("\n") + "\nLoading the rest...\n";
+        ast.value = await parse(firstLinesOfContent);
+        setTimeout(async () => {
+            ast.value = await parse(content);
+        }, 50);
     }
 
     watch(docPath, async (val) => {

@@ -16,8 +16,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class CountTest {
@@ -53,12 +52,12 @@ class CountTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of("namespace", "io.kestra.unittest"));
         Count.Output run = task.run(runContext);
 
-        assertThat(run.getResults().size(), is(2));
-        assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("second")).count(), is(1L));
-        assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("second")).findFirst().get().getCount(), is(6L));
-        assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("third")).count(), is(1L));
-        assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("third")).findFirst().get().getCount(), is(18L));
-        assertThat(run.getTotal(), is(24L));
+        assertThat(run.getResults().size()).isEqualTo(2);
+        assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("second")).count()).isEqualTo(1L);
+        assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("second")).findFirst().get().getCount()).isEqualTo(6L);
+        assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("third")).count()).isEqualTo(1L);
+        assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("third")).findFirst().get().getCount()).isEqualTo(18L);
+        assertThat(run.getTotal()).isEqualTo(24L);
 
         // add state filter no result
         run = Count.builder()
@@ -72,7 +71,7 @@ class CountTest {
             .build()
             .run(runContext);
 
-        assertThat(run.getResults().size(), is(0));
+        assertThat(run.getResults().size()).isEqualTo(0);
 
         // non-matching entry
         run = Count.builder()
@@ -85,9 +84,9 @@ class CountTest {
             .build()
             .run(runContext);
 
-        assertThat(run.getResults().size(), is(1));
-        assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("missing")).count(), is(1L));
-        assertThat(run.getTotal(), is(0L));
+        assertThat(run.getResults().size()).isEqualTo(1);
+        assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("missing")).count()).isEqualTo(1L);
+        assertThat(run.getTotal()).isEqualTo(0L);
 
     }
 }

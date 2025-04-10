@@ -44,7 +44,7 @@
     </el-dialog>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {ref} from "vue";
     import Keyboard from "vue-material-design-icons/Keyboard.vue";
 

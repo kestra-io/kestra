@@ -9,8 +9,7 @@ import org.junit.jupiter.api.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class UndefinedCoalescingExpressionTest {
@@ -24,10 +23,10 @@ class UndefinedCoalescingExpressionTest {
 
         String render = variableRenderer.render("{{ null ??? 'IS NULL' }}", vars);
 
-        assertThat(render, is(""));
+        assertThat(render).isEqualTo("");
 
         render = variableRenderer.render("{{ undefined ??? 'IS UNDEFINED' }}", vars);
 
-        assertThat(render, is("IS UNDEFINED"));
+        assertThat(render).isEqualTo("IS UNDEFINED");
     }
 }

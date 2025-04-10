@@ -44,7 +44,7 @@
     const section = ref(SECTIONS.TASKS);
 
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
-    import YamlUtils from "../../../utils/yamlUtils";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     import {useStore} from "vuex";
     const store = useStore();
@@ -61,11 +61,11 @@
     });
 
     const yaml = ref(
-        YamlUtils.extractTask(props.flow, props.identifier)?.toString() || "",
+        YAML_UTILS.extractTask(props.flow, props.identifier)?.toString() || "",
     );
 
     onBeforeMount(() => {
-        const type = YamlUtils.parse(yaml.value)?.type ?? null;
+        const type = YAML_UTILS.parse(yaml.value)?.type ?? null;
         emits("updateDocumentation", type);
     });
 
@@ -84,7 +84,7 @@
                 yaml.value = "";
             } else {
                 yaml.value =
-                    YamlUtils.extractTask(props.flow, value)?.toString() || "";
+                    YAML_UTILS.extractTask(props.flow, value)?.toString() || "";
             }
         },
         {immediate: true},
@@ -94,14 +94,14 @@
 
     const CURRENT = ref(null);
     const validateTask = (task) => {
-        let temp = YamlUtils.parse(yaml.value);
+        let temp = YAML_UTILS.parse(yaml.value);
 
         if (lastBreadcumb.value.shown) {
             const field = breadcrumbs.value.at(-1).label;
             temp = {...temp, [field]: task};
         }
 
-        temp = YamlUtils.stringify(temp);
+        temp = YAML_UTILS.stringify(temp);
 
         store
             .dispatch("flow/validateTask", {task: temp, section: section.value})
@@ -121,9 +121,9 @@
 
         const source = props.flow;
 
-        const task = YamlUtils.extractTask(
+        const task = YAML_UTILS.extractTask(
             yaml.value,
-            YamlUtils.parse(yaml.value).id,
+            YAML_UTILS.parse(yaml.value).id,
         );
 
         const currentSection = route.query.section;
@@ -134,7 +134,7 @@
 
         if (isCreation) {
             if (currentSection === "tasks") {
-                const existing = YamlUtils.checkTaskAlreadyExist(
+                const existing = YAML_UTILS.checkTaskAlreadyExist(
                     source,
                     CURRENT.value,
                 );
@@ -148,23 +148,23 @@
                     return;
                 }
 
-                result = YamlUtils.insertTask(
+                result = YAML_UTILS.insertTask(
                     source,
-                    route.query.target ?? YamlUtils.getLastTask(source),
+                    route.query.target ?? YAML_UTILS.getLastTask(source),
                     task,
                     route.query.position ?? "after",
                 );
             } else if (currentSection === "triggers") {
-                result = YamlUtils.insertTrigger(source, CURRENT.value);
+                result = YAML_UTILS.insertSection("triggers", source, CURRENT.value);
             } else if (currentSection === "error handlers") {
-                result = YamlUtils.insertError(source, CURRENT.value);
+                result = YAML_UTILS.insertSection("errors", source, CURRENT.value);
             } else if (currentSection === "finally") {
-                result = YamlUtils.insertFinally(source, CURRENT.value);
+                result = YAML_UTILS.insertSection("finally", source, CURRENT.value);
             } else if (currentSection === "after execution") {
-                result = YamlUtils.insertAfterExecution(source, CURRENT.value);
+                result = YAML_UTILS.insertSection("afterExecution", source, CURRENT.value);
             }
         } else {
-            result = YamlUtils.replaceTaskInDocument(
+            result = YAML_UTILS.replaceTaskInDocument(
                 source,
                 props.identifier,
                 task,

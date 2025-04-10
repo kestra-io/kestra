@@ -1,4 +1,4 @@
-import {YamlElement} from "../utils/yamlUtils";
+import {YamlElement} from "@kestra-io/ui-libs";
 
 export const QUOTE = "'";
 

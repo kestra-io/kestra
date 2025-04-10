@@ -54,7 +54,7 @@
                             <div class="left">
                                 <div class="blueprint">
                                     <div class="ps-0 title">
-                                        {{ blueprint.title }}
+                                        {{ blueprint.title ?? blueprint.id }}
                                     </div>
                                     <div v-if="!system" class="tags text-uppercase">
                                         <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">

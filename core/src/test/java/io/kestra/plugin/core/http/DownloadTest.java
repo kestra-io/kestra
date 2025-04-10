@@ -26,8 +26,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -55,11 +54,8 @@ class DownloadTest {
 
         Download.Output output = task.run(runContext);
 
-        assertThat(
-            IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8),
-            is(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8))
-        );
-        assertThat(output.getUri().toString(), endsWith(".csv"));
+        assertThat(IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8)).isEqualTo(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8));
+        assertThat(output.getUri().toString()).endsWith(".csv");
     }
 
     @Test
@@ -80,7 +76,7 @@ class DownloadTest {
             () -> task.run(runContext)
         );
 
-        assertThat(exception.getMessage(), is("No response from server"));
+        assertThat(exception.getMessage()).isEqualTo("No response from server");
     }
 
     @Test
@@ -98,8 +94,8 @@ class DownloadTest {
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
         Download.Output output = assertDoesNotThrow(() -> task.run(runContext));
 
-        assertThat(output.getLength(), is(0L));
-        assertThat(IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8), is(""));
+        assertThat(output.getLength()).isEqualTo(0L);
+        assertThat(IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8)).isEqualTo("");
     }
 
     @Test
@@ -120,7 +116,7 @@ class DownloadTest {
             () -> task.run(runContext)
         );
 
-        assertThat(exception.getMessage(), containsString("Failed http request with response code '500'"));
+        assertThat(exception.getMessage()).contains("Failed http request with response code '500'");
     }
 
     @Test
@@ -138,7 +134,7 @@ class DownloadTest {
 
         Download.Output output = task.run(runContext);
 
-        assertThat(this.storageInterface.get(null, null, output.getUri()).readAllBytes().length, is(10000 * 12));
+        assertThat(this.storageInterface.get(null, null, output.getUri()).readAllBytes().length).isEqualTo(10000 * 12);
     }
 
     @Test
@@ -156,7 +152,7 @@ class DownloadTest {
 
         Download.Output output = task.run(runContext);
 
-        assertThat(output.getUri().toString(), endsWith("filename.jpg"));
+        assertThat(output.getUri().toString()).endsWith("filename.jpg");
     }
 
     @Test
@@ -174,8 +170,8 @@ class DownloadTest {
 
         Download.Output output = task.run(runContext);
 
-        assertThat(output.getUri().toString(), not(containsString("/secure-path/")));
-        assertThat(output.getUri().toString(), endsWith("filename.jpg"));
+        assertThat(output.getUri().toString()).doesNotContain("/secure-path/");
+        assertThat(output.getUri().toString()).endsWith("filename.jpg");
     }
 
     @Test
@@ -196,8 +192,8 @@ class DownloadTest {
 
             Download.Output output = task.run(runContext);
 
-            assertThat(output.getHeaders().get("content-type"), is(List.of("application/json")));
-            assertThat(output.getCode(), is(417));
+            assertThat(output.getHeaders().get("content-type")).isEqualTo(List.of("application/json"));
+            assertThat(output.getCode()).isEqualTo(417);
         }
     }
 
@@ -216,8 +212,8 @@ class DownloadTest {
 
         Download.Output output = task.run(runContext);
 
-        assertThat(output.getUri().toString(), not(containsString("/secure-path/")));
-        assertThat(output.getUri().toString(), endsWith("filename..jpg"));
+        assertThat(output.getUri().toString()).doesNotContain("/secure-path/");
+        assertThat(output.getUri().toString()).endsWith("filename..jpg");
     }
 
     @Controller()

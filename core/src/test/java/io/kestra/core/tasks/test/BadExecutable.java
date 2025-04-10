@@ -5,6 +5,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.plugin.core.flow.Subflow;
@@ -38,7 +39,7 @@ import java.util.Optional;
 public class BadExecutable extends Subflow {
 
     @Override
-    public Optional<SubflowExecutionResult> createSubflowExecutionResult(RunContext runContext, TaskRun taskRun, Flow flow, Execution execution) {
+    public Optional<SubflowExecutionResult> createSubflowExecutionResult(RunContext runContext, TaskRun taskRun, FlowInterface flow, Execution execution) {
         throw new RuntimeException("An error!");
     }
 }

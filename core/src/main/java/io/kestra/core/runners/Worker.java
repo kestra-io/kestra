@@ -131,6 +131,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @Getter
     private final String workerGroup;
+    private final String workerGroupKey;
 
     private final String id;
 
@@ -170,6 +171,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
     ) {
         this.id = workerId;
         this.numThreads = numThreads;
+        this.workerGroupKey = workerGroupKey;
         this.workerGroup = workerGroupService.resolveGroupFromKey(workerGroupKey);
         this.eventPublisher = eventPublisher;
         this.executorService = executorsUtils.maxCachedThreadPool(numThreads, EXECUTOR_NAME);
@@ -276,7 +278,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
         this.clusterEventQueue.ifPresent(clusterEventQueueInterface -> this.receiveCancellations.addFirst(clusterEventQueueInterface.receive(this::clusterEventQueue)));
 
         setState(ServiceState.RUNNING);
-        log.info("Worker started with {} thread(s)", numThreads);
+        if (workerGroupKey != null) {
+            log.info("Worker started with {} thread(s) in group '{}'", numThreads, workerGroupKey);
+        }
+        else {
+            log.info("Worker started with {} thread(s)", numThreads);
+        }
     }
 
     private void clusterEventQueue(Either<ClusterEvent, DeserializationException> either) {
@@ -419,7 +426,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
         if (log.isDebugEnabled()) {
             logService.logTrigger(
                 workerTrigger.getTriggerContext(),
-                log,
                 Level.DEBUG,
                 "[type: {}] {}",
                 workerTrigger.getTrigger().getType(),
@@ -627,18 +633,12 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         logService.logTaskRun(
             workerTask.getTaskRun(),
-            workerTask.logger(),
             Level.INFO,
             "Type {} started",
             workerTask.getTask().getClass().getSimpleName()
         );
 
         workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(RUNNING));
-        try {
-            this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun()));
-        } catch (QueueException e) {
-            log.error("Unable to emit the worker task result for task {} taskrun {}", workerTask.getTask().getId(), workerTask.getTaskRun().getId(), e);
-        }
 
         try {
             // run
@@ -724,7 +724,6 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
         logService.logTaskRun(
             workerTask.getTaskRun(),
-            workerTask.logger(),
             Level.INFO,
             "Type {} with state {} completed in {}",
             workerTask.getTask().getClass().getSimpleName(),
@@ -780,20 +779,18 @@ public class Worker implements Service, Runnable, AutoCloseable {
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
             .state(new io.kestra.core.models.flows.State().withState(RUNNING));
 
-        AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
-
-        metricRunningCount.incrementAndGet();
-
-        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry);
-
-        // emit attempts
+        // emit the attempt so the execution knows that the task is in RUNNING
         this.workerTaskResultQueue.emit(new WorkerTaskResult(
                 workerTask.getTaskRun()
                     .withAttempts(this.addAttempt(workerTask, builder.build()))
             )
         );
 
+        AtomicInteger metricRunningCount = getMetricRunningCount(workerTask);
+        metricRunningCount.incrementAndGet();
+
         // run it
+        WorkerTaskCallable workerTaskCallable = new WorkerTaskCallable(workerTask, task, runContext, metricRegistry);
         io.kestra.core.models.flows.State.Type state = callJob(workerTaskCallable);
 
         metricRunningCount.decrementAndGet();

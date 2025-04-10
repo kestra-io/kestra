@@ -94,12 +94,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             String namespace = record.get("namespace", String.class);
             String tenantId = record.get("tenant_id", String.class);
             try {
-                Map<String, Object> map;
-                try {
-                    map =  MAPPER.readValue(source, new TypeReference<>(){});
-                } catch (IOException e) {
-                    throw new DeserializationException(e, source);
-                }
+                Map<String, Object> map = MAPPER.readValue(source, new TypeReference<>(){});
+
                 // Inject default plugin 'version' props before converting
                 // to flow to correctly resolve to plugin type.
                 map = pluginDefaultService.injectVersionDefaults(tenantId, namespace, map);
@@ -110,10 +106,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 deserialize.allTasksWithChilds();
 
                 return deserialize;
-            } catch (DeserializationException e) {
+            } catch (DeserializationException | IOException e) {
                 try {
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);
-                    return FlowWithException.from(jsonNode, e).orElseThrow(() -> e);
+                    return FlowWithException.from(jsonNode, e)
+                        .orElseThrow(() -> e instanceof DeserializationException de ? de : new DeserializationException(e, source));
                 } catch (JsonProcessingException ex) {
                     throw new DeserializationException(ex, source);
                 }

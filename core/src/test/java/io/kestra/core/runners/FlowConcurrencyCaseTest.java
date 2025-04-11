@@ -140,6 +140,9 @@ public class FlowConcurrencyCaseTest {
         CountDownLatch secondExecutionLatch = new CountDownLatch(1);
 
         Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
+            if (!"flow-concurrency-queue-pause".equals(e.getLeft().getFlowId())){
+                return;
+            }
             String currentId = e.getLeft().getId();
             Type currentState = e.getLeft().getState().getCurrent();
             if (firstExecutionId.get() == null) {
@@ -191,6 +194,9 @@ public class FlowConcurrencyCaseTest {
         CountDownLatch secondExecLatch = new CountDownLatch(1);
 
         Flux<Execution> receive = TestsUtils.receive(executionQueue, e -> {
+            if (!"flow-concurrency-cancel-pause".equals(e.getLeft().getFlowId())){
+                return;
+            }
             String currentId = e.getLeft().getId();
             Type currentState = e.getLeft().getState().getCurrent();
             if (firstExecutionId.get() == null) {

@@ -248,11 +248,11 @@
     };
     const sections = computed((): CollapseItem[] => {
         const flow:{
-            tasks: Record<string, any>[][];
-            triggers: Record<string, any>[][];
-            errors: Record<string, any>[][];
-            finally: Record<string, any>[][];
-            afterExecution: Record<string, any>[][];
+            tasks: Record<string, any>[];
+            triggers: Record<string, any>[];
+            errors: Record<string, any>[];
+            finally: Record<string, any>[];
+            afterExecution: Record<string, any>[];
         } = YAML_UTILS.parse(props.flow) as any;
         return [
             getSectionTitle("tasks", flow?.tasks ?? []),

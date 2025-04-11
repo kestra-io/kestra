@@ -695,6 +695,11 @@
     "minutes": "분",
     "monogram": "모노그램",
     "months": "개월",
+    "multi_panel_editor": {
+      "close_all_tabs": "모든 탭 닫기",
+      "move_left": "왼쪽으로 이동",
+      "move_right": "오른쪽으로 이동"
+    },
     "multiple saved done": "{name}이(가) 저장되었습니다.",
     "name": "이름",
     "namespace": "Namespace",

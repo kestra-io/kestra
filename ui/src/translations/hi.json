@@ -695,6 +695,11 @@
     "minutes": "मिनट्स",
     "monogram": "मोनोग्राम",
     "months": "महीने",
+    "multi_panel_editor": {
+      "close_all_tabs": "सभी टैब बंद करें",
+      "move_left": "बाएँ ले जाएँ",
+      "move_right": "दाईं ओर ले जाएँ"
+    },
     "multiple saved done": "{name} सहेजे गए हैं",
     "name": "नाम",
     "namespace": "Namespace",

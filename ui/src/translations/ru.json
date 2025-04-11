@@ -695,6 +695,11 @@
     "minutes": "Минуты",
     "monogram": "Монограмма",
     "months": "Месяцы",
+    "multi_panel_editor": {
+      "close_all_tabs": "Закрыть все вкладки",
+      "move_left": "Переместить влево",
+      "move_right": "Переместить вправо"
+    },
     "multiple saved done": "{name} был сохранен",
     "name": "Имя",
     "namespace": "Namespace",

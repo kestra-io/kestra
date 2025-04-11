@@ -695,6 +695,11 @@
     "minutes": "Minuten",
     "monogram": "Monogramm",
     "months": "Monate",
+    "multi_panel_editor": {
+      "close_all_tabs": "Alle Registerkarten schließen",
+      "move_left": "Nach links verschieben",
+      "move_right": "Nach rechts verschieben"
+    },
     "multiple saved done": "{name} wurde(n) gespeichert",
     "name": "Name",
     "namespace": "Namespace",

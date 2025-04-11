@@ -695,6 +695,11 @@
     "minutes": "分钟",
     "monogram": "字母组合",
     "months": "月份",
+    "multi_panel_editor": {
+      "close_all_tabs": "关闭所有标签页",
+      "move_left": "向左移动",
+      "move_right": "向右移动"
+    },
     "multiple saved done": "{name} 已保存",
     "name": "名称",
     "namespace": "命名空间",

@@ -695,6 +695,11 @@
     "minutes": "分",
     "monogram": "モノグラム",
     "months": "月",
+    "multi_panel_editor": {
+      "close_all_tabs": "すべてのタブを閉じる",
+      "move_left": "左に移動",
+      "move_right": "右に移動"
+    },
     "multiple saved done": "{name}が保存されました",
     "name": "名前",
     "namespace": "Namespace",

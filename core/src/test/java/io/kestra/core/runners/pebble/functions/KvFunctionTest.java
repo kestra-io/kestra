@@ -1,7 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -66,7 +65,46 @@ public class KvFunctionTest {
         String rendered = variableRenderer.render("{{ kv('my-key') }}", variables);
 
         // Then
-        assertThat(rendered, is("{\"field\":\"value\"}"));
+        assertThat(rendered).isEqualTo("{\"field\":\"value\"}");
+    }
+
+    @Test
+    void shouldGetValueFromKVGivenExistingKeyWithInheritance() throws IllegalVariableEvaluationException, IOException {
+        // Given
+        KVStore kv = new InternalKVStore(null, "my.company", storageInterface);
+        kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
+
+        KVStore firstKv = new InternalKVStore(null, "my", storageInterface);
+        firstKv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "firstValue")));
+
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "kv",
+                "namespace", "my.company.team")
+        );
+
+        // When
+        String rendered = variableRenderer.render("{{ kv('my-key') }}", variables);
+
+        // Then
+        assertThat(rendered).isEqualTo("{\"field\":\"value\"}");
+    }
+
+    @Test
+    void shouldNotGetValueFromKVWithGivenNamespaceAndInheritance() throws IOException {
+        // Given
+        KVStore kv = new InternalKVStore(null, "kv", storageInterface);
+        kv.put("my-key", new KVValueAndMetadata(null, Map.of("field", "value")));
+
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "kv",
+                "namespace", "my.company.team")
+        );
+
+        // When
+        Assertions.assertThrows(IllegalVariableEvaluationException.class, () ->
+            variableRenderer.render("{{ kv('my-key', namespace='kv.inherited') }}", variables));
     }
 
     @Test
@@ -85,9 +123,8 @@ public class KvFunctionTest {
         String rendered = variableRenderer.render("{{ kv('my-key', namespace='kv') }}", variables);
 
         // Then
-        assertThat(rendered, is("{\"field\":\"value\"}"));
+        assertThat(rendered).isEqualTo("{\"field\":\"value\"}");
     }
-
 
     @Test
     void shouldGetEmptyGivenNonExistingKeyAndErrorOnMissingFalse() throws IllegalVariableEvaluationException {
@@ -102,7 +139,7 @@ public class KvFunctionTest {
         String rendered = variableRenderer.render("{{ kv('my-key', errorOnMissing=false) }}", variables);
 
         // Then
-        assertThat(rendered, is(""));
+        assertThat(rendered).isEqualTo("");
     }
 
     @Test
@@ -120,7 +157,7 @@ public class KvFunctionTest {
         });
 
         // Then
-        assertThat(exception.getMessage(), is("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key', errorOnMissing=true) }}:1)"));
+        assertThat(exception.getMessage()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key', errorOnMissing=true) }}:1)");
     }
 
     @Test
@@ -137,6 +174,6 @@ public class KvFunctionTest {
         });
 
         // Then
-        assertThat(exception.getMessage(), is("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key') }}:1)"));
+        assertThat(exception.getMessage()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key') }}:1)");
     }
 }

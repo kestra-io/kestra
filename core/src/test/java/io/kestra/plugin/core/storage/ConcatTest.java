@@ -19,9 +19,7 @@ import java.util.List;
 import java.util.Objects;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ConcatTest {
@@ -58,11 +56,8 @@ class ConcatTest {
         String s = CharStreams.toString(new InputStreamReader(new FileInputStream(file)));
 
 
-        assertThat(
-            CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, run.getUri()))),
-            is(s + "\n" + s + "\n")
-        );
-        assertThat(run.getUri().getPath(), endsWith(".yml"));
+        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, run.getUri())))).isEqualTo(s + "\n" + s + "\n");
+        assertThat(run.getUri().getPath()).endsWith(".yml");
     }
 
     @Test

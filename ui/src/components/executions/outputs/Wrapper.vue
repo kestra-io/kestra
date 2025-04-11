@@ -76,6 +76,7 @@
                             <editor
                                 ref="debugEditor"
                                 :full-height="false"
+                                :custom-height="20"
                                 :input="true"
                                 :navbar="false"
                                 :model-value="computedDebugValue"
@@ -100,6 +101,7 @@
                                 :read-only="true"
                                 :input="true"
                                 :full-height="false"
+                                :custom-height="20"
                                 :navbar="false"
                                 :model-value="debugExpression"
                                 :lang="isJSON ? 'json' : ''"
@@ -469,21 +471,6 @@
 
     .bordered > .el-collapse-item {
         margin-bottom: 0px !important;
-    }
-
-    .cascader {
-        &::-webkit-scrollbar {
-            height: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-card);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 0px;
-        }
     }
 
     .wrapper {

@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "Szablony aplikacji",
       "community": "Społeczność",
+      "create": "Utwórz blueprint",
       "custom": "Niestandardowe blueprints",
       "dashboards": "Dashboard Blueprinty",
+      "edit": "Edytuj blueprint",
       "empty": "Brak blueprintów do wyświetlenia.",
       "flows": "Schematy Flow",
       "header": {
@@ -301,6 +303,18 @@
           "message": "W Kestra Enterprise Edition możesz definiować i zarządzać zmiennymi na poziomie namespace, aby wyeliminować powtarzające się konfiguracje w różnych flow. Te zmienne zapewniają spójność, upraszczają aktualizacje konfiguracji i mogą być łatwo odwoływane przez dowolny task lub trigger, co prowadzi do czystszych i łatwiejszych w utrzymaniu workflow.",
           "title": "Centralnie Zarządzaj Swoimi Zmiennymi"
         }
+      },
+      "secrets": {
+        "add_env": {
+          "first": "Zakoduj <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">wartość secret w Base64</a></strong>",
+          "intro": "Aby utworzyć nowy Secret:",
+          "second": "Dodaj zmienną środowiskową o nazwie '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' z powyższą wartością",
+          "third": "Uruchom ponownie instancję Kestra"
+        },
+        "detected_env": "Oto zmienne środowiskowe typu secret zidentyfikowane podczas uruchamiania instancji:",
+        "empty_env": "Nie masz jeszcze żadnych Secrets w swoim środowisku.",
+        "message": "Edycja Enterprise (EE) pozwala na dodawanie, edytowanie lub usuwanie sekretów bezpośrednio w UI — bez potrzeby ponownego uruchamiania instancji. Organizuj sekrety według namespace z precyzyjnymi uprawnieniami RBAC i dziedzicz je z namespace nadrzędnych do podrzędnych. EE integruje się z menedżerami sekretów, takimi jak HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager i Elasticsearch. Skonfiguruj dedykowane backendy dla każdego namespace, mandanta lub instancji, aby izolować sekrety w zespołach, lub włącz sekrety tylko do odczytu przechowywane w zewnętrznych vaultach. Sekrety pozostają zaszyfrowane w spoczynku i podczas przesyłania. Opcjonalne buforowanie zmniejsza liczbę wywołań API, a ścieżki audytu logują cały dostęp.",
+        "title": "Ulepsz swoje zarządzanie Secrets Management"
       },
       "tenants": {
         "message": "Kestra Enterprise Edition obsługuje multi-tenancy, zapewniając w pełni izolowane środowiska dla różnych zespołów lub projektów, z własnymi zasobami, takimi jak dedykowane grupy workerów, sekrety i wewnętrzne magazyny danych.",
@@ -543,6 +557,7 @@
         },
         "empty": "Nie zapisałeś jeszcze żadnego wyszukiwania.",
         "label": "Zapisane wyszukiwania",
+        "remove": "Usuń",
         "tooltip": "Nie można zapisać pustych kryteriów wyszukiwania."
       },
       "settings": {
@@ -680,6 +695,11 @@
     "minutes": "Minuty",
     "monogram": "Monogram",
     "months": "Miesiące",
+    "multi_panel_editor": {
+      "close_all_tabs": "Zamknij wszystkie karty",
+      "move_left": "Przesuń w lewo",
+      "move_right": "Przesuń w prawo"
+    },
     "multiple saved done": "{name} został zapisany",
     "name": "Nazwa",
     "namespace": "Namespace",
@@ -1007,8 +1027,11 @@
     "search term in message": "Wyszukaj termin w wiadomości",
     "seconds": "Sekundy",
     "secret": {
+      "add": "Nowy sekret",
       "inherited": "Dziedziczone secrets",
-      "names": "Secrets"
+      "isReadOnly": "Sekret jest tylko do odczytu",
+      "names": "Secrets",
+      "update": "Aktualizuj sekret '{name}'"
     },
     "security_advice": {
       "content": "Włącz podstawowe uwierzytelnianie, aby chronić swoją instancję.",
@@ -1041,7 +1064,8 @@
             "flow_default_tab": "Domyślna karta Flow",
             "language": "Język",
             "log_display": "Domyślne Wyświetlanie Log",
-            "log_level": "Domyślna Poziom Logs"
+            "log_level": "Domyślna Poziom Logs",
+            "multi_panel_editor": "Edytor Wielopanelowy"
           },
           "label": "Główna konfiguracja"
         },
@@ -1144,8 +1168,10 @@
     "templates deleted": "<code>{count}</code> Szablon(y) usunięte",
     "templates deprecated": "Szablony są przestarzałe. Proszę używać subflows. Zobacz <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">sekcję migracji</a>, aby dowiedzieć się, jak migrować z szablonów do subflows.",
     "templates exported": "Szablony wyeksportowane",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "Mandant",
+      "names": "Najemcy"
+    },
     "theme": "Motyw",
     "this_task_has": "To zadanie ma",
     "timezone": "Strefa czasowa",

@@ -41,7 +41,8 @@ public class NamespaceFiles {
         title = "A list of namespaces in which searching files. The files are loaded in the namespace order, and only the latest version of a file is kept. Meaning if a file is present in the first and second namespace, only the file present on the second namespace will be loaded."
     )
     @Builder.Default
-    private Property<List<String>> namespaces = Property.of(List.of("{{flow.namespace}}"));
+    private Property<List<String>> namespaces = new Property<>("""
+        ["{{flow.namespace}}"]""");
 
     @Schema(
         title = "Comportment of the task if a file already exist in the working directory."

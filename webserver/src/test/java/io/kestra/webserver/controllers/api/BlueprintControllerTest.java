@@ -18,8 +18,10 @@ import java.util.List;
 import java.util.Map;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.emptyOrNullString;
 
 @KestraTest
 @WireMockTest(httpPort = 28181)
@@ -59,16 +61,16 @@ class BlueprintControllerTest {
             Argument.of(PagedResults.class, BlueprintController.ApiBlueprintItem.class)
         );
 
-        assertThat(blueprintsWithTotal.getTotal(), is(2L));
+        assertThat(blueprintsWithTotal.getTotal()).isEqualTo(2L);
         List<BlueprintController.ApiBlueprintItem> blueprints = blueprintsWithTotal.getResults();
-        assertThat(blueprints.size(), is(2));
-        assertThat(blueprints.getFirst().getId(), is("1"));
-        assertThat(blueprints.getFirst().getTitle(), is("GCS Trigger"));
-        assertThat(blueprints.getFirst().getDescription(), is("GCS trigger flow"));
-        assertThat(blueprints.getFirst().getPublishedAt(), is(Instant.parse("2023-06-01T08:37:34.661Z")));
-        assertThat(blueprints.getFirst().getTags().size(), is(2));
-        assertThat(blueprints.getFirst().getTags(), contains("3", "2"));
-        assertThat(blueprints.get(1).getId(), is("2"));
+        assertThat(blueprints.size()).isEqualTo(2);
+        assertThat(blueprints.getFirst().getId()).isEqualTo("1");
+        assertThat(blueprints.getFirst().getTitle()).isEqualTo("GCS Trigger");
+        assertThat(blueprints.getFirst().getDescription()).isEqualTo("GCS trigger flow");
+        assertThat(blueprints.getFirst().getPublishedAt()).isEqualTo(Instant.parse("2023-06-01T08:37:34.661Z"));
+        assertThat(blueprints.getFirst().getTags().size()).isEqualTo(2);
+        assertThat(blueprints.getFirst().getTags()).containsExactly("3", "2");
+        assertThat(blueprints.get(1).getId()).isEqualTo("2");
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
         wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_SEARCH_KIND_FLOW , KIND_FLOW, versionProvider.getVersion()) + "?page=1&size=5&q=someTitle&sort=title%3Aasc&tags=3&ee=false")));
@@ -110,10 +112,10 @@ class BlueprintControllerTest {
         List<Map<String, Object>> nodes = (List<Map<String, Object>>) graph.get("nodes");
         List<Map<String, Object>> edges = (List<Map<String, Object>>) graph.get("edges");
         List<Map<String, Object>> clusters = (List<Map<String, Object>>) graph.get("clusters");
-        assertThat(nodes.size(), is(12));
-        assertThat(nodes.stream().filter(abstractGraph -> abstractGraph.get("uid").equals("3mTDtNoUxYIFaQtgjEg28_root")).count(), is(1L));
-        assertThat(edges.size(), is(16));
-        assertThat(clusters.size(), is(1));
+        assertThat(nodes.size()).isEqualTo(12);
+        assertThat(nodes.stream().filter(abstractGraph -> abstractGraph.get("uid").equals("3mTDtNoUxYIFaQtgjEg28_root")).count()).isEqualTo(1L);
+        assertThat(edges.size()).isEqualTo(16);
+        assertThat(clusters.size()).isEqualTo(1);
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
         wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_GET_GRAPH, KIND_FLOW, "id_1", versionProvider.getVersion()))));
@@ -132,13 +134,13 @@ class BlueprintControllerTest {
             BlueprintController.ApiBlueprintItemWithSource.class
         );
 
-        assertThat(blueprint.getId(), is("1"));
-        assertThat(blueprint.getTitle(), is("GCS Trigger"));
-        assertThat(blueprint.getDescription(), is("GCS trigger flow"));
+        assertThat(blueprint.getId()).isEqualTo("1");
+        assertThat(blueprint.getTitle()).isEqualTo("GCS Trigger");
+        assertThat(blueprint.getDescription()).isEqualTo("GCS trigger flow");
         assertThat(blueprint.getSource(), not(emptyOrNullString()));
-        assertThat(blueprint.getPublishedAt(), is(Instant.parse("2023-06-01T08:37:34.661Z")));
-        assertThat(blueprint.getTags().size(), is(2));
-        assertThat(blueprint.getTags(), contains("3", "2"));
+        assertThat(blueprint.getPublishedAt()).isEqualTo(Instant.parse("2023-06-01T08:37:34.661Z"));
+        assertThat(blueprint.getTags().size()).isEqualTo(2);
+        assertThat(blueprint.getTags()).containsExactly("3", "2");
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
         wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_GET, KIND_FLOW, "id_1", versionProvider.getVersion()))));
@@ -158,10 +160,10 @@ class BlueprintControllerTest {
             Argument.of(List.class, BlueprintController.ApiBlueprintTagItem.class)
         );
 
-        assertThat(blueprintTags.size(), is(3));
-        assertThat(blueprintTags.getFirst().getId(), is("3"));
-        assertThat(blueprintTags.getFirst().getName(), is("Cloud"));
-        assertThat(blueprintTags.getFirst().getPublishedAt(), is(Instant.parse("2023-06-01T08:37:10.171Z")));
+        assertThat(blueprintTags.size()).isEqualTo(3);
+        assertThat(blueprintTags.getFirst().getId()).isEqualTo("3");
+        assertThat(blueprintTags.getFirst().getName()).isEqualTo("Cloud");
+        assertThat(blueprintTags.getFirst().getPublishedAt()).isEqualTo(Instant.parse("2023-06-01T08:37:10.171Z"));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
         wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_GET_TAGS, KIND_FLOW, versionProvider.getVersion(), "someQuery"))));

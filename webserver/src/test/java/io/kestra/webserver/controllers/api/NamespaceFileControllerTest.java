@@ -1,9 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.startsWith;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -69,16 +66,16 @@ class NamespaceFileControllerTest {
         storageInterface.put(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/sub/script.py")), new ByteArrayInputStream(new byte[0]));
 
         String res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/search?q=file"));
-        assertThat((Iterable<String>) JacksonMapper.toObject(res), containsInAnyOrder("/file.txt", "/another_file.json", "/folder/file.txt"));
+        assertThat((Iterable<String>) JacksonMapper.toObject(res)).containsExactlyInAnyOrder("/file.txt", "/another_file.json", "/folder/file.txt");
 
         res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/search?q=file.txt"));
-        assertThat((Iterable<String>) JacksonMapper.toObject(res), containsInAnyOrder("/file.txt", "/folder/file.txt"));
+        assertThat((Iterable<String>) JacksonMapper.toObject(res)).containsExactlyInAnyOrder("/file.txt", "/folder/file.txt");
 
         res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/search?q=folder"));
-        assertThat((Iterable<String>) JacksonMapper.toObject(res), containsInAnyOrder("/folder/file.txt", "/folder/some.yaml", "/folder/sub/script.py"));
+        assertThat((Iterable<String>) JacksonMapper.toObject(res)).containsExactlyInAnyOrder("/folder/file.txt", "/folder/some.yaml", "/folder/sub/script.py");
 
         res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/search?q=.py"));
-        assertThat((Iterable<String>) JacksonMapper.toObject(res), containsInAnyOrder("/folder/sub/script.py"));
+        assertThat((Iterable<String>) JacksonMapper.toObject(res)).containsExactlyInAnyOrder("/folder/sub/script.py");
     }
 
     @Test
@@ -86,7 +83,7 @@ class NamespaceFileControllerTest {
         String hw = "Hello World";
         storageInterface.put(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/test.txt")), new ByteArrayInputStream(hw.getBytes()));
         String res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files?path=/test.txt"));
-        assertThat(res, is(hw));
+        assertThat(res).isEqualTo(hw);
     }
 
     @Test
@@ -94,15 +91,15 @@ class NamespaceFileControllerTest {
         String hw = "Hello World";
         storageInterface.put(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/test.txt")), new ByteArrayInputStream(hw.getBytes()));
         FileAttributes res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/stats?path=/test.txt"), TestFileAttributes.class);
-        assertThat(res.getFileName(), is("test.txt"));
-        assertThat(res.getType(), is(FileAttributes.FileType.File));
+        assertThat(res.getFileName()).isEqualTo("test.txt");
+        assertThat(res.getType()).isEqualTo(FileAttributes.FileType.File);
     }
 
     @Test
     void namespaceRootStatsWithoutPreCreation() {
         FileAttributes res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/stats"), TestFileAttributes.class);
-        assertThat(res.getFileName(), is("_files"));
-        assertThat(res.getType(), is(FileAttributes.FileType.Directory));
+        assertThat(res.getFileName()).isEqualTo("_files");
+        assertThat(res.getType()).isEqualTo(FileAttributes.FileType.Directory);
     }
 
     @Test
@@ -112,18 +109,18 @@ class NamespaceFileControllerTest {
         storageInterface.put(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/test/test2.txt")), new ByteArrayInputStream(hw.getBytes()));
 
         List<FileAttributes> res = List.of(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/directory"), TestFileAttributes[].class));
-        assertThat(res.stream().map(FileAttributes::getFileName).toList(), Matchers.containsInAnyOrder("test"));
+        assertThat(res.stream().map(FileAttributes::getFileName).toList()).containsExactlyInAnyOrder("test");
 
         res = List.of(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/directory?path=/test"), TestFileAttributes[].class));
-        assertThat(res.stream().map(FileAttributes::getFileName).toList(), Matchers.containsInAnyOrder("test.txt", "test2.txt"));
+        assertThat(res.stream().map(FileAttributes::getFileName).toList()).containsExactlyInAnyOrder("test.txt", "test2.txt");
     }
 
     @Test
     void listWithoutPreCreation() {
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, null)), is(false));
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, null))).isEqualTo(false);
         List<FileAttributes> res = List.of(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/files/directory"), TestFileAttributes[].class));
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, null)), is(true));
-        assertThat(res.stream().map(FileAttributes::getFileName).count(), is(0L));
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, null))).isEqualTo(true);
+        assertThat(res.stream().map(FileAttributes::getFileName).count()).isEqualTo(0L);
     }
 
     @Test
@@ -131,11 +128,11 @@ class NamespaceFileControllerTest {
         client.toBlocking().exchange(HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files/directory?path=/test", null));
         client.toBlocking().exchange(HttpRequest.POST("/api/v1/namespaces/" + NAMESPACE + "/files/directory?path=/_flows2", null));
         FileAttributes res = storageInterface.getAttributes(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/test")));
-        assertThat(res.getFileName(), is("test"));
-        assertThat(res.getType(), is(FileAttributes.FileType.Directory));
+        assertThat(res.getFileName()).isEqualTo("test");
+        assertThat(res.getType()).isEqualTo(FileAttributes.FileType.Directory);
         FileAttributes flows = storageInterface.getAttributes(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/_flows2")));
-        assertThat(flows.getFileName(), is("_flows2"));
-        assertThat(flows.getType(), is(FileAttributes.FileType.Directory));
+        assertThat(flows.getFileName()).isEqualTo("_flows2");
+        assertThat(flows.getType()).isEqualTo(FileAttributes.FileType.Directory);
     }
 
     @Test
@@ -189,7 +186,7 @@ class NamespaceFileControllerTest {
         File temp = File.createTempFile("task-flow", ".yml");
         Files.write(temp.toPath(), flowSource.getBytes());
 
-        assertThat(flowRepository.findByIdWithSource(null, NAMESPACE, "task-flow").isEmpty(), is(true));
+        assertThat(flowRepository.findByIdWithSource(null, NAMESPACE, "task-flow").isEmpty()).isEqualTo(true);
 
         MultipartBody body = MultipartBody.builder()
             .addPart("fileContent", "task-flow.yml", temp)
@@ -199,12 +196,9 @@ class NamespaceFileControllerTest {
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE)
         );
 
-        assertThat(
-            flowRepository.findByIdWithSource(null, NAMESPACE, "task-flow").get().getSource(),
-            is(flowSource.replaceFirst("(?m)^namespace: .*$", "namespace: " + NAMESPACE))
-        );
+        assertThat(flowRepository.findByIdWithSource(null, NAMESPACE, "task-flow").get().getSource()).isEqualTo(flowSource.replaceFirst("(?m)^namespace: .*$", "namespace: " + NAMESPACE));
 
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/_flows/task-flow.yml"))), is(false));
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/_flows/task-flow.yml")))).isEqualTo(false);
     }
 
     @Test
@@ -222,7 +216,7 @@ class NamespaceFileControllerTest {
         File temp = File.createTempFile("files", ".zip");
         Files.write(temp.toPath(), zip);
 
-        assertThat(flowRepository.findById(null, NAMESPACE, "task-flow").isEmpty(), is(true));
+        assertThat(flowRepository.findById(null, NAMESPACE, "task-flow").isEmpty()).isEqualTo(true);
 
         MultipartBody body = MultipartBody.builder()
             .addPart("fileContent", "files.zip", temp)
@@ -234,20 +228,20 @@ class NamespaceFileControllerTest {
 
         assertNamespaceFileContent(URI.create("/file.txt"), "file");
         assertNamespaceFileContent(URI.create("/another_file.txt"), "another_file");
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder"))), is(true));
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder")))).isEqualTo(true);
         assertNamespaceFileContent(URI.create("/folder/file.txt"), "folder_file");
         // Highlights the fact that we currently don't export / import empty folders (would require adding a method to storages to also retrieve folders)
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/empty_folder"))), is(false));
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/empty_folder")))).isEqualTo(false);
 
         Flow retrievedFlow = flowRepository.findById(null, NAMESPACE, "task-flow").get();
-        assertThat(retrievedFlow.getNamespace(), is(NAMESPACE));
-        assertThat(((Subflow) retrievedFlow.getTasks().getFirst()).getNamespace(), is(namespaceToExport));
+        assertThat(retrievedFlow.getNamespace()).isEqualTo(NAMESPACE);
+        assertThat(((Subflow) retrievedFlow.getTasks().getFirst()).getNamespace()).isEqualTo(namespaceToExport);
     }
 
     private void assertNamespaceFileContent(URI fileUri, String expectedContent) throws IOException {
         InputStream inputStream = storageInterface.get(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, fileUri));
         String content = new String(inputStream.readAllBytes());
-        assertThat(content, is(expectedContent));
+        assertThat(content).isEqualTo(expectedContent);
     }
 
     @Test
@@ -255,31 +249,31 @@ class NamespaceFileControllerTest {
         storageInterface.createDirectory(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/test")));
         client.toBlocking().exchange(HttpRequest.PUT("/api/v1/namespaces/" + NAMESPACE + "/files?from=/test&to=/foo", null));
         FileAttributes res = storageInterface.getAttributes(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/foo")));
-        assertThat(res.getFileName(), is("foo"));
-        assertThat(res.getType(), is(FileAttributes.FileType.Directory));
+        assertThat(res.getFileName()).isEqualTo("foo");
+        assertThat(res.getType()).isEqualTo(FileAttributes.FileType.Directory);
     }
 
     @Test
     void delete() throws IOException {
         storageInterface.put(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/file.txt")), new ByteArrayInputStream("Hello".getBytes()));
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/files?path=/folder/file.txt", null));
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/file.txt"))), is(false));
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder/file.txt")))).isEqualTo(false);
         // Zombie folders are deleted, but not the root folder
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder"))), is(false));
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, null)), is(true));
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folder")))).isEqualTo(false);
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, null))).isEqualTo(true);
 
         storageInterface.put(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/file1.txt")), new ByteArrayInputStream("Hello".getBytes()));
         storageInterface.put(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/file2.txt")), new ByteArrayInputStream("Hello".getBytes()));
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/files?path=/folderWithMultipleFiles/file1.txt", null));
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/file1.txt"))), is(false));
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/file2.txt"))), is(true));
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/file1.txt")))).isEqualTo(false);
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/file2.txt")))).isEqualTo(true);
         // Since there is still one file in the folder, it should not be deleted
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles"))), is(true));
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, null)), is(true));
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles")))).isEqualTo(true);
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, null))).isEqualTo(true);
 
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/files?path=/folderWithMultipleFiles", null));
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/"))), is(false));
-        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, null)), is(true));
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, URI.create("/folderWithMultipleFiles/")))).isEqualTo(false);
+        assertThat(storageInterface.exists(null, NAMESPACE, toNamespacedStorageUri(NAMESPACE, null))).isEqualTo(true);
     }
 
     @Test
@@ -294,7 +288,7 @@ class NamespaceFileControllerTest {
 
     private void assertForbiddenErrorThrown(Executable executable) {
         HttpClientResponseException httpClientResponseException = Assertions.assertThrows(HttpClientResponseException.class, executable);
-        assertThat(httpClientResponseException.getMessage(), startsWith("Illegal argument: Forbidden path: "));
+        assertThat(httpClientResponseException.getMessage()).startsWith("Illegal argument: Forbidden path: ");
     }
 
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {

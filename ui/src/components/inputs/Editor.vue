@@ -97,6 +97,7 @@
             schemaType: {type: String, default: undefined},
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
+            keepFocused: {type: Boolean, default: undefined},
             fullHeight: {type: Boolean, default: true},
             customHeight: {type: Number, default: 7},
             theme: {type: String, default: undefined},
@@ -109,6 +110,7 @@
             creating: {type: Boolean, default: false},
             label: {type: String, default: undefined},
             shouldFocus: {type: Boolean, default: true},
+            showScroll: {type: Boolean, default: false},
         },
         components: {
             MonacoEditor,
@@ -194,12 +196,12 @@
                     options.scrollBeyondLastColumn = 0;
                     options.overviewRulerLanes = 0;
                     options.scrollbar = {
-                        vertical: "hidden",
+                        vertical: !this.showScroll ? "hidden" : "visible",
                         horizontal: "hidden",
                         alwaysConsumeMouseWheel: false,
                         handleMouseWheel: true,
                         horizontalScrollbarSize: 0,
-                        verticalScrollbarSize: 0,
+                        verticalScrollbarSize: !this.showScroll ? 0 : 5,
                         useShadows: false,
                     };
                     options.stickyScroll = {
@@ -323,7 +325,7 @@
 
                 // TabFocus is global to all editor so revert the behavior on non inputs
                 this.editor.onDidFocusEditorText?.(() => {
-                    TabFocus.setTabFocusMode(this.input);
+                    TabFocus.setTabFocusMode(this.keepFocused === undefined ? this.input : false);
                 });
 
                 if (this.input) {
@@ -497,7 +499,7 @@
 @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 @import "../../styles/layout/root-dark.scss";
 
-:not(.namespace-form, .el-drawer__body) > .ks-editor {
+:not(.namespace-defaults, .el-drawer__body) > .ks-editor {
     flex-direction: column;
     height: 100%;
 }

@@ -26,8 +26,7 @@ import java.time.ZonedDateTime;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public abstract class AbstractExecutionServiceTest {
@@ -117,9 +116,9 @@ public abstract class AbstractExecutionServiceTest {
             null
         );
 
-        assertThat(purge.getExecutionsCount(), is(1));
-        assertThat(purge.getLogsCount(), is(10));
-        assertThat(purge.getStoragesCount(), is(5));
+        assertThat(purge.getExecutionsCount()).isEqualTo(1);
+        assertThat(purge.getLogsCount()).isEqualTo(10);
+        assertThat(purge.getStoragesCount()).isEqualTo(5);
 
 
         purge = executionService.purge(
@@ -135,6 +134,6 @@ public abstract class AbstractExecutionServiceTest {
             null
         );
 
-        assertThat(purge.getExecutionsCount(), is(0));
+        assertThat(purge.getExecutionsCount()).isEqualTo(0);
     }
 }

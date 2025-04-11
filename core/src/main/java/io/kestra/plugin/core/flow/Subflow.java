@@ -2,12 +2,14 @@ package io.kestra.plugin.core.flow;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
@@ -135,8 +137,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         title = "Whether the subflow should inherit labels from this execution that triggered it.",
         description = "By default, labels are not passed to the subflow execution. If you set this option to `true`, the child flow execution will inherit all labels from the parent execution."
     )
-    @PluginProperty
-    private final Boolean inheritLabels = false;
+    private final Property<Boolean> inheritLabels = Property.of(false);
 
     /**
      * @deprecated Output value should now be defined part of the Flow definition.
@@ -186,7 +187,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             currentTaskRun,
             inputs,
             labels,
-            inheritLabels,
+            runContext.render(inheritLabels).as(Boolean.class).orElseThrow(),
             scheduleDate
         )
             .<List<SubflowExecution<?>>>map(subflowExecution -> List.of(subflowExecution))
@@ -197,7 +198,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     public Optional<SubflowExecutionResult> createSubflowExecutionResult(
         RunContext runContext,
         TaskRun taskRun,
-        io.kestra.core.models.flows.Flow flow,
+        FlowInterface flow,
         Execution execution
     ) {
         // we only create a worker task result when the execution is terminated

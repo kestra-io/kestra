@@ -3,6 +3,7 @@ package io.kestra.core.services;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
 import io.kestra.plugin.core.condition.ExecutionFlow;
 import io.kestra.plugin.core.condition.ExecutionNamespace;
@@ -25,9 +26,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ConditionServiceTest {
@@ -51,18 +50,18 @@ class ConditionServiceTest {
 
         List<Condition> conditions = Arrays.asList(
             ExecutionFlow.builder()
-                .namespace(flow.getNamespace())
-                .flowId(flow.getId())
+                .namespace(Property.of(flow.getNamespace()))
+                .flowId(Property.of(flow.getId()))
                 .build(),
             ExecutionNamespace.builder()
-                .namespace(flow.getNamespace())
+                .namespace(Property.of(flow.getNamespace()))
                 .build()
         );
 
 
         boolean valid = conditionService.valid(flow, conditions, conditionContext);
 
-        assertThat(valid, is(true));
+        assertThat(valid).isEqualTo(true);
     }
 
     @Test
@@ -78,8 +77,8 @@ class ConditionServiceTest {
 
         List<Condition> conditions = Collections.singletonList(
             ExecutionFlow.builder()
-                .namespace(flow.getNamespace())
-                .flowId(flow.getId())
+                .namespace(Property.of(flow.getNamespace()))
+                .flowId(Property.of(flow.getId()))
                 .build()
         );
 
@@ -87,6 +86,6 @@ class ConditionServiceTest {
 
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getNamespace().equals("io.kestra.core.services.conditionservicetest") && logEntry.getFlowId().equals("exception"));
         receive.blockLast();
-        assertThat(matchingLog, notNullValue());
+        assertThat(matchingLog).isNotNull();
     }
 }

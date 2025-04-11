@@ -29,7 +29,7 @@
     const UNKNOWN = "unknown";
 
     const label = computed(() => props.option.label ?? props.option.field);
-    const operation = computed(() => props.option?.operation ?? props.option?.comparator?.value ?? (props.option?.label === "text" ? "$eq" : undefined));
+    const operation = computed(() => props.option?.operation ?? props.option?.comparator?.value ?? (props.option?.label === "text" ? "EQUALS" : undefined));
     const value = computed(() => {
         const {value, label, operation} = props.option;
 
@@ -56,20 +56,23 @@
 </script>
 
 <style scoped lang="scss">
+@import "../styles/filter.scss";
+
 span {
-    padding: 0.33rem 0.35rem;
+    padding: 0.40rem 0.35rem;
     display: inline-block;
 
     &:first-child,
     .operation {
         background: var(--ks-tag-background);
     }
+    
     .operation {
-        border-left: 4px solid #ffffff;
-        border-right: 4px solid #ffffff;
+        border-left: 4px solid $white;
+        border-right: 4px solid $white;
 
         html.dark & {
-            border-color: #20232d;
+            border-color: $border-color;
         }
     }
 }

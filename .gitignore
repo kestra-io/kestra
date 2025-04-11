@@ -58,3 +58,4 @@ core/src/main/resources/gradle.properties
 **/allure-results/*
 
 *storybook.log
+storybook-static

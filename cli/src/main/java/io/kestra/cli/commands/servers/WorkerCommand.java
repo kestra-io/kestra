@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.runners.Worker;
 import io.kestra.core.utils.Await;
@@ -36,7 +37,11 @@ public class WorkerCommand extends AbstractServerCommand {
 
     @Override
     public Integer call() throws Exception {
+
+        KestraContext.getContext().injectWorkerConfigs(thread, workerGroupKey);
+
         super.call();
+
         if (this.workerGroupKey != null && !this.workerGroupKey.matches("[a-zA-Z0-9_-]+")) {
             throw new IllegalArgumentException("The --worker-group option must match the [a-zA-Z0-9_-]+ pattern");
         }

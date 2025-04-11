@@ -1,5 +1,5 @@
 id: if
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 tasks:
   - id: if_true

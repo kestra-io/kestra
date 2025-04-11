@@ -16,8 +16,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class KvUpdateCommandTest {
     @Test
@@ -28,6 +27,8 @@ class KvUpdateCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -41,8 +42,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("string").get(), is(new KVValue("stringValue")));
-            assertThat(((InternalKVStore)kvStore).getRawValue("string").get(), is("\"stringValue\""));
+            assertThat(kvStore.getValue("string").get()).isEqualTo(new KVValue("stringValue"));
+            assertThat(((InternalKVStore) kvStore).getRawValue("string").get()).isEqualTo("\"stringValue\"");
         }
     }
 
@@ -54,6 +55,8 @@ class KvUpdateCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -67,8 +70,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("int").get(), is(new KVValue(1)));
-            assertThat(((InternalKVStore)kvStore).getRawValue("int").get(), is("1"));
+            assertThat(kvStore.getValue("int").get()).isEqualTo(new KVValue(1));
+            assertThat(((InternalKVStore) kvStore).getRawValue("int").get()).isEqualTo("1");
         }
     }
 
@@ -80,6 +83,8 @@ class KvUpdateCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -95,8 +100,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("intStr").get(), is(new KVValue("1")));
-            assertThat(((InternalKVStore)kvStore).getRawValue("intStr").get(), is("\"1\""));
+            assertThat(kvStore.getValue("intStr").get()).isEqualTo(new KVValue("1"));
+            assertThat(((InternalKVStore) kvStore).getRawValue("intStr").get()).isEqualTo("\"1\"");
         }
     }
 
@@ -108,6 +113,8 @@ class KvUpdateCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -121,8 +128,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("object").get(), is(new KVValue(Map.of("some", "json"))));
-            assertThat(((InternalKVStore)kvStore).getRawValue("object").get(), is("{some:\"json\"}"));
+            assertThat(kvStore.getValue("object").get()).isEqualTo(new KVValue(Map.of("some", "json")));
+            assertThat(((InternalKVStore) kvStore).getRawValue("object").get()).isEqualTo("{some:\"json\"}");
         }
     }
 
@@ -134,6 +141,8 @@ class KvUpdateCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -149,8 +158,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("objectStr").get(), is(new KVValue("{\"some\":\"json\"}")));
-            assertThat(((InternalKVStore)kvStore).getRawValue("objectStr").get(), is("\"{\\\"some\\\":\\\"json\\\"}\""));
+            assertThat(kvStore.getValue("objectStr").get()).isEqualTo(new KVValue("{\"some\":\"json\"}"));
+            assertThat(((InternalKVStore) kvStore).getRawValue("objectStr").get()).isEqualTo("\"{\\\"some\\\":\\\"json\\\"}\"");
         }
     }
 
@@ -167,6 +176,8 @@ class KvUpdateCommandTest {
             Files.write(file.toPath(), "{\"some\":\"json\",\"from\":\"file\"}".getBytes());
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -181,8 +192,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("objectFromFile").get(), is(new KVValue(Map.of("some", "json", "from", "file"))));
-            assertThat(((InternalKVStore)kvStore).getRawValue("objectFromFile").get(), is("{some:\"json\",from:\"file\"}"));
+            assertThat(kvStore.getValue("objectFromFile").get()).isEqualTo(new KVValue(Map.of("some", "json", "from", "file")));
+            assertThat(((InternalKVStore) kvStore).getRawValue("objectFromFile").get()).isEqualTo("{some:\"json\",from:\"file\"}");
         }
     }
 }

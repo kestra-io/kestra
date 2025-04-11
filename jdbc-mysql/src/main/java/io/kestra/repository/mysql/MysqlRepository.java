@@ -16,6 +16,7 @@ import org.jooq.DSLContext;
 import org.jooq.Field;
 import org.jooq.Record;
 import org.jooq.RecordMapper;
+import org.jooq.Result;
 import org.jooq.Select;
 import org.jooq.SelectConditionStep;
 import org.jooq.impl.DSL;
@@ -58,15 +59,14 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
         return DSL.condition("MATCH (" + String.join(", ", fields) + ") AGAINST (? IN BOOLEAN MODE)", match);
     }
 
+    @Override
     public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper) {
-        List<E> map = this.pageable(select, pageable)
-            .fetch()
-            .map(mapper);
+        Result<R> records = this.pageable(select, pageable).fetch();
 
-        return dslContextWrapper.transactionResult(configuration -> new ArrayListTotal<>(
-            map,
-            DSL.using(configuration).fetchOne("SELECT FOUND_ROWS()").into(Integer.class)
-        ));
+        return dslContextWrapper.transactionResult(configuration -> {
+            Integer rows = context.fetchOne("SELECT FOUND_ROWS()").into(Integer.class);
+            return new ArrayListTotal<>(records.map(mapper), rows);
+        });
     }
 
     @Override

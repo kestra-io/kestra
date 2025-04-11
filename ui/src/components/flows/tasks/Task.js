@@ -56,8 +56,8 @@ export default {
                 return "complex";
             }
 
-            if (Object.prototype.hasOwnProperty.call(property, "oneOf")) {
-                return "one-of";
+            if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
+                return "any-of";
             }
 
             if (Object.prototype.hasOwnProperty.call(property, "additionalProperties")) {
@@ -80,6 +80,14 @@ export default {
 
             if (key === "inputs" && hasNamespaceProperty && properties.includes("flowId")) {
                 return "subflow-inputs";
+            }
+
+            if( property.type === "array") {
+                if (property.items?.$ref?.includes("tasks.Task")) {
+                    return "tasks";
+                }
+
+                return "array";
             }
 
             return property.type || "expression";

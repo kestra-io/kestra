@@ -19,14 +19,15 @@ import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
 import AccountOutline from "vue-material-design-icons/AccountOutline.vue";
 import ShieldCheckOutline from "vue-material-design-icons/ShieldCheckOutline.vue";
 import ServerOutline from "vue-material-design-icons/ServerOutline.vue";
-import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue"
+import ShieldLockOutline from "vue-material-design-icons/ShieldLockOutline.vue";
 import FormatListGroupPlus from "vue-material-design-icons/FormatListGroupPlus.vue";
 import DatabaseOutline from "vue-material-design-icons/DatabaseOutline.vue";
+import ShieldKeyOutline from "vue-material-design-icons/ShieldKeyOutline.vue";
 
 export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
-    const $router = useRouter()
-    const store = useStore()
+    const $router = useRouter();
+    const store = useStore();
 
     /**
      * Returns all route names that start with the given route
@@ -34,7 +35,12 @@ export function useLeftMenu() {
      * @returns
      */
     function routeStartWith(route: string) {
-        return $router?.getRoutes().filter(r => typeof r.name === "string" && r.name.startsWith(route)).map(r => r.name);
+        return $router
+            ?.getRoutes()
+            .filter(
+                (r) => typeof r.name === "string" && r.name.startsWith(route),
+            )
+            .map((r) => r.name);
     }
 
     const configs = computed(() => store.state.misc.configs);
@@ -68,11 +74,11 @@ export function useLeftMenu() {
                 title: t("apps"),
                 icon: {
                     element: shallowRef(FormatListGroupPlus),
-                    class: "menu-icon"
+                    class: "menu-icon",
                 },
                 attributes: {
-                    locked: true
-                }
+                    locked: true,
+                },
             },
             {
                 href: {name: "templates/list"},
@@ -82,7 +88,7 @@ export function useLeftMenu() {
                     element: shallowRef(ContentCopy),
                     class: "menu-icon",
                 },
-                hidden: !configs.value.isTemplateEnabled
+                hidden: !configs.value.isTemplateEnabled,
             },
             {
                 href: {name: "executions/list"},
@@ -90,7 +96,7 @@ export function useLeftMenu() {
                 title: t("executions"),
                 icon: {
                     element: shallowRef(TimelineClockOutline),
-                    class: "menu-icon"
+                    class: "menu-icon",
                 },
             },
             {
@@ -99,9 +105,9 @@ export function useLeftMenu() {
                 title: t("taskruns"),
                 icon: {
                     element: shallowRef(ChartTimeline),
-                    class: "menu-icon"
+                    class: "menu-icon",
                 },
-                hidden: !configs.value.isTaskRunEnabled
+                hidden: !configs.value.isTaskRunEnabled,
             },
             {
                 href: {name: "logs/list"},
@@ -109,17 +115,17 @@ export function useLeftMenu() {
                 title: t("logs"),
                 icon: {
                     element: shallowRef(TimelineTextOutline),
-                    class: "menu-icon"
+                    class: "menu-icon",
                 },
             },
             {
-                href: {name: "namespaces"},
+                href: {name: "namespaces/list"},
                 routes: routeStartWith("namespaces"),
                 title: t("namespaces"),
                 icon: {
                     element: shallowRef(DotsSquare),
-                    class: "menu-icon"
-                }
+                    class: "menu-icon",
+                },
             },
             {
                 href: {name: "kv/list"},
@@ -127,15 +133,27 @@ export function useLeftMenu() {
                 title: t("kv.name"),
                 icon: {
                     element: shallowRef(DatabaseOutline),
-                    class: "menu-icon"
-                }
+                    class: "menu-icon",
+                },
+            },
+            {
+                href: {name: "secrets/list"},
+                routes: routeStartWith("secrets"),
+                title: t("secret.names"),
+                icon: {
+                    element: shallowRef(ShieldKeyOutline),
+                    class: "menu-icon",
+                },
+                attributes: {
+                    locked: true,
+                },
             },
             {
                 routes: routeStartWith("blueprints"),
                 title: t("blueprints.title"),
                 icon: {
                     element: shallowRef(BallotOutline),
-                    class: "menu-icon"
+                    class: "menu-icon",
                 },
                 child: [
                     {
@@ -143,20 +161,26 @@ export function useLeftMenu() {
                         routes: routeStartWith("blueprints/flow"),
                         icon: {
                             element: shallowRef(FileTreeOutline),
-                            class: "menu-icon"
+                            class: "menu-icon",
                         },
-                        href: {name: "blueprints", params: {kind: "flow", tab: "community"}},
+                        href: {
+                            name: "blueprints",
+                            params: {kind: "flow", tab: "community"},
+                        },
                     },
                     {
                         title: t("blueprints.dashboards"),
                         routes: routeStartWith("blueprints/dashboard"),
                         icon: {
                             element: shallowRef(ViewDashboardVariantOutline),
-                            class: "menu-icon"
+                            class: "menu-icon",
                         },
-                        href: {name: "blueprints", params: {kind: "dashboard", tab: "community"}},
+                        href: {
+                            name: "blueprints",
+                            params: {kind: "dashboard", tab: "community"},
+                        },
                     },
-                ]
+                ],
             },
             {
                 href: {name: "plugins/list"},
@@ -164,7 +188,7 @@ export function useLeftMenu() {
                 title: t("plugins.names"),
                 icon: {
                     element: shallowRef(Connection),
-                    class: "menu-icon"
+                    class: "menu-icon",
                 },
             },
             {
@@ -172,7 +196,7 @@ export function useLeftMenu() {
                 routes: routeStartWith("admin"),
                 icon: {
                     element: shallowRef(ShieldAccountVariantOutline),
-                    class: "menu-icon"
+                    class: "menu-icon",
                 },
                 child: [
                     {
@@ -181,11 +205,11 @@ export function useLeftMenu() {
                         title: t("iam"),
                         icon: {
                             element: shallowRef(AccountOutline),
-                            class: "menu-icon"
+                            class: "menu-icon",
                         },
                         attributes: {
-                            locked: true
-                        }
+                            locked: true,
+                        },
                     },
                     {
                         href: {name: "admin/auditlogs/list"},
@@ -193,11 +217,11 @@ export function useLeftMenu() {
                         title: t("auditlogs"),
                         icon: {
                             element: shallowRef(ShieldCheckOutline),
-                            class: "menu-icon"
+                            class: "menu-icon",
                         },
                         attributes: {
-                            locked: true
-                        }
+                            locked: true,
+                        },
                     },
                     {
                         href: {name: "admin/triggers"},
@@ -205,8 +229,8 @@ export function useLeftMenu() {
                         title: t("triggers"),
                         icon: {
                             element: shallowRef(TimerCogOutline),
-                            class: "menu-icon"
-                        }
+                            class: "menu-icon",
+                        },
                     },
                     {
                         href: {name: "admin/instance"},
@@ -214,23 +238,23 @@ export function useLeftMenu() {
                         title: t("instance"),
                         icon: {
                             element: shallowRef(ServerOutline),
-                            class: "menu-icon"
+                            class: "menu-icon",
                         },
                         attributes: {
-                            locked: true
-                        }
+                            locked: true,
+                        },
                     },
                     {
                         href: {name: "admin/tenants/list"},
                         routes: routeStartWith("admin/tenants"),
-                        title: t("tenants"),
+                        title: t("tenant.names"),
                         icon: {
                             element: shallowRef(ShieldLockOutline),
-                            class: "menu-icon"
+                            class: "menu-icon",
                         },
                         attributes: {
-                            locked: true
-                        }
+                            locked: true,
+                        },
                     },
                     {
                         href: {name: "admin/stats"},
@@ -238,10 +262,10 @@ export function useLeftMenu() {
                         title: t("stats"),
                         icon: {
                             element: shallowRef(ChartBoxOutline),
-                            class: "menu-icon"
+                            class: "menu-icon",
                         },
-                    }
-                ]
+                    },
+                ],
             },
             {
                 href: {name: "settings"},
@@ -249,11 +273,11 @@ export function useLeftMenu() {
                 title: t("settings.label"),
                 icon: {
                     element: shallowRef(CogOutline),
-                    class: "menu-icon"
-                }
-            }
+                    class: "menu-icon",
+                },
+            },
         ];
-    }
+    };
 
-    return {generateMenu} ;
+    return {generateMenu};
 }

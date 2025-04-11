@@ -28,7 +28,7 @@ public class H2Queue<T> extends JdbcQueue<T> {
                 AbstractJdbcRepository.field("offset")
             )
             .from(this.table)
-            .where(AbstractJdbcRepository.field("type").eq(this.cls.getName()))
+            .where(AbstractJdbcRepository.field("type").eq(queueType()))
             .and(DSL.or(List.of(
                 AbstractJdbcRepository.field("consumers").isNull(),
                 DSL.condition("NOT(ARRAY_CONTAINS(\"consumers\", ?))", queueType)

@@ -504,7 +504,8 @@ form.ks-horizontal {
         }
 
         &.is-active > * {
-            background-color: var(--ks-content-link);
+            background-color: var(--ks-button-background-primary);
+            color: var(--ks-button-content-primary);
         }
 
         &.is-disabled a {
@@ -809,12 +810,18 @@ form.ks-horizontal {
 .el-autocomplete-suggestion {
     .el-autocomplete-suggestion__wrap {
         max-height: 40vh;
+        padding: 10px 12px 10px 10px;
     }
 
     li {
         // highlight of keyboard selection & element plus hover
         --el-fill-color-light: var(--ks-select-hover);
         padding: 0 1rem;
+        border-radius: 5px;
+
+        &.highlighted {
+            margin-bottom: 3px;
+        }
 
         a {
             color: var(--ks-content-primary);
@@ -1203,4 +1210,8 @@ form.ks-horizontal {
 
 .el-empty {
     background-color: var(--ks-background-card);
+}
+
+.el-scrollbar__thumb {
+    background-color: var(--ks-border-primary) !important;
 }

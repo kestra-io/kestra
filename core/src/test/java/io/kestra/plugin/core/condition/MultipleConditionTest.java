@@ -2,6 +2,7 @@ package io.kestra.plugin.core.condition;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.conditions.Condition;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.junit.annotations.KestraTest;
 import org.junit.jupiter.api.Test;
@@ -14,8 +15,8 @@ import io.kestra.core.utils.TestsUtils;
 import java.util.Collections;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
+
 @KestraTest
 class MultipleConditionTest {
     @Inject
@@ -33,10 +34,10 @@ class MultipleConditionTest {
             .conditions(
                 ImmutableMap.of(
                 "first", ExecutionStatus.builder()
-                    .in(Collections.singletonList(State.Type.SUCCESS))
+                    .in(Property.of(Collections.singletonList(State.Type.SUCCESS)))
                     .build(),
                 "second", Expression.builder()
-                    .expression("{{ flow.id }}")
+                    .expression(new Property<>("{{ flow.id }}"))
                     .build()
             ))
             .build();
@@ -44,6 +45,6 @@ class MultipleConditionTest {
         boolean test = conditionService.isValid((Condition) build, flow, execution, multipleConditionStorage);
 
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 }

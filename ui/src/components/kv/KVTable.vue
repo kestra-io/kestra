@@ -1,5 +1,7 @@
 <template>
-    <KestraFilter :placeholder="$t('search')" :search-callback="(input) => search = input" :decode="false" />
+    <section class="d-inline-flex mb-3 filters">
+        <el-input v-model="search" :placeholder="$t('search')" />
+    </section>
 
     <select-table
         :data="filteredKvs"
@@ -33,7 +35,7 @@
         />
         <el-table-column prop="key" sortable="custom" :sort-orders="['ascending', 'descending']" :label="$t('key')">
             <template #default="scope">
-                <id :value="scope.row.key" :shrink="false" />
+                <id v-if="scope.row.key !== undefined" :value="scope.row.key" :shrink="false" />
             </template>
         </el-table-column>
         <el-table-column
@@ -57,7 +59,7 @@
 
         <el-table-column column-key="copy" class-name="row-action">
             <template #default="scope">
-                <el-tooltip :content="$t('copy_to_clipboard')">
+                <el-tooltip v-if="scope.row.key !== undefined" :content="$t('copy_to_clipboard')">
                     <el-button :icon="ContentCopy" link @click="Utils.copy(`\{\{ kv('${scope.row.key}') \}\}`)" />
                 </el-tooltip>
             </template>
@@ -65,13 +67,23 @@
 
         <el-table-column column-key="update" class-name="row-action">
             <template #default="scope">
-                <el-button v-if="canUpdate(scope.row)" :icon="FileDocumentEdit" link @click="updateKvModal(scope.row.namespace, scope.row.key)" />
+                <el-button
+                    v-if="canUpdate(scope.row)"
+                    :icon="FileDocumentEdit"
+                    link
+                    @click="updateKvModal(scope.row.namespace, scope.row.key)"
+                />
             </template>
         </el-table-column>
 
         <el-table-column column-key="delete" class-name="row-action">
             <template #default="scope">
-                <el-button v-if="canDelete(scope.row)" :icon="Delete" link @click="removeKv(scope.row.namespace, scope.row.key)" />
+                <el-button
+                    v-if="canDelete(scope.row)"
+                    :icon="Delete"
+                    link
+                    @click="removeKv(scope.row.namespace, scope.row.key)"
+                />
             </template>
         </el-table-column>
     </select-table>
@@ -83,7 +95,12 @@
     >
         <el-form class="ks-horizontal" :model="kv" :rules="rules" ref="form">
             <el-form-item v-if="namespace === undefined" :label="$t('namespace')" prop="namespace" required>
-                <namespace-select v-model="kv.namespace" :readonly="kv.update" data-type="flow" :include-system-namespace="true" />
+                <namespace-select
+                    v-model="kv.namespace"
+                    :readonly="kv.update"
+                    data-type="flow"
+                    :include-system-namespace="true"
+                />
             </el-form-item>
 
             <el-form-item :label="$t('key')" prop="key" required>
@@ -175,8 +192,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import Check from "vue-material-design-icons/Check.vue";
-    import KestraFilter from "../filter/KestraFilter.vue";
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 
     import Utils from "../../utils/utils";
 </script>
@@ -188,11 +204,12 @@
     import {NamespaceIterator} from "../../composables/useNamespaces";
     import useNamespaces from "../../composables/useNamespaces";
     import {groupBy} from "lodash";
-    import {mapState} from "vuex";
+    import {mapState, mapMutations} from "vuex";
     import action from "../../models/action";
     import permission from "../../models/permission";
 
     export default {
+        inheritAttrs: false,
         mixins: [SelectTableActions],
         components: {
             Id,
@@ -200,6 +217,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapState("namespace", ["addKvModalVisible"]),
             filteredKvs() {
                 return this.kvs?.filter(kv => !this.search || kv.key.toLowerCase().includes(this.search.toLowerCase()));
             },
@@ -210,12 +228,55 @@
                 get() {
                     return this.addKvModalVisible;
                 },
-                set(newValue) {
-                    this.$emit("update:addKvModalVisible", newValue);
+                set(newValue:boolean) {
+                    this.changeKVModalVisibility(newValue);
+                }
+            }
+        },
+        mounted() {
+            if (this.namespace !== undefined) {
+                this.fetchKvs();
+            }
+        },
+        props: {
+            namespace: {
+                type: String,
+                default: undefined
+            }
+        },
+        watch: {
+            addKvDrawerVisible(newValue) {
+                if (!newValue) {
+                    this.resetKv();
                 }
             },
-            rules() {
-                return {
+            "kv.type"() {
+                if (this.$refs.form) {
+                    this.$refs.form.clearValidate("value");
+                }
+            },
+            search(newValue) {
+                if (newValue !== undefined) {
+                    this.$router.push({query: {
+                        q: newValue
+                    }})
+                }
+            }
+        },
+        data() {
+            return {
+                kv: {
+                    namespace: this.namespace,
+                    key: undefined,
+                    type: "STRING",
+                    value: undefined,
+                    ttl: undefined,
+                    update: undefined
+                },
+                kvs: undefined,
+                namespaceIterator: undefined,
+                search: this.$route.query?.q ?? "",
+                rules: {
                     key: [
                         {required: true, trigger: "change"},
                         {validator: this.kvKeyDuplicate, trigger: "change"},
@@ -239,59 +300,15 @@
                         {validator: this.durationValidator, trigger: "change"}
                     ]
                 }
-            }
-        },
-        mounted() {
-            if (this.namespace !== undefined) {
-                this.fetchKvs();
-            }
-        },
-        props: {
-            addKvModalVisible: {
-                type: Boolean,
-                default: false
-            },
-            namespace: {
-                type: String,
-                default: undefined
-            }
-        },
-        emits: [
-            "update:addKvModalVisible"
-        ],
-        watch: {
-            addKvDrawerVisible(newValue) {
-                if (!newValue) {
-                    this.resetKv();
-                }
-            },
-            "kv.type"() {
-                if (this.$refs.form) {
-                    this.$refs.form.clearValidate("value");
-                }
-            }
-        },
-        data() {
-            return {
-                kv: {
-                    namespace: this.namespace,
-                    key: undefined,
-                    type: "STRING",
-                    value: undefined,
-                    ttl: undefined,
-                    update: undefined
-                },
-                kvs: undefined,
-                namespaceIterator: undefined,
-                search: "",
             };
         },
         methods: {
+            ...mapMutations("namespace", ["changeKVModalVisibility"]),
             canUpdate(kv) {
-                return this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
+                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
             },
             canDelete(kv) {
-                return this.user.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
+                return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.DELETE, kv.namespace)
             },
             jsonValidator(rule, value, callback) {
                 try {
@@ -344,6 +361,10 @@
                 }
 
                 this.kvs = this.kvs?.concat(kvFetch) ?? kvFetch;
+
+                if (this.namespace === undefined && this.filteredKvs.length === 0) {
+                    return this.fetchKvs();
+                }
 
                 return kvFetch;
             },
@@ -398,13 +419,15 @@
                         });
                     });
             },
-            reloadKvs() {
+            async reloadKvs() {
                 this.namespaceIterator = undefined;
+
+                const previousLength = this.secrets?.length ?? 0;
+                await this.$refs.selectTable.resetInfiniteScroll();
                 this.kvs = [];
-                this.$refs.selectTable.resetInfiniteScroll();
 
                 // If we are in the global KV view we let the infinite scroll handling the fetch
-                if (this.namespace !== undefined) {
+                if (this.namespace !== undefined || previousLength === 0) {
                     this.fetchKvs();
                 }
             },

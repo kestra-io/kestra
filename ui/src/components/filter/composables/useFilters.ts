@@ -24,7 +24,7 @@ const buildComparator = (label: string, value: string, multiple: boolean = false
     return {label, value, multiple};
 };
 
-export function useFilters(prefix: string) {
+export function useFilters(prefix: string, isDefaultDashboard: boolean) {
     const {t} = useI18n({useScope: "global"});
 
     const comparator = (which: string) => `filters.comparators.${which}`;
@@ -40,7 +40,7 @@ export function useFilters(prefix: string) {
         LESS_THAN: buildComparator(t(comparator("less_than")), "LESS_THAN"),
     };
 
-    const OPTIONS: Option[] = [
+    let OPTIONS: Option[] = [
         {
             key: "namespace",
             icon: ICONS.DotsSquare,
@@ -176,6 +176,24 @@ export function useFilters(prefix: string) {
             comparators: [COMPARATORS.EQUALS, COMPARATORS.NOT_EQUALS],
         },
     ];
+
+    // This is a temporary solution to remove the comparators that are not working for the default dashboard
+    // as it still rely on old stats controller
+    // TODO: to be removed when replacing to custom dashboard
+    if (isDefaultDashboard) {
+        OPTIONS = OPTIONS.map(option => ({
+            ...option,
+            comparators: option.comparators.filter(comparator => {
+                if (!comparator) {
+                    return false;
+                }
+                return !comparator.value.includes("NOT")
+                    && !comparator.value.includes("WITH")
+                    && !comparator.value.includes("IN")
+                    && !comparator.value.includes("CONTAINS")
+            })
+        }));
+    }
 
     const keys = {saved: `saved__${prefix}`};
 

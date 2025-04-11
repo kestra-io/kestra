@@ -30,10 +30,13 @@
 
     const emits = defineEmits(["removeElement", "moveElement"]);
 
-    const props = defineProps({
-        section: {type: String, required: true},
-        element: {type: Object, required: true},
-    });
+    const props = defineProps<{
+        section: string;
+        element: {
+            id: string;
+            type: string;
+        };
+    }>();
 
     import {useStore} from "vuex";
     const store = useStore();

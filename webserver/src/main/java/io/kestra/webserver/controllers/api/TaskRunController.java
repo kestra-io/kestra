@@ -88,9 +88,7 @@ public class TaskRunController {
         TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
         validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
 
-        ZonedDateTime resolvedStartDate = RequestUtils.resolveAbsoluteDateTime(timeLineSearch.getStartDate(),
-            timeLineSearch.getTimeRange(),
-            now);
+        ZonedDateTime resolvedStartDate = timeLineSearch.getStartDate();
 
         // Update filters with the resolved startDate
         filters = QueryFilterUtils.updateFilters(filters, resolvedStartDate);

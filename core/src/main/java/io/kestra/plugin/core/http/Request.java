@@ -272,7 +272,40 @@ import java.util.OptionalInt;
                     formData:
                       url: "{{ outputs.http_download.uri }}"
                 """
-        )
+        ),
+        @Example(
+          title = "Send a multiline JSON message using HTTP POST request and inputs with a pebble expression. We recommend this method to avoid JSON string interpolation",
+          full = true,
+          code = """
+              id: http_multiline_json
+              namespace: company.team
+
+              inputs:
+                - id: title
+                  type: STRING
+                  defaults: This is the title of the request
+                - id: message
+                  type: STRING
+                  defaults: |-
+                    This is my long
+                    multiline message.
+                - id: priority
+                  type: INT
+                  defaults: 5
+
+              tasks:
+                - id: send
+                  type: io.kestra.plugin.core.http.Request
+                  uri: "https://reqres.in/api/test-request"
+                  method: "POST"
+                  body: |
+                    {{ {
+                      "title": inputs.title,
+                      "message": inputs.message,
+                      "priority": inputs.priority,
+                    } }}
+              """
+      )
     },
     aliases = "io.kestra.plugin.fs.http.Request"
 )

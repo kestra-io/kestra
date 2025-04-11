@@ -1,35 +1,49 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
     <section class="full-container">
-        <editor-view
-            v-if="flow"
-            :flow-id="flow?.id"
-            :namespace="flow?.namespace"
-            :flow-validation="flowValidation"
-            :flow-graph="flowGraph"
-            :is-read-only="false"
-            is-creating
-            is-dirty
-            :flow="flow"
-            :next-revision="1"
-        />
+        <template v-if="multiPanelEditor">
+            <MultiPanelEditorView v-if="flow" />
+        </template>
+        <template v-else>
+            <editor-view
+                v-if="flow"
+                :flow-id="flow?.id"
+                :namespace="flow?.namespace"
+                :flow-validation="flowValidation"
+                :flow-graph="flowGraph"
+                :is-read-only="false"
+                is-creating
+                is-dirty
+                :flow="flow"
+                :next-revision="1"
+            />
+        </template>
     </section>
 </template>
 
 <script>
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    import EditorView from "../inputs/EditorView.vue";
     import {mapGetters, mapMutations, mapState} from "vuex";
+    import {useStorage} from "@vueuse/core";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import EditorView from "../inputs/EditorView.vue";
+    import MultiPanelEditorView from "./MultiPanelEditorView.vue";
 
     import {getRandomFlowID} from "../../../scripts/product/flow";
 
     export default {
         mixins: [RouteContext],
         components: {
+            MultiPanelEditorView,
             EditorView,
             TopNavBar
+        },
+
+        setup() {
+            return {
+                multiPanelEditor: useStorage("multiPanelEditor", false)
+            }
         },
         created() {
             this.$store.commit("flow/setIsCreating", true);
@@ -39,7 +53,6 @@
                 this.$tours["guidedTour"]?.start();
             }
             this.setupFlow()
-
             this.closeAllTabs()
         },
         beforeUnmount() {

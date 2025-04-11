@@ -10,8 +10,7 @@ import java.util.ConcurrentModificationException;
 import java.util.concurrent.atomic.AtomicInteger;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -40,10 +39,10 @@ class RetryUtilsTest {
                 () -> true
             );
 
-            assertThat(inc.get(), is(0));
+            assertThat(inc.get()).isEqualTo(0);
         });
 
-        assertThat(retryFailed.getAttemptCount(), is(3));
+        assertThat(retryFailed.getAttemptCount()).isEqualTo(3);
     }
 
     @Test
@@ -56,8 +55,8 @@ class RetryUtilsTest {
             () -> inc.getAndDecrement() == 1
         );
 
-        assertThat(inc.get(), is(0));
-        assertThat(retry, is(true));
+        assertThat(inc.get()).isEqualTo(0);
+        assertThat(retry).isEqualTo(true);
     }
 
     @Test
@@ -73,10 +72,10 @@ class RetryUtilsTest {
                 }
             );
 
-            assertThat(inc.get(), is(0));
+            assertThat(inc.get()).isEqualTo(0);
         });
 
-        assertThat(retryFailed.getAttemptCount(), is(3));
+        assertThat(retryFailed.getAttemptCount()).isEqualTo(3);
     }
 
     @Test
@@ -95,8 +94,8 @@ class RetryUtilsTest {
             }
         );
 
-        assertThat(inc.get(), is(0));
-        assertThat(retry, is(true));
+        assertThat(inc.get()).isEqualTo(0);
+        assertThat(retry).isEqualTo(true);
     }
 
     @Test

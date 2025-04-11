@@ -134,7 +134,7 @@
 
                 <VarValue
                     v-if="displayVarValue()"
-                    :value="selectedValue"
+                    :value="selectedValue.uri ? selectedValue.uri : selectedValue"
                     :execution="execution"
                 />
                 <SubFlowLink

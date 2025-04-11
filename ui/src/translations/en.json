@@ -1290,6 +1290,11 @@
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
-    "copied_logs_to_clipboard": "Copied logs to clipboard."
+    "copied_logs_to_clipboard": "Copied logs to clipboard.",
+    "multi_panel_editor": {
+      "move_right": "Move right",
+      "move_left": "Move left",
+      "close_all_tabs": "Close all tabs"
+    }
   }
 }

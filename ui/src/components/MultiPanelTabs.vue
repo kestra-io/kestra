@@ -57,6 +57,29 @@
                         />
                     </svg>
                 </button>
+                
+                <el-dropdown trigger="click" placement="bottom-end">
+                    <DotsVertical class="me-2 tab-icon" />
+                    <template #dropdown>
+                        <el-dropdown-menu class="m-2">
+                            <el-dropdown-item disabled :icon="DockRight">
+                                <span class="small-text">
+                                    {{ t("multi_panel_editor.move_right") }}
+                                </span>
+                            </el-dropdown-item>
+                            <el-dropdown-item disabled :icon="DockLeft">
+                                <span class="small-text">
+                                    {{ t("multi_panel_editor.move_left") }}
+                                </span>
+                            </el-dropdown-item>
+                            <el-dropdown-item disabled :icon="Close">
+                                <span class="small-text">
+                                    {{ t("multi_panel_editor.close_all_tabs") }}
+                                </span>
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
             </div>
             <div
                 class="content-panel"
@@ -79,10 +102,19 @@
 
 <script lang="ts" setup>
     import {nextTick, ref, watch} from "vue";
+    import {useI18n} from "vue-i18n";
+
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
+
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
+    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import DockLeft from "vue-material-design-icons/DockLeft.vue";
+    import DockRight from "vue-material-design-icons/DockRight.vue";
+    import Close from "vue-material-design-icons/Close.vue";
+
+    const {t} = useI18n({useScope: "global"});
 
     function throttle(callback: () => void, limit: number): () => void {
         let waiting = false;
@@ -396,6 +428,18 @@
         }
     }
 
+    .tab-icon{
+        color: var(--ks-content-inactive);
+    }
+
+    .small-text {
+        font-size: .8rem;
+    }
+
+    :deep(.el-dropdown-menu__item.is-disabled) {
+        color: var(--ks-border-inactive);
+    }
+
     .editor-tabs .editor-tab{
         padding: 3px .5rem;
         border: none;
@@ -410,9 +454,7 @@
         gap: .5rem;
         color: var(--ks-content-secondary);
         opacity: .6;
-        .tab-icon{
-            color: var(--ks-content-inactive);
-        }
+
         &.active {
             opacity: 1;
             color: var(--ks-content-primary);

@@ -56,7 +56,12 @@ It allows you to return templated values, inputs or outputs.`.trim(),
                 },
                 "values": {
                     "type": "array",
-                    "title": "The templated values to return.",
+                    "title": "An array of value to test forms with it",
+                    "items": {
+                        "type": "string",
+                        "title": "The templated value to return.",
+                        "$dynamic": true,
+                    },
                     "$dynamic": true,
                     "$required": true
                 }

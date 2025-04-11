@@ -72,7 +72,7 @@
                                     {{ t("multi_panel_editor.move_left") }}
                                 </span>
                             </el-dropdown-item>
-                            <el-dropdown-item disabled :icon="Close">
+                            <el-dropdown-item :icon="Close" @click="closeAllTabs(panelIndex)">
                                 <span class="small-text">
                                     {{ t("multi_panel_editor.close_all_tabs") }}
                                 </span>
@@ -340,6 +340,10 @@
             // add the tab to the target panel in-place of the hovered potential tab
             panels.value[targetPanelIndex].tabs.splice(targetTabIndex + 1, 0, movedTab);
         }
+    }
+
+    function closeAllTabs(panelIndex: number){
+        panels.value[panelIndex].tabs = [];
     }
 
     function destroyTab(panelIndex:number, tab: Tab){

@@ -24,5 +24,12 @@ export default defineWorkspace([
             },
             setupFiles: [".storybook/vitest.setup.ts"],
         },
+        optimizeDeps: {
+            include: [
+                "monaco-yaml/yaml.worker",
+                "vue-axios",
+                "nprogress"
+            ],
+        }
     },
 ]);

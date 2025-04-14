@@ -1,7 +1,7 @@
 import _merge from "lodash/merge";
 import Utils from "./utils";
 import {cssVariable, State} from "@kestra-io/ui-libs";
-import {getScheme} from "./scheme";
+import {getScheme} from "./scheme.js";
 
 export function tooltip(tooltipModel) {
     const titleLines = tooltipModel.title || [];

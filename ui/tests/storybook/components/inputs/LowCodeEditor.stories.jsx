@@ -1,17 +1,9 @@
 import {useStore} from "vuex";
-import {vueRouter} from "storybook-vue3-router";
 import LowCodeEditor from "../../../../src/components/inputs/LowCodeEditor.vue";
 
 export default {
     title: "Components/Inputs/LowCodeEditor",
     component: LowCodeEditor,
-    decorators: [vueRouter([
-            {
-                path: "/",
-                name: "home",
-                component: {template: "<div>home</div>"}
-            },
-        ])]
 };
 
 const Template= (args) => ({
@@ -22,7 +14,7 @@ const Template= (args) => ({
                 return  Promise.resolve({data: {}})
             }
         }
-        return () => <div style="width:600px; height:600px;"><LowCodeEditor {...args} /></div>;
+        return () => <LowCodeEditor {...args} />;
     }
 });
 

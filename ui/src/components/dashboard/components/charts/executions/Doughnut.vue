@@ -38,7 +38,7 @@
     import {totalsLegend} from "../legend.js";
     import {useTheme} from "../../../../../utils/utils";
     import {defaultConfig} from "../../../../../utils/charts.js";
-    import {useScheme} from "../../../../../utils/scheme";
+    import {useScheme} from "../../../../../utils/scheme.js";
 
     const router = useRouter();
     const scheme = useScheme();

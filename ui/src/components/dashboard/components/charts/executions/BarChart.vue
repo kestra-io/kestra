@@ -30,7 +30,7 @@
     </el-tooltip>
 </template>
 
-<script setup lang="ts">
+<script setup>
     import {computed, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import moment from "moment";
@@ -39,31 +39,48 @@
     const router = useRouter();
 
     import Utils, {useTheme} from "../../../../../utils/utils";
-    import {useScheme} from "../../../../../utils/scheme";
-    import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts";
+    import {useScheme} from "../../../../../utils/scheme.js";
+    import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts.js";
 
     import {State} from "@kestra-io/ui-libs";
     const ORDER = State.arrayAllStates().map((state) => state.name);
 
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps<{
-        data: Array<{
-            startDate: string;
-            executionCounts: Record<string, number>;
-            duration: {
-                avg: number;
-            };
-            groupBy: string;
-        }>;
-        plugins: Array<any>;
-        total?: number;
-        duration?: boolean;
-        scales?: boolean;
-        small?: boolean;
-        externalTooltip?: boolean;
-        loading?: boolean;
-    }>();
+    const props = defineProps({
+        data: {
+            type: Object,
+            required: true,
+        },
+        plugins: {
+            type: Array,
+            default: () => [],
+        },
+        total: {
+            type: Number,
+            default: undefined,
+        },
+        duration: {
+            type: Boolean,
+            default: true,
+        },
+        scales: {
+            type: Boolean,
+            default: true,
+        },
+        small: {
+            type: Boolean,
+            default: false,
+        },
+        externalTooltip: {
+            type: Boolean,
+            default: false,
+        },
+        loading: {
+            type: Boolean,
+            default: false
+        }
+    });
 
     const theme = useTheme()
     const scheme = useScheme();
@@ -116,12 +133,7 @@
     }));
 
     const parsedData = computed(() => {
-        const datasets = props.data.reduce(function (accumulator: Record<string, {
-            label: string
-            backgroundColor: string
-            yAxisID: string
-            data: number[]
-        }>, value) {
+        let datasets = props.data.reduce(function (accumulator, value) {
             Object.keys(value.executionCounts).forEach(function (state) {
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
@@ -138,7 +150,7 @@
             return accumulator;
         }, Object.create(null));
 
-        const datasetsArray = Object.values(datasets).sort((a, b) => {
+        datasets = Object.values(datasets).sort((a, b) => {
             return ORDER.indexOf(a.label) - ORDER.indexOf(b.label);
         });
 
@@ -159,12 +171,12 @@
                         data: props.data.map((value) => {
                             return value.duration.avg === 0
                                 ? 0
-                                : Utils.duration(value.duration.avg.toString());
+                                : Utils.duration(value.duration.avg);
                         }),
                     },
-                    ...datasetsArray,
+                    ...Object.values(datasets),
                 ]
-                : datasetsArray,
+                : Object.values(datasets),
         };
     });
 
@@ -181,14 +193,14 @@
                 },
                 tooltip: {
                     enabled: !props.externalTooltip,
-                    filter: (value: any) => value.raw,
+                    filter: (value) => value.raw,
                     callbacks: {
-                        label: function (value: any) {
+                        label: function (value) {
                             const {label, yAxisID} = value.dataset;
                             return `${label.toLowerCase().capitalize()}: ${value.raw}${yAxisID === "yB" ? "s" : ""}`;
                         },
                     },
-                    external: props.externalTooltip ? function (context: any) {
+                    external: props.externalTooltip ? function (context) {
                         let content = tooltip(context.tooltip);
                         tooltipContent.value = content;
                     } : undefined,
@@ -208,7 +220,7 @@
                     stacked: true,
                     ticks: {
                         maxTicksLimit: props.small ? 5 : 8,
-                        callback: function (value: any) {
+                        callback: function (value) {
                             const label = this.getLabelForValue(value);
 
                             if (
@@ -260,13 +272,13 @@
                     position: "right",
                     ticks: {
                         maxTicksLimit: props.small ? 5 : 8,
-                        callback: function (value: any) {
+                        callback: function (value) {
                             return `${this.getLabelForValue(value)}s`;
                         },
                     },
                 },
             },
-            onClick: (_e: any, elements: any[]) => {
+            onClick: (e, elements) => {
                 if (elements.length > 0) {
                     const state = parsedData.value.datasets[elements[0].datasetIndex].label;
                     router.push({

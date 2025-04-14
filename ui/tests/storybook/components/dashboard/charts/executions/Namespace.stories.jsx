@@ -1,16 +1,8 @@
 import Namespace from "../../../../../../src/components/dashboard/components/charts/executions/Namespace.vue";
-import {vueRouter} from "storybook-vue3-router";
 
 export default {
     title: "Dashboard/Charts/Executions/Namespace",
     component: Namespace,
-    decorators: [vueRouter([
-        {
-            path: "/",
-            name: "home",
-            component: {template: "<div>home</div>"}
-        }
-    ])],
     parameters: {
         layout: "centered",
     },
@@ -121,8 +113,8 @@ CustomNamespaces.args = {
 // Story with super long namespace names
 export const LongNamespaces = Template.bind({});
 const customDataLong = generateNamespaceData(25, "super-long-namespace-name-");
-
+   
 LongNamespaces.args = {
     data: customDataLong,
     total: calculateTotal(customDataLong)
-};
+}; 

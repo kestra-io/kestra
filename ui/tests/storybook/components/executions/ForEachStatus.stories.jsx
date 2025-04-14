@@ -10,7 +10,13 @@ const meta = {
                 path: "/",
                 name: "home",
                 component: {template: "<div>home</div>"}
-            }])]
+            },
+            {
+                path: "/executions",
+                name:"executions/list",
+                component: {template: "<div>executions</div>"}
+            },
+        ])]
 }
 
 export default meta;

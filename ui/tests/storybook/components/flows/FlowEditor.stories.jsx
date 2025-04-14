@@ -29,17 +29,17 @@ const Template = (args) => ({
     const store = useStore()
     store.$http = {
         get: async (uri) => {
-            console.log("get request", uri)
             if(uri.endsWith("/plugins")) {
                 return {data: []}
             }
+            console.log("get request", uri)
             return {data: {}}
         },
         post: async (uri) => {
-            console.log("post request", uri)
             if(uri.endsWith("/graph")) {
                 return {data: allowFailureDemo}
             }
+            console.log("post request", uri)
             return {data: {}}
         }
     }

@@ -45,18 +45,18 @@ const OPTIONS = Object.freeze({
     },
 });
 
-export const setScheme = (value) => {
+export const setScheme = (value: "classic" | "kestra") => {
     localStorage.setItem(SCHEME, value);
 };
 
-export const getScheme = (theme, state, type = "executions") => {
-    const scheme = localStorage.getItem(SCHEME) ?? "classic";
+export const getScheme = (theme: "light" | "dark", state: "string", type: "executions" | "logs" = "executions") => {
+    const scheme = localStorage.getItem(SCHEME) as  "classic" | "kestra" ?? "classic";
 
-    return OPTIONS[scheme]?.[theme]?.[type]?.[state];
+    return (OPTIONS[scheme]?.[theme]?.[type] as Record<string, string>)?.[state];
 };
 
-export const useScheme = (type = "executions") => {
-    const scheme = useStorage(SCHEME, "classic");
+export const useScheme = (type: "executions" | "logs" = "executions") => {
+    const scheme = useStorage<"classic" | "kestra">(SCHEME, "classic");
     const theme = useTheme();
 
     return computed(() => OPTIONS[scheme.value]?.[theme.value]?.[type]);

@@ -586,7 +586,7 @@
         return undefined;
     });
     const flowInfos = computed(() => store.getters["flow/flowInfos"]);
-    const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"]);
+    const flowHaveTasks = computed(() => Boolean(store.getters["flow/flowHaveTasks"]));
 
     const editorViewType = useStorage(storageKeys.EDITOR_VIEW_TYPE, "YAML");
 

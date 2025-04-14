@@ -21,7 +21,7 @@ dependencies {
     def kafkaVersion = "3.9.0"
     def opensearchVersion = "2.22.0"
     def opensearchRestVersion = "2.19.1"
-    def flyingSaucerVersion = "9.11.5"
+    def flyingSaucerVersion = "9.11.6"
     def jacksonVersion = "2.18.3"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(

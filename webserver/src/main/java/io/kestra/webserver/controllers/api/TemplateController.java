@@ -22,6 +22,7 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -44,6 +45,8 @@ import java.util.zip.ZipOutputStream;
 @Validated
 @Controller("/api/v1/templates")
 @TemplateEnabled
+@Deprecated(forRemoval = true)
+@Hidden
 public class TemplateController {
     @Inject
     private TemplateRepositoryInterface templateRepository;

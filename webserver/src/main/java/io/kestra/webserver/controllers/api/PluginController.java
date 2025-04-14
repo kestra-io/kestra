@@ -4,10 +4,7 @@ import io.kestra.core.docs.*;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.FlowableTask;
-import io.kestra.core.plugins.DefaultPluginRegistry;
-import io.kestra.core.plugins.PluginIdentifier;
 import io.kestra.core.plugins.PluginRegistry;
-import io.kestra.core.plugins.RegisteredPlugin;
 import io.micronaut.cache.annotation.Cacheable;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.annotation.Nullable;
@@ -53,7 +50,7 @@ public class PluginController {
         summary = "Get all json schemas for a type",
         description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
     )
-    public HttpResponse<Map<String, Object>> schemas(
+    public HttpResponse<Map<String, Object>> getSchemasFromType(
         @Parameter(description = "The schema needed") @PathVariable SchemaType type,
         @Parameter(description = "If schema should be an array of requested type") @Nullable @QueryValue(value = "arrayOf", defaultValue = "false") Boolean arrayOf
     ) {
@@ -68,7 +65,7 @@ public class PluginController {
         tags = {"Plugins"},
         summary = "Get all types for an inputs"
     )
-    public List<InputType> inputs() throws ClassNotFoundException {
+    public List<InputType> getAllInputTypes() throws ClassNotFoundException {
         return Stream.of(Type.values())
             .map(throwFunction(type -> new InputType(type.name(), type.cls().getName())))
             .toList();
@@ -78,10 +75,10 @@ public class PluginController {
     @ExecuteOn(TaskExecutors.IO)
     @Operation(
         tags = {"Plugins"},
-        summary = "Get all json schemas for a type",
+        summary = "Get json schemas for an input type",
         description = "The schema will be output as [http://json-schema.org/draft-07/schema](Json Schema Draft 7)"
     )
-    public MutableHttpResponse<DocumentationWithSchema> inputSchemas(
+    public MutableHttpResponse<DocumentationWithSchema> getSchemaFromInputType(
         @Parameter(description = "The schema needed") @PathVariable Type type
     ) throws ClassNotFoundException, IOException {
         ClassInputDocumentation classInputDocumentation = this.inputDocumentation(type);
@@ -108,7 +105,7 @@ public class PluginController {
     @Get
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get list of plugins")
-    public List<Plugin> search() {
+    public List<Plugin> listPlugins() {
         return pluginRegistry.plugins()
             .stream()
             .map(p -> Plugin.of(p, null))
@@ -118,7 +115,7 @@ public class PluginController {
     @Get(uri = "icons")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
-    public MutableHttpResponse<Map<String, PluginIcon>> icons() {
+    public MutableHttpResponse<Map<String, PluginIcon>> getPluginIcons() {
         Map<String, PluginIcon> icons = pluginRegistry.plugins()
             .stream()
             .flatMap(plugin -> Stream.of(
@@ -162,7 +159,7 @@ public class PluginController {
     @Get(uri = "icons/groups")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugins icons")
-    public MutableHttpResponse<Map<String, PluginIcon>> pluginGroupIcons() {
+    public MutableHttpResponse<Map<String, PluginIcon>> getPluginGroupIcons() {
         Map<String, PluginIcon> icons = loadPluginsIcon();
 
         return HttpResponse.ok(icons).header(HttpHeaders.CACHE_CONTROL, CACHE_DIRECTIVE);
@@ -191,23 +188,23 @@ public class PluginController {
     @Get(uri = "{cls}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
-    public HttpResponse<DocumentationWithSchema> pluginDocumentation(
+    public HttpResponse<DocumentationWithSchema> getPluginDocumentation(
         @Parameter(description = "The plugin full class name") @PathVariable String cls,
         @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") Boolean allProperties
     ) throws IOException {
-        return pluginVersions(cls, null, allProperties);
+        return getPluginDocumentationFromVersion(cls, null, allProperties);
     }
 
     @Get(uri = "{cls}/versions/{version}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugin documentation")
-    public HttpResponse<DocumentationWithSchema> pluginVersions(
+    public HttpResponse<DocumentationWithSchema> getPluginDocumentationFromVersion(
         @Parameter(description = "The plugin type") @PathVariable String cls,
         @Parameter(description = "The plugin version") @PathVariable String version,
         @Parameter(description = "Include all the properties") @QueryValue(value = "all", defaultValue = "false") Boolean allProperties
     ) throws IOException {
 
-        ClassPluginDocumentation<?> classPluginDocumentation = pluginDocumentation(cls, version, allProperties);
+        ClassPluginDocumentation<?> classPluginDocumentation = getPluginDocumentation(cls, version, allProperties);
 
         var doc = alertReplacement(DocumentationGenerator.render(classPluginDocumentation));
 
@@ -229,7 +226,7 @@ public class PluginController {
         tags = {"Plugins"},
         summary = "Get all versions for a plugin"
     )
-    public HttpResponse<ApiPluginVersions> pluginVersions(
+    public HttpResponse<ApiPluginVersions> getPluginVersions(
         @Parameter(description = "The plugin type") @PathVariable String cls
     ) {
         return HttpResponse.ok(new ApiPluginVersions(cls, pluginRegistry.getAllVersionsForType(cls)));
@@ -239,7 +236,7 @@ public class PluginController {
     @Get("/groups/subgroups")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Plugins"}, summary = "Get plugins group by subgroups")
-    public List<Plugin> subgroups(
+    public List<Plugin> getPluginBySubgroups(
         @Parameter(description = "Whether to include deprecated plugins") @QueryValue(value = "includeDeprecated", defaultValue = "true") boolean includeDeprecated
     ) {
         return Stream.concat(
@@ -259,7 +256,7 @@ public class PluginController {
 
 
     @Cacheable("default")
-    protected ClassPluginDocumentation<?> pluginDocumentation(String className, String version, Boolean allProperties) {
+    protected ClassPluginDocumentation<?> getPluginDocumentation(String className, String version, Boolean allProperties) {
         return pluginRegistry.findMetadataByIdentifier(getPluginIdentifier(className, version))
             .map(metadata -> ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, allProperties))
             .orElseThrow(() -> new NoSuchElementException("Class '" + className + "' doesn't exists "));

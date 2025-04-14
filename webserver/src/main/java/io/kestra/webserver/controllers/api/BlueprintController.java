@@ -46,7 +46,7 @@ public class BlueprintController {
     @ExecuteOn(TaskExecutors.IO)
     @Get("/{kind}")
     @Operation(tags = {"Blueprints"}, summary = "List all blueprints")
-    public PagedResults<ApiBlueprintItem> blueprints(
+    public PagedResults<ApiBlueprintItem> searchBlueprints(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") Optional<String> q,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue(value = "sort") Optional<String> sort,
         @Parameter(description = "A tags filter") @Nullable @QueryValue(value = "tags") Optional<List<String>> tags,
@@ -61,7 +61,7 @@ public class BlueprintController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(value = "/{kind}/{id}/source", produces = "application/yaml")
     @Operation(tags = {"Blueprints"}, summary = "Get a blueprint flow")
-    public String blueprintSource(
+    public String getBlueprintSource(
         @Parameter(description = "The blueprint id") String id,
         @Parameter(description = "The blueprint kind") Kind kind,
         HttpRequest<?> httpRequest
@@ -72,7 +72,7 @@ public class BlueprintController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(value = "/{kind}/{id}/graph")
     @Operation(tags = {"Blueprints"}, summary = "Get a blueprint graph")
-    public Map<String, Object> blueprintGraph(
+    public Map<String, Object> getBlueprintGraph(
         @Parameter(description = "The blueprint id") String id,
         @Parameter(description = "The blueprint kind") Kind kind,
         HttpRequest<?> httpRequest
@@ -83,7 +83,7 @@ public class BlueprintController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(value = "/{kind}/{id}")
     @Operation(tags = {"Blueprints"}, summary = "Get a blueprint")
-    public ApiBlueprintItemWithSource blueprint(
+    public ApiBlueprintItemWithSource getBlueprint(
         @Parameter(description = "The blueprint id") String id,
         @Parameter(description = "The blueprint kind") Kind kind,
         HttpRequest<?> httpRequest
@@ -95,7 +95,7 @@ public class BlueprintController {
     @ExecuteOn(TaskExecutors.IO)
     @Get("/{kind}/tags")
     @Operation(tags = {"Blueprint Tags"}, summary = "List blueprint tags matching the filter")
-    public List<ApiBlueprintTagItem> blueprintTags(
+    public List<ApiBlueprintTagItem> listBlueprintTags(
         @Parameter(description = "The blueprint kind") Kind kind,
         @Parameter(description = "A string filter to get tags with matching blueprints only") @Nullable @QueryValue(value = "q") Optional<String> q,
         HttpRequest<?> httpRequest

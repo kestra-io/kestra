@@ -74,7 +74,7 @@ class ExecutionControllerTest {
     }
 
     @Test
-    void getNotFound() {
+    void getExecutionNotFound() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(GET("/api/v1/executions/exec_id_not_found"))
@@ -83,7 +83,7 @@ class ExecutionControllerTest {
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
-    private MultipartBody createInputsFlowBody() {
+    private MultipartBody createExecutionInputsFlowBody() {
         // Trigger execution
         File applicationFile = new File(Objects.requireNonNull(
             ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
@@ -241,7 +241,7 @@ class ExecutionControllerTest {
 
     @Test
     void nullLabels() {
-        MultipartBody requestBody = createInputsFlowBody();
+        MultipartBody requestBody = createExecutionInputsFlowBody();
 
         // null keys are forbidden
         MutableHttpRequest<MultipartBody> requestNullKey = HttpRequest
@@ -258,7 +258,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
-    void getFlowForExecution() {
+    void getExecutionFlowForExecution() {
         FlowForExecution result = client.toBlocking().retrieve(
             GET("/api/v1/executions/flows/io.kestra.tests/full"),
             FlowForExecution.class
@@ -271,7 +271,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
-    void getFlowForExecutionById() {
+    void getExecutionFlowForExecutionById() {
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
                 .POST(
@@ -293,7 +293,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void getDistinctNamespaceExecutables() {
+    void getExecutionDistinctNamespaceExecutables() {
         List<String> result = client.toBlocking().retrieve(
             GET("/api/v1/executions/namespaces"),
             Argument.of(List.class, String.class)
@@ -304,7 +304,7 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void getFlowFromNamespace() {
+    void getExecutionFlowFromNamespace() {
         List<FlowForExecution> result = client.toBlocking().retrieve(
             GET("/api/v1/executions/namespaces/io.kestra.tests/flows"),
             Argument.of(List.class, FlowForExecution.class)
@@ -357,12 +357,12 @@ class ExecutionControllerTest {
         assertDoesNotThrow(() -> client.toBlocking().retrieve(killRequest, BulkResponse.class));
 
         MutableHttpRequest<MultipartBody> triggerRequest = HttpRequest
-            .POST("/api/v1/executions/trigger/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createInputsFlowBody())
+            .POST("/api/v1/executions/trigger/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
         assertThat(client.toBlocking().retrieve(triggerRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"));
 
         MutableHttpRequest<MultipartBody> createRequest = HttpRequest
-            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createInputsFlowBody())
+            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
         assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"));
 
@@ -381,7 +381,7 @@ class ExecutionControllerTest {
         String encodedRegularLabel = URLEncoder.encode("status:test", StandardCharsets.UTF_8);
 
         MutableHttpRequest<MultipartBody> createRequest = HttpRequest
-            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel, createInputsFlowBody())
+            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel, createExecutionInputsFlowBody())
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
         assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"), new Label("status", "test"));
 
@@ -411,7 +411,7 @@ class ExecutionControllerTest {
     }
 
     @Test
-    void shouldValidateInputsForCreateGivenSimpleInputs() {
+    void shouldValidateInputsForCreateExecutionGivenSimpleInputs() {
         // given
         String namespace = "io.kestra.tests";
         String flowId = "inputs";

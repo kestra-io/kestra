@@ -79,7 +79,7 @@ dependencies {
         api group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
         api group: 'net.thisptr', name: 'jackson-jq', version: '1.2.0'
         api group: 'com.google.guava', name: 'guava', version: '33.4.6-jre'
-        api group: 'commons-io', name: 'commons-io', version: '2.18.0'
+        api group: 'commons-io', name: 'commons-io', version: '2.19.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.17.0'
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
         api 'ch.qos.logback.contrib:logback-jackson:0.1.5'

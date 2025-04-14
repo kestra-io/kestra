@@ -30,7 +30,7 @@
     </el-tooltip>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import moment from "moment";
@@ -39,48 +39,31 @@
     const router = useRouter();
 
     import Utils, {useTheme} from "../../../../../utils/utils";
-    import {useScheme} from "../../../../../utils/scheme.js";
-    import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts.js";
+    import {useScheme} from "../../../../../utils/scheme";
+    import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts";
 
     import {State} from "@kestra-io/ui-libs";
     const ORDER = State.arrayAllStates().map((state) => state.name);
 
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps({
-        data: {
-            type: Object,
-            required: true,
-        },
-        plugins: {
-            type: Array,
-            default: () => [],
-        },
-        total: {
-            type: Number,
-            default: undefined,
-        },
-        duration: {
-            type: Boolean,
-            default: true,
-        },
-        scales: {
-            type: Boolean,
-            default: true,
-        },
-        small: {
-            type: Boolean,
-            default: false,
-        },
-        externalTooltip: {
-            type: Boolean,
-            default: false,
-        },
-        loading: {
-            type: Boolean,
-            default: false
-        }
-    });
+    const props = defineProps<{
+        data: Array<{
+            startDate: string;
+            executionCounts: Record<string, number>;
+            duration: {
+                avg: number;
+            };
+            groupBy: string;
+        }>;
+        plugins: Array<any>;
+        total?: number;
+        duration?: boolean;
+        scales?: boolean;
+        small?: boolean;
+        externalTooltip?: boolean;
+        loading?: boolean;
+    }>();
 
     const theme = useTheme()
     const scheme = useScheme();

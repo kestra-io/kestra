@@ -11,7 +11,6 @@ import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Stream;
 
 @ToString
@@ -29,18 +28,15 @@ public class TimerMetric extends AbstractMetric {
 
     @Override
     public AbstractMetricEntry<?> toMetric(RunContext runContext) throws IllegalVariableEvaluationException {
-        Optional<String> name = runContext.render(this.name).as(String.class);
-        Optional<Duration> value = runContext.render(this.value).as(Duration.class);
+        String name = runContext.render(this.name).as(String.class).orElseThrow();
+        Duration value = runContext.render(this.value).as(Duration.class).orElseThrow();
+        String description = runContext.render(this.description).as(String.class).orElse(null);
         Map<String, String> tags = runContext.render(this.tags).asMap(String.class, String.class);
         String[] tagsAsStrings = tags.entrySet().stream()
             .flatMap(e -> Stream.of(e.getKey(), e.getValue()))
             .toArray(String[]::new);
 
-        if (name.isEmpty() || value.isEmpty()) {
-            throw new IllegalVariableEvaluationException("Metric name and value can't be null");
-        }
-
-        return Timer.of(name.get(), value.get(), tagsAsStrings);
+        return Timer.of(name, description, value, tagsAsStrings);
     }
 
     public String getType() {

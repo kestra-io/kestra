@@ -39,6 +39,9 @@ const Template = (args) => ({
             if(uri.endsWith("/graph")) {
                 return {data: allowFailureDemo}
             }
+            if(uri.endsWith("/validate")) {
+                return {data: {}}
+            }
             console.log("post request", uri)
             return {data: {}}
         }

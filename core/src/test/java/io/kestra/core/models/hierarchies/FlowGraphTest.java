@@ -1,5 +1,6 @@
 package io.kestra.core.models.hierarchies;
 
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -215,7 +216,7 @@ class FlowGraphTest {
     }
 
     @Test
-    void trigger() throws IllegalVariableEvaluationException, IOException {
+    void trigger() throws IllegalVariableEvaluationException, IOException, FlowProcessingException {
         FlowWithSource flow = this.parse("flows/valids/trigger-flow-listener.yaml");
         triggerRepositoryInterface.save(
             Trigger.of(flow, flow.getTriggers().getFirst()).toBuilder().disabled(true).build()
@@ -261,7 +262,7 @@ class FlowGraphTest {
     @Test
     @LoadFlows({"flows/valids/task-flow.yaml",
         "flows/valids/switch.yaml"})
-    void subflow() throws IllegalVariableEvaluationException, IOException {
+    void subflow() throws IllegalVariableEvaluationException, IOException, FlowProcessingException {
         FlowWithSource flow = this.parse("flows/valids/task-flow.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
@@ -293,7 +294,7 @@ class FlowGraphTest {
     @Test
     @LoadFlows({"flows/valids/task-flow-dynamic.yaml",
         "flows/valids/switch.yaml"})
-    void dynamicIdSubflow() throws IllegalVariableEvaluationException, TimeoutException, QueueException, IOException {
+    void dynamicIdSubflow() throws IllegalVariableEvaluationException, TimeoutException, QueueException, IOException, FlowProcessingException {
         FlowWithSource flow = this.parse("flows/valids/task-flow-dynamic.yaml").toBuilder().revision(1).build();
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> graphService.flowGraph(flow, Collections.singletonList("root.launch")));

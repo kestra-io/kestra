@@ -89,20 +89,6 @@
     .trigger {
         max-width: 180px;
         overflow-x: auto;
-
-        &::-webkit-scrollbar {
-            width: 2px;
-            height: 2px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-card);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 0px;
-        }
     }
 
     .el-button {

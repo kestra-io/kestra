@@ -130,7 +130,7 @@ public class ForEachItemCaseTest {
 
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
-            if (execution.getFlowId().equals("for-each-item-subflow")) {
+            if (execution.getFlowId().equals("for-each-item-subflow-sleep")) {
                 if (execution.getState().getCurrent().isTerminated()) {
                     triggered.set(execution);
                     countDownLatch.countDown();
@@ -167,9 +167,9 @@ public class ForEachItemCaseTest {
 
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(triggered.get().getFlowId()).isEqualTo("for-each-item-subflow");
+        assertThat(triggered.get().getFlowId()).isEqualTo("for-each-item-subflow-sleep");
         assertThat((String) triggered.get().getInputs().get("items")).matches("kestra:///io/kestra/tests/for-each-item-no-wait/executions/.*/tasks/each-split/.*\\.txt");
-        assertThat(triggered.get().getTaskRunList()).hasSize(1);
+        assertThat(triggered.get().getTaskRunList()).hasSize(2);
     }
 
     @SuppressWarnings("unchecked")

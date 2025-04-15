@@ -211,19 +211,6 @@
             padding: 1.5rem;
             background-color: var(--bs-gray-100);
         }
-
-        &::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            -webkit-border-radius: 10px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
-            background: var(--ks-button-background-primary);
-        }
     }
 
     .plugin-card {

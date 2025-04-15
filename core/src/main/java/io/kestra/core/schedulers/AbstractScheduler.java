@@ -534,7 +534,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             List<FlowWithTriggers> schedulable = this.computeSchedulable(flowWithDefaults, triggerContextsToEvaluate, scheduleContext);
 
             metricRegistry
-                .counter(MetricRegistry.SCHEDULER_LOOP_COUNT)
+                .counter(MetricRegistry.METRIC_SCHEDULER_LOOP_COUNT, MetricRegistry.METRIC_SCHEDULER_LOOP_COUNT_DESCRIPTION)
                 .increment();
 
             if (log.isTraceEnabled()) {
@@ -577,7 +577,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             }
 
             metricRegistry
-                .counter(MetricRegistry.SCHEDULER_EVALUATE_COUNT)
+                .counter(MetricRegistry.METRIC_SCHEDULER_EVALUATE_COUNT, MetricRegistry.METRIC_SCHEDULER_EVALUATE_COUNT_DESCRIPTION)
                 .increment(readyForEvaluate.size());
 
             // submit ready one to the worker
@@ -744,7 +744,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         if (execution.isEmpty()) {
             if (lastTrigger.getUpdatedDate() != null) {
                 metricRegistry
-                    .timer(MetricRegistry.SCHEDULER_EXECUTION_MISSING_DURATION, metricRegistry.tags(lastTrigger))
+                    .timer(MetricRegistry.METRIC_SCHEDULER_EXECUTION_MISSING_DURATION, MetricRegistry.METRIC_SCHEDULER_EXECUTION_MISSING_DURATION_DESCRIPTION, metricRegistry.tags(lastTrigger))
                     .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
             }
 
@@ -763,7 +763,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
         if (lastTrigger.getUpdatedDate() != null) {
             metricRegistry
-                .timer(MetricRegistry.SCHEDULER_EXECUTION_RUNNING_DURATION, metricRegistry.tags(lastTrigger))
+                .timer(MetricRegistry.METRIC_SCHEDULER_EXECUTION_LOCK_DURATION, MetricRegistry.METRIC_SCHEDULER_EXECUTION_LOCK_DURATION_DESCRIPTION, metricRegistry.tags(lastTrigger))
                 .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
         }
 
@@ -783,7 +783,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
     private void log(SchedulerExecutionWithTrigger executionWithTrigger) {
         metricRegistry
-            .counter(MetricRegistry.SCHEDULER_TRIGGER_COUNT, metricRegistry.tags(executionWithTrigger))
+            .counter(MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT, MetricRegistry.METRIC_SCHEDULER_TRIGGER_COUNT_DESCRIPTION, metricRegistry.tags(executionWithTrigger))
             .increment();
 
         ZonedDateTime now = now();
@@ -800,7 +800,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             // FIXME : "late" are not excluded and can increase delay value (false positive)
             if (next != null && now.isBefore(next)) {
                 metricRegistry
-                    .timer(MetricRegistry.SCHEDULER_TRIGGER_DELAY_DURATION, metricRegistry.tags(executionWithTrigger))
+                    .timer(MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION, metricRegistry.tags(executionWithTrigger))
                     .record(Duration.between(
                         executionWithTrigger.getTriggerContext().getDate(), now
                     ));

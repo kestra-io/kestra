@@ -22,10 +22,16 @@ export default defineConfig({
             junit: "./test-report.junit.xml",
         },
         coverage: {
+            include: [
+                "src/**/*.{js,ts,vue}",
+            ],
             exclude: [
                 ...coverageConfigDefaults.exclude,
                 "stylelint.config.mjs",
                 "storybook-static/**",
+                "**/.storybook/**",
+                "**/*.stories.*",
+                "**/*.d.ts",
             ]
         }
     },

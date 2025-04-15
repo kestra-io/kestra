@@ -78,7 +78,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final RunContextInitializer runContextInitializer;
-    private final MetricRegistry metricRegistry;
+    protected final MetricRegistry metricRegistry;
     private final ConditionService conditionService;
     private final PluginDefaultService pluginDefaultService;
     private final WorkerGroupService workerGroupService;

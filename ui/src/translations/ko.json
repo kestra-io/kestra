@@ -1085,10 +1085,10 @@
           "note": "이 설정은 UI에서 날짜 및 시간 속성을 표시하는 데 사용됩니다. UTC와 다른 시간대에 flow를 예약하려면 flow 코드 또는 플러그인 기본값에서 Schedule trigger의 시간대 속성을 설정하세요."
         },
         "save": {
-          "fields": {
-            "name": "변경 사항 저장"
-          },
-          "label": "환경 설정 저장"
+          "discard": "버리기",
+          "label": "환경 설정 저장",
+          "unsaved_title": "저장되지 않은 변경 사항",
+          "unsaved_warning": "저장되지 않은 변경 사항이 있습니다. 나가기 전에 저장하시겠습니까?"
         },
         "theme": {
           "fields": {

@@ -1085,10 +1085,10 @@
           "note": "Ten en cuenta que esta configuración se usa para mostrar las propiedades de fecha y hora en la UI. Para programar tus flows en una zona horaria diferente a UTC, asegúrate de configurar la propiedad de zona horaria en el trigger de Schedule en tu código de flow o en los predeterminados de tu plugin."
         },
         "save": {
-          "fields": {
-            "name": "Guardar cambios"
-          },
-          "label": "Guardar preferencias"
+          "discard": "Descartar",
+          "label": "Guardar preferencias",
+          "unsaved_title": "Cambios no guardados",
+          "unsaved_warning": "Tienes cambios no guardados. ¿Quieres guardarlos antes de salir?"
         },
         "theme": {
           "fields": {

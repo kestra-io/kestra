@@ -796,10 +796,10 @@
           }
         },
         "save": {
-          "label": "Save Preferences",
-          "fields": {
-            "name": "Save Changes"
-          }
+          "label":"Save",
+          "discard": "Discard",
+          "unsaved_title": "Unsaved Changes",
+          "unsaved_warning": "You have unsaved changes. Do you want to save them before leaving?"
         }
       }
     },

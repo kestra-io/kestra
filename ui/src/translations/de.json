@@ -1085,10 +1085,10 @@
           "note": "Beachten Sie, dass diese Einstellung für die Anzeige von Datums- und Uhrzeiteigenschaften in der Benutzeroberfläche verwendet wird. Um Ihre Flows in einer anderen Zeitzone als UTC zu konfigurieren, stellen Sie sicher, dass Sie die Zeitzoneneigenschaft im Schedule-Trigger in Ihrem Flow-Code oder in Ihren Plugin-Standardeinstellungen festlegen."
         },
         "save": {
-          "fields": {
-            "name": "Änderungen speichern"
-          },
-          "label": "Präferenzen speichern"
+          "discard": "Verwerfen",
+          "label": "Präferenzen speichern",
+          "unsaved_title": "Nicht gespeicherte Änderungen",
+          "unsaved_warning": "Sie haben ungespeicherte Änderungen. Möchten Sie diese speichern, bevor Sie die Seite verlassen?"
         },
         "theme": {
           "fields": {

@@ -16,7 +16,7 @@
                           State.KILLING
                       ]}}"
             >
-                <el-button size="small" class="see-all-btn">
+                <el-button size="small" class="py-3">
                     {{ t("dashboard.see_all") }}
                 </el-button>
             </RouterLink>
@@ -221,11 +221,6 @@
 <style lang="scss" scoped>
 code {
     color: var(--ks-content-id);
-}
-
-.see-all-btn{
-    padding-top: 15px;
-    padding-bottom: 15px
 }
 
 .inprogress {

@@ -662,7 +662,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         });
         metricRegistry
             .timer(MetricRegistry.METRIC_SCHEDULER_HANDLE_DURATION, MetricRegistry.METRIC_SCHEDULER_HANDLE_DURATION_DESCRIPTION)
-            .record(Duration.between(startTime, Instant.now()));
+            .record(Duration.between(startTime, ZonedDateTime.now()));
     }
 
     private List<FlowWithSource> getFlowsWithDefaults() {

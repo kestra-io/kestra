@@ -308,7 +308,7 @@
                     :icon="ContentSave"
                     @click="onSaveNewError()"
                     type="primary"
-                    :disabled="taskErrors"
+                    :disabled="Boolean(taskErrors)"
                 >
                     {{ $t("save") }}
                 </el-button>
@@ -330,7 +330,7 @@
                     :icon="ContentSave"
                     @click="onSaveNewTrigger()"
                     type="primary"
-                    :disabled="taskErrors"
+                    :disabled="Boolean(taskErrors)"
                 >
                     {{ $t("save") }}
                 </el-button>

@@ -59,7 +59,7 @@ public abstract class AbstractFlowRepositoryTest {
 
     @BeforeEach
     protected void init() throws IOException, URISyntaxException {
-        TestsUtils.loads(repositoryLoader);
+        TestsUtils.loads(null, repositoryLoader);
         FlowListener.reset();
     }
 

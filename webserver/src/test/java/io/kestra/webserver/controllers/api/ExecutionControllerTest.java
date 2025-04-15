@@ -70,7 +70,7 @@ class ExecutionControllerTest {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
 
-        TestsUtils.loads(repositoryLoader);
+        TestsUtils.loads(null, repositoryLoader);
     }
 
     @Test

@@ -103,7 +103,7 @@ class FlowTest {
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
         assertThat(validate.isPresent()).isEqualTo(true);
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
         assertThat(validate.get().getMessage()).contains("impossible: The 'tasks' property cannot be empty");
     }

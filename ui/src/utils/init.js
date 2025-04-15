@@ -42,6 +42,7 @@ import createEventsRouter from "./eventsRouter";
 import "./global"
 
 import TaskArray from "../components/flows/tasks/TaskArray.vue";
+import TaskTasks from "../components/flows/tasks/TaskTasks.vue";
 import TaskBoolean from "../components/flows/tasks/TaskBoolean.vue";
 import TaskComplex from "../components/flows/tasks/TaskComplex.vue";
 import TaskCondition from "../components/flows/tasks/TaskCondition.vue";
@@ -177,6 +178,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
 
     // Task have some recursion and need to be register globally
     app.component("TaskArray", TaskArray)
+    app.component("TaskTasks", TaskTasks)
     app.component("TaskBoolean", TaskBoolean)
     app.component("TaskCondition", TaskCondition)
     app.component("TaskDict", TaskDict)

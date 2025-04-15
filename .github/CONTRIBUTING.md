@@ -37,6 +37,10 @@ The following dependencies are required to build Kestra locally:
 - Docker & Docker Compose
 - an IDE (Intellij IDEA, Eclipse or VS Code)
 
+Thanks to the Kestra community, if using VSCode, you can also start development on either the frontend or backend with a bootstrapped docker container without the need to manually set up the environment.
+
+Check out the [README](../.devcontainer/README.md) for set-up instructions and the associated [Dockerfile](../.devcontainer/Dockerfile) in the respository to get started.
+
 To start contributing:
 - [Fork](https://docs.github.com/en/github/getting-started-with-github/fork-a-repo) the repository
 - Clone the fork on your workstation:
@@ -46,7 +50,7 @@ git clone git@github.com:{YOUR_USERNAME}/kestra.git
 cd kestra
 ```
 
-#### Develop backend
+#### Develop on the backend
 The backend is made with [Micronaut](https://micronaut.io).
 
 Open the cloned repository in your favorite IDE. In most of decent IDEs, Gradle build will be detected and all dependencies will be downloaded.
@@ -72,7 +76,7 @@ python3 -m pip install virtualenv
 ```
 
 
-#### Develop frontend
+#### Develop on the frontend
 The frontend is made with [Vue.js](https://vuejs.org/) and located on the `/ui` folder.
 
 - `npm install`

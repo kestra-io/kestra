@@ -1164,15 +1164,6 @@
             height: auto;
         }
 
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 5px;
-
-            html.dark & {
-                background:  var(--ks-button-background-primary);
-            }
-        }
-
         .node {
             --el-tree-node-content-height: fit-content;
             --el-tree-node-hover-bg-color: transparent;

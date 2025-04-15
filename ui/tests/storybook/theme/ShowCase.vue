@@ -4,8 +4,6 @@
             <el-button size="large" @click="toast">
                 El Message
             </el-button>
-
-            <MessageBoxDemo />
         </div>
 
         <div class="my-2 flex flex-wrap items-center justify-center text-center">

@@ -1,8 +1,8 @@
 <template>
     <top-nav-bar :title="routeInfo.title">
         <template #additional-right>
-            <el-button @click="saveAllSettings()" type="primary">
-                {{ $t("settings.blocks.save.fields.name") }}
+            <el-button @click="saveAllSettings()" type="primary" :disabled="!hasUnsavedChanges">
+                {{ $t("settings.blocks.save.label") }}
             </el-button>
         </template>
     </top-nav-bar>
@@ -281,6 +281,8 @@
         },
         data() {
             return {
+                hasUnsavedChanges: false,
+                originalSettings: {},
                 pendingSettings: {
                     defaultNamespace: undefined,
                     defaultLogLevel: undefined,
@@ -328,7 +330,6 @@
             this.pendingSettings.editorType = localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) || "YAML";
             this.pendingSettings.defaultLogLevel = localStorage.getItem("defaultLogLevel") || "INFO";
             this.pendingSettings.lang = Utils.getLang();
-
             this.pendingSettings.theme = Utils.getTheme();
 
             let scheme = localStorage.getItem("scheme") || "classic";
@@ -349,40 +350,99 @@
             this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
             this.pendingSettings.multiPanelEditor = localStorage.getItem("multiPanelEditor") === "true";
+            this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
         },
         methods: {
+            checkForChanges() {
+                this.hasUnsavedChanges = JSON.stringify(this.pendingSettings) !== JSON.stringify(this.originalSettings);
+            },
+            async confirmNavigation() {
+                if (!this.hasUnsavedChanges) return true;
+                
+                try {
+                    await this.$confirm(
+                        this.$t("settings.blocks.save.unsaved_warning"),
+                        this.$t("settings.blocks.save.unsaved_title"),
+                        {
+                            confirmButtonText: this.$t("settings.blocks.save.label"),
+                            cancelButtonText: this.$t("settings.blocks.save.discard"),
+                            type: "warning",
+                            showClose: false,
+                            closeOnClickModal: false,
+                            closeOnPressEscape: false
+                        }
+                    );
+                    await this.saveAllSettings();
+                    return true;
+                } catch {
+                    this.pendingSettings = JSON.parse(JSON.stringify(this.originalSettings));
+                    this.hasUnsavedChanges = false;
+                    return true;
+                }
+            },
+            handleBeforeUnload(e) {
+                if (this.hasUnsavedChanges) {
+                    e.preventDefault();
+                    e.returnValue = "";
+                }
+            },
+            async handleNavigationClick(e) {
+                const link = e.target.closest("a");
+                if (!link) return;
+
+                if (!window.location.pathname.includes("/settings")) return;
+
+                if (this.hasUnsavedChanges) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    const shouldNavigate = await this.confirmNavigation();
+                    if (shouldNavigate) {
+                        const href = link.getAttribute("href");
+                        if (link.getAttribute("data-vue-router") === "true") {
+                            this.$router.push(href);
+                        } else {
+                            window.location.href = href;
+                        }
+                    }
+                }
+            },
             onNamespaceSelect(value) {
                 this.pendingSettings.defaultNamespace = value;
+                this.checkForChanges();
             },
             onEditorTypeChange(value) {
                 this.pendingSettings.editorType = value;
                 localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, value);
+                this.checkForChanges();
             },
             onLevelChange(value) {
                 this.pendingSettings.defaultLogLevel = value;
+                this.checkForChanges();
             },
             onLang(value) {
                 this.pendingSettings.lang = value;
+                this.checkForChanges();
             },
             onTheme(value) {
                 this.pendingSettings.theme = value;
-            },
-            updateThemeBasedOnSystem() {
-                if (this.theme === "syncWithSystem") {
-                    Utils.switchTheme(this.$store, "syncWithSystem");
-                }
+                this.checkForChanges();
             },
             onDateFormat(value) {
                 this.pendingSettings.dateFormat = value;
+                this.checkForChanges();
             },
             onTimezone(value) {
                 this.pendingSettings.timezone = value;
+                this.checkForChanges();
             },
             onChartColor(value) {
                 this.pendingSettings.chartColor = value;
+                this.checkForChanges();
             },
             onAutofoldTextEditor(value) {
                 this.pendingSettings.autofoldTextEditor = value;
+                this.checkForChanges();
             },
             exportFlows() {
                 return this.$store
@@ -400,33 +460,43 @@
             },
             onLogDisplayChange(value) {
                 this.pendingSettings.logDisplay = value;
+                this.checkForChanges();
             },
             onFontSize(value) {
                 this.pendingSettings.editorFontSize = value;
+                this.checkForChanges();
             },
             onFontFamily(value) {
                 this.pendingSettings.editorFontFamily = value;
+                this.checkForChanges();
             },
             onEnvNameChange(value) {
                 this.pendingSettings.envName = value;
+                this.checkForChanges();
             },
             onEnvColorChange(value) {
                 this.pendingSettings.envColor = value;
+                this.checkForChanges();
             },
             onExecuteFlowBehaviourChange(value) {
                 this.pendingSettings.executeFlowBehaviour = value;
+                this.checkForChanges();
             },
             onExecuteDefaultTabChange(value){
                 this.pendingSettings.executeDefaultTab = value;
+                this.checkForChanges();
             },
             onMultiPanelEditor(value) {
                 this.pendingSettings.multiPanelEditor = value;
+                this.checkForChanges();
             },
             onFlowDefaultTabChange(value){
                 this.pendingSettings.flowDefaultTab = value;
+                this.checkForChanges();
             },
             onLogsFontSize(value) {
                 this.pendingSettings.logsFontSize = value;
+                this.checkForChanges();
             },
             async saveAllSettings() {
                 let refreshWhenSaved = false
@@ -471,7 +541,6 @@
                         // before refreshing. If we don't, some values will be saved
                         // but the page will refresh before all is saved.
                         refreshWhenSaved = true
-
                         break;
                     }
                     default:
@@ -485,15 +554,31 @@
                         }
                     }
                 }
+
+                this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
+                this.hasUnsavedChanges = false;
+
                 if(refreshWhenSaved){
                     document.location.assign(document.location.href)
                 }
                 this.$toast().saved(this.$t("settings.label"), undefined, {multiple: true});
-            }
+            },
+            updateThemeBasedOnSystem() {
+                if (this.theme === "syncWithSystem") {
+                    Utils.switchTheme(this.$store, "syncWithSystem");
+                }
+            },
         },
         mounted() {
             const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
             mediaQuery.addEventListener("change", this.updateThemeBasedOnSystem);
+            
+            window.addEventListener("beforeunload", this.handleBeforeUnload);
+            document.addEventListener("click", this.handleNavigationClick, true); // Use capture phase
+        },
+        beforeUnmount() {
+            window.removeEventListener("beforeunload", this.handleBeforeUnload);
+            document.removeEventListener("click", this.handleNavigationClick, true);
         },
         computed: {
             ...mapState("auth", ["user"]),

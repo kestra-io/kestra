@@ -35,6 +35,8 @@ public abstract class AbstractMetric {
     @NotNull
     protected Property<String> name;
 
+    protected Property<String> description;
+
     protected Property<Map<String, String>> tags;
 
     @NotNull

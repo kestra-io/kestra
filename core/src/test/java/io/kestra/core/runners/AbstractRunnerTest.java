@@ -305,9 +305,9 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-delay-from-input.yaml"})
-    public void pauseRunDelayFromInput() throws Exception {
-        pauseTest.runDelayFromInput(runnerUtils);
+    @LoadFlows({"flows/valids/pause-duration-from-input.yaml"})
+    public void pauseRunDurationFromInput() throws Exception {
+        pauseTest.runDurationFromInput(runnerUtils);
     }
 
     @Test

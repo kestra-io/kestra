@@ -22,8 +22,10 @@ import io.kestra.core.runners.FlowableUtils;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.utils.GraphUtils;
+import io.kestra.core.utils.ListUtils;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 
@@ -40,9 +42,9 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Pause the current execution and wait for approval (either by humans or other automated processes).", 
-    description = "All tasks downstream from the Pause task will be put on hold until the execution is manually resumed from the UI.\n\n" + 
-      "The Execution will be in a Paused state, and you can either manually resume it by clicking on the \"Resume\" button in the UI or by calling the POST API endpoint `/api/v1/executions/{executionId}/resume`. The execution can also be resumed automatically after a timeout."
+    title = "Pause the current execution and wait for approval (either by humans or other automated processes).",
+    description = "All tasks downstream from the Pause task will be put on hold until the execution is manually resumed from the UI.\n\n" +
+      "The Execution will be in a Paused state, and you can either manually resume it by clicking on the \"Resume\" button in the UI or by calling the POST API endpoint `/api/v1/executions/{executionId}/resume`. The execution can also be resumed automatically after the `pauseDuration`."
 )
 @Plugin(
     examples = {
@@ -129,6 +131,24 @@ import java.util.stream.Stream;
                     type: io.kestra.plugin.core.log.Log
                     message: Status is {{ outputs.wait_for_approval.onResume.reason }}. Process finished with {{ outputs.approve.body }}
                 """
+        ),
+        @Example(
+            title = "Pause the execution and set the execution in WARNING if it has not been resumed after 5 minutes",
+            full = true,
+            code = """
+                id: pause_warn
+                namespace: company.team
+
+                tasks:
+                  - id: pause
+                    type: io.kestra.plugin.core.flow.Pause
+                    pauseDuration: PT5M
+                    behavior: WARN
+
+                  - id: post_resume
+                    type: io.kestra.plugin.core.debug.Return
+                    format: "{{ task.id }} started on {{ taskrun.startDate }} after the Pause"
+                """
         )
     },
     aliases = "io.kestra.core.tasks.flows.Pause"
@@ -136,17 +156,38 @@ import java.util.stream.Stream;
 public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Schema(
         title = "Duration of the pause — useful if you want to pause the execution for a fixed amount of time.",
-        description = "The delay is a string in the [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no delay and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
+        description = "**Deprecated**: use `pauseDuration` instead.",
         implementation = Duration.class
     )
+    @Deprecated
     private Property<Duration> delay;
 
+    @Deprecated
+    public void setDelay(Property<Duration> delay) {
+        this.delay = delay;
+        this.pauseDuration = delay;
+    }
+
     @Schema(
-        title = "Timeout of the pause — useful to avoid never-ending workflows in a human-in-the-loop scenario. For example, if you want to pause the execution until a human validates some data generated in a previous task, you can set a timeout of e.g. 24 hours. If no manual approval happens within 24 hours, the execution will automatically resume without a prior data validation.",
-        description = "If no delay and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
+        title = "Duration of the pause. If not set the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
+        description = "The duration is a string in the [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
         implementation = Duration.class
     )
-    private Property<Duration> timeout;
+    private Property<Duration> pauseDuration;
+
+    @Schema(
+        title = "Pause behavior, by default RESUME. What happens when a pause task reach its duration.",
+        description = """
+            Tasks that are resumed before the duration (for example, from the UI) will not use the behavior property but will always success.
+            Possible values are:
+            - RESUME: continue with the execution
+            - WARN: ends the Pause task in WARNING and continue with the execution
+            - FAIL: fail the Pause task
+            - CANCEL: cancel the execution"""
+    )
+    @NotNull
+    @Builder.Default
+    private Property<Behavior> behavior = Property.of(Behavior.RESUME);
 
     @Valid
     @Schema(
@@ -230,17 +271,34 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
             parentTaskRun.getState().getHistories().stream().noneMatch(history -> history.getState() == State.Type.PAUSED);
     }
 
+    // This method is only called when there are subtasks
     @Override
     public Optional<State.Type> resolveState(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
         if (this.needPause(parentTaskRun)) {
             return Optional.of(State.Type.PAUSED);
         }
 
-        if (this.tasks == null || this.tasks.isEmpty()) {
-            return Optional.of(State.Type.SUCCESS);
-        }
-
-        return FlowableTask.super.resolveState(runContext, execution, parentTaskRun);
+        Behavior behavior  = runContext.render(this.behavior).as(Behavior.class).orElse(Behavior.RESUME);
+        return switch (behavior) {
+            case Behavior.RESUME -> {
+                // yield SUCCESS or the final flowable task state
+                if (ListUtils.isEmpty(this.tasks)) {
+                    yield Optional.of(State.Type.SUCCESS);
+                } else {
+                    yield FlowableTask.super.resolveState(runContext, execution, parentTaskRun);
+                }
+            }
+            case Behavior.WARN -> {
+                // yield WARNING or the final flowable task state, if the flowable ends in SUCCESS, yield WARNING
+                if (ListUtils.isEmpty(this.tasks)) {
+                    yield Optional.of(State.Type.WARNING);
+                } else {
+                    Optional<State.Type> finalState = FlowableTask.super.resolveState(runContext, execution, parentTaskRun);
+                    yield finalState.map(state -> state == State.Type.SUCCESS ? State.Type.WARNING : state);
+                }
+            }
+            case Behavior.CANCEL ,Behavior.FAIL -> throw new IllegalArgumentException("The " + behavior + " cannot be handled at this stage, this is certainly a bug!");
+        };
     }
 
     public Map<String, Object> generateOutputs(Map<String, Object> inputs) {
@@ -255,5 +313,22 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Getter
     public static class Output implements io.kestra.core.models.tasks.Output {
         private Map<String, Object> onResume;
+    }
+
+    public enum Behavior {
+        RESUME(State.Type.RUNNING),
+        WARN(State.Type.WARNING),
+        CANCEL(State.Type.CANCELLED),
+        FAIL(State.Type.FAILED);
+
+        private final State.Type executionState;
+
+        Behavior(State.Type executionState) {
+            this.executionState = executionState;
+        }
+
+        public State.Type mapToState() {
+            return this.executionState;
+        }
     }
 }

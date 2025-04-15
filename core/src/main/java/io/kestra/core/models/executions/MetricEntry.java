@@ -66,7 +66,7 @@ public class MetricEntry implements DeletedInterface, TenantInterface {
             .taskId(taskRun.getTaskId())
             .taskRunId(taskRun.getId())
             .type(metricEntry.getType())
-            .name(metricEntry.name)
+            .name(metricEntry.getName())
             .tags(metricEntry.getTags())
             .value(computeValue(metricEntry))
             .timestamp(metricEntry.getTimestamp())

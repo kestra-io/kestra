@@ -1,28 +1,30 @@
 <template>
-    <el-form label-position="top">
-        <task-object
-            v-if="schema"
-            :model-value="modelValue"
-            @update:model-value="onInput"
-            :schema="schema.properties"
-            :definitions="schema.definitions"
-        />
-    </el-form>
+    <TaskObject
+        v-if="schema"
+        :model-value="modelValue"
+        @update:model-value="onInput"
+        :schema="schema.properties"
+        :definitions="schema.definitions"
+    />
 </template>
 <script>
     import Task from "./Task";
+    import TaskObject from "./TaskObject.vue";
 
     export default {
+        components: {
+            TaskObject,
+        },
         mixins: [Task],
     };
 </script>
 
-<style lang="scss" scoped>
-    :deep(.el-form-item) {
+<style lang="scss">
+    .el-form-item {
         margin-bottom: 1rem;
     }
 
-    :deep(.el-form-item__content) {
+    .el-form-item__content {
         .el-form-item {
             width: 100%;
         }

@@ -7,7 +7,7 @@
             <RouterLink
                 :to="{name: 'admin/triggers'}"
             >
-                <el-button type="primary" size="small" text>
+                <el-button size="small" class="py-3">
                     {{ t("dashboard.see_all") }}
                 </el-button>
             </RouterLink>

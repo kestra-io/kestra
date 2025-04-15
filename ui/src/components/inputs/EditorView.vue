@@ -308,7 +308,7 @@
                     :icon="ContentSave"
                     @click="onSaveNewError()"
                     type="primary"
-                    :disabled="taskErrors"
+                    :disabled="Boolean(taskErrors)"
                 >
                     {{ $t("save") }}
                 </el-button>
@@ -330,7 +330,7 @@
                     :icon="ContentSave"
                     @click="onSaveNewTrigger()"
                     type="primary"
-                    :disabled="taskErrors"
+                    :disabled="Boolean(taskErrors)"
                 >
                     {{ $t("save") }}
                 </el-button>
@@ -586,7 +586,7 @@
         return undefined;
     });
     const flowInfos = computed(() => store.getters["flow/flowInfos"]);
-    const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"]);
+    const flowHaveTasks = computed(() => Boolean(store.getters["flow/flowHaveTasks"]));
 
     const editorViewType = useStorage(storageKeys.EDITOR_VIEW_TYPE, "YAML");
 
@@ -742,7 +742,6 @@
     });
 
     onBeforeUnmount(() => {
-        store.commit("flow/setFlowYaml", undefined);
         window.removeEventListener("resize", onResize);
 
         store.commit("plugin/setEditorPlugin", undefined);
@@ -1339,20 +1338,6 @@
         &.enhance-readability {
             padding: 1.5rem;
             background-color: var(--bs-gray-100);
-        }
-
-        &::-webkit-scrollbar {
-            width: 10px;
-            height: 2px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-card);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 20px;
         }
     }
 

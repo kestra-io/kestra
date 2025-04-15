@@ -64,13 +64,11 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     )
     protected Property<Map<String, String>> env;
 
-    @Builder.Default
     @Schema(
-        title = "Whether to set the task state to `WARNING` when any `stdErr` output is detected.",
-        description = "Note that a script error will set the state to `FAILED` regardless."
+        title = "Not used anymore, will be removed soon"
     )
-    @NotNull
-    protected Property<Boolean> warningOnStdErr = Property.of(true);
+    @Deprecated
+    protected Property<Boolean> warningOnStdErr;
 
     @Builder.Default
     @Schema(
@@ -158,7 +156,6 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         Map<String, String> renderedEnv = runContext.render(this.getEnv()).asMap(String.class, String.class);
         return new CommandsWrapper(runContext)
             .withEnv(renderedEnv.isEmpty() ? new HashMap<>() : renderedEnv)
-            .withWarningOnStdErr(runContext.render(this.getWarningOnStdErr()).as(Boolean.class).orElseThrow())
             .withRunnerType(this.getRunner())
             .withContainerImage(runContext.render(this.getContainerImage()).as(String.class).orElse(null))
             .withTaskRunner(this.getTaskRunner())

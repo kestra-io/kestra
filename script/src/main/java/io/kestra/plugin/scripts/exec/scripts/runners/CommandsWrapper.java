@@ -74,8 +74,8 @@ public class CommandsWrapper implements TaskCommands {
     private DockerOptions dockerOptions;
 
     @With
+    @Deprecated
     private Boolean warningOnStdErr;
-
     @With
     private NamespaceFiles namespaceFiles;
 
@@ -177,8 +177,7 @@ public class CommandsWrapper implements TaskCommands {
 
         this.commands = Property.of(finalCommands);
 
-        ScriptOutput.ScriptOutputBuilder scriptOutputBuilder = ScriptOutput.builder()
-            .warningOnStdErr(this.warningOnStdErr);
+        ScriptOutput.ScriptOutputBuilder scriptOutputBuilder = ScriptOutput.builder();
 
         try {
             TaskRunnerResult<T> taskRunnerResult = realTaskRunner.run(taskRunnerRunContext, this, this.outputFiles);

@@ -30,7 +30,7 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Exit the execution: terminate it in the state defined by the property `state`.",
+    title = "Terminate an execution in the state defined by the property state.",
     description = "Note that if this execution has running tasks, for example in a parallel branch, the tasks will not be terminated except if `state` is set to `KILLED`."
 )
 @Plugin(

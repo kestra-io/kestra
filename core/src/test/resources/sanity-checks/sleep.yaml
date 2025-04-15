@@ -1,5 +1,5 @@
 id: sleep
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 tasks:
   - id: before

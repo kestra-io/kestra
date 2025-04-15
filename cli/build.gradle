@@ -36,5 +36,5 @@ dependencies {
     implementation project(":webserver")
 
     //test
-    testImplementation "org.wiremock:wiremock"
+    testImplementation "org.wiremock:wiremock-jetty12"
 }

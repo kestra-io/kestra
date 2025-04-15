@@ -1,12 +1,12 @@
 package io.kestra.webserver.controllers.api;
 
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.services.FlowService;
 import io.kestra.core.storages.FileAttributes;
 import io.kestra.core.storages.NamespaceFile;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Rethrow;
-import io.kestra.core.utils.WindowsUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.MediaType;
@@ -153,7 +153,7 @@ public class NamespaceFileController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @QueryValue String path,
         @Part CompletedFileUpload fileContent
-    ) throws IOException, URISyntaxException {
+    ) throws Exception {
         String tenantId = tenantService.resolveTenant();
         if (fileContent.getFilename().toLowerCase().endsWith(".zip")) {
             try (ZipInputStream archive = new ZipInputStream(fileContent.getInputStream())) {
@@ -181,7 +181,7 @@ public class NamespaceFileController {
         }
     }
 
-    private void putNamespaceFile(String tenantId, String namespace, URI path, BufferedInputStream inputStream) throws IOException {
+    private void putNamespaceFile(String tenantId, String namespace, URI path, BufferedInputStream inputStream) throws Exception {
         String filePath = path.getPath();
         if(filePath.matches("/" + FLOWS_FOLDER + "/.*")) {
             if(filePath.split("/").length != 3) {
@@ -197,7 +197,7 @@ public class NamespaceFileController {
         storageInterface.put(tenantId, namespace, NamespaceFile.of(namespace, path).uri(), inputStream);
     }
 
-    protected void importFlow(String tenantId, String source) {
+    protected void importFlow(String tenantId, String source) throws FlowProcessingException {
         flowService.importFlow(tenantId, source);
     }
 

@@ -234,8 +234,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         private String replaceSecret(String data) {
             for (String s : runContextLogger.useSecrets) {
                 if (data.contains(s)) {
-                    data = data.replace(s, "*".repeat(s.length()));
-                    data = data.replaceFirst("[*]{9}", "**masked*");
+                    data = data.replace(s, "******");
                 }
             }
 

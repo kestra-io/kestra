@@ -7,7 +7,6 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.*;
@@ -145,6 +144,7 @@ public class ExecutorService {
             return executor;
         }
 
+        long nanos = System.nanoTime();
         try {
             executor = this.handleRestart(executor);
             executor = this.handleEnd(executor);
@@ -175,6 +175,10 @@ public class ExecutorService {
             executor = this.handleExecutableTask(executor);
         } catch (Exception e) {
             return executor.withException(e, "process");
+        } finally {
+            metricRegistry
+                .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_MESSAGE_PROCESS_DURATION, MetricRegistry.METRIC_EXECUTOR_EXECUTION_MESSAGE_PROCESS_DURATION_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+                .record(Duration.ofNanos(System.nanoTime() - nanos));
         }
 
         return executor;
@@ -206,7 +210,7 @@ public class ExecutorService {
 
         if (execution.getState().getCurrent() == State.Type.CREATED) {
             metricRegistry
-                .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(execution))
+                .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
                 .increment();
 
             logService.logExecution(
@@ -217,10 +221,6 @@ public class ExecutorService {
 
             newExecution = newExecution.withState(State.Type.RUNNING);
         }
-
-        metricRegistry
-            .counter(MetricRegistry.EXECUTOR_TASKRUN_NEXT_COUNT, metricRegistry.tags(execution))
-            .increment(nexts.size());
 
         return newExecution;
     }
@@ -300,18 +300,7 @@ public class ExecutorService {
         TaskRun taskRun
     ) {
         return findState
-            .map(throwFunction(type -> new WorkerTaskResult(taskRun.withState(type))))
-            .stream()
-            .peek(workerTaskResult -> {
-                metricRegistry
-                    .counter(
-                        MetricRegistry.EXECUTOR_WORKERTASKRESULT_COUNT,
-                        metricRegistry.tags(workerTaskResult)
-                    )
-                    .increment();
-
-            })
-            .findFirst();
+            .map(throwFunction(type -> new WorkerTaskResult(taskRun.withState(type))));
     }
 
     private List<TaskRun> childNextsTaskRun(Executor executor, TaskRun parentTaskRun) throws InternalException {
@@ -414,11 +403,11 @@ public class ExecutorService {
         }
 
         metricRegistry
-            .counter(MetricRegistry.EXECUTOR_EXECUTION_END_COUNT, metricRegistry.tags(newExecution))
+            .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_END_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_END_COUNT_DESCRIPTION, metricRegistry.tags(newExecution))
             .increment();
 
         metricRegistry
-            .timer(MetricRegistry.EXECUTOR_EXECUTION_DURATION, metricRegistry.tags(newExecution))
+            .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION_DESCRIPTION, metricRegistry.tags(newExecution))
             .record(newExecution.getState().getDuration());
 
         return executor.withExecution(newExecution, "onEnd");
@@ -736,7 +725,7 @@ public class ExecutorService {
         }
 
         metricRegistry
-            .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(executor.getExecution()))
+            .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
             .increment();
 
         logService.logExecution(
@@ -848,6 +837,8 @@ public class ExecutorService {
         List<WorkerTask> processingTasks = workerTasks.get(false);
         if (processingTasks != null && !processingTasks.isEmpty()) {
             executorToReturn = executorToReturn.withWorkerTasks(processingTasks, "handleWorkerTask");
+
+            metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_CREATED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_CREATED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution())).increment(processingTasks.size());
         }
 
         return executorToReturn;

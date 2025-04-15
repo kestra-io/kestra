@@ -334,18 +334,6 @@
         .line {
             padding: .5rem;
         }
-
-        &::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--bs-gray-500);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-        }
     }
 
     .temporal {

@@ -1,6 +1,8 @@
 package io.kestra.core.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
@@ -70,7 +72,7 @@ public class FlowService {
      * @param strictValidation Specifies whether to perform a strict validation of the flow.
      * @return The created {@link FlowWithSource}.
      */
-    public FlowWithSource create(final GenericFlow flow, final boolean strictValidation) {
+    public FlowWithSource create(final GenericFlow flow, final boolean strictValidation) throws FlowProcessingException {
         Objects.requireNonNull(flow, "Cannot create null flow");
         if (flow.getSource() == null || flow.getSource().isBlank()) {
             throw new IllegalArgumentException("Cannot create flow with null or blank source");
@@ -123,6 +125,13 @@ public class FlowService {
                     modelValidator.validate(flow);
                 } catch (ConstraintViolationException e) {
                     validateConstraintViolationBuilder.constraints(e.getMessage());
+                } catch (FlowProcessingException e) {
+                    if (e.getCause() instanceof ConstraintViolationException) {
+                        validateConstraintViolationBuilder.constraints(e.getMessage());
+                    } else {
+                        Throwable cause = e.getCause() != null ? e.getCause() : e;
+                        validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + cause.getMessage());
+                    }
                 } catch (RuntimeException re) {
                     // In case of any error, we add a validation violation so the error is displayed in the UI.
                     // We may change that by throwing an internal error and handle it in the UI, but this should not occur except for rare cases
@@ -130,25 +139,20 @@ public class FlowService {
                     log.error("Unable to validate the flow", re);
                     validateConstraintViolationBuilder.constraints("Unable to validate the flow: " + re.getMessage());
                 }
-
                 return validateConstraintViolationBuilder.build();
             })
             .collect(Collectors.toList());
     }
 
-    public FlowWithSource importFlow(String tenantId, String source) {
+    public FlowWithSource importFlow(String tenantId, String source) throws FlowProcessingException {
         return this.importFlow(tenantId, source, false);
     }
 
-    public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) {
-        if (flowRepository.isEmpty()) {
-            throw noRepositoryException();
-        }
+    public FlowWithSource importFlow(String tenantId, String source, boolean dryRun) throws FlowProcessingException {
 
         final GenericFlow flow = GenericFlow.fromYaml(tenantId, source);
 
-        FlowRepositoryInterface flowRepository = this.flowRepository.get();
-        Optional<FlowWithSource> maybeExisting = flowRepository.findByIdWithSource(
+        Optional<FlowWithSource> maybeExisting = repository().findByIdWithSource(
             flow.getTenantId(),
             flow.getNamespace(),
             flow.getId(),
@@ -169,8 +173,8 @@ public class FlowService {
                 .orElseGet(() -> FlowWithSource.of(flowToImport, source).toBuilder().revision(1).build());
         } else {
             return maybeExisting
-                .map(previous -> flowRepository.update(flow, previous))
-                .orElseGet(() -> flowRepository.create(flow));
+                .map(previous -> repository().update(flow, previous))
+                .orElseGet(() -> repository().create(flow));
         }
     }
 

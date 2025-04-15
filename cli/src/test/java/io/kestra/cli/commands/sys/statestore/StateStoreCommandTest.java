@@ -8,9 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.core.Is.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class StateStoreCommandTest {
     @Test
@@ -22,8 +20,8 @@ class StateStoreCommandTest {
             String[] args = {};
             Integer call = PicocliRunner.call(StateStoreCommand.class, ctx, args);
 
-            assertThat(call, is(0));
-            assertThat(out.toString(), containsString("Usage: kestra sys state-store"));
+            assertThat(call).isEqualTo(0);
+            assertThat(out.toString()).contains("Usage: kestra sys state-store");
         }
     }
 }

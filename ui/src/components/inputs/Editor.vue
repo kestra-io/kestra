@@ -97,6 +97,7 @@
             schemaType: {type: String, default: undefined},
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
+            keepFocused: {type: Boolean, default: undefined},
             fullHeight: {type: Boolean, default: true},
             customHeight: {type: Number, default: 7},
             theme: {type: String, default: undefined},
@@ -324,7 +325,7 @@
 
                 // TabFocus is global to all editor so revert the behavior on non inputs
                 this.editor.onDidFocusEditorText?.(() => {
-                    TabFocus.setTabFocusMode(this.input);
+                    TabFocus.setTabFocusMode(this.keepFocused === undefined ? this.input : false);
                 });
 
                 if (this.input) {

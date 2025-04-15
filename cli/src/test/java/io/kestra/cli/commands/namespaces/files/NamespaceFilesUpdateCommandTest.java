@@ -14,8 +14,8 @@ import java.net.URISyntaxException;
 import java.net.URL;
 
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.not;
-import static org.hamcrest.core.StringContains.containsString;
 
 class NamespaceFilesUpdateCommandTest {
     @Test

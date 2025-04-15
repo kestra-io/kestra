@@ -1,7 +1,6 @@
 package io.kestra.core.runners.pebble.functions;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -66,7 +65,7 @@ public class KvFunctionTest {
         String rendered = variableRenderer.render("{{ kv('my-key') }}", variables);
 
         // Then
-        assertThat(rendered, is("{\"field\":\"value\"}"));
+        assertThat(rendered).isEqualTo("{\"field\":\"value\"}");
     }
 
     @Test
@@ -88,7 +87,7 @@ public class KvFunctionTest {
         String rendered = variableRenderer.render("{{ kv('my-key') }}", variables);
 
         // Then
-        assertThat(rendered, is("{\"field\":\"value\"}"));
+        assertThat(rendered).isEqualTo("{\"field\":\"value\"}");
     }
 
     @Test
@@ -124,7 +123,7 @@ public class KvFunctionTest {
         String rendered = variableRenderer.render("{{ kv('my-key', namespace='kv') }}", variables);
 
         // Then
-        assertThat(rendered, is("{\"field\":\"value\"}"));
+        assertThat(rendered).isEqualTo("{\"field\":\"value\"}");
     }
 
     @Test
@@ -140,7 +139,7 @@ public class KvFunctionTest {
         String rendered = variableRenderer.render("{{ kv('my-key', errorOnMissing=false) }}", variables);
 
         // Then
-        assertThat(rendered, is(""));
+        assertThat(rendered).isEqualTo("");
     }
 
     @Test
@@ -158,7 +157,7 @@ public class KvFunctionTest {
         });
 
         // Then
-        assertThat(exception.getMessage(), is("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key', errorOnMissing=true) }}:1)"));
+        assertThat(exception.getMessage()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key', errorOnMissing=true) }}:1)");
     }
 
     @Test
@@ -175,6 +174,6 @@ public class KvFunctionTest {
         });
 
         // Then
-        assertThat(exception.getMessage(), is("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key') }}:1)"));
+        assertThat(exception.getMessage()).isEqualTo("io.pebbletemplates.pebble.error.PebbleException: The key 'my-key' does not exist in the namespace 'io.kestra.tests'. ({{ kv('my-key') }}:1)");
     }
 }

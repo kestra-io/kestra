@@ -12,8 +12,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ObjectMapperFactoryTest {
@@ -69,32 +68,32 @@ class ObjectMapperFactoryTest {
 
         String s = objectMapper.writeValueAsString(b);
 
-        assertThat(s, containsString("\"intNull\":0"));
-        assertThat(s, containsString("\"intDefault\":0"));
-        assertThat(s, containsString("\"intChange\":1"));
+        assertThat(s).contains("\"intNull\":0");
+        assertThat(s).contains("\"intDefault\":0");
+        assertThat(s).contains("\"intChange\":1");
 
-        assertThat(s, not(containsString("\"integerNull\":")));
-        assertThat(s, containsString("\"integerDefault\":0"));
-        assertThat(s, containsString("\"integerChange\":1"));
+        assertThat(s).doesNotContain("\"integerNull\":");
+        assertThat(s).contains("\"integerDefault\":0");
+        assertThat(s).contains("\"integerChange\":1");
 
-        assertThat(s, containsString("\"boolNull\":false"));
-        assertThat(s, containsString("\"boolDefaultTrue\":true"));
-        assertThat(s, containsString("\"boolChangeTrue\":false"));
-        assertThat(s, containsString("\"boolDefaultFalse\":false"));
-        assertThat(s, containsString("\"boolChangeTrue\":false"));
+        assertThat(s).contains("\"boolNull\":false");
+        assertThat(s).contains("\"boolDefaultTrue\":true");
+        assertThat(s).contains("\"boolChangeTrue\":false");
+        assertThat(s).contains("\"boolDefaultFalse\":false");
+        assertThat(s).contains("\"boolChangeTrue\":false");
 
-        assertThat(s, not(containsString("\"booleanNull\":")));
-        assertThat(s, containsString("\"booleanDefaultTrue\":true"));
-        assertThat(s, containsString("\"booleanChangeTrue\":false"));
-        assertThat(s, containsString("\"booleanDefaultFalse\":false"));
-        assertThat(s, containsString("\"booleanChangeTrue\":false"));
+        assertThat(s).doesNotContain("\"booleanNull\":");
+        assertThat(s).contains("\"booleanDefaultTrue\":true");
+        assertThat(s).contains("\"booleanChangeTrue\":false");
+        assertThat(s).contains("\"booleanDefaultFalse\":false");
+        assertThat(s).contains("\"booleanChangeTrue\":false");
 
-        assertThat(s, not(containsString("\"stringNull\":")));
-        assertThat(s, containsString("\"stringDefault\":\"bla\""));
-        assertThat(s, containsString("\"stringChange\":\"foo\""));
+        assertThat(s).doesNotContain("\"stringNull\":");
+        assertThat(s).contains("\"stringDefault\":\"bla\"");
+        assertThat(s).contains("\"stringChange\":\"foo\"");
 
-        assertThat(s, containsString("\"duration\":\"PT5M\""));
-        assertThat(s, containsString("\"zonedDateTime\":\"2013-09-08T16:19:12+02:00\""));
+        assertThat(s).contains("\"duration\":\"PT5M\"");
+        assertThat(s).contains("\"zonedDateTime\":\"2013-09-08T16:19:12+02:00\"");
     }
 
 
@@ -105,30 +104,30 @@ class ObjectMapperFactoryTest {
             Bean.class
         );
 
-        assertThat(bean.intNull, is(0));
-        assertThat(bean.intDefault, is(0));
-        assertThat(bean.intChange, is(1));
+        assertThat(bean.intNull).isEqualTo(0);
+        assertThat(bean.intDefault).isEqualTo(0);
+        assertThat(bean.intChange).isEqualTo(1);
 
-        assertThat(bean.integerNull, is(nullValue()));
-        assertThat(bean.integerDefault, is(0));
-        assertThat(bean.integerChange, is(1));
+        assertThat(bean.integerNull).isNull();
+        assertThat(bean.integerDefault).isEqualTo(0);
+        assertThat(bean.integerChange).isEqualTo(1);
 
-        assertThat(bean.boolNull, is(false));
-        assertThat(bean.boolDefaultTrue, is(true));
-        assertThat(bean.boolChangeTrue, is(false));
-        assertThat(bean.boolDefaultFalse, is(false));
-        assertThat(bean.boolChangeFalse, is(true));
+        assertThat(bean.boolNull).isEqualTo(false);
+        assertThat(bean.boolDefaultTrue).isEqualTo(true);
+        assertThat(bean.boolChangeTrue).isEqualTo(false);
+        assertThat(bean.boolDefaultFalse).isEqualTo(false);
+        assertThat(bean.boolChangeFalse).isEqualTo(true);
 
-        assertThat(bean.booleanNull, is(nullValue()));
-        assertThat(bean.booleanDefaultTrue, is(true));
-        assertThat(bean.booleanChangeTrue, is(false));
-        assertThat(bean.booleanDefaultFalse, is(false));
-        assertThat(bean.booleanChangeFalse, is(true));
+        assertThat(bean.booleanNull).isNull();
+        assertThat(bean.booleanDefaultTrue).isEqualTo(true);
+        assertThat(bean.booleanChangeTrue).isEqualTo(false);
+        assertThat(bean.booleanDefaultFalse).isEqualTo(false);
+        assertThat(bean.booleanChangeFalse).isEqualTo(true);
 
-        assertThat(bean.stringNull, is(nullValue()));
-        assertThat(bean.stringDefault, is("bla"));
-        assertThat(bean.stringChange, is("foo"));
+        assertThat(bean.stringNull).isNull();
+        assertThat(bean.stringDefault).isEqualTo("bla");
+        assertThat(bean.stringChange).isEqualTo("foo");
 
-        assertThat(bean.duration, is(Duration.parse("PT5M")));
+        assertThat(bean.duration).isEqualTo(Duration.parse("PT5M"));
     }
 }

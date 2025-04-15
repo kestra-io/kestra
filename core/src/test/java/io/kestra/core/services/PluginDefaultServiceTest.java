@@ -1,6 +1,7 @@
 package io.kestra.core.services;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -67,7 +68,7 @@ class PluginDefaultServiceTest {
     private PluginDefaultService pluginDefaultService;
 
     @Test
-    void shouldInjectGivenFlowWithNullSource() {
+    void shouldInjectGivenFlowWithNullSource() throws FlowProcessingException {
         // Given
         FlowInterface flow = GenericFlow.fromYaml(null, TEST_LOG_FLOW_SOURCE);
 
@@ -131,7 +132,7 @@ class PluginDefaultServiceTest {
 
     @ParameterizedTest
     @MethodSource
-    void flowDefaultsOverrideGlobalDefaults(boolean flowDefaultForced, boolean globalDefaultForced, String fooValue, String barValue, String bazValue) {
+    void flowDefaultsOverrideGlobalDefaults(boolean flowDefaultForced, boolean globalDefaultForced, String fooValue, String barValue, String bazValue) throws FlowProcessingException {
         final DefaultPrecedenceTester task = DefaultPrecedenceTester.builder()
             .id("test")
             .type(DefaultPrecedenceTester.class.getName())
@@ -177,7 +178,7 @@ class PluginDefaultServiceTest {
     }
 
     @Test
-    public void injectFlowAndGlobals() {
+    public void injectFlowAndGlobals() throws FlowProcessingException {
         String source = String.format("""
             id: default-test
             namespace: io.kestra.tests
@@ -230,7 +231,7 @@ class PluginDefaultServiceTest {
     }
 
     @Test
-    public void shouldInjectForcedDefaultsGivenForcedTrue() {
+    public void shouldInjectForcedDefaultsGivenForcedTrue() throws FlowProcessingException {
         // Given
         String source = """
             id: default-test
@@ -266,7 +267,7 @@ class PluginDefaultServiceTest {
     }
 
     @Test
-    public void shouldInjectDefaultGivenPrefixType() {
+    public void shouldInjectDefaultGivenPrefixType() throws FlowProcessingException {
         // Given
         String source = """
             id: default-test
@@ -305,7 +306,7 @@ class PluginDefaultServiceTest {
     }
 
     @Test
-    void shouldInjectFlowDefaultsGivenAlias() {
+    void shouldInjectFlowDefaultsGivenAlias() throws FlowProcessingException {
         // Given
         GenericFlow flow = GenericFlow.fromYaml(null, """
               id: default-test
@@ -330,7 +331,7 @@ class PluginDefaultServiceTest {
     }
 
     @Test
-    void shouldInjectFlowDefaultsGivenType() {
+    void shouldInjectFlowDefaultsGivenType() throws FlowProcessingException {
         GenericFlow flow = GenericFlow.fromYaml(null, """
                   id: default-test
                   namespace: io.kestra.tests
@@ -352,7 +353,7 @@ class PluginDefaultServiceTest {
     }
 
     @Test
-    public void shouldNotInjectDefaultsGivenExistingTaskValue() {
+    public void shouldNotInjectDefaultsGivenExistingTaskValue() throws FlowProcessingException {
         // Given
         GenericFlow flow = GenericFlow.fromYaml(null, """
             id: default-test

@@ -311,5 +311,5 @@ export default class Utils {
 
 export const useTheme = () => {
     const store = useStore();
-    return computed(() => store.getters["misc/theme"]);
+    return computed<"light" | "dark">(() => store.getters["misc/theme"]);
 }

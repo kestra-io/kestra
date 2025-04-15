@@ -13,9 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.equalTo;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
 class LocalWorkingDirTest {
@@ -30,7 +28,7 @@ class LocalWorkingDirTest {
     @Test
     void shouldReturnTheSameWorkingDirPath() {
         LocalWorkingDir workingDirectory = new LocalWorkingDir(Path.of("/tmp"), IdUtils.create());
-        assertThat(workingDirectory.path(), is(workingDirectory.path()));
+        assertThat(workingDirectory.path()).isEqualTo(workingDirectory.path());
     }
 
     @Test
@@ -38,12 +36,12 @@ class LocalWorkingDirTest {
         LocalWorkingDir workingDirectory = new LocalWorkingDir(Path.of("/tmp"), IdUtils.create());
 
         Path path = workingDirectory.resolve(Path.of("file.txt"));
-        assertThat(path.toString(), is(workingDirectory.path() + "/file.txt"));
+        assertThat(path.toString()).isEqualTo(workingDirectory.path() + "/file.txt");
 
         path = workingDirectory.resolve(Path.of("subdir/file.txt"));
-        assertThat(path.toString(), is(workingDirectory.path() + "/subdir/file.txt"));
+        assertThat(path.toString()).isEqualTo(workingDirectory.path() + "/subdir/file.txt");
 
-        assertThat(workingDirectory.resolve(null), is(workingDirectory.path()));
+        assertThat(workingDirectory.resolve(null)).isEqualTo(workingDirectory.path());
         assertThrows(IllegalArgumentException.class, () -> workingDirectory.resolve(Path.of("/etc/passwd")));
         assertThrows(IllegalArgumentException.class, () -> workingDirectory.resolve(Path.of("../../etc/passwd")));
         assertThrows(IllegalArgumentException.class, () -> workingDirectory.resolve(Path.of("subdir/../../../etc/passwd")));
@@ -54,8 +52,8 @@ class LocalWorkingDirTest {
         String workingDirId = IdUtils.create();
         TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
         Path tempFile = workingDirectory.createTempFile();
-        assertThat(tempFile.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/"), is(true));
-        assertThat(workingDirectory.getAllCreatedTempFiles().size(), is(1));
+        assertThat(tempFile.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isEqualTo(true);
+        assertThat(workingDirectory.getAllCreatedTempFiles().size()).isEqualTo(1);
     }
 
     @Test
@@ -64,9 +62,9 @@ class LocalWorkingDirTest {
         TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
         Path path = workingDirectory.createFile("folder/file.txt");
 
-        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/"), is(true));
-        assertThat(path.toFile().getAbsolutePath().endsWith("/folder/file.txt"), is(true));
-        assertThat(workingDirectory.getAllCreatedFiles().size(), is(1));
+        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isEqualTo(true);
+        assertThat(path.toFile().getAbsolutePath().endsWith("/folder/file.txt")).isEqualTo(true);
+        assertThat(workingDirectory.getAllCreatedFiles().size()).isEqualTo(1);
     }
 
     @Test
@@ -93,13 +91,13 @@ class LocalWorkingDirTest {
         // When - Then
 
         // glob
-        assertThat(workingDir.findAllFilesMatching(List.of("glob:**/*.*")).size(), is(5));
+        assertThat(workingDir.findAllFilesMatching(List.of("glob:**/*.*")).size()).isEqualTo(5);
         // pattern
-        assertThat(workingDir.findAllFilesMatching(List.of("*.*", "**/*.*")).size(), is(5));
+        assertThat(workingDir.findAllFilesMatching(List.of("*.*", "**/*.*")).size()).isEqualTo(5);
         // duplicate pattern
-        assertThat(workingDir.findAllFilesMatching(List.of("*.*", "**/*.*", "**/*.*")).size(), is(5));
+        assertThat(workingDir.findAllFilesMatching(List.of("*.*", "**/*.*", "**/*.*")).size()).isEqualTo(5);
         // regex
-        assertThat(workingDir.findAllFilesMatching(List.of("regex:.*\\.tmp", "*.txt", "**/*.txt")).size(), is(5));
+        assertThat(workingDir.findAllFilesMatching(List.of("regex:.*\\.tmp", "*.txt", "**/*.txt")).size()).isEqualTo(5);
     }
 
     @Test
@@ -113,14 +111,14 @@ class LocalWorkingDirTest {
         workingDir.cleanup();
 
         // Then
-        assertThat(file.toFile().exists(), is(false));
-        assertThat(firtPath.toFile().exists(), is(false));
+        assertThat(file.toFile().exists()).isEqualTo(false);
+        assertThat(firtPath.toFile().exists()).isEqualTo(false);
 
         // When
         Path secondPath = workingDir.path(true);
         // Then
-        assertThat(secondPath.toFile().exists(), is(true));
-        assertThat(firtPath, equalTo(secondPath));
+        assertThat(secondPath.toFile().exists()).isEqualTo(true);
+        assertThat(firtPath).isEqualTo(secondPath);
     }
 
     @Test
@@ -130,15 +128,15 @@ class LocalWorkingDirTest {
         Path file = workingDir.createFile("test.txt", new ByteArrayInputStream("First file".getBytes(StandardCharsets.UTF_8)));
 
         assertThrows(FileAlreadyExistsException.class, () -> workingDir.putFile(file, new ByteArrayInputStream("Hello world".getBytes(StandardCharsets.UTF_8)), FileExistComportment.FAIL));
-        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8), is(List.of("First file")));
+        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8)).isEqualTo(List.of("First file"));
 
         workingDir.putFile(file, new ByteArrayInputStream("Hello world".getBytes(StandardCharsets.UTF_8)), FileExistComportment.IGNORE);
-        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8), is(List.of("First file")));
+        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8)).isEqualTo(List.of("First file"));
 
         workingDir.putFile(file, new ByteArrayInputStream("Hello world".getBytes(StandardCharsets.UTF_8)), FileExistComportment.WARN);
-        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8), is(List.of("First file")));
+        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8)).isEqualTo(List.of("First file"));
 
         workingDir.putFile(file, new ByteArrayInputStream("New file".getBytes(StandardCharsets.UTF_8)), FileExistComportment.OVERWRITE);
-        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8), is(List.of("New file")));
+        assertThat(Files.readAllLines(file, StandardCharsets.UTF_8)).isEqualTo(List.of("New file"));
     }
 }

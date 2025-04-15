@@ -15,9 +15,7 @@ import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class FinallyTest {
@@ -37,11 +35,11 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(5));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -54,11 +52,11 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(5));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -71,11 +69,11 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(5));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -83,11 +81,11 @@ class FinallyTest {
     void sequentialErrorFirst() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "finally-sequential-error-first");
 
-        assertThat(execution.getTaskRunList(), hasSize(3));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ok").isEmpty(), is(true));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(3);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ok").isEmpty()).isEqualTo(true);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -100,13 +98,13 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(7));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(7);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -119,11 +117,11 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(5));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(5);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -136,13 +134,13 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(7));
-        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(7);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -155,11 +153,11 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(8));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(8);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -172,13 +170,13 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(10));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(10);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -191,11 +189,11 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(9));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(9);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -208,13 +206,13 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(11));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(11);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -227,11 +225,11 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(9));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(9);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -244,13 +242,13 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(11));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(11);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -263,11 +261,11 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(7));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(7);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -280,13 +278,13 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(9));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(9);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -299,11 +297,11 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(4));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(4);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -316,11 +314,11 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(4));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(4);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -333,11 +331,11 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(4));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(4);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("ok").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -350,13 +348,13 @@ class FinallyTest {
             Duration.ofSeconds(60)
         );
 
-        assertThat(execution.getTaskRunList(), hasSize(6));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(6);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("a2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.findTaskRunsByTaskId("e2").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -364,10 +362,10 @@ class FinallyTest {
     void flowErrorFirst() throws QueueException, TimeoutException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "finally-flow-error-first");
 
-        assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.findTaskRunsByTaskId("ok").isEmpty(), is(true));
-        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.findTaskRunsByTaskId("ok").isEmpty()).isEqualTo(true);
+        assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 }

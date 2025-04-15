@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -15,6 +16,7 @@ import io.kestra.core.utils.GraphUtils;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
@@ -34,27 +36,28 @@ public class GraphService {
     @Inject
     private RunContextFactory runContextFactory;
 
-    public FlowGraph flowGraph(FlowWithSource flow, List<String> expandedSubflows) throws IllegalVariableEvaluationException {
+    public FlowGraph flowGraph(FlowWithSource flow, List<String> expandedSubflows) throws IllegalVariableEvaluationException, FlowProcessingException {
         return this.flowGraph(flow, expandedSubflows, null);
     }
 
-    public FlowGraph flowGraph(FlowWithSource flow, List<String> expandedSubflows, Execution execution) throws IllegalVariableEvaluationException {
+    public FlowGraph flowGraph(FlowWithSource flow, List<String> expandedSubflows, Execution execution) throws IllegalVariableEvaluationException, FlowProcessingException {
         return FlowGraph.of(this.of(flow, Optional.ofNullable(expandedSubflows).orElse(Collections.emptyList()), new HashMap<>(), execution));
     }
 
-    public FlowGraph executionGraph(FlowWithSource flow, List<String> expandedSubflows, Execution execution) throws IllegalVariableEvaluationException {
+    public FlowGraph executionGraph(FlowWithSource flow, List<String> expandedSubflows, Execution execution) throws IllegalVariableEvaluationException, FlowProcessingException {
         return FlowGraph.of(this.of(flow, Optional.ofNullable(expandedSubflows).orElse(Collections.emptyList()), new HashMap<>(), execution));
     }
 
-    public GraphCluster of(FlowWithSource flow, List<String> expandedSubflows, Map<String, FlowWithSource> flowByUid, Execution execution) throws IllegalVariableEvaluationException {
+    public GraphCluster of(FlowWithSource flow, List<String> expandedSubflows, Map<String, FlowWithSource> flowByUid, Execution execution) throws IllegalVariableEvaluationException, FlowProcessingException {
         return this.of(null, flow, expandedSubflows, flowByUid, execution);
     }
 
-    public GraphCluster of(GraphCluster baseGraph, FlowWithSource flow, List<String> expandedSubflows, Map<String, FlowWithSource> flowByUid) throws IllegalVariableEvaluationException {
+    public GraphCluster of(GraphCluster baseGraph, FlowWithSource flow, List<String> expandedSubflows, Map<String, FlowWithSource> flowByUid) throws IllegalVariableEvaluationException, FlowProcessingException {
         return this.of(baseGraph, flow, expandedSubflows, flowByUid, null);
     }
 
-    public GraphCluster of(GraphCluster baseGraph, FlowWithSource flow, List<String> expandedSubflows, Map<String, FlowWithSource> flowByUid, Execution execution) throws IllegalVariableEvaluationException {
+    @SneakyThrows
+    public GraphCluster of(GraphCluster baseGraph, FlowWithSource flow, List<String> expandedSubflows, Map<String, FlowWithSource> flowByUid, Execution execution) throws IllegalVariableEvaluationException, FlowProcessingException {
         String tenantId = flow.getTenantId();
         flow = pluginDefaultService.injectAllDefaults(flow, false);
         List<Trigger> triggers = null;

@@ -372,11 +372,12 @@
                 }
 
                 &::-webkit-scrollbar-track {
-                    background: var(--bs-gray-500);
+                    background: var(--ks-background-body);
                 }
 
                 &::-webkit-scrollbar-thumb {
-                    background: var(--ks-button-background-primary);
+                    background: var(--ks-border-primary);
+                    border-radius: 5px;
                 }
             }
 

@@ -24,8 +24,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 abstract public class JdbcQueueTest {
@@ -58,7 +57,7 @@ abstract public class JdbcQueueTest {
         countDownLatch.await(5, TimeUnit.SECONDS);
         receive.blockLast();
 
-        assertThat(countDownLatch.getCount(), is(0L));
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
 
     @Test
@@ -79,7 +78,7 @@ abstract public class JdbcQueueTest {
         countDownLatch.await(5, TimeUnit.SECONDS);
         receive.blockLast();
 
-        assertThat(countDownLatch.getCount(), is(0L));
+        assertThat(countDownLatch.getCount()).isEqualTo(0L);
     }
 
     @Test
@@ -94,7 +93,7 @@ abstract public class JdbcQueueTest {
 
         countDownLatch.await(5, TimeUnit.SECONDS);
 
-        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f1"));
+        assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f1");
 
         // second one only
         flowQueue.emit(builder("io.kestra.f2"));
@@ -105,7 +104,7 @@ abstract public class JdbcQueueTest {
         });
         countDownLatch2.await(5, TimeUnit.SECONDS);
 
-        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f2"));
+        assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f2");
     }
 
     @Test
@@ -120,7 +119,7 @@ abstract public class JdbcQueueTest {
 
         countDownLatch.await(5, TimeUnit.SECONDS);
 
-        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f1"));
+        assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f1");
 
         // second one only
         flowQueue.emit("consumer_group", builder("io.kestra.f2"));
@@ -131,7 +130,7 @@ abstract public class JdbcQueueTest {
         });
         countDownLatch2.await(5, TimeUnit.SECONDS);
 
-        assertThat(receive.blockLast().getNamespace(), is("io.kestra.f2"));
+        assertThat(receive.blockLast().getNamespace()).isEqualTo("io.kestra.f2");
     }
 
     private static FlowWithSource builder(String namespace) {

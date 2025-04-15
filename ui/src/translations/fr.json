@@ -1085,10 +1085,10 @@
           "note": "Remarque ce paramètre est utilisé pour afficher les propriétés de date et d'heure dans l'interface utilisateur. Pour planifier vos flux dans un fuseau horaire différent de l'UTC, assurez-vous de définir la propriété de fuseau horaire sur le déclencheur de planification dans le code de votre"
         },
         "save": {
-          "fields": {
-            "name": "Enregistrer les modifications"
-          },
-          "label": "Enregistrer les préférences"
+          "discard": "Jeter",
+          "label": "Enregistrer les préférences",
+          "unsaved_title": "Modifications non enregistrées",
+          "unsaved_warning": "Vous avez des modifications non enregistrées. Voulez-vous les enregistrer avant de quitter ?"
         },
         "theme": {
           "fields": {

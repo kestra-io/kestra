@@ -1,0 +1,1 @@
+ALTER TABLE `triggers` ADD INDEX idx_next_execution_date(`next_execution_date`);

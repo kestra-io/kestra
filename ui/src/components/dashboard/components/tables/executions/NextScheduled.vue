@@ -7,7 +7,7 @@
             <RouterLink
                 :to="{name: 'admin/triggers'}"
             >
-                <el-button type="primary" size="small" text>
+                <el-button class="see-all-btn" size="small">
                     {{ t("dashboard.see_all") }}
                 </el-button>
             </RouterLink>
@@ -238,6 +238,11 @@
 <style lang="scss">
 code {
     color: var(--ks-content-id);
+}
+
+.see-all-btn{
+    padding-top: 15px;
+    padding-bottom: 15px
 }
 
 .nextscheduled {

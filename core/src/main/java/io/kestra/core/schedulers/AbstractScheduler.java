@@ -3,6 +3,7 @@ package io.kestra.core.schedulers;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
@@ -517,7 +518,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         if (this.isPaused.get()) {
             return;
         }
-
+        Instant startInstant = Instant.now();
         ZonedDateTime now = now();
 
         final List<FlowWithSource> flowWithDefaults = getFlowsWithDefaults();
@@ -660,6 +661,9 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     }
                 });
         });
+        metricRegistry
+            .timer(MetricRegistry.METRIC_SCHEDULER_HANDLE_DURATION, MetricRegistry.METRIC_SCHEDULER_HANDLE_DURATION_DESCRIPTION, Lists.newArrayList().toArray(new String[0]))
+            .record(Duration.between(startInstant, Instant.now()));
     }
 
     private List<FlowWithSource> getFlowsWithDefaults() {

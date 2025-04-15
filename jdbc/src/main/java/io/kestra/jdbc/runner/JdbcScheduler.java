@@ -1,7 +1,5 @@
 package io.kestra.jdbc.runner;
 
-import com.google.common.collect.Lists;
-import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
@@ -17,8 +15,6 @@ import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
 
-import java.time.Duration;
-import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.function.BiConsumer;
@@ -67,11 +63,7 @@ public class JdbcScheduler extends AbstractScheduler {
         JdbcSchedulerContext schedulerContext = new JdbcSchedulerContext(this.dslContextWrapper);
 
         schedulerContext.doInTransaction(scheduleContextInterface -> {
-            Instant startInstant = Instant.now();
             List<Trigger> triggers = this.triggerState.findByNextExecutionDateReadyForAllTenants(now, scheduleContextInterface);
-            metricRegistry
-                .timer(MetricRegistry.METRIC_SCHEDULER_TRIGGER_FIND_BATCH_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_FIND_BATCH_DURATION_DESCRIPTION, Lists.newArrayList().toArray(new String[0]))
-                .record(Duration.between(startInstant, Instant.now()));
             consumer.accept(triggers, scheduleContextInterface);
         });
     }

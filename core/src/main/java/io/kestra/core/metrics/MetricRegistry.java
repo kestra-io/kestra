@@ -85,14 +85,14 @@ public class MetricRegistry {
     public static final String METRIC_SCHEDULER_TRIGGER_COUNT_DESCRIPTION = "Total number of executions triggered by the Scheduler";
     public static final String METRIC_SCHEDULER_TRIGGER_DELAY_DURATION = "scheduler.trigger.delay.duration";
     public static final String METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION = "Trigger delay duration inside the Scheduler";
-    public static final String METRIC_SCHEDULER_TRIGGER_FIND_BATCH_DURATION = "scheduler.trigger.find.batch.duration";
-    public static final String METRIC_SCHEDULER_TRIGGER_FIND_BATCH_DURATION_DESCRIPTION = "Trigger select method duration inside the Scheduler";
     public static final String METRIC_SCHEDULER_EVALUATE_COUNT = "scheduler.evaluate.count";
     public static final String METRIC_SCHEDULER_EVALUATE_COUNT_DESCRIPTION = "Total number of triggers evaluated by the Scheduler";
     public static final String METRIC_SCHEDULER_EXECUTION_LOCK_DURATION = "scheduler.execution.lock.duration";
     public static final String METRIC_SCHEDULER_EXECUTION_LOCK_DURATION_DESCRIPTION = "Trigger lock duration waiting for an execution to be terminated";
     public static final String METRIC_SCHEDULER_EXECUTION_MISSING_DURATION = "scheduler.execution.missing.duration";
     public static final String METRIC_SCHEDULER_EXECUTION_MISSING_DURATION_DESCRIPTION = "Missing execution duration inside the Scheduler. A missing execution is an execution that was triggered by the Scheduler but not yet started by the Executor";
+    public static final String METRIC_SCHEDULER_HANDLE_DURATION = "scheduler.handler.duration";
+    public static final String METRIC_SCHEDULER_HANDLE_DURATION_DESCRIPTION = "handler execution duration inside the Scheduler";
 
     public static final String METRIC_STREAMS_STATE_COUNT = "stream.state.count";
     public static final String METRIC_STREAMS_STATE_COUNT_DESCRIPTION = "Number of Kafka Stream applications by state";

@@ -409,6 +409,7 @@
         store.commit("core/setGuidedProperties", {tourStarted: false});
 
         TOURS[TOUR_NAME].stop();
+        router.push({name: "flows/create"});
     };
     const finishTour = (current, push = true) => {
         toggleScroll();

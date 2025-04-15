@@ -1,7 +1,15 @@
 import Bar from "../../../../../../src/components/dashboard/components/charts/executions/Bar.vue";
+import {vueRouter} from "storybook-vue3-router";
 
 export default {
     title: "Dashboard/Charts/Executions/Bar",
+    decorators: [vueRouter([
+        {
+            path: "/",
+            name: "home",
+            component: {template: "<div>home</div>"}
+        }
+    ])],
     component: Bar,
     parameters: {
         layout: "centered",
@@ -17,7 +25,7 @@ const generateSampleData = (days) => {
     for (let i = 0; i < days; i++) {
         const date = new Date(now);
         date.setDate(date.getDate() - i);
-        
+
         const executionCounts = {};
         states.forEach(state => {
             executionCounts[state] = Math.floor(Math.random() * 50); // Random count between 0-50
@@ -38,7 +46,6 @@ const generateSampleData = (days) => {
 
 // Template for all stories
 const Template = (args) => ({
-    components: {Bar},
     setup() {
         return () => {
             return <div style="width: 800px;"><Bar {...args} /></div>
@@ -94,7 +101,7 @@ HourlyData.args = {
         };
     }),
     total: 500,
-}; 
+};
 
 // Story with execution names as labels
 export const ExecutionNamesAsLabels = Template.bind({});

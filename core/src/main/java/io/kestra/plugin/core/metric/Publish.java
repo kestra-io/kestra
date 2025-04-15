@@ -24,7 +24,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Publish metrics.",
+    title = "Publish Kestra metrics within an execution.",
     description = "This task is useful to easily publish metrics for a flow."
 )
 @Plugin(

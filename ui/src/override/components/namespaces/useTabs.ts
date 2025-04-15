@@ -14,7 +14,7 @@ import KVTable from "../../../components/kv/KVTable.vue";
 const lockedProps = (tab: string) => ({
     locked: true,
     component: DemoNamespace,
-    props: {tab, maximize: true},
+    props: {tab},
 });
 
 export function useTabs() {

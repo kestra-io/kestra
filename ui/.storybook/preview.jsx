@@ -37,4 +37,11 @@ setup((app) => {
   initApp(app, [], stores, en);
 });
 
+
+window.addEventListener("unhandledrejection", (evt) => {
+    if (evt?.reason?.stack?.includes?.("/monaco/esm/vs") || evt?.reason?.stack?.includes?.("/monaco/min/vs")) {
+        evt.stopImmediatePropagation()
+    }
+})
+
 export default preview;

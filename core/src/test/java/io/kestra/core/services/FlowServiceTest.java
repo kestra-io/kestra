@@ -1,5 +1,6 @@
 package io.kestra.core.services;
 
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -51,7 +52,7 @@ class FlowServiceTest {
     }
 
     @Test
-    void importFlow() {
+    void importFlow() throws FlowProcessingException {
         String source = """
             id: import
             namespace: some.namespace
@@ -85,7 +86,7 @@ class FlowServiceTest {
     }
 
     @Test
-    void importFlow_DryRun() {
+    void importFlow_DryRun() throws FlowProcessingException {
         String oldSource = """
             id: import_dry
             namespace: some.namespace

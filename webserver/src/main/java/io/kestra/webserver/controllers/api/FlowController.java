@@ -1,8 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.QueryFilter;
@@ -32,6 +31,7 @@ import io.kestra.core.services.GraphService;
 import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
+import io.kestra.core.utils.Rethrow;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.BulkResponse;
@@ -58,6 +58,7 @@ import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -104,7 +105,7 @@ public class FlowController {
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The flow revision") @QueryValue Optional<Integer> revision,
         @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows
-    ) throws IllegalVariableEvaluationException {
+    ) throws IllegalVariableEvaluationException, FlowProcessingException {
         FlowWithSource flow = flowRepository
             .findByIdWithSource(tenantService.resolveTenant(), namespace, id, revision)
             .orElse(null);
@@ -125,7 +126,15 @@ public class FlowController {
             );
         }
 
-        return graphService.flowGraph(flow, subflows);
+        try {
+            return graphService.flowGraph(flow, subflows);
+        } catch (FlowProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException cve) {
+                throw cve;
+            } else {
+                throw e;
+            }
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -134,9 +143,18 @@ public class FlowController {
     public FlowGraph flowGraphSource(
         @Parameter(description = "The flow") @Body String flow,
         @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows
-    ) throws ConstraintViolationException, IllegalVariableEvaluationException {
-        FlowWithSource flowParsed = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), flow,false);
-        return graphService.flowGraph(flowParsed, subflows);
+    ) throws ConstraintViolationException, IllegalVariableEvaluationException, FlowProcessingException {
+        try {
+            FlowWithSource flowParsed = pluginDefaultService.parseFlowWithAllDefaults(tenantService.resolveTenant(), flow,false);
+            return graphService.flowGraph(flowParsed, subflows);
+        } catch (FlowProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException cve) {
+                throw cve;
+            } else {
+                throw e;
+            }
+        }
+
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -284,8 +302,17 @@ public class FlowController {
         return HttpResponse.ok(doCreate(parseFlowSource(flow.sourceOrGenerateIfNull())).toFlow());
     }
 
+    @SneakyThrows
     protected FlowWithSource doCreate(final GenericFlow flow) {
-        return flowService.create(flow, true);
+        try {
+            return flowService.create(flow, true);
+        } catch (FlowProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException cve) {
+                throw cve;
+            } else {
+                throw e;
+            }
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -329,14 +356,24 @@ public class FlowController {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "A list of flows") @Body @Valid List<Flow> flows,
         @Parameter(description = "If missing flow should be deleted") @QueryValue(defaultValue = "true") Boolean delete
-    ) throws ConstraintViolationException {
+    ) throws ConstraintViolationException, FlowProcessingException {
         log.warn(WARNING_JSON_FLOW_ENDPOINT);
 
         List<GenericFlow> genericFlows = flows.stream()
             .map(flow -> parseFlowSource(flow.sourceOrGenerateIfNull())).toList();
 
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, false).stream()
-            .map(flow -> pluginDefaultService.injectVersionDefaults(flow, false).toFlow())
+            .map(Rethrow.throwFunction(flow -> {
+                try {
+                    return pluginDefaultService.injectVersionDefaults(flow, false).toFlow();
+                } catch (FlowProcessingException e) {
+                    if (e.getCause() instanceof ConstraintViolationException cve) {
+                        throw cve;
+                    } else {
+                        throw e;
+                    }
+                }
+            }))
             .toList();
     }
 
@@ -419,7 +456,7 @@ public class FlowController {
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The flow") @Body String source
-    ) throws ConstraintViolationException {
+    ) throws ConstraintViolationException, FlowProcessingException {
         final String tenantId = tenantService.resolveTenant();
         Optional<Flow> existingFlow = flowRepository.findById(tenantId, namespace, id);
 
@@ -434,11 +471,18 @@ public class FlowController {
 
         // Inject default plugin 'version' props before converting
         // to flow to correctly resolve to plugin type.
-        FlowWithSource flow = pluginDefaultService.injectVersionDefaults(genericFlow, false);
-        flowService.checkValidSubflows(flow, tenantId);
-
-        // Persist
-        return HttpResponse.ok(update(genericFlow, existingFlow.get()));
+        try {
+            FlowWithSource flow = pluginDefaultService.injectVersionDefaults(genericFlow, false);
+            flowService.checkValidSubflows(flow, tenantId);
+            // Persist
+            return HttpResponse.ok(update(genericFlow, existingFlow.get()));
+        } catch (FlowProcessingException e) {
+            if (e.getCause() instanceof ConstraintViolationException cve) {
+                throw cve;
+            } else {
+                throw e;
+            }
+        }
     }
 
     /**
@@ -832,7 +876,7 @@ public class FlowController {
         return GenericFlow.fromYaml(tenantService.resolveTenant(), source);
     }
 
-    protected void importFlow(String tenantId, String source) {
+    protected void importFlow(String tenantId, String source) throws FlowProcessingException {
         flowService.importFlow(tenantId, source);
     }
 
@@ -864,58 +908,7 @@ public class FlowController {
         try {
             return JacksonMapper.ofJson().readValue(input, cls);
         } catch (JsonProcessingException e) {
-            if (e.getCause() instanceof ConstraintViolationException constraintViolationException) {
-                throw constraintViolationException;
-            } else if (e instanceof InvalidTypeIdException invalidTypeIdException) {
-                // This error is thrown when a non-existing task is used
-                throw new ConstraintViolationException(
-                    "Invalid type: " + invalidTypeIdException.getTypeId(),
-                    Set.of(
-                        ManualConstraintViolation.of(
-                            "Invalid type: " + invalidTypeIdException.getTypeId(),
-                            input,
-                            String.class,
-                            invalidTypeIdException.getPathReference(),
-                            null
-                        ),
-                        ManualConstraintViolation.of(
-                            e.getMessage(),
-                            input,
-                            String.class,
-                            invalidTypeIdException.getPathReference(),
-                            null
-                        )
-                    )
-                );
-            }
-            else if (e instanceof UnrecognizedPropertyException unrecognizedPropertyException) {
-                var message = unrecognizedPropertyException.getOriginalMessage() + unrecognizedPropertyException.getMessageSuffix();
-                throw new ConstraintViolationException(
-                    message,
-                    Collections.singleton(
-                        ManualConstraintViolation.of(
-                            e.getCause() == null ? message : message + "\nCaused by: " + e.getCause().getMessage(),
-                            input,
-                            String.class,
-                            unrecognizedPropertyException.getPathReference(),
-                            null
-                        )
-                    ));
-            }
-            else {
-                throw new ConstraintViolationException(
-                    "Illegal source: " + e.getMessage(),
-                    Collections.singleton(
-                        ManualConstraintViolation.of(
-                            e.getCause() == null ? e.getMessage() : e.getMessage() + "\nCaused by: " + e.getCause().getMessage(),
-                            input,
-                            String.class,
-                            "flow",
-                            null
-                        )
-                    )
-                );
-            }
+            throw YamlParser.toConstraintViolationException(input, cls.getSimpleName(),  e);
         }
     }
 }

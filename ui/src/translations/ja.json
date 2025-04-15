@@ -1085,10 +1085,10 @@
           "note": "この設定はUIでの日付と時刻のプロパティを表示するために使用されます。UTC以外のタイムゾーンでflowをスケジュールするには、flowコードやプラグインのデフォルトでSchedule triggerのtimezoneプロパティを設定してください。"
         },
         "save": {
-          "fields": {
-            "name": "変更を保存"
-          },
-          "label": "設定を保存"
+          "discard": "破棄",
+          "label": "設定を保存",
+          "unsaved_title": "未保存の変更",
+          "unsaved_warning": "保存されていない変更があります。離れる前に保存しますか？"
         },
         "theme": {
           "fields": {

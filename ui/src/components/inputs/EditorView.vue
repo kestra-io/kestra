@@ -742,7 +742,6 @@
     });
 
     onBeforeUnmount(() => {
-        store.commit("flow/setFlowYaml", undefined);
         window.removeEventListener("resize", onResize);
 
         store.commit("plugin/setEditorPlugin", undefined);

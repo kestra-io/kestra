@@ -675,6 +675,7 @@ export default {
             state.tasksWithMetrics = tasksWithMetrics
         },
         setFlowYaml(state, flowYaml) {
+            console.log("setFlowYaml", 1)
             state.flowYaml = flowYaml
         },
         setIsCreating(state, value) {

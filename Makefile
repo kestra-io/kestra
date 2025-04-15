@@ -181,8 +181,8 @@ clone-plugins:
 	@echo "Using PLUGIN_GIT_DIR: $(PLUGIN_GIT_DIR)"
 	@mkdir -p "$(PLUGIN_GIT_DIR)"
 	@echo "Fetching repository list from GitHub..."
-	@REPOS=$(gh repo list kestra-io -L 1000  --json  name | jq -r  .[].name | sort | grep "^plugin-") \
-	for repo in $$REPOS; do \
+	@REPOS=$$(gh repo list kestra-io -L 1000 --json name | jq -r .[].name | sort | grep "^plugin-"); \
+		for repo in $$REPOS; do \
 	    if [[ $$repo == plugin-* ]]; then \
 	        if [ -d "$(PLUGIN_GIT_DIR)/$$repo" ]; then \
 	            echo "Skipping: $$repo (Already cloned)"; \
@@ -193,6 +193,22 @@ clone-plugins:
 	    fi; \
 	done
 	@echo "Done!"
+
+# Pull every plugins in main or master branch
+pull-plugins:
+	@echo "🔍 Pulling repositories in '$(PLUGIN_GIT_DIR)'..."
+	@for repo in "$(PLUGIN_GIT_DIR)"/*; do \
+	    if [ -d "$$repo/.git" ]; then \
+	        branch=$$(git -C "$$repo" rev-parse --abbrev-ref HEAD); \
+	        if [[ "$$branch" == "master" || "$$branch" == "main" ]]; then \
+	            echo "🔄 Pulling: $$(basename "$$repo") (branch: $$branch)"; \
+	            git -C "$$repo" pull; \
+	        else \
+	            echo "❌ Skipping: $$(basename "$$repo") (Not on master or main branch, currently on $$branch)"; \
+	        fi; \
+	    fi; \
+	done
+	@echo "✅ Done pulling!"
 
 # Update all plugins jar
 build-plugins:

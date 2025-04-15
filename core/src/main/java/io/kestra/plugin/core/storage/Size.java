@@ -22,7 +22,7 @@ import java.net.URI;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Get the size of a file from the Kestra's internal storage."
+    title = "Get the size of a file from Kestra's internal storage."
 )
 @Plugin(
     examples = {

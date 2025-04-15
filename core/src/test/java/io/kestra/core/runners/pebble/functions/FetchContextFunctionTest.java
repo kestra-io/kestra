@@ -11,8 +11,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class FetchContextFunctionTest {
@@ -22,7 +21,7 @@ class FetchContextFunctionTest {
     @Test
     void fromString() throws IllegalVariableEvaluationException, JsonProcessingException {
         String render = variableRenderer.render("{{ printContext() }}", Map.of("test", "value", "array", List.of("a", "b", "c")));
-        assertThat(JacksonMapper.toMap(render).get("test"), is("value"));
-        assertThat(JacksonMapper.toMap(render).get("array"), is(List.of("a", "b", "c")));
+        assertThat(JacksonMapper.toMap(render).get("test")).isEqualTo("value");
+        assertThat(JacksonMapper.toMap(render).get("array")).isEqualTo(List.of("a", "b", "c"));
     }
 }

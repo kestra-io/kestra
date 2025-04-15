@@ -25,7 +25,7 @@ function getDecorators(data) {
                         get(a) {
                             if (a.endsWith("executions/search")) {
                                 return Promise.resolve({
-                                    data 
+                                    data
                                 })
                             }
                             return Promise.resolve({data: []})
@@ -39,21 +39,21 @@ function getDecorators(data) {
         {
             path: "/",
             name: "home",
-            component: {template: "div>home</div>"}
+            component: {template: "<div>home</div>"}
         },
           {
             path: "/flows/update/:namespace/:id?/:flowId?",
             name: "flows/update",
-            component: {template: "div>updateflows</div>"}
+            component: {template: "<div>updateflows</div>"}
           },{
             path: "/executions/update/:namespace/:id?/:flowId?",
             name: "executions/update",
-            component: {template: "div>executions</div>"}
+            component: {template: "<div>executions</div>"}
           },
           {
             path: "/executions/:id?/:flowId?",
             name: "executions/list",
-            component: {template: "div>executions</div>"}
+            component: {template: "<div>executions</div>"}
           }
         ], {
             initialRoute: "/executions/123/645"

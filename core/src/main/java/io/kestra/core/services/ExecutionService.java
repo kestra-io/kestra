@@ -2,6 +2,7 @@ package io.kestra.core.services;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -11,6 +12,7 @@ import io.kestra.core.models.executions.ExecutionKilledExecution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.InputAndValue;
@@ -319,7 +321,7 @@ public class ExecutionService {
     }
 
     @SuppressWarnings("deprecation")
-    private Execution markAs(final Execution execution, Flow flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs) throws Exception {
+    private Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState, @Nullable Map<String, Object> onResumeInputs) throws Exception {
         Set<String> taskRunToRestart = this.taskRunToRestart(
             execution,
             taskRun -> taskRun.getId().equals(taskRunId)
@@ -327,9 +329,11 @@ public class ExecutionService {
 
         Execution newExecution = execution.withMetadata(execution.getMetadata().nextAttempt());
 
+        final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
+
         for (String s : taskRunToRestart) {
             TaskRun originalTaskRun = newExecution.findTaskRunByTaskRunId(s);
-            Task task = flow.findTaskByTaskId(originalTaskRun.getTaskId());
+            Task task = flowWithSource.findTaskByTaskId(originalTaskRun.getTaskId());
             boolean isFlowable = task.isFlowable();
 
             if (!isFlowable || s.equals(taskRunId)) {
@@ -477,7 +481,7 @@ public class ExecutionService {
      * @return the execution in the new state.
      * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(Execution execution, Flow flow, State.Type newState) throws Exception {
+    public Execution resume(Execution execution, FlowInterface flow, State.Type newState) throws Exception {
         return this.resume(execution, flow, newState, (Map<String, Object>) null);
     }
 
@@ -490,7 +494,7 @@ public class ExecutionService {
      * @param flow      the flow of the execution
      * @return the execution in the new state.
      */
-    public Mono<List<InputAndValue>> validateForResume(final Execution execution, Flow flow) {
+    public Mono<List<InputAndValue>> validateForResume(final Execution execution, FlowInterface flow) {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task -> {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
@@ -532,7 +536,7 @@ public class ExecutionService {
      * @param inputs    the onResume inputs
      * @return the execution in the new state.
      */
-    public Mono<Execution> resume(final Execution execution, Flow flow, State.Type newState, @Nullable Publisher<CompletedPart> inputs) {
+    public Mono<Execution> resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Publisher<CompletedPart> inputs) {
         return getFirstPausedTaskOr(execution, flow)
             .flatMap(task -> {
                 if (task.isPresent() && task.get() instanceof Pause pauseTask) {
@@ -550,14 +554,15 @@ public class ExecutionService {
             });
     }
 
-    private static Mono<Optional<Task>> getFirstPausedTaskOr(Execution execution, Flow flow){
+    private Mono<Optional<Task>> getFirstPausedTaskOr(Execution execution, FlowInterface flow){
         return Mono.create(sink -> {
             try {
+                final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
                 var runningTaskRun = execution
                     .findFirstByState(State.Type.PAUSED)
-                    .map(throwFunction(task -> flow.findTaskByTaskId(task.getTaskId())));
+                    .map(throwFunction(task -> flowWithSource.findTaskByTaskId(task.getTaskId())));
                 sink.success(runningTaskRun);
-            } catch (InternalException e) {
+            } catch (InternalException | FlowProcessingException e) {
                 sink.error(e);
             }
         });
@@ -574,7 +579,7 @@ public class ExecutionService {
      * @return the execution in the new state.
      * @throws Exception if the state of the execution cannot be updated
      */
-    public Execution resume(final Execution execution, Flow flow, State.Type newState, @Nullable Map<String, Object> inputs) throws Exception {
+    public Execution resume(final Execution execution, FlowInterface flow, State.Type newState, @Nullable Map<String, Object> inputs) throws Exception {
         var pausedTaskRun = execution
             .findFirstByState(State.Type.PAUSED);
 

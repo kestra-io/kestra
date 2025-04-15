@@ -23,7 +23,7 @@ import java.util.NoSuchElementException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a file from the Kestra's internal storage."
+    title = "Delete a file from Kestra's internal storage."
 )
 @Plugin(
     examples = {

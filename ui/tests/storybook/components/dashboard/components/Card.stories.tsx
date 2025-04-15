@@ -1,4 +1,6 @@
+import {markRaw} from "vue";
 import type {Meta, StoryObj} from "@storybook/vue3";
+import {vueRouter} from "storybook-vue3-router";
 import Card from "../../../../../src/components/dashboard/components/Card.vue";
 import AccountMultiple from "vue-material-design-icons/AccountMultiple.vue";
 import ChartTimelineVariant from "vue-material-design-icons/ChartTimelineVariant.vue";
@@ -7,7 +9,23 @@ import ChartTimelineVariant from "vue-material-design-icons/ChartTimelineVariant
 const meta = {
     title: "Components/Dashboard/Card",
     component: Card,
-    tags: ["autodocs"],
+    decorators: [vueRouter([
+        {
+            path: "/",
+            name: "home",
+            component: {template: "<div>home</div>"}
+        },
+        {
+            path: "/users",
+            name: "users",
+            component: {template: "<div>users</div>"}
+        },
+        {
+            path: "/flows",
+            name: "flows",
+            component: {template: "<div>flows</div>"}
+        },
+    ])],
     argTypes: {
         icon: {
             control: "text",
@@ -38,7 +56,7 @@ type Story = StoryObj<typeof meta>;
 // Basic story
 export const Default: Story = {
     args: {
-        icon: AccountMultiple,
+        icon: markRaw(AccountMultiple),
         label: "Total Users",
         value: "1,234",
         redirect: {name: "users"}
@@ -48,7 +66,7 @@ export const Default: Story = {
 // Story with tooltip
 export const WithTooltip: Story = {
     args: {
-        icon: ChartTimelineVariant,
+        icon: markRaw(ChartTimelineVariant),
         label: "Active Flows",
         tooltip: "Number of flows that have been executed in the last 24 hours",
         value: "42",
@@ -59,12 +77,12 @@ export const WithTooltip: Story = {
 // Story with number value
 export const NumericValue: Story = {
     args: {
-        icon: AccountMultiple,
+        icon: markRaw(AccountMultiple),
         label: "New Users",
         value: 567,
         redirect: {name: "users"}
     }
-}; 
+};
 
 export const ThreeCardsInRow = {
     render: () => ({

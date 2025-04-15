@@ -12,9 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.empty;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class GetKeysTest {
@@ -45,7 +43,7 @@ class GetKeysTest {
         GetKeys.Output run = getKeys.run(runContext);
 
         // Then
-        assertThat(run.getKeys(), containsInAnyOrder("test-key", "test-second-key", "another-key"));
+        assertThat(run.getKeys()).containsExactlyInAnyOrder("test-key", "test-second-key", "another-key");
     }
 
     @Test
@@ -74,7 +72,7 @@ class GetKeysTest {
         GetKeys.Output run = getKeys.run(runContext);
 
         // Then
-        assertThat(run.getKeys(), containsInAnyOrder(TEST_KEY_PREFIX_TEST + "-key", TEST_KEY_PREFIX_TEST + "-second-key"));
+        assertThat(run.getKeys()).containsExactlyInAnyOrder(TEST_KEY_PREFIX_TEST + "-key", TEST_KEY_PREFIX_TEST + "-second-key");
     }
 
     @Test
@@ -98,6 +96,6 @@ class GetKeysTest {
         GetKeys.Output run = getKeys.run(runContext);
 
         // Then
-        assertThat(run.getKeys(), empty());
+        assertThat(run.getKeys()).isEmpty();
     }
 }

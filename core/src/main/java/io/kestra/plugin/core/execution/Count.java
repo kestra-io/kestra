@@ -31,7 +31,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "List execution counts for a list of flow.",
+    title = "List execution counts for a list of flows.",
     description = "This can be used to send an alert if a condition is met about execution counts."
 )
 @Plugin(

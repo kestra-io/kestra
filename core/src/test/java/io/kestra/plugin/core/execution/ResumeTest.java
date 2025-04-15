@@ -13,8 +13,7 @@ import org.junit.jupiter.api.Test;
 import java.time.Duration;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 class ResumeTest {
@@ -33,7 +32,7 @@ class ResumeTest {
         String pauseId = pause.getId();
 
         Execution resume = runnerUtils.runOne(null, "io.kestra.tests", "resume-execution", null, (flow, execution) -> Map.of("executionId", pauseId));
-        assertThat(resume.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(resume.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         Await.until(
             () -> executionRepository.findById(null, pauseId).orElseThrow().getState().getCurrent().isTerminated(),

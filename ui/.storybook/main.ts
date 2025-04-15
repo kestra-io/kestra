@@ -8,7 +8,7 @@ const config: StorybookConfig = {
     "@storybook/addon-essentials",
     "@storybook/addon-themes",
     "@chromatic-com/storybook",
-    "@storybook/addon-interactions",
+    "@storybook/experimental-addon-test"
   ],
   framework: {
     name: "@storybook/vue3-vite",
@@ -17,7 +17,7 @@ const config: StorybookConfig = {
   async viteFinal(config) {
     const {default: viteJSXPlugin} = await import("@vitejs/plugin-vue-jsx")
     config.plugins = [
-      ...config.plugins ?? [],
+      ...(config.plugins ?? []),
       viteJSXPlugin(),
     ];
     return config;

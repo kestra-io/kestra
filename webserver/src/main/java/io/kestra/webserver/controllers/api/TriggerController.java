@@ -479,7 +479,7 @@ public class TriggerController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/set-disabled/by-triggers")
-    @Operation(tags = {"Triggers"}, summary = "Delete backfill for given triggers")
+    @Operation(tags = {"Triggers"}, summary = "Disable/enable given triggers")
     public MutableHttpResponse<?> setDisabledByIds(
         @Parameter(description = "The triggers you want to set the disabled state") @Body SetDisabledRequest setDisabledRequest
     ) throws QueueException {
@@ -490,7 +490,7 @@ public class TriggerController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/set-disabled/by-query")
-    @Operation(tags = {"Triggers"}, summary = "Delete backfill for given triggers")
+    @Operation(tags = {"Triggers"}, summary = "Disable/enable triggers by query parameters")
     public MutableHttpResponse<?> setDisabledByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,

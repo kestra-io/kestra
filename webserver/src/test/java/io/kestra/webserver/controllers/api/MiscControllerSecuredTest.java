@@ -10,8 +10,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 @Property(name = "kestra.server.basic-auth.enabled", value = "true")
@@ -30,6 +29,6 @@ class MiscControllerSecuredTest {
             basicAuthConfiguration.getPassword()
         ), MiscController.Configuration.class);
 
-        assertThat(response.getIsBasicAuthEnabled(), is(true));
+        assertThat(response.getIsBasicAuthEnabled()).isEqualTo(true);
     }
 }

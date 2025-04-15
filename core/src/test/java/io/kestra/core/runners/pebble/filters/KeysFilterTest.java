@@ -13,8 +13,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class KeysFilterTest {
@@ -46,11 +45,11 @@ class KeysFilterTest {
         );
 
         String render = variableRenderer.render("{{ vars.second.list | keys }}", vars);
-        assertThat(render, is("[0,1,2]"));
+        assertThat(render).isEqualTo("[0,1,2]");
 
         render = variableRenderer.render("{{ vars.second | keys }}", vars);
-        assertThat(render, containsString("\"string\""));
-        assertThat(render, containsString("\"map\""));
-        assertThat(render.split(",").length, is(7));
+        assertThat(render).contains("\"string\"");
+        assertThat(render).contains("\"map\"");
+        assertThat(render.split(",").length).isEqualTo(7);
     }
 }

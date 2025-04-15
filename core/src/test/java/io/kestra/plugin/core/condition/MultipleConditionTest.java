@@ -15,8 +15,8 @@ import io.kestra.core.utils.TestsUtils;
 import java.util.Collections;
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
+
 @KestraTest
 class MultipleConditionTest {
     @Inject
@@ -45,6 +45,6 @@ class MultipleConditionTest {
         boolean test = conditionService.isValid((Condition) build, flow, execution, multipleConditionStorage);
 
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 }

@@ -100,6 +100,14 @@ export function useCodePanels(panels: Ref<Panel[]>) {
     watch(codeEditorTabs, (newVal) => {
         const codeTabs = getPanelsFromCodeEditorTabs(newVal)
 
+        // Loop through tabs to see if any code tab should be removed due to file deletion
+        const openedTabs = new Set(codeTabs.tabs.map(tab => tab.value))
+        panels.value.forEach((panel) => {
+            panel.tabs = panel.tabs.filter(tab => {
+                return !tab.value.startsWith("code-") || openedTabs.has(tab.value)
+            })
+        })
+        
         // get all the tabs to add since they are not already part of the panels tabs
         const toAdd = codeTabs.tabs.filter(t => !panels.value.some(p => p.tabs.some(pt => t.value === pt.value)))
 

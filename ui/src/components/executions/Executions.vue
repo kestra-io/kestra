@@ -280,7 +280,9 @@
                                     <template #content>
                                         <pre class="mb-0">{{ JSON.stringify(scope.row.inputs, null, "\t") }}</pre>
                                     </template>
-                                    <Import v-if="scope.row.inputs" class="fs-5" />
+                                    <div>
+                                        <Import v-if="scope.row.inputs" class="fs-5" />
+                                    </div>
                                 </el-tooltip>
                             </template>
                         </el-table-column>
@@ -491,7 +493,16 @@
             isConcurrency: {
                 type: Boolean,
                 default: false
-            }
+            },
+            id: {
+                type: String,
+                required: false,
+                default: null,
+            },
+            visibleCharts: {
+                type: Boolean,
+                default: false
+            },
         },
         data() {
             return {
@@ -628,7 +639,8 @@
                 return this.user.hasAnyActionOnAnyNamespace(permission.EXECUTION, action.CREATE);
             },
             isDisplayedTop() {
-                return this.embed === false && this.filter
+                if(this.visibleCharts) return true;
+                else return this.embed === false && this.filter
             },
             states() {
                 return [ State.FAILED, State.SUCCESS, State.WARNING, State.CANCELLED,].map(value => {

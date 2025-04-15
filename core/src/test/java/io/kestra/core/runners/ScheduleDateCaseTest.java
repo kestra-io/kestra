@@ -18,8 +18,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
@@ -37,8 +36,8 @@ public class ScheduleDateCaseTest {
         Execution execution = Execution.newExecution(flow, null, null, Optional.of(scheduleOn));
         this.executionQueue.emit(execution);
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.CREATED));
-        assertThat(execution.getScheduleDate(), is(scheduleOn.toInstant()));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CREATED);
+        assertThat(execution.getScheduleDate()).isEqualTo(scheduleOn.toInstant());
 
         CountDownLatch latch1 = new CountDownLatch(1);
 

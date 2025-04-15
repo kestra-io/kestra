@@ -97,7 +97,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
-    private QueueInterface<FlowWithSource> flowQueue;
+    private QueueInterface<FlowInterface> flowQueue;
 
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
@@ -307,7 +307,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         this.receiveCancellations.addFirst(flowQueue.receive(
             FlowTopology.class,
             either -> {
-                FlowWithSource flow;
+                FlowInterface flow;
                 if (either.isRight()) {
                     log.error("Unable to deserialize a flow: {}", either.getRight().getMessage());
                     try {
@@ -329,7 +329,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             Stream.<FlowTopology>empty() :
                             flowTopologyService
                                 .topology(
-                                    flow,
+                                    pluginDefaultService.injectVersionDefaults(flow, true),
                                     this.allFlows.stream().filter(f -> Objects.equals(f.getTenantId(), flow.getTenantId())).toList()
                                 )
                         )
@@ -455,7 +455,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
             return tracer.inCurrentContext(
                 execution,
-                Flow.uidWithoutRevision(execution),
+                FlowId.uidWithoutRevision(execution),
                 () -> {
                     try {
 
@@ -673,11 +673,11 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     TaskRun taskRun = message.getTaskRun();
                     if (taskRun.getState().isTerminated()) {
                         metricRegistry
-                            .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                            .counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(message))
                             .increment();
 
                         metricRegistry
-                            .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                            .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
                             .record(taskRun.getState().getDuration());
 
                         log.trace("TaskRun terminated: {}", taskRun);
@@ -772,12 +772,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                     // send metrics on parent taskRun terminated
                     if (taskRun.getState().isTerminated()) {
+                        // TODO maybe use a specific metric to track subflow instead of these two.
                         metricRegistry
-                            .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                            .counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(message))
                             .increment();
 
                         metricRegistry
-                            .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                            .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
                             .record(taskRun.getState().getDuration());
 
                         log.trace("TaskRun terminated: {}", taskRun);
@@ -995,7 +996,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             Execution execution = executor.getExecution();
             // handle flow triggers on state change
             if (!execution.getState().getCurrent().equals(executor.getOriginalState())) {
-                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows.stream().map(flow -> flow.toFlow()).toList(), Optional.of(multipleConditionStorage))
+                flowTriggerService.computeExecutionsFromFlowTriggers(execution, allFlows, Optional.of(multipleConditionStorage))
                     .forEach(throwConsumer(executionFromFlowTrigger -> this.executionQueue.emit(executionFromFlowTrigger)));
             }
 
@@ -1072,7 +1073,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     flow,
                     execution,
                     (tenantId, namespace, id) -> templateExecutorInterface.get().findById(tenantId, namespace, id).orElse(null)
-                ).withSource(flow.getSource());
+                );
             } catch (InternalException e) {
                 log.warn("Failed to inject template", e);
             }

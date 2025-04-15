@@ -14,8 +14,7 @@ import jakarta.inject.Inject;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ExecutionNamespaceTest {
@@ -33,7 +32,7 @@ class ExecutionNamespaceTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
 
         // Explicit
         build = ExecutionNamespace.builder()
@@ -42,7 +41,7 @@ class ExecutionNamespaceTest {
             .build();
 
         test = conditionService.isValid(build, flow, execution);
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
     }
 
     @Test
@@ -56,7 +55,7 @@ class ExecutionNamespaceTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 
     @Test
@@ -71,7 +70,7 @@ class ExecutionNamespaceTest {
         ), ExecutionNamespace.class);
 
         boolean test = conditionService.isValid(build, flow, execution);
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
 
         build = ExecutionNamespace.builder()
             .namespace(Property.of(flow.getNamespace().substring(0, 3)))
@@ -79,7 +78,7 @@ class ExecutionNamespaceTest {
             .build();
 
         test = conditionService.isValid(build, flow, execution);
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
 
         build = ExecutionNamespace.builder()
             .namespace(Property.of(flow.getNamespace().substring(0, 3)))
@@ -87,7 +86,7 @@ class ExecutionNamespaceTest {
             .build();
 
         test = conditionService.isValid(build, flow, execution);
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
     }
 
     @Test
@@ -101,7 +100,7 @@ class ExecutionNamespaceTest {
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 
     @Test
@@ -115,7 +114,7 @@ class ExecutionNamespaceTest {
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
     }
 
     @Test
@@ -131,6 +130,6 @@ class ExecutionNamespaceTest {
         ), ExecutionNamespace.class);
 
         boolean test = conditionService.isValid(build, flow, execution);
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
     }
 }

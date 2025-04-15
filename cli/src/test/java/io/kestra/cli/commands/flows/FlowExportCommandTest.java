@@ -14,10 +14,7 @@ import java.io.PrintStream;
 import java.net.URL;
 import java.util.zip.ZipFile;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class FlowExportCommandTest {
     @Test
@@ -42,7 +39,7 @@ class FlowExportCommandTest {
                 directory.getPath(),
             };
             PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, updateArgs);
-            assertThat(out.toString(), containsString("3 flow(s)"));
+            assertThat(out.toString()).contains("3 flow(s)");
 
             // then we export them
             String[] exportArgs = {
@@ -58,11 +55,11 @@ class FlowExportCommandTest {
             };
             PicocliRunner.call(FlowExportCommand.class, ctx, exportArgs);
             File file = new File("/tmp/flows.zip");
-            assertThat(file.exists(), is(true));
+            assertThat(file.exists()).isEqualTo(true);
             ZipFile zipFile = new ZipFile(file);
 
             // When launching the test in a suite, there is 4 flows but when lauching individualy there is only 3
-            assertThat(zipFile.stream().count(), greaterThanOrEqualTo(3L));
+            assertThat(zipFile.stream().count()).isGreaterThanOrEqualTo(3L);
 
             file.delete();
         }

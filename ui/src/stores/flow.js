@@ -55,7 +55,7 @@ export default {
             commit("setFlowYamlOrigin", state.flowYaml);
             return dispatch("saveWithoutRevisionGuard");
         },
-        async save({getters, dispatch, commit, state, rootState}, {content}){
+        async save({getters, dispatch, commit, state, rootState}, {content, namespace}){
             if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
                 return;
             }
@@ -85,7 +85,7 @@ export default {
                 if(!currentTab.dirty) return;
 
                 await dispatch("namespace/createFile", {
-                    namespace: getters.namespace,
+                    namespace: namespace ?? getters.namespace,
                     path: currentTab.path ?? currentTab.name,
                     content,
                 }, {root: true});

@@ -41,7 +41,7 @@
         expose: ["resetInfiniteScroll"],
         computed: {
             scrollWrapper() {
-                if (this.data) {
+                if (this.data && this.$refs.table?.$el) {
                     return this.$refs.table?.$el?.querySelector(".el-scrollbar__wrap");
                 }
 

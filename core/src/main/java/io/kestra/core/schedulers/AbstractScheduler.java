@@ -3,7 +3,6 @@ package io.kestra.core.schedulers;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Throwables;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
@@ -79,7 +78,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     protected final FlowListenersInterface flowListeners;
     private final RunContextFactory runContextFactory;
     private final RunContextInitializer runContextInitializer;
-    protected final MetricRegistry metricRegistry;
+    private final MetricRegistry metricRegistry;
     private final ConditionService conditionService;
     private final PluginDefaultService pluginDefaultService;
     private final WorkerGroupService workerGroupService;
@@ -518,7 +517,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         if (this.isPaused.get()) {
             return;
         }
-        Instant startInstant = Instant.now();
+        ZonedDateTime startTime = ZonedDateTime.now();
         ZonedDateTime now = now();
 
         final List<FlowWithSource> flowWithDefaults = getFlowsWithDefaults();
@@ -662,8 +661,8 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                 });
         });
         metricRegistry
-            .timer(MetricRegistry.METRIC_SCHEDULER_HANDLE_DURATION, MetricRegistry.METRIC_SCHEDULER_HANDLE_DURATION_DESCRIPTION, Lists.newArrayList().toArray(new String[0]))
-            .record(Duration.between(startInstant, Instant.now()));
+            .timer(MetricRegistry.METRIC_SCHEDULER_HANDLE_DURATION, MetricRegistry.METRIC_SCHEDULER_HANDLE_DURATION_DESCRIPTION)
+            .record(Duration.between(startTime, Instant.now()));
     }
 
     private List<FlowWithSource> getFlowsWithDefaults() {

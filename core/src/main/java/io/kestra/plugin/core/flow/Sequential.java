@@ -31,7 +31,7 @@ import java.util.stream.Stream;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks sequentially, one after the other, in the order they are defined.",
+    title = "Run tasks sequentially in the order they are defined.",
     description = "Used to visually group tasks."
 )
 @Plugin(

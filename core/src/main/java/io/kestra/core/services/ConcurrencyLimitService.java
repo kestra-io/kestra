@@ -6,7 +6,6 @@ import io.kestra.core.queues.QueueException;
 import jakarta.inject.Singleton;
 
 import java.util.EnumSet;
-import java.util.Optional;
 import java.util.Set;
 
 @Singleton

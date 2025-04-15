@@ -85,6 +85,8 @@ public class MetricRegistry {
     public static final String METRIC_SCHEDULER_TRIGGER_COUNT_DESCRIPTION = "Total number of executions triggered by the Scheduler";
     public static final String METRIC_SCHEDULER_TRIGGER_DELAY_DURATION = "scheduler.trigger.delay.duration";
     public static final String METRIC_SCHEDULER_TRIGGER_DELAY_DURATION_DESCRIPTION = "Trigger delay duration inside the Scheduler";
+    public static final String METRIC_SCHEDULER_TRIGGER_FIND_BATCH_DURATION = "scheduler.trigger.find.batch.duration";
+    public static final String METRIC_SCHEDULER_TRIGGER_FIND_BATCH_DURATION_DESCRIPTION = "Trigger select method duration inside the Scheduler";
     public static final String METRIC_SCHEDULER_EVALUATE_COUNT = "scheduler.evaluate.count";
     public static final String METRIC_SCHEDULER_EVALUATE_COUNT_DESCRIPTION = "Total number of triggers evaluated by the Scheduler";
     public static final String METRIC_SCHEDULER_EXECUTION_LOCK_DURATION = "scheduler.execution.lock.duration";

@@ -60,7 +60,7 @@
                         </span>
                         <br v-if="infos && infos.length > 0">
                         <span v-for="(info, index) in infos" :key="index">
-                            {{ info }}<br v-if="index < infos.length - 1">
+                            {{ info }}<br v-if="index < (infos?.length ?? 0) - 1">
                         </span>
                     </el-main>
                 </el-container>
@@ -102,57 +102,24 @@
     </span>
 </template>
 
-<script>
+<script setup lang="ts">
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
 
-    export default {
+    defineOptions({
         inheritAttrs: false,
-        components: {
-            CheckCircle,
-            AlertCircle,
-            Alert
-        },
-        props: {
-            errors: {
-                type: Array,
-                default: undefined
-            },
-            warnings: {
-                type: Array,
-                default: undefined
-            },
-            infos: {
-                type: Array,
-                default: undefined
-            },
-            link: {
-                type: Boolean,
-                default: false
-            },
-            size: {
-                type: String,
-                default: "default"
-            },
-            tooltipPlacement: {
-                type: String,
-                default: undefined
-            }
-        },
-        methods: {
-            onResize(maxWidth) {
-                const buttonLabels = this.$el.querySelectorAll(".el-button span.label");
+    })
 
-                buttonLabels.forEach(el => el.classList.remove("d-none"))
-                this.$nextTick(() => {
-                    if(this.$el.offsetLeft + this.$el.offsetWidth > maxWidth) {
-                        buttonLabels.forEach(el => el.classList.add("d-none"))
-                    }
-                });
-            }
-        }
-    };
+    defineProps<{
+        errors?: string[] | undefined;
+        warnings?: string[] | undefined;
+        infos?: string[] | undefined;
+        link?: boolean;
+        size?: "default" | "small";
+        tooltipPlacement?: string;
+    }>()
+
 </script>
 
 <style scoped lang="scss">

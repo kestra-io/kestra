@@ -19,34 +19,40 @@
         <ValidationError v-if="false" :errors link />
 
         <Save
-            @click="saveTask"
-            :what="route.query.section?.toString()"
+            :disabled="errors.length > 0"
+            @click="() => {
+                saveTask();
+                exitTaskElement();
+            }"
+            :what="section"
             class="w-100 mt-3"
         />
     </template>
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, ref, watch, computed} from "vue";
+    import {onBeforeMount, ref, watch, computed, inject} from "vue";
+    import {useStore} from "vuex";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import {SECTIONS} from "../../../utils/constants";
+    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, SAVEMODE_INJECTION_KEY} from "../injectionKeys";
+    import TaskEditor from "../../../components/flows/TaskEditor.vue";
+    import ValidationError from "../../../components/flows/ValidationError.vue";
+    import Save from "../components/Save.vue";
 
     const emits = defineEmits(["updateTask", "updateDocumentation"]);
-    const props = defineProps({
-        identifier: {type: String, required: true},
-        flow: {type: String, required: true},
-        creation: {type: Boolean, default: false},
+    const props = withDefaults(defineProps<{
+        section: "tasks" | "triggers" | "error handlers" | "finally" | "after execution";
+        identifier: string;
+        position?: "before" | "after";
+    }>(), {
+        position: "after"
     });
 
-    import {useRouter, useRoute} from "vue-router";
-    const router = useRouter();
-    const route = useRoute();
+    const flow = inject(FLOW_INJECTION_KEY, "");
+    const creation = inject(CREATING_INJECTION_KEY);
+    const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
 
-    import {SECTIONS} from ".././../../utils/constants";
-    const section = ref(SECTIONS.TASKS);
-
-    import TaskEditor from "../../../components/flows/TaskEditor.vue";
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-
-    import {useStore} from "vuex";
     const store = useStore();
 
     const breadcrumbs = computed(() => store.state.code.breadcrumbs);
@@ -61,7 +67,7 @@
     });
 
     const yaml = ref(
-        YAML_UTILS.extractTask(props.flow, props.identifier)?.toString() || "",
+        YAML_UTILS.extractTask(flow, props.identifier)?.toString() || "",
     );
 
     onBeforeMount(() => {
@@ -69,13 +75,9 @@
         emits("updateDocumentation", type);
     });
 
-    watch(
-        () => route.query.section,
-        (value) => {
-            section.value = SECTIONS[value === "triggers" ? "TRIGGERS" : "TASKS"];
-        },
-        {immediate: true},
-    );
+    const validationSection = computed(() =>
+        SECTIONS[props.section === "triggers" ? "TRIGGERS" : "TASKS"]
+    )
 
     watch(
         () => props.identifier,
@@ -84,16 +86,26 @@
                 yaml.value = "";
             } else {
                 yaml.value =
-                    YAML_UTILS.extractTask(props.flow, value)?.toString() || "";
+                    YAML_UTILS.extractTask(flow, value)?.toString() || "";
             }
         },
         {immediate: true},
     );
 
-    import ValidationError from "../../../components/flows/ValidationError.vue";
+    watch(
+        yaml,
+        (value) => {
+            if(saveMode === "auto") {
+                store.dispatch("flow/validateTask", {task: value, section: validationSection.value});
+                saveTask();
+            }
+        },
+    );
 
-    const CURRENT = ref(null);
-    const validateTask = (task) => {
+
+
+    const CURRENT = ref<string|null>(null);
+    const validateTask = (task: string) => {
         let temp = YAML_UTILS.parse(yaml.value);
 
         if (lastBreadcrumb.value.shown) {
@@ -104,7 +116,7 @@
         temp = YAML_UTILS.stringify(temp);
 
         store
-            .dispatch("flow/validateTask", {task: temp, section: section.value})
+            .dispatch("flow/validateTask", {task: temp, section: validationSection.value})
             .then(() => (yaml.value = temp));
 
         CURRENT.value = temp;
@@ -112,30 +124,31 @@
 
     const errors = computed(() => store.getters["flow/taskError"]);
 
-    import Save from "../components/Save.vue";
+    function exitTaskElement(){
+        store.commit("code/removeBreadcrumb", {last: true});
+    }
+
+
     const saveTask = () => {
-        if (lastBreadcrumb.value.shown) {
-            store.commit("code/removeBreadcrumb", {last: true});
+        if (lastBreadcrumb.value.shown && saveMode === "button") {
+            exitTaskElement();
             return;
         }
-
-        const source = props.flow;
 
         const task = YAML_UTILS.extractTask(
             yaml.value,
             YAML_UTILS.parse(yaml.value).id,
         );
 
-        const currentSection = route.query.section;
         const isCreation =
-            props.creation && (!props.identifier || props.identifier === "new");
+            creation && (!props.identifier || props.identifier === "new");
 
         let result;
 
         if (isCreation) {
-            if (currentSection === "tasks") {
+            if (props.section === "tasks" && CURRENT.value) {
                 const existing = YAML_UTILS.checkTaskAlreadyExist(
-                    source,
+                    flow,
                     CURRENT.value,
                 );
 
@@ -143,39 +156,40 @@
                     store.dispatch("core/showMessage", {
                         variant: "error",
                         title: "Task with same ID already exist",
-                        message: `Task in ${route.query.section} block  with ID: ${existing} already exist in the flow.`,
+                        message: `Task in ${props.section} block  with ID: ${existing} already exist in the flow.`,
                     });
                     return;
                 }
 
+                const taskId = props.identifier
+
+
                 result = YAML_UTILS.insertTask(
-                    source,
-                    route.query.target ?? YAML_UTILS.getLastTask(source),
-                    task,
-                    route.query.position ?? "after",
+                    flow,
+                    taskId,
+                    task!,
+                    props.position,
                 );
-            } else if (currentSection === "triggers") {
-                result = YAML_UTILS.insertSection("triggers", source, CURRENT.value);
-            } else if (currentSection === "error handlers") {
-                result = YAML_UTILS.insertSection("errors", source, CURRENT.value);
-            } else if (currentSection === "finally") {
-                result = YAML_UTILS.insertSection("finally", source, CURRENT.value);
-            } else if (currentSection === "after execution") {
-                result = YAML_UTILS.insertSection("afterExecution", source, CURRENT.value);
+            } else if (props.section === "triggers") {
+                result = YAML_UTILS.insertSection("triggers", flow, CURRENT.value);
+            } else if (props.section === "error handlers") {
+                result = YAML_UTILS.insertSection("errors", flow, CURRENT.value);
+            } else if (props.section === "finally") {
+                result = YAML_UTILS.insertSection("finally", flow, CURRENT.value);
+            } else if (props.section === "after execution") {
+                result = YAML_UTILS.insertSection("afterExecution", flow, CURRENT.value);
             }
         } else {
             result = YAML_UTILS.replaceTaskInDocument(
-                source,
+                flow,
                 props.identifier,
-                task,
+                task!,
             );
         }
 
         emits("updateTask", result);
-        store.commit("code/removeBreadcrumb", {last: true});
-
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {section, identifier, type, ...rest} = route.query;
-        router.replace({query: {...rest}});
+        if(saveMode === "button") {
+            store.commit("code/removeBreadcrumb", {last: true});
+        }
     };
 </script>

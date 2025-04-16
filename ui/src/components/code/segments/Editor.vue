@@ -26,8 +26,6 @@
 
                 <Collapse
                     :items="sections"
-                    creation
-                    :flow
                     @remove="(yaml) => emits('updateTask', yaml)"
                     @reorder="(yaml) => emits('reorder', yaml)"
                 />
@@ -49,16 +47,17 @@
             v-else
             :key="taskIdentifier"
             :identifier="taskIdentifier"
-            :flow
-            :creation
-            @update-task="(yaml) => emits('updateTask', yaml)"
+            :section="taskSection"
+            :position="taskPosition"
+            @update-task="onTaskUpdate"
             @update-documentation="(task) => emits('updateDocumentation', task)"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {watch, computed} from "vue";
+    import {watch, computed, inject} from "vue";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     import {Field, Fields, CollapseItem} from "../utils/types";
 
@@ -71,10 +70,13 @@
     import MetadataInputs from "../../flows/MetadataInputs.vue";
     import TaskBasic from "../../flows/tasks/TaskBasic.vue";
 
+    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY} from "../injectionKeys";
+
     import Task from "./Task.vue";
 
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     const route = useRoute();
+    const router = useRouter();
 
     const taskIdentifier = computed(
         () => route.query.identifier?.toString() ?? "new",
@@ -89,6 +91,13 @@
         },
         {deep: true},
     );
+
+    const taskSection = computed(() => {
+        return (route.query.section ?? "TASKS").toString() as "tasks" | "triggers"
+    });
+    const taskPosition = computed(() => {
+        return route.query.position?.toString() as "after" | "before" | undefined;
+    });
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
@@ -115,9 +124,10 @@
 
     document.addEventListener("keydown", saveEvent);
 
+    const creation = inject(CREATING_INJECTION_KEY);
+    const flow = inject(FLOW_INJECTION_KEY, "");
+
     const props = defineProps({
-        creation: {type: Boolean, default: false},
-        flow: {type: String, required: true},
         metadata: {type: Object, required: true},
     });
 
@@ -128,6 +138,13 @@
         return rest;
     };
 
+    function onTaskUpdate(yaml: string) {
+        emits("updateTask", yaml)
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const {section, identifier, type, ...rest} = route.query;
+        router.replace({query: {...rest}});
+    }
+
     const fields = computed<Fields>(() => {
         return {
             id: {
@@ -135,14 +152,14 @@
                 value: props.metadata.id,
                 label: t("no_code.fields.main.flow_id"),
                 required: true,
-                disabled: !props.creation,
+                disabled: !creation,
             },
             namespace: {
                 component: InputText,
                 value: props.metadata.namespace,
                 label: t("no_code.fields.main.namespace"),
                 required: true,
-                disabled: !props.creation,
+                disabled: !creation,
             },
             description: {
                 component: InputText,
@@ -241,30 +258,30 @@
         return rest;
     })
 
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+
     const getSectionTitle = (label: string, elements: Record<string, any>[] = []) => {
         const title = t(`no_code.sections.${label}`);
         return {title, elements};
     };
     const sections = computed((): CollapseItem[] => {
-        const flow:{
+        const parsedFlow:{
             tasks: Record<string, any>[];
             triggers: Record<string, any>[];
             errors: Record<string, any>[];
             finally: Record<string, any>[];
             afterExecution: Record<string, any>[];
-        } = YAML_UTILS.parse(props.flow) as any;
+        } = YAML_UTILS.parse(flow) as any;
         return [
-            getSectionTitle("tasks", flow?.tasks ?? []),
-            getSectionTitle("triggers", flow?.triggers ?? []),
+            getSectionTitle("tasks", parsedFlow?.tasks ?? []),
+            getSectionTitle("triggers", parsedFlow?.triggers ?? []),
             getSectionTitle(
                 "error_handlers",
-                flow?.errors ?? [],
+                parsedFlow?.errors ?? [],
             ),
-            getSectionTitle("finally", flow?.finally ?? []),
+            getSectionTitle("finally", parsedFlow?.finally ?? []),
             getSectionTitle(
                 "after_execution",
-                flow?.afterExecution ?? [],
+                parsedFlow?.afterExecution ?? [],
             ),
         ];
     });

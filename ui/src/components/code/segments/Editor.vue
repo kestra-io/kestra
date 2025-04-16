@@ -49,6 +49,7 @@
             :identifier="taskIdentifier"
             :section="taskSection"
             :position="taskPosition"
+            @exit-task="exitTask"
             @update-task="onTaskUpdate"
             @update-documentation="(task) => emits('updateDocumentation', task)"
         />
@@ -59,7 +60,7 @@
     import {watch, computed, inject} from "vue";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
-    import {Field, Fields, CollapseItem} from "../utils/types";
+    import {Field, Fields, CollapseItem, NoCodeElement} from "../utils/types";
 
     import Collapse from "../components/collapse/Collapse.vue";
     import InputText from "../components/inputs/InputText.vue";
@@ -70,7 +71,7 @@
     import MetadataInputs from "../../flows/MetadataInputs.vue";
     import TaskBasic from "../../flows/tasks/TaskBasic.vue";
 
-    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY} from "../injectionKeys";
+    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, SAVEMODE_INJECTION_KEY} from "../injectionKeys";
 
     import Task from "./Task.vue";
 
@@ -126,6 +127,7 @@
 
     const creation = inject(CREATING_INJECTION_KEY);
     const flow = inject(FLOW_INJECTION_KEY, "");
+    const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
 
     const props = defineProps({
         metadata: {type: Object, required: true},
@@ -138,11 +140,18 @@
         return rest;
     };
 
-    function onTaskUpdate(yaml: string) {
-        emits("updateTask", yaml)
+    function exitTask() {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const {section, identifier, type, ...rest} = route.query;
         router.replace({query: {...rest}});
+    }
+
+    function onTaskUpdate(yaml: string) {
+        emits("updateTask", yaml)
+
+        if(saveMode === "button") {
+            exitTask()
+        }
     }
 
     const fields = computed<Fields>(() => {
@@ -259,18 +268,18 @@
     })
 
 
-    const getSectionTitle = (label: string, elements: Record<string, any>[] = []) => {
+    const getSectionTitle = (label: string, elements: NoCodeElement[] = []) => {
         const title = t(`no_code.sections.${label}`);
         return {title, elements};
     };
     const sections = computed((): CollapseItem[] => {
-        const parsedFlow:{
-            tasks: Record<string, any>[];
-            triggers: Record<string, any>[];
-            errors: Record<string, any>[];
-            finally: Record<string, any>[];
-            afterExecution: Record<string, any>[];
-        } = YAML_UTILS.parse(flow) as any;
+        const parsedFlow = YAML_UTILS.parse<{
+            tasks: NoCodeElement[];
+            triggers: NoCodeElement[];
+            errors: NoCodeElement[];
+            finally: NoCodeElement[];
+            afterExecution: NoCodeElement[];
+        }>(flow);
         return [
             getSectionTitle("tasks", parsedFlow?.tasks ?? []),
             getSectionTitle("triggers", parsedFlow?.triggers ?? []),

@@ -2,7 +2,7 @@
     <NoCode
         :flow="lastValidFlowYaml"
         save-mode="auto"
-        @update-metadata="(e) => onUpdateMetadata(e, true)"
+        @update-metadata="(e) => onUpdateMetadata(e)"
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => handleReorder(yaml)"
         @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
@@ -29,18 +29,27 @@
         }
     }, {immediate: true});
 
-    const onUpdateMetadata = (metadata: any, shouldSave: boolean) => {
-        if(shouldSave) {
-            store.commit("flow/setMetadata", {...metadata.value, ...(metadata.concurrency?.limit === 0 ? {concurrency: null} : metadata)});
-            store.dispatch("flow/onSaveMetadata");
-            store.dispatch("flow/validateFlow", {flow: flowYaml.value});
-        } else {
-            store.commit("flow/setMetadata", metadata.concurrency?.limit === 0 ?  {concurrency: null} : metadata);
-        }
+    const onUpdateMetadata = (metadata: any) => {
+        store.commit("flow/setMetadata", {
+            ...metadata.value,
+            ...((metadata.concurrency?.limit ?? -1) === 0 ? {
+                concurrency: null
+            } : metadata)});
+        store.dispatch("flow/onSaveMetadata");
+        store.dispatch("flow/validateFlow", {flow: flowYaml.value});
+        store.commit("editor/setTabDirty", {
+            name: "Flow",
+            dirty: true
+        });
     };
 
     const editorUpdate = (source: string) => {
         store.commit("flow/setFlowYaml", source);
+        store.commit("flow/setHaveChange", true);
+        store.commit("editor/setTabDirty", {
+            name: "Flow",
+            dirty: true
+        });
     };
 
     const handleReorder = (source: string) => {
@@ -50,6 +59,6 @@
     };
 
     const updatePluginDocumentation = (event: string | undefined, task: any) => {
-        store.dispatch("plugin/updateDocumentation", {event,task});
+        store.dispatch("plugin/updateDocumentation", {event, task});
     };
 </script>

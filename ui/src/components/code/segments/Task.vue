@@ -19,7 +19,7 @@
         <ValidationError v-if="false" :errors link />
 
         <Save
-            :disabled="errors.length > 0"
+            :disabled="(errors?.length ?? 0) > 0"
             @click="() => {
                 saveTask();
                 exitTaskElement();
@@ -40,7 +40,7 @@
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
 
-    const emits = defineEmits(["updateTask", "updateDocumentation"]);
+    const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
     const props = withDefaults(defineProps<{
         section: "tasks" | "triggers" | "error handlers" | "finally" | "after execution";
         identifier: string;
@@ -125,7 +125,11 @@
     const errors = computed(() => store.getters["flow/taskError"]);
 
     function exitTaskElement(){
-        store.commit("code/removeBreadcrumb", {last: true});
+        if (lastBreadcrumb.value.shown){
+            store.commit("code/removeBreadcrumb", {last: true});
+        } else {
+            emits("exitTask");
+        }
     }
 
 
@@ -190,6 +194,7 @@
         emits("updateTask", result);
         if(saveMode === "button") {
             store.commit("code/removeBreadcrumb", {last: true});
+            emits("exitTask");
         }
     };
 </script>

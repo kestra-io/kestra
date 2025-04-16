@@ -5,9 +5,8 @@
             :key="index"
             :name="item.title"
             :title="`${item.title}${item.elements ? ` (${item.elements.length})` : ''}`"
-            :class="{creation}"
         >
-            <template v-if="creation" #icon>
+            <template #icon>
                 <Creation :section="item.title" />
             </template>
 
@@ -40,12 +39,11 @@
 
     import Creation from "./buttons/Creation.vue";
     import Element from "./Element.vue";
-    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY} from "../../injectionKeys";
+    import {FLOW_INJECTION_KEY} from "../../injectionKeys";
 
     const emits = defineEmits(["remove", "reorder"]);
 
     const flow = inject(FLOW_INJECTION_KEY, "");
-    const creation = inject(CREATING_INJECTION_KEY, false);
 
     const props = defineProps({
         items: {
@@ -55,11 +53,11 @@
     });
     const expanded = ref<CollapseItem["title"][]>([]);
 
-    if (creation) {
-        props.items.forEach((item) => {
-            if (item.elements?.length) expanded.value.push(item.title);
-        });
-    }
+
+    props.items.forEach((item) => {
+        if (item.elements?.length) expanded.value.push(item.title);
+    });
+
 
     const removeElement = (title: string, index: number) => {
         props.items.forEach((item) => {

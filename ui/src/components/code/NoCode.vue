@@ -5,11 +5,6 @@
         <hr class="m-0">
 
         <Editor
-            :creation="
-                route.query.identifier === 'new' ||
-                    route.name === 'flows/create'
-            "
-            :flow
             :metadata
             @update-metadata="(k, v) => emits('updateMetadata', {[k]: v})"
             @update-task="(yaml) => emits('updateTask', yaml)"

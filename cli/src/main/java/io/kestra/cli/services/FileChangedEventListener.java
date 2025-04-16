@@ -1,6 +1,6 @@
 package io.kestra.cli.services;
 
-import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithPath;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -236,7 +236,7 @@ public class FileChangedEventListener {
             FlowWithSource flow = pluginDefaultService.parseFlowWithAllDefaults(tenantId, content, false);
             modelValidator.validate(flow);
             return Optional.of(flow);
-        } catch (DeserializationException | ConstraintViolationException e) {
+        } catch (ConstraintViolationException | FlowProcessingException e) {
             log.warn("Error while parsing flow: {}", entry, e);
         }
         return Optional.empty();

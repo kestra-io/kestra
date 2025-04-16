@@ -8,6 +8,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.DeserializationException;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
@@ -57,6 +58,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -94,12 +96,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             String namespace = record.get("namespace", String.class);
             String tenantId = record.get("tenant_id", String.class);
             try {
-                Map<String, Object> map;
-                try {
-                    map =  MAPPER.readValue(source, new TypeReference<>(){});
-                } catch (IOException e) {
-                    throw new DeserializationException(e, source);
-                }
+                Map<String, Object> map = MAPPER.readValue(source, new TypeReference<>(){});
+
                 // Inject default plugin 'version' props before converting
                 // to flow to correctly resolve to plugin type.
                 map = pluginDefaultService.injectVersionDefaults(tenantId, namespace, map);
@@ -110,10 +108,11 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
                 deserialize.allTasksWithChilds();
 
                 return deserialize;
-            } catch (DeserializationException e) {
+            } catch (DeserializationException | IOException | IllegalArgumentException | FlowProcessingException e) {
                 try {
                     JsonNode jsonNode = JdbcMapper.of().readTree(source);
-                    return FlowWithException.from(jsonNode, e).orElseThrow(() -> e);
+                    return FlowWithException.from(jsonNode, e)
+                        .orElseThrow(() -> e instanceof DeserializationException de ? de : new DeserializationException(e, source));
                 } catch (JsonProcessingException ex) {
                     throw new DeserializationException(ex, source);
                 }
@@ -418,14 +417,14 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
 
                 // findAllWithSourceForAllTenants() is used in the backend, so we want it to work even if messy plugins exist.
                 // That's why we will try to deserialize each flow and log an error but not crash in case of exception.
-                return select.fetch().map(record -> {
+                return select.fetch().stream().map(record -> {
                     try {
                         return FlowWithSource.of((Flow)jdbcRepository.map(record), record.get("source_code", String.class));
                     } catch (Exception e) {
                         log.error("Unable to load the following flow:\n{}", record.get("value", String.class), e);
                         return null;
                     }
-                });
+                }).filter(Objects::nonNull).toList();
             });
     }
 
@@ -684,10 +683,9 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.save(flow, CrudEventType.CREATE);
     }
 
-    @SneakyThrows(QueueException.class)
+    @SneakyThrows({QueueException.class, FlowProcessingException.class})
     @Override
     public FlowWithSource update(GenericFlow flow, FlowInterface previous) throws ConstraintViolationException {
-
         // Check Flow with defaults
         FlowWithSource flowWithDefault = pluginDefaultService.injectAllDefaults(flow, false);
         modelValidator.validate(flowWithDefault);
@@ -714,7 +712,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
         return this.save(flow, CrudEventType.UPDATE);
     }
 
-    @SneakyThrows
+    @SneakyThrows({QueueException.class, FlowProcessingException.class})
     @VisibleForTesting
     public FlowWithSource save(GenericFlow flow, CrudEventType crudEventType) throws ConstraintViolationException {
 

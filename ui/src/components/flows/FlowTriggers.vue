@@ -148,7 +148,31 @@
         </el-table-column>
     </el-table>
 
-    <Empty v-else type="triggers" />
+    <div v-if="triggersWithType.length" class="mt-4">
+        <el-button
+            @click="addNewTrigger"
+            :icon="Plus"
+            class="border-0 p-3"
+        >
+            {{ $t('no_code.creation.triggers') }}
+        </el-button>
+    </div>
+
+    <Empty
+        v-else
+        type="triggers"
+    >
+        <template #button>
+            <el-button
+                type="primary"
+                @click="addNewTrigger"
+                :icon="Plus"
+                class="mt-3"
+            >
+                {{ $t('no_code.creation.triggers') }}
+            </el-button>
+        </template>
+    </Empty>
 
     <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true">
         <template #header>
@@ -233,6 +257,7 @@
     import Check from "vue-material-design-icons/Check.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
+    import Plus from "vue-material-design-icons/Plus.vue";
     import FlowRun from "./FlowRun.vue";
     import Id from "../Id.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
@@ -253,9 +278,16 @@
     import moment from "moment";
     import LogsWrapper from "../logs/LogsWrapper.vue";
     import _isEqual from "lodash/isEqual";
+    import {storageKeys} from "../../utils/constants.js";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
+        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, Empty},
+        props:{
+            embed: {
+                type: Boolean,
+                default: false
+            }
+        },
         data() {
             return {
                 triggerId: undefined,
@@ -349,6 +381,9 @@
                     }
                 }
                 return false
+            },
+            editorViewType() {
+                return localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
             },
         },
         methods: {
@@ -482,6 +517,41 @@
             canBeDisabled(trigger) {
                 return this.triggers.map(trigg => trigg.triggerId).includes(trigger.id)
                     && !trigger.sourceDisabled;
+            },
+            addNewTrigger() {
+                localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, "NO_CODE");
+
+                const baseUrl = {
+                    name: "flows/update",
+                    params: {
+                        tenant: this.$route.params.tenant,
+                        namespace: this.flow.namespace,
+                        id: this.flow.id,
+                        tab: "edit"
+                    }
+                };
+
+                if (this.editorViewType) {
+                    const route = {
+                        ...baseUrl,
+                        query: {
+                            section: "triggers"
+                        }
+                    };
+
+                    this.$nextTick(() => {
+                        this.$router.push(route).then(() => {
+                            this.$router.replace({
+                                ...route,
+                                query: {
+                                    ...route.query,
+                                }
+                            });
+                        });
+                    });
+                } else {
+                    this.$router.push(baseUrl);
+                }
             }
         }
     };

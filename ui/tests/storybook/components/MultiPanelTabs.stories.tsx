@@ -1,4 +1,4 @@
-import {markRaw, ref} from "vue";
+import {markRaw, ref, StyleValue} from "vue";
 import {within, userEvent, expect, fireEvent, waitFor} from "@storybook/test";
 import type {Meta, StoryObj} from "@storybook/vue3";
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
@@ -23,7 +23,20 @@ const render: Story["render"] = ({modelValue}) => ({
     setup() {
         const modelValueRef = ref();
         modelValueRef.value = modelValue;
+
+        const labelStyle: StyleValue = {
+            position: "absolute",
+            top: 0,
+            left: "0",
+            color: "white",
+            fontSize: "12px",
+            textAlign: "right",
+            padding: "0 1rem"
+          };
+          
         return () => <div style="padding: 1rem;border: 1px solid var(--ks-border-primary); border-radius: 4px; margin: 1rem; background: var(--ks-background-body)">
+            <div style={{...labelStyle, background: "red", width: "250px"}}>This is an example of 250px wide element.</div>
+            <div style={{...labelStyle, background: "blue", width: "800px", top: "20px"}}>This is an example of 800px wide element.</div>
             <MultiPanelTabs modelValue={modelValueRef.value} />
             <pre>{JSON.stringify(modelValueRef.value.map((p:any) => ({
                 tabs:p.tabs.map((t:any) => t.value),
@@ -230,10 +243,31 @@ export const TabReorderTest: Story = {
             expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 2", "Tab 3", "Tab 1"]);
         }
 
+        const dropBetweenTwoTabs = async () => {
+            // Find the tab elements in the first panel
+            const firstTab = canvas.getByText("Tab 2");
+            const tabList = canvas.getByRole("tablist");
+
+            // Perform drag operation
+            await fireEvent.dragStart(firstTab);
+
+            await fireEvent.dragOver(tabList, {clientX: 250});
+
+            // Perform drop operation at the calculated position
+            await fireEvent.drop(canvas.getAllByText("Tab 1")[0]);
+
+            // Wait for the reorder to complete
+            await new Promise(resolve => setTimeout(resolve, 100));
+
+            // Verify the tabs have been reordered
+            await userEvent.click(firstTab);
+            expect(canvas.getAllByRole("tab").map(tab => tab.textContent?.trim())).toMatchObject(["Tab 3", "Tab 2", "Tab 1"]);
+        }
+
         const dragEnterOnPanelDropOnPanel = async () => {
             // Find the tab elements in the first panel
             const secondTab = canvas.getByText("Tab 2");
-            const panelOverlay = canvas.getByText("Content for Tab 1").parentNode!;
+            const panelOverlay = canvas.getByText("Content for Tab 2").parentNode!;
 
             // Perform drag operation
             await fireEvent.dragStart(secondTab);
@@ -250,6 +284,10 @@ export const TabReorderTest: Story = {
         }
 
         await waitFor(dropBetweenTabs);
+
+        await new Promise(resolve => setTimeout(resolve, 100));
+        await waitFor(dropBetweenTwoTabs);
+
         await new Promise(resolve => setTimeout(resolve, 100));
         await waitFor(dragEnterOnPanelDropOnPanel);
     }

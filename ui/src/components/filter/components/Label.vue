@@ -19,7 +19,7 @@
     const props = defineProps<{ option: CurrentItem; prefix: string }>();
 
     import {useFilters} from "../composables/useFilters";
-    const {COMPARATORS} = useFilters(props.prefix);
+    const {COMPARATORS} = useFilters(props.prefix, false);
 
     import moment from "moment";
     const DATE_FORMAT = localStorage.getItem("dateFormat") || "llll";
@@ -66,7 +66,7 @@ span {
     .operation {
         background: var(--ks-tag-background);
     }
-    
+
     .operation {
         border-left: 4px solid $white;
         border-right: 4px solid $white;

@@ -2,6 +2,7 @@ package io.kestra.core.services;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
@@ -343,7 +344,7 @@ public class ExecutionService {
                 }
 
                 // if it's a Pause task with no subtask, we terminate the task
-                if (task instanceof Pause pauseTask && pauseTask.getTasks() == null) {
+                if (task instanceof Pause pauseTask && ListUtils.isEmpty(pauseTask.getTasks())) {
                     if (newState == State.Type.RUNNING) {
                         newTaskRun = newTaskRun.withState(State.Type.SUCCESS);
                     } else if (newState == State.Type.KILLING) {
@@ -364,11 +365,12 @@ public class ExecutionService {
         }
 
         if (newExecution.getTaskRunList().stream().anyMatch(t -> t.getState().getCurrent() == State.Type.PAUSED)) {
-            // there is still some tasks paused, this can occur with parallel pause
+            // there are still some tasks paused, this can occur with parallel pause
             return newExecution;
         }
-        return newExecution
-            .withState(State.Type.RESTARTED);
+
+        // we need to cancel immediately or the executor will process the next task if it's restarted.
+        return newState == State.Type.CANCELLED ? newExecution.withState(State.Type.CANCELLED) : newExecution.withState(State.Type.RESTARTED);
     }
 
     public Execution markWithTaskRunAs(final Execution execution, String taskRunId, State.Type newState, Boolean markParents) throws Exception {
@@ -554,15 +556,14 @@ public class ExecutionService {
     }
 
     private Mono<Optional<Task>> getFirstPausedTaskOr(Execution execution, FlowInterface flow){
-        final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
-
         return Mono.create(sink -> {
             try {
+                final FlowWithSource flowWithSource = pluginDefaultService.injectVersionDefaults(flow, false);
                 var runningTaskRun = execution
                     .findFirstByState(State.Type.PAUSED)
                     .map(throwFunction(task -> flowWithSource.findTaskByTaskId(task.getTaskId())));
                 sink.success(runningTaskRun);
-            } catch (InternalException e) {
+            } catch (InternalException | FlowProcessingException e) {
                 sink.error(e);
             }
         });
@@ -655,7 +656,7 @@ public class ExecutionService {
      *
      * @return the execution in a KILLING state if not already terminated
      */
-    public Execution kill(Execution execution, Flow flow) {
+    public Execution kill(Execution execution, FlowInterface flow) {
         if (execution.getState().getCurrent() == State.Type.KILLING || execution.getState().isTerminated()) {
             return execution;
         }

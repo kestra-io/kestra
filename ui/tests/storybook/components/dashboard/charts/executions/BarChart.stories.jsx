@@ -1,8 +1,16 @@
 import BarChart from "../../../../../../src/components/dashboard/components/charts/executions/BarChart.vue";
+import {vueRouter} from "storybook-vue3-router";
 
 export default {
     title: "Dashboard/Charts/Executions/BarChart",
     component: BarChart,
+    decorators: [vueRouter([
+        {
+            path: "/",
+            name: "home",
+            component: {template: "<div>home</div>"}
+        }
+    ])],
     parameters: {
         layout: "centered",
     },
@@ -52,6 +60,7 @@ const Template = (args) => ({
 // Story with 30 days of data
 export const ThirtyDays = Template.bind({});
 ThirtyDays.args = {
+    plugins: [],
     data: generateSampleData(30),
     total: 1500,
 };
@@ -59,6 +68,7 @@ ThirtyDays.args = {
 // Story with no data
 export const NoData = Template.bind({});
 NoData.args = {
+    plugins: [],
     data: [],
     total: 0,
 };
@@ -66,6 +76,7 @@ NoData.args = {
 // Story with single day data
 export const SingleDay = Template.bind({});
 SingleDay.args = {
+    plugins: [],
     data: generateSampleData(1),
     total: 50,
 };

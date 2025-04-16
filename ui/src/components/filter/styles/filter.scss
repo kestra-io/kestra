@@ -48,17 +48,17 @@ $filters-font-xs: var(--el-font-size-extra-small);
 
     .scroller {
         &::-webkit-scrollbar {
-            height: 3px;
-            width: 3px;
+            height: 5px;
+            width: 5px;
         }
 
         &::-webkit-scrollbar-track {
-            background: $filters-card-color
+            background: var(--ks-background-body);
         }
 
         &::-webkit-scrollbar-thumb {
-            background: $filters-border-color;
-            border-radius: 0px;
+            background: var(--ks-border-primary);
+            border-radius: 5px;
         }
     }
 }

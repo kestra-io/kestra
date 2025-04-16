@@ -11,11 +11,11 @@ import EditorView from "../../../components/inputs/EditorView.vue";
 
 export interface Tab {
     locked?: boolean;
+    maximized?: boolean;
 
     name: string;
     title: string;
     component: Component;
-    maximized?: boolean;
 
     props?: Record<string, any>;
 }
@@ -103,10 +103,10 @@ export function useHelpers() {
             props: {namespace, type: "dependencies"},
         },
         {
+            maximized: true,
             name: "files",
             title: t("files"),
             component: EditorView,
-            maximized: true,
             props: {namespace, isNamespace: true, isReadOnly: false},
         },
     ];

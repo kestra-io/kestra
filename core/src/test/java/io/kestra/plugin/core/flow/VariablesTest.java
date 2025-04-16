@@ -34,8 +34,8 @@ class VariablesTest {
 
     @Test
     @ExecuteFlow("flows/valids/variables.yaml")
-    @EnabledIfEnvironmentVariable(named = "KESTRA_TEST1", matches = ".*")
-    @EnabledIfEnvironmentVariable(named = "KESTRA_TEST2", matches = ".*")
+    @EnabledIfEnvironmentVariable(named = "ENV_TEST1", matches = ".*")
+    @EnabledIfEnvironmentVariable(named = "ENV_TEST2", matches = ".*")
     void recursiveVars(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.findTaskRunsByTaskId("variable").getFirst().getOutputs().get("value")).isEqualTo("1 > 2 > 3");

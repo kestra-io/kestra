@@ -36,8 +36,8 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Download a file from a HTTP server.",
-    description = "This task connects to a HTTP server and copy a file to Kestra's internal storage."
+    title = "Download a file from an HTTP server.",
+    description = "This task connects to a HTTP server and copies a file to Kestra's internal storage."
 )
 @Plugin(
     examples = {

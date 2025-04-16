@@ -1,6 +1,7 @@
 <template>
     <NoCode
         :flow="lastValidFlowYaml"
+        save-mode="auto"
         @update-metadata="(e) => onUpdateMetadata(e, true)"
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => handleReorder(yaml)"

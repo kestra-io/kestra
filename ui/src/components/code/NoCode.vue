@@ -20,10 +20,11 @@
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, computed} from "vue";
-
+    import {onBeforeMount, computed, provide} from "vue";
+    import {useRouter, useRoute} from "vue-router";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
+    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, SAVEMODE_INJECTION_KEY} from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
 
@@ -34,16 +35,25 @@
         "reorder",
     ]);
 
-    const props = defineProps<{
-        flow: string;
-    }>();
+    const props = withDefaults(
+        defineProps<{
+            flow: string;
+            saveMode?: "button" | "auto";
+        }>(), {
+            saveMode: "button",
+        });
 
     const flowBreadcrumbs = computed(() => YAML_UTILS.parse(props.flow) as Record<string, string>)
     const metadata = computed(() => YAML_UTILS.getMetadata(props.flow));
 
-    import {useRouter, useRoute} from "vue-router";
+
     const router = useRouter();
     const route = useRoute();
+
+    provide(FLOW_INJECTION_KEY, props.flow);
+    provide(SAVEMODE_INJECTION_KEY, props.saveMode);
+    provide(CREATING_INJECTION_KEY, route.query.identifier === "new" ||
+        route.name === "flows/create");
 
     onBeforeMount(async () => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars

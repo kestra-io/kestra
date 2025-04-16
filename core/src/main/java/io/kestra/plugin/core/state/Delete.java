@@ -17,7 +17,7 @@ import java.io.FileNotFoundException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Delete a state from the state store."
+    title = "Delete a state from the state store (Deprecated)."
 )
 @Plugin(
     examples = {

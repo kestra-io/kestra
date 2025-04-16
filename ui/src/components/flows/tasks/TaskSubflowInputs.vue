@@ -1,6 +1,7 @@
 <template>
     <div
         class="d-flex w-100"
+        :class="className"
         v-for="inputWithValue in Object.entries(inputsWithValue)"
         :key="inputWithValue[0]"
     >
@@ -51,6 +52,9 @@
             },
             Plus() {
                 return Plus
+            },
+            className(){
+                return this.class
             }
         },
         mixins: [Task],
@@ -142,6 +146,12 @@
                     }
                 }
             }
+        },
+        props:{
+            class: {
+                type: String,
+                default: ""
+            },
         }
     };
 </script>

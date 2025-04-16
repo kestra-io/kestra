@@ -729,5 +729,9 @@
 
 :deep(.editor-container){
         max-height: 200px;
+        
+        & .ks-monaco-editor {
+            overflow-x: hidden;
+        }
     }
 </style>

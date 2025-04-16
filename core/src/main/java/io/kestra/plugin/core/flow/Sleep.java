@@ -24,7 +24,7 @@ import java.util.concurrent.TimeUnit;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "A task that sleep for a specified duration before proceeding."
+    title = "Sleep task, wait for a specified duration before proceeding."
 )
 @Plugin(
     examples = {

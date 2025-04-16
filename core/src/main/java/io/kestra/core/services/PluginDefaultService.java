@@ -6,6 +6,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.executions.Execution;
@@ -238,12 +239,12 @@ public class PluginDefaultService {
      * </ul>
      *
      * @param flow the flow to be parsed
+     * @param strictParsing specifies if the source must meet strict validation requirements
      * @return a parsed {@link FlowWithSource}
      *
-     * @throws ConstraintViolationException if {@code strictParsing} is {@code true} and the source does not meet strict validation requirements
-     * @throws KestraRuntimeException if an error occurs while parsing the flow and it cannot be processed
+     * @throws FlowProcessingException if an error occurred while processing the flow
      */
-    public FlowWithSource injectAllDefaults(final FlowInterface flow, final boolean strictParsing) {
+    public FlowWithSource injectAllDefaults(final FlowInterface flow, final boolean strictParsing) throws FlowProcessingException {
 
         // Flow revisions created from older Kestra versions may not be linked to their original source.
         // In such cases, fall back to the generated source approach to enable plugin default injection.
@@ -256,15 +257,21 @@ public class PluginDefaultService {
             throw new IllegalArgumentException(error);
         }
 
-        return parseFlowWithAllDefaults(
-            flow.getTenantId(),
-            flow.getNamespace(),
-            flow.getRevision(),
-            flow.isDeleted(),
-            source,
-            false,
-            strictParsing
-        );
+        try {
+            return parseFlowWithAllDefaults(
+                flow.getTenantId(),
+                flow.getNamespace(),
+                flow.getRevision(),
+                flow.isDeleted(),
+                source,
+                false,
+                strictParsing
+            );
+        } catch (ConstraintViolationException e) {
+            throw new FlowProcessingException(e);
+        } catch (JsonProcessingException e) {
+            throw new FlowProcessingException(YamlParser.toConstraintViolationException(source, "Flow", e));
+        }
     }
 
     /**
@@ -282,8 +289,10 @@ public class PluginDefaultService {
      * @param flow the flow to be parsed
      * @param safe whether parsing errors should be handled gracefully
      * @return a parsed {@link FlowWithSource}, or a {@link FlowWithException} if parsing fails and {@code safe} is {@code true}
+     *
+     * @throws FlowProcessingException if an error occurred while processing the flow and {@code safe} is {@code false}.
      */
-    public FlowWithSource injectVersionDefaults(final FlowInterface flow, final boolean safe) {
+    public FlowWithSource injectVersionDefaults(final FlowInterface flow, final boolean safe) throws FlowProcessingException {
         if (flow instanceof FlowWithSource flowWithSource) {
             // shortcut - if the flow is already fully parsed return it immediately.
             return flowWithSource;
@@ -306,7 +315,7 @@ public class PluginDefaultService {
                 // deleted is not part of the original 'source'
                 result = result.toBuilder().deleted(flow.isDeleted()).build();
             } else {
-                throw new KestraRuntimeException(e);
+                throw new FlowProcessingException(e);
             }
         }
         return result;
@@ -314,7 +323,7 @@ public class PluginDefaultService {
 
     public Map<String, Object> injectVersionDefaults(@Nullable final String tenantId,
                                                      final String namespace,
-                                                     final Map<String, Object> mapFlow) {
+                                                     final Map<String, Object> mapFlow) throws FlowProcessingException {
         return innerInjectDefault(tenantId, namespace, mapFlow, true);
     }
 
@@ -325,10 +334,16 @@ public class PluginDefaultService {
      * @param source    the flow source.
      * @return  a new {@link FlowWithSource}.
      *
-     * @throws ConstraintViolationException when parsing flow.
+     * @throws FlowProcessingException when parsing flow.
      */
-    public FlowWithSource parseFlowWithAllDefaults(@Nullable final String tenantId, final String source, final boolean strict) throws ConstraintViolationException {
-        return parseFlowWithAllDefaults(tenantId, null, null, false, source, false, strict);
+    public FlowWithSource parseFlowWithAllDefaults(@Nullable final String tenantId, final String source, final boolean strict) throws FlowProcessingException {
+        try {
+            return parseFlowWithAllDefaults(tenantId, null, null, false, source, false, strict);
+        } catch (ConstraintViolationException e) {
+            throw new FlowProcessingException(e);
+        } catch (JsonProcessingException e) {
+            throw new FlowProcessingException(YamlParser.toConstraintViolationException(source, "Flow", e));
+        }
     }
 
     /**
@@ -348,36 +363,32 @@ public class PluginDefaultService {
                                                     final boolean isDeleted,
                                                     final String source,
                                                     final boolean onlyVersions,
-                                                    final boolean strictParsing) throws ConstraintViolationException {
-        try {
-            Map<String, Object> mapFlow = OBJECT_MAPPER.readValue(source, JacksonMapper.MAP_TYPE_REFERENCE);
-            namespace = namespace == null ? (String) mapFlow.get("namespace") : namespace;
-            revision = revision == null ? (Integer) mapFlow.get("revision") : revision;
+                                                    final boolean strictParsing) throws ConstraintViolationException, JsonProcessingException {
+        Map<String, Object> mapFlow = OBJECT_MAPPER.readValue(source, JacksonMapper.MAP_TYPE_REFERENCE);
+        namespace = namespace == null ? (String) mapFlow.get("namespace") : namespace;
+        revision = revision == null ? (Integer) mapFlow.get("revision") : revision;
 
-            mapFlow = innerInjectDefault(tenant, namespace, mapFlow, onlyVersions);
+        mapFlow = innerInjectDefault(tenant, namespace, mapFlow, onlyVersions);
 
-            FlowWithSource withDefault = YamlParser.parse(mapFlow, FlowWithSource.class, strictParsing);
+        FlowWithSource withDefault = YamlParser.parse(mapFlow, FlowWithSource.class, strictParsing);
 
-            // revision, tenants, and deleted are not in the 'source', so we copy them manually
-            FlowWithSource full = withDefault.toBuilder()
-                .tenantId(tenant)
-                .revision(revision)
-                .deleted(isDeleted)
-                .source(source)
-                .build();
+        // revision, tenants, and deleted are not in the 'source', so we copy them manually
+        FlowWithSource full = withDefault.toBuilder()
+            .tenantId(tenant)
+            .revision(revision)
+            .deleted(isDeleted)
+            .source(source)
+            .build();
 
-            if (tenant != null) {
-                // This is a hack to set the tenant in template tasks.
-                // When using the Template task, we need the tenant to fetch the Template from the database.
-                // However, as the task is executed on the Executor we cannot retrieve it from the tenant service and have no other options.
-                // So we save it at flow creation/updating time.
-                full.allTasksWithChilds().stream().filter(task -> task instanceof Template).forEach(task -> ((Template) task).setTenantId(tenant));
-            }
-
-            return full;
-        } catch (JsonProcessingException e) {
-            throw new KestraRuntimeException(e);
+        if (tenant != null) {
+            // This is a hack to set the tenant in template tasks.
+            // When using the Template task, we need the tenant to fetch the Template from the database.
+            // However, as the task is executed on the Executor we cannot retrieve it from the tenant service and have no other options.
+            // So we save it at flow creation/updating time.
+            full.allTasksWithChilds().stream().filter(task -> task instanceof Template).forEach(task -> ((Template) task).setTenantId(tenant));
         }
+
+        return full;
     }
 
 
@@ -576,7 +587,14 @@ public class PluginDefaultService {
     @Deprecated(forRemoval = true, since = "0.20")
     public Flow injectDefaults(Flow flow) throws ConstraintViolationException {
         if (flow instanceof FlowWithSource flowWithSource) {
-            return this.injectAllDefaults(flowWithSource, false);
+            try {
+                return this.injectAllDefaults(flowWithSource, false);
+            } catch (FlowProcessingException e) {
+                if (e.getCause() instanceof ConstraintViolationException cve) {
+                    throw cve;
+                }
+                throw new KestraRuntimeException(e);
+            }
         }
 
         Map<String, Object> mapFlow = NON_DEFAULT_OBJECT_MAPPER.convertValue(flow, JacksonMapper.MAP_TYPE_REFERENCE);

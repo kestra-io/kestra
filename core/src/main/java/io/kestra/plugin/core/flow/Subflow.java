@@ -49,8 +49,8 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Create a subflow execution. Subflows offer a modular way to reuse workflow logic by calling other flows just like calling a function in a programming language.",
-    description = "Restarting a parent flow will restart any subflows that has previously been executed."
+    title = "Create a subflow execution.",
+    description = "Subflows offer a modular way to reuse workflow logic by calling other flows just like calling a function in a programming language. Restarting a parent flow will restart any subflows that has previously been executed."
 )
 @Plugin(
     examples = {

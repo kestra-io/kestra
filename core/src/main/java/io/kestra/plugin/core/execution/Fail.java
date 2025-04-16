@@ -23,7 +23,7 @@ import lombok.experimental.SuperBuilder;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Fail the execution.",
+    title = "Intentionally fail the execution.",
     description = "Used to fail the execution, for example, on a switch branch or on some conditions based on the execution context."
 )
 @Plugin(

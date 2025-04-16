@@ -69,7 +69,7 @@ public class State {
 
     public State withState(Type state) {
         if (this.current == state) {
-            log.warn("Can't change state, already " + current);
+            log.warn("Can't change state, already {}", current);
             return this;
         }
 

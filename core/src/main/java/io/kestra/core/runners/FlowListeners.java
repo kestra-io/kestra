@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -54,7 +55,12 @@ public class FlowListeners implements FlowListenersInterface {
                     if (either.isRight()) {
                         flow = FlowWithException.from(either.getRight().getRecord(), either.getRight(), log).orElse(null);
                     } else {
-                        flow = pluginDefaultService.injectVersionDefaults(either.getLeft(), true);
+                        try {
+                            flow = pluginDefaultService.injectVersionDefaults(either.getLeft(), true);
+                        } catch (FlowProcessingException ignore) {
+                            // should not occur, safe = true...
+                            flow = null;
+                        }
                     }
 
                     if (flow == null) {

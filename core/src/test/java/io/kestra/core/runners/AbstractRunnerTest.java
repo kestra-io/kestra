@@ -305,9 +305,9 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-delay-from-input.yaml"})
-    public void pauseRunDelayFromInput() throws Exception {
-        pauseTest.runDelayFromInput(runnerUtils);
+    @LoadFlows({"flows/valids/pause-duration-from-input.yaml"})
+    public void pauseRunDurationFromInput() throws Exception {
+        pauseTest.runDurationFromInput(runnerUtils);
     }
 
     @Test
@@ -386,7 +386,7 @@ public abstract class AbstractRunnerTest {
         flowConcurrencyCaseTest.flowConcurrencyQueue();
     }
 
-    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
+    @Test
     @LoadFlows({"flows/valids/flow-concurrency-queue-pause.yml"})
     protected void concurrencyQueuePause() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueuePause();

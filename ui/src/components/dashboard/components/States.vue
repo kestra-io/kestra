@@ -9,7 +9,7 @@
 </template>
 
 <script setup>
-    import {useScheme} from "../../../utils/scheme.js";
+    import {useScheme} from "../../../utils/scheme";
 
     const scheme = useScheme();
 

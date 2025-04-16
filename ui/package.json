@@ -31,7 +31,7 @@
     "axios": "^1.8.4",
     "bootstrap": "^5.3.5",
     "buffer": "^6.0.3",
-    "chart.js": "^4.4.7",
+    "chart.js": "^4.4.9",
     "core-js": "^3.41.0",
     "cronstrue": "^2.59.0",
     "dagre": "^0.8.5",

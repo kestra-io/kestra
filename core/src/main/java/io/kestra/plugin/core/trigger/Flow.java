@@ -277,6 +277,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
                 this,
                 Output.builder()
                     .executionId(current.getId())
+                    .executionLabels(Label.toNestedMap(current.getLabels().stream().filter(label -> !label.key().equals(Label.CORRELATION_ID)).collect(Collectors.toList())))
                     .namespace(current.getNamespace())
                     .flowId(current.getFlowId())
                     .flowRevision(current.getFlowRevision())
@@ -578,6 +579,10 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
         @Schema(title = "The execution ID that triggered the current flow.")
         @NotNull
         private String executionId;
+
+        @Schema(title = "The execution labels that triggered the current flow.")
+        @NotNull
+        private Map<String, Object> executionLabels;
 
         @Schema(title = "The execution state.")
         @NotNull

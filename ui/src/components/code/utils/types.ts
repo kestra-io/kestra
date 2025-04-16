@@ -57,7 +57,11 @@ export type Fields = {
 
 export type CollapseItem = {
     title: string;
-    elements?: Record<string, any>[];
+    elements?: {
+        id: string;
+        type: string;
+        [key:string]: any;
+    }[];
 };
 
 export type Breadcrumb = {

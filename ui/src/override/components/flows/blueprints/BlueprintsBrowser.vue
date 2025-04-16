@@ -3,7 +3,7 @@
     <div v-else>
         <slot name="nav" />
         <slot name="content">
-            <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
+            <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hide-top-pagination divider>
                 <template #navbar>
                     <el-radio-group v-if="ready && !system && !embed" v-model="selectedTag" class="tags-selection">
                         <el-radio-button

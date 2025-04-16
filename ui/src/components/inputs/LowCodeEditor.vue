@@ -131,8 +131,7 @@
     const router = useRouter();
 
     const vueflowId = ref(Math.random().toString());
-    // Vue flow methods to interact with Graph
-    const {fitView} = useVueFlow({id: vueflowId.value});
+    const {fitView} = useVueFlow(vueflowId.value);
 
     // props
     const props = defineProps({

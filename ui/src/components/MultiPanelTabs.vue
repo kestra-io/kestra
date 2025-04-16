@@ -8,7 +8,7 @@
             @dragover.prevent="(e) => panelDragOver(e, panelIndex)"
             @dragleave.prevent="panelDragLeave"
             @drop.prevent="(e) => panelDrop(e, panelIndex)"
-            :class="{'panel-dragover': panel.dragover}"
+            :class="{'d-block': true, 'panel-dragover': panel.dragover}"
         >
             <div class="editor-tabs-container">
                 <el-button 

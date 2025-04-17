@@ -29,7 +29,7 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Gets value linked to a key."
+    title = "Retrieve a value of a KV pair by a key."
 )
 @Plugin(
     examples = {

@@ -21,6 +21,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
@@ -31,10 +32,11 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 @Validated
 @Controller("/api/v1/stats")
+@Deprecated(forRemoval = true)
+@Hidden
 public class StatsController {
     @Inject
     protected ExecutionRepositoryInterface executionRepository;

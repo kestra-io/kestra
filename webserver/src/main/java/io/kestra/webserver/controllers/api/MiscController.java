@@ -22,6 +22,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -89,7 +90,7 @@ public class MiscController {
     @Get("{/tenant}/configs")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get current configurations")
-    public Configuration configuration() throws JsonProcessingException {
+    public Configuration getConfiguration() throws JsonProcessingException {
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
             .uuid(instanceService.fetch())
@@ -125,15 +126,15 @@ public class MiscController {
     @Get("{/tenant}/usages/all")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get instance usage information")
-    public Usage usages() {
+    public Usage getUsages() {
         return collectorService.metrics(true);
     }
 
     @Post(uri = "{/tenant}/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Add basic auth to current instance")
-    public HttpResponse<Void> addBasicAuth(
-        @Body BasicAuthCredentials basicAuthCredentials
+    @Operation(tags = {"Misc"}, summary = "Create basic auth for the current instance")
+    public HttpResponse<Void> createBasicAuth(
+        @RequestBody(description = "") @Body BasicAuthCredentials basicAuthCredentials
     ) {
         basicAuthService.save(basicAuthCredentials.getUid(), new BasicAuthService.BasicAuthConfiguration(basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword()));
 

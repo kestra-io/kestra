@@ -12,6 +12,7 @@
     import TaskObject from "./TaskObject.vue";
 
     export default {
+        inheritAttrs: false,
         components: {
             TaskObject,
         },

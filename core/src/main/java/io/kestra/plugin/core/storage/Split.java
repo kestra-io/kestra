@@ -23,7 +23,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Split a file from the Kestra's internal storage into multiple files."
+    title = "Split a file from Kestra's internal storage into multiple files."
 )
 @Plugin(
     examples = {

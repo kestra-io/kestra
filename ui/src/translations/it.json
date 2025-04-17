@@ -1085,10 +1085,10 @@
           "note": "Nota che questa impostazione viene utilizzata per visualizzare le proprietà di data e ora nell'interfaccia utente. Per pianificare i tuoi flows in un fuso orario diverso da UTC, assicurati di impostare la proprietà del fuso orario nel trigger Schedule nel codice del tuo flow o nei tuoi plugin defaults."
         },
         "save": {
-          "fields": {
-            "name": "Salva modifiche"
-          },
-          "label": "Salva Preferenze"
+          "discard": "Scarta",
+          "label": "Salva Preferenze",
+          "unsaved_title": "Modifiche non salvate",
+          "unsaved_warning": "Hai modifiche non salvate. Vuoi salvarle prima di uscire?"
         },
         "theme": {
           "fields": {

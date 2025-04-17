@@ -42,6 +42,7 @@
     import {SECTIONS as SECTION} from "../../../utils/constants";
 
     export default {
+        inheritAttrs: false,
         mixins: [Task],
         components: {TaskEditor, Drawer},
         emits: ["update:modelValue"],

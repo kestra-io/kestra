@@ -281,6 +281,12 @@
 
     export default {
         components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, Empty},
+        props:{
+            embed: {
+                type: Boolean,
+                default: false
+            }
+        },
         data() {
             return {
                 triggerId: undefined,

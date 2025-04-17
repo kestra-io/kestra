@@ -56,7 +56,7 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files/search")
     @Operation(tags = {"Files"}, summary = "Find files which path contain the given string in their URI")
-    public List<String> search(
+    public List<String> searchNamespaceFiles(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The string the file path should contain") @QueryValue String q
     ) throws IOException, URISyntaxException {
@@ -69,7 +69,7 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = {"Files"}, summary = "Get namespace file content")
-    public StreamedFile file(
+    public StreamedFile getFileContent(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @QueryValue String path
     ) throws IOException, URISyntaxException {
@@ -86,7 +86,7 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files/stats")
     @Operation(tags = {"Files"}, summary = "Get namespace file stats such as size, creation & modification dates and type")
-    public FileAttributes stats(
+    public FileAttributes getFileMetadatas(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path
     ) throws IOException, URISyntaxException {
@@ -110,7 +110,7 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files/directory")
     @Operation(tags = {"Files"}, summary = "List directory content")
-    public List<FileAttributes> list(
+    public List<FileAttributes> listNamespaceDirectoryFiles(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path
     ) throws IOException, URISyntaxException {
@@ -133,7 +133,7 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{namespace}/files/directory")
     @Operation(tags = {"Files"}, summary = "Create a directory")
-    public void createDirectory(
+    public void createNamespaceDirectory(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @Nullable @QueryValue String path
     ) throws IOException, URISyntaxException {
@@ -149,10 +149,10 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{namespace}/files", consumes = MediaType.MULTIPART_FORM_DATA)
     @Operation(tags = {"Files"}, summary = "Create a file")
-    public void createFile(
+    public void createNamespaceFile(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri") @QueryValue String path,
-        @Part CompletedFileUpload fileContent
+        @Parameter(description = "The file to upload") @Part CompletedFileUpload fileContent
     ) throws Exception {
         String tenantId = tenantService.resolveTenant();
         if (fileContent.getFilename().toLowerCase().endsWith(".zip")) {
@@ -204,7 +204,7 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/files/export", produces = MediaType.APPLICATION_OCTET_STREAM)
     @Operation(tags = {"Files"}, summary = "Export namespace files as a ZIP")
-    public HttpResponse<byte[]> export(
+    public HttpResponse<byte[]> exportNamespaceFiles(
         @Parameter(description = "The namespace id") @PathVariable String namespace
         ) throws IOException {
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
@@ -239,7 +239,7 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "{namespace}/files")
     @Operation(tags = {"Files"}, summary = "Move a file or directory")
-    public void move(
+    public void moveFileDirectory(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri to move from") @QueryValue URI from,
         @Parameter(description = "The internal storage uri to move to") @QueryValue URI to
@@ -253,7 +253,7 @@ public class NamespaceFileController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "{namespace}/files")
     @Operation(tags = {"Files"}, summary = "Delete a file or directory")
-    public void delete(
+    public void deleteFileDirectory(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The internal storage uri of the file / directory to delete") @QueryValue String path
     ) throws IOException, URISyntaxException {

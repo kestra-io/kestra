@@ -127,10 +127,10 @@
                 lastValidatedValue.value = temp;
                 store.dispatch("flow/validateTask", {task: temp, section: validationSection.value});
             }
-        }, 500);
+        }, 500) as any;
     };
 
-    const timer = ref(null);
+    const timer = ref<number>();
     const lastValidatedValue = ref(null);
 
     const errors = computed(() => store.getters["flow/taskError"]);

@@ -1,5 +1,5 @@
 <template>
-    <span>
+    <span ref="rootContainer">
         <!-- Valid -->
         <el-button v-if="!errors && !warnings &&!infos" v-bind="$attrs" :link="link" :size="size" type="default" class="success">
             <check-circle class="text-success" />
@@ -103,6 +103,7 @@
 </template>
 
 <script setup lang="ts">
+    import {nextTick, ref} from "vue";
     import CheckCircle from "vue-material-design-icons/CheckCircle.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
@@ -119,6 +120,26 @@
         size?: "default" | "small";
         tooltipPlacement?: string;
     }>()
+
+    const rootContainer = ref<HTMLSpanElement>()
+
+    function onResize(maxWidth: number) {
+        if(rootContainer.value === undefined) {
+            return;
+        }
+        const buttonLabels = rootContainer.value.querySelectorAll(".el-button span.label");
+
+        buttonLabels.forEach(el => el.classList.remove("d-none"))
+        nextTick(() => {
+            if(rootContainer.value && rootContainer.value.offsetLeft + rootContainer.value.offsetWidth > maxWidth) {
+                buttonLabels.forEach(el => el.classList.add("d-none"))
+            }
+        });
+    }
+
+    defineExpose({
+        onResize
+    })
 
 </script>
 

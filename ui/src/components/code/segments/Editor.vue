@@ -1,6 +1,6 @@
 <template>
     <div class="p-4">
-        <template v-if="!route.query.section && !route.query.identifier">
+        <template v-if="!taskSection && !taskIdentifier">
             <template v-if="panel">
                 <component
                     :is="panel.type"
@@ -57,7 +57,7 @@
 </template>
 
 <script setup lang="ts">
-    import {watch, computed, inject} from "vue";
+    import {watch, computed, inject, ref} from "vue";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     import {Field, Fields, CollapseItem, NoCodeElement} from "../utils/types";
@@ -71,7 +71,7 @@
     import MetadataInputs from "../../flows/MetadataInputs.vue";
     import TaskBasic from "../../flows/tasks/TaskBasic.vue";
 
-    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, SAVEMODE_INJECTION_KEY} from "../injectionKeys";
+    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
 
     import Task from "./Task.vue";
 
@@ -80,7 +80,7 @@
     const router = useRouter();
 
     const taskIdentifier = computed(
-        () => route.query.identifier?.toString() ?? "new",
+        () => taskId.value?.toString() ?? "new",
     );
 
     watch(
@@ -93,11 +93,12 @@
         {deep: true},
     );
 
+    const sectionInjected = inject(SECTION_INJECTION_KEY, ref(""));
+    const taskId = inject(TASKID_INJECTION_KEY, ref(""));
+    const taskPosition = inject(POSITION_INJECTION_KEY, ref<"after" | "before">("after"));
+
     const taskSection = computed(() => {
-        return (route.query.section ?? "TASKS").toString() as "tasks" | "triggers"
-    });
-    const taskPosition = computed(() => {
-        return route.query.position?.toString() as "after" | "before" | undefined;
+        return (sectionInjected.value ?? "TASKS").toString() as "tasks" | "triggers"
     });
 
     import {useI18n} from "vue-i18n";

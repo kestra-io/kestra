@@ -22,9 +22,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, inject, ref} from "vue";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
+    import {SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../../injectionKeys";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
@@ -43,19 +44,12 @@
 
     const icons = computed(() => store.state.plugin.icons);
 
-    import {useRouter, useRoute} from "vue-router";
-    const router = useRouter();
-    const route = useRoute();
+    const sectionInjected = inject(SECTION_INJECTION_KEY, ref(""));
+    const taskId = inject(TASKID_INJECTION_KEY, ref(""));
 
     const handleClick = () => {
-        router.replace({
-            query: {
-                ...route.query,
-                section: props.section.toLowerCase(),
-                identifier: props.element.id,
-                type: props.element.type,
-            },
-        });
+        sectionInjected.value = props.section.toLowerCase();
+        taskId.value = props.element.id;
     };
 </script>
 

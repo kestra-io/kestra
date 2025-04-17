@@ -185,10 +185,10 @@
                         </el-table-column>
                         <el-table-column :label="$t('backfill')" column-key="backfill">
                             <template #default="scope">
-                                <div class="flex items-center gap-2">
-                                    <span v-if="scope.row.backfill">
+                                <div class="backfillContainer items-center gap-2">
+                                    <span v-if="scope.row.backfill" class="statusIcon">
                                         <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
-                                            <play-box />
+                                            <play-box font />
                                         </el-tooltip>
                                         <el-tooltip v-else :content="$t('backfill paused')">
                                             <pause-box />
@@ -198,6 +198,7 @@
                                     <el-button
                                         v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                         @click="restart(scope.row)"
+                                        class="restartTrigger"
                                     >
                                         <kicon :tooltip="$t(`restart trigger.tooltip`)" placement="left">
                                             <Restart />
@@ -499,6 +500,15 @@
     };
 </script>
 <style>
+    .backfillContainer{
+        display: flex;
+        align-items: center;
+    }
+    .statusIcon{
+        font-size: large;
+    }
+
+
     .trigger-issue-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;

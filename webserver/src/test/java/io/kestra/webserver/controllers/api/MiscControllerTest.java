@@ -31,7 +31,7 @@ class MiscControllerTest {
     }
 
     @Test
-    void configuration() {
+    void getConfiguration() {
         var response = client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class);
 
         assertThat(response).isNotNull();

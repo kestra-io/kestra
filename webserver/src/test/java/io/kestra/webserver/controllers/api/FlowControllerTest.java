@@ -31,6 +31,7 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.hateoas.JsonError;
+import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import org.hamcrest.Matchers;
@@ -40,6 +41,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -153,7 +155,7 @@ class FlowControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void findAll() {
+    void searchFlowsAll() {
         PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/search?filters[q][EQUALS]=*"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows.getTotal()).isEqualTo(Helpers.FLOWS_COUNT);
 
@@ -162,7 +164,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void getFlowsByNamespace() throws IOException, URISyntaxException {
+    void getFlowFlowsByNamespace() throws IOException, URISyntaxException {
         TestsUtils.loads(repositoryLoader, FlowControllerTest.class.getClassLoader().getResource("flows/getflowsbynamespace"));
 
         List<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.flowsbynamespace"), Argument.listOf(Flow.class));
@@ -172,7 +174,7 @@ class FlowControllerTest {
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
-    void updateNamespace() {
+    void updateFlowFromJsonFlowsInNamespace() {
         // initial création
         List<Flow> flows = Arrays.asList(
             generateFlow("f1", "io.kestra.updatenamespace", "1"),
@@ -262,7 +264,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void updateNamespaceAsString() {
+    void updateFlowFlowsInNamespaceAsString() {
         // initial création
         String flows = String.join("---\n", Arrays.asList(
             generateFlowAsString("flow1","io.kestra.updatenamespace","a"),
@@ -284,7 +286,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void createFlow() {
+    void createFlowFromJsonFlow() {
         Flow flow = generateFlow(TEST_NAMESPACE, "a");
 
         Flow result = parseFlow(client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class));
@@ -298,7 +300,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void createFlowWithJsonLabels() {
+    void createFlowFromJsonFlowWithJsonLabels() {
         Map<String, Object> flow = JacksonMapper.toMap(generateFlow(TEST_NAMESPACE, "a"));
         flow.put("labels", Map.of("a", "b"));
 
@@ -337,7 +339,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void updateFlow() {
+    void updateFlowFlowFromJson() {
         String flowId = IdUtils.create();
 
         Flow flow = generateFlow(flowId, TEST_NAMESPACE, "a");
@@ -367,7 +369,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void updateFlowMultilineJson() {
+    void updateFlowFlowFromJsonMultilineJson() {
         String flowId = IdUtils.create();
 
         Flow flow = generateFlowWithFlowable(flowId, TEST_NAMESPACE, "\n \n a         \nb\nc");
@@ -381,7 +383,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void updateTaskFlow() throws InternalException {
+    void updateFlowTaskFlowFromJson() throws InternalException {
         String flowId = IdUtils.create();
 
         Flow flow = generateFlowWithFlowable(flowId, TEST_NAMESPACE, "a");
@@ -418,7 +420,7 @@ class FlowControllerTest {
 
     @SuppressWarnings("OptionalGetWithoutIsPresent")
     @Test
-    void invalidUpdateFlow() {
+    void invalidUpdateFlowFlowFromJson() {
         String flowId = IdUtils.create();
 
         Flow flow = generateFlow(flowId, TEST_NAMESPACE, "a");
@@ -445,7 +447,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void listDistinctNamespace() {
+    void listDistinctNamespaces() {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
@@ -453,7 +455,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void createFlowFromString() {
+    void createFlowFromJsonFlowFromString() {
         String flow = generateFlowAsString(TEST_NAMESPACE,"a");
         Flow assertFlow = parseFlow(flow);
 
@@ -469,7 +471,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void createInvalidFlowFromString() throws IOException {
+    void createFlowFromJsonInvalidFlowFromString() throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource("flows/simpleInvalidFlow.yaml");
         assert resource != null;
 
@@ -485,7 +487,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void updateFlowFromString() throws IOException {
+    void updateFlowFlowFromJsonFromString() throws IOException {
         String flow = generateFlowAsString("updatedFlow", TEST_NAMESPACE,"a");
         Flow assertFlow = parseFlow(flow);
 
@@ -514,7 +516,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void updateInvalidFlowFromString() throws IOException {
+    void updateFlowInvalidFlowFromJsonFromString() throws IOException {
         URL resource = TestsUtils.class.getClassLoader().getResource("flows/simpleFlow.yaml");
         assert resource != null;
 
@@ -545,7 +547,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void exportByQuery() throws IOException {
+    void exportFlowsByQuery() throws IOException {
         byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/export/by-query?namespace=io.kestra.tests"),
             Argument.of(byte[].class));
         File file = File.createTempFile("flows", ".zip");
@@ -674,7 +676,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void deleteFlowsByQuery(){
+    void deleteFlowFlowsByQuery(){
         postFlow("flow-a","io.kestra.tests.delete", "a");
         postFlow("flow-b","io.kestra.tests.delete", "b");
         postFlow("flow-c","io.kestra.tests.delete", "c");
@@ -685,9 +687,16 @@ class FlowControllerTest {
             new IdWithNamespace("io.kestra.tests.delete", "flow-c")
         );
 
+        UriBuilder uriBuilder = UriBuilder.of("/api/v1/flows/delete/by-ids");
+        for (IdWithNamespace idWithNamespace : ids) {
+            uriBuilder.queryParam("ids.id", idWithNamespace.getId());
+            uriBuilder.queryParam("ids.namespace", idWithNamespace.getNamespace());
+        }
+        URI uri = uriBuilder.build();
+
         HttpResponse<BulkResponse> response = client
             .toBlocking()
-            .exchange(DELETE("/api/v1/flows/delete/by-ids", ids), BulkResponse.class);
+            .exchange(DELETE(uri), BulkResponse.class);
 
         assertThat(response.getBody().get().getCount()).isEqualTo(3);
 
@@ -707,7 +716,7 @@ class FlowControllerTest {
     }
 
     @Test
-    void deleteFlowsByIds(){
+    void deleteFlowFlowsByIds(){
         Flow flow = generateFlow("toDelete","io.kestra.unittest.delete", "a");
         client.toBlocking().retrieve(POST("/api/v1/flows", flow), String.class);
 

@@ -22,7 +22,6 @@ export default {
         total: 0,
         overallTotal: undefined,
         flowGraph: undefined,
-        flowGraphParam: undefined,
         revisions: undefined,
         flowValidation: undefined,
         taskError: undefined,
@@ -440,12 +439,6 @@ export default {
             }
             return this.$http.get(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
                 commit("setFlowGraph", response.data)
-                commit("setFlowGraphParam", {
-                    namespace: flow.namespace,
-                    id: flow.id,
-                    revision: flow.revision
-                })
-
                 return response.data;
             })
         },
@@ -467,11 +460,6 @@ export default {
                     // prevent losing revision when loading graph from source
                     flow.revision = state.flow?.revision;
                     commit("setFlow", flow);
-                    commit("setFlowGraphParam", {
-                        namespace: flow.namespace ? flow.namespace : "default",
-                        id: flow.id ? flow.id : "default",
-                        revision: flow.revision
-                    })
 
                     return response;
                 }).catch(error => {
@@ -604,15 +592,6 @@ export default {
         setFlow(state, flow) {
             state.flow = flow;
             state.lastSaveFlow = flow;
-            // if (state.flowGraph !== undefined && state.flowGraphParam && flow) {
-            //     if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id) {
-            //         state.flowGraph = undefined
-            //     }
-            // }
-
-        },
-        setFlowGraphParam(state, flow) {
-            state.flowGraphParam = flow
         },
         setTask(state, task) {
             state.task = task;

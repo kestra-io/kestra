@@ -120,7 +120,18 @@
             .then(() => (yaml.value = temp));
 
         CURRENT.value = temp;
+
+        clearTimeout(timer.value);
+        timer.value = setTimeout(() => {
+            if (lastValidatedValue.value !== temp) {
+                lastValidatedValue.value = temp;
+                store.dispatch("flow/validateTask", {task: temp, section: validationSection.value});
+            }
+        }, 500);
     };
+
+    const timer = ref(null);
+    const lastValidatedValue = ref(null);
 
     const errors = computed(() => store.getters["flow/taskError"]);
 

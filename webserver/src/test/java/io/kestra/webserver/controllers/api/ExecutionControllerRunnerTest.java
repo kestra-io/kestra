@@ -69,8 +69,8 @@ import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -1318,11 +1318,11 @@ class ExecutionControllerRunnerTest {
     @Test
     @LoadFlows({"flows/valids/sleep.yml"})
     void shouldPauseExecutionByQueryRunningFlows() throws Exception {
-        awaitPreviousWorkerTasksFinished();
+        awaitPreviousWorkerTasksFinished(TESTS_FLOW_NS);
 
-        Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
-        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
-        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        Execution result1 = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
+        Execution result2 = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
+        Execution result3 = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep");
 
         BulkResponse response = client.toBlocking().retrieve(
             HttpRequest.POST("/api/v1/executions/pause/by-query?namespace=" + result1.getNamespace(), null),
@@ -1331,12 +1331,13 @@ class ExecutionControllerRunnerTest {
         assertThat(response.getCount()).isEqualTo(3);
     }
 
-    void awaitPreviousWorkerTasksFinished() throws TimeoutException {
+    void awaitPreviousWorkerTasksFinished(String namespace) throws TimeoutException {
         // this may will slow down that particular test, use it only when necessary
         Await.until(() -> "previous running worker tasks took too long to end", () -> {
             try {
-                var runningWorkers = workerEndpoint.running().getRunnings();
-                return runningWorkers == null || runningWorkers.isEmpty();
+                return Optional.ofNullable(workerEndpoint.running().getRunnings()).orElse(List.of())
+                    .stream().filter(workerTask -> namespace.equals(workerTask.getTaskRun().getNamespace())).toList()
+                    .isEmpty();
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }

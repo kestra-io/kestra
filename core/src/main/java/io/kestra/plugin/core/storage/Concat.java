@@ -31,7 +31,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Concat files from the internal storage."
+    title = "Concat files from Kestra’s internal storage."
 )
 @Plugin(
     examples = {

@@ -1,5 +1,5 @@
 id: sequential
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 tasks:
   - id: sequential_root

@@ -192,7 +192,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import Check from "vue-material-design-icons/Check.vue";
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 
     import Utils from "../../utils/utils";
 </script>
@@ -204,11 +204,12 @@
     import {NamespaceIterator} from "../../composables/useNamespaces";
     import useNamespaces from "../../composables/useNamespaces";
     import {groupBy} from "lodash";
-    import {mapState} from "vuex";
+    import {mapState, mapMutations} from "vuex";
     import action from "../../models/action";
     import permission from "../../models/permission";
 
     export default {
+        inheritAttrs: false,
         mixins: [SelectTableActions],
         components: {
             Id,
@@ -216,6 +217,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapState("namespace", ["addKvModalVisible"]),
             filteredKvs() {
                 return this.kvs?.filter(kv => !this.search || kv.key.toLowerCase().includes(this.search.toLowerCase()));
             },
@@ -226,8 +228,8 @@
                 get() {
                     return this.addKvModalVisible;
                 },
-                set(newValue) {
-                    this.$emit("update:addKvModalVisible", newValue);
+                set(newValue:boolean) {
+                    this.changeKVModalVisibility(newValue);
                 }
             }
         },
@@ -237,18 +239,11 @@
             }
         },
         props: {
-            addKvModalVisible: {
-                type: Boolean,
-                default: false
-            },
             namespace: {
                 type: String,
                 default: undefined
             }
         },
-        emits: [
-            "update:addKvModalVisible"
-        ],
         watch: {
             addKvDrawerVisible(newValue) {
                 if (!newValue) {
@@ -308,6 +303,7 @@
             };
         },
         methods: {
+            ...mapMutations("namespace", ["changeKVModalVisibility"]),
             canUpdate(kv) {
                 return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
             },
@@ -366,7 +362,7 @@
 
                 this.kvs = this.kvs?.concat(kvFetch) ?? kvFetch;
 
-                if (this.filteredKvs.length === 0) {
+                if (this.namespace === undefined && this.filteredKvs.length === 0) {
                     return this.fetchKvs();
                 }
 

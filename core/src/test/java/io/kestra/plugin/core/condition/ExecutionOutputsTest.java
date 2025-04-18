@@ -11,8 +11,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ExecutionOutputsTest {
@@ -33,7 +32,7 @@ class ExecutionOutputsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
     }
 
     @Test
@@ -50,7 +49,7 @@ class ExecutionOutputsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 
     @Test
@@ -64,6 +63,6 @@ class ExecutionOutputsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 }

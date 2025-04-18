@@ -2,8 +2,10 @@ package io.kestra.core.schedulers;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
@@ -25,8 +27,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.*;
 
@@ -44,7 +45,7 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
     protected FlowRepositoryInterface flowRepository;
 
 
-    private static Flow createScheduleFlow() {
+    private static FlowWithSource createScheduleFlow() {
         Schedule schedule = Schedule.builder()
             .id("hourly")
             .type(Schedule.class.getName())
@@ -72,8 +73,8 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
         SchedulerExecutionStateInterface executionRepositorySpy = spy(this.executionState);
         CountDownLatch queueCount = new CountDownLatch(4);
 
-        Flow flow = createScheduleFlow();
-        flowRepository.create(flow, flow.generateSource(), flow);
+        FlowWithSource flow = createScheduleFlow();
+        flowRepository.create(GenericFlow.of(flow));
 
         Trigger trigger = Trigger.builder()
             .namespace(flow.getNamespace())
@@ -101,14 +102,14 @@ class SchedulerConditionTest extends AbstractSchedulerTest {
             Flux<Execution> receive = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();
                 if (execution.getState().getCurrent() == State.Type.CREATED) {
-                    terminateExecution(execution, trigger, flow.withSource(flow.generateSource()));
+                    terminateExecution(execution, trigger, flow);
 
                     queueCount.countDown();
                     if (queueCount.getCount() == 0) {
-                        assertThat(ZonedDateTime.parse((String) execution.getTrigger().getVariables().get("date")), is(ZonedDateTime.parse("2022-01-03T00:00:00+01:00")));
+                        assertThat(ZonedDateTime.parse((String) execution.getTrigger().getVariables().get("date"))).isEqualTo(ZonedDateTime.parse("2022-01-03T00:00:00+01:00"));
                     }
                 }
-                assertThat(execution.getFlowId(), is(flow.getId()));
+                assertThat(execution.getFlowId()).isEqualTo(flow.getId());
             }));
 
             scheduler.run();

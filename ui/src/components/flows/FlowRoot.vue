@@ -2,10 +2,10 @@
     <template v-if="ready">
         <FlowRootTopBar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName()" />
         <Tabs
-            @expand-subflow="updateExpandedSubflows"
             route-name="flows/update"
             ref="currentTab"
             :tabs="tabs"
+            @expand-subflow="updateExpandedSubflows"
         />
     </template>
 </template>
@@ -172,10 +172,11 @@
                         component: FlowEditor,
                         title: this.$t("edit"),
                         containerClass: "full-container",
+                        maximized: true,
                         props: {
                             expandedSubflows: this.expandedSubflows,
                             isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
-                            beta: localStorage.getItem("multiPanelEditor") === "true"
+                            beta: localStorage.getItem("multiPanelEditor") === "true",
                         },
                     });
                 }

@@ -92,12 +92,12 @@ public class JdbcIndexer implements IndexerInterface {
             List<T> items = eithers.stream().filter(either -> either.isLeft()).map(either -> either.getLeft()).toList();
             if (!ListUtils.isEmpty(items)) {
                 String itemClassName = items.getFirst().getClass().getName();
-                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT, "type", itemClassName).increment();
-                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, "type", itemClassName).increment(items.size());
+                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_REQUEST_COUNT, MetricRegistry.METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION, "type", itemClassName).increment();
+                this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_IN_COUNT_DESCRIPTION, "type", itemClassName).increment(items.size());
 
-                this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, "type", itemClassName).record(() -> {
+                this.metricRegistry.timer(MetricRegistry.METRIC_INDEXER_REQUEST_DURATION, MetricRegistry.METRIC_INDEXER_REQUEST_DURATION_DESCRIPTION, "type", itemClassName).record(() -> {
                     int saved = saveRepositoryInterface.saveBatch(items);
-                    this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, "type", itemClassName).increment(saved);
+                    this.metricRegistry.counter(MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT, MetricRegistry.METRIC_INDEXER_MESSAGE_OUT_COUNT_DESCRIPTION, "type", itemClassName).increment(saved);
                 });
             }
         }));

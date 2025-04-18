@@ -192,7 +192,7 @@ export const MultipleLogLinesWithAllLevels = () => {
 export const ShortLogWithoutContext = () => {
     return (
         <ElCard>
-            <LogLine log={{level: "INFO", message: "test"}} />
+            <LogLine log={{level: "INFO", message: "test"}} level="INFO" />
         </ElCard>
     );
 }

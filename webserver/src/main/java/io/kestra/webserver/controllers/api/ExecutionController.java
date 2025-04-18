@@ -255,7 +255,7 @@ public class ExecutionController {
     public FlowGraph flowGraph(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The subflow tasks to display") @Nullable @QueryValue List<String> subflows
-    ) throws IllegalVariableEvaluationException {
+    ) throws Exception {
         return executionRepository
             .findById(tenantService.resolveTenant(), executionId)
             .map(throwFunction(execution -> {

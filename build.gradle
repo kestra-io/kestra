@@ -39,7 +39,7 @@ plugins {
     id 'ru.vyarus.github-info' version '2.0.0' apply false
 
     // OWASP dependency check
-    id "org.owasp.dependencycheck" version "12.1.0" apply false
+    id "org.owasp.dependencycheck" version "12.1.1" apply false
 }
 
 idea {
@@ -196,6 +196,9 @@ subprojects {
             testImplementation 'org.hamcrest:hamcrest'
             testImplementation 'org.hamcrest:hamcrest-library'
             testImplementation 'org.exparity:hamcrest-date'
+
+            //assertj
+            testImplementation 'org.assertj:assertj-core'
         }
 
         test {
@@ -213,8 +216,8 @@ subprojects {
             environment 'SECRET_WEBHOOK_KEY', "secretKey".bytes.encodeBase64().toString()
             environment 'SECRET_NON_B64_SECRET', "some secret value"
             environment 'SECRET_PASSWORD', "cGFzc3dvcmQ="
-            environment 'KESTRA_TEST1', "true"
-            environment 'KESTRA_TEST2', "Pass by env"
+            environment 'ENV_TEST1', "true"
+            environment 'ENV_TEST2', "Pass by env"
         }
 
         testlogger {
@@ -279,7 +282,7 @@ subprojects {
         }
 
         dependencies {
-            agent "org.aspectj:aspectjweaver:1.9.23"
+            agent "org.aspectj:aspectjweaver:1.9.24"
         }
 
         test {

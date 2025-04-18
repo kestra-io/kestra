@@ -14,8 +14,7 @@ import java.util.Collections;
 
 import jakarta.inject.Inject;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class ExecutionStatusTest {
@@ -33,7 +32,7 @@ class ExecutionStatusTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 
     @Test
@@ -47,7 +46,7 @@ class ExecutionStatusTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(true));
+        assertThat(test).isEqualTo(true);
     }
 
     @Test
@@ -62,6 +61,6 @@ class ExecutionStatusTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test, is(false));
+        assertThat(test).isEqualTo(false);
     }
 }

@@ -139,7 +139,7 @@
     import {mapState} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";

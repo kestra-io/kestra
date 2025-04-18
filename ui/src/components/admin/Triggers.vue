@@ -462,13 +462,13 @@
                 }
             },
             triggersMerged() {
-                const all = this.triggers.map(triggers => {
+                const all = this.triggers.map(t => {
                     return {
-                        ...triggers?.abstractTrigger,
-                        ...triggers.triggerContext,
-                        codeDisabled: triggers?.abstractTrigger?.disabled,
+                        ...t?.abstractTrigger,
+                        ...t.triggerContext,
+                        codeDisabled: t?.abstractTrigger?.disabled,
                         // if we have no abstract trigger, it means that flow or trigger definition hasn't been found
-                        missingSource: !triggers.abstractTrigger
+                        missingSource: !t.abstractTrigger
                     }
                 })
 

@@ -74,10 +74,9 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
         }
     }
 
-    // bug in micronaut, we can't inject YamlFlowParser & ModelValidator, so we inject from implementation
+    // bug in micronaut, we can't inject ModelValidator, so we inject from implementation
     public Integer call(
         Class<?> cls,
-        YamlParser yamlParser,
         ModelValidator modelValidator,
         Function<Object, String> identity,
         Function<Object, List<String>> warningsFunction,
@@ -94,7 +93,7 @@ public abstract class AbstractValidateCommand extends AbstractApiCommand {
                     .filter(YamlParser::isValidExtension)
                     .forEach(path -> {
                         try {
-                            Object parse = yamlParser.parse(path.toFile(), cls);
+                            Object parse = YamlParser.parse(path.toFile(), cls);
                             modelValidator.validate(parse);
                             stdOut("@|green \u2713|@ - " + identity.apply(parse));
                             List<String> warnings = warningsFunction.apply(parse);

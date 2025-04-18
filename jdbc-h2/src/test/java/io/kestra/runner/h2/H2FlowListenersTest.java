@@ -1,12 +1,12 @@
 package io.kestra.runner.h2;
 
-import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.runners.FlowListenersTest;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import jakarta.inject.Inject;
@@ -26,12 +26,15 @@ class H2FlowListenersTest extends FlowListenersTest {
 
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
-    QueueInterface<FlowWithSource> flowQueue;
+    QueueInterface<FlowInterface> flowQueue;
+
+    @Inject
+    PluginDefaultService pluginDefaultService;
 
     @Test
     public void all() {
         // we don't inject FlowListeners to remove a flaky test
-        this.suite(new FlowListeners(flowRepository, flowQueue));
+        this.suite(new FlowListeners(flowRepository, flowQueue, pluginDefaultService));
     }
 
     @BeforeEach

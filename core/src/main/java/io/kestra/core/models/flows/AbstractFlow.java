@@ -1,8 +1,12 @@
 package io.kestra.core.models.flows;
 
-import io.kestra.core.models.DeletedInterface;
-import io.kestra.core.models.TenantInterface;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.kestra.core.models.Label;
+import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
+import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
 import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
@@ -11,11 +15,13 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 import java.util.List;
+import java.util.Map;
 
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-public abstract class AbstractFlow implements DeletedInterface, TenantInterface {
+@JsonDeserialize
+public abstract class AbstractFlow implements FlowInterface {
     @NotNull
     @NotBlank
     @Pattern(regexp = "^[a-zA-Z0-9][a-zA-Z0-9._-]*")
@@ -33,6 +39,9 @@ public abstract class AbstractFlow implements DeletedInterface, TenantInterface 
     @Valid
     List<Input<?>> inputs;
 
+    @Valid
+    List<Output> outputs;
+
     @NotNull
     @Builder.Default
     boolean disabled = false;
@@ -45,5 +54,12 @@ public abstract class AbstractFlow implements DeletedInterface, TenantInterface 
     @Hidden
     @Pattern(regexp = "^[a-z0-9][a-z0-9_-]*")
     String tenantId;
+
+    @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
+    @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    @Schema(implementation = Object.class, oneOf = {List.class, Map.class})
+    List<Label> labels;
+
+    Map<String, Object> variables;
 
 }

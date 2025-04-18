@@ -10,8 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class DeleteConfigurationApplicationListenersTest {
 
@@ -28,7 +27,7 @@ class DeleteConfigurationApplicationListenersTest {
         );
 
         try (ApplicationContext ctx = ApplicationContext.run(mapPropertySource, Environment.CLI, Environment.TEST)) {
-            assertThat(tempFile.exists(), is(false));
+            assertThat(tempFile.exists()).isEqualTo(false);
         }
     }
 }

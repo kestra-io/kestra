@@ -423,7 +423,7 @@
                 function extractPaths(basePath = "", array) {
                     const paths = [];
 
-                    array.forEach((item) => {
+                    array?.forEach((item) => {
                         if (item.type === "Directory") {
                             const folderPath = `${basePath}${item.fileName}`;
                             paths.push(folderPath);
@@ -1162,15 +1162,6 @@
 
         .el-tree__empty-block {
             height: auto;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 5px;
-
-            html.dark & {
-                background:  var(--ks-button-background-primary);
-            }
         }
 
         .node {

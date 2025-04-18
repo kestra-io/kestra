@@ -21,26 +21,21 @@ dependencies {
     def kafkaVersion = "3.9.0"
     def opensearchVersion = "2.22.0"
     def opensearchRestVersion = "2.19.1"
-    def flyingSaucerVersion = "9.11.5"
+    def flyingSaucerVersion = "9.11.6"
     def jacksonVersion = "2.18.3"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
-    // needed because httpclient fails to communicate with docker socket with > v5.4 (https://github.com/docker-java/docker-java/pull/2293#issuecomment-2435455322) and opensearch-java brings that version
-    api enforcedPlatform("org.apache.httpcomponents.client5:httpclient5:5.3.1")
     api enforcedPlatform("org.slf4j:slf4j-api:$slf4jVersion")
-    api platform("io.micronaut.platform:micronaut-platform:4.7.6")
+    api platform("io.micronaut.platform:micronaut-platform:4.8.0")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.58.0')
+    api platform('com.google.cloud:libraries-bom:26.59.0')
     api platform("com.azure:azure-sdk-bom:1.2.33")
-    api platform('software.amazon.awssdk:bom:2.31.11')
+    api platform('software.amazon.awssdk:bom:2.31.21')
 
 
     constraints {
-        // Forced dependencies
-        // Temporal force to include https://github.com/micronaut-projects/micronaut-core/commit/9bb43ce55ea3fca97c12cb50c5f1baea28557729 as a potential fix for https://github.com/kestra-io/kestra/issues/3402
-        api("io.micronaut:micronaut-core:4.7.15")
         // need to force this dep as mysql-connector brings a version incompatible with the Google Cloud libs
         api("com.google.protobuf:protobuf-java:$protobufVersion")
         api("com.google.protobuf:protobuf-java-util:$protobufVersion")
@@ -69,10 +64,10 @@ dependencies {
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.37.0'
+        api 'software.amazon.awssdk.crt:aws-crt:0.38.1'
 
         // we need at least 0.14, it could be removed when Micronaut contains a recent only version in their BOM
-        api "io.micrometer:micrometer-core:1.14.5"
+        api "io.micrometer:micrometer-core:1.14.6"
 
         // Other libs
         api("org.projectlombok:lombok:1.18.36")
@@ -83,8 +78,8 @@ dependencies {
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
         api group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
         api group: 'net.thisptr', name: 'jackson-jq', version: '1.2.0'
-        api group: 'com.google.guava', name: 'guava', version: '33.4.0-jre'
-        api group: 'commons-io', name: 'commons-io', version: '2.18.0'
+        api group: 'com.google.guava', name: 'guava', version: '33.4.7-jre'
+        api group: 'commons-io', name: 'commons-io', version: '2.19.0'
         api group: 'org.apache.commons', name: 'commons-lang3', version: '3.17.0'
         api 'ch.qos.logback.contrib:logback-json-classic:0.1.5'
         api 'ch.qos.logback.contrib:logback-jackson:0.1.5'
@@ -94,7 +89,7 @@ dependencies {
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-file', version: mavenResolverVersion
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-http', version: mavenResolverVersion
         api 'com.github.oshi:oshi-core:6.8.0'
-        api 'io.pebbletemplates:pebble:3.2.3'
+        api 'io.pebbletemplates:pebble:3.2.4'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion
         api group: 'de.focus-shift', name: 'jollyday-jaxb', version: jollydayVersion
@@ -108,8 +103,8 @@ dependencies {
         api 'com.h2database:h2:2.3.232'
         api 'mysql:mysql-connector-java:8.0.33'
         api 'org.postgresql:postgresql:42.7.5'
-        api 'com.github.docker-java:docker-java:3.4.2'
-        api 'com.github.docker-java:docker-java-transport-httpclient5:3.4.2'
+        api 'com.github.docker-java:docker-java:3.5.0'
+        api 'com.github.docker-java:docker-java-transport-httpclient5:3.5.0'
         api (group: 'org.opensearch.client', name: 'opensearch-java', version: "$opensearchVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-client', version: "$opensearchRestVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchRestVersion") // used by the elasticsearch plugin
@@ -126,14 +121,14 @@ dependencies {
         api 'org.codehaus.plexus:plexus-utils:3.0.24' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244
 
         // for jOOQ to the same version as we use in EE
-        api ("org.jooq:jooq:3.20.2")
+        api ("org.jooq:jooq:3.20.3")
 
         // Tests
         api "org.junit-pioneer:junit-pioneer:2.3.0"
         api 'org.hamcrest:hamcrest:3.0'
         api 'org.hamcrest:hamcrest-library:3.0'
         api group: 'org.exparity', name: 'hamcrest-date', version: '2.0.8'
-        api "org.wiremock:wiremock:3.10.0"
+        api "org.wiremock:wiremock-jetty12:3.12.1"
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
         api "com.microsoft.playwright:playwright:1.51.0"
 

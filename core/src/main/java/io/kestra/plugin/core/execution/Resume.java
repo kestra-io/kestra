@@ -6,6 +6,7 @@ import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -36,7 +37,8 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Resume a paused execution. By default, the task assumes that you want to resume the current `executionId`. If you want to programmatically resume an execution of another flow, make sure to define the `executionId`, `flowId`, and `namespace` properties explicitly. Using the `inputs` property, you can additionally pass custom `onResume` input values to the execution."
+    title = "Resume a paused execution.",
+    description = "By default, the task assumes that you want to resume the current `executionId`. If you want to programmatically resume an execution of another flow, make sure to define the `executionId`, `flowId`, and `namespace` properties explicitly. Using the `inputs` property, you can additionally pass custom `onResume` input values to the execution."
 )
 @Plugin(
     examples = {
@@ -92,7 +94,7 @@ public class Resume  extends Task implements RunnableTask<VoidOutput> {
 
         Execution execution = executionRepository.findById(executionInfo.tenantId(), executionInfo.id())
             .orElseThrow(() -> new IllegalArgumentException("No execution found for execution id " + executionInfo.id()));
-        Flow flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution id " + executionInfo.id()));
+        FlowInterface flow = flowExecutor.findByExecution(execution).orElseThrow(() -> new IllegalArgumentException("Flow not found for execution id " + executionInfo.id()));
 
         Map<String, Object> renderedInputs = runContext.render(this.inputs).asMap(String.class, Object.class);
         renderedInputs = !renderedInputs.isEmpty() ? renderedInputs : null;

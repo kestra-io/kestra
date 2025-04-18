@@ -5,6 +5,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -75,11 +76,11 @@ public class RunContextFactory {
         return applicationContext.getBean(RunContextInitializer.class);
     }
 
-    public RunContext of(Flow flow, Execution execution) {
+    public RunContext of(FlowInterface flow, Execution execution) {
         return of(flow, execution, Function.identity());
     }
 
-    public RunContext of(Flow flow, Execution execution, Function<RunVariables.Builder, RunVariables.Builder> runVariableModifier) {
+    public RunContext of(FlowInterface flow, Execution execution, Function<RunVariables.Builder, RunVariables.Builder> runVariableModifier) {
         RunContextLogger runContextLogger = runContextLoggerFactory.create(execution);
 
         return newBuilder()
@@ -100,11 +101,11 @@ public class RunContextFactory {
             .build();
     }
 
-    public RunContext of(Flow flow, Task task, Execution execution, TaskRun taskRun) {
+    public RunContext of(FlowInterface flow, Task task, Execution execution, TaskRun taskRun) {
         return this.of(flow, task, execution, taskRun, true);
     }
 
-    public RunContext of(Flow flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
+    public RunContext of(FlowInterface flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
         RunContextLogger runContextLogger = runContextLoggerFactory.create(taskRun, task);
 
         return newBuilder()
@@ -202,7 +203,7 @@ public class RunContextFactory {
         return of(Map.of());
     }
 
-    private List<String> secretInputsFromFlow(Flow flow) {
+    private List<String> secretInputsFromFlow(FlowInterface flow) {
         if (flow == null || flow.getInputs() == null) {
             return Collections.emptyList();
         }

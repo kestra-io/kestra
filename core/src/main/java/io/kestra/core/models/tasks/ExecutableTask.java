@@ -4,6 +4,8 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowId;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.runners.FlowExecutorInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
@@ -29,9 +31,9 @@ public interface ExecutableTask<T extends Output>{
      * Creates a SubflowExecutionResult for a given SubflowExecution
      */
     Optional<SubflowExecutionResult> createSubflowExecutionResult(RunContext runContext,
-                                                                         TaskRun taskRun,
-                                                                         Flow flow,
-                                                                         Execution execution);
+                                                                  TaskRun taskRun,
+                                                                  FlowInterface flow,
+                                                                  Execution execution);
 
     /**
      * Whether to wait for the execution(s) of the subflow before terminating this tasks
@@ -51,12 +53,12 @@ public interface ExecutableTask<T extends Output>{
     record SubflowId(String namespace, String flowId, Optional<Integer> revision) {
         public String flowUid() {
             // as the Flow task can only be used in the same tenant we can hardcode null here
-            return Flow.uid(null, this.namespace, this.flowId, this.revision);
+            return FlowId.uid(null, this.namespace, this.flowId, this.revision);
         }
 
         public String flowUidWithoutRevision() {
             // as the Flow task can only be used in the same tenant we can hardcode null here
-            return Flow.uidWithoutRevision(null, this.namespace, this.flowId);
+            return FlowId.uidWithoutRevision(null, this.namespace, this.flowId);
         }
     }
 

@@ -20,13 +20,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class FlowTest {
-    @Inject
-    YamlParser yamlParser = new YamlParser();
 
     @Inject
     ModelValidator modelValidator;
@@ -36,11 +33,11 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/duplicate.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(1));
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
-        assertThat(validate.get().getMessage(), containsString("Duplicate task id with name [date, listen]"));
-        assertThat(validate.get().getMessage(), containsString("Duplicate trigger id with name [trigger]"));
+        assertThat(validate.get().getMessage()).contains("Duplicate task id with name [date, listen]");
+        assertThat(validate.get().getMessage()).contains("Duplicate trigger id with name [trigger]");
     }
 
     @Test
@@ -48,10 +45,10 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/duplicate-inputs.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(1));
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
-        assertThat(validate.get().getMessage(), containsString("Duplicate input with name [first_input]"));
+        assertThat(validate.get().getMessage()).contains("Duplicate input with name [first_input]");
     }
 
     @Test
@@ -59,10 +56,10 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/duplicate-parallel.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(1));
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
-        assertThat(validate.get().getMessage(), containsString("Duplicate task id with name [t3]"));
+        assertThat(validate.get().getMessage()).contains("Duplicate task id with name [t3]");
     }
 
     @Test
@@ -71,10 +68,10 @@ class FlowTest {
         Flow updated = this.parse("flows/invalids/duplicate.yaml");
         Optional<ConstraintViolationException> validate = flow.validateUpdate(updated);
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(1));
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
-        assertThat(validate.get().getMessage(), containsString("Illegal flow id update"));
+        assertThat(validate.get().getMessage()).contains("Illegal flow id update");
     }
 
 
@@ -83,10 +80,10 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/switch-invalid.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(1));
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
-        assertThat(validate.get().getMessage(), containsString("impossible: No task defined, neither cases or default have any tasks"));
+        assertThat(validate.get().getMessage()).contains("impossible: No task defined, neither cases or default have any tasks");
     }
 
     @Test
@@ -94,10 +91,10 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/workingdirectory-invalid.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(1));
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
-        assertThat(validate.get().getMessage(), containsString("impossible: Only runnable tasks are allowed as children of a WorkingDirectory task"));
+        assertThat(validate.get().getMessage()).contains("impossible: Only runnable tasks are allowed as children of a WorkingDirectory task");
     }
 
     @Test
@@ -105,10 +102,10 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/workingdirectory-no-tasks.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(1));
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
-        assertThat(validate.get().getMessage(), containsString("impossible: The 'tasks' property cannot be empty"));
+        assertThat(validate.get().getMessage()).contains("impossible: The 'tasks' property cannot be empty");
     }
 
     @Test
@@ -124,7 +121,7 @@ class FlowTest {
 
         Task findUpdated = updated.findTaskByTaskId("1-2-2_return");
 
-        assertThat(((Return) findUpdated).getFormat().toString(), is("{{task.id}}"));
+        assertThat(((Return) findUpdated).getFormat().toString()).isEqualTo("{{task.id}}");
     }
 
     @Test
@@ -132,10 +129,10 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/worker-group.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(1));
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
-        assertThat(validate.get().getMessage(), equalTo("tasks[0].workerGroup: Worker Group is an Enterprise Edition functionality\n"));
+        assertThat(validate.get().getMessage()).isEqualTo("tasks[0].workerGroup: Worker Group is an Enterprise Edition functionality\n");
     }
 
     @Test
@@ -143,7 +140,7 @@ class FlowTest {
         Flow flow = this.parse("flows/valids/trigger-flow-listener-no-inputs.yaml");
         List<String> all = flow.allTasksWithChildsAndTriggerIds();
 
-        assertThat(all.size(), is(3));
+        assertThat(all.size()).isEqualTo(3);
     }
 
     @Test
@@ -151,11 +148,11 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/inputs-validation.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent(), is(true));
-        assertThat(validate.get().getConstraintViolations().size(), is(2));
+        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
-        assertThat(validate.get().getMessage(), containsString("file: no `defaults` can be set for inputs of type 'FILE'"));
-        assertThat(validate.get().getMessage(), containsString("array: `itemType` cannot be `ARRAY"));
+        assertThat(validate.get().getMessage()).contains("file: no `defaults` can be set for inputs of type 'FILE'");
+        assertThat(validate.get().getMessage()).contains("array: `itemType` cannot be `ARRAY");
     }
 
     // This test is done to ensure the equals is checking the right fields and also make sure the Maps orders don't negate the equality even if they are not the same.
@@ -167,13 +164,13 @@ class FlowTest {
         triggerInputsReverseOrder.put("c", "d");
         triggerInputsReverseOrder.put("a", "b");
         Flow flowABis = baseFlow().toBuilder().revision(2).triggers(List.of(io.kestra.plugin.core.trigger.Flow.builder().inputs(triggerInputsReverseOrder).build())).build();
-        assertThat(flowA.equalsWithoutRevision(flowABis), is(true));
+        assertThat(flowA.equalsWithoutRevision(flowABis)).isEqualTo(true);
 
         Flow flowB = baseFlow().toBuilder().id("b").build();
-        assertThat(flowA.equalsWithoutRevision(flowB), is(false));
+        assertThat(flowA.equalsWithoutRevision(flowB)).isEqualTo(false);
 
         Flow flowAnotherTenant = baseFlow().toBuilder().tenantId("b").build();
-        assertThat(flowA.equalsWithoutRevision(flowAnotherTenant), is(false));
+        assertThat(flowA.equalsWithoutRevision(flowAnotherTenant)).isEqualTo(false);
     }
 
     private static Flow baseFlow() {
@@ -197,6 +194,6 @@ class FlowTest {
 
         File file = new File(resource.getFile());
 
-        return yamlParser.parse(file, Flow.class);
+        return YamlParser.parse(file, Flow.class);
     }
 }

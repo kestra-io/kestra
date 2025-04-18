@@ -17,7 +17,6 @@
                 :infinite-scroll-delay="0"
                 :height="tableHeight"
             >
-                <slot name="expand" v-if="expandable" />
                 <el-table-column type="selection" v-if="selectable" />
                 <slot name="default" />
             </el-table>
@@ -41,7 +40,7 @@
         expose: ["resetInfiniteScroll"],
         computed: {
             scrollWrapper() {
-                if (this.data && this.$refs.table?.$el) {
+                if (this.data) {
                     return this.$refs.table?.$el?.querySelector(".el-scrollbar__wrap");
                 }
 

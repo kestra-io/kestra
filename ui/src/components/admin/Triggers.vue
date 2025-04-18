@@ -500,6 +500,10 @@
     };
 </script>
 <style>
+    .data-table-wrapper {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    }
     .backfillContainer{
         display: flex;
         align-items: center;
@@ -507,8 +511,6 @@
     .statusIcon{
         font-size: large;
     }
-
-
     .trigger-issue-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;

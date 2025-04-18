@@ -1312,14 +1312,16 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep.yml"})
+    @LoadFlows({"flows/valids/sleep-short.yml"})
+    // use a dedicated Flow to avoid clash with other tests
     void shouldPauseExecutionByQueryRunningFlows() throws TimeoutException, QueueException {
-        Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
-        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
-        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        var flowId = "sleep-short";
+        Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
+        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
+        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
 
         BulkResponse response = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/executions/pause/by-query?namespace=" + result1.getNamespace(), null),
+            HttpRequest.POST("/api/v1/executions/pause/by-query?flowId="+flowId+"&namespace=" + result1.getNamespace(), null),
             BulkResponse.class
         );
         assertThat(response.getCount()).isEqualTo(3);

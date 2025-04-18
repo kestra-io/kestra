@@ -6,8 +6,7 @@
 
         <Editor
             :creation="
-                route.query.identifier === 'new' ||
-                    route.name === 'flows/create'
+                Boolean(route.query.creating)
             "
             :flow
             :metadata
@@ -47,7 +46,7 @@
 
     onBeforeMount(async () => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {section, identifier, type, ...rest} = route.query;
+        const {section, identifier, type, creating, ...rest} = route.query;
         router.replace({query: {...rest}});
     });
 </script>

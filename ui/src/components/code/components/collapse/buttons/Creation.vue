@@ -21,7 +21,7 @@
             query: {
                 ...route.query,
                 section: props.section.toLowerCase(),
-                identifier: "new",
+                creating: "true",
             },
         });
     };

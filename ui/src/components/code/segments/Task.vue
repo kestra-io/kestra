@@ -119,6 +119,14 @@
 
     const errors = computed(() => store.getters["flow/taskError"]);
 
+    const SECTIONS_MAP: Record<string, string> = {
+        tasks: "task",
+        triggers: "triggers",
+        "error handlers": "errors",
+        finally: "finally",
+        "after execution": "afterExecution",
+    };
+
     import Save from "../components/Save.vue";
     const saveTask = () => {
         if (lastBreadcrumb.value.shown) {
@@ -134,12 +142,10 @@
         );
 
         const currentSection = route.query.section;
-        const isCreation =
-            props.creation && (!props.identifier || props.identifier === "new");
 
         let result;
 
-        if (isCreation) {
+        if (props.creation) {
             if (currentSection === "tasks") {
                 const existing = YAML_UTILS.checkTaskAlreadyExist(
                     source,
@@ -161,14 +167,12 @@
                     task,
                     route.query.position ?? "after",
                 );
-            } else if (currentSection === "triggers") {
-                result = YAML_UTILS.insertSection("triggers", source, CURRENT.value);
-            } else if (currentSection === "error handlers") {
-                result = YAML_UTILS.insertSection("errors", source, CURRENT.value);
-            } else if (currentSection === "finally") {
-                result = YAML_UTILS.insertSection("finally", source, CURRENT.value);
-            } else if (currentSection === "after execution") {
-                result = YAML_UTILS.insertSection("afterExecution", source, CURRENT.value);
+            } else if (currentSection && SECTIONS_MAP[currentSection.toString()]) {
+                result = YAML_UTILS.insertSection(
+                    SECTIONS_MAP[currentSection.toString()],
+                    source,
+                    CURRENT.value
+                );
             }
         } else {
             result = YAML_UTILS.replaceTaskInDocument(

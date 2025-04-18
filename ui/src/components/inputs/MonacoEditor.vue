@@ -89,7 +89,7 @@
         theme?: "light" | "dark",
         language?: string,
         extension?: string,
-        options?: monaco.editor.IStandaloneEditorConstructionOptions & {renderSideBySide?: boolean},
+        options?: monaco.editor.IStandaloneEditorConstructionOptions & { renderSideBySide?: boolean },
         schemaType?: string,
         diffEditor?: boolean,
         input?: boolean,
@@ -402,6 +402,7 @@
                 label: label,
                 insertText: value,
                 insertTextRules: value.includes("${1:") ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
+                sortText: value.includes("(") ? "b" + value : "a" + value,
                 range: {
                     startLineNumber: position.lineNumber,
                     endLineNumber: position.lineNumber,
@@ -590,12 +591,12 @@
         });
 
         const $el = editorRef.value
-        if($el !== null) {
+        if ($el !== null) {
             suggestWidgetResizeObserver.value.observe($el.querySelector(".overflowingContentWidgets")!, {childList: true})
         }
     }
 
-    async function initMonaco () {
+    async function initMonaco() {
         let options = {
             ...{
                 value: props.value,
@@ -610,7 +611,7 @@
         };
 
         if (props.diffEditor) {
-            if(editorRef.value){
+            if (editorRef.value) {
                 localDiffEditor = monaco.editor.createDiffEditor(editorRef.value, {
                     ...options,
                     ignoreTrimWhitespace: false
@@ -651,7 +652,7 @@
                 when: "editorFocus"
             });
 
-            if(editorRef.value){
+            if (editorRef.value) {
                 localEditor = monaco.editor.create(editorRef.value, options);
             }
 
@@ -731,7 +732,7 @@
     function destroy() {
         disposeObservers();
         autoCompletionProviders.value.forEach(provider => provider.dispose());
-        if(props.diffEditor) {
+        if (props.diffEditor) {
             localDiffEditor?.getModel()?.modified?.dispose();
             localDiffEditor?.getModel()?.original?.dispose();
             localDiffEditor?.dispose();
@@ -752,20 +753,20 @@
 </script>
 
 <style scoped lang="scss">
-.ks-monaco-editor {
-    position: absolute;
-    width: 100%;
-    height: 100%;
-    outline: none;
-}
+    .ks-monaco-editor {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        outline: none;
+    }
 
-.main-editor>#editorWrapper .monaco-editor {
-    padding: 1rem 0 0 1rem;
-}
+    .main-editor > #editorWrapper .monaco-editor {
+        padding: 1rem 0 0 1rem;
+    }
 </style>
 
 <style lang="scss">
-@import "../../styles/layout/root-dark";
+    @import "../../styles/layout/root-dark";
 
     .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
         background-color: $input-bg;

@@ -114,7 +114,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void unlock() {
+    void unlockTrigger() {
         Trigger trigger = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
@@ -189,7 +189,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void restart() {
+    void restartTrigger() {
         Flow flow = generateFlow("flow-with-triggers");
         jdbcFlowRepository.create(GenericFlow.of(flow));
 
@@ -210,7 +210,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void unlockByTriggers() {
+    void unlockTriggerByTriggers() {
         Trigger triggerLock = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
@@ -235,7 +235,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void unlockByQuery() {
+    void unlockTriggerByQuery() {
         Trigger triggerLock = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")

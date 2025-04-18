@@ -27,7 +27,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Purge flow execution and trigger logs.",
+    title = "Purge flow execution logs and trigger-related logs.",
     description = "This task can be used to purge flow execution and trigger logs for all flows, for a specific namespace, or for a specific flow."
 )
 @Plugin(

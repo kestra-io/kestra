@@ -83,7 +83,7 @@ export default {
             }
 
             if( property.type === "array") {
-                if (property.items && property.items.$ref.includes("tasks.Task")) {
+                if (property.items?.$ref?.includes("tasks.Task")) {
                     return "tasks";
                 }
 

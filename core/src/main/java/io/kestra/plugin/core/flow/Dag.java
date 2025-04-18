@@ -36,7 +36,7 @@ import java.util.stream.Stream;
 @NoArgsConstructor
 @DagTaskValidation
 @Schema(
-    title = "Create a directed acyclic graph (DAG) of tasks without explicitly specifying the order in which the tasks need to run.",
+    title = "Create a DAG of tasks without explicitly specifying the order in which the tasks must run.",
     description = "List your tasks and their dependencies, and Kestra will figure out the execution sequence.\n" +
         "Each task can only depend on other tasks from the DAG task.\n" +
         "For technical reasons, low-code interaction via UI forms is disabled for now when using this task."

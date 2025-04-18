@@ -18,10 +18,8 @@ export default {
             path: "/executions",
             name: "executions/list",
             component: {template: "<div>executions</div>"},
-            beforeEnter: (to, from, next) => {
-                console.log("executions/list route");
+            beforeEnter: (to) => {
                 hasNavigated.value = to.name;
-                next();
             }
         }])
     ],
@@ -75,6 +73,7 @@ const Template = (args) => ({
 // Story with 30 days of data
 export const ThirtyDays = Template.bind({});
 ThirtyDays.args = {
+    plugins: [],
     data: generateSampleData(30),
     total: 1500,
 };
@@ -95,6 +94,7 @@ ThirtyDays.play = async ({canvasElement}) => {
 // Story with no data
 export const NoData = Template.bind({});
 NoData.args = {
+    plugins: [],
     data: [],
     total: 0,
 };
@@ -102,6 +102,7 @@ NoData.args = {
 // Story with single day data
 export const SingleDay = Template.bind({});
 SingleDay.args = {
+    plugins: [],
     data: generateSampleData(1),
     total: 50,
 };

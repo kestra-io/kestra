@@ -76,9 +76,9 @@
 
                 <template #top>
                     <el-card v-if="showStatChart()" class="mb-4 shadow">
-                        <ExecutionsBar 
-                            :data="daily" 
-                            :total="executionsCount" 
+                        <ExecutionsBar
+                            :data="daily"
+                            :total="executionsCount"
                             :loading="loading"
                         />
                     </el-card>
@@ -263,6 +263,7 @@
                                         :data="chartData(scope.row)"
                                         small
                                         external-tooltip
+                                        :plugins="[]"
                                         @click="
                                             tableChartClick.bind(
                                                 null,

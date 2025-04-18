@@ -202,21 +202,21 @@ class RunContextTest {
     void metricsIncrement() {
         RunContext runContext = runContextFactory.of();
 
-        Counter counter = Counter.of("counter", 12D);
+        Counter counter = Counter.of("counter", "Some counter", 12D);
         runContext.metric(counter);
-        runContext.metric(Counter.of("counter", 30D));
+        runContext.metric(Counter.of("counter", "Some counter", 30D));
 
-        Timer timer = Timer.of("duration", Duration.ofSeconds(12));
+        Timer timer = Timer.of("duration", "Some duration", Duration.ofSeconds(12));
         runContext.metric(timer);
-        runContext.metric(Timer.of("duration", Duration.ofSeconds(30)));
+        runContext.metric(Timer.of("duration", "Some duration", Duration.ofSeconds(30)));
 
         runContext.metric(Counter.of("counter", 123D, "key", "value"));
         runContext.metric(Timer.of("duration", Duration.ofSeconds(123), "key", "value"));
 
         assertThat(runContext.metrics().get(runContext.metrics().indexOf(counter)).getValue()).isEqualTo(42D);
-        assertThat(metricRegistry.counter("counter").count()).isEqualTo(42D);
+        assertThat(metricRegistry.counter("counter", null).count()).isEqualTo(42D);
         assertThat(runContext.metrics().get(runContext.metrics().indexOf(timer)).getValue()).isEqualTo(Duration.ofSeconds(42));
-        assertThat(metricRegistry.timer("duration").totalTime(TimeUnit.SECONDS)).isEqualTo(42D);
+        assertThat(metricRegistry.timer("duration", null).totalTime(TimeUnit.SECONDS)).isEqualTo(42D);
 
         assertThat(runContext.metrics().get(2).getValue()).isEqualTo(123D);
         assertThat(runContext.metrics().get(2).getTags().size()).isEqualTo(1);

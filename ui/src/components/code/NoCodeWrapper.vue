@@ -14,6 +14,14 @@
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import NoCode from "./NoCode.vue";
 
+    export interface NoCodeProps {
+        section?: string;
+        taskId?: string;
+        position?: "before" | "after";
+    }
+
+    defineProps<NoCodeProps>();
+
     const store = useStore();
     const flowYaml = computed(() => store.getters["flow/flowYaml"]);
 

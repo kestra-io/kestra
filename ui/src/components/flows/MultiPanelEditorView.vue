@@ -31,7 +31,9 @@
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
 
     function isFlowRelated(element: Tab){
-        return ["code", "nocode", "topology"].some(key => element.value.startsWith(key))
+        return ["code", "nocode", "topology"].includes(element.value)
+            // when the flow file is dirty all the nocode tabs get splashed
+            || element.value.startsWith("nocode-")
     }
 
     const store = useStore()

@@ -6,8 +6,8 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.property.Property;
@@ -31,7 +31,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.hateoas.JsonError;
-import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
 import org.hamcrest.Matchers;
@@ -41,7 +40,6 @@ import org.junit.jupiter.api.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
@@ -56,7 +54,8 @@ import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.everyItem;
+import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -687,16 +686,9 @@ class FlowControllerTest {
             new IdWithNamespace("io.kestra.tests.delete", "flow-c")
         );
 
-        UriBuilder uriBuilder = UriBuilder.of("/api/v1/flows/delete/by-ids");
-        for (IdWithNamespace idWithNamespace : ids) {
-            uriBuilder.queryParam("ids.id", idWithNamespace.getId());
-            uriBuilder.queryParam("ids.namespace", idWithNamespace.getNamespace());
-        }
-        URI uri = uriBuilder.build();
-
         HttpResponse<BulkResponse> response = client
             .toBlocking()
-            .exchange(DELETE(uri), BulkResponse.class);
+            .exchange(DELETE("/api/v1/flows/delete/by-ids", ids), BulkResponse.class);
 
         assertThat(response.getBody().get().getCount()).isEqualTo(3);
 

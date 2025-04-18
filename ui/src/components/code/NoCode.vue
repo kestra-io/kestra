@@ -33,28 +33,40 @@
         defineProps<{
             flow: string;
             saveMode?: "button" | "auto";
+            /**
+             * Initial section name when opening
+             * a no-code panel from topology
+             */
+            section?: string;
+            /**
+             * Initial task id when opening
+             * a no-code panel from topology
+             */
+            taskId?: string;
             creating?: boolean;
             position?: "before" | "after";
         }>(), {
             saveMode: "button",
             creating: false,
             position: "after",
+            section: "",
+            taskId: "",
         });
 
     const flowBreadcrumbs = computed(() => YAML_UTILS.parse<{id:string}>(props.flow) ?? {id: ""});
     const metadata = computed(() => YAML_UTILS.getMetadata(props.flow));
 
 
-    const section = ref<string>("")
-    const taskId = ref<string>("")
+    const injectedSection = ref<string>(props.section)
+    const injectedTaskId = ref<string>(props.taskId)
 
 
     provide(FLOW_INJECTION_KEY, props.flow);
-    provide(SECTION_INJECTION_KEY, section);
-    provide(TASKID_INJECTION_KEY, taskId);
+    provide(SECTION_INJECTION_KEY, injectedSection);
+    provide(TASKID_INJECTION_KEY, injectedTaskId);
     provide(POSITION_INJECTION_KEY, props.position);
     provide(SAVEMODE_INJECTION_KEY, props.saveMode);
-    provide(CREATING_INJECTION_KEY, taskId.value === "new" || props.creating);
+    provide(CREATING_INJECTION_KEY, computed(() => injectedTaskId.value === "new" || props.creating));
 </script>
 
 <style scoped lang="scss">

@@ -50,7 +50,7 @@
     });
 
     const flow = inject(FLOW_INJECTION_KEY, "");
-    const creation = inject(CREATING_INJECTION_KEY);
+    const creation = inject(CREATING_INJECTION_KEY, ref(false));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
 
     const store = useStore();

@@ -1,5 +1,6 @@
 package io.kestra.core.repositories;
 
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -95,7 +96,7 @@ public class LocalFlowRepositoryLoader {
                             flowRepository.update(parsed, existing);
                             log.trace("Updated flow {}.{}", parsed.getNamespace(), parsed.getId());
                         }
-                    } catch (ConstraintViolationException e) {
+                    } catch (FlowProcessingException | ConstraintViolationException e) {
                         log.warn("Unable to create flow {}", file, e);
                     }
                 }));

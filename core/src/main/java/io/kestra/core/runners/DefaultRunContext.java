@@ -413,7 +413,8 @@ public class DefaultRunContext extends RunContext {
         }
 
         try {
-            metricEntry.register(this.meterRegistry, this.metricPrefix(), this.metricsTags());
+            // FIXME there seems to be a bug as the metric name is never used
+            metricEntry.register(this.meterRegistry, this.metricPrefix(), metricEntry.getDescription(), this.metricsTags());
         } catch (IllegalArgumentException e) {
             // https://github.com/micrometer-metrics/micrometer/issues/877
             // https://github.com/micrometer-metrics/micrometer/issues/2399

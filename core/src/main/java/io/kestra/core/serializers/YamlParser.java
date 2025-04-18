@@ -7,10 +7,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 import io.kestra.core.models.validations.ManualConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 
-import jakarta.validation.ConstraintViolationException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -42,7 +42,7 @@ public final class YamlParser {
             return currentMapper.convertValue(input, cls);
         } catch (IllegalArgumentException e) {
             if(e.getCause() instanceof JsonProcessingException jsonProcessingException) {
-                jsonProcessingExceptionHandler(input, type(cls), jsonProcessingException);
+                throw toConstraintViolationException(input, type(cls), jsonProcessingException);
             }
 
             throw e;
@@ -78,18 +78,17 @@ public final class YamlParser {
         try {
             return STRICT_MAPPER.readValue(input, objectClass);
         } catch (JsonProcessingException e) {
-            jsonProcessingExceptionHandler(input, resource, e);
+            throw toConstraintViolationException(input, resource, e);
         }
-        return null;
     }
 
     @SuppressWarnings("unchecked")
-    private static <T> void jsonProcessingExceptionHandler(T target, String resource, JsonProcessingException e) throws ConstraintViolationException {
+    public static <T> ConstraintViolationException toConstraintViolationException(T target, String resource, JsonProcessingException e) {
         if (e.getCause() instanceof ConstraintViolationException constraintViolationException) {
-            throw constraintViolationException;
+            return constraintViolationException;
         } else if (e instanceof InvalidTypeIdException invalidTypeIdException) {
             // This error is thrown when a non-existing task is used
-            throw new ConstraintViolationException(
+            return new ConstraintViolationException(
                 "Invalid type: " + invalidTypeIdException.getTypeId(),
                 Set.of(
                     ManualConstraintViolation.of(
@@ -110,7 +109,7 @@ public final class YamlParser {
             );
         } else if (e instanceof UnrecognizedPropertyException unrecognizedPropertyException) {
             var message = unrecognizedPropertyException.getOriginalMessage() + unrecognizedPropertyException.getMessageSuffix();
-            throw new ConstraintViolationException(
+            return new ConstraintViolationException(
                 message,
                 Collections.singleton(
                     ManualConstraintViolation.of(
@@ -122,8 +121,8 @@ public final class YamlParser {
                     )
                 ));
         } else {
-            throw new ConstraintViolationException(
-                "Illegal "+ resource +" yaml: " + e.getMessage(),
+            return new ConstraintViolationException(
+                "Illegal " + resource + " source: " + e.getMessage(),
                 Collections.singleton(
                     ManualConstraintViolation.of(
                         e.getCause() == null ? e.getMessage() : e.getMessage() + "\nCaused by: " + e.getCause().getMessage(),

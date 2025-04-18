@@ -63,7 +63,7 @@ public class PauseTest {
 
     @Disabled("This test is too flaky and it always pass in JDBC and Kafka")
     void delayFromInput() throws Exception {
-        suite.runDelayFromInput(runnerUtils);
+        suite.runDurationFromInput(runnerUtils);
     }
 
     @Disabled("This test is too flaky and it always pass in JDBC and Kafka")
@@ -99,6 +99,30 @@ public class PauseTest {
     @LoadFlows({"flows/valids/pause_on_resume_optional.yaml"})
     void runOnResumeOptionalInputs() throws Exception {
         suite.runOnResumeOptionalInputs(runnerUtils);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/pause-behavior.yaml"})
+    void runDurationWithCONTINUEBehavior() throws Exception {
+        suite.runDurationWithBehavior(runnerUtils, Pause.Behavior.RESUME);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/pause-behavior.yaml"})
+    void runDurationWithFAILBehavior() throws Exception {
+        suite.runDurationWithBehavior(runnerUtils, Pause.Behavior.FAIL);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/pause-behavior.yaml"})
+    void runDurationWithWARNBehavior() throws Exception {
+        suite.runDurationWithBehavior(runnerUtils, Pause.Behavior.WARN);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/pause-behavior.yaml"})
+    void runDurationWithCANCELBehavior() throws Exception {
+        suite.runDurationWithBehavior(runnerUtils, Pause.Behavior.CANCEL);
     }
 
     @Singleton
@@ -159,8 +183,8 @@ public class PauseTest {
             assertThat(execution.getTaskRunList()).hasSize(3);
         }
 
-        public void runDelayFromInput(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-delay-from-input", null, null, Duration.ofSeconds(30));
+        public void runDurationFromInput(RunnerUtils runnerUtils) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-duration-from-input", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
@@ -299,6 +323,26 @@ public class PauseTest {
 
             Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").getFirst().getOutputs().get("values");
             assertThat(outputs.get("asked")).isEqualTo("MISSING");
+        }
+
+        public void runDurationWithBehavior(RunnerUtils runnerUtils, Pause.Behavior behavior) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-behavior", null, (unused, _unused) -> Map.of("behavior", behavior), Duration.ofSeconds(30));
+            String executionId = execution.getId();
+
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+            assertThat(execution.getTaskRunList()).hasSize(1);
+
+            execution = runnerUtils.awaitExecution(
+                e -> e.getId().equals(executionId) && e.getState().getCurrent().isTerminated(),
+                () -> {},
+                Duration.ofSeconds(5)
+            );
+
+            State.Type finalState = behavior == Pause.Behavior.RESUME ? State.Type.SUCCESS : behavior.mapToState();
+            boolean terminateAfterPause = behavior == Pause.Behavior.CANCEL || behavior == Pause.Behavior.FAIL;
+            assertThat(execution.getTaskRunList()).hasSize(terminateAfterPause ? 1 : 2);
+            assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(finalState);
+            assertThat(execution.getState().getCurrent()).isEqualTo(finalState);
         }
     }
 }

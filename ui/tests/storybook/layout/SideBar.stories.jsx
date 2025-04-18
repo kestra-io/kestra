@@ -21,7 +21,7 @@ export default {
         {
             path: "/",
             name: "home",
-            component: {template: "div>home</div>"}
+            component: {template: "<div>home</div>"}
         },
           {
             path: "/dashboard",

@@ -780,7 +780,7 @@ public class FlowController {
         summary = "Delete flows by their IDs."
     )
     public HttpResponse<BulkResponse> deleteFlowsByIds(
-        @Parameter(description = "A list of tuple flow ID and namespace as flow identifiers") @QueryValue List<IdWithNamespace> ids
+        @RequestBody(description = "A list of tuple flow ID and namespace as flow identifiers") @Body List<IdWithNamespace> ids
     ) {
         List<Flow> list = ids
             .stream()

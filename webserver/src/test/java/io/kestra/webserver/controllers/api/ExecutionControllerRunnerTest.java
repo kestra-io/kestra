@@ -2,6 +2,7 @@ package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.endpoints.WorkerEndpoint;
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
@@ -115,6 +116,9 @@ class ExecutionControllerRunnerTest {
 
     @Inject
     protected StandAloneRunner runner;
+
+    @Inject
+    protected WorkerEndpoint workerEndpoint;
 
     public static final String TESTS_FLOW_NS = "io.kestra.tests";
     public static final String TESTS_WEBHOOK_KEY = "a-secret-key";
@@ -1313,7 +1317,9 @@ class ExecutionControllerRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/sleep.yml"})
-    void shouldPauseExecutionByQueryRunningFlows() throws TimeoutException, QueueException {
+    void shouldPauseExecutionByQueryRunningFlows() throws Exception {
+        awaitPreviousWorkerTasksFinished();
+
         Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
         Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
         Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
@@ -1323,6 +1329,18 @@ class ExecutionControllerRunnerTest {
             BulkResponse.class
         );
         assertThat(response.getCount()).isEqualTo(3);
+    }
+
+    void awaitPreviousWorkerTasksFinished() throws TimeoutException {
+        // this may will slow down that particular test, use it only when necessary
+        Await.until(() -> "previous running worker tasks took too long to end", () -> {
+            try {
+                var runningWorkers = workerEndpoint.running().getRunnings();
+                return runningWorkers == null || runningWorkers.isEmpty();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }, Duration.ofMillis(10), Duration.ofSeconds(10));
     }
 
     @Test

@@ -28,7 +28,11 @@
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
-    import {FLOW_RELATED_TABS, useCodePanels, useInitialCodeTabs} from "./useCodePanels";
+    import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
+
+    function isFlowRelated(element: Tab){
+        return ["code", "nocode", "topology"].some(key => element.value.startsWith(key))
+    }
 
     const store = useStore()
     const flow = computed(() => store.state.flow.flow)
@@ -59,7 +63,7 @@
 
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
         const element: Tab = EDITOR_ELEMENTS.find(e => e.value === value)!
-        if(FLOW_RELATED_TABS.includes(element.value)){
+        if(isFlowRelated(element)){
             element.dirty = dirtyFlow
         }
         return {
@@ -115,11 +119,11 @@
 
     watch(isFlowDirty, (dirty) => {
         for(const panel of panels.value){
-            if(panel.activeTab && FLOW_RELATED_TABS.includes(panel.activeTab.value)){
+            if(panel.activeTab && isFlowRelated(panel.activeTab)){
                 panel.activeTab.dirty = dirty
             }
             for(const tab of panel.tabs){
-                if(FLOW_RELATED_TABS.includes(tab.value)){
+                if(isFlowRelated(tab)){
                     tab.dirty = dirty
                 }
             }

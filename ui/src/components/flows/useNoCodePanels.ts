@@ -4,11 +4,11 @@ import type {Panel} from "../MultiPanelTabs.vue";
 import EditorWrapper, {EditorTabProps} from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
 
-const CODE_PREFIX = "code"
+const NOCODE_PREFIX = "nocode"
 
 export function getTabFromCodeTab(tab: EditorTabProps){
     return {
-        value: `${CODE_PREFIX}-${tab.path}`,
+        value: `${NOCODE_PREFIX}-${tab.path}`,
         button: {
             label: tab.name,
             icon: () => h(TypeIcon, {name:tab.name})
@@ -22,7 +22,7 @@ export function useInitialCodeTabs(){
     const store = useStore()
 
     function setupInitialCodeTab(tab: string){
-        if(!tab.startsWith(`${CODE_PREFIX}-`)){
+        if(!tab.startsWith(`${NOCODE_PREFIX}-`)){
             return
         }
         const filePath = tab.substring(5)
@@ -64,7 +64,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
         // the corresponding tab is active
         for(const p of panels.value){
             for(const t of p.tabs){
-                if(t.value === `${CODE_PREFIX}-${newVal}`){
+                if(t.value === `${NOCODE_PREFIX}-${newVal}`){
                     p.activeTab = t
                 }
             }
@@ -126,7 +126,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
     })
 
     function onRemoveTab(tabId: string){
-        if(tabId.startsWith(`${CODE_PREFIX}-`)){
+        if(tabId.startsWith(`${NOCODE_PREFIX}-`)){
             store.dispatch("editor/closeTab", {
                 action: "close",
                 path: tabId.substring(5),

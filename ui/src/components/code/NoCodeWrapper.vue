@@ -2,6 +2,8 @@
     <NoCode
         :flow="lastValidFlowYaml"
         save-mode="auto"
+        :creating="creating"
+        :position="route.query.position === 'before' ? 'before' : 'after'"
         @update-metadata="(e) => onUpdateMetadata(e)"
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => handleReorder(yaml)"
@@ -10,24 +12,28 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, watch} from "vue";
+    import {computed} from "vue";
     import {useStore} from "vuex";
+    import {useRoute} from "vue-router"
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import NoCode from "./NoCode.vue";
 
     const store = useStore();
     const flowYaml = computed(() => store.getters["flow/flowYaml"]);
+    const creating = computed(() => store.getters["flow/isCreating"]);
 
-    const lastValidFlowYaml = ref("");
+    const route = useRoute();
 
-    watch(flowYaml, (newVal) => {
-        try {
-            YAML_UTILS.parse(flowYaml.value);
-            lastValidFlowYaml.value = newVal;
-        } catch {
-            // do nothing
+    const lastValidFlowYaml = computed<string>(
+        (oldValue) => {
+            try {
+                YAML_UTILS.parse(flowYaml.value);
+                return flowYaml.value;
+            } catch {
+                return oldValue ?? "";
+            }
         }
-    }, {immediate: true});
+    );
 
     const onUpdateMetadata = (metadata: any) => {
         store.commit("flow/setMetadata", {

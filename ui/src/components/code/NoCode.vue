@@ -15,8 +15,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, computed, provide, ref} from "vue";
-    import {useRouter, useRoute} from "vue-router";
+    import {computed, provide, ref} from "vue";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "./injectionKeys";
@@ -34,37 +33,28 @@
         defineProps<{
             flow: string;
             saveMode?: "button" | "auto";
+            creating?: boolean;
+            position?: "before" | "after";
         }>(), {
             saveMode: "button",
+            creating: false,
+            position: "after",
         });
 
-    const flowBreadcrumbs = computed(() => YAML_UTILS.parse(props.flow) as Record<string, string>)
+    const flowBreadcrumbs = computed(() => YAML_UTILS.parse<{id:string}>(props.flow) ?? {id: ""});
     const metadata = computed(() => YAML_UTILS.getMetadata(props.flow));
 
-
-    const router = useRouter();
-    const route = useRoute();
 
     const section = ref<string>("")
     const taskId = ref<string>("")
 
-    const position = computed(() => {
-        return route.query.position as "before" | "after";
-    });
 
     provide(FLOW_INJECTION_KEY, props.flow);
     provide(SECTION_INJECTION_KEY, section);
     provide(TASKID_INJECTION_KEY, taskId);
-    provide(POSITION_INJECTION_KEY, position);
+    provide(POSITION_INJECTION_KEY, props.position);
     provide(SAVEMODE_INJECTION_KEY, props.saveMode);
-    provide(CREATING_INJECTION_KEY, route.query.identifier === "new" ||
-        route.name === "flows/create");
-
-    onBeforeMount(async () => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {section, identifier, type, ...rest} = route.query;
-        router.replace({query: {...rest}});
-    });
+    provide(CREATING_INJECTION_KEY, taskId.value === "new" || props.creating);
 </script>
 
 <style scoped lang="scss">

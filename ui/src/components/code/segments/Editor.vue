@@ -75,27 +75,25 @@
 
     import Task from "./Task.vue";
 
-    import {useRoute, useRouter} from "vue-router";
-    const route = useRoute();
-    const router = useRouter();
 
     const taskIdentifier = computed(
         () => taskId.value?.toString() ?? "new",
     );
 
-    watch(
-        () => route.query,
-        async (newQuery) => {
-            if (!newQuery?.section && !newQuery?.identifier) {
-                emits("updateDocumentation", null);
-            }
-        },
-        {deep: true},
-    );
+
 
     const sectionInjected = inject(SECTION_INJECTION_KEY, ref(""));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
-    const taskPosition = inject(POSITION_INJECTION_KEY, ref<"after" | "before">("after"));
+    const taskPosition = inject(POSITION_INJECTION_KEY, "after");
+
+    watch(
+        [sectionInjected, taskId],
+        ([section, id]) => {
+            if (section && id) {
+                emits("updateDocumentation", null);
+            }
+        },
+    );
 
     const taskSection = computed(() => {
         return (sectionInjected.value ?? "TASKS").toString() as "tasks" | "triggers"
@@ -142,9 +140,8 @@
     };
 
     function exitTask() {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {section, identifier, type, ...rest} = route.query;
-        router.replace({query: {...rest}});
+        sectionInjected.value = "";
+        taskId.value = "";
     }
 
     function onTaskUpdate(yaml: string) {

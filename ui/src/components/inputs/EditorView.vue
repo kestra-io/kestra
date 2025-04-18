@@ -238,6 +238,8 @@
             <NoCode
                 v-else
                 :flow="flowYaml"
+                :creating="isCreating"
+                :position="route.query.position === 'before' ? 'before' : 'after'"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
                 @reorder="(yaml) => handleReorder(yaml)"

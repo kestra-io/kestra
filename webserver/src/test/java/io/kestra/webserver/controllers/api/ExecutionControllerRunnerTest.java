@@ -1304,7 +1304,8 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep.yml"})
+    @LoadFlows({"flows/valids/sleep-short.yml"})
+    // use a dedicated Flow to avoid clash with other tests
     void shouldPauseExecutionByQueryRunningFlows() throws TimeoutException, QueueException {
         Execution result1 = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");
         Execution result2 = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, "sleep");

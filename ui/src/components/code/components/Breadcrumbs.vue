@@ -78,6 +78,10 @@
 <style scoped lang="scss">
 @import "../styles/code.scss";
 
+.item{
+    cursor: pointer;
+}
+
 .item:last-child > .el-breadcrumb__inner > a {
     color: $code-primary !important;
 }

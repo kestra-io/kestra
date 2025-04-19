@@ -106,6 +106,13 @@ export function useFilters(prefix: string, isDefaultDashboard: boolean) {
             comparators: [COMPARATORS.EQUALS],
         },
         {
+            key: "userId",
+            icon: ICONS.AccountOutline,
+            label: t("filters.options.user"),
+            value: {label: "userId", comparator: undefined, value: []},
+            comparators: [COMPARATORS.EQUALS],
+        },
+        {
             key: "details.cls",
             icon: ICONS.FormatListBulletedType,
             label: t("filters.options.type"),

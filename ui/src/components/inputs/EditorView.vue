@@ -1101,7 +1101,7 @@
     async function loadFileAtPath(path){
         const content = await store.dispatch("namespace/readFile", {
             path,
-            namespace: props.namespace ?? route.params.namespace,
+            namespace: props.namespace ?? route.params.namespace ?? route.params.id,
         })
         store.commit("flow/setFlowYaml", content);
     }

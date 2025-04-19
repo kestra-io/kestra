@@ -151,12 +151,12 @@ tasks:
     format: fallback output
 
 finally:
-  - id: finally_log 
+  - id: finally_log
     type: io.kestra.plugin.core.log.Log
     message: "This task runs after all the tasks are run, irrespective of whether the tasks ran successfully or failed. Execution {{ execution.state }}" # Execution RUNNING
 
 afterExecution:
-  - id: afterExecution_log 
+  - id: afterExecution_log
     type: io.kestra.plugin.core.log.Log
     message: "This task runs after the flow execution is complete. Execution {{ execution.state }}" # Execution FAILED / SUCCESS
 
@@ -223,7 +223,8 @@ The table below lists common Pebble expressions and functions.
 | `{{ inputs.myInput }}`                                                                             | Accesses flow input `myInput`.                                                                                                  |
 | `{{ secret('MY_SECRET') }}`                                                                        | Retrieves secret `MY_SECRET`.                                                                                                   |
 | `{{ kv('MY_KEY') }}`                                                                               | Retrieves a KV pair from the current namespace.                                                                                 |
-| `{{ kv('MY_KEY', 'company.team') }}`                                                               | Retrieves a KV pair from a specific namespace.                                                                                  |
+| `{{ kv('MY_KEY', 'company.team') }}`                                                               | Retrieves a KV pair from a given namespace.                                                                                                                                                                                                                                                           |
+| `{{ kv(key='KEY_ID', namespace='NAMESPACE_ID', errorOnMissing=false) }}`                           | Retrieves a KV pair from a given namespace while specifying if error or null on missing keys.                                                                                                                                                                                                         |
 | `{{ namespace.myproject.myvariable }}`                                                             | Accesses namespace variable `myproject.myvariable`.                                                                             |
 | `{{ outputs.taskId.outputAttribute }}`                                                             | Accesses task output attribute.                                                                                                 |
 | `{{ range(0, 3) }}`                                                                                | Generates a list from 0 to 3.                                                                                                   |

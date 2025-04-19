@@ -221,8 +221,13 @@
             },
             onInput(value) {
                 clearTimeout(this.timer);
+                this.taskYaml = value;
+                
                 this.timer = setTimeout(() => {
-                    this.$store.dispatch("flow/validateTask", {task: value, section: this.section})
+                    if (this.lastValidatedValue !== value) {
+                        this.lastValidatedValue = value;
+                        this.$store.dispatch("flow/validateTask", {task: value, section: this.section});
+                    }
                 }, 500);
             },
             defaultActiveTab() {
@@ -236,7 +241,9 @@
                 isModalOpen: false,
                 activeTabs: this.defaultActiveTab(),
                 type: null,
-                revisions: undefined
+                revisions: undefined,
+                timer: null,
+                lastValidatedValue: null,
             };
         },
         computed: {

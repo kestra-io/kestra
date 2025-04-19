@@ -46,7 +46,7 @@ class LogControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void find() {
+    void searchLogs() {
         LogEntry log1 = logEntry(Level.INFO);
         LogEntry log2 = logEntry(Level.WARN);
         LogEntry log3 = logEntry(Level.DEBUG);
@@ -91,7 +91,7 @@ class LogControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void findByExecution() {
+    void searchLogsByExecution() {
         LogEntry log1 = logEntry(Level.INFO);
         LogEntry log2 = log1.toBuilder().message("another message").build();
         LogEntry log3 = logEntry(Level.DEBUG);
@@ -109,7 +109,7 @@ class LogControllerTest {
     }
 
     @Test
-    void download() {
+    void downloadLogsFromExecution() {
         LogEntry log1 = logEntry(Level.INFO);
         LogEntry log2 = log1.toBuilder().message("another message").build();
         LogEntry log3 = logEntry(Level.DEBUG);
@@ -127,7 +127,7 @@ class LogControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void delete() {
+    void deleteLogsFromExecution() {
         LogEntry log1 = logEntry(Level.INFO);
         LogEntry log2 = log1.toBuilder().message("another message").build();
         LogEntry log3 = logEntry(Level.DEBUG);
@@ -148,7 +148,7 @@ class LogControllerTest {
     }
 
     @Test
-    void deleteByQuery() {
+    void deleteLogsFromExecutionByQuery() {
         LogEntry log1 = logEntry(Level.INFO);
         LogEntry log2 = log1.toBuilder().message("another message").build();
         LogEntry log3 = logEntry(Level.DEBUG);

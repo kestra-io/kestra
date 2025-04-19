@@ -25,7 +25,6 @@ import java.util.function.BiConsumer;
 public class JdbcScheduler extends AbstractScheduler {
     private final TriggerRepositoryInterface triggerRepository;
     private final JooqDSLContextWrapper dslContextWrapper;
-    private final PluginDefaultService pluginDefaultService;
 
     @Inject
     public JdbcScheduler(
@@ -38,7 +37,6 @@ public class JdbcScheduler extends AbstractScheduler {
         triggerState = applicationContext.getBean(SchedulerTriggerStateInterface.class);
         executionState = applicationContext.getBean(SchedulerExecutionState.class);
         dslContextWrapper = applicationContext.getBean(JooqDSLContextWrapper.class);
-        pluginDefaultService = applicationContext.getBean(PluginDefaultService.class);
     }
 
     @Override

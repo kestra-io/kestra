@@ -88,7 +88,7 @@ dependencies {
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-connector-basic', version: mavenResolverVersion
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-file', version: mavenResolverVersion
         api group: 'org.apache.maven.resolver', name: 'maven-resolver-transport-http', version: mavenResolverVersion
-        api 'com.github.oshi:oshi-core:6.8.0'
+        api 'com.github.oshi:oshi-core:6.8.1'
         api 'io.pebbletemplates:pebble:3.2.4'
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.6.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion

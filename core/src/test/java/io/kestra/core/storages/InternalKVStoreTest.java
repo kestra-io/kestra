@@ -49,7 +49,7 @@ class InternalKVStoreTest {
         Instant before = Instant.now().minusMillis(100);
         InternalKVStore kv = kv();
 
-        assertThat(kv.list().size()).isEqualTo(0);
+        assertThat(kv.list().size()).isZero();
 
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), complexValue));
         kv.put("my-second-key", new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(10)), complexValue));
@@ -60,8 +60,8 @@ class InternalKVStoreTest {
         assertThat(list.size()).isEqualTo(2);
 
         list.forEach(kvEntry -> {
-            assertThat(kvEntry.creationDate().isAfter(before) && kvEntry.creationDate().isBefore(after)).isEqualTo(true);
-            assertThat(kvEntry.updateDate().isAfter(before) && kvEntry.updateDate().isBefore(after)).isEqualTo(true);
+            assertThat(kvEntry.creationDate().isAfter(before) && kvEntry.creationDate().isBefore(after)).isTrue();
+            assertThat(kvEntry.updateDate().isAfter(before) && kvEntry.updateDate().isBefore(after)).isTrue();
         });
 
         Map<String, KVEntry> map = list.stream().collect(Collectors.toMap(KVEntry::key, Function.identity()));
@@ -70,11 +70,11 @@ class InternalKVStoreTest {
 
         KVEntry myKeyValue = map.get(TEST_KV_KEY);
         assertThat(myKeyValue.creationDate().plus(Duration.ofMinutes(4)).isBefore(myKeyValue.expirationDate()) &&
-            myKeyValue.creationDate().plus(Duration.ofMinutes(6)).isAfter(myKeyValue.expirationDate())).isEqualTo(true);
+            myKeyValue.creationDate().plus(Duration.ofMinutes(6)).isAfter(myKeyValue.expirationDate())).isTrue();
 
         KVEntry mySecondKeyValue = map.get("my-second-key");
         assertThat(mySecondKeyValue.creationDate().plus(Duration.ofMinutes(9)).isBefore(mySecondKeyValue.expirationDate()) &&
-            mySecondKeyValue.creationDate().plus(Duration.ofMinutes(11)).isAfter(mySecondKeyValue.expirationDate())).isEqualTo(true);
+            mySecondKeyValue.creationDate().plus(Duration.ofMinutes(11)).isAfter(mySecondKeyValue.expirationDate())).isTrue();
     }
 
     @Test
@@ -90,7 +90,7 @@ class InternalKVStoreTest {
         StorageObject withMetadata = storageInterface.getWithMetadata(null, kv.namespace(), URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion"));
         String valueFile = new String(withMetadata.inputStream().readAllBytes());
         Instant expirationDate = Instant.parse(withMetadata.metadata().get("expirationDate"));
-        assertThat(expirationDate.isAfter(before.plus(Duration.ofMinutes(4))) && expirationDate.isBefore(before.plus(Duration.ofMinutes(6)))).isEqualTo(true);
+        assertThat(expirationDate.isAfter(before.plus(Duration.ofMinutes(4))) && expirationDate.isBefore(before.plus(Duration.ofMinutes(6)))).isTrue();
         assertThat(valueFile).isEqualTo(JacksonMapper.ofIon().writeValueAsString(complexValue));
 
         // Re-When
@@ -100,7 +100,7 @@ class InternalKVStoreTest {
         withMetadata = storageInterface.getWithMetadata(null, kv.namespace(), URI.create("/" + kv.namespace().replace(".", "/") + "/_kv/my-key.ion"));
         valueFile = new String(withMetadata.inputStream().readAllBytes());
         expirationDate = Instant.parse(withMetadata.metadata().get("expirationDate"));
-        assertThat(expirationDate.isAfter(before.plus(Duration.ofMinutes(9))) && expirationDate.isBefore(before.plus(Duration.ofMinutes(11)))).isEqualTo(true);
+        assertThat(expirationDate.isAfter(before.plus(Duration.ofMinutes(9))) && expirationDate.isBefore(before.plus(Duration.ofMinutes(11)))).isTrue();
         assertThat(valueFile).isEqualTo("\"some-value\"");
     }
 
@@ -139,7 +139,7 @@ class InternalKVStoreTest {
         Optional<KVValue> value = kv.getValue(TEST_KV_KEY);
 
         // Then
-        assertThat(value.isEmpty()).isEqualTo(true);
+        assertThat(value.isEmpty()).isTrue();
     }
 
     @Test

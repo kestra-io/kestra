@@ -32,7 +32,7 @@ class ExecutionNamespaceTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
 
         // Explicit
         build = ExecutionNamespace.builder()
@@ -41,7 +41,7 @@ class ExecutionNamespaceTest {
             .build();
 
         test = conditionService.isValid(build, flow, execution);
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
     }
 
     @Test
@@ -55,7 +55,7 @@ class ExecutionNamespaceTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(false);
+        assertThat(test).isFalse();
     }
 
     @Test
@@ -70,7 +70,7 @@ class ExecutionNamespaceTest {
         ), ExecutionNamespace.class);
 
         boolean test = conditionService.isValid(build, flow, execution);
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
 
         build = ExecutionNamespace.builder()
             .namespace(Property.of(flow.getNamespace().substring(0, 3)))
@@ -78,7 +78,7 @@ class ExecutionNamespaceTest {
             .build();
 
         test = conditionService.isValid(build, flow, execution);
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
 
         build = ExecutionNamespace.builder()
             .namespace(Property.of(flow.getNamespace().substring(0, 3)))
@@ -86,7 +86,7 @@ class ExecutionNamespaceTest {
             .build();
 
         test = conditionService.isValid(build, flow, execution);
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
     }
 
     @Test
@@ -100,7 +100,7 @@ class ExecutionNamespaceTest {
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
-        assertThat(test).isEqualTo(false);
+        assertThat(test).isFalse();
     }
 
     @Test
@@ -114,7 +114,7 @@ class ExecutionNamespaceTest {
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
     }
 
     @Test
@@ -130,6 +130,6 @@ class ExecutionNamespaceTest {
         ), ExecutionNamespace.class);
 
         boolean test = conditionService.isValid(build, flow, execution);
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
     }
 }

@@ -83,7 +83,7 @@ public class ForEachItemCaseTest {
             Duration.ofSeconds(30));
 
         // we should have triggered 26 subflows
-        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isEqualTo(true);
+        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();
         receive.blockLast();
 
         // assert on the main flow execution
@@ -95,8 +95,8 @@ public class ForEachItemCaseTest {
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
-        assertThat(iterations.get("CREATED")).isEqualTo(0);
-        assertThat(iterations.get("RUNNING")).isEqualTo(0);
+        assertThat(iterations.get("CREATED")).isZero();
+        assertThat(iterations.get("RUNNING")).isZero();
         assertThat(iterations.get("SUCCESS")).isEqualTo(26);
 
         // assert on the last subflow execution
@@ -105,7 +105,7 @@ public class ForEachItemCaseTest {
         assertThat((String) triggered.get().getInputs().get("items")).matches("kestra:///io/kestra/tests/for-each-item/executions/.*/tasks/each-split/.*\\.txt");
         assertThat(triggered.get().getTaskRunList()).hasSize(1);
         Optional<Label> correlationId = triggered.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
-        assertThat(correlationId.isPresent()).isEqualTo(true);
+        assertThat(correlationId.isPresent()).isTrue();
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 
@@ -158,11 +158,11 @@ public class ForEachItemCaseTest {
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
         assertThat(iterations.get("CREATED")).isNull(); // if we didn't wait we will only observe RUNNING and SUCCESS
-        assertThat(iterations.get("RUNNING")).isEqualTo(0);
+        assertThat(iterations.get("RUNNING")).isZero();
         assertThat(iterations.get("SUCCESS")).isEqualTo(26);
 
         // wait for the 26 flows to ends
-        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).as("Remaining count was " + countDownLatch.getCount()).isEqualTo(true);
+        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).as("Remaining count was " + countDownLatch.getCount()).isTrue();
         receive.blockLast();
 
         // assert on the last subflow execution
@@ -192,7 +192,7 @@ public class ForEachItemCaseTest {
             Duration.ofSeconds(60));
 
         // we should have triggered 26 subflows
-        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isEqualTo(true);
+        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();
         receive.blockLast();
 
         // assert on the main flow execution
@@ -204,8 +204,8 @@ public class ForEachItemCaseTest {
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
-        assertThat(iterations.get("CREATED")).isEqualTo(0);
-        assertThat(iterations.get("RUNNING")).isEqualTo(0);
+        assertThat(iterations.get("CREATED")).isZero();
+        assertThat(iterations.get("RUNNING")).isZero();
         assertThat(iterations.get("FAILED")).isEqualTo(26);
 
         // assert on the last subflow execution
@@ -235,7 +235,7 @@ public class ForEachItemCaseTest {
             Duration.ofSeconds(30));
 
         // we should have triggered 26 subflows
-        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isEqualTo(true);
+        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();
         receive.blockLast();
 
         // assert on the main flow execution
@@ -248,8 +248,8 @@ public class ForEachItemCaseTest {
         assertThat(outputs.get("iterations")).isNotNull();
 
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
-        assertThat(iterations.get("CREATED")).isEqualTo(0);
-        assertThat(iterations.get("RUNNING")).isEqualTo(0);
+        assertThat(iterations.get("CREATED")).isZero();
+        assertThat(iterations.get("RUNNING")).isZero();
         assertThat(iterations.get("SUCCESS")).isEqualTo(26);
 
         // assert on the last subflow execution
@@ -331,7 +331,7 @@ public class ForEachItemCaseTest {
             Duration.ofSeconds(30));
 
         // we should have triggered 26 subflows
-        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isEqualTo(true);
+        assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).isTrue();
         receive.blockLast();
 
         // assert on the main flow execution
@@ -341,8 +341,8 @@ public class ForEachItemCaseTest {
         assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
-        assertThat(iterations.get("CREATED")).isEqualTo(0);
-        assertThat(iterations.get("RUNNING")).isEqualTo(0);
+        assertThat(iterations.get("CREATED")).isZero();
+        assertThat(iterations.get("RUNNING")).isZero();
         assertThat(iterations.get("SUCCESS")).isEqualTo(26);
 
         // assert on the last subflow execution
@@ -351,7 +351,7 @@ public class ForEachItemCaseTest {
         assertThat((String) triggered.get().getInputs().get("items")).matches("kestra:///io/kestra/tests/for-each-item-in-if/executions/.*/tasks/each-split/.*\\.txt");
         assertThat(triggered.get().getTaskRunList()).hasSize(1);
         Optional<Label> correlationId = triggered.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
-        assertThat(correlationId.isPresent()).isEqualTo(true);
+        assertThat(correlationId.isPresent()).isTrue();
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 

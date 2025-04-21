@@ -144,7 +144,7 @@ class TemplateControllerTest {
     void listDistinctNamespace() {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/templates/distinct-namespaces"), Argument.listOf(String.class));
-        assertThat(namespaces.size()).isEqualTo(0);
+        assertThat(namespaces.size()).isZero();
             Template t1 = Template.builder()
             .id(IdUtils.create())
             .namespace("kestra.template.custom")

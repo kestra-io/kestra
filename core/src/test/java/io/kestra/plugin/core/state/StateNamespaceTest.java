@@ -54,6 +54,6 @@ class StateNamespaceTest {
             .type(Get.class.getSimpleName())
             .build();
         getOutput = get.run(runContextFlow2(get));
-        assertThat(getOutput.getCount()).isEqualTo(0);
+        assertThat(getOutput.getCount()).isZero();
     }
 }

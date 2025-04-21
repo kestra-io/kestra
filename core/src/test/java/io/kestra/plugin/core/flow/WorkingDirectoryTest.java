@@ -235,7 +235,7 @@ public class WorkingDirectoryTest {
                 .findFirst().get()
                 .getOutputs()
                 .get("uris"))
-                .containsKey("hello.txt")).isEqualTo(true);
+                .containsKey("hello.txt")).isTrue();
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         }
 

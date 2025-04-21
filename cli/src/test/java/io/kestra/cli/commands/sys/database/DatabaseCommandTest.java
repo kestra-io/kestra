@@ -19,7 +19,7 @@ class DatabaseCommandTest {
             String[] args = {};
             Integer call = PicocliRunner.call(DatabaseCommand.class, ctx, args);
 
-            assertThat(call).isEqualTo(0);
+            assertThat(call).isZero();
             assertThat(out.toString()).contains("Usage: kestra sys database");
         }
     }

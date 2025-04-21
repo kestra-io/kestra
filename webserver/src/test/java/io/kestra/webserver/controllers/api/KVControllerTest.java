@@ -68,8 +68,8 @@ class KVControllerTest {
 
         List<KVEntry> res = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/namespaces/" + NAMESPACE + "/kv"), Argument.of(List.class, KVEntry.class));
         res.stream().forEach(entry -> {
-            assertThat(entry.creationDate().isAfter(before) && entry.creationDate().isBefore(after)).isEqualTo(true);
-            assertThat(entry.updateDate().isAfter(before) && entry.updateDate().isBefore(after)).isEqualTo(true);
+            assertThat(entry.creationDate().isAfter(before) && entry.creationDate().isBefore(after)).isTrue();
+            assertThat(entry.updateDate().isAfter(before) && entry.updateDate().isBefore(after)).isTrue();
         });
 
         assertThat(res.stream().filter(entry -> entry.key().equals("my-key")).findFirst().get().expirationDate()).isEqualTo(myKeyExpirationDate);
@@ -155,13 +155,13 @@ class KVControllerTest {
 
         KVStore kvStore = new InternalKVStore(null, NAMESPACE, storageInterface);
         Class<?> valueClazz = kvStore.getValue("my-key").get().value().getClass();
-        assertThat(expectedClass.isAssignableFrom(valueClazz)).as("Expected value to be a " + expectedClass + " but was " + valueClazz).isEqualTo(true);
+        assertThat(expectedClass.isAssignableFrom(valueClazz)).as("Expected value to be a " + expectedClass + " but was " + valueClazz).isTrue();
 
         List<KVEntry> list = kvStore.list();
         assertThat(list.size()).isEqualTo(1);
         KVEntry kvEntry = list.get(0);
-        assertThat(kvEntry.expirationDate().isAfter(Instant.now().plus(Duration.ofMinutes(4)))).isEqualTo(true);
-        assertThat(kvEntry.expirationDate().isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isEqualTo(true);
+        assertThat(kvEntry.expirationDate().isAfter(Instant.now().plus(Duration.ofMinutes(4)))).isTrue();
+        assertThat(kvEntry.expirationDate().isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isTrue();
     }
 
     @Test
@@ -176,10 +176,10 @@ class KVControllerTest {
             )
         );
 
-        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isEqualTo(true);
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isTrue();
         client.toBlocking().exchange(HttpRequest.DELETE("/api/v1/namespaces/" + NAMESPACE + "/kv/my-key"));
 
-        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isEqualTo(false);
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isFalse();
     }
 
     @Test
@@ -194,7 +194,7 @@ class KVControllerTest {
                 new ByteArrayInputStream("\"content\"".getBytes())
             )
         );
-        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isEqualTo(true);
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isTrue();
 
         // When
         HttpResponse<ApiDeleteBulkResponse> response = client.toBlocking()
@@ -215,7 +215,7 @@ class KVControllerTest {
         // Then
         Assertions.assertEquals(HttpStatus.OK, response.getStatus());
         Assertions.assertEquals(new ApiDeleteBulkResponse(List.of()), response.body());
-        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isEqualTo(false);
+        assertThat(storageInterface.exists(null, NAMESPACE, toKVUri(NAMESPACE, "my-key"))).isFalse();
     }
 
     @Test

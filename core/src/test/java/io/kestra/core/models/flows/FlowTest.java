@@ -33,7 +33,7 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/duplicate.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
         assertThat(validate.get().getMessage()).contains("Duplicate task id with name [date, listen]");
@@ -45,7 +45,7 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/duplicate-inputs.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
         assertThat(validate.get().getMessage()).contains("Duplicate input with name [first_input]");
@@ -56,7 +56,7 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/duplicate-parallel.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
         assertThat(validate.get().getMessage()).contains("Duplicate task id with name [t3]");
@@ -68,7 +68,7 @@ class FlowTest {
         Flow updated = this.parse("flows/invalids/duplicate.yaml");
         Optional<ConstraintViolationException> validate = flow.validateUpdate(updated);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
         assertThat(validate.get().getMessage()).contains("Illegal flow id update");
@@ -80,7 +80,7 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/switch-invalid.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
         assertThat(validate.get().getMessage()).contains("impossible: No task defined, neither cases or default have any tasks");
@@ -91,7 +91,7 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/workingdirectory-invalid.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
         assertThat(validate.get().getMessage()).contains("impossible: Only runnable tasks are allowed as children of a WorkingDirectory task");
@@ -102,7 +102,7 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/workingdirectory-no-tasks.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
         assertThat(validate.get().getMessage()).contains("impossible: The 'tasks' property cannot be empty");
@@ -129,7 +129,7 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/worker-group.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
 
         assertThat(validate.get().getMessage()).isEqualTo("tasks[0].workerGroup: Worker Group is an Enterprise Edition functionality\n");
@@ -148,7 +148,7 @@ class FlowTest {
         Flow flow = this.parse("flows/invalids/inputs-validation.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
         assertThat(validate.get().getConstraintViolations().size()).isEqualTo(2);
 
         assertThat(validate.get().getMessage()).contains("file: no `defaults` can be set for inputs of type 'FILE'");
@@ -164,13 +164,13 @@ class FlowTest {
         triggerInputsReverseOrder.put("c", "d");
         triggerInputsReverseOrder.put("a", "b");
         Flow flowABis = baseFlow().toBuilder().revision(2).triggers(List.of(io.kestra.plugin.core.trigger.Flow.builder().inputs(triggerInputsReverseOrder).build())).build();
-        assertThat(flowA.equalsWithoutRevision(flowABis)).isEqualTo(true);
+        assertThat(flowA.equalsWithoutRevision(flowABis)).isTrue();
 
         Flow flowB = baseFlow().toBuilder().id("b").build();
-        assertThat(flowA.equalsWithoutRevision(flowB)).isEqualTo(false);
+        assertThat(flowA.equalsWithoutRevision(flowB)).isFalse();
 
         Flow flowAnotherTenant = baseFlow().toBuilder().tenantId("b").build();
-        assertThat(flowA.equalsWithoutRevision(flowAnotherTenant)).isEqualTo(false);
+        assertThat(flowA.equalsWithoutRevision(flowAnotherTenant)).isFalse();
     }
 
     private static Flow baseFlow() {

@@ -62,13 +62,13 @@ class CorrelationIdTest {
         assertThat(child.get()).isNotNull();
         assertThat(child.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Optional<Label> correlationId = child.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
-        assertThat(correlationId.isPresent()).isEqualTo(true);
+        assertThat(correlationId.isPresent()).isTrue();
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
 
         assertThat(grandChild.get()).isNotNull();
         assertThat(grandChild.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         correlationId = grandChild.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
-        assertThat(correlationId.isPresent()).isEqualTo(true);
+        assertThat(correlationId.isPresent()).isTrue();
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 }

@@ -32,7 +32,7 @@ class SwitchTest {
 
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("t1");
         assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value")).isEqualTo("FIRST");
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isEqualTo(false);
+        assertThat((Boolean) execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isEqualTo(false);
     }
 
     @Test
@@ -48,7 +48,7 @@ class SwitchTest {
 
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("t2");
         assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value")).isEqualTo("SECOND");
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isEqualTo(false);
+        assertThat((Boolean) execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isFalse();
         assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("t2_sub");
     }
 
@@ -65,7 +65,7 @@ class SwitchTest {
 
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("t3");
         assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value")).isEqualTo("THIRD");
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isEqualTo(false);
+        assertThat((Boolean) execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isFalse();
         assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("failed");
         assertThat(execution.getTaskRunList().get(3).getTaskId()).isEqualTo("error-t1");
     }
@@ -83,7 +83,7 @@ class SwitchTest {
 
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("default");
         assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("value")).isEqualTo("DEFAULT");
-        assertThat(execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isEqualTo(true);
+        assertThat((Boolean)execution.findTaskRunsByTaskId("parent-seq").getFirst().getOutputs().get("defaults")).isTrue();
     }
 
     @Test

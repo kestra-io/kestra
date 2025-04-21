@@ -16,7 +16,7 @@ public class MemoryRepositoryTest {
 
     @Test
     void verifyMemoryFallbacksToH2() {
-        assertThat(flowRepositoryInterface.findAll(null).size()).isEqualTo(0);
+        assertThat(flowRepositoryInterface.findAll(null).size()).isZero();
 
         String flowSource = """
             id: some-flow

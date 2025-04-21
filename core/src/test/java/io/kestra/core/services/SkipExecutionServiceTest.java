@@ -31,8 +31,8 @@ class SkipExecutionServiceTest {
 
         skipExecutionService.setSkipExecutions(List.of(executionToSkip));
 
-        assertThat(skipExecutionService.skipExecution(executionToSkip)).isEqualTo(true);
-        assertThat(skipExecutionService.skipExecution(executionNotToSkip)).isEqualTo(false);
+        assertThat(skipExecutionService.skipExecution(executionToSkip)).isTrue();
+        assertThat(skipExecutionService.skipExecution(executionNotToSkip)).isFalse();
     }
 
     @Test
@@ -43,8 +43,8 @@ class SkipExecutionServiceTest {
         skipExecutionService.setSkipExecutions(List.of("skip"));
         skipExecutionService.setSkipFlows(List.of("namespace|skip"));
 
-        assertThat(skipExecutionService.skipExecution(executionToSkip)).isEqualTo(true);
-        assertThat(skipExecutionService.skipExecution(executionToSkipByFlow)).isEqualTo(true);
+        assertThat(skipExecutionService.skipExecution(executionToSkip)).isTrue();
+        assertThat(skipExecutionService.skipExecution(executionToSkipByFlow)).isTrue();
     }
 
     @Test
@@ -55,8 +55,8 @@ class SkipExecutionServiceTest {
         skipExecutionService.setSkipExecutions(List.of("skip"));
         skipExecutionService.setSkipFlows(List.of("namespace|skip"));
 
-        assertThat(skipExecutionService.skipExecution(taskRunToSkip)).isEqualTo(true);
-        assertThat(skipExecutionService.skipExecution(taskRunToSkipByFlow)).isEqualTo(true);
+        assertThat(skipExecutionService.skipExecution(taskRunToSkip)).isTrue();
+        assertThat(skipExecutionService.skipExecution(taskRunToSkipByFlow)).isTrue();
     }
 
     @Test
@@ -66,32 +66,32 @@ class SkipExecutionServiceTest {
 
         skipExecutionService.setSkipFlows(List.of(flowToSkip, flowToSkipWithTenant));
 
-        assertThat(skipExecutionService.skipExecution(null, "namespace", "skip", "random")).isEqualTo(true);
-        assertThat(skipExecutionService.skipExecution(null, "wrong", "skip", "random")).isEqualTo(false);
-        assertThat(skipExecutionService.skipExecution("tenant", "namespace", "skip", "random")).isEqualTo(true);
-        assertThat(skipExecutionService.skipExecution("wrong", "namespace", "skip", "random")).isEqualTo(false);
-        assertThat(skipExecutionService.skipExecution(null, "namespace", "not_skipped", "random")).isEqualTo(false);
-        assertThat(skipExecutionService.skipExecution("tenant", "namespace", "not_skipped", "random")).isEqualTo(false);
+        assertThat(skipExecutionService.skipExecution(null, "namespace", "skip", "random")).isTrue();
+        assertThat(skipExecutionService.skipExecution(null, "wrong", "skip", "random")).isFalse();
+        assertThat(skipExecutionService.skipExecution("tenant", "namespace", "skip", "random")).isTrue();
+        assertThat(skipExecutionService.skipExecution("wrong", "namespace", "skip", "random")).isFalse();
+        assertThat(skipExecutionService.skipExecution(null, "namespace", "not_skipped", "random")).isFalse();
+        assertThat(skipExecutionService.skipExecution("tenant", "namespace", "not_skipped", "random")).isFalse();
     }
 
     @Test
     void skipExecutionByNamespace() {
         skipExecutionService.setSkipNamespaces(List.of("tenant|namespace"));
 
-        assertThat(skipExecutionService.skipExecution("tenant", "namespace", "someFlow", "someExecution")).isEqualTo(true);
-        assertThat(skipExecutionService.skipExecution(null, "namespace", "someFlow", "someExecution")).isEqualTo(false);
-        assertThat(skipExecutionService.skipExecution("anotherTenant", "namespace", "someFlow", "someExecution")).isEqualTo(false);
-        assertThat(skipExecutionService.skipExecution("tenant", "namespace", "anotherFlow", "anotherExecution")).isEqualTo(true);
-        assertThat(skipExecutionService.skipExecution("tenant", "other.namespace", "someFlow", "someExecution")).isEqualTo(false);
+        assertThat(skipExecutionService.skipExecution("tenant", "namespace", "someFlow", "someExecution")).isTrue();
+        assertThat(skipExecutionService.skipExecution(null, "namespace", "someFlow", "someExecution")).isFalse();
+        assertThat(skipExecutionService.skipExecution("anotherTenant", "namespace", "someFlow", "someExecution")).isFalse();
+        assertThat(skipExecutionService.skipExecution("tenant", "namespace", "anotherFlow", "anotherExecution")).isTrue();
+        assertThat(skipExecutionService.skipExecution("tenant", "other.namespace", "someFlow", "someExecution")).isFalse();
     }
 
     @Test
     void skipExecutionByTenantId() {
         skipExecutionService.setSkipTenants(List.of("tenant"));
 
-        assertThat(skipExecutionService.skipExecution("tenant", "namespace", "someFlow", "someExecution")).isEqualTo(true);
-        assertThat(skipExecutionService.skipExecution("anotherTenant", "namespace", "someFlow", "someExecution")).isEqualTo(false);
-        assertThat(skipExecutionService.skipExecution("tenant", "another.namespace", "someFlow", "someExecution")).isEqualTo(true);
-        assertThat(skipExecutionService.skipExecution("anotherTenant", "another.namespace", "someFlow", "someExecution")).isEqualTo(false);
+        assertThat(skipExecutionService.skipExecution("tenant", "namespace", "someFlow", "someExecution")).isTrue();
+        assertThat(skipExecutionService.skipExecution("anotherTenant", "namespace", "someFlow", "someExecution")).isFalse();
+        assertThat(skipExecutionService.skipExecution("tenant", "another.namespace", "someFlow", "someExecution")).isTrue();
+        assertThat(skipExecutionService.skipExecution("anotherTenant", "another.namespace", "someFlow", "someExecution")).isFalse();
     }
 }

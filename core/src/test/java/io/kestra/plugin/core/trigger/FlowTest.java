@@ -66,7 +66,7 @@ class FlowTest {
             execution
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getFlowId()).isEqualTo("flow-with-flow-trigger");
         assertThat(evaluate.get().getLabels()).hasSize(3);
         assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
@@ -116,7 +116,7 @@ class FlowTest {
             execution
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getFlowId()).isEqualTo("flow-with-flow-trigger");
         assertThat(evaluate.get().getTenantId()).isEqualTo("tenantId");
         assertThat(evaluate.get().getLabels()).hasSize(3);
@@ -165,7 +165,7 @@ class FlowTest {
 
         Optional<Execution> evaluate = flowTrigger.evaluate(multipleConditionStorage, runContextFactory.of(), flow, execution);
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getLabels()).hasSize(6);
         assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
         assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-2", "flow-label-2"));

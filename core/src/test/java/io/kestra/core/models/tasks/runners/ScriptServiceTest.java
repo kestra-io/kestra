@@ -50,17 +50,17 @@ class ScriptServiceTest {
             command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, false);
 
             Matcher matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(command);
-            assertThat(matcher.matches()).isEqualTo(true);
+            assertThat(matcher.matches()).isTrue();
             Path absoluteLocalFilePath = Path.of(matcher.group(1));
             localFile = absoluteLocalFilePath.toFile();
-            assertThat(localFile.exists()).isEqualTo(true);
+            assertThat(localFile.exists()).isTrue();
 
             command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, true);
             matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(command);
-            assertThat(matcher.matches()).isEqualTo(true);
+            assertThat(matcher.matches()).isTrue();
             String relativePath = matcher.group(1);
             assertThat(relativePath).doesNotStartWith("/");
-            assertThat(runContext.workingDir().resolve(Path.of(relativePath)).toFile().exists()).isEqualTo(true);
+            assertThat(runContext.workingDir().resolve(Path.of(relativePath)).toFile().exists()).isTrue();
         } finally {
             localFile.delete();
             path.toFile().delete();
@@ -94,18 +94,18 @@ class ScriptServiceTest {
 
             assertThat(commands.getFirst(), not(is("my command with an internal storage file: " + internalStorageUri)));
             Matcher matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(commands.getFirst());
-            assertThat(matcher.matches()).isEqualTo(true);
+            assertThat(matcher.matches()).isTrue();
             File file = Path.of(matcher.group(1)).toFile();
-            assertThat(file.exists()).isEqualTo(true);
+            assertThat(file.exists()).isTrue();
             filesToDelete.add(file);
 
             assertThat(commands.get(1)).isEqualTo("my command with some additional var usage: " + wdir);
 
             commands = ScriptService.replaceInternalStorage(runContext, Collections.emptyMap(), List.of("my command with an internal storage file: " + internalStorageUri), true);
             matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(commands.getFirst());
-            assertThat(matcher.matches()).isEqualTo(true);
+            assertThat(matcher.matches()).isTrue();
             file = runContext.workingDir().resolve(Path.of(matcher.group(1))).toFile();
-            assertThat(file.exists()).isEqualTo(true);
+            assertThat(file.exists()).isTrue();
             filesToDelete.add(file);
         } catch (IllegalVariableEvaluationException e) {
             throw new RuntimeException(e);

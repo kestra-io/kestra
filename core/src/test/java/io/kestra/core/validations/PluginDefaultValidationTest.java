@@ -26,7 +26,7 @@ class PluginDefaultValidationTest {
 
         Optional<ConstraintViolationException> validate = modelValidator.isValid(pluginDefault);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
     }
 
     @Test
@@ -40,7 +40,7 @@ class PluginDefaultValidationTest {
 
         Optional<ConstraintViolationException> validate = modelValidator.isValid(pluginDefault);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
     }
 
     @Test
@@ -52,7 +52,7 @@ class PluginDefaultValidationTest {
 
         Optional<ConstraintViolationException> validate = modelValidator.isValid(pluginDefault);
 
-        assertThat(validate.isPresent()).isEqualTo(true);
+        assertThat(validate.isPresent()).isTrue();
     }
 
     @Test
@@ -64,7 +64,7 @@ class PluginDefaultValidationTest {
 
         Optional<ConstraintViolationException> validate = modelValidator.isValid(pluginDefault);
 
-        assertThat(validate.isEmpty()).isEqualTo(true);
+        assertThat(validate.isEmpty()).isTrue();
     }
 
     @Test
@@ -76,7 +76,7 @@ class PluginDefaultValidationTest {
 
         Optional<ConstraintViolationException> validate = modelValidator.isValid(pluginDefault);
 
-        assertThat(validate.isEmpty()).isEqualTo(true);
+        assertThat(validate.isEmpty()).isTrue();
     }
 
 }

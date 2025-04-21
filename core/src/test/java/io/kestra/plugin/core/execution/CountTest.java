@@ -71,7 +71,7 @@ class CountTest {
             .build()
             .run(runContext);
 
-        assertThat(run.getResults().size()).isEqualTo(0);
+        assertThat(run.getResults().size()).isZero();
 
         // non-matching entry
         run = Count.builder()

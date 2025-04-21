@@ -8,7 +8,7 @@ export default {
         {
             path: "/",
             name: "home",
-            component: {template: "div>home</div>"}
+            component: {template: "<div>home</div>"}
         }])
     ],
     title: "Components/NoCode/Editor",
@@ -48,9 +48,20 @@ It allows you to return templated values, inputs or outputs.`.trim(),
     "schema": {
         "properties": {
             "properties": {
-                "foo": {
+                "message": {
                     "type": "string",
                     "title": "The templated string to render.",
+                    "$dynamic": true,
+                    "$required": true
+                },
+                "values": {
+                    "type": "array",
+                    "title": "An array of value to test forms with it",
+                    "items": {
+                        "type": "string",
+                        "title": "The templated value to return.",
+                        "$dynamic": true,
+                    },
                     "$dynamic": true,
                     "$required": true
                 }
@@ -58,7 +69,7 @@ It allows you to return templated values, inputs or outputs.`.trim(),
             "title": "Return a value for debugging purposes.",
             "$examples": [],
             "$metrics": [],
-            "required": ["foo"],
+            "required": ["message", "values"],
         },
         "outputs": {
             "properties": {
@@ -97,36 +108,99 @@ const Template = (args) => ({
                 return Promise.resolve({
                     data: []
                 })
+            },
+            post(url, body, opts){
+                if(url.endsWith("flows/validate/task")){
+                    return Promise.resolve({data: {}})
+                }
+                console.log("POST", url, body, opts)
+                return Promise.resolve({
+                    data: []
+                })
             }
         }
         return () =>
             <div style="margin: 1rem; width: 400px;border: 1px solid lightgray; padding: .5rem;">
-                <Editor {...args} flow={modelValue.value} on />
+                <Editor {...args.props} flow={modelValue.value} on />
             </div>
     }
 });
 
 export const Default = Template.bind({});
 Default.args = {
-    creation: false,
     flow: `
 id: flow1
 namespace: namespace1
 tasks:
   - id: task1
     type: io.kestra.plugin.core.debug.Return
+    message: "Hello world"
+    values:
+      - one
+      - two
+      - three
     `.trim(),
-    metadata: {
-        id: "example-id",
-        namespace: "example-namespace",
-        description: "Example description",
-        retry: "",
-        labels: {},
-        inputs: [],
-        outputs: "",
-        variables: {},
-        concurrency: {},
-        pluginDefaults: "",
-        disabled: false,
+    props:{
+        creation: false,
+        metadata: {
+            id: "example-id",
+            namespace: "example-namespace",
+            description: "Example description",
+            retry: "",
+            labels: {},
+            inputs: [],
+            outputs: "",
+            variables: {},
+            concurrency: {},
+            pluginDefaults: "",
+            disabled: false,
+        },
     },
 };
+
+export const EditTask = Template.bind({});
+EditTask.decorators = [vueRouter([
+    {
+        path: "/",
+        name: "home",
+        component: {template: "<div>home</div>"}
+    },
+    {
+        path: "/flows",
+        name: "flows",
+        component: {template: "<div>flows</div>"}
+    }], {
+        initialRoute: "/flows?section=tasks&identifier=task1"
+    })
+]
+EditTask.args = {
+    flow: `
+id: flow1
+namespace: namespace1
+tasks:
+  - id: task1
+    type: io.kestra.plugin.core.debug.Return
+    message: "Hello world"
+    values:
+      - one
+      - two
+      - three
+    `.trim(),
+    props:{
+        creation: false,
+        metadata: {
+            id: "example-id",
+            namespace: "example-namespace",
+            description: "Example description",
+            retry: "",
+            labels: {},
+            inputs: [],
+            outputs: "",
+            variables: {},
+            concurrency: {},
+            pluginDefaults: "",
+            disabled: false,
+        },
+    },
+};
+

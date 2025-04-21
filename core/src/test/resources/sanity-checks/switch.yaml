@@ -1,5 +1,5 @@
 id: switch
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 variables:
   switch_value: 3

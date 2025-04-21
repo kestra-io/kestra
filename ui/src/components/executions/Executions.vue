@@ -280,7 +280,9 @@
                                     <template #content>
                                         <pre class="mb-0">{{ JSON.stringify(scope.row.inputs, null, "\t") }}</pre>
                                     </template>
-                                    <Import v-if="scope.row.inputs" class="fs-5" />
+                                    <div>
+                                        <Import v-if="scope.row.inputs" class="fs-5" />
+                                    </div>
                                 </el-tooltip>
                             </template>
                         </el-table-column>

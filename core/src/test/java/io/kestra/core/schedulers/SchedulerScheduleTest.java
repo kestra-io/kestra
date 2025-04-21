@@ -194,7 +194,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 return optionalTrigger.filter(value -> value.getNextExecutionDate() != null).isPresent();
             }, Duration.ofSeconds(1), Duration.ofSeconds(60));
 
-            assertThat(this.triggerState.findLast(trigger).get().getNextExecutionDate().isAfter(trigger.getDate())).isEqualTo(true);
+            assertThat(this.triggerState.findLast(trigger).get().getNextExecutionDate().isAfter(trigger.getDate())).isTrue();
         }
     }
 
@@ -412,7 +412,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             Trigger lastTrigger = this.triggerState.findLast(trigger).get();
 
             // Nothing changed because nothing happened
-            assertThat(lastTrigger.getNextExecutionDate().truncatedTo(ChronoUnit.HOURS).isEqual(now)).isEqualTo(true);
+            assertThat(lastTrigger.getNextExecutionDate().truncatedTo(ChronoUnit.HOURS).isEqual(now)).isTrue();
         }
     }
 

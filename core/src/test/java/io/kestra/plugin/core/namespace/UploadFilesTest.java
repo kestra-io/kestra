@@ -100,7 +100,7 @@ public class UploadFilesTest {
 
         String newFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
-        assertThat(previousFile.equals(newFile)).isEqualTo(false);
+        assertThat(previousFile.equals(newFile)).isFalse();
     }
 
     @Test
@@ -139,7 +139,7 @@ public class UploadFilesTest {
 
         String newFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
-        assertThat(previousFile.equals(newFile)).isEqualTo(true);
+        assertThat(previousFile.equals(newFile)).isTrue();
     }
 
     @Test

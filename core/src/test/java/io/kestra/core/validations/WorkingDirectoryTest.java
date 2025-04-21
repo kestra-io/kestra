@@ -35,7 +35,7 @@ public class WorkingDirectoryTest {
             )
             .build();
 
-        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isEqualTo(false);
+        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isFalse();
     }
 
     @Test
@@ -46,7 +46,7 @@ public class WorkingDirectoryTest {
             .type(WorkingDirectory.class.getName())
             .build();
 
-        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isTrue();
         assertThat(modelValidator.isValid(workingDirectory).get().getMessage()).contains("The 'tasks' property cannot be empty");
 
         // flowable task
@@ -63,7 +63,7 @@ public class WorkingDirectoryTest {
             )
             .build();
 
-        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isTrue();
         assertThat(modelValidator.isValid(workingDirectory).get().getMessage()).contains("Only runnable tasks are allowed as children of a WorkingDirectory task");
 
         // worker group at the subtasks level
@@ -81,7 +81,7 @@ public class WorkingDirectoryTest {
             )
             .build();
 
-        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(workingDirectory).isPresent()).isTrue();
         assertThat(modelValidator.isValid(workingDirectory).get().getMessage()).contains("Cannot set a Worker Group in any WorkingDirectory sub-tasks, it is only supported at the WorkingDirectory level");
 
     }

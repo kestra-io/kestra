@@ -32,11 +32,11 @@ import java.util.OptionalInt;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Make an HTTP API request to a specified URL and store the response as output.",
+    title = "Make an HTTP API request to a specified URL and store the response as an output.",
     description = """
-                  This task makes an API call to a specified URL of an HTTP server and stores the response as output.
+                  This task makes an API call to a specified URL of an HTTP server and stores the response as an output.
                   By default, the maximum length of the response is limited to 10MB, but it can be increased to at most 2GB by using the `options.maxContentLength` property.
-                  Note that the response is added as output to the task. If you need to process large API payloads, we recommend using the `Download` task instead."""
+                  Note that the response is added as an output of the task. If you need to process large API payloads, we recommend using the `Download` task instead."""
 )
 @Plugin(
     examples = {

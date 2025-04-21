@@ -134,7 +134,7 @@ class FlowWithSourceTest {
         String expectedSource = flow.sourceOrGenerateIfNull() + " # additional comment";
         FlowWithSource of = FlowWithSource.of(flow, expectedSource);
 
-        assertThat(of.equalsWithoutRevision(flow)).isEqualTo(true);
+        assertThat(of.equalsWithoutRevision(flow)).isTrue();
         assertThat(of.getSource()).isEqualTo(expectedSource);
     }
 }

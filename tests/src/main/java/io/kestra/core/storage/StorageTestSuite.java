@@ -52,24 +52,25 @@ public abstract class StorageTestSuite {
     @Test
     void getNoCrossTenant() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = IdUtils.create();
+        String fistTenant = IdUtils.create();
+        String secondTenant = IdUtils.create();
 
-        String withTenant = "/" + prefix + "/storage/withtenant.yml";
-        putFile(tenantId, withTenant);
-        String nullTenant = "/" + prefix + "/storage/nulltenant.yml";
-        putFile(null, nullTenant);
+        String fistTenantPath = "/" + prefix + "/storage/firstTenant.yml";
+        putFile(fistTenant, fistTenantPath);
+        String secondTenantPath = "/" + prefix + "/storage/secondTenant.yml";
+        putFile(secondTenant, secondTenantPath);
 
-        URI with = new URI(withTenant);
-        InputStream get = storageInterface.get(tenantId, prefix, with);
+        URI fistTenantUri = new URI(fistTenantPath);
+        InputStream get = storageInterface.get(fistTenant, prefix, fistTenantUri);
         assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
-        assertTrue(storageInterface.exists(tenantId, prefix, with));
-        assertThrows(FileNotFoundException.class, () -> storageInterface.get(MAIN_TENANT, null, with));
+        assertTrue(storageInterface.exists(fistTenant, prefix, fistTenantUri));
+        assertThrows(FileNotFoundException.class, () -> storageInterface.get(secondTenant, null, fistTenantUri));
 
-        URI without = new URI(nullTenant);
-        get = storageInterface.get(MAIN_TENANT, prefix, without);
+        URI secondTenantUri = new URI(secondTenantPath);
+        get = storageInterface.get(secondTenant, prefix, secondTenantUri);
         assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
-        assertTrue(storageInterface.exists(null, prefix, without));
-        assertThrows(FileNotFoundException.class, () -> storageInterface.get(tenantId, null, without));
+        assertTrue(storageInterface.exists(secondTenant, prefix, secondTenantUri));
+        assertThrows(FileNotFoundException.class, () -> storageInterface.get(fistTenant, null, secondTenantUri));
 
     }
 
@@ -835,7 +836,7 @@ public abstract class StorageTestSuite {
         String prefix = IdUtils.create();
         storageInterface.createDirectory(MAIN_TENANT, prefix, URI.create("/" + prefix + "/first/second/third"));
 
-        List<FileAttributes> list = storageInterface.list(null, prefix, URI.create("/" + prefix));
+        List<FileAttributes> list = storageInterface.list(MAIN_TENANT, prefix, URI.create("/" + prefix));
         assertThat(list, contains(
             hasProperty("fileName", is("first"))
         ));

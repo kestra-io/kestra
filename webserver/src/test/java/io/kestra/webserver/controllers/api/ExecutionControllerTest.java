@@ -77,7 +77,7 @@ class ExecutionControllerTest {
     void getExecutionNotFound() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(GET("/api/v1/executions/exec_id_not_found"))
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/executions/exec_id_not_found"))
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
@@ -114,7 +114,7 @@ class ExecutionControllerTest {
             () -> client.toBlocking().retrieve(
                 HttpRequest
                     .POST(
-                        "/api/v1/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
+                        "/api/v1/main/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
                         ImmutableMap.of("a", 1, "b", true)
                     ),
                 Execution.class
@@ -127,7 +127,7 @@ class ExecutionControllerTest {
             () -> client.toBlocking().retrieve(
                 HttpRequest
                     .PUT(
-                        "/api/v1/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
+                        "/api/v1/main/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
                         Collections.singletonList(ImmutableMap.of("a", 1, "b", true))
                     ),
                 Execution.class
@@ -140,7 +140,7 @@ class ExecutionControllerTest {
             () -> client.toBlocking().retrieve(
                 HttpRequest
                     .POST(
-                        "/api/v1/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
+                        "/api/v1/main/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
                         "bla"
                     ),
                 Execution.class
@@ -151,7 +151,7 @@ class ExecutionControllerTest {
 
         exception = assertThrows(HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
-                GET("/api/v1/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13"),
+                GET("/api/v1/main/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13"),
                 Execution.class
             )
         );
@@ -162,7 +162,7 @@ class ExecutionControllerTest {
             () -> client.toBlocking().retrieve(
                 HttpRequest
                     .POST(
-                        "/api/v1/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
+                        "/api/v1/main/executions/webhook/not-found/webhook/not-found?name=john&age=12&age=13",
                         "{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}"
                     ),
                 Execution.class
@@ -176,7 +176,7 @@ class ExecutionControllerTest {
     void webhookDynamicKey() {
         Execution execution = client.toBlocking().retrieve(
             GET(
-                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-dynamic-key/webhook-dynamic-key"
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-dynamic-key/webhook-dynamic-key"
                 ),
             Execution.class
         );
@@ -190,7 +190,7 @@ class ExecutionControllerTest {
     void webhookDynamicKeyFromASecret() {
         Execution execution = client.toBlocking().retrieve(
             GET(
-                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-secret-key/secretKey"
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-secret-key/secretKey"
                 ),
             Execution.class
         );
@@ -206,7 +206,7 @@ class ExecutionControllerTest {
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
                 .POST(
-                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
                     new Hello("world")
                 ),
             Execution.class
@@ -218,7 +218,7 @@ class ExecutionControllerTest {
         HttpResponse<Execution> response = client.toBlocking().exchange(
             HttpRequest
                 .POST(
-                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-with-condition/webhookKey",
                     new Hello("webhook")
                 ),
             Execution.class
@@ -245,13 +245,13 @@ class ExecutionControllerTest {
 
         // null keys are forbidden
         MutableHttpRequest<MultipartBody> requestNullKey = HttpRequest
-            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=:value", requestBody)
+            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/inputs?labels=:value", requestBody)
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
         assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(requestNullKey, Execution.class));
 
         // null values are forbidden
         MutableHttpRequest<MultipartBody> requestNullValue = HttpRequest
-            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=key:", requestBody)
+            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/inputs?labels=key:", requestBody)
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
         assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(requestNullValue, Execution.class));
     }
@@ -259,6 +259,18 @@ class ExecutionControllerTest {
     @SuppressWarnings("DataFlowIssue")
     @Test
     void getExecutionFlowForExecution() {
+        FlowForExecution result = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/flows/io.kestra.tests/full"),
+            FlowForExecution.class
+        );
+
+        assertThat(result).isNotNull();
+        assertThat(result.getTasks()).hasSize(5);
+        assertThat((result.getTasks().getFirst() instanceof TaskForExecution)).isEqualTo(true);
+    }
+
+    @Test
+    void getExecutionFlowForExecutionWithOldUrl() {
         FlowForExecution result = client.toBlocking().retrieve(
             GET("/api/v1/executions/flows/io.kestra.tests/full"),
             FlowForExecution.class
@@ -275,14 +287,14 @@ class ExecutionControllerTest {
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
                 .POST(
-                    "/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + TESTS_WEBHOOK_KEY + "?name=john&age=12&age=13",
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + TESTS_WEBHOOK_KEY + "?name=john&age=12&age=13",
                     ImmutableMap.of("a", 1, "b", true)
                 ),
             Execution.class
         );
 
         FlowForExecution result = client.toBlocking().retrieve(
-            GET("/api/v1/executions/" + execution.getId() + "/flow"),
+            GET("/api/v1/main/executions/" + execution.getId() + "/flow"),
             FlowForExecution.class
         );
 
@@ -295,7 +307,7 @@ class ExecutionControllerTest {
     @Test
     void getExecutionDistinctNamespaceExecutables() {
         List<String> result = client.toBlocking().retrieve(
-            GET("/api/v1/executions/namespaces"),
+            GET("/api/v1/main/executions/namespaces"),
             Argument.of(List.class, String.class)
         );
 
@@ -306,7 +318,7 @@ class ExecutionControllerTest {
     @Test
     void getExecutionFlowFromNamespace() {
         List<FlowForExecution> result = client.toBlocking().retrieve(
-            GET("/api/v1/executions/namespaces/io.kestra.tests/flows"),
+            GET("/api/v1/main/executions/namespaces/io.kestra.tests/flows"),
             Argument.of(List.class, FlowForExecution.class)
         );
 
@@ -317,13 +329,13 @@ class ExecutionControllerTest {
     void badDate() {
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
             client.toBlocking().retrieve(GET(
-                "/api/v1/executions/search?filters[startDate][EQUALS]=2024-06-03T00:00:00.000%2B02:00&filters[endDate][EQUALS]=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
+                "/api/v1/main/executions/search?filters[startDate][EQUALS]=2024-06-03T00:00:00.000%2B02:00&filters[endDate][EQUALS]=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
         assertThat(exception.getStatus().getCode()).isEqualTo(422);
         assertThat(exception.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
 
         HttpClientResponseException exception_oldParameters = assertThrows(HttpClientResponseException.class, () ->
             client.toBlocking().retrieve(GET(
-                "/api/v1/executions/search?startDate=2024-06-03T00:00:00.000%2B02:00&endDate=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
+                "/api/v1/main/executions/search?startDate=2024-06-03T00:00:00.000%2B02:00&endDate=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
         assertThat(exception_oldParameters.getStatus().getCode()).isEqualTo(422);
         assertThat(exception_oldParameters.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
     }
@@ -333,45 +345,45 @@ class ExecutionControllerTest {
         String encodedCommaWithinLabel = URLEncoder.encode("project:foo,bar", StandardCharsets.UTF_8);
 
         MutableHttpRequest<Object> deleteRequest = HttpRequest
-            .DELETE("/api/v1/executions/by-query?labels=" + encodedCommaWithinLabel);
+            .DELETE("/api/v1/main/executions/by-query?labels=" + encodedCommaWithinLabel);
         assertDoesNotThrow(() -> client.toBlocking().retrieve(deleteRequest, PagedResults.class));
 
         MutableHttpRequest<List<Object>> restartRequest = HttpRequest
-            .POST("/api/v1/executions/restart/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .POST("/api/v1/main/executions/restart/by-query?labels=" + encodedCommaWithinLabel, List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(restartRequest, BulkResponse.class));
 
         MutableHttpRequest<List<Object>> resumeRequest = HttpRequest
-            .POST("/api/v1/executions/resume/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .POST("/api/v1/main/executions/resume/by-query?labels=" + encodedCommaWithinLabel, List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(resumeRequest, BulkResponse.class));
 
         MutableHttpRequest<List<Object>> replayRequest = HttpRequest
-            .POST("/api/v1/executions/replay/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .POST("/api/v1/main/executions/replay/by-query?labels=" + encodedCommaWithinLabel, List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(replayRequest, BulkResponse.class));
 
         MutableHttpRequest<List<Object>> labelsRequest = HttpRequest
-            .POST("/api/v1/executions/labels/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .POST("/api/v1/main/executions/labels/by-query?labels=" + encodedCommaWithinLabel, List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(labelsRequest, BulkResponse.class));
 
         MutableHttpRequest<List<Object>> killRequest = HttpRequest
-            .DELETE("/api/v1/executions/kill/by-query?labels=" + encodedCommaWithinLabel, List.of());
+            .DELETE("/api/v1/main/executions/kill/by-query?labels=" + encodedCommaWithinLabel, List.of());
         assertDoesNotThrow(() -> client.toBlocking().retrieve(killRequest, BulkResponse.class));
 
         MutableHttpRequest<MultipartBody> triggerRequest = HttpRequest
-            .POST("/api/v1/executions/trigger/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
+            .POST("/api/v1/main/executions/trigger/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
         assertThat(client.toBlocking().retrieve(triggerRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"));
 
         MutableHttpRequest<MultipartBody> createRequest = HttpRequest
-            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
+            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
         assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"));
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
-            .GET("/api/v1/executions/search?filters[labels][EQUALS][project]=foo,bar");
+            .GET("/api/v1/main/executions/search?filters[labels][EQUALS][project]=foo,bar");
         assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal()).isEqualTo(2L);
 
         MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
-            .GET("/api/v1/executions/search?labels=project:foo,bar");
+            .GET("/api/v1/main/executions/search?labels=project:foo,bar");
         assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal()).isEqualTo(2L);
     }
 
@@ -381,16 +393,16 @@ class ExecutionControllerTest {
         String encodedRegularLabel = URLEncoder.encode("status:test", StandardCharsets.UTF_8);
 
         MutableHttpRequest<MultipartBody> createRequest = HttpRequest
-            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel, createExecutionInputsFlowBody())
+            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel, createExecutionInputsFlowBody())
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
         assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"), new Label("status", "test"));
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
-            .GET("/api/v1/executions/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test");
+            .GET("/api/v1/main/executions/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test");
         assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal()).isEqualTo(1L);
 
         MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
-            .GET("/api/v1/executions/search?labels=project:foo,bar" + "&labels=status:test");
+            .GET("/api/v1/main/executions/search?labels=project:foo,bar" + "&labels=status:test");
         assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal()).isEqualTo(1L);
     }
 
@@ -402,7 +414,7 @@ class ExecutionControllerTest {
 
         // when
         MutableHttpRequest<?> createRequest = HttpRequest
-            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/minimal?scheduleDate=" + scheduleDate, null)
+            .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/minimal?scheduleDate=" + scheduleDate, null)
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
         Execution execution = client.toBlocking().retrieve(createRequest, Execution.class);
 
@@ -422,7 +434,7 @@ class ExecutionControllerTest {
         // when
         ExecutionController.ApiValidateExecutionInputsResponse response = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/" + namespace + "/" + flowId + "/validate", requestBody)
+                .POST("/api/v1/main/executions/" + namespace + "/" + flowId + "/validate", requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             ExecutionController.ApiValidateExecutionInputsResponse.class
         );
@@ -441,20 +453,20 @@ class ExecutionControllerTest {
         // adding it would mean updating the Execution itself, which is too annoying, so for the test we just deserialize to a Map.
         Map<?, ?> executionResult = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/minimal", null)
+                .POST("/api/v1/main/executions/" + TESTS_FLOW_NS + "/minimal", null)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Map.class
         );
 
         assertThat(executionResult).isNotNull();
-        assertThat(executionResult.get("url")).isEqualTo("http://localhost:8081/ui/executions/io.kestra.tests/minimal/" + executionResult.get("id"));
+        assertThat(executionResult.get("url")).isEqualTo("http://localhost:8081/ui/main/executions/io.kestra.tests/minimal/" + executionResult.get("id"));
     }
 
     @Test
     void shouldRefuseSystemLabelsWhenCreatingAnExecution() {
         var error = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/executions/io.kestra.tests/minimal?labels=system.label:system", null)
+                .POST("/api/v1/main/executions/io.kestra.tests/minimal?labels=system.label:system", null)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         ));

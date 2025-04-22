@@ -1,6 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import io.kestra.webserver.controllers.api.MiscController;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpRequest;
@@ -24,7 +23,7 @@ class MiscControllerSecuredTest {
 
     @Test
     void getConfiguration() {
-        var response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/configs").basicAuth(
+        var response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/configs").basicAuth(
             basicAuthConfiguration.getUsername(),
             basicAuthConfiguration.getPassword()
         ), MiscController.Configuration.class);

@@ -44,7 +44,7 @@ class ErrorControllerTest {
         );
 
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(POST("/api/v1/flows", flow), Argument.of(Flow.class), Argument.of(Object.class))
+            client.toBlocking().retrieve(POST("/api/v1/main/flows", flow), Argument.of(Flow.class), Argument.of(Object.class))
         );
 
         assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
@@ -72,7 +72,7 @@ class ErrorControllerTest {
         );
 
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().retrieve(
-                POST("/api/v1/flows", JacksonMapper.ofYaml().writeValueAsString(flow)).contentType(MediaType.APPLICATION_YAML),
+                POST("/api/v1/main/flows", JacksonMapper.ofYaml().writeValueAsString(flow)).contentType(MediaType.APPLICATION_YAML),
                 Argument.of(String.class),
                 Argument.of(JsonError.class)
             )
@@ -100,7 +100,7 @@ class ErrorControllerTest {
         );
 
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
-            client.toBlocking().retrieve(POST("/api/v1/flows", flow), Argument.of(Flow.class), Argument.of(JsonError.class))
+            client.toBlocking().retrieve(POST("/api/v1/main/flows", flow), Argument.of(Flow.class), Argument.of(JsonError.class))
         );
 
         assertThat(exception.getStatus().getCode()).isEqualTo(UNPROCESSABLE_ENTITY.getCode());

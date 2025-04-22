@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -53,7 +54,7 @@ public class FlowTriggerCaseTest {
             }
         });
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-flow");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger", "trigger-flow");
 
         assertThat(execution.getTaskRunList().size()).isEqualTo(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -97,7 +98,7 @@ public class FlowTriggerCaseTest {
             }
         });
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.pause", "trigger-flow-with-pause");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.pause", "trigger-flow-with-pause");
 
         assertThat(execution.getTaskRunList().size()).isEqualTo(3);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

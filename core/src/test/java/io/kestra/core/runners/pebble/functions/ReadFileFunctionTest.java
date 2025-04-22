@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -34,10 +35,10 @@ class ReadFileFunctionTest {
     void readNamespaceFile() throws IllegalVariableEvaluationException, IOException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        storageInterface.createDirectory(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello from {{ flow.namespace }}".getBytes()));
+        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello from {{ flow.namespace }}".getBytes()));
 
-        String render = variableRenderer.render("{{ render(read('" + filePath + "')) }}", Map.of("flow", Map.of("namespace", namespace)));
+        String render = variableRenderer.render("{{ render(read('" + filePath + "')) }}", Map.of("flow", Map.of("namespace", namespace, "tenantId", MAIN_TENANT)));
         assertThat(render).isEqualTo("Hello from " + namespace);
     }
 
@@ -45,10 +46,10 @@ class ReadFileFunctionTest {
     void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        storageInterface.createDirectory(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello but not from flow.namespace".getBytes()));
+        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello but not from flow.namespace".getBytes()));
 
-        String render = variableRenderer.render("{{ read('" + filePath + "', namespace='" + namespace + "') }}", Map.of("flow", Map.of("namespace", "flow.namespace")));
+        String render = variableRenderer.render("{{ read('" + filePath + "', namespace='" + namespace + "') }}", Map.of("flow", Map.of("namespace", "flow.namespace", "tenantId", MAIN_TENANT)));
         assertThat(render).isEqualTo("Hello but not from flow.namespace");
     }
 
@@ -65,13 +66,14 @@ class ReadFileFunctionTest {
         String flowId = "flow";
         String executionId = IdUtils.create();
         URI internalStorageURI = URI.create("/" + namespace.replace(".", "/") + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
-        URI internalStorageFile = storageInterface.put(null, namespace, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
+        URI internalStorageFile = storageInterface.put(MAIN_TENANT, namespace, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
 
         // test for an authorized execution
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", flowId,
-                "namespace", namespace),
+                "namespace", namespace,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", executionId)
         );
 
@@ -82,12 +84,14 @@ class ReadFileFunctionTest {
         variables = Map.of(
             "flow", Map.of(
                 "id", "subflow",
-                "namespace", namespace),
+                "namespace", namespace,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", IdUtils.create()),
             "trigger", Map.of(
                 "flowId", flowId,
                 "namespace", namespace,
-                "executionId", executionId
+                "executionId", executionId,
+                "tenantId", MAIN_TENANT
             )
         );
 
@@ -102,13 +106,14 @@ class ReadFileFunctionTest {
         String flowId = "flow";
         String executionId = IdUtils.create();
         URI internalStorageURI = URI.create("/" + namespace.replace(".", "/") + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
-        URI internalStorageFile = storageInterface.put(null, namespace, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
+        URI internalStorageFile = storageInterface.put(MAIN_TENANT, namespace, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
 
         // test for an authorized execution
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", flowId,
-                "namespace", namespace),
+                "namespace", namespace,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", executionId),
             "file", internalStorageFile
         );
@@ -120,12 +125,14 @@ class ReadFileFunctionTest {
         variables = Map.of(
             "flow", Map.of(
                 "id", "subflow",
-                "namespace", namespace),
+                "namespace", namespace,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", IdUtils.create()),
             "trigger", Map.of(
                 "flowId", flowId,
                 "namespace", namespace,
-                "executionId", executionId
+                "executionId", executionId,
+                "tenantId", MAIN_TENANT
             )
         );
 
@@ -139,12 +146,13 @@ class ReadFileFunctionTest {
         String flowId = "flow";
         String executionId = IdUtils.create();
         URI internalStorageURI = URI.create("/" + namespace.replace(".", "/") + "/" + flowId + "/executions/" + executionId + "/tasks/task/" + IdUtils.create() + "/123456.ion");
-        URI internalStorageFile = storageInterface.put(null, namespace, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
+        URI internalStorageFile = storageInterface.put(MAIN_TENANT, namespace, internalStorageURI, new ByteArrayInputStream("Hello from a task output".getBytes()));
 
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", "notme",
-                "namespace", "notme"),
+                "namespace", "notme",
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", "notme")
         );
 

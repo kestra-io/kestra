@@ -32,6 +32,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Singleton
@@ -82,7 +83,7 @@ public class LocalFlowRepositoryLoader {
                 .forEach(Rethrow.throwConsumer(file -> {
                     try {
                         String source = Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset());
-                        GenericFlow parsed = GenericFlow.fromYaml(null, source);
+                        GenericFlow parsed = GenericFlow.fromYaml(MAIN_TENANT, source);
 
                         FlowWithSource flowWithSource = pluginDefaultService.injectAllDefaults(parsed, false);
                         modelValidator.validate(flowWithSource);

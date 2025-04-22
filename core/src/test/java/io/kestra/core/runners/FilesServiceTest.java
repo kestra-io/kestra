@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.apache.commons.io.FileUtils;
@@ -14,7 +15,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @KestraTest
 class FilesServiceTest {
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void overrideExistingInputFile() throws Exception {

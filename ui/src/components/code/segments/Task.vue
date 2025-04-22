@@ -173,11 +173,11 @@
                     return;
                 }
 
-                const taskId = YAML_UTILS.parse(yaml.value).id
+
 
                 result = YAML_UTILS.insertTask(
                     flow,
-                    taskId,
+                    taskId.value, // target task id (the one before of after the task will be inserted)
                     task,
                     position,
                 );
@@ -188,6 +188,9 @@
                     task
                 );
             }
+            const newTaskId = YAML_UTILS.parse(yaml.value).id
+            taskId.value = newTaskId;
+            creation.value = false;
         } else if(task){
             result = YAML_UTILS.replaceTaskInDocument(
                 flow,

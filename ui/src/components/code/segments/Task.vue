@@ -177,7 +177,7 @@
 
                 result = YAML_UTILS.insertTask(
                     flow,
-                    taskId.value, // target task id (the one before of after the task will be inserted)
+                    taskId.value ?? YAML_UTILS.getLastTask(flow), // target task id (the one before of after the task will be inserted)
                     task,
                     position,
                 );

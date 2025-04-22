@@ -4,4 +4,4 @@ namespace: io.kestra.tests
 tasks:
   - id: sleep-short
     type: io.kestra.plugin.core.flow.Sleep
-    duration: PT3S
+    duration: PT10S

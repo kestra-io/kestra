@@ -1319,11 +1319,16 @@ class ExecutionControllerRunnerTest {
         Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
         Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
         Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
+        BulkResponse response = null;
+        try {
+            response = client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/executions/pause/by-query?flowId="+flowId+"&namespace=" + result1.getNamespace(), null),
+                BulkResponse.class
+            );
+        } catch (HttpClientResponseException e){
+            log.error("Error while pausing execution, err: {}", e.getMessage(), e);
+        }
 
-        BulkResponse response = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/executions/pause/by-query?flowId="+flowId+"&namespace=" + result1.getNamespace(), null),
-            BulkResponse.class
-        );
         assertThat(response.getCount()).isEqualTo(3);
     }
 

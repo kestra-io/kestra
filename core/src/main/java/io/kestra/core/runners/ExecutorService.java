@@ -18,6 +18,7 @@ import io.kestra.core.services.*;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.Pause;
@@ -41,6 +42,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
@@ -471,6 +473,7 @@ public class ExecutorService {
 
         List<WorkerTaskResult> list = new ArrayList<>();
         List<ExecutionDelay> executionDelays = new ArrayList<>();
+        List<WorkerTask> onPauses = new ArrayList<>();
 
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             if (taskRun.getState().isRunning()) {
@@ -542,9 +545,7 @@ public class ExecutorService {
                             .collect(Collectors.toCollection(ArrayList::new));
                     }
                 }
-            }
-            // WaitFor case
-            else if (task instanceof LoopUntil waitFor && taskRun.getState().isRunning()) {
+            } else if (task instanceof LoopUntil waitFor && taskRun.getState().isRunning()) {
                 if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                     Output newOutput = waitFor.outputs(taskRun);
                     Variables variables = variablesService.of(StorageContext.forTask(taskRun), newOutput);
@@ -568,6 +569,17 @@ public class ExecutorService {
                         executor.withExecution(executor.getExecution().withTaskRun(updatedTaskRun), "handleWaitFor");
                     }
                 }
+            } else if (task instanceof Pause pause && pause.getOnPause() != null) {
+                // if a Pause task defines an onPause, we must create a TaskRun and a WorkerTask
+                RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+                onPauses.add(WorkerTask.builder()
+                    .runContext(runContext)
+                    .taskRun(TaskRun.of(
+                        executor.getExecution(),
+                        ResolvedTask.of(pause.getOnPause())
+                    ))
+                    .task(pause.getOnPause())
+                    .build());
             }
 
             // If the task is retrying
@@ -579,9 +591,16 @@ public class ExecutorService {
         }
 
         executor.withWorkerTaskDelays(executionDelays, "handleChildWorkerTaskDelay");
-
+        
         if (list.isEmpty()) {
             return executor;
+        }
+
+
+        if (!onPauses.isEmpty()) {
+            List<TaskRun> taskRuns = onPauses.stream().map(WorkerTask::getTaskRun).toList();
+            executor.withTaskRun(taskRuns, "handlePauses");
+            executor.withWorkerTasks(onPauses, "handlePauses");
         }
 
         executor = this.handlePausedDelay(executor, list);

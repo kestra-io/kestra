@@ -42,7 +42,7 @@
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
-    const flow = inject(FLOW_INJECTION_KEY, "");
+    const flow = inject(FLOW_INJECTION_KEY, ref(""));
     const creation = inject(CREATING_INJECTION_KEY, ref(false));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
     const section = inject(SECTION_INJECTION_KEY, ref("tasks"));
@@ -63,8 +63,10 @@
     });
 
     const yaml = ref(
-        YAML_UTILS.extractTask(flow, taskId.value)?.toString() || "",
+        YAML_UTILS.extractTask(flow.value, taskId.value)?.toString() || "",
     );
+
+    const flowBeforeAdd = ref(flow.value);
 
     onBeforeMount(() => {
         const type = YAML_UTILS.parse(yaml.value)?.type ?? null;
@@ -79,7 +81,7 @@
         taskId,
         (value) => {
             yaml.value =
-                YAML_UTILS.extractTask(flow, value)?.toString() || "";
+                YAML_UTILS.extractTask(flow.value, value)?.toString() || "";
         },
         {immediate: true},
     );
@@ -160,7 +162,7 @@
         if (creation.value) {
             if (currentSection === "tasks" && task) {
                 const existing = YAML_UTILS.checkTaskAlreadyExist(
-                    flow,
+                    flowBeforeAdd.value,
                     task,
                 );
 
@@ -173,27 +175,22 @@
                     return;
                 }
 
-
-
                 result = YAML_UTILS.insertTask(
-                    flow,
-                    taskId.value ?? YAML_UTILS.getLastTask(flow), // target task id (the one before of after the task will be inserted)
+                    flowBeforeAdd.value,
+                    taskId.value.length ? taskId.value : YAML_UTILS.getLastTask(flowBeforeAdd.value) ?? "", // target task id (the one before of after the task will be inserted)
                     task,
                     position,
                 );
             } else if (currentSection && SECTIONS_MAP[currentSection.toString()]) {
                 result = YAML_UTILS.insertSection(
                     SECTIONS_MAP[currentSection.toString()],
-                    flow,
+                    flowBeforeAdd.value,
                     task
                 );
             }
-            const newTaskId = YAML_UTILS.parse(yaml.value).id
-            taskId.value = newTaskId;
-            creation.value = false;
         } else if(task){
             result = YAML_UTILS.replaceTaskInDocument(
-                flow,
+                flow.value,
                 taskId.value,
                 task,
             );

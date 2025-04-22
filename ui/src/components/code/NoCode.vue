@@ -61,7 +61,7 @@
     const injectedTaskId = ref<string>(props.taskId)
 
 
-    provide(FLOW_INJECTION_KEY, props.flow);
+    provide(FLOW_INJECTION_KEY, computed(() => props.flow));
     provide(SECTION_INJECTION_KEY, injectedSection);
     provide(TASKID_INJECTION_KEY, injectedTaskId);
     provide(POSITION_INJECTION_KEY, props.position);

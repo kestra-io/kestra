@@ -1,6 +1,6 @@
-import type {InjectionKey, Ref} from "vue"
+import type {ComputedRef, InjectionKey, Ref} from "vue"
 
-export const FLOW_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<string>
+export const FLOW_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
 export const SECTION_INJECTION_KEY = Symbol("section-injection-key") as InjectionKey<Ref<string>>
 export const TASKID_INJECTION_KEY = Symbol("taskid-injection-key") as InjectionKey<Ref<string>>
 export const POSITION_INJECTION_KEY = Symbol("position-injection-key") as InjectionKey<"after" | "before">

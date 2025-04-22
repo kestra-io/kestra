@@ -121,7 +121,7 @@
     document.addEventListener("keydown", saveEvent);
 
     const creation = inject(CREATING_INJECTION_KEY);
-    const flow = inject(FLOW_INJECTION_KEY, "");
+    const flow = inject(FLOW_INJECTION_KEY, ref(""));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
 
     const props = defineProps({
@@ -273,7 +273,7 @@
             errors: NoCodeElement[];
             finally: NoCodeElement[];
             afterExecution: NoCodeElement[];
-        }>(flow);
+        }>(flow.value);
         return [
             getSectionTitle("tasks", parsedFlow?.tasks ?? []),
             getSectionTitle("triggers", parsedFlow?.triggers ?? []),

@@ -43,7 +43,7 @@
 
     const emits = defineEmits(["remove", "reorder"]);
 
-    const flow = inject(FLOW_INJECTION_KEY, "");
+    const flow = inject(FLOW_INJECTION_KEY, ref(""));
 
     const props = defineProps({
         items: {
@@ -69,7 +69,7 @@
                     if(ID){
                         emits(
                             "remove",
-                            YAML_UTILS.deleteTask(flow, ID, title.toUpperCase()),
+                            YAML_UTILS.deleteTask(flow.value, ID, title.toUpperCase()),
                         );
                     }
                     expanded.value = expanded.value.filter((v) => v !== title);
@@ -94,7 +94,7 @@
         const newIndex = direction === "up" ? index - 1 : index + 1;
         emits(
             "reorder",
-            YAML_UTILS.swapTasks(flow, elementID, items[newIndex].id),
+            YAML_UTILS.swapTasks(flow.value, elementID, items[newIndex].id),
         );
     };
 </script>

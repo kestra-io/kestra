@@ -150,10 +150,10 @@
             return;
         }
 
-        const task = YAML_UTILS.extractTask(
-            yaml.value,
-            YAML_UTILS.parse(yaml.value).id,
-        );
+        const taskObject = YAML_UTILS.parse(yaml.value);
+        taskObject.id = taskObject.id?.length ? taskObject.id : undefined;
+
+        const task = YAML_UTILS.stringify(taskObject);
 
         let result: string = "";
 

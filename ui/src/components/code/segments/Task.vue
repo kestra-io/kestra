@@ -35,24 +35,19 @@
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../../utils/constants";
-    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY} from "../injectionKeys";
+    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
-    const props = withDefaults(defineProps<{
-        section: "tasks" | "triggers" | "error handlers" | "finally" | "after execution";
-        identifier: string;
-        position?: "before" | "after";
-    }>(), {
-        position: "after"
-    });
 
     const flow = inject(FLOW_INJECTION_KEY, "");
     const creation = inject(CREATING_INJECTION_KEY, ref(false));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
-    const injectedSectionId = inject(SECTION_INJECTION_KEY, "button");
+    const section = inject(SECTION_INJECTION_KEY, ref("tasks"));
+    const taskId = inject(TASKID_INJECTION_KEY, ref(""));
+    const position = inject(POSITION_INJECTION_KEY, "after");
 
     const store = useStore();
 
@@ -68,7 +63,7 @@
     });
 
     const yaml = ref(
-        YAML_UTILS.extractTask(flow, props.identifier)?.toString() || "",
+        YAML_UTILS.extractTask(flow, taskId.value)?.toString() || "",
     );
 
     onBeforeMount(() => {
@@ -77,18 +72,14 @@
     });
 
     const validationSection = computed(() =>
-        SECTIONS[props.section === "triggers" ? "TRIGGERS" : "TASKS"]
+        SECTIONS[section.value === "triggers" ? "TRIGGERS" : "TASKS"]
     )
 
     watch(
-        () => props.identifier,
+        taskId,
         (value) => {
-            if (value === "new") {
-                yaml.value = "";
-            } else {
-                yaml.value =
-                    YAML_UTILS.extractTask(flow, value)?.toString() || "";
-            }
+            yaml.value =
+                YAML_UTILS.extractTask(flow, value)?.toString() || "";
         },
         {immediate: true},
     );
@@ -102,8 +93,6 @@
             }
         },
     );
-
-
 
     const CURRENT = ref<string|null>(null);
     const validateTask = (task: string) => {
@@ -164,50 +153,46 @@
             YAML_UTILS.parse(yaml.value).id,
         );
 
-        const isCreation =
-            creation && (!props.identifier || props.identifier === "new");
+        let result: string = "";
 
-        let result;
+        const currentSection = section.value;
 
-        const currentSection = injectedSectionId.value;
-
-        if (isCreation) {
-            if (currentSection === "tasks" && CURRENT.value) {
+        if (creation.value) {
+            if (currentSection === "tasks" && task) {
                 const existing = YAML_UTILS.checkTaskAlreadyExist(
                     flow,
-                    CURRENT.value,
+                    task,
                 );
 
                 if (existing) {
                     store.dispatch("core/showMessage", {
                         variant: "error",
                         title: "Task with same ID already exist",
-                        message: `Task in ${props.section} block  with ID: ${existing} already exist in the flow.`,
+                        message: `Task in ${section} block  with ID: ${existing} already exist in the flow.`,
                     });
                     return;
                 }
 
-                const taskId = props.identifier
-
+                const taskId = YAML_UTILS.parse(yaml.value).id
 
                 result = YAML_UTILS.insertTask(
                     flow,
                     taskId,
-                    task!,
-                    props.position,
+                    task,
+                    position,
                 );
             } else if (currentSection && SECTIONS_MAP[currentSection.toString()]) {
                 result = YAML_UTILS.insertSection(
                     SECTIONS_MAP[currentSection.toString()],
                     flow,
-                    CURRENT.value
+                    task
                 );
             }
-        } else {
+        } else if(task){
             result = YAML_UTILS.replaceTaskInDocument(
                 flow,
-                props.identifier,
-                task!,
+                taskId.value,
+                task,
             );
         }
 

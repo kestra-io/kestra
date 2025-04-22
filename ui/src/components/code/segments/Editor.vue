@@ -46,9 +46,6 @@
         <Task
             v-else
             :key="taskIdentifier"
-            :identifier="taskIdentifier"
-            :section="taskSection"
-            :position="taskPosition"
             @exit-task="exitTask"
             @update-task="onTaskUpdate"
             @update-documentation="(task) => emits('updateDocumentation', task)"
@@ -71,7 +68,7 @@
     import MetadataInputs from "../../flows/MetadataInputs.vue";
     import TaskBasic from "../../flows/tasks/TaskBasic.vue";
 
-    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
+    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
 
     import Task from "./Task.vue";
 
@@ -84,7 +81,6 @@
 
     const sectionInjected = inject(SECTION_INJECTION_KEY, ref(""));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
-    const taskPosition = inject(POSITION_INJECTION_KEY, "after");
 
     watch(
         [sectionInjected, taskId],

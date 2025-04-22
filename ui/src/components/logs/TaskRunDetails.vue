@@ -44,7 +44,7 @@
                         :min-item-size="1"
                         key-field="index"
                         class="log-lines"
-                        :style="{maxHeight: currentTaskRuns.length === 1 ? 'calc(100vh - 350px)' : '50vh'}"
+                        :class="{'single-line': currentTaskRuns.length === 1}"
                         :ref="el => logsScrollerRef(el, currentTaskRunIndex, attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
                         @resize="scrollToBottomFailedTask"
                     >
@@ -727,12 +727,17 @@
 
         .log-lines {
             transition: max-height 0.2s ease-out;
+            max-height: 50vh;
+
+            &.single-line {
+                max-height: calc(100vh - 250px);
+            }
 
             .line {
                 padding: 1rem;
 
                 &.cursor {
-                    background-color: var(--bs-gray-300)
+                    background-color: var(--bs-gray-300);
                 }
             }
         }

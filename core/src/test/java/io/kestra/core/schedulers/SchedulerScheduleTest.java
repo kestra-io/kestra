@@ -23,6 +23,7 @@ import io.kestra.core.runners.FlowListeners;
 import io.kestra.core.utils.Await;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
@@ -55,6 +56,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     protected QueueInterface<LogEntry> logQueue;
 
+    private String tenantId;
+
     private Schedule.ScheduleBuilder<?, ?> createScheduleTrigger(String zone, String cron, String triggerId, boolean invalid) {
         return Schedule.builder()
             .id(triggerId + (invalid ? "-invalid" : ""))
@@ -66,10 +69,10 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
             ));
     }
 
-    private FlowWithSource createScheduleFlow(String zone, String triggerId, boolean invalid) {
+    private FlowWithSource createScheduleFlow(String tenantId, String zone, String triggerId, boolean invalid) {
         Schedule schedule = createScheduleTrigger(zone, "0 * * * *", triggerId, invalid).build();
 
-        return createFlow(Collections.singletonList(schedule));
+        return createFlow(tenantId, Collections.singletonList(schedule));
     }
 
     private ZonedDateTime date(int minus) {
@@ -85,6 +88,11 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         );
     }
 
+    @BeforeEach
+    void init() {
+        // making sure tests are logically isolated
+        this.tenantId = FriendlyId.createFriendlyId();
+    }
 
     @Test
     void schedule() throws Exception {
@@ -98,8 +106,8 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
 
         // Create a flow with a backfill of 5 hours
         // then flow should be executed 6 times
-        FlowWithSource invalid = createScheduleFlow("Asia/Delhi", "schedule", true);
-        FlowWithSource flow = createScheduleFlow("Europe/Paris", "schedule", false);
+        FlowWithSource invalid = createScheduleFlow(this.tenantId, "Asia/Delhi", "schedule", true);
+        FlowWithSource flow = createScheduleFlow(this.tenantId,"Europe/Paris", "schedule", false);
 
         flowRepository.create(GenericFlow.of(flow));
         doReturn(List.of(invalid, flow))
@@ -109,6 +117,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Trigger trigger = Trigger
             .builder()
             .triggerId("schedule")
+            .tenantId(this.tenantId)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .date(ZonedDateTime.now())
@@ -169,7 +178,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
 
-        FlowWithSource flow = createScheduleFlow("Europe/Paris", "retroSchedule", false);
+        FlowWithSource flow = createScheduleFlow(this.tenantId,"Europe/Paris", "retroSchedule", false);
 
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
@@ -178,6 +187,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Trigger trigger = Trigger
             .builder()
             .triggerId("retroSchedule")
+            .tenantId(this.tenantId)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .date(ZonedDateTime.now())
@@ -202,7 +212,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
     void recoverALLMissing() throws Exception {
         // mock flow listeners
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
-        FlowWithSource flow = createScheduleFlow(null, "recoverALLMissing", false);
+        FlowWithSource flow = createScheduleFlow(this.tenantId,null, "recoverALLMissing", false);
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -211,6 +221,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Trigger lastTrigger = Trigger
             .builder()
             .triggerId("recoverALLMissing")
+            .tenantId(this.tenantId)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .date(lastDate)
@@ -247,7 +258,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Schedule schedule = createScheduleTrigger(null, "0 * * * *", "recoverLASTMissing", false)
             .recoverMissedSchedules(RecoverMissedSchedules.LAST)
             .build();
-        FlowWithSource flow = createFlow(List.of(schedule));
+        FlowWithSource flow = createFlow(this.tenantId, List.of(schedule));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -256,6 +267,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Trigger lastTrigger = Trigger
             .builder()
             .triggerId("recoverLASTMissing")
+            .tenantId(this.tenantId)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .date(lastDate)
@@ -293,7 +305,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Schedule schedule = createScheduleTrigger(null, "0 * * * *", "recoverNONEMissing", false)
             .recoverMissedSchedules(RecoverMissedSchedules.NONE)
             .build();
-        FlowWithSource flow = createFlow(List.of(schedule));
+        FlowWithSource flow = createFlow(this.tenantId,List.of(schedule));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -302,6 +314,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Trigger lastTrigger = Trigger
             .builder()
             .triggerId("recoverNONEMissing")
+            .tenantId(this.tenantId)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .date(lastDate)
@@ -325,7 +338,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         String triggerId = "backfill";
 
-        FlowWithSource flow = createScheduleFlow("Europe/Paris", triggerId, false);
+        FlowWithSource flow = createScheduleFlow(this.tenantId,"Europe/Paris", triggerId, false);
 
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
@@ -335,6 +348,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Trigger trigger = Trigger
             .builder()
             .triggerId(triggerId)
+            .tenantId(this.tenantId)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .build();
@@ -381,7 +395,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         FlowListeners flowListenersServiceSpy = spy(this.flowListenersService);
         String triggerId = "disabled";
 
-        FlowWithSource flow = createScheduleFlow("Europe/Paris", triggerId, false);
+        FlowWithSource flow = createScheduleFlow(this.tenantId,"Europe/Paris", triggerId, false);
 
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
@@ -393,6 +407,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Trigger trigger = Trigger
             .builder()
             .triggerId(triggerId)
+            .tenantId(this.tenantId)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .date(ZonedDateTime.now())
@@ -423,7 +438,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Schedule schedule = createScheduleTrigger("Europe/Paris", "* * * * *", "stopAfter", false)
             .stopAfter(List.of(State.Type.SUCCESS))
             .build();
-        FlowWithSource flow = createFlow(Collections.singletonList(schedule));
+        FlowWithSource flow = createFlow(this.tenantId,Collections.singletonList(schedule));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -433,6 +448,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Trigger lastTrigger = Trigger
             .builder()
             .triggerId("stopAfter")
+            .tenantId(this.tenantId)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .date(ZonedDateTime.now().minusMinutes(1L))
@@ -484,7 +500,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
                 )
             )
             .build();
-        FlowWithSource flow = createFlow(Collections.singletonList(schedule));
+        FlowWithSource flow = createFlow(this.tenantId,Collections.singletonList(schedule));
         doReturn(List.of(flow))
             .when(flowListenersServiceSpy)
             .flows();
@@ -493,6 +509,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         Trigger lastTrigger = Trigger
             .builder()
             .triggerId("failedEvaluation")
+            .tenantId(this.tenantId)
             .flowId(flow.getId())
             .namespace(flow.getNamespace())
             .date(ZonedDateTime.now().minusMinutes(1L))
@@ -532,6 +549,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         String triggerId = FriendlyId.createFriendlyId();
         Schedule schedule = Schedule.builder().id(triggerId).type(Schedule.class.getName()).cron("*/5 * * * * *").withSeconds(true).build();
         FlowWithSource flow = createLongRunningFlow(
+            this.tenantId,
             Collections.singletonList(schedule),
             List.of(
                 PluginDefault.builder()
@@ -604,6 +622,7 @@ public class SchedulerScheduleTest extends AbstractSchedulerTest {
         String triggerId = FriendlyId.createFriendlyId();
         Schedule schedule = Schedule.builder().id(triggerId).type(Schedule.class.getName()).cron("*/5 * * * * *").withSeconds(true).build();
         FlowWithSource flow = createLongRunningFlow(
+            this.tenantId,
             Collections.singletonList(schedule),
             List.of(
                 PluginDefault.builder()

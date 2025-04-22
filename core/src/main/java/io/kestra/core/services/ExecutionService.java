@@ -6,11 +6,7 @@ import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.conditions.ConditionContext;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.executions.ExecutionKilledExecution;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -106,6 +102,9 @@ public class ExecutionService {
 
     @Inject
     private PluginDefaultService pluginDefaultService;
+
+    @Inject
+    private VariablesService variablesService;
 
     public Execution getExecutionIfPause(final String tenant, final @NotNull String executionId, boolean withACL) {
         Execution execution = getExecution(tenant, executionId, withACL);
@@ -340,7 +339,8 @@ public class ExecutionService {
                 TaskRun newTaskRun = originalTaskRun.withState(newState);
 
                 if (task instanceof Pause pauseTask && pauseTask.getOnResume() != null) {
-                    newTaskRun = newTaskRun.withOutputs(pauseTask.generateOutputs(onResumeInputs));
+                    Variables variables = variablesService.of(StorageContext.forTask(originalTaskRun), pauseTask.generateOutputs(onResumeInputs));
+                    newTaskRun = newTaskRun.withOutputs(variables);
                 }
 
                 // if it's a Pause task with no subtask, we terminate the task

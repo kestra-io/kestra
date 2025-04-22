@@ -9,6 +9,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.State.History;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.SubflowExecutionResult;
+import io.kestra.core.services.VariablesService;
 import io.micronaut.context.ApplicationContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,7 @@ class SubflowTest {
 
     @BeforeEach
     void beforeEach() {
+        Mockito.when(applicationContext.getBean(VariablesService.class)).thenReturn(new VariablesService());
         Mockito.when(runContext.logger()).thenReturn(LOG);
         Mockito.when(runContext.getApplicationContext()).thenReturn(applicationContext);
     }
@@ -83,7 +85,7 @@ class SubflowTest {
         // When
         Optional<SubflowExecutionResult> result = subflow.createSubflowExecutionResult(
             runContext,
-            TaskRun.builder().state(DEFAULT_SUCCESS_STATE).build(),
+            TaskRun.builder().state(DEFAULT_SUCCESS_STATE).namespace("io.kestra.test").flowId("flow").executionId("execution").taskId("task").id("id").build(),
             Flow.builder().build(),
             Execution.builder().id(EXECUTION_ID).state(DEFAULT_SUCCESS_STATE).build()
         );
@@ -96,9 +98,9 @@ class SubflowTest {
             .outputs(Collections.emptyMap())
             .build()
             .toMap();
-        assertThat(result.get().getParentTaskRun().getOutputs()).isEqualTo(expected);
+        assertThat(result.get().getParentTaskRun().getOutputs()).containsAllEntriesOf(expected);
 
-        assertThat(result.get().getParentTaskRun().getAttempts().get(0).getState().getHistories())
+        assertThat(result.get().getParentTaskRun().getAttempts().getFirst().getState().getHistories())
             .extracting(History::getState)
             .containsExactly(
                 State.Type.CREATED,
@@ -125,7 +127,7 @@ class SubflowTest {
         // When
         Optional<SubflowExecutionResult> result = subflow.createSubflowExecutionResult(
             runContext,
-            TaskRun.builder().state(DEFAULT_SUCCESS_STATE).build(),
+            TaskRun.builder().state(DEFAULT_SUCCESS_STATE).namespace("io.kestra.test").flowId("flow").executionId("execution").taskId("task").id("id").build(),
             Flow.builder().build(),
             Execution.builder().id(EXECUTION_ID).state(DEFAULT_SUCCESS_STATE).build()
         );
@@ -138,7 +140,7 @@ class SubflowTest {
             .outputs(outputs)
             .build()
             .toMap();
-        assertThat(result.get().getParentTaskRun().getOutputs()).isEqualTo(expected);
+        assertThat(result.get().getParentTaskRun().getOutputs()).containsAllEntriesOf(expected);
 
         assertThat(result.get().getParentTaskRun().getAttempts().get(0).getState().getHistories())
             .extracting(History::getState)
@@ -164,7 +166,7 @@ class SubflowTest {
         // When
         Optional<SubflowExecutionResult> result = new Subflow().createSubflowExecutionResult(
             runContext,
-            TaskRun.builder().state(DEFAULT_SUCCESS_STATE).build(),
+            TaskRun.builder().state(DEFAULT_SUCCESS_STATE).namespace("io.kestra.test").flowId("flow").executionId("execution").taskId("task").id("id").build(),
             flow,
             Execution.builder().id(EXECUTION_ID).state(DEFAULT_SUCCESS_STATE).build()
         );
@@ -179,9 +181,9 @@ class SubflowTest {
             .outputs(Map.of(output.getId(), output.getValue()))
             .build()
             .toMap();
-        assertThat(outputs).isEqualTo(expected);
+        assertThat(outputs).containsAllEntriesOf(expected);
 
-        assertThat(result.get().getParentTaskRun().getAttempts().get(0).getState().getHistories())
+        assertThat(result.get().getParentTaskRun().getAttempts().getFirst().getState().getHistories())
             .extracting(History::getState)
             .containsExactly(
                 State.Type.CREATED,

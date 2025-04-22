@@ -1,6 +1,7 @@
 package io.kestra.runner.postgres;
 
 import io.kestra.core.models.executions.TaskRun;
+import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.WorkerTaskResult;
@@ -24,7 +25,7 @@ class PostgresQueueTest extends JdbcQueueTest {
                 .namespace("namespace")
                 .flowId("flowId")
                 .state(new State().withState(State.Type.SUCCESS))
-                .outputs(Map.of("value", "\u0000"))
+                .outputs(Variables.inMemory(Map.of("value", "\u0000")))
                 .build()
             )
             .build();

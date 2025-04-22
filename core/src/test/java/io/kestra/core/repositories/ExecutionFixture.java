@@ -1,5 +1,7 @@
 package io.kestra.core.repositories;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 import com.google.common.collect.ImmutableMap;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -16,6 +18,7 @@ class ExecutionFixture {
     public static final Execution EXECUTION_1 = Execution.builder()
         .id(IdUtils.create())
         .namespace("io.kestra.unittest")
+        .tenantId(MAIN_TENANT)
         .flowId("full")
         .flowRevision(1)
         .state(new State())
@@ -40,6 +43,7 @@ class ExecutionFixture {
     public static final Execution EXECUTION_2 = Execution.builder()
         .id(IdUtils.create())
         .namespace("io.kestra.unittest")
+        .tenantId(MAIN_TENANT)
         .flowId("full")
         .flowRevision(1)
         .state(new State())

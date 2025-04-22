@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
@@ -33,7 +34,7 @@ class WriteTest {
         assertThat(output).isNotNull();
         assertThat(output.getUri()).isNotNull();
 
-        InputStream inputStream = storageInterface.get(null, null, output.getUri());
+        InputStream inputStream = storageInterface.get(MAIN_TENANT, null, output.getUri());
         assertThat(inputStream).isNotNull();
         inputStream.close();
     }

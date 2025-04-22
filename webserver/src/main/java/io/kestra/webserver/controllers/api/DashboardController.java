@@ -43,7 +43,7 @@ import java.util.Optional;
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
 @Validated
-@Controller("/api/v1/dashboards")
+@Controller("/api/v1/main/dashboards")
 @Slf4j
 public class DashboardController {
 

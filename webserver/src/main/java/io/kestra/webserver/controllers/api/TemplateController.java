@@ -1,5 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.models.validations.ManualConstraintViolation;
@@ -43,7 +45,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 @Validated
-@Controller("/api/v1/templates")
+@Controller("/api/v1/main/templates")
 @TemplateEnabled
 @Deprecated(forRemoval = true)
 @Hidden
@@ -88,6 +90,7 @@ public class TemplateController {
     public HttpResponse<Template> create(
         @Parameter(description = "The template") @Valid @Body Template template
     ) throws ConstraintViolationException {
+        template.setTenantId(MAIN_TENANT);
         if (templateRepository.findById(tenantService.resolveTenant(), template.getNamespace(), template.getId()).isPresent()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
                 "Template id already exists",
@@ -109,6 +112,7 @@ public class TemplateController {
         @Parameter(description = "The template id") @PathVariable String id,
         @Parameter(description = "The template") @Valid @Body Template template
     ) throws ConstraintViolationException {
+        template.setTenantId(MAIN_TENANT);
         Optional<Template> existingTemplate = templateRepository.findById(tenantService.resolveTenant(), namespace, id);
 
         if (existingTemplate.isEmpty()) {
@@ -156,6 +160,7 @@ public class TemplateController {
         @Parameter(description = "A list of templates") @Body @Valid List<Template> templates,
         @Parameter(description = "If missing template should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {
+        templates.forEach(template -> template.setTenantId(MAIN_TENANT));
         return new ArrayList<>(this
             .updateCompleteNamespace(
                 namespace,
@@ -248,7 +253,7 @@ public class TemplateController {
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
                 try {
                     Template templateParse = YamlParser.parse(template, Template.class);
-
+                    templateParse.setTenantId(MAIN_TENANT);
                     validateConstraintViolationBuilder.flow(templateParse.getId());
                     validateConstraintViolationBuilder.namespace(templateParse.getNamespace());
 
@@ -271,7 +276,7 @@ public class TemplateController {
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ) throws IOException {
-        var templates = templateRepository.find(tenantService.resolveTenant(), query, namespace);
+        var templates = templateRepository.find(query, tenantService.resolveTenant(), namespace);
         var bytes = zipTemplates(templates);
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"templates.zip\"");
     }
@@ -303,7 +308,7 @@ public class TemplateController {
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ){
         List<Template> list = templateRepository
-            .find(tenantService.resolveTenant(), query, namespace)
+            .find(query, tenantService.resolveTenant(), namespace)
             .stream()
             .peek(templateRepository::delete)
             .toList();
@@ -358,6 +363,7 @@ public class TemplateController {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
                 Template parsed = YamlParser.parse(source, Template.class);
+                parsed.setTenantId(MAIN_TENANT);
                 importTemplate(parsed);
             }
         } else if (fileName.endsWith(".zip")) {
@@ -370,6 +376,7 @@ public class TemplateController {
 
                     String source = new String(archive.readAllBytes());
                     Template parsed = YamlParser.parse(source, Template.class);
+                    parsed.setTenantId(MAIN_TENANT);
                     importTemplate(parsed);
                 }
             }

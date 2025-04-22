@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -141,7 +142,7 @@ public class PauseTest {
         protected QueueInterface<Execution> executionQueue;
 
         public void run(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause", null, null, Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
             Flow flow = flowRepository.findByExecution(execution);
 
@@ -166,7 +167,7 @@ public class PauseTest {
         }
 
         public void runDelay(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-delay", null, null, Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-delay", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
@@ -184,7 +185,7 @@ public class PauseTest {
         }
 
         public void runDurationFromInput(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-duration-from-input", null, null, Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-duration-from-input", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
@@ -202,14 +203,14 @@ public class PauseTest {
         }
 
         public void runParallelDelay(RunnerUtils runnerUtils) throws TimeoutException, QueueException {
-            Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-parallel-pause", Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "each-parallel-pause", Duration.ofSeconds(30));
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
             assertThat(execution.getTaskRunList()).hasSize(7);
         }
 
         public void runTimeout(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-timeout", null, null, Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-timeout", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
@@ -228,7 +229,7 @@ public class PauseTest {
         }
 
         public void runEmptyTasks(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause_no_tasks", null, null, Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_no_tasks", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
             Flow flow = flowRepository.findByExecution(execution);
 
@@ -254,7 +255,7 @@ public class PauseTest {
 
         @SuppressWarnings("unchecked")
         public void runOnResume(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause_on_resume", null, null, Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_on_resume", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
             Flow flow = flowRepository.findByExecution(execution);
 
@@ -286,11 +287,11 @@ public class PauseTest {
             Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").getFirst().getOutputs().get("values");
             assertThat(outputs.get("asked")).isEqualTo("restarted");
             assertThat((String) outputs.get("data")).startsWith("kestra://");
-            assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, URI.create((String) outputs.get("data")))))).isEqualTo(executionId);
+            assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, URI.create((String) outputs.get("data")))))).isEqualTo(executionId);
         }
 
         public void runOnResumeMissingInputs(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause_on_resume", null, null, Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_on_resume", null, null, Duration.ofSeconds(30));
             Flow flow = flowRepository.findByExecution(execution);
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
@@ -305,7 +306,7 @@ public class PauseTest {
 
         @SuppressWarnings("unchecked")
         public void runOnResumeOptionalInputs(RunnerUtils runnerUtils) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause_on_resume_optional", null, null, Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_on_resume_optional", null, null, Duration.ofSeconds(30));
             String executionId = execution.getId();
             Flow flow = flowRepository.findByExecution(execution);
 
@@ -326,7 +327,7 @@ public class PauseTest {
         }
 
         public void runDurationWithBehavior(RunnerUtils runnerUtils, Pause.Behavior behavior) throws Exception {
-            Execution execution = runnerUtils.runOneUntilPaused(null, "io.kestra.tests", "pause-behavior", null, (unused, _unused) -> Map.of("behavior", behavior), Duration.ofSeconds(30));
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-behavior", null, (unused, _unused) -> Map.of("behavior", behavior), Duration.ofSeconds(30));
             String executionId = execution.getId();
 
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);

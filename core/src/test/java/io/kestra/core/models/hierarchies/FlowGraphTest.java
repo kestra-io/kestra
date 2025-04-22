@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
@@ -300,7 +301,7 @@ class FlowGraphTest {
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> graphService.flowGraph(flow, Collections.singletonList("root.launch")));
         assertThat(illegalArgumentException.getMessage()).isEqualTo("Can't expand subflow task 'launch' because namespace and/or flowId contains dynamic values. This can only be viewed on an execution.");
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-flow-dynamic", 1, (f, e) -> Map.of(
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "task-flow-dynamic", 1, (f, e) -> Map.of(
             "namespace", f.getNamespace(),
             "flowId", "switch"
         ));
@@ -377,7 +378,10 @@ class FlowGraphTest {
 
         File file = new File(resource.getFile());
 
-        return YamlParser.parse(file, FlowWithSource.class).toBuilder().source(Files.readString(file.toPath())).build();
+        return YamlParser.parse(file, FlowWithSource.class).toBuilder()
+            .tenantId(MAIN_TENANT)
+            .source(Files.readString(file.toPath()))
+            .build();
     }
 
     private static AbstractGraph node(FlowGraph flowGraph, String taskId) {

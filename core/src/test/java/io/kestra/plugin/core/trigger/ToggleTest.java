@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.trigger;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.KestraTest;
@@ -60,7 +61,7 @@ class ToggleTest {
             }
         });
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger", "trigger-toggle");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger", "trigger-toggle");
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(1);

@@ -2,9 +2,15 @@ package io.kestra.repository.h2;
 
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowWithException;
+import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.repository.AbstractJdbcFlowRepositoryTest;
+import io.kestra.plugin.core.flow.Template;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
+import java.util.Collections;
+import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -12,7 +18,10 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.spy;
 
 public class H2FlowRepositoryTest extends AbstractJdbcFlowRepositoryTest {
 
@@ -25,7 +34,7 @@ public class H2FlowRepositoryTest extends AbstractJdbcFlowRepositoryTest {
     @Test
     @Override
     public void findSourceCode() {
-        List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "io.kestra.plugin.core.condition.MultipleCondition", null, null);
+        List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "io.kestra.plugin.core.condition.MultipleCondition", MAIN_TENANT, null);
 
         // FIXME since the big task renaming, H2 return 6 instead of 2
         //  as no core change this is a test artefact, or a latent bug in H2.
@@ -46,5 +55,42 @@ public class H2FlowRepositoryTest extends AbstractJdbcFlowRepositoryTest {
     protected void init() throws IOException, URISyntaxException {
         super.setup();
         super.init();
+    }
+
+    @SuppressWarnings("deprecation")
+    @Test
+    void templateDisabled() {
+        Template template = Template.builder()
+            .id(IdUtils.create())
+            .type(Template.class.getName())
+            .namespace(TEST_FLOW_ID)
+            .tenantId(MAIN_TENANT)
+            .templateId("testTemplate")
+            .build();
+
+        Template templateSpy = spy(template);
+
+        doReturn(Collections.emptyList())
+            .when(templateSpy)
+            .allChildTasks();
+
+        Flow flow = Flow.builder()
+            .id(IdUtils.create())
+            .namespace(TEST_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .tasks(Collections.singletonList(templateSpy))
+            .build();
+
+        flow = flowRepository.create(GenericFlow.of(flow));
+
+        try {
+            Optional<Flow> found = flowRepository.findById(MAIN_TENANT, flow.getNamespace(), flow.getId());
+
+            assertThat(found.isPresent()).isEqualTo(true);
+            assertThat(found.get() instanceof FlowWithException).isEqualTo(true);
+            assertThat(((FlowWithException) found.get()).getException()).contains("Templates are disabled");
+        } finally {
+            deleteFlow(flow);
+        }
     }
 }

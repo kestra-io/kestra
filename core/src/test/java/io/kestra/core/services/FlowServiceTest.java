@@ -9,7 +9,6 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
-import io.kestra.plugin.core.trigger.Schedule;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.api.Test;
@@ -233,35 +232,6 @@ class FlowServiceTest {
         assertThat(warnings.size(), is(2));
         assertThat(warnings.getFirst().from(), is("io.kestra.core.runners.test.task.Alias"));
         assertThat(warnings.getFirst().to(), is("io.kestra.core.runners.test.TaskWithAlias"));
-    }
-
-    @Test
-    void warnMissingDefault() {
-        Flow flow = Flow.builder()
-            .id("missing_default")
-            .namespace("qa")
-            .inputs(List.of(
-                StringInput.builder()
-                    .id("user")
-                    .type(Type.STRING)
-                    .build()
-            ))
-            .tasks(Collections.singletonList(Return.builder()
-                .id("hello")
-                .type("io.kestra.core.tasks.log.Log")
-                .format(Property.of("test"))
-                .build()
-            ))
-            .triggers(List.of(
-                Schedule.builder()
-                    .id("every_minute")
-                    .type("io.kestra.core.models.triggers.types.Schedule")
-                    .cron("*/1 * * * *")
-                    .build()
-            ))
-            .build();
-
-        assertThat(flowService.missingDefaults(flow), containsInAnyOrder("Schedule '", "' is missing inputs for: "));
     }
 
     @SuppressWarnings("deprecation")

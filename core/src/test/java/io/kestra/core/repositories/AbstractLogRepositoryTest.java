@@ -44,7 +44,7 @@ public abstract class AbstractLogRepositoryTest {
         LogEntry.LogEntryBuilder builder = logEntry(Level.INFO);
 
         ArrayListTotal<LogEntry> find = logRepository.find(Pageable.UNPAGED, null, null);
-        assertThat(find.size()).isEqualTo(0);
+        assertThat(find.size()).isZero();
 
 
         LogEntry save = logRepository.save(builder.build());
@@ -63,7 +63,7 @@ public abstract class AbstractLogRepositoryTest {
                 .value(Instant.now().minus(1, ChronoUnit.HOURS))
                 .build());
         find = logRepository.find(Pageable.UNPAGED,  "doe", filters);
-        assertThat(find.size()).isEqualTo(0);
+        assertThat(find.size()).isZero();
 
         find = logRepository.find(Pageable.UNPAGED, null, null);
         assertThat(find.size()).isEqualTo(1);
@@ -101,7 +101,7 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(countDeleted).isEqualTo(1);
 
         list = logRepository.findByExecutionIdAndTaskId(null, save.getExecutionId(), save.getTaskId(), null);
-        assertThat(list.size()).isEqualTo(0);
+        assertThat(list.size()).isZero();
     }
 
     @Test
@@ -147,7 +147,7 @@ public abstract class AbstractLogRepositoryTest {
 
         find = logRepository.findByExecutionIdAndTaskRunId(null, executionId, logEntry2.getTaskRunId(), null, Pageable.from(10, 10));
 
-        assertThat(find.size()).isEqualTo(0);
+        assertThat(find.size()).isZero();
     }
 
     @Test
@@ -158,14 +158,14 @@ public abstract class AbstractLogRepositoryTest {
         logRepository.deleteByQuery(null, log1.getExecutionId(), null, (String) null, null, null);
 
         ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
-        assertThat(find.size()).isEqualTo(0);
+        assertThat(find.size()).isZero();
 
         logRepository.save(log1);
 
         logRepository.deleteByQuery(null, "io.kestra.unittest", "flowId", List.of(Level.TRACE, Level.DEBUG, Level.INFO), null, ZonedDateTime.now().plusMinutes(1));
 
         find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
-        assertThat(find.size()).isEqualTo(0);
+        assertThat(find.size()).isZero();
     }
 
     @Test
@@ -176,14 +176,14 @@ public abstract class AbstractLogRepositoryTest {
         logRepository.deleteByQuery(null, log1.getExecutionId(), null, (String) null, null, null);
 
         ArrayListTotal<LogEntry> find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
-        assertThat(find.size()).isEqualTo(0);
+        assertThat(find.size()).isZero();
 
         logRepository.save(log1);
 
         logRepository.deleteByQuery(null, "io.kestra.unittest", "flowId", null);
 
         find = logRepository.findByExecutionId(null, log1.getExecutionId(), null, Pageable.from(1, 50));
-        assertThat(find.size()).isEqualTo(0);
+        assertThat(find.size()).isZero();
     }
 
     @Test

@@ -1,8 +1,7 @@
 <template>
-    <el-dropdown v-if="enabled">
-        <el-button type="default" @click="kill(true)">
+    <el-dropdown v-if="enabled" placement="bottom-end">
+        <el-button type="default" :icon="Circle" @click="kill(true)">
             {{ $t("kill") }}
-            <DotsVertical title="" />
         </el-button>
         <template #dropdown>
             <el-dropdown-menu class="m-dropdown-menu">
@@ -26,7 +25,7 @@
 </template>
 <script setup>
     import StopCircleOutline from "vue-material-design-icons/StopCircleOutline.vue";
-    import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import Circle from "vue-material-design-icons/Circle.vue";
 </script>
 <script>
 
@@ -73,5 +72,15 @@
 <style lang="scss" scoped>
     button.el-button {
         cursor: pointer !important;
+        border-color: var(--ks-border-error);
+        color: var(--ks-content-error);
+    }
+    .m-dropdown-menu {
+        width: fit-content !important;
+        
+        :deep(.el-dropdown-menu__item:hover) {
+            background-color: var(--ks-log-background-error) !important;
+            color: var(--ks-content-error) !important;
+        }
     }
 </style>

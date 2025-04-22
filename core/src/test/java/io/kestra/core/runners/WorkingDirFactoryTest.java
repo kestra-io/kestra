@@ -23,6 +23,6 @@ class WorkingDirFactoryTest {
         // When
         Path path = workingDirectory.path();
         // Then
-        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isEqualTo(true);
+        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isTrue();
     }
 }

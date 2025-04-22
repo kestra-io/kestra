@@ -25,14 +25,14 @@ class ScheduleValidationTest {
             .cron("* * * * *")
             .build();
 
-        assertThat(modelValidator.isValid(build).isEmpty()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).isEmpty()).isTrue();
 
         build = Schedule.builder()
             .type(Schedule.class.getName())
             .cron("$ome Inv@lid Cr0n")
             .build();
 
-        assertThat(modelValidator.isValid(build).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).isPresent()).isTrue();
         assertThat(modelValidator.isValid(build).get().getMessage()).contains("invalid cron expression");
     }
 
@@ -44,7 +44,7 @@ class ScheduleValidationTest {
             .cron("@hourly")
             .build();
 
-        assertThat(modelValidator.isValid(build).isEmpty()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).isEmpty()).isTrue();
     }
 
     @Test
@@ -56,7 +56,7 @@ class ScheduleValidationTest {
             .cron("* * * * * *")
             .build();
 
-        assertThat(modelValidator.isValid(build).isEmpty()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).isEmpty()).isTrue();
 
         build = Schedule.builder()
             .id(IdUtils.create())
@@ -64,7 +64,7 @@ class ScheduleValidationTest {
             .cron("* * * * * *")
             .build();
 
-        assertThat(modelValidator.isValid(build).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).isPresent()).isTrue();
         assertThat(modelValidator.isValid(build).get().getMessage()).contains("invalid cron expression");
     }
 
@@ -77,7 +77,7 @@ class ScheduleValidationTest {
             .lateMaximumDelay(Duration.ofSeconds(10))
             .build();
 
-        assertThat(modelValidator.isValid(build).isPresent()).isEqualTo(false);
+        assertThat(modelValidator.isValid(build).isPresent()).isFalse();
     }
 
     @Test
@@ -90,7 +90,7 @@ class ScheduleValidationTest {
             .build();
 
 
-        assertThat(modelValidator.isValid(build).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(build).isPresent()).isTrue();
         assertThat(modelValidator.isValid(build).get().getMessage()).contains("interval: must be null");
 
     }

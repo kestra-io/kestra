@@ -22,9 +22,9 @@ class ListUtilsTest {
 
     @Test
     void isEmpty() {
-        assertThat(ListUtils.isEmpty(null)).isEqualTo(true);
-        assertThat(ListUtils.isEmpty(Collections.emptyList())).isEqualTo(true);
-        assertThat(ListUtils.isEmpty(List.of("1"))).isEqualTo(false);
+        assertThat(ListUtils.isEmpty(null)).isTrue();
+        assertThat(ListUtils.isEmpty(Collections.emptyList())).isTrue();
+        assertThat(ListUtils.isEmpty(List.of("1"))).isFalse();
     }
 
     @Test

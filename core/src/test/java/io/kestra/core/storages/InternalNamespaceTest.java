@@ -173,6 +173,6 @@ class InternalNamespaceTest {
         final String namespaceId = "io.kestra." + IdUtils.create();
         final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
         List<NamespaceFile> namespaceFiles = namespace.findAllFilesMatching((unused) -> true);
-        assertThat(namespaceFiles.size()).isEqualTo(0);
+        assertThat(namespaceFiles.size()).isZero();
     }
 }

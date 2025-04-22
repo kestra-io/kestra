@@ -53,7 +53,7 @@ class FlowGraphTest {
 
         assertThat(flowGraph.getNodes().size()).isEqualTo(5);
         assertThat(flowGraph.getEdges().size()).isEqualTo(4);
-        assertThat(flowGraph.getClusters().size()).isEqualTo(0);
+        assertThat(flowGraph.getClusters().size()).isZero();
 
         assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getTask().getId()).isEqualTo("date");
         assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
@@ -228,7 +228,7 @@ class FlowGraphTest {
         assertThat(flowGraph.getEdges().size()).isEqualTo(5);
         assertThat(flowGraph.getClusters().size()).isEqualTo(1);
         AbstractGraph triggerGraph = flowGraph.getNodes().stream().filter(e -> e instanceof GraphTrigger).findFirst().orElseThrow();
-        assertThat(((GraphTrigger) triggerGraph).getTrigger().getDisabled()).isEqualTo(true);
+        assertThat(((GraphTrigger) triggerGraph).getTrigger().getDisabled()).isTrue();
     }
 
     @Test

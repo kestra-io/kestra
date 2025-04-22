@@ -119,7 +119,7 @@ public class InputsTest {
         HashMap<String, Object> inputsWithMissingOptionalInput = new HashMap<>(inputs);
         inputsWithMissingOptionalInput.remove("bool");
 
-        assertThat(typedInputs(inputsWithMissingOptionalInput).containsKey("bool")).isEqualTo(true);
+        assertThat(typedInputs(inputsWithMissingOptionalInput).containsKey("bool")).isTrue();
         assertThat(typedInputs(inputsWithMissingOptionalInput).get("bool")).isNull();
     }
 
@@ -132,7 +132,7 @@ public class InputsTest {
         assertThat(typeds.get("string")).isEqualTo("myString");
         assertThat(typeds.get("int")).isEqualTo(42);
         assertThat(typeds.get("float")).isEqualTo(42.42F);
-        assertThat(typeds.get("bool")).isEqualTo(false);
+        assertThat((Boolean) typeds.get("bool")).isFalse();
         assertThat(typeds.get("instant")).isEqualTo(Instant.parse("2019-10-06T18:27:49Z"));
         assertThat(typeds.get("instantDefaults")).isEqualTo(Instant.parse("2013-08-09T14:19:00Z"));
         assertThat(typeds.get("date")).isEqualTo(LocalDate.parse("2019-10-06"));
@@ -143,7 +143,7 @@ public class InputsTest {
         assertThat(typeds.get("json")).isEqualTo(Map.of("a", "b"));
         assertThat(typeds.get("uri")).isEqualTo("https://www.google.com");
         assertThat(((Map<String, Object>) typeds.get("nested")).get("string")).isEqualTo("a string");
-        assertThat(((Map<String, Object>) typeds.get("nested")).get("bool")).isEqualTo(true);
+        assertThat((Boolean) ((Map<String, Object>) typeds.get("nested")).get("bool")).isTrue();
         assertThat(((Map<String, Object>) ((Map<String, Object>) typeds.get("nested")).get("more")).get("int")).isEqualTo(123);
         assertThat(typeds.get("validatedString")).isEqualTo("A123");
         assertThat(typeds.get("validatedInt")).isEqualTo(12);
@@ -173,7 +173,7 @@ public class InputsTest {
         assertThat(typeds.get("enum")).isEqualTo("ENUM_VALUE");
         assertThat(typeds.get("int")).isEqualTo(42);
         assertThat(typeds.get("float")).isEqualTo(42.42F);
-        assertThat(typeds.get("bool")).isEqualTo(false);
+        assertThat((Boolean) typeds.get("bool")).isFalse();
     }
 
     @Test
@@ -345,7 +345,7 @@ public class InputsTest {
         Map<String, Object> typeds = typedInputs(map);
 
         assertThat(typeds.get("json")).isInstanceOf(Map.class);
-        assertThat(((Map<?, ?>) typeds.get("json")).size()).isEqualTo(0);
+        assertThat(((Map<?, ?>) typeds.get("json")).size()).isZero();
     }
 
     @Test
@@ -366,7 +366,7 @@ public class InputsTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         assertThat(execution.getInputs().get("json")).isInstanceOf(Map.class);
-        assertThat(((Map<?, ?>) execution.getInputs().get("json")).size()).isEqualTo(0);
+        assertThat(((Map<?, ?>) execution.getInputs().get("json")).size()).isZero();
         assertThat((String) execution.findTaskRunsByTaskId("jsonOutput").getFirst().getOutputs().get("value")).isEqualTo("{}");
     }
 

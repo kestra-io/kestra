@@ -45,6 +45,6 @@ class MultipleConditionTest {
         boolean test = conditionService.isValid((Condition) build, flow, execution, multipleConditionStorage);
 
 
-        assertThat(test).isEqualTo(false);
+        assertThat(test).isFalse();
     }
 }

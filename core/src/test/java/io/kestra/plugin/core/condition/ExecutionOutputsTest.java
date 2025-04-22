@@ -32,7 +32,7 @@ class ExecutionOutputsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(true);
+        assertThat(test).isTrue();
     }
 
     @Test
@@ -49,7 +49,7 @@ class ExecutionOutputsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(false);
+        assertThat(test).isFalse();
     }
 
     @Test
@@ -63,6 +63,6 @@ class ExecutionOutputsTest {
 
         boolean test = conditionService.isValid(build, flow, execution);
 
-        assertThat(test).isEqualTo(false);
+        assertThat(test).isFalse();
     }
 }

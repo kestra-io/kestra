@@ -27,7 +27,7 @@ class DeleteConfigurationApplicationListenersTest {
         );
 
         try (ApplicationContext ctx = ApplicationContext.run(mapPropertySource, Environment.CLI, Environment.TEST)) {
-            assertThat(tempFile.exists()).isEqualTo(false);
+            assertThat(tempFile.exists()).isFalse();
         }
     }
 }

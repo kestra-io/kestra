@@ -84,7 +84,7 @@ class FinallyTest {
         assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.findTaskRunsByTaskId("ok").isEmpty()).isEqualTo(true);
+        assertThat(execution.findTaskRunsByTaskId("ok").isEmpty()).isTrue();
         assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
@@ -365,7 +365,7 @@ class FinallyTest {
         assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.findTaskRunsByTaskId("ko").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.findTaskRunsByTaskId("ok").isEmpty()).isEqualTo(true);
+        assertThat(execution.findTaskRunsByTaskId("ok").isEmpty()).isTrue();
         assertThat(execution.findTaskRunsByTaskId("a1").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 }

@@ -144,7 +144,7 @@ class LogControllerTest {
             GET("/api/v1/logs/" + log1.getExecutionId()),
             Argument.of(List.class, LogEntry.class)
         );
-        assertThat(logs.size()).isEqualTo(0);
+        assertThat(logs.size()).isZero();
     }
 
     @Test
@@ -165,7 +165,7 @@ class LogControllerTest {
             GET("/api/v1/logs/" + log1.getExecutionId()),
             Argument.of(List.class, LogEntry.class)
         );
-        assertThat(logs.size()).isEqualTo(0);
+        assertThat(logs.size()).isZero();
     }
 
     private static LogEntry logEntry(Level level) {

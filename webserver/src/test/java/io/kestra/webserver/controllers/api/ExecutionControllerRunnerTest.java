@@ -29,6 +29,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -1326,7 +1327,7 @@ class ExecutionControllerRunnerTest {
                 BulkResponse.class
             );
         } catch (HttpClientResponseException e){
-            log.error("Error while pausing execution, err: {}", e.getMessage(), e);
+            log.error("Error while pausing execution, err: {}, response: {}", e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids), e);
         }
 
         assertThat(response.getCount()).isEqualTo(3);

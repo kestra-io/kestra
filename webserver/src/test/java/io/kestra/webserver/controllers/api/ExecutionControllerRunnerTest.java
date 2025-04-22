@@ -1344,6 +1344,14 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/" + result.getId() + "/unqueue", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
+        // waiting for the flow to complete successfully
+        runnerUtils.awaitExecution(
+            execution -> execution.getId().equals(result.getId()) && execution.getState().isSuccess(),
+            () -> {},
+            Duration.ofSeconds(10)
+        );
+
+
         var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/executions/notfound/unqueue", null)));
         assertThat(notFound.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
 
@@ -1382,6 +1390,13 @@ class ExecutionControllerRunnerTest {
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(TENANT_ID, result.getId());
         assertThat(forcedRun.isPresent()).isTrue();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.QUEUED);
+
+        // waiting for the flow to complete successfully
+        runnerUtils.awaitExecution(
+            execution -> execution.getId().equals(result.getId()) && execution.getState().isSuccess(),
+            () -> {},
+            Duration.ofSeconds(10)
+        );
     }
 
     @Test

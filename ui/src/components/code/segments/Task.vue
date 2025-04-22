@@ -140,6 +140,7 @@
             store.commit("code/removeBreadcrumb", {last: true});
         } else {
             emits("exitTask");
+            creation.value = false;
         }
     }
 
@@ -172,7 +173,10 @@
                         title: "Task with same ID already exist",
                         message: `Task in ${section} block  with ID: ${existing} already exist in the flow.`,
                     });
-                    return;
+
+                    if(saveMode === "button"){
+                        return;
+                    }
                 }
 
                 result = YAML_UTILS.insertTask(

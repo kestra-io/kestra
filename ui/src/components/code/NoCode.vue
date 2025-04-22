@@ -66,7 +66,7 @@
     provide(TASKID_INJECTION_KEY, injectedTaskId);
     provide(POSITION_INJECTION_KEY, props.position);
     provide(SAVEMODE_INJECTION_KEY, props.saveMode);
-    provide(CREATING_INJECTION_KEY, computed(() => injectedTaskId.value === "new" || props.creating));
+    provide(CREATING_INJECTION_KEY, computed(() => props.creating));
 </script>
 
 <style scoped lang="scss">

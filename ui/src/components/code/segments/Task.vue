@@ -35,7 +35,7 @@
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../../utils/constants";
-    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, SAVEMODE_INJECTION_KEY} from "../injectionKeys";
+    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY} from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
@@ -52,6 +52,7 @@
     const flow = inject(FLOW_INJECTION_KEY, "");
     const creation = inject(CREATING_INJECTION_KEY, ref(false));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
+    const injectedSectionId = inject(SECTION_INJECTION_KEY, "button");
 
     const store = useStore();
 
@@ -135,6 +136,14 @@
 
     const errors = computed(() => store.getters["flow/taskError"]);
 
+    const SECTIONS_MAP: Record<string, string> = {
+        tasks: "task",
+        triggers: "triggers",
+        "error handlers": "errors",
+        finally: "finally",
+        "after execution": "afterExecution",
+    };
+
     function exitTaskElement(){
         if (lastBreadcrumb.value.shown){
             store.commit("code/removeBreadcrumb", {last: true});
@@ -160,8 +169,10 @@
 
         let result;
 
+        const currentSection = injectedSectionId.value;
+
         if (isCreation) {
-            if (props.section === "tasks" && CURRENT.value) {
+            if (currentSection === "tasks" && CURRENT.value) {
                 const existing = YAML_UTILS.checkTaskAlreadyExist(
                     flow,
                     CURRENT.value,
@@ -185,14 +196,12 @@
                     task!,
                     props.position,
                 );
-            } else if (props.section === "triggers") {
-                result = YAML_UTILS.insertSection("triggers", flow, CURRENT.value);
-            } else if (props.section === "error handlers") {
-                result = YAML_UTILS.insertSection("errors", flow, CURRENT.value);
-            } else if (props.section === "finally") {
-                result = YAML_UTILS.insertSection("finally", flow, CURRENT.value);
-            } else if (props.section === "after execution") {
-                result = YAML_UTILS.insertSection("afterExecution", flow, CURRENT.value);
+            } else if (currentSection && SECTIONS_MAP[currentSection.toString()]) {
+                result = YAML_UTILS.insertSection(
+                    SECTIONS_MAP[currentSection.toString()],
+                    flow,
+                    CURRENT.value
+                );
             }
         } else {
             result = YAML_UTILS.replaceTaskInDocument(

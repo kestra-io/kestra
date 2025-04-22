@@ -6,7 +6,7 @@
 
 <script setup lang="ts">
     import {inject, ref} from "vue";
-    import {SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../../../injectionKeys";
+    import {SECTION_INJECTION_KEY, CREATING_INJECTION_KEY} from "../../../injectionKeys";
     import {Plus} from "../../../utils/icons";
 
     import {useI18n} from "vue-i18n";
@@ -15,10 +15,10 @@
     const props = defineProps({section: {type: String, required: true}});
 
     const sectionInjected = inject(SECTION_INJECTION_KEY, ref(""));
-    const taskId = inject(TASKID_INJECTION_KEY, ref(""));
+    const creating = inject(CREATING_INJECTION_KEY, ref(false));
 
     const handleClick = () => {
         sectionInjected.value = props.section.toLowerCase();
-        taskId.value = "new";
+        creating.value = true;
     };
 </script>

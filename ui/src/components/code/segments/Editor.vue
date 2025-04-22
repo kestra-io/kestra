@@ -116,9 +116,9 @@
     document.addEventListener("keydown", saveEvent);
 
     const props = defineProps({
-        creation: {type: Boolean, default: false},
         flow: {type: String, required: true},
         metadata: {type: Object, required: true},
+        creation: {type: Boolean, default: false},
     });
 
     const trimmed = (field: Field) => {

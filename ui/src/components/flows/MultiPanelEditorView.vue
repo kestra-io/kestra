@@ -65,7 +65,23 @@
     }
 
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
-        const element: Tab = EDITOR_ELEMENTS.find(e => e.value === value)!
+        const element: Tab = setupInitialNoCodeTab(value, {
+            onCreateTask(section){
+                openAddTaskTab({
+                    panelIndex: panels.value.length - 1,
+                    tabIndex: 0
+                }, section)
+                return false
+            },
+            onEditTask(section, taskId){
+                openEditTaskTab({
+                    panelIndex: panels.value.length - 1,
+                    tabIndex: 0
+                }, section, taskId)
+                return false
+            },
+        }) ?? EDITOR_ELEMENTS.find(e => e.value === value)!
+
         if(isFlowRelated(element)){
             element.dirty = dirtyFlow
         }

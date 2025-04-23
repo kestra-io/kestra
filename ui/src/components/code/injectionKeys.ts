@@ -8,3 +8,4 @@ export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as I
 export const SAVEMODE_INJECTION_KEY = Symbol("flow-id-injection-key") as InjectionKey<"button" | "auto">
 export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(section: string) => void>
 export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(section: string, taskId: string) => void>
+export const TASK_CREATION_INDEX_INJECTION_KEY = Symbol("task-creation-index-injection-key") as InjectionKey<ComputedRef<number>>

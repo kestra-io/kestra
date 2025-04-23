@@ -8,20 +8,20 @@ const NOCODE_PREFIX = "nocode"
 export function getTabFromNoCodeTab(tab: NoCodeProps, handlers?: {onCreateTask: (section: string) => boolean, onEditTask: (section: string, taskId: string) => boolean}){
     const {onCreateTask, onEditTask} = handlers ?? {}
     return tab?.taskId?.length ? {
-        value: `${NOCODE_PREFIX}-${tab.section}-${tab.taskId}`,
+        value: `${NOCODE_PREFIX}-edit-${tab.section}-${tab.taskId}`,
         button: {
             label: `${tab.section}-${tab.taskId}`,
             icon:  markRaw(MouseRightClickIcon),
         },
-        component: () => h(markRaw(NoCodeWrapper), tab),
+        component: () => h(NoCodeWrapper, tab),
         dirty: false,
     } : tab?.section?.length ? {
-        value: `${NOCODE_PREFIX}-${tab.section}`,
+        value: `${NOCODE_PREFIX}-create-${tab.section}-${tab.createIndex}`,
         button: {
             label: `New ${tab.section}`,
             icon:  markRaw(MouseRightClickIcon),
         },
-        component: () => h(markRaw(NoCodeWrapper), tab),
+        component: () => h(NoCodeWrapper, tab),
         dirty: false,
     } : {
         button: {
@@ -52,12 +52,24 @@ export function setupInitialNoCodeTab(tab: string, handlers:{
         return
     }
     const taskInfoPath = tab.substring(7)
-    const section = taskInfoPath.split("-").shift() ?? ""
-    const editorTab: NoCodeProps = {
-        section: section,
-        taskId: taskInfoPath.substring(section.length + 1),
+    if(taskInfoPath.startsWith("create-")){
+        const section = taskInfoPath.split("-").slice(1).shift() ?? ""
+        const createIndex = parseInt(taskInfoPath.substring(section.length + 8))
+        const editorTab: NoCodeProps = {
+            section,
+            createIndex
+        }
+        return getTabFromNoCodeTab(editorTab)
+    }else if(taskInfoPath.startsWith("edit-")){
+        const section = taskInfoPath.split("-").slice(1).shift() ?? ""
+        const taskId = taskInfoPath.substring(section.length + 6)
+        const editorTab: NoCodeProps = {
+            section,
+            taskId
+        }
+        return getTabFromNoCodeTab(editorTab)
     }
-    return getTabFromNoCodeTab(editorTab)
+    return undefined
 }
 
 export function useNoCodePanels(panels: Ref<Panel[]>) {
@@ -69,10 +81,21 @@ export function useNoCodePanels(panels: Ref<Panel[]>) {
         section: string,
         position: "before" | "after" = "after"
     ) {
+        // find all nocode task creating tabs for this section
+        const existingTabs = panels.value.flatMap(p => p.tabs).filter((tab) => {
+            return tab.value.startsWith(`${NOCODE_PREFIX}-create-${section}-`)
+        })
+
+        // find the biggest createIndex
+        const createIndex = existingTabs.reduce((acc, tab) => {
+            const index = parseInt(tab.value.split("-").slice(-1).shift() ?? "")
+            return Math.max(acc, index)
+        }, 0) + 1
+        // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab({
             section,
             position,
-            creatingTask: true
+            createIndex
         })
         panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)
 

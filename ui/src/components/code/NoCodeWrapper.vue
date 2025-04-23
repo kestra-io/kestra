@@ -4,7 +4,7 @@
             :flow="lastValidFlowYaml"
             save-mode="auto"
             :section
-            :creating-task
+            :creating-task="Boolean(createIndex)"
             :position
             :task-id="taskId"
             @update-metadata="(e) => onUpdateMetadata(e)"
@@ -18,19 +18,20 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, onBeforeUnmount, provide} from "vue";
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import NoCode from "./NoCode.vue";
+    import {TASK_CREATION_INDEX_INJECTION_KEY} from "./injectionKeys";
 
     export interface NoCodeProps {
-        creatingTask?: boolean;
+        createIndex?: number;
         section?: string;
         taskId?: string;
         position?: "before" | "after";
     }
 
-    defineProps<NoCodeProps>();
+    const props = defineProps<NoCodeProps>();
 
     const emit = defineEmits<{
         (e: "createTask", section: string): boolean | void;
@@ -83,4 +84,16 @@
     const updatePluginDocumentation = (event: string | undefined, task: any) => {
         store.dispatch("plugin/updateDocumentation", {event, task});
     };
+
+    onBeforeUnmount(() => {
+        if(props.createIndex){
+            store.commit("flow/setCreatedTaskYaml", {
+                section: props.section,
+                index: props.createIndex,
+                yaml: undefined
+            });
+        }
+    });
+
+    provide(TASK_CREATION_INDEX_INJECTION_KEY, computed(() => props.createIndex ?? 0));
 </script>

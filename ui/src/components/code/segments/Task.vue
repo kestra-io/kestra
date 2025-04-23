@@ -35,7 +35,7 @@
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../../utils/constants";
-    import {CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
+    import {FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASK_CREATION_INDEX_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
@@ -43,11 +43,14 @@
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
-    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, ref(false));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
     const section = inject(SECTION_INJECTION_KEY, ref("tasks"));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
     const position = inject(POSITION_INJECTION_KEY, "after");
+    const taskCreationIndex = inject(
+        TASK_CREATION_INDEX_INJECTION_KEY,
+        ref(0),
+    );
 
     const store = useStore();
 
@@ -62,9 +65,18 @@
         };
     });
 
-    const yaml = ref(
-        YAML_UTILS.extractTask(flow.value, taskId.value)?.toString() || "",
-    );
+    const yaml = taskCreationIndex.value ? computed({
+        get() {
+            return store.getters["flow/createdTaskYaml"][section.value][taskCreationIndex.value - 1]
+        },
+        set(val){
+            store.commit("flow/setCreatedTaskYaml", {
+                section: section.value,
+                index: taskCreationIndex.value - 1,
+                yaml: val,
+            });
+        }
+    }) : ref("");
 
     const flowBeforeAdd = ref(flow.value);
 
@@ -80,8 +92,11 @@
     watch(
         taskId,
         (value) => {
+            if(taskCreationIndex.value){
+                return;
+            }
             yaml.value =
-                YAML_UTILS.extractTask(flow.value, value)?.toString() || "";
+                YAML_UTILS.extractTask(flow.value, value) ?? "";
         },
         {immediate: true},
     );
@@ -140,7 +155,7 @@
             store.commit("code/removeBreadcrumb", {last: true});
         } else {
             emits("exitTask");
-            creatingTask.value = false;
+            taskCreationIndex.value = 0;
         }
     }
 
@@ -151,52 +166,53 @@
             return;
         }
 
-        const taskObject = YAML_UTILS.parse(yaml.value);
-        taskObject.id = taskObject.id?.length ? taskObject.id : undefined;
-
-        const task = YAML_UTILS.stringify(taskObject);
-
         let result: string = "";
 
         const currentSection = section.value;
 
-        if (creatingTask.value) {
-            if (currentSection === "tasks" && task) {
-                const existing = YAML_UTILS.checkTaskAlreadyExist(
-                    flowBeforeAdd.value,
-                    task,
-                );
+        if (taskCreationIndex.value) {
+            // if multiple task creation tabs are open add them all
+            const tasks: string[] | undefined = store.getters["flow/createdTaskYaml"][section.value];
+            result = flowBeforeAdd.value;
+            for(const task in tasks){
+                if (currentSection === "tasks" && task?.length) {
+                    const existing = YAML_UTILS.checkTaskAlreadyExist(
+                        flowBeforeAdd.value,
+                        task,
+                    );
 
-                if (existing) {
-                    store.dispatch("core/showMessage", {
-                        variant: "error",
-                        title: "Task with same ID already exist",
-                        message: `Task in ${section} block  with ID: ${existing} already exist in the flow.`,
-                    });
+                    if (existing) {
+                        store.dispatch("core/showMessage", {
+                            variant: "error",
+                            title: "Task with same ID already exist",
+                            message: `Task in ${section} block  with ID: ${existing} already exist in the flow.`,
+                        });
 
-                    if(saveMode === "button"){
-                        return;
+                        if(saveMode === "button"){
+                            return;
+                        }
                     }
-                }
 
-                result = YAML_UTILS.insertTask(
-                    flowBeforeAdd.value,
-                    taskId.value.length ? taskId.value : YAML_UTILS.getLastTask(flowBeforeAdd.value) ?? "", // target task id (the one before of after the task will be inserted)
-                    task,
-                    position,
-                );
-            } else if (currentSection && SECTIONS_MAP[currentSection.toString()]) {
-                result = YAML_UTILS.insertSection(
-                    SECTIONS_MAP[currentSection.toString()],
-                    flowBeforeAdd.value,
-                    task
-                );
+                    result = YAML_UTILS.insertTask(
+                        result,
+                        taskId.value.length ? taskId.value : YAML_UTILS.getLastTask(flowBeforeAdd.value) ?? "", // target task id (the one before of after the task will be inserted)
+                        task,
+                        position,
+                    );
+
+                } else if (currentSection && SECTIONS_MAP[currentSection.toString()] && task?.length) {
+                    result = YAML_UTILS.insertSection(
+                        SECTIONS_MAP[currentSection.toString()],
+                        flowBeforeAdd.value,
+                        task,
+                    );
+                }
             }
-        } else if(task){
+        } else{
             result = YAML_UTILS.replaceTaskInDocument(
                 flow.value,
                 taskId.value,
-                task,
+                yaml.value,
             );
         }
 

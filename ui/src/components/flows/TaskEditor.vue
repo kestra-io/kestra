@@ -42,6 +42,7 @@
         },
         emits: ["update:modelValue"],
         created() {
+            console.log("created", this.modelValue);
             if (this.modelValue) {
                 this.setup()
             }
@@ -49,6 +50,7 @@
         watch: {
             modelValue: {
                 handler() {
+                    console.log("watch", this.modelValue);
                     if (!this.modelValue) {
                         this.taskObject = {};
                         this.selectedTaskType = undefined;
@@ -81,6 +83,7 @@
         },
         methods: {
             setup() {
+                console.log("setup", this.modelValue);
                 this.taskObject = YAML_UTILS.parse(this.modelValue);
                 this.selectedTaskType = this.taskObject.type;
                 this.$store.dispatch("flow/validateTask", {task: this.modelValue, section: this.section})
@@ -101,17 +104,19 @@
 
             },
             onInput(value) {
+                console.log("onInput", value);
                 this.taskObject = value;
                 this.$emit("update:modelValue", YAML_UTILS.stringify(value));
             },
             onTaskTypeSelect() {
                 this.load();
+                console.log("onTaskTypeSelect", this.selectedTaskType);
                 const value = {
                     type: this.selectedTaskType
                 };
 
                 if (this.section !== SECTIONS.TRIGGERS && this.section !== SECTIONS.TASK_RUNNERS) {
-                    value["id"] = this.taskObject && this.taskObject.id ? this.taskObject.id : "";
+                    value["id"] = this.taskObject && this.taskObject.id ? this.taskObject.id : undefined;
                 }
 
                 this.onInput(value);

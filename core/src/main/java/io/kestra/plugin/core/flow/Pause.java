@@ -49,7 +49,7 @@ import java.util.stream.Stream;
 @Plugin(
     examples = {
         @Example(
-            title = "Pause the execution and wait for a manual approval",
+            title = "Pause the execution and wait for a manual approval.",
             full = true,
             code = """
                 id: human_in_the_loop
@@ -133,7 +133,7 @@ import java.util.stream.Stream;
                 """
         ),
         @Example(
-            title = "Pause the execution and set the execution in WARNING if it has not been resumed after 5 minutes",
+            title = "Pause the execution and set the execution to WARNING if it has not been resumed after 5 minutes.",
             full = true,
             code = """
                 id: pause_warn
@@ -169,21 +169,21 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     }
 
     @Schema(
-        title = "Duration of the pause. If not set the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
-        description = "The duration is a string in the [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
+        title = "Duration of the pause. If not set, the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
+        description = "The duration is a string in [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
         implementation = Duration.class
     )
     private Property<Duration> pauseDuration;
 
     @Schema(
-        title = "Pause behavior, by default RESUME. What happens when a pause task reach its duration.",
+        title = "Pause behavior, by default set to RESUME. This property controls happens when a pause task reach its duration.",
         description = """
-            Tasks that are resumed before the duration (for example, from the UI) will not use the behavior property but will always success.
+            Tasks that are resumed before the duration (for example, from the UI) will not use the behavior property but will always succeed.
             Possible values are:
-            - RESUME: continue with the execution
-            - WARN: ends the Pause task in WARNING and continue with the execution
-            - FAIL: fail the Pause task
-            - CANCEL: cancel the execution"""
+            - RESUME: continues with the execution
+            - WARN: ends the Pause task in WARNING and continues with the execution
+            - FAIL: fails the Pause task
+            - CANCEL: cancels the execution"""
     )
     @NotNull
     @Builder.Default
@@ -192,7 +192,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     @Valid
     @Schema(
         title = "Inputs to be passed to the execution when it's resumed.",
-        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task.")
+        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task.")
     @PluginProperty
     private List<Input<?>> onResume;
 

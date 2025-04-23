@@ -29,6 +29,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -1312,16 +1313,23 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep.yml"})
+    @LoadFlows({"flows/valids/sleep-short.yml"})
+    // use a dedicated Flow to avoid clash with other tests
     void shouldPauseExecutionByQueryRunningFlows() throws TimeoutException, QueueException {
-        Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
-        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
-        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        var flowId = "sleep-short";
+        Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
+        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
+        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
+        BulkResponse response = null;
+        try {
+            response = client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/executions/pause/by-query?flowId="+flowId+"&namespace=" + result1.getNamespace(), null),
+                BulkResponse.class
+            );
+        } catch (HttpClientResponseException e){
+            log.error("Error while pausing execution, err: {}, response: {}", e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids), e);
+        }
 
-        BulkResponse response = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/executions/pause/by-query?namespace=" + result1.getNamespace(), null),
-            BulkResponse.class
-        );
         assertThat(response.getCount()).isEqualTo(3);
     }
 
@@ -1351,6 +1359,14 @@ class ExecutionControllerRunnerTest {
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/unqueue", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // waiting for the flow to complete successfully
+        runnerUtils.awaitExecution(
+            execution -> execution.getId().equals(result.getId()) && execution.getState().isSuccess(),
+            () -> {},
+            Duration.ofSeconds(10)
+        );
+
 
         var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/notfound/unqueue", null)));
         assertThat(notFound.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
@@ -1390,6 +1406,13 @@ class ExecutionControllerRunnerTest {
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(null, result.getId());
         assertThat(forcedRun.isPresent()).isTrue();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.QUEUED);
+
+        // waiting for the flow to complete successfully
+        runnerUtils.awaitExecution(
+            execution -> execution.getId().equals(result.getId()) && execution.getState().isSuccess(),
+            () -> {},
+            Duration.ofSeconds(10)
+        );
     }
 
     @Test

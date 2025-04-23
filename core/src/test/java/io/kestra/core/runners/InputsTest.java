@@ -87,6 +87,9 @@ public class InputsTest {
     @Inject
     private FlowInputOutput flowIO;
 
+    @Inject
+    private FlowInputOutput flowInputOutput;
+
     private Map<String, Object> typedInputs(Map<String, Object> map) {
         return typedInputs(map, flowRepository.findById(null, "io.kestra.tests", "inputs").get());
     }
@@ -370,7 +373,7 @@ public class InputsTest {
         assertThat((String) execution.findTaskRunsByTaskId("jsonOutput").getFirst().getOutputs().get("value")).isEqualTo("{}");
     }
 
-    @RetryingTest(5) // it can happen that a log from another execution arrives first, so we enable retry
+    @Test
     @LoadFlows({"flows/valids/input-log-secret.yaml"})
     void shouldNotLogSecretInput() throws TimeoutException, QueueException {
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> {});
@@ -378,7 +381,9 @@ public class InputsTest {
         Execution execution = runnerUtils.runOne(
             null,
             "io.kestra.tests",
-            "input-log-secret"
+            "input-log-secret",
+            null,
+            (flow, exec) -> flowInputOutput.readExecutionInputs(flow, exec, Map.of("nested.key", "pass"))
         );
 
         assertThat(execution.getTaskRunList()).hasSize(1);
@@ -386,6 +391,6 @@ public class InputsTest {
 
         var logEntry = receive.blockLast();
         assertThat(logEntry).isNotNull();
-        assertThat(logEntry.getMessage()).isEqualTo("This is my secret: ******");
+        assertThat(logEntry.getMessage()).isEqualTo("These are my secrets: ****** - ******");
     }
 }

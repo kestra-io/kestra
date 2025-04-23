@@ -340,6 +340,10 @@ export default {
                         return Promise.reject(new Error("Server error on flow save"))
                     } else {
                         commit("setFlow", response.data);
+                        commit("editor/setTabDirty", {
+                            name: "Flow",
+                            dirty: false,
+                        }, {root: true});
 
                         return response.data;
                     }

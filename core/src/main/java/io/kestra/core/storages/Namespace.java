@@ -23,6 +23,13 @@ public interface Namespace {
     String namespace();
 
     /**
+     * Gets the current tenantId.
+     *
+     * @return the current tenantId.
+     */
+    String tenantId();
+
+    /**
      * Gets the URIs of all namespace files for the contextual namespace.
      *
      * @return The list of {@link URI}.

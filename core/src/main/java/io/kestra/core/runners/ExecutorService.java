@@ -15,6 +15,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.*;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
@@ -78,6 +79,9 @@ public class ExecutorService {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
+
+    @Inject
+    private VariablesService variablesService;
 
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
@@ -253,10 +257,11 @@ public class ExecutorService {
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
                     try {
                         Output outputs = flowableParent.outputs(runContext);
+                        Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputs);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
-                            .withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of()))
-                        );
+                            .withOutputs(variables)
+                        ));
                     } catch (Exception e) {
                         runContext.logger().error("Unable to resolve outputs from the Flowable task: {}", e.getMessage(), e);
                     }
@@ -353,7 +358,8 @@ public class ExecutorService {
 
                 try {
                     Output outputs = flowableTask.outputs(runContext);
-                    taskRun = taskRun.withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of());
+                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
+                    taskRun = taskRun.withOutputs(variables);
                 } catch (Exception e) {
                     runContext.logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
                 }
@@ -539,7 +545,8 @@ public class ExecutorService {
             else if (task instanceof LoopUntil waitFor && taskRun.getState().isRunning()) {
                 if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                     Output newOutput = waitFor.outputs(taskRun);
-                    TaskRun updatedTaskRun = taskRun.withOutputs(newOutput.toMap());
+                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), newOutput);
+                    TaskRun updatedTaskRun = taskRun.withOutputs(variables);
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(updatedTaskRun), updatedTaskRun);
                     List<NextTaskRun> next = ((FlowableTask<?>) task).resolveNexts(runContext, executor.getExecution(), updatedTaskRun);
                     Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), updatedTaskRun);

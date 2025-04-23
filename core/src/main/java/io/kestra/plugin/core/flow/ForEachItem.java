@@ -9,10 +9,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.annotations.PluginProperty;
-import io.kestra.core.models.executions.Execution;
-import io.kestra.core.models.executions.NextTaskRun;
-import io.kestra.core.models.executions.TaskRun;
-import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
@@ -510,7 +507,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                                     currentFlow,
                                     this,
                                     currentTaskRun
-                                        .withOutputs(outputs.toMap())
+                                        .withOutputs(Variables.inMemory(outputs.toMap()))
                                         .withIteration(iteration),
                                     inputs,
                                     labels,
@@ -562,7 +559,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                     taskRun = taskRun
                         .withState(state)
                         .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
-                        .withOutputs(builder.build().toMap());
+                        .withOutputs(Variables.inMemory(builder.build().toMap()));
 
                     return Optional.of(SubflowExecutionResult.builder()
                         .executionId(execution.getId())
@@ -570,7 +567,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                         .parentTaskRun(taskRun)
                         .build());
                 }
-                taskRun = taskRun.withOutputs(builder.build().toMap());
+                taskRun = taskRun.withOutputs(Variables.inMemory(builder.build().toMap()));
             }
 
             // ForEachItem is an iterative task, the terminal state will be computed in the executor while counting on the task run execution list

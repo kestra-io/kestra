@@ -1,13 +1,12 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
-import java.util.Map;
 
 @Data
 @Builder
@@ -19,7 +18,7 @@ public class SubflowExecutionEnd {
     private String taskRunId;
     private String taskId;
     private State.Type state;
-    private Map<String, Object> outputs;
+    private Variables outputs;
 
     public String toStringState() {
         return "SubflowExecutionEnd(" +

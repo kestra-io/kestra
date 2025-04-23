@@ -5,24 +5,20 @@
 </template>
 
 <script setup lang="ts">
+    import {inject, ref} from "vue";
+    import {SECTION_INJECTION_KEY, CREATING_INJECTION_KEY} from "../../../injectionKeys";
     import {Plus} from "../../../utils/icons";
-
-    import {useRouter, useRoute} from "vue-router";
-    const router = useRouter();
-    const route = useRoute();
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
     const props = defineProps({section: {type: String, required: true}});
 
+    const sectionInjected = inject(SECTION_INJECTION_KEY, ref(""));
+    const creating = inject(CREATING_INJECTION_KEY, ref(false));
+
     const handleClick = () => {
-        router.replace({
-            query: {
-                ...route.query,
-                section: props.section.toLowerCase(),
-                creating: "true",
-            },
-        });
+        sectionInjected.value = props.section.toLowerCase();
+        creating.value = true;
     };
 </script>

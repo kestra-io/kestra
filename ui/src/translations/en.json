@@ -1197,6 +1197,14 @@
         "finally": "Save task",
         "after execution": "Save task",
         "input": "Save input"
+      },
+      "close": {
+        "tasks": "Close task",
+        "triggers": "Close trigger",
+        "error handlers": "Close error handler",
+        "finally": "Close task",
+        "after execution": "Close task",
+        "input": "Close input"
       }
     },
     "properties": {

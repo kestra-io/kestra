@@ -54,7 +54,7 @@
 </template>
 
 <script setup lang="ts">
-    import {watch, computed, inject, ref} from "vue";
+    import {onMounted, watch, computed, inject, ref} from "vue";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     import {Field, Fields, CollapseItem, NoCodeElement} from "../utils/types";
@@ -148,6 +148,13 @@
         }
     }
 
+    const schema = ref({})
+    onMounted(async () => {
+        await store.dispatch("plugin/loadSchemaType").then((response) => {
+            schema.value = response;
+        })
+    });
+
     const fields = computed<Fields>(() => {
         return {
             id: {
@@ -213,20 +220,7 @@
                 component: TaskBasic,
                 value: props.metadata.concurrency,
                 label: t("no_code.fields.general.concurrency"),
-                // TODO: Pass schema for concurrency dynamically
-                schema: {
-                    type: "object",
-                    properties: {
-                        behavior: {
-                            type: "string",
-                            enum: ["QUEUE", "CANCEL", "FAIL"],
-                            default: "QUEUE",
-                            markdownDescription: "Default value is : `QUEUE`",
-                        },
-                        limit: {type: "integer", exclusiveMinimum: 0},
-                    },
-                    required: ["limit"],
-                },
+                schema: schema.value?.definitions?.["io.kestra.core.models.flows.Concurrency"] ?? {},               
                 root: "concurrency",
             },
             pluginDefaults: {

@@ -35,7 +35,7 @@
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../../utils/constants";
-    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
+    import {CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
@@ -43,7 +43,7 @@
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
-    const creation = inject(CREATING_INJECTION_KEY, ref(false));
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, ref(false));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
     const section = inject(SECTION_INJECTION_KEY, ref("tasks"));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
@@ -140,7 +140,7 @@
             store.commit("code/removeBreadcrumb", {last: true});
         } else {
             emits("exitTask");
-            creation.value = false;
+            creatingTask.value = false;
         }
     }
 
@@ -160,7 +160,7 @@
 
         const currentSection = section.value;
 
-        if (creation.value) {
+        if (creatingTask.value) {
             if (currentSection === "tasks" && task) {
                 const existing = YAML_UTILS.checkTaskAlreadyExist(
                     flowBeforeAdd.value,

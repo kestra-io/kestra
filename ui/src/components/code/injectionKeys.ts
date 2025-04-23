@@ -4,5 +4,7 @@ export const FLOW_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<C
 export const SECTION_INJECTION_KEY = Symbol("section-injection-key") as InjectionKey<Ref<string>>
 export const TASKID_INJECTION_KEY = Symbol("taskid-injection-key") as InjectionKey<Ref<string>>
 export const POSITION_INJECTION_KEY = Symbol("position-injection-key") as InjectionKey<"after" | "before">
-export const CREATING_INJECTION_KEY = Symbol("creating-injection-key") as InjectionKey<Ref<boolean>>
+export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as InjectionKey<ComputedRef<boolean>>
 export const SAVEMODE_INJECTION_KEY = Symbol("flow-id-injection-key") as InjectionKey<"button" | "auto">
+export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(section: string) => void>
+export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(section: string, taskId: string) => void>

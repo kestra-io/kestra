@@ -5,7 +5,7 @@
                 <button
                     v-for="element of EDITOR_ELEMENTS"
                     :key="element.value"
-                    :class="{active: activeTabs.includes(element.value)}"
+                    :class="{active: openTabs.includes(element.value)}"
                     @click="setTabValue(element.value)"
                 >
                     <component class="tabs-icon" :is="element.button.icon" />
@@ -29,6 +29,7 @@
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
+    import {setupInitialNoCodeTab, useNoCodePanels} from "./useNoCodePanels";
 
     function isFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.value)
@@ -51,7 +52,7 @@
     }
 
     function setTabValue(tabValue: string){
-        if(activeTabs.value.includes(tabValue)){
+        if(openTabs.value.includes(tabValue)){
             focusTab(tabValue)
             return
         }
@@ -98,8 +99,27 @@
                         const panels: {tabs: string[], activeTab: string, size: number}[] = JSON.parse(v)
                         return panels
                             .filter((p) => p.tabs.length)
-                            .map((p):Panel => {
-                                const tabs = p.tabs.map(t => setupInitialCodeTab(t) ?? EDITOR_ELEMENTS.find(e => e.value === t)!)
+                            .map((p, panelIndex):Panel => {
+                                const tabs = p.tabs.map((t, tabIndex) =>
+                                    setupInitialCodeTab(t)
+                                    ?? setupInitialNoCodeTab(t, {
+                                        onCreateTask(section){
+                                            openAddTaskTab({
+                                                panelIndex,
+                                                tabIndex
+                                            }, section)
+                                            return false
+                                        },
+                                        onEditTask(section, taskId){
+                                            openEditTaskTab({
+                                                panelIndex,
+                                                tabIndex
+                                            }, section, taskId)
+                                            return false
+                                        },
+                                    })
+                                    ?? EDITOR_ELEMENTS.find(e => e.value === t)!
+                                )
                                 const activeTab = tabs.find(t => t.value === p.activeTab)!
                                 return {
                                     activeTab,
@@ -115,7 +135,9 @@
         },
     )
 
-    const activeTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
+    const {openAddTaskTab, openEditTaskTab} = useNoCodePanels(panels)
+
+    const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
 
     const {onRemoveTab, isFlowDirty} = useCodePanels(panels)
 

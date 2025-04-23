@@ -1,24 +1,30 @@
 <template>
-    <NoCode
-        :flow="lastValidFlowYaml"
-        save-mode="auto"
-        :creating="creating"
-        :position="route.query.position === 'before' ? 'before' : 'after'"
-        @update-metadata="(e) => onUpdateMetadata(e)"
-        @update-task="(e) => editorUpdate(e)"
-        @reorder="(yaml) => handleReorder(yaml)"
-        @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
-    />
+    <KeepAlive>
+        <NoCode
+            :flow="lastValidFlowYaml"
+            save-mode="auto"
+            :section
+            :creating-task
+            :position
+            :task-id="taskId"
+            @update-metadata="(e) => onUpdateMetadata(e)"
+            @update-task="(e) => editorUpdate(e)"
+            @reorder="(yaml) => handleReorder(yaml)"
+            @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
+            @create-task="(section) => emit('createTask', section)"
+            @edit-task="(section, taskId) => emit('editTask', section, taskId)"
+        />
+    </KeepAlive>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue";
     import {useStore} from "vuex";
-    import {useRoute} from "vue-router"
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import NoCode from "./NoCode.vue";
 
     export interface NoCodeProps {
+        creatingTask?: boolean;
         section?: string;
         taskId?: string;
         position?: "before" | "after";
@@ -26,11 +32,13 @@
 
     defineProps<NoCodeProps>();
 
+    const emit = defineEmits<{
+        (e: "createTask", section: string): boolean | void;
+        (e: "editTask", section: string, taskId: string): boolean | void;
+    }>();
+
     const store = useStore();
     const flowYaml = computed(() => store.getters["flow/flowYaml"]);
-    const creating = computed(() => store.getters["flow/isCreating"]);
-
-    const route = useRoute();
 
     const lastValidFlowYaml = computed<string>(
         (oldValue) => {

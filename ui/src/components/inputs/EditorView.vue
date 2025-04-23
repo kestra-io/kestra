@@ -240,7 +240,7 @@
                 :flow="flowYaml"
                 :section="route.query.section.toString()"
                 :task-id="route.query.identifier.toString()"
-                :creating="isCreating"
+                :creating-task="isCreating"
                 :position="route.query.position === 'before' ? 'before' : 'after'"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"

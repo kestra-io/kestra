@@ -795,6 +795,14 @@
     "no_code": {
       "adding": "+ Ajouter un {what}",
       "adding_default": "+ Ajouter une nouvelle valeur",
+      "close": {
+        "after execution": "Fermer la task",
+        "error handlers": "Fermer le gestionnaire d'erreurs",
+        "finally": "Fermer la task",
+        "input": "Fermer l'input",
+        "tasks": "Fermer la task",
+        "triggers": "Fermer le trigger"
+      },
       "creation": {
         "after execution": "Ajouter un bloc après l'exécution",
         "error handlers": "Ajouter un gestionnaire d'erreurs",

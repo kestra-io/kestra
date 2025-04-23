@@ -795,6 +795,14 @@
     "no_code": {
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
+      "close": {
+        "after execution": "タスクを閉じる",
+        "error handlers": "エラーハンドラーを閉じる",
+        "finally": "タスクを閉じる",
+        "input": "入力を閉じる",
+        "tasks": "タスクを閉じる",
+        "triggers": "トリガーを閉じる"
+      },
       "creation": {
         "after execution": "実行後ブロックを追加",
         "error handlers": "エラーハンドラーを追加",

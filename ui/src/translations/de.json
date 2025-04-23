@@ -795,6 +795,14 @@
     "no_code": {
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",
+      "close": {
+        "after execution": "Task schließen",
+        "error handlers": "Fehlerbehandler schließen",
+        "finally": "Task schließen",
+        "input": "Eingabe schließen",
+        "tasks": "Task schließen",
+        "triggers": "Trigger schließen"
+      },
       "creation": {
         "after execution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "error handlers": "Fügen Sie einen Fehlerhandler hinzu",

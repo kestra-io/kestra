@@ -57,7 +57,7 @@
                 </el-card>
                 <template v-if="blueprint.description">
                     <h4>{{ $t('about_this_blueprint') }}</h4>
-                    <div v-if="!system" class="tags text-uppercase">
+                    <div class="tags text-uppercase">
                         <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
                             <el-tag type="info" size="small">
                                 {{ tag }}
@@ -130,6 +130,10 @@
                 type: String,
                 default: "flow",
             },
+            combinedView: {
+                type: Boolean,
+                default: false
+            },
         },
         methods: {
             goBack() {
@@ -153,7 +157,11 @@
             }
         },
         async created() {
-            this.$store.dispatch("blueprints/getBlueprint", {type: this.$route.params.tab, kind: this.blueprintKind, id: this.blueprintId})
+            this.$store.dispatch("blueprints/getBlueprint", {
+                type: this.combinedView ? this.blueprintType : this.$route.params.tab,
+                kind: this.blueprintKind,
+                id: this.blueprintId
+            })
                 .then(data => {
                     this.blueprint = data;
                     if (this.kind === "flow") {

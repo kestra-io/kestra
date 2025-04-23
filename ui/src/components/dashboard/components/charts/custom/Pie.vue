@@ -25,7 +25,7 @@
     import {computed, onMounted, ref, watch} from "vue";
 
     import NoData from "../../../../layout/NoData.vue";
-    import Utils, {useTheme} from "../../../../../utils/utils.js";
+    import Utils, {useTheme} from "../../../../../utils/utils";
 
     import {Doughnut, Pie} from "vue-chartjs";
 
@@ -46,7 +46,7 @@
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: Number, required: true},
+        identifier: {type: [Number, String], required: true},
         chart: {type: Object, required: true},
         isPreview: {type: Boolean, required: false, default: false}
     });

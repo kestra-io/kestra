@@ -40,8 +40,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import static io.micronaut.http.HttpRequest.GET;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -71,20 +70,20 @@ class ExecutionControllerTest {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
 
-        TestsUtils.loads(repositoryLoader);
+        TestsUtils.loads(null, repositoryLoader);
     }
 
     @Test
-    void getNotFound() {
+    void getExecutionNotFound() {
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(GET("/api/v1/executions/exec_id_not_found"))
         );
 
-        assertThat(e.getStatus(), is(HttpStatus.NOT_FOUND));
+        assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
     }
 
-    private MultipartBody createInputsFlowBody() {
+    private MultipartBody createExecutionInputsFlowBody() {
         // Trigger execution
         File applicationFile = new File(Objects.requireNonNull(
             ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
@@ -121,8 +120,8 @@ class ExecutionControllerTest {
                 Execution.class
             )
         );
-        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
-        assertThat(exception.getMessage(), containsString("Not Found: Flow not found"));
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
 
         exception = assertThrows(HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
@@ -134,8 +133,8 @@ class ExecutionControllerTest {
                 Execution.class
             )
         );
-        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
-        assertThat(exception.getMessage(), containsString("Not Found: Flow not found"));
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
 
         exception = assertThrows(HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
@@ -147,8 +146,8 @@ class ExecutionControllerTest {
                 Execution.class
             )
         );
-        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
-        assertThat(exception.getMessage(), containsString("Not Found: Flow not found"));
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
 
         exception = assertThrows(HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
@@ -156,8 +155,8 @@ class ExecutionControllerTest {
                 Execution.class
             )
         );
-        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
-        assertThat(exception.getMessage(), containsString("Not Found: Flow not found"));
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
 
         exception = assertThrows(HttpClientResponseException.class,
             () -> client.toBlocking().retrieve(
@@ -169,8 +168,8 @@ class ExecutionControllerTest {
                 Execution.class
             )
         );
-        assertThat(exception.getStatus(), is(HttpStatus.NOT_FOUND));
-        assertThat(exception.getMessage(), containsString("Not Found: Flow not found"));
+        assertThat(exception.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
+        assertThat(exception.getMessage()).contains("Not Found: Flow not found");
     }
 
     @Test
@@ -182,8 +181,8 @@ class ExecutionControllerTest {
             Execution.class
         );
 
-        assertThat(execution, notNullValue());
-        assertThat(execution.getId(), notNullValue());
+        assertThat(execution).isNotNull();
+        assertThat(execution.getId()).isNotNull();
     }
 
     @Test
@@ -196,8 +195,8 @@ class ExecutionControllerTest {
             Execution.class
         );
 
-        assertThat(execution, notNullValue());
-        assertThat(execution.getId(), notNullValue());
+        assertThat(execution).isNotNull();
+        assertThat(execution.getId()).isNotNull();
     }
 
     @Test
@@ -213,8 +212,8 @@ class ExecutionControllerTest {
             Execution.class
         );
 
-        assertThat(execution, notNullValue());
-        assertThat(execution.getId(), notNullValue());
+        assertThat(execution).isNotNull();
+        assertThat(execution.getId()).isNotNull();
 
         HttpResponse<Execution> response = client.toBlocking().exchange(
             HttpRequest
@@ -224,8 +223,8 @@ class ExecutionControllerTest {
                 ),
             Execution.class
         );
-        assertThat(response.getStatus(), is(HttpStatus.NO_CONTENT));
-        assertThat(response.body(), nullValue());
+        assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.NO_CONTENT.getCode());
+        assertThat(response.body()).isNull();
     }
 
     @Test
@@ -234,15 +233,15 @@ class ExecutionControllerTest {
         final Duration offset = Duration.ofSeconds(5L);
         final ZonedDateTime baseTimestamp = ZonedDateTime.of(2024, 2, 3, 5, 6,10, 0, ZoneId.systemDefault());
 
-        assertThat(executionController.resolveAbsoluteDateTime(absoluteTimestamp, null, null), is(absoluteTimestamp));
-        assertThat(executionController.resolveAbsoluteDateTime(null, offset, baseTimestamp), is(baseTimestamp.minus(offset)));
+        assertThat(executionController.resolveAbsoluteDateTime(absoluteTimestamp, null, null)).isEqualTo(absoluteTimestamp);
+        assertThat(executionController.resolveAbsoluteDateTime(null, offset, baseTimestamp)).isEqualTo(baseTimestamp.minus(offset));
         assertThrows(IllegalArgumentException.class, () -> executionController.resolveAbsoluteDateTime(absoluteTimestamp, offset, baseTimestamp));
     }
 
 
     @Test
     void nullLabels() {
-        MultipartBody requestBody = createInputsFlowBody();
+        MultipartBody requestBody = createExecutionInputsFlowBody();
 
         // null keys are forbidden
         MutableHttpRequest<MultipartBody> requestNullKey = HttpRequest
@@ -259,20 +258,20 @@ class ExecutionControllerTest {
 
     @SuppressWarnings("DataFlowIssue")
     @Test
-    void getFlowForExecution() {
+    void getExecutionFlowForExecution() {
         FlowForExecution result = client.toBlocking().retrieve(
             GET("/api/v1/executions/flows/io.kestra.tests/full"),
             FlowForExecution.class
         );
 
-        assertThat(result, notNullValue());
-        assertThat(result.getTasks(), hasSize(5));
-        assertThat((result.getTasks().getFirst() instanceof TaskForExecution), is(true));
+        assertThat(result).isNotNull();
+        assertThat(result.getTasks()).hasSize(5);
+        assertThat((result.getTasks().getFirst() instanceof TaskForExecution)).isTrue();
     }
 
     @SuppressWarnings("DataFlowIssue")
     @Test
-    void getFlowForExecutionById() {
+    void getExecutionFlowForExecutionById() {
         Execution execution = client.toBlocking().retrieve(
             HttpRequest
                 .POST(
@@ -287,31 +286,31 @@ class ExecutionControllerTest {
             FlowForExecution.class
         );
 
-        assertThat(result.getId(), is(execution.getFlowId()));
-        assertThat(result.getTriggers(), hasSize(1));
-        assertThat((result.getTriggers().getFirst() instanceof AbstractTriggerForExecution), is(true));
+        assertThat(result.getId()).isEqualTo(execution.getFlowId());
+        assertThat(result.getTriggers()).hasSize(1);
+        assertThat((result.getTriggers().getFirst() instanceof AbstractTriggerForExecution)).isTrue();
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    void getDistinctNamespaceExecutables() {
+    void getExecutionDistinctNamespaceExecutables() {
         List<String> result = client.toBlocking().retrieve(
             GET("/api/v1/executions/namespaces"),
             Argument.of(List.class, String.class)
         );
 
-        assertThat(result.size(), greaterThanOrEqualTo(5));
+        assertThat(result.size()).isGreaterThanOrEqualTo(5);
     }
 
     @SuppressWarnings("unchecked")
     @Test
-    void getFlowFromNamespace() {
+    void getExecutionFlowFromNamespace() {
         List<FlowForExecution> result = client.toBlocking().retrieve(
             GET("/api/v1/executions/namespaces/io.kestra.tests/flows"),
             Argument.of(List.class, FlowForExecution.class)
         );
 
-        assertThat(result.size(), greaterThan(100));
+        assertThat(result.size()).isGreaterThan(100);
     }
 
     @Test
@@ -319,14 +318,14 @@ class ExecutionControllerTest {
         HttpClientResponseException exception = assertThrows(HttpClientResponseException.class, () ->
             client.toBlocking().retrieve(GET(
                 "/api/v1/executions/search?filters[startDate][EQUALS]=2024-06-03T00:00:00.000%2B02:00&filters[endDate][EQUALS]=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
-        assertThat(exception.getStatus().getCode(), is(422));
-        assertThat(exception.getMessage(),is("Illegal argument: Start date must be before End Date"));
+        assertThat(exception.getStatus().getCode()).isEqualTo(422);
+        assertThat(exception.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
 
         HttpClientResponseException exception_oldParameters = assertThrows(HttpClientResponseException.class, () ->
             client.toBlocking().retrieve(GET(
                 "/api/v1/executions/search?startDate=2024-06-03T00:00:00.000%2B02:00&endDate=2023-06-05T00:00:00.000%2B02:00"), PagedResults.class));
-        assertThat(exception_oldParameters.getStatus().getCode(), is(422));
-        assertThat(exception_oldParameters.getMessage(),is("Illegal argument: Start date must be before End Date"));
+        assertThat(exception_oldParameters.getStatus().getCode()).isEqualTo(422);
+        assertThat(exception_oldParameters.getMessage()).isEqualTo("Illegal argument: Start date must be before End Date");
     }
 
     @Test
@@ -358,22 +357,22 @@ class ExecutionControllerTest {
         assertDoesNotThrow(() -> client.toBlocking().retrieve(killRequest, BulkResponse.class));
 
         MutableHttpRequest<MultipartBody> triggerRequest = HttpRequest
-            .POST("/api/v1/executions/trigger/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createInputsFlowBody())
+            .POST("/api/v1/executions/trigger/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        assertThat(client.toBlocking().retrieve(triggerRequest, Execution.class).getLabels(), hasItem(new Label("project", "foo,bar")));
+        assertThat(client.toBlocking().retrieve(triggerRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"));
 
         MutableHttpRequest<MultipartBody> createRequest = HttpRequest
-            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createInputsFlowBody())
+            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel, createExecutionInputsFlowBody())
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels(), hasItem(new Label("project", "foo,bar")));
+        assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"));
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
             .GET("/api/v1/executions/search?filters[labels][EQUALS][project]=foo,bar");
-        assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal(), is(2L));
+        assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal()).isEqualTo(2L);
 
         MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
             .GET("/api/v1/executions/search?labels=project:foo,bar");
-        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal(), is(2L));
+        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal()).isEqualTo(2L);
     }
 
     @Test
@@ -382,20 +381,17 @@ class ExecutionControllerTest {
         String encodedRegularLabel = URLEncoder.encode("status:test", StandardCharsets.UTF_8);
 
         MutableHttpRequest<MultipartBody> createRequest = HttpRequest
-            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel, createInputsFlowBody())
+            .POST("/api/v1/executions/" + TESTS_FLOW_NS + "/inputs?labels=" + encodedCommaWithinLabel + "&labels=" + encodedRegularLabel, createExecutionInputsFlowBody())
             .contentType(MediaType.MULTIPART_FORM_DATA_TYPE);
-        assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels(), hasItems(
-            new Label("project", "foo,bar"),
-            new Label("status", "test")
-        ));
+        assertThat(client.toBlocking().retrieve(createRequest, Execution.class).getLabels()).contains(new Label("project", "foo,bar"), new Label("status", "test"));
 
         MutableHttpRequest<Object> searchRequest = HttpRequest
             .GET("/api/v1/executions/search?filters[labels][EQUALS][project]=foo,bar" + "&filters[labels][EQUALS][status]=test");
-        assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal(), is(1L));
+        assertThat(client.toBlocking().retrieve(searchRequest, PagedResults.class).getTotal()).isEqualTo(1L);
 
         MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
             .GET("/api/v1/executions/search?labels=project:foo,bar" + "&labels=status:test");
-        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal(), is(1L));
+        assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal()).isEqualTo(1L);
     }
 
     @Test
@@ -411,11 +407,11 @@ class ExecutionControllerTest {
         Execution execution = client.toBlocking().retrieve(createRequest, Execution.class);
 
         // then
-        assertThat(execution.getScheduleDate(), is(now.toInstant()));
+        assertThat(execution.getScheduleDate()).isEqualTo(now.toInstant());
     }
 
     @Test
-    void shouldValidateInputsForCreateGivenSimpleInputs() {
+    void shouldValidateInputsForCreateExecutionGivenSimpleInputs() {
         // given
         String namespace = "io.kestra.tests";
         String flowId = "inputs";
@@ -450,8 +446,8 @@ class ExecutionControllerTest {
             Map.class
         );
 
-        assertThat(executionResult, notNullValue());
-        assertThat(executionResult.get("url"), is("http://localhost:8081/ui/executions/io.kestra.tests/minimal/" + executionResult.get("id")));
+        assertThat(executionResult).isNotNull();
+        assertThat(executionResult.get("url")).isEqualTo("http://localhost:8081/ui/executions/io.kestra.tests/minimal/" + executionResult.get("id"));
     }
 
     @Test
@@ -463,6 +459,6 @@ class ExecutionControllerTest {
             Execution.class
         ));
 
-        assertThat(error.getStatus(), is(HttpStatus.UNPROCESSABLE_ENTITY));
+        assertThat(error.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
     }
 }

@@ -1,0 +1,1 @@
+CREATE INDEX ix_next_execution_date ON `triggers` (`next_execution_date`);

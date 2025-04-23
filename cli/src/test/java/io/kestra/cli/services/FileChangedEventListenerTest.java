@@ -19,8 +19,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static io.kestra.core.utils.Rethrow.throwRunnable;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest(environments = {"test", "file-watch"}, transactional = false)
 class FileChangedEventListenerTest {
@@ -77,9 +76,9 @@ class FileChangedEventListenerTest {
             Duration.ofSeconds(10)
         );
         Flow myflow = flowRepository.findById(null, "io.kestra.tests.watch", "myflow").orElseThrow();
-        assertThat(myflow.getTasks(), hasSize(1));
-        assertThat(myflow.getTasks().getFirst().getId(), is("hello"));
-        assertThat(myflow.getTasks().getFirst().getType(), is("io.kestra.plugin.core.log.Log"));
+        assertThat(myflow.getTasks()).hasSize(1);
+        assertThat(myflow.getTasks().getFirst().getId()).isEqualTo("hello");
+        assertThat(myflow.getTasks().getFirst().getType()).isEqualTo("io.kestra.plugin.core.log.Log");
 
         // delete the flow
         Files.delete(Path.of(FILE_WATCH + "/myflow.yaml"));
@@ -116,9 +115,9 @@ class FileChangedEventListenerTest {
             Duration.ofSeconds(10)
         );
         Flow pluginDefaultFlow = flowRepository.findById(null, "io.kestra.tests.watch", "pluginDefault").orElseThrow();
-        assertThat(pluginDefaultFlow.getTasks(), hasSize(1));
-        assertThat(pluginDefaultFlow.getTasks().getFirst().getId(), is("helloWithDefault"));
-        assertThat(pluginDefaultFlow.getTasks().getFirst().getType(), is("io.kestra.plugin.core.log.Log"));
+        assertThat(pluginDefaultFlow.getTasks()).hasSize(1);
+        assertThat(pluginDefaultFlow.getTasks().getFirst().getId()).isEqualTo("helloWithDefault");
+        assertThat(pluginDefaultFlow.getTasks().getFirst().getType()).isEqualTo("io.kestra.plugin.core.log.Log");
 
         // delete both files
         Files.delete(Path.of(FILE_WATCH + "/plugin-default.yaml"));

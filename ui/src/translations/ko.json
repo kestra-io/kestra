@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "앱 Blueprints",
       "community": "커뮤니티",
+      "create": "블루프린트 생성",
       "custom": "사용자 정의 blueprints",
       "dashboards": "대시보드 Blueprints",
+      "edit": "블루프린트 편집",
       "empty": "블루프린트가 없습니다.",
       "flows": "플로우 Blueprints",
       "header": {
@@ -303,6 +305,14 @@
         }
       },
       "secrets": {
+        "add_env": {
+          "first": "<strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">비밀 값 Base64로 인코딩</a></strong>",
+          "intro": "새 Secret을 생성하려면:",
+          "second": "위의 값을 사용하여 '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>'라는 환경 변수를 추가하세요.",
+          "third": "Kestra 인스턴스를 재시작하십시오"
+        },
+        "detected_env": "다음은 인스턴스 시작 시 식별된 secret-type 환경 변수입니다:",
+        "empty_env": "아직 환경에 Secrets가 없습니다.",
         "message": "Enterprise Edition (EE)는 UI에서 비밀을 직접 추가, 편집 또는 삭제할 수 있게 해줍니다. 인스턴스를 재시작할 필요가 없습니다. 비밀을 namespace별로 세분화된 RBAC 권한으로 구성하고, 상위 namespace에서 하위 namespace로 상속할 수 있습니다. EE는 HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager, Elasticsearch와 같은 비밀 관리자와 통합됩니다. namespace, tenant, 인스턴스별로 전용 백엔드를 설정하여 팀 간 비밀을 격리하거나 외부 vault에 저장된 읽기 전용 비밀을 활성화할 수 있습니다. 비밀은 저장 중 및 전송 중에 암호화된 상태로 유지됩니다. 선택적 캐싱은 API 호출을 줄이고, 감사 추적은 모든 접근을 log합니다.",
         "title": "비밀 관리 업그레이드"
       },
@@ -685,6 +695,11 @@
     "minutes": "분",
     "monogram": "모노그램",
     "months": "개월",
+    "multi_panel_editor": {
+      "close_all_tabs": "모든 탭 닫기",
+      "move_left": "왼쪽으로 이동",
+      "move_right": "오른쪽으로 이동"
+    },
     "multiple saved done": "{name}이(가) 저장되었습니다.",
     "name": "이름",
     "namespace": "Namespace",
@@ -1070,10 +1085,10 @@
           "note": "이 설정은 UI에서 날짜 및 시간 속성을 표시하는 데 사용됩니다. UTC와 다른 시간대에 flow를 예약하려면 flow 코드 또는 플러그인 기본값에서 Schedule trigger의 시간대 속성을 설정하세요."
         },
         "save": {
-          "fields": {
-            "name": "변경 사항 저장"
-          },
-          "label": "환경 설정 저장"
+          "discard": "버리기",
+          "label": "환경 설정 저장",
+          "unsaved_title": "저장되지 않은 변경 사항",
+          "unsaved_warning": "저장되지 않은 변경 사항이 있습니다. 나가기 전에 저장하시겠습니까?"
         },
         "theme": {
           "fields": {
@@ -1153,8 +1168,10 @@
     "templates deleted": "<code>{count}</code> 개의 템플릿이 삭제되었습니다",
     "templates deprecated": "템플릿은 사용 중지되었습니다. 대신 subflows를 사용하세요. 템플릿에서 subflows로 마이그레이션하는 방법을 설명하는 <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">마이그레이션 섹션</a>을 참조하세요.",
     "templates exported": "템플릿이 내보내졌습니다",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "테넌트",
+      "names": "테넌트"
+    },
     "theme": "테마",
     "this_task_has": "이 task는",
     "timezone": "시간대",

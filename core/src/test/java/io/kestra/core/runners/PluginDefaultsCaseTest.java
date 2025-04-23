@@ -24,9 +24,7 @@ import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
 public class PluginDefaultsCaseTest {
@@ -36,21 +34,21 @@ public class PluginDefaultsCaseTest {
     public void taskDefaults() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "plugin-defaults", Duration.ofSeconds(60));
 
-        assertThat(execution.getTaskRunList(), hasSize(8));
+        assertThat(execution.getTaskRunList()).hasSize(8);
 
-        assertThat(execution.getTaskRunList().getFirst().getTaskId(), is("first"));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("def"), is("1"));
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("second"));
-        assertThat(execution.getTaskRunList().get(1).getOutputs().get("def"), is("2"));
-        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("third"));
-        assertThat(execution.getTaskRunList().get(2).getOutputs().get("def"), is("3"));
+        assertThat(execution.getTaskRunList().getFirst().getTaskId()).isEqualTo("first");
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("def")).isEqualTo("1");
+        assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("second");
+        assertThat(execution.getTaskRunList().get(1).getOutputs().get("def")).isEqualTo("2");
+        assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("third");
+        assertThat(execution.getTaskRunList().get(2).getOutputs().get("def")).isEqualTo("3");
 
-        assertThat(execution.getTaskRunList().get(4).getTaskId(), is("err-first"));
-        assertThat(execution.getTaskRunList().get(4).getOutputs().get("def"), is("1"));
-        assertThat(execution.getTaskRunList().get(5).getTaskId(), is("err-second"));
-        assertThat(execution.getTaskRunList().get(5).getOutputs().get("def"), is("2"));
-        assertThat(execution.getTaskRunList().get(6).getTaskId(), is("err-third"));
-        assertThat(execution.getTaskRunList().get(6).getOutputs().get("def"), is("3"));
+        assertThat(execution.getTaskRunList().get(4).getTaskId()).isEqualTo("err-first");
+        assertThat(execution.getTaskRunList().get(4).getOutputs().get("def")).isEqualTo("1");
+        assertThat(execution.getTaskRunList().get(5).getTaskId()).isEqualTo("err-second");
+        assertThat(execution.getTaskRunList().get(5).getOutputs().get("def")).isEqualTo("2");
+        assertThat(execution.getTaskRunList().get(6).getTaskId()).isEqualTo("err-third");
+        assertThat(execution.getTaskRunList().get(6).getOutputs().get("def")).isEqualTo("3");
     }
 
     @SuperBuilder

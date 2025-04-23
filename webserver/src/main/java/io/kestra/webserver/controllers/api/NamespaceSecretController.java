@@ -39,7 +39,7 @@ public class NamespaceSecretController {
     @Get(uri = "{namespace}/secrets")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Namespaces"}, summary = "Get secrets for a namespace")
-    public HttpResponse<ApiSecretListResponse> listSecret(
+    public HttpResponse<ApiSecretListResponse> listNamespaceSecrets(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The current page") @QueryValue(value = "page", defaultValue = "1") int page,
         @Parameter(description = "The current page size") @QueryValue(value = "size", defaultValue = "10") int size,
@@ -78,7 +78,7 @@ public class NamespaceSecretController {
     @Get(uri = "{namespace}/inherited-secrets")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Namespaces"}, summary = "List inherited secrets")
-    public HttpResponse<Map<String, Set<String>>> inheritedSecrets(
+    public HttpResponse<Map<String, Set<String>>> getInheritedSecrets(
         @Parameter(description = "The namespace id") @PathVariable String namespace
     ) throws IllegalArgumentException, IOException {
         return HttpResponse.ok(secretService.inheritedSecrets(tenantService.resolveTenant(), namespace));

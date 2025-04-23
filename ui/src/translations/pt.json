@@ -61,8 +61,10 @@
     "blueprints": {
       "apps": "Blueprints do Aplicativo",
       "community": "Comunidade",
+      "create": "Criar um blueprint",
       "custom": "Blueprints personalizados",
       "dashboards": "Blueprints do Dashboard",
+      "edit": "Editar um blueprint",
       "empty": "Nenhum blueprint para mostrar.",
       "flows": "Blueprints de Flow",
       "header": {
@@ -303,6 +305,14 @@
         }
       },
       "secrets": {
+        "add_env": {
+          "first": "Codifique o <strong><a href=\"https://kestra.io/docs/how-to-guides/secrets#using-secrets-in-kestra\" target=\"_blank\">valor secreto em Base64</a></strong>",
+          "intro": "Para criar um novo Secret:",
+          "second": "Adicione uma variável de ambiente chamada '<strong>SECRET_{'{MY_SECRET_KEY}'}</strong>' com o valor acima",
+          "third": "Reinicie sua instância do Kestra"
+        },
+        "detected_env": "Aqui estão as variáveis de ambiente do tipo secreto identificadas no momento de inicialização da instância:",
+        "empty_env": "Você ainda não tem nenhum Secret no seu ambiente.",
         "message": "A Enterprise Edition (EE) permite adicionar, editar ou excluir segredos diretamente na UI—sem necessidade de reiniciar a instância. Organize segredos por namespace com permissões RBAC granulares e herde-os de namespaces pai para filho. A EE integra-se com gerenciadores de segredos como HashiCorp Vault, AWS Secrets Manager, Azure Key Vault, Google Secret Manager e Elasticsearch. Configure backends dedicados por namespace, tenant ou instância para isolar segredos entre equipes, ou habilite segredos somente leitura armazenados em cofres externos. Os segredos permanecem criptografados em repouso e em trânsito. O cache opcional reduz chamadas de API, e trilhas de auditoria registram todo o acesso.",
         "title": "Atualize seu Gerenciamento de Secrets"
       },
@@ -685,6 +695,11 @@
     "minutes": "Minutos",
     "monogram": "Monograma",
     "months": "Meses",
+    "multi_panel_editor": {
+      "close_all_tabs": "Fechar todas as abas",
+      "move_left": "Mover para a esquerda",
+      "move_right": "Mover para a direita"
+    },
     "multiple saved done": "{name} foi salvo",
     "name": "Nome",
     "namespace": "Namespace",
@@ -1070,10 +1085,10 @@
           "note": "Note que esta configuração é usada para exibir propriedades de data e hora na UI. Para agendar seus flows em um fuso horário diferente de UTC, certifique-se de definir a propriedade de fuso horário no trigger de Schedule no seu código de flow ou nos padrões do seu plugin."
         },
         "save": {
-          "fields": {
-            "name": "Salvar Alterações"
-          },
-          "label": "Salvar Preferências"
+          "discard": "Descartar",
+          "label": "Salvar Preferências",
+          "unsaved_title": "Alterações Não Salvas",
+          "unsaved_warning": "Você tem alterações não salvas. Deseja salvá-las antes de sair?"
         },
         "theme": {
           "fields": {
@@ -1153,8 +1168,10 @@
     "templates deleted": "<code>{count}</code> Template(s) deletado(s)",
     "templates deprecated": "Templates estão obsoletos. Por favor, use subflows. Veja a <a href=\"https://kestra.io/docs/migration-guide/0.11.0/templates\" target=\"_blank\">Seção de Migrações</a> explicando como você pode migrar de templates para subflows.",
     "templates exported": "Templates exportados",
-    "tenant": "Tenant",
-    "tenants": "Tenants",
+    "tenant": {
+      "name": "Mandante",
+      "names": "Mandantes"
+    },
     "theme": "Tema",
     "this_task_has": "Esta task tem",
     "timezone": "Fuso horário",

@@ -22,7 +22,7 @@ import org.slf4j.event.Level;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Log a message in the task logs.",
+    title = "Log a message in the task logs (Deprecated).",
     description = "This task is deprecated, please use the `io.kestra.plugin.core.log.Log` task instead.",
     deprecated = true
 )

@@ -48,18 +48,18 @@ abstract public class AbstractSchedulerTest {
     @Inject
     protected ExecutionService executionService;
 
-    public static Flow createThreadFlow() {
+    public static FlowWithSource createThreadFlow() {
         return createThreadFlow(null);
     }
 
-    public static Flow createThreadFlow(String workerGroup) {
+    public static FlowWithSource createThreadFlow(String workerGroup) {
         UnitTest schedule = UnitTest.builder()
             .id("sleep")
             .type(UnitTest.class.getName())
             .workerGroup(workerGroup == null ? null : new WorkerGroup(workerGroup, null))
             .build();
 
-        return createFlow(Collections.singletonList(schedule), List.of(
+        return createFlow(null, Collections.singletonList(schedule), List.of(
             PluginDefault.builder()
                 .type(UnitTest.class.getName())
                 .values(Map.of("defaultInjected", "done"))
@@ -67,13 +67,23 @@ abstract public class AbstractSchedulerTest {
         ));
     }
 
+    /**
+     * @deprecated try to use {@link AbstractSchedulerTest#createFlow(String, List)} with 'tenantId' instead to be
+     * extra sure these tests do not share resources
+     */
+    @Deprecated
     protected static FlowWithSource createFlow(List<AbstractTrigger> triggers) {
-        return createFlow(triggers, null);
+        return createFlow(null, triggers);
     }
 
-    protected static FlowWithSource createFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
-        Flow.FlowBuilder<?, ?> builder = Flow.builder()
+    protected static FlowWithSource createFlow(String tenantId, List<AbstractTrigger> triggers) {
+        return createFlow(tenantId, triggers, null);
+    }
+
+    protected static FlowWithSource createFlow(String tenantId, List<AbstractTrigger> triggers, List<PluginDefault> list) {
+        FlowWithSource.FlowWithSourceBuilder<?, ?> builder = FlowWithSource.builder()
             .id(IdUtils.create())
+            .tenantId(tenantId)
             .namespace("io.kestra.unittest")
             .inputs(List.of(
                 StringInput.builder()
@@ -107,16 +117,16 @@ abstract public class AbstractSchedulerTest {
             builder.pluginDefaults(list);
         }
 
-        Flow flow = builder.build();
-        return FlowWithSource.of(flow, flow.generateSource());
+        FlowWithSource flow = builder.build();
+        return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
     }
 
-    protected static FlowWithSource createLongRunningFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
-        return createFlow(triggers, list)
+    protected static FlowWithSource createLongRunningFlow(String tenantId, List<AbstractTrigger> triggers, List<PluginDefault> list) {
+        return createFlow(tenantId, triggers, list)
             .toBuilder()
             .tasks(
                 Collections.singletonList(
-                    Sleep.builder().id("sleep").type(Sleep.class.getName()).duration(Duration.ofSeconds(125)).build()
+                    Sleep.builder().id("sleep").type(Sleep.class.getName()).duration(Property.of(Duration.ofSeconds(125))).build()
                 )
             )
             .build();
@@ -161,6 +171,7 @@ abstract public class AbstractSchedulerTest {
             } else {
                 Execution execution = Execution.builder()
                     .id(IdUtils.create())
+                    .tenantId(context.getTenantId())
                     .namespace(context.getNamespace())
                     .flowId(context.getFlowId())
                     .flowRevision(conditionContext.getFlow().getRevision())

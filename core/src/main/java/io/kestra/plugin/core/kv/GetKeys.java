@@ -26,7 +26,7 @@ import java.util.function.Predicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Gets keys matching a given prefix."
+    title = "Fetch all keys matching a given KV pair prefix."
 )
 @Plugin(
     examples = {

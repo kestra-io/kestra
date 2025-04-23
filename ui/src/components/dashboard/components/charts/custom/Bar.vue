@@ -18,7 +18,7 @@
     import {Bar} from "vue-chartjs";
 
     import {customBarLegend} from "../legend.js";
-    import {useTheme} from "../../../../../utils/utils.js";
+    import {useTheme} from "../../../../../utils/utils";
     import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
@@ -35,7 +35,7 @@
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: Number, required: true},
+        identifier: {type: [Number, String], required: true},
         chart: {type: Object, required: true},
         isPreview: {type: Boolean, required: false, default: false}
     });

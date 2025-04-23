@@ -22,7 +22,6 @@ export default {
         total: 0,
         overallTotal: undefined,
         flowGraph: undefined,
-        flowGraphParam: undefined,
         revisions: undefined,
         flowValidation: undefined,
         taskError: undefined,
@@ -55,7 +54,7 @@ export default {
             commit("setFlowYamlOrigin", state.flowYaml);
             return dispatch("saveWithoutRevisionGuard");
         },
-        async save({getters, dispatch, commit, state, rootState}, {content}){
+        async save({getters, dispatch, commit, state, rootState}, {content, namespace}){
             if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
                 return;
             }
@@ -85,7 +84,7 @@ export default {
                 if(!currentTab.dirty) return;
 
                 await dispatch("namespace/createFile", {
-                    namespace: getters.namespace,
+                    namespace: namespace ?? getters.namespace,
                     path: currentTab.path ?? currentTab.name,
                     content,
                 }, {root: true});
@@ -341,6 +340,10 @@ export default {
                         return Promise.reject(new Error("Server error on flow save"))
                     } else {
                         commit("setFlow", response.data);
+                        commit("editor/setTabDirty", {
+                            name: "Flow",
+                            dirty: false,
+                        }, {root: true});
 
                         return response.data;
                     }
@@ -436,12 +439,6 @@ export default {
             }
             return this.$http.get(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
                 commit("setFlowGraph", response.data)
-                commit("setFlowGraphParam", {
-                    namespace: flow.namespace,
-                    id: flow.id,
-                    revision: flow.revision
-                })
-
                 return response.data;
             })
         },
@@ -463,11 +460,6 @@ export default {
                     // prevent losing revision when loading graph from source
                     flow.revision = state.flow?.revision;
                     commit("setFlow", flow);
-                    commit("setFlowGraphParam", {
-                        namespace: flow.namespace ? flow.namespace : "default",
-                        id: flow.id ? flow.id : "default",
-                        revision: flow.revision
-                    })
 
                     return response;
                 }).catch(error => {
@@ -600,15 +592,6 @@ export default {
         setFlow(state, flow) {
             state.flow = flow;
             state.lastSaveFlow = flow;
-            // if (state.flowGraph !== undefined && state.flowGraphParam && flow) {
-            //     if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id) {
-            //         state.flowGraph = undefined
-            //     }
-            // }
-
-        },
-        setFlowGraphParam(state, flow) {
-            state.flowGraphParam = flow
         },
         setTask(state, task) {
             state.task = task;
@@ -764,31 +747,6 @@ export default {
                 const errors = [...flowExistsError, ...constraintsError];
 
                 return errors.length === 0 ? undefined : errors;
-            }
-
-            return undefined;
-        },
-        flowWarnings(state, getters){
-            if (getters.isFlow) {
-                const outdatedWarning =
-                    state.flowValidation?.outdated && !state.isCreating
-                        ? [getters.outdatedMessage]
-                        : [];
-
-                const deprecationWarnings =
-                    state.flowValidation?.deprecationPaths?.map(
-                        (f) => `${f} ${this.$i18n.t("is deprecated")}.`
-                    ) ?? [];
-
-                const otherWarnings = state.flowValidation?.warnings ?? [];
-
-                const warnings = [
-                    ...outdatedWarning,
-                    ...deprecationWarnings,
-                    ...otherWarnings,
-                ];
-
-                return warnings.length === 0 ? undefined : warnings;
             }
 
             return undefined;

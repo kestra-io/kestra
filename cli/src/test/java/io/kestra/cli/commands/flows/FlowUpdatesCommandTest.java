@@ -10,9 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.net.URL;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class FlowUpdatesCommandTest {
     @Test
@@ -28,6 +26,8 @@ class FlowUpdatesCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -37,10 +37,12 @@ class FlowUpdatesCommandTest {
             };
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("successfully updated !"));
+            assertThat(out.toString()).contains("successfully updated !");
             out.reset();
 
             args = new String[]{
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -52,7 +54,7 @@ class FlowUpdatesCommandTest {
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
             // 2 delete + 1 update
-            assertThat(out.toString(), containsString("successfully updated !"));
+            assertThat(out.toString()).contains("successfully updated !");
         }
     }
 
@@ -70,6 +72,8 @@ class FlowUpdatesCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -79,11 +83,13 @@ class FlowUpdatesCommandTest {
             };
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("4 flow(s)"));
+            assertThat(out.toString()).contains("4 flow(s)");
             out.reset();
 
             // no "delete" arg should behave as no-delete
             args = new String[]{
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -92,10 +98,12 @@ class FlowUpdatesCommandTest {
             };
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("1 flow(s)"));
+            assertThat(out.toString()).contains("1 flow(s)");
             out.reset();
 
             args = new String[]{
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -105,7 +113,7 @@ class FlowUpdatesCommandTest {
             };
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("1 flow(s)"));
+            assertThat(out.toString()).contains("1 flow(s)");
         }
     }
 
@@ -121,6 +129,8 @@ class FlowUpdatesCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -132,7 +142,7 @@ class FlowUpdatesCommandTest {
             };
             PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(out.toString(), containsString("Invalid entity: flow.namespace: io.kestra.outsider_quattro_-1 - flow namespace is invalid"));
+            assertThat(out.toString()).contains("Invalid entity: flow.namespace: io.kestra.outsider_quattro_-1 - flow namespace is invalid");
         }
     }
 
@@ -148,6 +158,8 @@ class FlowUpdatesCommandTest {
             embeddedServer.start();
 
             String[] args = {
+                "--plugins",
+                "/tmp", // pass this arg because it can cause failure
                 "--server",
                 embeddedServer.getURL().toString(),
                 "--user",
@@ -157,8 +169,8 @@ class FlowUpdatesCommandTest {
             };
             Integer call = PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(call, is(0));
-            assertThat(out.toString(), containsString("1 flow(s)"));
+            assertThat(call).isZero();
+            assertThat(out.toString()).contains("1 flow(s)");
         }
     }
 }

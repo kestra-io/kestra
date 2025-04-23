@@ -2,6 +2,7 @@ package io.kestra.cli.commands.servers;
 
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.services.FileChangedEventListener;
+import io.kestra.core.contexts.KestraContext;
 import io.kestra.core.models.ServerType;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.runners.StandAloneRunner;
@@ -88,15 +89,16 @@ public class StandAloneCommand extends AbstractServerCommand {
         this.skipExecutionService.setSkipFlows(skipFlows);
         this.skipExecutionService.setSkipNamespaces(skipNamespaces);
         this.skipExecutionService.setSkipTenants(skipTenants);
-
         this.startExecutorService.applyOptions(startExecutors, notStartExecutors);
+
+        KestraContext.getContext().injectWorkerConfigs(workerThread, null);
 
         super.call();
 
         if (flowPath != null) {
             try {
                 LocalFlowRepositoryLoader localFlowRepositoryLoader = applicationContext.getBean(LocalFlowRepositoryLoader.class);
-                localFlowRepositoryLoader.load(this.flowPath);
+                localFlowRepositoryLoader.load(null, this.flowPath);
             } catch (IOException e) {
                 throw new CommandLine.ParameterException(this.spec.commandLine(), "Invalid flow path", e);
             }

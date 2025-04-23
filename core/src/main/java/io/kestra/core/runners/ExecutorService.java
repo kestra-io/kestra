@@ -6,7 +6,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.*;
@@ -15,6 +15,7 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.*;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
@@ -80,6 +81,9 @@ public class ExecutorService {
     private Optional<OpenTelemetry> openTelemetry;
 
     @Inject
+    private VariablesService variablesService;
+
+    @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
     protected QueueInterface<ExecutionKilled> killQueue;
 
@@ -92,7 +96,7 @@ public class ExecutorService {
         return this.flowExecutorInterface;
     }
 
-    public Executor checkConcurrencyLimit(Executor executor, Flow flow, Execution execution, long count) {
+    public Executor checkConcurrencyLimit(Executor executor, FlowInterface flow, Execution execution, long count) {
         // if above the limit, handle concurrency limit based on its behavior
         if (count >= flow.getConcurrency().getLimit()) {
             return switch (flow.getConcurrency().getBehavior()) {
@@ -144,6 +148,7 @@ public class ExecutorService {
             return executor;
         }
 
+        long nanos = System.nanoTime();
         try {
             executor = this.handleRestart(executor);
             executor = this.handleEnd(executor);
@@ -174,6 +179,10 @@ public class ExecutorService {
             executor = this.handleExecutableTask(executor);
         } catch (Exception e) {
             return executor.withException(e, "process");
+        } finally {
+            metricRegistry
+                .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_MESSAGE_PROCESS_DURATION, MetricRegistry.METRIC_EXECUTOR_EXECUTION_MESSAGE_PROCESS_DURATION_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+                .record(Duration.ofNanos(System.nanoTime() - nanos));
         }
 
         return executor;
@@ -205,7 +214,7 @@ public class ExecutorService {
 
         if (execution.getState().getCurrent() == State.Type.CREATED) {
             metricRegistry
-                .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(execution))
+                .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
                 .increment();
 
             logService.logExecution(
@@ -216,10 +225,6 @@ public class ExecutorService {
 
             newExecution = newExecution.withState(State.Type.RUNNING);
         }
-
-        metricRegistry
-            .counter(MetricRegistry.EXECUTOR_TASKRUN_NEXT_COUNT, metricRegistry.tags(execution))
-            .increment(nexts.size());
 
         return newExecution;
     }
@@ -252,10 +257,11 @@ public class ExecutorService {
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
                     try {
                         Output outputs = flowableParent.outputs(runContext);
+                        Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputs);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
-                            .withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of()))
-                        );
+                            .withOutputs(variables)
+                        ));
                     } catch (Exception e) {
                         runContext.logger().error("Unable to resolve outputs from the Flowable task: {}", e.getMessage(), e);
                     }
@@ -299,18 +305,7 @@ public class ExecutorService {
         TaskRun taskRun
     ) {
         return findState
-            .map(throwFunction(type -> new WorkerTaskResult(taskRun.withState(type))))
-            .stream()
-            .peek(workerTaskResult -> {
-                metricRegistry
-                    .counter(
-                        MetricRegistry.EXECUTOR_WORKERTASKRESULT_COUNT,
-                        metricRegistry.tags(workerTaskResult)
-                    )
-                    .increment();
-
-            })
-            .findFirst();
+            .map(throwFunction(type -> new WorkerTaskResult(taskRun.withState(type))));
     }
 
     private List<TaskRun> childNextsTaskRun(Executor executor, TaskRun parentTaskRun) throws InternalException {
@@ -363,7 +358,8 @@ public class ExecutorService {
 
                 try {
                     Output outputs = flowableTask.outputs(runContext);
-                    taskRun = taskRun.withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of());
+                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
+                    taskRun = taskRun.withOutputs(variables);
                 } catch (Exception e) {
                     runContext.logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
                 }
@@ -413,11 +409,11 @@ public class ExecutorService {
         }
 
         metricRegistry
-            .counter(MetricRegistry.EXECUTOR_EXECUTION_END_COUNT, metricRegistry.tags(newExecution))
+            .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_END_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_END_COUNT_DESCRIPTION, metricRegistry.tags(newExecution))
             .increment();
 
         metricRegistry
-            .timer(MetricRegistry.EXECUTOR_EXECUTION_DURATION, metricRegistry.tags(newExecution))
+            .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION_DESCRIPTION, metricRegistry.tags(newExecution))
             .record(newExecution.getState().getDuration());
 
         return executor.withExecution(newExecution, "onEnd");
@@ -549,7 +545,8 @@ public class ExecutorService {
             else if (task instanceof LoopUntil waitFor && taskRun.getState().isRunning()) {
                 if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                     Output newOutput = waitFor.outputs(taskRun);
-                    TaskRun updatedTaskRun = taskRun.withOutputs(newOutput.toMap());
+                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), newOutput);
+                    TaskRun updatedTaskRun = taskRun.withOutputs(variables);
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(updatedTaskRun), updatedTaskRun);
                     List<NextTaskRun> next = ((FlowableTask<?>) task).resolveNexts(runContext, executor.getExecution(), updatedTaskRun);
                     Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), updatedTaskRun);
@@ -625,16 +622,19 @@ public class ExecutorService {
                 Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
 
                 if (task instanceof Pause pauseTask) {
-                    if (pauseTask.getDelay() != null || pauseTask.getTimeout() != null) {
+                    if (pauseTask.getPauseDuration() != null || pauseTask.getTimeout() != null) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        Duration delay = runContext.render(pauseTask.getDelay()).as(Duration.class).orElse(null);
+                        Duration duration = runContext.render(pauseTask.getPauseDuration()).as(Duration.class).orElse(null);
                         Duration timeout = runContext.render(pauseTask.getTimeout()).as(Duration.class).orElse(null);
-                        if (delay != null || timeout != null) { // rendering can lead to null, so we must re-check here
+                        Pause.Behavior behavior  = runContext.render(pauseTask.getBehavior()).as(Pause.Behavior.class).orElse(Pause.Behavior.RESUME);
+                        if (duration != null || timeout != null) { // rendering can lead to null, so we must re-check here
+                            // if duration is set, we use it, and we use the Pause behavior as a state
+                            // if no duration, we use the standard timeout property and use FAILED as the target state
                             return ExecutionDelay.builder()
                                 .taskRunId(workerTaskResult.getTaskRun().getId())
                                 .executionId(executor.getExecution().getId())
-                                .date(workerTaskResult.getTaskRun().getState().maxDate().plus(delay != null ? delay : timeout))
-                                .state(delay != null ? State.Type.RUNNING : State.Type.FAILED)
+                                .date(workerTaskResult.getTaskRun().getState().maxDate().plus(duration != null ? duration : timeout))
+                                .state(duration != null ? behavior.mapToState() : State.Type.FAILED)
                                 .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                                 .build();
                         }
@@ -735,7 +735,7 @@ public class ExecutorService {
         }
 
         metricRegistry
-            .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(executor.getExecution()))
+            .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
             .increment();
 
         logService.logExecution(
@@ -847,6 +847,8 @@ public class ExecutorService {
         List<WorkerTask> processingTasks = workerTasks.get(false);
         if (processingTasks != null && !processingTasks.isEmpty()) {
             executorToReturn = executorToReturn.withWorkerTasks(processingTasks, "handleWorkerTask");
+
+            metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_CREATED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_CREATED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution())).increment(processingTasks.size());
         }
 
         return executorToReturn;
@@ -902,7 +904,7 @@ public class ExecutorService {
                         );
                     } else {
                         executions.addAll(subflowExecutions);
-                        Optional<FlowWithSource> flow = flowExecutorInterface.findByExecution(subflowExecutions.getFirst().getExecution());
+                        Optional<FlowInterface> flow = flowExecutorInterface.findByExecution(subflowExecutions.getFirst().getExecution());
                         if (flow.isPresent()) {
                             // add SubflowExecutionResults to notify parents
                             for (SubflowExecution<?> subflowExecution : subflowExecutions) {

@@ -21,7 +21,7 @@ import java.util.NoSuchElementException;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Deletes a KV pair."
+    title = "Delete a KV pair."
 )
 @Plugin(
     examples = {

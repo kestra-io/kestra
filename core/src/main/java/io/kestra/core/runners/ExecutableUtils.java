@@ -6,6 +6,7 @@ import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
@@ -143,7 +144,7 @@ public final class ExecutableUtils {
             String subflowId = runContext.render(currentTask.subflowId().flowId());
             Optional<Integer> subflowRevision = currentTask.subflowId().revision();
 
-            Flow flow = flowExecutorInterface.findByIdFromTask(
+            FlowInterface flow = flowExecutorInterface.findByIdFromTask(
                     currentExecution.getTenantId(),
                     subflowNamespace,
                     subflowId,
@@ -212,7 +213,7 @@ public final class ExecutableUtils {
         }));
     }
 
-    private static List<Label> filterLabels(List<Label> labels, Flow flow) {
+    private static List<Label> filterLabels(List<Label> labels, FlowInterface flow) {
         if (ListUtils.isEmpty(flow.getLabels())) {
             return labels;
         }
@@ -274,7 +275,7 @@ public final class ExecutableUtils {
 
             return previousTaskRun
                 .withIteration(taskRun.getIteration())
-                .withOutputs(outputs)
+                .withOutputs(Variables.inMemory(outputs))
                 .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
                 .withState(state);
         }
@@ -282,10 +283,10 @@ public final class ExecutableUtils {
         // else we update the previous taskRun as it's the same taskRun that is still running
         return previousTaskRun
             .withIteration(taskRun.getIteration())
-            .withOutputs(Map.of(
+            .withOutputs(Variables.inMemory(Map.of(
                 TASK_VARIABLE_ITERATIONS, iterations,
                 TASK_VARIABLE_NUMBER_OF_BATCHES, numberOfBatches
-            ));
+            )));
     }
 
     private static State.Type findTerminalState(Map<String, Integer> iterations, boolean allowFailure, boolean allowWarning) {
@@ -304,7 +305,7 @@ public final class ExecutableUtils {
         return State.Type.SUCCESS;
     }
 
-    public static SubflowExecutionResult subflowExecutionResultFromChildExecution(RunContext runContext, Flow flow, Execution execution, ExecutableTask<?> executableTask, TaskRun taskRun) {
+    public static SubflowExecutionResult subflowExecutionResultFromChildExecution(RunContext runContext, FlowInterface flow, Execution execution, ExecutableTask<?> executableTask, TaskRun taskRun) {
         try {
             return executableTask
                 .createSubflowExecutionResult(runContext, taskRun, flow, execution)

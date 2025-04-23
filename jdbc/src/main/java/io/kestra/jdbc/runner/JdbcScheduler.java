@@ -6,6 +6,7 @@ import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.schedulers.*;
 import io.kestra.core.services.FlowListenersInterface;
 import io.kestra.core.services.FlowService;
+import io.kestra.core.services.PluginDefaultService;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.jdbc.repository.AbstractJdbcTriggerRepository;
@@ -24,7 +25,6 @@ import java.util.function.BiConsumer;
 public class JdbcScheduler extends AbstractScheduler {
     private final TriggerRepositoryInterface triggerRepository;
     private final JooqDSLContextWrapper dslContextWrapper;
-
 
     @Inject
     public JdbcScheduler(

@@ -1,5 +1,5 @@
 id: kv
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 variables:
   key: mykey

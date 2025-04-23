@@ -9,15 +9,13 @@ import io.kestra.core.models.executions.metrics.Timer;
 import io.micronaut.data.model.Pageable;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 public abstract class AbstractMetricRepositoryTest {
@@ -35,13 +33,13 @@ public abstract class AbstractMetricRepositoryTest {
         metricRepository.save(timer);
 
         List<MetricEntry> results = metricRepository.findByExecutionId(null, executionId, Pageable.from(1, 10));
-        assertThat(results.size(), is(2));
+        assertThat(results.size()).isEqualTo(2);
 
         results = metricRepository.findByExecutionIdAndTaskId(null, executionId, taskRun1.getTaskId(), Pageable.from(1, 10));
-        assertThat(results.size(), is(2));
+        assertThat(results.size()).isEqualTo(2);
 
         results = metricRepository.findByExecutionIdAndTaskRunId(null, executionId, taskRun1.getId(), Pageable.from(1, 10));
-        assertThat(results.size(), is(1));
+        assertThat(results.size()).isEqualTo(1);
 
         MetricAggregations aggregationResults = metricRepository.aggregateByFlowId(
             null,
@@ -54,8 +52,8 @@ public abstract class AbstractMetricRepositoryTest {
             "sum"
         );
 
-        assertThat(aggregationResults.getAggregations().size(), is(31));
-        assertThat(aggregationResults.getGroupBy(), is("day"));
+        assertThat(aggregationResults.getAggregations().size()).isEqualTo(31);
+        assertThat(aggregationResults.getGroupBy()).isEqualTo("day");
 
         aggregationResults = metricRepository.aggregateByFlowId(
             null,
@@ -68,8 +66,8 @@ public abstract class AbstractMetricRepositoryTest {
             "sum"
         );
 
-        assertThat(aggregationResults.getAggregations().size(), is(27));
-        assertThat(aggregationResults.getGroupBy(), is("week"));
+        assertThat(aggregationResults.getAggregations().size()).isEqualTo(27);
+        assertThat(aggregationResults.getGroupBy()).isEqualTo("week");
 
     }
 
@@ -90,10 +88,24 @@ public abstract class AbstractMetricRepositoryTest {
          List<String> taskMetricsNames = metricRepository.taskMetrics(null, "namespace", "flow", "task");
          List<String> tasksWithMetrics = metricRepository.tasksWithMetrics(null, "namespace", "flow");
 
-         assertThat(flowMetricsNames.size(), is(2));
-         assertThat(taskMetricsNames.size(), is(1));
-         assertThat(tasksWithMetrics.size(), is(2));
+         assertThat(flowMetricsNames.size()).isEqualTo(2);
+         assertThat(taskMetricsNames.size()).isEqualTo(1);
+         assertThat(tasksWithMetrics.size()).isEqualTo(2);
      }
+
+    @Test
+    void findAllAsync() {
+        String executionId = FriendlyId.createFriendlyId();
+        TaskRun taskRun1 = taskRun(executionId, "task");
+        MetricEntry counter = MetricEntry.of(taskRun1, counter("counter"));
+        TaskRun taskRun2 = taskRun(executionId, "task");
+        MetricEntry timer = MetricEntry.of(taskRun2, timer());
+        metricRepository.save(counter);
+        metricRepository.save(timer);
+
+        List<MetricEntry> results = metricRepository.findAllAsync(null).collectList().block();
+        assertThat(results).hasSize(2);
+    }
 
     private Counter counter(String metricName) {
         return Counter.of(metricName, 1);

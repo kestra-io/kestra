@@ -1211,3 +1211,7 @@ form.ks-horizontal {
 .el-empty {
     background-color: var(--ks-background-card);
 }
+
+.el-scrollbar__thumb {
+    background-color: var(--ks-border-primary) !important;
+}

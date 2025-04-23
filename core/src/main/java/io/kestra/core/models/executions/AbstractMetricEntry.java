@@ -7,6 +7,7 @@ import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.metrics.Counter;
 import io.kestra.core.models.executions.metrics.Timer;
 import io.micronaut.core.annotation.Introspected;
+import jakarta.annotation.Nullable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -36,12 +37,15 @@ abstract public class AbstractMetricEntry<T> {
     @NotNull
     protected String name;
 
+    protected String description;
+
     protected Map<String, String> tags;
 
     protected Instant timestamp = Instant.now();
 
-    protected AbstractMetricEntry(@NotNull String name, String[] tags) {
+    protected AbstractMetricEntry(@NotNull String name, @Nullable String description, String[] tags) {
         this.name = name;
+        this.description = description;
         this.tags = tagsAsMap(tags);
     }
 
@@ -79,7 +83,7 @@ abstract public class AbstractMetricEntry<T> {
 
     abstract public T getValue();
 
-    abstract public void register(MetricRegistry meterRegistry, String prefix, Map<String, String> tags);
+    abstract public void register(MetricRegistry meterRegistry, String name, @Nullable String description, Map<String, String> tags);
 
     abstract public void increment(T value);
 }

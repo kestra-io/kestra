@@ -1,5 +1,5 @@
 id: pause
-namespace: sanitychecks
+namespace: sanitychecks.core
 
 tasks:
   - id: pause_flow

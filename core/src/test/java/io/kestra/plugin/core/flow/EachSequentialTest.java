@@ -24,9 +24,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import reactor.core.publisher.Flux;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
 public class EachSequentialTest {
@@ -40,51 +38,51 @@ public class EachSequentialTest {
     @Test
     @ExecuteFlow("flows/valids/each-sequential.yaml")
     void sequential(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(11));
-        assertThat(execution.getState().getCurrent(), is(State.Type.WARNING));
+        assertThat(execution.getTaskRunList()).hasSize(11);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-object.yaml")
     void object(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(8));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat((String) execution.getTaskRunList().get(6).getOutputs().get("value"), containsString("json > JSON > [\"my-complex\"]"));
+        assertThat(execution.getTaskRunList()).hasSize(8);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat((String) execution.getTaskRunList().get(6).getOutputs().get("value")).contains("json > JSON > [\"my-complex\"]");
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-object-in-list.yaml")
     void objectInList(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(8));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat((String) execution.getTaskRunList().get(6).getOutputs().get("value"), containsString("json > JSON > [\"my-complex\"]"));
+        assertThat(execution.getTaskRunList()).hasSize(8);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat((String) execution.getTaskRunList().get(6).getOutputs().get("value")).contains("json > JSON > [\"my-complex\"]");
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-sequential-nested.yaml")
     void sequentialNested(Execution execution) throws InternalException {
-        assertThat(execution.getTaskRunList(), hasSize(23));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(23);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         TaskRun last = execution.findTaskRunsByTaskId("2_return").getFirst();
         TaskRun lastWithValue = execution.findTaskRunByTaskIdAndValue("1-2-1_return", Arrays.asList("s1", "a a"));
-        assertThat((String) last.getOutputs().get("value"), containsString((String) lastWithValue.getOutputs().get("value")));
+        assertThat((String) last.getOutputs().get("value")).contains((String) lastWithValue.getOutputs().get("value"));
 
         TaskRun evalL1 = execution.findTaskRunByTaskIdAndValue("1-3_return", Collections.singletonList("s1"));
         TaskRun evalL1Lookup = execution.findTaskRunByTaskIdAndValue("1-1_return", Collections.singletonList("s1"));
-        assertThat((String) evalL1.getOutputs().get("value"), containsString((String) evalL1Lookup.getOutputs().get("value")));
+        assertThat((String) evalL1.getOutputs().get("value")).contains((String) evalL1Lookup.getOutputs().get("value"));
 
         TaskRun evalL2 = execution.findTaskRunByTaskIdAndValue("1-2-2_return", Arrays.asList("s1", "a a"));
         TaskRun evalL2Lookup = execution.findTaskRunByTaskIdAndValue("1-2-1_return", Arrays.asList("s1", "a a"));
-        assertThat((String) evalL2.getOutputs().get("value"), containsString("get " + (String) evalL2Lookup.getOutputs().get("value")));
-        assertThat((String) evalL2.getOutputs().get("value"), containsString((String) evalL2Lookup.getOutputs().get("value")));
+        assertThat((String) evalL2.getOutputs().get("value")).contains("get " + (String) evalL2Lookup.getOutputs().get("value"));
+        assertThat((String) evalL2.getOutputs().get("value")).contains((String) evalL2Lookup.getOutputs().get("value"));
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-empty.yaml")
     void eachEmpty(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -99,30 +97,30 @@ public class EachSequentialTest {
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "each-null", Duration.ofSeconds(60));
 
-        assertThat(execution.getTaskRunList(), hasSize(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         LogEntry matchingLog = TestsUtils.awaitLog(logs, logEntry -> logEntry.getMessage().contains("Found '1' null values on Each, with values=[1, null, {key=my-key, value=my-value}]"));
         receive.blockLast();
-        assertThat(matchingLog, notNullValue());
+        assertThat(matchingLog).isNotNull();
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-switch.yaml")
     void eachSwitch(Execution execution) throws InternalException {
-        assertThat(execution.getTaskRunList(), hasSize(12));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(12);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         TaskRun switchNumber1 = execution.findTaskRunByTaskIdAndValue("2-1-1_switch-number-1", Arrays.asList("b", "1"));
-        assertThat((String) switchNumber1.getOutputs().get("value"), is("1"));
+        assertThat((String) switchNumber1.getOutputs().get("value")).isEqualTo("1");
 
         TaskRun switchNumber2 = execution.findTaskRunByTaskIdAndValue("2-1-1_switch-number-2", Arrays.asList("b", "2"));
-        assertThat((String) switchNumber2.getOutputs().get("value"), is("2 b"));
+        assertThat((String) switchNumber2.getOutputs().get("value")).isEqualTo("2 b");
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-disabled-tasks.yaml")
     void eachDisabledTasks(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(2));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 }

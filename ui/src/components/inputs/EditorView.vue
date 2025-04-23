@@ -238,6 +238,10 @@
             <NoCode
                 v-else
                 :flow="flowYaml"
+                :section="route.query.section.toString()"
+                :task-id="route.query.identifier.toString()"
+                :creating="isCreating"
+                :position="route.query.position === 'before' ? 'before' : 'after'"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
                 @reorder="(yaml) => handleReorder(yaml)"
@@ -250,7 +254,7 @@
                 v-if="viewType === editorViewTypes.SOURCE_BLUEPRINTS"
                 class="combined-right-view enhance-readability"
             >
-                <Blueprints @loaded="blueprintsLoaded = true" embed kind="flow" />
+                <Blueprints @loaded="blueprintsLoaded = true" embed kind="flow" combined-view />
             </div>
 
             <div
@@ -308,7 +312,7 @@
                     :icon="ContentSave"
                     @click="onSaveNewError()"
                     type="primary"
-                    :disabled="taskErrors"
+                    :disabled="Boolean(taskErrors)"
                 >
                     {{ $t("save") }}
                 </el-button>
@@ -330,7 +334,7 @@
                     :icon="ContentSave"
                     @click="onSaveNewTrigger()"
                     type="primary"
-                    :disabled="taskErrors"
+                    :disabled="Boolean(taskErrors)"
                 >
                     {{ $t("save") }}
                 </el-button>
@@ -560,9 +564,33 @@
 
     const baseOutdatedTranslationKey = computed(() => store.getters["flow/baseOutdatedTranslationKey"]);
     const flowErrors = computed(() => store.getters["flow/flowErrors"]);
-    const flowWarnings = computed(() => store.getters["flow/flowWarnings"]);
+    const flowWarnings = computed(() => {
+        if (isFlow.value) {
+            const outdatedWarning =
+                store.state.flow.flowValidation?.outdated && !store.state.flow.isCreating
+                    ? [store.getters["flow/outdatedMessage"]]
+                    : [];
+
+            const deprecationWarnings =
+                store.state.flow.flowValidation?.deprecationPaths?.map(
+                    (f) => `${f} ${t("is deprecated")}.`
+                ) ?? [];
+
+            const otherWarnings = store.state.flow.flowValidation?.warnings ?? [];
+
+            const warnings = [
+                ...outdatedWarning,
+                ...deprecationWarnings,
+                ...otherWarnings,
+            ];
+
+            return warnings.length === 0 ? undefined : warnings;
+        }
+
+        return undefined;
+    });
     const flowInfos = computed(() => store.getters["flow/flowInfos"]);
-    const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"]);
+    const flowHaveTasks = computed(() => Boolean(store.getters["flow/flowHaveTasks"]));
 
     const editorViewType = useStorage(storageKeys.EDITOR_VIEW_TYPE, "YAML");
 
@@ -718,7 +746,6 @@
     });
 
     onBeforeUnmount(() => {
-        store.commit("flow/setFlowYaml", undefined);
         window.removeEventListener("resize", onResize);
 
         store.commit("plugin/setEditorPlugin", undefined);
@@ -862,33 +889,17 @@
 
     const onUpdateMetadata = (event, shouldSave) => {
         if(shouldSave) {
-            metadata.value = {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)};
-            onSaveMetadata();
-            validateFlow(flowYaml.value)
+            store.commit("flow/setMetadata", {...metadata.value, ...(event.concurrency?.limit === 0 ? {concurrency: null} : event)});
+            store.dispatch("flow/onSaveMetadata");
+            store.dispatch("flow/validateFlow", {flow: flowYaml.value});
         } else {
-            metadata.value = event.concurrency?.limit === 0 ?  {concurrency: null} : event;
+            store.commit("flow/setMetadata", event.concurrency?.limit === 0 ?  {concurrency: null} : event);
         }
     };
 
     const onSaveMetadata = () => {
         store.dispatch("flow/onSaveMetadata");
         isEditMetadataOpen.value = false;
-    };
-
-    const validateFlow = (flow) => {
-        if(!flow) return;
-
-        return store
-            .dispatch("flow/validateFlow", {flow})
-            .then((value) => {
-                if (validationDomElement.value && editorDomElement.value) {
-                    validationDomElement.value.onResize(
-                        editorDomElement.value.$el.offsetWidth
-                    );
-                }
-
-                return value;
-            });
     };
 
     const handleReorder = (yaml) => {
@@ -953,7 +964,8 @@
 
     const  save = async () => {
         const result = await store.dispatch("flow/save", {
-            content: editorDomElement.value.$refs.monacoEditor.value,
+            content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
+            namespace: props.namespace ?? route.params.namespace,
         })
         if(result === "redirect_to_update"){
             await router.push({
@@ -1093,7 +1105,7 @@
     async function loadFileAtPath(path){
         const content = await store.dispatch("namespace/readFile", {
             path,
-            namespace: props.namespace,
+            namespace: props.namespace ?? route.params.namespace ?? route.params.id,
         })
         store.commit("flow/setFlowYaml", content);
     }
@@ -1330,20 +1342,6 @@
         &.enhance-readability {
             padding: 1.5rem;
             background-color: var(--bs-gray-100);
-        }
-
-        &::-webkit-scrollbar {
-            width: 10px;
-            height: 2px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-card);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 20px;
         }
     }
 

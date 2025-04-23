@@ -22,6 +22,7 @@ import io.micronaut.http.multipart.CompletedFileUpload;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -44,6 +45,8 @@ import java.util.zip.ZipOutputStream;
 @Validated
 @Controller("/api/v1/templates")
 @TemplateEnabled
+@Deprecated(forRemoval = true)
+@Hidden
 public class TemplateController {
     @Inject
     private TemplateRepositoryInterface templateRepository;
@@ -244,7 +247,7 @@ public class TemplateController {
                 ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
                 try {
-                    Template templateParse = new YamlParser().<Template>parse(template, Template.class);
+                    Template templateParse = YamlParser.parse(template, Template.class);
 
                     validateConstraintViolationBuilder.flow(templateParse.getId());
                     validateConstraintViolationBuilder.namespace(templateParse.getNamespace());
@@ -354,7 +357,7 @@ public class TemplateController {
         if (fileName.endsWith(".yaml") || fileName.endsWith(".yml")) {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
-                Template parsed = new YamlParser().parse(source, Template.class);
+                Template parsed = YamlParser.parse(source, Template.class);
                 importTemplate(parsed);
             }
         } else if (fileName.endsWith(".zip")) {
@@ -366,7 +369,7 @@ public class TemplateController {
                     }
 
                     String source = new String(archive.readAllBytes());
-                    Template parsed = new YamlParser().parse(source, Template.class);
+                    Template parsed = YamlParser.parse(source, Template.class);
                     importTemplate(parsed);
                 }
             }

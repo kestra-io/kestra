@@ -13,8 +13,7 @@ import picocli.CommandLine;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class AppTest {
@@ -26,7 +25,7 @@ class AppTest {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             PicocliRunner.call(App.class, ctx, "--help");
 
-            assertThat(out.toString(), containsString("kestra"));
+            assertThat(out.toString()).contains("kestra");
         }
     }
 
@@ -42,7 +41,7 @@ class AppTest {
             new CommandLine(App.class, new MicronautFactory(ctx)).execute(args);
 
             assertTrue(ctx.getProperty("kestra.server-type", ServerType.class).isEmpty());
-            assertThat(out.toString(), startsWith("Usage: kestra server " + serverType));
+            assertThat(out.toString()).startsWith("Usage: kestra server " + serverType);
         }
     }
 
@@ -56,9 +55,9 @@ class AppTest {
         try (ApplicationContext ctx = App.applicationContext(App.class, argsWithMissingParams)) {
             new CommandLine(App.class, new MicronautFactory(ctx)).execute(argsWithMissingParams);
 
-            assertThat(out.toString(), startsWith("Missing required parameters: "));
-            assertThat(out.toString(), containsString("Usage: kestra flow namespace update "));
-            assertThat(out.toString(), not(containsString("MissingParameterException: ")));
+            assertThat(out.toString()).startsWith("Missing required parameters: ");
+            assertThat(out.toString()).contains("Usage: kestra flow namespace update ");
+            assertThat(out.toString()).doesNotContain("MissingParameterException: ");
         }
     }
 }

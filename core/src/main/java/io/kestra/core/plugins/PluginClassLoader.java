@@ -34,6 +34,7 @@ public class PluginClassLoader extends URLClassLoader {
         + "|io.kestra.plugin.core"
         + "|org.slf4j"
         + "|ch.qos.logback"
+        + "|io.swagger"
         + "|com.fasterxml.jackson.core"
         + "|com.fasterxml.jackson.annotation"
         + "|com.fasterxml.jackson.module"

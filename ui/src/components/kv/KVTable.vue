@@ -1,5 +1,7 @@
 <template>
-    <KestraFilter :placeholder="$t('search')" :search-callback="(input) => search = input" :decode="false" />
+    <section class="d-inline-flex mb-3 filters">
+        <el-input v-model="search" :placeholder="$t('search')" />
+    </section>
 
     <select-table
         :data="filteredKvs"
@@ -190,8 +192,7 @@
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import TimeSelect from "../executions/date-select/TimeSelect.vue";
     import Check from "vue-material-design-icons/Check.vue";
-    import KestraFilter from "../filter/KestraFilter.vue";
-    import NamespaceSelect from "../namespace/NamespaceSelect.vue";
+    import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 
     import Utils from "../../utils/utils";
 </script>
@@ -203,11 +204,12 @@
     import {NamespaceIterator} from "../../composables/useNamespaces";
     import useNamespaces from "../../composables/useNamespaces";
     import {groupBy} from "lodash";
-    import {mapState} from "vuex";
+    import {mapState, mapMutations} from "vuex";
     import action from "../../models/action";
     import permission from "../../models/permission";
 
     export default {
+        inheritAttrs: false,
         mixins: [SelectTableActions],
         components: {
             Id,
@@ -215,6 +217,7 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            ...mapState("namespace", ["addKvModalVisible"]),
             filteredKvs() {
                 return this.kvs?.filter(kv => !this.search || kv.key.toLowerCase().includes(this.search.toLowerCase()));
             },
@@ -225,8 +228,8 @@
                 get() {
                     return this.addKvModalVisible;
                 },
-                set(newValue) {
-                    this.$emit("update:addKvModalVisible", newValue);
+                set(newValue:boolean) {
+                    this.changeKVModalVisibility(newValue);
                 }
             }
         },
@@ -236,18 +239,11 @@
             }
         },
         props: {
-            addKvModalVisible: {
-                type: Boolean,
-                default: false
-            },
             namespace: {
                 type: String,
                 default: undefined
             }
         },
-        emits: [
-            "update:addKvModalVisible"
-        ],
         watch: {
             addKvDrawerVisible(newValue) {
                 if (!newValue) {
@@ -257,6 +253,13 @@
             "kv.type"() {
                 if (this.$refs.form) {
                     this.$refs.form.clearValidate("value");
+                }
+            },
+            search(newValue) {
+                if (newValue !== undefined) {
+                    this.$router.push({query: {
+                        q: newValue
+                    }})
                 }
             }
         },
@@ -272,7 +275,7 @@
                 },
                 kvs: undefined,
                 namespaceIterator: undefined,
-                search: "",
+                search: this.$route.query?.q ?? "",
                 rules: {
                     key: [
                         {required: true, trigger: "change"},
@@ -300,6 +303,7 @@
             };
         },
         methods: {
+            ...mapMutations("namespace", ["changeKVModalVisibility"]),
             canUpdate(kv) {
                 return kv.namespace !== undefined && this.user.isAllowed(permission.KVSTORE, action.UPDATE, kv.namespace)
             },
@@ -358,6 +362,10 @@
 
                 this.kvs = this.kvs?.concat(kvFetch) ?? kvFetch;
 
+                if (this.namespace === undefined && this.filteredKvs.length === 0) {
+                    return this.fetchKvs();
+                }
+
                 return kvFetch;
             },
             kvKeyDuplicate(rule, value, callback) {
@@ -411,13 +419,15 @@
                         });
                     });
             },
-            reloadKvs() {
+            async reloadKvs() {
                 this.namespaceIterator = undefined;
+
+                const previousLength = this.secrets?.length ?? 0;
+                await this.$refs.selectTable.resetInfiniteScroll();
                 this.kvs = [];
-                this.$refs.selectTable.resetInfiniteScroll();
 
                 // If we are in the global KV view we let the infinite scroll handling the fetch
-                if (this.namespace !== undefined) {
+                if (this.namespace !== undefined || previousLength === 0) {
                     this.fetchKvs();
                 }
             },

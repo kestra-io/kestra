@@ -115,7 +115,7 @@
     "playwright": "^1.51.1",
     "prettier": "^3.5.3",
     "rollup-plugin-copy": "^3.5.0",
-    "sass": "^1.86.3",
+    "sass": "^1.87.0",
     "storybook": "^8.6.12",
     "storybook-vue3-router": "^5.0.0",
     "typescript": "^5.8.3",

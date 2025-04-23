@@ -30,20 +30,20 @@ public abstract class SchedulerTriggerStateInterfaceTest {
         Trigger.TriggerBuilder<?, ?> builder = trigger();
 
         Optional<Trigger> find = triggerState.findLast(builder.build());
-        assertThat(find.isPresent()).isEqualTo(false);
+        assertThat(find.isPresent()).isFalse();
 
         Trigger save = triggerState.update(builder.build());
 
         find = triggerState.findLast(save);
 
-        assertThat(find.isPresent()).isEqualTo(true);
+        assertThat(find.isPresent()).isTrue();
         assertThat(find.get().getExecutionId()).isEqualTo(save.getExecutionId());
 
         save = triggerState.update(builder.executionId(IdUtils.create()).build());
 
         find = triggerState.findLast(save);
 
-        assertThat(find.isPresent()).isEqualTo(true);
+        assertThat(find.isPresent()).isTrue();
         assertThat(find.get().getExecutionId()).isEqualTo(save.getExecutionId());
     }
 }

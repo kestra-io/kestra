@@ -29,6 +29,6 @@ class MiscControllerSecuredTest {
             basicAuthConfiguration.getPassword()
         ), MiscController.Configuration.class);
 
-        assertThat(response.getIsBasicAuthEnabled()).isEqualTo(true);
+        assertThat(response.getIsBasicAuthEnabled()).isTrue();
     }
 }

@@ -157,7 +157,7 @@
                         borderColor: "#A2CDFF",
                         yAxisID: "yB",
                         data: props.data.map((value) => {
-                            return value.duration.avg === 0
+                            return value.duration.avg === 0 || !value.duration.avg
                                 ? 0
                                 : Utils.duration(value.duration.avg.toString());
                         }),

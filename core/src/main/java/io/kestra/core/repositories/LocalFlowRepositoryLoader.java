@@ -47,7 +47,7 @@ public class LocalFlowRepositoryLoader {
     @Inject
     private PluginDefaultService pluginDefaultService;
 
-    public void load(URL basePath) throws IOException, URISyntaxException {
+    public void load(String tenantId, URL basePath) throws IOException, URISyntaxException {
         URI uri = basePath.toURI();
 
         if (uri.getScheme().equals("jar")) {
@@ -66,14 +66,14 @@ public class LocalFlowRepositoryLoader {
                     }
                 }
 
-                this.load(tempDirectory.toFile());
+                this.load(tenantId, tempDirectory.toFile());
             }
         } else {
-            this.load(Paths.get(uri).toFile());
+            this.load(tenantId, Paths.get(uri).toFile());
         }
     }
 
-    public void load(File basePath) throws IOException {
+    public void load(String tenantId, File basePath) throws IOException {
         Map<String, FlowInterface> flowByUidInRepository = flowRepository.findAllForAllTenants().stream()
             .collect(Collectors.toMap(FlowId::uidWithoutRevision, Function.identity()));
 
@@ -82,7 +82,7 @@ public class LocalFlowRepositoryLoader {
                 .forEach(Rethrow.throwConsumer(file -> {
                     try {
                         String source = Files.readString(Path.of(file.toFile().getPath()), Charset.defaultCharset());
-                        GenericFlow parsed = GenericFlow.fromYaml(null, source);
+                        GenericFlow parsed = GenericFlow.fromYaml(tenantId, source);
 
                         FlowWithSource flowWithSource = pluginDefaultService.injectAllDefaults(parsed, false);
                         modelValidator.validate(flowWithSource);

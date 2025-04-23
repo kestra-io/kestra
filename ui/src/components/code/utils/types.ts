@@ -55,9 +55,15 @@ export type Fields = {
     disabled: Field;
 };
 
+export interface NoCodeElement {
+    id: string;
+    type: string;
+    [key:string]: any;
+}
+
 export type CollapseItem = {
     title: string;
-    elements?: Record<string, any>[];
+    elements?: NoCodeElement[];
 };
 
 export type Breadcrumb = {

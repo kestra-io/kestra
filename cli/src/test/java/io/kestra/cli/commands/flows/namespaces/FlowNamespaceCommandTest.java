@@ -19,7 +19,7 @@ class FlowNamespaceCommandTest {
             String[] args = {};
             Integer call = PicocliRunner.call(FlowNamespaceCommand.class, ctx, args);
 
-            assertThat(call).isEqualTo(0);
+            assertThat(call).isZero();
             assertThat(out.toString()).contains("Usage: kestra flow namespace");
         }
     }

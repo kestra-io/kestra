@@ -162,7 +162,7 @@ class FlowNamespaceUpdateCommandTest {
             };
             Integer call = PicocliRunner.call(FlowNamespaceUpdateCommand.class, ctx, args);
 
-            assertThat(call).isEqualTo(0);
+            assertThat(call).isZero();
             assertThat(out.toString()).contains("1 flow(s)");
         }
     }

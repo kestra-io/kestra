@@ -160,7 +160,7 @@ class SetTest {
         final KVStore kv = runContext.namespaceKv(runContext.flowInfo().namespace());
         assertThat(kv.getValue(TEST_KEY)).isEqualTo(Optional.of(new KVValue(value)));
         Instant expirationDate = kv.get(TEST_KEY).get().expirationDate();
-        assertThat(expirationDate.isAfter(Instant.now().plus(Duration.ofMinutes(4))) && expirationDate.isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isEqualTo(true);
+        assertThat(expirationDate.isAfter(Instant.now().plus(Duration.ofMinutes(4))) && expirationDate.isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isTrue();
     }
 
     @Test
@@ -191,7 +191,7 @@ class SetTest {
         assertThat(kv.getValue(TEST_KEY).orElseThrow().value()).isEqualTo(123.45);
 
         kv = createAndPerformSetTask("true", KVType.BOOLEAN);
-        assertThat(kv.getValue(TEST_KEY).orElseThrow().value()).isEqualTo(true);
+        assertThat((Boolean) kv.getValue(TEST_KEY).orElseThrow().value()).isTrue();
 
         kv = createAndPerformSetTask("2023-05-02T01:02:03Z", KVType.DATETIME);
         assertThat(kv.getValue(TEST_KEY).orElseThrow().value()).isEqualTo(Instant.parse("2023-05-02T01:02:03Z"));

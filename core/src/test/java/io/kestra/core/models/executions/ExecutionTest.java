@@ -29,7 +29,7 @@ class ExecutionTest {
                 .withState(State.Type.RUNNING)
             ))
             .build()
-        )).isEqualTo(true);
+        )).isTrue();
     }
 
     @Test
@@ -44,7 +44,7 @@ class ExecutionTest {
         assertThat(execution.hasTaskRunJoinable(TASK_RUN
             .state(new State())
             .build()
-        )).isEqualTo(false);
+        )).isFalse();
     }
 
     @Test
@@ -61,7 +61,7 @@ class ExecutionTest {
         assertThat(execution.hasTaskRunJoinable(TASK_RUN
             .state(new State(State.Type.RUNNING, new State()))
             .build()
-        )).isEqualTo(false);
+        )).isFalse();
     }
 
     @Test
@@ -81,7 +81,7 @@ class ExecutionTest {
                 .withState(State.Type.RUNNING)
             ))
             .build()
-        )).isEqualTo(false);
+        )).isFalse();
     }
 
     @Test
@@ -102,7 +102,7 @@ class ExecutionTest {
                 .withState(State.Type.SUCCESS)
             ))
             .build()
-        )).isEqualTo(true);
+        )).isTrue();
     }
 
     @Test
@@ -125,7 +125,7 @@ class ExecutionTest {
                 .withState(State.Type.RUNNING)
             ))
             .build()
-        )).isEqualTo(true);
+        )).isTrue();
     }
 
     @Test

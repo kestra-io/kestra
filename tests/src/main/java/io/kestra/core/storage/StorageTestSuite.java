@@ -289,8 +289,8 @@ public abstract class StorageTestSuite {
 
     private void exists(String prefix, String tenantId) throws Exception {
         putFile(tenantId, "/" + prefix + "/storage/put.yml");
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/put.yml"))).isEqualTo(true);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/notfound.yml"))).isEqualTo(false);
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/put.yml"))).isTrue();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/notfound.yml"))).isFalse();
     }
 
     @Test
@@ -534,21 +534,21 @@ public abstract class StorageTestSuite {
         assertThat(attr.getType()).isEqualTo(FileAttributes.FileType.File);
         assertThat(attr.getSize()).isEqualTo((long) CONTENT_STRING.length());
         Instant lastModifiedInstant = Instant.ofEpochMilli(attr.getLastModifiedTime());
-        assertThat(lastModifiedInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isEqualTo(true);
-        assertThat(lastModifiedInstant.isBefore(Instant.now())).isEqualTo(true);
+        assertThat(lastModifiedInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isTrue();
+        assertThat(lastModifiedInstant.isBefore(Instant.now())).isTrue();
         Instant creationInstant = Instant.ofEpochMilli(attr.getCreationTime());
-        assertThat(creationInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isEqualTo(true);
-        assertThat(creationInstant.isBefore(Instant.now())).isEqualTo(true);
+        assertThat(creationInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isTrue();
+        assertThat(creationInstant.isBefore(Instant.now())).isTrue();
 
         attr = storageInterface.getAttributes(tenantId, prefix, new URI("/" + prefix + "/storage/level1"));
         assertThat(attr.getFileName()).isEqualTo("level1");
         assertThat(attr.getType()).isEqualTo(FileAttributes.FileType.Directory);
         lastModifiedInstant = Instant.ofEpochMilli(attr.getLastModifiedTime());
-        assertThat(lastModifiedInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isEqualTo(true);
-        assertThat(lastModifiedInstant.isBefore(Instant.now())).isEqualTo(true);
+        assertThat(lastModifiedInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isTrue();
+        assertThat(lastModifiedInstant.isBefore(Instant.now())).isTrue();
         creationInstant = Instant.ofEpochMilli(attr.getCreationTime());
-        assertThat(creationInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isEqualTo(true);
-        assertThat(creationInstant.isBefore(Instant.now())).isEqualTo(true);
+        assertThat(creationInstant.isAfter(Instant.now().minus(Duration.ofMinutes(1)))).isTrue();
+        assertThat(creationInstant.isBefore(Instant.now())).isTrue();
     }
 
     @Test
@@ -730,7 +730,7 @@ public abstract class StorageTestSuite {
     void deleteNotFound() throws URISyntaxException, IOException {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
-        assertThat(storageInterface.delete(tenantId, prefix, new URI("/" + prefix + "/storage/"))).isEqualTo(false);
+        assertThat(storageInterface.delete(tenantId, prefix, new URI("/" + prefix + "/storage/"))).isFalse();
     }
 
     private void delete(String prefix, String tenantId) throws Exception {
@@ -746,22 +746,22 @@ public abstract class StorageTestSuite {
         path.forEach(throwConsumer(s -> this.putFile(tenantId, s)));
 
         boolean deleted = storageInterface.delete(tenantId, prefix, new URI("/" + prefix + "/storage/level1"));
-        assertThat(deleted).isEqualTo(true);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root.yml"))).isEqualTo(true);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/another/1.yml"))).isEqualTo(true);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/level1"))).isEqualTo(false);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/level12.yml"))).isEqualTo(true);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/level1/1.yml"))).isEqualTo(false);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/level1/level2/1.yml"))).isEqualTo(false);
+        assertThat(deleted).isTrue();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root.yml"))).isTrue();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/another/1.yml"))).isTrue();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/level1"))).isFalse();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/level12.yml"))).isTrue();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/level1/1.yml"))).isFalse();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/level1/level2/1.yml"))).isFalse();
 
         deleted = storageInterface.delete(tenantId, prefix, new URI("/" + prefix + "/storage/root.yml"));
-        assertThat(deleted).isEqualTo(true);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root.yml"))).isEqualTo(false);
+        assertThat(deleted).isTrue();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root.yml"))).isFalse();
 
         deleted = storageInterface.delete(tenantId, prefix, new URI("/" + prefix + "/storage/file"));
-        assertThat(deleted).isEqualTo(true);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/file"))).isEqualTo(false);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/file.txt"))).isEqualTo(true);
+        assertThat(deleted).isTrue();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/file"))).isFalse();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/file.txt"))).isTrue();
     }
 
     @Test
@@ -771,7 +771,7 @@ public abstract class StorageTestSuite {
 
         putFile(tenantId, "/" + prefix + "/storage/get.yml");
         assertTrue(storageInterface.delete(tenantId, prefix, new URI("kestra:///" + prefix + "/storage/get.yml")));
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/get.yml"))).isEqualTo(false);
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/get.yml"))).isFalse();
     }
     //endregion
 
@@ -896,15 +896,15 @@ public abstract class StorageTestSuite {
         storageInterface.move(tenantId, prefix, new URI("/" + prefix + "/storage/level1"), new URI("/" + prefix + "/storage/moved"));
 
         List<FileAttributes> list = storageInterface.list(tenantId, prefix, new URI("/" + prefix + "/storage/moved"));
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/level1"))).isEqualTo(false);
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/level1"))).isFalse();
         assertThat(list.stream().map(FileAttributes::getFileName).toList()).containsExactlyInAnyOrder("level2", "1.yml");
 
         list = storageInterface.list(tenantId, prefix, new URI("/" + prefix + "/storage/moved/level2"));
         assertThat(list.stream().map(FileAttributes::getFileName).toList()).containsExactlyInAnyOrder("2.yml");
 
         storageInterface.move(tenantId, prefix, new URI("/" + prefix + "/storage/root.yml"), new URI("/" + prefix + "/storage/root-moved.yml"));
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root.yml"))).isEqualTo(false);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root-moved.yml"))).isEqualTo(true);
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root.yml"))).isFalse();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root-moved.yml"))).isTrue();
     }
 
     @Test
@@ -915,8 +915,8 @@ public abstract class StorageTestSuite {
         this.putFile(tenantId, "/" + prefix + "/storage/root.yml");
 
         storageInterface.move(tenantId, prefix, new URI("kestra:///" + prefix + "/storage/root.yml"), new URI("kestra:///" + prefix + "/storage/root-moved.yml"));
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root.yml"))).isEqualTo(false);
-        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root-moved.yml"))).isEqualTo(true);
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root.yml"))).isFalse();
+        assertThat(storageInterface.exists(tenantId, prefix, new URI("/" + prefix + "/storage/root-moved.yml"))).isTrue();
     }
     //endregion
 
@@ -988,7 +988,7 @@ public abstract class StorageTestSuite {
         });
 
         path.forEach(throwConsumer(s -> {
-            assertThat(storageInterface.exists(tenantId, prefix, new URI(s))).isEqualTo(false);
+            assertThat(storageInterface.exists(tenantId, prefix, new URI(s))).isFalse();
         }));
     }
 
@@ -1023,7 +1023,7 @@ public abstract class StorageTestSuite {
         });
 
         path.forEach(throwConsumer(s -> {
-            assertThat(storageInterface.exists(tenantId, prefix, new URI(s))).isEqualTo(false);
+            assertThat(storageInterface.exists(tenantId, prefix, new URI(s))).isFalse();
         }));
     }
     //endregion

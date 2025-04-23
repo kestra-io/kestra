@@ -125,6 +125,9 @@ public class RunContextInitializer {
             enrichedVariables.put("taskrun", taskrun);
         }
 
+        // rehydrate outputs
+        enrichedVariables.put("outputs", rehydrateOutputs((Map<String, Object>) enrichedVariables.get("outputs")));
+
         final RunContextLogger runContextLogger = contextLoggerFactory.create(taskRun, task);
         enrichedVariables.put(RunVariables.SECRET_CONSUMER_VARIABLE_NAME, (Consumer<String>) runContextLogger::usedSecret);
 
@@ -137,6 +140,14 @@ public class RunContextInitializer {
         runContext.setTask(task);
 
         return runContext;
+    }
+
+    /**
+     * Rehydrate outputs from internal storage if enabled.
+     * As outputs in internal storage is an EE feature, this is a no-op in OSS.
+     */
+    protected Map<String, Object> rehydrateOutputs(Map<String, Object> outputs) {
+        return outputs;
     }
 
     /**

@@ -13,6 +13,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
@@ -25,6 +26,8 @@ import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.services.VariablesService;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
@@ -225,6 +228,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             )
             .orElseGet(() -> isOutputsAllowed ? this.getOutputs() : null);
 
+        VariablesService variablesService = ((DefaultRunContext) runContext).getApplicationContext().getBean(VariablesService.class);
         if (subflowOutputs != null) {
             try {
                 Map<String, Object> outputs = runContext.render(subflowOutputs);
@@ -236,10 +240,11 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             } catch (Exception e) {
                 runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
                 var state = this.isAllowFailure() ? this.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
+                Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
                 taskRun = taskRun
                     .withState(state)
                     .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
-                    .withOutputs(builder.build().toMap());
+                    .withOutputs(variables);
 
                 return Optional.of(SubflowExecutionResult.builder()
                     .executionId(execution.getId())
@@ -249,7 +254,8 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             }
         }
 
-        taskRun = taskRun.withOutputs(builder.build().toMap());
+        Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
+        taskRun = taskRun.withOutputs(variables);
 
         State.Type finalState = ExecutableUtils.guessState(execution, this.transmitFailed, this.isAllowFailure(), this.isAllowWarning());
         if (taskRun.getState().getCurrent() != finalState) {

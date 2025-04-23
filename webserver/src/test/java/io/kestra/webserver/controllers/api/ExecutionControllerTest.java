@@ -70,7 +70,7 @@ class ExecutionControllerTest {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
 
-        TestsUtils.loads(repositoryLoader);
+        TestsUtils.loads(null, repositoryLoader);
     }
 
     @Test
@@ -266,7 +266,7 @@ class ExecutionControllerTest {
 
         assertThat(result).isNotNull();
         assertThat(result.getTasks()).hasSize(5);
-        assertThat((result.getTasks().getFirst() instanceof TaskForExecution)).isEqualTo(true);
+        assertThat((result.getTasks().getFirst() instanceof TaskForExecution)).isTrue();
     }
 
     @SuppressWarnings("DataFlowIssue")
@@ -288,7 +288,7 @@ class ExecutionControllerTest {
 
         assertThat(result.getId()).isEqualTo(execution.getFlowId());
         assertThat(result.getTriggers()).hasSize(1);
-        assertThat((result.getTriggers().getFirst() instanceof AbstractTriggerForExecution)).isEqualTo(true);
+        assertThat((result.getTriggers().getFirst() instanceof AbstractTriggerForExecution)).isTrue();
     }
 
     @SuppressWarnings("unchecked")

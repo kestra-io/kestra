@@ -33,7 +33,7 @@ class StateTest {
         ));
 
         Get.Output getOutput = get.run(runContext);
-        assertThat(getOutput.getCount()).isEqualTo(0);
+        assertThat(getOutput.getCount()).isZero();
 
         Set set = Set.builder()
             .id(IdUtils.create())
@@ -82,7 +82,7 @@ class StateTest {
             .build();
 
         Delete.Output deleteRun = delete.run(runContext);
-        assertThat(deleteRun.getDeleted()).isEqualTo(true);
+        assertThat(deleteRun.getDeleted()).isTrue();
 
 
         get = Get.builder()
@@ -92,7 +92,7 @@ class StateTest {
 
         getOutput = get.run(runContext);
 
-        assertThat(getOutput.getCount()).isEqualTo(0);
+        assertThat(getOutput.getCount()).isZero();
     }
 
     @Test

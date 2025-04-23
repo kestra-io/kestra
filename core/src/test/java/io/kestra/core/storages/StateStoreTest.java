@@ -60,7 +60,7 @@ public class StateStoreTest {
         MigrationRequiredException migrationRequiredException = Assertions.assertThrows(MigrationRequiredException.class, () -> runContext.stateStore().getState(state, "some-name", "my-taskrun-value"));
         assertThat(migrationRequiredException.getMessage()).isEqualTo("It looks like the State Store migration hasn't been run, please run the `/app/kestra sys state-store migrate` command before.");
 
-        assertThat(runContext.namespaceKv(flowInfo.namespace()).getValue(key).isEmpty()).isEqualTo(true);
+        assertThat(runContext.namespaceKv(flowInfo.namespace()).getValue(key).isEmpty()).isTrue();
     }
 
     @Test

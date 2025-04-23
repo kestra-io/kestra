@@ -52,7 +52,7 @@ class LocalWorkingDirTest {
         String workingDirId = IdUtils.create();
         TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
         Path tempFile = workingDirectory.createTempFile();
-        assertThat(tempFile.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isEqualTo(true);
+        assertThat(tempFile.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isTrue();
         assertThat(workingDirectory.getAllCreatedTempFiles().size()).isEqualTo(1);
     }
 
@@ -62,8 +62,8 @@ class LocalWorkingDirTest {
         TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
         Path path = workingDirectory.createFile("folder/file.txt");
 
-        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isEqualTo(true);
-        assertThat(path.toFile().getAbsolutePath().endsWith("/folder/file.txt")).isEqualTo(true);
+        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isTrue();
+        assertThat(path.toFile().getAbsolutePath().endsWith("/folder/file.txt")).isTrue();
         assertThat(workingDirectory.getAllCreatedFiles().size()).isEqualTo(1);
     }
 
@@ -111,13 +111,13 @@ class LocalWorkingDirTest {
         workingDir.cleanup();
 
         // Then
-        assertThat(file.toFile().exists()).isEqualTo(false);
-        assertThat(firtPath.toFile().exists()).isEqualTo(false);
+        assertThat(file.toFile().exists()).isFalse();
+        assertThat(firtPath.toFile().exists()).isFalse();
 
         // When
         Path secondPath = workingDir.path(true);
         // Then
-        assertThat(secondPath.toFile().exists()).isEqualTo(true);
+        assertThat(secondPath.toFile().exists()).isTrue();
         assertThat(firtPath).isEqualTo(secondPath);
     }
 

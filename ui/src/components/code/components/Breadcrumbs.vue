@@ -6,74 +6,81 @@
             class="item"
             @click="
                 (store.commit('code/removeBreadcrumb', {position: index}),
-                 store.commit('code/unsetPanel', false))
+                 store.commit('code/unsetPanel', false),
+                 clickBreadCrumb(index)
+                )
             "
         >
-            <router-link :to="breadcrumb.to">
-                {{ breadcrumb.label }}
-            </router-link>
+            {{ breadcrumb.label }}
         </el-breadcrumb-item>
     </el-breadcrumb>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, watch} from "vue";
-
-    import {useRoute} from "vue-router";
-    const route = useRoute();
+    import {computed, inject, onMounted, ref, watch} from "vue";
 
     import {useStore} from "vuex";
     const store = useStore();
 
     import {useI18n} from "vue-i18n";
+    import {SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps({flow: {type: Object, required: true}});
+    const props = defineProps<{
+        flow: {
+            id: string;
+        };
+    }>();
 
     store.commit("code/clearBreadcrumbs");
 
     const breadcrumbs = computed(() => store.state.code.breadcrumbs);
-
-    const params = {
-        namespace: route.params.namespace,
-        id: props.flow.id ?? "new",
-        tab: "edit",
-    };
+    const taskId = inject(TASKID_INJECTION_KEY, ref(""));
+    const taskSection = inject(SECTION_INJECTION_KEY, ref(""));
 
     onMounted(() => {
         store.commit("code/addBreadcrumbs", {
             breadcrumb: {
                 label:
-                    route.name === "flows/create"
+                    taskId.value === "new"
                         ? t("create_flow")
                         : props.flow.id,
-                to: {name: route.name, params, query: {}},
             },
             position: 0,
         });
     });
 
     watch(
-        () => route.query.identifier,
+        taskId,
         (value) => {
             if (!value) return;
 
             store.commit("code/addBreadcrumbs", {
                 breadcrumb: {
                     label:
-                        route.query.identifier === "new"
-                            ? t(`no_code.creation.${route.query.section}`)
-                            : route.query.identifier,
-                    to: {name: route.name, params, query: route.query},
+                        value === "new"
+                            ? t(`no_code.creation.${taskSection.value}`)
+                            : value,
                 },
                 position: 1,
             });
         },
     );
+
+    function clickBreadCrumb(index: number){
+        if (index === 0 && taskId.value.length > 0) {
+            taskId.value = "";
+            taskSection.value = "";
+        }
+    }
 </script>
 
 <style scoped lang="scss">
 @import "../styles/code.scss";
+
+.item{
+    cursor: pointer;
+}
 
 .item:last-child > .el-breadcrumb__inner > a {
     color: $code-primary !important;

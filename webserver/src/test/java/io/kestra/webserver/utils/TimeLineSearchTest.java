@@ -21,15 +21,24 @@ class TimeLineSearchTest {
 
         List<QueryFilter> filters = List.of(
             QueryFilter.builder().field(QueryFilter.Field.START_DATE).operation(QueryFilter.Op.EQUALS).value(startDate.toString()).build(),
-            QueryFilter.builder().field(QueryFilter.Field.END_DATE).operation(QueryFilter.Op.EQUALS).value(endDate.toString()).build(),
-            QueryFilter.builder().field(QueryFilter.Field.TIME_RANGE).operation(QueryFilter.Op.EQUALS).value(timeRange.toString()).build()
-        );
+            QueryFilter.builder().field(QueryFilter.Field.END_DATE).operation(QueryFilter.Op.EQUALS).value(endDate.toString()).build()
+            );
         // WHEN
         TimeLineSearch result = TimeLineSearch.extractFrom(filters);
+
         // THEN
         assertNotNull(result);
         assertEquals(startDate, result.getStartDate());
         assertEquals(endDate, result.getEndDate());
+
+        filters = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.TIME_RANGE).operation(QueryFilter.Op.EQUALS).value(timeRange.toString()).build()
+        );
+        // WHEN
+        result = TimeLineSearch.extractFrom(filters);
+
+        // THEN
+        assertNotNull(result);
         assertEquals(timeRange, result.getTimeRange());
     }
 

@@ -1,9 +1,10 @@
 package io.kestra.core.runners;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
+import io.kestra.core.exceptions.FlowProcessingException;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithException;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.services.PluginDefaultService;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import io.kestra.core.queues.QueueFactoryInterface;
@@ -11,11 +12,10 @@ import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.services.FlowListenersInterface;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
@@ -26,47 +26,48 @@ import jakarta.inject.Singleton;
 @Singleton
 @Slf4j
 public class FlowListeners implements FlowListenersInterface {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
-    private Boolean isStarted = false;
-    private final QueueInterface<FlowWithSource> flowQueue;
+    private final AtomicBoolean isStarted = new AtomicBoolean(false);
+    private final QueueInterface<FlowInterface> flowQueue;
     private final List<FlowWithSource> flows;
     private final List<Consumer<List<FlowWithSource>>> consumers = new ArrayList<>();
-
     private final List<BiConsumer<FlowWithSource, FlowWithSource>> consumersEach = new ArrayList<>();
+
+    private final PluginDefaultService pluginDefaultService;
 
     @Inject
     public FlowListeners(
         FlowRepositoryInterface flowRepository,
-        @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<FlowWithSource> flowQueue
+        @Named(QueueFactoryInterface.FLOW_NAMED) QueueInterface<FlowInterface> flowQueue,
+        PluginDefaultService pluginDefaultService
     ) {
         this.flowQueue = flowQueue;
-        this.flows = flowRepository.findAllWithSourceForAllTenants();
+        this.flows = new ArrayList<>(flowRepository.findAllWithSourceForAllTenants());
+        this.pluginDefaultService = pluginDefaultService;
     }
 
     @Override
     public void run() {
         synchronized (this) {
-            if (!this.isStarted) {
-                this.isStarted = true;
-
+            if (this.isStarted.compareAndSet(false, true)) {
                 this.flowQueue.receive(either -> {
                     FlowWithSource flow;
                     if (either.isRight()) {
-                        log.error("Unable to deserialize a flow: {}", either.getRight().getMessage());
+                        flow = FlowWithException.from(either.getRight().getRecord(), either.getRight(), log).orElse(null);
+                    } else {
                         try {
-                            var jsonNode = MAPPER.readTree(either.getRight().getRecord());
-                            flow = FlowWithException.from(jsonNode, either.getRight()).orElseThrow(IOException::new);
-                        } catch (IOException e) {
-                            // if we cannot create a FlowWithException, ignore the message
-                            log.error("Unexpected exception when trying to handle a deserialization error", e);
-                            return;
+                            flow = pluginDefaultService.injectVersionDefaults(either.getLeft(), true);
+                        } catch (FlowProcessingException ignore) {
+                            // should not occur, safe = true...
+                            flow = null;
                         }
                     }
-                    else {
-                        flow = either.getLeft();
+
+                    if (flow == null) {
+                        return;
                     }
-                    Optional<FlowWithSource> previous = this.previous(flow);
+
+                    final FlowWithSource previous = this.previous(flow).orElse(null);
 
                     if (flow.isDeleted()) {
                         this.remove(flow);
@@ -83,7 +84,7 @@ public class FlowListeners implements FlowListenersInterface {
                         );
                     }
 
-                    this.notifyConsumersEach(flow, previous.orElse(null));
+                    this.notifyConsumersEach(flow, previous);
                     this.notifyConsumers();
                 });
 
@@ -96,16 +97,14 @@ public class FlowListeners implements FlowListenersInterface {
         }
     }
 
-    private Optional<FlowWithSource> previous(FlowWithSource flow) {
-        return flows
-            .stream()
-            .filter(r -> Objects.equals(r.getTenantId(), flow.getTenantId()) && r.getNamespace().equals(flow.getNamespace()) && r.getId().equals(flow.getId()))
-            .findFirst();
+    private Optional<FlowWithSource> previous(final FlowWithSource flow) {
+        List<FlowWithSource> copy = new ArrayList<>(flows);
+        return copy.stream().filter(r -> r.isSameId(flow)).findFirst();
     }
 
-    private boolean remove(FlowWithSource flow) {
+    private boolean remove(FlowInterface flow) {
         synchronized (this) {
-            boolean remove = flows.removeIf(r -> Objects.equals(r.getTenantId(), flow.getTenantId()) && r.getNamespace().equals(flow.getNamespace()) && r.getId().equals(flow.getId()));
+            boolean remove = flows.removeIf(r -> r.isSameId(flow));
             if (!remove && flow.isDeleted()) {
                 log.warn("Can't remove flow {}.{}", flow.getNamespace(), flow.getId());
             }
@@ -117,15 +116,13 @@ public class FlowListeners implements FlowListenersInterface {
     private void upsert(FlowWithSource flow) {
         synchronized (this) {
             this.remove(flow);
-
             this.flows.add(flow);
         }
     }
 
     private void notifyConsumers() {
         synchronized (this) {
-            this.consumers
-                .forEach(consumer -> consumer.accept(new ArrayList<>(this.flows)));
+            this.consumers.forEach(consumer -> consumer.accept(new ArrayList<>(this.flows)));
         }
     }
 

@@ -10,9 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest
@@ -39,9 +37,9 @@ class EncryptDecryptFunctionTest {
     @Test
     void encryptDecrypt() throws IllegalVariableEvaluationException {
         String encrypted = variableRenderer.render("{{encrypt(secretKey, 'toto')}}", Map.of("secretKey", secretKey));
-        assertThat(encrypted, notNullValue());
+        assertThat(encrypted).isNotNull();
 
         String decrypted = variableRenderer.render("{{decrypt(secretKey, '" + encrypted + "')}}", Map.of("secretKey", secretKey));
-        assertThat(decrypted, is("toto"));
+        assertThat(decrypted).isEqualTo("toto");
     }
 }

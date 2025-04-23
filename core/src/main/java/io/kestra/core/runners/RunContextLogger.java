@@ -20,7 +20,6 @@ import io.kestra.core.queues.QueueInterface;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 
 import java.io.*;
 import java.time.Instant;
@@ -29,15 +28,18 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class RunContextLogger implements Supplier<org.slf4j.Logger> {
-    private static final int MAX_MESSAGE_LENGTH = 1024*10;
+    private static final int MAX_MESSAGE_LENGTH = 1024 * 10;
+    public static final String ORIGINAL_TIMESTAMP_KEY = "originalTimestamp";
 
     private final String loggerName;
     private volatile Logger logger; // must be volatile as it is built lazily via DCL
+
     private QueueInterface<LogEntry> logQueue;
     private LogEntry logEntry;
     private Level loglevel;
     private final List<String> useSecrets = new ArrayList<>();
     private final boolean logToFile;
+
     @Getter
     private File logFile;
     private OutputStream logFileOS;
@@ -49,11 +51,14 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     }
 
     public RunContextLogger(QueueInterface<LogEntry> logQueue, LogEntry logEntry, org.slf4j.event.Level loglevel, boolean logToFile) {
-        if (logEntry.getExecutionId() != null) {
-            this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getExecutionId() + (logEntry.getTaskRunId() != null ? "." + logEntry.getTaskRunId() : "");
-        } else {
+        if (logEntry.getTaskId() != null) {
+            this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getTaskId();
+        } else if (logEntry.getTriggerId() != null) {
             this.loggerName = "flow." + logEntry.getFlowId() + "." + logEntry.getTriggerId();
+        } else {
+            this.loggerName = "flow." + logEntry.getFlowId();
         }
+
         this.logQueue = logQueue;
         this.logEntry = logEntry;
         this.loglevel = loglevel == null ? Level.TRACE : Level.toLevel(loglevel.toString());
@@ -87,7 +92,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                 .triggerId(logEntry.getTriggerId())
                 .level(level != null ? level : org.slf4j.event.Level.valueOf(event.getLevel().toString()))
                 .message(s)
-                .timestamp(Instant.ofEpochMilli(event.getTimeStamp()).plusMillis(i))
+                .timestamp(event.getInstant())
                 .thread(event.getThreadName())
                 .build()
             );
@@ -229,8 +234,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         private String replaceSecret(String data) {
             for (String s : runContextLogger.useSecrets) {
                 if (data.contains(s)) {
-                    data = data.replace(s, "*".repeat(s.length()));
-                    data = data.replaceFirst("[*]{9}", "**masked*");
+                    data = data.replace(s, "******");
                 }
             }
 
@@ -255,7 +259,8 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             } else if (object instanceof String string) {
                 return replaceSecret(string);
             } else {
-                return object;
+                // toString will be called anyway at some point so better to all it now
+                return replaceSecret(object.toString());
             }
         }
 
@@ -277,8 +282,18 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             try {
                 String message = replaceSecret(event.getMessage());
                 Object[] argumentArray = replaceSecret(event.getArgumentArray());
+                Instant customTimestamp = null;
 
-                return new LoggingEvent(
+                if (event.getKeyValuePairs() != null) {
+                    var originalTimestampKv = event.getKeyValuePairs().stream().filter((kv) -> kv.key.equals(ORIGINAL_TIMESTAMP_KEY)).findFirst();
+                    if (originalTimestampKv.isPresent()) {
+                        if (originalTimestampKv.get().value instanceof Instant instant) {
+                            customTimestamp = instant;
+                        }
+                    }
+                }
+
+                var lle = new LoggingEvent(
                     "ch.qos.logback.classic.Logger",
                     this.logger,
                     event.getLevel(),
@@ -286,6 +301,10 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     event.getThrowableProxy() instanceof ThrowableProxy throwableProxy ? throwableProxy.getThrowable() : null,
                     argumentArray
                 );
+                if (customTimestamp != null) {
+                    lle.setTimeStamp(customTimestamp.toEpochMilli());
+                }
+                return lle;
             } catch (Throwable e) {
                 log.warn("Unable to replace secret", e);
                 return event;
@@ -321,6 +340,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     public static class FileAppender extends BaseAppender {
         private static final ch.qos.logback.classic.Logger LOGGER = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("flow");
         private static final PatternLayout PATTERN_LAYOUT = new PatternLayout();
+
         static {
             // the pattern is the same as in core/src/main/base.xml except that we remove the coloring
             PATTERN_LAYOUT.setPattern("%d{ISO8601} %-5.5level %-12.36thread %-12.36logger{36} %msg%n");
@@ -349,10 +369,12 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
     }
 
     public static class ForwardAppender extends BaseAppender {
-        private static final ch.qos.logback.classic.Logger LOGGER = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger("flow");
+        private final ch.qos.logback.classic.Logger fowardLogger;
 
         protected ForwardAppender(RunContextLogger runContextLogger, Logger logger) {
             super(runContextLogger, logger);
+
+            fowardLogger = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(runContextLogger.loggerName);
         }
 
         @Override
@@ -369,8 +391,8 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         protected void append(ILoggingEvent e) {
             e = this.transform(e);
 
-            if (LOGGER.isEnabledFor(e.getLevel())) {
-                LOGGER.callAppenders(e);
+            if (fowardLogger.isEnabledFor(e.getLevel())) {
+                fowardLogger.callAppenders(e);
             }
         }
     }

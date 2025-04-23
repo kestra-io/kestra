@@ -2,7 +2,6 @@ package io.kestra.core.runners;
 
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.models.tasks.common.EncryptedString;
-import jakarta.annotation.Nullable;
 import org.slf4j.Logger;
 
 import java.security.GeneralSecurityException;
@@ -50,8 +49,11 @@ final class Secret {
                     try {
                         String decoded = decrypt((String) map.get("value"));
                         decryptedMap.put(entry.getKey(), decoded);
-                    } catch (GeneralSecurityException e) {
-                        throw new RuntimeException(e);
+                    } catch (GeneralSecurityException | IllegalArgumentException e) {
+                        // NOTE: in rare cases, if for ex a Worker didn't have the encryption but an Executor has it,
+                        // we can have a non-encrypted output that we try to decrypt, this will lead to an IllegalArgumentException.
+                        // As it could break the executor, the best is to do nothing in this case and only log an error.
+                        logger.get().warn("Unable to decrypt the output", e);
                     }
                 }  else {
                     decryptedMap.put(entry.getKey(), decrypt((Map<String, Object>) map));

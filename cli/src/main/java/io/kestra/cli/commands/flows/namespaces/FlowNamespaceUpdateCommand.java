@@ -10,7 +10,6 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.MutableHttpRequest;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.netty.DefaultHttpClient;
-import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
@@ -27,8 +26,6 @@ import java.util.List;
 )
 @Slf4j
 public class FlowNamespaceUpdateCommand extends AbstractServiceNamespaceUpdateCommand {
-    @Inject
-    public YamlParser yamlParser;
 
     @CommandLine.Option(names = {"--override-namespaces"}, negatable = true, description = "Replace namespace of all flows by the one provided")
     public boolean override = false;

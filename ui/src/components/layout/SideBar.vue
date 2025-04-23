@@ -356,6 +356,11 @@
             }
         }
 
+        .vsm--scroll-thumb {
+            background: var(--ks-border-primary) !important;
+            border-radius: 8px;
+        }
+
         .vsm--mobile-bg {
             border-radius: 0 var(--bs-border-radius) var(--bs-border-radius) 0;
         }

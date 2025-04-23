@@ -14,8 +14,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hibernate.validator.internal.util.Contracts.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -48,7 +47,7 @@ public class FileSizeFunctionTest {
         );
 
         String size = variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables);
-        assertThat(size, is(FILE_SIZE));
+        assertThat(size).isEqualTo(FILE_SIZE);
     }
 
     @Test
@@ -59,7 +58,7 @@ public class FileSizeFunctionTest {
         storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream(FILE_TEXT.getBytes()));
 
         String render = variableRenderer.render("{{ fileSize('" + filePath + "', namespace='" + namespace + "') }}", Map.of("flow", Map.of("namespace", "flow.namespace")));
-        assertThat(render, is(FILE_SIZE));
+        assertThat(render).isEqualTo(FILE_SIZE);
     }
 
     @Test
@@ -81,7 +80,7 @@ public class FileSizeFunctionTest {
         );
 
         String size = variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables);
-        assertThat(size, is(FILE_SIZE));
+        assertThat(size).isEqualTo(FILE_SIZE);
     }
 
     @Test
@@ -98,7 +97,7 @@ public class FileSizeFunctionTest {
         );
 
         String size = variableRenderer.render("{{ fileSize('" + internalStorageFile + "') }}", variables);
-        assertThat(size, is(FILE_SIZE));
+        assertThat(size).isEqualTo(FILE_SIZE);
     }
 
     @Test
@@ -142,7 +141,7 @@ public class FileSizeFunctionTest {
         );
 
         String size = variableRenderer.render("{{ fileSize(file) }}", variables);
-        assertThat(size, is(FILE_SIZE));
+        assertThat(size).isEqualTo(FILE_SIZE);
     }
 
     @Test
@@ -165,7 +164,7 @@ public class FileSizeFunctionTest {
         );
 
         String size = variableRenderer.render("{{ fileSize(file) }}", variables);
-        assertThat(size, is(FILE_SIZE));
+        assertThat(size).isEqualTo(FILE_SIZE);
     }
 
     private URI getInternalStorageURI(String executionId) {

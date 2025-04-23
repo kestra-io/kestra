@@ -62,7 +62,7 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
      **/
     @Override
     protected void onSchedule(Instant now) throws Exception {
-        if (Optional.ofNullable(serviceRegistry.get(Service.ServiceType.EXECUTOR))
+        if (Optional.ofNullable(serviceRegistry.get(ServiceType.EXECUTOR))
             .filter(service -> service.instance().is(RUNNING))
             .isEmpty()) {
             log.debug(
@@ -175,7 +175,7 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
         store
             .findAllInstancesInStates(Set.of(DISCONNECTED, TERMINATING, TERMINATED_GRACEFULLY, TERMINATED_FORCED))
             .stream()
-            .filter(instance -> !instance.is(Service.ServiceType.WORKER)) // WORKERS are handle above.
+            .filter(instance -> !instance.is(ServiceType.WORKER)) // WORKERS are handle above.
             .filter(instance -> instance.isTerminationGracePeriodElapsed(now))
             .peek(instance -> maybeLogNonRespondingAfterTerminationGracePeriod(instance, now))
             .forEach(instance -> safelyUpdate(instance, NOT_RUNNING, DEFAULT_REASON_FOR_NOT_RUNNING));

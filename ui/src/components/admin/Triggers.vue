@@ -352,11 +352,13 @@
                     namespace: trigger.namespace,
                     flowId: trigger.flowId,
                     triggerId: trigger.triggerId
-                }).then(newTrigger => {
-                    this.$toast().saved(newTrigger.id);
+                }).then(newTriggerContext => {
+                    this.$toast().saved(newTriggerContext.id);
                     this.triggers = this.triggers.map(t => {
-                        if (t.id === newTrigger.id) {
-                            return newTrigger
+                        if (t.id === newTriggerContext.id) {
+                            let triggerCopy = t;
+                            triggerCopy.triggerContext = newTriggerContext;
+                            return triggerCopy;
                         }
                         return t
                     })

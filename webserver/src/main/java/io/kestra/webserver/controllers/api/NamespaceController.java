@@ -4,16 +4,19 @@ import io.kestra.core.models.namespaces.Namespace;
 import io.kestra.core.models.topologies.FlowTopologyGraph;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.FlowRepositoryInterface;
-import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.topologies.FlowTopologyService;
+import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.webserver.models.namespaces.NamespaceWithDisabled;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import io.micronaut.http.annotation.*;
+import io.micronaut.http.annotation.Controller;
+import io.micronaut.http.annotation.Get;
+import io.micronaut.http.annotation.PathVariable;
+import io.micronaut.http.annotation.QueryValue;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
@@ -23,7 +26,9 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
 import jakarta.validation.constraints.Min;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Validated
@@ -44,7 +49,7 @@ public class NamespaceController implements NamespaceControllerInterface<Namespa
     @Get(uri = "{id}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Namespaces"}, summary = "Get a namespace")
-    public Namespace index(
+    public Namespace getNamespace(
         @Parameter(description = "The namespace id") @PathVariable String id
     ) {
         return Namespace.builder().id(id).build();
@@ -53,7 +58,7 @@ public class NamespaceController implements NamespaceControllerInterface<Namespa
     @Get(uri = "/search")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Namespaces"}, summary = "Search for namespaces")
-    public PagedResults<NamespaceWithDisabled> find(
+    public PagedResults<NamespaceWithDisabled> searchNamespaces(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
@@ -80,9 +85,13 @@ public class NamespaceController implements NamespaceControllerInterface<Namespa
                 .collect(Collectors.toList());
         }
 
+        Pageable pageable = PageableUtils.from(page, size, sort);
+
         var total = distinctNamespaces.size();
 
-        Pageable pageable = PageableUtils.from(page, size, sort);
+        if (total <= (pageable.getOffset() - pageable.getSize())) {
+            return PagedResults.of(new ArrayListTotal<>(0));
+        }
 
         if (sort != null) {
             Sort.Order.Direction direction = pageable.getSort().getOrderBy().getFirst().getDirection();
@@ -116,7 +125,7 @@ public class NamespaceController implements NamespaceControllerInterface<Namespa
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/dependencies")
     @Operation(tags = {"Flows"}, summary = "Get flow dependencies")
-    public FlowTopologyGraph dependencies(
+    public FlowTopologyGraph getFlowDependenciesFromNamespace(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "if true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly
     ) {

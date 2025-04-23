@@ -17,10 +17,10 @@ import java.util.List;
 
 @CommandLine.Command(
     name = "uninstall",
-    description = "uninstall a plugin"
+    description = "Uninstall plugins"
 )
 public class PluginUninstallCommand extends AbstractCommand {
-    @Parameters(index = "0..*", description = "the plugins to uninstall")
+    @Parameters(index = "0..*", description = "The plugins to uninstall. Represented as Maven artifact coordinates (i.e., <groupId>:<artifactId>:(<version>|LATEST)")
     List<String> dependencies = new ArrayList<>();
 
     @Spec

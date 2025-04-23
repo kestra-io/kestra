@@ -1,8 +1,6 @@
 package io.kestra.core.runners;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -10,11 +8,9 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.flows.State;
-import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.utils.TestsUtils;
 import io.kestra.plugin.core.flow.EachSequentialTest;
 import io.kestra.plugin.core.flow.FlowCaseTest;
 import io.kestra.plugin.core.flow.ForEachItemCaseTest;
@@ -23,20 +19,12 @@ import io.kestra.plugin.core.flow.WaitForCaseTest;
 import io.kestra.plugin.core.flow.WorkingDirectoryTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeoutException;
 
-import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junitpioneer.jupiter.RetryingTest;
-import org.slf4j.event.Level;
-import reactor.core.publisher.Flux;
 
 @KestraTest(startRunner = true)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -101,66 +89,63 @@ public abstract class AbstractRunnerTest {
     @Test
     @ExecuteFlow("flows/valids/full.yaml")
     void full(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(13));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(
-            (String) execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value"),
-            containsString("value1"));
+        assertThat(execution.getTaskRunList()).hasSize(13);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat((String) execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value")).contains("value1");
     }
 
     @Test
     @ExecuteFlow("flows/valids/logs.yaml")
     void logs(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(5));
+        assertThat(execution.getTaskRunList()).hasSize(5);
     }
 
     @Test
     @ExecuteFlow("flows/valids/sequential.yaml")
     void sequential(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(11));
+        assertThat(execution.getTaskRunList()).hasSize(11);
     }
 
     @Test
     @ExecuteFlow("flows/valids/parallel.yaml")
     void parallel(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(8));
+        assertThat(execution.getTaskRunList()).hasSize(8);
     }
 
     @RetryingTest(5)
     @ExecuteFlow("flows/valids/parallel-nested.yaml")
     void parallelNested(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(11));
+        assertThat(execution.getTaskRunList()).hasSize(11);
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-parallel-subflow-notfound.yml")
     void eachParallelWithSubflowMissing(Execution execution) {
-        assertThat(execution, notNullValue());
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution).isNotNull();
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         // on JDBC, when using an each parallel, the flow is failed even if not all subtasks of the each parallel are ended as soon as
         // there is one failed task FIXME https://github.com/kestra-io/kestra/issues/2179
         // so instead of asserting that all tasks FAILED we assert that at least two failed (the each parallel and one of its subtasks)
-        assertThat(
-            execution.getTaskRunList().stream().filter(taskRun -> taskRun.getState().isFailed())
-                .count(), greaterThanOrEqualTo(2L)); // Should be 3
+        assertThat(execution.getTaskRunList().stream().filter(taskRun -> taskRun.getState().isFailed())
+            .count()).isGreaterThanOrEqualTo(2L); // Should be 3
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-sequential-nested.yaml")
     void eachSequentialNested(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(23));
+        assertThat(execution.getTaskRunList()).hasSize(23);
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-parallel.yaml")
     void eachParallel(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(8));
+        assertThat(execution.getTaskRunList()).hasSize(8);
     }
 
     @Test
     @ExecuteFlow("flows/valids/each-parallel-nested.yaml")
     void eachParallelNested(Execution execution) {
-        assertThat(execution.getTaskRunList(), hasSize(11));
+        assertThat(execution.getTaskRunList()).hasSize(11);
     }
 
     @Test
@@ -195,7 +180,7 @@ public abstract class AbstractRunnerTest {
 
     @Test
     @LoadFlows({"flows/valids/restart-parent.yaml", "flows/valids/restart-child.yaml"})
-    void restartSubflow() throws Exception {
+    protected void restartSubflow() throws Exception {
         restartCaseTest.restartSubflow();
     }
 
@@ -320,9 +305,9 @@ public abstract class AbstractRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/pause-delay-from-input.yaml"})
-    public void pauseRunDelayFromInput() throws Exception {
-        pauseTest.runDelayFromInput(runnerUtils);
+    @LoadFlows({"flows/valids/pause-duration-from-input.yaml"})
+    public void pauseRunDurationFromInput() throws Exception {
+        pauseTest.runDurationFromInput(runnerUtils);
     }
 
     @Test
@@ -370,7 +355,7 @@ public abstract class AbstractRunnerTest {
         forEachItemCaseTest.forEachItemWithSubflowOutputs();
     }
 
-    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
+    @Test
     @LoadFlows({"flows/valids/restart-for-each-item.yaml", "flows/valids/restart-child.yaml"})
     void restartForEachItem() throws Exception {
         forEachItemCaseTest.restartForEachItem();
@@ -401,31 +386,31 @@ public abstract class AbstractRunnerTest {
         flowConcurrencyCaseTest.flowConcurrencyQueue();
     }
 
-    @RetryingTest(5) // Flaky on CI but never locally even with 100 repetitions
+    @Test
     @LoadFlows({"flows/valids/flow-concurrency-queue-pause.yml"})
-    void concurrencyQueuePause() throws Exception {
+    protected void concurrencyQueuePause() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyQueuePause();
     }
 
     @Test
     @LoadFlows({"flows/valids/flow-concurrency-cancel-pause.yml"})
-    void concurrencyCancelPause() throws Exception {
+    protected void concurrencyCancelPause() throws Exception {
         flowConcurrencyCaseTest.flowConcurrencyCancelPause();
     }
 
     @Test
     @ExecuteFlow("flows/valids/executable-fail.yml")
     void badExecutable(Execution execution) {
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     @Test
     @ExecuteFlow("flows/valids/dynamic-task.yaml")
     void dynamicTask(Execution execution) {
-        assertThat(execution.getTaskRunList().size(), is(3));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test
@@ -506,8 +491,8 @@ public abstract class AbstractRunnerTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if", null,
             (f, e) -> Map.of("if1", true, "if2", false, "if3", true));
 
-        assertThat(execution.getTaskRunList(), hasSize(12));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList()).hasSize(12);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     @Test

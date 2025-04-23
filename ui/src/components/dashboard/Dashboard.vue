@@ -12,7 +12,9 @@
     />
 
     <div class="dashboard-filters">
+        <!-- Force re-rendering when switching between custom and default -->
         <KestraFilter
+            :key="custom.shown"
             :prefix="custom.shown ? 'custom_dashboard' : 'dashboard'"
             :include="
                 custom.shown
@@ -21,7 +23,6 @@
                         'namespace',
                         'state',
                         'scope',
-                        'relative_date',
                         'absolute_date',
                     ]
             "
@@ -32,8 +33,9 @@
                 },
                 settings: {shown: false},
             }"
-            :dashboards="{shown: customDashboardsEnabled}"
+            :dashboards="{shown: customDashboardsEnabled && route.name === 'home'}"
             @dashboard="(v) => handleCustomUpdate(v)"
+            :is-default-dashboard="!custom.shown"
         />
     </div>
 
@@ -191,10 +193,10 @@
             class="card card-1/2"
         />
 
-        <ExecutionsEmptyNextScheduled 
-            v-else 
+        <ExecutionsEmptyNextScheduled
+            v-else
             :loading="executionsLoading"
-            class="card card-1/2" 
+            class="card card-1/2"
         />
         <ExecutionsNamespace
             v-if="!props.flow && Object.keys(namespaceExecutions).length > 1"
@@ -202,11 +204,11 @@
             :data="namespaceExecutions"
             :total="stats.total"
         />
-        <Logs 
-            v-if="!props.flow" 
-            :data="logs" 
+        <Logs
+            v-if="!props.flow"
+            :data="logs"
             :loading="executionsLoading"
-            class="card card-1" 
+            class="card card-1"
         />
     </div>
 </template>
@@ -216,8 +218,6 @@
     import {useRoute, useRouter} from "vue-router";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
-
-    import moment from "moment";
 
     import {apiUrl} from "override/utils/route";
     import {State} from "@kestra-io/ui-libs"
@@ -247,8 +247,8 @@
     import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
     import FileTree from "vue-material-design-icons/FileTree.vue";
     import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
-    import permission from "../../models/permission.js";
-    import action from "../../models/action.js";
+    import permission from "../../models/permission";
+    import action from "../../models/action";
     import _cloneDeep from "lodash/cloneDeep.js";
 
     const router = useRouter();
@@ -280,6 +280,16 @@
             type: Boolean,
             default: true,
         },
+        id: {
+            type: String,
+            required: false,
+            default: null,
+        },
+        containerClass: {
+            type: String,
+            required: false,
+            default: null,
+        },
     });
 
     const customDashboardsEnabled = computed(
@@ -294,7 +304,7 @@
         if (route.name === "home") {
             router.replace({
                 params: {...route.params, id: v?.id ?? "default"},
-                query: {...route.query},
+                query: route.params.id != v?.id ? {} : {...route.query},
             });
             if (v && v.id !== "default") {
                 dashboard = await store.dispatch("dashboard/load", v.id);
@@ -454,20 +464,6 @@
     };
 
     const fetchAll = async () => {
-        route.query.startDate = route.query.timeRange
-            ? moment()
-                .subtract(
-                    moment.duration(route.query.timeRange).as("milliseconds"),
-                )
-                .toISOString(true)
-            : route.query.startDate ||
-                moment()
-                    .subtract(moment.duration("PT720H").as("milliseconds"))
-                    .toISOString(true);
-        route.query.endDate = route.query.timeRange
-            ? moment().toISOString(true)
-            : route.query.endDate || moment().toISOString(true);
-
         if (!custom.value.shown) {
             try {
                 executionsLoading.value = true;
@@ -635,12 +631,12 @@ $media-lg: 1000px;
     }
 
     &::-webkit-scrollbar-track {
-        background: var(--ks-background-card);
+        background: var(--ks-background-body);
     }
 
     &::-webkit-scrollbar-thumb {
-        background: var(--ks-button-background-primary);
-        border-radius: 0px;
+        background: var(--ks-border-primary);
+        border-radius: 5px;
     }
 
     &::-webkit-scrollbar-thumb:hover {

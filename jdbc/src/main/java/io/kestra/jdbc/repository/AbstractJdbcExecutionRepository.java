@@ -2,6 +2,7 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
@@ -34,22 +35,20 @@ import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.tuple.Pair;
-import org.jooq.Record;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.*;
+import java.util.Comparator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcRepository implements ExecutionRepositoryInterface, JdbcQueueIndexerInterface<Execution> {
     private static final int FETCH_SIZE = 100;
@@ -343,6 +342,28 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         }
 
         return select;
+    }
+
+    @Override
+    public Flux<Execution> findAllAsync(@Nullable String tenantId) {
+        return Flux.create(emitter -> this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                SelectConditionStep<Record1<Object>> select = context
+                    .select(field("value"))
+                    .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
+                    .from(this.jdbcRepository.getTable())
+                    .where(this.defaultFilter(tenantId));
+
+                try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()){
+                    stream.map((Record record) -> jdbcRepository.map(record))
+                        .forEach(emitter::next);
+                } finally {
+                    emitter.complete();
+                }
+            }), FluxSink.OverflowStrategy.BUFFER);
     }
 
     @Override
@@ -1226,7 +1247,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 Map<String, String> mergedMap = new HashMap<>();
 
                 labelFilters.forEach(labelFilter -> {
-                    Map<String, String> currentMap = (Map<String, String>) labelFilter.getValue();
+                    Map<String, String> currentMap =
+                        labelFilter.getValue() instanceof String stringLabel ?
+                            Label.from(stringLabel)
+                            : (Map<String, String>) labelFilter.getValue();
                     mergedMap.putAll(currentMap);
                 });
 

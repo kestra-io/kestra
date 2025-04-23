@@ -31,7 +31,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Concat files from the internal storage."
+    title = "Concat files from Kestra’s internal storage."
 )
 @Plugin(
     examples = {
@@ -94,7 +94,7 @@ public class Concat extends Task implements RunnableTask<Concat.Output> {
         title = "List of files to be concatenated.",
         description = "Must be a `kestra://` storage URIs, can be a list of string or json string"
     )
-    @PluginProperty(dynamic = true)
+    @PluginProperty(dynamic = true, internalStorageURI = true)
     @NotNull
     private Object files;
 

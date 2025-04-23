@@ -1,6 +1,7 @@
 package io.kestra.core.models.property;
 
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -49,6 +50,9 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
 
     @NotNull
     private Data<Message> data;
+
+    @PluginProperty(internalStorageURI = true)
+    private Property<String> uri;
 
 
     @Override

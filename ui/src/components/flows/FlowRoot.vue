@@ -1,11 +1,11 @@
 <template>
     <template v-if="ready">
-        <flow-root-top-bar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName()" />
-        <tabs
-            @expand-subflow="updateExpandedSubflows"
+        <FlowRootTopBar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName()" />
+        <Tabs
             route-name="flows/update"
             ref="currentTab"
             :tabs="tabs"
+            @expand-subflow="updateExpandedSubflows"
         />
     </template>
 </template>
@@ -18,7 +18,7 @@
     import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
@@ -44,7 +44,6 @@
                 tabIndex: undefined,
                 previousFlow: undefined,
                 dependenciesCount: undefined,
-                expandedSubflows: [],
                 deleted: false,
             };
         },
@@ -173,9 +172,11 @@
                         component: FlowEditor,
                         title: this.$t("edit"),
                         containerClass: "full-container",
+                        maximized: true,
                         props: {
                             expandedSubflows: this.expandedSubflows,
                             isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
+                            beta: localStorage.getItem("multiPanelEditor") === "true",
                         },
                     });
                 }
@@ -286,14 +287,15 @@
                 return tabs;
             },
             updateExpandedSubflows(expandedSubflows) {
-                this.expandedSubflows = expandedSubflows;
+                this.$store.commit("flow/setExpandedSubflows", expandedSubflows);
             },
             activeTabName() {
                 return this.$refs.currentTab?.activeTab?.name ?? "home";
             }
         },
         computed: {
-            ...mapState("flow", ["flow"]),
+            ...mapGetters("flow", ["flow", "isAllowedEdit", "readOnlySystemLabel"]),
+            ...mapState("flow", ["expandedSubflows"]),
             ...mapState("auth", ["user"]),
             ...mapState("core", ["guidedProperties"]),
             routeInfo() {
@@ -316,6 +318,7 @@
                             },
                         },
                     ],
+                    beta: this.tabs.find(tab => tab.name === this.$route.params.tab)?.props?.beta,
                 };
             },
             tabs() {
@@ -323,24 +326,6 @@
             },
             ready() {
                 return this.user && this.flow;
-            },
-            isAllowedEdit() {
-                if (!this.flow || !this.user) {
-                    return false;
-                }
-
-                return this.user.isAllowed(
-                    permission.FLOW,
-                    action.UPDATE,
-                    this.flow.namespace,
-                );
-            },
-            readOnlySystemLabel() {
-                if (!this.flow) {
-                    return false;
-                }
-
-                return (this.flow.labels?.["system.readOnly"] === "true") || (this.flow.labels?.["system.readOnly"] === true);
             },
             routeFlowDependencies() {
                 const EMPTY = () => h(Empty, {type: "dependencies"});

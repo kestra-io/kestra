@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Reverse a file from the Kestra's internal storage, last line first."
+    title = "Reverse a file from Kestra's internal storage, last line first."
 )
 @Plugin(
     examples = {
@@ -47,6 +47,7 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
         title = "The file to be split."
     )
     @NotNull
+    @PluginProperty(internalStorageURI = true)
     private Property<String> from;
 
     @Schema(

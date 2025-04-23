@@ -1,8 +1,6 @@
 package io.kestra.plugin.core.flow;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsInAnyOrder;
-import static org.hamcrest.Matchers.hasItem;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.is;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -47,31 +45,30 @@ class RuntimeLabelsTest {
             )
         );
 
-        assertThat(execution.getTaskRunList().size(), is(4));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(4);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         String labelsOverriderTaskRunId = execution.findTaskRunsByTaskId("override-labels").getFirst().getId();
-        assertThat(execution.getLabels(), containsInAnyOrder(
-            is(new Label(Label.CORRELATION_ID, execution.getId())),
-            is(new Label("flowLabelKey", "flowLabelValue")),
-            is(new Label("overriddenFlowLabelKey", "io.kestra.tests.labels-update-task")),
-            is(new Label("keyFromJson", "valueFromJson")),
-            is(new Label("keyFromMap", "valueFromMap")),
-            is(new Label("keyFromList", "valueFromList")),
-            is(new Label("keyFromExecution", "valueFromExecution")),
-            is(new Label("overriddenExecutionLabelKey", labelsOverriderTaskRunId))
-        ));
+        assertThat(execution.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label("flowLabelKey", "flowLabelValue"),
+            new Label("overriddenFlowLabelKey", "io.kestra.tests.labels-update-task"),
+            new Label("keyFromJson", "valueFromJson"),
+            new Label("keyFromMap", "valueFromMap"),
+            new Label("keyFromList", "valueFromList"),
+            new Label("keyFromExecution", "valueFromExecution"),
+            new Label("overriddenExecutionLabelKey", labelsOverriderTaskRunId));
     }
 
 
     @Test
     @ExecuteFlow("flows/valids/npe-labels-update-task.yml")
     void noNpeOnNullPreviousExecutionLabels(Execution execution) {
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         String labelsTaskRunId = execution.findTaskRunsByTaskId("labels").getFirst().getId();
-        assertThat(execution.getLabels(), hasItem(new Label("someLabel", labelsTaskRunId)));
+        assertThat(execution.getLabels()).contains(new Label("someLabel", labelsTaskRunId));
     }
 
     @Test
@@ -93,18 +90,17 @@ class RuntimeLabelsTest {
             )
         );
 
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         String labelsTaskRunId = execution.findTaskRunsByTaskId("update-labels").getFirst().getId();
 
-        assertThat(execution.getLabels(), containsInAnyOrder(
-            is(new Label(Label.CORRELATION_ID, execution.getId())),
-            is(new Label("intValue", "42")),
-            is(new Label("boolValue", "true")),
-            is(new Label("floatValue", "3.14")),
-            is(new Label("taskRunId", labelsTaskRunId)),
-            is(new Label("existingLabel", "someValue"))
-        ));
+        assertThat(execution.getLabels()).containsExactlyInAnyOrder(
+            new Label(Label.CORRELATION_ID, execution.getId()),
+            new Label("intValue", "42"),
+            new Label("boolValue", "true"),
+            new Label("floatValue", "3.14"),
+            new Label("taskRunId", labelsTaskRunId),
+            new Label("existingLabel", "someValue"));
     }
 }

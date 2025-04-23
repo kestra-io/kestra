@@ -44,6 +44,7 @@
                         :min-item-size="1"
                         key-field="index"
                         class="log-lines"
+                        :class="{'single-line': currentTaskRuns.length === 1}"
                         :ref="el => logsScrollerRef(el, currentTaskRunIndex, attemptUid(currentTaskRun.id, selectedAttemptNumberByTaskRunId[currentTaskRun.id]))"
                         @resize="scrollToBottomFailedTask"
                     >
@@ -67,7 +68,6 @@
                                     </el-button-group>
                                 </Teleport>
                                 <log-line
-                                    @click="emitLogCursor(`${currentTaskRunIndex}/${index}`)"
                                     class="line"
                                     :cursor="logCursor === `${currentTaskRunIndex}/${index}`"
                                     :class="{['log-bg-' + levelToHighlight?.toLowerCase()]: levelToHighlight === item.level, 'opacity-40': levelToHighlight && levelToHighlight !== item.level}"
@@ -118,8 +118,8 @@
     import FlowUtils from "../../utils/flowUtils";
     import throttle from "lodash/throttle";
     import FilePreview from "../executions/FilePreview.vue";
-    import {apiUrl} from "override/utils/route.js";
-    import Utils from "../../utils/utils.js";
+    import {apiUrl} from "override/utils/route";
+    import Utils from "../../utils/utils";
     import LogUtils from "../../utils/logs.js";
 
     export default {
@@ -131,7 +131,7 @@
             LogLine,
             DynamicScroller,
             DynamicScrollerItem,
-            Download
+            Download,
         },
         emits: ["opened-taskruns-count", "follow", "reset-expand-collapse-all-switch", "log-cursor", "log-indices-by-level"],
         props: {
@@ -678,20 +678,6 @@
     .log-wrapper {
         max-height: calc(100vh - 233px);
 
-        &::-webkit-scrollbar {
-            width: 2px;
-            height: 2px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--ks-background-card);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--ks-button-background-primary);
-            border-radius: 0px;
-        }
-
         :deep(> .vue-recycle-scroller__item-wrapper > .vue-recycle-scroller__item-view > div) {
             padding-bottom: 1rem;
         }
@@ -740,27 +726,19 @@
         }
 
         .log-lines {
-            max-height: 50vh;
             transition: max-height 0.2s ease-out;
+            max-height: 50vh;
+
+            &.single-line {
+                max-height: calc(100vh - 250px);
+            }
 
             .line {
                 padding: 1rem;
 
                 &.cursor {
-                    background-color: var(--bs-gray-300)
+                    background-color: var(--bs-gray-300);
                 }
-            }
-
-            &::-webkit-scrollbar {
-                width: 5px;
-            }
-
-            &::-webkit-scrollbar-track {
-                background: var(--bs-gray-500);
-            }
-
-            &::-webkit-scrollbar-thumb {
-                background: var(--ks-button-background-primary);
             }
         }
     }

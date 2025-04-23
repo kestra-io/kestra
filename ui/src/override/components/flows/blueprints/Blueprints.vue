@@ -14,6 +14,7 @@
                 :blueprint-id="selectedBlueprintId"
                 blueprint-type="community"
                 @back="selectedBlueprintId = undefined"
+                :combined-view
             />
             <blueprints-browser
                 @loaded="$emit('loaded', $event)"
@@ -75,7 +76,11 @@
             tab: {
                 type: String,
                 default: "community"
-            }
+            },
+            combinedView: {
+                type: Boolean,
+                default: false
+            },
         },
         data() {
             return {

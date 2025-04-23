@@ -11,7 +11,6 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -26,6 +25,7 @@ import lombok.experimental.SuperBuilder;
 @JsonSubTypes({
     @JsonSubTypes.Type(value = ArrayInput.class, name = "ARRAY"),
     @JsonSubTypes.Type(value = BooleanInput.class, name = "BOOLEAN"),
+    @JsonSubTypes.Type(value = BoolInput.class, name = "BOOL"),
     @JsonSubTypes.Type(value = DateInput.class, name = "DATE"),
     @JsonSubTypes.Type(value = DateTimeInput.class, name = "DATETIME"),
     @JsonSubTypes.Type(value = DurationInput.class, name = "DURATION"),

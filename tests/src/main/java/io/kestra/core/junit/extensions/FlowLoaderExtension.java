@@ -2,6 +2,7 @@ package io.kestra.core.junit.extensions;
 
 import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
 
+import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -44,24 +45,24 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
             LocalFlowRepositoryLoader.class);
 
         LoadFlows loadFlows = getLoadFlows(extensionContext);
+        String tenantId = LoadFlows.DEFAULT_TENANT_ID.equals(loadFlows.tenantId()) ? null : loadFlows.tenantId();
 
         for (String path : loadFlows.value()) {
             URL resource = loadFile(path);
 
-            TestsUtils.loads(repositoryLoader, resource);
+            TestsUtils.loads(tenantId, repositoryLoader, resource);
         }
     }
 
     @Override
     public void afterEach(ExtensionContext extensionContext) throws URISyntaxException {
         LoadFlows loadFlows = getLoadFlows(extensionContext);
-        FlowRepositoryInterface flowRepository = applicationContext.getBean(
-            FlowRepositoryInterface.class);
-        YamlParser yamlParser = applicationContext.getBean(YamlParser.class);
+        FlowRepositoryInterface flowRepository = applicationContext.getBean(FlowRepositoryInterface.class);
+
         Set<String> flowIds = new HashSet<>();
         for (String path : loadFlows.value()) {
             URL resource = loadFile(path);
-            Flow flow = yamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
+            Flow flow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
             flowIds.add(flow.getId());
         }
         flowRepository.findAllForAllTenants().stream()

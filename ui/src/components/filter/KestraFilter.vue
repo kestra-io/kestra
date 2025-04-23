@@ -201,10 +201,10 @@
 
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
-    import {useRoute, useRouter} from "vue-router";
+    import {useRoute, useRouter, LocationQueryRaw} from "vue-router";
     import {useFilters} from "./composables/useFilters";
-    import action from "../../models/action.js";
-    import permission from "../../models/permission.js";
+    import action from "../../models/action";
+    import permission from "../../models/permission";
     import {useValues} from "./composables/useValues";
     import {decodeParams, encodeParams} from "./utils/helpers";
 
@@ -242,12 +242,13 @@
         },
         placeholder: {type: String, default: undefined},
         searchCallback: {type: Function, default: undefined},
+        isDefaultDashboard: {type: Boolean, default: false}
     });
 
     const TEXT_PREFIX = `${t("filters.text_search")}: `;
     const ITEMS_PREFIX = props.prefix ?? String(route.name);
 
-    const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX);
+    const {COMPARATORS, OPTIONS} = useFilters(ITEMS_PREFIX, props.isDefaultDashboard);
 
     const prefixFilteredValueOptions = computed(() => {
         if (prefixFilter.value === "") {
@@ -319,7 +320,9 @@
             emits("input", getInputValue());
         }
 
+        console.log("getInputValue", getInputValue());
         if (getInputValue() === TEXT_PREFIX) {
+            // cons
             select.value!.states.inputValue = "";
         }
     };
@@ -631,20 +634,9 @@
 
     watch(
         () => route.query,
-        (q: any) => {
-            // Handling change of label filters from direct click events
-            if (
-                Object.keys(q).length === 0 ||
-                Object.keys(q).some((key) => key.startsWith("filters[labels]"))
-            ) {
-                const routeFilters = decodeParams(
-                    route.name,
-                    q,
-                    props.include,
-                    OPTIONS,
-                );
-                currentFilters.value = routeFilters;
-            }
+        (q: LocationQueryRaw) => {
+            const routeFilters = decodeParams(route.name, q, props.include, OPTIONS, props.isDefaultDashboard) as CurrentItem[];
+            currentFilters.value = routeFilters;
         },
         {immediate: true},
     );
@@ -672,7 +664,7 @@
         (options) => {
             if (options.length || !dropdowns.value.first?.shown) return;
 
-            if (!getInputValue()?.startsWith(TEXT_PREFIX) && select.value) {
+            if (getInputValue() && !getInputValue()?.startsWith(TEXT_PREFIX) && select.value && !props.searchCallback) {
                 select.value.states.inputValue = `${TEXT_PREFIX}${getInputValue()}`;
             }
         },
@@ -701,9 +693,9 @@
             } else {
                 // Adding text search string
                 const label = t("filters.options.text");
-                const index = currentFilters.value.findIndex(
-                    (i) => i.label === label,
-                );
+                const index = currentFilters.value.findIndex((i) => {
+                    return i.label === label;
+                });
 
                 const value = wholeSearchContent
                     .at(-1)
@@ -734,14 +726,14 @@
 
     const handleClickedItems = (value) => {
         if (value) currentFilters.value = value;
-        select.value?.focus();
+        triggerSearch();
     };
 
     const triggerSearch = () => {
         if (props.searchCallback) return;
         else {
             router.push({
-                query: encodeParams(route.name, currentFilters.value, OPTIONS),
+                query: encodeParams(route.name, currentFilters.value, OPTIONS, props.isDefaultDashboard),
             });
         }
     };
@@ -754,6 +746,7 @@
                 route.query,
                 props.include,
                 OPTIONS,
+                props.isDefaultDashboard
             );
             currentFilters.value = decodedParams.map((item: any) => {
                 if (item.label === "absolute_date") {

@@ -34,7 +34,6 @@ public class SchedulerCommand extends AbstractServerCommand {
         AbstractScheduler scheduler = applicationContext.getBean(AbstractScheduler.class);
         scheduler.run();
 
-        log.info("Scheduler started");
         Await.until(() -> !this.applicationContext.isRunning());
 
         return 0;

@@ -23,7 +23,7 @@ import java.util.List;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Split a file from the Kestra's internal storage into multiple files."
+    title = "Split a file from Kestra's internal storage into multiple files."
 )
 @Plugin(
     examples = {
@@ -56,6 +56,7 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
         title = "The file to be split."
     )
     @NotNull
+    @PluginProperty(internalStorageURI = true)
     private Property<String> from;
 
     private Property<String> bytes;

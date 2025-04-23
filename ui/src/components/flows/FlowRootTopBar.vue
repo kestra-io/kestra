@@ -5,7 +5,10 @@
                 <Alert class="text-warning me-2" />{{ $t('deleted_label') }}:&nbsp;
             </template>
             <Lock v-else-if="!isAllowedEdit" class="me-2 gray-700" />
-            <span :class="{'body-color': deleted}">{{ routeInfo.title }}</span>
+            <span :class="{'body-color': deleted}">
+                {{ routeInfo.title }}
+                <BetaBadge v-if="routeInfo.beta" />
+            </span>
         </template>
         <template #additional-right v-if="displayButtons()">
             <ul>
@@ -44,6 +47,8 @@
     import BackupRestore from "vue-material-design-icons/BackupRestore.vue";
     import Alert from "vue-material-design-icons/Alert.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
+
+    import BetaBadge from "../global/BetaBadge.vue";
 </script>
 
 <script>

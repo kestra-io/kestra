@@ -44,7 +44,7 @@ public class TaskRunController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = {"Executions"}, summary = "Search for taskruns, only available with the Elasticsearch repository")
-    public PagedResults<TaskRun> findTaskRun(
+    public PagedResults<TaskRun> searchTaskRun(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
@@ -88,9 +88,7 @@ public class TaskRunController {
         TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
         validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
 
-        ZonedDateTime resolvedStartDate = RequestUtils.resolveAbsoluteDateTime(timeLineSearch.getStartDate(),
-            timeLineSearch.getTimeRange(),
-            now);
+        ZonedDateTime resolvedStartDate = timeLineSearch.getStartDate();
 
         // Update filters with the resolved startDate
         filters = QueryFilterUtils.updateFilters(filters, resolvedStartDate);

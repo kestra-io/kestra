@@ -1,15 +1,5 @@
 package io.kestra.jdbc.runner;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.instanceOf;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.matchesPattern;
-import static org.hamcrest.Matchers.notNullValue;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
@@ -21,16 +11,20 @@ import io.kestra.core.runners.InputsTest;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import jakarta.inject.Inject;
+import org.junit.jupiter.api.Test;
+import org.junitpioneer.jupiter.RetryingTest;
+import org.slf4j.event.Level;
+import reactor.core.publisher.Flux;
+
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import org.junit.jupiter.api.Test;
-import org.junitpioneer.jupiter.RetryingTest;
-import org.slf4j.event.Level;
-import reactor.core.publisher.Flux;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 public abstract class JdbcRunnerTest extends AbstractRunnerTest {
 
@@ -61,9 +55,8 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
             Duration.ofSeconds(120)
         );
 
-        assertThat(execution.getTaskRunList().size(),
-            greaterThanOrEqualTo(6)); // the exact number is test-run-dependent.
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getTaskRunList().size()).isGreaterThanOrEqualTo(6); // the exact number is test-run-dependent.
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // To avoid flooding the database with big messages, we re-init it
         jdbcTestUtils.drop();
@@ -89,10 +82,9 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
         ));
 
         // the size is different on all runs, so we cannot assert on the exact message size
-        assertThat(exception.getMessage(), containsString("Message of size"));
-        assertThat(exception.getMessage(),
-            containsString("has exceeded the configured limit of 1048576"));
-        assertThat(exception, instanceOf(MessageTooBigException.class));
+        assertThat(exception.getMessage()).contains("Message of size");
+        assertThat(exception.getMessage()).contains("has exceeded the configured limit of 1048576");
+        assertThat(exception).isInstanceOf(MessageTooBigException.class);
     }
 
     @Test
@@ -112,15 +104,14 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
             .startsWith("Unable to emit the worker task result to the queue"));
         receive.blockLast();
 
-        assertThat(matchingLog, notNullValue());
-        assertThat(matchingLog.getLevel(), is(Level.ERROR));
+        assertThat(matchingLog).isNotNull();
+        assertThat(matchingLog.getLevel()).isEqualTo(Level.ERROR);
         // the size is different on all runs, so we cannot assert on the exact message size
-        assertThat(matchingLog.getMessage(), containsString("Message of size"));
-        assertThat(matchingLog.getMessage(),
-            containsString("has exceeded the configured limit of 1048576"));
+        assertThat(matchingLog.getMessage()).contains("Message of size");
+        assertThat(matchingLog.getMessage()).contains("has exceeded the configured limit of 1048576");
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().size(), is(1));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
 
     }
 
@@ -134,13 +125,13 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "errors", null, null,
             Duration.ofSeconds(60));
 
-        assertThat(execution.getTaskRunList(), hasSize(7));
+        assertThat(execution.getTaskRunList()).hasSize(7);
 
         receive.blockLast();
         LogEntry logEntry = TestsUtils.awaitLog(logs,
             log -> log.getMessage().contains("- task: failed, message: Task failure"));
-        assertThat(logEntry, notNullValue());
-        assertThat(logEntry.getMessage(), is("- task: failed, message: Task failure"));
+        assertThat(logEntry).isNotNull();
+        assertThat(logEntry.getMessage()).isEqualTo("- task: failed, message: Task failure");
     }
 
     @RetryingTest(5)
@@ -149,12 +140,11 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests",
             "execution-start-date", null, null, Duration.ofSeconds(60));
 
-        assertThat((String) execution.getTaskRunList().getFirst().getOutputs().get("value"),
-            matchesPattern("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z"));
+        assertThat((String) execution.getTaskRunList().getFirst().getOutputs().get("value")).matches("^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{6}Z");
     }
 
     @RetryingTest(5)
-    @LoadFlows({"flows/valids/for-each-item-subflow.yaml",
+    @LoadFlows({"flows/valids/for-each-item-subflow-sleep.yaml",
         "flows/valids/for-each-item-no-wait.yaml"})
     protected void forEachItemNoWait() throws Exception {
         forEachItemCaseTest.forEachItemNoWait();

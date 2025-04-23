@@ -12,6 +12,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.hierarchies.GraphCluster;
 import io.kestra.core.models.hierarchies.RelationType;
+import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.FlowableTask;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.tasks.Task;
@@ -42,7 +43,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Run tasks conditionally, i.e. decide which branch of tasks should be executed based on a given value.",
+    title = "Run tasks conditionally based on a given value.",
     description = "This task runs a set of tasks based on a given value.\n" +
         "The value is evaluated at runtime and compared to the list of cases.\n" +
         "If the value matches a case, the corresponding tasks are executed.\n" +
@@ -63,7 +64,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 
                 tasks:
                   - id: switch
-                    type: io.kestra.plugin.core.flows.Switch
+                    type: io.kestra.plugin.core.flow.Switch
                     value: "{{ inputs.string }}"
                     cases:
                       FIRST:
@@ -90,13 +91,11 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Introspected
 @SwitchTaskValidation
 public class Switch extends Task implements FlowableTask<Switch.Output> {
-    @NotBlank
     @NotNull
     @Schema(
         title = "The value to be evaluated."
     )
-    @PluginProperty(dynamic = true)
-    private String value;
+    private Property<String> value;
 
     // @FIXME: @Valid break on io.micronaut.validation.validator.DefaultValidator#cascadeToOne with "Cannot validate java.util.ArrayList"
     // @Valid
@@ -124,7 +123,7 @@ public class Switch extends Task implements FlowableTask<Switch.Output> {
     }
 
     private String rendererValue(RunContext runContext) throws IllegalVariableEvaluationException {
-        return runContext.render(this.value);
+        return runContext.render(this.value).as(String.class).orElseThrow();
     }
 
     @Override

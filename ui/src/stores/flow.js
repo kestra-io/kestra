@@ -1,5 +1,10 @@
+import {h} from "vue";
+import {ElMessageBox} from "element-plus";
+import permission from "../models/permission";
+import action from "../models/action";
 import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import Utils from "../utils/utils";
+import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
 
 const textYamlHeader = {
@@ -17,7 +22,6 @@ export default {
         total: 0,
         overallTotal: undefined,
         flowGraph: undefined,
-        flowGraphParam: undefined,
         revisions: undefined,
         flowValidation: undefined,
         taskError: undefined,
@@ -25,10 +29,228 @@ export default {
         aggregatedMetrics: undefined,
         tasksWithMetrics: [],
         executeFlow: false,
-        lastSaveFlow: undefined
+        lastSaveFlow: undefined,
+        isCreating: false,
+        flowYaml: undefined,
+        flowYamlOrigin: undefined,
+        confirmOutdatedSaveDialog: false,
+        haveChange: false,
+        expandedSubflows: [],
+        metadata: undefined,
     },
 
     actions: {
+        onSaveMetadata({commit, state}){
+            commit("setFlowYaml", YAML_UTILS.updateMetadata(state.flowYaml, state.metadata));
+            commit("setMetadata", null);
+            commit("setHaveChange", true)
+        },
+        async saveAll({dispatch, state, commit, getters}){
+            if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
+                return;
+            }
+
+            await dispatch("editor/saveAllTabs", {namespace: getters.namespace}, {root: true});
+            commit("setFlowYamlOrigin", state.flowYaml);
+            return dispatch("saveWithoutRevisionGuard");
+        },
+        async save({getters, dispatch, commit, state, rootState}, {content, namespace}){
+            if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
+                return;
+            }
+
+            const source = state.flowYaml
+            const currentTab = rootState.editor.current;
+
+            if (getters.isFlow) {
+                return dispatch("onEdit", {source, currentIsFlow:true}).then((validation) => {
+                    if (validation?.outdated && !state.isCreating) {
+                        return "confirmOutdatedSaveDialog";
+                    }
+                    const res = dispatch("saveWithoutRevisionGuard");
+                    commit("setFlowYamlOrigin", source);
+
+                    if (currentTab && currentTab.name) {
+                        commit("editor/setTabDirty", {
+                            name: "Flow",
+                            path: "Flow.yaml",
+                            dirty: false,
+                            flow: true,
+                        }, {root: true});
+                    }
+                    return res
+                });
+            } else {
+                if(!currentTab.dirty) return;
+
+                await dispatch("namespace/createFile", {
+                    namespace: namespace ?? getters.namespace,
+                    path: currentTab.path ?? currentTab.name,
+                    content,
+                }, {root: true});
+                commit("editor/setTabDirty", {
+                    path: currentTab.path,
+                    name: currentTab.name,
+                    dirty: false
+                }, {root: true});
+
+                dispatch("core/isUnsaved", false, {root: true});
+            }
+        },
+        onEdit({getters, dispatch, commit, state, rootState}, {source, currentIsFlow, editorViewType, topologyVisible}) {
+            const flowParsed = getters.flowParsed;
+            const currentTab = rootState.editor.current;
+
+            if (currentIsFlow) {
+                if (
+                    flowParsed &&
+                    !state.isCreating &&
+                    (getters.id !== flowParsed.id ||
+                        getters.namespace !== flowParsed.namespace)
+                ) {
+                    dispatch("core/showMessage", {
+                        variant: "error",
+                        title: this.$i18n.t("readonly property"),
+                        message: this.$i18n.t("namespace and id readonly"),
+                    }, {root: true});
+                    commit("setFlowYaml", YAML_UTILS.replaceIdAndNamespace(
+                        source,
+                        getters.id,
+                        getters.namespace
+                    ));
+                    return;
+                }
+            }
+
+            commit("setHaveChange", true);
+            if(editorViewType === "YAML") {
+                dispatch("core/isUnsaved", true, {root: true});
+            }
+
+            if(!state.isCreating){
+                commit("editor/setTabDirty", {
+                    ...currentTab,
+                    name: currentTab?.name ?? "Flow",
+                    path: currentTab?.path ?? "Flow.yaml",
+                    dirty: true
+                }, {root: true});
+            }
+
+            if(!currentIsFlow) return;
+
+            return dispatch("validateFlow", {
+                flow: state.isCreating ? state.flowYaml : getters.yamlWithNextRevision
+            })
+                .then((value) => {
+                    if (
+                        topologyVisible &&
+                        getters.flowHaveTasks &&
+                        // avoid sending empty errors
+                        // they make the backend fail
+                        flowParsed && (!flowParsed.errors || flowParsed.errors.every(e => typeof e.id === "string"))
+                    ) {
+                        if(!value.constraints) dispatch("fetchGraph");
+                    }
+
+                    return value;
+                });
+        },
+        async saveWithoutRevisionGuard ({commit, state, dispatch, getters}) {
+            const flowYaml = state.flowYaml;
+            const flowParsed = getters.flowParsed;
+
+            if (flowParsed === undefined) {
+                dispatch("core/showMessage", {
+                    variant: "error",
+                    title: this.$i18n.t("invalid flow"),
+                    message: this.$i18n.t("invalid yaml"),
+                }, {root: true});
+
+                return;
+            }
+            let overrideFlow = false;
+            if (getters.flowErrors) {
+                if (state.flowValidation.outdated && state.isCreating) {
+                    overrideFlow = await ElMessageBox({
+                        title: this.$i18n.t("override.title"),
+                        message: () => {
+                            return h("div", null, [
+                                h("p", null, this.$i18n.t("override.details")),
+                            ]);
+                        },
+                        showCancelButton: true,
+                        confirmButtonText: this.$i18n.t("ok"),
+                        cancelButtonText: this.$i18n.t("cancel"),
+                        center: false,
+                        showClose: false,
+                    })
+                        .then(() => {
+                            overrideFlow = true;
+                            return true;
+                        })
+                        .catch(() => {
+                            return false;
+                        });
+                }
+            }
+
+            if (state.isCreating && !overrideFlow) {
+                await dispatch("createFlow", {flow: flowYaml})
+                    .then((response) => {
+                        this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
+                        dispatch("core/isUnsaved", false, {root: true});
+                    });
+            } else {
+                await dispatch("saveFlow", {flow: flowYaml})
+                    .then((response) => {
+                        this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
+                        dispatch("core/isUnsaved", false, {root: true});
+                    });
+            }
+
+            if (state.isCreating || overrideFlow) {
+                return "redirect_to_update";
+            }
+
+            commit("setHaveChange", false);
+            await dispatch("validateFlow", {
+                flow: state.isCreating ? flowYaml : getters.yamlWithNextRevision
+            });
+        },
+        fetchGraph({state, dispatch}) {
+            return dispatch("loadGraphFromSource", {
+                flow: state.flowYaml,
+                config: {
+                    params: {
+                        // due to usage of axios instance instead of $http which doesn't convert arrays
+                        subflows: state.expandedSubflows.join(","),
+                    },
+                    validateStatus: (status) => {
+                        return status === 200;
+                    },
+                },
+            });
+        },
+        async initYamlSource({getters, commit, dispatch, state}, {viewType}) {
+            const {source} = getters.flow;
+            commit("setFlowYaml", source);
+            commit("setFlowYamlOrigin", source);
+            if (getters.flowHaveTasks) {
+                if (
+                    [
+                        editorViewTypes.TOPOLOGY,
+                        editorViewTypes.SOURCE_TOPOLOGY,
+                    ].includes(viewType)
+                ) {
+                    await dispatch("fetchGraph");
+                } else {
+                    dispatch("fetchGraph");
+                }
+            }
+
+            // validate flow on first load
+            return dispatch("validateFlow", {flow: state.isCreating ? source : getters.yamlWithNextRevision})
+        },
         findFlows({commit}, options) {
             const sortString = options.sort ? `?sort=${options.sort}` : ""
             delete options.sort
@@ -85,6 +307,8 @@ export default {
                         return response.data;
                     }
                     commit("setFlow", response.data);
+                    commit("setFlowYaml", response.data.source);
+                    commit("setFlowYamlOrigin", response.data.source);
                     commit("setOverallTotal", 1)
                     return response.data;
                 })
@@ -108,7 +332,7 @@ export default {
                     }
                 })
         },
-        saveFlow({commit, _dispatch}, options) {
+        saveFlow({commit}, options) {
             const flowData = YAML_UTILS.parse(options.flow)
             return this.$http.put(`${apiUrl(this)}/flows/${flowData.namespace}/${flowData.id}`, options.flow, textYamlHeader)
                 .then(response => {
@@ -116,6 +340,10 @@ export default {
                         return Promise.reject(new Error("Server error on flow save"))
                     } else {
                         commit("setFlow", response.data);
+                        commit("editor/setTabDirty", {
+                            name: "Flow",
+                            dirty: false,
+                        }, {root: true});
 
                         return response.data;
                     }
@@ -141,6 +369,63 @@ export default {
                 return response.data;
             })
         },
+        deleteFlowAndDependencies({getters, dispatch}){
+            const metadata = getters["flowYamlMetadata"];
+
+            return new Promise((resolve, reject) => this.$http
+                .get(
+                    `${apiUrl(this)}/flows/${metadata.namespace}/${
+                        metadata.id
+                    }/dependencies`,
+                    {params: {destinationOnly: true}}
+                )
+                .then((response) => {
+                    let warning = "";
+
+                    if (response.data && response.data.nodes) {
+                        const deps = response.data.nodes
+                            .filter(
+                                (n) =>
+                                    !(
+                                        n.namespace === metadata.namespace &&
+                                        n.id === metadata.id
+                                    )
+                            )
+                            .map(
+                                (n) =>
+                                    "<li>" +
+                                    n.namespace +
+                                    ".<code>" +
+                                    n.id +
+                                    "</code></li>"
+                            )
+                            .join("\n");
+
+                        if(deps.length){
+                            warning =
+                                "<div class=\"el-alert el-alert--warning is-light mt-3\" role=\"alert\">\n" +
+                                "<div class=\"el-alert__content\">\n" +
+                                "<p class=\"el-alert__description\">\n" +
+                                this.$i18n.t("dependencies delete flow") +
+                                "<ul>\n" +
+                                deps +
+                                "</ul>\n" +
+                                "</p>\n" +
+                                "</div>\n" +
+                                "</div>";
+                        }
+                    }
+
+                    return this.$i18n.t("delete confirm", {name: metadata.id}) + warning;
+                })
+                .then((message) => {
+                    return this.$toast.bind({$t: this.$i18n.t})()
+                        .confirm(message, () => {
+                            resolve(dispatch("deleteFlow", metadata));
+                        })
+                }).catch(reject)
+            )
+        },
         deleteFlow({commit}, flow) {
             return this.$http.delete(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}`).then(() => {
                 commit("setFlow", null)
@@ -154,12 +439,6 @@ export default {
             }
             return this.$http.get(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
                 commit("setFlowGraph", response.data)
-                commit("setFlowGraphParam", {
-                    namespace: flow.namespace,
-                    id: flow.id,
-                    revision: flow.revision
-                })
-
                 return response.data;
             })
         },
@@ -181,11 +460,6 @@ export default {
                     // prevent losing revision when loading graph from source
                     flow.revision = state.flow?.revision;
                     commit("setFlow", flow);
-                    commit("setFlowGraphParam", {
-                        namespace: flow.namespace ? flow.namespace : "default",
-                        id: flow.id ? flow.id : "default",
-                        revision: flow.revision
-                    })
 
                     return response;
                 }).catch(error => {
@@ -204,7 +478,7 @@ export default {
                     return Promise.reject(error);
                 })
         },
-        getGraphFromSourceResponse({_commit}, options) {
+        getGraphFromSourceResponse(_, options) {
             const config = options.config ? {...options.config, ...textYamlHeader} : textYamlHeader;
             const flowParsed = YAML_UTILS.parse(options.flow);
             let flowSource = options.flow
@@ -318,15 +592,6 @@ export default {
         setFlow(state, flow) {
             state.flow = flow;
             state.lastSaveFlow = flow;
-            // if (state.flowGraph !== undefined && state.flowGraphParam && flow) {
-            //     if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id) {
-            //         state.flowGraph = undefined
-            //     }
-            // }
-
-        },
-        setFlowGraphParam(state, flow) {
-            state.flowGraphParam = flow
         },
         setTask(state, task) {
             state.task = task;
@@ -391,9 +656,31 @@ export default {
         },
         setTasksWithMetrics(state, tasksWithMetrics) {
             state.tasksWithMetrics = tasksWithMetrics
+        },
+        setFlowYaml(state, flowYaml) {
+            state.flowYaml = flowYaml
+        },
+        setIsCreating(state, value) {
+            state.isCreating = value
+        },
+        setFlowYamlOrigin(state, value) {
+            state.flowYamlOrigin = value
+        },
+        setHaveChange(state, value) {
+            state.haveChange = value
+        },
+        setExpandedSubflows(state, value) {
+            state.expandedSubflows = value
+        },
+        setMetadata(state, value) {
+            state.metadata = value
         }
     },
     getters: {
+        isFlow(state, _getters, rootState) {
+            const currentTab = rootState.editor.current;
+            return currentTab?.flow !== undefined || state.isCreating;
+        },
         lastSaveFlow(state){
             if(state.lastSavedFlow){
                 return state.lastSavedFlow;
@@ -404,6 +691,9 @@ export default {
                 return state.flow;
             }
         },
+        flowYaml(state) {
+            return state.flowYaml;
+        },
         flowValidation(state) {
             if (state.flowValidation) {
                 return state.flowValidation;
@@ -413,6 +703,90 @@ export default {
             if (state.taskError) {
                 return state.taskError;
             }
+        },
+        isAllowedEdit(_state, getters, _rootState, rootGetters) {
+            if (!getters.flow || !rootGetters["auth/user"]) {
+                return false;
+            }
+
+            return rootGetters["auth/user"].isAllowed(
+                permission.FLOW,
+                action.UPDATE,
+                getters.flow.namespace,
+            );
+        },
+        isReadOnly(_state, getters) {
+            return getters.flow?.deleted || !getters.isAllowedEdit || getters.readOnlySystemLabel;
+        },
+        readOnlySystemLabel(_state, getters) {
+            if (!getters.flow) {
+                return false;
+            }
+
+            return (getters.flow.labels?.["system.readOnly"] === "true") || (getters.flow.labels?.["system.readOnly"] === true);
+        },
+        baseOutdatedTranslationKey(state) {
+                const createOrUpdateKey = state.isCreating ? "create" : "update";
+                return "outdated revision save confirmation." + createOrUpdateKey;
+        },
+        outdatedMessage(_, getters){
+            return `${this.$i18n.t(getters.baseOutdatedTranslationKey + ".description")} ${this.$i18n.t(
+                getters.baseOutdatedTranslationKey + ".details"
+            )}`;
+        },
+        flowErrors(state, getters){
+            if (getters.isFlow) {
+                const flowExistsError =
+                    state.flowValidation?.outdated && state.isCreating
+                        ? [getters.outdatedMessage]
+                        : [];
+
+                const constraintsError =
+                    state.flowValidation?.constraints?.split(/, ?/) ?? [];
+
+                const errors = [...flowExistsError, ...constraintsError];
+
+                return errors.length === 0 ? undefined : errors;
+            }
+
+            return undefined;
+        },
+        flowInfos(state, getters){
+            if (getters.isFlow) {
+                const infos = state.flowValidation?.infos ?? [];
+
+                return infos.length === 0 ? undefined : infos;
+            }
+
+            return undefined;
+        },
+        flowHaveTasks(state, getters){
+            if (getters.isFlow) {
+                const flow = state.isCreating ? getters.flow.source : state.flowYaml;
+                return flow ? YAML_UTILS.flowHaveTasks(flow) : false;
+            } else return false;
+        },
+        nextRevision(_state, getters){
+            return getters.flow.revision + 1;
+        },
+        yamlWithNextRevision(_state, getters){
+            return `revision: ${getters.nextRevision}\n${getters.flowYaml}`;
+        },
+        flowParsed(state){
+            try{
+                return YAML_UTILS.parse(state.flowYaml)
+            }catch{
+                return undefined
+            }
+        },
+        namespace(state){
+            return state.flow.namespace;
+        },
+        id(state){
+            return state.flow.id;
+        },
+        flowYamlMetadata(state){
+            return YAML_UTILS.getMetadata(state.flowYaml);
         }
     }
 }

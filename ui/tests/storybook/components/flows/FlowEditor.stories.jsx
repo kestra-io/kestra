@@ -13,7 +13,7 @@ export default {
         {
             path: "/",
             name: "home",
-            component: {template: "div>home</div>"}
+            component: {template: "<div>home</div>"}
         },
         {
             path: "/flows/edit/:namespace/",
@@ -29,29 +29,31 @@ const Template = (args) => ({
     const store = useStore()
     store.$http = {
         get: async (uri) => {
-            console.log("get request", uri)
             if(uri.endsWith("/plugins")) {
                 return {data: []}
             }
+            console.log("get request", uri)
             return {data: {}}
         },
         post: async (uri) => {
-            console.log("post request", uri)
             if(uri.endsWith("/graph")) {
                 return {data: allowFailureDemo}
             }
+            if(uri.endsWith("/validate")) {
+                return {data: {}}
+            }
+            console.log("post request", uri)
             return {data: {}}
         }
     }
     const flow = YAML_UTILS.parse(args.flow)
     flow.source = args.flow
     store.commit("flow/setFlow", flow)
-    store.commit("editor/changeOpenedTabs", {
-        action:"open",
-        flow:true,
-        name:"Flow",
-        path :"Flow.yaml",
-        persistent:true,
+    store.dispatch("editor/openTab", {
+        flow: true,
+        name: "Flow",
+        path: "Flow.yaml",
+        persistent: true,
     })
 
     return () =>

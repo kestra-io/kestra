@@ -20,6 +20,7 @@ export default [
             "**/*.spec.ts",
             "vite.config.js",
             "vitest.config.js",
+            "vitest.workspace.js",
         ],
         languageOptions: {globals: globals.node},
     },
@@ -28,7 +29,7 @@ export default [
         files: ["**/*.vue", "**/*.tsx", "**/*.jsx"],
         languageOptions: {parserOptions: {parser: tseslint.parser}},
         rules: {
-            "vue/this-in-template": ["error"],
+            "vue/this-in-template": "error",
             "vue/html-indent": [
                 "error",
                 4,
@@ -57,6 +58,12 @@ export default [
                 {
                     order: ["template", "script", "style"],
                 },
+            ],
+            "@typescript-eslint/consistent-type-assertions": [
+                "error",
+                {
+                    assertionStyle: "as"
+                }
             ],
         },
     },

@@ -32,11 +32,11 @@ import java.util.OptionalInt;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Make an HTTP API request to a specified URL and store the response as output.",
+    title = "Make an HTTP API request to a specified URL and store the response as an output.",
     description = """
-                  This task makes an API call to a specified URL of an HTTP server and stores the response as output.
+                  This task makes an API call to a specified URL of an HTTP server and stores the response as an output.
                   By default, the maximum length of the response is limited to 10MB, but it can be increased to at most 2GB by using the `options.maxContentLength` property.
-                  Note that the response is added as output to the task. If you need to process large API payloads, we recommend using the `Download` task instead."""
+                  Note that the response is added as an output of the task. If you need to process large API payloads, we recommend using the `Download` task instead."""
 )
 @Plugin(
     examples = {
@@ -272,7 +272,40 @@ import java.util.OptionalInt;
                     formData:
                       url: "{{ outputs.http_download.uri }}"
                 """
-        )
+        ),
+        @Example(
+          title = "Send a multiline JSON message using HTTP POST request and inputs with a pebble expression. We recommend this method to avoid JSON string interpolation",
+          full = true,
+          code = """
+              id: http_multiline_json
+              namespace: company.team
+
+              inputs:
+                - id: title
+                  type: STRING
+                  defaults: This is the title of the request
+                - id: message
+                  type: STRING
+                  defaults: |-
+                    This is my long
+                    multiline message.
+                - id: priority
+                  type: INT
+                  defaults: 5
+
+              tasks:
+                - id: send
+                  type: io.kestra.plugin.core.http.Request
+                  uri: "https://reqres.in/api/test-request"
+                  method: "POST"
+                  body: |
+                    {{ {
+                      "title": inputs.title,
+                      "message": inputs.message,
+                      "priority": inputs.priority,
+                    } }}
+              """
+      )
     },
     aliases = "io.kestra.plugin.fs.http.Request"
 )

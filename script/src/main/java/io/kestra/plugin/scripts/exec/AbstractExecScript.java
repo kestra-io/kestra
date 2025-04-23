@@ -13,6 +13,7 @@ import io.kestra.plugin.scripts.exec.scripts.models.RunnerType;
 import io.kestra.plugin.scripts.exec.scripts.models.ScriptOutput;
 import io.kestra.plugin.scripts.exec.scripts.runners.CommandsWrapper;
 import io.kestra.plugin.scripts.runner.docker.Docker;
+import io.kestra.plugin.scripts.runner.docker.PullPolicy;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
@@ -50,6 +51,7 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     @Valid
     protected TaskRunner<?> taskRunner = Docker.builder()
         .type(Docker.class.getName())
+        .pullPolicy(Property.of(PullPolicy.IF_NOT_PRESENT))
         .build();
 
     @Schema(
@@ -62,13 +64,11 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
     )
     protected Property<Map<String, String>> env;
 
-    @Builder.Default
     @Schema(
-        title = "Whether to set the task state to `WARNING` when any `stdErr` output is detected.",
-        description = "Note that a script error will set the state to `FAILED` regardless."
+        title = "Not used anymore, will be removed soon"
     )
-    @NotNull
-    protected Property<Boolean> warningOnStdErr = Property.of(true);
+    @Deprecated
+    protected Property<Boolean> warningOnStdErr;
 
     @Builder.Default
     @Schema(
@@ -156,7 +156,6 @@ public abstract class AbstractExecScript extends Task implements RunnableTask<Sc
         Map<String, String> renderedEnv = runContext.render(this.getEnv()).asMap(String.class, String.class);
         return new CommandsWrapper(runContext)
             .withEnv(renderedEnv.isEmpty() ? new HashMap<>() : renderedEnv)
-            .withWarningOnStdErr(runContext.render(this.getWarningOnStdErr()).as(Boolean.class).orElseThrow())
             .withRunnerType(this.getRunner())
             .withContainerImage(runContext.render(this.getContainerImage()).as(String.class).orElse(null))
             .withTaskRunner(this.getTaskRunner())

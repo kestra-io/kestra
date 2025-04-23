@@ -5,7 +5,17 @@ import NoCodeWrapper, {NoCodeProps} from "../code/NoCodeWrapper.vue";
 
 const NOCODE_PREFIX = "nocode"
 
-export function getTabFromNoCodeTab(tab: NoCodeProps, handlers?: {onCreateTask: (section: string) => boolean, onEditTask: (section: string, taskId: string) => boolean}){
+interface Opener{
+    panelIndex: number,
+    tabIndex: number
+}
+
+interface Handlers{
+    onCreateTask: (opener: Opener, section: string) => boolean,
+    onEditTask: (opener: Opener, section: string, taskId: string) => boolean
+}
+
+export function getTabFromNoCodeTab(tab: NoCodeProps, handlers?: Handlers){
     const {onCreateTask, onEditTask} = handlers ?? {}
     return tab?.taskId?.length ? {
         value: `${NOCODE_PREFIX}-edit-${tab.section}-${tab.taskId}`,
@@ -29,19 +39,22 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, handlers?: {onCreateTask: 
             label: "No-code"
         },
         value: NOCODE_PREFIX,
-        component: () => h(NoCodeWrapper, {
-            onCreateTask,
-            onEditTask
+        component: ({"panel-index": panelIndex,"tab-index": tabIndex}:{"panel-index":number, "tab-index":number}) => h(NoCodeWrapper, {
+            onCreateTask: onCreateTask?.bind({}, {
+                panelIndex,
+                tabIndex
+            }),
+            onEditTask: onEditTask?.bind({}, {
+                panelIndex,
+                tabIndex
+            }),
         }),
         dirty: false,
     }
 }
 
-export function setupInitialNoCodeTab(tab: string, handlers:{
-    onCreateTask: ( section: string) => boolean,
-    onEditTask: ( section: string, taskId: string) => boolean,
-}){
-    if(tab == NOCODE_PREFIX){
+export function setupInitialNoCodeTab(tab: string, handlers:Handlers){
+    if(tab === NOCODE_PREFIX){
         const {onCreateTask, onEditTask} = handlers ?? {}
         return getTabFromNoCodeTab({}, {
             onCreateTask,
@@ -91,18 +104,21 @@ export function useNoCodePanels(panels: Ref<Panel[]>) {
             const index = parseInt(tab.value.split("-").slice(-1).shift() ?? "")
             return Math.max(acc, index)
         }, 0) + 1
+
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab({
             section,
             position,
             createIndex
         })
+
         panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)
 
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
             return
         }
+
         openerPanel.activeTab = tab
     }
 

@@ -67,7 +67,7 @@
 
     const yaml = taskCreationIndex.value ? computed({
         get() {
-            return store.getters["flow/createdTaskYaml"][section.value][taskCreationIndex.value - 1]
+            return store.getters["flow/createdTaskYaml"][section.value]?.[taskCreationIndex.value - 1] ?? "";
         },
         set(val){
             store.commit("flow/setCreatedTaskYaml", {
@@ -174,7 +174,10 @@
             // if multiple task creation tabs are open add them all
             const tasks: string[] | undefined = store.getters["flow/createdTaskYaml"][section.value];
             result = flowBeforeAdd.value;
-            for(const task in tasks){
+            if(!tasks || !tasks.length) {
+                return;
+            }
+            for(const task of tasks){
                 if (currentSection === "tasks" && task?.length) {
                     const existing = YAML_UTILS.checkTaskAlreadyExist(
                         flowBeforeAdd.value,
@@ -199,6 +202,7 @@
                         task,
                         position,
                     );
+                    console.log("result", result);
 
                 } else if (currentSection && SECTIONS_MAP[currentSection.toString()] && task?.length) {
                     result = YAML_UTILS.insertSection(

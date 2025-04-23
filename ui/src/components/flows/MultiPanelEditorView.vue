@@ -65,22 +65,18 @@
     }
 
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
-        const element: Tab = setupInitialNoCodeTab(value, {
-            onCreateTask(section){
-                openAddTaskTab({
-                    panelIndex: panels.value.length - 1,
-                    tabIndex: 0
-                }, section)
+        const tab = setupInitialNoCodeTab(value, {
+            onCreateTask(opener, section){
+                console.log("Create task", section)
+                openAddTaskTab(opener, section)
                 return false
             },
-            onEditTask(section, taskId){
-                openEditTaskTab({
-                    panelIndex: panels.value.length - 1,
-                    tabIndex: 0
-                }, section, taskId)
+            onEditTask(opener, section, taskId){
+                openEditTaskTab(opener, section, taskId)
                 return false
             },
-        }) ?? EDITOR_ELEMENTS.find(e => e.value === value)!
+        })
+        const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value)!
 
         if(isFlowRelated(element)){
             element.dirty = dirtyFlow
@@ -115,22 +111,17 @@
                         const panels: {tabs: string[], activeTab: string, size: number}[] = JSON.parse(v)
                         return panels
                             .filter((p) => p.tabs.length)
-                            .map((p, panelIndex):Panel => {
-                                const tabs = p.tabs.map((t, tabIndex) =>
+                            .map((p):Panel => {
+                                const tabs = p.tabs.map((t) =>
                                     setupInitialCodeTab(t)
                                     ?? setupInitialNoCodeTab(t, {
-                                        onCreateTask(section){
-                                            openAddTaskTab({
-                                                panelIndex,
-                                                tabIndex
-                                            }, section)
+                                        onCreateTask(opener, section){
+                                            console.log("Create task init", section)
+                                            openAddTaskTab(opener, section)
                                             return false
                                         },
-                                        onEditTask(section, taskId){
-                                            openEditTaskTab({
-                                                panelIndex,
-                                                tabIndex
-                                            }, section, taskId)
+                                        onEditTask(opener, section, taskId){
+                                            openEditTaskTab(opener, section, taskId)
                                             return false
                                         },
                                     })

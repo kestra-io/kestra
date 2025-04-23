@@ -5,11 +5,13 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.services.ConcurrencyLimitService;
 import io.kestra.jdbc.runner.AbstractJdbcExecutionQueuedStorage;
+import io.kestra.jdbc.runner.JdbcRunnerEnabled;
 import io.micronaut.context.annotation.Replaces;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
+@JdbcRunnerEnabled
 @Replaces(ConcurrencyLimitService.class)
 public class JdbcConcurrencyLimitService extends ConcurrencyLimitService {
 

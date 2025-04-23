@@ -72,7 +72,9 @@
                             YAML_UTILS.deleteTask(flow.value, ID, title.toUpperCase()),
                         );
                     }
-                    expanded.value = expanded.value.filter((v) => v !== title);
+                    if(item.elements?.length === 0){
+                        expanded.value = expanded.value.filter((v) => v !== title);
+                    }
                 });
             }
         });

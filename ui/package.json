@@ -53,7 +53,7 @@
     "nprogress": "^0.2.0",
     "path-browserify": "^1.0.1",
     "pdfjs-dist": "^5.1.91",
-    "posthog-js": "^1.236.1",
+    "posthog-js": "^1.236.5",
     "rapidoc": "^9.3.8",
     "shiki": "^3.2.2",
     "splitpanes": "^3.2.0",

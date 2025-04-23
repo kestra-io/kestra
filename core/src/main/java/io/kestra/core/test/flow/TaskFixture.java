@@ -1,6 +1,7 @@
 package io.kestra.core.test.flow;
 
 import io.kestra.core.models.flows.State;
+import io.kestra.core.models.property.Property;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,4 +20,6 @@ public class TaskFixture {
     private State.Type state = State.Type.SUCCESS;
 
     private Map<String, Object> outputs;
+
+    private Property<String> description;
 }

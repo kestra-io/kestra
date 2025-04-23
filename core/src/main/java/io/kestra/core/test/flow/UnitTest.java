@@ -4,6 +4,8 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
+
 @Getter
 @Builder
 public class UnitTest {
@@ -20,5 +22,6 @@ public class UnitTest {
 
     private Fixtures fixtures;
 
-    // TODO assertions
+    @NotNull
+    private List<Assertion> assertions;
 }

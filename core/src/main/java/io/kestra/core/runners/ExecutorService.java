@@ -829,9 +829,8 @@ public class ExecutorService {
 
         // mock WorkerTaskResult for mocked execution
         // submit TaskRun when receiving created, must be done after the state execution store
-        // TODO check if it cannot be done directly inside the Execution
         boolean hasMockedWorkerTask = false;
-        record FixtureAndTaskRun(TaskFixture fixture, TaskRun taskRun) {} // FIXME temporal
+        record FixtureAndTaskRun(TaskFixture fixture, TaskRun taskRun) {}
         if (executor.getExecution().getFixtures() != null) {
             List<WorkerTaskResult> workerTaskResults = executor.getExecution()
                 .getTaskRunList()
@@ -841,7 +840,7 @@ public class ExecutorService {
                 .map(fixtureAndTaskRun -> WorkerTaskResult.builder()
                     .taskRun(fixtureAndTaskRun.taskRun()
                         .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
-                        .withOutputs(fixtureAndTaskRun.fixture().getOutputs())
+                        .withOutputs(variablesService.of(StorageContext.forTask(fixtureAndTaskRun.taskRun), fixtureAndTaskRun.fixture().getOutputs()))
                     )
                     .build()
                 )

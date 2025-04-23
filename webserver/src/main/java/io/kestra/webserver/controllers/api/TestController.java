@@ -60,7 +60,7 @@ public class TestController {
     @Operation(tags = {"Flows"}, summary = "Test a flow")
     public void test(@Parameter(description = "The flow namespace") @Body String testStr) throws QueueException, InterruptedException {
         TestSuite testSuite = yamlParser.parse(testStr, TestSuite.class).withSource(testStr);
-        UnitTest test = testSuite.getTests().getFirst();// TODO...
+        UnitTest test = testSuite.getTestCases().getFirst();// TODO...
 
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), testSuite.getNamespace(), testSuite.getFlowId(), Optional.empty());
         Map<String, Object> inputs = ListUtils.emptyOnNull(test.getFixtures().getInputs()).stream().collect(Collectors.toMap(

@@ -28,5 +28,5 @@ public class TestSuite {
 
     @NotNull
     @NotEmpty
-    private List<UnitTest> tests;
+    private List<UnitTest> testCases;
 }

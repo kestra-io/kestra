@@ -86,6 +86,9 @@ public abstract class AbstractRunnerTest {
     @Inject
     private AfterExecutionTestCase afterExecutionTestCase;
 
+    @Inject
+    private UnitTestCaseTest unitTestCaseTest;
+
     @Test
     @ExecuteFlow("flows/valids/full.yaml")
     void full(Execution execution) {
@@ -530,4 +533,23 @@ public abstract class AbstractRunnerTest {
     public void shouldCallTasksAfterListener(Execution execution) {
         afterExecutionTestCase.shouldCallTasksAfterListener(execution);
     }
+
+    @Test
+    @LoadFlows({"flows/valids/return.yaml"})
+    void withoutAnyTaskFixture() throws Exception {
+        unitTestCaseTest.withoutAnyTaskFixture();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/return.yaml"})
+    void taskFixture() throws Exception {
+        unitTestCaseTest.taskFixture();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/return.yaml"})
+    void twoTaskFixturesOverridingOutput() throws Exception {
+        unitTestCaseTest.twoTaskFixturesOverridingOutput();
+    }
+
 }

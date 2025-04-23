@@ -552,4 +552,10 @@ public abstract class AbstractRunnerTest {
         unitTestCaseTest.twoTaskFixturesOverridingOutput();
     }
 
+    @Test
+    @LoadFlows({"flows/valids/return.yaml"})
+    void taskFixturesWithWarningState() throws Exception {
+        unitTestCaseTest.taskFixturesWithWarningState();
+    }
+
 }

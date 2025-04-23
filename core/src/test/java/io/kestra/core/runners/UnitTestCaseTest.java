@@ -14,6 +14,7 @@ import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
 import org.assertj.core.api.AbstractObjectAssert;
+import org.assertj.core.api.ObjectAssert;
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -40,11 +41,6 @@ public class UnitTestCaseTest {
 
     @Inject
     protected ApplicationContext applicationContext;
-
-    public void allUnitTestTestCases() throws Exception {
-        withoutAnyTaskFixture();
-        taskFixture();
-    }
 
     public void withoutAnyTaskFixture() throws QueueException, TimeoutException {
         var fixtures = List.<TaskFixture>of();
@@ -104,6 +100,28 @@ public class UnitTestCaseTest {
             .isEqualTo("my-mocked-output-value");
     }
 
+    public void taskFixturesWithWarningState() throws QueueException, TimeoutException {
+        var fixtures = List.of(
+            TaskFixture.builder()
+                .id("date")
+                .state(State.Type.WARNING)
+                .build()
+        );
+
+        var executionResult = runReturnFlow(fixtures);
+
+        assertThat(executionResult.getState().getCurrent()).isEqualTo(State.Type.WARNING);
+        assertTask(executionResult, "task-id")
+            .extracting(TaskRun::getState).extracting(State::getCurrent)
+            .isEqualTo(State.Type.SUCCESS);
+        assertTask(executionResult, "flow-id")
+            .extracting(TaskRun::getState).extracting(State::getCurrent)
+            .isEqualTo(State.Type.SUCCESS);
+        assertTask(executionResult, "date")
+            .extracting(TaskRun::getState).extracting(State::getCurrent)
+            .isEqualTo(State.Type.WARNING);
+    }
+
     private Execution runReturnFlow(List<TaskFixture> fixtures) throws TimeoutException, QueueException {
         var flow = flowRepository.findById(null, "io.kestra.tests", "return", Optional.empty()).orElseThrow();
 
@@ -121,7 +139,11 @@ public class UnitTestCaseTest {
     }
 
     private static AbstractObjectAssert<?, Object> assertOutputForTask(Execution executionResult, String taskId) {
-        return assertThat(executionResult.getTaskRunList()).filteredOn(x -> taskId.equals(x.getTaskId()))
-            .extracting(TaskRun::getOutputs).first().extracting(x -> x.get("value"));
+        return assertTask(executionResult, taskId)
+            .extracting(TaskRun::getOutputs).extracting(x -> x.get("value"));
+    }
+
+    private static ObjectAssert<TaskRun> assertTask(Execution executionResult, String taskId) {
+        return assertThat(executionResult.getTaskRunList()).filteredOn(x -> taskId.equals(x.getTaskId())).hasSize(1).first();
     }
 }

@@ -47,28 +47,37 @@
 
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps<{
-        data: Array<{
-            startDate: string;
-            executionCounts: Record<string, number>;
-            duration: {
-                avg: number;
-            };
-            groupBy: string;
-        }>;
-        plugins: Array<any>;
+    interface DataItem {
+        startDate: string;
+        executionCounts: Record<string, number>;
+        duration: { avg: number | string };
+        groupBy?: string;
+    }
+
+    interface Props {
+        data: DataItem[];
+        plugins?: any[];
         total?: number;
         duration?: boolean;
         scales?: boolean;
         small?: boolean;
         externalTooltip?: boolean;
         loading?: boolean;
-    }>();
+    };
 
-    const theme = useTheme()
+    const props = withDefaults(defineProps<Props>(), {
+        plugins: () => [],
+        total: undefined,
+        duration: true,
+        scales: true,
+        small: false,
+        externalTooltip: false,
+        loading: false
+    });
+
+    const theme = useTheme();
     const scheme = useScheme();
-
-    const tooltipContent = ref("")
+    const tooltipContent = ref<string>("");
 
     const skeletonData = computed(() => {
         const barColor = theme.value === "dark"
@@ -159,7 +168,7 @@
                         data: props.data.map((value) => {
                             return value.duration.avg === 0 || !value.duration.avg
                                 ? 0
-                                : Utils.duration(value.duration.avg.toString());
+                                : Utils.duration(String(value.duration.avg));
                         }),
                     },
                     ...datasetsArray,

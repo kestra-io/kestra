@@ -211,6 +211,9 @@
                 }
             }
         } else{
+            const originalTask = YAML_UTILS.extractTask(flow.value, taskId.value);
+            if(!originalTask)return;
+
             result = YAML_UTILS.replaceTaskInDocument(
                 flow.value,
                 taskId.value,

@@ -202,8 +202,6 @@
                         task,
                         position,
                     );
-                    console.log("result", result);
-
                 } else if (currentSection && SECTIONS_MAP[currentSection.toString()] && task?.length) {
                     result = YAML_UTILS.insertSection(
                         SECTIONS_MAP[currentSection.toString()],
@@ -218,6 +216,8 @@
                 taskId.value,
                 yaml.value,
             );
+            const updatedTask = YAML_UTILS.parse(yaml.value);
+            taskId.value = updatedTask.id;
         }
 
         emits("updateTask", result);

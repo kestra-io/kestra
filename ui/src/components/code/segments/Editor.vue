@@ -45,7 +45,6 @@
 
         <Task
             v-else
-            :key="taskId"
             @exit-task="exitTask"
             @update-task="onTaskUpdate"
             @update-documentation="(task) => emits('updateDocumentation', task)"

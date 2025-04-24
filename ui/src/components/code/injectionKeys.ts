@@ -9,4 +9,4 @@ export const SAVEMODE_INJECTION_KEY = Symbol("flow-id-injection-key") as Injecti
 export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(section: string) => void>
 export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(section: string, taskId: string) => void>
 export const TASK_CREATION_INDEX_INJECTION_KEY = Symbol("task-creation-index-injection-key") as InjectionKey<ComputedRef<number>>
-export const BREADCRUMB_INJECTION_KEY = Symbol("breadcrumb-injection-key") as InjectionKey<Ref<string[]>>
+export const BREADCRUMB_INJECTION_KEY = Symbol("breadcrumb-injection-key") as InjectionKey<Ref<{label:string, to?:any, component?: any}[]>>

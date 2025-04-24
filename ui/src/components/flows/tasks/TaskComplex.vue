@@ -4,20 +4,16 @@
             <el-button
                 :icon="TextSearch"
                 @click="
-                    $store.commit('code/addBreadcrumbs', {
-                        breadcrumb: {
-                            label: root,
-                            to: {},
-                            component: h('task-object', {
-                                modelValue,
-                                schema: currentSchema,
-                                definitions,
-                                'onUpdate:modelValue': onInput,
-                            }),
-                        },
-                        position:
-                            breadcrumbs.length === 2 ? 2 : breadcrumbs.length,
-                    })
+                    breadcrumbs[breadcrumbs.length] = {
+                        label: root,
+                        to: {},
+                        component: h(AnyOfContent, {
+                            modelValue,
+                            schema,
+                            definitions,
+                            'onUpdate:modelValue': onInput,
+                        }),
+                    }
                 "
             />
         </template>
@@ -25,19 +21,20 @@
 </template>
 
 <script setup>
-    import {h} from "vue";
+    import {h, inject, ref} from "vue";
+    import {BREADCRUMB_INJECTION_KEY} from "../../code/injectionKeys";
 
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
+
+    const breadcrumbs = inject(BREADCRUMB_INJECTION_KEY, ref([]));
 </script>
 
 <script>
     import Task from "./Task";
-    import {mapState} from "vuex";
 
     export default {
         mixins: [Task],
         computed: {
-            ...mapState("code", ["breadcrumbs"]),
 
             currentSchema() {
                 let ref = this.schema.$ref.substring(8);

@@ -35,7 +35,7 @@
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../../utils/constants";
-    import {FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASK_CREATION_INDEX_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
+    import {BREADCRUMB_INJECTION_KEY, FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASK_CREATION_INDEX_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
@@ -54,7 +54,10 @@
 
     const store = useStore();
 
-    const breadcrumbs = computed(() => store.state.code.breadcrumbs);
+    const breadcrumbs = inject(
+        BREADCRUMB_INJECTION_KEY,
+        ref([])
+    );
     const lastBreadcrumb = computed(() => {
         const index =
             breadcrumbs.value.length === 3 ? 2 : breadcrumbs.value.length - 1;
@@ -116,8 +119,10 @@
         let temp = YAML_UTILS.parse(yaml.value);
 
         if (lastBreadcrumb.value.shown) {
-            const field = breadcrumbs.value.at(-1).label;
-            temp = {...temp, [field]: task};
+            const field = breadcrumbs.value.at(-1)?.label;
+            if (field) {
+                temp = {...temp, [field]: task};
+            }
         }
 
         temp = YAML_UTILS.stringify(temp);
@@ -152,7 +157,7 @@
 
     function exitTaskElement(){
         if (lastBreadcrumb.value.shown){
-            store.commit("code/removeBreadcrumb", {last: true});
+            breadcrumbs.value.pop();
         } else {
             emits("exitTask");
             taskCreationIndex.value = 0;
@@ -225,7 +230,7 @@
 
         emits("updateTask", result);
         if(saveMode === "button") {
-            store.commit("code/removeBreadcrumb", {last: true});
+            breadcrumbs.value.pop();
             emits("exitTask");
         }
     };

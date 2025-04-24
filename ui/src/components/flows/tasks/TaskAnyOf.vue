@@ -5,22 +5,16 @@
                 :icon="Eye"
                 @click="
                     () => {
-                        $store.commit('code/addBreadcrumbs', {
-                            breadcrumb: {
-                                label: root,
-                                to: {},
-                                component: h(AnyOfContent, {
-                                    modelValue,
-                                    schema,
-                                    definitions,
-                                    'onUpdate:modelValue': onInput,
-                                }),
-                            },
-                            position:
-                                breadcrumbs.length === 2
-                                    ? 2
-                                    : breadcrumbs.length,
-                        });
+                        breadcrumbs[breadcrumbs.length] = {
+                            label: root,
+                            to: {},
+                            component: h(AnyOfContent, {
+                                modelValue,
+                                schema,
+                                definitions,
+                                'onUpdate:modelValue': onInput,
+                            }),
+                        }
                     }
                 "
             />
@@ -29,20 +23,19 @@
 </template>
 
 <script setup>
-    import {h} from "vue";
+    import {h, inject, ref} from "vue";
     import Eye from "vue-material-design-icons/Eye.vue";
     import AnyOfContent from "./AnyOfContent.vue";
+
+    import {BREADCRUMB_INJECTION_KEY} from "../../code/injectionKeys";
+
+    const breadcrumbs = inject(BREADCRUMB_INJECTION_KEY, ref([]));
 </script>
 
 <script>
     import Task from "./Task";
-    import {mapState} from "vuex";
 
     export default {
         mixins: [Task],
-
-        computed: {
-            ...mapState("code", ["breadcrumbs"]),
-        },
     };
 </script>

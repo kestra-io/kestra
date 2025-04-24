@@ -35,12 +35,13 @@
     import {useI18n} from "vue-i18n";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
-    import {useRouter} from "vue-router";
+    import {useRouter, useRoute} from "vue-router";
     const router = useRouter();
+    const route = useRoute();
 
     import Utils, {useTheme} from "../../../../../utils/utils";
     import {useScheme} from "../../../../../utils/scheme";
-    import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts";
+    import {defaultConfig, tooltip, getFormat, chartClick} from "../../../../../utils/charts";
 
     import {State} from "@kestra-io/ui-libs";
     const ORDER = State.arrayAllStates().map((state) => state.name);
@@ -275,19 +276,8 @@
                     },
                 },
             },
-            onClick: (_e: any, elements: any[]) => {
-                if (elements.length > 0) {
-                    const state = parsedData.value.datasets[elements[0].datasetIndex].label;
-                    router.push({
-                        name: "executions/list",
-                        query: {
-                            state: state,
-                            scope: "USER",
-                            size: 100,
-                            page: 1,
-                        },
-                    });
-                }
+            onClick: (e, elements) => {
+                chartClick(moment, router, route, {}, parsedData.value, elements, "label");
             },
         }, theme.value),
     );

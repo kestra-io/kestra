@@ -1,6 +1,6 @@
 <template>
     <div class="h-100 overflow-y-auto no-code">
-        <Breadcrumbs :flow="flowBreadcrumbs" />
+        <Breadcrumbs />
 
         <hr class="m-0">
 
@@ -55,7 +55,6 @@
             taskId: "",
         });
 
-    const flowBreadcrumbs = computed(() => YAML_UTILS.parse<{id:string}>(props.flow) ?? {id: ""});
     const metadata = computed(() => YAML_UTILS.getMetadata(props.flow));
 
     const injectedSection = ref<string>(props.section)

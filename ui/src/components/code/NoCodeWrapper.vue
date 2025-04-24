@@ -16,7 +16,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, provide} from "vue";
+    import {computed, onBeforeUnmount, provide, watch} from "vue";
     import debounce from "lodash/debounce";
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
@@ -35,10 +35,35 @@
     const emit = defineEmits<{
         (e: "createTask", section: string): boolean | void;
         (e: "editTask", section: string, taskId: string): boolean | void;
+        (e: "updateTaskId", newTaskId: string): boolean | void;
     }>();
 
     const store = useStore();
-    const flowYaml = computed(() => store.getters["flow/flowYaml"]);
+    const flowYaml = computed<string>(() => store.getters["flow/flowYaml"]);
+
+    watch(
+        flowYaml,
+        (newValue, oldValue) => {
+            const IdLineRE = /id:\s*(\S+)/
+
+            // get the changed lines having an id to emit
+            // an event so no-code can stay in sync
+            const oldLines = oldValue.split("\n");
+            const newLines = newValue.split("\n");
+            const oldLinesWithId = oldLines.map((line, index) => ({line, index})).filter(({line}) => IdLineRE.test(line));
+            const changedLines = oldLinesWithId.filter(({line, index}) => IdLineRE.test(newLines[index]) && line !== newLines[index]);
+            if(changedLines.length > 0){
+
+                for(const {line, index} of changedLines){
+                    const oldId = line.match(IdLineRE)?.[1];
+                    const newId = newLines[index].match(IdLineRE)?.[1];
+                    if(oldId && newId && oldId !== newId && props.taskId === oldId){
+                        emit("updateTaskId", newId);
+                    }
+                }
+            }
+        }
+    );
 
     const lastValidFlowYaml = computed<string>(
         (oldValue) => {

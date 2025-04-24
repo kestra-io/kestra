@@ -19,6 +19,7 @@
 
 <script setup lang="ts">
     import {computed, onBeforeUnmount, provide} from "vue";
+    import debounce from "lodash/debounce";
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import NoCode from "./NoCode.vue";
@@ -52,6 +53,10 @@
         }
     );
 
+    const validateFlow = debounce(() => {
+        store.dispatch("flow/validateFlow", {flow: flowYaml.value});
+    }, 500);
+
     const onUpdateMetadata = (metadata: any) => {
         store.commit("flow/setMetadata", {
             ...metadata.value,
@@ -59,7 +64,7 @@
                 concurrency: null
             } : metadata)});
         store.dispatch("flow/onSaveMetadata");
-        store.dispatch("flow/validateFlow", {flow: flowYaml.value});
+        validateFlow()
         store.commit("editor/setTabDirty", {
             name: "Flow",
             dirty: true
@@ -69,6 +74,7 @@
     const editorUpdate = (source: string) => {
         store.commit("flow/setFlowYaml", source);
         store.commit("flow/setHaveChange", true);
+        validateFlow();
         store.commit("editor/setTabDirty", {
             name: "Flow",
             dirty: true

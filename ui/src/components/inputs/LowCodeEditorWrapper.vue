@@ -96,4 +96,7 @@
     .vue-flow {
         height: 100%;
     }
+    :deep(.vue-flow__panel.bottom) {
+        bottom: 2rem !important;
+    }
 </style>

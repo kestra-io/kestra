@@ -39,6 +39,6 @@ public class NullOutputTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getTaskRunList().getFirst().getOutputs()).hasSize(1);
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().containsKey("value")).isEqualTo(true);
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().containsKey("value")).isTrue();
     }
 }

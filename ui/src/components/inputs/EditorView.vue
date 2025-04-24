@@ -238,6 +238,10 @@
             <NoCode
                 v-else
                 :flow="flowYaml"
+                :section="route.query.section.toString()"
+                :task-id="route.query.identifier.toString()"
+                :creating="isCreating"
+                :position="route.query.position === 'before' ? 'before' : 'after'"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
                 @reorder="(yaml) => handleReorder(yaml)"
@@ -1101,7 +1105,7 @@
     async function loadFileAtPath(path){
         const content = await store.dispatch("namespace/readFile", {
             path,
-            namespace: props.namespace ?? route.params.namespace,
+            namespace: props.namespace ?? route.params.namespace ?? route.params.id,
         })
         store.commit("flow/setFlowYaml", content);
     }

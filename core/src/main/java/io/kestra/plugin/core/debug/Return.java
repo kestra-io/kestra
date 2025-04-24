@@ -24,10 +24,8 @@ import java.util.Optional;
 @NoArgsConstructor
 @Schema(
     title = "Return a value for debugging purposes.",
-    description = """
-        This task is intended for troubleshooting.
-
-        It allows you to return templated values, inputs or outputs."""
+    description = "This task is mostly useful for troubleshooting.\n\n" +
+        "It allows you to return some templated functions, inputs or outputs. In some cases you might want to trim all white spaces from the rendered values so downstream tasks can use them properly"
 )
 @Plugin(
     examples = {
@@ -41,6 +39,18 @@ import java.util.Optional;
                   - id: return
                     type: io.kestra.plugin.core.debug.Return
                     format: "{{ task.id }} > {{ taskrun.startDate }}"
+                """
+        ),
+        @Example(
+            code = """
+                id: compute_header
+                type: io.kestra.plugin.core.debug.Return
+                format: >-
+                    {%- if inputs.token is not empty -%}
+                    Bearer {{ inputs.token }}
+                    {%- elseif inputs.username is not empty and inputs.password is not empty -%}
+                    Basic {{ (inputs.username + ':' + inputs.password) | base64encode }}
+                    {%- endif -%} 
                 """
         )
     },

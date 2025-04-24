@@ -46,7 +46,7 @@ class PluginDocCommandTest {
             assertThat(files.size()).isEqualTo(1);
             assertThat(files.getFirst().getFileName().toString()).isEqualTo("plugin-template-test");
             var directory = files.getFirst().toFile();
-            assertThat(directory.isDirectory()).isEqualTo(true);
+            assertThat(directory.isDirectory()).isTrue();
             assertThat(directory.listFiles().length).isEqualTo(3);
 
             var readme = directory.toPath().resolve("index.md");

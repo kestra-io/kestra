@@ -795,6 +795,14 @@
     "no_code": {
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",
+      "close": {
+        "after execution": "टास्क बंद करें",
+        "error handlers": "त्रुटि हैंडलर बंद करें",
+        "finally": "टास्क बंद करें",
+        "input": "इनपुट बंद करें",
+        "tasks": "टास्क बंद करें",
+        "triggers": "ट्रिगर बंद करें"
+      },
       "creation": {
         "after execution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
         "error handlers": "त्रुटि हैंडलर जोड़ें",

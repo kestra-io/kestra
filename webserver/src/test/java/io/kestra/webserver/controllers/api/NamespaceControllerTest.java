@@ -58,7 +58,7 @@ public class NamespaceControllerTest {
         );
 
         assertThat(namespace.getId()).isEqualTo("my.ns");
-        assertThat(namespace.isDeleted()).isEqualTo(false);
+        assertThat(namespace.isDeleted()).isFalse();
     }
 
     @SuppressWarnings("unchecked")
@@ -131,7 +131,7 @@ public class NamespaceControllerTest {
             HttpRequest.GET("/api/v1/namespaces/any.ns/secrets?page=1&size=2"),
             ApiSecretListResponse.class
         );
-        assertThat(secrets.readOnly()).isEqualTo(true);
+        assertThat(secrets.readOnly()).isTrue();
         assertThat(secrets.total()).isEqualTo(4L);
         assertThat(secrets.results()).isEqualTo(List.of(
             new ApiSecretMeta("WEBHOOK_KEY"),

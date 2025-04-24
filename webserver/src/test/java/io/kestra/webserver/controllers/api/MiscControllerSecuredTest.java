@@ -23,12 +23,12 @@ class MiscControllerSecuredTest {
     private BasicAuthService.BasicAuthConfiguration basicAuthConfiguration;
 
     @Test
-    void configuration() {
+    void getConfiguration() {
         var response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/configs").basicAuth(
             basicAuthConfiguration.getUsername(),
             basicAuthConfiguration.getPassword()
         ), MiscController.Configuration.class);
 
-        assertThat(response.getIsBasicAuthEnabled()).isEqualTo(true);
+        assertThat(response.getIsBasicAuthEnabled()).isTrue();
     }
 }

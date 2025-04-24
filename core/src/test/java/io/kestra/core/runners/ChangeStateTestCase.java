@@ -54,7 +54,7 @@ public class ChangeStateTestCase {
         Execution markedAs = executionService.markAs(execution, flow, execution.getTaskRunList().getFirst().getId(), State.Type.SUCCESS);
         executionQueue.emit(markedAs);
 
-        assertThat(latch.await(10, TimeUnit.SECONDS)).isEqualTo(true);
+        assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
         receivedExecutions.blockLast();
         assertThat(lastExecution.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(lastExecution.get().getTaskRunList()).hasSize(2);
@@ -80,7 +80,7 @@ public class ChangeStateTestCase {
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
 
         // assert on the subflow
-        assertThat(latch.await(10, TimeUnit.SECONDS)).isEqualTo(true);
+        assertThat(latch.await(10, TimeUnit.SECONDS)).isTrue();
         receivedExecutions.blockLast();
         assertThat(lastExecution.get().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(lastExecution.get().getTaskRunList()).hasSize(1);
@@ -103,7 +103,7 @@ public class ChangeStateTestCase {
         executionQueue.emit(markedAs);
 
         // assert for the parent flow
-        assertThat(parentLatch.await(10, TimeUnit.SECONDS)).isEqualTo(true);
+        assertThat(parentLatch.await(10, TimeUnit.SECONDS)).isTrue();
         receivedExecutions.blockLast();
         assertThat(lastParentExecution.get().getState().getCurrent()).isEqualTo(State.Type.FAILED); // FIXME should be success but it's FAILED on unit tests
         assertThat(lastParentExecution.get().getTaskRunList()).hasSize(1);

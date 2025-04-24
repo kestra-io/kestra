@@ -25,20 +25,20 @@ class PublicHolidayTest {
         PublicHoliday publicHoliday = PublicHoliday.builder()
             .date(Property.of("2023-01-01"))
             .build();
-        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isEqualTo(true);
+        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isTrue();
 
         publicHoliday = PublicHoliday.builder()
             .date(Property.of("2023-07-14"))
             .country(Property.of("FR"))
             .build();
-        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isEqualTo(true);
+        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isTrue();
 
         publicHoliday = PublicHoliday.builder()
             .date(Property.of("2023-03-08"))
             .country(Property.of("DE"))
             .subDivision(Property.of("BE"))
             .build();
-        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isEqualTo(true);
+        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isTrue();
     }
 
     @Test
@@ -50,12 +50,12 @@ class PublicHolidayTest {
             .date(Property.of("2023-01-02"))
             .country(Property.of("FR"))
             .build();
-        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isEqualTo(false);
+        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isFalse();
 
         publicHoliday = PublicHoliday.builder()
             .date(Property.of("2023-03-08"))
             .country(Property.of("DE"))
             .build();
-        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isEqualTo(false);
+        assertThat(conditionService.isValid(publicHoliday, flow, execution)).isFalse();
     }
 }

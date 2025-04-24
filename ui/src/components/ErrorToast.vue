@@ -91,6 +91,8 @@
 
 <style lang="scss">
     .error-notification {
+        max-height: 90svh;
+
         .el-notification__title {
             max-width: calc(100% - 15ch);
         }
@@ -100,6 +102,11 @@
             right: calc(15px + 2rem);
             transform: translateY(-50%);
             gap: .5rem;
+        }
+
+        .el-notification__content {
+            overflow-y: auto;
+            max-height: 100%;
         }
     }
 </style>

@@ -105,9 +105,9 @@ class MapUtilsTest {
 
     @Test
     void isEmpty() {
-        assertThat(MapUtils.isEmpty(null)).isEqualTo(true);
-        assertThat(MapUtils.isEmpty(Collections.emptyMap())).isEqualTo(true);
-        assertThat(MapUtils.isEmpty(Map.of("key", "value"))).isEqualTo(false);
+        assertThat(MapUtils.isEmpty(null)).isTrue();
+        assertThat(MapUtils.isEmpty(Collections.emptyMap())).isTrue();
+        assertThat(MapUtils.isEmpty(Map.of("key", "value"))).isFalse();
     }
 
 

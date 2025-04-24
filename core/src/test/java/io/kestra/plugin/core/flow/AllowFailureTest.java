@@ -28,7 +28,7 @@ class AllowFailureTest {
     void success(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(9);
         control(execution);
-        assertThat(execution.findTaskRunsByTaskId("global-error").size()).isEqualTo(0);
+        assertThat(execution.findTaskRunsByTaskId("global-error").size()).isZero();
         assertThat(execution.findTaskRunsByTaskId("last").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
     }

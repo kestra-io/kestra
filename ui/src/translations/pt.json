@@ -795,6 +795,14 @@
     "no_code": {
       "adding": "+ Adicionar um {what}",
       "adding_default": "+ Adicionar um novo value",
+      "close": {
+        "after execution": "Fechar task",
+        "error handlers": "Fechar manipulador de erro",
+        "finally": "Fechar task",
+        "input": "Fechar input",
+        "tasks": "Fechar task",
+        "triggers": "Fechar trigger"
+      },
       "creation": {
         "after execution": "Adicionar um bloco após a execução",
         "error handlers": "Adicionar um manipulador de erro",

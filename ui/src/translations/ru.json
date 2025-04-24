@@ -795,6 +795,14 @@
     "no_code": {
       "adding": "+ Добавить {what}",
       "adding_default": "+ Добавить новое value",
+      "close": {
+        "after execution": "Закрыть task",
+        "error handlers": "Закрыть обработчик ошибок",
+        "finally": "Закрыть task",
+        "input": "Закрыть input",
+        "tasks": "Закрыть task",
+        "triggers": "Закрыть trigger"
+      },
       "creation": {
         "after execution": "Добавить блок после выполнения",
         "error handlers": "Добавить обработчик ошибок",

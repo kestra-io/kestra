@@ -150,23 +150,25 @@
                     };
                 }
             },
+            getTabClasses(tab) {
+                const isEnterpriseTab = tab.locked;
+                const isGanttTab = tab.name === "gantt";
+                const ROUTES = ["/flows/edit/", "/namespaces/edit/"];
+                const EDIT_ROUTES = ROUTES.some(route => this.$route.path.startsWith(route));
+                const isOverviewTab = EDIT_ROUTES && tab.title === "Overview";
+
+                return {
+                    "container": !isEnterpriseTab && !isOverviewTab,
+                    "mt-4": !isEnterpriseTab && !isOverviewTab,
+                    "px-0": isEnterpriseTab && isOverviewTab,
+                    "gantt-container": isGanttTab
+                };
+            },
         },
         computed: {
             ...mapState("editor", ["explorerVisible", "explorerWidth"]),
             containerClass() {
-                const isEnterpriseTab = this.activeTab.locked;
-                const isGanttTab = this.activeTab.name === "gantt";
-
-                if (this.activeTab?.props?.containerClass) {
-                    return {[this.activeTab.props.containerClass]: true};
-                }
-
-                return {
-                    "container": !isEnterpriseTab,
-                    "mt-4": !isEnterpriseTab,
-                    "px-0": isEnterpriseTab,
-                    "gantt-container": isGanttTab
-                };
+                return this.getTabClasses(this.activeTab);
             },
             activeTab() {
                 return this.tabs
@@ -202,7 +204,7 @@
 </script>
 
 <style lang="scss" scoped>
-    section.container.mt-4:has(> section.empty) {
+    section.container.mt-4:has(> section.empty){
         margin: 0 !important;
         padding: 0 !important;
     }
@@ -246,11 +248,10 @@
         flex-grow: 1;
         flex-direction: column;
     }
-</style>
 
-<style lang="scss">
-    .el-tabs__nav-next, .el-tabs__nav-prev{
-        &.is-disabled{
+    :deep(.el-tabs__nav-next),
+    :deep(.el-tabs__nav-prev) {
+        &.is-disabled {
             display: none;
         }
     }

@@ -61,7 +61,7 @@ class ConditionServiceTest {
 
         boolean valid = conditionService.valid(flow, conditions, conditionContext);
 
-        assertThat(valid).isEqualTo(true);
+        assertThat(valid).isTrue();
     }
 
     @Test

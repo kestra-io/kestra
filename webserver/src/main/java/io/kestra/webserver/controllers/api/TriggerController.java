@@ -73,7 +73,7 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/search")
     @Operation(tags = {"Triggers"}, summary = "Search for triggers")
-    public PagedResults<Triggers> search(
+    public PagedResults<Triggers> searchTriggers(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
@@ -151,7 +151,7 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{namespace}/{flowId}/{triggerId}/unlock")
     @Operation(tags = {"Triggers"}, summary = "Unlock a trigger")
-    public HttpResponse<Trigger> unlock(
+    public HttpResponse<Trigger> unlockTrigger(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String flowId,
         @Parameter(description = "The trigger id") @PathVariable String triggerId
@@ -181,13 +181,13 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/unlock/by-triggers")
     @Operation(tags = {"Triggers"}, summary = "Unlock given triggers")
-    public MutableHttpResponse<?> unlockByIds(
+    public MutableHttpResponse<?> unlockTriggersByIds(
         @Parameter(description = "The triggers to unlock") @Body List<Trigger> triggers
     ) {
         AtomicInteger count = new AtomicInteger();
         triggers.forEach(trigger -> {
             try {
-                this.unlock(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId());
+                this.unlockTrigger(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId());
             }
             // When doing bulk action, we ignore that a trigger can't be unlocked
             catch (IllegalStateException | QueueException ignored) {
@@ -202,7 +202,7 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/unlock/by-query")
     @Operation(tags = {"Triggers"}, summary = "Unlock triggers by query parameters")
-    public MutableHttpResponse<?> unlockByQuery(
+    public MutableHttpResponse<?> unlockTriggersByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace
     ) {
@@ -211,7 +211,7 @@ public class TriggerController {
             .filter(trigger -> trigger.getExecutionId() != null || trigger.getEvaluateRunningDate() != null)
             .map(trigger -> {
                 try {
-                    this.unlock(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId());
+                    this.unlockTrigger(trigger.getNamespace(), trigger.getFlowId(), trigger.getTriggerId());
                 }
                 // When doing bulk action, we ignore that a trigger can't be unlocked
                 catch (IllegalStateException | QueueException ignored) {
@@ -229,7 +229,7 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/{namespace}/{flowId}")
     @Operation(tags = {"Triggers"}, summary = "Get all triggers for a flow")
-    public PagedResults<Trigger> find(
+    public PagedResults<Trigger> searchTriggersForFlow(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
@@ -250,7 +250,7 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "/")
     @Operation(tags = {"Triggers"}, summary = "Update a trigger")
-    public HttpResponse<Trigger> update(
+    public HttpResponse<Trigger> updateTrigger(
         @Parameter(description = "The trigger") @Body final Trigger newTrigger
     ) throws HttpStatusException, QueueException {
 
@@ -311,7 +311,7 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/{namespace}/{flowId}/{triggerId}/restart")
     @Operation(tags = {"Triggers"}, summary = "Restart a trigger")
-    public HttpResponse<?> restart(
+    public HttpResponse<?> restartTrigger(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String flowId,
         @Parameter(description = "The trigger id") @PathVariable String triggerId
@@ -353,7 +353,7 @@ public class TriggerController {
     @Put(uri = "/backfill/pause")
     @Operation(tags = {"Triggers"}, summary = "Pause a backfill")
     public HttpResponse<Trigger> pauseBackfill(
-        @Parameter(description = "The trigger") @Body Trigger trigger
+        @Parameter(description = "The trigger that need the backfill to be paused") @Body Trigger trigger
     ) throws QueueException {
 
         return this.setBackfillPaused(trigger, true);
@@ -391,7 +391,7 @@ public class TriggerController {
     @Put(uri = "/backfill/unpause")
     @Operation(tags = {"Triggers"}, summary = "Unpause a backfill")
     public HttpResponse<Trigger> unpauseBackfill(
-        @Parameter(description = "The trigger") @Body Trigger trigger
+        @Parameter(description = "The trigger that need the backfill to be resume") @Body Trigger trigger
     ) throws QueueException {
         return this.setBackfillPaused(trigger, false);
     }
@@ -428,7 +428,7 @@ public class TriggerController {
     @Post(uri = "/backfill/delete")
     @Operation(tags = {"Triggers"}, summary = "Delete a backfill")
     public HttpResponse<Trigger> deleteBackfill(
-        @Parameter(description = "The trigger") @Body Trigger trigger
+        @Parameter(description = "The trigger that need to have its backfill to be deleted") @Body Trigger trigger
     ) throws QueueException {
         Trigger updatedTrigger = this.triggerRepository.lock(trigger.uid(), throwFunction(current -> {
             if (current.getBackfill() == null) {
@@ -480,7 +480,7 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/set-disabled/by-triggers")
     @Operation(tags = {"Triggers"}, summary = "Disable/enable given triggers")
-    public MutableHttpResponse<?> setDisabledByIds(
+    public MutableHttpResponse<?> disabledTriggersByIds(
         @Parameter(description = "The triggers you want to set the disabled state") @Body SetDisabledRequest setDisabledRequest
     ) throws QueueException {
         setDisabledRequest.triggers.forEach(throwConsumer(trigger -> this.setDisabled(trigger, setDisabledRequest.disabled)));
@@ -491,7 +491,7 @@ public class TriggerController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/set-disabled/by-query")
     @Operation(tags = {"Triggers"}, summary = "Disable/enable triggers by query parameters")
-    public MutableHttpResponse<?> setDisabledByQuery(
+    public MutableHttpResponse<?> disabledTriggersByQuery(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
         @Parameter(description = "The disabled state") @QueryValue(defaultValue = "true") Boolean disabled

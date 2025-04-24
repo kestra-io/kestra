@@ -10,3 +10,4 @@ export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-inje
 export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(section: string, taskId: string) => void>
 export const TASK_CREATION_INDEX_INJECTION_KEY = Symbol("task-creation-index-injection-key") as InjectionKey<ComputedRef<number>>
 export const BREADCRUMB_INJECTION_KEY = Symbol("breadcrumb-injection-key") as InjectionKey<Ref<{label:string, to?:any, component?: any}[]>>
+export const PANEL_INJECTION_KEY = Symbol("panel-injection-key") as InjectionKey<Ref<any>>

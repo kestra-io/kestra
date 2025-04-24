@@ -67,13 +67,14 @@
     import MetadataInputs from "../../flows/MetadataInputs.vue";
     import TaskBasic from "../../flows/tasks/TaskBasic.vue";
 
-    import {CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
+    import {CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY, PANEL_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
 
     import Task from "./Task.vue";
 
 
     const sectionInjected = inject(SECTION_INJECTION_KEY, ref(""));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
+    const panel = inject(PANEL_INJECTION_KEY, ref());
 
     watch(
         [sectionInjected, taskId],
@@ -94,7 +95,6 @@
     import {useStore} from "vuex";
     const store = useStore();
 
-    const panel = computed(() => store.state.code.panel);
 
     const emits = defineEmits([
         "save",

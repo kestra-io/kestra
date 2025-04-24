@@ -18,7 +18,7 @@
     import {computed, provide, ref} from "vue";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
-    import {BREADCRUMB_INJECTION_KEY, CREATE_TASK_FUNCTION_INJECTION_KEY, CREATING_TASK_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY, FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "./injectionKeys";
+    import {BREADCRUMB_INJECTION_KEY, CREATE_TASK_FUNCTION_INJECTION_KEY, CREATING_TASK_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY, FLOW_INJECTION_KEY, PANEL_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
 
@@ -63,6 +63,7 @@
     const creatingTaskRef = ref(props.creatingTask)
 
     provide(FLOW_INJECTION_KEY, computed(() => props.flow));
+    provide(PANEL_INJECTION_KEY, ref())
     provide(BREADCRUMB_INJECTION_KEY, ref([]));
     provide(SECTION_INJECTION_KEY, injectedSection);
     provide(TASKID_INJECTION_KEY, injectedTaskId);

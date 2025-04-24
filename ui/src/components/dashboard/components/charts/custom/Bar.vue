@@ -12,14 +12,14 @@
 
 <script lang="ts" setup>
     import {computed, onMounted, ref, watch} from "vue";
-
+    import moment from "moment";
     import NoData from "../../../../layout/NoData.vue";
 
     import {Bar} from "vue-chartjs";
 
-    import {customBarLegend} from "../legend.js";
-    import {useTheme} from "../../../../../utils/utils.js";
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../../../utils/charts.js";
+    import {customBarLegend} from "../legend";
+    import {useTheme} from "../../../../../utils/utils";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../../../utils/charts";
 
     import {useStore} from "vuex";
 
@@ -107,7 +107,9 @@
                 },
             },
             onClick: (e, elements) => {
-                chartClick(moment, router, route, {}, parsedData.value, elements, "label");
+                const index = elements[0].index;
+                const namespace = parsedData.value.labels[index];
+                chartClick(moment, router, route, {namespace}, parsedData.value, elements, "label");
             },
         }, theme.value);
     });

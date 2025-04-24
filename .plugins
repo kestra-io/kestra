@@ -76,6 +76,7 @@
 #plugin-powerbi:io.kestra.plugin:plugin-powerbi:LATEST
 #plugin-pulsar:io.kestra.plugin:plugin-pulsar:LATEST
 #plugin-redis:io.kestra.plugin:plugin-redis:LATEST
+#plugin-scripts:io.kestra.plugin:plugin-script-go:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-groovy:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-jbang:LATEST
 #plugin-scripts:io.kestra.plugin:plugin-script-julia:LATEST

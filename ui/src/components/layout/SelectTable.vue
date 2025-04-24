@@ -17,7 +17,6 @@
                 :infinite-scroll-delay="0"
                 :height="tableHeight"
             >
-                <slot name="expand" v-if="expandable" />
                 <el-table-column type="selection" v-if="selectable" />
                 <slot name="default" />
             </el-table>

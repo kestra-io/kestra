@@ -1,20 +1,18 @@
 <template>
-    <KeepAlive>
-        <NoCode
-            :flow="lastValidFlowYaml"
-            save-mode="auto"
-            :section
-            :creating-task="Boolean(createIndex)"
-            :position
-            :task-id="taskId"
-            @update-metadata="(e) => onUpdateMetadata(e)"
-            @update-task="(e) => editorUpdate(e)"
-            @reorder="(yaml) => handleReorder(yaml)"
-            @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
-            @create-task="(section) => emit('createTask', section)"
-            @edit-task="(section, taskId) => emit('editTask', section, taskId)"
-        />
-    </KeepAlive>
+    <NoCode
+        :flow="lastValidFlowYaml"
+        save-mode="auto"
+        :section
+        :creating-task="Boolean(createIndex)"
+        :position
+        :task-id="taskId"
+        @update-metadata="(e) => onUpdateMetadata(e)"
+        @update-task="(e) => editorUpdate(e)"
+        @reorder="(yaml) => handleReorder(yaml)"
+        @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
+        @create-task="(section) => emit('createTask', section)"
+        @edit-task="(section, taskId) => emit('editTask', section, taskId)"
+    />
 </template>
 
 <script setup lang="ts">

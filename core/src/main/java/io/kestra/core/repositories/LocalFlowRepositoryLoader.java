@@ -47,6 +47,10 @@ public class LocalFlowRepositoryLoader {
     @Inject
     private PluginDefaultService pluginDefaultService;
 
+    public void load(URL basePath) throws IOException, URISyntaxException {
+        load(null, basePath);
+    }
+
     public void load(String tenantId, URL basePath) throws IOException, URISyntaxException {
         URI uri = basePath.toURI();
 
@@ -71,6 +75,10 @@ public class LocalFlowRepositoryLoader {
         } else {
             this.load(tenantId, Paths.get(uri).toFile());
         }
+    }
+
+    public void load(File basePath) throws IOException {
+        load(null, basePath);
     }
 
     public void load(String tenantId, File basePath) throws IOException {

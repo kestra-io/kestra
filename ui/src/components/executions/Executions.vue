@@ -115,7 +115,7 @@
                                         <el-dropdown-item v-if="canUpdate" :icon="PauseBox" @click="pauseExecutions()">
                                             {{ $t("pause") }}
                                         </el-dropdown-item>
-                                        <el-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueExecutions()">
+                                        <el-dropdown-item v-if="canUpdate" :icon="QueueFirstInLastOut" @click="unqueueDialogVisible = true">
                                             {{ $t("unqueue") }}
                                         </el-dropdown-item>
                                         <el-dropdown-item v-if="canUpdate" :icon="RunFast" @click="forceRunExecutions()">
@@ -362,6 +362,45 @@
         </template>
     </el-dialog>
 
+    <el-dialog v-if="unqueueDialogVisible" v-model="unqueueDialogVisible" destroy-on-close :append-to-body="true">
+        <template #header>
+            <h5>{{ $t("confirmation") }}</h5>
+        </template>
+
+        <template #default>
+            <p v-html="$t('unqueue title multiple', {count: queryBulkAction ? total : selection.length})" />
+
+            <el-select
+                :required="true"
+                v-model="selectedStatus"
+                :persistent="false"
+            >
+                <el-option
+                    v-for="item in unQueuestates"
+                    :key="item.code"
+                    :value="item.code"
+                >
+                    <template #default>
+                        <status size="small" :label="false" class="me-1" :status="item.code" />
+                        <span v-html="item.label" />
+                    </template>
+                </el-option>
+            </el-select>
+        </template>
+
+        <template #footer>
+            <el-button @click="unqueueDialogVisible = false">
+                {{ $t('cancel') }}
+            </el-button>
+            <el-button
+                type="primary"
+                @click="unqueueExecutions()"
+            >
+                {{ $t('ok') }}
+            </el-button>
+        </template>
+    </el-dialog>
+
     <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="Utils.uid()" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
@@ -572,6 +611,7 @@
                 lastRefreshDate: new Date(),
                 isOpenReplayModal: false,
                 changeStatusDialogVisible: false,
+                unqueueDialogVisible: false,
                 selectedStatus: undefined,
                 loading: false
             };
@@ -647,6 +687,17 @@
                         label: this.$t("mark as", {status: value})
                     };
                 });
+            },
+            unQueuestates() {
+                return [State.RUNNING, State.CANCELLED, State.FAILED].map(value => ({
+                    code: value,
+                    label: this.$t("unqueue as", {status: value}),
+                }));
+            },
+            executionsCount() {
+                return [...this.daily].reduce((a, b) => {
+                    return a + Object.values(b.executionCounts).reduce((a, b) => a + b, 0);
+                }, 0);
             },
             selectedNamespace(){
                 return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;
@@ -820,8 +871,10 @@
                 );
             },
             unqueueExecutions() {
-                this.genericConfirmAction(
-                    "bulk unqueue",
+                this.unqueueDialogVisible = false;
+                this.actionOptions.newStatus = this.selectedStatus;
+
+                this.genericConfirmCallback(
                     "execution/queryUnqueueExecution",
                     "execution/bulkUnqueueExecution",
                     "executions unqueue"

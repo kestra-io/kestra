@@ -238,6 +238,7 @@
     "pause done": "Execution is paused",
     "unqueue": "Unqueue",
     "unqueue title": "Are you sure you want to Unqueue execution <code>{id}</code>?<br/><br/>Note that it will not obey the flow concurrency limit, so more executions could be running than the allowed limit.",
+    "unqueue title multiple": "Are you sure you want to Unqueue <code>{count}</code> executions?<br/><br/>Note that it will not obey the flow concurrency limit, so more executions could be running than the allowed limit.",
     "unqueue confirm": "Are you sure you want to unqueue execution <code>{id}</code>?",
     "unqueue done": "Execution is unqueued",
     "force run": "Force run",

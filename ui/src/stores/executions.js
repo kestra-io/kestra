@@ -303,13 +303,13 @@ export default {
         },
         bulkUnqueueExecution(_, options) {
             return this.$http.post(
-                `${apiUrl(this)}/executions/unqueue/by-ids`,
+                `${apiUrl(this)}/executions/unqueue/by-ids?state=${options.newStatus}`,
                 options.executionsId
             )
         },
         queryUnqueueExecution(_, options) {
             return this.$http.post(
-                `${apiUrl(this)}/executions/unqueue/by-query`,
+                `${apiUrl(this)}/executions/unqueue/by-query?state=${options.newStatus}`,
                 {},
                 {params: options}
             )

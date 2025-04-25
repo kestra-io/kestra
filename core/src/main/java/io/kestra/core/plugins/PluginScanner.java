@@ -110,6 +110,7 @@ public class PluginScanner {
         List<Class<? extends Chart<?>>> charts = new ArrayList<>();
         List<Class<? extends DataFilter<?, ?>>> dataFilters = new ArrayList<>();
         List<Class<? extends LogExporter<?>>> logExporter = new ArrayList<>();
+        List<Class<? extends AdditionalPlugin>> additionalPlugins = new ArrayList<>();
         List<String> guides = new ArrayList<>();
         Map<String, Class<?>> aliases = new HashMap<>();
 
@@ -172,6 +173,10 @@ public class PluginScanner {
                         log.debug("Loading LogExporter plugin: '{}'", plugin.getClass());
                         logExporter.add((Class<? extends LogExporter<?>>)  shipper.getClass());
                     }
+                    case AdditionalPlugin additionalPlugin -> {
+                        log.debug("Loading additional plugin: '{}'", plugin.getClass());
+                        additionalPlugins.add(additionalPlugin.getClass());
+                    }
                     default -> {
                     }
                 }
@@ -222,6 +227,7 @@ public class PluginScanner {
             .dataFilters(dataFilters)
             .guides(guides)
             .logExporters(logExporter)
+            .additionalPlugins(additionalPlugins)
             .aliases(aliases.entrySet().stream().collect(Collectors.toMap(
                 e -> e.getKey().toLowerCase(),
                 Function.identity()

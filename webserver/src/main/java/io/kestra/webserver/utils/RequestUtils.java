@@ -1,6 +1,7 @@
 package io.kestra.webserver.utils;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -48,7 +49,8 @@ public class RequestUtils {
         Duration timeRange,
         ExecutionRepositoryInterface.ChildFilter childFilter,
         List<State.Type> state,
-        String workerId
+        String workerId,
+        String triggerExecutionId
     ) {
 
         List<QueryFilter> filters = new ArrayList<>();
@@ -148,6 +150,13 @@ public class RequestUtils {
                 .field(QueryFilter.Field.WORKER_ID)
                 .operation(QueryFilter.Op.EQUALS)
                 .value(workerId)
+                .build());
+        }
+        if (triggerExecutionId != null) {
+            filters.add(QueryFilter.builder()
+                .field(Field.TRIGGER_EXECUTION_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(triggerExecutionId)
                 .build());
         }
 

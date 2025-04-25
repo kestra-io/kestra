@@ -60,7 +60,7 @@ class TriggerTest {
 
             worker.run();
             scheduler.run();
-            repositoryLoader.load(Objects.requireNonNull(TriggerTest.class.getClassLoader().getResource("flows/valids/http-listen.yaml")));
+            repositoryLoader.load(null, Objects.requireNonNull(TriggerTest.class.getClassLoader().getResource("flows/valids/http-listen.yaml")));
 
             assertTrue(queueCount.await(1, TimeUnit.MINUTES));
             receive.blockLast();
@@ -89,7 +89,7 @@ class TriggerTest {
 
             worker.run();
             scheduler.run();
-            repositoryLoader.load(Objects.requireNonNull(TriggerTest.class.getClassLoader().getResource("flows/valids/http-listen-encrypted.yaml")));
+            repositoryLoader.load(null, Objects.requireNonNull(TriggerTest.class.getClassLoader().getResource("flows/valids/http-listen-encrypted.yaml")));
 
             assertTrue(queueCount.await(1, TimeUnit.MINUTES));
             worker.shutdown();

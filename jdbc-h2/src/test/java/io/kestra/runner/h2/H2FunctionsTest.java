@@ -34,7 +34,7 @@ class H2FunctionsTest {
     @Test
     public void jqBoolean() {
         Boolean jqString = H2Functions.jqBoolean("{\"a\": true}", ".a");
-        assertThat(jqString).isEqualTo(true);
+        assertThat(jqString).isTrue();
     }
 
     @Test

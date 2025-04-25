@@ -660,6 +660,9 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     }
                 });
         });
+        metricRegistry
+            .timer(MetricRegistry.METRIC_SCHEDULER_EVALUATION_LOOP_DURATION, MetricRegistry.METRIC_SCHEDULER_EVALUATION_LOOP_DURATION_DESCRIPTION)
+            .record(Duration.between(now, ZonedDateTime.now()));
     }
 
     private List<FlowWithSource> getFlowsWithDefaults() {

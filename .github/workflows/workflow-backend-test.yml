@@ -31,6 +31,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         name: Checkout - Current ref
+        with:
+          fetch-depth: 0
 
       # Setup build
       - uses: kestra-io/actions/.github/actions/setup-build@main

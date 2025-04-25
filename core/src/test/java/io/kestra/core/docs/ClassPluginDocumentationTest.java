@@ -71,7 +71,7 @@ class ClassPluginDocumentationTest {
             // map
             Map<String, Object> childInputMap = (Map<String, Object>) childInput.get("map");
             assertThat((String) (childInputMap).get("type")).isEqualTo("object");
-            assertThat((Boolean) (childInputMap).get("$dynamic")).isEqualTo(true);
+            assertThat((Boolean) (childInputMap).get("$dynamic")).isTrue();
             assertThat(((Map<String, String>) (childInputMap).get("additionalProperties")).get("type")).isEqualTo("number");
 
             // output
@@ -151,18 +151,18 @@ class ClassPluginDocumentationTest {
             List<Map<String, Object>> anyOf = (List<Map<String, Object>>) number.get("anyOf");
             assertThat(anyOf).hasSize(2);
             assertThat(anyOf.getFirst().get("type")).isEqualTo("integer");
-            assertThat(anyOf.getFirst().get("$dynamic")).isEqualTo(true);
+            assertThat((Boolean) anyOf.getFirst().get("$dynamic")).isTrue();
             assertThat(anyOf.get(1).get("type")).isEqualTo("string");
 //            assertThat(anyOf.get(1).get("pattern"), is(".*{{.*}}.*"));
 
             Map<String, Object> withDefault = (Map<String, Object>) properties.get("withDefault");
             assertThat(withDefault.get("type")).isEqualTo("string");
             assertThat(withDefault.get("default")).isEqualTo("Default Value");
-            assertThat(withDefault.get("$dynamic")).isEqualTo(true);
+            assertThat((Boolean) withDefault.get("$dynamic")).isTrue();
 
             Map<String, Object> internalStorageURI = (Map<String, Object>) properties.get("uri");
             assertThat(internalStorageURI.get("type")).isEqualTo("string");
-            assertThat(internalStorageURI.get("$internalStorageURI")).isEqualTo(true);
+            assertThat((Boolean) internalStorageURI.get("$internalStorageURI")).isTrue();
         }));
     }
 }

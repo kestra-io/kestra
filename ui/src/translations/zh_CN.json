@@ -795,6 +795,14 @@
     "no_code": {
       "adding": "+ 添加{what}",
       "adding_default": "+ 添加新value",
+      "close": {
+        "after execution": "关闭task",
+        "error handlers": "关闭错误处理程序",
+        "finally": "关闭 task",
+        "input": "关闭输入",
+        "tasks": "关闭task",
+        "triggers": "关闭 trigger"
+      },
       "creation": {
         "after execution": "添加执行后块",
         "error handlers": "添加错误处理程序",

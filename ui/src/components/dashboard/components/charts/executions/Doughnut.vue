@@ -31,16 +31,18 @@
 <script setup>
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useRouter} from "vue-router";
+    import {useRouter, useRoute} from "vue-router";
+    import moment from "moment";
 
     import {Doughnut} from "vue-chartjs";
 
     import {totalsLegend} from "../legend.js";
     import {useTheme} from "../../../../../utils/utils";
-    import {defaultConfig} from "../../../../../utils/charts.js";
+    import {defaultConfig, chartClick} from "../../../../../utils/charts";
     import {useScheme} from "../../../../../utils/scheme";
 
     const router = useRouter();
+    const route = useRoute();
     const scheme = useScheme();
 
     import NoData from "../../../../layout/NoData.vue";
@@ -110,19 +112,7 @@
                 },
             },
             onClick: (e, elements) => {
-                if (elements.length > 0) {
-                    const index = elements[0].index;
-                    const state = parsedData.value.labels[index];
-                    router.push({
-                        name: "executions/list",
-                        query: {
-                            state: state,
-                            scope: "USER",
-                            size: 100,
-                            page: 1,
-                        },
-                    });
-                }
+                chartClick(moment, router, route, {}, parsedData.value, elements, "dataset");
             },
         }, theme.value),
     );

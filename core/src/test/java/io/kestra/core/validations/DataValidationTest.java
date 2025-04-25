@@ -21,13 +21,13 @@ public class DataValidationTest {
     @Test
     void valid() throws Exception {
         Data<?> data = Data.ofURI(URI.create("kestra:///uri"));
-        assertThat(modelValidator.isValid(data).isEmpty()).isEqualTo(true);
+        assertThat(modelValidator.isValid(data).isEmpty()).isTrue();
 
         data = Data.ofMap(Map.of("key", "value"));
-        assertThat(modelValidator.isValid(data).isEmpty()).isEqualTo(true);
+        assertThat(modelValidator.isValid(data).isEmpty()).isTrue();
 
         data = Data.ofList(List.of(Map.of("key1", "value11"), Map.of("key2", "value2")));
-        assertThat(modelValidator.isValid(data).isEmpty()).isEqualTo(true);
+        assertThat(modelValidator.isValid(data).isEmpty()).isTrue();
     }
 
     @Test
@@ -37,7 +37,7 @@ public class DataValidationTest {
             .fromList(new Property<>())
             .build();
 
-        assertThat(modelValidator.isValid(data).isEmpty()).isEqualTo(false);
+        assertThat(modelValidator.isValid(data).isEmpty()).isFalse();
         assertThat(modelValidator.isValid(data).get().getMessage()).contains("Only one of 'fromURI', 'fromMap' or 'fromList' can be set.");
     }
 }

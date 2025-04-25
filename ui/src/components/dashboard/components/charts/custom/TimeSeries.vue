@@ -19,12 +19,12 @@
     import {Bar} from "vue-chartjs";
 
     import {customBarLegend} from "../legend.js";
-    import {defaultConfig, getConsistentHEXColor} from "../../../../../utils/charts.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
     import moment from "moment";
 
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../../../utils/utils"
     import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
@@ -34,6 +34,7 @@
     const dashboard = computed(() => store.state.dashboard.dashboard);
 
     const route = useRoute();
+    const router = useRouter();
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
@@ -122,6 +123,12 @@
                         }
                     },
                 }),
+            },
+            onClick: (e, elements) => {
+                if (data.type === "io.kestra.plugin.core.dashboard.data.Logs") {
+                    return;
+                }
+                chartClick(moment, router, route, {}, parsedData.value, elements, "label");
             },
         }, theme.value);
     });
@@ -276,4 +283,3 @@
     max-height: var(--chart-height);
 }
 </style>
-

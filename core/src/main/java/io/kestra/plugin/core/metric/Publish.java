@@ -32,20 +32,25 @@ import java.util.List;
         @Example(
             full = true,
             code = """
-                id: publish_metric
+                id: publish_metrics
                 namespace: company.team
 
                 tasks:
-                  - id: random
-                    type: io.kestra.plugin.core.output.OutputValues
-                    values:
-                      metric: "{{randomInt(0, 10)}}"
                   - id: metric
                     type: io.kestra.plugin.core.metric.Publish
                     metrics:
-                      - name: myMetric
-                        type: counter
-                        value: "{{outputs.random.values.metric}}"
+                      - type: timer
+                        name: duration
+                        value: PT10M
+                        tags:
+                          flow: "{{flow.id}}"
+                          project: kestra
+                      - type: counter
+                        name: number
+                        value: 42
+                        tags:
+                          flow: "{{flow.id}}"
+                          project: kestra
                 """
         )
     }

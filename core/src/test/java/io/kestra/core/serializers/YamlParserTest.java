@@ -220,7 +220,7 @@ class YamlParserTest {
         Flow parse = this.parse("flows/invalids/invalid-parallel.yaml");
         Optional<ConstraintViolationException> valid = modelValidator.isValid(parse);
 
-        assertThat(valid.isPresent()).isEqualTo(true);
+        assertThat(valid.isPresent()).isTrue();
         assertThat(valid.get().getConstraintViolations().size()).isEqualTo(10);
         assertThat(new ArrayList<>(valid.get().getConstraintViolations()).stream().filter(r -> r.getMessage().contains("must not be empty")).count()).isEqualTo(3L);
     }

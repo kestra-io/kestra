@@ -183,36 +183,31 @@
                                 </el-button>
                             </template>
                         </el-table-column>
-                        <el-table-column
-                            v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
-                            column-key="restart"
-                            class-name="row-action"
-                        >
+                        <el-table-column :label="$t('backfill')" column-key="backfill">
                             <template #default="scope">
-                                <el-button>
-                                    <kicon
-                                        :tooltip="$t(`restart trigger.tooltip`)"
-                                        placement="left"
+                                <div class="backfillContainer items-center gap-2">
+                                    <span v-if="scope.row.backfill" class="statusIcon">
+                                        <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
+                                            <play-box font />
+                                        </el-tooltip>
+                                        <el-tooltip v-else :content="$t('backfill paused')">
+                                            <pause-box />
+                                        </el-tooltip>
+                                    </span>
+
+                                    <el-button
+                                        v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                         @click="restart(scope.row)"
+                                        class="restartTrigger"
                                     >
-                                        <Restart />
-                                    </kicon>
-                                </el-button>
+                                        <kicon :tooltip="$t(`restart trigger.tooltip`)" placement="left">
+                                            <Restart />
+                                        </kicon>
+                                    </el-button>
+                                </div>
                             </template>
                         </el-table-column>
 
-                        <el-table-column :label="$t('backfill')" column-key="backfill">
-                            <template #default="scope">
-                                <span v-if="scope.row.backfill">
-                                    <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
-                                        <play-box />
-                                    </el-tooltip>
-                                    <el-tooltip v-else :content="$t('backfill paused')">
-                                        <pause-box />
-                                    </el-tooltip>
-                                </span>
-                            </template>
-                        </el-table-column>
 
                         <el-table-column :label="$t('actions')" column-key="disable" class-name="row-action">
                             <template #default="scope">
@@ -467,13 +462,13 @@
                 }
             },
             triggersMerged() {
-                const all = this.triggers.map(triggers => {
+                const all = this.triggers.map(t => {
                     return {
-                        ...triggers?.abstractTrigger,
-                        ...triggers.triggerContext,
-                        codeDisabled: triggers?.abstractTrigger?.disabled,
+                        ...t?.abstractTrigger,
+                        ...t.triggerContext,
+                        codeDisabled: t?.abstractTrigger?.disabled,
                         // if we have no abstract trigger, it means that flow or trigger definition hasn't been found
-                        missingSource: !triggers.abstractTrigger
+                        missingSource: !t.abstractTrigger
                     }
                 })
 
@@ -505,6 +500,17 @@
     };
 </script>
 <style>
+    .data-table-wrapper {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    }
+    .backfillContainer{
+        display: flex;
+        align-items: center;
+    }
+    .statusIcon{
+        font-size: large;
+    }
     .trigger-issue-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;

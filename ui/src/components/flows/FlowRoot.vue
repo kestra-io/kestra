@@ -72,6 +72,8 @@
                 this.$router.replace({name: "flows/update", params: {...this.$route.params, tab}});
             }
 
+            this.$store.commit("flow/setIsCreating", false);
+
             this.load();
         },
         methods: {

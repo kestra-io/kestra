@@ -18,7 +18,7 @@
     import {computed, provide, ref} from "vue";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
-    import {BREADCRUMB_INJECTION_KEY, CREATE_TASK_FUNCTION_INJECTION_KEY, CREATING_TASK_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY, FLOW_INJECTION_KEY, PANEL_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "./injectionKeys";
+    import {BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY, CREATE_TASK_FUNCTION_INJECTION_KEY, CREATING_TASK_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY, FLOW_INJECTION_KEY, PANEL_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
 
@@ -29,6 +29,7 @@
         (e: "reorder", yaml: string): void
         (e: "createTask", section: string): boolean | void
         (e: "editTask", section: string, taskId: string): boolean | void
+        (e: "closeTask"): boolean | void
     }>()
 
     const props = withDefaults(
@@ -61,10 +62,12 @@
     const injectedTaskId = ref<string>(props.taskId)
 
     const creatingTaskRef = ref(props.creatingTask)
+    const breadcrumbs = ref([])
+    const panel = ref()
 
     provide(FLOW_INJECTION_KEY, computed(() => props.flow));
-    provide(PANEL_INJECTION_KEY, ref())
-    provide(BREADCRUMB_INJECTION_KEY, ref([]));
+    provide(PANEL_INJECTION_KEY, panel)
+    provide(BREADCRUMB_INJECTION_KEY, breadcrumbs);
     provide(SECTION_INJECTION_KEY, injectedSection);
     provide(TASKID_INJECTION_KEY, injectedTaskId);
     provide(POSITION_INJECTION_KEY, props.position);
@@ -86,6 +89,19 @@
         creatingTaskRef.value = false
         injectedTaskId.value = taskId
     });
+    provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {
+        if(emit("closeTask") === false){
+            return
+        }
+
+        if (breadcrumbs.value.length > 2) {
+            breadcrumbs.value.pop();
+        } else {
+            injectedSection.value = "";
+            injectedTaskId.value = "";
+        }
+
+    })
 </script>
 
 <style scoped lang="scss">

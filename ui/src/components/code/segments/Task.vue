@@ -35,7 +35,12 @@
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../../utils/constants";
-    import {BREADCRUMB_INJECTION_KEY, FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASK_CREATION_INDEX_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
+    import {
+        BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
+        FLOW_INJECTION_KEY, POSITION_INJECTION_KEY,
+        SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY,
+        TASK_CREATION_INDEX_INJECTION_KEY, TASKID_INJECTION_KEY
+    } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
@@ -50,6 +55,10 @@
     const taskCreationIndex = inject(
         TASK_CREATION_INDEX_INJECTION_KEY,
         ref(0),
+    );
+    const exitTaskElement = inject(
+        CLOSE_TASK_FUNCTION_INJECTION_KEY,
+        () => {},
     );
 
     const store = useStore();
@@ -154,16 +163,6 @@
         finally: "finally",
         "after execution": "afterExecution",
     };
-
-    function exitTaskElement(){
-        if (lastBreadcrumb.value.shown){
-            breadcrumbs.value.pop();
-        } else {
-            emits("exitTask");
-            taskCreationIndex.value = 0;
-        }
-    }
-
 
     const saveTask = () => {
         if (lastBreadcrumb.value.shown && saveMode === "button") {

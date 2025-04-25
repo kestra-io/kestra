@@ -11,6 +11,7 @@
         @reorder="(yaml) => handleReorder(yaml)"
         @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
         @create-task="(section) => emit('createTask', section)"
+        @close-task="() => emit('closeTask')"
         @edit-task="(section, taskId) => emit('editTask', section, taskId)"
     />
 </template>
@@ -36,6 +37,7 @@
         (e: "createTask", section: string): boolean | void;
         (e: "editTask", section: string, taskId: string): boolean | void;
         (e: "updateTaskId", newTaskId: string): boolean | void;
+        (e: "closeTask"): boolean | void;
     }>();
 
     const store = useStore();
@@ -53,7 +55,6 @@
             const oldLinesWithId = oldLines.map((line, index) => ({line, index})).filter(({line}) => IdLineRE.test(line));
             const changedLines = oldLinesWithId.filter(({line, index}) => IdLineRE.test(newLines[index]) && line !== newLines[index]);
             if(changedLines.length > 0){
-
                 for(const {line, index} of changedLines){
                     const oldId = line.match(IdLineRE)?.[1];
                     const newId = newLines[index].match(IdLineRE)?.[1];

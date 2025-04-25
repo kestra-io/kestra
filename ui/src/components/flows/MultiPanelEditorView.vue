@@ -65,19 +65,26 @@
         }
     }
 
-    const {t} = useI18n()
 
+
+    const noCodeHandlers: Parameters<typeof setupInitialNoCodeTab>[2] = {
+        onCreateTask(opener, section){
+            openAddTaskTab(opener, section)
+            return false
+        },
+        onEditTask(opener, section, taskId){
+            openEditTaskTab(opener, section, taskId)
+            return false
+        },
+        onCloseTask(opener){
+            closeTaskTab(opener)
+            return false
+        },
+    }
+
+    const {t} = useI18n()
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
-        const tab = setupInitialNoCodeTab(value, t, {
-            onCreateTask(opener, section){
-                openAddTaskTab(opener, section)
-                return false
-            },
-            onEditTask(opener, section, taskId){
-                openEditTaskTab(opener, section, taskId)
-                return false
-            },
-        })
+        const tab = setupInitialNoCodeTab(value, t, noCodeHandlers)
         const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value)!
 
         if(isFlowRelated(element)){
@@ -116,16 +123,7 @@
                             .map((p):Panel => {
                                 const tabs = p.tabs.map((tab) =>
                                     setupInitialCodeTab(tab)
-                                    ?? setupInitialNoCodeTabIfExists(flow.value, tab, t, {
-                                        onCreateTask(opener, section){
-                                            openAddTaskTab(opener, section)
-                                            return false
-                                        },
-                                        onEditTask(opener, section, taskId){
-                                            openEditTaskTab(opener, section, taskId)
-                                            return false
-                                        },
-                                    })
+                                    ?? setupInitialNoCodeTabIfExists(flow.value, tab, t, noCodeHandlers)
                                     ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
                                 )
                                 const activeTab = tabs.find(t => t.value === p.activeTab)!
@@ -143,7 +141,7 @@
         },
     )
 
-    const {openAddTaskTab, openEditTaskTab} = useNoCodePanels(panels)
+    const {openAddTaskTab, openEditTaskTab, closeTaskTab} = useNoCodePanels(panels)
 
     const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
 

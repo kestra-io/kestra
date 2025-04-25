@@ -265,13 +265,8 @@ public final class RunVariables {
                         // if some inputs are of type secret, we decode them
                         final Secret secret = new Secret(secretKey, logger);
                         for (Input<?> input : flow.getInputs()) {
-                            if (input instanceof SecretInput && inputs.containsKey(input.getId())) {
-                                try {
-                                    String decoded = secret.decrypt(((String) inputs.get(input.getId())));
-                                    inputs.put(input.getId(), decoded);
-                                } catch (GeneralSecurityException e) {
-                                    throw new RuntimeException(e);
-                                }
+                            if (input instanceof SecretInput) {
+                                decodeInput(secret, input.getId(), inputs);
                             }
                         }
                     }
@@ -343,6 +338,23 @@ public final class RunVariables {
             }
 
             return builder.build();
+        }
+
+        @SuppressWarnings("unchecked")
+        private void decodeInput(Secret secret, String id, Map<String, Object> inputs) {
+            // find the input value that can be nested in case the input has a '.' in it.
+            if (id.indexOf('.') > -1) {
+                String nestedId = id.substring(0, id.indexOf('.'));
+                String restOfId = id.substring(id.indexOf('.') + 1);
+                decodeInput(secret, restOfId, (Map<String, Object>) inputs.get(nestedId));
+            } else if (inputs.containsKey(id)) {
+                try {
+                    String decoded = secret.decrypt(((String) inputs.get(id)));
+                    inputs.put(id, decoded);
+                } catch (GeneralSecurityException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 

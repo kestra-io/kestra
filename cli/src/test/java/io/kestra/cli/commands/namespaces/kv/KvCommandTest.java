@@ -19,7 +19,7 @@ class KvCommandTest {
             String[] args = {};
             Integer call = PicocliRunner.call(KvCommand.class, ctx, args);
 
-            assertThat(call).isEqualTo(0);
+            assertThat(call).isZero();
             assertThat(out.toString()).contains("Usage: kestra namespace kv");
         }
     }

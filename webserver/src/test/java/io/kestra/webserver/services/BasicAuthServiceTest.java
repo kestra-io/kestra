@@ -58,7 +58,7 @@ class BasicAuthServiceTest {
 
     @Test
     void initFromYamlConfig() throws TimeoutException, QueueException {
-        assertThat(basicAuthService.isEnabled()).isEqualTo(true);
+        assertThat(basicAuthService.isEnabled()).isTrue();
 
         assertConfigurationMatchesApplicationYaml();
 
@@ -82,16 +82,16 @@ class BasicAuthServiceTest {
 
     @Test
     void unsecure() {
-        assertThat(basicAuthService.isEnabled()).isEqualTo(true);
+        assertThat(basicAuthService.isEnabled()).isTrue();
         BasicAuthService.SaltedBasicAuthConfiguration previousConfiguration = basicAuthService.configuration();
 
         basicAuthService.unsecure();
 
-        assertThat(basicAuthService.isEnabled()).isEqualTo(false);
+        assertThat(basicAuthService.isEnabled()).isFalse();
         BasicAuthService.SaltedBasicAuthConfiguration newConfiguration = basicAuthService.configuration();
 
 
-        assertThat(newConfiguration.getEnabled()).isEqualTo(false);
+        assertThat(newConfiguration.getEnabled()).isFalse();
         assertThat(newConfiguration.getUsername()).isEqualTo(previousConfiguration.getUsername());
         assertThat(newConfiguration.getPassword()).isEqualTo(previousConfiguration.getPassword());
         assertThat(newConfiguration.getRealm()).isEqualTo(previousConfiguration.getRealm());
@@ -107,7 +107,7 @@ class BasicAuthServiceTest {
         assertThat(actualConfiguration).isEqualTo(applicationYamlConfiguration);
 
         Optional<Setting> maybeSetting = settingRepositoryInterface.findByKey(BasicAuthService.BASIC_AUTH_SETTINGS_KEY);
-        assertThat(maybeSetting.isPresent()).isEqualTo(true);
+        assertThat(maybeSetting.isPresent()).isTrue();
         assertThat(maybeSetting.get().getValue()).isEqualTo(JacksonMapper.toMap(applicationYamlConfiguration));
     }
 

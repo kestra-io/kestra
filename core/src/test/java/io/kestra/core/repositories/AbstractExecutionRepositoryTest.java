@@ -297,7 +297,7 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
         Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
-        assertThat(full.isPresent()).isEqualTo(true);
+        assertThat(full.isPresent()).isTrue();
 
         full.ifPresent(current -> {
             assertThat(full.get().getId()).isEqualTo(ExecutionFixture.EXECUTION_1.getId());
@@ -309,12 +309,12 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
         Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
-        assertThat(full.isPresent()).isEqualTo(true);
+        assertThat(full.isPresent()).isTrue();
 
         executionRepository.purge(ExecutionFixture.EXECUTION_1);
 
         full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
-        assertThat(full.isPresent()).isEqualTo(false);
+        assertThat(full.isPresent()).isFalse();
     }
 
     @Test
@@ -322,12 +322,12 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(ExecutionFixture.EXECUTION_1);
 
         Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
-        assertThat(full.isPresent()).isEqualTo(true);
+        assertThat(full.isPresent()).isTrue();
 
         executionRepository.delete(ExecutionFixture.EXECUTION_1);
 
         full = executionRepository.findById(null, ExecutionFixture.EXECUTION_1.getId());
-        assertThat(full.isPresent()).isEqualTo(false);
+        assertThat(full.isPresent()).isFalse();
     }
 
     @Test
@@ -720,7 +720,7 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.update(updated);
 
         Optional<Execution> validation = executionRepository.findById(null, updated.getId());
-        assertThat(validation.isPresent()).isEqualTo(true);
+        assertThat(validation.isPresent()).isTrue();
         assertThat(validation.get().getLabels().size()).isEqualTo(1);
         assertThat(validation.get().getLabels().getFirst()).isEqualTo(label);
     }
@@ -734,7 +734,7 @@ public abstract class AbstractExecutionRepositoryTest {
         executionRepository.save(latest);
 
         Optional<Execution> result = executionRepository.findLatestForStates(null, "io.kestra.unittest", "full", List.of(State.Type.CREATED));
-        assertThat(result.isPresent()).isEqualTo(true);
+        assertThat(result.isPresent()).isTrue();
         assertThat(result.get().getId()).isEqualTo(latest.getId());
     }
 

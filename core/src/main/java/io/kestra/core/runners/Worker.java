@@ -19,7 +19,9 @@ import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.server.*;
 import io.kestra.core.services.LabelService;
 import io.kestra.core.services.LogService;
+import io.kestra.core.services.VariablesService;
 import io.kestra.core.services.WorkerGroupService;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.trace.TraceUtils;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
@@ -113,6 +115,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
 
     @Inject
     private WorkerSecurityService workerSecurityService;
+
+    @Inject
+    private VariablesService variablesService;
 
     private final Set<String> killedExecution = ConcurrentHashMap.newKeySet();
 
@@ -684,7 +689,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
             TaskRun failed = workerTask.fail();
             if (e instanceof MessageTooBigException) {
                 // If it's a message too big, we remove the outputs
-                failed = failed.withOutputs(Collections.emptyMap());
+                failed = failed.withOutputs(Variables.empty());
             }
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(failed);
             RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask.getTaskRun(), workerTask.getTask());
@@ -817,7 +822,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
             .withAttempts(attempts);
 
         try {
-            taskRun = taskRun.withOutputs(workerTaskCallable.getTaskOutput() != null ? workerTaskCallable.getTaskOutput().toMap() : ImmutableMap.of());
+            Variables variables = variablesService.of(StorageContext.forTask(taskRun), workerTaskCallable.getTaskOutput());
+            taskRun = taskRun.withOutputs(variables);
         } catch (Exception e) {
             logger.warn("Unable to save output on taskRun '{}'", taskRun, e);
         }

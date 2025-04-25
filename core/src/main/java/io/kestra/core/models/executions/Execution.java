@@ -794,7 +794,7 @@ public class Execution implements DeletedInterface, TenantInterface {
     /**
      * Transform an exception to {@link ILoggingEvent}
      *
-     * @param e the current execption
+     * @param e the current exception
      * @return the {@link ILoggingEvent} waited to generate {@link LogEntry}
      */
     public static ILoggingEvent loggingEventFromException(Exception e) {

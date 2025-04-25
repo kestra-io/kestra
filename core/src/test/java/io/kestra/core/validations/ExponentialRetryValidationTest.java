@@ -27,7 +27,7 @@ public class ExponentialRetryValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
-        assertThat(valid.isEmpty()).isEqualTo(true);
+        assertThat(valid.isEmpty()).isTrue();
     }
 
     @Test
@@ -40,7 +40,7 @@ public class ExponentialRetryValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
-        assertThat(valid.isEmpty()).isEqualTo(false);
+        assertThat(valid.isEmpty()).isFalse();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
         assertThat(valid.get().getMessage()).isEqualTo(": 'interval' must be less than 'maxDuration' but is PT2S\n");
 
@@ -52,7 +52,7 @@ public class ExponentialRetryValidationTest {
             .build();
 
         valid = modelValidator.isValid(retry);
-        assertThat(valid.isEmpty()).isEqualTo(false);
+        assertThat(valid.isEmpty()).isFalse();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
         assertThat(valid.get().getMessage()).isEqualTo(": 'interval' must be less than 'maxInterval' but is PT3S\n");
     }

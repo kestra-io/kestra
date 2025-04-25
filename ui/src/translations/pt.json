@@ -513,11 +513,13 @@
         "contains": "contém",
         "ends_with": "termina com",
         "greater_than": "maior que",
+        "greater_than_or_equal_to": "maior ou igual a",
         "in": "em",
         "is": "é",
         "is_not": "não é",
         "is_one_of": "é um dos",
         "less_than": "menor que",
+        "less_than_or_equal_to": "menor ou igual a",
         "not_contains": "não contém",
         "not_in": "não em",
         "starts_with": "começa com"
@@ -531,6 +533,7 @@
         "aggregation": "Agregação",
         "child": "Filho",
         "details": "Detalhes",
+        "endDate": "Data de término",
         "flow": "Fluxo",
         "labels": "Etiquetas",
         "level": "Nível de Log",
@@ -540,6 +543,7 @@
         "relative_date": "Data relativa",
         "scope": "Escopo",
         "service_type": "Tipo",
+        "startDate": "Data de início",
         "state": "Estado",
         "status": "Status",
         "task": "Tarefa",
@@ -795,6 +799,14 @@
     "no_code": {
       "adding": "+ Adicionar um {what}",
       "adding_default": "+ Adicionar um novo value",
+      "close": {
+        "after execution": "Fechar task",
+        "error handlers": "Fechar manipulador de erro",
+        "finally": "Fechar task",
+        "input": "Fechar input",
+        "tasks": "Fechar task",
+        "triggers": "Fechar trigger"
+      },
       "creation": {
         "after execution": "Adicionar um bloco após a execução",
         "error handlers": "Adicionar um manipulador de erro",

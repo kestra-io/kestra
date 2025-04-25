@@ -19,6 +19,6 @@ public class Md5FilterTest {
     void out() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ \"hello\" | md5 }}", Map.of());
 
-        assertThat(render.equals("hello")).isEqualTo(false);
+        assertThat(render.equals("hello")).isFalse();
     }
 }

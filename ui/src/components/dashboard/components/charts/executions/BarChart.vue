@@ -35,40 +35,50 @@
     import {useI18n} from "vue-i18n";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
-    import {useRouter} from "vue-router";
+    import {useRouter, useRoute} from "vue-router";
     const router = useRouter();
+    const route = useRoute();
 
     import Utils, {useTheme} from "../../../../../utils/utils";
     import {useScheme} from "../../../../../utils/scheme";
-    import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts";
+    import {defaultConfig, tooltip, getFormat, chartClick} from "../../../../../utils/charts";
 
     import {State} from "@kestra-io/ui-libs";
     const ORDER = State.arrayAllStates().map((state) => state.name);
 
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps<{
-        data: Array<{
-            startDate: string;
-            executionCounts: Record<string, number>;
-            duration: {
-                avg: number;
-            };
-            groupBy: string;
-        }>;
-        plugins: Array<any>;
+    interface DataItem {
+        startDate: string;
+        executionCounts: Record<string, number>;
+        duration: { avg: number | string };
+        groupBy?: string;
+    }
+
+    interface Props {
+        data: DataItem[];
+        plugins?: any[];
         total?: number;
         duration?: boolean;
         scales?: boolean;
         small?: boolean;
         externalTooltip?: boolean;
         loading?: boolean;
-    }>();
+    };
 
-    const theme = useTheme()
+    const props = withDefaults(defineProps<Props>(), {
+        plugins: () => [],
+        total: undefined,
+        duration: true,
+        scales: true,
+        small: false,
+        externalTooltip: false,
+        loading: false
+    });
+
+    const theme = useTheme();
     const scheme = useScheme();
-
-    const tooltipContent = ref("")
+    const tooltipContent = ref<string>("");
 
     const skeletonData = computed(() => {
         const barColor = theme.value === "dark"
@@ -157,9 +167,9 @@
                         borderColor: "#A2CDFF",
                         yAxisID: "yB",
                         data: props.data.map((value) => {
-                            return value.duration.avg === 0
+                            return value.duration.avg === 0 || !value.duration.avg
                                 ? 0
-                                : Utils.duration(value.duration.avg.toString());
+                                : Utils.duration(String(value.duration.avg));
                         }),
                     },
                     ...datasetsArray,
@@ -266,19 +276,8 @@
                     },
                 },
             },
-            onClick: (_e: any, elements: any[]) => {
-                if (elements.length > 0) {
-                    const state = parsedData.value.datasets[elements[0].datasetIndex].label;
-                    router.push({
-                        name: "executions/list",
-                        query: {
-                            state: state,
-                            scope: "USER",
-                            size: 100,
-                            page: 1,
-                        },
-                    });
-                }
+            onClick: (e, elements) => {
+                chartClick(moment, router, route, {}, parsedData.value, elements, "label");
             },
         }, theme.value),
     );

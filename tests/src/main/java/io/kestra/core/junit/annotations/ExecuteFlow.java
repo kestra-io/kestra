@@ -13,7 +13,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(FlowExecutorExtension.class)
 public @interface ExecuteFlow {
+    String DEFAULT_TENANT_ID = "<null>";
+
     String value();
 
     String timeout() default "PT60S";
+
+    String tenantId() default DEFAULT_TENANT_ID;
 }

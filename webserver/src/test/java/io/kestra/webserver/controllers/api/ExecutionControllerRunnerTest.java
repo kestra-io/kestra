@@ -29,6 +29,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
 import io.kestra.jdbc.JdbcTestUtils;
 import io.kestra.plugin.core.trigger.Webhook;
+import io.kestra.webserver.responses.BulkErrorResponse;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.micronaut.core.type.Argument;
@@ -153,7 +154,7 @@ class ExecutionControllerRunnerTest {
         assertThat(result.getInputs().get("float")).isEqualTo(42.42);
         assertThat(result.getInputs().get("file").toString()).startsWith("kestra:///io/kestra/tests/inputs/executions/");
         assertThat(result.getInputs().get("file").toString()).startsWith("kestra:///io/kestra/tests/inputs/executions/");
-        assertThat(result.getInputs().containsKey("bool")).isEqualTo(true);
+        assertThat(result.getInputs().containsKey("bool")).isTrue();
         assertThat(result.getInputs().get("bool")).isNull();
         assertThat(result.getLabels().size()).isEqualTo(6);
         assertThat(result.getLabels().getFirst()).isEqualTo(new Label("flow-label-1", "flow-label-1"));
@@ -332,7 +333,7 @@ class ExecutionControllerRunnerTest {
         ));
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(e.getResponse().getBody(String.class).isPresent()).isEqualTo(true);
+        assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
         assertThat(e.getResponse().getBody(String.class).get()).contains("No task found");
     }
 
@@ -351,7 +352,7 @@ class ExecutionControllerRunnerTest {
         ));
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(e.getResponse().getBody(String.class).isPresent()).isEqualTo(true);
+        assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
         assertThat(e.getResponse().getBody(String.class).get()).contains("No task found to restart");
     }
 
@@ -366,7 +367,7 @@ class ExecutionControllerRunnerTest {
 
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
 
-        assertThat(flow.isPresent()).isEqualTo(true);
+        assertThat(flow.isPresent()).isTrue();
 
         // Run child execution starting from a specific task and wait until it finishes
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
@@ -417,7 +418,7 @@ class ExecutionControllerRunnerTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
-        assertThat(flow.isPresent()).isEqualTo(true);
+        assertThat(flow.isPresent()).isTrue();
 
         // Run child execution starting from a specific task and wait until it finishes
         runnerUtils.awaitChildExecution(
@@ -453,7 +454,7 @@ class ExecutionControllerRunnerTest {
 
         // Update task's command to make second execution successful
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
-        assertThat(flow.isPresent()).isEqualTo(true);
+        assertThat(flow.isPresent()).isTrue();
 
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
@@ -516,7 +517,7 @@ class ExecutionControllerRunnerTest {
 
         // Update task's command to make second execution successful
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
-        assertThat(flow.isPresent()).isEqualTo(true);
+        assertThat(flow.isPresent()).isTrue();
 
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
@@ -675,7 +676,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("a")).isEqualTo(1);
-        assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("b")).isEqualTo(true);
+        assertThat((Boolean) ((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("b")).isTrue();
         assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("parameters")).get("name")).isEqualTo(List.of("john"));
         assertThat(((Map<String, List<String>>) execution.getTrigger().getVariables().get("parameters")).get("age")).containsExactlyInAnyOrder("12", "13");
         assertThat(execution.getLabels().getFirst()).isEqualTo(new Label("flow-label-1", "flow-label-1"));
@@ -691,7 +692,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).getFirst().get("a")).isEqualTo(1);
-        assertThat(((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).getFirst().get("b")).isEqualTo(true);
+        assertThat((Boolean) ((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).getFirst().get("b")).isTrue();
 
         execution = client.toBlocking().retrieve(
             HttpRequest
@@ -727,7 +728,7 @@ class ExecutionControllerRunnerTest {
     void resumeExecutionPaused() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
-        assertThat(pausedExecution.getState().isPaused()).isEqualTo(true);
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
 
         // resume the execution
         HttpResponse<?> resumeResponse = client.toBlocking().exchange(
@@ -739,7 +740,7 @@ class ExecutionControllerRunnerTest {
         Execution execution = client.toBlocking().retrieve(
             GET("/api/v1/executions/" + pausedExecution.getId()),
             Execution.class);
-        assertThat(execution.getState().isPaused()).isEqualTo(false);
+        assertThat(execution.getState().isPaused()).isFalse();
     }
 
     @SuppressWarnings("unchecked")
@@ -748,7 +749,7 @@ class ExecutionControllerRunnerTest {
     void resumeExecutionPausedWithInputs() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause_on_resume");
-        assertThat(pausedExecution.getState().isPaused()).isEqualTo(true);
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
 
         File applicationFile = new File(Objects.requireNonNull(
             ExecutionControllerTest.class.getClassLoader().getResource("application-test.yml")
@@ -771,7 +772,7 @@ class ExecutionControllerRunnerTest {
         Execution execution = client.toBlocking().retrieve(
             GET("/api/v1/executions/" + pausedExecution.getId()),
             Execution.class);
-        assertThat(execution.getState().isPaused()).isEqualTo(false);
+        assertThat(execution.getState().isPaused()).isFalse();
 
         Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
         assertThat(outputs.get("asked")).isEqualTo("myString");
@@ -784,8 +785,8 @@ class ExecutionControllerRunnerTest {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
         Execution pausedExecution2 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
 
-        assertThat(pausedExecution1.getState().isPaused()).isEqualTo(true);
-        assertThat(pausedExecution2.getState().isPaused()).isEqualTo(true);
+        assertThat(pausedExecution1.getState().isPaused()).isTrue();
+        assertThat(pausedExecution2.getState().isPaused()).isTrue();
 
         // resume executions
         BulkResponse resumeResponse = client.toBlocking().retrieve(
@@ -807,8 +808,8 @@ class ExecutionControllerRunnerTest {
             GET("/api/v1/executions/" + pausedExecution2.getId()),
             Execution.class
         );
-        assertThat(resumedExecution1.getState().isPaused()).isEqualTo(false);
-        assertThat(resumedExecution2.getState().isPaused()).isEqualTo(false);
+        assertThat(resumedExecution1.getState().isPaused()).isFalse();
+        assertThat(resumedExecution2.getState().isPaused()).isFalse();
 
         // attempt to resume no more paused executions
         HttpClientResponseException e = assertThrows(
@@ -827,8 +828,8 @@ class ExecutionControllerRunnerTest {
         Execution pausedExecution1 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
         Execution pausedExecution2 = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
 
-        assertThat(pausedExecution1.getState().isPaused()).isEqualTo(true);
-        assertThat(pausedExecution2.getState().isPaused()).isEqualTo(true);
+        assertThat(pausedExecution1.getState().isPaused()).isTrue();
+        assertThat(pausedExecution2.getState().isPaused()).isTrue();
 
         // resume executions
         BulkResponse resumeResponse = client.toBlocking().retrieve(
@@ -847,8 +848,8 @@ class ExecutionControllerRunnerTest {
             GET("/api/v1/executions/" + pausedExecution2.getId()),
             Execution.class
         );
-        assertThat(resumedExecution1.getState().isPaused()).isEqualTo(false);
-        assertThat(resumedExecution2.getState().isPaused()).isEqualTo(false);
+        assertThat(resumedExecution1.getState().isPaused()).isFalse();
+        assertThat(resumedExecution2.getState().isPaused()).isFalse();
 
         // attempt to resume no more paused executions
         HttpClientResponseException e = assertThrows(
@@ -943,7 +944,7 @@ class ExecutionControllerRunnerTest {
     void replayExecution() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
-        assertThat(execution.getState().isTerminated()).isEqualTo(true);
+        assertThat(execution.getState().isTerminated()).isTrue();
 
         // replay execution
         Execution replay = client.toBlocking().retrieve(
@@ -971,8 +972,8 @@ class ExecutionControllerRunnerTest {
         Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
-        assertThat(execution1.getState().isTerminated()).isEqualTo(true);
-        assertThat(execution2.getState().isTerminated()).isEqualTo(true);
+        assertThat(execution1.getState().isTerminated()).isTrue();
+        assertThat(execution2.getState().isTerminated()).isTrue();
 
         PagedResults<?> executions = client.toBlocking().retrieve(
             GET("/api/v1/executions/search"), PagedResults.class
@@ -1001,8 +1002,8 @@ class ExecutionControllerRunnerTest {
         Execution execution1 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
         Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
 
-        assertThat(execution1.getState().isTerminated()).isEqualTo(true);
-        assertThat(execution2.getState().isTerminated()).isEqualTo(true);
+        assertThat(execution1.getState().isTerminated()).isTrue();
+        assertThat(execution2.getState().isTerminated()).isTrue();
 
         PagedResults<?> executions = client.toBlocking().retrieve(
             GET("/api/v1/executions/search"), PagedResults.class
@@ -1027,7 +1028,7 @@ class ExecutionControllerRunnerTest {
     void killExecutionPaused() throws TimeoutException, InterruptedException, QueueException {
         // Run execution until it is paused
         Execution pausedExecution = runnerUtils.runOneUntilPaused(null, TESTS_FLOW_NS, "pause");
-        assertThat(pausedExecution.getState().isPaused()).isEqualTo(true);
+        assertThat(pausedExecution.getState().isPaused()).isTrue();
 
         // resume the execution
         HttpResponse<?> resumeResponse = client.toBlocking().exchange(
@@ -1039,7 +1040,7 @@ class ExecutionControllerRunnerTest {
         Execution execution = client.toBlocking().retrieve(
             GET("/api/v1/executions/" + pausedExecution.getId()),
             Execution.class);
-        assertThat(execution.getState().isPaused()).isEqualTo(false);
+        assertThat(execution.getState().isPaused()).isFalse();
     }
 
     // This test is flaky on CI as the flow may be already SUCCESS when we kill it if CI is super slow
@@ -1066,7 +1067,7 @@ class ExecutionControllerRunnerTest {
 
         // Run execution until it is paused
         Execution runningExecution = runnerUtils.runOneUntilRunning(null, TESTS_FLOW_NS, "sleep-long");
-        assertThat(runningExecution.getState().isRunning()).isEqualTo(true);
+        assertThat(runningExecution.getState().isRunning()).isTrue();
 
         // kill the execution
         HttpResponse<?> killResponse = client.toBlocking().exchange(
@@ -1123,7 +1124,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(e.getResponse().getBody(String.class).isPresent()).isEqualTo(true);
+        assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
         assertThat(e.getResponse().getBody(String.class).get()).contains("are mutually exclusive");
 
         executions = client.toBlocking().retrieve(
@@ -1312,16 +1313,23 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
-    @LoadFlows({"flows/valids/sleep.yml"})
+    @LoadFlows({"flows/valids/sleep-short.yml"})
+    // use a dedicated Flow to avoid clash with other tests
     void shouldPauseExecutionByQueryRunningFlows() throws TimeoutException, QueueException {
-        Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
-        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
-        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", "sleep");
+        var flowId = "sleep-short";
+        Execution result1 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
+        Execution result2 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
+        Execution result3 = runnerUtils.runOneUntilRunning(null, "io.kestra.tests", flowId);
+        BulkResponse response = null;
+        try {
+            response = client.toBlocking().retrieve(
+                HttpRequest.POST("/api/v1/executions/pause/by-query?flowId="+flowId+"&namespace=" + result1.getNamespace(), null),
+                BulkResponse.class
+            );
+        } catch (HttpClientResponseException e){
+            log.error("Error while pausing execution, err: {}, response: {}", e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids), e);
+        }
 
-        BulkResponse response = client.toBlocking().retrieve(
-            HttpRequest.POST("/api/v1/executions/pause/by-query?namespace=" + result1.getNamespace(), null),
-            BulkResponse.class
-        );
         assertThat(response.getCount()).isEqualTo(3);
     }
 
@@ -1351,6 +1359,14 @@ class ExecutionControllerRunnerTest {
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/unqueue", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // waiting for the flow to complete successfully
+        runnerUtils.awaitExecution(
+            execution -> execution.getId().equals(result.getId()) && execution.getState().isSuccess(),
+            () -> {},
+            Duration.ofSeconds(10)
+        );
+
 
         var notFound = assertThrows(HttpClientResponseException.class, () -> client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/notfound/unqueue", null)));
         assertThat(notFound.getStatus().getCode()).isEqualTo(HttpStatus.NOT_FOUND.getCode());
@@ -1388,8 +1404,15 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(null, result.getId());
-        assertThat(forcedRun.isPresent()).isEqualTo(true);
+        assertThat(forcedRun.isPresent()).isTrue();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.QUEUED);
+
+        // waiting for the flow to complete successfully
+        runnerUtils.awaitExecution(
+            execution -> execution.getId().equals(result.getId()) && execution.getState().isSuccess(),
+            () -> {},
+            Duration.ofSeconds(10)
+        );
     }
 
     @Test
@@ -1413,7 +1436,7 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(null, result.getId());
-        assertThat(forcedRun.isPresent()).isEqualTo(true);
+        assertThat(forcedRun.isPresent()).isTrue();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.CREATED);
     }
 
@@ -1426,7 +1449,7 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(null, result.getId());
-        assertThat(forcedRun.isPresent()).isEqualTo(true);
+        assertThat(forcedRun.isPresent()).isTrue();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.PAUSED);
     }
 
@@ -1440,7 +1463,7 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(null, result.getId());
-        assertThat(forcedRun.isPresent()).isEqualTo(true);
+        assertThat(forcedRun.isPresent()).isTrue();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.CREATED);
     }
 

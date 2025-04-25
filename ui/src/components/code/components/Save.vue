@@ -1,14 +1,27 @@
 <template>
     <el-button type="primary" :icon="ContentSave">
-        {{ t(`no_code.save.${props.what}`) }}
+        {{ t(`no_code.${saveOrClose}.${props.what}`) }}
     </el-button>
 </template>
 
 <script setup lang="ts">
+    import {computed, inject} from "vue";
     import {ContentSave} from "../utils/icons";
+    import {SAVEMODE_INJECTION_KEY} from "../injectionKeys";
 
     const props = defineProps({
         what: {type: String, required: true, default: "tasks"},
+    });
+
+    const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
+
+    const saveOrClose = computed(() => {
+        if (saveMode === "button") {
+            return "save";
+        } else if (saveMode === "auto") {
+            return "close";
+        }
+        return "save";
     });
 
     import {useI18n} from "vue-i18n";

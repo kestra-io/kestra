@@ -195,11 +195,11 @@ kestra:
     liveness:
       enabled: true
       # The expected time between liveness probe.
-      interval: 5s
+      interval: 10s
       # The timeout used to detect service failures.
-      timeout: 45s
+      timeout: 1m
       # The time to wait before executing a liveness probe.
-      initialDelay: 45s
+      initialDelay: 1m
       # The expected time between service heartbeats.
       heartbeatInterval: 3s
   anonymous-usage-report:

@@ -69,7 +69,7 @@ public class MetricRegistry {
     public static final String METRIC_INDEXER_REQUEST_DURATION = "indexer.request.duration";
     public static final String METRIC_INDEXER_REQUEST_DURATION_DESCRIPTION = "Batch of records duration inside the Indexer";
     public static final String METRIC_INDEXER_REQUEST_RETRY_COUNT = "indexer.request.retry.count";
-    public static final String METRIC_INDEXER_REQUEST_RETRY_COUNT_DESCRIPTION = "Total number of batches of records retries by the Indexer";
+    public static final String METRIC_INDEXER_REQUEST_RETRY_COUNT_DESCRIPTION = "Total number of batches of records retried by the Indexer";
     public static final String METRIC_INDEXER_SERVER_DURATION = "indexer.server.duration";
     public static final String METRIC_INDEXER_SERVER_DURATION_DESCRIPTION = "Batch of records indexation duration";
     public static final String METRIC_INDEXER_MESSAGE_FAILED_COUNT = "indexer.message.failed.count";

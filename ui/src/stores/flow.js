@@ -168,6 +168,7 @@ export default {
 
                 return;
             }
+
             let overrideFlow = false;
             if (getters.flowErrors) {
                 if (state.flowValidation.outdated && state.isCreating) {
@@ -199,6 +200,7 @@ export default {
                     .then((response) => {
                         this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
                         dispatch("core/isUnsaved", false, {root: true});
+                        commit("setIsCreating", false);
                     });
             } else {
                 await dispatch("saveFlow", {flow: flowYaml})
@@ -340,6 +342,10 @@ export default {
                         return Promise.reject(new Error("Server error on flow save"))
                     } else {
                         commit("setFlow", response.data);
+                        commit("editor/setTabDirty", {
+                            name: "Flow",
+                            dirty: false,
+                        }, {root: true});
 
                         return response.data;
                     }

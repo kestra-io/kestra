@@ -19,7 +19,7 @@ interface Handlers{
     onCloseTask: (opener: Opener) => boolean
 }
 
-export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string, handlers?: Handlers): Tab {
+export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string, handlers: Handlers): Tab {
     const preTab = tab?.taskId?.length ? {
         value: `${NOCODE_PREFIX}-edit-${tab.section}-${tab.taskId}`,
         button: {
@@ -51,18 +51,9 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string
             props: ["panelIndex", "tabIndex"],
             setup:(props: Opener) => () => h(NoCodeWrapper, {
                 ...tab,
-                onCloseTask: onCloseTask?.bind({}, {
-                    panelIndex: props.panelIndex,
-                    tabIndex: props.tabIndex
-                }),
-                onCreateTask: onCreateTask?.bind({}, {
-                    panelIndex: props.panelIndex,
-                    tabIndex: props.tabIndex
-                }),
-                onEditTask: onEditTask?.bind({}, {
-                    panelIndex: props.panelIndex,
-                    tabIndex: props.tabIndex
-                }),
+                onCloseTask: onCloseTask?.bind({}, props),
+                onCreateTask: onCreateTask?.bind({}, props),
+                onEditTask: onEditTask?.bind({}, props),
             })
         }),
     }
@@ -73,6 +64,8 @@ export function setupInitialNoCodeTabIfExists(flow: string, tab: string, t: (key
         const taskInfoPath = tab.substring(7)
         const section = taskInfoPath.split("-").slice(1).shift() ?? ""
         const taskId = taskInfoPath.substring(section.length + 6)
+        // check if the task exists in the flow
+        console.log("setupInitialNoCodeTabIfExists", taskId, section)
         if(!YAML_UTILS.extractTask(flow, taskId)){
             // if the task is not found, we don't create the tab
             return undefined
@@ -112,7 +105,7 @@ export function setupInitialNoCodeTab(tab: string, t: (key: string) => string, h
     return getTabFromNoCodeTab(getNoCodeProps(tab), t, handlers)
 }
 
-export function useNoCodePanels(panels: Ref<Panel[]>) {
+export function useNoCodePanels(panels: Ref<Panel[]>, handlers:Handlers) {
     const {t} = useI18n()
 
     function openAddTaskTab(
@@ -139,7 +132,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>) {
             section,
             position,
             createIndex
-        }, t)
+        }, t, handlers)
 
         panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)
 
@@ -155,7 +148,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>) {
         const tab = getTabFromNoCodeTab({
             section,
             taskId
-        }, t)
+        }, t, handlers)
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
             return

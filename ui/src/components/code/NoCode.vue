@@ -90,6 +90,7 @@
         injectedTaskId.value = taskId
     });
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {
+        console.log("close task tab", injectedSection.value, injectedTaskId.value)
         if(emit("closeTask") === false){
             return
         }

@@ -123,7 +123,7 @@
                             .map((p):Panel => {
                                 const tabs = p.tabs.map((tab) =>
                                     setupInitialCodeTab(tab)
-                                    ?? setupInitialNoCodeTabIfExists(flow.value, tab, t, noCodeHandlers)
+                                    ?? setupInitialNoCodeTabIfExists(store.state.flow.flowYaml, tab, t, noCodeHandlers)
                                     ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
                                 )
                                 const activeTab = tabs.find(t => t.value === p.activeTab)!
@@ -141,7 +141,7 @@
         },
     )
 
-    const {openAddTaskTab, openEditTaskTab, closeTaskTab} = useNoCodePanels(panels)
+    const {openAddTaskTab, openEditTaskTab, closeTaskTab} = useNoCodePanels(panels, noCodeHandlers)
 
     const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
 

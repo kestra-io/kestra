@@ -169,6 +169,7 @@ export default {
 
                 return;
             }
+
             let overrideFlow = false;
             if (getters.flowErrors) {
                 if (state.flowValidation.outdated && state.isCreating) {
@@ -200,6 +201,7 @@ export default {
                     .then((response) => {
                         this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
                         dispatch("core/isUnsaved", false, {root: true});
+                        commit("setIsCreating", false);
                     });
             } else {
                 await dispatch("saveFlow", {flow: flowYaml})

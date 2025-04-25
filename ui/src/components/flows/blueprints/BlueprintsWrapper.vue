@@ -1,5 +1,5 @@
 <template>
-    <Blueprints embed kind="flow" />
+    <Blueprints embed kind="flow" combined-view />
 </template>
 
 <script lang="ts" setup>

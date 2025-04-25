@@ -165,12 +165,67 @@
                     >Kestra Internal Storage File</label>
                 </div>
             </div>
+            <div
+                v-if="input.type === 'ARRAY'"
+                :data-test-id="`input-form-${input.id}`"
+                class="w-100"
+            >
+                <div v-if="editingArrayId !== input.id" class="preview">
+                    <div class="tags">
+                        <el-tag
+                            v-for="(item, index) in parseArrayValue(input.id)"
+                            :key="index"
+                        >
+                            {{ item }}
+                        </el-tag>
+                    </div>
+                    <el-button 
+                        class="p-3" 
+                        @click="toggleArrayEdit(input.id)"
+                        :icon="Pencil"
+                    >
+                        {{ $t('edit') }}
+                    </el-button>
+                </div>
+
+                <div v-else class="edit_input">
+                    <div>
+                        <div v-for="(item, index) in editableItems[input.id]" :key="index" class="list-row">
+                            <el-input
+                                v-model="editableItems[input.id][index]"
+                                class="array-cell"
+                            />
+                            <el-button @click="removeArrayItem(input, index)" :icon="DeleteOutline" class="delete-input" />
+                            <div class="d-flex flex-column controls-input">
+                                <ChevronUp @click="moveArrayItem(input, 'up', index)" />
+                                <ChevronDown @click="moveArrayItem(input, 'down', index)" />
+                            </div>
+                        </div>
+                    </div>
+                    <el-button 
+                        class="add-new mt-1 border-0" 
+                        @click="addNewArrayItem(input)"
+                        :icon="Plus"
+                    >
+                        {{ $t('add_new_item') }}
+                    </el-button>
+                    <div class="d-flex justify-content-end mt-2">
+                        <el-button 
+                            @click="toggleArrayEdit(input.id)"
+                            type="primary"
+                            :icon="ContentSave"
+                        >
+                            {{ $t('save') }}
+                        </el-button>
+                    </div>
+                </div>
+            </div>
             <editor
                 :full-height="false"
                 :input="true"
                 :navbar="false"
+                v-if="input.type === 'JSON'"
                 :show-scroll="inputsValues[input.id]?.length > 530 ? true : false"
-                v-if="input.type === 'JSON' || input.type === 'ARRAY'"
                 :data-test-id="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputsValues[input.id]"
@@ -221,6 +276,13 @@
     import DurationPicker from "./DurationPicker.vue";
     import {inputsToFormDate} from "../../utils/submitTask"
 
+    import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
+    import Plus from "vue-material-design-icons/Plus.vue";
+    import Pencil from "vue-material-design-icons/Pencil.vue";
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import ChevronUp from "vue-material-design-icons/ChevronUp.vue";
+    import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
+
     export default {
         computed: {
             ...mapState("auth", ["user"]),
@@ -270,6 +332,8 @@
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
                 debouncedValidation: () => {},
+                editingArrayId: null,
+                editableItems: {},
             };
         },
         emits: ["update:modelValue", "confirm", "validation"],
@@ -453,6 +517,55 @@
                 }
 
                 return undefined
+            },
+            parseArrayValue(inputId) {
+                const value = this.inputsValues[inputId];
+                if (!value) return [];
+                
+                if (typeof value === "string") {
+                    return JSON.parse(value);
+                }
+            },
+            addNewArrayItem(input) {
+                if (!this.editableItems[input.id]) {
+                    this.editableItems[input.id] = this.parseArrayValue(input.id).map(item => item?.toString() || "");
+                }
+                this.editableItems[input.id].push("");
+            },
+            updateArrayValue(input) {
+                const validItems = this.editableItems[input.id]
+                    .filter(item => item && item.trim() !== "")
+                    .map(item => item.trim());
+                    
+                this.inputsValues[input.id] = JSON.stringify(validItems);
+                this.onChange(input);
+            },
+            removeArrayItem(input, index) {
+                this.editableItems[input.id].splice(index, 1);
+                this.updateArrayValue(input);
+            },
+            toggleArrayEdit(inputId) {
+                const isEditing = this.editingArrayId === inputId;
+                if (isEditing && this.editableItems[inputId]) {
+                    this.updateArrayValue(this.inputsMetaData.find(i => i.id === inputId));
+                }
+                this.editingArrayId = isEditing ? null : inputId;
+                if (!isEditing) {
+                    this.editableItems[inputId] = this.parseArrayValue(inputId).map(v => v?.toString() || "");
+                }
+            },
+            moveArrayItem(input, direction, index) {
+                const {id} = input;
+                const items = this.editableItems[id];
+                const isValidMove = {
+                    up: () => index > 0,
+                    down: () => index < items.length - 1
+                }[direction]?.();
+                if (!isValidMove) return;
+                const targetIndex = direction === "up" ? index - 1 : index + 1;
+                [items[index], items[targetIndex]] = [items[targetIndex], items[index]];
+                
+                this.updateArrayValue(input);
             }
         },
         watch: {
@@ -482,49 +595,143 @@
     font-size: var(--font-size-xs);
     color: var(--bs-gray-700);
 }
-</style>
 
-<style scoped lang="scss">
-    :deep(.boolean-inputs) {
-        display: flex;
-        align-items: center;
+:deep(.boolean-inputs) {
+    display: flex;
+    align-items: center;
 
-        .el-radio-button {
-            &.is-active {
-                .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
-                    color: var(--ks-content-primary);
-                    background-color: var(--bs-gray-100);
-                    box-shadow: 0 0 0 0 var(--ks-border-active);
-                }
+    .el-radio-button {
+        &.is-active {
+            .el-radio-button__original-radio:not(:disabled) + .el-radio-button__inner {
+                color: var(--ks-content-primary);
+                background-color: var(--bs-gray-100);
+                box-shadow: 0 0 0 0 var(--ks-border-active);
+            }
+        }
+
+        .el-radio-button__inner {
+            border: var(--ks-border-primary);
+            transition: 0.3s ease-in-out;
+
+            &:hover {
+                color: var(--ks-content-secondary);
+                border-color: var(--ks-border-active);
+                background-color: var(--ks-background-card);
             }
 
-            .el-radio-button__inner {
-                border: var(--ks-border-primary);
-                transition: 0.3s ease-in-out;
-
-                &:hover {
-                    color: var(--ks-content-secondary);
-                    border-color: var(--ks-border-active);
-                    background-color: var(--ks-background-card);
-                }
-
-                &:first-child {
-                    border-left: var(--ks-border-primary);
-                }
+            &:first-child {
+                border-left: var(--ks-border-primary);
             }
         }
     }
+}
 
-    :deep(.editor-container){
+.el-input-file {
+    display: flex;
+    align-items: center;
+}
+    
+.preview {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    .tags {
+        flex: 1;
+        background: var(--ks-background-input);
+        border: 1px solid var(--ks-border-primary);
+        border-radius: 4px;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 5px;
+        gap: 4px;
+
+        :deep(.el-tag) {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 4px;
+            background-color: var(--ks-tag-background);
+            color: var(--ks-content-tag);
+        }
+    }
+}
+
+.edit_input {
+    .list-row {
+        position: relative;
+        margin-bottom: 8px;
+
+        .array-cell {
+            :deep(.el-input__wrapper) {
+                box-shadow: none;
+                border: 1px solid var(--ks-border-primary);
+                border-radius: 5px;
+            }
+
+            :deep(.el-input__inner) {
+                color: #eeae7e !important;
+                font-size: var(--font-size-sm) !important;
+
+                html.light & {
+                    color: #dd5f00 !important;
+                }
+            }
+        }
+
+        .delete-input {
+            position: absolute;
+            right: 28px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 4px;
+            border: none;
+            color: var(--ks-content-secondary);
+            background: transparent;
+                
+            &:hover {
+                color: var(--ks-content-error);
+            }
+        }
+
+        .controls-input {
+            position: absolute;
+            right: 2px;
+            top: 50%;
+            transform: translateY(-50%);
+            padding: 3px;
+            border-left: 1px solid var(--ks-border-primary);
+            color: var(--ks-content-secondary);
+            background: transparent;
+        }
+    }
+
+    .add-new {
+        padding: 5px 8px;
+        color: var(--ks-content-tertiary);
+        font-size: var(--font-size-sm);
+        background: none;
+
+        &:hover {
+            color: var(--ks-content-secondary);
+        }
+    }
+}
+
+.el-form-item {
+    &:has(.edit_input) {
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--ks-border-primary);
+        background-color: var(--ks-dropdown-background-active);
+    }
+}
+
+:deep(.editor-container){
         max-height: 200px;
         
         & .ks-monaco-editor {
             overflow-x: hidden;
         }
-    }
-
-    .el-input-file {
-        display: flex;
-        align-items: center;
     }
 </style>

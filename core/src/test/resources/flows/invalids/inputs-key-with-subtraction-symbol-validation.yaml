@@ -1,0 +1,12 @@
+id: inputs-key-with-subtraction-symbol-validation
+namespace: io.kestra.tests
+
+inputs:
+  - id: server-fqn
+    type: STRING
+    defaults: 'animal'
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: "{{inputs.server-fqn}}"

@@ -3,9 +3,9 @@
     <div v-else>
         <slot name="nav" />
         <slot name="content">
-            <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" divider>
+            <data-table class="blueprints" @page-changed="onPageChanged" ref="dataTable" :total="total" hide-top-pagination divider>
                 <template #navbar>
-                    <el-radio-group v-if="ready && !system" v-model="selectedTag" class="tags-selection">
+                    <el-radio-group v-if="ready && !system && !embed" v-model="selectedTag" class="tags-selection">
                         <el-radio-button
                             :key="0"
                             :value="0"
@@ -53,10 +53,30 @@
                         >
                             <div class="left">
                                 <div class="blueprint">
-                                    <div class="ps-0 title">
+                                    <div 
+                                        class="ps-0 title" 
+                                        :class="{'embed-title': embed, 'text-truncate': embed}"
+                                    >
                                         {{ blueprint.title ?? blueprint.id }}
                                     </div>
-                                    <div v-if="!system" class="tags text-uppercase">
+                                    <div v-if="embed" class="tags-w-icons-container">
+                                        <div class="tags-w-icons">
+                                            <div v-for="(tag, index) in blueprint.tags" :key="index">
+                                                <el-tag size="small">
+                                                    {{ tag }}
+                                                </el-tag>
+                                            </div>
+                                            <div class="tasks-container">
+                                                <task-icon
+                                                    :icons="icons"
+                                                    :cls="task"
+                                                    :key="task"
+                                                    v-for="task in [...new Set(blueprint.includedTasks)]"
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div v-else-if="!system" class="tags text-uppercase">
                                         <div v-for="(tag, index) in blueprint.tags" :key="index" class="tag-box">
                                             <el-tag size="small">
                                                 {{ tag }}
@@ -64,7 +84,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="tasks-container">
+                                <div v-if="!embed" class="tasks-container">
                                     <task-icon
                                         :icons="icons"
                                         :cls="task"
@@ -81,9 +101,8 @@
                                         size="default"
                                         :icon="icon.ContentCopy"
                                         @click.prevent.stop="copy(blueprint.id)"
-                                    >
-                                        {{ $t('copy') }}
-                                    </el-button>
+                                        class="copy-button p-2"
+                                    />
                                 </el-tooltip>
                                 <el-button v-else type="primary" size="default" @click.prevent.stop="blueprintToEditor(blueprint.id)">
                                     {{ $t('use') }}
@@ -307,16 +326,6 @@
     @use 'element-plus/theme-chalk/src/mixins/mixins' as *;
     @import "@kestra-io/ui-libs/src/scss/variables";
 
-    .blueprint {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-
-        @media (max-width: 1024px) {
-            margin-bottom: 10px;
-        }
-}
-
     .sub-nav {
         margin: 0 0 $spacer;
 
@@ -362,6 +371,47 @@
             border: 0;
             border-bottom: 1px solid var(--ks-border-primary);
 
+            .blueprint {
+                display: flex;
+                align-items: center;
+                flex-wrap: wrap;
+
+                @media (max-width: 1024px) {
+                    margin-bottom: 10px;
+                }
+
+                .tags-w-icons-container {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    width: 100%;
+                    margin-top: 7px;
+
+                    .tags-w-icons {
+                        display: flex;
+                        align-items: center;
+                        gap: .35rem;
+                    }
+                }
+            }
+
+            .el-tag {
+                background-color: var(--ks-tag-background);
+                padding: 13px 10px;
+                color: var(--ks-tag-content);
+                text-transform: capitalize;
+                font-size: $small-font-size;
+                border: 1px solid var(--ks-border-primary);
+
+                html.dark & {
+                    background-color: rgba(64, 69, 89, .7);
+                }
+            }
+
+            &.embed {
+                position: relative;
+            }
+
             .blueprint-link {
                 display: flex;
                 color: inherit;
@@ -371,8 +421,10 @@
 
                 .left {
                     align-items: center;
+                    flex: 1;
+                    min-width: 0;
                     .title {
-                        width: 400px;
+                        width: 500px;
                         font-weight: bold;
                         font-size: $small-font-size;
                         padding-left: 0;
@@ -383,22 +435,20 @@
                         }
                     }
 
+                    .embed-title {
+                        width: 100%;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        
+                    }
+
                     .tags {
                         margin: 10px 0;
                         display: flex;
 
-
-                        .el-tag {
-                            background-color: var(--ks-tag-background);
-                            padding: 15px 10px;
-                            color: var(--ks-tag-content);
-                            text-transform: capitalize;
-                            font-size: var(--el-font-size-small);
-                            border: 1px solid var(--ks-border-primary);
-                        }
-
                         .tag-box {
-                            margin-right: .3rem;
+                            margin-right: .5rem;
                         }
                     }
 
@@ -420,6 +470,15 @@
                 .side {
                     &.buttons {
                         white-space: nowrap;
+                        flex-shrink: 0;
+                    }
+
+                    &.copy-button {
+                        position: absolute;
+                        right: 1rem;
+                        transform: translateY(-50%);
+                        top: 50%;
+                        z-index: 10;
                     }
                 }
             }

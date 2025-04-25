@@ -421,6 +421,8 @@
 
                 .left {
                     align-items: center;
+                    flex: 1;
+                    min-width: 0;
                     .title {
                         width: 500px;
                         font-weight: bold;
@@ -434,8 +436,11 @@
                     }
 
                     .embed-title {
-                        min-width: 300px;
-                        max-width: 400px;
+                        width: 100%;
+                        white-space: nowrap;
+                        overflow: hidden;
+                        text-overflow: ellipsis;
+                        
                     }
 
                     .tags {
@@ -443,7 +448,7 @@
                         display: flex;
 
                         .tag-box {
-                            margin-right: .3rem;
+                            margin-right: .5rem;
                         }
                     }
 
@@ -465,6 +470,7 @@
                 .side {
                     &.buttons {
                         white-space: nowrap;
+                        flex-shrink: 0;
                     }
 
                     &.copy-button {
@@ -472,6 +478,7 @@
                         right: 1rem;
                         transform: translateY(-50%);
                         top: 50%;
+                        z-index: 10;
                     }
                 }
             }

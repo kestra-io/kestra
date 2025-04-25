@@ -1,8 +1,10 @@
 import {h, markRaw, Ref} from "vue"
+import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import type {Panel} from "../MultiPanelTabs.vue";
 import NoCodeWrapper, {NoCodeProps} from "../code/NoCodeWrapper.vue";
-import {useI18n} from "vue-i18n";
+
 
 const NOCODE_PREFIX = "nocode"
 
@@ -54,10 +56,24 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string
     }
 }
 
+export function setupInitialNoCodeTabIfExists(flow: string, tab: string, t: (key: string) => string, handlers: Handlers) {
+    if(tab.startsWith(`${NOCODE_PREFIX}-`) && tab.substring(7).startsWith("edit-")){
+        const taskInfoPath = tab.substring(7)
+        const section = taskInfoPath.split("-").slice(1).shift() ?? ""
+        const taskId = taskInfoPath.substring(section.length + 6)
+        if(!YAML_UTILS.extractTask(flow, taskId)){
+            // if the task is not found, we don't create the tab
+            return undefined
+        }
+    }
+
+    return setupInitialNoCodeTab(tab, t, handlers)
+}
+
 export function setupInitialNoCodeTab(tab: string, t: (key: string) => string, handlers:Handlers) {
     if(tab === NOCODE_PREFIX){
         const {onCreateTask, onEditTask} = handlers ?? {}
-        return getTabFromNoCodeTab({}, t,{
+        return getTabFromNoCodeTab({}, t, {
             onCreateTask,
             onEditTask
         })

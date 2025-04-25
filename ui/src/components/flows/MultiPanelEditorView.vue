@@ -30,7 +30,7 @@
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
-    import {setupInitialNoCodeTab, useNoCodePanels} from "./useNoCodePanels";
+    import {setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
 
     function isFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.value)
@@ -116,7 +116,7 @@
                             .map((p):Panel => {
                                 const tabs = p.tabs.map((tab) =>
                                     setupInitialCodeTab(tab)
-                                    ?? setupInitialNoCodeTab(tab, t, {
+                                    ?? setupInitialNoCodeTabIfExists(flow.value, tab, t, {
                                         onCreateTask(opener, section){
                                             openAddTaskTab(opener, section)
                                             return false

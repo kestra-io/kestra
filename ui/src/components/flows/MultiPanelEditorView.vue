@@ -24,6 +24,7 @@
     import {computed, Ref, watch} from "vue";
     import {useStorage} from "@vueuse/core";
     import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
@@ -64,10 +65,11 @@
         }
     }
 
+    const {t} = useI18n()
+
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
-        const tab = setupInitialNoCodeTab(value, {
+        const tab = setupInitialNoCodeTab(value, t, {
             onCreateTask(opener, section){
-                console.log("Create task", section)
                 openAddTaskTab(opener, section)
                 return false
             },
@@ -112,11 +114,10 @@
                         return panels
                             .filter((p) => p.tabs.length)
                             .map((p):Panel => {
-                                const tabs = p.tabs.map((t) =>
-                                    setupInitialCodeTab(t)
-                                    ?? setupInitialNoCodeTab(t, {
+                                const tabs = p.tabs.map((tab) =>
+                                    setupInitialCodeTab(tab)
+                                    ?? setupInitialNoCodeTab(tab, t, {
                                         onCreateTask(opener, section){
-                                            console.log("Create task init", section)
                                             openAddTaskTab(opener, section)
                                             return false
                                         },
@@ -125,7 +126,7 @@
                                             return false
                                         },
                                     })
-                                    ?? EDITOR_ELEMENTS.find(e => e.value === t)!
+                                    ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
                                 )
                                 const activeTab = tabs.find(t => t.value === p.activeTab)!
                                 return {

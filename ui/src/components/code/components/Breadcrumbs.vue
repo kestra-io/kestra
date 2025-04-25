@@ -52,7 +52,7 @@
             if(isCreating || taskIdVal.length > 0){
                 breadcrumbs.value[1] = {
                     label: isCreating
-                        ? t("no_code.creation.new")
+                        ? t(`no_code.creation.${taskSection.value}`)
                         : taskIdVal
                 }
             }

@@ -2,6 +2,7 @@ import {h, markRaw, Ref} from "vue"
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import type {Panel} from "../MultiPanelTabs.vue";
 import NoCodeWrapper, {NoCodeProps} from "../code/NoCodeWrapper.vue";
+import {useI18n} from "vue-i18n";
 
 const NOCODE_PREFIX = "nocode"
 
@@ -15,12 +16,12 @@ interface Handlers{
     onEditTask: (opener: Opener, section: string, taskId: string) => boolean
 }
 
-export function getTabFromNoCodeTab(tab: NoCodeProps, handlers?: Handlers){
+export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string, handlers?: Handlers, ) {
     const {onCreateTask, onEditTask} = handlers ?? {}
     return tab?.taskId?.length ? {
         value: `${NOCODE_PREFIX}-edit-${tab.section}-${tab.taskId}`,
         button: {
-            label: `${tab.section}-${tab.taskId}`,
+            label: `${tab.section} / ${tab.taskId}`,
             icon:  markRaw(MouseRightClickIcon),
         },
         component: () => h(NoCodeWrapper, tab),
@@ -28,7 +29,7 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, handlers?: Handlers){
     } : tab?.section?.length ? {
         value: `${NOCODE_PREFIX}-create-${tab.section}-${tab.createIndex}`,
         button: {
-            label: `New ${tab.section}`,
+            label: `${tab.section} / ${t(`no_code.creation.${tab.section}`)}`,
             icon:  markRaw(MouseRightClickIcon),
         },
         component: () => h(NoCodeWrapper, tab),
@@ -53,10 +54,10 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, handlers?: Handlers){
     }
 }
 
-export function setupInitialNoCodeTab(tab: string, handlers:Handlers){
+export function setupInitialNoCodeTab(tab: string, t: (key: string) => string, handlers:Handlers) {
     if(tab === NOCODE_PREFIX){
         const {onCreateTask, onEditTask} = handlers ?? {}
-        return getTabFromNoCodeTab({}, {
+        return getTabFromNoCodeTab({}, t,{
             onCreateTask,
             onEditTask
         })
@@ -72,7 +73,7 @@ export function setupInitialNoCodeTab(tab: string, handlers:Handlers){
             section,
             createIndex
         }
-        return getTabFromNoCodeTab(editorTab)
+        return getTabFromNoCodeTab(editorTab, t)
     }else if(taskInfoPath.startsWith("edit-")){
         const section = taskInfoPath.split("-").slice(1).shift() ?? ""
         const taskId = taskInfoPath.substring(section.length + 6)
@@ -80,12 +81,14 @@ export function setupInitialNoCodeTab(tab: string, handlers:Handlers){
             section,
             taskId
         }
-        return getTabFromNoCodeTab(editorTab)
+        return getTabFromNoCodeTab(editorTab, t)
     }
     return undefined
 }
 
 export function useNoCodePanels(panels: Ref<Panel[]>) {
+    const {t} = useI18n()
+
     function openAddTaskTab(
         opener: {
             panelIndex: number,
@@ -110,7 +113,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>) {
             section,
             position,
             createIndex
-        })
+        }, t)
 
         panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)
 
@@ -126,7 +129,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>) {
         const tab = getTabFromNoCodeTab({
             section,
             taskId
-        })
+        }, t)
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
             return

@@ -6,6 +6,8 @@ import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import Utils from "../utils/utils";
 import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
+import {useI18n} from "vue-i18n";
+
 
 const textYamlHeader = {
     headers: {
@@ -726,7 +728,8 @@ export default {
                 return "outdated revision save confirmation." + createOrUpdateKey;
         },
         outdatedMessage(_, getters){
-            return `${this.$i18n.t(getters.baseOutdatedTranslationKey + ".description")} ${this.$i18n.t(
+            const {t} = useI18n();
+            return `${t(getters.baseOutdatedTranslationKey + ".description")} ${t(
                 getters.baseOutdatedTranslationKey + ".details"
             )}`;
         },

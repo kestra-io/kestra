@@ -1111,7 +1111,9 @@
         "relative_date": "Relative date",
         "absolute_date": "Absolute date",
         "labels": "Labels",
-        "text": "text"
+        "text": "text",
+        "startDate": "Start date",
+        "endDate": "End date"
       },
       "comparators": {
         "is": "is",
@@ -1124,7 +1126,9 @@
         "between": "between",
         "starts_with": "starts with",
         "greater_than": "greater than",
+        "greater_than_or_equal_to": "greater than or equal to",
         "less_than": "less than",
+        "less_than_or_equal_to": "less than or equal to",
         "ends_with": "ends with"
       },
       "save": {

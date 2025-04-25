@@ -37,7 +37,9 @@ export function useFilters(prefix: string, isDefaultDashboard: boolean) {
         IN: buildComparator(t(comparator("in")), "IN", true),
         NOT_IN: buildComparator(t(comparator("not_in")), "NOT_IN", true),
         GREATER_THAN: buildComparator(t(comparator("greater_than")), "GREATER_THAN"),
+        GREATER_THAN_OR_EQUAL_TO: buildComparator(t(comparator("greater_than_or_equal_to")), "GREATER_THAN_OR_EQUAL_TO"),
         LESS_THAN: buildComparator(t(comparator("less_than")), "LESS_THAN"),
+        LESS_THAN_OR_EQUAL_TO: buildComparator(t(comparator("less_than_or_equal_to")), "LESS_THAN_OR_EQUAL_TO"),
     };
 
     let OPTIONS: Option[] = [

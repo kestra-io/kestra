@@ -1,6 +1,9 @@
 package io.kestra.core.services;
 
+
 import com.fasterxml.jackson.core.JsonProcessingException;
+import io.kestra.core.runners.TriggerScheduler;
+import io.kestra.core.models.flows.FlowSource;
 import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.Execution;
@@ -62,6 +65,9 @@ public class FlowService {
 
     @Inject
     ModelValidator modelValidator;
+
+    @Inject
+    TriggerScheduler triggerScheduler;
 
     /**
      * Validates and creates the given flow.
@@ -436,6 +442,26 @@ public class FlowService {
         }
 
         return flowRepository.get().delete(flow);
+    }
+
+     public void softDelete(String tenantId,
+                           String namespace,
+                           String id,
+                           FlowSource src) {
+
+        FlowRepositoryInterface repo = repository();  // reuse helper
+
+        repo.findById(tenantId, namespace, id).ifPresent(flow -> {
+            if (flow.getSource() == src && !flow.isDeleted()) {
+                // mark deleted
+                repo.update(flow.toBuilder().deleted(true).build());
+
+                // unschedule any triggers so they stop firing
+                triggerScheduler.unscheduleAllForFlow(tenantId, namespace, id);
+
+                log.info("Soft-deleted flow {}:{} ({})", namespace, id, src);
+            }
+        });
     }
 
     /**

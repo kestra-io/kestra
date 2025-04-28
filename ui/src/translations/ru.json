@@ -130,6 +130,9 @@
     "close sidebar": "закрыть боковую панель",
     "collapse": "Свернуть",
     "collapse all": "Свернуть все",
+    "common": {
+      "back": "Назад"
+    },
     "concurrency": "Конкурентность",
     "conditions": "условия",
     "configure basic auth": "Настроить базовую аутентификацию",
@@ -861,6 +864,7 @@
     "no_logs_data": "Нет данных",
     "no_logs_data_description": "Либо никакие flows не выполняются, либо вам нужно изменить фильтры.",
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
+    "no_results_found": "Результаты не найдены",
     "no_tasks_running": "Ещё нет запущенных tasks.",
     "now": "Сейчас",
     "of": "из",
@@ -1037,6 +1041,8 @@
       "saved": "Сохраненные фильтры"
     },
     "search term in message": "Поиск по термину в сообщении",
+    "search_docs": "Поиск",
+    "searching": "Поиск...",
     "seconds": "Секунды",
     "secret": {
       "add": "Новый секрет",

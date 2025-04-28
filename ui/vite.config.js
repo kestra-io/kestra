@@ -85,7 +85,8 @@ export default defineConfig({
             // without allowing interop in typescript
             "dayjs",
             "debug",
-            "@braintree/sanitize-url"
+            "@braintree/sanitize-url",
+            "monaco-yaml/yaml.worker",
         ],
         exclude: [
             "* > @kestra-io/ui-libs"

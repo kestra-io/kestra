@@ -130,6 +130,9 @@
     "close sidebar": "サイドバーを閉じる",
     "collapse": "折りたたむ",
     "collapse all": "すべて折りたたむ",
+    "common": {
+      "back": "戻る"
+    },
     "concurrency": "並行性",
     "conditions": "条件",
     "configure basic auth": "基本認証を設定",
@@ -861,6 +864,7 @@
     "no_logs_data": "データなし",
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
+    "no_results_found": "結果が見つかりません",
     "no_tasks_running": "タスクはまだ実行されていません。",
     "now": "現在",
     "of": "の",
@@ -1037,6 +1041,8 @@
       "saved": "保存されたフィルター"
     },
     "search term in message": "メッセージ内の検索語",
+    "search_docs": "検索",
+    "searching": "検索中...",
     "seconds": "秒",
     "secret": {
       "add": "新しいシークレット",

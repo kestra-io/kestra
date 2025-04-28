@@ -63,7 +63,7 @@ export function useFilters(prefix: string, isDefaultDashboard: boolean) {
             icon: ICONS.StateMachine,
             label: t("filters.options.state"),
             value: {label: "trigger_state", comparator: undefined, value: []},
-            comparators: [COMPARATORS.EQUALS, COMPARATORS.NOT_EQUALS, COMPARATORS.IN, COMPARATORS.NOT_IN],
+            comparators: [COMPARATORS.EQUALS],
         },
         {
             key: "scope",

@@ -130,6 +130,9 @@
     "close sidebar": "साइडबार बंद करें",
     "collapse": "संक्षिप्त करें",
     "collapse all": "सभी संक्षिप्त करें",
+    "common": {
+      "back": "वापस"
+    },
     "concurrency": "समानांतरता",
     "conditions": "शर्तें",
     "configure basic auth": "बेसिक प्रमाणीकरण कॉन्फ़िगर करें",
@@ -861,6 +864,7 @@
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
+    "no_results_found": "कोई परिणाम नहीं मिला",
     "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
     "now": "अब",
     "of": "का",
@@ -1037,6 +1041,8 @@
       "saved": "सहेजे गए फ़िल्टर"
     },
     "search term in message": "संदेश में खोज शब्द",
+    "search_docs": "खोजें",
+    "searching": "खोज जारी है...",
     "seconds": "सेकंड्स",
     "secret": {
       "add": "नया secret",

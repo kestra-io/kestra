@@ -130,6 +130,9 @@
     "close sidebar": "zamknij pasek boczny",
     "collapse": "Zwiń",
     "collapse all": "Zwiń wszystko",
+    "common": {
+      "back": "Wstecz"
+    },
     "concurrency": "Współbieżność",
     "conditions": "warunki",
     "configure basic auth": "Skonfiguruj podstawowe uwierzytelnianie",
@@ -861,6 +864,7 @@
     "no_logs_data": "Brak danych",
     "no_logs_data_description": "Albo żadne flow nie są uruchomione, albo musisz dostosować swoje filtry.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
+    "no_results_found": "Nie znaleziono wyników",
     "no_tasks_running": "Jeszcze nie ma uruchomionych tasków.",
     "now": "Teraz",
     "of": "z",
@@ -1037,6 +1041,8 @@
       "saved": "Zapisane filtry"
     },
     "search term in message": "Wyszukaj termin w wiadomości",
+    "search_docs": "Szukaj",
+    "searching": "Szukanie...",
     "seconds": "Sekundy",
     "secret": {
       "add": "Nowy sekret",

@@ -195,6 +195,7 @@ export default {
                 }
             }
 
+            const {isCreating} = state;
             if (state.isCreating && !overrideFlow) {
                 await dispatch("createFlow", {flow: flowYaml})
                     .then((response) => {
@@ -210,13 +211,13 @@ export default {
                     });
             }
 
-            if (state.isCreating || overrideFlow) {
+            if (isCreating || overrideFlow) {
                 return "redirect_to_update";
             }
 
             commit("setHaveChange", false);
             await dispatch("validateFlow", {
-                flow: state.isCreating ? flowYaml : getters.yamlWithNextRevision
+                flow: isCreating ? flowYaml : getters.yamlWithNextRevision
             });
         },
         fetchGraph({state, dispatch}) {

@@ -130,6 +130,9 @@
     "close sidebar": "关闭侧边栏",
     "collapse": "折叠",
     "collapse all": "折叠所有",
+    "common": {
+      "back": "返回"
+    },
     "concurrency": "并发",
     "conditions": "条件",
     "configure basic auth": "配置基本认证",
@@ -861,6 +864,7 @@
     "no_logs_data": "无数据",
     "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
+    "no_results_found": "未找到结果",
     "no_tasks_running": "尚无任务正在运行。",
     "now": "现在",
     "of": "的",
@@ -1037,6 +1041,8 @@
       "saved": "已保存的过滤器"
     },
     "search term in message": "在消息中搜索术语",
+    "search_docs": "搜索",
+    "searching": "搜索中...",
     "seconds": "秒钟",
     "secret": {
       "add": "新密钥",

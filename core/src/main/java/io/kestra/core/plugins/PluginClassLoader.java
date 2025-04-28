@@ -45,6 +45,7 @@ public class PluginClassLoader extends URLClassLoader {
         + "|org.reactivestreams"
         + "|dev.failsafe"
         + "|reactor"
+        + "|io.opentelemetry"
         + ")\\..*$");
 
     private final ClassLoader parent;

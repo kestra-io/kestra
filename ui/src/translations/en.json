@@ -19,6 +19,9 @@
     "delete ok": "is deleted",
     "Default page": "Default page",
     "confirmation": "Confirmation",
+    "common": {
+      "back": "Back"
+    },
     "delete confirm": "Are you sure you want to delete <code>{name}</code>?",
     "outdated revision save confirmation": {
       "confirm": "Do you want to overwrite it?",
@@ -1308,6 +1311,9 @@
       "move_right": "Move right",
       "move_left": "Move left",
       "close_all_tabs": "Close all tabs"
-    }
+    },
+    "search_docs": "Search",
+    "no_results_found": "No results found",
+    "searching": "Searching..."
   }
 }

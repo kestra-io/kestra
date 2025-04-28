@@ -34,7 +34,7 @@ import lombok.experimental.SuperBuilder;
                   "- id: executions_timeseries\n" +
                     "type: io.kestra.plugin.core.dashboard.chart.TimeSeries\n" +
                     "chartOptions:\n" +
-                        "displayName: Executions\n" +
+                        "displayName: Total Executions\n" +
                         "description: Executions last week\n" +
                         "legend:\n" +
                             "enabled: true\n" +

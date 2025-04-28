@@ -22,8 +22,25 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Cache Node Modules
+        id: cache-node-modules
+        uses: actions/cache@v4
+        with:
+          path: |
+            ui/node_modules
+          key: modules-${{ hashFiles('ui/package-lock.json') }}
+
+      - name: Cache Playwright Binaries
+        id: cache-playwright
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: playwright-${{ hashFiles('ui/package-lock.json') }}
+
       - name: Npm - install
         shell: bash
+        if: steps.cache-node-modules.outputs.cache-hit != 'true'
         working-directory: ui
         run: npm ci
 
@@ -44,6 +61,7 @@ jobs:
       - name: Storybook - Install Playwright
         shell: bash
         working-directory: ui
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps
 
       - name: Run front-end unit tests

@@ -306,13 +306,19 @@
                 this.selection = selection;
             },
             loadData(callback) {
-                this.$store.dispatch("trigger/search", {
-                    namespace: this.$route.query.namespace,
-                    q: this.$route.query.q,
+                const query = this.loadQuery({
                     size: parseInt(this.$route.query.size || 25),
                     page: parseInt(this.$route.query.page || 1),
                     sort: this.$route.query.sort || "triggerId:asc"
-                }).then(triggersData => {
+                });
+
+                for (const key in query) {
+                    if (key.startsWith("filters[trigger_state]")) {
+                        delete query[key];
+                    }
+                }
+
+                this.$store.dispatch("trigger/search", query).then(triggersData => {
                     this.triggers = triggersData.results;
                     this.total = triggersData.total;
                     if (callback) {
@@ -472,9 +478,9 @@
                     }
                 })
 
-                if(!this.$route.query.trigger_state?.length) return all;
+                if(!this.$route.query?.["filters[trigger_state][EQUALS]"]?.length) return all;
 
-                const disabled = this.$route.query?.trigger_state?.[0] === "DISABLED" ? true : false;
+                const disabled = this.$route.query?.["filters[trigger_state][EQUALS]"] === "DISABLED" ? true : false;
                 return all.filter(trigger => trigger.disabled === disabled);
             },
             visibleColumns() {

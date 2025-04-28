@@ -373,6 +373,10 @@ class ExecutionControllerTest {
         MutableHttpRequest<Object> searchRequest_oldParameters = HttpRequest
             .GET("/api/v1/executions/search?labels=project:foo,bar");
         assertThat(client.toBlocking().retrieve(searchRequest_oldParameters, PagedResults.class).getTotal()).isEqualTo(2L);
+
+        MutableHttpRequest<Object> searchRequest_triggerExecution = HttpRequest
+            .GET("/api/v1/executions/search?triggerExecutionId=test");
+        assertThat(client.toBlocking().retrieve(searchRequest_triggerExecution, PagedResults.class).getTotal()).isEqualTo(0L);
     }
 
     @Test

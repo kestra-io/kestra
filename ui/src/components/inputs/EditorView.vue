@@ -238,8 +238,8 @@
             <NoCode
                 v-else
                 :flow="flowYaml"
-                :section="route.query.section.toString()"
-                :task-id="route.query.identifier.toString()"
+                :section="route.query.section?.toString()"
+                :task-id="route.query.identifier?.toString()"
                 :creating="isCreating"
                 :position="route.query.position === 'before' ? 'before' : 'after'"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"

@@ -130,6 +130,9 @@
     "close sidebar": "fechar barra lateral",
     "collapse": "Colapsar",
     "collapse all": "Colapsar tudo",
+    "common": {
+      "back": "Voltar"
+    },
     "concurrency": "Concorrência",
     "conditions": "condições",
     "configure basic auth": "Configurar Autenticação Básica",
@@ -861,6 +864,7 @@
     "no_logs_data": "Sem Dados",
     "no_logs_data_description": "Nenhum flow está em execução, ou você pode precisar ajustar seus filtros.",
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
+    "no_results_found": "Nenhum resultado encontrado",
     "no_tasks_running": "Ainda não há tasks em execução.",
     "now": "Agora",
     "of": "de",
@@ -1037,6 +1041,8 @@
       "saved": "Filtros salvos"
     },
     "search term in message": "Termo de busca na mensagem",
+    "search_docs": "Pesquisar",
+    "searching": "Procurando...",
     "seconds": "Segundos",
     "secret": {
       "add": "Novo segredo",

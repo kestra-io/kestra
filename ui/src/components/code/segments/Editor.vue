@@ -25,7 +25,9 @@
                 <hr class="my-4">
 
                 <Collapse
-                    :items="sections"
+                    v-for="(section, index) in sections"
+                    :key="index"
+                    :item="section"
                     @remove="(yaml) => emits('updateTask', yaml)"
                     @reorder="(yaml) => emits('reorder', yaml)"
                 />
@@ -220,7 +222,7 @@
                 component: TaskBasic,
                 value: props.metadata.concurrency,
                 label: t("no_code.fields.general.concurrency"),
-                schema: schema.value?.definitions?.["io.kestra.core.models.flows.Concurrency"] ?? {},               
+                schema: schema.value?.definitions?.["io.kestra.core.models.flows.Concurrency"] ?? {},
                 root: "concurrency",
             },
             pluginDefaults: {

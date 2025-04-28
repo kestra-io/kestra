@@ -1,8 +1,6 @@
 <template>
     <el-collapse v-model="expanded" class="collapse">
         <el-collapse-item
-            v-for="(item, index) in props.items"
-            :key="index"
             :name="item.title"
             :title="`${item.title}${item.elements ? ` (${item.elements.length})` : ''}`"
         >
@@ -31,7 +29,7 @@
 </template>
 
 <script setup lang="ts">
-    import {inject, nextTick, PropType, ref} from "vue";
+    import {inject, ref} from "vue";
 
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
@@ -45,39 +43,17 @@
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
 
-    const props = defineProps({
-        items: {
-            type: Array as PropType<CollapseItem[]>,
-            required: true,
-        }
-    });
-    const expanded = ref<CollapseItem["title"][]>([]);
-
-
-    props.items.forEach((item) => {
-        if (item.elements?.length) expanded.value.push(item.title);
-    });
-
+    const props = defineProps<{
+        item: CollapseItem
+    }>();
+    const expanded = ref<CollapseItem["title"]>(props.item.title);
 
     const removeElement = (title: string, index: number) => {
-        props.items.forEach((item) => {
-            if (item.title === title) {
-                nextTick(() => {
-                    const ID = item.elements?.[index].id;
-
-                    item.elements?.splice(index, 1);
-                    if(ID){
-                        emits(
-                            "remove",
-                            YAML_UTILS.deleteTask(flow.value, ID, title.toUpperCase()),
-                        );
-                    }
-                    if(item.elements?.length === 0){
-                        expanded.value = expanded.value.filter((v) => v !== title);
-                    }
-                });
-            }
-        });
+        if(props.item.elements?.[index]?.id === undefined) return;
+        emits(
+            "remove",
+            YAML_UTILS.deleteTask(flow.value, props.item.elements[index].id, title),
+        );
     };
 
     const moveElement = (

@@ -1,5 +1,10 @@
 import Editor from "../../../../../src/components/code/segments/Editor.vue";
-import {ref} from "vue";
+import {
+    CREATING_INJECTION_KEY, FLOW_INJECTION_KEY,
+    POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY,
+    SECTION_INJECTION_KEY, TASKID_INJECTION_KEY
+} from "../../../../../src/components/code/injectionKeys";
+import {provide, ref, computed} from "vue";
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 
@@ -88,6 +93,13 @@ const Template = (args) => ({
     setup() {
         const store = useStore()
         const modelValue = ref(args.flow)
+
+        provide(FLOW_INJECTION_KEY, computed(() => args.flow));
+        provide(SECTION_INJECTION_KEY, ref("tasks"));
+        provide(TASKID_INJECTION_KEY, ref(""));
+        provide(POSITION_INJECTION_KEY, args.position);
+        provide(SAVEMODE_INJECTION_KEY, args.saveMode);
+        provide(CREATING_INJECTION_KEY, ref(args.creating));
 
         store.$http = {
             get(url) {

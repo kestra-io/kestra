@@ -38,4 +38,9 @@ export default defineConfig({
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",
     },
+    optimizeDeps: {
+        include: [
+            "monaco-yaml/yaml.worker",
+        ],
+    },
 })

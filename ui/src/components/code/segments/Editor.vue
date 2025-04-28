@@ -27,7 +27,7 @@
                 <Collapse
                     v-for="(section, index) in sections"
                     :key="index"
-                    :item="section"
+                    v-bind="section"
                     @remove="(yaml) => emits('updateTask', yaml)"
                     @reorder="(yaml) => emits('reorder', yaml)"
                 />

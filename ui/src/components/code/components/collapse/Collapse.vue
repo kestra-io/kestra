@@ -1,23 +1,23 @@
 <template>
     <el-collapse v-model="expanded" class="collapse">
         <el-collapse-item
-            :name="item.title"
-            :title="`${item.title}${item.elements ? ` (${item.elements.length})` : ''}`"
+            :name="title"
+            :title="`${title}${elements ? ` (${elements.length})` : ''}`"
         >
             <template #icon>
-                <Creation :section="item.title" />
+                <Creation :section="title" />
             </template>
 
             <Element
-                v-for="(element, elementIndex) in item.elements"
+                v-for="(element, elementIndex) in elements"
                 :key="elementIndex"
-                :section="item.title"
+                :section="title"
                 :element
-                @remove-element="removeElement(item.title, elementIndex)"
+                @remove-element="removeElement(title, elementIndex)"
                 @move-element="
                     (direction: 'up' | 'down') =>
                         moveElement(
-                            item.elements,
+                            elements,
                             element.id,
                             elementIndex,
                             direction,
@@ -43,16 +43,14 @@
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
 
-    const props = defineProps<{
-        item: CollapseItem
-    }>();
-    const expanded = ref<CollapseItem["title"]>(props.item.title);
+    const props = defineProps<CollapseItem>();
+    const expanded = ref<CollapseItem["title"]>(props.title);
 
     const removeElement = (title: string, index: number) => {
-        if(props.item.elements?.[index]?.id === undefined) return;
+        if(props.elements?.[index]?.id === undefined) return;
         emits(
             "remove",
-            YAML_UTILS.deleteTask(flow.value, props.item.elements[index].id, title),
+            YAML_UTILS.deleteTask(flow.value, props.elements[index].id, title),
         );
     };
 

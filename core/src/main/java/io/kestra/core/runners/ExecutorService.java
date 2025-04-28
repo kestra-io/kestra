@@ -537,7 +537,8 @@ public class ExecutorService {
                     // Prevent workerTaskResult of flowable to be sent
                     // because one of its children is retrying
                     if (taskRun.getParentTaskRunId() != null) {
-                        list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId())).toList();
+                        list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId()))
+                            .collect(Collectors.toCollection(ArrayList::new));
                     }
                 }
             }
@@ -571,7 +572,8 @@ public class ExecutorService {
             // If the task is retrying
             // make sure that the workerTaskResult of the parent task is not sent
             if (taskRun.getState().isRetrying() && taskRun.getParentTaskRunId() != null) {
-                list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId())).toList();
+                list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId()))
+                    .collect(Collectors.toCollection(ArrayList::new));
             }
         }
 

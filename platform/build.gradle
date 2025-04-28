@@ -22,7 +22,7 @@ dependencies {
     def opensearchVersion = "2.23.0"
     def opensearchRestVersion = "2.19.1"
     def flyingSaucerVersion = "9.12.0"
-    def jacksonVersion = "2.18.3"
+    def jacksonVersion = "2.19.0"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")

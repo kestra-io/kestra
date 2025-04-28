@@ -101,7 +101,8 @@ public class TriggerController {
                 null,
                 null,
                 null,
-                workerId);
+                workerId,
+                null);
         }
         ArrayListTotal<Trigger> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),

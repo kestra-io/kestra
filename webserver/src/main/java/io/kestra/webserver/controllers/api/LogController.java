@@ -88,6 +88,7 @@ public class LogController {
                 null,
                 null,
                 null,
+                null,
                 null);
         }
         TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);

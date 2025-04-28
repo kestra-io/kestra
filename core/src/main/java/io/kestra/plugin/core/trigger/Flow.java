@@ -63,7 +63,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
         You can trigger a flow as soon as another flow ends. This allows you to add implicit dependencies between multiple flows, which can often be managed by different teams.
 
         A flow trigger must have `preconditions` which filter on other flow executions.
-        It can also have standard trigger `conditions`.
+        It can also have standard trigger `conditions`. Neither condition type can use Pebble templating expressions; they must be declaratively defined.
         Upstream execution outputs will be available in a `trigger.outputs` variable."""
 )
 @Plugin(

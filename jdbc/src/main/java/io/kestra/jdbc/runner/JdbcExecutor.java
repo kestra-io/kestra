@@ -211,6 +211,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     private final List<Runnable> receiveCancellations = new ArrayList<>();
 
+    private final java.util.concurrent.ExecutorService workerTaskResultExecutorService;
+    private final java.util.concurrent.ExecutorService executionExecutorService;
+    private final int numberOfThreads;
+
     /**
      * Creates a new {@link JdbcExecutor} instance. Both constructor and field injection are used
      * to force Micronaut to respect order when invoking pre-destroy order.
@@ -226,13 +230,21 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         final FlowMetaStoreInterface flowMetaStore,
         final AbstractJdbcFlowTopologyRepository flowTopologyRepository,
         final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
-        final TracerFactory tracerFactory
+        final TracerFactory tracerFactory,
+        final ExecutorsUtils executorsUtils
         ) {
         this.serviceLivenessCoordinator = serviceLivenessCoordinator;
         this.flowMetaStore = flowMetaStore;
         this.flowTopologyRepository = flowTopologyRepository;
         this.eventPublisher = eventPublisher;
         this.tracer = tracerFactory.getTracer(JdbcExecutor.class, "EXECUTOR");
+
+        // By default, we start half-available processors count threads with a minimum of 4 by executor service
+        // for the worker task result queue and the execution queue.
+        // Other queues would not benefit from more consumers.
+        this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, Runtime.getRuntime().availableProcessors() / 2);
+        this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "jdbc-worker-task-result-executor");
+        this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "jdbc-execution-executor");
     }
 
     @SneakyThrows
@@ -247,13 +259,24 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
         Await.until(() -> this.allFlows != null, Duration.ofMillis(100), Duration.ofMinutes(5));
 
-        // By default, we start half-available processors consumers of the execution and worker task result queue with a minimum of two.
-        // Other queues would not benefit from more consumers.
-        int numberOfThreads = threadCount != 0 ? threadCount : Math.max(2, Runtime.getRuntime().availableProcessors() / 2);
-        for (int i = 0; i < numberOfThreads; i++) {
-            this.receiveCancellations.addFirst(this.executionQueue.receive(Executor.class, this::executionQueue));
-            this.receiveCancellations.addFirst(this.workerTaskResultQueue.receive(Executor.class, this::workerTaskResultQueue));
-        }
+        this.receiveCancellations.addFirst(((JdbcQueue<Execution>) this.executionQueue).receiveBatch(
+            Executor.class,
+            executions -> {
+                List<CompletableFuture<Void>> futures = executions.stream()
+                    .map(execution -> CompletableFuture.runAsync(() -> executionQueue(execution), executionExecutorService))
+                    .toList();
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            }
+        ));
+        this.receiveCancellations.addFirst(((JdbcQueue<WorkerTaskResult>) this.workerTaskResultQueue).receiveBatch(
+            Executor.class,
+            workerTaskResults -> {
+                List<CompletableFuture<Void>> futures = workerTaskResults.stream()
+                    .map(workerTaskResult -> CompletableFuture.runAsync(() -> workerTaskResultQueue(workerTaskResult), workerTaskResultExecutorService))
+                    .toList();
+                CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            }
+        ));
         this.receiveCancellations.addFirst(this.killQueue.receive(Executor.class, this::killQueue));
         this.receiveCancellations.addFirst(this.subflowExecutionResultQueue.receive(Executor.class, this::subflowExecutionResultQueue));
         this.receiveCancellations.addFirst(this.subflowExecutionEndQueue.receive(Executor.class, this::subflowExecutionEndQueue));

@@ -1296,6 +1296,7 @@
     "worker group": "Worker 그룹",
     "worker group fallback": "작업자 그룹 대체",
     "worker group key": "워크 그룹 key",
+    "worker information": "작업자 정보",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "라벨에 빈 key 또는 value는 허용되지 않습니다",

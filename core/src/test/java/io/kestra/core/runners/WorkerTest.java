@@ -204,7 +204,7 @@ class WorkerTest {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
-            .duration(Duration.ofMillis(sleepDuration))
+            .duration(Property.of(Duration.ofMillis(sleepDuration)))
             .build();
 
         Flow flow = Flow.builder()

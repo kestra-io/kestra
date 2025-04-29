@@ -18,7 +18,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Get a state from the state store."
+    title = "Get a state from the state store (Deprecated)."
 )
 @Plugin(
     examples = {

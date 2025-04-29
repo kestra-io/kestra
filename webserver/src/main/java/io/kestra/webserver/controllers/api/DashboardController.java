@@ -27,6 +27,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.Min;
@@ -57,8 +58,8 @@ public class DashboardController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get
-    @Operation(tags = {"Dashboards"}, summary = "List all dashboards")
-    public PagedResults<Dashboard> list(
+    @Operation(tags = {"Dashboards"}, summary = "Search for dashboards")
+    public PagedResults<Dashboard> searchDashboards(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The filter query") @Nullable @QueryValue String q,
@@ -69,8 +70,8 @@ public class DashboardController {
 
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{id}")
-    @Operation(tags = {"Dashboards"}, summary = "Retrieve a dashboard")
-    public Dashboard get(
+    @Operation(tags = {"Dashboards"}, summary = "Get a dashboard")
+    public Dashboard getDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id
     ) throws ConstraintViolationException, IllegalVariableEvaluationException {
         return dashboardRepository.get(tenantService.resolveTenant(), id).orElse(null);
@@ -79,8 +80,8 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Dashboards"}, summary = "Create a dashboard from yaml source")
-    public HttpResponse<Dashboard> create(
-        @Parameter(description = "The dashboard") @Body String dashboard
+    public HttpResponse<Dashboard> createDashboard(
+        @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
     ) throws ConstraintViolationException, JsonProcessingException {
         Dashboard dashboardParsed = YamlParser.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
         modelValidator.validate(dashboardParsed);
@@ -95,8 +96,8 @@ public class DashboardController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "validate", consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Dashboards"}, summary = "Validate dashboard from yaml source")
-    public ValidateConstraintViolation validate(
-        @Parameter(description = "The dashboard") @Body String dashboard
+    public ValidateConstraintViolation validateDashboard(
+        @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
     ) throws ConstraintViolationException, JsonProcessingException {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
         validateConstraintViolationBuilder.index(0);
@@ -121,9 +122,9 @@ public class DashboardController {
     @Put(uri = "{id}", consumes = MediaType.APPLICATION_YAML)
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Dashboards"}, summary = "Update a dashboard")
-    public HttpResponse<Dashboard> update(
+    public HttpResponse<Dashboard> updateDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id,
-        @Parameter(description = "The dashboard") @Body String dashboard
+        @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
     ) throws ConstraintViolationException, JsonProcessingException {
         Optional<Dashboard> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), id);
         if (existingDashboard.isEmpty()) {
@@ -142,7 +143,7 @@ public class DashboardController {
     @Delete(uri = "{id}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Dashboards"}, summary = "Delete a dashboard")
-    public HttpResponse<Void> delete(
+    public HttpResponse<Void> deleteDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id
     ) throws ConstraintViolationException, JsonProcessingException {
         if (dashboardRepository.delete(tenantService.resolveTenant(), id) != null) {
@@ -156,10 +157,10 @@ public class DashboardController {
     @Post(uri = "{id}/charts/{chartId}")
     @Operation(tags = {"Dashboards"}, summary = "Generate a dashboard chart data")
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public PagedResults<Map<String, Object>> dashboardChart(
+    public PagedResults<Map<String, Object>> getDashboardChartData(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The chart id") @PathVariable String chartId,
-        @Parameter(description = "The filters to apply, some can override chart definition like labels & namespace") @Body @Nullable GlobalFilter globalFilter
+        @RequestBody(description = "The filters to apply, some can override chart definition like labels & namespace") @Body @Nullable GlobalFilter globalFilter
     ) throws IOException {
         String tenantId = tenantService.resolveTenant();
         List<QueryFilter> filters = globalFilter.getFilters();
@@ -211,8 +212,8 @@ public class DashboardController {
     @Post(uri = "charts/preview", consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Dashboards"}, summary = "Preview a chart data")
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public PagedResults<Map<String, Object>> previewChart(
-        @Parameter(description = "The chart") @Body String chart
+    public PagedResults<Map<String, Object>> previewChartData(
+        @RequestBody(description = "The chart definition as YAML") @Body String chart
     ) throws IOException {
         Chart<?> parsed = YamlParser.parse(chart, Chart.class);
 
@@ -223,7 +224,7 @@ public class DashboardController {
     @Post(uri = "validate/chart", consumes = MediaType.APPLICATION_YAML)
     @Operation(tags = {"Dashboards"}, summary = "Validate a chart from yaml source")
     public ValidateConstraintViolation validateChart(
-        @Parameter(description = "The dashboard") @Body String chart
+        @RequestBody(description = "The chart definition as YAML") @Body String chart
     ) throws ConstraintViolationException {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
             validateConstraintViolationBuilder.index(0);

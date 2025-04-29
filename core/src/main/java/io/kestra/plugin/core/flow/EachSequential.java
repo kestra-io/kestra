@@ -34,7 +34,7 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "For each value in the list, execute one or more tasks sequentially.",
+    title = "For each value in the list, execute one or more tasks sequentially (Deprecated).",
     description = "This task is deprecated, please use the `io.kestra.plugin.core.flow.ForEach` task instead.\n\n" +
         "The list of `tasks` will be executed for each item sequentially. " +
         "The value must be a valid JSON string representing an array, e.g. a list of strings `[\"value1\", \"value2\"]` or a list of dictionaries `[{\"key\": \"value1\"}, {\"key\": \"value2\"}]`. \n\n" +

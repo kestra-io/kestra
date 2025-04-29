@@ -29,6 +29,7 @@ import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceStateChangeEvent;
 import io.kestra.core.server.ServiceType;
 import io.kestra.core.services.*;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.topologies.FlowTopologyService;
 import io.kestra.core.trace.Tracer;
 import io.kestra.core.trace.TracerFactory;
@@ -180,6 +181,9 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     @Inject
     private SchedulerTriggerStateInterface triggerState;
 
+    @Inject
+    private VariablesService variablesService;
+
     @Value("${kestra.jdbc.executor.thread-count:0}")
     private int threadCount;
 
@@ -240,9 +244,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             serviceLivenessCoordinator.setExecutor(this);
         }
         flowListeners.run();
-        flowListeners.listen(flows -> {
-            this.allFlows = flows.stream().map(flow -> pluginDefaultService.injectVersionDefaults(flow, true)).toList();
-        });
+        flowListeners.listen(flows -> this.allFlows = flows);
 
         Await.until(() -> this.allFlows != null, Duration.ofMillis(100), Duration.ofMinutes(5));
 
@@ -642,7 +644,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     private void workerTaskResultQueue(Either<WorkerTaskResult, DeserializationException> either) {
         if (either.isRight()) {
-            log.error("Unable to deserialize a worker task result: {}", either.getRight().getMessage());
+            log.error("Unable to deserialize a worker task result: {}", either.getRight().getMessage(), either.getRight());
             return;
         }
 
@@ -675,11 +677,11 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     TaskRun taskRun = message.getTaskRun();
                     if (taskRun.getState().isTerminated()) {
                         metricRegistry
-                            .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                            .counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(message))
                             .increment();
 
                         metricRegistry
-                            .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                            .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
                             .record(taskRun.getState().getDuration());
 
                         log.trace("TaskRun terminated: {}", taskRun);
@@ -749,7 +751,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         RunContext runContext = runContextFactory.of(flow, task, current.getExecution(), message.getParentTaskRun());
                         taskRun = execution.findTaskRunByTaskRunId(message.getParentTaskRun().getId()).withState(message.getState());
                         Map<String, Object> outputs = MapUtils.merge(taskRun.getOutputs(), message.getParentTaskRun().getOutputs());
-                        taskRun = taskRun.withOutputs(outputs);
+                        Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
+                        taskRun = taskRun.withOutputs(variables);
                         taskRun = ExecutableUtils.manageIterations(
                             runContext.storage(),
                             taskRun,
@@ -774,12 +777,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                     // send metrics on parent taskRun terminated
                     if (taskRun.getState().isTerminated()) {
+                        // TODO maybe use a specific metric to track subflow instead of these two.
                         metricRegistry
-                            .counter(MetricRegistry.EXECUTOR_TASKRUN_ENDED_COUNT, metricRegistry.tags(message))
+                            .counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(message))
                             .increment();
 
                         metricRegistry
-                            .timer(MetricRegistry.EXECUTOR_TASKRUN_ENDED_DURATION, metricRegistry.tags(message))
+                            .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
                             .record(taskRun.getState().getDuration());
 
                         log.trace("TaskRun terminated: {}", taskRun);
@@ -1011,7 +1015,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     String taskId = (String) execution.getTrigger().getVariables().get("taskId");
                     @SuppressWarnings("unchecked")
                     Map<String, Object> outputs = (Map<String, Object>) execution.getTrigger().getVariables().get("taskRunOutputs");
-                    SubflowExecutionEnd subflowExecutionEnd = new SubflowExecutionEnd(executor.getExecution(), parentExecutionId, taskRunId, taskId, execution.getState().getCurrent(), outputs);
+                    Variables variables = variablesService.of(StorageContext.forExecution(executor.getExecution()), outputs);
+                    SubflowExecutionEnd subflowExecutionEnd = new SubflowExecutionEnd(executor.getExecution(), parentExecutionId, taskRunId, taskId, execution.getState().getCurrent(), variables);
                     this.subflowExecutionEndQueue.emit(subflowExecutionEnd);
                 }
 

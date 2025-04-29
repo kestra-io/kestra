@@ -59,7 +59,7 @@ public class NoEncryptionConfiguredTest implements TestPropertyProvider {
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
     void secretInput() {
-        assertThat(flowRepository.findById(null, "io.kestra.tests", "inputs").isPresent()).isEqualTo(true);
+        assertThat(flowRepository.findById(null, "io.kestra.tests", "inputs").isPresent()).isTrue();
 
         Flow flow = flowRepository.findById(null, "io.kestra.tests", "inputs").get();
         Execution execution = Execution.builder()

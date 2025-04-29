@@ -2,10 +2,10 @@
     <template v-if="ready">
         <FlowRootTopBar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName()" />
         <Tabs
-            @expand-subflow="updateExpandedSubflows"
             route-name="flows/update"
             ref="currentTab"
             :tabs="tabs"
+            @expand-subflow="updateExpandedSubflows"
         />
     </template>
 </template>
@@ -71,6 +71,12 @@
                 const tab = localStorage.getItem("flowDefaultTab") || undefined;
                 this.$router.replace({name: "flows/update", params: {...this.$route.params, tab}});
             }
+            // since this component is only used in edition
+            // we need to set the flag as editing in the store.
+            // Specifically, it would be a problem when saving a new flow
+            // and moving to edit mode.
+            // NOTE: Flow creation component is ./FlowCreate.vue
+            this.$store.commit("flow/setIsCreating", false);
 
             this.load();
         },

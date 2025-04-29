@@ -183,36 +183,31 @@
                                 </el-button>
                             </template>
                         </el-table-column>
-                        <el-table-column
-                            v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
-                            column-key="restart"
-                            class-name="row-action"
-                        >
+                        <el-table-column :label="$t('backfill')" column-key="backfill">
                             <template #default="scope">
-                                <el-button>
-                                    <kicon
-                                        :tooltip="$t(`restart trigger.tooltip`)"
-                                        placement="left"
+                                <div class="backfillContainer items-center gap-2">
+                                    <span v-if="scope.row.backfill" class="statusIcon">
+                                        <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
+                                            <play-box font />
+                                        </el-tooltip>
+                                        <el-tooltip v-else :content="$t('backfill paused')">
+                                            <pause-box />
+                                        </el-tooltip>
+                                    </span>
+
+                                    <el-button
+                                        v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                         @click="restart(scope.row)"
+                                        class="restartTrigger"
                                     >
-                                        <Restart />
-                                    </kicon>
-                                </el-button>
+                                        <kicon :tooltip="$t(`restart trigger.tooltip`)" placement="left">
+                                            <Restart />
+                                        </kicon>
+                                    </el-button>
+                                </div>
                             </template>
                         </el-table-column>
 
-                        <el-table-column :label="$t('backfill')" column-key="backfill">
-                            <template #default="scope">
-                                <span v-if="scope.row.backfill">
-                                    <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
-                                        <play-box />
-                                    </el-tooltip>
-                                    <el-tooltip v-else :content="$t('backfill paused')">
-                                        <pause-box />
-                                    </el-tooltip>
-                                </span>
-                            </template>
-                        </el-table-column>
 
                         <el-table-column :label="$t('actions')" column-key="disable" class-name="row-action">
                             <template #default="scope">
@@ -318,13 +313,19 @@
                 this.selection = selection;
             },
             loadData(callback) {
-                this.$store.dispatch("trigger/search", {
-                    namespace: this.$route.query.namespace,
-                    q: this.$route.query.q,
+                const query = this.loadQuery({
                     size: parseInt(this.$route.query.size || 25),
                     page: parseInt(this.$route.query.page || 1),
                     sort: this.$route.query.sort || "triggerId:asc"
-                }).then(triggersData => {
+                });
+
+                for (const key in query) {
+                    if (key.startsWith("filters[trigger_state]")) {
+                        delete query[key];
+                    }
+                }
+
+                this.$store.dispatch("trigger/search", query).then(triggersData => {
                     this.triggers = triggersData.results;
                     this.total = triggersData.total;
                     if (callback) {
@@ -474,19 +475,19 @@
                 }
             },
             triggersMerged() {
-                const all = this.triggers.map(triggers => {
+                const all = this.triggers.map(t => {
                     return {
-                        ...triggers?.abstractTrigger,
-                        ...triggers.triggerContext,
-                        codeDisabled: triggers?.abstractTrigger?.disabled,
+                        ...t?.abstractTrigger,
+                        ...t.triggerContext,
+                        codeDisabled: t?.abstractTrigger?.disabled,
                         // if we have no abstract trigger, it means that flow or trigger definition hasn't been found
-                        missingSource: !triggers.abstractTrigger
+                        missingSource: !t.abstractTrigger
                     }
                 })
 
-                if(!this.$route.query.trigger_state?.length) return all;
+                if(!this.$route.query?.["filters[trigger_state][EQUALS]"]?.length) return all;
 
-                const disabled = this.$route.query?.trigger_state?.[0] === "DISABLED" ? true : false;
+                const disabled = this.$route.query?.["filters[trigger_state][EQUALS]"] === "DISABLED" ? true : false;
                 return all.filter(trigger => trigger.disabled === disabled);
             },
             visibleColumns() {
@@ -512,6 +513,24 @@
     };
 </script>
 <style lang="scss" scoped>
+    .data-table-wrapper {
+        margin-left: 0 !important;
+        padding-left: 0 !important;
+    }
+    
+    .backfillContainer{
+        display: flex;
+        align-items: center;
+    }
+    .statusIcon{
+        font-size: large;
+    }
+    
+    .trigger-issue-icon {
+        color: var(--ks-content-warning);
+        font-size: 1.4em;
+    }
+    
     .alert-circle-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;

@@ -11,5 +11,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 @Retention(RetentionPolicy.RUNTIME)
 @ExtendWith(FlowLoaderExtension.class)
 public @interface LoadFlows {
+    String DEFAULT_TENANT_ID = "<null>";
+
     String[] value();
+
+    String tenantId() default DEFAULT_TENANT_ID;
 }

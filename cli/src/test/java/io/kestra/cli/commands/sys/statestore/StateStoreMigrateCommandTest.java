@@ -53,7 +53,7 @@ class StateStoreMigrateCommandTest {
                 oldStateStoreUri,
                 new ByteArrayInputStream("my-value".getBytes())
             );
-            assertThat(storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri)).isEqualTo(true);
+            assertThat(storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri)).isTrue();
 
             RunContext runContext = ctx.getBean(RunContextFactory.class).of(flow, Map.of("flow", Map.of(
                 "tenantId", tenantId,
@@ -67,9 +67,9 @@ class StateStoreMigrateCommandTest {
             Integer call = PicocliRunner.call(StateStoreMigrateCommand.class, ctx, args);
 
             assertThat(new String(stateStore.getState(true, "my-state", "sub-name", "my-taskrun-value").readAllBytes())).isEqualTo("my-value");
-            assertThat(storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri)).isEqualTo(false);
+            assertThat(storage.exists(tenantId, flow.getNamespace(), oldStateStoreUri)).isFalse();
 
-            assertThat(call).isEqualTo(0);
+            assertThat(call).isZero();
         }
     }
 }

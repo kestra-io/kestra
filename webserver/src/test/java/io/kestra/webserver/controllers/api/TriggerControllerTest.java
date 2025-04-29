@@ -114,7 +114,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void unlock() {
+    void unlockTrigger() {
         Trigger trigger = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
@@ -185,11 +185,11 @@ class TriggerControllerTest {
         // Assert that executionId cannot be edited
         assertThat(afterUpdated.getExecutionId()).isNotEqualTo("hello");
         // Assert that disabled can be edited
-        assertThat(afterUpdated.getDisabled()).isEqualTo(false);
+        assertThat(afterUpdated.getDisabled()).isFalse();
     }
 
     @Test
-    void restart() {
+    void restartTrigger() {
         Flow flow = generateFlow("flow-with-triggers");
         jdbcFlowRepository.create(GenericFlow.of(flow));
 
@@ -210,7 +210,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void unlockByTriggers() {
+    void unlockTriggerByTriggers() {
         Trigger triggerLock = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
@@ -235,7 +235,7 @@ class TriggerControllerTest {
     }
 
     @Test
-    void unlockByQuery() {
+    void unlockTriggerByQuery() {
         Trigger triggerLock = Trigger.builder()
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
@@ -280,7 +280,7 @@ class TriggerControllerTest {
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, false)), BulkResponse.class);
 
         assertThat(bulkResponse.getCount()).isEqualTo(2);
-        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isEqualTo(false);
+        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isFalse();
     }
 
     @Test
@@ -304,7 +304,7 @@ class TriggerControllerTest {
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-query?namespace=io.kestra.unittest&disabled=false", null), BulkResponse.class);
 
         assertThat(bulkResponse.getCount()).isEqualTo(2);
-        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isEqualTo(false);
+        assertThat(jdbcTriggerRepository.findLast(triggerDisabled).get().getDisabled()).isFalse();
     }
 
     @Test
@@ -330,7 +330,7 @@ class TriggerControllerTest {
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-triggers", new TriggerController.SetDisabledRequest(triggers, true)), BulkResponse.class);
 
         assertThat(bulkResponse.getCount()).isEqualTo(2);
-        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled()).isEqualTo(true);
+        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled()).isTrue();
     }
 
     @Test
@@ -354,7 +354,7 @@ class TriggerControllerTest {
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/triggers/set-disabled/by-query?namespace=io.kestra.unittest&disabled=true", null), BulkResponse.class);
 
 //        assertThat(bulkResponse.getCount(), is(2));
-        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled()).isEqualTo(true);
+        assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled()).isTrue();
     }
 
     @Test

@@ -123,14 +123,14 @@ public abstract class AbstractMultipleConditionStorageTest {
         assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
         window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getResults().get("a")).isEqualTo(true);
+        assertThat(window.getResults().get("a")).isTrue();
 
         Thread.sleep(2005);
 
         MultipleConditionWindow next = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
         assertThat(next.getStart().format(DateTimeFormatter.ISO_DATE_TIME)).isNotEqualTo(window.getStart().format(DateTimeFormatter.ISO_DATE_TIME));
-        assertThat(next.getResults().containsKey("a")).isEqualTo(false);
+        assertThat(next.getResults().containsKey("a")).isFalse();
     }
 
     @Test
@@ -144,10 +144,10 @@ public abstract class AbstractMultipleConditionStorageTest {
         assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
         window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getResults().get("a")).isEqualTo(true);
+        assertThat(window.getResults().get("a")).isTrue();
 
         List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
-        assertThat(expired.size()).isEqualTo(0);
+        assertThat(expired.size()).isZero();
 
         Thread.sleep(2005);
 
@@ -166,10 +166,10 @@ public abstract class AbstractMultipleConditionStorageTest {
         assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
         window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getResults().get("a")).isEqualTo(true);
+        assertThat(window.getResults().get("a")).isTrue();
 
         List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
-        assertThat(expired.size()).isEqualTo(0);
+        assertThat(expired.size()).isZero();
 
         Thread.sleep(2005);
 
@@ -206,10 +206,10 @@ public abstract class AbstractMultipleConditionStorageTest {
         assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
         window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getResults().get("a")).isEqualTo(true);
+        assertThat(window.getResults().get("a")).isTrue();
 
         List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
-        assertThat(expired.size()).isEqualTo(0);
+        assertThat(expired.size()).isZero();
     }
 
     @Test
@@ -223,10 +223,10 @@ public abstract class AbstractMultipleConditionStorageTest {
         assertThat(window.getFlowId()).isEqualTo(pair.getLeft().getId());
         window = multipleConditionStorage.getOrCreate(pair.getKey(), pair.getRight(), Collections.emptyMap());
 
-        assertThat(window.getResults().get("a")).isEqualTo(true);
+        assertThat(window.getResults().get("a")).isTrue();
 
         List<MultipleConditionWindow> expired = multipleConditionStorage.expired(null);
-        assertThat(expired.size()).isEqualTo(0);
+        assertThat(expired.size()).isZero();
     }
 
     private static Pair<Flow, MultipleCondition> mockFlow(TimeWindow sla) {

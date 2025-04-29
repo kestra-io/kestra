@@ -89,7 +89,7 @@ public class FlowTestCommand extends AbstractCommand {
 
         try {
             runner.run();
-            repositoryLoader.load(file.toFile());
+            repositoryLoader.load(null, file.toFile());
 
             List<Flow> all = flowRepository.findAllForAllTenants();
             if (all.size() != 1) {

@@ -130,6 +130,9 @@
     "close sidebar": "Seitenleiste schließen",
     "collapse": "Einklappen",
     "collapse all": "Alle einklappen",
+    "common": {
+      "back": "Zurück"
+    },
     "concurrency": "Nebenläufigkeit",
     "conditions": "Bedingungen",
     "configure basic auth": "Basis-Authentifizierung konfigurieren",
@@ -513,11 +516,13 @@
         "contains": "enthält",
         "ends_with": "endet mit",
         "greater_than": "größer als",
+        "greater_than_or_equal_to": "größer als oder gleich",
         "in": "im",
         "is": "ist",
         "is_not": "ist nicht",
         "is_one_of": "ist eine von",
         "less_than": "weniger als",
+        "less_than_or_equal_to": "kleiner oder gleich",
         "not_contains": "nicht enthält",
         "not_in": "nicht in",
         "starts_with": "beginnt mit"
@@ -531,6 +536,7 @@
         "aggregation": "Aggregation",
         "child": "Kind",
         "details": "Details",
+        "endDate": "Enddatum",
         "flow": "Flow",
         "labels": "Labels",
         "level": "Log-Ebene",
@@ -540,6 +546,7 @@
         "relative_date": "Relatives Datum",
         "scope": "Umfang",
         "service_type": "Typ",
+        "startDate": "Startdatum",
         "state": "Zustand",
         "status": "Status",
         "task": "Aufgabe",
@@ -695,6 +702,11 @@
     "minutes": "Minuten",
     "monogram": "Monogramm",
     "months": "Monate",
+    "multi_panel_editor": {
+      "close_all_tabs": "Alle Registerkarten schließen",
+      "move_left": "Nach links verschieben",
+      "move_right": "Nach rechts verschieben"
+    },
     "multiple saved done": "{name} wurde(n) gespeichert",
     "name": "Name",
     "namespace": "Namespace",
@@ -790,6 +802,14 @@
     "no_code": {
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",
+      "close": {
+        "after execution": "Task schließen",
+        "error handlers": "Fehlerbehandler schließen",
+        "finally": "Task schließen",
+        "input": "Eingabe schließen",
+        "tasks": "Task schließen",
+        "triggers": "Trigger schließen"
+      },
       "creation": {
         "after execution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
@@ -844,6 +864,7 @@
     "no_logs_data": "Keine Daten",
     "no_logs_data_description": "Entweder laufen keine Flows, oder Sie müssen Ihre Filter anpassen.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
+    "no_results_found": "Keine Ergebnisse gefunden",
     "no_tasks_running": "Noch keine Tasks laufen.",
     "now": "Jetzt",
     "of": "von",
@@ -1020,6 +1041,8 @@
       "saved": "Gespeicherte Filter"
     },
     "search term in message": "Suchbegriff in Nachricht",
+    "search_docs": "Suche",
+    "searching": "Suche läuft...",
     "seconds": "Sekunden",
     "secret": {
       "add": "Neues Geheimnis",
@@ -1080,10 +1103,10 @@
           "note": "Beachten Sie, dass diese Einstellung für die Anzeige von Datums- und Uhrzeiteigenschaften in der Benutzeroberfläche verwendet wird. Um Ihre Flows in einer anderen Zeitzone als UTC zu konfigurieren, stellen Sie sicher, dass Sie die Zeitzoneneigenschaft im Schedule-Trigger in Ihrem Flow-Code oder in Ihren Plugin-Standardeinstellungen festlegen."
         },
         "save": {
-          "fields": {
-            "name": "Änderungen speichern"
-          },
-          "label": "Präferenzen speichern"
+          "discard": "Verwerfen",
+          "label": "Präferenzen speichern",
+          "unsaved_title": "Nicht gespeicherte Änderungen",
+          "unsaved_warning": "Sie haben ungespeicherte Änderungen. Möchten Sie diese speichern, bevor Sie die Seite verlassen?"
         },
         "theme": {
           "fields": {

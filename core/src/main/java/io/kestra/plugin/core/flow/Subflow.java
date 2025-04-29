@@ -2,6 +2,7 @@ package io.kestra.plugin.core.flow;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -12,6 +13,7 @@ import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.TaskRunAttempt;
+import io.kestra.core.models.executions.Variables;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
@@ -24,6 +26,8 @@ import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
 import io.kestra.core.serializers.ListOrMapOfLabelDeserializer;
 import io.kestra.core.serializers.ListOrMapOfLabelSerializer;
+import io.kestra.core.services.VariablesService;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.validations.NoSystemLabelValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Min;
@@ -48,8 +52,8 @@ import java.util.stream.Collectors;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Create a subflow execution. Subflows offer a modular way to reuse workflow logic by calling other flows just like calling a function in a programming language.",
-    description = "Restarting a parent flow will restart any subflows that has previously been executed."
+    title = "Create a subflow execution.",
+    description = "Subflows offer a modular way to reuse workflow logic by calling other flows just like calling a function in a programming language. Restarting a parent flow will restart any subflows that has previously been executed."
 )
 @Plugin(
     examples = {
@@ -136,8 +140,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         title = "Whether the subflow should inherit labels from this execution that triggered it.",
         description = "By default, labels are not passed to the subflow execution. If you set this option to `true`, the child flow execution will inherit all labels from the parent execution."
     )
-    @PluginProperty
-    private final Boolean inheritLabels = false;
+    private final Property<Boolean> inheritLabels = Property.of(false);
 
     /**
      * @deprecated Output value should now be defined part of the Flow definition.
@@ -187,7 +190,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             currentTaskRun,
             inputs,
             labels,
-            inheritLabels,
+            runContext.render(inheritLabels).as(Boolean.class).orElseThrow(),
             scheduleDate
         )
             .<List<SubflowExecution<?>>>map(subflowExecution -> List.of(subflowExecution))
@@ -225,6 +228,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             )
             .orElseGet(() -> isOutputsAllowed ? this.getOutputs() : null);
 
+        VariablesService variablesService = ((DefaultRunContext) runContext).getApplicationContext().getBean(VariablesService.class);
         if (subflowOutputs != null) {
             try {
                 Map<String, Object> outputs = runContext.render(subflowOutputs);
@@ -236,10 +240,11 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             } catch (Exception e) {
                 runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
                 var state = this.isAllowFailure() ? this.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
+                Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
                 taskRun = taskRun
                     .withState(state)
                     .withAttempts(Collections.singletonList(TaskRunAttempt.builder().state(new State().withState(state)).build()))
-                    .withOutputs(builder.build().toMap());
+                    .withOutputs(variables);
 
                 return Optional.of(SubflowExecutionResult.builder()
                     .executionId(execution.getId())
@@ -249,7 +254,8 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
             }
         }
 
-        taskRun = taskRun.withOutputs(builder.build().toMap());
+        Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
+        taskRun = taskRun.withOutputs(variables);
 
         State.Type finalState = ExecutableUtils.guessState(execution, this.transmitFailed, this.isAllowFailure(), this.isAllowWarning());
         if (taskRun.getState().getCurrent() != finalState) {

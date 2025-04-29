@@ -52,18 +52,14 @@ public class NamespaceFilesUtils {
             .as(FileExistComportment.class).orElse(FileExistComportment.OVERWRITE);
         List<String> namespaces = runContext.render(namespaceFiles.getNamespaces()).asList(String.class);
 
-        Map<String, NamespaceFile> namespaceFileMap = new HashMap<>();
+        List<NamespaceFile> matchedNamespaceFiles = new ArrayList<>();
         for (String namespace : namespaces) {
             List<NamespaceFile> files = runContext.storage()
                 .namespace(namespace)
                 .findAllFilesMatching(include, exclude);
 
-            for (NamespaceFile file : files) {
-                namespaceFileMap.put(file.storagePath().toFile().getName(), file);
-            }
+          matchedNamespaceFiles.addAll(files);
         }
-
-        List<NamespaceFile> matchedNamespaceFiles = new ArrayList<>(namespaceFileMap.values());
 
         Flux.fromIterable(matchedNamespaceFiles)
             .doOnNext(throwConsumer(namespaceFile -> {

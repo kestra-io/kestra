@@ -234,8 +234,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         private String replaceSecret(String data) {
             for (String s : runContextLogger.useSecrets) {
                 if (data.contains(s)) {
-                    data = data.replace(s, "*".repeat(s.length()));
-                    data = data.replaceFirst("[*]{9}", "**masked*");
+                    data = data.replace(s, "******");
                 }
             }
 
@@ -313,6 +312,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
         }
     }
 
+    @Slf4j
     public static class ContextAppender extends BaseAppender {
         private final QueueInterface<LogEntry> logQueue;
         private final LogEntry logEntry;
@@ -328,11 +328,11 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             e = this.transform(e);
 
             logEntries(e, logEntry)
-                .forEach(log -> {
+                .forEach(l -> {
                     try {
-                        logQueue.emitAsync(log);
+                        logQueue.emitAsync(l);
                     } catch (QueueException ex) {
-                        // silently do nothing
+                        log.warn("Unable to emit logQueue", ex);
                     }
                 });
         }

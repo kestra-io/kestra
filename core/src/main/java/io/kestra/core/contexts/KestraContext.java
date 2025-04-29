@@ -2,11 +2,13 @@ package io.kestra.core.contexts;
 
 import io.kestra.core.models.ServerType;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
+import io.micronaut.context.env.PropertySource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +82,8 @@ public abstract class KestraContext {
      */
     public abstract PluginRegistry getPluginRegistry();
 
+    public abstract StorageInterface getStorageInterface();
+
     /**
      * Shutdowns the Kestra application.
      */
@@ -146,7 +150,7 @@ public abstract class KestraContext {
                 .ifPresent(val -> configs.put(KESTRA_WORKER_GROUP_KEY, val));
 
             if (!configs.isEmpty()) {
-                environment.addPropertySource("kestra-runtime", configs);
+                environment.addPropertySource(PropertySource.of("kestra-runtime", configs));
             }
         }
 
@@ -171,6 +175,12 @@ public abstract class KestraContext {
         public PluginRegistry getPluginRegistry() {
             // Lazy init of the PluginRegistry.
             return this.applicationContext.getBean(PluginRegistry.class);
+        }
+
+        @Override
+        public StorageInterface getStorageInterface() {
+            // Lazy init of the PluginRegistry.
+            return this.applicationContext.getBean(StorageInterface.class);
         }
     }
 }

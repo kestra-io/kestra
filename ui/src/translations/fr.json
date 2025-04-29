@@ -130,6 +130,9 @@
     "close sidebar": "fermer la barre latérale",
     "collapse": "Masquer",
     "collapse all": "Masquer tout",
+    "common": {
+      "back": "Retour"
+    },
     "concurrency": "Concurrence",
     "conditions": "conditions",
     "configure basic auth": "Configurer l'authentification basique",
@@ -513,11 +516,13 @@
         "contains": "contient",
         "ends_with": "se termine par",
         "greater_than": "plus grand que",
+        "greater_than_or_equal_to": "supérieur ou égal à",
         "in": "dans",
         "is": "est",
         "is_not": "n'est pas",
         "is_one_of": "est l'un de",
         "less_than": "moins de",
+        "less_than_or_equal_to": "inférieur ou égal à",
         "not_contains": "ne contient pas",
         "not_in": "n'est pas dans",
         "starts_with": "commence par"
@@ -531,6 +536,7 @@
         "aggregation": "Agrégation",
         "child": "Enfant",
         "details": "Détails",
+        "endDate": "Date de fin",
         "flow": "Flux",
         "labels": "Étiquettes",
         "level": "Niveau de log",
@@ -540,6 +546,7 @@
         "relative_date": "Date relative",
         "scope": "Portée",
         "service_type": "Type",
+        "startDate": "Date de début",
         "state": "État",
         "status": "Statut",
         "task": "Tâche",
@@ -695,6 +702,11 @@
     "minutes": "Minutes",
     "monogram": "Monogramme",
     "months": "Mois",
+    "multi_panel_editor": {
+      "close_all_tabs": "Fermer tous les onglets",
+      "move_left": "Déplacer à gauche",
+      "move_right": "Déplacer vers la droite"
+    },
     "multiple saved done": "{name} ont été enregistré(e)s",
     "name": "Nom",
     "namespace": "Espace de nom",
@@ -790,6 +802,14 @@
     "no_code": {
       "adding": "+ Ajouter un {what}",
       "adding_default": "+ Ajouter une nouvelle valeur",
+      "close": {
+        "after execution": "Fermer la task",
+        "error handlers": "Fermer le gestionnaire d'erreurs",
+        "finally": "Fermer la task",
+        "input": "Fermer l'input",
+        "tasks": "Fermer la task",
+        "triggers": "Fermer le trigger"
+      },
       "creation": {
         "after execution": "Ajouter un bloc après l'exécution",
         "error handlers": "Ajouter un gestionnaire d'erreurs",
@@ -844,6 +864,7 @@
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Soit aucun flow n'est en cours d'exécution, soit vous devez ajuster vos filtres.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
+    "no_results_found": "Aucun résultat trouvé",
     "no_tasks_running": "Aucune tâche n'est encore en cours d'exécution.",
     "now": "Maintenant",
     "of": "de",
@@ -1020,6 +1041,8 @@
       "saved": "Filtres sauvegardés"
     },
     "search term in message": "Chercher dans le message",
+    "search_docs": "Rechercher",
+    "searching": "Recherche en cours...",
     "seconds": "Secondes",
     "secret": {
       "add": "Nouveau secret",
@@ -1080,10 +1103,10 @@
           "note": "Remarque ce paramètre est utilisé pour afficher les propriétés de date et d'heure dans l'interface utilisateur. Pour planifier vos flux dans un fuseau horaire différent de l'UTC, assurez-vous de définir la propriété de fuseau horaire sur le déclencheur de planification dans le code de votre"
         },
         "save": {
-          "fields": {
-            "name": "Enregistrer les modifications"
-          },
-          "label": "Enregistrer les préférences"
+          "discard": "Jeter",
+          "label": "Enregistrer les préférences",
+          "unsaved_title": "Modifications non enregistrées",
+          "unsaved_warning": "Vous avez des modifications non enregistrées. Voulez-vous les enregistrer avant de quitter ?"
         },
         "theme": {
           "fields": {

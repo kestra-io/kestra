@@ -1,4 +1,4 @@
-id: pause-delay-from-input
+id: pause-duration-from-input
 namespace: io.kestra.tests
 
 inputs:
@@ -9,7 +9,7 @@ inputs:
 tasks:
   - id: pause
     type: io.kestra.plugin.core.flow.Pause
-    delay: "{{inputs.delay}}"
+    pauseDuration: "{{inputs.delay}}"
     tasks:
       - id: subtask
         type: io.kestra.plugin.core.log.Log

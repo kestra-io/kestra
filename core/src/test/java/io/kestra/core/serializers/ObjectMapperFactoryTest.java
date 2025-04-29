@@ -104,25 +104,25 @@ class ObjectMapperFactoryTest {
             Bean.class
         );
 
-        assertThat(bean.intNull).isEqualTo(0);
-        assertThat(bean.intDefault).isEqualTo(0);
+        assertThat(bean.intNull).isZero();
+        assertThat(bean.intDefault).isZero();
         assertThat(bean.intChange).isEqualTo(1);
 
         assertThat(bean.integerNull).isNull();
-        assertThat(bean.integerDefault).isEqualTo(0);
+        assertThat(bean.integerDefault).isZero();
         assertThat(bean.integerChange).isEqualTo(1);
 
-        assertThat(bean.boolNull).isEqualTo(false);
-        assertThat(bean.boolDefaultTrue).isEqualTo(true);
-        assertThat(bean.boolChangeTrue).isEqualTo(false);
-        assertThat(bean.boolDefaultFalse).isEqualTo(false);
-        assertThat(bean.boolChangeFalse).isEqualTo(true);
+        assertThat(bean.boolNull).isFalse();
+        assertThat(bean.boolDefaultTrue).isTrue();
+        assertThat(bean.boolChangeTrue).isFalse();
+        assertThat(bean.boolDefaultFalse).isFalse();
+        assertThat(bean.boolChangeFalse).isTrue();
 
         assertThat(bean.booleanNull).isNull();
-        assertThat(bean.booleanDefaultTrue).isEqualTo(true);
-        assertThat(bean.booleanChangeTrue).isEqualTo(false);
-        assertThat(bean.booleanDefaultFalse).isEqualTo(false);
-        assertThat(bean.booleanChangeFalse).isEqualTo(true);
+        assertThat(bean.booleanDefaultTrue).isTrue();
+        assertThat(bean.booleanChangeTrue).isFalse();
+        assertThat(bean.booleanDefaultFalse).isFalse();
+        assertThat(bean.booleanChangeFalse).isTrue();
 
         assertThat(bean.stringNull).isNull();
         assertThat(bean.stringDefault).isEqualTo("bla");

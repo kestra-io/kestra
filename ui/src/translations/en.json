@@ -19,6 +19,9 @@
     "delete ok": "is deleted",
     "Default page": "Default page",
     "confirmation": "Confirmation",
+    "common": {
+      "back": "Back"
+    },
     "delete confirm": "Are you sure you want to delete <code>{name}</code>?",
     "outdated revision save confirmation": {
       "confirm": "Do you want to overwrite it?",
@@ -50,6 +53,7 @@
     "Select namespace": "Namespace",
     "Add flow": "Add flow",
     "add": "Add",
+    "add_new_item": "Add new item",
     "copy": "Copy",
     "copy_to_clipboard": "Copy to clipboard",
     "Per page": "per page",
@@ -798,10 +802,10 @@
           }
         },
         "save": {
-          "label": "Save Preferences",
-          "fields": {
-            "name": "Save Changes"
-          }
+          "label":"Save",
+          "discard": "Discard",
+          "unsaved_title": "Unsaved Changes",
+          "unsaved_warning": "You have unsaved changes. Do you want to save them before leaving?"
         }
       }
     },
@@ -1112,7 +1116,9 @@
         "relative_date": "Relative date",
         "absolute_date": "Absolute date",
         "labels": "Labels",
-        "text": "text"
+        "text": "text",
+        "startDate": "Start date",
+        "endDate": "End date"
       },
       "comparators": {
         "is": "is",
@@ -1125,7 +1131,9 @@
         "between": "between",
         "starts_with": "starts with",
         "greater_than": "greater than",
+        "greater_than_or_equal_to": "greater than or equal to",
         "less_than": "less than",
+        "less_than_or_equal_to": "less than or equal to",
         "ends_with": "ends with"
       },
       "save": {
@@ -1199,6 +1207,14 @@
         "finally": "Save task",
         "after execution": "Save task",
         "input": "Save input"
+      },
+      "close": {
+        "tasks": "Close task",
+        "triggers": "Close trigger",
+        "error handlers": "Close error handler",
+        "finally": "Close task",
+        "after execution": "Close task",
+        "input": "Close input"
       }
     },
     "properties": {
@@ -1292,6 +1308,14 @@
       }
     },
     "toggle_word_wrap": "Toggle Word Wrap",
-    "copied_logs_to_clipboard": "Copied logs to clipboard."
+    "copied_logs_to_clipboard": "Copied logs to clipboard.",
+    "multi_panel_editor": {
+      "move_right": "Move right",
+      "move_left": "Move left",
+      "close_all_tabs": "Close all tabs"
+    },
+    "search_docs": "Search",
+    "no_results_found": "No results found",
+    "searching": "Searching..."
   }
 }

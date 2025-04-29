@@ -130,6 +130,9 @@
     "close sidebar": "zamknij pasek boczny",
     "collapse": "Zwiń",
     "collapse all": "Zwiń wszystko",
+    "common": {
+      "back": "Wstecz"
+    },
     "concurrency": "Współbieżność",
     "conditions": "warunki",
     "configure basic auth": "Skonfiguruj podstawowe uwierzytelnianie",
@@ -513,11 +516,13 @@
         "contains": "zawiera",
         "ends_with": "kończy się na",
         "greater_than": "większe niż",
+        "greater_than_or_equal_to": "większe lub równe",
         "in": "w",
         "is": "jest",
         "is_not": "nie jest",
         "is_one_of": "jest jednym z",
         "less_than": "mniej niż",
+        "less_than_or_equal_to": "mniejsze lub równe",
         "not_contains": "nie zawiera",
         "not_in": "nie w",
         "starts_with": "zaczyna się od"
@@ -531,6 +536,7 @@
         "aggregation": "Agregacja",
         "child": "Dziecko",
         "details": "Szczegóły",
+        "endDate": "Data zakończenia",
         "flow": "Flow",
         "labels": "Etykiety",
         "level": "Poziom logowania",
@@ -540,6 +546,7 @@
         "relative_date": "Data względna",
         "scope": "Zakres",
         "service_type": "Typ",
+        "startDate": "Data rozpoczęcia",
         "state": "Stan",
         "status": "Status",
         "task": "Zadanie",
@@ -695,6 +702,11 @@
     "minutes": "Minuty",
     "monogram": "Monogram",
     "months": "Miesiące",
+    "multi_panel_editor": {
+      "close_all_tabs": "Zamknij wszystkie karty",
+      "move_left": "Przesuń w lewo",
+      "move_right": "Przesuń w prawo"
+    },
     "multiple saved done": "{name} został zapisany",
     "name": "Nazwa",
     "namespace": "Namespace",
@@ -790,6 +802,14 @@
     "no_code": {
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
+      "close": {
+        "after execution": "Zamknij task",
+        "error handlers": "Zamknij obsługę błędów",
+        "finally": "Zamknij task",
+        "input": "Zamknij input",
+        "tasks": "Zamknij task",
+        "triggers": "Zamknij trigger"
+      },
       "creation": {
         "after execution": "Dodaj blok po wykonaniu",
         "error handlers": "Dodaj obsługę błędów",
@@ -844,6 +864,7 @@
     "no_logs_data": "Brak danych",
     "no_logs_data_description": "Albo żadne flow nie są uruchomione, albo musisz dostosować swoje filtry.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
+    "no_results_found": "Nie znaleziono wyników",
     "no_tasks_running": "Jeszcze nie ma uruchomionych tasków.",
     "now": "Teraz",
     "of": "z",
@@ -1020,6 +1041,8 @@
       "saved": "Zapisane filtry"
     },
     "search term in message": "Wyszukaj termin w wiadomości",
+    "search_docs": "Szukaj",
+    "searching": "Szukanie...",
     "seconds": "Sekundy",
     "secret": {
       "add": "Nowy sekret",
@@ -1080,10 +1103,10 @@
           "note": "Zauważ, że to ustawienie jest używane do wyświetlania właściwości daty i czasu w UI. Aby zaplanować swoje flows w strefie czasowej innej niż UTC, upewnij się, że ustawisz właściwość strefy czasowej w trigger harmonogramu w kodzie flow lub w domyślnych ustawieniach pluginów."
         },
         "save": {
-          "fields": {
-            "name": "Zapisz zmiany"
-          },
-          "label": "Zapisz preferencje"
+          "discard": "Odrzuć",
+          "label": "Zapisz preferencje",
+          "unsaved_title": "Niezapisane zmiany",
+          "unsaved_warning": "Masz niezapisane zmiany. Czy chcesz je zapisać przed opuszczeniem?"
         },
         "theme": {
           "fields": {

@@ -27,7 +27,7 @@ class MetricControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     @LoadFlows({"flows/valids/minimal.yaml"})
-    void findByExecution() {
+    void searchByExecution() {
         Execution result = triggerExecution(TESTS_FLOW_NS, "minimal", null, true);
         assertThat(result).isNotNull();
 

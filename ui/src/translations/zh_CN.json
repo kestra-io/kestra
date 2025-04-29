@@ -130,6 +130,9 @@
     "close sidebar": "关闭侧边栏",
     "collapse": "折叠",
     "collapse all": "折叠所有",
+    "common": {
+      "back": "返回"
+    },
     "concurrency": "并发",
     "conditions": "条件",
     "configure basic auth": "配置基本认证",
@@ -513,11 +516,13 @@
         "contains": "包含",
         "ends_with": "以...结束",
         "greater_than": "大于",
+        "greater_than_or_equal_to": "大于或等于",
         "in": "在",
         "is": "是",
         "is_not": "不是",
         "is_one_of": "是其中之一",
         "less_than": "小于",
+        "less_than_or_equal_to": "小于或等于",
         "not_contains": "不包含",
         "not_in": "不在",
         "starts_with": "以...开始"
@@ -531,6 +536,7 @@
         "aggregation": "聚合",
         "child": "子节点",
         "details": "详情",
+        "endDate": "结束日期",
         "flow": "流程",
         "labels": "标签",
         "level": "日志级别",
@@ -540,6 +546,7 @@
         "relative_date": "相对日期",
         "scope": "范围",
         "service_type": "类型",
+        "startDate": "开始日期",
         "state": "状态",
         "status": "状态",
         "task": "任务",
@@ -695,6 +702,11 @@
     "minutes": "分钟",
     "monogram": "字母组合",
     "months": "月份",
+    "multi_panel_editor": {
+      "close_all_tabs": "关闭所有标签页",
+      "move_left": "向左移动",
+      "move_right": "向右移动"
+    },
     "multiple saved done": "{name} 已保存",
     "name": "名称",
     "namespace": "命名空间",
@@ -790,6 +802,14 @@
     "no_code": {
       "adding": "+ 添加{what}",
       "adding_default": "+ 添加新value",
+      "close": {
+        "after execution": "关闭task",
+        "error handlers": "关闭错误处理程序",
+        "finally": "关闭 task",
+        "input": "关闭输入",
+        "tasks": "关闭task",
+        "triggers": "关闭 trigger"
+      },
       "creation": {
         "after execution": "添加执行后块",
         "error handlers": "添加错误处理程序",
@@ -844,6 +864,7 @@
     "no_logs_data": "无数据",
     "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
+    "no_results_found": "未找到结果",
     "no_tasks_running": "尚无任务正在运行。",
     "now": "现在",
     "of": "的",
@@ -1020,6 +1041,8 @@
       "saved": "已保存的过滤器"
     },
     "search term in message": "在消息中搜索术语",
+    "search_docs": "搜索",
+    "searching": "搜索中...",
     "seconds": "秒钟",
     "secret": {
       "add": "新密钥",
@@ -1080,10 +1103,10 @@
           "note": "请注意，此设置用于在UI中显示日期和时间属性。要在UTC以外的时区安排你的流程，请确保在流程代码或插件默认值中的Schedule触发器上设置时区属性。"
         },
         "save": {
-          "fields": {
-            "name": "保存更改"
-          },
-          "label": "保存偏好设置"
+          "discard": "丢弃",
+          "label": "保存偏好设置",
+          "unsaved_title": "未保存的更改",
+          "unsaved_warning": "您有未保存的更改。您想在离开之前保存它们吗？"
         },
         "theme": {
           "fields": {

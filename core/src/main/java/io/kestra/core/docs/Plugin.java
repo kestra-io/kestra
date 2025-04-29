@@ -37,6 +37,7 @@ public class Plugin {
     private List<String> charts;
     private List<String> dataFilters;
     private List<String> logExporters;
+    private List<String> additionalPlugins;
     private List<PluginSubGroup.PluginCategory> categories;
     private String subGroup;
 
@@ -89,17 +90,18 @@ public class Plugin {
         plugin.subGroup = subgroup;
 
         Predicate<Class<?>> packagePredicate = c -> subgroup == null || c.getPackageName().equals(subgroup);
-        plugin.tasks = filterAndGetClassName(registeredPlugin.getTasks(), includeDeprecated, packagePredicate).stream().toList();
-        plugin.triggers = filterAndGetClassName(registeredPlugin.getTriggers(), includeDeprecated, packagePredicate).stream().toList();
-        plugin.conditions = filterAndGetClassName(registeredPlugin.getConditions(), includeDeprecated, packagePredicate).stream().toList();
-        plugin.storages = filterAndGetClassName(registeredPlugin.getStorages(), includeDeprecated, packagePredicate).stream().toList();
-        plugin.secrets = filterAndGetClassName(registeredPlugin.getSecrets(), includeDeprecated, packagePredicate).stream().toList();
-        plugin.taskRunners = filterAndGetClassName(registeredPlugin.getTaskRunners(), includeDeprecated, packagePredicate).stream().toList();
-        plugin.apps = filterAndGetClassName(registeredPlugin.getApps(), includeDeprecated, packagePredicate).stream().toList();
-        plugin.appBlocks = filterAndGetClassName(registeredPlugin.getAppBlocks(), includeDeprecated, packagePredicate).stream().toList();
-        plugin.charts = filterAndGetClassName(registeredPlugin.getCharts(), includeDeprecated, packagePredicate).stream().toList();
-        plugin.dataFilters = filterAndGetClassName(registeredPlugin.getDataFilters(), includeDeprecated, packagePredicate).stream().toList();
-        plugin.logExporters = filterAndGetClassName(registeredPlugin.getLogExporters(), includeDeprecated, packagePredicate).stream().toList();
+        plugin.tasks = filterAndGetClassName(registeredPlugin.getTasks(), includeDeprecated, packagePredicate);
+        plugin.triggers = filterAndGetClassName(registeredPlugin.getTriggers(), includeDeprecated, packagePredicate);
+        plugin.conditions = filterAndGetClassName(registeredPlugin.getConditions(), includeDeprecated, packagePredicate);
+        plugin.storages = filterAndGetClassName(registeredPlugin.getStorages(), includeDeprecated, packagePredicate);
+        plugin.secrets = filterAndGetClassName(registeredPlugin.getSecrets(), includeDeprecated, packagePredicate);
+        plugin.taskRunners = filterAndGetClassName(registeredPlugin.getTaskRunners(), includeDeprecated, packagePredicate);
+        plugin.apps = filterAndGetClassName(registeredPlugin.getApps(), includeDeprecated, packagePredicate);
+        plugin.appBlocks = filterAndGetClassName(registeredPlugin.getAppBlocks(), includeDeprecated, packagePredicate);
+        plugin.charts = filterAndGetClassName(registeredPlugin.getCharts(), includeDeprecated, packagePredicate);
+        plugin.dataFilters = filterAndGetClassName(registeredPlugin.getDataFilters(), includeDeprecated, packagePredicate);
+        plugin.logExporters = filterAndGetClassName(registeredPlugin.getLogExporters(), includeDeprecated, packagePredicate);
+        plugin.additionalPlugins = filterAndGetClassName(registeredPlugin.getAdditionalPlugins(), includeDeprecated, packagePredicate);
 
         return plugin;
     }

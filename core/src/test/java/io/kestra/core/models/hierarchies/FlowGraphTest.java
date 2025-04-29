@@ -1,5 +1,6 @@
 package io.kestra.core.models.hierarchies;
 
+import io.kestra.core.exceptions.FlowProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -52,7 +53,7 @@ class FlowGraphTest {
 
         assertThat(flowGraph.getNodes().size()).isEqualTo(5);
         assertThat(flowGraph.getEdges().size()).isEqualTo(4);
-        assertThat(flowGraph.getClusters().size()).isEqualTo(0);
+        assertThat(flowGraph.getClusters().size()).isZero();
 
         assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getTask().getId()).isEqualTo("date");
         assertThat(((AbstractGraphTask) flowGraph.getNodes().get(2)).getRelationType()).isEqualTo(RelationType.SEQUENTIAL);
@@ -215,7 +216,7 @@ class FlowGraphTest {
     }
 
     @Test
-    void trigger() throws IllegalVariableEvaluationException, IOException {
+    void trigger() throws IllegalVariableEvaluationException, IOException, FlowProcessingException {
         FlowWithSource flow = this.parse("flows/valids/trigger-flow-listener.yaml");
         triggerRepositoryInterface.save(
             Trigger.of(flow, flow.getTriggers().getFirst()).toBuilder().disabled(true).build()
@@ -227,7 +228,7 @@ class FlowGraphTest {
         assertThat(flowGraph.getEdges().size()).isEqualTo(5);
         assertThat(flowGraph.getClusters().size()).isEqualTo(1);
         AbstractGraph triggerGraph = flowGraph.getNodes().stream().filter(e -> e instanceof GraphTrigger).findFirst().orElseThrow();
-        assertThat(((GraphTrigger) triggerGraph).getTrigger().getDisabled()).isEqualTo(true);
+        assertThat(((GraphTrigger) triggerGraph).getTrigger().getDisabled()).isTrue();
     }
 
     @Test
@@ -261,7 +262,7 @@ class FlowGraphTest {
     @Test
     @LoadFlows({"flows/valids/task-flow.yaml",
         "flows/valids/switch.yaml"})
-    void subflow() throws IllegalVariableEvaluationException, IOException {
+    void subflow() throws IllegalVariableEvaluationException, IOException, FlowProcessingException {
         FlowWithSource flow = this.parse("flows/valids/task-flow.yaml");
         FlowGraph flowGraph = GraphUtils.flowGraph(flow, null);
 
@@ -293,7 +294,7 @@ class FlowGraphTest {
     @Test
     @LoadFlows({"flows/valids/task-flow-dynamic.yaml",
         "flows/valids/switch.yaml"})
-    void dynamicIdSubflow() throws IllegalVariableEvaluationException, TimeoutException, QueueException, IOException {
+    void dynamicIdSubflow() throws IllegalVariableEvaluationException, TimeoutException, QueueException, IOException, FlowProcessingException {
         FlowWithSource flow = this.parse("flows/valids/task-flow-dynamic.yaml").toBuilder().revision(1).build();
 
         IllegalArgumentException illegalArgumentException = Assertions.assertThrows(IllegalArgumentException.class, () -> graphService.flowGraph(flow, Collections.singletonList("root.launch")));

@@ -39,7 +39,7 @@ class RetryUtilsTest {
                 () -> true
             );
 
-            assertThat(inc.get()).isEqualTo(0);
+            assertThat(inc.get()).isZero();
         });
 
         assertThat(retryFailed.getAttemptCount()).isEqualTo(3);
@@ -55,8 +55,8 @@ class RetryUtilsTest {
             () -> inc.getAndDecrement() == 1
         );
 
-        assertThat(inc.get()).isEqualTo(0);
-        assertThat(retry).isEqualTo(true);
+        assertThat(inc.get()).isZero();
+        assertThat(retry).isTrue();
     }
 
     @Test
@@ -72,7 +72,7 @@ class RetryUtilsTest {
                 }
             );
 
-            assertThat(inc.get()).isEqualTo(0);
+            assertThat(inc.get()).isZero();
         });
 
         assertThat(retryFailed.getAttemptCount()).isEqualTo(3);
@@ -94,8 +94,8 @@ class RetryUtilsTest {
             }
         );
 
-        assertThat(inc.get()).isEqualTo(0);
-        assertThat(retry).isEqualTo(true);
+        assertThat(inc.get()).isZero();
+        assertThat(retry).isTrue();
     }
 
     @Test

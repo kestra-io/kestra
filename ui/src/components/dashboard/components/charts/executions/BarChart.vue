@@ -30,62 +30,55 @@
     </el-tooltip>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed, ref} from "vue";
     import {useI18n} from "vue-i18n";
     import moment from "moment";
     import {Bar} from "vue-chartjs";
-    import {useRouter} from "vue-router";
+    import {useRouter, useRoute} from "vue-router";
     const router = useRouter();
+    const route = useRoute();
 
     import Utils, {useTheme} from "../../../../../utils/utils";
-    import {useScheme} from "../../../../../utils/scheme.js";
-    import {defaultConfig, tooltip, getFormat} from "../../../../../utils/charts.js";
+    import {useScheme} from "../../../../../utils/scheme";
+    import {defaultConfig, tooltip, getFormat, chartClick} from "../../../../../utils/charts";
 
     import {State} from "@kestra-io/ui-libs";
     const ORDER = State.arrayAllStates().map((state) => state.name);
 
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps({
-        data: {
-            type: Object,
-            required: true,
-        },
-        plugins: {
-            type: Array,
-            default: () => [],
-        },
-        total: {
-            type: Number,
-            default: undefined,
-        },
-        duration: {
-            type: Boolean,
-            default: true,
-        },
-        scales: {
-            type: Boolean,
-            default: true,
-        },
-        small: {
-            type: Boolean,
-            default: false,
-        },
-        externalTooltip: {
-            type: Boolean,
-            default: false,
-        },
-        loading: {
-            type: Boolean,
-            default: false
-        }
+    interface DataItem {
+        startDate: string;
+        executionCounts: Record<string, number>;
+        duration: { avg: number | string };
+        groupBy?: string;
+    }
+
+    interface Props {
+        data: DataItem[];
+        plugins?: any[];
+        total?: number;
+        duration?: boolean;
+        scales?: boolean;
+        small?: boolean;
+        externalTooltip?: boolean;
+        loading?: boolean;
+    };
+
+    const props = withDefaults(defineProps<Props>(), {
+        plugins: () => [],
+        total: undefined,
+        duration: true,
+        scales: true,
+        small: false,
+        externalTooltip: false,
+        loading: false
     });
 
-    const theme = useTheme()
+    const theme = useTheme();
     const scheme = useScheme();
-
-    const tooltipContent = ref("")
+    const tooltipContent = ref<string>("");
 
     const skeletonData = computed(() => {
         const barColor = theme.value === "dark"
@@ -133,7 +126,12 @@
     }));
 
     const parsedData = computed(() => {
-        let datasets = props.data.reduce(function (accumulator, value) {
+        const datasets = props.data.reduce(function (accumulator: Record<string, {
+            label: string
+            backgroundColor: string
+            yAxisID: string
+            data: number[]
+        }>, value) {
             Object.keys(value.executionCounts).forEach(function (state) {
                 if (accumulator[state] === undefined) {
                     accumulator[state] = {
@@ -150,7 +148,7 @@
             return accumulator;
         }, Object.create(null));
 
-        datasets = Object.values(datasets).sort((a, b) => {
+        const datasetsArray = Object.values(datasets).sort((a, b) => {
             return ORDER.indexOf(a.label) - ORDER.indexOf(b.label);
         });
 
@@ -169,14 +167,14 @@
                         borderColor: "#A2CDFF",
                         yAxisID: "yB",
                         data: props.data.map((value) => {
-                            return value.duration.avg === 0
+                            return value.duration.avg === 0 || !value.duration.avg
                                 ? 0
-                                : Utils.duration(value.duration.avg);
+                                : Utils.duration(String(value.duration.avg));
                         }),
                     },
-                    ...Object.values(datasets),
+                    ...datasetsArray,
                 ]
-                : Object.values(datasets),
+                : datasetsArray,
         };
     });
 
@@ -193,14 +191,14 @@
                 },
                 tooltip: {
                     enabled: !props.externalTooltip,
-                    filter: (value) => value.raw,
+                    filter: (value: any) => value.raw,
                     callbacks: {
-                        label: function (value) {
+                        label: function (value: any) {
                             const {label, yAxisID} = value.dataset;
                             return `${label.toLowerCase().capitalize()}: ${value.raw}${yAxisID === "yB" ? "s" : ""}`;
                         },
                     },
-                    external: props.externalTooltip ? function (context) {
+                    external: props.externalTooltip ? function (context: any) {
                         let content = tooltip(context.tooltip);
                         tooltipContent.value = content;
                     } : undefined,
@@ -220,7 +218,7 @@
                     stacked: true,
                     ticks: {
                         maxTicksLimit: props.small ? 5 : 8,
-                        callback: function (value) {
+                        callback: function (value: any) {
                             const label = this.getLabelForValue(value);
 
                             if (
@@ -272,25 +270,14 @@
                     position: "right",
                     ticks: {
                         maxTicksLimit: props.small ? 5 : 8,
-                        callback: function (value) {
+                        callback: function (value: any) {
                             return `${this.getLabelForValue(value)}s`;
                         },
                     },
                 },
             },
             onClick: (e, elements) => {
-                if (elements.length > 0) {
-                    const state = parsedData.value.datasets[elements[0].datasetIndex].label;
-                    router.push({
-                        name: "executions/list",
-                        query: {
-                            state: state,
-                            scope: "USER",
-                            size: 100,
-                            page: 1,
-                        },
-                    });
-                }
+                chartClick(moment, router, route, {}, parsedData.value, elements, "label");
             },
         }, theme.value),
     );

@@ -18,16 +18,17 @@
     import {Bar} from "vue-chartjs";
 
     import {customBarLegend} from "../legend.js";
-    import {useTheme} from "../../../../../utils/utils";
-    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
+    import {useTheme} from "../../../../../utils/utils.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
 
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
     import {decodeSearchParams} from "../../../../filter/utils/helpers";
 
     const store = useStore();
+    const router = useRouter();
 
     const dashboard = computed(() => store.state.dashboard.dashboard);
 
@@ -104,6 +105,9 @@
                         callback: value => isDurationAgg() ? Utils.humanDuration(value) : value
                     }
                 },
+            },
+            onClick: (e, elements) => {
+                chartClick(moment, router, route, {}, parsedData.value, elements, "label");
             },
         }, theme.value);
     });

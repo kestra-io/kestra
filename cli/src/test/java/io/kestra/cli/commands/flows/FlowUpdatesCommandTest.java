@@ -169,7 +169,7 @@ class FlowUpdatesCommandTest {
             };
             Integer call = PicocliRunner.call(FlowUpdatesCommand.class, ctx, args);
 
-            assertThat(call).isEqualTo(0);
+            assertThat(call).isZero();
             assertThat(out.toString()).contains("1 flow(s)");
         }
     }

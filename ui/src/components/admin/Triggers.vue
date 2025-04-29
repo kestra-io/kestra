@@ -211,16 +211,24 @@
 
                         <el-table-column :label="$t('actions')" column-key="disable" class-name="row-action">
                             <template #default="scope">
-                                <el-switch
+                                <el-tooltip
                                     v-if="!scope.row.missingSource"
-                                    :active-text="$t('enabled')"
-                                    :model-value="!scope.row.disabled"
-                                    @change="setDisabled(scope.row, $event)"
-                                    class="switch-text"
-                                    :active-action-icon="Check"
-                                />
-                                <el-tooltip v-else :content="'flow source not found'" effect="light">
-                                    <AlertCircle class="trigger-issue-icon" />
+                                    :content="$t('trigger disabled')"
+                                    :disabled="!scope.row.codeDisabled"
+                                    effect="light"
+                                >
+                                    <el-switch
+                                        :active-text="$t('enabled')"
+                                        :inactive-text="$t('disabled')"
+                                        :model-value="!(scope.row.disabled || scope.row.codeDisabled)"
+                                        @change="setDisabled(scope.row, $event)"
+                                        inline-prompt
+                                        class="switch-text"
+                                        :disabled="scope.row.codeDisabled"
+                                    />
+                                </el-tooltip>
+                                <el-tooltip v-else :content="$t('flow source not found')" effect="light">
+                                    <AlertCircle />
                                 </el-tooltip>
                             </template>
                         </el-table-column>
@@ -250,7 +258,6 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TopNavBar from "../layout/TopNavBar.vue";
-    import Check from "vue-material-design-icons/Check.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
@@ -505,11 +512,12 @@
         }
     };
 </script>
-<style>
+<style lang="scss" scoped>
     .data-table-wrapper {
-    margin-left: 0 !important;
-    padding-left: 0 !important;
+        margin-left: 0 !important;
+        padding-left: 0 !important;
     }
+    
     .backfillContainer{
         display: flex;
         align-items: center;
@@ -517,18 +525,33 @@
     .statusIcon{
         font-size: large;
     }
+    
     .trigger-issue-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;
     }
-    .el-table__expanded-cell[class*=cell]{
-        padding: 0;
+    
+    .alert-circle-icon {
+        color: var(--ks-content-warning);
+        font-size: 1.4em;
     }
-    .no-expand .el-icon {
-        display: none; /* Hide the expand icon */
+    
+    :deep(.el-table__expand-icon) {
+        pointer-events: none;
+        .el-icon {
+            display: none;
+        }
     }
-
-    .no-expand .el-table__expand-icon {
-        pointer-events: none; /* Disable pointer events */
+    :deep(.el-switch) {
+        .is-text {
+            padding: 0 3px;
+            color: inherit;
+        }
+        
+        &.is-checked {
+            .is-text {
+                color: #ffffff;
+            }
+        }
     }
 </style>

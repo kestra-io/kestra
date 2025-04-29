@@ -583,6 +583,7 @@
     "flow export": "क्या आप वाकई <code>{flowCount}</code> flow(s) को निर्यात करना चाहते हैं?",
     "flow must have id and namespace": "Flow में एक id और एक namespace होना चाहिए।",
     "flow not imported": "कुछ flow आयात नहीं किया जा सका",
+    "flow source not found": "Flow source नहीं मिला",
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
     "flow_only": "केवल Flow टैब पर उपलब्ध है।",
@@ -1210,6 +1211,7 @@
     },
     "trigger": "Trigger",
     "trigger details": "Trigger विवरण",
+    "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
     "trigger execution id": "Trigger निष्पादन Id",
     "trigger filter": {
       "options": {

@@ -583,6 +583,7 @@
     "flow export": "<code>{flowCount}</code> 개의 flow를 내보내시겠습니까?",
     "flow must have id and namespace": "Flow에는 id와 namespace가 있어야 합니다.",
     "flow not imported": "일부 flow를 가져올 수 없습니다.",
+    "flow source not found": "Flow source를 찾을 수 없음",
     "flow-dependencies": "종속성",
     "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
     "flow_only": "Flow 탭에서만 사용 가능합니다.",
@@ -1210,6 +1211,7 @@
     },
     "trigger": "Trigger",
     "trigger details": "Trigger 세부 정보",
+    "trigger disabled": "Flow 소스 내에서 Trigger가 비활성화되었습니다.",
     "trigger execution id": "Trigger Execution Id",
     "trigger filter": {
       "options": {

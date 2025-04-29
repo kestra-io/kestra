@@ -91,6 +91,30 @@ class NamespaceFilesUtilsTest {
         assertThat((Duration) runContext.metrics().stream().filter(m -> m.getName().equals("namespacefiles.duration")).findFirst().orElseThrow().getValue()).isInstanceOf(Duration.class);
     }
 
+    @Test
+    void multiple_folder_ns() throws Exception {
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
+        Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
+
+        Log task = Log.builder().id(IdUtils.create()).type(Log.class.getName()).message("Yo!").build();
+        var runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of());
+        String namespace = IdUtils.create();
+
+        ByteArrayInputStream data = new ByteArrayInputStream("a".repeat(1024).getBytes(StandardCharsets.UTF_8));
+        storageInterface.put(null, namespace, toNamespacedStorageUri(namespace, URI.create("/folder1/test.txt")), data);
+        storageInterface.put(null, namespace, toNamespacedStorageUri(namespace, URI.create("/folder2/test.txt")), data);
+        storageInterface.put(null, namespace, toNamespacedStorageUri(namespace, URI.create("/test.txt")), data);
+
+        namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().namespaces(Property.of(List.of(namespace))).build());
+
+        List<LogEntry> logEntry = TestsUtils.awaitLogs(logs, 1);
+        receive.blockLast();
+
+        assertThat(logEntry.getFirst().getMessage()).contains("Loaded 3 namespace files");
+        assertThat(runContext.metrics().stream().filter(m -> m.getName().equals("namespacefiles.count")).findFirst().orElseThrow().getValue()).isEqualTo(3D);
+        assertThat((Duration) runContext.metrics().stream().filter(m -> m.getName().equals("namespacefiles.duration")).findFirst().orElseThrow().getValue()).isInstanceOf(Duration.class);
+    }
+
     private URI toNamespacedStorageUri(String namespace, @Nullable URI relativePath) {
         return NamespaceFile.of(namespace, relativePath).storagePath().toUri();
     }

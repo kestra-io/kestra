@@ -596,6 +596,8 @@
       "button": "Restart trigger",
       "tooltip": "Restart the trigger"
     },
+    "trigger disabled": "Trigger is disabled within Flow source",
+    "flow source not found": "Flow source not found",
     "date format": "Date format",
     "timezone": "Timezone",
     "add task": "Add a task",

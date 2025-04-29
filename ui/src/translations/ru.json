@@ -583,6 +583,7 @@
     "flow export": "Вы уверены, что хотите экспортировать <code>{flowCount}</code> flow(ы)?",
     "flow must have id and namespace": "Flow должен иметь id и namespace.",
     "flow not imported": "Некоторые flow не удалось импортировать",
+    "flow source not found": "Источник flow не найден",
     "flow-dependencies": "зависимости",
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
     "flow_only": "Доступно только на вкладке Flow.",
@@ -1210,6 +1211,7 @@
     },
     "trigger": "Trigger",
     "trigger details": "Подробности trigger",
+    "trigger disabled": "Триггер отключен в источнике Flow",
     "trigger execution id": "Trigger Execution Id",
     "trigger filter": {
       "options": {

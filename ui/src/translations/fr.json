@@ -583,6 +583,7 @@
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
     "flow must have id and namespace": "Le flow doit avoir un id et un namespace.",
     "flow not imported": "Certains flow n'ont pas pu être importés",
+    "flow source not found": "Source du flow introuvable",
     "flow-dependencies": "dépendances",
     "flow-no-dependencies": "Votre flow n'a pas de dépendances.",
     "flow_only": "Disponible uniquement sur l'onglet Flow.",
@@ -1210,6 +1211,7 @@
     },
     "trigger": "Déclencheur",
     "trigger details": "Détails du déclencheur",
+    "trigger disabled": "Le trigger est désactivé dans la source du flow",
     "trigger execution id": "Id parent",
     "trigger filter": {
       "options": {

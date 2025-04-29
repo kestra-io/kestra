@@ -465,6 +465,6 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         Duration minPollInterval = Duration.ofMillis(100);
         Duration maxPollInterval = Duration.ofMillis(500);
         Duration pollSwitchInterval = Duration.ofSeconds(30);
-        Integer pollSize = 100;
+        Integer pollSize = 50;
     }
 }

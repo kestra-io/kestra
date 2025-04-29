@@ -1,21 +1,38 @@
 id: labels
 namespace: sanitychecks.core
 
-variables:
-  label_1: test1
-  label_2: test2
-  label_3: test3
+labels:
+  dependencies.plugins: "[execution.Assert]"
 
 tasks:
-  - id: update_labels_with_map
+  - id: label_simple
     type: io.kestra.plugin.core.execution.Labels
     labels:
-      label_1: "{{ vars.label_1 }}"
+      test_one: value_one
+      test_two: "{{ false == false }}"
 
-  - id: update_labels_by_list
+  - id: simple_assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ labels.test_one == 'value_one' }}"
+
+  - id: label_replacement
     type: io.kestra.plugin.core.execution.Labels
     labels:
-      - key: label_2
-        value: "{{ vars.label_2 }}"
-      - key: label_3
-        value: "{{ vars.label_3 }}"
+      test_one: value_two
+  
+  - id: label_property_formating
+    type: io.kestra.plugin.core.execution.Labels
+    labels:
+      - key: order_id
+        value: "{{ 'something' }}"
+
+  - id: label_property_formatting_empty_array
+    type: io.kestra.plugin.core.execution.Labels
+    labels: []
+
+  - id: scnd_assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ labels.test_one == 'value_two' }}"
+      - "{{ labels.test_two == 'true' }}"

@@ -1296,6 +1296,7 @@
     "worker group": "Worker Group",
     "worker group fallback": "Groupe de Worker de secours",
     "worker group key": "Clé du groupe de Worker",
+    "worker information": "Informations sur le Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Clé ou valeur vide détecté dans les labels",

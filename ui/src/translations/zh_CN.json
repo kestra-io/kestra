@@ -583,6 +583,7 @@
     "flow export": "确定要导出 <code>{flowCount}</code> 个流程吗？",
     "flow must have id and namespace": "流程必须有ID和命名空间。",
     "flow not imported": "某些flow无法导入",
+    "flow source not found": "未找到flow源",
     "flow-dependencies": "依赖项",
     "flow-no-dependencies": "您的flow没有任何依赖项",
     "flow_only": "仅在流程标签中可用。",
@@ -1210,6 +1211,7 @@
     },
     "trigger": "触发器",
     "trigger details": "触发器详情",
+    "trigger disabled": "在Flow源中触发器已禁用",
     "trigger execution id": "触发执行ID",
     "trigger filter": {
       "options": {

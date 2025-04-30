@@ -1296,6 +1296,7 @@
     "worker group": "Grupo de Workers",
     "worker group fallback": "Grupo de Worker de respaldo",
     "worker group key": "Clave del grupo de Worker",
+    "worker information": "Información del Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "No se permite una key o value vacía en las etiquetas",

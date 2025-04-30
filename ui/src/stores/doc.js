@@ -43,13 +43,21 @@ export default {
                 content: response.data,
                 metadata
             }
-    },
-        async search({getters}, q) {
-            return axios.get(getters["resourceUrl"]() + "/search?q=" + q)
-                .then(response => response.data);
+        },
+        async search({getters}, {q, scoredSearch = false}) {
+            if (scoredSearch) {
+                return axios.get(`${getters["resourceUrl"](undefined, "search")}?q=${q}&type=DOCS`)
+                    .then(({data}) => data.results.map(({url, title}) => ({
+                        parsedUrl: url,
+                        title
+                    })));
+            }
+
+            return axios.get(`${getters["resourceUrl"]()}/search?q=${q}`)
+                .then(response => response.data)
         },
         initResourceUrlTemplate({commit}, version) {
-            commit("setResourceUrlTemplate", `${API_URL}/v1/docs${PATH_PLACEHOLDER}/versions/${version}`);
+            commit("setResourceUrlTemplate", `${API_URL}/v1${PATH_PLACEHOLDER}/versions/${version}`);
         }
     },
     mutations: {
@@ -70,13 +78,16 @@ export default {
         pageMetadata: (state) => {
             return state.pageMetadata;
         },
-        resourceUrl: (state) => (path) => {
+        resourceUrl: (state) => (path, domain = "/docs") => {
             if (state.resourceUrlTemplate) {
                 let resourcePath = "";
                 if (path !== undefined) {
                     resourcePath = path.startsWith("/") ? path : `/${path}`;
                 }
-                return state.resourceUrlTemplate.replace(PATH_PLACEHOLDER, resourcePath);
+                if (!domain.startsWith("/")) {
+                    domain = "/" + domain;
+                }
+                return state.resourceUrlTemplate.replace(PATH_PLACEHOLDER, domain + resourcePath);
             }
         },
         docPath: (state) => {

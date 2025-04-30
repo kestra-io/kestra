@@ -116,13 +116,14 @@
         injectedTaskId.value = taskId
     });
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {
-        if(emit("closeTask") === false){
-            return
-        }
-
         if (breadcrumbs.value.length > 2) {
             breadcrumbs.value.pop();
         } else {
+            // only close the tab if saving a task not a value
+            if(emit("closeTask") === false){
+                return
+            }
+
             injectedSection.value = "";
             injectedTaskId.value = "";
         }

@@ -47,14 +47,14 @@
 
     const menuItems = computed(() => [
         {
-            label: "my settings",
+            label: "settings.label",
             icon: CogOutline,
             action: () => {
                 router.push({name: "settings"});
             },
         },
         {
-            label: "join slack",
+            label: "join_slack",
             icon: Slack,
             action: () => {
                 window.open("https://kestra.io/slack", "_blank");
@@ -77,7 +77,7 @@
             min-height: 34px;
             height: fit-content;
             padding: 10px 16px 8px 16px;
-            margin: 8px;
+            margin: 0;
             font-size: 14px;
             font-weight: 700;
 

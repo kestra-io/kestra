@@ -35,6 +35,14 @@ public class PostgresQueueFactory implements QueueFactoryInterface {
 
     @Override
     @Singleton
+    @Named(QueueFactoryInterface.EXECUTION_STATE_CHANGE_NAMED)
+    @Bean(preDestroy = "close")
+    public QueueInterface<ExecutionStateChange> executionStateChange() {
+        return new PostgresQueue<>(ExecutionStateChange.class, applicationContext);
+    }
+
+    @Override
+    @Singleton
     @Named(QueueFactoryInterface.EXECUTOR_NAMED)
     @Bean(preDestroy = "close")
     public QueueInterface<Executor> executor() {

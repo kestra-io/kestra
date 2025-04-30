@@ -13,6 +13,7 @@ import io.kestra.core.models.templates.Template;
 
 public interface QueueFactoryInterface {
     String EXECUTION_NAMED = "executionQueue";
+    String EXECUTION_STATE_CHANGE_NAMED = "executionStateChangeQueue";
     String EXECUTOR_NAMED = "executorQueue";
     String WORKERJOB_NAMED = "workerJobQueue";
     String WORKERTASKRESULT_NAMED = "workerTaskResultQueue";
@@ -31,6 +32,8 @@ public interface QueueFactoryInterface {
     String EXECUTION_RUNNING_NAMED = "executionRunningQueue";
 
     QueueInterface<Execution> execution();
+
+    QueueInterface<ExecutionStateChange> executionStateChange();
 
     QueueInterface<Executor> executor();
 

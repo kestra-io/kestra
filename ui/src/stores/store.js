@@ -18,6 +18,7 @@ import doc from "./doc";
 import bookmarks from "./bookmarks";
 import dashboard from "./dashboard";
 import blueprints from "./blueprints";
+import service from "./service"
 
 export default {
     modules: {
@@ -41,5 +42,6 @@ export default {
         bookmarks,
         dashboard,
         blueprints,
+        service,
     }
 }

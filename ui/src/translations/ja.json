@@ -583,6 +583,7 @@
     "flow export": "<code>{flowCount}</code>件のflowをエクスポートしてもよろしいですか？",
     "flow must have id and namespace": "Flowにはidとnamespaceが必要です。",
     "flow not imported": "一部のflowをインポートできませんでした",
+    "flow source not found": "フローソースが見つかりません",
     "flow-dependencies": "依存関係",
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
     "flow_only": "Flowタブでのみ利用可能です。",
@@ -1210,6 +1211,7 @@
     },
     "trigger": "Trigger",
     "trigger details": "Triggerの詳細",
+    "trigger disabled": "Flowソース内でTriggerが無効になっています",
     "trigger execution id": "Trigger Execution Id",
     "trigger filter": {
       "options": {
@@ -1294,6 +1296,7 @@
     "worker group": "Workerグループ",
     "worker group fallback": "ワーカーグループフォールバック",
     "worker group key": "ワーカーグループキー",
+    "worker information": "ワーカー情報",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",

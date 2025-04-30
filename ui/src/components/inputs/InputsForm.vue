@@ -337,7 +337,7 @@
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
                 debouncedValidation: () => {},
-                selectedTriggerLocal: toRaw(this.selectedTrigger.inputs),
+                selectedTriggerLocal: {},
                 editingArrayId: null,
                 editableItems: {},
             };
@@ -346,6 +346,9 @@
         created() {
             this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
             this.debouncedValidation = debounce(this.validateInputs, 500)
+
+            if(this.selectedTrigger?.inputs) this.selectedTriggerLocal = toRaw(this.selectedTrigger.inputs);
+            else this.selectedTriggerLocal = this.inputsValues;
 
             this.validateInputs().then(() => {
                 this.$watch("inputsValues", {

@@ -58,7 +58,7 @@ class FileChangedEventListenerTest {
     @RetryingTest(5) // Flaky on CI but always pass locally
     void test() throws IOException, TimeoutException {
         // remove the flow if it already exists
-        flowRepository.findByIdWithSource(null, "io.kestra.tests.watch", "myflow").ifPresent(flow -> flowRepository.delete(flow));
+        flowRepository.findByIdWithSource(MAIN_TENANT, "io.kestra.tests.watch", "myflow").ifPresent(flow -> flowRepository.delete(flow));
 
         // create a basic flow
         String flow = """
@@ -93,7 +93,7 @@ class FileChangedEventListenerTest {
     @RetryingTest(5) // Flaky on CI but always pass locally
     void testWithPluginDefault() throws IOException, TimeoutException {
         // remove the flow if it already exists
-        flowRepository.findByIdWithSource(null, "io.kestra.tests.watch", "pluginDefault").ifPresent(flow -> flowRepository.delete(flow));
+        flowRepository.findByIdWithSource(MAIN_TENANT, "io.kestra.tests.watch", "pluginDefault").ifPresent(flow -> flowRepository.delete(flow));
 
         // create a flow with plugin default
         String pluginDefault = """

@@ -89,7 +89,7 @@ class FlowControllerTest {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
 
-        TestsUtils.loads(null, repositoryLoader);
+        TestsUtils.loads(MAIN_TENANT, repositoryLoader);
     }
 
     @Test
@@ -167,7 +167,7 @@ class FlowControllerTest {
 
     @Test
     void getFlowFlowsByNamespace() throws IOException, URISyntaxException {
-        TestsUtils.loads(null, repositoryLoader, FlowControllerTest.class.getClassLoader().getResource("flows/getflowsbynamespace"));
+        TestsUtils.loads(MAIN_TENANT, repositoryLoader, FlowControllerTest.class.getClassLoader().getResource("flows/getflowsbynamespace"));
 
         List<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/io.kestra.unittest.flowsbynamespace"), Argument.listOf(Flow.class));
         assertThat(flows.size()).isEqualTo(2);

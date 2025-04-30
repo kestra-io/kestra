@@ -11,7 +11,7 @@ import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.inject.Inject;
 
-@Controller("/api/v1/cluster")
+@Controller("/api/v1/main/cluster")
 @Requires(bean = ServiceInstanceRepositoryInterface.class)
 public class ClusterController {
 

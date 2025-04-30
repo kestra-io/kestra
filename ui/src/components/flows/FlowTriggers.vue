@@ -205,6 +205,7 @@
         <flow-run
             @update-inputs="backfill.inputs = $event"
             @update-labels="backfill.labels = $event"
+            :selected-trigger="selectedTrigger"
             :redirect="false"
             :embed="true"
         />

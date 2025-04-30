@@ -1296,6 +1296,7 @@
     "worker group": "Группа workers",
     "worker group fallback": "Группа Worker резервный вариант",
     "worker group key": "Ключ группы Worker",
+    "worker information": "Информация о Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Пустой key или value не допускается в метках",

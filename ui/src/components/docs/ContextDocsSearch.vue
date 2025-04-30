@@ -65,15 +65,6 @@
         return searchQuery.value.trim().length > 0;
     });
 
-    const getTitle = (path) => {
-        const parts = path.split("/");
-        const lastPart = parts[parts.length - 1];
-        return lastPart
-            .split("-")
-            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-            .join(" ");
-    };
-
     const handleKeyUp = (e) => {
         e.preventDefault();
         if (searchResults.value.length > 0) {
@@ -112,14 +103,9 @@
 
         try {
             loading.value = true;
-            const results = await store.dispatch("doc/search", query);
-            
-            const processedResults = (results || [])
-                .map(result => ({
-                    ...result,
-                    title: getTitle(result.parsedUrl),
-                }))
-                .slice(0, 10);
+            const results = await store.dispatch("doc/search", {q: query, scoredSearch: true});
+
+            const processedResults = (results || []).slice(0, 10);
             searchResults.value = processedResults;
             selectedIndex.value = 0;
         } catch (error) {
@@ -184,7 +170,7 @@
         height: 1.25rem;
         background: transparent;
     }
-    
+
     .el-input__inner::placeholder {
         color: var(--ks-content-secondary);
     }
@@ -230,7 +216,7 @@
         color: inherit;
         background: var(--ks-background-card);
         transition: background-color 0.2s;
-        
+
         &:hover {
             background: var(--ks-background-hover);
             text-decoration: none;
@@ -263,9 +249,9 @@
         cursor: default;
         padding: 6px 12px;
         font-size: 14px;
-        
+
         &:hover {
             background: none;
         }
     }
-</style> 
+</style>

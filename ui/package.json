@@ -28,7 +28,7 @@
     "@vue-flow/core": "^1.42.5",
     "@vueuse/core": "^13.1.0",
     "ansi-to-html": "^0.7.2",
-    "axios": "^1.8.4",
+    "axios": "^1.9.0",
     "bootstrap": "^5.3.5",
     "buffer": "^6.0.3",
     "chart.js": "^4.4.9",

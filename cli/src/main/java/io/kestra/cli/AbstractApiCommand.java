@@ -90,7 +90,7 @@ public abstract class AbstractApiCommand extends AbstractCommand {
             throw new IllegalArgumentException("'path' must be non-null and start with '/'");
         }
 
-        return tenantId == null ? "/api/v1" + path : "/api/v1/" + tenantId + path;
+        return tenantId == null ? "/api/v1/main" + path : "/api/v1/" + tenantId + path;
     }
 
     @Builder

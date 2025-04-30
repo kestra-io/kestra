@@ -102,9 +102,9 @@ class NamespaceFilesUtilsTest {
         String namespace = IdUtils.create();
 
         ByteArrayInputStream data = new ByteArrayInputStream("a".repeat(1024).getBytes(StandardCharsets.UTF_8));
-        storageInterface.put(null, namespace, toNamespacedStorageUri(namespace, URI.create("/folder1/test.txt")), data);
-        storageInterface.put(null, namespace, toNamespacedStorageUri(namespace, URI.create("/folder2/test.txt")), data);
-        storageInterface.put(null, namespace, toNamespacedStorageUri(namespace, URI.create("/test.txt")), data);
+        storageInterface.put(MAIN_TENANT, namespace, toNamespacedStorageUri(namespace, URI.create("/folder1/test.txt")), data);
+        storageInterface.put(MAIN_TENANT, namespace, toNamespacedStorageUri(namespace, URI.create("/folder2/test.txt")), data);
+        storageInterface.put(MAIN_TENANT, namespace, toNamespacedStorageUri(namespace, URI.create("/test.txt")), data);
 
         namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().namespaces(Property.of(List.of(namespace))).build());
 

@@ -15,7 +15,7 @@ public class LocalFlowFileWatcher implements FlowFilesManager {
 
     @Override
     public FlowWithSource createOrUpdateFlow(final GenericFlow flow) {
-        return flowRepository.findById(null, flow.getNamespace(), flow.getId())
+        return flowRepository.findById(flow.getTenantId(), flow.getNamespace(), flow.getId())
             .map(previous -> flowRepository.update(flow, previous))
             .orElseGet(() -> flowRepository.create(flow));
     }

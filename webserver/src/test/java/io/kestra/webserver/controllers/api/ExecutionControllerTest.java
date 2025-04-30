@@ -281,18 +281,6 @@ class ExecutionControllerTest {
         assertThat((result.getTasks().getFirst() instanceof TaskForExecution)).isEqualTo(true);
     }
 
-    @Test
-    void getExecutionFlowForExecutionWithOldUrl() {
-        FlowForExecution result = client.toBlocking().retrieve(
-            GET("/api/v1/executions/flows/io.kestra.tests/full"),
-            FlowForExecution.class
-        );
-
-        assertThat(result).isNotNull();
-        assertThat(result.getTasks()).hasSize(5);
-        assertThat((result.getTasks().getFirst() instanceof TaskForExecution)).isTrue();
-    }
-
     @SuppressWarnings("DataFlowIssue")
     @Test
     void getExecutionFlowForExecutionById() {

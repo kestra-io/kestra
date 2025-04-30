@@ -31,8 +31,10 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.http.client.multipart.MultipartBody;
 import io.micronaut.http.hateoas.JsonError;
+import io.micronaut.http.uri.UriBuilder;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
+import java.net.URI;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,6 +52,7 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.zip.ZipFile;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.micronaut.http.HttpRequest.*;
 import static io.micronaut.http.HttpStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -687,7 +690,7 @@ class FlowControllerTest {
 
         HttpResponse<BulkResponse> response = client
             .toBlocking()
-            .exchange(DELETE("/api/v1/flows/delete/by-ids", ids), BulkResponse.class);
+            .exchange(DELETE(uri), BulkResponse.class);
 
         assertThat(response.getBody().get().getCount()).isEqualTo(3);
 
@@ -760,7 +763,7 @@ class FlowControllerTest {
         URL resource = TestsUtils.class.getClassLoader().getResource("flows/warningsAndInfos.yaml");
         String source = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
 
-        jdbcFlowRepository.create(GenericFlow.fromYaml(null, source));
+        jdbcFlowRepository.create(GenericFlow.fromYaml(MAIN_TENANT, source));
 
         HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/main/flows/validate", source).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
 

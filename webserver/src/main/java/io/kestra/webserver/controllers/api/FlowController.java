@@ -542,7 +542,7 @@ public class FlowController {
     ) throws ConstraintViolationException {
         List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
         List<GenericFlow> genericFlows = sources.stream()
-            .map(source -> GenericFlow.fromYaml(null, source))
+            .map(source -> GenericFlow.fromYaml(tenantService.resolveTenant(), source))
             .toList();
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, allowNamespaceChild);
     }

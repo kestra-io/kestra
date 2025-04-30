@@ -28,7 +28,7 @@
                 :navbar="false"
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-test-id="`input-form-${input.id}`"
-                v-model="selTrigger[input.id]"
+                v-model="selectedTriggerLocal[input.id]"
                 @update:model-value="onChange(input)"
                 :allow-create="input.allowCustomValue"
                 filterable
@@ -268,6 +268,7 @@
     import ValidationError from "../flows/ValidationError.vue";
 </script>
 <script>
+    import {toRaw} from "vue";
     import {mapState} from "vuex";
     import debounce from "lodash/debounce";
     import Editor from "../../components/inputs/Editor.vue";
@@ -275,7 +276,6 @@
     import Inputs from "../../utils/inputs";
     import DurationPicker from "./DurationPicker.vue";
     import {inputsToFormDate} from "../../utils/submitTask"
-    import {toRaw} from "vue";
 
     import DeleteOutline from "vue-material-design-icons/DeleteOutline.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
@@ -337,7 +337,7 @@
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
                 debouncedValidation: () => {},
-                selTrigger: toRaw(this.selectedTrigger.inputs)
+                selectedTriggerLocal: toRaw(this.selectedTrigger.inputs),
                 editingArrayId: null,
                 editableItems: {},
             };

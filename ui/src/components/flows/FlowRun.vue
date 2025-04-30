@@ -93,7 +93,7 @@
             },
             selectedTrigger:{
                 type: Object,
-                default: null
+                default: undefined
             }
         },
         data() {

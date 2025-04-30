@@ -66,6 +66,7 @@
 <style lang="scss">
 .user-select  {
     &.el-select-dropdown {
+        width: 328px;
         background: var(--ks-select-background);
         box-shadow: 2px 3px 3px var(--ks-card-shadow);
         border-radius: var(--bs-border-radius);
@@ -73,12 +74,11 @@
         margin-bottom: -2px;
 
         .el-select-dropdown__item {
-            min-width: 280px;
             min-height: 34px;
             height: fit-content;
-            padding: 8px 16px;
+            padding: 10px 16px 8px 16px;
             margin: 8px;
-            font-size: 1rem;
+            font-size: 14px;
             font-weight: 700;
 
             .menu-icon {

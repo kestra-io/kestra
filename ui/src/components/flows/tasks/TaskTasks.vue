@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="tasks-wrapper">
         <Collapse
             title="tasks"
             :elements="items"
@@ -17,8 +17,10 @@
 
     interface Task {id:string, type:string}
 
+    const emits = defineEmits<{
+        (e: "update:modelValue", tasks: Task[]): void
+    }>();
 
-    const emits = defineEmits(["update:modelValue"]);
     const props = withDefaults(defineProps<{
         modelValue?: Task[]
     }>(), {
@@ -57,6 +59,10 @@
 
 <style scoped lang="scss">
 @import "../../code/styles/code.scss";
+
+.tasks-wrapper {
+    width: 100%;
+}
 
 .disabled {
     opacity: 0.5;

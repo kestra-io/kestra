@@ -2,6 +2,7 @@
     <NoCode
         :flow="lastValidFlowYaml"
         save-mode="auto"
+        :parent-task-id="parentTaskId"
         :section
         :creating-task="Boolean(createIndex)"
         :position
@@ -10,7 +11,7 @@
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => handleReorder(yaml)"
         @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
-        @create-task="(section) => emit('createTask', section)"
+        @create-task="(section, parent) => emit('createTask', section, parent)"
         @close-task="() => emit('closeTask')"
         @edit-task="(section, taskId) => emit('editTask', section, taskId)"
     />
@@ -26,6 +27,7 @@
 
     export interface NoCodeProps {
         createIndex?: number;
+        parentTaskId?: string;
         section?: string;
         taskId?: string;
         position?: "before" | "after";
@@ -34,7 +36,7 @@
     const props = defineProps<NoCodeProps>();
 
     const emit = defineEmits<{
-        (e: "createTask", section: string): boolean | void;
+        (e: "createTask", section: string, parentTaskId?:string): boolean | void;
         (e: "editTask", section: string, taskId: string): boolean | void;
         (e: "updateTaskId", newTaskId: string): boolean | void;
         (e: "closeTask"): boolean | void;

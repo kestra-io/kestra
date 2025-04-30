@@ -1,4 +1,5 @@
 import type {ComputedRef, InjectionKey, Ref} from "vue"
+import {Breadcrumb} from "./utils/types"
 
 /**
  * Complete flow YAML string for the no-code
@@ -51,9 +52,14 @@ export const TASK_CREATION_INDEX_INJECTION_KEY = Symbol("task-creation-index-inj
 /**
  * Breadcrumbs for the no-code panel
  */
-export const BREADCRUMB_INJECTION_KEY = Symbol("breadcrumb-injection-key") as InjectionKey<Ref<{label:string, to?:any, component?: any}[]>>
+export const BREADCRUMB_INJECTION_KEY = Symbol("breadcrumb-injection-key") as InjectionKey<Ref<Breadcrumb[]>>
 /**
  * Set this to override the contents of the no-code editor with a component of your choice
  * This is used to display the metadata edition inputs
  */
 export const PANEL_INJECTION_KEY = Symbol("panel-injection-key") as InjectionKey<Ref<any>>
+/**
+ * When creating a subtask, this is the parent task ID
+ * undefined when creating a task at the root level
+ */
+export const PARENT_TASKID_INJECTION_KEY = Symbol("parent-taskid-injection-key") as InjectionKey<Ref<string | undefined>>

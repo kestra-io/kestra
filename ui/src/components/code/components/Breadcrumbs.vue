@@ -25,7 +25,11 @@
     const store = useStore();
 
     import {useI18n} from "vue-i18n";
-    import {BREADCRUMB_INJECTION_KEY, CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY, PANEL_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
+    import {
+        BREADCRUMB_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
+        FLOW_INJECTION_KEY, PANEL_INJECTION_KEY,
+        SECTION_INJECTION_KEY, TASKID_INJECTION_KEY
+    } from "../injectionKeys";
     const {t} = useI18n({useScope: "global"});
 
     const breadcrumbs = inject(BREADCRUMB_INJECTION_KEY, ref([]));

@@ -37,7 +37,7 @@
     import {SECTIONS} from "../../../utils/constants";
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
-        FLOW_INJECTION_KEY, POSITION_INJECTION_KEY,
+        FLOW_INJECTION_KEY, PARENT_TASKID_INJECTION_KEY, POSITION_INJECTION_KEY,
         SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY,
         TASK_CREATION_INDEX_INJECTION_KEY, TASKID_INJECTION_KEY
     } from "../injectionKeys";
@@ -52,6 +52,7 @@
     const section = inject(SECTION_INJECTION_KEY, ref("tasks"));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
     const position = inject(POSITION_INJECTION_KEY, "after");
+    const parentTaskId = inject(PARENT_TASKID_INJECTION_KEY, ref());
     const taskCreationIndex = inject(
         TASK_CREATION_INDEX_INJECTION_KEY,
         ref(0),
@@ -202,9 +203,11 @@
 
                     result = YAML_UTILS.insertTask(
                         result,
-                        taskId.value.length ? taskId.value : YAML_UTILS.getLastTask(flowBeforeAdd.value) ?? "", // target task id (the one before of after the task will be inserted)
+                        // target task id (the one before of after the task will be inserted)
+                        taskId.value.length ? taskId.value : YAML_UTILS.getLastTask(flowBeforeAdd.value, parentTaskId.value) ?? "",
                         task,
                         position,
+                        parentTaskId.value,
                     );
                 } else if (currentSection && SECTIONS_MAP[currentSection.toString()] && task?.length) {
                     result = YAML_UTILS.insertSection(

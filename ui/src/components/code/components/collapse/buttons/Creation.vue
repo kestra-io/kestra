@@ -12,7 +12,11 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps({section: {type: String, required: true}});
+    const props = defineProps({
+        section: {
+            type: String,
+            required: true
+        }});
 
     const createTask = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {});
 

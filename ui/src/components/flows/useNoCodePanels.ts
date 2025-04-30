@@ -14,7 +14,7 @@ interface Opener{
 }
 
 interface Handlers{
-    onCreateTask: (opener: Opener, section: string) => boolean,
+    onCreateTask: (opener: Opener, section: string, parentTaskId?: string) => boolean,
     onEditTask: (opener: Opener, section: string, taskId: string) => boolean
     onCloseTask: (opener: Opener) => boolean
 }
@@ -48,6 +48,7 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string
     return {
         ...preTab,
         component: markRaw({
+            name: "NoCodeTab",
             props: ["panelIndex", "tabIndex"],
             setup:(props: Opener) => () => h(NoCodeWrapper, {
                 ...tab,
@@ -65,7 +66,6 @@ export function setupInitialNoCodeTabIfExists(flow: string, tab: string, t: (key
         const section = taskInfoPath.split("-").slice(1).shift() ?? ""
         const taskId = taskInfoPath.substring(section.length + 6)
         // check if the task exists in the flow
-        console.log("setupInitialNoCodeTabIfExists", taskId, section)
         if(!YAML_UTILS.extractTask(flow, taskId)){
             // if the task is not found, we don't create the tab
             return undefined
@@ -114,6 +114,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers:Handlers) {
             tabIndex: number
         },
         section: string,
+        parentTaskId?: string,
         position: "before" | "after" = "after"
     ) {
         // find all nocode task creating tabs for this section
@@ -130,6 +131,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers:Handlers) {
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab({
             section,
+            parentTaskId,
             position,
             createIndex
         }, t, handlers)

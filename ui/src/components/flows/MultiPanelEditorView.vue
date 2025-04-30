@@ -68,16 +68,16 @@
 
 
     const noCodeHandlers: Parameters<typeof setupInitialNoCodeTab>[2] = {
-        onCreateTask(opener, section){
-            openAddTaskTab(opener, section)
+        onCreateTask(...args){
+            openAddTaskTab(...args)
             return false
         },
-        onEditTask(opener, section, taskId){
-            openEditTaskTab(opener, section, taskId)
+        onEditTask(...args){
+            openEditTaskTab(...args)
             return false
         },
-        onCloseTask(opener){
-            closeTaskTab(opener)
+        onCloseTask(...args){
+            closeTaskTab(...args)
             return false
         },
     }

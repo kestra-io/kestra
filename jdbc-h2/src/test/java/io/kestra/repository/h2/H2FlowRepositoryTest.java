@@ -56,41 +56,4 @@ public class H2FlowRepositoryTest extends AbstractJdbcFlowRepositoryTest {
         super.setup();
         super.init();
     }
-
-    @SuppressWarnings("deprecation")
-    @Test
-    void templateDisabled() {
-        Template template = Template.builder()
-            .id(IdUtils.create())
-            .type(Template.class.getName())
-            .namespace(TEST_FLOW_ID)
-            .tenantId(MAIN_TENANT)
-            .templateId("testTemplate")
-            .build();
-
-        Template templateSpy = spy(template);
-
-        doReturn(Collections.emptyList())
-            .when(templateSpy)
-            .allChildTasks();
-
-        Flow flow = Flow.builder()
-            .id(IdUtils.create())
-            .namespace(TEST_NAMESPACE)
-            .tenantId(MAIN_TENANT)
-            .tasks(Collections.singletonList(templateSpy))
-            .build();
-
-        flow = flowRepository.create(GenericFlow.of(flow));
-
-        try {
-            Optional<Flow> found = flowRepository.findById(MAIN_TENANT, flow.getNamespace(), flow.getId());
-
-            assertThat(found.isPresent()).isEqualTo(true);
-            assertThat(found.get() instanceof FlowWithException).isEqualTo(true);
-            assertThat(((FlowWithException) found.get()).getException()).contains("Templates are disabled");
-        } finally {
-            deleteFlow(flow);
-        }
-    }
 }

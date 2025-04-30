@@ -1,5 +1,9 @@
+import {ref} from "vue";
 import BarChart from "../../../../../../src/components/dashboard/components/charts/executions/BarChart.vue";
 import {vueRouter} from "storybook-vue3-router";
+import {within, expect, fireEvent, waitFor} from "@storybook/test";
+
+const hasNavigated = ref("");
 
 export default {
     title: "Dashboard/Charts/Executions/BarChart",
@@ -9,8 +13,16 @@ export default {
             path: "/",
             name: "home",
             component: {template: "<div>home</div>"}
-        }
-    ])],
+        },
+        {
+            path: "/executions",
+            name: "executions/list",
+            component: {template: "<div>executions</div>"},
+            beforeEnter: (to) => {
+                hasNavigated.value = to.name;
+            }
+        }])
+    ],
     parameters: {
         layout: "centered",
     },
@@ -47,6 +59,7 @@ const generateSampleData = (days) => {
 // Template for all stories
 const Template = (args) => ({
     setup() {
+        hasNavigated.value = "";
         return () => {
             return <div style="width: 200px;">
                 <BarChart small duration={false} scales={false} {...args} style="height:50px"/>
@@ -63,6 +76,19 @@ ThirtyDays.args = {
     plugins: [],
     data: generateSampleData(30),
     total: 1500,
+};
+ThirtyDays.play = async ({canvasElement}) => {
+    const canvas = within(canvasElement);
+    const chart = canvas.getByRole("img");
+    expect(chart).toBeInTheDocument();
+    const {top, left} = chart.getBoundingClientRect();
+    fireEvent.click(chart, {
+        clientX: left + 50,
+        clientY: top + 40,
+    })
+    waitFor(function checkHasNavigatedToExecutionsList(){
+        expect(hasNavigated.value, "we should have navigated to executions list").toBe("executions/list");
+    });
 };
 
 // Story with no data

@@ -29,16 +29,17 @@
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../../../utils/charts.js";
     import {totalsDurationLegend, totalsLegend} from "../legend.js";
 
     import moment from "moment";
 
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {useStore} from "vuex";
     import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
 
     const route = useRoute();
+    const router = useRouter();
 
     const store = useStore();
 
@@ -79,6 +80,9 @@
                         },
                     }
                 },
+            },
+            onClick: (e, elements) => {
+                chartClick(moment, router, route, {}, parsedData.value, elements, "dataset");
             },
         }, theme.value);
     });
@@ -218,4 +222,3 @@
         max-height: $height;
     }
 </style>
-ss

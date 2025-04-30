@@ -59,7 +59,7 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/search")
     @Operation(tags = {"Logs"}, summary = "Search for logs")
-    public PagedResults<LogEntry> find(
+    public PagedResults<LogEntry> searchLogs(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
@@ -88,10 +88,9 @@ public class LogController {
                 null,
                 null,
                 null,
+                null,
                 null);
         }
-        final ZonedDateTime now = ZonedDateTime.now();
-
         TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
         validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
 
@@ -109,7 +108,7 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/{executionId}")
     @Operation(tags = {"Logs"}, summary = "Get logs for a specific execution, taskrun or task")
-    public List<LogEntry> findByExecution(
+    public List<LogEntry> listLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
@@ -130,7 +129,7 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/{executionId}/download", produces = MediaType.TEXT_PLAIN)
     @Operation(tags = {"Logs"}, summary = "Download logs for a specific execution, taskrun or task")
-    public StreamedFile download(
+    public StreamedFile downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
@@ -152,7 +151,7 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "logs/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = {"Logs"}, summary = "Follow logs for a specific execution")
-    public Flux<Event<LogEntry>> follow(
+    public Flux<Event<LogEntry>> followLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel
     ) {
@@ -176,7 +175,7 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "logs/{executionId}")
     @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
-    public void delete(
+    public void deleteLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
         @Parameter(description = "The min log level filter") @Nullable @QueryValue Level minLevel,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
@@ -189,7 +188,7 @@ public class LogController {
     @ExecuteOn(TaskExecutors.IO)
     @Delete(uri = "logs/{namespace}/{flowId}")
     @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
-    public void deleteFromFlow(
+    public void deleteLogsFromFlow(
         @Parameter(description = "The namespace") @PathVariable String namespace,
         @Parameter(description = "The flow identifier") @PathVariable String flowId,
         @Parameter(description = "The trigger id") @Nullable @QueryValue String triggerId

@@ -5,9 +5,8 @@
             :key="index"
             :name="item.title"
             :title="`${item.title}${item.elements ? ` (${item.elements.length})` : ''}`"
-            :class="{creation: props.creation}"
         >
-            <template v-if="creation" #icon>
+            <template #icon>
                 <Creation :section="item.title" />
             </template>
 
@@ -32,7 +31,7 @@
 </template>
 
 <script setup lang="ts">
-    import {nextTick, PropType, ref} from "vue";
+    import {inject, nextTick, PropType, ref} from "vue";
 
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
@@ -40,24 +39,25 @@
 
     import Creation from "./buttons/Creation.vue";
     import Element from "./Element.vue";
+    import {FLOW_INJECTION_KEY} from "../../injectionKeys";
 
     const emits = defineEmits(["remove", "reorder"]);
+
+    const flow = inject(FLOW_INJECTION_KEY, ref(""));
 
     const props = defineProps({
         items: {
             type: Array as PropType<CollapseItem[]>,
             required: true,
-        },
-        flow: {type: String, default: undefined},
-        creation: {type: Boolean, default: false},
+        }
     });
     const expanded = ref<CollapseItem["title"][]>([]);
 
-    if (props.creation) {
-        props.items.forEach((item) => {
-            if (item.elements?.length) expanded.value.push(item.title);
-        });
-    }
+
+    props.items.forEach((item) => {
+        if (item.elements?.length) expanded.value.push(item.title);
+    });
+
 
     const removeElement = (title: string, index: number) => {
         props.items.forEach((item) => {
@@ -66,10 +66,12 @@
                     const ID = item.elements?.[index].id;
 
                     item.elements?.splice(index, 1);
-                    emits(
-                        "remove",
-                        YAML_UTILS.deleteTask(props.flow, ID, title.toUpperCase()),
-                    );
+                    if(ID){
+                        emits(
+                            "remove",
+                            YAML_UTILS.deleteTask(flow.value, ID, title.toUpperCase()),
+                        );
+                    }
                     expanded.value = expanded.value.filter((v) => v !== title);
                 });
             }
@@ -82,7 +84,7 @@
         index: number,
         direction: "up" | "down",
     ) => {
-        if (!items || !props.flow) return;
+        if (!items || !flow) return;
         if (
             (direction === "up" && index === 0) ||
             (direction === "down" && index === items.length - 1)
@@ -92,7 +94,7 @@
         const newIndex = direction === "up" ? index - 1 : index + 1;
         emits(
             "reorder",
-            YAML_UTILS.swapTasks(props.flow, elementID, items[newIndex].id),
+            YAML_UTILS.swapTasks(flow.value, elementID, items[newIndex].id),
         );
     };
 </script>

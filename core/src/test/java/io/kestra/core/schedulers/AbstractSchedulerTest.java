@@ -59,7 +59,7 @@ abstract public class AbstractSchedulerTest {
             .workerGroup(workerGroup == null ? null : new WorkerGroup(workerGroup, null))
             .build();
 
-        return createFlow(Collections.singletonList(schedule), List.of(
+        return createFlow(null, Collections.singletonList(schedule), List.of(
             PluginDefault.builder()
                 .type(UnitTest.class.getName())
                 .values(Map.of("defaultInjected", "done"))
@@ -67,13 +67,23 @@ abstract public class AbstractSchedulerTest {
         ));
     }
 
+    /**
+     * @deprecated try to use {@link AbstractSchedulerTest#createFlow(String, List)} with 'tenantId' instead to be
+     * extra sure these tests do not share resources
+     */
+    @Deprecated
     protected static FlowWithSource createFlow(List<AbstractTrigger> triggers) {
-        return createFlow(triggers, null);
+        return createFlow(null, triggers);
     }
 
-    protected static FlowWithSource createFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
+    protected static FlowWithSource createFlow(String tenantId, List<AbstractTrigger> triggers) {
+        return createFlow(tenantId, triggers, null);
+    }
+
+    protected static FlowWithSource createFlow(String tenantId, List<AbstractTrigger> triggers, List<PluginDefault> list) {
         FlowWithSource.FlowWithSourceBuilder<?, ?> builder = FlowWithSource.builder()
             .id(IdUtils.create())
+            .tenantId(tenantId)
             .namespace("io.kestra.unittest")
             .inputs(List.of(
                 StringInput.builder()
@@ -111,8 +121,8 @@ abstract public class AbstractSchedulerTest {
         return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
     }
 
-    protected static FlowWithSource createLongRunningFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
-        return createFlow(triggers, list)
+    protected static FlowWithSource createLongRunningFlow(String tenantId, List<AbstractTrigger> triggers, List<PluginDefault> list) {
+        return createFlow(tenantId, triggers, list)
             .toBuilder()
             .tasks(
                 Collections.singletonList(
@@ -161,6 +171,7 @@ abstract public class AbstractSchedulerTest {
             } else {
                 Execution execution = Execution.builder()
                     .id(IdUtils.create())
+                    .tenantId(context.getTenantId())
                     .namespace(context.getNamespace())
                     .flowId(context.getFlowId())
                     .flowRevision(conditionContext.getFlow().getRevision())

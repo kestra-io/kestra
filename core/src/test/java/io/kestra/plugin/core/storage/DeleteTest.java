@@ -43,10 +43,10 @@ class DeleteTest {
             .build();
 
         Delete.Output run = bash.run(runContext);
-        assertThat(run.getDeleted()).isEqualTo(true);
+        assertThat(run.getDeleted()).isTrue();
 
         run = bash.run(runContext);
-        assertThat(run.getDeleted()).isEqualTo(false);
+        assertThat(run.getDeleted()).isFalse();
 
         assertThrows(NoSuchElementException.class, () -> {
             Delete error = Delete.builder()

@@ -69,6 +69,6 @@ class ToggleTest {
         assertThat(countDownLatch.getCount()).isEqualTo(0L);
         Trigger lastTrigger = receive.blockLast();
         assertThat(lastTrigger).isNotNull();
-        assertThat(lastTrigger.getDisabled()).isEqualTo(false);
+        assertThat(lastTrigger.getDisabled()).isFalse();
     }
 }

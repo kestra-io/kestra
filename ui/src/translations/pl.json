@@ -130,6 +130,9 @@
     "close sidebar": "zamknij pasek boczny",
     "collapse": "Zwiń",
     "collapse all": "Zwiń wszystko",
+    "common": {
+      "back": "Wstecz"
+    },
     "concurrency": "Współbieżność",
     "conditions": "warunki",
     "configure basic auth": "Skonfiguruj podstawowe uwierzytelnianie",
@@ -513,11 +516,13 @@
         "contains": "zawiera",
         "ends_with": "kończy się na",
         "greater_than": "większe niż",
+        "greater_than_or_equal_to": "większe lub równe",
         "in": "w",
         "is": "jest",
         "is_not": "nie jest",
         "is_one_of": "jest jednym z",
         "less_than": "mniej niż",
+        "less_than_or_equal_to": "mniejsze lub równe",
         "not_contains": "nie zawiera",
         "not_in": "nie w",
         "starts_with": "zaczyna się od"
@@ -531,6 +536,7 @@
         "aggregation": "Agregacja",
         "child": "Dziecko",
         "details": "Szczegóły",
+        "endDate": "Data zakończenia",
         "flow": "Flow",
         "labels": "Etykiety",
         "level": "Poziom logowania",
@@ -540,6 +546,7 @@
         "relative_date": "Data względna",
         "scope": "Zakres",
         "service_type": "Typ",
+        "startDate": "Data rozpoczęcia",
         "state": "Stan",
         "status": "Status",
         "task": "Zadanie",
@@ -576,6 +583,7 @@
     "flow export": "Czy na pewno chcesz wyeksportować <code>{flowCount}</code> flow(s)?",
     "flow must have id and namespace": "Flow musi mieć id i namespace.",
     "flow not imported": "Niektóre flow nie mogły zostać zaimportowane",
+    "flow source not found": "Źródło flow nie znalezione",
     "flow-dependencies": "zależności",
     "flow-no-dependencies": "Twój flow nie ma żadnych zależności",
     "flow_only": "Dostępne tylko na zakładce Flow.",
@@ -795,6 +803,14 @@
     "no_code": {
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
+      "close": {
+        "after execution": "Zamknij task",
+        "error handlers": "Zamknij obsługę błędów",
+        "finally": "Zamknij task",
+        "input": "Zamknij input",
+        "tasks": "Zamknij task",
+        "triggers": "Zamknij trigger"
+      },
       "creation": {
         "after execution": "Dodaj blok po wykonaniu",
         "error handlers": "Dodaj obsługę błędów",
@@ -849,6 +865,7 @@
     "no_logs_data": "Brak danych",
     "no_logs_data_description": "Albo żadne flow nie są uruchomione, albo musisz dostosować swoje filtry.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
+    "no_results_found": "Nie znaleziono wyników",
     "no_tasks_running": "Jeszcze nie ma uruchomionych tasków.",
     "now": "Teraz",
     "of": "z",
@@ -1025,6 +1042,8 @@
       "saved": "Zapisane filtry"
     },
     "search term in message": "Wyszukaj termin w wiadomości",
+    "search_docs": "Szukaj",
+    "searching": "Szukanie...",
     "seconds": "Sekundy",
     "secret": {
       "add": "Nowy sekret",
@@ -1192,6 +1211,7 @@
     },
     "trigger": "Trigger",
     "trigger details": "Szczegóły trigger",
+    "trigger disabled": "Trigger jest wyłączony w źródle Flow",
     "trigger execution id": "Trigger Execution Id",
     "trigger filter": {
       "options": {
@@ -1276,6 +1296,7 @@
     "worker group": "Grupa Worker",
     "worker group fallback": "Grupa Workerów awaryjna",
     "worker group key": "Klucz grupy Worker",
+    "worker information": "Informacje o Workerze",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Pusta wartość lub key nie jest dozwolona w etykietach",

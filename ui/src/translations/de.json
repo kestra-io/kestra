@@ -130,6 +130,9 @@
     "close sidebar": "Seitenleiste schließen",
     "collapse": "Einklappen",
     "collapse all": "Alle einklappen",
+    "common": {
+      "back": "Zurück"
+    },
     "concurrency": "Nebenläufigkeit",
     "conditions": "Bedingungen",
     "configure basic auth": "Basis-Authentifizierung konfigurieren",
@@ -513,11 +516,13 @@
         "contains": "enthält",
         "ends_with": "endet mit",
         "greater_than": "größer als",
+        "greater_than_or_equal_to": "größer als oder gleich",
         "in": "im",
         "is": "ist",
         "is_not": "ist nicht",
         "is_one_of": "ist eine von",
         "less_than": "weniger als",
+        "less_than_or_equal_to": "kleiner oder gleich",
         "not_contains": "nicht enthält",
         "not_in": "nicht in",
         "starts_with": "beginnt mit"
@@ -531,6 +536,7 @@
         "aggregation": "Aggregation",
         "child": "Kind",
         "details": "Details",
+        "endDate": "Enddatum",
         "flow": "Flow",
         "labels": "Labels",
         "level": "Log-Ebene",
@@ -540,6 +546,7 @@
         "relative_date": "Relatives Datum",
         "scope": "Umfang",
         "service_type": "Typ",
+        "startDate": "Startdatum",
         "state": "Zustand",
         "status": "Status",
         "task": "Aufgabe",
@@ -576,6 +583,7 @@
     "flow export": "Sind Sie sicher, dass Sie <code>{flowCount}</code> Flow(s) exportieren möchten?",
     "flow must have id and namespace": "Flow muss eine Id und einen Namespace haben.",
     "flow not imported": "Einige Flows konnten nicht importiert werden",
+    "flow source not found": "Flow-Quelle nicht gefunden",
     "flow-dependencies": "Abhängigkeiten",
     "flow-no-dependencies": "Ihr Flow hat keine Abhängigkeiten.",
     "flow_only": "Nur auf der Flow-Registerkarte verfügbar.",
@@ -795,6 +803,14 @@
     "no_code": {
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",
+      "close": {
+        "after execution": "Task schließen",
+        "error handlers": "Fehlerbehandler schließen",
+        "finally": "Task schließen",
+        "input": "Eingabe schließen",
+        "tasks": "Task schließen",
+        "triggers": "Trigger schließen"
+      },
       "creation": {
         "after execution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
@@ -849,6 +865,7 @@
     "no_logs_data": "Keine Daten",
     "no_logs_data_description": "Entweder laufen keine Flows, oder Sie müssen Ihre Filter anpassen.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
+    "no_results_found": "Keine Ergebnisse gefunden",
     "no_tasks_running": "Noch keine Tasks laufen.",
     "now": "Jetzt",
     "of": "von",
@@ -1025,6 +1042,8 @@
       "saved": "Gespeicherte Filter"
     },
     "search term in message": "Suchbegriff in Nachricht",
+    "search_docs": "Suche",
+    "searching": "Suche läuft...",
     "seconds": "Sekunden",
     "secret": {
       "add": "Neues Geheimnis",
@@ -1192,6 +1211,7 @@
     },
     "trigger": "Trigger",
     "trigger details": "Trigger-Details",
+    "trigger disabled": "Trigger ist in der Flow-Quelle deaktiviert",
     "trigger execution id": "Trigger-Ausführungs-Id",
     "trigger filter": {
       "options": {
@@ -1276,6 +1296,7 @@
     "worker group": "Worker-Gruppe",
     "worker group fallback": "Arbeitsgruppe Fallback",
     "worker group key": "Worker-Gruppe Schlüssel",
+    "worker information": "Worker-Informationen",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt",

@@ -130,6 +130,9 @@
     "close sidebar": "サイドバーを閉じる",
     "collapse": "折りたたむ",
     "collapse all": "すべて折りたたむ",
+    "common": {
+      "back": "戻る"
+    },
     "concurrency": "並行性",
     "conditions": "条件",
     "configure basic auth": "基本認証を設定",
@@ -513,11 +516,13 @@
         "contains": "含む",
         "ends_with": "で終了します",
         "greater_than": "より大きい",
+        "greater_than_or_equal_to": "以上",
         "in": "内",
         "is": "です",
         "is_not": "ではありません",
         "is_one_of": "のいずれか",
         "less_than": "未満",
+        "less_than_or_equal_to": "以下以下",
         "not_contains": "含まれていない",
         "not_in": "にない",
         "starts_with": "で始まる"
@@ -531,6 +536,7 @@
         "aggregation": "集計",
         "child": "子",
         "details": "詳細",
+        "endDate": "終了日",
         "flow": "フロー",
         "labels": "ラベル",
         "level": "ログレベル",
@@ -540,6 +546,7 @@
         "relative_date": "相対日付",
         "scope": "スコープ",
         "service_type": "タイプ",
+        "startDate": "開始日",
         "state": "状態",
         "status": "ステータス",
         "task": "タスク",
@@ -576,6 +583,7 @@
     "flow export": "<code>{flowCount}</code>件のflowをエクスポートしてもよろしいですか？",
     "flow must have id and namespace": "Flowにはidとnamespaceが必要です。",
     "flow not imported": "一部のflowをインポートできませんでした",
+    "flow source not found": "フローソースが見つかりません",
     "flow-dependencies": "依存関係",
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
     "flow_only": "Flowタブでのみ利用可能です。",
@@ -795,6 +803,14 @@
     "no_code": {
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
+      "close": {
+        "after execution": "タスクを閉じる",
+        "error handlers": "エラーハンドラーを閉じる",
+        "finally": "タスクを閉じる",
+        "input": "入力を閉じる",
+        "tasks": "タスクを閉じる",
+        "triggers": "トリガーを閉じる"
+      },
       "creation": {
         "after execution": "実行後ブロックを追加",
         "error handlers": "エラーハンドラーを追加",
@@ -849,6 +865,7 @@
     "no_logs_data": "データなし",
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
+    "no_results_found": "結果が見つかりません",
     "no_tasks_running": "タスクはまだ実行されていません。",
     "now": "現在",
     "of": "の",
@@ -1025,6 +1042,8 @@
       "saved": "保存されたフィルター"
     },
     "search term in message": "メッセージ内の検索語",
+    "search_docs": "検索",
+    "searching": "検索中...",
     "seconds": "秒",
     "secret": {
       "add": "新しいシークレット",
@@ -1192,6 +1211,7 @@
     },
     "trigger": "Trigger",
     "trigger details": "Triggerの詳細",
+    "trigger disabled": "Flowソース内でTriggerが無効になっています",
     "trigger execution id": "Trigger Execution Id",
     "trigger filter": {
       "options": {
@@ -1276,6 +1296,7 @@
     "worker group": "Workerグループ",
     "worker group fallback": "ワーカーグループフォールバック",
     "worker group key": "ワーカーグループキー",
+    "worker information": "ワーカー情報",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",

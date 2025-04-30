@@ -2,38 +2,41 @@ package io.kestra.core.models.tasks.runners;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
-import io.kestra.core.models.executions.AbstractMetricEntry;
+import io.kestra.core.models.tasks.runners.TaskLogLineMatcher.TaskLogMatch;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.services.FlowService;
 import jakarta.validation.constraints.NotNull;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
-import org.slf4j.event.Level;
-import org.slf4j.spi.LoggingEventBuilder;
 
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Instant;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
-import static io.kestra.core.runners.RunContextLogger.ORIGINAL_TIMESTAMP_KEY;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 abstract public class PluginUtilsService {
-    private static final ObjectMapper MAPPER = JacksonMapper.ofJson(false);
-    private static final Pattern PATTERN = Pattern.compile("^::(\\{.*})::$");
+
     private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
 
     public static Map<String, String> createOutputFiles(
@@ -52,12 +55,12 @@ abstract public class PluginUtilsService {
     ) throws IOException {
         List<String> outputs = new ArrayList<>();
 
-        if (outputFiles != null && outputFiles.size() > 0) {
+        if (outputFiles != null && !outputFiles.isEmpty()) {
             outputs.addAll(outputFiles);
         }
 
         Map<String, String> result = new HashMap<>();
-        if (outputs.size() > 0) {
+        if (!outputs.isEmpty()) {
             outputs
                 .forEach(throwConsumer(s -> {
                     PluginUtilsService.validFilename(s);
@@ -168,62 +171,25 @@ abstract public class PluginUtilsService {
     }
 
     public static Map<String, Object> parseOut(String line, Logger logger, RunContext runContext, boolean isStdErr, Instant customInstant) {
-        Matcher m = PATTERN.matcher(line);
+
+        TaskLogLineMatcher logLineMatcher = ((DefaultRunContext) runContext).getApplicationContext().getBean(TaskLogLineMatcher.class);
+
         Map<String, Object> outputs = new HashMap<>();
-
-        if (m.find()) {
-            try {
-                BashCommand<?> bashCommand = MAPPER.readValue(m.group(1), BashCommand.class);
-
-                if (bashCommand.getOutputs() != null) {
-                    outputs.putAll(bashCommand.getOutputs());
-                }
-
-                if (bashCommand.getMetrics() != null) {
-                    bashCommand.getMetrics().forEach(runContext::metric);
-                }
-
-                if (bashCommand.getLogs() != null) {
-                    bashCommand.getLogs().forEach(logLine -> {
-                        try {
-                            LoggingEventBuilder builder = runContext
-                                .logger()
-                                .atLevel(logLine.getLevel())
-                                .addKeyValue(ORIGINAL_TIMESTAMP_KEY, customInstant);
-                            builder.log(logLine.getMessage());
-                        } catch (Exception e) {
-                            logger.warn("Invalid log '{}'", m.group(1), e);
-                        }
-                    });
-                }
-            }
-            catch (JsonProcessingException e) {
-                logger.warn("Invalid outputs '{}'", e.getMessage(), e);
-            }
-        } else {
-            if (isStdErr) {
+        try {
+            Optional<TaskLogMatch> matches = logLineMatcher.matches(line, logger, runContext, customInstant);
+            if (matches.isPresent()) {
+                TaskLogMatch taskLogMatch = matches.get();
+                outputs.putAll(taskLogMatch.outputs());
+            } else if (isStdErr) {
                 runContext.logger().error(line);
             } else {
                 runContext.logger().info(line);
             }
+
+        } catch (IOException e) {
+            logger.warn("Invalid outputs '{}'", e.getMessage(), e);
         }
-
         return outputs;
-    }
-
-    @NoArgsConstructor
-    @Data
-    public static class BashCommand <T> {
-        private Map<String, Object> outputs;
-        private List<AbstractMetricEntry<T>> metrics;
-        private List<LogLine> logs;
-    }
-
-    @NoArgsConstructor
-    @Data
-    public static class LogLine {
-        private Level level;
-        private String message;
     }
 
     /**

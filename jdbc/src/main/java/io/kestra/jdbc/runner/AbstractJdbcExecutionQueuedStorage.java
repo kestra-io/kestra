@@ -2,6 +2,7 @@ package io.kestra.jdbc.runner;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.runners.ExecutionQueued;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
 import org.jooq.Field;
 import org.jooq.impl.DSL;
@@ -60,6 +61,25 @@ public abstract class AbstractJdbcExecutionQueuedStorage extends AbstractJdbcRep
                     .from(this.jdbcRepository.getTable());
 
                 return this.jdbcRepository.fetch(select);
+            });
+    }
+
+    public void remove(Execution execution) {
+        this.jdbcRepository
+            .getDslContextWrapper()
+            .transaction(configuration -> {
+                var select = DSL
+                    .using(configuration)
+                    .select(AbstractJdbcRepository.field("value"))
+                    .from(this.jdbcRepository.getTable())
+                    .where(buildTenantCondition(execution.getTenantId()))
+                    .and(field("key").eq(IdUtils.fromParts(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), execution.getId())))
+                    .forUpdate();
+
+                Optional<ExecutionQueued> maybeExecution = this.jdbcRepository.fetchOne(select);
+                if (maybeExecution.isPresent()) {
+                    this.jdbcRepository.delete(maybeExecution.get());
+                }
             });
     }
 }

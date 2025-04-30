@@ -35,20 +35,20 @@ public abstract class AbstractTriggerRepositoryTest {
         Trigger.TriggerBuilder<?, ?> builder = trigger();
 
         Optional<Trigger> findLast = triggerRepository.findLast(builder.build());
-        assertThat(findLast.isPresent()).isEqualTo(false);
+        assertThat(findLast.isPresent()).isFalse();
 
         Trigger save = triggerRepository.save(builder.build());
 
         findLast = triggerRepository.findLast(save);
 
-        assertThat(findLast.isPresent()).isEqualTo(true);
+        assertThat(findLast.isPresent()).isTrue();
         assertThat(findLast.get().getExecutionId()).isEqualTo(save.getExecutionId());
 
         save = triggerRepository.save(builder.executionId(IdUtils.create()).build());
 
         findLast = triggerRepository.findLast(save);
 
-        assertThat(findLast.isPresent()).isEqualTo(true);
+        assertThat(findLast.isPresent()).isTrue();
         assertThat(findLast.get().getExecutionId()).isEqualTo(save.getExecutionId());
 
 

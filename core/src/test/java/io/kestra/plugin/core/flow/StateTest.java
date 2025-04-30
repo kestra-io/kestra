@@ -42,7 +42,7 @@ class StateTest {
         execution = runnerUtils.runOne(null, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.findTaskRunsByTaskId("deleteGet").getFirst().getOutputs().get("count")).isEqualTo(0);
+        assertThat((Integer) execution.findTaskRunsByTaskId("deleteGet").getFirst().getOutputs().get("count")).isZero();
     }
 
     @SuppressWarnings("unchecked")

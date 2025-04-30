@@ -58,7 +58,7 @@ class ScheduleTest {
                 .build()
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(false);
+        assertThat(evaluate.isPresent()).isFalse();
     }
 
     private static TriggerContext triggerContext(ZonedDateTime date, Schedule schedule) {
@@ -99,7 +99,7 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getLabels()).hasSize(3);
         assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
 
@@ -133,7 +133,7 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getLabels()).hasSize(3);
         assertTrue(evaluate.get().getLabels().stream().anyMatch(label -> label.key().equals(Label.CORRELATION_ID)));
 
@@ -167,7 +167,7 @@ class ScheduleTest {
 
         Optional<Execution> evaluate = scheduleTrigger.evaluate(conditionContext, triggerContext);
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-1", "trigger-label-1"));
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-2", "trigger-label-2"));
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-3", ""));
@@ -189,7 +189,7 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
 
@@ -213,7 +213,7 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
 
@@ -239,7 +239,7 @@ class ScheduleTest {
         Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
 
         // Then
-        assertThat(result.isEmpty()).isEqualTo(true);
+        assertThat(result.isEmpty()).isTrue();
     }
 
     @Test
@@ -260,7 +260,7 @@ class ScheduleTest {
         Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
 
         // Then
-        assertThat(result.isPresent()).isEqualTo(true);
+        assertThat(result.isPresent()).isTrue();
     }
 
     @Test
@@ -301,7 +301,7 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
         assertThat(dateFromVars(vars.get("date"), expexted)).isEqualTo(expexted);
@@ -336,7 +336,7 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
         assertThat(dateFromVars(vars.get("date"), date)).isEqualTo(date);
@@ -369,12 +369,12 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
         assertThat(dateFromVars(vars.get("date"), date)).isEqualTo(date);
         assertThat(dateFromVars(vars.get("previous"), previous)).isEqualTo(previous);
-        assertThat(vars.containsKey("next")).isEqualTo(false);
+        assertThat(vars.containsKey("next")).isFalse();
     }
 
     @Test
@@ -421,7 +421,7 @@ class ScheduleTest {
                 .build()
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
         assertThat(dateFromVars(vars.get("date"), date)).isEqualTo(date);
     }
@@ -447,7 +447,7 @@ class ScheduleTest {
             triggerContext(date, trigger)
         );
 
-        assertThat(evaluate.isPresent()).isEqualTo(true);
+        assertThat(evaluate.isPresent()).isTrue();
 
         var vars = (Map<String, String>) evaluate.get().getVariables().get("schedule");
 
@@ -477,7 +477,7 @@ class ScheduleTest {
         Optional<Execution> result = trigger.evaluate(conditionContext(trigger), triggerContext);
 
         // Then
-        assertThat(result.isPresent()).isEqualTo(true);
+        assertThat(result.isPresent()).isTrue();
     }
 
 

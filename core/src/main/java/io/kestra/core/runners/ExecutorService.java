@@ -15,7 +15,10 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.*;
+import io.kestra.core.test.flow.TaskFixture;
+import io.kestra.core.storages.StorageContext;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
+import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.Pause;
@@ -39,6 +42,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
@@ -78,6 +82,9 @@ public class ExecutorService {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
+
+    @Inject
+    private VariablesService variablesService;
 
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
@@ -253,10 +260,11 @@ public class ExecutorService {
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
                     try {
                         Output outputs = flowableParent.outputs(runContext);
+                        Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputs);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
-                            .withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of()))
-                        );
+                            .withOutputs(variables)
+                        ));
                     } catch (Exception e) {
                         runContext.logger().error("Unable to resolve outputs from the Flowable task: {}", e.getMessage(), e);
                     }
@@ -353,7 +361,8 @@ public class ExecutorService {
 
                 try {
                     Output outputs = flowableTask.outputs(runContext);
-                    taskRun = taskRun.withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of());
+                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
+                    taskRun = taskRun.withOutputs(variables);
                 } catch (Exception e) {
                     runContext.logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
                 }
@@ -464,6 +473,7 @@ public class ExecutorService {
 
         List<WorkerTaskResult> list = new ArrayList<>();
         List<ExecutionDelay> executionDelays = new ArrayList<>();
+        List<WorkerTask> onPauses = new ArrayList<>();
 
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             if (taskRun.getState().isRunning()) {
@@ -531,15 +541,15 @@ public class ExecutorService {
                     // Prevent workerTaskResult of flowable to be sent
                     // because one of its children is retrying
                     if (taskRun.getParentTaskRunId() != null) {
-                        list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId())).toList();
+                        list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId()))
+                            .collect(Collectors.toCollection(ArrayList::new));
                     }
                 }
-            }
-            // WaitFor case
-            else if (task instanceof LoopUntil waitFor && taskRun.getState().isRunning()) {
+            } else if (task instanceof LoopUntil waitFor && taskRun.getState().isRunning()) {
                 if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                     Output newOutput = waitFor.outputs(taskRun);
-                    TaskRun updatedTaskRun = taskRun.withOutputs(newOutput.toMap());
+                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), newOutput);
+                    TaskRun updatedTaskRun = taskRun.withOutputs(variables);
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(updatedTaskRun), updatedTaskRun);
                     List<NextTaskRun> next = ((FlowableTask<?>) task).resolveNexts(runContext, executor.getExecution(), updatedTaskRun);
                     Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), updatedTaskRun);
@@ -559,19 +569,38 @@ public class ExecutorService {
                         executor.withExecution(executor.getExecution().withTaskRun(updatedTaskRun), "handleWaitFor");
                     }
                 }
+            } else if (task instanceof Pause pause && pause.getOnPause() != null) {
+                // if a Pause task defines an onPause, we must create a TaskRun and a WorkerTask
+                RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+                onPauses.add(WorkerTask.builder()
+                    .runContext(runContext)
+                    .taskRun(TaskRun.of(
+                        executor.getExecution(),
+                        ResolvedTask.of(pause.getOnPause())
+                    ))
+                    .task(pause.getOnPause())
+                    .build());
             }
 
             // If the task is retrying
             // make sure that the workerTaskResult of the parent task is not sent
             if (taskRun.getState().isRetrying() && taskRun.getParentTaskRunId() != null) {
-                list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId())).toList();
+                list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId()))
+                    .collect(Collectors.toCollection(ArrayList::new));
             }
         }
 
         executor.withWorkerTaskDelays(executionDelays, "handleChildWorkerTaskDelay");
-
+        
         if (list.isEmpty()) {
             return executor;
+        }
+
+
+        if (!onPauses.isEmpty()) {
+            List<TaskRun> taskRuns = onPauses.stream().map(WorkerTask::getTaskRun).toList();
+            executor.withTaskRun(taskRuns, "handlePauses");
+            executor.withWorkerTasks(onPauses, "handlePauses");
         }
 
         executor = this.handlePausedDelay(executor, list);
@@ -763,7 +792,7 @@ public class ExecutorService {
         Map<Boolean, List<WorkerTask>> workerTasks = executor.getExecution()
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
+            .filter(taskRun -> taskRun.getState().getCurrent().isCreated() && executor.getExecution().getFixtureForTaskRun(taskRun).isEmpty())
             .map(throwFunction(taskRun -> {
                     Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
@@ -819,7 +848,31 @@ public class ExecutorService {
             )
             .collect(Collectors.groupingBy(workerTask -> workerTask.getTaskRun().getState().isFailed() || workerTask.getTaskRun().getState().getCurrent() == State.Type.CANCELLED));
 
-        if (workerTasks.isEmpty()) {
+        // mock WorkerTaskResult for mocked execution
+        // submit TaskRun when receiving created, must be done after the state execution store
+        boolean hasMockedWorkerTask = false;
+        record FixtureAndTaskRun(TaskFixture fixture, TaskRun taskRun) {}
+        if (executor.getExecution().getFixtures() != null) {
+            List<WorkerTaskResult> workerTaskResults = executor.getExecution()
+                .getTaskRunList()
+                .stream()
+                .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
+                .flatMap(taskRun -> executor.getExecution().getFixtureForTaskRun(taskRun).stream().map(fixture -> new FixtureAndTaskRun(fixture, taskRun)))
+                .map(fixtureAndTaskRun -> WorkerTaskResult.builder()
+                    .taskRun(fixtureAndTaskRun.taskRun()
+                        .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
+                        .withOutputs(variablesService.of(StorageContext.forTask(fixtureAndTaskRun.taskRun), fixtureAndTaskRun.fixture().getOutputs()))
+                    )
+                    .build()
+                )
+                .toList();
+
+            hasMockedWorkerTask = !workerTaskResults.isEmpty();
+            this.addWorkerTaskResults(executor, executor.getFlow(), workerTaskResults);
+        }
+
+
+        if (workerTasks.isEmpty() || hasMockedWorkerTask) {
             return executor;
         }
 

@@ -21,6 +21,6 @@ class EndsWithFilterTest {
             variableRenderer.render("{{ \"Hello World\" | endsWith(\"World\") }}", Map.of())
         );
 
-        assertThat(render).isEqualTo(true);
+        assertThat(render).isTrue();
     }
 }

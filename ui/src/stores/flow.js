@@ -22,7 +22,6 @@ export default {
         total: 0,
         overallTotal: undefined,
         flowGraph: undefined,
-        flowGraphParam: undefined,
         revisions: undefined,
         flowValidation: undefined,
         taskError: undefined,
@@ -169,6 +168,7 @@ export default {
 
                 return;
             }
+
             let overrideFlow = false;
             if (getters.flowErrors) {
                 if (state.flowValidation.outdated && state.isCreating) {
@@ -195,11 +195,13 @@ export default {
                 }
             }
 
+            const {isCreating} = state;
             if (state.isCreating && !overrideFlow) {
                 await dispatch("createFlow", {flow: flowYaml})
                     .then((response) => {
                         this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
                         dispatch("core/isUnsaved", false, {root: true});
+                        commit("setIsCreating", false);
                     });
             } else {
                 await dispatch("saveFlow", {flow: flowYaml})
@@ -209,13 +211,13 @@ export default {
                     });
             }
 
-            if (state.isCreating || overrideFlow) {
+            if (isCreating || overrideFlow) {
                 return "redirect_to_update";
             }
 
             commit("setHaveChange", false);
             await dispatch("validateFlow", {
-                flow: state.isCreating ? flowYaml : getters.yamlWithNextRevision
+                flow: isCreating ? flowYaml : getters.yamlWithNextRevision
             });
         },
         fetchGraph({state, dispatch}) {
@@ -341,6 +343,10 @@ export default {
                         return Promise.reject(new Error("Server error on flow save"))
                     } else {
                         commit("setFlow", response.data);
+                        commit("editor/setTabDirty", {
+                            name: "Flow",
+                            dirty: false,
+                        }, {root: true});
 
                         return response.data;
                     }
@@ -436,12 +442,6 @@ export default {
             }
             return this.$http.get(`${apiUrl(this)}/flows/${flow.namespace}/${flow.id}/graph`, {params}).then(response => {
                 commit("setFlowGraph", response.data)
-                commit("setFlowGraphParam", {
-                    namespace: flow.namespace,
-                    id: flow.id,
-                    revision: flow.revision
-                })
-
                 return response.data;
             })
         },
@@ -463,11 +463,6 @@ export default {
                     // prevent losing revision when loading graph from source
                     flow.revision = state.flow?.revision;
                     commit("setFlow", flow);
-                    commit("setFlowGraphParam", {
-                        namespace: flow.namespace ? flow.namespace : "default",
-                        id: flow.id ? flow.id : "default",
-                        revision: flow.revision
-                    })
 
                     return response;
                 }).catch(error => {
@@ -600,15 +595,6 @@ export default {
         setFlow(state, flow) {
             state.flow = flow;
             state.lastSaveFlow = flow;
-            // if (state.flowGraph !== undefined && state.flowGraphParam && flow) {
-            //     if (state.flowGraphParam.namespace !== flow.namespace || state.flowGraphParam.id !== flow.id) {
-            //         state.flowGraph = undefined
-            //     }
-            // }
-
-        },
-        setFlowGraphParam(state, flow) {
-            state.flowGraphParam = flow
         },
         setTask(state, task) {
             state.task = task;

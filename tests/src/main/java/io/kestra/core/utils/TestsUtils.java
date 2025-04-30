@@ -51,12 +51,12 @@ abstract public class TestsUtils {
         return mapper.readValue(read, cls);
     }
 
-    public static void loads(LocalFlowRepositoryLoader repositoryLoader) throws IOException, URISyntaxException {
-        TestsUtils.loads(repositoryLoader, Objects.requireNonNull(TestsUtils.class.getClassLoader().getResource("flows/valids")));
+    public static void loads(String tenantId, LocalFlowRepositoryLoader repositoryLoader) throws IOException, URISyntaxException {
+        TestsUtils.loads(tenantId, repositoryLoader, Objects.requireNonNull(TestsUtils.class.getClassLoader().getResource("flows/valids")));
     }
 
-    public static void loads(LocalFlowRepositoryLoader repositoryLoader, URL url) throws IOException, URISyntaxException {
-        repositoryLoader.load(url);
+    public static void loads(String tenantId, LocalFlowRepositoryLoader repositoryLoader, URL url) throws IOException, URISyntaxException {
+        repositoryLoader.load(tenantId, url);
     }
 
     public static List<LogEntry> filterLogs(List<LogEntry> logs, TaskRun taskRun) {

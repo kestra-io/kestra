@@ -49,7 +49,7 @@ class BlueprintControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldFindBlueprints(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldFindSearchBlueprints(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlMatching("/v1/blueprints.*"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
@@ -77,7 +77,7 @@ class BlueprintControllerTest {
     }
 
     @Test
-    void shouldGetSourceForExistingBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldGetSourceForExistingGetBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlMatching("/v1/blueprints/kinds/.*/id_1/.*/source.*"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
@@ -97,7 +97,7 @@ class BlueprintControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
-    void shouldGetGraphForExistingBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldGetGraphForExistingGetBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlMatching("/v1/blueprints/kinds/.*/id_1/.*/graph.*"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")
@@ -122,7 +122,7 @@ class BlueprintControllerTest {
     }
 
     @Test
-    void shouldGetDetailsForExistingBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
+    void shouldGetDetailsForExistingGetBlueprint(WireMockRuntimeInfo wmRuntimeInfo) {
         stubFor(get(urlMatching("/v1/blueprints/kinds/.*/id_1.*"))
             .willReturn(aResponse()
                 .withHeader("Content-Type", "application/json")

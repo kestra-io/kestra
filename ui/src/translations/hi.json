@@ -130,6 +130,9 @@
     "close sidebar": "साइडबार बंद करें",
     "collapse": "संक्षिप्त करें",
     "collapse all": "सभी संक्षिप्त करें",
+    "common": {
+      "back": "वापस"
+    },
     "concurrency": "समानांतरता",
     "conditions": "शर्तें",
     "configure basic auth": "बेसिक प्रमाणीकरण कॉन्फ़िगर करें",
@@ -513,11 +516,13 @@
         "contains": "शामिल है",
         "ends_with": "समाप्त होता है",
         "greater_than": "से अधिक",
+        "greater_than_or_equal_to": "से अधिक या बराबर",
         "in": "में",
         "is": "है",
         "is_not": "नहीं है",
         "is_one_of": "में से एक है",
         "less_than": "से कम",
+        "less_than_or_equal_to": "से कम या बराबर",
         "not_contains": "नहीं शामिल है",
         "not_in": "में नहीं",
         "starts_with": "शुरू होता है"
@@ -531,6 +536,7 @@
         "aggregation": "संकलन",
         "child": "बच्चा",
         "details": "विवरण",
+        "endDate": "समाप्ति तिथि",
         "flow": "फ्लो",
         "labels": "लेबल्स",
         "level": "Log स्तर",
@@ -540,6 +546,7 @@
         "relative_date": "सापेक्ष तिथि",
         "scope": "स्कोप",
         "service_type": "प्रकार",
+        "startDate": "आरंभ तिथि",
         "state": "स्थिति",
         "status": "स्थिति",
         "task": "कार्य",
@@ -576,6 +583,7 @@
     "flow export": "क्या आप वाकई <code>{flowCount}</code> flow(s) को निर्यात करना चाहते हैं?",
     "flow must have id and namespace": "Flow में एक id और एक namespace होना चाहिए।",
     "flow not imported": "कुछ flow आयात नहीं किया जा सका",
+    "flow source not found": "Flow source नहीं मिला",
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
     "flow_only": "केवल Flow टैब पर उपलब्ध है।",
@@ -795,6 +803,14 @@
     "no_code": {
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",
+      "close": {
+        "after execution": "टास्क बंद करें",
+        "error handlers": "त्रुटि हैंडलर बंद करें",
+        "finally": "टास्क बंद करें",
+        "input": "इनपुट बंद करें",
+        "tasks": "टास्क बंद करें",
+        "triggers": "ट्रिगर बंद करें"
+      },
       "creation": {
         "after execution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
         "error handlers": "त्रुटि हैंडलर जोड़ें",
@@ -849,6 +865,7 @@
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
+    "no_results_found": "कोई परिणाम नहीं मिला",
     "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
     "now": "अब",
     "of": "का",
@@ -1025,6 +1042,8 @@
       "saved": "सहेजे गए फ़िल्टर"
     },
     "search term in message": "संदेश में खोज शब्द",
+    "search_docs": "खोजें",
+    "searching": "खोज जारी है...",
     "seconds": "सेकंड्स",
     "secret": {
       "add": "नया secret",
@@ -1192,6 +1211,7 @@
     },
     "trigger": "Trigger",
     "trigger details": "Trigger विवरण",
+    "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
     "trigger execution id": "Trigger निष्पादन Id",
     "trigger filter": {
       "options": {
@@ -1276,6 +1296,7 @@
     "worker group": "Worker समूह",
     "worker group fallback": "वर्कर ग्रुप फॉलबैक",
     "worker group key": "वर्कर ग्रुप key",
+    "worker information": "वर्कर जानकारी",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",

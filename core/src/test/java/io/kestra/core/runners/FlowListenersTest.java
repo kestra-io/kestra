@@ -51,15 +51,15 @@ abstract public class FlowListenersTest {
 
         // initial state
         wait(ref, () -> {
-            assertThat(count.get()).isEqualTo(0);
-            assertThat(flowListenersService.flows().size()).isEqualTo(0);
+            assertThat(count.get()).isZero();
+            assertThat(flowListenersService.flows().size()).isZero();
         });
 
         // resend on startup done for kafka
         if (flowListenersService.getClass().getName().equals("io.kestra.ee.runner.kafka.KafkaFlowListeners")) {
             wait(ref, () -> {
-                assertThat(count.get()).isEqualTo(0);
-                assertThat(flowListenersService.flows().size()).isEqualTo(0);
+                assertThat(count.get()).isZero();
+                assertThat(flowListenersService.flows().size()).isZero();
             });
         }
 

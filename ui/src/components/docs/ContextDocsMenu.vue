@@ -5,13 +5,18 @@
         </el-button>
         <ul v-if="menuOpen" class="docsMenu list-unstyled d-flex flex-column gap-3">
             <template v-if="rawStructure">
-                <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName">
+                <li v-for="[sectionName, children] in sectionsWithChildren" :key="sectionName" :class="{'active-section': isCurrentSection(sectionName)}">
                     <span class="text-secondary">
                         {{ sectionName.toUpperCase() }}
                     </span>
                     <recursive-toc :parent="{children}">
                         <template #default="{path, title}">
-                            <context-docs-link @click="menuOpen = false" :href="path.slice(5)" use-raw>
+                            <context-docs-link 
+                                @click="menuOpen = false" 
+                                :href="path.slice(5)" 
+                                use-raw
+                                :class="{'active-page': isCurrentPage(path)}"
+                            >
                                 {{ title.capitalize() }}
                             </context-docs-link>
                         </template>
@@ -72,11 +77,33 @@
     }
 
     const rawStructure = ref(undefined);
+    const currentDocPath = computed(() => store.getters["doc/docPath"]);
+
+    const normalizePath = (path) => {
+        if (!path) return "";
+        return path.replace(/^docs\//, "").replace(/^\/+|\/+$/g, "");
+    };
+
+    const isCurrentPage = (path) => {
+        if (!currentDocPath.value || !path) return false;
+        const normalizedCurrent = normalizePath(currentDocPath.value);
+        const normalizedPath = normalizePath(path);
+        
+        if (normalizedCurrent === normalizedPath) return true;
+        
+        if (normalizedCurrent.startsWith(normalizedPath + "/")) return true;
+        
+        return false;
+    };
+
+    const isCurrentSection = (sectionName) => {
+        if (!currentDocPath.value) return false;
+        const sectionChildren = sectionsWithChildren.value?.find(([name]) => name === sectionName)?.[1] || [];
+        return sectionChildren.some(child => isCurrentPage(child.path));
+    };
 
     watch(menuOpen, async (val) => {
-        if(!val || rawStructure.value !== undefined){
-            return;
-        }
+        if(!val || rawStructure.value !== undefined) return;
         rawStructure.value = await store.dispatch("doc/children");
     });
 
@@ -129,22 +156,67 @@
     .docsMenu{
         position: absolute;
         z-index: 1000;
-        padding: .5rem 1rem;
-        left: 1rem;
+        padding: .5rem;
+        left: 26px;
         top: 100%;
-        right: 1rem;
+        right: 26px;
         background-color: var(--ks-background-card);
         border-radius: 6px;
+
+        a {
+            color: var(--ks-content-primary);
+            text-decoration: none;
+            display: block;
+            padding: .25rem .5rem;
+            border-radius: 4px;
+
+            &:hover {
+                color: var(--ks-primary);
+                background-color: var(--ks-select-hover);
+            }
+
+            &.active-page {
+                color: var(--ks-content-link);
+                font-weight: 600;
+            }
+        }
+
+        li {
+            > span {
+                display: block;
+                padding: .25rem .5rem;
+                margin-bottom: .25rem;
+                border-radius: 4px;
+            }
+
+            &.active-section {
+                > span {
+                    color: var(--ks-content-link);
+                    font-weight: 600;
+                }
+            }
+
+            &:hover {
+                > span {
+                    background-color: var(--ks-select-hover);
+                }
+            }
+        }
     }
 
     .docsMenuWrapper{
         position: relative;
         display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        padding-left: 27px;
+        padding-right: 27px;
     }
 
     .menuOpener{
         flex: 1;
-        margin: 1rem;
+        margin: 0;
+        width: 100%;
     }
 
     .expandIcon{

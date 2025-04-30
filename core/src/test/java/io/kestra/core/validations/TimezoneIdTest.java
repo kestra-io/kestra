@@ -27,11 +27,11 @@ class TimezoneIdTest {
     void inputValidation() {
         final TimezoneIdCls existingTimezone = new TimezoneIdCls("Europe/Paris");
 
-        assertThat(modelValidator.isValid(existingTimezone).isEmpty()).isEqualTo(true);
+        assertThat(modelValidator.isValid(existingTimezone).isEmpty()).isTrue();
 
         final TimezoneIdCls invalidTimezone = new TimezoneIdCls("Foo/Bar");
 
-        assertThat(modelValidator.isValid(invalidTimezone).isPresent()).isEqualTo(true);
+        assertThat(modelValidator.isValid(invalidTimezone).isPresent()).isTrue();
         assertThat(modelValidator.isValid(invalidTimezone).get().getMessage())
             .satisfies(
                 arg -> assertThat(arg).startsWith("timezone"),

@@ -130,6 +130,9 @@
     "close sidebar": "fermer la barre latérale",
     "collapse": "Masquer",
     "collapse all": "Masquer tout",
+    "common": {
+      "back": "Retour"
+    },
     "concurrency": "Concurrence",
     "conditions": "conditions",
     "configure basic auth": "Configurer l'authentification basique",
@@ -513,11 +516,13 @@
         "contains": "contient",
         "ends_with": "se termine par",
         "greater_than": "plus grand que",
+        "greater_than_or_equal_to": "supérieur ou égal à",
         "in": "dans",
         "is": "est",
         "is_not": "n'est pas",
         "is_one_of": "est l'un de",
         "less_than": "moins de",
+        "less_than_or_equal_to": "inférieur ou égal à",
         "not_contains": "ne contient pas",
         "not_in": "n'est pas dans",
         "starts_with": "commence par"
@@ -531,6 +536,7 @@
         "aggregation": "Agrégation",
         "child": "Enfant",
         "details": "Détails",
+        "endDate": "Date de fin",
         "flow": "Flux",
         "labels": "Étiquettes",
         "level": "Niveau de log",
@@ -540,6 +546,7 @@
         "relative_date": "Date relative",
         "scope": "Portée",
         "service_type": "Type",
+        "startDate": "Date de début",
         "state": "État",
         "status": "Statut",
         "task": "Tâche",
@@ -576,6 +583,7 @@
     "flow export": "Êtes vous sûr de vouloir exporter <code>{flowCount}</code> flow(s)?",
     "flow must have id and namespace": "Le flow doit avoir un id et un namespace.",
     "flow not imported": "Certains flow n'ont pas pu être importés",
+    "flow source not found": "Source du flow introuvable",
     "flow-dependencies": "dépendances",
     "flow-no-dependencies": "Votre flow n'a pas de dépendances.",
     "flow_only": "Disponible uniquement sur l'onglet Flow.",
@@ -795,6 +803,14 @@
     "no_code": {
       "adding": "+ Ajouter un {what}",
       "adding_default": "+ Ajouter une nouvelle valeur",
+      "close": {
+        "after execution": "Fermer la task",
+        "error handlers": "Fermer le gestionnaire d'erreurs",
+        "finally": "Fermer la task",
+        "input": "Fermer l'input",
+        "tasks": "Fermer la task",
+        "triggers": "Fermer le trigger"
+      },
       "creation": {
         "after execution": "Ajouter un bloc après l'exécution",
         "error handlers": "Ajouter un gestionnaire d'erreurs",
@@ -849,6 +865,7 @@
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Soit aucun flow n'est en cours d'exécution, soit vous devez ajuster vos filtres.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
+    "no_results_found": "Aucun résultat trouvé",
     "no_tasks_running": "Aucune tâche n'est encore en cours d'exécution.",
     "now": "Maintenant",
     "of": "de",
@@ -1025,6 +1042,8 @@
       "saved": "Filtres sauvegardés"
     },
     "search term in message": "Chercher dans le message",
+    "search_docs": "Rechercher",
+    "searching": "Recherche en cours...",
     "seconds": "Secondes",
     "secret": {
       "add": "Nouveau secret",
@@ -1192,6 +1211,7 @@
     },
     "trigger": "Déclencheur",
     "trigger details": "Détails du déclencheur",
+    "trigger disabled": "Le trigger est désactivé dans la source du flow",
     "trigger execution id": "Id parent",
     "trigger filter": {
       "options": {
@@ -1276,6 +1296,7 @@
     "worker group": "Worker Group",
     "worker group fallback": "Groupe de Worker de secours",
     "worker group key": "Clé du groupe de Worker",
+    "worker information": "Informations sur le Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Clé ou valeur vide détecté dans les labels",

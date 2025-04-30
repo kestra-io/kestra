@@ -44,7 +44,7 @@ public abstract class AbstractTaskRunnerTest {
         var taskRunner = taskRunner();
         var result = taskRunner.run(runContext, commands, Collections.emptyList());
         assertThat(result).isNotNull();
-        assertThat(result.getExitCode()).isEqualTo(0);
+        assertThat(result.getExitCode()).isZero();
     }
 
     @Test
@@ -58,12 +58,12 @@ public abstract class AbstractTaskRunnerTest {
         );
 
         var taskRunner = taskRunner();
-        assertThat(taskRunner.additionalVars(runContext, commands).containsKey(ScriptService.VAR_OUTPUT_DIR)).isEqualTo(false);
-        assertThat(taskRunner.env(runContext, commands).containsKey(ScriptService.ENV_OUTPUT_DIR)).isEqualTo(false);
+        assertThat(taskRunner.additionalVars(runContext, commands).containsKey(ScriptService.VAR_OUTPUT_DIR)).isFalse();
+        assertThat(taskRunner.env(runContext, commands).containsKey(ScriptService.ENV_OUTPUT_DIR)).isFalse();
 
         var result = taskRunner.run(runContext, commands, Collections.emptyList());
         assertThat(result).isNotNull();
-        assertThat(result.getExitCode()).isEqualTo(0);
+        assertThat(result.getExitCode()).isZero();
     }
 
     @Test
@@ -133,11 +133,11 @@ public abstract class AbstractTaskRunnerTest {
         outputFiles.putAll(FilesService.outputFiles(runContext, filesToDownload));
 
         // Exit code for successful job
-        assertThat(run.getExitCode()).isEqualTo(0);
+        assertThat(run.getExitCode()).isZero();
 
         Set<Map.Entry<String, Boolean>> logEntries = logsWithIsStdErr.entrySet();
-        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello from internal storage")).findFirst().orElseThrow().getValue()).isEqualTo(false);
-        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello World")).findFirst().orElseThrow().getValue()).isEqualTo(false);
+        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello from internal storage")).findFirst().orElseThrow().getValue()).isFalse();
+        assertThat(logEntries.stream().filter(e -> e.getKey().contains("Hello World")).findFirst().orElseThrow().getValue()).isFalse();
 
         // Verify outputFiles
         assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("output.txt")), StandardCharsets.UTF_8)).isEqualTo("Hello World");

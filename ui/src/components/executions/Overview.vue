@@ -68,12 +68,11 @@
                 <restart is-replay :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <restart :execution="execution" @follow="forwardEvent('follow', $event)" />
                 <change-execution-status :execution="execution" @follow="forwardEvent('follow', $event)" />
-                <resume :execution="execution" />
-                <pause :execution="execution" />
-                <kill :execution="execution" />
+                <pause v-if="execution.state.current !== 'PAUSED'" :execution="execution" />
                 <unqueue :execution="execution" />
                 <force-run :execution="execution" />
-                <status :status="execution.state.current" />
+                <resume :execution="execution" />
+                <kill :execution="execution" />
             </el-col>
         </el-row>
 
@@ -93,6 +92,9 @@
                     </span>
                     <span v-else-if="scope.row.duration">
                         <duration :histories="scope.row.value" />
+                    </span>
+                    <span v-else-if="scope.row.key === $t('state')">
+                        <status :status="scope.row.value" />
                     </span>
                     <span v-else-if="scope.row.key === $t('labels')">
                         <labels :labels="scope.row.value" read-only />
@@ -409,6 +411,7 @@
                     ? this.execution.taskRunList.length
                     : 0;
                 let ret = [
+                    {key: this.$t("state"), value: this.execution.state.current},
                     {key: this.$t("namespace"), value: this.execution.namespace},
                     {key: this.$t("flow"), value: this.execution.flowId},
                     {

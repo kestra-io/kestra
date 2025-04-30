@@ -30,11 +30,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.*;
 
 @SuperBuilder
 @ToString
@@ -49,7 +45,7 @@ import java.util.stream.Stream;
 @Plugin(
     examples = {
         @Example(
-            title = "Pause the execution and wait for a manual approval",
+            title = "Pause the execution and wait for a manual approval.",
             full = true,
             code = """
                 id: human_in_the_loop
@@ -133,7 +129,7 @@ import java.util.stream.Stream;
                 """
         ),
         @Example(
-            title = "Pause the execution and set the execution in WARNING if it has not been resumed after 5 minutes",
+            title = "Pause the execution and set the execution to WARNING if it has not been resumed after 5 minutes.",
             full = true,
             code = """
                 id: pause_warn
@@ -169,21 +165,21 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
     }
 
     @Schema(
-        title = "Duration of the pause. If not set the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
-        description = "The duration is a string in the [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
+        title = "Duration of the pause. If not set, the task will wait forever to be manually resumed except if a timeout is set, in this case, the timeout will be honored.",
+        description = "The duration is a string in [ISO 8601 Duration](https://en.wikipedia.org/wiki/ISO_8601#Durations) format, e.g. `PT1H` for 1 hour, `PT30M` for 30 minutes, `PT10S` for 10 seconds, `P1D` for 1 day, etc. If no pauseDuration and no timeout are configured, the execution will never end until it's manually resumed from the UI or API.",
         implementation = Duration.class
     )
     private Property<Duration> pauseDuration;
 
     @Schema(
-        title = "Pause behavior, by default RESUME. What happens when a pause task reach its duration.",
+        title = "Pause behavior, by default set to RESUME. This property controls happens when a pause task reach its duration.",
         description = """
-            Tasks that are resumed before the duration (for example, from the UI) will not use the behavior property but will always success.
+            Tasks that are resumed before the duration (for example, from the UI) will not use the behavior property but will always succeed.
             Possible values are:
-            - RESUME: continue with the execution
-            - WARN: ends the Pause task in WARNING and continue with the execution
-            - FAIL: fail the Pause task
-            - CANCEL: cancel the execution"""
+            - RESUME: continues with the execution
+            - WARN: ends the Pause task in WARNING and continues with the execution
+            - FAIL: fails the Pause task
+            - CANCEL: cancels the execution"""
     )
     @NotNull
     @Builder.Default
@@ -191,8 +187,15 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Valid
     @Schema(
+        title = "A runnable task that will be executed when it's paused."
+    )
+    @PluginProperty
+    private Task onPause;
+
+    @Valid
+    @Schema(
         title = "Inputs to be passed to the execution when it's resumed.",
-        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task.")
+        description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task.")
     @PluginProperty
     private List<Input<?>> onResume;
 
@@ -223,7 +226,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
         GraphUtils.sequential(
             subGraph,
-            this.tasks,
+            this.getOnPause() != null ? ListUtils.concat(List.of(this.getOnPause()), this.tasks) : this.tasks,
             this.errors,
             this._finally,
             taskRun,
@@ -235,26 +238,27 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Override
     public List<Task> allChildTasks() {
-        return Stream
-            .concat(
-                this.getTasks() != null ? this.getTasks().stream() : Stream.empty(),
-                Stream.concat(
-                    this.getErrors() != null ? this.getErrors().stream() : Stream.empty(),
-                    this.getFinally() != null ? this.getFinally().stream() : Stream.empty()
-                )
-            )
-            .toList();
+        return ListUtils.concat(
+            this.getTasks(),
+            this.getOnPause() != null ? List.of(this.getOnPause()) : null,
+            this.getErrors(),
+            this.getFinally()
+        );
     }
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveTasks(this.getTasks(), parentTaskRun);
+        List<Task> childTasks = new ArrayList<>(this.getTasks());
+        if (onPause != null) {
+            childTasks.addFirst(onPause);
+        }
+        return FlowableUtils.resolveTasks(childTasks, parentTaskRun);
     }
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        if (this.needPause(parentTaskRun) || parentTaskRun.getState().getCurrent() == State.Type.PAUSED) {
-            return new ArrayList<>();
+        if (this.needPause(parentTaskRun) || (parentTaskRun.getState().getCurrent() == State.Type.PAUSED)) {
+            return Collections.emptyList();
         }
 
         return FlowableUtils.resolveSequentialNexts(

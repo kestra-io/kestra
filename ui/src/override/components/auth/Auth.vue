@@ -5,15 +5,15 @@
         :show-arrow="false"
         :suffix-icon="ChevronRight"
         :placeholder="$t('kestra')"
-        :popper-class="'user-select'"
+        :popper-class="'user-select border border-0'"
     >
         <template #prefix>
-            <img src="../../../assets/ks-logo-small.svg" alt="kestra">
+            <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra">
         </template>
         <template #header>
-            <el-option class=" list-unstyled">
+            <el-option :value="{}" class=" list-unstyled">
                 <div class="d-flex align-items-center gap-2">
-                    <img src="../../../assets/ks-logo-small.svg" alt="kestra">
+                    <img src="../../../assets/ks-logo-small.svg" width="40" alt="Kestra">
                     {{ $t("kestra") }}
                 </div>
             </el-option>
@@ -70,7 +70,7 @@
         background: var(--ks-select-background);
         box-shadow: 2px 3px 3px var(--ks-card-shadow);
         border-radius: var(--bs-border-radius);
-        border: 1px solid var(--ks-border-primary);
+        border: 1px solid var(--ks-border-primary) !important;
         margin-bottom: -2px;
 
         .el-select-dropdown__item {
@@ -89,11 +89,7 @@
         .el-select-dropdown__header {
             .el-select-dropdown__item {
                 padding: 0;
-
-                img {
-                    width: 50px;
-                    height: 50px;
-                }
+                margin: 0;
 
                 &.is-hovering {
                     background: none;

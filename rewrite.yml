@@ -1,0 +1,138 @@
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: io.kestra.java.UpgradeToJava21Custom
+displayName: Upgrade to Java 21 (custom)
+description: >-
+  This recipe is based on the official org.openrewrite.java.migrate.UpgradeToJava21 with expanded
+  org.openrewrite.java.migrate.UpgradeToJava17, and org.openrewrite.java.migrate.Java8toJava11.
+  Customizations:
+   # breaks YAML blocks
+  - removed org.openrewrite.java.migrate.lang.UseTextBlocks
+   # N/A
+  - removed org.openrewrite.java.migrate.lombok.UpdateLombokToJava11
+   # N/A
+  - removed org.openrewrite.java.migrate.javax.AddCommonAnnotationsDependencies
+tags:
+  - java21
+recipeList:
+  # Java8toJava11
+  - org.openrewrite.java.migrate.UpgradeToJava8
+  - org.openrewrite.java.migrate.UseJavaUtilBase64
+  - org.openrewrite.java.migrate.CastArraysAsListToList
+  # Add an explicit JAXB/JAX-WS runtime and upgrade the dependencies to Jakarta EE 8
+  - org.openrewrite.java.migrate.javax.AddJaxbDependencies
+  - org.openrewrite.java.migrate.javax.AddJaxwsDependencies
+  - org.openrewrite.java.migrate.javax.AddInjectDependencies
+  # Remediate deprecations
+  - org.openrewrite.staticanalysis.BigDecimalRoundingConstantsToEnums
+  - org.openrewrite.staticanalysis.PrimitiveWrapperClassConstructorToValueOf
+  - org.openrewrite.java.migrate.concurrent.JavaConcurrentAPIs
+  - org.openrewrite.java.migrate.lang.JavaLangAPIs
+  - org.openrewrite.java.RemoveMethodInvocations:
+      methodPattern: java.lang.Runtime runFinalizersOnExit(boolean)
+  - org.openrewrite.java.RemoveMethodInvocations:
+      methodPattern: java.lang.System runFinalizersOnExit(boolean)
+  - org.openrewrite.java.migrate.logging.JavaLoggingAPIs
+  - org.openrewrite.java.migrate.net.JavaNetAPIs
+  - org.openrewrite.java.migrate.nio.file.PathsGetToPathOf
+  - org.openrewrite.java.migrate.sql.JavaSqlAPIs
+  - org.openrewrite.java.migrate.javax.JavaxLangModelUtil
+  - org.openrewrite.java.migrate.javax.JavaxManagementMonitorAPIs
+  - org.openrewrite.java.migrate.javax.JavaxXmlStreamAPIs
+  - org.openrewrite.java.migrate.cobertura.RemoveCoberturaMavenPlugin
+  - org.openrewrite.java.migrate.UpgradeBuildToJava11
+  - org.openrewrite.java.migrate.util.OptionalNotPresentToIsEmpty
+  - org.openrewrite.java.migrate.util.OptionalNotEmptyToIsPresent
+  - org.openrewrite.java.migrate.util.OptionalStreamRecipe
+  - org.openrewrite.java.migrate.InternalBindPackages
+  - org.openrewrite.java.migrate.RemovedSecurityManagerMethods
+  - org.openrewrite.java.migrate.UpgradePluginsForJava11
+  - org.openrewrite.java.migrate.RemovedPolicy
+  - org.openrewrite.java.migrate.ReferenceCloneMethod
+  - org.openrewrite.java.migrate.ThreadStopDestroy
+  - org.openrewrite.java.migrate.ReplaceAWTGetPeerMethod
+  - org.openrewrite.scala.migrate.UpgradeScala_2_12
+  - org.openrewrite.java.migrate.ReplaceComSunAWTUtilitiesMethods
+  - org.openrewrite.java.migrate.ReplaceLocalizedStreamMethods
+  - org.openrewrite.java.migrate.ArrayStoreExceptionToTypeNotPresentException
+  - org.openrewrite.java.migrate.IllegalArgumentExceptionToAlreadyConnectedException
+  - org.openrewrite.java.migrate.ChangeDefaultKeyStore
+  # UpgradeToJava17
+  - org.openrewrite.java.migrate.UpgradeBuildToJava17
+  - org.openrewrite.staticanalysis.InstanceOfPatternMatch
+  - org.openrewrite.staticanalysis.AddSerialAnnotationToSerialVersionUID
+  - org.openrewrite.java.migrate.RemovedRuntimeTraceMethods
+  - org.openrewrite.java.migrate.RemovedToolProviderConstructor
+  - org.openrewrite.java.migrate.RemovedModifierAndConstantBootstrapsConstructors
+  - org.openrewrite.java.migrate.lang.ExplicitRecordImport
+  - org.openrewrite.java.migrate.lang.StringFormatted:
+      addParentheses: false
+  - org.openrewrite.java.migrate.DeprecatedJavaxSecurityCert
+  - org.openrewrite.java.migrate.DeprecatedLogRecordThreadID
+  - org.openrewrite.java.migrate.RemovedLegacySunJSSEProviderName
+  - org.openrewrite.java.migrate.Jre17AgentMainPreMainPublic
+  - org.openrewrite.java.migrate.DeprecatedCountStackFramesMethod
+  - org.openrewrite.java.migrate.RemovedZipFinalizeMethods
+  - org.openrewrite.java.migrate.RemovedSSLSessionGetPeerCertificateChainMethodImpl
+  - org.openrewrite.java.migrate.SunNetSslPackageUnavailable
+  - org.openrewrite.java.migrate.RemovedRMIConnectorServerCredentialTypesConstant
+  - org.openrewrite.java.migrate.RemovedFileIOFinalizeMethods
+  - org.openrewrite.java.migrate.UpgradePluginsForJava17
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: com.google.inject
+      artifactId: guice
+      newVersion: 5.x
+  - org.openrewrite.java.dependencies.UpgradeDependencyVersion:
+      groupId: commons-codec
+      artifactId: commons-codec
+      newVersion: 1.17.x
+  - org.openrewrite.java.migrate.AddLombokMapstructBinding
+  # UpgradeToJava21
+  - org.openrewrite.java.migrate.UpgradeBuildToJava21
+  - org.openrewrite.java.migrate.RemoveIllegalSemicolons
+  - org.openrewrite.java.migrate.lang.ThreadStopUnsupported
+  - org.openrewrite.java.migrate.net.URLConstructorToURICreate
+  - org.openrewrite.java.migrate.util.SequencedCollection
+  - org.openrewrite.java.migrate.util.UseLocaleOf
+  - org.openrewrite.staticanalysis.ReplaceDeprecatedRuntimeExecMethods
+  - org.openrewrite.github.SetupJavaUpgradeJavaVersion
+  - org.openrewrite.java.migrate.UpgradePluginsForJava21
+  - org.openrewrite.java.migrate.DeleteDeprecatedFinalize
+  - org.openrewrite.java.migrate.RemovedSubjectMethods
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: io.kestra.staticanalysis.General
+displayName: Set of static analysis
+description: >-
+  This recipe defines a custom set of static analysis recipes.
+recipeList:
+  - org.openrewrite.staticanalysis.ModifierOrder
+  - org.openrewrite.staticanalysis.MissingOverrideAnnotation
+  - org.openrewrite.staticanalysis.IsEmptyCallOnCollections
+  - org.openrewrite.staticanalysis.NoToStringOnStringType
+  - org.openrewrite.staticanalysis.UseMapContainsKey
+  - org.openrewrite.staticanalysis.AddSerialVersionUidToSerializable:
+      uid: 1L
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: io.kestra.testing.General
+displayName: Set of testing
+description: >-
+  This recipe defines a custom set of testing-related recipes.
+tags:
+  - testing
+recipeList:
+  - org.openrewrite.java.testing.assertj.SimplifyAssertJAssertions
+  - org.openrewrite.java.testing.assertj.SimplifyChainedAssertJAssertions
+---
+type: specs.openrewrite.org/v1beta/recipe
+name: io.kestra.misc.General
+displayName: Set of miscellaneous
+description: >-
+  This recipe defines a custom set of various types of recipes.
+recipeList:
+  - org.openrewrite.java.migrate.net.JavaNetAPIs
+  - org.openrewrite.java.migrate.lang.JavaLangAPIs
+  - org.openrewrite.java.migrate.io.ReplaceFileInOrOutputStreamFinalizeWithClose
+  - org.openrewrite.java.migrate.lang.StringRulesRecipes
+  - org.openrewrite.java.migrate.lang.UseStringIsEmptyRecipe

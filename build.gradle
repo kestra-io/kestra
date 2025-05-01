@@ -40,6 +40,23 @@ plugins {
 
     // OWASP dependency check
     id "org.owasp.dependencycheck" version "12.1.1" apply false
+
+    // source modernizer
+    id "org.openrewrite.rewrite" version "7.6.1"
+}
+
+rewrite {
+    activeRecipe(
+        "io.kestra.java.UpgradeToJava21Custom",
+        "io.kestra.staticanalysis.General",
+        "io.kestra.testing.General",
+        "io.kestra.misc.General"
+    )
+    exclusion(
+        // handling of generics wildcard capture of Map needs to be fixed by OpenRewrite
+        "**/ExecutionControllerTest.java"
+    )
+    setExportDatatables(true)
 }
 
 idea {
@@ -67,6 +84,11 @@ java {
 dependencies {
     implementation project(":cli")
     testImplementation project(":cli")
+
+    rewrite(platform("org.openrewrite.recipe:rewrite-recipe-bom:latest.release"))
+    rewrite("org.openrewrite.recipe:rewrite-migrate-java")
+    rewrite("org.openrewrite.recipe:rewrite-static-analysis")
+    rewrite("org.openrewrite.recipe:rewrite-testing-frameworks")
 }
 
 /**********************************************************************************************************************\

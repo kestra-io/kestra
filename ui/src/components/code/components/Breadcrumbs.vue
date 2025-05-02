@@ -3,13 +3,15 @@
         <el-breadcrumb-item
             v-for="(breadcrumb, index) in breadcrumbs"
             :key="index"
-            class="item"
+            :class="{clickable: saveMode === 'button'}"
             @click="
-                (
-                    breadcrumbs = breadcrumbs.slice(0, index + 1),
-                    panel = null,
+                () => {
+                    if (saveMode === 'button') {
+                        breadcrumbs = breadcrumbs.slice(0, index + 1);
+                        panel = null;
+                    }
                     clickBreadCrumb(index)
-                )
+                }
             "
         >
             {{ breadcrumb?.label }}
@@ -29,7 +31,8 @@
         BREADCRUMB_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
         FLOW_INJECTION_KEY, PANEL_INJECTION_KEY,
         SECTION_INJECTION_KEY, TASKID_INJECTION_KEY,
-        PARENT_TASKID_INJECTION_KEY
+        PARENT_TASKID_INJECTION_KEY,
+        SAVEMODE_INJECTION_KEY
     } from "../injectionKeys";
     const {t} = useI18n({useScope: "global"});
 
@@ -40,6 +43,7 @@
     const taskCreation = inject(CREATING_TASK_INJECTION_KEY, ref(false));
     const taskSection = inject(SECTION_INJECTION_KEY, ref(""));
     const parentTaskId = inject(PARENT_TASKID_INJECTION_KEY, ref(""));
+    const saveMode = inject(SAVEMODE_INJECTION_KEY, ref("auto"));
 
     const flow = computed(() => {
         return YAML_UTILS.parse(flowYaml.value);
@@ -86,7 +90,7 @@
 <style scoped lang="scss">
 @import "../styles/code.scss";
 
-.item{
+.clickable{
     cursor: pointer;
 }
 

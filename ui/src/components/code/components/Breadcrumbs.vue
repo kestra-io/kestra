@@ -28,7 +28,8 @@
     import {
         BREADCRUMB_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
         FLOW_INJECTION_KEY, PANEL_INJECTION_KEY,
-        SECTION_INJECTION_KEY, TASKID_INJECTION_KEY
+        SECTION_INJECTION_KEY, TASKID_INJECTION_KEY,
+        PARENT_TASKID_INJECTION_KEY
     } from "../injectionKeys";
     const {t} = useI18n({useScope: "global"});
 
@@ -38,6 +39,7 @@
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
     const taskCreation = inject(CREATING_TASK_INJECTION_KEY, ref(false));
     const taskSection = inject(SECTION_INJECTION_KEY, ref(""));
+    const parentTaskId = inject(PARENT_TASKID_INJECTION_KEY, ref(""));
 
     const flow = computed(() => {
         return YAML_UTILS.parse(flowYaml.value);
@@ -52,10 +54,16 @@
     });
 
     watch(
-        [taskCreation, taskId],
-        ([isCreating, taskIdVal]) => {
-            if(isCreating || taskIdVal.length > 0){
+        [taskCreation, taskId, parentTaskId],
+        ([isCreating, taskIdVal, parentTaskIdVal]) => {
+            const index = parentTaskIdVal ? 2 : 1;
+            if(parentTaskIdVal){
                 breadcrumbs.value[1] = {
+                    label: parentTaskIdVal,
+                }
+            }
+            if(isCreating || taskIdVal.length > 0){
+                breadcrumbs.value[index] = {
                     label: isCreating
                         ? t(`no_code.creation.${taskSection.value}`)
                         : taskIdVal

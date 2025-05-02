@@ -232,6 +232,12 @@ public abstract class AbstractRunnerTest {
         multipleConditionTriggerCaseTest.flowTriggerPreconditionsMergeOutputs();
     }
 
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-paused-listen.yaml", "flows/valids/flow-trigger-paused-flow.yaml"})
+    void flowTriggerOnPaused() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerOnPaused();
+    }
+
     @RetryingTest(5)
     @LoadFlows({"flows/valids/each-null.yaml"})
     void eachWithNull() throws Exception {

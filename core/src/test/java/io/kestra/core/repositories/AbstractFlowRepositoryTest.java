@@ -188,7 +188,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void findByNamespace() {
         List<Flow> save = flowRepository.findByNamespace(null, "io.kestra.tests");
-        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 20);
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 22);
 
         save = flowRepository.findByNamespace(null, "io.kestra.tests2");
         assertThat((long) save.size()).isEqualTo(1L);
@@ -390,7 +390,7 @@ public abstract class AbstractFlowRepositoryTest {
     @Test
     void findDistinctNamespace() {
         List<String> distinctNamespace = flowRepository.findDistinctNamespace(null);
-        assertThat((long) distinctNamespace.size()).isEqualTo(7L);
+        assertThat((long) distinctNamespace.size()).isEqualTo(8L);
     }
 
     @SuppressWarnings("deprecation")

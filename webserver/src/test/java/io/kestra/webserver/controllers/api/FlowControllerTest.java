@@ -450,7 +450,7 @@ class FlowControllerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size()).isEqualTo(7);
+        assertThat(namespaces.size()).isEqualTo(8);
     }
 
     @Test

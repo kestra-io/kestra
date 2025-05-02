@@ -7,7 +7,7 @@
     />
 
     <component
-        v-else
+        v-else-if="lastBreadcrumb.component"
         :is="lastBreadcrumb.component.type"
         v-bind="lastBreadcrumb.component.props"
         :model-value="lastBreadcrumb.component.props.modelValue"
@@ -69,11 +69,10 @@
         ref([])
     );
     const lastBreadcrumb = computed(() => {
-        const index =
-            breadcrumbs.value.length === 3 ? 2 : breadcrumbs.value.length - 1;
+        const index = breadcrumbs.value.length - 1;
 
         return {
-            shown: index >= 2,
+            shown: parentTaskId.value ? index >= 3 : index >= 2,
             component: breadcrumbs.value?.[index]?.component,
         };
     });

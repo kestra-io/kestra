@@ -2,7 +2,6 @@ package io.kestra.core.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.FlowProcessingException;
-import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
@@ -72,15 +71,19 @@ public class FlowService {
      * @param strictValidation Specifies whether to perform a strict validation of the flow.
      * @return The created {@link FlowWithSource}.
      */
-    public FlowWithSource create(final GenericFlow flow, final boolean strictValidation) throws FlowProcessingException {
+    public FlowWithSource create(GenericFlow flow, final boolean strictValidation) throws FlowProcessingException {
         Objects.requireNonNull(flow, "Cannot create null flow");
         if (flow.getSource() == null || flow.getSource().isBlank()) {
             throw new IllegalArgumentException("Cannot create flow with null or blank source");
         }
 
-        // Check Flow with defaults
-        FlowWithSource flowWithDefault = pluginDefaultService.injectAllDefaults(flow, strictValidation);
-        modelValidator.validate(flowWithDefault);
+        // Inject plugin default versions, and perform parsing validation when strictValidation = true (i.e., checking unknown and duplicated properties).
+        FlowWithSource parsed = pluginDefaultService.parseFlowWithVersionDefaults(flow.getTenantId(), flow.getSource(), strictValidation);
+
+        // Validate Flow with defaults values
+        // Do not perform a strict parsing validation to ignore unknown
+        // properties that might be injecting through default values.
+        modelValidator.validate(pluginDefaultService.injectAllDefaults(parsed, false));
 
         return repository().create(flow);
     }
@@ -108,7 +111,7 @@ public class FlowService {
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
 
                 try {
-                    FlowWithSource flow = pluginDefaultService.parseFlowWithAllDefaults(tenantId, source, true);
+                    FlowWithSource flow = pluginDefaultService.parseFlowWithVersionDefaults(tenantId, source, true);
                     Integer sentRevision = flow.getRevision();
                     if (sentRevision != null) {
                         Integer lastRevision = Optional.ofNullable(repository().lastRevision(tenantId, flow.getNamespace(), flow.getId()))
@@ -122,7 +125,10 @@ public class FlowService {
                     validateConstraintViolationBuilder.flow(flow.getId());
                     validateConstraintViolationBuilder.namespace(flow.getNamespace());
 
-                    modelValidator.validate(flow);
+                    // Do not perform a strict parsing validation to ignore unknown
+                    // properties that might be injecting through default values.
+                    modelValidator.validate(pluginDefaultService.injectAllDefaults(flow, false));
+
                 } catch (ConstraintViolationException e) {
                     validateConstraintViolationBuilder.constraints(e.getMessage());
                 } catch (FlowProcessingException e) {

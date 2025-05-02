@@ -571,6 +571,8 @@
     "environment color setting": "Environment color",
     "slack support": "Ask any question via Slack",
     "join community": "Join the Community",
+    "join_slack": "Join Slack",
+    "kestra": "Kestra",
     "reach us": "Talk to us",
     "new version": "New version {version} available!",
     "error detected": "Error(s) detected",

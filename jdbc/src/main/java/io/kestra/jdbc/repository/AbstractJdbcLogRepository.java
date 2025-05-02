@@ -49,19 +49,25 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     @Getter
     private final JdbcFilterService filterService;
 
-    @Getter
-    private final Map<Logs.Fields, String> fieldsMapping = Map.of(
-        Logs.Fields.DATE, "timestamp",
-        Logs.Fields.NAMESPACE, "namespace",
-        Logs.Fields.FLOW_ID, "flow_id",
-        Logs.Fields.TASK_ID, "task_id",
-        Logs.Fields.EXECUTION_ID, "execution_id",
-        Logs.Fields.TASK_RUN_ID, "taskrun_id",
-        Logs.Fields.ATTEMPT_NUMBER, "attempt_number",
-        Logs.Fields.TRIGGER_ID, "trigger_id",
-        Logs.Fields.LEVEL, "level",
-        Logs.Fields.MESSAGE, "message"
-    );
+    protected Map<Logs.Fields, String> getFieldsMapping() {
+      return Map.of(
+          Logs.Fields.DATE, "timestamp",
+          Logs.Fields.NAMESPACE, "namespace",
+          Logs.Fields.FLOW_ID, "flow_id",
+          Logs.Fields.TASK_ID, "task_id",
+          Logs.Fields.EXECUTION_ID, "execution_id",
+          Logs.Fields.TASK_RUN_ID, "taskrun_id",
+          Logs.Fields.ATTEMPT_NUMBER, "attempt_number",
+          Logs.Fields.TRIGGER_ID, "trigger_id",
+          Logs.Fields.LEVEL, "level",
+          Logs.Fields.MESSAGE, "message"
+      );
+    }
+
+    protected Map<Logs.Fields, String> getWhereMapping() {
+        return getFieldsMapping();
+    }
+
     @Override
     public Set<Logs.Fields> dateFields() {
         return Set.of(Logs.Fields.DATE);
@@ -669,7 +675,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
                 // Generate custom fields for date as they probably need formatting
-                List<Field<Date>> dateFields = generateDateFields(descriptors, fieldsMapping, startDate, endDate, dateFields());
+                List<Field<Date>> dateFields = generateDateFields(descriptors, getFieldsMapping(), startDate, endDate, dateFields());
 
                 // Init request
                 SelectConditionStep<Record> selectConditionStep = select(
@@ -683,7 +689,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors, fieldsMapping);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors, getWhereMapping());
 
                 List<? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)
@@ -694,7 +700,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     selectConditionStep,
                     columnsWithoutDateWithOutAggs,
                     dateFields,
-                    fieldsMapping
+                    getFieldsMapping()
                 );
 
                 // Apply OrderBy

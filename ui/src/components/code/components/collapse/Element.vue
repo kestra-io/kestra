@@ -47,7 +47,6 @@
     const editTask = inject(
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         (section: string, id: string) => {
-            console.log("Edit task", section, id);
         },
     );
 

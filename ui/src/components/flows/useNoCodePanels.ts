@@ -28,7 +28,7 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string
         },
         dirty: false,
     } : tab?.section?.length ? {
-        value: `${NOCODE_PREFIX}-create-${tab.section}-${tab.createIndex}`,
+        value: `${NOCODE_PREFIX}-create-${tab.section}-${tab.createIndex}${tab.parentTaskId?.length ? `-${tab.parentTaskId}` : ""}`,
         button: {
             label: `${tab.section} / ${t(`no_code.creation.${tab.section}`)}`,
             icon:  markRaw(MouseRightClickIcon),
@@ -83,10 +83,13 @@ export function setupInitialNoCodeTab(tab: string, t: (key: string) => string, h
         const taskInfoPath = tab.substring(7)
         const section = taskInfoPath.split("-").slice(1).shift() ?? ""
         if(taskInfoPath.startsWith("create-")){
-            const createIndex = parseInt(taskInfoPath.substring(section.length + 8))
+            const [createIndexPathPart, ...parentTaskIdArray] = taskInfoPath.substring(section.length + 8).split("-")
+            const createIndex = parseInt(createIndexPathPart, 10)
+            const parentTaskId = parentTaskIdArray.join("-")
             return {
                 section,
-                createIndex
+                createIndex,
+                parentTaskId
             }
         }else if(taskInfoPath.startsWith("edit-")){
             const taskId = taskInfoPath.substring(section.length + 6)

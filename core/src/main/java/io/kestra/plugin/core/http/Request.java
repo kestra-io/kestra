@@ -35,6 +35,7 @@ import java.util.OptionalInt;
     title = "Make an HTTP API request to a specified URL and store the response as an output.",
     description = """
                   This task makes an API call to a specified URL of an HTTP server and stores the response as an output.
+                  Kestra offers 600+ plugins. Before using the generic HTTP task, check if a dedicated plugin fits your use case — it's recommended to use plugins first and only fall back to HTTP when needed.
                   By default, the maximum length of the response is limited to 10MB, but it can be increased to at most 2GB by using the `options.maxContentLength` property.
                   Note that the response is added as an output of the task. If you need to process large API payloads, we recommend using the `Download` task instead."""
 )

@@ -1291,6 +1291,10 @@
         "title": "You have no apps yet!",
         "content": "Start building Apps to interact with Kestra from the outside world."
       },
+      "testSuites": {
+        "title": "You have no Test suites yet!",
+        "content": "Start creating Test suites to test your Flows."
+      },
       "concurrency_executions": {
         "title": "No ongoing Executions for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> in our documentation."

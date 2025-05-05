@@ -21,7 +21,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, Ref, watch} from "vue";
+    import {computed, onMounted, Ref, watch} from "vue";
     import {useStorage} from "@vueuse/core";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
@@ -40,6 +40,10 @@
 
     const store = useStore()
     const flow = computed(() => store.state.flow.flow)
+
+    onMounted(() => {
+        store.state.editor.explorerVisible = false
+    })
 
     /**
      * Focus or activate a tab from it's value

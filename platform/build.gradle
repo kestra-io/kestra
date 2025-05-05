@@ -75,7 +75,7 @@ dependencies {
         api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.24.3'
         api group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion
         api group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
-        api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.1'
+        api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.2'
         api group: 'com.devskiller.friendly-id', name: 'friendly-id', version: '1.1.0'
         api group: 'net.thisptr', name: 'jackson-jq', version: '1.2.0'
         api group: 'com.google.guava', name: 'guava', version: '33.4.8-jre'

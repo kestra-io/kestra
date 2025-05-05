@@ -182,6 +182,16 @@ public abstract class AbstractJdbcServiceInstanceRepository extends AbstractJdbc
             this.jdbcRepository.fetch(query);
     }
 
+    @Override
+    public int purgeEmptyInstances(Instant until) {
+        return jdbcRepository.getDslContextWrapper().transactionResult(
+            configuration -> using(configuration).delete(table())
+                .where(STATE.eq(Service.ServiceState.EMPTY.name()))
+                .and(UPDATED_AT.lessOrEqual(until))
+                .execute()
+        );
+    }
+
     public void transaction(final TransactionalRunnable runnable) {
         this.jdbcRepository
             .getDslContextWrapper()

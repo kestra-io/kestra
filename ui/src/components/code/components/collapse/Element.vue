@@ -46,7 +46,7 @@
 
     const editTask = inject(
         EDIT_TASK_FUNCTION_INJECTION_KEY,
-        (section: string, id: string) => {
+        (_section: string, _id: string) => {
         },
     );
 

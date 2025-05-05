@@ -19,6 +19,9 @@
     "delete ok": "is deleted",
     "Default page": "Default page",
     "confirmation": "Confirmation",
+    "common": {
+      "back": "Back"
+    },
     "delete confirm": "Are you sure you want to delete <code>{name}</code>?",
     "outdated revision save confirmation": {
       "confirm": "Do you want to overwrite it?",
@@ -568,6 +571,8 @@
     "environment color setting": "Environment color",
     "slack support": "Ask any question via Slack",
     "join community": "Join the Community",
+    "join_slack": "Join Slack",
+    "kestra": "Kestra",
     "reach us": "Talk to us",
     "new version": "New version {version} available!",
     "error detected": "Error(s) detected",
@@ -593,6 +598,8 @@
       "button": "Restart trigger",
       "tooltip": "Restart the trigger"
     },
+    "trigger disabled": "Trigger is disabled within Flow source",
+    "flow source not found": "Flow source not found",
     "date format": "Date format",
     "timezone": "Timezone",
     "add task": "Add a task",
@@ -701,6 +708,8 @@
     "pause backfills": "Pause backfills",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
+    "backfill paused": "Backfill paused",
+    "backfill running": "Backfill running",
     "relative": "Relative",
     "relative start date": "Relative start date",
     "relative end date": "Relative end date",
@@ -1308,6 +1317,10 @@
       "move_right": "Move right",
       "move_left": "Move left",
       "close_all_tabs": "Close all tabs"
-    }
+    },
+    "search_docs": "Search",
+    "no_results_found": "No results found",
+    "searching": "Searching...",
+    "worker information": "Worker Information"
   }
 }

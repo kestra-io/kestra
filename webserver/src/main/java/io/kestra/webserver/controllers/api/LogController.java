@@ -88,10 +88,9 @@ public class LogController {
                 null,
                 null,
                 null,
+                null,
                 null);
         }
-        final ZonedDateTime now = ZonedDateTime.now();
-
         TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
         validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
 

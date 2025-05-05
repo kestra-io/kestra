@@ -5,10 +5,7 @@
         >
             <div class="info-block">
                 <p class="m-0 fs-6">
-                    <span class="fw-bold">{{ t("executions") }}</span>
-                    <span class="fw-light small">
-                        {{ t("dashboard.per_day") }}
-                    </span>
+                    <span class="fw-bold">{{ t("dashboard.total_executions") }}</span>
                 </p>
                 <p class="m-0 fs-2">
                     <el-skeleton v-if="loading" :rows="0" />

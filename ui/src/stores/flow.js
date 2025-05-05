@@ -37,6 +37,7 @@ export default {
         haveChange: false,
         expandedSubflows: [],
         metadata: undefined,
+        createdTaskYaml: {}
     },
 
     actions: {
@@ -195,6 +196,7 @@ export default {
                 }
             }
 
+            const {isCreating} = state;
             if (state.isCreating && !overrideFlow) {
                 await dispatch("createFlow", {flow: flowYaml})
                     .then((response) => {
@@ -210,13 +212,13 @@ export default {
                     });
             }
 
-            if (state.isCreating || overrideFlow) {
+            if (isCreating || overrideFlow) {
                 return "redirect_to_update";
             }
 
             commit("setHaveChange", false);
             await dispatch("validateFlow", {
-                flow: state.isCreating ? flowYaml : getters.yamlWithNextRevision
+                flow: isCreating ? flowYaml : getters.yamlWithNextRevision
             });
         },
         fetchGraph({state, dispatch}) {
@@ -676,9 +678,18 @@ export default {
         },
         setMetadata(state, value) {
             state.metadata = value
+        },
+        setCreatedTaskYaml(state, payload) {
+            if(state.createdTaskYaml[payload.section] === undefined){
+                state.createdTaskYaml[payload.section] = []
+            }
+            state.createdTaskYaml[payload.section][payload.index] = payload.yaml
         }
     },
     getters: {
+        createdTaskYaml(state){
+            return state.createdTaskYaml;
+        },
         isFlow(state, _getters, rootState) {
             const currentTab = rootState.editor.current;
             return currentTab?.flow !== undefined || state.isCreating;

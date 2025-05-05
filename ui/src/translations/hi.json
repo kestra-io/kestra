@@ -56,6 +56,8 @@
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",
     "backfill": "Backfill",
     "backfill executions": "Backfill निष्पादन",
+    "backfill paused": "Backfill PAUSED",
+    "backfill running": "Backfill चल रहा है",
     "before": "पहले",
     "behavior": "व्यवहार",
     "blueprints": {
@@ -130,6 +132,9 @@
     "close sidebar": "साइडबार बंद करें",
     "collapse": "संक्षिप्त करें",
     "collapse all": "सभी संक्षिप्त करें",
+    "common": {
+      "back": "वापस"
+    },
     "concurrency": "समानांतरता",
     "conditions": "शर्तें",
     "configure basic auth": "बेसिक प्रमाणीकरण कॉन्फ़िगर करें",
@@ -580,6 +585,7 @@
     "flow export": "क्या आप वाकई <code>{flowCount}</code> flow(s) को निर्यात करना चाहते हैं?",
     "flow must have id and namespace": "Flow में एक id और एक namespace होना चाहिए।",
     "flow not imported": "कुछ flow आयात नहीं किया जा सका",
+    "flow source not found": "Flow source नहीं मिला",
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
     "flow_only": "केवल Flow टैब पर उपलब्ध है।",
@@ -648,7 +654,9 @@
     "item": "आइटम",
     "items": "आइटम्स",
     "join community": "समुदाय में शामिल हों",
+    "join_slack": "Slack से जुड़ें",
     "jump to...": "कूदें...",
+    "kestra": "केस्ट्रा",
     "key": "Key",
     "kill": "समाप्त करें",
     "kill only parents": "केवल parents समाप्त करें",
@@ -861,6 +869,7 @@
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
+    "no_results_found": "कोई परिणाम नहीं मिला",
     "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
     "now": "अब",
     "of": "का",
@@ -1037,6 +1046,8 @@
       "saved": "सहेजे गए फ़िल्टर"
     },
     "search term in message": "संदेश में खोज शब्द",
+    "search_docs": "खोजें",
+    "searching": "खोज जारी है...",
     "seconds": "सेकंड्स",
     "secret": {
       "add": "नया secret",
@@ -1204,6 +1215,7 @@
     },
     "trigger": "Trigger",
     "trigger details": "Trigger विवरण",
+    "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
     "trigger execution id": "Trigger निष्पादन Id",
     "trigger filter": {
       "options": {
@@ -1288,6 +1300,7 @@
     "worker group": "Worker समूह",
     "worker group fallback": "वर्कर ग्रुप फॉलबैक",
     "worker group key": "वर्कर ग्रुप key",
+    "worker information": "वर्कर जानकारी",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",

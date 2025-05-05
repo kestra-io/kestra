@@ -5,20 +5,22 @@
 </template>
 
 <script setup lang="ts">
-    import {inject, ref} from "vue";
-    import {SECTION_INJECTION_KEY, CREATING_INJECTION_KEY} from "../../../injectionKeys";
+    import {inject} from "vue";
+    import {CREATE_TASK_FUNCTION_INJECTION_KEY} from "../../../injectionKeys";
     import {Plus} from "../../../utils/icons";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps({section: {type: String, required: true}});
+    const props = defineProps({
+        section: {
+            type: String,
+            required: true
+        }});
 
-    const sectionInjected = inject(SECTION_INJECTION_KEY, ref(""));
-    const creating = inject(CREATING_INJECTION_KEY, ref(false));
+    const createTask = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {});
 
     const handleClick = () => {
-        sectionInjected.value = props.section.toLowerCase();
-        creating.value = true;
+        createTask(props.section.toLowerCase());
     };
 </script>

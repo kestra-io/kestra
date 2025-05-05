@@ -5,7 +5,7 @@
                 <button
                     v-for="element of EDITOR_ELEMENTS"
                     :key="element.value"
-                    :class="{active: activeTabs.includes(element.value)}"
+                    :class="{active: openTabs.includes(element.value)}"
                     @click="setTabValue(element.value)"
                 >
                     <component class="tabs-icon" :is="element.button.icon" />
@@ -24,11 +24,19 @@
     import {computed, Ref, watch} from "vue";
     import {useStorage} from "@vueuse/core";
     import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
-    import {FLOW_RELATED_TABS, useCodePanels, useInitialCodeTabs} from "./useCodePanels";
+    import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
+    import {setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
+
+    function isFlowRelated(element: Tab){
+        return ["code", "nocode", "topology"].includes(element.value)
+            // when the flow file is dirty all the nocode tabs get splashed
+            || element.value.startsWith("nocode-")
+    }
 
     const store = useStore()
     const flow = computed(() => store.state.flow.flow)
@@ -45,7 +53,7 @@
     }
 
     function setTabValue(tabValue: string){
-        if(activeTabs.value.includes(tabValue)){
+        if(openTabs.value.includes(tabValue)){
             focusTab(tabValue)
             return
         }
@@ -57,9 +65,29 @@
         }
     }
 
+
+
+    const noCodeHandlers: Parameters<typeof setupInitialNoCodeTab>[2] = {
+        onCreateTask(...args){
+            openAddTaskTab(...args)
+            return false
+        },
+        onEditTask(...args){
+            openEditTaskTab(...args)
+            return false
+        },
+        onCloseTask(...args){
+            closeTaskTab(...args)
+            return false
+        },
+    }
+
+    const {t} = useI18n()
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
-        const element: Tab = EDITOR_ELEMENTS.find(e => e.value === value)!
-        if(FLOW_RELATED_TABS.includes(element.value)){
+        const tab = setupInitialNoCodeTab(value, t, noCodeHandlers)
+        const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value)!
+
+        if(isFlowRelated(element)){
             element.dirty = dirtyFlow
         }
         return {
@@ -93,7 +121,11 @@
                         return panels
                             .filter((p) => p.tabs.length)
                             .map((p):Panel => {
-                                const tabs = p.tabs.map(t => setupInitialCodeTab(t) ?? EDITOR_ELEMENTS.find(e => e.value === t)!)
+                                const tabs = p.tabs.map((tab) =>
+                                    setupInitialCodeTab(tab)
+                                    ?? setupInitialNoCodeTabIfExists(store.state.flow.flowYaml, tab, t, noCodeHandlers)
+                                    ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
+                                )
                                 const activeTab = tabs.find(t => t.value === p.activeTab)!
                                 return {
                                     activeTab,
@@ -109,17 +141,19 @@
         },
     )
 
-    const activeTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
+    const {openAddTaskTab, openEditTaskTab, closeTaskTab} = useNoCodePanels(panels, noCodeHandlers)
+
+    const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
 
     const {onRemoveTab, isFlowDirty} = useCodePanels(panels)
 
     watch(isFlowDirty, (dirty) => {
         for(const panel of panels.value){
-            if(panel.activeTab && FLOW_RELATED_TABS.includes(panel.activeTab.value)){
+            if(panel.activeTab && isFlowRelated(panel.activeTab)){
                 panel.activeTab.dirty = dirty
             }
             for(const tab of panel.tabs){
-                if(FLOW_RELATED_TABS.includes(tab.value)){
+                if(isFlowRelated(tab)){
                     tab.dirty = dirty
                 }
             }

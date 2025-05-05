@@ -1,4 +1,4 @@
-import {markRaw} from "vue";
+import {h, markRaw} from "vue";
 
 import CodeTagsIcon from "vue-material-design-icons/CodeTags.vue";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
@@ -23,7 +23,7 @@ export const EDITOR_ELEMENTS = [
             label: "Flow Code"
         },
         value: "code",
-        component: markRaw(EditorWrapper),
+        component: () => h(EditorWrapper, {path: "Flow.yml", name: "Flow.yml"}),
     },
     {
         button: {

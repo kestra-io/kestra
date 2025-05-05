@@ -28,7 +28,7 @@
                 :navbar="false"
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
                 :data-test-id="`input-form-${input.id}`"
-                v-model="inputsValues[input.id]"
+                v-model="selectedTriggerLocal[input.id]"
                 @update:model-value="onChange(input)"
                 :allow-create="input.allowCustomValue"
                 filterable
@@ -268,6 +268,7 @@
     import ValidationError from "../flows/ValidationError.vue";
 </script>
 <script>
+    import {toRaw} from "vue";
     import {mapState} from "vuex";
     import debounce from "lodash/debounce";
     import Editor from "../../components/inputs/Editor.vue";
@@ -317,6 +318,10 @@
                 type: Object,
                 default: undefined,
             },
+            selectedTrigger: {
+                type: Object,
+                default: undefined,
+            }
         },
         data() {
             return {
@@ -332,6 +337,7 @@
                 multiSelectInputs: {},
                 inputsValidated: new Set(),
                 debouncedValidation: () => {},
+                selectedTriggerLocal: {},
                 editingArrayId: null,
                 editableItems: {},
             };
@@ -340,6 +346,9 @@
         created() {
             this.inputsMetaData = JSON.parse(JSON.stringify(this.initialInputs));
             this.debouncedValidation = debounce(this.validateInputs, 500)
+
+            if(this.selectedTrigger?.inputs) this.selectedTriggerLocal = toRaw(this.selectedTrigger.inputs);
+            else this.selectedTriggerLocal = this.inputsValues;
 
             this.validateInputs().then(() => {
                 this.$watch("inputsValues", {

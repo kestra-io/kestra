@@ -126,6 +126,12 @@
                     >
                         {{ $t("delete logs") }}
                     </el-dropdown-item>
+                    <WorkerInfo
+                        component="el-dropdown-item"
+                        v-if="hasWorkerId(currentTaskRun) !== null"
+                        :task-run="currentTaskRun"
+                        @follow="forwardEvent('follow', $event)"
+                    />
                 </el-dropdown-menu>
             </template>
         </el-dropdown>
@@ -165,6 +171,7 @@
     import ChevronRight from "vue-material-design-icons/ChevronRight.vue";
     import ChevronDown from "vue-material-design-icons/ChevronDown.vue";
     import DotsVertical from "vue-material-design-icons/DotsVertical.vue";
+    import WorkerInfo from "./WorkerInfo.vue";
 </script>
 
 <script>
@@ -325,6 +332,9 @@
                     () => {}
                 )
 
+            },
+            hasWorkerId(currentTaskRun) {
+                return currentTaskRun.attempts?.find(attempt => attempt.workerId !== null) !== null;
             },
             forwardEvent(type, event) {
                 this.$emit(type, event);

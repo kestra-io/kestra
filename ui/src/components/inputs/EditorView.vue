@@ -236,7 +236,7 @@
                 </div>
             </template>
             <NoCode
-                v-else
+                v-else-if="isFlow"
                 :flow="flowYaml"
                 :section="route.query.section?.toString()"
                 :task-id="route.query.identifier?.toString()"

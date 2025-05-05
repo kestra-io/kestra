@@ -84,6 +84,22 @@
                     </Column>
                 </Row>
                 <Row>
+                    <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval.label')">
+                        <el-input-number
+                            :model-value="pendingSettings.autoRefreshInterval"
+                            @update:model-value="onAutoRefreshInterval"
+                            controls-position="right"
+                            :min="2"
+                            :max="120"
+                            :step="5"
+                        >
+                            <template #suffix>
+                                <span>{{ $t('settings.blocks.configuration.fields.auto_refresh_interval.time_unit') }}</span>
+                            </template>
+                        </el-input-number>
+                    </Column>
+                </Row>
+                <Row>
                     <Column :label="$t('settings.blocks.configuration.fields.multi_panel_editor')">
                         <el-switch :aria-label="$t('settings.blocks.configuration.fields.multi_panel_editor')" :model-value="pendingSettings.multiPanelEditor" @update:model-value="onMultiPanelEditor" />
                     </Column>
@@ -301,6 +317,7 @@
                     envColor: undefined,
                     executeDefaultTab: undefined,
                     multiPanelEditor: undefined,
+                    autoRefreshInterval: undefined,
                     flowDefaultTab: undefined,
                     logsFontSize: undefined
                 },
@@ -350,6 +367,7 @@
             this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
             this.pendingSettings.multiPanelEditor = localStorage.getItem("multiPanelEditor") === "true";
+            this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
             this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
         },
         methods: {
@@ -488,6 +506,10 @@
             },
             onMultiPanelEditor(value) {
                 this.pendingSettings.multiPanelEditor = value;
+                this.checkForChanges();
+            },
+            onAutoRefreshInterval(value) {
+                this.pendingSettings.autoRefreshInterval = value;
                 this.checkForChanges();
             },
             onFlowDefaultTabChange(value){

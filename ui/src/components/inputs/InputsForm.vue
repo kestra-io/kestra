@@ -207,7 +207,7 @@
                         @click="addNewArrayItem(input)"
                         :icon="Plus"
                     >
-                        {{ $t('add_new_item') }}
+                        {{ $t('add') }} {{ $t('new') }} {{ $t('items') }}
                     </el-button>
                     <div class="d-flex justify-content-end mt-2">
                         <el-button 

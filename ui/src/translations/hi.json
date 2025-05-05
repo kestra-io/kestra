@@ -56,6 +56,8 @@
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",
     "backfill": "Backfill",
     "backfill executions": "Backfill निष्पादन",
+    "backfill paused": "Backfill PAUSED",
+    "backfill running": "Backfill चल रहा है",
     "before": "पहले",
     "behavior": "व्यवहार",
     "blueprints": {

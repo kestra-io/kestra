@@ -56,6 +56,8 @@
     "back_to_dashboard": "Вернуться на панель управления",
     "backfill": "Заполнение",
     "backfill executions": "Выполнения заполнение",
+    "backfill paused": "Заполнение приостановлено",
+    "backfill running": "Запуск Backfill",
     "before": "до",
     "behavior": "Поведение",
     "blueprints": {

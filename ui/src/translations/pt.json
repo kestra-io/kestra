@@ -56,6 +56,8 @@
     "back_to_dashboard": "Voltar ao dashboard",
     "backfill": "Backfill",
     "backfill executions": "Execuções de backfill",
+    "backfill paused": "Preenchimento retroativo pausado",
+    "backfill running": "Backfill em execução",
     "before": "antes",
     "behavior": "Comportamento",
     "blueprints": {

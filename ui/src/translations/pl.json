@@ -56,6 +56,8 @@
     "back_to_dashboard": "Powrót do pulpitu",
     "backfill": "Backfill",
     "backfill executions": "Backfill wykonania",
+    "backfill paused": "Wstrzymano backfill",
+    "backfill running": "Backfill uruchomiony",
     "before": "przed",
     "behavior": "Zachowanie",
     "blueprints": {

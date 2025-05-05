@@ -56,6 +56,8 @@
     "back_to_dashboard": "ダッシュボードに戻る",
     "backfill": "Backfill",
     "backfill executions": "backfill実行",
+    "backfill paused": "バックフィル PAUSED",
+    "backfill running": "バックフィル実行中",
     "before": "前",
     "behavior": "動作",
     "blueprints": {

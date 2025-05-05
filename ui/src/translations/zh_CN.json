@@ -56,6 +56,8 @@
     "back_to_dashboard": "返回仪表板",
     "backfill": "回填",
     "backfill executions": "回填执行",
+    "backfill paused": "补数据已暂停",
+    "backfill running": "正在运行Backfill",
     "before": "之前",
     "behavior": "行为",
     "blueprints": {

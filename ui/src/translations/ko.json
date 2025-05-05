@@ -56,6 +56,8 @@
     "back_to_dashboard": "대시보드로 돌아가기",
     "backfill": "Backfill",
     "backfill executions": "backfill 실행",
+    "backfill paused": "백필 일시 중지됨",
+    "backfill running": "백필 실행 중",
     "before": "이전",
     "behavior": "동작",
     "blueprints": {

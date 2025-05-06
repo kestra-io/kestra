@@ -1081,6 +1081,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "自动刷新间隔",
             "default_namespace": "默认命名空间",
             "editor_type": "默认编辑器类型",
             "execute_default_tab": "默认执行选项卡",
@@ -1204,7 +1205,7 @@
     "toggle fullscreen": "切换全屏",
     "toggle output": "切换输出",
     "toggle output display": "切换输出显示",
-    "toggle periodic refresh each 10 seconds": "切换每10秒周期刷新",
+    "toggle periodic refresh each x seconds": "切换每隔 {interval} 秒的定期刷新",
     "toggle_word_wrap": "切换自动换行",
     "topology": "拓扑",
     "topology-graph": {

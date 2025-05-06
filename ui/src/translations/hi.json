@@ -1081,6 +1081,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
             "default_namespace": "पूर्व-निर्धारित Namespace",
             "editor_type": "डिफ़ॉल्ट एडिटर प्रकार",
             "execute_default_tab": "डिफ़ॉल्ट Execution टैब",
@@ -1204,7 +1205,7 @@
     "toggle fullscreen": "पूर्ण स्क्रीन टॉगल करें",
     "toggle output": "आउटपुट टॉगल करें",
     "toggle output display": "आउटपुट प्रदर्शन टॉगल करें",
-    "toggle periodic refresh each 10 seconds": "हर 10 सेकंड में आवधिक ताज़ा टॉगल करें",
+    "toggle periodic refresh each x seconds": "हर {interval} सेकंड में आवधिक रिफ्रेश टॉगल करें",
     "toggle_word_wrap": "शब्द रैप टॉगल करें",
     "topology": "टोपोलॉजी",
     "topology-graph": {

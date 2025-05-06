@@ -1971,7 +1971,7 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/namespaces")
     @Operation(tags = {"Executions"}, summary = "Get all namespaces that have executable flows")
-    public List<String> listDistinctNamespaces() {
+    public List<String> listExecutableDistinctNamespaces() {
         return flowRepository.findDistinctNamespaceExecutable(tenantService.resolveTenant());
     }
 

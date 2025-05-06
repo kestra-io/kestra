@@ -392,8 +392,9 @@ class ExecutionServiceTest {
 
     @Test
     @ExecuteFlow("flows/valids/logs.yaml")
-    void deleteExecutionKeepLogs(Execution execution) throws IOException {
+    void deleteExecutionKeepLogs(Execution execution) throws IOException, TimeoutException {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        Await.until(() -> logRepository.findByExecutionId(execution.getTenantId(), execution.getId(), Level.TRACE).size() == 5, Duration.ofMillis(10), Duration.ofSeconds(5));
 
         executionService.delete(execution, false, false, false);
 

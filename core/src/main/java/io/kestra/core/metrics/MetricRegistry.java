@@ -1,6 +1,8 @@
 package io.kestra.core.metrics;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKilled;
+import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -49,6 +51,8 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_TRIGGER_ERROR_COUNT_DESCRIPTION = "The total number of trigger evaluations that failed inside the Worker";
     public static final String METRIC_WORKER_TRIGGER_EXECUTION_COUNT = "worker.trigger.execution.count";
     public static final String METRIC_WORKER_TRIGGER_EXECUTION_COUNT_DESCRIPTION = "The total number of triggers evaluated by the Worker";
+    public static final String METRIC_WORKER_KILLED_COUNT = "worker.killed.count";
+    public static final String METRIC_WORKER_KILLED_COUNT_DESCRIPTION = "The total number of executions killed events received the Executor";
 
     public static final String METRIC_EXECUTOR_TASKRUN_CREATED_COUNT = "executor.taskrun.created.count";
     public static final String METRIC_EXECUTOR_TASKRUN_CREATED_COUNT_DESCRIPTION = "The total number of tasks created by the Executor";
@@ -64,6 +68,17 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_EXECUTION_DURATION_DESCRIPTION = "Execution duration inside the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_MESSAGE_PROCESS_DURATION = "executor.execution.message.process";
     public static final String METRIC_EXECUTOR_EXECUTION_MESSAGE_PROCESS_DURATION_DESCRIPTION = "Duration of a single execution message processed by the Executor";
+    public static final String METRIC_EXECUTOR_KILLED_COUNT = "executor.killed.count";
+    public static final String METRIC_EXECUTOR_KILLED_COUNT_DESCRIPTION = "The total number of executions killed events received the Executor";
+    public static final String METRIC_EXECUTOR_SLA_EXPIRED_COUNT = "executor.sla.expired.count";
+    public static final String METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION = "The total number of expired SLA (i.e. executions with SLA of type MAX_DURATION that took longer than the SLA) evaluated by the Executor";
+    public static final String METRIC_EXECUTOR_SLA_VIOLATION_COUNT = "executor.sla.violation.count";
+    public static final String METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION = "The total number of expired SLA (i.e. executions with SLA of type MAX_DURATION that took longer than the SLA) evaluated by the Executor";
+    public static final String METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT = "executor.execution.delay.created.count";
+    public static final String METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT_DESCRIPTION = "The total number of execution delays created by the Executor";
+    public static final String METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT = "executor.execution.delay.ended.count";
+    public static final String METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION = "The total number of execution delays ended (resumed) by the Executor";
+
     public static final String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
     public static final String METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION = "Total number of batches of records received by the Indexer";
     public static final String METRIC_INDEXER_REQUEST_DURATION = "indexer.request.duration";
@@ -112,6 +127,7 @@ public class MetricRegistry {
     public static final String TAG_WORKER_GROUP = "worker_group";
     public static final String TAG_TENANT_ID = "tenant_id";
     public static final String TAG_CLASS_NAME = "class_name";
+    public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";
 
     @Inject
     private MeterRegistry meterRegistry;
@@ -316,7 +332,7 @@ public class MetricRegistry {
      * Return tags for current {@link AbstractTrigger}
      *
      * @param trigger the current Trigger
-     * @return tags to applied to metrics
+     * @return tags to apply to metrics
      */
     public String[] tags(AbstractTrigger trigger) {
         return new String[]{
@@ -364,6 +380,19 @@ public class MetricRegistry {
             this.tags(schedulerExecutionWithTrigger.getExecution()),
             tags
         );
+    }
+
+    /**
+     * Return tags for current {@link ExecutionKilled}
+     *
+     * @param executionKilled the current Trigger
+     * @return tags to apply to metrics
+     */
+    public String[] tags(ExecutionKilled executionKilled) {
+        var baseTags = new String[]{
+            TAG_EXECUTION_KILLED_TYPE, executionKilled.getType(),
+        };
+        return executionKilled.getTenantId() == null ? baseTags : ArrayUtils.addAll(baseTags, TAG_TENANT_ID, executionKilled.getTenantId());
     }
 
 

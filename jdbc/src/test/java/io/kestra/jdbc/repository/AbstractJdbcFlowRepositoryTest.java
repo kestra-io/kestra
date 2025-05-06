@@ -73,7 +73,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                 .execute();
         });
 
-        Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(null, "io.kestra.unittest", "invalid");
+        Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(MAIN_TENANT, "io.kestra.unittest", "invalid");
 
         try {
             assertThat(flow.isPresent()).isTrue();

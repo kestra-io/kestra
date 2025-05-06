@@ -162,6 +162,7 @@
         "error handlers": "errors",
         finally: "finally",
         "after execution": "afterExecution",
+        "plugin defaults": "pluginDefaults",
     };
 
     const saveTask = () => {

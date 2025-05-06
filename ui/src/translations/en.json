@@ -1175,9 +1175,10 @@
         "optional": "Optional properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
-        "error_handlers": "Error Handlers",
+        "errors": "Error Handlers",
+        "afterExecution": "After Execution",
         "finally": "Finally",
-        "after_execution": "After Execution"
+        "pluginDefaults": "Plugin Defaults"
       },
       "fields": {
         "main": {
@@ -1202,6 +1203,7 @@
         "triggers": "Add a trigger",
         "error handlers": "Add an error handler",
         "finally": "Add a finally block",
+        "plugin defaults": "Add a plugin default",
         "after execution": "Add an after execution block"
       },
       "save": {

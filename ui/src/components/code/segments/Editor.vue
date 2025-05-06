@@ -122,6 +122,7 @@
     const creatingFlow = computed(() => {
         return store.state.flow.isCreating;
     });
+
     const creatingTask = inject(CREATING_TASK_INJECTION_KEY);
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
@@ -257,31 +258,22 @@
         return rest;
     })
 
+    const SECTIONS_IDS = [
+        "tasks",
+        "triggers",
+        "errors",
+        "finally",
+        "afterExecution",
+        "pluginDefaults",
+    ] as const
 
-    const getSectionTitle = (label: string, elements: NoCodeElement[] = []) => {
-        const title = t(`no_code.sections.${label}`);
-        return {title, elements};
-    };
+    type SectionKey = typeof SECTIONS_IDS[number];
+
     const sections = computed((): CollapseItem[] => {
-        const parsedFlow = YAML_UTILS.parse<{
-            tasks: NoCodeElement[];
-            triggers: NoCodeElement[];
-            errors: NoCodeElement[];
-            finally: NoCodeElement[];
-            afterExecution: NoCodeElement[];
-        }>(flow.value);
-        return [
-            getSectionTitle("tasks", parsedFlow?.tasks ?? []),
-            getSectionTitle("triggers", parsedFlow?.triggers ?? []),
-            getSectionTitle(
-                "error_handlers",
-                parsedFlow?.errors ?? [],
-            ),
-            getSectionTitle("finally", parsedFlow?.finally ?? []),
-            getSectionTitle(
-                "after_execution",
-                parsedFlow?.afterExecution ?? [],
-            ),
-        ];
+        const parsedFlow = YAML_UTILS.parse<Partial<Record<SectionKey, NoCodeElement[]>>>(flow.value);
+        return SECTIONS_IDS.map((section) => ({
+            elements: parsedFlow?.[section] ?? [],
+            title: t(`no_code.sections.${section}`),
+        }))
     });
 </script>

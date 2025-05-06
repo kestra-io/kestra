@@ -29,6 +29,12 @@
     import {mapState} from "vuex";
     import {TaskIcon} from "@kestra-io/ui-libs";
 
+    function upperSnakeToCamelCase(str) {
+        return str.toLowerCase().replaceAll(/_([a-z])/g, function (g) {
+            return g[1].toUpperCase();
+        });
+    }
+
     export default {
         components: {
             TaskIcon
@@ -53,18 +59,15 @@
             ...mapState("plugin", ["plugin", "plugins", "icons"]),
             taskModels() {
                 const taskModels = [];
+                const pluginKeySection = this.section === "plugin defaults" ? "tasks" : upperSnakeToCamelCase(this.section);
                 for (const plugin of this.plugins || []) {
-                    taskModels.push.apply(taskModels, plugin[this.upperSnakeToCamelCase(this.section)]);
+                    taskModels.push.apply(taskModels, plugin[pluginKeySection]);
                 }
                 return taskModels;
             },
         },
         methods: {
-            upperSnakeToCamelCase(str) {
-                return str.toLowerCase().replaceAll(/_([a-z])/g, function (g) {
-                    return g[1].toUpperCase();
-                });
-            },
+
             onInput(value) {
                 this.$emit("update:modelValue", value);
             },

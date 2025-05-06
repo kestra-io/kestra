@@ -1,5 +1,6 @@
 package io.kestra.core.test;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasSource;
@@ -58,6 +59,7 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
     private Boolean disabled = Boolean.FALSE;
 
     @Override
+    @JsonIgnore
     public String uid() {
         return IdUtils.fromParts(
             tenantId,

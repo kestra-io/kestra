@@ -265,14 +265,19 @@ public class FlowableUtils {
             return Collections.emptyList();
         }
 
-        long concurrencySlots = concurrency == 0 ? Integer.MAX_VALUE : concurrency - nonTerminatedCount;
+        Map<String, List<ResolvedTask>> collect = allTasks
+            .stream()
+            .collect(Collectors.groupingBy(ResolvedTask::getValue, LinkedHashMap::new, Collectors.toList()));
+
+        long resolvedConcurrency = concurrency == 0 ? Integer.MAX_VALUE : concurrency;
+        // if concurrencyLimit > values.size() we limit concurrency to values.size()
+        if (resolvedConcurrency > collect.size()) {
+            resolvedConcurrency = collect.size();
+        }
+        long concurrencySlots = resolvedConcurrency - nonTerminatedCount;
 
         // first one
         if (taskRuns.isEmpty()) {
-            Map<String, List<ResolvedTask>> collect = allTasks
-                .stream()
-                .collect(Collectors.groupingBy(ResolvedTask::getValue, LinkedHashMap::new, Collectors.toList()));
-
             return collect.values().stream()
                 .limit(concurrencySlots)
                 .map(resolvedTasks -> resolvedTasks.getFirst().toNextTaskRun(execution))
@@ -281,10 +286,6 @@ public class FlowableUtils {
         }
 
         // start as many tasks as we have concurrency slots
-        Map<String, List<ResolvedTask>> collect = allTasks
-            .stream()
-            .collect(Collectors.groupingBy(ResolvedTask::getValue, LinkedHashMap::new, Collectors.toList()));
-
         return collect.values().stream()
             .map(resolvedTasks -> filterCreated(resolvedTasks, taskRuns, parentTaskRun))
             .filter(resolvedTasks -> !resolvedTasks.isEmpty())

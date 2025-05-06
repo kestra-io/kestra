@@ -1081,6 +1081,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "Interwał automatycznego odświeżania",
             "default_namespace": "Domyślny Namespace",
             "editor_type": "Domyślny typ edytora",
             "execute_default_tab": "Domyślna karta Execution",
@@ -1204,7 +1205,7 @@
     "toggle fullscreen": "Przełącz pełny ekran",
     "toggle output": "Przełącz wyjścia",
     "toggle output display": "Przełącz wyświetlanie wyjścia",
-    "toggle periodic refresh each 10 seconds": "Przełącz okresowe odświeżanie co 10 sekund",
+    "toggle periodic refresh each x seconds": "Przełącz okresowe odświeżanie co {interval} sekund",
     "toggle_word_wrap": "Przełącz zawijanie wierszy",
     "topology": "Topologia",
     "topology-graph": {

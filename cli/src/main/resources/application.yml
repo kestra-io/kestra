@@ -202,6 +202,11 @@ kestra:
       initialDelay: 1m
       # The expected time between service heartbeats.
       heartbeatInterval: 3s
+    service:
+      purge:
+        initial-delay: 1h
+        fixed-delay: 1d
+        retention: 30d
   anonymous-usage-report:
     enabled: true
     uri: https://api.kestra.io/v1/reports/usages

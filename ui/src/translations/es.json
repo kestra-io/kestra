@@ -1081,6 +1081,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "Intervalo de Auto Refresh",
             "default_namespace": "Namespace Predeterminado",
             "editor_type": "Tipo de Editor Predeterminado",
             "execute_default_tab": "Pestaña de Ejecución Predeterminada",
@@ -1204,7 +1205,7 @@
     "toggle fullscreen": "Alternar pantalla completa",
     "toggle output": "Alternar salidas",
     "toggle output display": "Alternar visualización de salida",
-    "toggle periodic refresh each 10 seconds": "Alternar actualización periódica cada 10 segundos",
+    "toggle periodic refresh each x seconds": "Alternar actualización periódica cada {interval} segundos",
     "toggle_word_wrap": "Alternar ajuste de línea",
     "topology": "Topología",
     "topology-graph": {

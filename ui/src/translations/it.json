@@ -1081,6 +1081,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
             "default_namespace": "Namespace predefinito",
             "editor_type": "Tipo Editor Predefinito",
             "execute_default_tab": "Scheda di Esecuzione Predefinita",
@@ -1204,7 +1205,7 @@
     "toggle fullscreen": "Attiva/disattiva schermo intero",
     "toggle output": "Attiva/disattiva outputs",
     "toggle output display": "Attiva/disattiva visualizzazione output",
-    "toggle periodic refresh each 10 seconds": "Attiva/disattiva aggiornamento periodico ogni 10 secondi",
+    "toggle periodic refresh each x seconds": "Attiva/disattiva l'aggiornamento periodico ogni {interval} secondi",
     "toggle_word_wrap": "Attiva/disattiva Word Wrap",
     "topology": "Topologia",
     "topology-graph": {

@@ -1081,6 +1081,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "Intervalle de rafraîchissement automatique",
             "default_namespace": "Espace de noms par défaut",
             "editor_type": "Type d'Éditeur par Défaut",
             "execute_default_tab": "Onglet d'exécution par défaut",
@@ -1204,7 +1205,7 @@
     "toggle fullscreen": "Permuter le plein écran",
     "toggle output": "Voir les sorties",
     "toggle output display": "Permuter l'affichage de sortie",
-    "toggle periodic refresh each 10 seconds": "Activer le rafraîchissement toutes les 10 secondes",
+    "toggle periodic refresh each x seconds": "Basculer le rafraîchissement périodique toutes les {interval} secondes",
     "toggle_word_wrap": "Activer/Désactiver le retour à la ligne",
     "topology": "Topologie",
     "topology-graph": {

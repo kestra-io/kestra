@@ -36,6 +36,7 @@ dependencies {
     implementation group: 'de.focus-shift', name: 'jollyday-jaxb'
     implementation 'nl.basjes.gitignore:gitignore-reader'
     implementation group: 'dev.failsafe', name: 'failsafe'
+    implementation 'com.github.ben-manes.caffeine:caffeine'
     api 'org.apache.httpcomponents.client5:httpclient5'
 
     // plugins

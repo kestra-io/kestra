@@ -16,14 +16,15 @@
 
     <TaskObject
         v-loading="isLoading"
-        v-if="plugin"
+        v-if="schema"
         name="root"
         :model-value="taskObject"
         @update:model-value="onInput"
-        :properties="schema?.properties"
-        :definitions="schema?.definitions"
+        :properties="schema.properties"
+        :definitions="schema.definitions"
     />
 </template>
+
 <script lang="ts" setup>
     import {computed, onBeforeMount, onBeforeUnmount, ref, watch} from "vue";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";

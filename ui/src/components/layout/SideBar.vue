@@ -248,6 +248,9 @@
         .vsm--child {
             .vsm--item {
                 padding: 0;
+                .vsm--title {
+                    padding-left: 10px;
+                }
             }
         }
 

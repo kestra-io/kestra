@@ -195,16 +195,24 @@
                         </el-table-column>
                         <el-table-column :label="$t('actions')" column-key="disable" class-name="row-action">
                             <template #default="scope">
-                                <el-switch
+                                <el-tooltip
                                     v-if="!scope.row.missingSource"
-                                    :active-text="$t('enabled')"
-                                    :model-value="!scope.row.disabled"
-                                    @change="setDisabled(scope.row, $event)"
-                                    class="switch-text"
-                                    :active-action-icon="Check"
-                                />
-                                <el-tooltip v-else :content="'flow source not found'" effect="light">
-                                    <AlertCircle class="trigger-issue-icon" />
+                                    :content="$t('trigger disabled')"
+                                    :disabled="!scope.row.codeDisabled"
+                                    effect="light"
+                                >
+                                    <el-switch
+                                        :active-text="$t('enabled')"
+                                        :inactive-text="$t('disabled')"
+                                        :model-value="!(scope.row.disabled || scope.row.codeDisabled)"
+                                        @change="setDisabled(scope.row, $event)"
+                                        inline-prompt
+                                        class="switch-text"
+                                        :disabled="scope.row.codeDisabled"
+                                    />
+                                </el-tooltip>
+                                <el-tooltip v-else :content="$t('flow source not found')" effect="light">
+                                    <AlertCircle />
                                 </el-tooltip>
                             </template>
                         </el-table-column>
@@ -270,7 +278,6 @@
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TopNavBar from "../layout/TopNavBar.vue";
-    import Check from "vue-material-design-icons/Check.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/SelectTable.vue";
@@ -387,12 +394,16 @@
                 this.selection = selection;
             },
             loadData(callback) {
+ feature/8606-backfill-icons
                 console.log('Loading triggers data...');
+
+ develop
                 const query = this.loadQuery({
                     size: parseInt(this.$route.query.size || 25),
                     page: parseInt(this.$route.query.page || 1),
                     sort: this.$route.query.sort || "triggerId:asc"
                 });
+ feature/8606-backfill-icons
                 
                 this.$store.dispatch("trigger/search", {
                     ...query,
@@ -401,6 +412,16 @@
                 }).then(triggersData => {
                     console.log('Raw triggers data:', triggersData);
                     console.log('Trigger results:', triggersData.results);
+
+
+                for (const key in query) {
+                    if (key.startsWith("filters[trigger_state]")) {
+                        delete query[key];
+                    }
+                }
+
+                this.$store.dispatch("trigger/search", query).then(triggersData => {
+ develop
                     this.triggers = triggersData.results;
                     this.total = triggersData.total;
                     if (callback) {
@@ -532,6 +553,7 @@
                     this.backfill = { start: null, end: null };
                 }
             },
+feature/8606-backfill-icons
             postBackfill() {
                 if (this.selectedTrigger && this.backfill.start && this.backfill.end) {
                     console.log('Executing backfill:', {
@@ -561,6 +583,23 @@
                     this.isBackfillOpen = false;
                     this.backfill = { start: null, end: null };
                 }
+
+            triggersMerged() {
+                const all = this.triggers.map(t => {
+                    return {
+                        ...t?.abstractTrigger,
+                        ...t.triggerContext,
+                        codeDisabled: t?.abstractTrigger?.disabled,
+                        // if we have no abstract trigger, it means that flow or trigger definition hasn't been found
+                        missingSource: !t.abstractTrigger
+                    }
+                })
+
+                if(!this.$route.query?.["filters[trigger_state][EQUALS]"]?.length) return all;
+
+                const disabled = this.$route.query?.["filters[trigger_state][EQUALS]"] === "DISABLED" ? true : false;
+                return all.filter(trigger => trigger.disabled === disabled);
+ develop
             },
             isScheduleType(trigger) {
                 console.log('Checking trigger:', trigger);
@@ -590,13 +629,22 @@
         }
     };
 </script>
+ feature/8606-backfill-icons
 
 <style>
+
+<style lang="scss" scoped>
+ develop
     .data-table-wrapper {
         margin-left: 0 !important;
         padding-left: 0 !important;
     }
+ feature/8606-backfill-icons
     .backfillContainer {
+
+    
+    .backfillContainer{
+ develop
         display: flex;
         align-items: center;
         gap: 8px;
@@ -608,10 +656,12 @@
         display: flex;
         align-items: center;
     }
+    
     .trigger-issue-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;
     }
+ feature/8606-backfill-icons
     .el-table__expanded-cell[class*=cell] {
         padding: 0;
     }
@@ -666,5 +716,30 @@
         display: inline-flex !important;
         align-items: center !important;
         gap: 8px !important;
+
+    
+    .alert-circle-icon {
+        color: var(--ks-content-warning);
+        font-size: 1.4em;
+    }
+    
+    :deep(.el-table__expand-icon) {
+        pointer-events: none;
+        .el-icon {
+            display: none;
+        }
+    }
+    :deep(.el-switch) {
+        .is-text {
+            padding: 0 3px;
+            color: inherit;
+        }
+        
+        &.is-checked {
+            .is-text {
+                color: #ffffff;
+            }
+        }
+ develop
     }
 </style>

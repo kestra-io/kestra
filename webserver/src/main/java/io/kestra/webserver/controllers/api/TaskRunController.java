@@ -72,7 +72,7 @@ public class TaskRunController {
                 query,
                 namespace,
                 flowId,
-                triggerExecutionId,
+                null,
                 null,
                 startDate,
                 endDate,
@@ -81,7 +81,8 @@ public class TaskRunController {
                 timeRange,
                 childFilter,
                 state,
-                null);
+                null,
+                triggerExecutionId);
         }
         final ZonedDateTime now = ZonedDateTime.now();
 

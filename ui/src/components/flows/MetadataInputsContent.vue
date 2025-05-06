@@ -30,6 +30,7 @@
 
 <script>
     import {mapState} from "vuex";
+    import {BREADCRUMB_INJECTION_KEY, PANEL_INJECTION_KEY} from "../code/injectionKeys";
 
     export default {
         emits: ["update:modelValue"],
@@ -68,6 +69,10 @@
                 loading: false,
             };
         },
+        inject:{
+            panel: {from: PANEL_INJECTION_KEY},
+            breadcrumbs: {from: BREADCRUMB_INJECTION_KEY}
+        },
         methods: {
             selectInput(input) {
                 this.loading = true;
@@ -96,7 +101,8 @@
                         message: this.$t("duplicate input id"),
                     });
                 } else {
-                    this.$store.commit("code/unsetPanel");
+                    this.panel = undefined;
+                    this.breadcrumbs.pop();
                     this.$emit("update:modelValue", [...this.inputs]);
                 }
             },

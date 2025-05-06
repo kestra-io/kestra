@@ -22,10 +22,10 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, ref} from "vue";
+    import {computed, inject} from "vue";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
-    import {SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../../injectionKeys";
+    import {EDIT_TASK_FUNCTION_INJECTION_KEY} from "../../injectionKeys";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
@@ -44,12 +44,14 @@
 
     const icons = computed(() => store.state.plugin.icons);
 
-    const sectionInjected = inject(SECTION_INJECTION_KEY, ref(""));
-    const taskId = inject(TASKID_INJECTION_KEY, ref(""));
+    const editTask = inject(
+        EDIT_TASK_FUNCTION_INJECTION_KEY,
+        (_section: string, _id: string) => {
+        },
+    );
 
     const handleClick = () => {
-        sectionInjected.value = props.section.toLowerCase();
-        taskId.value = props.element.id;
+        editTask(props.section.toLowerCase(), props.element.id);
     };
 </script>
 

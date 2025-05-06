@@ -39,6 +39,7 @@
     "add flow": "Aggiungi flow",
     "add task": "Aggiungi un task",
     "add-trigger-in-editor": "Aggiungi un Trigger al tuo Flow prima",
+    "add_new_item": "Aggiungi nuovo elemento",
     "administration": "Amministrazione",
     "advanced configuration": "Altre proprietà",
     "after": "dopo",
@@ -56,6 +57,8 @@
     "back_to_dashboard": "Torna alla dashboard",
     "backfill": "Backfill",
     "backfill executions": "Esecuzioni di backfill",
+    "backfill paused": "Backfill PAUSED",
+    "backfill running": "Esecuzione del backfill",
     "before": "prima",
     "behavior": "Comportamento",
     "blueprints": {
@@ -130,6 +133,9 @@
     "close sidebar": "chiudi barra laterale",
     "collapse": "Comprimi",
     "collapse all": "Comprimi tutto",
+    "common": {
+      "back": "Indietro"
+    },
     "concurrency": "Concurrency",
     "conditions": "condizioni",
     "configure basic auth": "Configura Autenticazione di Base",
@@ -580,6 +586,7 @@
     "flow export": "Sei sicuro di voler esportare <code>{flowCount}</code> flow?",
     "flow must have id and namespace": "Il flow deve avere un id e un namespace.",
     "flow not imported": "Alcuni flow non possono essere importati",
+    "flow source not found": "Sorgente del flow non trovata",
     "flow-dependencies": "dipendenze",
     "flow-no-dependencies": "Il tuo flow non ha dipendenze",
     "flow_only": "Disponibile solo nella scheda Flow.",
@@ -648,7 +655,9 @@
     "item": "elemento",
     "items": "elementi",
     "join community": "Unisciti alla Community",
+    "join_slack": "Unisciti a Slack",
     "jump to...": "Vai a...",
+    "kestra": "Kestra",
     "key": "Key",
     "kill": "Termina",
     "kill only parents": "Termina solo genitori",
@@ -861,6 +870,7 @@
     "no_logs_data": "Nessun dato",
     "no_logs_data_description": "O non ci sono flow in esecuzione, oppure potrebbe essere necessario modificare i filtri.",
     "no_namespaces": "Nessun namespace corrisponde ai criteri di ricerca.",
+    "no_results_found": "Nessun risultato trovato",
     "no_tasks_running": "Nessun task è ancora in esecuzione.",
     "now": "Ora",
     "of": "di",
@@ -1037,6 +1047,8 @@
       "saved": "Filtri salvati"
     },
     "search term in message": "Cerca termine nel messaggio",
+    "search_docs": "Cerca",
+    "searching": "Ricerca in corso...",
     "seconds": "Secondi",
     "secret": {
       "add": "Nuovo secret",
@@ -1204,6 +1216,7 @@
     },
     "trigger": "Trigger",
     "trigger details": "Dettagli del trigger",
+    "trigger disabled": "Il trigger è disabilitato all'interno della sorgente del flow",
     "trigger execution id": "Trigger Execution Id",
     "trigger filter": {
       "options": {
@@ -1288,6 +1301,7 @@
     "worker group": "Gruppo di Workers",
     "worker group fallback": "Gruppo di Worker di riserva",
     "worker group key": "Chiave del gruppo Worker",
+    "worker information": "Informazioni sul Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette",

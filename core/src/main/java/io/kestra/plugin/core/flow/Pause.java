@@ -30,11 +30,7 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.*;
 
 @SuperBuilder
 @ToString
@@ -191,6 +187,13 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Valid
     @Schema(
+        title = "A runnable task that will be executed when it's paused."
+    )
+    @PluginProperty
+    private Task onPause;
+
+    @Valid
+    @Schema(
         title = "Inputs to be passed to the execution when it's resumed.",
         description = "Before resuming the execution, the user will be prompted to fill in these inputs. The inputs can be used to pass additional data to the execution, which is useful for human-in-the-loop scenarios. The `onResume` inputs work the same way as regular [flow inputs](https://kestra.io/docs/workflow-components/inputs) — they can be of any type and can have default values. You can access those values in downstream tasks using the `onResume` output of the Pause task.")
     @PluginProperty
@@ -223,7 +226,7 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
         GraphUtils.sequential(
             subGraph,
-            this.tasks,
+            this.getOnPause() != null ? ListUtils.concat(List.of(this.getOnPause()), this.tasks) : this.tasks,
             this.errors,
             this._finally,
             taskRun,
@@ -235,26 +238,27 @@ public class Pause extends Task implements FlowableTask<Pause.Output> {
 
     @Override
     public List<Task> allChildTasks() {
-        return Stream
-            .concat(
-                this.getTasks() != null ? this.getTasks().stream() : Stream.empty(),
-                Stream.concat(
-                    this.getErrors() != null ? this.getErrors().stream() : Stream.empty(),
-                    this.getFinally() != null ? this.getFinally().stream() : Stream.empty()
-                )
-            )
-            .toList();
+        return ListUtils.concat(
+            this.getTasks(),
+            this.getOnPause() != null ? List.of(this.getOnPause()) : null,
+            this.getErrors(),
+            this.getFinally()
+        );
     }
 
     @Override
     public List<ResolvedTask> childTasks(RunContext runContext, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        return FlowableUtils.resolveTasks(this.getTasks(), parentTaskRun);
+        List<Task> childTasks = new ArrayList<>(this.getTasks());
+        if (onPause != null) {
+            childTasks.addFirst(onPause);
+        }
+        return FlowableUtils.resolveTasks(childTasks, parentTaskRun);
     }
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-        if (this.needPause(parentTaskRun) || parentTaskRun.getState().getCurrent() == State.Type.PAUSED) {
-            return new ArrayList<>();
+        if (this.needPause(parentTaskRun) || (parentTaskRun.getState().getCurrent() == State.Type.PAUSED)) {
+            return Collections.emptyList();
         }
 
         return FlowableUtils.resolveSequentialNexts(

@@ -1,6 +1,7 @@
 package io.kestra.webserver.utils;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -44,7 +45,8 @@ class RequestUtilsTest {
             timeRange,
             ExecutionRepositoryInterface.ChildFilter.MAIN,
             state,
-            "worker-1"
+            "worker-1",
+            "test_trigger_id"
         );
 
         assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.QUERY && f.value().equals("test-query")));
@@ -55,12 +57,13 @@ class RequestUtilsTest {
         assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.END_DATE && f.value().equals(endDate.toString())));
         assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.TIME_RANGE && f.value().equals(timeRange)));
         assertTrue(filters.stream().anyMatch(f -> f.field() == QueryFilter.Field.STATE && f.value().equals(state)));
+        assertTrue(filters.stream().anyMatch(f -> f.field() == Field.TRIGGER_EXECUTION_ID && f.value().equals("test_trigger_id")));
     }
 
     @Test
     void testMapLegacyParamsToFiltersHandlesNulls() {
         List<QueryFilter> filters = RequestUtils.mapLegacyParamsToFilters(
-            null, null, null, null, null, null, null, null, null, null, null, null, null
+            null, null, null, null, null, null, null, null, null, null, null, null, null, null
         );
 
         assertTrue(filters.isEmpty(), "Filters should be empty when all inputs are null.");

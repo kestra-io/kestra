@@ -36,7 +36,7 @@ charts:
   - id: executions_timeseries
     type: io.kestra.plugin.core.dashboard.chart.TimeSeries
     chartOptions:
-      displayName: Executions
+      displayName: Total Executions
       description: Executions duration and count per date
       legend:
         enabled: true

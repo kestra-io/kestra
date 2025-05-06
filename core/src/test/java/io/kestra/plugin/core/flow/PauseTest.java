@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.flow;
 
 import com.google.common.io.CharStreams;
+import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
@@ -123,6 +124,12 @@ public class PauseTest {
     @LoadFlows({"flows/valids/pause-behavior.yaml"})
     void runDurationWithCANCELBehavior() throws Exception {
         suite.runDurationWithBehavior(runnerUtils, Pause.Behavior.CANCEL);
+    }
+
+    @Test
+    @ExecuteFlow("flows/valids/pause_on_pause.yaml")
+    void shouldExecuteOnPauseTask(Execution execution) throws Exception {
+        suite.shouldExecuteOnPauseTask(execution);
     }
 
     @Singleton
@@ -343,6 +350,13 @@ public class PauseTest {
             assertThat(execution.getTaskRunList()).hasSize(terminateAfterPause ? 1 : 2);
             assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(finalState);
             assertThat(execution.getState().getCurrent()).isEqualTo(finalState);
+        }
+
+        public void shouldExecuteOnPauseTask(Execution execution) throws Exception {
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+            assertThat(execution.getTaskRunList()).hasSize(2);
+            assertThat(execution.getTaskRunList().getLast().getTaskId()).isEqualTo("hello");
+            assertThat(execution.getTaskRunList().getLast().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         }
     }
 }

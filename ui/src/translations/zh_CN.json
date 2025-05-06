@@ -39,6 +39,7 @@
     "add flow": "添加流程",
     "add task": "添加任务",
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
+    "add_new_item": "添加新项目",
     "administration": "管理",
     "advanced configuration": "其他属性",
     "after": "之后",
@@ -56,6 +57,8 @@
     "back_to_dashboard": "返回仪表板",
     "backfill": "回填",
     "backfill executions": "回填执行",
+    "backfill paused": "补数据已暂停",
+    "backfill running": "正在运行Backfill",
     "before": "之前",
     "behavior": "行为",
     "blueprints": {
@@ -130,6 +133,9 @@
     "close sidebar": "关闭侧边栏",
     "collapse": "折叠",
     "collapse all": "折叠所有",
+    "common": {
+      "back": "返回"
+    },
     "concurrency": "并发",
     "conditions": "条件",
     "configure basic auth": "配置基本认证",
@@ -580,6 +586,7 @@
     "flow export": "确定要导出 <code>{flowCount}</code> 个流程吗？",
     "flow must have id and namespace": "流程必须有ID和命名空间。",
     "flow not imported": "某些flow无法导入",
+    "flow source not found": "未找到flow源",
     "flow-dependencies": "依赖项",
     "flow-no-dependencies": "您的flow没有任何依赖项",
     "flow_only": "仅在流程标签中可用。",
@@ -648,7 +655,9 @@
     "item": "项目",
     "items": "项目",
     "join community": "加入社区",
+    "join_slack": "加入 Slack",
     "jump to...": "跳转到...",
+    "kestra": "Kestra",
     "key": "键",
     "kill": "终止",
     "kill only parents": "仅终止父流程",
@@ -861,6 +870,7 @@
     "no_logs_data": "无数据",
     "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
+    "no_results_found": "未找到结果",
     "no_tasks_running": "尚无任务正在运行。",
     "now": "现在",
     "of": "的",
@@ -1037,6 +1047,8 @@
       "saved": "已保存的过滤器"
     },
     "search term in message": "在消息中搜索术语",
+    "search_docs": "搜索",
+    "searching": "搜索中...",
     "seconds": "秒钟",
     "secret": {
       "add": "新密钥",
@@ -1204,6 +1216,7 @@
     },
     "trigger": "触发器",
     "trigger details": "触发器详情",
+    "trigger disabled": "在Flow源中触发器已禁用",
     "trigger execution id": "触发执行ID",
     "trigger filter": {
       "options": {
@@ -1288,6 +1301,7 @@
     "worker group": "工作组",
     "worker group fallback": "工作组回退",
     "worker group key": "工作组 key",
+    "worker information": "工作者信息",
     "workerId": "工作者ID",
     "workers": "工作者",
     "wrong labels": "标签中不允许空键或值",

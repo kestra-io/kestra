@@ -4,6 +4,7 @@ import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.utils.DateUtils;
 import io.kestra.jdbc.repository.AbstractJdbcLogRepository;
 import io.kestra.jdbc.services.JdbcFilterService;
+import io.kestra.plugin.core.dashboard.data.Logs;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -15,6 +16,7 @@ import org.slf4j.event.Level;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -25,6 +27,22 @@ public class PostgresLogRepository extends AbstractJdbcLogRepository {
     public PostgresLogRepository(@Named("logs") PostgresRepository<LogEntry> repository,
                                  JdbcFilterService filterService) {
         super(repository, filterService);
+    }
+
+    @Override
+    protected Map<Logs.Fields, String> getWhereMapping() {
+        return Map.of(
+            Logs.Fields.DATE, "timestamp",
+            Logs.Fields.NAMESPACE, "namespace",
+            Logs.Fields.FLOW_ID, "flow_id",
+            Logs.Fields.TASK_ID, "task_id",
+            Logs.Fields.EXECUTION_ID, "execution_id",
+            Logs.Fields.TASK_RUN_ID, "taskrun_id",
+            Logs.Fields.ATTEMPT_NUMBER, "attempt_number",
+            Logs.Fields.TRIGGER_ID, "trigger_id",
+            Logs.Fields.LEVEL, "level::TEXT",
+            Logs.Fields.MESSAGE, "message"
+        );
     }
 
     @Override

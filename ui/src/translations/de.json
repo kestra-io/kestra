@@ -39,6 +39,7 @@
     "add flow": "Flow hinzufügen",
     "add task": "Einen Task hinzufügen",
     "add-trigger-in-editor": "Fügen Sie zuerst einen Trigger zu Ihrem Flow hinzu",
+    "add_new_item": "Neues Element hinzufügen",
     "administration": "Administration",
     "advanced configuration": "Andere Eigenschaften",
     "after": "nach",
@@ -56,6 +57,8 @@
     "back_to_dashboard": "Zurück zum Dashboard",
     "backfill": "Backfill",
     "backfill executions": "Backfill-Ausführungen",
+    "backfill paused": "Backfill PAUSED",
+    "backfill running": "Backfill läuft",
     "before": "vor",
     "behavior": "Verhalten",
     "blueprints": {
@@ -130,6 +133,9 @@
     "close sidebar": "Seitenleiste schließen",
     "collapse": "Einklappen",
     "collapse all": "Alle einklappen",
+    "common": {
+      "back": "Zurück"
+    },
     "concurrency": "Nebenläufigkeit",
     "conditions": "Bedingungen",
     "configure basic auth": "Basis-Authentifizierung konfigurieren",
@@ -580,6 +586,7 @@
     "flow export": "Sind Sie sicher, dass Sie <code>{flowCount}</code> Flow(s) exportieren möchten?",
     "flow must have id and namespace": "Flow muss eine Id und einen Namespace haben.",
     "flow not imported": "Einige Flows konnten nicht importiert werden",
+    "flow source not found": "Flow-Quelle nicht gefunden",
     "flow-dependencies": "Abhängigkeiten",
     "flow-no-dependencies": "Ihr Flow hat keine Abhängigkeiten.",
     "flow_only": "Nur auf der Flow-Registerkarte verfügbar.",
@@ -648,7 +655,9 @@
     "item": "Element",
     "items": "Elemente",
     "join community": "Community beitreten",
+    "join_slack": "Slack beitreten",
     "jump to...": "Springe zu...",
+    "kestra": "Kestra",
     "key": "Key",
     "kill": "Beenden",
     "kill only parents": "Nur Eltern beenden",
@@ -861,6 +870,7 @@
     "no_logs_data": "Keine Daten",
     "no_logs_data_description": "Entweder laufen keine Flows, oder Sie müssen Ihre Filter anpassen.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
+    "no_results_found": "Keine Ergebnisse gefunden",
     "no_tasks_running": "Noch keine Tasks laufen.",
     "now": "Jetzt",
     "of": "von",
@@ -1037,6 +1047,8 @@
       "saved": "Gespeicherte Filter"
     },
     "search term in message": "Suchbegriff in Nachricht",
+    "search_docs": "Suche",
+    "searching": "Suche läuft...",
     "seconds": "Sekunden",
     "secret": {
       "add": "Neues Geheimnis",
@@ -1204,6 +1216,7 @@
     },
     "trigger": "Trigger",
     "trigger details": "Trigger-Details",
+    "trigger disabled": "Trigger ist in der Flow-Quelle deaktiviert",
     "trigger execution id": "Trigger-Ausführungs-Id",
     "trigger filter": {
       "options": {
@@ -1288,6 +1301,7 @@
     "worker group": "Worker-Gruppe",
     "worker group fallback": "Arbeitsgruppe Fallback",
     "worker group key": "Worker-Gruppe Schlüssel",
+    "worker information": "Worker-Informationen",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt",

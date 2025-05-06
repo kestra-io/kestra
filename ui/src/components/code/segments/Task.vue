@@ -7,7 +7,7 @@
     />
 
     <component
-        v-else
+        v-else-if="lastBreadcrumb.component"
         :is="lastBreadcrumb.component.type"
         v-bind="lastBreadcrumb.component.props"
         :model-value="lastBreadcrumb.component.props.modelValue"
@@ -35,7 +35,12 @@
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import {SECTIONS} from "../../../utils/constants";
-    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
+    import {
+        BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
+        FLOW_INJECTION_KEY, PARENT_TASKID_INJECTION_KEY, POSITION_INJECTION_KEY,
+        SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY,
+        TASK_CREATION_INDEX_INJECTION_KEY, TASKID_INJECTION_KEY
+    } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
@@ -43,28 +48,47 @@
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
-    const creation = inject(CREATING_INJECTION_KEY, ref(false));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
     const section = inject(SECTION_INJECTION_KEY, ref("tasks"));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
     const position = inject(POSITION_INJECTION_KEY, "after");
+    const parentTaskId = inject(PARENT_TASKID_INJECTION_KEY, ref());
+    const taskCreationIndex = inject(
+        TASK_CREATION_INDEX_INJECTION_KEY,
+        ref(0),
+    );
+    const exitTaskElement = inject(
+        CLOSE_TASK_FUNCTION_INJECTION_KEY,
+        () => {},
+    );
 
     const store = useStore();
 
-    const breadcrumbs = computed(() => store.state.code.breadcrumbs);
+    const breadcrumbs = inject(
+        BREADCRUMB_INJECTION_KEY,
+        ref([])
+    );
     const lastBreadcrumb = computed(() => {
-        const index =
-            breadcrumbs.value.length === 3 ? 2 : breadcrumbs.value.length - 1;
+        const index = breadcrumbs.value.length - 1;
 
         return {
-            shown: index >= 2,
+            shown: parentTaskId.value ? index >= 3 : index >= 2,
             component: breadcrumbs.value?.[index]?.component,
         };
     });
 
-    const yaml = ref(
-        YAML_UTILS.extractTask(flow.value, taskId.value)?.toString() || "",
-    );
+    const yaml = taskCreationIndex.value ? computed({
+        get() {
+            return store.getters["flow/createdTaskYaml"][section.value]?.[taskCreationIndex.value - 1] ?? "";
+        },
+        set(val){
+            store.commit("flow/setCreatedTaskYaml", {
+                section: section.value,
+                index: taskCreationIndex.value - 1,
+                yaml: val,
+            });
+        }
+    }) : ref("");
 
     const flowBeforeAdd = ref(flow.value);
 
@@ -80,8 +104,11 @@
     watch(
         taskId,
         (value) => {
+            if(taskCreationIndex.value){
+                return;
+            }
             yaml.value =
-                YAML_UTILS.extractTask(flow.value, value)?.toString() || "";
+                YAML_UTILS.extractTask(flow.value, value) ?? "";
         },
         {immediate: true},
     );
@@ -101,8 +128,10 @@
         let temp = YAML_UTILS.parse(yaml.value);
 
         if (lastBreadcrumb.value.shown) {
-            const field = breadcrumbs.value.at(-1).label;
-            temp = {...temp, [field]: task};
+            const field = breadcrumbs.value.at(-1)?.label;
+            if (field) {
+                temp = {...temp, [field]: task};
+            }
         }
 
         temp = YAML_UTILS.stringify(temp);
@@ -135,74 +164,74 @@
         "after execution": "afterExecution",
     };
 
-    function exitTaskElement(){
-        if (lastBreadcrumb.value.shown){
-            store.commit("code/removeBreadcrumb", {last: true});
-        } else {
-            emits("exitTask");
-            creation.value = false;
-        }
-    }
-
-
     const saveTask = () => {
         if (lastBreadcrumb.value.shown && saveMode === "button") {
             exitTaskElement();
             return;
         }
 
-        const taskObject = YAML_UTILS.parse(yaml.value);
-        taskObject.id = taskObject.id?.length ? taskObject.id : undefined;
-
-        const task = YAML_UTILS.stringify(taskObject);
-
         let result: string = "";
 
         const currentSection = section.value;
 
-        if (creation.value) {
-            if (currentSection === "tasks" && task) {
-                const existing = YAML_UTILS.checkTaskAlreadyExist(
-                    flowBeforeAdd.value,
-                    task,
-                );
-
-                if (existing) {
-                    store.dispatch("core/showMessage", {
-                        variant: "error",
-                        title: "Task with same ID already exist",
-                        message: `Task in ${section} block  with ID: ${existing} already exist in the flow.`,
-                    });
-
-                    if(saveMode === "button"){
-                        return;
-                    }
-                }
-
-                result = YAML_UTILS.insertTask(
-                    flowBeforeAdd.value,
-                    taskId.value.length ? taskId.value : YAML_UTILS.getLastTask(flowBeforeAdd.value) ?? "", // target task id (the one before of after the task will be inserted)
-                    task,
-                    position,
-                );
-            } else if (currentSection && SECTIONS_MAP[currentSection.toString()]) {
-                result = YAML_UTILS.insertSection(
-                    SECTIONS_MAP[currentSection.toString()],
-                    flowBeforeAdd.value,
-                    task
-                );
+        if (taskCreationIndex.value) {
+            // if multiple task creation tabs are open add them all
+            const tasks: string[] | undefined = store.getters["flow/createdTaskYaml"][section.value];
+            result = flowBeforeAdd.value;
+            if(!tasks || !tasks.length) {
+                return;
             }
-        } else if(task){
+            for(const task of tasks){
+                if (currentSection === "tasks" && task?.length) {
+                    const existing = YAML_UTILS.checkTaskAlreadyExist(
+                        flowBeforeAdd.value,
+                        task,
+                    );
+
+                    if (existing) {
+                        store.dispatch("core/showMessage", {
+                            variant: "error",
+                            title: "Task with same ID already exist",
+                            message: `Task in ${section} block  with ID: ${existing} already exist in the flow.`,
+                        });
+
+                        if(saveMode === "button"){
+                            return;
+                        }
+                    }
+
+                    result = YAML_UTILS.insertTask(
+                        result,
+                        // target task id (the one before of after the task will be inserted)
+                        taskId.value.length ? taskId.value : YAML_UTILS.getLastTask(flowBeforeAdd.value, parentTaskId.value) ?? "",
+                        task,
+                        position,
+                        parentTaskId.value,
+                    );
+                } else if (currentSection && SECTIONS_MAP[currentSection.toString()] && task?.length) {
+                    result = YAML_UTILS.insertSection(
+                        SECTIONS_MAP[currentSection.toString()],
+                        flowBeforeAdd.value,
+                        task,
+                    );
+                }
+            }
+        } else{
+            const originalTask = YAML_UTILS.extractTask(flow.value, taskId.value);
+            if(!originalTask)return;
+
             result = YAML_UTILS.replaceTaskInDocument(
                 flow.value,
                 taskId.value,
-                task,
+                yaml.value,
             );
+            const updatedTask = YAML_UTILS.parse(yaml.value);
+            taskId.value = updatedTask.id;
         }
 
         emits("updateTask", result);
         if(saveMode === "button") {
-            store.commit("code/removeBreadcrumb", {last: true});
+            breadcrumbs.value.pop();
             emits("exitTask");
         }
     };

@@ -68,7 +68,7 @@ export type CollapseItem = {
 
 export type Breadcrumb = {
     label: string;
-    to: {
+    to?: {
         name?: RouteRecordName;
         params?: RouteParams;
     };

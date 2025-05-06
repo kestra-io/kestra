@@ -472,6 +472,15 @@ tasks.register('runLocal', JavaExec) {
     args 'server', 'local', '--plugins', 'local/plugins'
 }
 
+tasks.register('runStandalone', JavaExec) {
+    group = "application"
+    description = "Run Kestra as server local"
+    classpath = project(":cli").sourceSets.main.runtimeClasspath
+    mainClass = mainClassName
+    environment 'MICRONAUT_ENVIRONMENTS', 'override'
+    args 'server', 'standalone', '--plugins', 'local/plugins'
+}
+
 /**********************************************************************************************************************\
  * Publish
  **********************************************************************************************************************/

@@ -20,7 +20,7 @@
         name="root"
         :model-value="taskObject"
         @update:model-value="onInput"
-        :properties="schema.properties"
+        :schema="schema.properties"
         :definitions="schema.definitions"
     />
 </template>
@@ -39,16 +39,16 @@
         inheritAttrs: false,
     });
 
-    const emit = defineEmits(["update:modelValue"]);
+    const modelValue = defineModel<string>();
+
     const props = defineProps<{
-        modelValue: string | undefined;
         section: string;
     }>();
 
     const store = useStore();
 
     onBeforeMount(() => {
-        if (props.modelValue) {
+        if (modelValue.value) {
             setup()
         }
     })
@@ -57,7 +57,7 @@
         store.commit("flow/setTaskError", undefined);
     })
 
-    watch(() => props.modelValue, (v) => {
+    watch(modelValue, (v) => {
         if (!v) {
             taskObject.value = {};
             selectedTaskType.value = undefined;
@@ -76,9 +76,9 @@
     });
 
     function setup() {
-        taskObject.value = YAML_UTILS.parse<PartialCodeElement>(props.modelValue);
+        taskObject.value = YAML_UTILS.parse<PartialCodeElement>(modelValue.value);
         selectedTaskType.value = taskObject.value?.type;
-        store.dispatch("flow/validateTask", {task: props.modelValue, section: props.section})
+        store.dispatch("flow/validateTask", {task: modelValue.value, section: props.section})
 
         load();
     }
@@ -99,7 +99,7 @@
 
     function onInput(val: PartialCodeElement | undefined) {
         taskObject.value = val;
-        emit("update:modelValue", YAML_UTILS.stringify(val));
+        modelValue.value = YAML_UTILS.stringify(val);
     }
 
     function onTaskTypeSelect() {

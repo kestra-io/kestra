@@ -16,7 +16,7 @@
         name="root"
         :model-value="selectedInput"
         @update:model-value="updateSelected($event, selectedIndex)"
-        :properties="inputSchema?.schema?.properties"
+        :schema="inputSchema?.schema?.properties"
         :definitions="inputSchema?.schema?.definitions"
     />
 

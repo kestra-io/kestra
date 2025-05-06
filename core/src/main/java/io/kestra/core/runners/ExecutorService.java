@@ -590,8 +590,12 @@ public class ExecutorService {
             }
         }
 
+        metricRegistry
+            .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+            .increment(executionDelays.size());
+
         executor.withWorkerTaskDelays(executionDelays, "handleChildWorkerTaskDelay");
-        
+
         if (list.isEmpty()) {
             return executor;
         }
@@ -1194,6 +1198,10 @@ public class ExecutorService {
         RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
         List<Violation> violations = slaService.evaluateExecutionChangedSLA(runContext, executor.getFlow(), executor.getExecution());
         if (!violations.isEmpty()) {
+            metricRegistry
+                .counter(MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+                .increment(violations.size());
+
             // For now, we only consider the first violation to be capable of updating the execution.
             // Other violations would only be logged.
             Violation violation = violations.getFirst();

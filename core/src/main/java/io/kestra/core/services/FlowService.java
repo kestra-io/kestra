@@ -274,7 +274,7 @@ public class FlowService {
             String regex = ".*\\{\\{.+}}.*"; // regex to check if string contains pebble
             String subflowId = subflow.getFlowId();
             String namespace = subflow.getNamespace();
-            if (subflowId.matches(regex) || namespace.matches(regex)) {
+            if ((subflowId != null && subflowId.matches(regex)) || (namespace != null && namespace.matches(regex))) {
                 return;
             }
             Optional<Flow> optional = findById(tenantId, subflow.getNamespace(), subflow.getFlowId());

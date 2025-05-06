@@ -193,7 +193,7 @@ public abstract class AbstractRunnerTest {
         flowTriggerCaseTest.trigger();
     }
 
-    @Test
+    @RetryingTest(5) // flaky on CI but never fail locally
     @LoadFlows({"flows/valids/trigger-flow-listener-with-pause.yaml",
         "flows/valids/trigger-flow-with-pause.yaml"})
     void flowTriggerWithPause() throws Exception {

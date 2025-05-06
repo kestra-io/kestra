@@ -1220,7 +1220,8 @@
         "error handlers": "Close error handler",
         "finally": "Close task",
         "after execution": "Close task",
-        "input": "Close input"
+        "input": "Close input",
+        "plugin defaults": "Close plugin default"
       }
     },
     "properties": {

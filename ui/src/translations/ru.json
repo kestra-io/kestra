@@ -39,6 +39,7 @@
     "add flow": "Добавить flow",
     "add task": "Добавить задачу",
     "add-trigger-in-editor": "Сначала добавьте Trigger в ваш Flow",
+    "add_new_item": "Добавить новый элемент",
     "administration": "Администрирование",
     "advanced configuration": "Другие свойства",
     "after": "после",
@@ -56,6 +57,8 @@
     "back_to_dashboard": "Вернуться на панель управления",
     "backfill": "Заполнение",
     "backfill executions": "Выполнения заполнение",
+    "backfill paused": "Заполнение приостановлено",
+    "backfill running": "Запуск Backfill",
     "before": "до",
     "behavior": "Поведение",
     "blueprints": {

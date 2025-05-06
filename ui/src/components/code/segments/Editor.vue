@@ -1,6 +1,6 @@
 <template>
     <div class="p-4">
-        <template v-if="!taskSection && !taskIdentifier">
+        <template v-if="!taskSection && !taskId && !creatingTask">
             <template v-if="panel">
                 <component
                     :is="panel.type"
@@ -25,7 +25,9 @@
                 <hr class="my-4">
 
                 <Collapse
-                    :items="sections"
+                    v-for="(section, index) in sections"
+                    :key="index"
+                    v-bind="section"
                     @remove="(yaml) => emits('updateTask', yaml)"
                     @reorder="(yaml) => emits('reorder', yaml)"
                 />
@@ -45,7 +47,6 @@
 
         <Task
             v-else
-            :key="taskIdentifier"
             @exit-task="exitTask"
             @update-task="onTaskUpdate"
             @update-documentation="(task) => emits('updateDocumentation', task)"
@@ -68,19 +69,18 @@
     import MetadataInputs from "../../flows/MetadataInputs.vue";
     import TaskBasic from "../../flows/tasks/TaskBasic.vue";
 
-    import {CREATING_INJECTION_KEY, FLOW_INJECTION_KEY, SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
+    import {
+        CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
+        PANEL_INJECTION_KEY, SAVEMODE_INJECTION_KEY,
+        SECTION_INJECTION_KEY, TASKID_INJECTION_KEY
+    } from "../injectionKeys";
 
     import Task from "./Task.vue";
 
 
-    const taskIdentifier = computed(
-        () => taskId.value?.toString() ?? "new",
-    );
-
-
-
     const sectionInjected = inject(SECTION_INJECTION_KEY, ref(""));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
+    const panel = inject(PANEL_INJECTION_KEY, ref());
 
     watch(
         [sectionInjected, taskId],
@@ -101,7 +101,6 @@
     import {useStore} from "vuex";
     const store = useStore();
 
-    const panel = computed(() => store.state.code.panel);
 
     const emits = defineEmits([
         "save",
@@ -120,7 +119,10 @@
 
     document.addEventListener("keydown", saveEvent);
 
-    const creation = inject(CREATING_INJECTION_KEY);
+    const creatingFlow = computed(() => {
+        return store.state.flow.isCreating;
+    });
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY);
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
 
@@ -162,14 +164,14 @@
                 value: props.metadata.id,
                 label: t("no_code.fields.main.flow_id"),
                 required: true,
-                disabled: !creation,
+                disabled: !creatingFlow.value,
             },
             namespace: {
                 component: InputText,
                 value: props.metadata.namespace,
                 label: t("no_code.fields.main.namespace"),
                 required: true,
-                disabled: !creation,
+                disabled: !creatingFlow.value,
             },
             description: {
                 component: InputText,
@@ -220,7 +222,7 @@
                 component: TaskBasic,
                 value: props.metadata.concurrency,
                 label: t("no_code.fields.general.concurrency"),
-                schema: schema.value?.definitions?.["io.kestra.core.models.flows.Concurrency"] ?? {},               
+                schema: schema.value?.definitions?.["io.kestra.core.models.flows.Concurrency"] ?? {},
                 root: "concurrency",
             },
             pluginDefaults: {

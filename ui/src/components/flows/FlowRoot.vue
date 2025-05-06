@@ -78,6 +78,8 @@
             // NOTE: Flow creation component is ./FlowCreate.vue
             this.$store.commit("flow/setIsCreating", false);
 
+            this.$store.commit("flow/setIsCreating", false);
+
             this.load();
         },
         methods: {

@@ -3,74 +3,86 @@
         <el-breadcrumb-item
             v-for="(breadcrumb, index) in breadcrumbs"
             :key="index"
-            class="item"
+            :class="{clickable: saveMode === 'button'}"
             @click="
-                (store.commit('code/removeBreadcrumb', {position: index}),
-                 store.commit('code/unsetPanel', false),
-                 clickBreadCrumb(index)
-                )
+                () => {
+                    if (saveMode === 'button') {
+                        breadcrumbs = breadcrumbs.slice(0, index + 1);
+                        panel = null;
+                    }
+                    clickBreadCrumb(index)
+                }
             "
         >
-            {{ breadcrumb.label }}
+            {{ breadcrumb?.label }}
         </el-breadcrumb-item>
     </el-breadcrumb>
 </template>
 
 <script setup lang="ts">
     import {computed, inject, onMounted, ref, watch} from "vue";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     import {useStore} from "vuex";
     const store = useStore();
 
     import {useI18n} from "vue-i18n";
-    import {SECTION_INJECTION_KEY, TASKID_INJECTION_KEY} from "../injectionKeys";
+    import {
+        BREADCRUMB_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
+        FLOW_INJECTION_KEY, PANEL_INJECTION_KEY,
+        SECTION_INJECTION_KEY, TASKID_INJECTION_KEY,
+        PARENT_TASKID_INJECTION_KEY,
+        SAVEMODE_INJECTION_KEY
+    } from "../injectionKeys";
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps<{
-        flow: {
-            id: string;
-        };
-    }>();
-
-    store.commit("code/clearBreadcrumbs");
-
-    const breadcrumbs = computed(() => store.state.code.breadcrumbs);
+    const breadcrumbs = inject(BREADCRUMB_INJECTION_KEY, ref([]));
+    const panel = inject(PANEL_INJECTION_KEY, ref());
+    const flowYaml = inject(FLOW_INJECTION_KEY, ref(""));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
+    const taskCreation = inject(CREATING_TASK_INJECTION_KEY, ref(false));
     const taskSection = inject(SECTION_INJECTION_KEY, ref(""));
+    const parentTaskId = inject(PARENT_TASKID_INJECTION_KEY, ref(""));
+    const saveMode = inject(SAVEMODE_INJECTION_KEY, ref("auto"));
+
+    const flow = computed(() => {
+        return YAML_UTILS.parse(flowYaml.value);
+    });
 
     onMounted(() => {
-        store.commit("code/addBreadcrumbs", {
-            breadcrumb: {
-                label:
-                    taskId.value === "new"
-                        ? t("create_flow")
-                        : props.flow.id,
-            },
-            position: 0,
-        });
+        breadcrumbs.value[0] = {
+            label: store.state.flow.isCreating
+                ? t("create_flow")
+                : flow.value.id,
+        }
     });
 
     watch(
-        taskId,
-        (value) => {
-            if (!value) return;
+        [taskCreation, taskId, parentTaskId],
+        ([isCreating, taskIdVal, parentTaskIdVal]) => {
+            const index = parentTaskIdVal ? 2 : 1;
+            if(parentTaskIdVal){
+                breadcrumbs.value[1] = {
+                    label: parentTaskIdVal,
+                }
+            }
+            if(isCreating || taskIdVal.length > 0){
+                breadcrumbs.value[index] = {
+                    label: isCreating
+                        ? t(`no_code.creation.${taskSection.value}`)
+                        : taskIdVal
+                }
+            }
 
-            store.commit("code/addBreadcrumbs", {
-                breadcrumb: {
-                    label:
-                        value === "new"
-                            ? t(`no_code.creation.${taskSection.value}`)
-                            : value,
-                },
-                position: 1,
-            });
         },
+        {immediate: true}
     );
 
     function clickBreadCrumb(index: number){
         if (index === 0 && taskId.value.length > 0) {
             taskId.value = "";
             taskSection.value = "";
+            taskCreation.value = false;
         }
     }
 </script>
@@ -78,7 +90,7 @@
 <style scoped lang="scss">
 @import "../styles/code.scss";
 
-.item{
+.clickable{
     cursor: pointer;
 }
 

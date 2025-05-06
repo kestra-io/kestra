@@ -708,6 +708,8 @@
     "pause backfills": "Pause backfills",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
+    "backfill paused": "Backfill paused",
+    "backfill running": "Backfill running",
     "relative": "Relative",
     "relative start date": "Relative start date",
     "relative end date": "Relative end date",

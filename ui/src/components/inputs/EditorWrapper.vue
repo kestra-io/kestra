@@ -26,15 +26,15 @@
 
     const store = useStore();
 
-    const props = withDefaults(defineProps<{
-        path?: string
-        name?: string
-        extension?: string | undefined
-        flow?: boolean
-        dirty?: boolean
-    }>(), {
-        path: "Flow.yaml",
-        name: "Flow",
+    export interface EditorTabProps{
+        name: string,
+        path: string,
+        extension?: string,
+        flow?: boolean,
+        dirty?: boolean,
+    }
+
+    const props = withDefaults(defineProps<EditorTabProps>(), {
         extension: undefined,
         dirty: false,
         flow: true

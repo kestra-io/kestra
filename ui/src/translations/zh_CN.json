@@ -39,6 +39,7 @@
     "add flow": "添加流程",
     "add task": "添加任务",
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
+    "add_new_item": "添加新项目",
     "administration": "管理",
     "advanced configuration": "其他属性",
     "after": "之后",
@@ -56,6 +57,8 @@
     "back_to_dashboard": "返回仪表板",
     "backfill": "回填",
     "backfill executions": "回填执行",
+    "backfill paused": "补数据已暂停",
+    "backfill running": "正在运行Backfill",
     "before": "之前",
     "behavior": "行为",
     "blueprints": {

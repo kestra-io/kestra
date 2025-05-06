@@ -388,12 +388,16 @@
             },
             loadData(callback) {
                 console.log('Loading triggers data...');
-                this.$store.dispatch("trigger/search", {
-                    namespace: this.$route.query.namespace,
-                    q: this.$route.query.q,
+                const query = this.loadQuery({
                     size: parseInt(this.$route.query.size || 25),
                     page: parseInt(this.$route.query.page || 1),
                     sort: this.$route.query.sort || "triggerId:asc"
+                });
+                
+                this.$store.dispatch("trigger/search", {
+                    ...query,
+                    namespace: this.$route.query.namespace,
+                    q: this.$route.query.q
                 }).then(triggersData => {
                     console.log('Raw triggers data:', triggersData);
                     console.log('Trigger results:', triggersData.results);

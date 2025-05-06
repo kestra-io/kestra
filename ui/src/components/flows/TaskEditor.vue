@@ -14,20 +14,20 @@
         </el-form-item>
     </el-form>
 
-    <task-root
+    <TaskObject
         v-loading="isLoading"
         v-if="plugin"
         name="root"
         :model-value="taskObject"
         @update:model-value="onInput"
-        :schema="plugin.schema"
-        :definitions="plugin.schema.definitions"
+        :properties="schema?.properties"
+        :definitions="schema?.definitions"
     />
 </template>
 <script lang="ts" setup>
-    import {onBeforeMount, onBeforeUnmount, ref, watch} from "vue";
+    import {computed, onBeforeMount, onBeforeUnmount, ref, watch} from "vue";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    import TaskRoot from "./tasks/TaskRoot.vue";
+    import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {useStore} from "vuex";
     import {SECTIONS} from "../../utils/constants";
@@ -39,18 +39,10 @@
     });
 
     const emit = defineEmits(["update:modelValue"]);
-    const props = defineProps({
-        modelValue: {
-            type: String,
-            required: false,
-            default: undefined,
-        },
-        section: {
-            type: String,
-            required: true,
-            default: undefined,
-        },
-    });
+    const props = defineProps<{
+        modelValue: string | undefined;
+        section: string;
+    }>();
 
     const store = useStore();
 
@@ -77,6 +69,10 @@
     const selectedTaskType = ref<string>();
     const isLoading = ref(false);
     const plugin = ref<{schema: Schemas}>();
+
+    const schema = computed(() => {
+        return plugin.value?.schema;
+    });
 
     function setup() {
         taskObject.value = YAML_UTILS.parse<PartialCodeElement>(props.modelValue);

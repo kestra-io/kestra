@@ -4,6 +4,9 @@ import type {RouteRecordName, RouteParams} from "vue-router";
 export type Schemas = {
     $ref?: string;
     $schema?: string;
+    properties?: {
+        [key: string]: Schemas;
+    };
     definitions?: {
         [key: string]: object;
     };

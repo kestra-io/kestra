@@ -122,6 +122,7 @@
     import TaskDict from "./TaskDict.vue";
 
     export default {
+        inheritAttrs: false,
         name: "TaskObject",
         mixins: [Task],
         components: {
@@ -196,7 +197,7 @@
             onObjectInput(properties, value) {
                 const currentValue = this.modelValue || {};
                 currentValue[properties] = value;
-                this.$emit("update:modelValue", currentValue);
+                this.onInput(currentValue);
             },
             isValidated(key) {
                 return (
@@ -218,6 +219,18 @@
         },
     };
 </script>
+
+<style lang="scss">
+    .el-form-item {
+        margin-bottom: 1rem;
+    }
+
+    .el-form-item__content {
+        .el-form-item {
+            width: 100%;
+        }
+    }
+</style>
 
 <style lang="scss" scoped>
 @import "../../code/styles/code.scss";

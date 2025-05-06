@@ -11,7 +11,7 @@ import java.util.Set;
 @Singleton
 public class ConcurrencyLimitService {
 
-    private static final Set<State.Type> VALID_TARGET_STATES =
+    protected static final Set<State.Type> VALID_TARGET_STATES =
         EnumSet.of(State.Type.RUNNING, State.Type.CANCELLED, State.Type.FAILED);
 
     /**

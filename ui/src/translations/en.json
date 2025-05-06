@@ -771,10 +771,7 @@
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
             "flow_default_tab": "Default Flow Tab",
-            "auto_refresh_interval": {
-              "label": "Auto refresh interval",
-              "time_unit": "sec"
-            }
+            "auto_refresh_interval": "Auto Refresh Interval"            
           }
         },
         "theme": {

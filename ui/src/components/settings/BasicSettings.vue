@@ -84,17 +84,16 @@
                     </Column>
                 </Row>
                 <Row>
-                    <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval.label')">
+                    <Column :label="$t('settings.blocks.configuration.fields.auto_refresh_interval')">
                         <el-input-number
                             :model-value="pendingSettings.autoRefreshInterval"
                             @update:model-value="onAutoRefreshInterval"
                             controls-position="right"
                             :min="2"
                             :max="120"
-                            :step="5"
                         >
                             <template #suffix>
-                                <span>{{ $t('settings.blocks.configuration.fields.auto_refresh_interval.time_unit') }}</span>
+                                <small class="dimmed">{{ $t('seconds').toLowerCase() }}</small>
                             </template>
                         </el-input-number>
                     </Column>
@@ -765,10 +764,14 @@
         }
     };
 </script>
-<style>
-
+<style lang="scss">
     .settings-wrapper .el-input-number {
         max-width: 20vw;
+
+        & .el-input__suffix {
+            color: var(--ks-content-secondary);
+        }
+
     }
 
     .el-input__count {

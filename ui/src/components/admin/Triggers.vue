@@ -150,7 +150,7 @@
                         </el-table-column>
                         <el-table-column :label="$t('cron')">
                             <template #default="scope">
-                                <Cron v-if="scope.row.cron" :cron-expression="scope.row?.cron" />
+                                <Cron v-if="scope.row.cron" :date="scope.row.nextExecutionDate" />
                             </template>
                         </el-table-column>
                         <el-table-column :label="$t('details')">

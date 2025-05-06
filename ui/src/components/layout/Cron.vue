@@ -5,20 +5,24 @@
 </template>
 
 <script>
-    import Utils from "../../utils/utils";
-    import cronstrue from "cronstrue";
     import "cronstrue/locales/fr";
 
     export default {
         props: {
-            cronExpression: {
-                type: String,
+            date:{
+                type:String,
                 default: undefined
             }
         },
         computed: {
             humanReadableCron() {
-                return cronstrue.toString(this.cronExpression, {locale: Utils.getLang()});
+                const newDate = new Date(this.date)
+                const timeString = newDate.toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    hour12: true
+                });         
+                return timeString;
             }
         }
     }

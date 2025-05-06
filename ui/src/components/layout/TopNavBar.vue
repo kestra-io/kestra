@@ -35,7 +35,6 @@
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons icons">
                 <impersonating />
-                <auth />
             </div>
         </div>
     </nav>
@@ -43,7 +42,6 @@
 
 <script>
     import {mapState, mapGetters} from "vuex";
-    import Auth from "override/components/auth/Auth.vue";
     import Impersonating from "override/components/auth/Impersonating.vue";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
@@ -53,7 +51,6 @@
 
     export default {
         components: {
-            Auth,
             GlobalSearch,
             TrashCan,
             Impersonating,

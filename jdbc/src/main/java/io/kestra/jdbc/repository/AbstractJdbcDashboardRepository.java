@@ -141,13 +141,13 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
 
         Map<Field<Object>, Object> fields = this.jdbcRepository.persistFields(deleted);
         fields.remove(field("sourceCode"));
-        fields.put(field("source_code"), dashboard.get().getSourceCode());
+        fields.put(field("source_code"), deleted.getSourceCode());
 
         this.jdbcRepository.persist(deleted, fields);
 
         eventPublisher.publishEvent(new CrudEvent<>(dashboard.get(), CrudEventType.DELETE));
 
-        return dashboard.get().toDeleted();
+        return deleted;
     }
 
     @Override

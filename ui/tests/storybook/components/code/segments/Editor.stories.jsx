@@ -1,6 +1,6 @@
 import Editor from "../../../../../src/components/code/segments/Editor.vue";
 import {
-    CREATING_INJECTION_KEY, FLOW_INJECTION_KEY,
+    CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
     POSITION_INJECTION_KEY, SAVEMODE_INJECTION_KEY,
     SECTION_INJECTION_KEY, TASKID_INJECTION_KEY
 } from "../../../../../src/components/code/injectionKeys";
@@ -99,7 +99,7 @@ const Template = (args) => ({
         provide(TASKID_INJECTION_KEY, ref(""));
         provide(POSITION_INJECTION_KEY, args.position);
         provide(SAVEMODE_INJECTION_KEY, args.saveMode);
-        provide(CREATING_INJECTION_KEY, ref(args.creating));
+        provide(CREATING_TASK_INJECTION_KEY, ref(args.creating));
 
         store.$http = {
             get(url) {

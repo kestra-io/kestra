@@ -8,6 +8,7 @@ import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.plugin.core.debug.Echo;
 import io.kestra.plugin.core.debug.Return;
@@ -49,6 +50,32 @@ class FlowServiceTest {
             .build();
 
         return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
+    }
+
+    @Test
+    void shouldReturnTrueWhenValidatingFlowGivenDefaults() {
+        // Given
+        String source = """
+            id: test
+            namespace: io.kestra.unittest
+            tasks:
+              - id: download
+                type: io.kestra.plugin.core.http.Download
+              - id: log
+                type: io.kestra.plugin.core.log.Log
+                message: This is a message
+            pluginDefaults:
+              - type: io.kestra.plugin.core
+                values:
+                  level: WARN
+                  uri: https://kestra.io
+            """;
+        // When
+        List<ValidateConstraintViolation> results = flowService.validate("my-tenant", source);
+
+        // Then
+        assertThat(results).hasSize(1);
+        assertThat(results.getFirst()).isEqualTo(new ValidateConstraintViolation("test", "io.kestra.unittest", 0, null, false, List.of(), List.of(), List.of()));
     }
 
     @Test

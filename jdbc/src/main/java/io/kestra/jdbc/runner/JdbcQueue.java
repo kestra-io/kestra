@@ -31,14 +31,10 @@ import org.jooq.impl.DSL;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -390,22 +386,27 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     @SuppressWarnings("BusyWait")
     protected Runnable poll(Supplier<Integer> runnable) {
         AtomicBoolean running = new AtomicBoolean(true);
-        AtomicLong sleep = new AtomicLong(configuration.getMaxPollInterval().toMillis());
-        AtomicReference<ZonedDateTime> lastPoll = new AtomicReference<>(ZonedDateTime.now());
 
         poolExecutor.execute(() -> {
+            List<Configuration.Step> steps = configuration.computeSteps();
+            Duration sleep = steps.getFirst().pollInterval();
+            ZonedDateTime lastPoll = ZonedDateTime.now();
             while (running.get() && !this.isClosed.get()) {
                 if (!this.isPaused.get()) {
                     try {
                         Integer count = runnable.get();
                         if (count > 0) {
-                            lastPoll.set(ZonedDateTime.now());
+                            lastPoll = ZonedDateTime.now();
+                            sleep = configuration.minPollInterval;
+                        } else {
+                            ZonedDateTime finalLastPoll = lastPoll;
+                            // get all poll steps which duration is less than the duration between last poll and now
+                            List<Configuration.Step> selectedSteps = steps.stream()
+                                .takeWhile(step -> finalLastPoll.plus(step.switchInterval()).compareTo(ZonedDateTime.now()) < 0)
+                                .toList();
+                            // then select the last one (longest) or maxPoll if all are beyond
+                            sleep = selectedSteps.isEmpty() ? configuration.maxPollInterval : selectedSteps.getLast().pollInterval();
                         }
-
-                        sleep.set(lastPoll.get().plus(configuration.getPollSwitchInterval()).compareTo(ZonedDateTime.now()) < 0 ?
-                            configuration.getMaxPollInterval().toMillis() :
-                            configuration.getMinPollInterval().toMillis()
-                        );
                     } catch (CannotCreateTransactionException e) {
                         if (log.isDebugEnabled()) {
                             log.debug("Can't poll on receive", e);
@@ -414,7 +415,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                 }
 
                 try {
-                    Thread.sleep(sleep.get());
+                    Thread.sleep(sleep);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -462,9 +463,38 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     @ConfigurationProperties("kestra.jdbc.queues")
     @Getter
     public static class Configuration {
-        Duration minPollInterval = Duration.ofMillis(100);
+        Duration minPollInterval = Duration.ofMillis(25);
         Duration maxPollInterval = Duration.ofMillis(500);
-        Duration pollSwitchInterval = Duration.ofSeconds(30);
+        Duration pollSwitchInterval = Duration.ofSeconds(60);
         Integer pollSize = 50;
+        Integer switchSteps = 5;
+
+        public List<Step> computeSteps() {
+            if (this.maxPollInterval.compareTo(this.minPollInterval) <= 0) {
+                throw new IllegalArgumentException("'maxPollInterval' (" + this.maxPollInterval + ") must be greater than 'minPollInterval' (" + this.minPollInterval + ")");
+            }
+
+            List<Step> steps = new ArrayList<>();
+            Step currentStep = new Step(this.maxPollInterval, this.pollSwitchInterval);
+            steps.add(currentStep);
+            for (int i = 0; i < switchSteps; i++) {
+                Duration stepPollInterval = Duration.ofMillis(currentStep.pollInterval().toMillis() / 2);
+                if (stepPollInterval.compareTo(minPollInterval) < 0) {
+                    stepPollInterval = minPollInterval;
+                }
+                Duration stepSwitchInterval = Duration.ofMillis(currentStep.switchInterval().toMillis() / 2);
+                currentStep = new Step(stepPollInterval, stepSwitchInterval);
+                steps.add(currentStep);
+            }
+            Collections.sort(steps);
+            return steps;
+        }
+
+        public record Step (Duration pollInterval, Duration switchInterval) implements Comparable<Step> {
+            @Override
+            public int compareTo(Step o) {
+                return this.switchInterval.compareTo(o.switchInterval);
+            }
+        }
     }
 }

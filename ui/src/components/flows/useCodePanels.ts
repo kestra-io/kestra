@@ -1,23 +1,14 @@
 import {computed, h, markRaw, Ref, watch} from "vue"
 import {useStore} from "vuex"
 import type {Panel} from "../MultiPanelTabs.vue";
-import EditorWrapper from "../inputs/EditorWrapper.vue";
+import EditorWrapper, {EditorTabProps} from "../inputs/EditorWrapper.vue";
 import TypeIcon from "../utils/icons/Type.vue";
 
-interface EditorTab {
-    name: string,
-    path: string,
-    extension: string,
-    persistent?: boolean,
-    dirty?: boolean,
-    flow?: boolean
-}
+const CODE_PREFIX = "code"
 
-export const FLOW_RELATED_TABS = ["code", "nocode", "topology"]
-
-export function getTabFromCodeTab(tab: EditorTab){
+export function getTabFromCodeTab(tab: EditorTabProps){
     return {
-        value: `code-${tab.path}`,
+        value: `${CODE_PREFIX}-${tab.path}`,
         button: {
             label: tab.name,
             icon: () => h(TypeIcon, {name:tab.name})
@@ -31,11 +22,11 @@ export function useInitialCodeTabs(){
     const store = useStore()
 
     function setupInitialCodeTab(tab: string){
-        if(!tab.startsWith("code-")){
+        if(!tab.startsWith(`${CODE_PREFIX}-`)){
             return
         }
         const filePath = tab.substring(5)
-        const editorTab: EditorTab = {
+        const editorTab: EditorTabProps = {
             name: filePath.split("/").pop()!,
             path: filePath,
             extension: filePath.split(".").pop()!,
@@ -52,14 +43,14 @@ export function useInitialCodeTabs(){
 export function useCodePanels(panels: Ref<Panel[]>) {
     const store = useStore()
 
-    const codeEditorTabs = computed<EditorTab[]>(() => store.state.editor.tabs.filter((t:any) => !t.flow))
+    const codeEditorTabs = computed<EditorTabProps[]>(() => store.state.editor.tabs.filter((t:any) => !t.flow))
     /**
      * If the flow tab has recorded changes, show all representations as dirty
      */
     const isFlowDirty = computed(() => store.state.editor.tabs.some((t:any) => t.flow && t.dirty))
     const currentTab = computed(() => store.state.editor.current?.path)
 
-    function getPanelsFromCodeEditorTabs(codeTabs: EditorTab[]){
+    function getPanelsFromCodeEditorTabs(codeTabs: EditorTabProps[]){
         const tabs = codeTabs.map(getTabFromCodeTab)
 
         return {
@@ -73,7 +64,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
         // the corresponding tab is active
         for(const p of panels.value){
             for(const t of p.tabs){
-                if(t.value === `code-${newVal}`){
+                if(t.value === `${CODE_PREFIX}-${newVal}`){
                     p.activeTab = t
                 }
             }
@@ -107,7 +98,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
                 return !tab.value.startsWith("code-") || openedTabs.has(tab.value)
             })
         })
-        
+
         // get all the tabs to add since they are not already part of the panels tabs
         const toAdd = codeTabs.tabs.filter(t => !panels.value.some(p => p.tabs.some(pt => t.value === pt.value)))
 
@@ -135,7 +126,7 @@ export function useCodePanels(panels: Ref<Panel[]>) {
     })
 
     function onRemoveTab(tabId: string){
-        if(tabId.startsWith("code-")){
+        if(tabId.startsWith(`${CODE_PREFIX}-`)){
             store.dispatch("editor/closeTab", {
                 action: "close",
                 path: tabId.substring(5),

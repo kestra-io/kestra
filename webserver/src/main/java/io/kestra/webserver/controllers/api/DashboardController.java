@@ -1,7 +1,6 @@
 package io.kestra.webserver.controllers.api;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.charts.Chart;
@@ -17,7 +16,6 @@ import io.kestra.webserver.models.GlobalFilter;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.TimeLineSearch;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -28,6 +26,7 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
 import jakarta.validation.constraints.Min;
@@ -64,7 +63,7 @@ public class DashboardController {
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The filter query") @Nullable @QueryValue String q,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort
-    ) throws ConstraintViolationException, IllegalVariableEvaluationException {
+    ) throws ConstraintViolationException {
         return PagedResults.of(dashboardRepository.list(PageableUtils.from(page, size, sort), tenantService.resolveTenant(), q));
     }
 
@@ -73,7 +72,7 @@ public class DashboardController {
     @Operation(tags = {"Dashboards"}, summary = "Get a dashboard")
     public Dashboard getDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id
-    ) throws ConstraintViolationException, IllegalVariableEvaluationException {
+    ) throws ConstraintViolationException {
         return dashboardRepository.get(tenantService.resolveTenant(), id).orElse(null);
     }
 
@@ -82,7 +81,7 @@ public class DashboardController {
     @Operation(tags = {"Dashboards"}, summary = "Create a dashboard from yaml source")
     public HttpResponse<Dashboard> createDashboard(
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
-    ) throws ConstraintViolationException, JsonProcessingException {
+    ) throws ConstraintViolationException {
         Dashboard dashboardParsed = YamlParser.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
         modelValidator.validate(dashboardParsed);
 
@@ -98,7 +97,7 @@ public class DashboardController {
     @Operation(tags = {"Dashboards"}, summary = "Validate dashboard from yaml source")
     public ValidateConstraintViolation validateDashboard(
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
-    ) throws ConstraintViolationException, JsonProcessingException {
+    ) throws ConstraintViolationException {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
         validateConstraintViolationBuilder.index(0);
 
@@ -145,7 +144,7 @@ public class DashboardController {
     @Operation(tags = {"Dashboards"}, summary = "Delete a dashboard")
     public HttpResponse<Void> deleteDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id
-    ) throws ConstraintViolationException, JsonProcessingException {
+    ) throws ConstraintViolationException {
         if (dashboardRepository.delete(tenantService.resolveTenant(), id) != null) {
             return HttpResponse.status(HttpStatus.NO_CONTENT);
         } else {
@@ -160,7 +159,7 @@ public class DashboardController {
     public PagedResults<Map<String, Object>> getDashboardChartData(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The chart id") @PathVariable String chartId,
-        @RequestBody(description = "The filters to apply, some can override chart definition like labels & namespace") @Body @Nullable GlobalFilter globalFilter
+        @RequestBody(description = "The filters to apply, some can override chart definition like labels & namespace") @Body GlobalFilter globalFilter
     ) throws IOException {
         String tenantId = tenantService.resolveTenant();
         List<QueryFilter> filters = globalFilter.getFilters();

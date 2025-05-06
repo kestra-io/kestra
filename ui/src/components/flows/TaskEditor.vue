@@ -111,7 +111,7 @@
                 };
 
                 if (this.section !== SECTIONS.TRIGGERS && this.section !== SECTIONS.TASK_RUNNERS) {
-                    value["id"] = this.taskObject && this.taskObject.id ? this.taskObject.id : "";
+                    value["id"] = this.taskObject && this.taskObject.id ? this.taskObject.id : undefined;
                 }
 
                 this.onInput(value);

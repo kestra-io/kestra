@@ -113,7 +113,11 @@
                 @dragleave.prevent="removeAllPotentialTabs"
                 @dragenter.prevent
             >
-                <component :is="panel.activeTab?.component" />
+                <component
+                    :is="panel.activeTab?.component"
+                    :panel-index="panelIndex"
+                    :tab-index="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
+                />
                 <div
                     v-if="dragging"
                     class="editor-content-overlay"

@@ -122,12 +122,13 @@ export const encodeSearchParams = (filters, OPTIONS) => {
 
     return filters.reduce((query, filter) => {
         if(filter.operation) {
-            Object.assign(query, encode(filter.value, filter.field, filter.operation));
+            const match = OPTIONS.find((o) => o.value.label === filter.field);
+            const key = match ? match.key : filter.field === "text" ? "q" : filter.field;
+            Object.assign(query, encode(filter.value, key, filter.operation));
         } else {
             const match = OPTIONS.find((o) => o.value.label === filter.label);
             const key = match ? match.key : filter.label === "text" ? "q" : null;
             const operation = filter.comparator?.value || match?.comparators?.find(c => c.value === filter.operation)?.value || "EQUALS";
-
             if (key) {
                 if (key !== "date") {
                     Object.assign(query, encode(filter.value, key, operation));
@@ -164,7 +165,6 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
             return {field: label, value: decodeURIComponent(value), operation: comparator.value};
         })
         .filter(Boolean);
-
     return params;
 };
 export const isSearchPath = (name: string) => ["home", "flows/list", "executions/list", "logs/list", "admin/triggers"].includes(name);

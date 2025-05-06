@@ -324,7 +324,6 @@
             emits("input", getInputValue());
         }
 
-        console.log("getInputValue", getInputValue());
         if (getInputValue() === TEXT_PREFIX) {
             // cons
             select.value!.states.inputValue = "";
@@ -650,7 +649,7 @@
     const includedOptions = computed(() => {
         const dates = ["relative_date", "absolute_date"];
 
-        const found = currentFilters.value?.find((v) => dates.includes(v?.label));
+        const found = currentFilters.value?.find((v) => dates.includes(v?.field));
         const exclude = found ? dates.find((date) => date !== found.label) : null;
 
         return OPTIONS.filter((o) => {

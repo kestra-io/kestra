@@ -133,26 +133,22 @@
             Editor,
             Markdown,
         },
+        props: {
+            properties: {
+                type: Object,
+                default: () => ({}),
+            },
+        },
         emits: ["update:modelValue"],
         computed: {
             sortedProperties() {
-                if (this.schema?.properties) {
-                    return this.sortProperties(this.schema.properties);
-                }
-
-                return undefined;
+                return this.sortProperties(this.properties);
             },
             requiredProperties() {
-                const properties = this.sortedProperties.filter(([p]) => this.isRequired(p));
-                // if the field id is not found in the required fields,
-                // we need to add it
-                if(!properties.find(([field]) => field === "id")) {
-                    properties.unshift(["id", {type: "string", $required: true}]);
-                }
-                return properties;
+                return this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
             },
             optionalProperties() {
-                return this.sortedProperties.filter(([p]) => !this.isRequired(p));
+                return this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p));
             },
         },
         methods: {

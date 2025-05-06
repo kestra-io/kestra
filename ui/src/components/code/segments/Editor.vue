@@ -226,17 +226,6 @@
                 schema: schema.value?.definitions?.["io.kestra.core.models.flows.Concurrency"] ?? {},
                 root: "concurrency",
             },
-            pluginDefaults: {
-                component: Editor,
-                value: props.metadata.pluginDefaults,
-                label: t("no_code.fields.general.plugin_defaults"),
-                navbar: false,
-                input: true,
-                lang: "yaml",
-                shouldFocus: false,
-                showScroll: true,
-                style: {height: "100px"},
-            },
             disabled: {
                 component: InputSwitch,
                 value: props.metadata.disabled,

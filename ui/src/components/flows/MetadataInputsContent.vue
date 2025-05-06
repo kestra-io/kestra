@@ -17,6 +17,7 @@
         :model-value="selectedInput"
         @update:model-value="updateSelected($event, selectedIndex)"
         :schema="inputSchema?.schema?.properties"
+        :properties="inputSchema?.schema?.properties?.properties"
         :definitions="inputSchema?.schema?.definitions"
     />
 

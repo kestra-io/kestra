@@ -5,7 +5,7 @@ export type Schemas = {
     $ref?: string;
     $schema?: string;
     properties?: {
-        [key: string]: Schemas;
+        [key: string]: any;
     };
     definitions?: {
         [key: string]: object;
@@ -54,7 +54,6 @@ export type Fields = {
     outputs: EditorField;
     variables: PairField;
     concurrency: ConcurrencyField;
-    pluginDefaults: EditorField;
     disabled: Field;
 };
 

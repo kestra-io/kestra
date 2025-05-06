@@ -21,6 +21,7 @@
         :model-value="taskObject"
         @update:model-value="onInput"
         :schema="schema.properties"
+        :properties="properties"
         :definitions="schema.definitions"
     />
 </template>
@@ -75,6 +76,18 @@
         return plugin.value?.schema;
     });
 
+    const properties = computed(() => {
+        const updatedProperties = schema.value?.properties?.properties;
+        if(props.section === "plugins defaults" && updatedProperties["id"]){
+            updatedProperties["id"] = undefined
+            return updatedProperties;
+        }
+        if(updatedProperties && !updatedProperties["id"]){
+            updatedProperties["id"] = {type: "string", $required: true};
+        }
+        return updatedProperties
+    });
+
     function setup() {
         taskObject.value = YAML_UTILS.parse<PartialCodeElement>(modelValue.value);
         selectedTaskType.value = taskObject.value?.type;
@@ -109,7 +122,7 @@
         };
 
         if (props.section !== SECTIONS.TRIGGERS && props.section !== SECTIONS.TASK_RUNNERS) {
-            value["id"] = taskObject.value && taskObject.value.id ? taskObject.value.id : undefined;
+            value["id"] = taskObject.value?.id ? taskObject.value.id : undefined;
         }
 
         onInput(value);

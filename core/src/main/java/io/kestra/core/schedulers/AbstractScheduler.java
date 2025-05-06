@@ -827,41 +827,44 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     }
 
     private Optional<SchedulerExecutionWithTrigger> evaluateScheduleTrigger(FlowWithWorkerTrigger flowWithTrigger) {
-        try {
+        return metricRegistry.timer(MetricRegistry.METRIC_SCHEDULER_TRIGGER_EVALUATION_DURATION, MetricRegistry.METRIC_SCHEDULER_TRIGGER_EVALUATION_DURATION_DESCRIPTION, metricRegistry.tags(flowWithTrigger.getAbstractTrigger()))
+            .record(() -> {
+                try {
 
-            // mutability dirty hack that forces the creation of a new triggerExecutionId
-            DefaultRunContext runContext = (DefaultRunContext) flowWithTrigger.getConditionContext().getRunContext();
-            runContextInitializer.forScheduler(
-                runContext,
-                flowWithTrigger.getTriggerContext(),
-                flowWithTrigger.getAbstractTrigger()
-            );
+                    // mutability dirty hack that forces the creation of a new triggerExecutionId
+                    DefaultRunContext runContext = (DefaultRunContext) flowWithTrigger.getConditionContext().getRunContext();
+                    runContextInitializer.forScheduler(
+                        runContext,
+                        flowWithTrigger.getTriggerContext(),
+                        flowWithTrigger.getAbstractTrigger()
+                    );
 
-            Optional<Execution> evaluate = ((Schedulable) flowWithTrigger.getAbstractTrigger()).evaluate(
-                flowWithTrigger.getConditionContext(),
-                flowWithTrigger.getTriggerContext()
-            );
+                    Optional<Execution> evaluate = ((Schedulable) flowWithTrigger.getAbstractTrigger()).evaluate(
+                        flowWithTrigger.getConditionContext(),
+                        flowWithTrigger.getTriggerContext()
+                    );
 
-            if (log.isDebugEnabled()) {
-                logService.logTrigger(
-                    flowWithTrigger.getTriggerContext(),
-                    Level.DEBUG,
-                    "[type: {}] {}",
-                    flowWithTrigger.getAbstractTrigger().getType(),
-                    evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
-                );
-            }
+                    if (log.isDebugEnabled()) {
+                        logService.logTrigger(
+                            flowWithTrigger.getTriggerContext(),
+                            Level.DEBUG,
+                            "[type: {}] {}",
+                            flowWithTrigger.getAbstractTrigger().getType(),
+                            evaluate.map(execution -> "New execution '" + execution.getId() + "'").orElse("Empty evaluation")
+                        );
+                    }
 
-            flowWithTrigger.getConditionContext().getRunContext().cleanup();
+                    flowWithTrigger.getConditionContext().getRunContext().cleanup();
 
-            return evaluate.map(execution -> new SchedulerExecutionWithTrigger(
-                execution,
-                flowWithTrigger.getTriggerContext()
-            ));
-        } catch (Exception e) {
-            logError(flowWithTrigger, e);
-            return Optional.empty();
-        }
+                    return evaluate.map(execution -> new SchedulerExecutionWithTrigger(
+                        execution,
+                        flowWithTrigger.getTriggerContext()
+                    ));
+                } catch (Exception e) {
+                    logError(flowWithTrigger, e);
+                    return Optional.empty();
+                }
+            });
     }
 
     private void logError(FlowWithWorkerTrigger flowWithWorkerTriggerNextDate, Throwable e) {

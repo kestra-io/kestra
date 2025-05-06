@@ -11,7 +11,7 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
-import io.kestra.core.runners.FlowExecutorInterface;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
 import io.micronaut.context.ApplicationContext;
@@ -109,7 +109,7 @@ public class Toggle extends Task implements RunnableTask<VoidOutput> {
 
         // verify that the target flow exists, and the current execution is authorized to access it
         final ApplicationContext applicationContext = ((DefaultRunContext) runContext).getApplicationContext();
-        FlowExecutorInterface flowExecutor = applicationContext.getBean(FlowExecutorInterface.class);
+        FlowMetaStoreInterface flowExecutor = applicationContext.getBean(FlowMetaStoreInterface.class);
         flowExecutor.findByIdFromTask(
             runContext.flowInfo().tenantId(),
             realNamespace,

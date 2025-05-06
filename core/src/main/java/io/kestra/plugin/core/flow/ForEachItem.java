@@ -465,7 +465,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
         @Override
         public List<SubflowExecution<?>> createSubflowExecutions(
             RunContext runContext,
-            FlowExecutorInterface flowExecutorInterface,
+            FlowMetaStoreInterface flowExecutorInterface,
             Flow currentFlow,
             Execution currentExecution,
             TaskRun currentTaskRun

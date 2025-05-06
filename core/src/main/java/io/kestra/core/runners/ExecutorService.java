@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
@@ -18,7 +17,6 @@ import io.kestra.core.services.*;
 import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
-import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
 import io.kestra.plugin.core.flow.Pause;
@@ -42,7 +40,6 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Singleton
@@ -69,7 +66,7 @@ public class ExecutorService {
     @Inject
     private WorkerGroupExecutorInterface workerGroupExecutorInterface;
 
-    protected FlowExecutorInterface flowExecutorInterface;
+    protected FlowMetaStoreInterface flowExecutorInterface;
 
     @Inject
     private ExecutionService executionService;
@@ -90,10 +87,10 @@ public class ExecutorService {
     @Named(QueueFactoryInterface.KILL_NAMED)
     protected QueueInterface<ExecutionKilled> killQueue;
 
-    protected FlowExecutorInterface flowExecutorInterface() {
+    protected FlowMetaStoreInterface flowExecutorInterface() {
         // bean is injected late, so we need to wait
         if (this.flowExecutorInterface == null) {
-            this.flowExecutorInterface = applicationContext.getBean(FlowExecutorInterface.class);
+            this.flowExecutorInterface = applicationContext.getBean(FlowMetaStoreInterface.class);
         }
 
         return this.flowExecutorInterface;

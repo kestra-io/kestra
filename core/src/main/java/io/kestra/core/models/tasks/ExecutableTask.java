@@ -6,7 +6,7 @@ import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowId;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.runners.FlowExecutorInterface;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.runners.SubflowExecution;
 import io.kestra.core.runners.SubflowExecutionResult;
@@ -23,7 +23,7 @@ public interface ExecutableTask<T extends Output>{
      * Each SubflowExecution will generate a subflow execution.
      */
     List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
-                                                      FlowExecutorInterface flowExecutorInterface,
+                                                      FlowMetaStoreInterface flowExecutorInterface,
                                                       Flow currentFlow, Execution currentExecution,
                                                       TaskRun currentTaskRun) throws InternalException;
 

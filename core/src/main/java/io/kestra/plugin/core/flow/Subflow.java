@@ -2,7 +2,6 @@ package io.kestra.plugin.core.flow;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.annotations.Example;
@@ -18,7 +17,7 @@ import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.ExecutableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.ExecutableUtils;
-import io.kestra.core.runners.FlowExecutorInterface;
+import io.kestra.core.runners.FlowMetaStoreInterface;
 import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.DefaultRunContext;
 import io.kestra.core.runners.RunContext;
@@ -172,7 +171,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
 
     @Override
     public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
-                                                             FlowExecutorInterface flowExecutorInterface,
+                                                             FlowMetaStoreInterface flowExecutorInterface,
                                                              io.kestra.core.models.flows.Flow currentFlow,
                                                              Execution currentExecution,
                                                              TaskRun currentTaskRun) throws InternalException {

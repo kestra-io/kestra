@@ -67,7 +67,7 @@ public final class ExecutableUtils {
 
     public static <T extends Task & ExecutableTask<?>> Optional<SubflowExecution<?>> subflowExecution(
         RunContext runContext,
-        FlowExecutorInterface flowExecutorInterface,
+        FlowMetaStoreInterface flowExecutorInterface,
         Execution currentExecution,
         Flow currentFlow,
         T currentTask,

@@ -85,7 +85,14 @@ public interface ServiceInstanceRepositoryInterface {
                                                   final Instant to);
 
     /**
-     * Returns the function to be used for mapping column used to sort result.
+     * Purge all instances in the EMPTY state older than the until date.
+     *
+     * @return the number of purged instances
+     */
+    int purgeEmptyInstances(Instant until);
+
+    /**
+     * Returns the function to be used for mapping column used to sort results.
      *
      * @return the mapping function.
      */

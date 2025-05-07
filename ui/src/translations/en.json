@@ -261,7 +261,7 @@
     "parent execution": "Parent execution",
     "original execution": "Original execution",
     "automatic refresh": "Automatic refresh",
-    "toggle periodic refresh each 10 seconds": "Toggle periodic refresh every 10 seconds",
+    "toggle periodic refresh each x seconds": "Toggle periodic refresh every {interval} seconds",
     "trigger refresh": "Trigger refresh",
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
@@ -770,7 +770,8 @@
             "execute_flow": "Execute the Flow",
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
-            "flow_default_tab": "Default Flow Tab"
+            "flow_default_tab": "Default Flow Tab",
+            "auto_refresh_interval": "Auto Refresh Interval"            
           }
         },
         "theme": {

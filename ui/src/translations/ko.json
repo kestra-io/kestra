@@ -1081,6 +1081,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "자동 새로고침 간격",
             "default_namespace": "기본 Namespace",
             "editor_type": "기본 편집기 유형",
             "execute_default_tab": "기본 실행 탭",
@@ -1204,7 +1205,7 @@
     "toggle fullscreen": "전체 화면 전환",
     "toggle output": "출력 전환",
     "toggle output display": "출력 표시 전환",
-    "toggle periodic refresh each 10 seconds": "10초마다 주기적으로 새로 고침 전환",
+    "toggle periodic refresh each x seconds": "주기적인 새로 고침을 {interval}초마다 전환",
     "toggle_word_wrap": "자동 줄 바꿈 토글",
     "topology": "토폴로지",
     "topology-graph": {

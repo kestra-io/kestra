@@ -263,7 +263,10 @@ export default {
         updatePluginDocumentation(event) {
             const taskType = YAML_UTILS.getTaskType(event.model.getValue(), event.position, this.pluginSingleList)
             if (taskType) {
-                this.$store.dispatch("plugin/load", {cls: taskType})
+                const taskElement = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.position);
+                const version = taskElement?.parents?.[taskElement.parents.length - 1]?.version;
+                
+                this.$store.dispatch("plugin/load", {cls: taskType, version})
                     .then(plugin => {
                         this.$store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
                     });

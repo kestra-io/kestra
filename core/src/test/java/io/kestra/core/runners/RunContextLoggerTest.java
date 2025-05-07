@@ -30,7 +30,6 @@ class RunContextLoggerTest {
     @Test
     void logs() {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
-        List<LogEntry> matchingLog;
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
         Flow flow = TestsUtils.mockFlow();
@@ -50,7 +49,7 @@ class RunContextLoggerTest {
         logger.warn("warn");
         logger.error("error");
 
-        matchingLog = TestsUtils.awaitLogs(logs, 5);
+        List<LogEntry> matchingLog = TestsUtils.awaitLogs(logs, 5);
         receive.blockLast();
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.TRACE)).findFirst().orElseThrow().getMessage()).isEqualTo("trace");
         assertThat(matchingLog.stream().filter(logEntry -> logEntry.getLevel().equals(Level.DEBUG)).findFirst().orElseThrow().getMessage()).isEqualTo("debug");

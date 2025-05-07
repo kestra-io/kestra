@@ -227,7 +227,7 @@ public class MultipleConditionTriggerCaseTest {
             }
         });
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.paused",
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests.trigger.paused",
             "flow-trigger-paused-flow", Duration.ofSeconds(60));
         assertThat(execution.getTaskRunList().size()).isEqualTo(2);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);

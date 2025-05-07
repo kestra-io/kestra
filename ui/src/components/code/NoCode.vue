@@ -56,6 +56,7 @@
             /**
              * Initial task id when opening
              * a no-code panel from topology
+             * (if it's a pluginDefaults, we have the type instead)
              */
             taskId?: string;
             /**

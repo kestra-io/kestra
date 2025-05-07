@@ -406,6 +406,10 @@
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> в нашей документации.",
         "title": "Для этого namespace не установлены значения по умолчанию для плагинов."
       },
+      "testSuites": {
+        "content": "Начните создавать тестовые наборы для проверки ваших Flows.",
+        "title": "У вас еще нет Test suites!"
+      },
       "triggers": {
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> в нашей документации.",
         "title": "Ваш flow не имеет никаких Triggers."

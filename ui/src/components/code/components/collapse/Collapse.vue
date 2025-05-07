@@ -47,7 +47,7 @@
     const expanded = ref<CollapseItem["title"]>(props.title);
 
     const removeElement = (title: string, index: number) => {
-        if(props.elements?.[index]?.id === undefined) return;
+        if(title !== "" && props.elements?.[index]?.id === undefined) return;
         emits(
             "remove",
             YAML_UTILS.deleteTask(flow.value, props.elements[index].id, title),

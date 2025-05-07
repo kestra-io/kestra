@@ -47,6 +47,8 @@
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
+    const PLUGIN_DEFAULTS_SECTION = "plugin defaults";
+
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
     const section = inject(SECTION_INJECTION_KEY, ref("tasks"));
@@ -102,30 +104,40 @@
     )
 
     watch(
-        taskId,
-        (value) => {
+        [taskId, section],
+        ([id, section]) => {
             if(taskCreationIndex.value){
                 return;
             }
             yaml.value =
-                YAML_UTILS.extractTask(flow.value, value) ?? "";
+                section === PLUGIN_DEFAULTS_SECTION ?
+                    YAML_UTILS.extractPluginDefault(
+                        flow.value,
+                        id // this is the task type for the plugin defaults
+                    )
+                    :
+                    YAML_UTILS.extractTask(flow.value, id) ?? "";
         },
         {immediate: true},
     );
 
     watch(
         yaml,
-        (value) => {
+        () => {
             if(saveMode === "auto") {
-                store.dispatch("flow/validateTask", {task: value, section: validationSection.value});
+                if(errors.value?.length > 0){
+                    return;
+                }
                 saveTask();
             }
         },
     );
 
+    const parsedTask = computed(() => YAML_UTILS.parse(yaml.value));
+
     const CURRENT = ref<string|null>(null);
-    const validateTask = (task: string) => {
-        let temp = YAML_UTILS.parse(yaml.value);
+    const validateTask = (task?: string) => {
+        let temp = parsedTask.value;
 
         if (lastBreadcrumb.value.shown) {
             const field = breadcrumbs.value.at(-1)?.label;
@@ -162,7 +174,7 @@
         "error handlers": "errors",
         finally: "finally",
         "after execution": "afterExecution",
-        "plugin defaults": "pluginDefaults",
+        [PLUGIN_DEFAULTS_SECTION]: "pluginDefaults",
     };
 
     const saveTask = () => {
@@ -217,7 +229,13 @@
                     );
                 }
             }
-        } else{
+        } else if (currentSection === PLUGIN_DEFAULTS_SECTION) {
+            result = YAML_UTILS.replacePluginDefaultsInDocument(
+                flow.value,
+                yaml.value,
+                parsedTask.value.type
+            );
+        } else {
             const originalTask = YAML_UTILS.extractTask(flow.value, taskId.value);
             if(!originalTask)return;
 

@@ -196,13 +196,13 @@
                                     </span>
 
                                     <el-button
+                                        :icon="CalendarCollapseHorizontalOutline"
                                         v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                         @click="restart(scope.row)"
-                                        class="restartTrigger"
+                                        size="small"
+                                        type="primary"
                                     >
-                                        <kicon :tooltip="$t(`restart trigger.tooltip`)" placement="left">
-                                            <Restart />
-                                        </kicon>
+                                        {{ $t("backfill executions") }}
                                     </el-button>
                                 </div>
                             </template>
@@ -261,9 +261,9 @@
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
-    import Restart from "vue-material-design-icons/Restart.vue";
     import Cron from "../layout/Cron.vue"
     import TriggerAvatar from "../flows/TriggerAvatar.vue"
+    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
 </script>
 <script>
     import RouteContext from "../../mixins/routeContext";

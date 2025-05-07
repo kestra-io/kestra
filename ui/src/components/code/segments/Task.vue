@@ -142,25 +142,31 @@
         if (lastBreadcrumb.value.shown) {
             const field = breadcrumbs.value.at(-1)?.label;
             if (field) {
-                temp = {...temp, [field]: task};
+                temp[field] = task;
             }
         }
 
         temp = YAML_UTILS.stringify(temp);
 
-        store
-            .dispatch("flow/validateTask", {task: temp, section: validationSection.value})
-            .then(() => (yaml.value = temp));
+        if(section.value !== PLUGIN_DEFAULTS_SECTION){
+            store
+                .dispatch("flow/validateTask", {task: temp, section: validationSection.value})
+                .then(() => (yaml.value = temp));
+            CURRENT.value = temp;
 
-        CURRENT.value = temp;
+            clearTimeout(timer.value);
+            timer.value = setTimeout(() => {
+                if (lastValidatedValue.value !== temp) {
+                    lastValidatedValue.value = temp;
+                    store.dispatch("flow/validateTask", {task: temp, section: validationSection.value});
+                }
+            }, 500) as any;
+        } else {
+            yaml.value = temp;
+            CURRENT.value = temp;
+        }
 
-        clearTimeout(timer.value);
-        timer.value = setTimeout(() => {
-            if (lastValidatedValue.value !== temp) {
-                lastValidatedValue.value = temp;
-                store.dispatch("flow/validateTask", {task: temp, section: validationSection.value});
-            }
-        }, 500) as any;
+
     };
 
     const timer = ref<number>();

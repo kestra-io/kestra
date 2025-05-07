@@ -27,7 +27,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onBeforeMount, onBeforeUnmount, ref, watch} from "vue";
+    import {computed, onBeforeMount, ref, watch} from "vue";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
@@ -52,10 +52,6 @@
         if (modelValue.value) {
             setup()
         }
-    })
-
-    onBeforeUnmount(() => {
-        store.commit("flow/setTaskError", undefined);
     })
 
     watch(modelValue, (v) => {
@@ -91,7 +87,6 @@
     function setup() {
         taskObject.value = YAML_UTILS.parse<PartialCodeElement>(modelValue.value);
         selectedTaskType.value = taskObject.value?.type;
-        store.dispatch("flow/validateTask", {task: modelValue.value, section: props.section})
 
         load();
     }

@@ -13,13 +13,13 @@ import java.util.List;
 import java.util.Optional;
 
 @Singleton
-public class DefaultFlowExecutor implements FlowExecutorInterface {
+public class DefaultFlowMetaStore implements FlowMetaStoreInterface {
     private final FlowRepositoryInterface flowRepository;
 
     @Setter
     private List<FlowWithSource> allFlows;
 
-    public DefaultFlowExecutor(FlowListenersInterface flowListeners, FlowRepositoryInterface flowRepository) {
+    public DefaultFlowMetaStore(FlowListenersInterface flowListeners, FlowRepositoryInterface flowRepository) {
         this.flowRepository = flowRepository;
         flowListeners.listen(flows -> allFlows = flows);
     }

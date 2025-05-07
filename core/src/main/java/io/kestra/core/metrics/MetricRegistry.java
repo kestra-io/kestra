@@ -6,13 +6,11 @@ import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.kestra.core.runners.SubflowExecutionResult;
-import io.kestra.core.runners.WorkerTask;
-import io.kestra.core.runners.WorkerTaskResult;
-import io.kestra.core.runners.WorkerTrigger;
+import io.kestra.core.runners.*;
 import io.kestra.core.schedulers.SchedulerExecutionWithTrigger;
 import io.micrometer.core.instrument.*;
 import io.micrometer.core.instrument.binder.MeterBinder;
+import io.micrometer.core.instrument.search.Search;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
@@ -96,6 +94,8 @@ public class MetricRegistry {
 
     public static final String METRIC_SCHEDULER_LOOP_COUNT = "scheduler.loop.count";
     public static final String METRIC_SCHEDULER_LOOP_COUNT_DESCRIPTION = "Total number of evaluation loops executed by the Scheduler";
+    public static final String METRIC_SCHEDULER_TRIGGER_EVALUATION_DURATION = "scheduler.trigger.evaluation.duration";
+    public static final String METRIC_SCHEDULER_TRIGGER_EVALUATION_DURATION_DESCRIPTION = "Trigger evaluation duration for trigger executed inside the Scheduler (Schedulable triggers)";
     public static final String METRIC_SCHEDULER_TRIGGER_COUNT = "scheduler.trigger.count";
     public static final String METRIC_SCHEDULER_TRIGGER_COUNT_DESCRIPTION = "Total number of executions triggered by the Scheduler";
     public static final String METRIC_SCHEDULER_TRIGGER_DELAY_DURATION = "scheduler.trigger.delay.duration";
@@ -197,6 +197,14 @@ public class MetricRegistry {
             .description(description)
             .tags(tags)
             .register(this.meterRegistry);
+    }
+
+    /**
+     * Search for an existing Meter in the meter registry
+     * @param name The base metric name
+     */
+    public Search find(String name) {
+        return this.meterRegistry.find(metricName(name));
     }
 
     /**

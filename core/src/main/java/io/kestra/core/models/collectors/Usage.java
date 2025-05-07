@@ -2,7 +2,7 @@ package io.kestra.core.models.collectors;
 
 import io.kestra.core.models.ServerType;
 import io.micronaut.core.annotation.Introspected;
-import io.micronaut.core.annotation.Nullable;
+import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -13,6 +13,7 @@ import lombok.extern.jackson.Jacksonized;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 @SuperBuilder(toBuilder = true)
@@ -66,4 +67,8 @@ public class Usage {
     @Valid
     @Nullable
     private ServiceUsage services;
+
+    @Valid
+    @Nullable
+    private List<PluginMetric> pluginMetrics;
 }

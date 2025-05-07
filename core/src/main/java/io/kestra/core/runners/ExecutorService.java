@@ -38,6 +38,7 @@ import org.slf4j.event.Level;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -606,7 +607,7 @@ public class ExecutorService {
 
         executor = this.handlePausedDelay(executor, list);
 
-        this.addWorkerTaskResults(executor, executor.getFlow(), list);
+        this.addWorkerTaskResults(executor, list);
 
         return executor;
     }
@@ -695,7 +696,7 @@ public class ExecutorService {
             .map(Optional::get)
             .toList();
 
-        this.addWorkerTaskResults(executor, executor.getFlow(), workerTaskResults);
+        this.addWorkerTaskResults(executor, workerTaskResults);
         return executor;
     }
 
@@ -869,7 +870,7 @@ public class ExecutorService {
                 .toList();
 
             hasMockedWorkerTask = !workerTaskResults.isEmpty();
-            this.addWorkerTaskResults(executor, executor.getFlow(), workerTaskResults);
+            this.addWorkerTaskResults(executor, workerTaskResults);
         }
 
 
@@ -887,7 +888,7 @@ public class ExecutorService {
                 .map(workerTask -> WorkerTaskResult.builder().taskRun(workerTask.getTaskRun()).build())
                 .toList();
 
-            this.addWorkerTaskResults(executor, executor.getFlow(), failed);
+            this.addWorkerTaskResults(executor, failed);
         }
 
         // Send other TaskRun to the worker (create worker tasks)
@@ -1030,18 +1031,18 @@ public class ExecutorService {
                 return true;
             });
 
-        this.addWorkerTaskResults(executor, executor.getFlow(), workerTaskResults);
+        this.addWorkerTaskResults(executor, workerTaskResults);
 
         return executor;
     }
 
-    public void addWorkerTaskResults(Executor executor, Flow flow, List<WorkerTaskResult> workerTaskResults) throws InternalException {
+    public void addWorkerTaskResults(Executor executor, List<WorkerTaskResult> workerTaskResults) throws InternalException {
         for (WorkerTaskResult workerTaskResult : workerTaskResults) {
-            this.addWorkerTaskResult(executor, flow, workerTaskResult);
+            this.addWorkerTaskResult(executor, () -> executor.getFlow(), workerTaskResult);
         }
     }
 
-    public void addWorkerTaskResult(Executor executor, Flow flow, WorkerTaskResult workerTaskResult) throws InternalException {
+    public void addWorkerTaskResult(Executor executor, Supplier<Flow> flow, WorkerTaskResult workerTaskResult) throws InternalException {
         // dynamic tasks
         Execution newExecution = this.addDynamicTaskRun(
             executor.getExecution(),
@@ -1062,7 +1063,8 @@ public class ExecutorService {
         executor.withExecution(newExecution, "addWorkerTaskResult");
     }
 
-    private Execution addDynamicTaskRun(Execution execution, Flow flow, WorkerTaskResult workerTaskResult) throws InternalException {
+    // Note: as the flow is only used in an error branch and it can take time to load, we pass it thought a Supplier
+    private Execution addDynamicTaskRun(Execution execution, Supplier<Flow> flow, WorkerTaskResult workerTaskResult) throws InternalException {
         ArrayList<TaskRun> taskRuns = new ArrayList<>(ListUtils.emptyOnNull(execution.getTaskRunList()));
 
         // declared dynamic tasks
@@ -1076,7 +1078,7 @@ public class ExecutorService {
                 execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getId());
             } catch (InternalException e) {
                 TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getParentTaskRunId());
-                Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
+                Task parentTask = flow.get().findTaskByTaskId(parentTaskRun.getTaskId());
 
                 if (parentTask instanceof WorkingDirectory) {
                     taskRuns.add(workerTaskResult.getTaskRun());

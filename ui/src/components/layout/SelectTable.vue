@@ -37,7 +37,7 @@
                 tableHeight: this.infiniteScrollLoad === undefined ? "auto" : "100%"
             }
         },
-        expose: ["resetInfiniteScroll"],
+        expose: ["resetInfiniteScroll", "toggleRowExpansion"],
         computed: {
             scrollWrapper() {
                 if (this.data) {
@@ -64,6 +64,10 @@
             async resetInfiniteScroll() {
                 this.infiniteScrollDisabled = false;
                 this.tableHeight = await this.computeTableHeight();
+            },
+            async toggleRowExpansion(row, expand){
+                this.$refs.table.toggleRowExpansion(row, expand)
+                // this.$refs.table.clearSelection()
             },
             async waitTableRender() {
                 if (this.tableView === undefined) {

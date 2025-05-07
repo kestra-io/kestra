@@ -1,6 +1,6 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
-    <section data-component="Triggers" class="container" v-if="ready">
+    <section data-component="FILENAME_PLACEHOLDER" class="container" v-if="ready">
         <div>
             <data-table
                 @page-changed="onPageChanged"
@@ -8,22 +8,14 @@
                 :total="total"
             >
                 <template #navbar>
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <KestraFilter
-                            prefix="triggers"
-                            :include="['namespace', 'trigger_state']"
-                            :buttons="{ settings: {shown: false} }"
-                        />
-                        <el-button
-                            class="backfill-button"
-                            type="primary"
-                            style="background-color: #8833FF; border-color: #8833FF; color: #fff;"
-                            @click="setBackfillModal(null, true)"
-                        >
-                            <CalendarCollapseHorizontalOutline class="icon" />
-                            <span>Backfill executions</span>
-                        </el-button>
-                    </div>
+                    <KestraFilter
+                        prefix="triggers"
+                        :include="['namespace', 'trigger_state']"
+                        :buttons="{
+                            refresh: {shown: true, callback: load},
+                            settings: {shown: false}
+                        }"
+                    />
                 </template>
                 <template #table>
                     <select-table
@@ -52,25 +44,22 @@
                                 @update:select-all="toggleAllSelection"
                                 @unselect="toggleAllUnselected"
                             >
-                                <el-button @click="setDisabledTriggers(false)" type="primary" size="small">
+                                <el-button @click="setDisabledTriggers(false)">
                                     {{ $t("enable") }}
                                 </el-button>
-                                <el-button @click="setDisabledTriggers(true)" type="primary" size="small">
+                                <el-button @click="setDisabledTriggers(true)">
                                     {{ $t("disable") }}
                                 </el-button>
-                                <el-button @click="unlockTriggers()" type="primary" size="small">
+                                <el-button @click="unlockTriggers()">
                                     {{ $t("unlock") }}
                                 </el-button>
-                                <el-button @click="pauseBackfills()" type="primary" size="small">
-                                    <CalendarCollapseHorizontalOutline class="icon" />
+                                <el-button @click="pauseBackfills()">
                                     {{ $t("pause backfills") }}
                                 </el-button>
-                                <el-button @click="unpauseBackfills()" type="primary" size="small">
-                                    <CalendarCollapseHorizontalOutline class="icon" />
+                                <el-button @click="unpauseBackfills()">
                                     {{ $t("continue backfills") }}
                                 </el-button>
-                                <el-button @click="deleteBackfills()" type="primary" size="small">
-                                    <CalendarCollapseHorizontalOutline class="icon" />
+                                <el-button @click="deleteBackfills()">
                                     {{ $t("delete backfills") }}
                                 </el-button>
                             </bulk-select>
@@ -119,6 +108,7 @@
                                 {{ $filters.invisibleSpace(scope.row.namespace) }}
                             </template>
                         </el-table-column>
+
                         <el-table-column v-if="visibleColumns.executionId" :label="$t('current execution')">
                             <template #default="scope">
                                 <router-link
@@ -163,21 +153,21 @@
                                 <Cron v-if="scope.row.cron" :cron-expression="scope.row?.cron" />
                             </template>
                         </el-table-column>
-                        <!-- Backfill column -->
-                        <el-table-column :label="'Backfill'" :width="200" prop="backfillText">
+                        <el-table-column :label="$t('details')">
                             <template #default="scope">
-                                <button
-                                    style="background-color: #8833FF; border: 1px solid #8833FF; color: #fff; margin-top: 8px; padding: 8px 16px; border-radius: 4px; display: flex; align-items: center; cursor: pointer;"
-                                    @click="setBackfillModal(scope.row, true)"
-                                >
-                                    Backfill executions
-                                </button>
+                                <TriggerAvatar
+                                    :flow="{flowId: scope.row.flowId, namespace: scope.row.namespace, triggers: [scope.row]}"
+                                    :trigger-id="scope.row.id"
+                                />
                             </template>
                         </el-table-column>
-                        <!-- Move "Restart the trigger" button to "Actions" column -->
+                        <el-table-column v-if="visibleColumns.evaluateRunningDate" :label="$t('evaluation lock date')">
+                            <template #default="scope">
+                                <date-ago :inverted="true" :date="scope.row.evaluateRunningDate" />
+                            </template>
+                        </el-table-column>
                         <el-table-column
                             v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
-                            :label="$t('actions')"
                             column-key="action"
                             class-name="row-action"
                         >
@@ -193,6 +183,32 @@
                                 </el-button>
                             </template>
                         </el-table-column>
+                        <el-table-column :label="$t('backfill')" column-key="backfill">
+                            <template #default="scope">
+                                <div class="backfillContainer items-center gap-2">
+                                    <span v-if="scope.row.backfill" class="statusIcon">
+                                        <el-tooltip v-if="!scope.row.backfill.paused" :content="$t('backfill running')" effect="light">
+                                            <play-box font />
+                                        </el-tooltip>
+                                        <el-tooltip v-else :content="$t('backfill paused')">
+                                            <pause-box />
+                                        </el-tooltip>
+                                    </span>
+
+                                    <el-button
+                                        v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
+                                        @click="restart(scope.row)"
+                                        class="restartTrigger"
+                                    >
+                                        <kicon :tooltip="$t(`restart trigger.tooltip`)" placement="left">
+                                            <Restart />
+                                        </kicon>
+                                    </el-button>
+                                </div>
+                            </template>
+                        </el-table-column>
+
+
                         <el-table-column :label="$t('actions')" column-key="disable" class-name="row-action">
                             <template #default="scope">
                                 <el-tooltip
@@ -231,60 +247,24 @@
                     </el-button>
                 </template>
             </el-dialog>
-
-            <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true">
-                <template #header>
-                    <span>Backfill executions</span>
-                </template>
-                <el-form :model="backfill" label-position="top">
-                    <div class="pickers">
-                        <div class="small-picker">
-                            <el-form-item label="Start">
-                                <el-date-picker
-                                    v-model="backfill.start"
-                                    type="datetime"
-                                    placeholder="Start"
-                                />
-                            </el-form-item>
-                        </div>
-                        <div class="small-picker">
-                            <el-form-item label="End">
-                                <el-date-picker
-                                    v-model="backfill.end"
-                                    type="datetime"
-                                    placeholder="End"
-                                />
-                            </el-form-item>
-                        </div>
-                    </div>
-                </el-form>
-                <template #footer>
-                    <el-button type="primary" @click="postBackfill()">
-                        Execute backfill
-                    </el-button>
-                </template>
-            </el-dialog>
         </div>
     </section>
 </template>
-
 <script setup>
     import LockOff from "vue-material-design-icons/LockOff.vue";
     import PlayBox from "vue-material-design-icons/PlayBox.vue";
     import PauseBox from "vue-material-design-icons/PauseBox.vue";
-    import Calendar from "vue-material-design-icons/Calendar.vue";
-    import { CalendarCollapseHorizontalOutline } from 'vue-material-design-icons';
     import Kicon from "../Kicon.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import TopNavBar from "../layout/TopNavBar.vue";
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import SelectTable from "../layout/SelectTable.vue";
-    import BulkSelect from "../layout/SelectTable.vue";
-    import Cron from "../layout/Cron.vue";
-    import TriggerAvatar from "../flows/TriggerAvatar.vue";
+    import BulkSelect from "../layout/BulkSelect.vue";
+    import Restart from "vue-material-design-icons/Restart.vue";
+    import Cron from "../layout/Cron.vue"
+    import TriggerAvatar from "../flows/TriggerAvatar.vue"
 </script>
-
 <script>
     import RouteContext from "../../mixins/routeContext";
     import RestoreUrl from "../../mixins/restoreUrl";
@@ -293,14 +273,13 @@
     import MarkdownTooltip from "../layout/MarkdownTooltip.vue";
     import DateAgo from "../layout/DateAgo.vue";
     import Id from "../Id.vue";
-    import { mapState } from "vuex";
+    import {mapState} from "vuex";
     import SelectTableActions from "../../mixins/selectTableActions";
     import _merge from "lodash/merge";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    import KestraFilter from "../filter/KestraFilter.vue";
+    import KestraFilter from "../filter/KestraFilter.vue"
 
     export default {
-        name: 'Triggers',
         mixins: [RouteContext, RestoreUrl, DataTableActions, SelectTableActions],
         components: {
             KestraFilter,
@@ -308,111 +287,37 @@
             DataTable,
             DateAgo,
             Id,
-            LogsWrapper,
-            CalendarCollapseHorizontalOutline,
-            LockOff,
-            PlayBox,
-            PauseBox,
-            Kicon,
-            Check,
-            AlertCircle,
-            SelectTable,
-            BulkSelect,
-            Cron,
-            TriggerAvatar
+            LogsWrapper
         },
         data() {
             return {
-                triggers: [],
-                total: 0,
+                triggers: undefined,
+                total: undefined,
                 triggerToUnlock: undefined,
                 state: undefined,
                 states: [
                     {label: this.$t("triggers_state.options.enabled"), value: "ENABLED"},
                     {label: this.$t("triggers_state.options.disabled"), value: "DISABLED"}
                 ],
-                selection: null,
-                isBackfillOpen: false,
-                selectedTrigger: null,
-                backfill: {
-                    start: null,
-                    end: null
-                },
-                ready: true,
+                selection: null
             };
-        },
-        computed: {
-            ...mapState("auth", ["user"]),
-            routeInfo() {
-                return {
-                    title: this.$t("triggers")
-                };
-            },
-            triggersMerged() {
-                return this.triggers.map(t => ({
-                    ...t?.abstractTrigger,
-                    ...t?.triggerContext,
-                    id: t?.id,
-                    type: t?.type || t?.abstractTrigger?.type,
-                    codeDisabled: t?.codeDisabled || false,
-                    disabled: t?.disabled || false,
-                    missingSource: t?.missingSource || false,
-                    backfillText: 'STATIC TEST'
-                }));
-            },
-            visibleColumns() {
-                const columns = [
-                    {prop: "triggerId", label: this.$t("id")},
-                    {prop: "flowId", label: this.$t("flow")},
-                    {prop: "namespace", label: this.$t("namespace")},
-                    {prop: "executionId", label: this.$t("current execution")},
-                    {prop: "executionCurrentState", label: this.$t("state")},
-                    {prop: "workerId", label: this.$t("workerId")},
-                    {prop: "date", label: this.$t("date")},
-                    {prop: "updatedDate", label: this.$t("updated date")},
-                    {prop: "nextExecutionDate", label: this.$t("next execution date")},
-                    {prop: "evaluateRunningDate", label: this.$t("evaluation lock date")},
-                ];
-
-                return columns.reduce((acc, column) => {
-                    acc[column.prop] = this.triggersMerged.some(trigger => trigger[column.prop]);
-                    return acc;
-                }, {});
-            }
-        },
-        mounted() {
-            this.loadData();
         },
         methods: {
             hasLogsContent(row) {
                 return row.logs && row.logs.length > 0;
             },
             getClasses(row) {
-                return this.hasLogsContent(row) ? "expandable" : "no-expand";
+                return this.hasLogsContent(row) ? "expandable" : "no-expand"; // Return class based on logs
             },
             onSelectionChange(selection) {
                 this.selection = selection;
             },
             loadData(callback) {
- feature/8606-backfill-icons
-                console.log('Loading triggers data...');
-
- develop
                 const query = this.loadQuery({
                     size: parseInt(this.$route.query.size || 25),
                     page: parseInt(this.$route.query.page || 1),
                     sort: this.$route.query.sort || "triggerId:asc"
                 });
- feature/8606-backfill-icons
-                
-                this.$store.dispatch("trigger/search", {
-                    ...query,
-                    namespace: this.$route.query.namespace,
-                    q: this.$route.query.q
-                }).then(triggersData => {
-                    console.log('Raw triggers data:', triggersData);
-                    console.log('Trigger results:', triggersData.results);
-
 
                 for (const key in query) {
                     if (key.startsWith("filters[trigger_state]")) {
@@ -421,14 +326,11 @@
                 }
 
                 this.$store.dispatch("trigger/search", query).then(triggersData => {
- develop
                     this.triggers = triggersData.results;
                     this.total = triggersData.total;
                     if (callback) {
                         callback();
                     }
-                }).catch(error => {
-                    console.error('Error loading triggers:', error);
                 });
             },
             async unlock() {
@@ -453,6 +355,23 @@
 
                 this.triggerToUnlock = undefined;
             },
+            restart(trigger) {
+                this.$store.dispatch("trigger/restart", {
+                    namespace: trigger.namespace,
+                    flowId: trigger.flowId,
+                    triggerId: trigger.triggerId
+                }).then(newTriggerContext => {
+                    this.$toast().saved(newTriggerContext.id);
+                    this.triggers = this.triggers.map(t => {
+                        if (t.id === newTriggerContext.id) {
+                            let triggerCopy = t;
+                            triggerCopy.triggerContext = newTriggerContext;
+                            return triggerCopy;
+                        }
+                        return t
+                    })
+                })
+            },
             setDisabled(trigger, value) {
                 if (trigger.codeDisabled) {
                     this.$message({
@@ -466,13 +385,14 @@
                 this.$store.dispatch("trigger/update", {...trigger, disabled: !value})
                     .then(_ => {
                         this.loadData();
-                    });
+                    })
             },
             genericConfirmAction(toast, queryAction, byIdAction, success, data) {
                 this.$toast().confirm(
                     this.$t(toast, {"count": this.queryBulkAction ? this.total : this.selection.length}),
                     () => this.genericConfirmCallback(queryAction, byIdAction, success, data),
-                    () => {}
+                    () => {
+                    }
                 );
             },
             genericConfirmCallback(queryAction, byIdAction, success, data) {
@@ -483,8 +403,8 @@
                         .dispatch(queryAction, options)
                         .then(data => {
                             this.$toast().success(this.$t(success, {count: data.count}));
-                            this.loadData();
-                        });
+                            this.loadData()
+                        })
                 } else {
                     const selection = this.selection;
                     const options = {triggers: selection, ...data};
@@ -492,12 +412,12 @@
                         .dispatch(byIdAction, byIdAction.includes("setDisabled") ? options : selection)
                         .then(data => {
                             this.$toast().success(this.$t(success, {count: data.count}));
-                            this.loadData();
+                            this.loadData()
                         }).catch(e => {
                             this.$toast().error(e?.invalids.map(exec => {
-                                return {message: this.$t(exec.message, {triggers: exec.invalidValue})};
-                            }), this.$t(e.message));
-                        });
+                                return {message: this.$t(exec.message, {triggers: exec.invalidValue})}
+                            }), this.$t(e.message))
+                        })
                 }
             },
             unpauseBackfills() {
@@ -543,47 +463,17 @@
             },
             loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
-                return _merge(base, queryFilter);
-            },
-            setBackfillModal(trigger, show) {
-                console.log('Opening backfill modal for trigger:', trigger);
-                this.selectedTrigger = trigger;
-                this.isBackfillOpen = show;
-                if (!show) {
-                    this.backfill = { start: null, end: null };
-                }
-            },
-feature/8606-backfill-icons
-            postBackfill() {
-                if (this.selectedTrigger && this.backfill.start && this.backfill.end) {
-                    console.log('Executing backfill:', {
-                        trigger: this.selectedTrigger,
-                        backfill: this.backfill
-                    });
-                    
-                    this.$store.dispatch("trigger/backfill", {
-                        namespace: this.selectedTrigger.namespace,
-                        flowId: this.selectedTrigger.flowId,
-                        triggerId: this.selectedTrigger.id,
-                        start: this.backfill.start,
-                        end: this.backfill.end
-                    }).then(() => {
-                        this.$message({
-                            message: this.$t("backfill.success"),
-                            type: "success"
-                        });
-                        this.loadData();
-                    }).catch(error => {
-                        this.$message({
-                            message: error.message || this.$t("backfill.error"),
-                            type: "error"
-                        });
-                    });
-                    
-                    this.isBackfillOpen = false;
-                    this.backfill = { start: null, end: null };
-                }
 
+                return _merge(base, queryFilter)
+            },
+        },
+        computed: {
+            ...mapState("auth", ["user"]),
+            routeInfo() {
+                return {
+                    title: this.$t("triggers")
+                }
+            },
             triggersMerged() {
                 const all = this.triggers.map(t => {
                     return {
@@ -599,124 +489,47 @@ feature/8606-backfill-icons
 
                 const disabled = this.$route.query?.["filters[trigger_state][EQUALS]"] === "DISABLED" ? true : false;
                 return all.filter(trigger => trigger.disabled === disabled);
- develop
             },
-            isScheduleType(trigger) {
-                console.log('Checking trigger:', trigger);
-                if (trigger && trigger.cron) {
-                    console.log('Found cron property:', trigger.cron);
-                    return true;
-                }
-                const type = trigger?.type || trigger?.abstractTrigger?.type;
-                if (!type) {
-                    console.log('No type found in trigger');
-                    return false;
-                }
-                console.log('Checking type:', type);
-                const scheduleTypes = [
-                    "daily",
-                    "schedule",
-                    "Schedule",
-                    "io.kestra.core.models.triggers.types.Schedule",
-                    "io.kestra.plugin.core.triggers.Schedule"
+            visibleColumns() {
+                const columns = [
+                    {prop: "triggerId", label: this.$t("id")},
+                    {prop: "flowId", label: this.$t("flow")},
+                    {prop: "namespace", label: this.$t("namespace")},
+                    {prop: "executionId", label: this.$t("current execution")},
+                    {prop: "executionCurrentState", label: this.$t("state")},
+                    {prop: "workerId", label: this.$t("workerId")},
+                    {prop: "date", label: this.$t("date")},
+                    {prop: "updatedDate", label: this.$t("updated date")},
+                    {prop: "nextExecutionDate", label: this.$t("next execution date")},
+                    {prop: "evaluateRunningDate", label: this.$t("evaluation lock date")},
                 ];
-                const isScheduleType = scheduleTypes.some(scheduleType => 
-                    type.toLowerCase().includes(scheduleType.toLowerCase())
-                );
-                console.log('Is schedule type:', isScheduleType);
-                return isScheduleType;
+
+                return columns.reduce((acc, column) => {
+                    acc[column.prop] = this.triggersMerged.some(trigger => trigger[column.prop]);
+                    return acc;
+                }, {});
             }
         }
     };
 </script>
- feature/8606-backfill-icons
-
-<style>
-
 <style lang="scss" scoped>
- develop
     .data-table-wrapper {
         margin-left: 0 !important;
         padding-left: 0 !important;
     }
- feature/8606-backfill-icons
-    .backfillContainer {
-
     
     .backfillContainer{
- develop
         display: flex;
         align-items: center;
-        gap: 8px;
-        min-height: 32px;
-        padding: 0 4px;
     }
-    .statusIcon {
+    .statusIcon{
         font-size: large;
-        display: flex;
-        align-items: center;
     }
     
     .trigger-issue-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;
     }
- feature/8606-backfill-icons
-    .el-table__expanded-cell[class*=cell] {
-        padding: 0;
-    }
-    .no-expand .el-icon {
-        display: none;
-    }
-    .no-expand .el-table__expand-icon {
-        pointer-events: none;
-    }
-    .pickers {
-        display: flex;
-        gap: 16px;
-    }
-    .small-picker {
-        flex: 1;
-    }
-    .backfill-button {
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-        background-color: #8833FF !important;
-        border-color: #8833FF !important;
-        padding: 8px 16px !important;
-        font-size: 14px !important;
-        height: 32px !important;
-    }
-    .backfill-button .icon {
-        width: 18px;
-        height: 18px;
-        margin-right: 4px;
-    }
-    .backfill-button:hover {
-        background-color: #7029D9 !important;
-        border-color: #7029D9 !important;
-    }
-    .backfill-button span {
-        line-height: 1;
-    }
-    .d-flex {
-        display: flex;
-    }
-    .align-items-center {
-        align-items: center;
-    }
-    /* Add consistent styling for all backfill-related buttons */
-    .el-button .icon {
-        width: 18px;
-        height: 18px;
-        margin-right: 4px;
-    }
-    .el-button[type="primary"] {
-        display: inline-flex !important;
-        align-items: center !important;
-        gap: 8px !important;
-
     
     .alert-circle-icon {
         color: var(--ks-content-warning);
@@ -740,6 +553,5 @@ feature/8606-backfill-icons
                 color: #ffffff;
             }
         }
- develop
     }
 </style>

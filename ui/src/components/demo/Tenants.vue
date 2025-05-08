@@ -3,6 +3,9 @@
     <Layout
         :title="t('demos.tenants.title')"
         :image="{source: sourceImg, alt: t('demos.tenants.title')}"
+        :video="{
+            source: 'https://youtu.be/dk6dKLF4XnU',
+        }"
     >
         <template #message>
             {{ $t('demos.tenants.message') }}

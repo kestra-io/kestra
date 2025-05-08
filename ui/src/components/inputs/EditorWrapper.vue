@@ -103,7 +103,7 @@
                 editorViewType: "YAML", // this is to be opposed to the no-code editor
                 topologyVisible: true,
             });
-        }, 500);
+        }, 2000);
     }
 
 

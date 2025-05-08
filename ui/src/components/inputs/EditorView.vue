@@ -270,7 +270,6 @@
                     @loading="loadingState"
                     @expand-subflow="onExpandSubflow"
                     @swapped-task="onSwappedTask"
-                    @open-no-code="(params) => handleTopologyEditClick(params)"
                     :flow-graph="flowGraph"
                     :flow-id="flowId"
                     :namespace="namespace"
@@ -599,14 +598,6 @@
             editorWidth.value = editorWidth.value > 33.3 ? 33.3 : editorWidth.value;
         }
     });
-
-    const handleTopologyEditClick = (params) => {
-        if (viewType.value === editorViewTypes.TOPOLOGY) {
-            switchViewType(editorViewTypes.SOURCE_TOPOLOGY);
-        }
-        editorViewType.value = "NO_CODE";
-        nextTick(() => router.replace({query: {...route.query, ...params}}))
-    }
 
     const loadViewType = () => {
         return localStorage.getItem(editorViewTypes.STORAGE_KEY);

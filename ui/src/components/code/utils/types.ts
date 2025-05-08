@@ -77,3 +77,18 @@ export type Breadcrumb = {
 };
 
 export type Component = ReturnType<typeof defineComponent>;
+
+type BasicParams = {
+    id: string;
+    section: string;
+}
+
+type CreationParams = BasicParams & {
+    target: string;
+    position: "before" | "after";
+}
+
+export type TopologyClickParams = {
+    action: "create" | "edit" | "delete";
+    params: BasicParams | CreationParams;
+}

@@ -1,5 +1,5 @@
 import type {ComputedRef, InjectionKey, Ref} from "vue"
-import {Breadcrumb} from "./utils/types"
+import {Breadcrumb, TopologyClickParams} from "./utils/types"
 
 /**
  * Complete flow YAML string for the no-code
@@ -63,3 +63,7 @@ export const PANEL_INJECTION_KEY = Symbol("panel-injection-key") as InjectionKey
  * undefined when creating a task at the root level
  */
 export const PARENT_TASKID_INJECTION_KEY = Symbol("parent-taskid-injection-key") as InjectionKey<Ref<string | undefined>>
+/**
+ * When users click on one of topology buttons, such as create, edit or delete, multi-panel view needs to react accordingly
+ */
+export const TOPOLOGY_CLICK_INJECTION_KEY = Symbol("topology-click-injection-key") as InjectionKey<Ref<TopologyClickParams | undefined>>

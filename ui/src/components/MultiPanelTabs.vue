@@ -129,11 +129,14 @@
 </template>
 
 <script lang="ts" setup>
-    import {nextTick, ref, watch} from "vue";
+    import {nextTick, ref, watch, provide} from "vue";
     import {useI18n} from "vue-i18n";
 
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
+
+    import {TOPOLOGY_CLICK_INJECTION_KEY} from "./code/injectionKeys";
+    import {TopologyClickParams} from "./code/utils/types";
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
@@ -144,6 +147,9 @@
     import Close from "vue-material-design-icons/Close.vue";
 
     const {t} = useI18n({useScope: "global"});
+    
+    const topologyClick = ref<TopologyClickParams | undefined>(undefined);
+    provide(TOPOLOGY_CLICK_INJECTION_KEY, topologyClick);
 
     function throttle(callback: () => void, limit: number): () => void {
         let waiting = false;

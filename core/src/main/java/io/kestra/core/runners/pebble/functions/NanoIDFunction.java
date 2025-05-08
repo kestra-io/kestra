@@ -15,23 +15,26 @@ public class NanoIDFunction implements Function {
     private static final char[] DEFAULT_ALPHABET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz-_".toCharArray();
     private static final SecureRandom secureRandom = new SecureRandom();
 
+    private static final String LENGTH = "length";
+    private static final String ALPHABET = "alphabet";
+
     @Override
     public Object execute(
         Map<String, Object> args, PebbleTemplate self, EvaluationContext context, int lineNumber) {
         int length = DEFAULT_LENGTH;
-        if (args.containsKey("length") && (args.get("length") instanceof Integer)) {
-            length = (int) args.get("length");
+        if (args.containsKey(LENGTH) && (args.get(LENGTH) instanceof Integer)) {
+            length = (int) args.get(LENGTH);
         }
         char[] alphabet = DEFAULT_ALPHABET;
-        if (args.containsKey("alphabet") && (args.get("alphabet") instanceof String)) {
-            alphabet = ((String) args.get("alphabet")).toCharArray();
+        if (args.containsKey(ALPHABET) && (args.get(ALPHABET) instanceof String)) {
+            alphabet = ((String) args.get(ALPHABET)).toCharArray();
         }
         return createNanoID(length, alphabet);
     }
 
     @Override
     public List<String> getArgumentNames() {
-        return List.of("length", "alphabet");
+        return List.of(LENGTH,ALPHABET);
     }
 
     String createNanoID(int length, char[] alphabet){

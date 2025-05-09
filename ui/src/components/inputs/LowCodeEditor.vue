@@ -188,7 +188,6 @@
         "loading",
         "expand-subflow",
         "swapped-task",
-        "openNoCode",
     ]);
 
     // Vue instance variables

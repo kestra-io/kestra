@@ -65,7 +65,7 @@ class FileSerdeTest {
         } else if (value instanceof Collections) {
             assertThat((List) object.get("key")).containsExactlyInAnyOrder((List) result.get("key"));
         } else {
-            assertThat(result.get("key")).isEqualTo(resultValue != null ? resultValue : object.get("key"));
+            assertThat(result).containsEntry("key", resultValue != null ? resultValue : object.get("key"));
         }
     }
 
@@ -83,7 +83,7 @@ class FileSerdeTest {
         List<Object> list = new ArrayList<>();
         FileSerde.reader(inputStream, 2, row -> list.add(row));
 
-        assertThat(list.size()).isEqualTo(2);
+        assertThat(list).hasSize(2);
     }
 
     @Test

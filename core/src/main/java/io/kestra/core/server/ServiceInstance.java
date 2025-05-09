@@ -180,7 +180,7 @@ public record ServiceInstance(
 
         // add a default reason if a state changed is detected.
         if (reason == null && !state.equals(newState)) {
-            reason = String.format("Service transitioned to the '%s' state.", newState);
+            reason = "Service transitioned to the '%s' state.".formatted(newState);
         }
 
         List<TimestampedEvent> events = Optional.ofNullable(this.events).orElse(new ArrayList<>());

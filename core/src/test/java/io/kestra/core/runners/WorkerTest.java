@@ -77,7 +77,7 @@ class WorkerTest {
         receive.blockLast();
         worker.shutdown();
 
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(3);
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories()).hasSize(3);
     }
 
     @Test
@@ -136,7 +136,7 @@ class WorkerTest {
         receive.blockLast();
         worker.shutdown();
 
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(3);
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories()).hasSize(3);
     }
 
     @Test
@@ -178,14 +178,14 @@ class WorkerTest {
             .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.KILLED)
             .findFirst()
             .orElseThrow();
-        assertThat(oneKilled.getTaskRun().getState().getHistories().size()).isEqualTo(3);
+        assertThat(oneKilled.getTaskRun().getState().getHistories()).hasSize(3);
         assertThat(oneKilled.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.KILLED);
 
         WorkerTaskResult oneNotKilled = workerTaskResult.stream()
             .filter(r -> r.getTaskRun().getState().getCurrent() == State.Type.SUCCESS)
             .findFirst()
             .orElseThrow();
-        assertThat(oneNotKilled.getTaskRun().getState().getHistories().size()).isEqualTo(3);
+        assertThat(oneNotKilled.getTaskRun().getState().getHistories()).hasSize(3);
         assertThat(oneNotKilled.getTaskRun().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // child process is stopped and we never received 3 logs

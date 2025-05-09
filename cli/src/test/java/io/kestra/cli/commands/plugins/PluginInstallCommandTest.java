@@ -25,8 +25,8 @@ class PluginInstallCommandTest {
 
             List<Path> files = Files.list(pluginsPath).toList();
 
-            assertThat(files.size()).isEqualTo(1);
-            assertThat(files.getFirst().getFileName().toString()).isEqualTo("io_kestra_plugin__plugin-notifications__0_6_0.jar");
+            assertThat(files).hasSize(1);
+            assertThat(files.getFirst().getFileName()).hasToString("io_kestra_plugin__plugin-notifications__0_6_0.jar");
         }
     }
 
@@ -41,7 +41,7 @@ class PluginInstallCommandTest {
 
             List<Path> files = Files.list(pluginsPath).toList();
 
-            assertThat(files.size()).isEqualTo(1);
+            assertThat(files).hasSize(1);
             assertThat(files.getFirst().getFileName().toString()).startsWith("io_kestra_plugin__plugin-notifications__");
             assertThat(files.getFirst().getFileName().toString()).doesNotContain("LATEST");
         }
@@ -59,8 +59,8 @@ class PluginInstallCommandTest {
 
             List<Path> files = Files.list(pluginsPath).toList();
 
-            assertThat(files.size()).isEqualTo(1);
-            assertThat(files.getFirst().getFileName().toString()).isEqualTo("io_kestra_storage__storage-s3__0_12_1.jar");
+            assertThat(files).hasSize(1);
+            assertThat(files.getFirst().getFileName()).hasToString("io_kestra_storage__storage-s3__0_12_1.jar");
         }
     }
 }

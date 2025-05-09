@@ -45,7 +45,7 @@ public class DownloadFilesTest {
 
         DownloadFiles.Output output = downloadFiles.run(runContext);
 
-        assertThat(output.getFiles().size()).isEqualTo(1);
+        assertThat(output.getFiles()).hasSize(1);
         assertThat(output.getFiles().get("/a/b/test1.txt")).isNotNull();
 
     }

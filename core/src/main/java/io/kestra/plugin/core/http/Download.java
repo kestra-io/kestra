@@ -64,6 +64,7 @@ public class Download extends AbstractHttp implements RunnableTask<Download.Outp
     @Builder.Default
     private final Property<Boolean> failOnEmptyResponse = Property.of(true);
 
+    @Override
     public Output run(RunContext runContext) throws Exception {
         Logger logger = runContext.logger();
         URI from = new URI(runContext.render(this.uri).as(String.class).orElseThrow());

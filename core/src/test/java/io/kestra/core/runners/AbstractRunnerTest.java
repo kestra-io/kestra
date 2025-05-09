@@ -407,7 +407,7 @@ public abstract class AbstractRunnerTest {
     @Test
     @ExecuteFlow("flows/valids/executable-fail.yml")
     void badExecutable(Execution execution) {
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
@@ -415,7 +415,7 @@ public abstract class AbstractRunnerTest {
     @Test
     @ExecuteFlow("flows/valids/dynamic-task.yaml")
     void dynamicTask(Execution execution) {
-        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 

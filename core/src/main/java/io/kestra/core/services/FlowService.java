@@ -420,10 +420,10 @@ public class FlowService {
 
         Pattern p = Pattern.compile(regex, Pattern.MULTILINE);
         if (p.matcher(source).find()) {
-            return p.matcher(source).replaceAll(String.format("disabled: %s\n", disabled));
+            return p.matcher(source).replaceAll("disabled: %s\n".formatted(disabled));
         }
 
-        return source + String.format("\ndisabled: %s", disabled);
+        return source + "\ndisabled: %s".formatted(disabled);
     }
 
     // Used in Git plugin

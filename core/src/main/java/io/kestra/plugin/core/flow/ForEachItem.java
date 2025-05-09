@@ -317,6 +317,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
     @Getter(AccessLevel.NONE)
     protected List<Task> _finally;
 
+    @Override
     public List<Task> getFinally() {
         return this._finally;
     }
@@ -516,8 +517,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
                                 );
                         }
                     ))
-                    .filter(Optional::isPresent)
-                    .<SubflowExecution<?>>map(Optional::get)
+                    .flatMap(Optional::stream)
                     .toList();
             } catch (IOException e) {
                 throw new InternalException(e);

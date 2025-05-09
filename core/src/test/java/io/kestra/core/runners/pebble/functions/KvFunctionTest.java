@@ -139,7 +139,7 @@ public class KvFunctionTest {
         String rendered = variableRenderer.render("{{ kv('my-key', errorOnMissing=false) }}", variables);
 
         // Then
-        assertThat(rendered).isEqualTo("");
+        assertThat(rendered).isEmpty();
     }
 
     @Test

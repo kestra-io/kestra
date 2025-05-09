@@ -21,7 +21,7 @@ class FetchContextFunctionTest {
     @Test
     void fromString() throws IllegalVariableEvaluationException, JsonProcessingException {
         String render = variableRenderer.render("{{ printContext() }}", Map.of("test", "value", "array", List.of("a", "b", "c")));
-        assertThat(JacksonMapper.toMap(render).get("test")).isEqualTo("value");
-        assertThat(JacksonMapper.toMap(render).get("array")).isEqualTo(List.of("a", "b", "c"));
+        assertThat(JacksonMapper.toMap(render)).containsEntry("test", "value");
+        assertThat(JacksonMapper.toMap(render)).containsEntry("array", List.of("a", "b", "c"));
     }
 }

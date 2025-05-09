@@ -71,6 +71,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
     @Getter(AccessLevel.NONE)
     protected List<Task> _finally;
 
+    @Override
     public List<Task> getFinally() {
         return this._finally;
     }
@@ -96,6 +97,7 @@ public class Sequential extends Task implements FlowableTask<VoidOutput> {
         return subGraph;
     }
 
+    @Override
     public List<Task> allChildTasks() {
         return Stream
             .concat(

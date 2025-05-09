@@ -81,7 +81,7 @@ class SanityCheckTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         TaskRun taskRun = execution.findTaskRunsByTaskId("return_value").getFirst();
-        assertThat(taskRun.getOutputs().get("value")).isEqualTo("some string with pebble test");
+        assertThat(taskRun.getOutputs()).containsEntry("value", "some string with pebble test");
     }
 
     @Test

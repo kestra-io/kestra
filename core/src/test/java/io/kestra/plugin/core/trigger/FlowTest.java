@@ -68,7 +68,7 @@ class FlowTest {
             execution
         );
 
-        assertThat(evaluate.isPresent()).isTrue();
+        assertThat(evaluate).isPresent();
         assertThat(evaluate.get().getFlowId()).isEqualTo("flow-with-flow-trigger");
         assertThat(evaluate.get().getLabels()).hasSize(3);
         assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
@@ -118,7 +118,7 @@ class FlowTest {
             execution
         );
 
-        assertThat(evaluate.isPresent()).isTrue();
+        assertThat(evaluate).isPresent();
         assertThat(evaluate.get().getFlowId()).isEqualTo("flow-with-flow-trigger");
         assertThat(evaluate.get().getTenantId()).isEqualTo("tenantId");
         assertThat(evaluate.get().getLabels()).hasSize(3);
@@ -167,7 +167,7 @@ class FlowTest {
 
         Optional<Execution> evaluate = flowTrigger.evaluate(multipleConditionStorage, runContextFactory.of(), flow, execution);
 
-        assertThat(evaluate.isPresent()).isTrue();
+        assertThat(evaluate).isPresent();
         assertThat(evaluate.get().getLabels()).hasSize(6);
         assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
         assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-2", "flow-label-2"));
@@ -176,6 +176,6 @@ class FlowTest {
         assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-3", ""));
         assertThat(evaluate.get().getLabels()).contains(new Label(Label.CORRELATION_ID, "correlationId"));
         assertThat(evaluate.get().getTrigger()).extracting(ExecutionTrigger::getVariables).hasFieldOrProperty("executionLabels");
-        assertThat(evaluate.get().getTrigger().getVariables().get("executionLabels")).isEqualTo(Map.of("execution-label", "execution"));
+        assertThat(evaluate.get().getTrigger().getVariables()).containsEntry("executionLabels", Map.of("execution-label", "execution"));
     }
 }

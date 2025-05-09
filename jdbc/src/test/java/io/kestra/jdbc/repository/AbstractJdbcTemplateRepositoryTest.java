@@ -24,13 +24,13 @@ public abstract class AbstractJdbcTemplateRepositoryTest extends io.kestra.core.
         templateRepository.create(builder("com.kestra.test").build());
 
         List<Template> save = templateRepository.find(Pageable.from(1, 10, Sort.UNSORTED), null, null, null);
-        assertThat(save.size()).isEqualTo(2);
+        assertThat(save).hasSize(2);
 
         save = templateRepository.find(Pageable.from(1, 10, Sort.UNSORTED), "kestra", null, "com");
-        assertThat(save.size()).isEqualTo(1);
+        assertThat(save).hasSize(1);
 
         save = templateRepository.find(Pageable.from(1, 10, Sort.of(Sort.Order.asc("id"))), "kestra unit", null, null);
-        assertThat(save.size()).isEqualTo(1);
+        assertThat(save).hasSize(1);
     }
 
     @BeforeEach

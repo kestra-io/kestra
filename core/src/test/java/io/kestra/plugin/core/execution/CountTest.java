@@ -52,7 +52,7 @@ class CountTest {
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, task, ImmutableMap.of("namespace", "io.kestra.unittest"));
         Count.Output run = task.run(runContext);
 
-        assertThat(run.getResults().size()).isEqualTo(2);
+        assertThat(run.getResults()).hasSize(2);
         assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("second")).count()).isEqualTo(1L);
         assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("second")).findFirst().get().getCount()).isEqualTo(6L);
         assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("third")).count()).isEqualTo(1L);
@@ -71,7 +71,7 @@ class CountTest {
             .build()
             .run(runContext);
 
-        assertThat(run.getResults().size()).isZero();
+        assertThat(run.getResults()).isEmpty();
 
         // non-matching entry
         run = Count.builder()
@@ -84,7 +84,7 @@ class CountTest {
             .build()
             .run(runContext);
 
-        assertThat(run.getResults().size()).isEqualTo(1);
+        assertThat(run.getResults()).hasSize(1);
         assertThat(run.getResults().stream().filter(f -> f.getFlowId().equals("missing")).count()).isEqualTo(1L);
         assertThat(run.getTotal()).isEqualTo(0L);
 

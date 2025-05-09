@@ -130,12 +130,12 @@ class TemplateControllerTest {
         Template template = createTemplate();
         client.toBlocking().retrieve(POST("/api/v1/templates", template), Template.class);
         Template createdTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
-        assertThat(template.getTasks().size()).isEqualTo(2);
+        assertThat(template.getTasks()).hasSize(2);
         Task t3 = Return.builder().id("task-3").type(Return.class.getName()).format(io.kestra.core.models.property.Property.of("test")).build();
         Template updateTemplate = Template.builder().id(template.getId()).namespace(template.getNamespace()).description("My new template description").tasks(Arrays.asList(t3)).build();
         client.toBlocking().retrieve(PUT("/api/v1/templates/" + template.getNamespace() + "/" + template.getId(), updateTemplate), Template.class);
         Template updatedTemplate = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/templates/" + template.getNamespace() + "/" + template.getId()), Template.class);
-        assertThat(updatedTemplate.getTasks().size()).isEqualTo(1);
+        assertThat(updatedTemplate.getTasks()).hasSize(1);
         assertThat(updatedTemplate.getTasks().getFirst().getId()).isEqualTo("task-3");
         assertThat(updatedTemplate.getDescription()).isEqualTo("My new template description");
     }
@@ -144,7 +144,7 @@ class TemplateControllerTest {
     void listDistinctNamespace() {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/templates/distinct-namespaces"), Argument.listOf(String.class));
-        assertThat(namespaces.size()).isZero();
+        assertThat(namespaces).isEmpty();
             Template t1 = Template.builder()
             .id(IdUtils.create())
             .namespace("kestra.template.custom")
@@ -156,7 +156,7 @@ class TemplateControllerTest {
         namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/templates/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size()).isEqualTo(2);
+        assertThat(namespaces).hasSize(2);
     }
 
     @Test

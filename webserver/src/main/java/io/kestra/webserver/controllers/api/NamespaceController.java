@@ -49,6 +49,7 @@ public class NamespaceController implements NamespaceControllerInterface<Namespa
     @Get(uri = "{id}")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Namespaces"}, summary = "Get a namespace")
+    @Override
     public Namespace getNamespace(
         @Parameter(description = "The namespace id") @PathVariable String id
     ) {
@@ -58,6 +59,7 @@ public class NamespaceController implements NamespaceControllerInterface<Namespa
     @Get(uri = "/search")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Namespaces"}, summary = "Search for namespaces")
+    @Override
     public PagedResults<NamespaceWithDisabled> searchNamespaces(
         @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
@@ -125,6 +127,7 @@ public class NamespaceController implements NamespaceControllerInterface<Namespa
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "{namespace}/dependencies")
     @Operation(tags = {"Flows"}, summary = "Get flow dependencies")
+    @Override
     public FlowTopologyGraph getFlowDependenciesFromNamespace(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "if true, list only destination dependencies, otherwise list also source dependencies") @QueryValue(defaultValue = "false") boolean destinationOnly

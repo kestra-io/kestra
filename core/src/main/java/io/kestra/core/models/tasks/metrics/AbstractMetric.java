@@ -30,7 +30,7 @@ import java.util.Map;
 @AllArgsConstructor
 @SuperBuilder
 public abstract class AbstractMetric {
-    abstract public String getType();
+    public abstract String getType();
 
     @NotNull
     protected Property<String> name;

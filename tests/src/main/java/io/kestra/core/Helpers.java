@@ -10,7 +10,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.BiConsumer;
@@ -24,7 +23,7 @@ public final class Helpers {
 
     static {
         try {
-            plugins = Paths.get(Objects.requireNonNull(Helpers.class.getClassLoader().getResource("plugins")).toURI());
+            plugins = Path.of(Objects.requireNonNull(Helpers.class.getClassLoader().getResource("plugins")).toURI());
         } catch (URISyntaxException e) {
             throw new RuntimeException(e);
         }

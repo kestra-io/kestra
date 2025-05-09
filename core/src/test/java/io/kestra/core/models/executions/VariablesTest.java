@@ -24,14 +24,14 @@ class VariablesTest {
         // simple
         Map<String, Object> outputs = Map.of("key", "value");
         var variables = Variables.inMemory(outputs);
-        assertThat(variables.get("key")).isEqualTo("value");
+        assertThat(variables).containsEntry("key", "value");
 
         // nested
         Map<String, Object> nest = Map.of("nest", "value");
         var nestVariables = Variables.inMemory(nest);
         Map<String, Object> host = Map.of("key", nestVariables);
         var hostVariables = Variables.inMemory(host);
-        assertThat(((Map<String, Object>) hostVariables.get("key")).get("nest")).isEqualTo("value");
+        assertThat(((Map<String, Object>) hostVariables.get("key"))).containsEntry("nest", "value");
     }
 
     @Test
@@ -44,23 +44,23 @@ class VariablesTest {
         // simple
         Map<String, Object> outputs = Map.of("key", "value");
         var variables = Variables.inStorage(internalStorage, outputs);
-        assertThat(variables.get("key")).isEqualTo("value");
+        assertThat(variables).containsEntry("key", "value");
 
         // re-read it from URI
         URI uri = ((Variables.InStorageVariables) variables).getStorageUri();
         variables = Variables.inStorage(variablesContext, uri);
-        assertThat(variables.get("key")).isEqualTo("value");
+        assertThat(variables).containsEntry("key", "value");
 
         // nested
         Map<String, Object> nest = Map.of("nest", "value");
         var nestVariables = Variables.inStorage(internalStorage, nest);
         Map<String, Object> host = Map.of("key", nestVariables);
         var hostVariables = Variables.inStorage(internalStorage, host);
-        assertThat(((Map<String, Object>) hostVariables.get("key")).get("nest")).isEqualTo("value");
+        assertThat(((Map<String, Object>) hostVariables.get("key"))).containsEntry("nest", "value");
 
         // re-read it from URI
         uri = ((Variables.InStorageVariables) hostVariables).getStorageUri();
         hostVariables = Variables.inStorage(variablesContext, uri);
-        assertThat(((Map<String, Object>) hostVariables.get("key")).get("nest")).isEqualTo("value");
+        assertThat(((Map<String, Object>) hostVariables.get("key"))).containsEntry("nest", "value");
     }
 }

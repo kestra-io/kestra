@@ -21,7 +21,7 @@ class RequestUtilsTest {
     void toMap() {
         final Map<String, String> resultMap = RequestUtils.toMap(List.of("timestamp:2023-12-18T14:32:14Z"));
 
-        assertThat(resultMap.get("timestamp")).isEqualTo("2023-12-18T14:32:14Z");
+        assertThat(resultMap).containsEntry("timestamp", "2023-12-18T14:32:14Z");
     }
 
 

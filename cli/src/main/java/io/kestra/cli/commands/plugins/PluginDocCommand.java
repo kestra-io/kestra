@@ -14,7 +14,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Base64;
 import java.util.List;
 
@@ -27,7 +26,7 @@ public class PluginDocCommand extends AbstractCommand {
     private ApplicationContext applicationContext;
 
     @CommandLine.Parameters(index = "0", description = "Path to write documentation files")
-    private Path output = Paths.get(System.getProperty("user.dir"), "docs");
+    private Path output = Path.of(System.getProperty("user.dir"), "docs");
 
     @CommandLine.Option(names = {"--core"}, description = "Also write core tasks docs files")
     private boolean core = false;
@@ -52,7 +51,7 @@ public class PluginDocCommand extends AbstractCommand {
                 documentationGenerator
                     .generate(registeredPlugin)
                     .forEach(s -> {
-                            File file = Paths.get(output.toAbsolutePath().toString(), s.getPath()).toFile();
+                            File file = Path.of(output.toAbsolutePath().toString(), s.getPath()).toFile();
 
                             if (!file.getParentFile().exists()) {
                                 //noinspection ResultOfMethodCallIgnored

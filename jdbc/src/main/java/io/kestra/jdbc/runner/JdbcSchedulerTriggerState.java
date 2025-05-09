@@ -86,10 +86,12 @@ public class JdbcSchedulerTriggerState implements SchedulerTriggerStateInterface
         return this.triggerRepository.update(updated);
     }
 
+    @Override
     public Trigger update(Flow flow, AbstractTrigger abstractTrigger, ConditionContext conditionContext) {
         return this.triggerRepository.update(flow, abstractTrigger, conditionContext);
     }
 
+    @Override
     public void delete(Trigger trigger) throws QueueException {
         this.triggerRepository.delete(trigger);
     }

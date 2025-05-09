@@ -63,17 +63,17 @@ class BlueprintControllerTest {
 
         assertThat(blueprintsWithTotal.getTotal()).isEqualTo(2L);
         List<BlueprintController.ApiBlueprintItem> blueprints = blueprintsWithTotal.getResults();
-        assertThat(blueprints.size()).isEqualTo(2);
+        assertThat(blueprints).hasSize(2);
         assertThat(blueprints.getFirst().getId()).isEqualTo("1");
         assertThat(blueprints.getFirst().getTitle()).isEqualTo("GCS Trigger");
         assertThat(blueprints.getFirst().getDescription()).isEqualTo("GCS trigger flow");
         assertThat(blueprints.getFirst().getPublishedAt()).isEqualTo(Instant.parse("2023-06-01T08:37:34.661Z"));
-        assertThat(blueprints.getFirst().getTags().size()).isEqualTo(2);
+        assertThat(blueprints.getFirst().getTags()).hasSize(2);
         assertThat(blueprints.getFirst().getTags()).containsExactly("3", "2");
         assertThat(blueprints.get(1).getId()).isEqualTo("2");
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_SEARCH_KIND_FLOW , KIND_FLOW, versionProvider.getVersion()) + "?page=1&size=5&q=someTitle&sort=title%3Aasc&tags=3&ee=false")));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo(API_BLUEPRINT_SEARCH_KIND_FLOW.formatted(KIND_FLOW, versionProvider.getVersion()) + "?page=1&size=5&q=someTitle&sort=title%3Aasc&tags=3&ee=false")));
     }
 
     @Test
@@ -92,7 +92,7 @@ class BlueprintControllerTest {
         assertThat(blueprintFlow, not(emptyOrNullString()));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_GET_SOURCE, KIND_FLOW,  "id_1", versionProvider.getVersion()))));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo(API_BLUEPRINT_GET_SOURCE.formatted(KIND_FLOW, "id_1", versionProvider.getVersion()))));
     }
 
     @SuppressWarnings("unchecked")
@@ -112,13 +112,13 @@ class BlueprintControllerTest {
         List<Map<String, Object>> nodes = (List<Map<String, Object>>) graph.get("nodes");
         List<Map<String, Object>> edges = (List<Map<String, Object>>) graph.get("edges");
         List<Map<String, Object>> clusters = (List<Map<String, Object>>) graph.get("clusters");
-        assertThat(nodes.size()).isEqualTo(12);
+        assertThat(nodes).hasSize(12);
         assertThat(nodes.stream().filter(abstractGraph -> abstractGraph.get("uid").equals("3mTDtNoUxYIFaQtgjEg28_root")).count()).isEqualTo(1L);
-        assertThat(edges.size()).isEqualTo(16);
-        assertThat(clusters.size()).isEqualTo(1);
+        assertThat(edges).hasSize(16);
+        assertThat(clusters).hasSize(1);
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_GET_GRAPH, KIND_FLOW, "id_1", versionProvider.getVersion()))));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo(API_BLUEPRINT_GET_GRAPH.formatted(KIND_FLOW, "id_1", versionProvider.getVersion()))));
     }
 
     @Test
@@ -139,11 +139,11 @@ class BlueprintControllerTest {
         assertThat(blueprint.getDescription()).isEqualTo("GCS trigger flow");
         assertThat(blueprint.getSource(), not(emptyOrNullString()));
         assertThat(blueprint.getPublishedAt()).isEqualTo(Instant.parse("2023-06-01T08:37:34.661Z"));
-        assertThat(blueprint.getTags().size()).isEqualTo(2);
+        assertThat(blueprint.getTags()).hasSize(2);
         assertThat(blueprint.getTags()).containsExactly("3", "2");
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_GET, KIND_FLOW, "id_1", versionProvider.getVersion()))));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo(API_BLUEPRINT_GET.formatted(KIND_FLOW, "id_1", versionProvider.getVersion()))));
     }
 
     @SuppressWarnings("unchecked")
@@ -160,12 +160,12 @@ class BlueprintControllerTest {
             Argument.of(List.class, BlueprintController.ApiBlueprintTagItem.class)
         );
 
-        assertThat(blueprintTags.size()).isEqualTo(3);
+        assertThat(blueprintTags).hasSize(3);
         assertThat(blueprintTags.getFirst().getId()).isEqualTo("3");
         assertThat(blueprintTags.getFirst().getName()).isEqualTo("Cloud");
         assertThat(blueprintTags.getFirst().getPublishedAt()).isEqualTo(Instant.parse("2023-06-01T08:37:10.171Z"));
 
         WireMock wireMock = wmRuntimeInfo.getWireMock();
-        wireMock.verifyThat(getRequestedFor(urlEqualTo(String.format(API_BLUEPRINT_GET_TAGS, KIND_FLOW, versionProvider.getVersion(), "someQuery"))));
+        wireMock.verifyThat(getRequestedFor(urlEqualTo(API_BLUEPRINT_GET_TAGS.formatted(KIND_FLOW, versionProvider.getVersion(), "someQuery"))));
     }
 }

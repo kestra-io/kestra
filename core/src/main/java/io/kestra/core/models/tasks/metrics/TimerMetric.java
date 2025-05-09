@@ -39,6 +39,7 @@ public class TimerMetric extends AbstractMetric {
         return Timer.of(name, description, value, tagsAsStrings);
     }
 
+    @Override
     public String getType() {
         return TYPE;
     }

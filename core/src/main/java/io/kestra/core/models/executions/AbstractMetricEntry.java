@@ -31,8 +31,8 @@ import jakarta.validation.constraints.NotNull;
 @Getter
 @NoArgsConstructor
 @Introspected
-abstract public class AbstractMetricEntry<T> {
-    abstract public String getType();
+public abstract class AbstractMetricEntry<T> {
+    public abstract String getType();
 
     @NotNull
     protected String name;
@@ -81,9 +81,9 @@ abstract public class AbstractMetricEntry<T> {
         return prefix == null ? this.name : prefix + "." + this.name;
     }
 
-    abstract public T getValue();
+    public abstract T getValue();
 
-    abstract public void register(MetricRegistry meterRegistry, String name, @Nullable String description, Map<String, String> tags);
+    public abstract void register(MetricRegistry meterRegistry, String name, @Nullable String description, Map<String, String> tags);
 
-    abstract public void increment(T value);
+    public abstract void increment(T value);
 }

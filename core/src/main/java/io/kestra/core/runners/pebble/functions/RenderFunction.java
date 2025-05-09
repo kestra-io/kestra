@@ -23,6 +23,7 @@ public class RenderFunction implements Function {
     @Inject
     private ApplicationContext applicationContext;
 
+    @Override
     public List<String> getArgumentNames() {
         return List.of("toRender", "recursive");
     }

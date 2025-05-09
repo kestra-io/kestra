@@ -36,10 +36,10 @@ class LocalWorkingDirTest {
         LocalWorkingDir workingDirectory = new LocalWorkingDir(Path.of("/tmp"), IdUtils.create());
 
         Path path = workingDirectory.resolve(Path.of("file.txt"));
-        assertThat(path.toString()).isEqualTo(workingDirectory.path() + "/file.txt");
+        assertThat(path).hasToString(workingDirectory.path() + "/file.txt");
 
         path = workingDirectory.resolve(Path.of("subdir/file.txt"));
-        assertThat(path.toString()).isEqualTo(workingDirectory.path() + "/subdir/file.txt");
+        assertThat(path).hasToString(workingDirectory.path() + "/subdir/file.txt");
 
         assertThat(workingDirectory.resolve(null)).isEqualTo(workingDirectory.path());
         assertThrows(IllegalArgumentException.class, () -> workingDirectory.resolve(Path.of("/etc/passwd")));
@@ -52,8 +52,8 @@ class LocalWorkingDirTest {
         String workingDirId = IdUtils.create();
         TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
         Path tempFile = workingDirectory.createTempFile();
-        assertThat(tempFile.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isTrue();
-        assertThat(workingDirectory.getAllCreatedTempFiles().size()).isEqualTo(1);
+        assertThat(tempFile.toFile().getAbsolutePath()).startsWith("/tmp/sub/dir/tmp/");
+        assertThat(workingDirectory.getAllCreatedTempFiles()).hasSize(1);
     }
 
     @Test
@@ -62,9 +62,9 @@ class LocalWorkingDirTest {
         TestWorkingDir workingDirectory = new TestWorkingDir(workingDirId, new LocalWorkingDir(Path.of("/tmp/sub/dir/tmp/"), workingDirId));
         Path path = workingDirectory.createFile("folder/file.txt");
 
-        assertThat(path.toFile().getAbsolutePath().startsWith("/tmp/sub/dir/tmp/")).isTrue();
-        assertThat(path.toFile().getAbsolutePath().endsWith("/folder/file.txt")).isTrue();
-        assertThat(workingDirectory.getAllCreatedFiles().size()).isEqualTo(1);
+        assertThat(path.toFile().getAbsolutePath()).startsWith("/tmp/sub/dir/tmp/");
+        assertThat(path.toFile().getAbsolutePath()).endsWith("/folder/file.txt");
+        assertThat(workingDirectory.getAllCreatedFiles()).hasSize(1);
     }
 
     @Test
@@ -91,13 +91,13 @@ class LocalWorkingDirTest {
         // When - Then
 
         // glob
-        assertThat(workingDir.findAllFilesMatching(List.of("glob:**/*.*")).size()).isEqualTo(5);
+        assertThat(workingDir.findAllFilesMatching(List.of("glob:**/*.*"))).hasSize(5);
         // pattern
-        assertThat(workingDir.findAllFilesMatching(List.of("*.*", "**/*.*")).size()).isEqualTo(5);
+        assertThat(workingDir.findAllFilesMatching(List.of("*.*", "**/*.*"))).hasSize(5);
         // duplicate pattern
-        assertThat(workingDir.findAllFilesMatching(List.of("*.*", "**/*.*", "**/*.*")).size()).isEqualTo(5);
+        assertThat(workingDir.findAllFilesMatching(List.of("*.*", "**/*.*", "**/*.*"))).hasSize(5);
         // regex
-        assertThat(workingDir.findAllFilesMatching(List.of("regex:.*\\.tmp", "*.txt", "**/*.txt")).size()).isEqualTo(5);
+        assertThat(workingDir.findAllFilesMatching(List.of("regex:.*\\.tmp", "*.txt", "**/*.txt"))).hasSize(5);
     }
 
     @Test
@@ -117,7 +117,7 @@ class LocalWorkingDirTest {
         // When
         Path secondPath = workingDir.path(true);
         // Then
-        assertThat(secondPath.toFile().exists()).isTrue();
+        assertThat(secondPath.toFile()).exists();
         assertThat(firtPath).isEqualTo(secondPath);
     }
 

@@ -397,7 +397,7 @@ public class FlowController {
                 .filter(flow ->
                     !flow.getNamespace().equals(namespace) && (!flow.getNamespace().startsWith(namespace) || !allowNamespaceChild))
                 .map(flow -> ManualConstraintViolation.of(
-                    String.format("%s - flow namespace is invalid", flow.uid()),
+                    "%s - flow namespace is invalid".formatted(flow.uid()),
                     flow,
                     GenericFlow.class,
                     "flow.namespace",

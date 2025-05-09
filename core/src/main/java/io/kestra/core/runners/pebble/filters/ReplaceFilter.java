@@ -18,7 +18,7 @@ public class ReplaceFilter implements Filter {
     private static final String ARGUMENT_PAIRS = "replace_pairs";
     private static final String ARGUMENT_REGEXP = "regexp";
 
-    private final static List<String> ARGS = List.of(ARGUMENT_PAIRS, ARGUMENT_REGEXP);
+    private static final List<String> ARGS = List.of(ARGUMENT_PAIRS, ARGUMENT_REGEXP);
 
     @Override
     public List<String> getArgumentNames() {

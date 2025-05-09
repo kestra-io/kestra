@@ -61,8 +61,7 @@ public class InternalKVStore implements KVStore {
         KVStore.validateKey(key);
 
         if (!overwrite && exists(key)) {
-            throw new KVStoreException(String.format(
-                "Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.", key));
+            throw new KVStoreException("Cannot set value for key '%s'. Key already exists and `overwrite` is set to `false`.".formatted(key));
         }
 
         byte[] serialized = JacksonMapper.ofIon().writeValueAsBytes(value.value());

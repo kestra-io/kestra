@@ -16,7 +16,7 @@ public class MemoryRepositoryTest {
 
     @Test
     void verifyMemoryFallbacksToH2() {
-        assertThat(flowRepositoryInterface.findAll(null).size()).isZero();
+        assertThat(flowRepositoryInterface.findAll(null)).isEmpty();
 
         String flowSource = """
             id: some-flow
@@ -28,7 +28,7 @@ public class MemoryRepositoryTest {
          """;
         flowRepositoryInterface.create(GenericFlow.fromYaml(null, flowSource));
 
-        assertThat(flowRepositoryInterface.findAll(null).size()).isEqualTo(1);
+        assertThat(flowRepositoryInterface.findAll(null)).hasSize(1);
 
         assertThat(flowRepositoryInterface.findByIdWithSource(null, "some.namespace", "some-flow").get().getSource()).isEqualTo(flowSource);
     }

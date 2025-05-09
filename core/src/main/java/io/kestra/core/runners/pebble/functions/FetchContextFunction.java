@@ -12,6 +12,7 @@ import java.util.Map;
 
 @Singleton
 public class FetchContextFunction implements Function {
+    @Override
     public List<String> getArgumentNames() {
         return List.of();
     }

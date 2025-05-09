@@ -47,19 +47,19 @@ public class NoEncryptionConfiguredTest implements TestPropertyProvider {
         assertThat(execution.getTaskRunList()).hasSize(2);
         TaskRun hello = execution.findTaskRunsByTaskId("hello").getFirst();
         Map<String, String> valueOutput = (Map<String, String>) hello.getOutputs().get("value");
-        assertThat(valueOutput.size()).isEqualTo(2);
-        assertThat(valueOutput.get("type")).isEqualTo(EncryptedString.TYPE);
+        assertThat(valueOutput).hasSize(2);
+        assertThat(valueOutput).containsEntry("type", EncryptedString.TYPE);
         // the value is not encrypted as there is no encryption key
-        assertThat(valueOutput.get("value")).isEqualTo("Hello World");
+        assertThat(valueOutput).containsEntry("value", "Hello World");
         TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst();
         // the output is automatically decrypted so the return has the decrypted value of the hello task output
-        assertThat(returnTask.getOutputs().get("value")).isEqualTo("Hello World");
+        assertThat(returnTask.getOutputs()).containsEntry("value", "Hello World");
     }
 
     @Test
     @LoadFlows({"flows/valids/inputs.yaml"})
     void secretInput() {
-        assertThat(flowRepository.findById(null, "io.kestra.tests", "inputs").isPresent()).isTrue();
+        assertThat(flowRepository.findById(null, "io.kestra.tests", "inputs")).isPresent();
 
         Flow flow = flowRepository.findById(null, "io.kestra.tests", "inputs").get();
         Execution execution = Execution.builder()

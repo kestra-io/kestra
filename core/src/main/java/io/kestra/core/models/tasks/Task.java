@@ -26,7 +26,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @Plugin
-abstract public class Task implements TaskInterface {
+public abstract class Task implements TaskInterface {
     protected String id;
 
     protected String type;
@@ -69,8 +69,7 @@ abstract public class Task implements TaskInterface {
             Optional<Task> childs = ((FlowableTask<?>) this).allChildTasks()
                 .stream()
                 .map(t -> t.findById(id))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .flatMap(Optional::stream)
                 .findFirst();
 
             if (childs.isPresent()) {
@@ -90,8 +89,7 @@ abstract public class Task implements TaskInterface {
             Optional<Task> childs = ((FlowableTask<?>) this).childTasks(runContext, taskRun)
                 .stream()
                 .map(throwFunction(resolvedTask -> resolvedTask.getTask().findById(id, runContext, taskRun)))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .flatMap(Optional::stream)
                 .findFirst();
 
             if (childs.isPresent()) {
@@ -103,8 +101,7 @@ abstract public class Task implements TaskInterface {
             Optional<Task> errorChilds = ((FlowableTask<?>) this).getErrors()
                 .stream()
                 .map(throwFunction(task -> task.findById(id, runContext, taskRun)))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
+                .flatMap(Optional::stream)
                 .findFirst();
 
             if (errorChilds.isPresent()) {

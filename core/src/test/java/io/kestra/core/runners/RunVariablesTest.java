@@ -17,7 +17,7 @@ class RunVariablesTest {
     @SuppressWarnings("unchecked")
     void shouldGetEmptyVariables() {
         Map<String, Object> variables = new RunVariables.DefaultBuilder().build(new RunContextLogger());
-        assertThat(variables.size()).isEqualTo(3);
+        assertThat(variables).hasSize(3);
         assertThat((Map<String, Object>) variables.get("envs")).isEqualTo(Map.of());
         assertThat((Map<String, Object>) variables.get("globals")).isEqualTo(Map.of());
         assertThat(variables.get("addSecretConsumer")).isNotNull();
@@ -103,10 +103,10 @@ class RunVariablesTest {
         Map<String, Object> variables = new RunVariables.DefaultBuilder()
             .withKestraConfiguration(new RunVariables.KestraConfiguration("test", "http://localhost:8080"))
             .build(new RunContextLogger());
-        assertThat(variables.size()).isEqualTo(4);
+        assertThat(variables).hasSize(4);
         Map<String, Object> kestra = (Map<String, Object>) variables.get("kestra");
         assertThat(kestra).hasSize(2);
-        assertThat(kestra.get("environment")).isEqualTo("test");
-        assertThat(kestra.get("url")).isEqualTo("http://localhost:8080");
+        assertThat(kestra).containsEntry("environment", "test");
+        assertThat(kestra).containsEntry("url", "http://localhost:8080");
     }
 }

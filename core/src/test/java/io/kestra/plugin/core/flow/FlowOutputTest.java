@@ -16,7 +16,7 @@ class FlowOutputTest {
     @ExecuteFlow("flows/valids/flow-with-outputs.yml")
     void shouldGetSuccessExecutionForFlowWithOutputs(Execution execution) {
         assertThat(execution.getOutputs()).hasSize(1);
-        assertThat(execution.getOutputs().get("key")).isEqualTo("{\"value\":\"flow-with-outputs\"}");
+        assertThat(execution.getOutputs()).containsEntry("key", "{\"value\":\"flow-with-outputs\"}");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 

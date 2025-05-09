@@ -36,7 +36,7 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
         );
 
         List<FlowTopology> list = flowTopologyRepository.findByFlow(null, "io.kestra.tests", "flow-a", false);
-        assertThat(list.size()).isEqualTo(1);
+        assertThat(list).hasSize(1);
 
         flowTopologyRepository.save(
             flow,
@@ -47,7 +47,7 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
 
         list = flowTopologyRepository.findByFlow(null, "io.kestra.tests", "flow-a", false);
 
-        assertThat(list.size()).isEqualTo(1);
+        assertThat(list).hasSize(1);
         assertThat(list.getFirst().getDestination().getId()).isEqualTo("flow-c");
 
         flowTopologyRepository.save(
@@ -60,7 +60,7 @@ public abstract class AbstractJdbcFlowTopologyRepositoryTest extends AbstractFlo
 
         list = flowTopologyRepository.findByNamespace(null, "io.kestra.tests");
 
-        assertThat(list.size()).isEqualTo(2);
+        assertThat(list).hasSize(2);
     }
 
 

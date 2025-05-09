@@ -42,7 +42,7 @@ class YamlParserTest {
         Flow flow = parse("flows/valids/full.yaml");
 
         assertThat(flow.getId()).isEqualTo("full");
-        assertThat(flow.getTasks().size()).isEqualTo(5);
+        assertThat(flow.getTasks()).hasSize(5);
 
         // third with all optionals
         Task optionals = flow.getTasks().get(2);
@@ -58,7 +58,7 @@ class YamlParserTest {
         Flow flow = parseString("flows/valids/full.yaml");
 
         assertThat(flow.getId()).isEqualTo("full");
-        assertThat(flow.getTasks().size()).isEqualTo(5);
+        assertThat(flow.getTasks()).hasSize(5);
 
         // third with all optionals
         Task optionals = flow.getTasks().get(2);
@@ -73,7 +73,7 @@ class YamlParserTest {
         Flow flow = this.parse("flows/valids/all-flowable.yaml");
 
         assertThat(flow.getId()).isEqualTo("all-flowable");
-        assertThat(flow.getTasks().size()).isEqualTo(4);
+        assertThat(flow.getTasks()).hasSize(4);
     }
 
     @Test
@@ -85,7 +85,7 @@ class YamlParserTest {
         try {
             this.parse("flows/invalids/invalid.yaml");
         } catch (ConstraintViolationException e) {
-            assertThat(e.getConstraintViolations().size()).isEqualTo(4);
+            assertThat(e.getConstraintViolations()).hasSize(4);
         }
     }
 
@@ -96,7 +96,7 @@ class YamlParserTest {
             () -> modelValidator.validate(this.parse("flows/invalids/empty.yaml"))
         );
 
-        assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
+        assertThat(exception.getConstraintViolations()).hasSize(1);
         assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).isEqualTo("must not be empty");
     }
 
@@ -107,7 +107,7 @@ class YamlParserTest {
             () -> modelValidator.validate(this.parse("flows/invalids/inputs.yaml"))
         );
 
-        assertThat(exception.getConstraintViolations().size()).isEqualTo(2);
+        assertThat(exception.getConstraintViolations()).hasSize(2);
         exception.getConstraintViolations().forEach(
             c -> assertThat(c.getMessage())
                 .satisfiesAnyOf(
@@ -121,7 +121,7 @@ class YamlParserTest {
     void inputs() {
         Flow flow = this.parse("flows/valids/inputs.yaml");
 
-        assertThat(flow.getInputs().size()).isEqualTo(29);
+        assertThat(flow.getInputs()).hasSize(29);
         assertThat(flow.getInputs().stream().filter(Input::getRequired).count()).isEqualTo(11L);
         assertThat(flow.getInputs().stream().filter(r -> !r.getRequired()).count()).isEqualTo(18L);
         assertThat(flow.getInputs().stream().filter(r -> r.getDefaults() != null).count()).isEqualTo(3L);
@@ -133,7 +133,7 @@ class YamlParserTest {
     void inputsOld() {
         Flow flow = this.parse("flows/tests/inputs-old.yaml");
 
-        assertThat(flow.getInputs().size()).isEqualTo(1);
+        assertThat(flow.getInputs()).hasSize(1);
         assertThat(flow.getInputs().getFirst().getId()).isEqualTo("myInput");
         assertThat(flow.getInputs().getFirst().getType()).isEqualTo(Type.STRING);
     }
@@ -155,7 +155,7 @@ class YamlParserTest {
             () -> modelValidator.validate(this.parse("flows/invalids/listener.yaml"))
         );
 
-        assertThat(exception.getConstraintViolations().size()).isEqualTo(2);
+        assertThat(exception.getConstraintViolations()).hasSize(2);
         assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).contains("must not be empty");
         assertThat(new ArrayList<>(exception.getConstraintViolations()).get(1).getMessage()).isEqualTo("must not be empty");
     }
@@ -184,7 +184,7 @@ class YamlParserTest {
             () -> this.parse("flows/invalids/invalid-task.yaml")
         );
 
-        assertThat(exception.getConstraintViolations().size()).isEqualTo(2);
+        assertThat(exception.getConstraintViolations()).hasSize(2);
         assertThat(exception.getConstraintViolations().stream().filter(e -> e.getMessage().contains("Invalid type")).findFirst().orElseThrow().getMessage()).contains("Invalid type: io.kestra.plugin.core.debug.MissingOne");
     }
 
@@ -196,7 +196,7 @@ class YamlParserTest {
         );
 
         assertThat(exception.getMessage()).isEqualTo("Unrecognized field \"invalid\" (class io.kestra.plugin.core.debug.Return), not marked as ignorable (14 known properties: \"logLevel\", \"timeout\", \"retry\", \"allowWarning\", \"format\", \"version\", \"type\", \"id\", \"description\", \"workerGroup\", \"runIf\", \"logToFile\", \"disabled\", \"allowFailure\"])");
-        assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
+        assertThat(exception.getConstraintViolations()).hasSize(1);
         assertThat(exception.getConstraintViolations().iterator().next().getPropertyPath().toString()).isEqualTo("io.kestra.core.models.flows.Flow[\"tasks\"]->java.util.ArrayList[0]->io.kestra.plugin.core.debug.Return[\"invalid\"]");
     }
 
@@ -220,8 +220,8 @@ class YamlParserTest {
         Flow parse = this.parse("flows/invalids/invalid-parallel.yaml");
         Optional<ConstraintViolationException> valid = modelValidator.isValid(parse);
 
-        assertThat(valid.isPresent()).isTrue();
-        assertThat(valid.get().getConstraintViolations().size()).isEqualTo(10);
+        assertThat(valid).isPresent();
+        assertThat(valid.get().getConstraintViolations()).hasSize(10);
         assertThat(new ArrayList<>(valid.get().getConstraintViolations()).stream().filter(r -> r.getMessage().contains("must not be empty")).count()).isEqualTo(3L);
     }
 
@@ -232,7 +232,7 @@ class YamlParserTest {
             () -> this.parse("flows/invalids/duplicate-key.yaml")
         );
 
-        assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
+        assertThat(exception.getConstraintViolations()).hasSize(1);
         assertThat(new ArrayList<>(exception.getConstraintViolations()).getFirst().getMessage()).contains("Duplicate field 'variables.tf'");
     }
 

@@ -142,7 +142,7 @@ class SubflowTest {
             .toMap();
         assertThat(result.get().getParentTaskRun().getOutputs()).containsAllEntriesOf(expected);
 
-        assertThat(result.get().getParentTaskRun().getAttempts().get(0).getState().getHistories())
+        assertThat(result.get().getParentTaskRun().getAttempts().getFirst().getState().getHistories())
             .extracting(History::getState)
             .containsExactly(
                 State.Type.CREATED,

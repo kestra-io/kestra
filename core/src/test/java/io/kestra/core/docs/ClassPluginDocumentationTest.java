@@ -14,7 +14,6 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -29,34 +28,34 @@ class ClassPluginDocumentationTest {
         Helpers.runApplicationContext(throwConsumer((applicationContext) -> {
             JsonSchemaGenerator jsonSchemaGenerator = applicationContext.getBean(JsonSchemaGenerator.class);
 
-            Path plugins = Paths.get(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
+            Path plugins = Path.of(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
 
             PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
             List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
-            assertThat(scan.size()).isEqualTo(1);
-            assertThat(scan.getFirst().getTasks().size()).isEqualTo(1);
+            assertThat(scan).hasSize(1);
+            assertThat(scan.getFirst().getTasks()).hasSize(1);
 
             PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class, null);
             ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
-            assertThat(doc.getDocExamples().size()).isEqualTo(2);
+            assertThat(doc.getDocExamples()).hasSize(2);
             assertThat(doc.getIcon()).isNotNull();
-            assertThat(doc.getInputs().size()).isEqualTo(5);
+            assertThat(doc.getInputs()).hasSize(5);
             assertThat(doc.getDocLicense()).isEqualTo("EE");
 
             // simple
-            assertThat(((Map<String, String>) doc.getInputs().get("format")).get("type")).isEqualTo("string");
-            assertThat(((Map<String, String>) doc.getInputs().get("format")).get("default")).isEqualTo("{}");
-            assertThat(((Map<String, String>) doc.getInputs().get("format")).get("pattern")).isEqualTo(".*");
+            assertThat(((Map<String, String>) doc.getInputs().get("format"))).containsEntry("type", "string");
+            assertThat(((Map<String, String>) doc.getInputs().get("format"))).containsEntry("default", "{}");
+            assertThat(((Map<String, String>) doc.getInputs().get("format"))).containsEntry("pattern", ".*");
             assertThat(((Map<String, String>) doc.getInputs().get("format")).get("description")).contains("of this input");
 
             // definitions
-            assertThat(doc.getDefs().size()).isEqualTo(5);
+            assertThat(doc.getDefs()).hasSize(5);
 
             // enum
             Map<String, Object> enumProperties = (Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.ExampleTask-PropertyChildInput")).get("properties")).get("childEnum");
-            assertThat(((List<String>) enumProperties.get("enum")).size()).isEqualTo(2);
+            assertThat(((List<String>) enumProperties.get("enum"))).hasSize(2);
             assertThat(((List<String>) enumProperties.get("enum"))).containsExactlyInAnyOrder("VALUE_1", "VALUE_2");
 
             Map<String, Object> childInput = (Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.ExampleTask-PropertyChildInput")).get("properties");
@@ -66,28 +65,28 @@ class ClassPluginDocumentationTest {
             assertThat((String) (childInputList).get("type")).isEqualTo("array");
             assertThat((String) (childInputList).get("title")).isEqualTo("List of string");
             assertThat((Integer) (childInputList).get("minItems")).isEqualTo(1);
-            assertThat(((Map<String, String>) (childInputList).get("items")).get("type")).isEqualTo("string");
+            assertThat(((Map<String, String>) (childInputList).get("items"))).containsEntry("type", "string");
 
             // map
             Map<String, Object> childInputMap = (Map<String, Object>) childInput.get("map");
             assertThat((String) (childInputMap).get("type")).isEqualTo("object");
             assertThat((Boolean) (childInputMap).get("$dynamic")).isTrue();
-            assertThat(((Map<String, String>) (childInputMap).get("additionalProperties")).get("type")).isEqualTo("number");
+            assertThat(((Map<String, String>) (childInputMap).get("additionalProperties"))).containsEntry("type", "number");
 
             // output
             Map<String, Object> childOutput = (Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.AbstractTask-OutputChild")).get("properties");
-            assertThat(((Map<String, String>) childOutput.get("value")).get("type")).isEqualTo("string");
-            assertThat(((Map<String, Object>) childOutput.get("outputChildMap")).get("type")).isEqualTo("object");
+            assertThat(((Map<String, String>) childOutput.get("value"))).containsEntry("type", "string");
+            assertThat(((Map<String, Object>) childOutput.get("outputChildMap"))).containsEntry("type", "object");
             assertThat(((Map<String, String>) ((Map<String, Object>) childOutput.get("outputChildMap")).get("additionalProperties")).get("$ref")).contains("OutputMap");
 
             // required
             Map<String, Object> propertiesChild = (Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.ExampleTask-PropertyChildInput");
-            assertThat(((List<String>) propertiesChild.get("required")).size()).isEqualTo(3);
+            assertThat(((List<String>) propertiesChild.get("required"))).hasSize(3);
 
             // output ref
             Map<String, Object> outputMap = ((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.plugin.templates.AbstractTask-OutputMap")).get("properties"));
-            assertThat(outputMap.size()).isEqualTo(2);
-            assertThat(((Map<String, Object>) outputMap.get("code")).get("type")).isEqualTo("integer");
+            assertThat(outputMap).hasSize(2);
+            assertThat(((Map<String, Object>) outputMap.get("code"))).containsEntry("type", "integer");
         }));
     }
 
@@ -103,11 +102,11 @@ class ClassPluginDocumentationTest {
             PluginClassAndMetadata<AbstractTrigger> metadata = PluginClassAndMetadata.create(scan, Schedule.class, AbstractTrigger.class, null);
             ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, true);
 
-            assertThat(doc.getDefs().size()).isEqualTo(1);
+            assertThat(doc.getDefs()).hasSize(1);
             assertThat(doc.getDocLicense()).isNull();
 
-            assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type")).isEqualTo("object");
-            assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("properties")).size()).isEqualTo(2);
+            assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup"))).containsEntry("type", "object");
+            assertThat(((Map<String, Object>) ((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("properties"))).hasSize(2);
         }));
     }
 
@@ -124,7 +123,7 @@ class ClassPluginDocumentationTest {
 
             assertThat(((Map<?, ?>) doc.getPropertiesSchema().get("properties")).get("version")).isNotNull();
             assertThat(doc.getCls()).isEqualTo("io.kestra.plugin.core.runner.Process");
-            assertThat(doc.getPropertiesSchema().get("title")).isEqualTo("Task runner that executes a task as a subprocess on the Kestra host.");
+            assertThat(doc.getPropertiesSchema()).containsEntry("title", "Task runner that executes a task as a subprocess on the Kestra host.");
             assertThat(doc.getDefs()).isEmpty();
         }));
     }
@@ -150,18 +149,18 @@ class ClassPluginDocumentationTest {
             assertThat(number.get("anyOf")).isNotNull();
             List<Map<String, Object>> anyOf = (List<Map<String, Object>>) number.get("anyOf");
             assertThat(anyOf).hasSize(2);
-            assertThat(anyOf.getFirst().get("type")).isEqualTo("integer");
+            assertThat(anyOf.getFirst()).containsEntry("type", "integer");
             assertThat((Boolean) anyOf.getFirst().get("$dynamic")).isTrue();
-            assertThat(anyOf.get(1).get("type")).isEqualTo("string");
+            assertThat(anyOf.get(1)).containsEntry("type", "string");
 //            assertThat(anyOf.get(1).get("pattern"), is(".*{{.*}}.*"));
 
             Map<String, Object> withDefault = (Map<String, Object>) properties.get("withDefault");
-            assertThat(withDefault.get("type")).isEqualTo("string");
-            assertThat(withDefault.get("default")).isEqualTo("Default Value");
+            assertThat(withDefault).containsEntry("type", "string");
+            assertThat(withDefault).containsEntry("default", "Default Value");
             assertThat((Boolean) withDefault.get("$dynamic")).isTrue();
 
             Map<String, Object> internalStorageURI = (Map<String, Object>) properties.get("uri");
-            assertThat(internalStorageURI.get("type")).isEqualTo("string");
+            assertThat(internalStorageURI).containsEntry("type", "string");
             assertThat((Boolean) internalStorageURI.get("$internalStorageURI")).isTrue();
         }));
     }

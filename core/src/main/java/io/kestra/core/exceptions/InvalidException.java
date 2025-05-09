@@ -1,12 +1,15 @@
 package io.kestra.core.exceptions;
 
+import java.io.Serial;
+
 /**
  * General exception that can be throws when a Kestra resource or entity is not valid.
  */
 public class InvalidException extends KestraRuntimeException {
+    @Serial
     private static final long serialVersionUID = 1L;
 
-    private transient final Object invalid;
+    private final transient Object invalid;
 
     /**
      * Creates a new {@link InvalidException} instance.

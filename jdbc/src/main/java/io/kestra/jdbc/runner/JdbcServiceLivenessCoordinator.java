@@ -35,7 +35,7 @@ import static io.kestra.core.server.Service.ServiceState.allRunningStates;
 @Requires(property = "kestra.server-type", pattern = "(EXECUTOR|STANDALONE)")
 public final class JdbcServiceLivenessCoordinator extends AbstractServiceLivenessCoordinator {
 
-    private final static Logger log = LoggerFactory.getLogger(JdbcServiceLivenessCoordinator.class);
+    private static final Logger log = LoggerFactory.getLogger(JdbcServiceLivenessCoordinator.class);
 
     private final AtomicReference<JdbcExecutor> executor = new AtomicReference<>();
     private final AbstractJdbcServiceInstanceRepository serviceInstanceRepository;

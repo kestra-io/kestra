@@ -60,8 +60,7 @@ public class VersionProvider {
                     )
             )
             .map(this::getVersion)
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .flatMap(Optional::stream)
             .findFirst()
             .orElse(this.version);
     }

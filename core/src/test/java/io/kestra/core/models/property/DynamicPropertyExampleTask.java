@@ -57,8 +57,7 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
 
     @Override
     public Output run(RunContext runContext) throws Exception {
-        String value = String.format(
-            "%s - %s - %s - %s",
+        String value = "%s - %s - %s - %s".formatted(
             runContext.render(string).as(String.class).orElse(null),
             runContext.render(number).as(Integer.class).orElse(null),
             runContext.render(withDefault).as(String.class).orElse(null),

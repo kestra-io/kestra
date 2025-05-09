@@ -159,11 +159,11 @@ class InternalNamespaceTest {
 
         // When - Then
         List<NamespaceFile> allTenant1 = namespaceTenant1.all();
-        assertThat(allTenant1.size()).isEqualTo(1);
+        assertThat(allTenant1).hasSize(1);
         assertThat(allTenant1).containsExactlyInAnyOrder(namespaceFile1);
 
         List<NamespaceFile> allTenant2 = namespaceTenant2.all();
-        assertThat(allTenant2.size()).isEqualTo(1);
+        assertThat(allTenant2).hasSize(1);
         assertThat(allTenant2).containsExactlyInAnyOrder(namespaceFile2);
     }
 
@@ -173,6 +173,6 @@ class InternalNamespaceTest {
         final String namespaceId = "io.kestra." + IdUtils.create();
         final InternalNamespace namespace = new InternalNamespace(logger, null, namespaceId, storageInterface);
         List<NamespaceFile> namespaceFiles = namespace.findAllFilesMatching((unused) -> true);
-        assertThat(namespaceFiles.size()).isZero();
+        assertThat(namespaceFiles).isEmpty();
     }
 }

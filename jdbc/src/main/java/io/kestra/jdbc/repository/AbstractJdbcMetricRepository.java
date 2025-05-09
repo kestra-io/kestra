@@ -423,7 +423,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             });
     }
 
-    abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
+    protected abstract Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
 
     protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
         DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,

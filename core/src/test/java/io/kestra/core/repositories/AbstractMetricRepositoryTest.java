@@ -33,13 +33,13 @@ public abstract class AbstractMetricRepositoryTest {
         metricRepository.save(timer);
 
         List<MetricEntry> results = metricRepository.findByExecutionId(null, executionId, Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(2);
+        assertThat(results).hasSize(2);
 
         results = metricRepository.findByExecutionIdAndTaskId(null, executionId, taskRun1.getTaskId(), Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(2);
+        assertThat(results).hasSize(2);
 
         results = metricRepository.findByExecutionIdAndTaskRunId(null, executionId, taskRun1.getId(), Pageable.from(1, 10));
-        assertThat(results.size()).isEqualTo(1);
+        assertThat(results).hasSize(1);
 
         MetricAggregations aggregationResults = metricRepository.aggregateByFlowId(
             null,
@@ -52,7 +52,7 @@ public abstract class AbstractMetricRepositoryTest {
             "sum"
         );
 
-        assertThat(aggregationResults.getAggregations().size()).isEqualTo(31);
+        assertThat(aggregationResults.getAggregations()).hasSize(31);
         assertThat(aggregationResults.getGroupBy()).isEqualTo("day");
 
         aggregationResults = metricRepository.aggregateByFlowId(
@@ -66,7 +66,7 @@ public abstract class AbstractMetricRepositoryTest {
             "sum"
         );
 
-        assertThat(aggregationResults.getAggregations().size()).isEqualTo(27);
+        assertThat(aggregationResults.getAggregations()).hasSize(27);
         assertThat(aggregationResults.getGroupBy()).isEqualTo("week");
 
     }
@@ -88,9 +88,9 @@ public abstract class AbstractMetricRepositoryTest {
          List<String> taskMetricsNames = metricRepository.taskMetrics(null, "namespace", "flow", "task");
          List<String> tasksWithMetrics = metricRepository.tasksWithMetrics(null, "namespace", "flow");
 
-         assertThat(flowMetricsNames.size()).isEqualTo(2);
-         assertThat(taskMetricsNames.size()).isEqualTo(1);
-         assertThat(tasksWithMetrics.size()).isEqualTo(2);
+         assertThat(flowMetricsNames).hasSize(2);
+         assertThat(taskMetricsNames).hasSize(1);
+         assertThat(tasksWithMetrics).hasSize(2);
      }
 
     @Test

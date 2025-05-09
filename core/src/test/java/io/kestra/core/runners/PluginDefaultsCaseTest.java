@@ -37,18 +37,18 @@ public class PluginDefaultsCaseTest {
         assertThat(execution.getTaskRunList()).hasSize(8);
 
         assertThat(execution.getTaskRunList().getFirst().getTaskId()).isEqualTo("first");
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("def")).isEqualTo("1");
+        assertThat(execution.getTaskRunList().getFirst().getOutputs()).containsEntry("def", "1");
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("second");
-        assertThat(execution.getTaskRunList().get(1).getOutputs().get("def")).isEqualTo("2");
+        assertThat(execution.getTaskRunList().get(1).getOutputs()).containsEntry("def", "2");
         assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("third");
-        assertThat(execution.getTaskRunList().get(2).getOutputs().get("def")).isEqualTo("3");
+        assertThat(execution.getTaskRunList().get(2).getOutputs()).containsEntry("def", "3");
 
         assertThat(execution.getTaskRunList().get(4).getTaskId()).isEqualTo("err-first");
-        assertThat(execution.getTaskRunList().get(4).getOutputs().get("def")).isEqualTo("1");
+        assertThat(execution.getTaskRunList().get(4).getOutputs()).containsEntry("def", "1");
         assertThat(execution.getTaskRunList().get(5).getTaskId()).isEqualTo("err-second");
-        assertThat(execution.getTaskRunList().get(5).getOutputs().get("def")).isEqualTo("2");
+        assertThat(execution.getTaskRunList().get(5).getOutputs()).containsEntry("def", "2");
         assertThat(execution.getTaskRunList().get(6).getTaskId()).isEqualTo("err-third");
-        assertThat(execution.getTaskRunList().get(6).getOutputs().get("def")).isEqualTo("3");
+        assertThat(execution.getTaskRunList().get(6).getOutputs()).containsEntry("def", "3");
     }
 
     @SuperBuilder
@@ -65,6 +65,7 @@ public class PluginDefaultsCaseTest {
         @Getter(AccessLevel.NONE)
         protected List<Task> _finally;
 
+        @Override
         public List<Task> getFinally() {
             return this._finally;
         }

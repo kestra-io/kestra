@@ -29,7 +29,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
-abstract public class AbstractTrigger implements TriggerInterface {
+public abstract class AbstractTrigger implements TriggerInterface {
     protected String id;
 
     protected String type;

@@ -53,13 +53,11 @@ public record NamespaceFile(
         final NamespaceFile namespaceFile;
         if (uri.getScheme() != null) {
             if (!uri.getScheme().equalsIgnoreCase("kestra")) {
-                throw new IllegalArgumentException(String.format(
-                    "Invalid Kestra URI scheme. Expected 'kestra', but was '%s'.", uri
+                throw new IllegalArgumentException("Invalid Kestra URI scheme. Expected 'kestra', but was '%s'.".formatted(uri
                 ));
             }
             if (!uri.getPath().startsWith(StorageContext.namespaceFilePrefix(namespace))) {
-                throw new IllegalArgumentException(String.format(
-                    "Invalid Kestra URI. Expected prefix for namespace '%s', but was %s.", namespace, uri)
+                throw new IllegalArgumentException("Invalid Kestra URI. Expected prefix for namespace '%s', but was %s.".formatted(namespace, uri)
                 );
             }
             namespaceFile = of(namespace, Path.of(StorageContext.namespaceFilePrefix(namespace)).relativize(path));
@@ -119,7 +117,7 @@ public record NamespaceFile(
      * @return The path.
      */
     public Path path(boolean withLeadingSlash) {
-        final String strPath = path.toString();
+        final String strPath = path;
         if (!withLeadingSlash) {
             if (strPath.startsWith("/")) {
                 return Path.of(strPath.substring(1));

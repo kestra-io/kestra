@@ -62,7 +62,7 @@ class LocalFilesTest {
 
         assertThat(outputs).isNotNull();
         assertThat(outputs.getUris()).isNotNull();
-        assertThat(outputs.getUris().size()).isEqualTo(1);
+        assertThat(outputs.getUris()).hasSize(1);
         assertThat(new String(storageInterface.get(null, null, outputs.getUris().get("hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
         assertThat(runContext.workingDir().path().toFile().list().length).isEqualTo(2);
         assertThat(Files.readString(runContext.workingDir().path().resolve("execution.txt"))).isEqualTo("tata");
@@ -90,7 +90,7 @@ class LocalFilesTest {
 
         assertThat(outputs).isNotNull();
         assertThat(outputs.getUris()).isNotNull();
-        assertThat(outputs.getUris().size()).isEqualTo(3);
+        assertThat(outputs.getUris()).hasSize(3);
         assertThat(new String(storageInterface.get(null, null, outputs.getUris().get("test/hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
         assertThat(new String(storageInterface.get(null, null, outputs.getUris().get("test/sub/dir/2/execution.txt"))
             .readAllBytes())).isEqualTo("tata");

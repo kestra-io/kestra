@@ -73,7 +73,7 @@ public class NamespaceControllerTest {
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
         assertThat(list.getTotal()).isEqualTo(6L);
-        assertThat(list.getResults().size()).isEqualTo(6);
+        assertThat(list.getResults()).hasSize(6);
         assertThat(list.getResults(), everyItem(hasProperty("disabled", is(true))));
         assertThat(list.getResults().stream().map(NamespaceWithDisabled::getId).toList()).containsExactlyInAnyOrder("my", "my.ns", "my.ns.flow", "another", "another.ns", "system");
 
@@ -83,7 +83,7 @@ public class NamespaceControllerTest {
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
         assertThat(list.getTotal()).isEqualTo(6L);
-        assertThat(list.getResults().size()).isEqualTo(2);
+        assertThat(list.getResults()).hasSize(2);
         assertThat(list.getResults().getFirst().getId()).isEqualTo("system");
         assertThat(list.getResults().get(1).getId()).isEqualTo("my.ns.flow");
 
@@ -92,7 +92,7 @@ public class NamespaceControllerTest {
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
         assertThat(list.getTotal()).isEqualTo(6L);
-        assertThat(list.getResults().size()).isEqualTo(2);
+        assertThat(list.getResults()).hasSize(2);
         assertThat(list.getResults().getFirst().getId()).isEqualTo("my.ns");
         assertThat(list.getResults().get(1).getId()).isEqualTo("my");
 
@@ -101,7 +101,7 @@ public class NamespaceControllerTest {
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
         assertThat(list.getTotal()).isEqualTo(3L);
-        assertThat(list.getResults().size()).isEqualTo(3);
+        assertThat(list.getResults()).hasSize(3);
 
         list = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/namespaces/search?page=4&size=2&sort=id:desc"),
@@ -121,8 +121,8 @@ public class NamespaceControllerTest {
             Argument.of(FlowTopologyGraph.class)
         );
 
-        assertThat(retrieve.getNodes().size()).isEqualTo(3);
-        assertThat(retrieve.getEdges().size()).isEqualTo(2);
+        assertThat(retrieve.getNodes()).hasSize(3);
+        assertThat(retrieve.getEdges()).hasSize(2);
     }
 
     @Test
@@ -154,8 +154,8 @@ public class NamespaceControllerTest {
             HttpRequest.GET("/api/v1/namespaces/any.ns/inherited-secrets"),
             Argument.mapOf(Argument.of(String.class), Argument.setOf(String.class))
         );
-        assertThat(parentInheritedSecrets.size()).isEqualTo(1);
-        assertThat(parentInheritedSecrets.get("any.ns")).isEqualTo(Set.of("WEBHOOK_KEY", "PASSWORD", "NEW_LINE", "MY_SECRET"));
+        assertThat(parentInheritedSecrets).hasSize(1);
+        assertThat(parentInheritedSecrets).containsEntry("any.ns", Set.of("WEBHOOK_KEY", "PASSWORD", "NEW_LINE", "MY_SECRET"));
     }
 
     protected Flow flow(String namespace) {

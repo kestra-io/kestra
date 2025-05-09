@@ -7,6 +7,7 @@ import io.pebbletemplates.pebble.template.PebbleTemplate;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class RandomIntFunction implements Function {
 
@@ -22,7 +23,7 @@ public class RandomIntFunction implements Function {
             lineNumber,
             self.getName());
     }
-    return (int) (Math.floor(Math.random() * (upper - lower)) + lower);
+    return (int) (Math.floor(ThreadLocalRandom.current().nextDouble() * (upper - lower)) + lower);
   }
 
   @Override

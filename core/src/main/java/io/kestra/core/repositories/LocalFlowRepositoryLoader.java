@@ -25,7 +25,6 @@ import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.function.Function;
@@ -73,7 +72,7 @@ public class LocalFlowRepositoryLoader {
                 this.load(tenantId, tempDirectory.toFile());
             }
         } else {
-            this.load(tenantId, Paths.get(uri).toFile());
+            this.load(tenantId, Path.of(uri).toFile());
         }
     }
 

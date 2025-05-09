@@ -244,9 +244,9 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         return this.receiveFetch(ctx, consumerGroup, queueType, true);
     }
 
-    abstract protected Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType, boolean forUpdate);
+    protected abstract Result<Record> receiveFetch(DSLContext ctx, String consumerGroup, String queueType, boolean forUpdate);
 
-    abstract protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
+    protected abstract void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets);
 
     protected abstract Condition buildTypeCondition(String type);
 

@@ -44,7 +44,7 @@ class SplitTest {
 
         Split.Output run = result.run(runContext);
 
-        assertThat(run.getUris().size()).isEqualTo(8);
+        assertThat(run.getUris()).hasSize(8);
         assertThat(run.getUris().getFirst().getPath()).endsWith(".yml");
         assertThat(StringUtils.countMatches(readAll(run.getUris()), "\n")).isEqualTo(1000);
     }
@@ -61,7 +61,7 @@ class SplitTest {
 
         Split.Output run = result.run(runContext);
 
-        assertThat(run.getUris().size()).isEqualTo(100);
+        assertThat(run.getUris()).hasSize(100);
         assertThat(readAll(run.getUris())).isEqualTo(String.join("\n", content(1000)) + "\n");
     }
 
@@ -77,7 +77,7 @@ class SplitTest {
 
         Split.Output run = result.run(runContext);
 
-        assertThat(run.getUris().size()).isEqualTo(251);
+        assertThat(run.getUris()).hasSize(251);
         assertThat(readAll(run.getUris())).isEqualTo(String.join("\n", content(12288)) + "\n");
     }
 

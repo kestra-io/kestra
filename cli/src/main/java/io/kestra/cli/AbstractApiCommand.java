@@ -49,6 +49,7 @@ public abstract class AbstractApiCommand extends AbstractCommand {
     /**
      * {@inheritDoc}
      */
+    @Override
     protected boolean loadExternalPlugins() {
         return false;
     }

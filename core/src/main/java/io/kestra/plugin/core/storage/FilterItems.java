@@ -122,8 +122,7 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
                             if (exception != null) {
                                 throw exception;
                             } else {
-                                throw new IllegalVariableEvaluationException(String.format(
-                                    "Expression `%s` return `null` on item `%s`",
+                                throw new IllegalVariableEvaluationException("Expression `%s` return `null` on item `%s`".formatted(
                                     filterCondition,
                                     item
                                 ));

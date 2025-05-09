@@ -185,7 +185,7 @@ class NamespaceFileControllerTest {
         File temp = File.createTempFile("task-flow", ".yml");
         Files.write(temp.toPath(), flowSource.getBytes());
 
-        assertThat(flowRepository.findByIdWithSource(null, NAMESPACE, "task-flow").isEmpty()).isTrue();
+        assertThat(flowRepository.findByIdWithSource(null, NAMESPACE, "task-flow")).isEmpty();
 
         MultipartBody body = MultipartBody.builder()
             .addPart("fileContent", "task-flow.yml", temp)
@@ -215,7 +215,7 @@ class NamespaceFileControllerTest {
         File temp = File.createTempFile("files", ".zip");
         Files.write(temp.toPath(), zip);
 
-        assertThat(flowRepository.findById(null, NAMESPACE, "task-flow").isEmpty()).isTrue();
+        assertThat(flowRepository.findById(null, NAMESPACE, "task-flow")).isEmpty();
 
         MultipartBody body = MultipartBody.builder()
             .addPart("fileContent", "files.zip", temp)

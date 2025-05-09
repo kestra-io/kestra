@@ -92,12 +92,12 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
-        assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
+        assertThat(outputs).containsEntry("numberOfBatches", 26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
         assertThat(iterations.get("CREATED")).isZero();
         assertThat(iterations.get("RUNNING")).isZero();
-        assertThat(iterations.get("SUCCESS")).isEqualTo(26);
+        assertThat(iterations).containsEntry("SUCCESS", 26);
 
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -105,7 +105,7 @@ public class ForEachItemCaseTest {
         assertThat((String) triggered.get().getInputs().get("items")).matches("kestra:///io/kestra/tests/for-each-item/executions/.*/tasks/each-split/.*\\.txt");
         assertThat(triggered.get().getTaskRunList()).hasSize(1);
         Optional<Label> correlationId = triggered.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
-        assertThat(correlationId.isPresent()).isTrue();
+        assertThat(correlationId).isPresent();
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 
@@ -154,12 +154,12 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
-        assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
+        assertThat(outputs).containsEntry("numberOfBatches", 26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
         assertThat(iterations.get("CREATED")).isNull(); // if we didn't wait we will only observe RUNNING and SUCCESS
         assertThat(iterations.get("RUNNING")).isZero();
-        assertThat(iterations.get("SUCCESS")).isEqualTo(26);
+        assertThat(iterations).containsEntry("SUCCESS", 26);
 
         // wait for the 26 flows to ends
         assertThat(countDownLatch.await(1, TimeUnit.MINUTES)).as("Remaining count was " + countDownLatch.getCount()).isTrue();
@@ -201,12 +201,12 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(FAILED);
         assertThat(execution.getState().getCurrent()).isEqualTo(FAILED);
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
-        assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
+        assertThat(outputs).containsEntry("numberOfBatches", 26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
         assertThat(iterations.get("CREATED")).isZero();
         assertThat(iterations.get("RUNNING")).isZero();
-        assertThat(iterations.get("FAILED")).isEqualTo(26);
+        assertThat(iterations).containsEntry("FAILED", 26);
 
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent()).isEqualTo(FAILED);
@@ -244,13 +244,13 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList().get(2).getAttempts().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Map<String, Object> outputs = execution.getTaskRunList().get(2).getOutputs();
-        assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
+        assertThat(outputs).containsEntry("numberOfBatches", 26);
         assertThat(outputs.get("iterations")).isNotNull();
 
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
         assertThat(iterations.get("CREATED")).isZero();
         assertThat(iterations.get("RUNNING")).isZero();
-        assertThat(iterations.get("SUCCESS")).isEqualTo(26);
+        assertThat(iterations).containsEntry("SUCCESS", 26);
 
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -338,12 +338,12 @@ public class ForEachItemCaseTest {
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         Map<String, Object> outputs = execution.getTaskRunList().get(3).getOutputs();
-        assertThat(outputs.get("numberOfBatches")).isEqualTo(26);
+        assertThat(outputs).containsEntry("numberOfBatches", 26);
         assertThat(outputs.get("iterations")).isNotNull();
         Map<String, Integer> iterations = (Map<String, Integer>) outputs.get("iterations");
         assertThat(iterations.get("CREATED")).isZero();
         assertThat(iterations.get("RUNNING")).isZero();
-        assertThat(iterations.get("SUCCESS")).isEqualTo(26);
+        assertThat(iterations).containsEntry("SUCCESS", 26);
 
         // assert on the last subflow execution
         assertThat(triggered.get().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
@@ -351,7 +351,7 @@ public class ForEachItemCaseTest {
         assertThat((String) triggered.get().getInputs().get("items")).matches("kestra:///io/kestra/tests/for-each-item-in-if/executions/.*/tasks/each-split/.*\\.txt");
         assertThat(triggered.get().getTaskRunList()).hasSize(1);
         Optional<Label> correlationId = triggered.get().getLabels().stream().filter(label -> label.key().equals(Label.CORRELATION_ID)).findAny();
-        assertThat(correlationId.isPresent()).isTrue();
+        assertThat(correlationId).isPresent();
         assertThat(correlationId.get().value()).isEqualTo(execution.getId());
     }
 

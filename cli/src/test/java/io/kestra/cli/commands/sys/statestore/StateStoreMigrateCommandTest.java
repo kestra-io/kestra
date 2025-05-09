@@ -24,6 +24,7 @@ import java.io.PrintStream;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadLocalRandom;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,7 +40,7 @@ class StateStoreMigrateCommandTest {
             Flow flow = Flow.builder()
                 .tenantId("my-tenant")
                 .id("a-flow")
-                .namespace("some.valid.namespace." + ((int) (Math.random() * 1000000)))
+                .namespace("some.valid.namespace." + ((int) (ThreadLocalRandom.current().nextDouble() * 1000000)))
                 .tasks(List.of(Log.builder().id("log").type(Log.class.getName()).message("logging").build()))
                 .build();
             flowRepository.create(GenericFlow.of(flow));

@@ -102,8 +102,8 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
             // wait for execution
             Flux<Execution> receiveExecutions = TestsUtils.receive(executionQueue, throwConsumer(either -> {
                 Execution execution = either.getLeft();
-                assertThat(execution.getInputs().get("testInputs")).isEqualTo("test-inputs");
-                assertThat(execution.getInputs().get("def")).isEqualTo("awesome");
+                assertThat(execution.getInputs()).containsEntry("testInputs", "test-inputs");
+                assertThat(execution.getInputs()).containsEntry("def", "awesome");
 
                 date.add((String) execution.getTrigger().getVariables().get("date"));
                 executionId.add(execution.getId());

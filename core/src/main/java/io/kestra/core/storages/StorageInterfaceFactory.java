@@ -21,7 +21,7 @@ import java.util.stream.Stream;
  * Factor class for constructing {@link StorageInterface} objects.
  */
 public class StorageInterfaceFactory {
-    
+
     public static final String KESTRA_STORAGE_TYPE_CONFIG = "kestra.storage.type";
 
     private final PluginRegistry pluginRegistry;
@@ -50,8 +50,7 @@ public class StorageInterfaceFactory {
 
         if (optional.isEmpty()) {
             String storageIds = getLoggableStorageIds();
-            throw new KestraRuntimeException(String.format(
-                "No storage interface can be found for '%s=%s'. Supported types are: %s", KESTRA_STORAGE_TYPE_CONFIG, pluginId, storageIds
+            throw new KestraRuntimeException("No storage interface can be found for '%s=%s'. Supported types are: %s".formatted(KESTRA_STORAGE_TYPE_CONFIG, pluginId, storageIds
             ));
         }
 
@@ -64,8 +63,7 @@ public class StorageInterfaceFactory {
             Map<String, Object> nonEmptyConfig = Optional.ofNullable(pluginConfiguration).orElse(Map.of());
             plugin = JacksonMapper.toMap(nonEmptyConfig, pluginClass);
         } catch (Exception e) {
-            throw new KestraRuntimeException(String.format(
-                "Failed to create storage '%s'. Error: %s", pluginId, e.getMessage())
+            throw new KestraRuntimeException("Failed to create storage '%s'. Error: %s".formatted(pluginId, e.getMessage())
             );
         }
 
@@ -74,22 +72,19 @@ public class StorageInterfaceFactory {
         try {
             violations = validator.validate(plugin);
         } catch (ConstraintViolationException e) {
-            throw new KestraRuntimeException(String.format(
-                "Failed to validate configuration for storage '%s'. Error: %s", pluginId, e.getMessage())
+            throw new KestraRuntimeException("Failed to validate configuration for storage '%s'. Error: %s".formatted(pluginId, e.getMessage())
             );
         }
         if (!violations.isEmpty()) {
             ConstraintViolationException e = new ConstraintViolationException(violations);
-            throw new KestraRuntimeException(String.format(
-                "Invalid configuration for storage '%s'. Error: '%s'", pluginId, e.getMessage()), e
+            throw new KestraRuntimeException("Invalid configuration for storage '%s'. Error: '%s'".formatted(pluginId, e.getMessage()), e
             );
         }
 
         try {
             plugin = init(storageConfiguration, plugin);
         } catch (IOException e) {
-            throw new KestraRuntimeException(String.format(
-                "Failed to initialize storage '%s'. Error: %s", pluginId, e.getMessage()), e
+            throw new KestraRuntimeException("Failed to initialize storage '%s'. Error: %s".formatted(pluginId, e.getMessage()), e
             );
         }
         return plugin;

@@ -168,7 +168,7 @@ public class Version implements Comparable<Version> {
 
     private static int requirePositive(int version, final String message) {
         if (version < 0) {
-            throw new IllegalArgumentException(String.format("The '%s' version must super or equal to 0", message));
+            throw new IllegalArgumentException("The '%s' version must super or equal to 0".formatted(message));
         }
         return version;
     }

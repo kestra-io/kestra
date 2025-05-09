@@ -19,6 +19,7 @@ public class DefaultLogConsumer extends AbstractLogConsumer {
         this.accept(line, isStdErr, null);
     }
 
+    @Override
     public void accept(String line, Boolean isStdErr, Instant instant) {
         outputs.putAll(PluginUtilsService.parseOut(line, runContext.logger(), runContext, isStdErr, instant));
 

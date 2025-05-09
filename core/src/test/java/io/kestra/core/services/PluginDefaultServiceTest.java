@@ -179,7 +179,7 @@ class PluginDefaultServiceTest {
 
     @Test
     public void injectFlowAndGlobals() throws FlowProcessingException {
-        String source = String.format("""
+        String source = """
             id: default-test
             namespace: io.kestra.tests
 
@@ -193,7 +193,7 @@ class PluginDefaultServiceTest {
             - id: test
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               set: 666
-              
+
             pluginDefaults:
             - type: "%s"
               forced: false
@@ -209,7 +209,7 @@ class PluginDefaultServiceTest {
               forced: false
               values:
                 expression: "{{ test }}"
-                  """,
+                  """.formatted(
             DefaultTester.class.getName(),
             DefaultTriggerTester.class.getName(),
             Expression.class.getName()
@@ -236,12 +236,12 @@ class PluginDefaultServiceTest {
         String source = """
             id: default-test
             namespace: io.kestra.tests
-    
+
             tasks:
             - id: test
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               set: 1
-                  
+
             pluginDefaults:
             - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               forced: true
@@ -283,7 +283,7 @@ class PluginDefaultServiceTest {
             - id: test
               type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               set: 666
-              
+
             pluginDefaults:
             - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
               values:
@@ -316,7 +316,7 @@ class PluginDefaultServiceTest {
               - id: test
                 type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
                 set: 666
-                
+
               pluginDefaults:
                  - type: io.kestra.core.services.DefaultTesterAlias
                    values:
@@ -340,7 +340,7 @@ class PluginDefaultServiceTest {
                   - id: test
                     type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
                     set: 666
-                    
+
                   pluginDefaults:
                      - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
                        values:
@@ -364,7 +364,7 @@ class PluginDefaultServiceTest {
               type: io.kestra.plugin.core.log.Log
               message: testing
               level: INFO
-              
+
             pluginDefaults:
              - type: io.kestra.core.services.PluginDefaultServiceTest$DefaultTester
                values:

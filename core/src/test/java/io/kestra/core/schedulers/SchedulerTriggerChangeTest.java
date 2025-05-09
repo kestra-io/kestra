@@ -172,6 +172,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
         private String format;
         private Duration sleep;
 
+        @Override
         public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws InterruptedException {
             STARTED_COUNT++;
 

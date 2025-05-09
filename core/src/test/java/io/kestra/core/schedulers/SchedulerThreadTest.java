@@ -84,8 +84,8 @@ public class SchedulerThreadTest extends AbstractSchedulerTest {
             Execution last = receive.blockLast();
 
             assertThat(last).as("Countdown latch returned " + sawSuccessExecution).isNotNull();
-            assertThat(last.getTrigger().getVariables().get("defaultInjected")).isEqualTo("done");
-            assertThat(last.getTrigger().getVariables().get("counter")).isEqualTo(3);
+            assertThat(last.getTrigger().getVariables()).containsEntry("defaultInjected", "done");
+            assertThat(last.getTrigger().getVariables()).containsEntry("counter", 3);
             assertThat(last.getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
             assertThat(last.getLabels()).contains(new Label("flow-label-2", "flow-label-2"));
             AbstractSchedulerTest.COUNTER = 0;

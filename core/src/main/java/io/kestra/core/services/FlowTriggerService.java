@@ -140,8 +140,7 @@ public class FlowTriggerService {
                 f.getFlow(),
                 execution
             ))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .flatMap(Optional::stream)
             .toList();
 
         if (multipleConditionStorage.isPresent()) {

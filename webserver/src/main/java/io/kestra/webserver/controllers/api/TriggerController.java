@@ -116,7 +116,7 @@ public class TriggerController {
             Optional<Flow> flow = flowRepository.findById(tc.getTenantId(), tc.getNamespace(), tc.getFlowId());
             if (flow.isEmpty()) {
                 // Warn instead of throwing to avoid blocking the trigger UI
-                log.warn(String.format("Flow %s not found for trigger %s", tc.getFlowId(), tc.getTriggerId()));
+                log.warn("Flow %s not found for trigger %s".formatted(tc.getFlowId(), tc.getTriggerId()));
 
                 return;
             }
@@ -129,7 +129,7 @@ public class TriggerController {
             AbstractTrigger abstractTrigger = flow.get().getTriggers().stream().filter(t -> t.getId().equals(tc.getTriggerId())).findFirst().orElse(null);
             if (abstractTrigger == null) {
                 // Warn instead of throwing to avoid blocking the trigger UI
-                log.warn(String.format("Flow %s has no trigger %s", tc.getFlowId(), tc.getTriggerId()));
+                log.warn("Flow %s has no trigger %s".formatted(tc.getFlowId(), tc.getTriggerId()));
             }
 
             triggers.add(Triggers.builder()
@@ -257,11 +257,11 @@ public class TriggerController {
 
         Optional<Flow> maybeFlow = this.flowRepository.findById(this.tenantService.resolveTenant(), newTrigger.getNamespace(), newTrigger.getFlowId());
         if (maybeFlow.isEmpty()) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, String.format("Flow of trigger %s not found", newTrigger.getTriggerId()));
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow of trigger %s not found".formatted(newTrigger.getTriggerId()));
         }
         AbstractTrigger abstractTrigger = maybeFlow.get().getTriggers().stream().filter(t -> t.getId().equals(newTrigger.getTriggerId())).findFirst().orElse(null);
         if (abstractTrigger == null) {
-            throw new HttpStatusException(HttpStatus.NOT_FOUND, String.format("Flow %s has no trigger %s", newTrigger.getFlowId(), newTrigger.getTriggerId()));
+            throw new HttpStatusException(HttpStatus.NOT_FOUND, "Flow %s has no trigger %s".formatted(newTrigger.getFlowId(), newTrigger.getTriggerId()));
         }
 
         Trigger updatedTrigger = this.triggerRepository.lock(newTrigger.uid(), throwFunction(current -> {

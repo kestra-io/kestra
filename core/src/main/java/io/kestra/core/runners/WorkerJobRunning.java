@@ -24,6 +24,6 @@ public abstract class WorkerJobRunning implements HasUID {
     @NotNull
     private int partition;
 
-    abstract public String getType();
+    public abstract String getType();
 
 }

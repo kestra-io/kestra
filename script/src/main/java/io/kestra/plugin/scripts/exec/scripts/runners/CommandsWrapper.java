@@ -233,6 +233,7 @@ public class CommandsWrapper implements TaskCommands {
         return (TaskRunner<T>) taskRunner;
     }
 
+    @Override
     public Boolean getEnableOutputDirectory() {
         if (this.enableOutputDirectory == null) {
             // For compatibility reasons, if legacy runnerType property is used, we enable the output directory
@@ -242,6 +243,7 @@ public class CommandsWrapper implements TaskCommands {
         return this.enableOutputDirectory;
     }
 
+    @Override
     public Path getOutputDirectory() {
         if (this.outputDirectory == null) {
             this.outputDirectory = this.workingDirectory.resolve(IdUtils.create());

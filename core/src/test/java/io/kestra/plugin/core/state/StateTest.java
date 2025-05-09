@@ -51,7 +51,7 @@ class StateTest {
             .build();
         getOutput = get.run(runContext);
         assertThat(getOutput.getCount()).isEqualTo(1);
-        assertThat(getOutput.getData().get("test")).isEqualTo("1");
+        assertThat(getOutput.getData()).containsEntry("test", "1");
 
         set = Set.builder()
             .id(IdUtils.create())
@@ -73,8 +73,8 @@ class StateTest {
         getOutput = get.run(runContext);
 
         assertThat(getOutput.getCount()).isEqualTo(2);
-        assertThat(getOutput.getData().get("test")).isEqualTo("2");
-        assertThat(getOutput.getData().get("test2")).isEqualTo("3");
+        assertThat(getOutput.getData()).containsEntry("test", "2");
+        assertThat(getOutput.getData()).containsEntry("test2", "3");
 
         Delete delete = Delete.builder()
             .id(IdUtils.create())

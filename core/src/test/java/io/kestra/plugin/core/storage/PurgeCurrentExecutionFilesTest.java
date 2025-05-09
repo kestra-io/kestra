@@ -34,6 +34,6 @@ class PurgeCurrentExecutionFilesTest {
             .build();
         var output = purge.run(runContext);
 
-        assertThat(output.getUris().size()).isEqualTo(2);
+        assertThat(output.getUris()).hasSize(2);
     }
 }

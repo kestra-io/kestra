@@ -60,8 +60,7 @@ public class StaticFilter implements HttpServerFilter {
                                     StandardCharsets.UTF_8
                                 )))
                         )
-                        .filter(Optional::isPresent)
-                        .map(Optional::get)
+                        .flatMap(Optional::stream)
                         .map(s -> {
                             String finalBody = replace(s);
 

@@ -44,7 +44,7 @@ public class PublishTest {
 
         publish.run(runContext);
 
-        assertThat(runContext.metrics().size()).isEqualTo(2);
+        assertThat(runContext.metrics()).hasSize(2);
     }
 
 }

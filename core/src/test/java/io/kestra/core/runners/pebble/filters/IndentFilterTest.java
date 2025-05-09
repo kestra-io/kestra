@@ -24,7 +24,7 @@ class IndentFilterTest {
     @Test
     void indentEmpty() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ '' | indent(2) }}", Map.of());
-        assertThat(render).isEqualTo("");
+        assertThat(render).isEmpty();
     }
 
     @Test

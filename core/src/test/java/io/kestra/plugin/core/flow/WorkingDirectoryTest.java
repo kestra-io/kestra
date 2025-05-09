@@ -234,8 +234,7 @@ public class WorkingDirectoryTest {
                 .filter(t -> t.getTaskId().equals("exists"))
                 .findFirst().get()
                 .getOutputs()
-                .get("uris"))
-                .containsKey("hello.txt")).isTrue();
+                .get("uris"))).containsKey("hello.txt");
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         }
 
@@ -266,9 +265,9 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList()).hasSize(6);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
             assertThat(execution.findTaskRunsByTaskId("t4").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-            assertThat(execution.findTaskRunsByTaskId("t1").getFirst().getOutputs().get("value")).isEqualTo("first");
-            assertThat(execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value")).isEqualTo("second");
-            assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value")).isEqualTo("third");
+            assertThat(execution.findTaskRunsByTaskId("t1").getFirst().getOutputs()).containsEntry("value", "first");
+            assertThat(execution.findTaskRunsByTaskId("t2").getFirst().getOutputs()).containsEntry("value", "second");
+            assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs()).containsEntry("value", "third");
         }
 
         public void namespaceFilesWithNamespaces(RunnerUtils runnerUtils) throws TimeoutException, IOException, QueueException {
@@ -290,9 +289,9 @@ public class WorkingDirectoryTest {
             assertThat(execution.getTaskRunList()).hasSize(6);
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
             assertThat(execution.findTaskRunsByTaskId("t4").getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
-            assertThat(execution.findTaskRunsByTaskId("t1").getFirst().getOutputs().get("value")).isEqualTo("first in third namespace");
-            assertThat(execution.findTaskRunsByTaskId("t2").getFirst().getOutputs().get("value")).isEqualTo("second in second namespace");
-            assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs().get("value")).isEqualTo("third in first namespace");
+            assertThat(execution.findTaskRunsByTaskId("t1").getFirst().getOutputs()).containsEntry("value", "first in third namespace");
+            assertThat(execution.findTaskRunsByTaskId("t2").getFirst().getOutputs()).containsEntry("value", "second in second namespace");
+            assertThat(execution.findTaskRunsByTaskId("t3").getFirst().getOutputs()).containsEntry("value", "third in first namespace");
         }
 
         @SuppressWarnings("unchecked")
@@ -301,11 +300,11 @@ public class WorkingDirectoryTest {
 
             assertThat(execution.getTaskRunList()).hasSize(3);
             Map<String, Object> encryptedString = (Map<String, Object>) execution.findTaskRunsByTaskId("encrypted").getFirst().getOutputs().get("value");
-            assertThat(encryptedString.get("type")).isEqualTo(EncryptedString.TYPE);
+            assertThat(encryptedString).containsEntry("type", EncryptedString.TYPE);
             String encryptedValue = (String) encryptedString.get("value");
             assertThat(encryptedValue).isNotEqualTo("Hello World");
             assertThat(runContextFactory.of().decrypt(encryptedValue)).isEqualTo("Hello World");
-            assertThat(execution.findTaskRunsByTaskId("decrypted").getFirst().getOutputs().get("value")).isEqualTo("Hello World");
+            assertThat(execution.findTaskRunsByTaskId("decrypted").getFirst().getOutputs()).containsEntry("value", "Hello World");
         }
 
         private void put(String path, String content) throws IOException {

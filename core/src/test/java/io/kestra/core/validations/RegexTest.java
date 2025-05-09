@@ -27,11 +27,11 @@ class RegexTest {
     void inputValidation() {
         final RegexCls validRegex = new RegexCls("[A-Z]+");
 
-        assertThat(modelValidator.isValid(validRegex).isEmpty()).isTrue();
+        assertThat(modelValidator.isValid(validRegex)).isEmpty();
 
         final RegexCls invalidRegex = new RegexCls("\\");
 
-        assertThat(modelValidator.isValid(invalidRegex).isPresent()).isTrue();
+        assertThat(modelValidator.isValid(invalidRegex)).isPresent();
         assertThat(modelValidator.isValid(invalidRegex).get().getMessage()).contains("invalid pattern");
     }
 }

@@ -35,8 +35,9 @@ public abstract class AbstractFilter<F extends Enum<F>> {
     private F field;
     private String labelKey;
 
-    abstract public FilterType getType();
+    public abstract FilterType getType();
 
+    @Override
     public boolean equals(Object o) {
         if (o == this) {
             return true;

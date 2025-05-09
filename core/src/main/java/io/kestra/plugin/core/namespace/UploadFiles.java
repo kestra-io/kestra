@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 
@@ -188,7 +187,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
 
         for (Path path : runContext.workingDir().findAllFilesMatching(files)) {
             File file = path.toFile();
-            Path resolve = Paths.get("/").resolve(runContext.workingDir().path().relativize(file.toPath()));
+            Path resolve = Path.of("/").resolve(runContext.workingDir().path().relativize(file.toPath()));
 
             Path targetFilePath = Path.of(destination, resolve.toString());
             storageNamespace.putFile(targetFilePath, new FileInputStream(file), runContext.render(conflict).as(Namespace.Conflicts.class).orElseThrow());

@@ -38,9 +38,9 @@ class VariablesTest {
     @EnabledIfEnvironmentVariable(named = "ENV_TEST2", matches = ".*")
     void recursiveVars(Execution execution) {
         assertThat(execution.getTaskRunList()).hasSize(3);
-        assertThat(execution.findTaskRunsByTaskId("variable").getFirst().getOutputs().get("value")).isEqualTo("1 > 2 > 3");
-        assertThat(execution.findTaskRunsByTaskId("env").getFirst().getOutputs().get("value")).isEqualTo("true Pass by env");
-        assertThat(execution.findTaskRunsByTaskId("global").getFirst().getOutputs().get("value")).isEqualTo("string 1 true 2");
+        assertThat(execution.findTaskRunsByTaskId("variable").getFirst().getOutputs()).containsEntry("value", "1 > 2 > 3");
+        assertThat(execution.findTaskRunsByTaskId("env").getFirst().getOutputs()).containsEntry("value", "true Pass by env");
+        assertThat(execution.findTaskRunsByTaskId("global").getFirst().getOutputs()).containsEntry("value", "string 1 true 2");
     }
 
     @Test

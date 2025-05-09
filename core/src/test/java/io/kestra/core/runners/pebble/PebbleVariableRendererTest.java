@@ -58,12 +58,12 @@ class PebbleVariableRendererTest {
 
         Map<String, Object> render = variableRenderer.render(in, vars);
 
-        assertThat(render.get("string")).isEqualTo("string");
-        assertThat(render.get("int")).isEqualTo("1");
-        assertThat(render.get("float")).isEqualTo("1.123");
-        assertThat(render.get("list")).isEqualTo("[\"string\",1,1.123]");
-        assertThat(render.get("bool")).isEqualTo("true");
-        assertThat(render.get("date")).isEqualTo("2013-09-08T16:19+02:00");
+        assertThat(render).containsEntry("string", "string");
+        assertThat(render).containsEntry("int", "1");
+        assertThat(render).containsEntry("float", "1.123");
+        assertThat(render).containsEntry("list", "[\"string\",1,1.123]");
+        assertThat(render).containsEntry("bool", "true");
+        assertThat(render).containsEntry("date", "2013-09-08T16:19+02:00");
         assertThat((String) render.get("map")).contains("\"int\":1");
         assertThat((String) render.get("map")).contains("\"int\":1");
         assertThat((String) render.get("map")).contains("\"float\":1.123");
@@ -71,7 +71,7 @@ class PebbleVariableRendererTest {
         assertThat((String) render.get("map")).startsWith("{");
         assertThat((String) render.get("map")).endsWith("}");
         assertThat((String) render.get("escape")).contains("[\"string\",1,1.123] // {");
-        assertThat((String) render.get("empty")).isEqualTo("");
+        assertThat((String) render.get("empty")).isEmpty();
         assertThat((String) render.get("concat")).isEqualTo("applepearbanana");
     }
 
@@ -95,9 +95,9 @@ class PebbleVariableRendererTest {
 
         assertThat((String) render.get("map")).contains("\"a\":\"1\"");
         assertThat((String) render.get("map")).contains("\"b\":\"2\"");
-        assertThat(render.get("collection")).isEqualTo("[\"1\",\"2\",\"3\"]");
-        assertThat(render.get("array")).isEqualTo("[\"1\",\"2\",\"3\"]");
-        assertThat(render.get("inta")).isEqualTo("[1,2,3]");
+        assertThat(render).containsEntry("collection", "[\"1\",\"2\",\"3\"]");
+        assertThat(render).containsEntry("array", "[\"1\",\"2\",\"3\"]");
+        assertThat(render).containsEntry("inta", "[1,2,3]");
     }
 
     @Test
@@ -146,9 +146,9 @@ class PebbleVariableRendererTest {
 
         Map<String, Object> render = variableRenderer.render(in, vars);
 
-        assertThat(render.get("string")).isEqualTo("top");
+        assertThat(render).containsEntry("string", "top");
         assertThat((List<String>) render.get("list")).containsExactlyInAnyOrder("top", "awesome");
-        assertThat(render.get("int")).isEqualTo(1);
+        assertThat(render).containsEntry("int", 1);
     }
 
     @Test

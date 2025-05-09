@@ -36,8 +36,8 @@ import lombok.experimental.SuperBuilder;
     @JsonSubTypes.Type(value = ExecutionKilledExecution.class, name = "execution"),
     @JsonSubTypes.Type(value = ExecutionKilledTrigger.class, name = "trigger"),
 })
-abstract public class ExecutionKilled implements TenantInterface, HasUID {
-    abstract public String getType();
+public abstract class ExecutionKilled implements TenantInterface, HasUID {
+    public abstract String getType();
 
     public enum State {
         REQUESTED,

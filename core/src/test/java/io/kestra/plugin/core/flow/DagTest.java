@@ -41,7 +41,7 @@ public class DagTest {
     @ExecuteFlow("flows/valids/dag.yaml")
     void dag(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList().size()).isEqualTo(7);
+        assertThat(execution.getTaskRunList()).hasSize(7);
     }
 
     @Test
@@ -49,8 +49,8 @@ public class DagTest {
         Flow flow = this.parse("flows/invalids/dag-cyclicdependency.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getConstraintViolations()).hasSize(1);
 
         assertThat(validate.get().getMessage()).contains("dag: Cyclic dependency detected: task1, task2");
     }
@@ -60,8 +60,8 @@ public class DagTest {
         Flow flow = this.parse("flows/invalids/dag-notexist-task.yaml");
         Optional<ConstraintViolationException> validate = modelValidator.isValid(flow);
 
-        assertThat(validate.isPresent()).isTrue();
-        assertThat(validate.get().getConstraintViolations().size()).isEqualTo(1);
+        assertThat(validate).isPresent();
+        assertThat(validate.get().getConstraintViolations()).hasSize(1);
 
         assertThat(validate.get().getMessage()).contains("dag: Not existing task id in dependency: taskX");
     }

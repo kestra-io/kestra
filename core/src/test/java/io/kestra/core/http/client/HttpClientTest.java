@@ -178,7 +178,7 @@ class HttpClientTest {
             );
 
             assertThat(response.getStatus().getCode()).isEqualTo(200);
-            assertThat(response.getBody().get("ping")).isEqualTo("pong");
+            assertThat(response.getBody()).containsEntry("ping", "pong");
             assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow()).isEqualTo(MediaType.APPLICATION_JSON);
         }
     }
@@ -238,7 +238,7 @@ class HttpClientTest {
             );
 
             assertThat(response.getStatus().getCode()).isEqualTo(200);
-            assertThat(response.getBody().get("ping")).isEqualTo(UUID);
+            assertThat(response.getBody()).containsEntry("ping", UUID);
             assertThat(response.getHeaders().firstValue(HttpHeaders.CONTENT_TYPE).orElseThrow()).isEqualTo(MediaType.APPLICATION_JSON);
         }
     }
@@ -282,8 +282,8 @@ class HttpClientTest {
             );
 
             assertThat(response.getStatus().getCode()).isEqualTo(200);
-            assertThat(response.getBody().get("ping")).isEqualTo("pong");
-            assertThat(response.getBody().get("int")).isEqualTo("1");
+            assertThat(response.getBody()).containsEntry("ping", "pong");
+            assertThat(response.getBody()).containsEntry("int", "1");
             assertThat((String) response.getBody().get("file")).contains("logback");
             // @FIXME: Request seems to be correct, but not returned by micronaut
             // assertThat((String) response.getBody().get("inputStream"), containsString("logback"));

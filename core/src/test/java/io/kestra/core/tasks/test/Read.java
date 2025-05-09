@@ -9,7 +9,8 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 
 import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.nio.file.Path;
+
 import jakarta.validation.constraints.NotNull;
 
 @SuperBuilder
@@ -25,7 +26,7 @@ public class Read extends Task implements RunnableTask<Read.Output> {
     @Override
     public Read.Output run(RunContext runContext) throws Exception {
         return Output.builder()
-            .value(Files.readString(Paths.get(runContext.workingDir().path().toString(), runContext.render(path))))
+            .value(Files.readString(Path.of(runContext.workingDir().path().toString(), runContext.render(path))))
             .build();
     }
 

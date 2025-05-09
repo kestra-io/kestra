@@ -107,7 +107,7 @@ class BasicAuthServiceTest {
         assertThat(actualConfiguration).isEqualTo(applicationYamlConfiguration);
 
         Optional<Setting> maybeSetting = settingRepositoryInterface.findByKey(BasicAuthService.BASIC_AUTH_SETTINGS_KEY);
-        assertThat(maybeSetting.isPresent()).isTrue();
+        assertThat(maybeSetting).isPresent();
         assertThat(maybeSetting.get().getValue()).isEqualTo(JacksonMapper.toMap(applicationYamlConfiguration));
     }
 

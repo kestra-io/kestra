@@ -68,8 +68,8 @@ class TimeLineSearchTest {
         List<QueryFilter> updatedFilters = QueryFilterUtils.updateFilters(filters, newStartDate);
         // THEN
         assertEquals(1, updatedFilters.size()); // TIME_RANGE filter should be removed
-        assertEquals(QueryFilter.Field.START_DATE, updatedFilters.get(0).field());
-        assertEquals(newStartDate.toString(), updatedFilters.get(0).value());
+        assertEquals(QueryFilter.Field.START_DATE, updatedFilters.getFirst().field());
+        assertEquals(newStartDate.toString(), updatedFilters.getFirst().value());
     }
 
     @Test

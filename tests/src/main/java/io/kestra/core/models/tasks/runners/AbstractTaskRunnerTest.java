@@ -144,7 +144,7 @@ public abstract class AbstractTaskRunnerTest {
         assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("file.txt")), StandardCharsets.UTF_8)).isEqualTo("file from output dir");
         assertThat(IOUtils.toString(storage.get(null, "unittest", outputFiles.get("nested/file.txt")), StandardCharsets.UTF_8)).isEqualTo("nested file from output dir");
 
-        assertThat(defaultLogConsumer.getOutputs().get("logOutput")).isEqualTo("Hello World");
+        assertThat(defaultLogConsumer.getOutputs()).containsEntry("logOutput", "Hello World");
     }
 
     @Test
@@ -159,7 +159,7 @@ public abstract class AbstractTaskRunnerTest {
 
         var taskRunner = taskRunner();
         TaskException taskException = assertThrows(TaskException.class, () -> taskRunner.run(runContext, commands, Collections.emptyList()));
-        assertThat(taskException.getLogConsumer().getOutputs().get("logOutput")).isEqualTo("Hello World");
+        assertThat(taskException.getLogConsumer().getOutputs()).containsEntry("logOutput", "Hello World");
     }
 
     protected RunContext runContext(RunContextFactory runContextFactory) {

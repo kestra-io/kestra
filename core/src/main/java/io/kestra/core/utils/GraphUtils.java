@@ -424,9 +424,9 @@ public class GraphUtils {
                 // link to next edge
                 AbstractGraph nextEdge = relationType ==  RelationType.AFTER_EXECUTION ? graph.getEnd() : (relationType == RelationType.FINALLY ? graph.getAfterExecution() : graph.getFinally());
                 if (GraphUtils.isAllLinkToEnd(relationType)) {
-                    if (currentGraph instanceof GraphCluster && ((GraphCluster) currentGraph).getEnd() != null) {
+                    if (currentGraph instanceof GraphCluster cluster && cluster.getEnd() != null) {
                         graph.addEdge(
-                            ((GraphCluster) currentGraph).getEnd(),
+                            cluster.getEnd(),
                             nextEdge,
                             new Relation()
                         );
@@ -443,7 +443,7 @@ public class GraphUtils {
 
                 if (!iterator.hasNext() && !isAllLinkToEnd(relationType)) {
                     graph.addEdge(
-                        currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getEnd() : currentGraph,
+                        currentGraph instanceof GraphCluster gc ? gc.getEnd() : currentGraph,
                         nextEdge,
                         new Relation()
                     );
@@ -453,7 +453,7 @@ public class GraphUtils {
     }
 
     private static AbstractGraph toEdgeTarget(AbstractGraph currentGraph) {
-        return currentGraph instanceof GraphCluster ? ((GraphCluster) currentGraph).getRoot() : currentGraph;
+        return currentGraph instanceof GraphCluster gc ? gc.getRoot() : currentGraph;
     }
 
     private static void fillGraphDag(
@@ -557,8 +557,8 @@ public class GraphUtils {
                         }
                     }
 
-                    if (currentGraph instanceof GraphTask) {
-                        nodeTaskCreated.add((GraphTask) currentGraph);
+                    if (currentGraph instanceof GraphTask task) {
+                        nodeTaskCreated.add(task);
                     }
                     nodeCreatedIds.add(currentTask.getTask().getId());
                 }

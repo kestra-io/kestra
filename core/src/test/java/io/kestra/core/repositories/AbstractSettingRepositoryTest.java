@@ -24,26 +24,26 @@ public abstract class AbstractSettingRepositoryTest {
             .build();
 
         Optional<Setting> find = settingRepository.findByKey(setting.getKey());
-        assertThat(find.isPresent()).isFalse();
+        assertThat(find).isNotPresent();
 
         Setting save = settingRepository.save(setting);
 
         find = settingRepository.findByKey(save.getKey());
 
-        assertThat(find.isPresent()).isTrue();
+        assertThat(find).isPresent();
         assertThat(find.get().getValue()).isEqualTo(save.getValue());
 
         List<Setting> all = settingRepository.findAll();
-        assertThat(all.size()).isEqualTo(1);
+        assertThat(all).hasSize(1);
         assertThat(all.getFirst().getValue()).isEqualTo(setting.getValue());
 
         Setting delete = settingRepository.delete(setting);
         assertThat(delete.getValue()).isEqualTo(setting.getValue());
 
         all = settingRepository.findAll();
-        assertThat(all.size()).isZero();
+        assertThat(all).isEmpty();
 
         find = settingRepository.findByKey(setting.getKey());
-        assertThat(find.isPresent()).isFalse();
+        assertThat(find).isNotPresent();
     }
 }

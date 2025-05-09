@@ -15,6 +15,6 @@ class RunnableTaskExceptionTest {
     void simple(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList()).hasSize(1);
-        assertThat(execution.getTaskRunList().get(0).getOutputs().get("message")).isEqualTo("Oh no!");
+        assertThat(execution.getTaskRunList().getFirst().getOutputs()).containsEntry("message", "Oh no!");
     }
 }

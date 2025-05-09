@@ -42,8 +42,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("string").get()).isEqualTo(new KVValue("stringValue"));
-            assertThat(((InternalKVStore) kvStore).getRawValue("string").get()).isEqualTo("\"stringValue\"");
+            assertThat(kvStore.getValue("string")).contains(new KVValue("stringValue"));
+            assertThat(((InternalKVStore) kvStore).getRawValue("string")).contains("\"stringValue\"");
         }
     }
 
@@ -70,8 +70,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("int").get()).isEqualTo(new KVValue(1));
-            assertThat(((InternalKVStore) kvStore).getRawValue("int").get()).isEqualTo("1");
+            assertThat(kvStore.getValue("int")).contains(new KVValue(1));
+            assertThat(((InternalKVStore) kvStore).getRawValue("int")).contains("1");
         }
     }
 
@@ -100,8 +100,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("intStr").get()).isEqualTo(new KVValue("1"));
-            assertThat(((InternalKVStore) kvStore).getRawValue("intStr").get()).isEqualTo("\"1\"");
+            assertThat(kvStore.getValue("intStr")).contains(new KVValue("1"));
+            assertThat(((InternalKVStore) kvStore).getRawValue("intStr")).contains("\"1\"");
         }
     }
 
@@ -128,8 +128,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("object").get()).isEqualTo(new KVValue(Map.of("some", "json")));
-            assertThat(((InternalKVStore) kvStore).getRawValue("object").get()).isEqualTo("{some:\"json\"}");
+            assertThat(kvStore.getValue("object")).contains(new KVValue(Map.of("some", "json")));
+            assertThat(((InternalKVStore) kvStore).getRawValue("object")).contains("{some:\"json\"}");
         }
     }
 
@@ -158,8 +158,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("objectStr").get()).isEqualTo(new KVValue("{\"some\":\"json\"}"));
-            assertThat(((InternalKVStore) kvStore).getRawValue("objectStr").get()).isEqualTo("\"{\\\"some\\\":\\\"json\\\"}\"");
+            assertThat(kvStore.getValue("objectStr")).contains(new KVValue("{\"some\":\"json\"}"));
+            assertThat(((InternalKVStore) kvStore).getRawValue("objectStr")).contains("\"{\\\"some\\\":\\\"json\\\"}\"");
         }
     }
 
@@ -192,8 +192,8 @@ class KvUpdateCommandTest {
             KVStoreService kvStoreService = ctx.getBean(KVStoreService.class);
             KVStore kvStore = kvStoreService.get(null, "io.kestra.cli", null);
 
-            assertThat(kvStore.getValue("objectFromFile").get()).isEqualTo(new KVValue(Map.of("some", "json", "from", "file")));
-            assertThat(((InternalKVStore) kvStore).getRawValue("objectFromFile").get()).isEqualTo("{some:\"json\",from:\"file\"}");
+            assertThat(kvStore.getValue("objectFromFile")).contains(new KVValue(Map.of("some", "json", "from", "file")));
+            assertThat(((InternalKVStore) kvStore).getRawValue("objectFromFile")).contains("{some:\"json\",from:\"file\"}");
         }
     }
 }

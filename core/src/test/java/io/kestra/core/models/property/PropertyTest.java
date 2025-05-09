@@ -78,8 +78,8 @@ class PropertyTest {
         assertThat(output.getLevel()).isEqualTo(Level.INFO);
         assertThat(output.getList()).containsExactlyInAnyOrder("item1", "item2");
         assertThat(output.getMap()).hasSize(2);
-        assertThat(output.getMap().get("key1")).isEqualTo("value1");
-        assertThat(output.getMap().get("key2")).isEqualTo("value2");
+        assertThat(output.getMap()).containsEntry("key1", "value1");
+        assertThat(output.getMap()).containsEntry("key2", "value2");
         assertThat(output.getMessages()).hasSize(1);
         assertThat(output.getMessages().getFirst().getKey()).isEqualTo("mapKey");
         assertThat(output.getMessages().getFirst().getValue()).isEqualTo("mapValue");
@@ -136,8 +136,8 @@ class PropertyTest {
         assertThat(output.getLevel()).isEqualTo(Level.INFO);
         assertThat(output.getList()).containsExactlyInAnyOrder("item1", "item2");
         assertThat(output.getMap()).hasSize(2);
-        assertThat(output.getMap().get("key1")).isEqualTo("value1");
-        assertThat(output.getMap().get("key2")).isEqualTo("value2");
+        assertThat(output.getMap()).containsEntry("key1", "value1");
+        assertThat(output.getMap()).containsEntry("key2", "value2");
         assertThat(output.getMessages()).hasSize(2);
         assertThat(output.getMessages().getFirst().getKey()).isEqualTo("mapKey1");
         assertThat(output.getMessages().getFirst().getValue()).isEqualTo("mapValue1");
@@ -193,8 +193,8 @@ class PropertyTest {
         assertThat(output.getLevel()).isEqualTo(Level.INFO);
         assertThat(output.getList()).containsExactlyInAnyOrder("item1", "item2");
         assertThat(output.getMap()).hasSize(2);
-        assertThat(output.getMap().get("key1")).isEqualTo("value1");
-        assertThat(output.getMap().get("key2")).isEqualTo("value2");
+        assertThat(output.getMap()).containsEntry("key1", "value1");
+        assertThat(output.getMap()).containsEntry("key2", "value2");
         assertThat(output.getMessages()).hasSize(2);
         assertThat(output.getMessages().getFirst().getKey()).isEqualTo("key1");
         assertThat(output.getMessages().getFirst().getValue()).isEqualTo("value1");
@@ -264,7 +264,7 @@ class PropertyTest {
         ));
 
         var exception = assertThrows(ConstraintViolationException.class, () -> task.run(runContext));
-        assertThat(exception.getConstraintViolations().size()).isEqualTo(1);
+        assertThat(exception.getConstraintViolations()).hasSize(1);
         assertThat(exception.getMessage()).isEqualTo("number: must be greater than or equal to 0");
     }
 
@@ -293,8 +293,8 @@ class PropertyTest {
         assertThat(output).isNotNull();
         assertThat(output.getList()).containsExactlyInAnyOrder("arrayValue1", "arrayValue2");
         assertThat(output.getMap()).hasSize(2);
-        assertThat(output.getMap().get("mapKey1")).isEqualTo("mapValue1");
-        assertThat(output.getMap().get("mapKey2")).isEqualTo("mapValue2");
+        assertThat(output.getMap()).containsEntry("mapKey1", "mapValue1");
+        assertThat(output.getMap()).containsEntry("mapKey2", "mapValue2");
     }
 
     @Test

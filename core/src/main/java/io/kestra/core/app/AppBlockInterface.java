@@ -17,7 +17,8 @@ public interface AppBlockInterface extends io.kestra.core.models.Plugin {
         title = "The type of the block."
     )
     @NotNull
+    @Override
     @NotBlank
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     String getType();
 }

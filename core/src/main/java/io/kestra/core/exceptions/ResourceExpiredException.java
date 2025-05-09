@@ -1,6 +1,9 @@
 package io.kestra.core.exceptions;
 
+import java.io.Serial;
+
 public class ResourceExpiredException extends Exception {
+    @Serial
     private static final long serialVersionUID = 1L;
 
     public ResourceExpiredException(Throwable e) {

@@ -142,14 +142,12 @@ public class InternalNamespace implements Namespace {
                 URI uri = storage.put(tenant, namespace, cleanUri, content);
                 NamespaceFile namespaceFile = new NamespaceFile(relativize(uri), uri, namespace);
                 if (exists) {
-                    logger.debug(String.format(
-                        "File '%s' overwritten into namespace '%s'.",
+                    logger.debug("File '%s' overwritten into namespace '%s'.".formatted(
                         path,
                         namespace
                     ));
                 } else {
-                    logger.debug(String.format(
-                        "File '%s' added to namespace '%s'.",
+                    logger.debug("File '%s' added to namespace '%s'.".formatted(
                         path,
                         namespace
                     ));
@@ -161,8 +159,7 @@ public class InternalNamespace implements Namespace {
                     URI uri = storage.put(tenant, namespace, namespaceFilesPrefix.toUri(), content);
                     yield new NamespaceFile(relativize(uri), uri, namespace);
                 } else {
-                    throw new IOException(String.format(
-                        "File '%s' already exists in namespace '%s' and conflict is set to %s",
+                    throw new IOException("File '%s' already exists in namespace '%s' and conflict is set to %s".formatted(
                         path,
                         namespace,
                         Conflicts.ERROR
@@ -173,15 +170,13 @@ public class InternalNamespace implements Namespace {
                 if (!exists) {
                     URI uri = storage.put(tenant, namespace, namespaceFilesPrefix.toUri(), content);
                     NamespaceFile namespaceFile = new NamespaceFile(relativize(uri), uri, namespace);
-                    logger.debug(String.format(
-                        "File '%s' added to namespace '%s'.",
+                    logger.debug("File '%s' added to namespace '%s'.".formatted(
                         path,
                         namespace
                     ));
                     yield namespaceFile;
                 } else {
-                    logger.debug(String.format(
-                        "File '%s' already exists in namespace '%s' and conflict is set to %s. Skipping.",
+                    logger.debug("File '%s' already exists in namespace '%s' and conflict is set to %s. Skipping.".formatted(
                         path,
                         namespace,
                         Conflicts.SKIP

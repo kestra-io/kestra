@@ -42,7 +42,7 @@ public class DailyExecutionStatistics {
 
     @Value
     @Builder
-    static public class Duration {
+    public static class Duration {
         @NotNull
         java.time.Duration min;
 

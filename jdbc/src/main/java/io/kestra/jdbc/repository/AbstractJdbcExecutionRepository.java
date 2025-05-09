@@ -116,6 +116,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return this.executionQueue;
     }
 
+    @Override
     public Boolean isTaskRunEnabled() {
         return false;
     }
@@ -194,9 +195,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             });
     }
 
-    abstract protected Condition findCondition(String query, Map<String, String> labels);
-    abstract protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation);
+    protected abstract Condition findCondition(String query, Map<String, String> labels);
+    protected abstract Condition findCondition(Map<?, ?> value, QueryFilter.Op operation);
 
+    @Override
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
             .in(state.stream().map(Enum::name).toList());
@@ -988,6 +990,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         return counts;
     }
 
+    @Override
     public List<Execution> lastExecutions(
         @Nullable String tenantId,
         List<FlowFilter> flows
@@ -1272,7 +1275,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
         }
     }
 
-    abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
+    protected abstract Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
 
     protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
         DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,

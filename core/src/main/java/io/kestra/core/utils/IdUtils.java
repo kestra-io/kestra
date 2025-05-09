@@ -11,7 +11,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @SuppressWarnings({"deprecation"})
-abstract public class IdUtils {
+public abstract class IdUtils {
     private static final HashFunction HASH_FUNCTION = Hashing.md5();
     private static final char ID_SEPARATOR = '_';
 

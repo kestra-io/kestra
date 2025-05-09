@@ -37,7 +37,7 @@ class ExitTest {
     @ExecuteFlow("flows/valids/exit.yaml")
     void shouldExitTheExecution(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.WARNING);
-        assertThat(execution.getTaskRunList().size()).isEqualTo(2);
+        assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.WARNING);
     }
 
@@ -62,7 +62,7 @@ class ExitTest {
         assertTrue(countDownLatch.await(1, TimeUnit.MINUTES));
         assertThat(killedExecution.get()).isNotNull();
         assertThat(killedExecution.get().getState().getCurrent()).isEqualTo(State.Type.KILLED);
-        assertThat(killedExecution.get().getTaskRunList().size()).isEqualTo(2);
+        assertThat(killedExecution.get().getTaskRunList()).hasSize(2);
         assertThat(killedExecution.get().getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
         assertThat(killedExecution.get().getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.KILLED);
         receive.blockLast();

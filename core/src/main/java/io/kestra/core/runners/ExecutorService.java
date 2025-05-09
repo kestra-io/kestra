@@ -691,8 +691,7 @@ public class ExecutorService {
                 Optional.of(State.Type.KILLED),
                 t
             ))
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .flatMap(Optional::stream)
             .toList();
 
         this.addWorkerTaskResults(executor, executor.getFlow(), workerTaskResults);

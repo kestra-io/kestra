@@ -25,7 +25,7 @@ public class JdbcQueueConfigurationTest {
 
         // By default, we have 5 computed steps + the minPoll
         List<JdbcQueue.Configuration.Step> steps = configuration.computeSteps();
-        assertThat(steps.size()).isEqualTo(6);
+        assertThat(steps).hasSize(6);
         assertThat(steps).contains(
             new JdbcQueue.Configuration.Step(Duration.ofMillis(25), Duration.ofMillis(1875)),
             new JdbcQueue.Configuration.Step(Duration.ofMillis(31), Duration.ofMillis(3750)),
@@ -45,7 +45,7 @@ public class JdbcQueueConfigurationTest {
 
         // As configured, we should have 6 steps + the minPoll
         List<JdbcQueue.Configuration.Step> steps = configuration.computeSteps();
-        assertThat(steps.size()).isEqualTo(7);
+        assertThat(steps).hasSize(7);
         assertThat(steps).contains(
             new JdbcQueue.Configuration.Step(Duration.ofMillis(1000), Duration.ofMillis(937)),
             new JdbcQueue.Configuration.Step(Duration.ofMillis(1875), Duration.ofMillis(1875)),

@@ -37,7 +37,7 @@ class PluginControllerTest {
                 Argument.listOf(Plugin.class)
             );
 
-            assertThat(list.size()).isEqualTo(2);
+            assertThat(list).hasSize(2);
 
             Plugin template = list.stream()
                 .filter(plugin -> plugin.getTitle().equals("plugin-template-test"))
@@ -48,10 +48,10 @@ class PluginControllerTest {
             assertThat(template.getGroup()).isEqualTo("io.kestra.plugin.templates");
             assertThat(template.getDescription()).isEqualTo("Plugin template for Kestra");
 
-            assertThat(template.getTasks().size()).isEqualTo(1);
+            assertThat(template.getTasks()).hasSize(1);
             assertThat(template.getTasks().getFirst()).isEqualTo("io.kestra.plugin.templates.ExampleTask");
 
-            assertThat(template.getGuides().size()).isEqualTo(2);
+            assertThat(template.getGuides()).hasSize(2);
             assertThat(template.getGuides().getFirst()).isEqualTo("authentication");
 
             Plugin core = list.stream()
@@ -67,7 +67,7 @@ class PluginControllerTest {
                 Argument.listOf(Plugin.class)
             );
 
-            assertThat(list.size()).isEqualTo(2);
+            assertThat(list).hasSize(2);
         });
     }
 
@@ -103,8 +103,8 @@ class PluginControllerTest {
             assertThat(doc.getMarkdown()).contains("Return a value for debugging purposes.");
             assertThat(doc.getMarkdown()).contains("The templated string to render");
             assertThat(doc.getMarkdown()).contains("The generated string");
-            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size()).isEqualTo(1);
-            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
+            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties"))).hasSize(1);
+            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties"))).hasSize(1);
         });
     }
 
@@ -120,8 +120,8 @@ class PluginControllerTest {
             );
 
             assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
-            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties")).size()).isEqualTo(5);
-            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
+            assertThat(((Map<String, Object>) doc.getSchema().getProperties().get("properties"))).hasSize(5);
+            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties"))).hasSize(1);
         });
     }
 
@@ -155,9 +155,9 @@ class PluginControllerTest {
             Map<String, Map<String, Object>> properties = (Map<String, Map<String, Object>>) doc.getSchema().getProperties().get("properties");
 
             assertThat(doc.getMarkdown()).contains("io.kestra.plugin.templates.ExampleTask");
-            assertThat(properties.size()).isEqualTo(17);
-            assertThat(properties.get("id").size()).isEqualTo(4);
-            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties")).size()).isEqualTo(1);
+            assertThat(properties).hasSize(17);
+            assertThat(properties.get("id")).hasSize(4);
+            assertThat(((Map<String, Object>) doc.getSchema().getOutputs().get("properties"))).hasSize(1);
         });
     }
 
@@ -170,7 +170,7 @@ class PluginControllerTest {
                 Argument.mapOf(String.class, Object.class)
             );
 
-            assertThat(doc.get("$ref")).isEqualTo("#/definitions/io.kestra.core.models.flows.Flow");
+            assertThat(doc).containsEntry("$ref", "#/definitions/io.kestra.core.models.flows.Flow");
         });
     }
 
@@ -183,7 +183,7 @@ class PluginControllerTest {
                 Argument.mapOf(String.class, Object.class)
             );
 
-            assertThat(doc.get("$ref")).isEqualTo("#/definitions/io.kestra.core.models.templates.Template");
+            assertThat(doc).containsEntry("$ref", "#/definitions/io.kestra.core.models.templates.Template");
         });
     }
 
@@ -196,7 +196,7 @@ class PluginControllerTest {
                 Argument.mapOf(String.class, Object.class)
             );
 
-            assertThat(doc.get("$ref")).isEqualTo("#/definitions/io.kestra.core.models.tasks.Task");
+            assertThat(doc).containsEntry("$ref", "#/definitions/io.kestra.core.models.tasks.Task");
         });
     }
 
@@ -209,7 +209,7 @@ class PluginControllerTest {
                 Argument.listOf(InputType.class)
             );
 
-            assertThat(doc.size()).isEqualTo(19);
+            assertThat(doc).hasSize(19);
         });
     }
 
@@ -223,9 +223,9 @@ class PluginControllerTest {
                 DocumentationWithSchema.class
             );
 
-            assertThat(doc.getSchema().getProperties().size()).isEqualTo(3);
+            assertThat(doc.getSchema().getProperties()).hasSize(3);
             Map<String, Object> properties = (Map<String, Object>) doc.getSchema().getProperties().get("properties");
-            assertThat(properties.size()).isEqualTo(8);
+            assertThat(properties).hasSize(8);
 //            assertThat(((Map<String, Object>) properties.get("name")).get("$deprecated"), is(true));
         });
     }

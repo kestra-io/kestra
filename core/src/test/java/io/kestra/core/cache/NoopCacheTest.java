@@ -31,21 +31,21 @@ class NoopCacheTest {
     void getAllPresent() {
         cache.put("key", "value");
 
-        assertThat(cache.getAllPresent(List.of("key"))).hasSize(0);
+        assertThat(cache.getAllPresent(List.of("key"))).isEmpty();
     }
 
     @Test
     void getAll() {
         cache.put("key", "value");
 
-        assertThat(cache.getAll(List.of("key"), it -> Map.of("key", "value"))).hasSize(0);
+        assertThat(cache.getAll(List.of("key"), it -> Map.of("key", "value"))).isEmpty();
     }
 
     @Test
     void putAll() {
         cache.putAll(Map.of("key", "value"));
 
-        assertThat(cache.getAllPresent(List.of("key"))).hasSize(0);
+        assertThat(cache.getAllPresent(List.of("key"))).isEmpty();
     }
 
     @Test
@@ -82,7 +82,7 @@ class NoopCacheTest {
     void asMap() {
         cache.put("key", "value");
 
-        assertThat(cache.asMap()).hasSize(0);
+        assertThat(cache.asMap()).isEmpty();
     }
 
     @Test
@@ -90,7 +90,7 @@ class NoopCacheTest {
         cache.put("key", "value");
         cache.cleanUp();
 
-        assertThat(cache.getAllPresent(List.of("key"))).hasSize(0);
+        assertThat(cache.getAllPresent(List.of("key"))).isEmpty();
     }
 
     @Test

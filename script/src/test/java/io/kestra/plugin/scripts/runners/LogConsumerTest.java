@@ -66,7 +66,7 @@ class LogConsumerTest {
         );
         Await.until(() -> run.getLogConsumer().getStdOutCount() == 2, null, Duration.ofSeconds(5));
         assertThat(run.getLogConsumer().getStdOutCount()).isEqualTo(2);
-        assertThat(run.getLogConsumer().getOutputs().get("someOutput")).isEqualTo(outputValue);
+        assertThat(run.getLogConsumer().getOutputs()).containsEntry("someOutput", outputValue);
     }
 
     @Test

@@ -55,9 +55,7 @@ public class KestraBeansFactory {
     }
 
     public String getStoragePluginId(StorageInterfaceFactory storageInterfaceFactory) {
-        return storageType.orElseThrow(() -> new KestraRuntimeException(String.format(
-            "No storage configured through the application property '%s'. Supported types are: %s"
-            , KESTRA_STORAGE_TYPE_CONFIG,
+        return storageType.orElseThrow(() -> new KestraRuntimeException("No storage configured through the application property '%s'. Supported types are: %s".formatted(KESTRA_STORAGE_TYPE_CONFIG,
             storageInterfaceFactory.getLoggableStorageIds()
         )));
     }

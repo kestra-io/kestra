@@ -24,7 +24,7 @@ class NindentFilterTest {
     @Test
     void nindentEmpty() throws IllegalVariableEvaluationException {
         String render = variableRenderer.render("{{ '' | nindent(2) }}", Map.of());
-        assertThat(render).isEqualTo("");
+        assertThat(render).isEmpty();
     }
 
     @Test

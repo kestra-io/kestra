@@ -5,7 +5,7 @@ import io.kestra.core.contexts.KestraContext;
 import jakarta.annotation.PostConstruct;
 import picocli.CommandLine;
 
-abstract public class AbstractServerCommand extends AbstractCommand implements ServerCommandInterface {
+public abstract class AbstractServerCommand extends AbstractCommand implements ServerCommandInterface {
     @CommandLine.Option(names = {"--port"}, description = "The port to bind")
     Integer serverPort;
 

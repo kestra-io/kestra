@@ -49,7 +49,7 @@ class InternalKVStoreTest {
         Instant before = Instant.now().minusMillis(100);
         InternalKVStore kv = kv();
 
-        assertThat(kv.list().size()).isZero();
+        assertThat(kv.list()).isEmpty();
 
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), complexValue));
         kv.put("my-second-key", new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(10)), complexValue));
@@ -57,7 +57,7 @@ class InternalKVStoreTest {
         Instant after = Instant.now().plusMillis(100);
 
         List<KVEntry> list = kv.list();
-        assertThat(list.size()).isEqualTo(2);
+        assertThat(list).hasSize(2);
 
         list.forEach(kvEntry -> {
             assertThat(kvEntry.creationDate().isAfter(before) && kvEntry.creationDate().isBefore(after)).isTrue();
@@ -66,7 +66,7 @@ class InternalKVStoreTest {
 
         Map<String, KVEntry> map = list.stream().collect(Collectors.toMap(KVEntry::key, Function.identity()));
         // Check that we don't list expired keys
-        assertThat(map.size()).isEqualTo(2);
+        assertThat(map).hasSize(2);
 
         KVEntry myKeyValue = map.get(TEST_KV_KEY);
         assertThat(myKeyValue.creationDate().plus(Duration.ofMinutes(4)).isBefore(myKeyValue.expirationDate()) &&
@@ -127,7 +127,7 @@ class InternalKVStoreTest {
         Optional<KVValue> value = kv.getValue(TEST_KV_KEY);
 
         // Then
-        assertThat(value.get()).isEqualTo(new KVValue(complexValue));
+        assertThat(value).contains(new KVValue(complexValue));
     }
 
     @Test
@@ -139,7 +139,7 @@ class InternalKVStoreTest {
         Optional<KVValue> value = kv.getValue(TEST_KV_KEY);
 
         // Then
-        assertThat(value.isEmpty()).isTrue();
+        assertThat(value).isEmpty();
     }
 
     @Test

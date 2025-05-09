@@ -45,7 +45,7 @@ class RuntimeLabelsTest {
             )
         );
 
-        assertThat(execution.getTaskRunList().size()).isEqualTo(4);
+        assertThat(execution.getTaskRunList()).hasSize(4);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         String labelsOverriderTaskRunId = execution.findTaskRunsByTaskId("override-labels").getFirst().getId();
@@ -64,7 +64,7 @@ class RuntimeLabelsTest {
     @Test
     @ExecuteFlow("flows/valids/npe-labels-update-task.yml")
     void noNpeOnNullPreviousExecutionLabels(Execution execution) {
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         String labelsTaskRunId = execution.findTaskRunsByTaskId("labels").getFirst().getId();
@@ -90,7 +90,7 @@ class RuntimeLabelsTest {
             )
         );
 
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         String labelsTaskRunId = execution.findTaskRunsByTaskId("update-labels").getFirst().getId();

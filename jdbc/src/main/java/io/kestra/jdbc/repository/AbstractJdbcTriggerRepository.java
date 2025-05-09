@@ -345,6 +345,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
         return query == null ? DSL.trueCondition() : jdbcRepository.fullTextCondition(List.of("fulltext"), query);
     }
 
+    @Override
     protected Condition defaultFilter(String tenantId, boolean allowDeleted) {
         return buildTenantCondition(tenantId);
     }

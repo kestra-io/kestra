@@ -101,6 +101,7 @@ public interface LogRepositoryInterface extends SaveRepositoryInterface<LogEntry
         @Nullable DateUtils.GroupType groupBy
     );
 
+    @Override
     LogEntry save(LogEntry log);
 
     Integer purge(Execution execution);

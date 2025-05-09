@@ -375,7 +375,7 @@ class JsonSchemaGeneratorTest {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
-    private static abstract class ParentClass extends Task {
+    private abstract static class ParentClass extends Task {
         @Builder.Default
         private Property<String> stringWithDefault = Property.of("default");
     }

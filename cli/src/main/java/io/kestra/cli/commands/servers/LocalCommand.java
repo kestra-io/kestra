@@ -7,7 +7,6 @@ import jakarta.inject.Inject;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 
 @CommandLine.Command(
@@ -21,7 +20,7 @@ public class LocalCommand extends StandAloneCommand {
 
     @SuppressWarnings("unused")
     public static Map<String, Object> propertiesOverrides() {
-        Path data = Paths.get("").toAbsolutePath().resolve("data");
+        Path data = Path.of("").toAbsolutePath().resolve("data");
 
         //noinspection ResultOfMethodCallIgnored
         data.toFile().mkdirs();

@@ -74,6 +74,7 @@ public class MysqlRepository<T> extends AbstractJdbcRepository<T> {
         return this.sort(select, Pageable.from(Sort.of(Order.asc(orderField))));
     }
 
+    @Override
     public Field<Integer> weekFromTimestamp(Field<Timestamp> timestampField) {
         // DAYOFWEEK > 5 means you have less than 3 days in the first week of the year so we choose mode 2 (see https://www.w3resource.com/mysql/date-and-time-functions/mysql-week-function.php)
         return DSL.when(

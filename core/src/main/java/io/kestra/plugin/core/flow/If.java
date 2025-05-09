@@ -104,6 +104,7 @@ public class If extends Task implements FlowableTask<If.Output> {
     @Getter(AccessLevel.NONE)
     protected List<Task> _finally;
 
+    @Override
     public List<Task> getFinally() {
         return this._finally;
     }

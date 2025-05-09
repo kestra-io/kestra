@@ -17,7 +17,7 @@ class ListUtilsTest {
 
         list = ListUtils.emptyOnNull(List.of("1"));
         assertThat(list).isNotNull();
-        assertThat(list.size()).isEqualTo(1);
+        assertThat(list).hasSize(1);
     }
 
     @Test

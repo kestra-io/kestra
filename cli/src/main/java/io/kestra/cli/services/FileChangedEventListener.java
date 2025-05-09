@@ -89,14 +89,14 @@ public class FileChangedEventListener {
                 if (current.isDeleted()) {
                     this.flows.stream().filter(flowWithPath -> flowWithPath.uidWithoutRevision().equals(current.uidWithoutRevision())).findFirst()
                         .ifPresent(flowWithPath -> {
-                            deleteFile(Paths.get(flowWithPath.getPath()));
+                            deleteFile(Path.of(flowWithPath.getPath()));
                         });
                     this.flows.removeIf(flowWithPath -> flowWithPath.uidWithoutRevision().equals(current.uidWithoutRevision()));
                 } else {
                     // if updated/created
                     Optional<FlowWithPath> flowWithPath = this.flows.stream().filter(fwp -> fwp.uidWithoutRevision().equals(current.uidWithoutRevision())).findFirst();
                     if (flowWithPath.isPresent()) {
-                        flowToFile(current, Paths.get(flowWithPath.get().getPath()));
+                        flowToFile(current, Path.of(flowWithPath.get().getPath()));
                     } else {
                         flows.add(FlowWithPath.of(current, this.buildPath(current).toString()));
                         flowToFile(current, null);

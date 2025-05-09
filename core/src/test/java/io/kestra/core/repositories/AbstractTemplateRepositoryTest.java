@@ -50,11 +50,11 @@ public abstract class AbstractTemplateRepositoryTest {
         templateRepository.create(template);
 
         Optional<Template> full = templateRepository.findById(null, template.getNamespace(), template.getId());
-        assertThat(full.isPresent()).isTrue();
+        assertThat(full).isPresent();
         assertThat(full.get().getId()).isEqualTo(template.getId());
 
         full = templateRepository.findById(null, template.getNamespace(), template.getId());
-        assertThat(full.isPresent()).isTrue();
+        assertThat(full).isPresent();
         assertThat(full.get().getId()).isEqualTo(template.getId());
     }
 
@@ -71,7 +71,7 @@ public abstract class AbstractTemplateRepositoryTest {
         List<Template> templates = templateRepository.findByNamespace(null, template1.getNamespace());
         assertThat(templates.size()).isGreaterThanOrEqualTo(1);
         templates = templateRepository.findByNamespace(null, template2.getNamespace());
-        assertThat(templates.size()).isEqualTo(1);
+        assertThat(templates).hasSize(1);
     }
 
     @Test
@@ -133,9 +133,9 @@ public abstract class AbstractTemplateRepositoryTest {
         Template save = templateRepository.create(template);
         templateRepository.delete(save);
 
-        assertThat(templateRepository.findById(null, template.getNamespace(), template.getId()).isPresent()).isFalse();
+        assertThat(templateRepository.findById(null, template.getNamespace(), template.getId())).isNotPresent();
 
-        assertThat(TemplateListener.getEmits().size()).isEqualTo(2);
+        assertThat(TemplateListener.getEmits()).hasSize(2);
         assertThat(TemplateListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.CREATE).count()).isEqualTo(1L);
         assertThat(TemplateListener.getEmits().stream().filter(r -> r.getType() == CrudEventType.DELETE).count()).isEqualTo(1L);
     }

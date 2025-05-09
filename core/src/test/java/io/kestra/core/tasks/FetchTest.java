@@ -18,7 +18,7 @@ class FetchTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(4);
         TaskRun fetch = execution.findTaskRunsByTaskId("get-log-task").getFirst();
-        assertThat(fetch.getOutputs().get("size")).isEqualTo(3);
+        assertThat(fetch.getOutputs()).containsEntry("size", 3);
     }
 
     @Test
@@ -27,7 +27,7 @@ class FetchTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(4);
         TaskRun fetch = execution.findTaskRunsByTaskId("get-log-task").getFirst();
-        assertThat(fetch.getOutputs().get("size")).isEqualTo(1);
+        assertThat(fetch.getOutputs()).containsEntry("size", 1);
     }
 
     @Test
@@ -36,6 +36,6 @@ class FetchTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(4);
         TaskRun fetch = execution.findTaskRunsByTaskId("get-log-task").getFirst();
-        assertThat(fetch.getOutputs().get("size")).isEqualTo(3);
+        assertThat(fetch.getOutputs()).containsEntry("size", 3);
     }
 }

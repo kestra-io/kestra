@@ -34,7 +34,7 @@ class ScriptServiceTest {
     void replaceInternalStorage() throws IOException {
         var runContext = runContextFactory.of();
         var command  = ScriptService.replaceInternalStorage(runContext, null, false);
-        assertThat(command).isEqualTo("");
+        assertThat(command).isEmpty();
 
         command = ScriptService.replaceInternalStorage(runContext, "my command", false);
         assertThat(command).isEqualTo("my command");
@@ -53,14 +53,14 @@ class ScriptServiceTest {
             assertThat(matcher.matches()).isTrue();
             Path absoluteLocalFilePath = Path.of(matcher.group(1));
             localFile = absoluteLocalFilePath.toFile();
-            assertThat(localFile.exists()).isTrue();
+            assertThat(localFile).exists();
 
             command = ScriptService.replaceInternalStorage(runContext, "my command with an internal storage file: " + internalStorageUri, true);
             matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(command);
             assertThat(matcher.matches()).isTrue();
             String relativePath = matcher.group(1);
             assertThat(relativePath).doesNotStartWith("/");
-            assertThat(runContext.workingDir().resolve(Path.of(relativePath)).toFile().exists()).isTrue();
+            assertThat(runContext.workingDir().resolve(Path.of(relativePath)).toFile()).exists();
         } finally {
             localFile.delete();
             path.toFile().delete();
@@ -96,7 +96,7 @@ class ScriptServiceTest {
             Matcher matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(commands.getFirst());
             assertThat(matcher.matches()).isTrue();
             File file = Path.of(matcher.group(1)).toFile();
-            assertThat(file.exists()).isTrue();
+            assertThat(file).exists();
             filesToDelete.add(file);
 
             assertThat(commands.get(1)).isEqualTo("my command with some additional var usage: " + wdir);
@@ -105,7 +105,7 @@ class ScriptServiceTest {
             matcher = COMMAND_PATTERN_CAPTURE_LOCAL_PATH.matcher(commands.getFirst());
             assertThat(matcher.matches()).isTrue();
             file = runContext.workingDir().resolve(Path.of(matcher.group(1))).toFile();
-            assertThat(file.exists()).isTrue();
+            assertThat(file).exists();
             filesToDelete.add(file);
         } catch (IllegalVariableEvaluationException e) {
             throw new RuntimeException(e);
@@ -125,7 +125,7 @@ class ScriptServiceTest {
 
         var outputFiles = ScriptService.uploadOutputFiles(runContext, Path.of("/tmp/unittest"));
         assertThat(outputFiles, not(anEmptyMap()));
-        assertThat(outputFiles.get("file.txt")).isEqualTo(URI.create("kestra:///file.txt"));
+        assertThat(outputFiles).containsEntry("file.txt", URI.create("kestra:///file.txt"));
 
         path.toFile().delete();
     }
@@ -143,22 +143,22 @@ class ScriptServiceTest {
         var runContext = runContext(runContextFactory, "very.very.very.very.very.very.very.very.very.very.very.very.long.namespace");
 
         var labels = ScriptService.labels(runContext, "kestra.io/");
-        assertThat(labels.size()).isEqualTo(6);
-        assertThat(labels.get("kestra.io/namespace")).isEqualTo("very.very.very.very.very.very.very.very.very.very.very.very.lon");
-        assertThat(labels.get("kestra.io/flow-id")).isEqualTo("flowId");
-        assertThat(labels.get("kestra.io/task-id")).isEqualTo("task");
-        assertThat(labels.get("kestra.io/execution-id")).isEqualTo("executionId");
-        assertThat(labels.get("kestra.io/taskrun-id")).isEqualTo("taskrun");
-        assertThat(labels.get("kestra.io/taskrun-attempt")).isEqualTo("0");
+        assertThat(labels).hasSize(6);
+        assertThat(labels).containsEntry("kestra.io/namespace", "very.very.very.very.very.very.very.very.very.very.very.very.lon");
+        assertThat(labels).containsEntry("kestra.io/flow-id", "flowId");
+        assertThat(labels).containsEntry("kestra.io/task-id", "task");
+        assertThat(labels).containsEntry("kestra.io/execution-id", "executionId");
+        assertThat(labels).containsEntry("kestra.io/taskrun-id", "taskrun");
+        assertThat(labels).containsEntry("kestra.io/taskrun-attempt", "0");
 
         labels = ScriptService.labels(runContext, null, true, true);
-        assertThat(labels.size()).isEqualTo(6);
-        assertThat(labels.get("namespace")).isEqualTo("very.very.very.very.very.very.very.very.very.very.very.very.lon");
-        assertThat(labels.get("flow-id")).isEqualTo("flowid");
-        assertThat(labels.get("task-id")).isEqualTo("task");
-        assertThat(labels.get("execution-id")).isEqualTo("executionid");
-        assertThat(labels.get("taskrun-id")).isEqualTo("taskrun");
-        assertThat(labels.get("taskrun-attempt")).isEqualTo("0");
+        assertThat(labels).hasSize(6);
+        assertThat(labels).containsEntry("namespace", "very.very.very.very.very.very.very.very.very.very.very.very.lon");
+        assertThat(labels).containsEntry("flow-id", "flowid");
+        assertThat(labels).containsEntry("task-id", "task");
+        assertThat(labels).containsEntry("execution-id", "executionid");
+        assertThat(labels).containsEntry("taskrun-id", "taskrun");
+        assertThat(labels).containsEntry("taskrun-attempt", "0");
     }
 
     @Test
@@ -166,12 +166,12 @@ class ScriptServiceTest {
         var runContext = runContext(runContextFactory, "namespace");
         String jobName = ScriptService.jobName(runContext);
         assertThat(jobName).startsWith("namespace-flowid-task-");
-        assertThat(jobName.length()).isEqualTo(27);
+        assertThat(jobName).hasSize(27);
 
         runContext = runContext(runContextFactory, "very.very.very.very.very.very.very.very.very.very.very.very.long.namespace");
         jobName = ScriptService.jobName(runContext);
         assertThat(jobName).startsWith("veryveryveryveryveryveryveryveryveryveryveryverylongnames-");
-        assertThat(jobName.length()).isEqualTo(63);
+        assertThat(jobName).hasSize(63);
     }
 
     @Test

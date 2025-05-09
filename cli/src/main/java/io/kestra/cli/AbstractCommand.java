@@ -40,7 +40,7 @@ import picocli.CommandLine.Option;
 )
 @Slf4j
 @Introspected
-abstract public class AbstractCommand implements Callable<Integer> {
+public abstract class AbstractCommand implements Callable<Integer> {
     @Inject
     private ApplicationContext applicationContext;
 
@@ -71,7 +71,7 @@ abstract public class AbstractCommand implements Callable<Integer> {
     private boolean internalLog = false;
 
     @Option(names = {"-c", "--config"}, description = "Path to a configuration file")
-    private Path config = Paths.get(System.getProperty("user.home"), ".kestra/config.yml");
+    private Path config = Path.of(System.getProperty("user.home"), ".kestra/config.yml");
 
     @Option(names = {"-p", "--plugins"}, description = "Path to plugins directory")
     protected Path pluginsPath = Optional.ofNullable(System.getenv("KESTRA_PLUGINS_PATH")).map(Paths::get).orElse(null);

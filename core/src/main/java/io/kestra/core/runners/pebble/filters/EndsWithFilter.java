@@ -14,7 +14,7 @@ public class EndsWithFilter implements Filter {
 
     private static final String ARGUMENT_VALUE = "value";
 
-    private final static List<String> ARGS = List.of(ARGUMENT_VALUE);
+    private static final List<String> ARGS = List.of(ARGUMENT_VALUE);
 
     @Override
     public List<String> getArgumentNames() {

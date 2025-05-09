@@ -25,7 +25,7 @@ import java.util.function.Consumer;
 @Singleton
 @Slf4j
 public class JdbcWorkerTriggerResultQueueService implements Closeable {
-    private final static ObjectMapper MAPPER = JdbcMapper.of();
+    private static final ObjectMapper MAPPER = JdbcMapper.of();
 
     private final JdbcQueue<WorkerTriggerResult> workerTriggerResultQueue;
 

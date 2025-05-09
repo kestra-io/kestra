@@ -48,12 +48,12 @@ public abstract class AbstractIndent {
         }
 
         if (!args.containsKey("amount")) {
-            throw new PebbleException(null, String.format("The '%s' filter expects an integer as argument 'amount'.", indentType), lineNumber, self.getName());
+            throw new PebbleException(null, "The '%s' filter expects an integer as argument 'amount'.".formatted(indentType), lineNumber, self.getName());
         }
 
         int amount = ((Long) args.get("amount")).intValue();
         if (!(amount >= 0)) {
-            throw new PebbleException(null, String.format("The '%s' filter expects a positive integer >=0 as argument 'amount'.", indentType), lineNumber, self.getName());
+            throw new PebbleException(null, "The '%s' filter expects a positive integer >=0 as argument 'amount'.".formatted(indentType), lineNumber, self.getName());
         }
 
         String prefix = prefix(args);
@@ -66,7 +66,7 @@ public abstract class AbstractIndent {
             // nindent filter adds a newline to the string and indents each line by defined amount of spaces
             return (newLine + input).replace(newLine, newLine + prefix.repeat(amount));
         }
-        throw new PebbleException(null, String.format("Unknow indent type '%s'.", indentType), lineNumber, self.getName());
+        throw new PebbleException(null, "Unknow indent type '%s'.".formatted(indentType), lineNumber, self.getName());
 
     }
 }

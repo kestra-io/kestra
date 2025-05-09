@@ -244,7 +244,7 @@ public class DeserializationIssuesCaseTest {
             Duration.ofMinutes(1)
         );
         receive.blockLast();
-        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().size()).isEqualTo(2);
+        assertThat(workerTaskResult.get().getTaskRun().getState().getHistories()).hasSize(2);
         assertThat(workerTaskResult.get().getTaskRun().getState().getHistories().getFirst().getState()).isEqualTo(State.Type.CREATED);
         assertThat(workerTaskResult.get().getTaskRun().getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }

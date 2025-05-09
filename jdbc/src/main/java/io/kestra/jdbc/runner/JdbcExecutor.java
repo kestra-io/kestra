@@ -601,7 +601,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                     subflowExecutionDedup
                                         .forEach(throwConsumer(subflowExecution -> {
                                             Execution subExecution = subflowExecution.getExecution();
-                                            String log = String.format("Created new execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]]", subExecution.getId(), subExecution.getFlowId(), subExecution.getNamespace());
+                                            String log = "Created new execution [[link execution=\"%s\" flowId=\"%s\" namespace=\"%s\"]]".formatted(subExecution.getId(), subExecution.getFlowId(), subExecution.getNamespace());
 
                                             JdbcExecutor.log.info(log);
 

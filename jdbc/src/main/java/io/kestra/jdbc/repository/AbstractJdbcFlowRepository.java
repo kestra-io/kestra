@@ -537,8 +537,8 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .where(this.defaultFilter(tenantId));
     }
 
-    abstract protected Condition findCondition(String query, Map<String, String> labels);
-    abstract protected Condition findCondition(Object value, QueryFilter.Op operation);
+    protected abstract Condition findCondition(String query, Map<String, String> labels);
+    protected abstract Condition findCondition(Object value, QueryFilter.Op operation);
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -637,7 +637,7 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
 
-    abstract protected Condition findSourceCodeCondition(String query);
+    protected abstract Condition findSourceCodeCondition(String query);
 
     @Override
     @SuppressWarnings({"unchecked", "rawtypes"})

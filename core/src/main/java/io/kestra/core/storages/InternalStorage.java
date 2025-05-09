@@ -266,6 +266,7 @@ public class InternalStorage implements Storage {
         return this.storage.put(context.getTenantId(), context.getNamespace(), resolve, new BufferedInputStream(inputStream));
     }
 
+    @Override
     public Optional<StorageContext.Task> getTaskStorageContext() {
         return Optional.ofNullable((context instanceof StorageContext.Task task) ? task : null);
     }

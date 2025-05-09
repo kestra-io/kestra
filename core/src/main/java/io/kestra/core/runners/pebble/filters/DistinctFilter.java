@@ -19,14 +19,13 @@ public class DistinctFilter implements Filter {
     @Override
     public Object apply(Object input, Map<String, Object> args, PebbleTemplate self, EvaluationContext context,
                         int lineNumber) throws PebbleException {
-								
+
 		if (input == null) {
             return "null";
-        }						
-							
+        }
+
         // Check if the input is a list
-        if (input instanceof List<?>) {
-            List<?> list = (List<?>) input;
+        if (input instanceof List<?> list) {
 
             // Deduplicate the list by using distinct stream operation
             return list.stream().distinct().collect(Collectors.toList());

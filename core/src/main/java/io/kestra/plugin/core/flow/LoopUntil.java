@@ -81,6 +81,7 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
     @Getter(AccessLevel.NONE)
     protected List<Task> _finally;
 
+    @Override
     public List<Task> getFinally() {
         return this._finally;
     }
@@ -177,7 +178,7 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
         Integer iterationCount = Optional.ofNullable(parentTaskRun.getOutputs())
             .map(outputs -> (Integer) outputs.get("iterationCount"))
             .orElse(0);
-        
+
         Optional<Integer> maxIterations = runContext.render(this.getCheckFrequency().getMaxIterations()).as(Integer.class);
         if (maxIterations.isPresent() && iterationCount != null && iterationCount > maxIterations.get()) {
             if (printLog) {logger.warn("Max iterations reached");}
@@ -186,8 +187,8 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
 
         Instant creationDate = parentTaskRun.getState().getHistories().getFirst().getDate();
         Optional<Duration> maxDuration = runContext.render(this.getCheckFrequency().getMaxDuration()).as(Duration.class);
-        if (maxDuration.isPresent() 
-            && creationDate != null 
+        if (maxDuration.isPresent()
+            && creationDate != null
             && creationDate.plus(maxDuration.get()).isBefore(Instant.now())) {
             if (printLog) {logger.warn("Max duration reached");}
 
@@ -204,8 +205,8 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
             return Optional.empty();
         }
 
-        if (childTaskExecuted 
-            && this.reachedMaximums(runContext, execution, parentTaskRun, true) 
+        if (childTaskExecuted
+            && this.reachedMaximums(runContext, execution, parentTaskRun, true)
             && Boolean.TRUE.equals(runContext.render(this.failOnMaxReached).as(Boolean.class).orElseThrow())
         ) {
             return Optional.of(State.Type.FAILED);

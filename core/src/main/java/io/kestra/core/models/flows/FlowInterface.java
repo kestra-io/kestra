@@ -32,6 +32,7 @@ public interface FlowInterface extends FlowId, DeletedInterface, TenantInterface
 
     boolean isDisabled();
 
+    @Override
     boolean isDeleted();
 
     List<Label> getLabels();
@@ -174,7 +175,7 @@ public interface FlowInterface extends FlowId, DeletedInterface, TenantInterface
                         Map.Entry::getKey,
                         Map.Entry::getValue,
                         (u, v) -> {
-                            throw new IllegalStateException(String.format("Duplicate key %s", u));
+                            throw new IllegalStateException("Duplicate key %s".formatted(u));
                         },
                         LinkedHashMap::new
                     ));

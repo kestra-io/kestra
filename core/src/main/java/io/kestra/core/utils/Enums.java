@@ -77,13 +77,12 @@ public final class Enums {
             .filter(e -> e.name().equals(value.toUpperCase(Locale.ROOT)))
             .findFirst()
             .or(() -> Optional.ofNullable(fallbackMap.get(value.toUpperCase(Locale.ROOT))))
-            .orElseThrow(() -> new IllegalArgumentException(String.format(
-                "Unsupported enum value '%s'. Expected one of: %s",
-                value,
-                Arrays.stream(values)
-                    .map(Enum::name)
-                    .collect(Collectors.joining(", ", "[", "]"))
-            )));
+            .orElseThrow(() -> new IllegalArgumentException("Unsupported enum value '%s'. Expected one of: %s".formatted(
+            value,
+            Arrays.stream(values)
+                .map(Enum::name)
+                .collect(Collectors.joining(", ", "[", "]"))
+        )));
     }
 
     /**

@@ -37,11 +37,11 @@ class MapUtilsTest {
 
         Map<String, Object> merge = MapUtils.merge(a, b);
 
-        assertThat(((Map<String, Object>) merge.get("map")).size()).isEqualTo(4);
-        assertThat(((Map<String, Object>) merge.get("map")).get("map_c")).isEqualTo("e");
-        assertThat(merge.get("string")).isEqualTo("b");
-        assertThat(merge.get("int")).isEqualTo(1);
-        assertThat(merge.get("float")).isEqualTo(1F);
+        assertThat(((Map<String, Object>) merge.get("map"))).hasSize(4);
+        assertThat(((Map<String, Object>) merge.get("map"))).containsEntry("map_c", "e");
+        assertThat(merge).containsEntry("string", "b");
+        assertThat(merge).containsEntry("int", 1);
+        assertThat(merge).containsEntry("float", 1F);
         assertThat((List<?>) merge.get("lists")).hasSize(2);
     }
 
@@ -67,8 +67,8 @@ class MapUtilsTest {
 
         Map<String, Object> merge = MapUtils.merge(a, b);
 
-        assertThat(((Map<String, Object>) merge.get("map")).size()).isEqualTo(3);
-        assertThat(((Map<String, Object>) merge.get("map")).get("map_c")).isEqualTo("e");
+        assertThat(((Map<String, Object>) merge.get("map"))).hasSize(3);
+        assertThat(((Map<String, Object>) merge.get("map"))).containsEntry("map_c", "e");
         assertThat(((Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) merge.get("map")).get("map_a")).get("sub")).get("null")).isNull();
     }
 
@@ -100,7 +100,7 @@ class MapUtilsTest {
 
         map = MapUtils.emptyOnNull(Map.of("key", "value"));
         assertThat(map).isNotNull();
-        assertThat(map.size()).isEqualTo(1);
+        assertThat(map).hasSize(1);
     }
 
     @Test

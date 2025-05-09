@@ -28,7 +28,7 @@ class PreconditionFilterValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(condition);
-        assertThat(valid.isEmpty()).isTrue();
+        assertThat(valid).isEmpty();
     }
 
     @ParameterizedTest
@@ -41,7 +41,7 @@ class PreconditionFilterValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(condition);
-        assertThat(valid.isEmpty()).isFalse();
+        assertThat(valid).isNotEmpty();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
         assertThat(valid.get().getMessage()).isEqualTo(": `value` cannot be null for type " + type.name() + "\n");
     }
@@ -57,7 +57,7 @@ class PreconditionFilterValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(condition);
-        assertThat(valid.isEmpty()).isFalse();
+        assertThat(valid).isNotEmpty();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
         assertThat(valid.get().getMessage()).isEqualTo(": `values` must be null for type " + type.name() + "\n");
     }
@@ -72,7 +72,7 @@ class PreconditionFilterValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(condition);
-        assertThat(valid.isEmpty()).isTrue();
+        assertThat(valid).isEmpty();
     }
 
     @ParameterizedTest
@@ -85,7 +85,7 @@ class PreconditionFilterValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(condition);
-        assertThat(valid.isEmpty()).isFalse();
+        assertThat(valid).isNotEmpty();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
         assertThat(valid.get().getMessage()).isEqualTo(": `value` must be null for type " + type.name() + "\n");
     }

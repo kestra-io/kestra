@@ -42,7 +42,7 @@ class SearcheableTest {
             .build();
 
         ArrayListTotal<TestEntity> result = searcheable.search(searched);
-        assertEquals(25, result.get(0).age());
+        assertEquals(25, result.getFirst().age());
         assertEquals(30, result.get(1).age());
         assertEquals(35, result.get(2).age());
         assertEquals(40, result.get(3).age());
@@ -56,7 +56,7 @@ class SearcheableTest {
             .build();
 
         ArrayListTotal<TestEntity> result = searcheable.search(searched);
-        assertEquals(40, result.get(0).age());
+        assertEquals(40, result.getFirst().age());
         assertEquals(35, result.get(1).age());
         assertEquals(30, result.get(2).age());
         assertEquals(25, result.get(3).age());
@@ -71,8 +71,8 @@ class SearcheableTest {
             .build();
 
         ArrayListTotal<TestEntity> result = searcheable.search(searched);
-        assertEquals("Alice", result.get(0).name());
-        assertEquals(30, result.get(0).age());
+        assertEquals("Alice", result.getFirst().name());
+        assertEquals(30, result.getFirst().age());
         assertEquals("Alice", result.get(1).name());
         assertEquals(40, result.get(1).age());
     }

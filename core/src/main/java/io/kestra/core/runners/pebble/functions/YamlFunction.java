@@ -15,11 +15,12 @@ import java.util.List;
 import java.util.Map;
 
 public class YamlFunction implements Function {
-    final static ObjectMapper MAPPER = new ObjectMapper(
+    static final ObjectMapper MAPPER = new ObjectMapper(
         new YAMLFactory()
     ).findAndRegisterModules();
     private static final TypeReference<Object> TYPE_REFERENCE = new TypeReference<>() {};
 
+    @Override
     public List<String> getArgumentNames() {
         return List.of("yaml");
     }

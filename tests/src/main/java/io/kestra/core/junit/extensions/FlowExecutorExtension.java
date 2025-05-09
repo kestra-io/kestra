@@ -14,7 +14,7 @@ import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Objects;
 import lombok.SneakyThrows;
@@ -58,7 +58,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         LocalFlowRepositoryLoader repositoryLoader = context.getBean(LocalFlowRepositoryLoader.class);
         TestsUtils.loads(tenantId, repositoryLoader, Objects.requireNonNull(url));
 
-        Flow flow = YamlParser.parse(Paths.get(url.toURI()).toFile(), Flow.class);
+        Flow flow = YamlParser.parse(Path.of(url.toURI()).toFile(), Flow.class);
         RunnerUtils runnerUtils = context.getBean(RunnerUtils.class);
         return runnerUtils.runOne(tenantId, flow.getNamespace(), flow.getId(), Duration.parse(executeFlow.timeout()));
     }
@@ -70,7 +70,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
 
         String path = executeFlow.value();
         URL resource = loadFile(path);
-        Flow loadedFlow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
+        Flow loadedFlow = YamlParser.parse(Path.of(resource.toURI()).toFile(), Flow.class);
         flowRepository.findAllForAllTenants().stream()
             .filter(flow -> Objects.equals(flow.getId(), loadedFlow.getId()))
             .forEach(flow -> flowRepository.delete(FlowWithSource.of(flow, "unused")));

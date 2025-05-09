@@ -36,8 +36,7 @@ public class KVStoreService {
             try {
                 flowService.checkAllowedNamespace(tenant, namespace, tenant, fromNamespace);
             } catch (IllegalArgumentException e) {
-                throw new KVStoreException(String.format(
-                    "Cannot access the KV store. Access to '%s' namespace is not allowed from '%s'.", namespace, fromNamespace)
+                throw new KVStoreException("Cannot access the KV store. Access to '%s' namespace is not allowed from '%s'.".formatted(namespace, fromNamespace)
                 );
             }
         }
@@ -49,8 +48,7 @@ public class KVStoreService {
             KVStore kvStore = new InternalKVStore(tenant, namespace, storageInterface);
             try {
                 if (kvStore.list().isEmpty()) {
-                    throw new KVStoreException(String.format(
-                        "Cannot access the KV store. The namespace '%s' does not exist.",
+                    throw new KVStoreException("Cannot access the KV store. The namespace '%s' does not exist.".formatted(
                         namespace
                     ));
                 }

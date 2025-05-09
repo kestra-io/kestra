@@ -143,6 +143,7 @@ public class SchedulerStreamingTest extends AbstractSchedulerTest {
         @Builder.Default
         private Boolean failed = false;
 
+        @Override
         public Publisher<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) {
             startedEvaluate.compute(this.failed, (val, integer) -> integer == null ? 1 : integer + 1);
 

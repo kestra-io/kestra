@@ -37,6 +37,7 @@ public final class TestWorkingDir implements WorkingDir {
         this.delegate = delegate;
     }
 
+    @Override
     public String id() {
         return id;
     }

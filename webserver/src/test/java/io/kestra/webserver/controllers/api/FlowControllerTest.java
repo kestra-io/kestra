@@ -94,7 +94,7 @@ class FlowControllerTest {
         String result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/full"), String.class);
         Flow flow = YamlParser.parse(result, Flow.class);
         assertThat(flow.getId()).isEqualTo("full");
-        assertThat(flow.getTasks().size()).isEqualTo(5);
+        assertThat(flow.getTasks()).hasSize(5);
     }
 
     @Test
@@ -127,9 +127,9 @@ class FlowControllerTest {
     void graph() {
         FlowGraph result = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.tests/all-flowable/graph"), FlowGraph.class);
 
-        assertThat(result.getNodes().size()).isEqualTo(38);
-        assertThat(result.getEdges().size()).isEqualTo(42);
-        assertThat(result.getClusters().size()).isEqualTo(7);
+        assertThat(result.getNodes()).hasSize(38);
+        assertThat(result.getEdges()).hasSize(42);
+        assertThat(result.getClusters()).hasSize(7);
         assertThat(result.getClusters().stream().map(FlowGraph.Cluster::getCluster).toList(), Matchers.everyItem(
             Matchers.hasProperty("uid", Matchers.not(Matchers.startsWith("cluster_cluster_")))
         ));
@@ -167,7 +167,7 @@ class FlowControllerTest {
         TestsUtils.loads(null, repositoryLoader, FlowControllerTest.class.getClassLoader().getResource("flows/getflowsbynamespace"));
 
         List<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/flows/io.kestra.unittest.flowsbynamespace"), Argument.listOf(Flow.class));
-        assertThat(flows.size()).isEqualTo(2);
+        assertThat(flows).hasSize(2);
         assertThat(flows.stream().map(Flow::getId).toList()).containsExactlyInAnyOrder("getbynamespace-test-flow", "getbynamespace-test-flow2");
     }
 
@@ -182,7 +182,7 @@ class FlowControllerTest {
         );
 
         List<Flow> updated = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows), Argument.listOf(Flow.class));
-        assertThat(updated.size()).isEqualTo(3);
+        assertThat(updated).hasSize(3);
 
         Flow retrieve = parseFlow(client.toBlocking().retrieve(GET("/api/v1/flows/io.kestra.updatenamespace/f1"), String.class));
         assertThat(retrieve.getId()).isEqualTo("f1");
@@ -195,7 +195,7 @@ class FlowControllerTest {
 
         // f3 & f4 must be updated
         updated = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/flows/io.kestra.updatenamespace", flows), Argument.listOf(Flow.class));
-        assertThat(updated.size()).isEqualTo(4);
+        assertThat(updated).hasSize(4);
         assertThat(updated.get(2).getInputs().getFirst().getId()).isEqualTo("3-3");
         assertThat(updated.get(3).getInputs().getFirst().getId()).isEqualTo("4");
 
@@ -277,7 +277,7 @@ class FlowControllerTest {
                     .contentType(MediaType.APPLICATION_YAML),
                 Argument.listOf(FlowWithSource.class)
             );
-        assertThat(updated.size()).isEqualTo(3);
+        assertThat(updated).hasSize(3);
 
         client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow1"));
         client.toBlocking().exchange(DELETE("/api/v1/flows/io.kestra.updatenamespace/flow2"));
@@ -450,7 +450,7 @@ class FlowControllerTest {
         List<String> namespaces = client.toBlocking().retrieve(
             HttpRequest.GET("/api/v1/flows/distinct-namespaces"), Argument.listOf(String.class));
 
-        assertThat(namespaces.size()).isEqualTo(8);
+        assertThat(namespaces).hasSize(8);
     }
 
     @Test
@@ -732,13 +732,13 @@ class FlowControllerTest {
         HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate", flow).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
 
         List<ValidateConstraintViolation> body = response.body();
-        assertThat(body.size()).isEqualTo(2);
+        assertThat(body).hasSize(2);
         // We don't send any revision while the flow already exists so it's outdated
         assertThat(body.getFirst().isOutdated()).isTrue();
         assertThat(body.getFirst().getDeprecationPaths()).hasSize(3);
         assertThat(body.getFirst().getDeprecationPaths()).containsExactlyInAnyOrder("tasks[1]", "tasks[1].additionalProperty", "listeners");
-        assertThat(body.getFirst().getWarnings().size()).isZero();
-        assertThat(body.getFirst().getInfos().size()).isZero();
+        assertThat(body.getFirst().getWarnings()).isEmpty();
+        assertThat(body.getFirst().getInfos()).isEmpty();
         assertThat(body.get(1).isOutdated()).isFalse();
         assertThat(body.get(1).getDeprecationPaths()).containsExactlyInAnyOrder("tasks[0]", "tasks[1]");
         assertThat(body, everyItem(
@@ -751,7 +751,7 @@ class FlowControllerTest {
         response = client.toBlocking().exchange(POST("/api/v1/flows/validate", flow).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
 
         body = response.body();
-        assertThat(body.size()).isEqualTo(2);
+        assertThat(body).hasSize(2);
         assertThat(body.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
         assertThat(body.get(1).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
     }
@@ -766,10 +766,10 @@ class FlowControllerTest {
         HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate", source).contentType(MediaType.APPLICATION_YAML), Argument.listOf(ValidateConstraintViolation.class));
 
         List<ValidateConstraintViolation> body = response.body();
-        assertThat(body.size()).isEqualTo(1);
+        assertThat(body).hasSize(1);
         assertThat(body.getFirst().getDeprecationPaths()).hasSize(1);
         assertThat(body.getFirst().getDeprecationPaths().getFirst()).isEqualTo("tasks[0]");
-        assertThat(body.getFirst().getInfos().size()).isEqualTo(1);
+        assertThat(body.getFirst().getInfos()).hasSize(1);
         assertThat(body.getFirst().getInfos().getFirst()).isEqualTo("io.kestra.core.tasks.log.Log is replaced by io.kestra.plugin.core.log.Log");
     }
 
@@ -827,7 +827,7 @@ class FlowControllerTest {
         HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate/task", task).contentType(MediaType.APPLICATION_JSON), Argument.listOf(ValidateConstraintViolation.class));
 
         List<ValidateConstraintViolation> body = response.body();
-        assertThat(body.size()).isEqualTo(1);
+        assertThat(body).hasSize(1);
         assertThat(body, everyItem(
             Matchers.hasProperty("constraints", nullValue())
         ));
@@ -839,8 +839,8 @@ class FlowControllerTest {
 
         body = response.body();
 
-        assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
+        assertThat(body).hasSize(1);
+        assertThat(body.getFirst().getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTask");
 
         resource = TestsUtils.class.getClassLoader().getResource("tasks/invalidTaskUnknownProp.json");
         task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
@@ -849,8 +849,8 @@ class FlowControllerTest {
 
         body = response.body();
 
-        assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        assertThat(body).hasSize(1);
+        assertThat(body.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
 
         resource = TestsUtils.class.getClassLoader().getResource("tasks/invalidTaskMissingProp.json");
         task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
@@ -859,8 +859,8 @@ class FlowControllerTest {
 
         body = response.body();
 
-        assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("message: must not be null");
+        assertThat(body).hasSize(1);
+        assertThat(body.getFirst().getConstraints()).contains("message: must not be null");
     }
 
     @Test
@@ -872,7 +872,7 @@ class FlowControllerTest {
         HttpResponse<List<ValidateConstraintViolation>> response = client.toBlocking().exchange(POST("/api/v1/flows/validate/trigger", task).contentType(MediaType.APPLICATION_JSON), Argument.listOf(ValidateConstraintViolation.class));
 
         List<ValidateConstraintViolation> body = response.body();
-        assertThat(body.size()).isEqualTo(1);
+        assertThat(body).hasSize(1);
         assertThat(body, everyItem(
             Matchers.hasProperty("constraints", nullValue())
         ));
@@ -884,8 +884,8 @@ class FlowControllerTest {
 
         body = response.body();
 
-        assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTrigger");
+        assertThat(body).hasSize(1);
+        assertThat(body.getFirst().getConstraints()).contains("Invalid type: io.kestra.plugin.core.debug.UnknownTrigger");
 
         resource = TestsUtils.class.getClassLoader().getResource("triggers/invalidTriggerUnknownProp.json");
         task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
@@ -894,8 +894,8 @@ class FlowControllerTest {
 
         body = response.body();
 
-        assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("Unrecognized field \"unknownProp\"");
+        assertThat(body).hasSize(1);
+        assertThat(body.getFirst().getConstraints()).contains("Unrecognized field \"unknownProp\"");
 
         resource = TestsUtils.class.getClassLoader().getResource("triggers/invalidTriggerMissingProp.json");
         task = Files.readString(Path.of(Objects.requireNonNull(resource).getPath()), Charset.defaultCharset());
@@ -904,8 +904,8 @@ class FlowControllerTest {
 
         body = response.body();
 
-        assertThat(body.size()).isEqualTo(1);
-        assertThat(body.get(0).getConstraints()).contains("cron: must not be null");
+        assertThat(body).hasSize(1);
+        assertThat(body.getFirst().getConstraints()).contains("cron: must not be null");
     }
 
     private Flow generateFlow(String namespace, String inputName) {

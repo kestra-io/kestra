@@ -30,7 +30,7 @@ public class NullCoalescingExpression extends BinaryExpression<Object> {
 
     @Override
     public String toString() {
-        return String.format("%s ?? %s", getLeftExpression(), getRightExpression());
+        return "%s ?? %s".formatted(getLeftExpression(), getRightExpression());
     }
 
 }

@@ -378,8 +378,7 @@ public class FlowInputOutput {
                     throw output.toConstraintViolationException(e.getMessage(), current);
                 }
             })
-            .filter(Optional::isPresent)
-            .map(Optional::get)
+            .flatMap(Optional::stream)
             .collect(HashMap::new, (map, entry) -> map.put(entry.getKey(), entry.getValue()), Map::putAll);
 
         // Ensure outputs are compliant with tasks outputs.

@@ -16,8 +16,9 @@ public interface TaskInterface extends Plugin, PluginVersioning {
     String getId();
 
     @NotNull
+    @Override
     @NotBlank
-    @Pattern(regexp="\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
+    @Pattern(regexp = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     @Schema(title = "The class name of this task.")
     String getType();
 }

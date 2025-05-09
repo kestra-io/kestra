@@ -23,7 +23,7 @@ class UndefinedCoalescingExpressionTest {
 
         String render = variableRenderer.render("{{ null ??? 'IS NULL' }}", vars);
 
-        assertThat(render).isEqualTo("");
+        assertThat(render).isEmpty();
 
         render = variableRenderer.render("{{ undefined ??? 'IS UNDEFINED' }}", vars);
 

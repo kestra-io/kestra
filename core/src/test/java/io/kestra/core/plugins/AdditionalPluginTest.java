@@ -26,8 +26,8 @@ class AdditionalPluginTest {
         assertThat(execution).isNotNull();
         assertThat(execution.getState().isSuccess()).isTrue();
         assertThat(execution.getTaskRunList()).hasSize(2);
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("output")).isEqualTo("1 -> Hello");
-        assertThat(execution.getTaskRunList().get(1).getOutputs().get("output")).isEqualTo("Hello World!");
+        assertThat(execution.getTaskRunList().getFirst().getOutputs()).containsEntry("output", "1 -> Hello");
+        assertThat(execution.getTaskRunList().get(1).getOutputs()).containsEntry("output", "Hello World!");
     }
 
     @SuperBuilder
@@ -61,7 +61,7 @@ class AdditionalPluginTest {
     // IMPORTANT: The abstract plugin base class must define using the PluginDeserializer,
     // AND concrete subclasses must be annotated by @JsonDeserialize() to avoid StackOverflow.
     @JsonDeserialize(using = PluginDeserializer.class)
-    public static abstract class BaseAdditionalPluginTest extends AdditionalPlugin {
+    public abstract static class BaseAdditionalPluginTest extends AdditionalPlugin {
         public abstract String sayHello();
     }
 

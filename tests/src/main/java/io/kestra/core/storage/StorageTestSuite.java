@@ -636,7 +636,7 @@ public abstract class StorageTestSuite {
             storageInterface.get(tenantId, prefix, new URI("/" + prefix + "/storage/put.yml"))
         );
 
-        assertThat(putFromAnother.toString()).isEqualTo(new URI("kestra:///" + prefix + "/storage/put_from_another.yml").toString());
+        assertThat(putFromAnother).hasToString(new URI("kestra:///" + prefix + "/storage/put_from_another.yml").toString());
         InputStream get = storageInterface.get(tenantId, prefix, new URI("/" + prefix + "/storage/put_from_another.yml"));
         assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
     }
@@ -687,7 +687,7 @@ public abstract class StorageTestSuite {
         URI put = putFile(tenantId, "/" + prefix + "/storage/put.yml");
         InputStream get = storageInterface.get(tenantId, prefix, new URI("/" + prefix + "/storage/put.yml"));
 
-        assertThat(put.toString()).isEqualTo(new URI("kestra:///" + prefix + "/storage/put.yml").toString());
+        assertThat(put).hasToString(new URI("kestra:///" + prefix + "/storage/put.yml").toString());
         assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
     }
     //endregion

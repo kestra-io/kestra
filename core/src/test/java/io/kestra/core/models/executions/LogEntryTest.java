@@ -22,16 +22,16 @@ public class LogEntryTest {
             .message("message")
             .build();
         Map<String, Object> logMap = logEntry.toLogMap();
-        assertThat(logMap.get("tenantId")).isEqualTo("tenantId");
-        assertThat(logMap.get("namespace")).isEqualTo("namespace");
-        assertThat(logMap.get("flowId")).isEqualTo("flowId");
-        assertThat(logMap.get("taskId")).isEqualTo("taskId");
-        assertThat(logMap.get("executionId")).isEqualTo("executionId");
-        assertThat(logMap.get("taskRunId")).isEqualTo("taskRunId");
-        assertThat(logMap.get("attemptNumber")).isEqualTo(1);
-        assertThat(logMap.get("triggerId")).isEqualTo("triggerId");
-        assertThat(logMap.get("thread")).isEqualTo("thread");
-        assertThat(logMap.get("message")).isEqualTo("message");
+        assertThat(logMap).containsEntry("tenantId", "tenantId");
+        assertThat(logMap).containsEntry("namespace", "namespace");
+        assertThat(logMap).containsEntry("flowId", "flowId");
+        assertThat(logMap).containsEntry("taskId", "taskId");
+        assertThat(logMap).containsEntry("executionId", "executionId");
+        assertThat(logMap).containsEntry("taskRunId", "taskRunId");
+        assertThat(logMap).containsEntry("attemptNumber", 1);
+        assertThat(logMap).containsEntry("triggerId", "triggerId");
+        assertThat(logMap).containsEntry("thread", "thread");
+        assertThat(logMap).containsEntry("message", "message");
     }
 
 }

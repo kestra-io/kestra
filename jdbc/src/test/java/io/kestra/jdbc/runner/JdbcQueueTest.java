@@ -27,7 +27,7 @@ import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
-abstract public class JdbcQueueTest {
+public abstract class JdbcQueueTest {
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
     protected QueueInterface<FlowInterface> flowQueue;

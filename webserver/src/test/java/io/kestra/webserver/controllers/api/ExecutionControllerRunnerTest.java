@@ -151,12 +151,12 @@ class ExecutionControllerRunnerTest {
 
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.CREATED);
         assertThat(result.getFlowId()).isEqualTo("inputs");
-        assertThat(result.getInputs().get("float")).isEqualTo(42.42);
+        assertThat(result.getInputs()).containsEntry("float", 42.42);
         assertThat(result.getInputs().get("file").toString()).startsWith("kestra:///io/kestra/tests/inputs/executions/");
         assertThat(result.getInputs().get("file").toString()).startsWith("kestra:///io/kestra/tests/inputs/executions/");
-        assertThat(result.getInputs().containsKey("bool")).isTrue();
+        assertThat(result.getInputs()).containsKey("bool");
         assertThat(result.getInputs().get("bool")).isNull();
-        assertThat(result.getLabels().size()).isEqualTo(6);
+        assertThat(result.getLabels()).hasSize(6);
         assertThat(result.getLabels().getFirst()).isEqualTo(new Label("flow-label-1", "flow-label-1"));
         assertThat(result.getLabels().get(1)).isEqualTo(new Label("flow-label-2", "flow-label-2"));
         assertThat(result.getLabels().get(2)).isEqualTo(new Label("a", "label-1"));
@@ -213,7 +213,7 @@ class ExecutionControllerRunnerTest {
         Execution result = triggerExecutionInputsFlowExecution(true);
 
         assertThat(result.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(result.getTaskRunList().size()).isEqualTo(14);
+        assertThat(result.getTaskRunList()).hasSize(14);
     }
 
     @Test
@@ -308,7 +308,7 @@ class ExecutionControllerRunnerTest {
         } catch (JsonProcessingException e) {
             throw new AssertionError("Evaluation result is not a map. Probably due to output decryption being performed while it shouldn't for such feature.");
         }
-        assertThat(resultMap.get("type")).isEqualTo("io.kestra.datatype:aes_encrypted");
+        assertThat(resultMap).containsEntry("type", "io.kestra.datatype:aes_encrypted");
         assertThat(resultMap.get("value")).isNotNull();
 
         execution = runnerUtils.runOne(null, "io.kestra.tests", "inputs", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
@@ -333,7 +333,7 @@ class ExecutionControllerRunnerTest {
         ));
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
+        assertThat(e.getResponse().getBody(String.class)).isPresent();
         assertThat(e.getResponse().getBody(String.class).get()).contains("No task found");
     }
 
@@ -352,7 +352,7 @@ class ExecutionControllerRunnerTest {
         ));
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
+        assertThat(e.getResponse().getBody(String.class)).isPresent();
         assertThat(e.getResponse().getBody(String.class).get()).contains("No task found to restart");
     }
 
@@ -367,7 +367,7 @@ class ExecutionControllerRunnerTest {
 
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
 
-        assertThat(flow.isPresent()).isTrue();
+        assertThat(flow).isPresent();
 
         // Run child execution starting from a specific task and wait until it finishes
         Execution finishedChildExecution = runnerUtils.awaitChildExecution(
@@ -383,7 +383,7 @@ class ExecutionControllerRunnerTest {
 
             assertThat(createdChidExec).isNotNull();
             assertThat(createdChidExec.getParentId()).isEqualTo(parentExecution.getId());
-            assertThat(createdChidExec.getTaskRunList().size()).isEqualTo(4);
+            assertThat(createdChidExec.getTaskRunList()).hasSize(4);
             assertThat(createdChidExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
 
                 IntStream
@@ -392,13 +392,13 @@ class ExecutionControllerRunnerTest {
                     .forEach(taskRun -> assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS));
 
             assertThat(createdChidExec.getTaskRunList().get(3).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-            assertThat(createdChidExec.getTaskRunList().get(3).getAttempts().size()).isEqualTo(1);
+            assertThat(createdChidExec.getTaskRunList().get(3).getAttempts()).hasSize(1);
             }),
             Duration.ofSeconds(15));
 
         assertThat(finishedChildExecution).isNotNull();
         assertThat(finishedChildExecution.getParentId()).isEqualTo(parentExecution.getId());
-        assertThat(finishedChildExecution.getTaskRunList().size()).isEqualTo(5);
+        assertThat(finishedChildExecution.getTaskRunList()).hasSize(5);
 
         finishedChildExecution
             .getTaskRunList()
@@ -418,7 +418,7 @@ class ExecutionControllerRunnerTest {
             (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
-        assertThat(flow.isPresent()).isTrue();
+        assertThat(flow).isPresent();
 
         // Run child execution starting from a specific task and wait until it finishes
         runnerUtils.awaitChildExecution(
@@ -454,7 +454,7 @@ class ExecutionControllerRunnerTest {
 
         // Update task's command to make second execution successful
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
-        assertThat(flow.isPresent()).isTrue();
+        assertThat(flow).isPresent();
 
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
@@ -471,17 +471,17 @@ class ExecutionControllerRunnerTest {
                 assertThat(restartedExec).isNotNull();
                 assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
                 assertThat(restartedExec.getParentId()).isNull();
-                assertThat(restartedExec.getTaskRunList().size()).isEqualTo(3);
+                assertThat(restartedExec.getTaskRunList()).hasSize(3);
                 assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
 
                 IntStream
                     .range(0, 2)
                     .mapToObj(value -> restartedExec.getTaskRunList().get(value)).forEach(taskRun -> {
                     assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-                    assertThat(taskRun.getAttempts().size()).isEqualTo(1);
+                    assertThat(taskRun.getAttempts()).hasSize(1);
 
                     assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
-                    assertThat(restartedExec.getTaskRunList().get(2).getAttempts().size()).isEqualTo(1);
+                    assertThat(restartedExec.getTaskRunList().get(2).getAttempts()).hasSize(1);
                     });
             },
             Duration.ofSeconds(15)
@@ -490,12 +490,12 @@ class ExecutionControllerRunnerTest {
         assertThat(finishedRestartedExecution).isNotNull();
         assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
         assertThat(finishedRestartedExecution.getParentId()).isNull();
-        assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(4);
+        assertThat(finishedRestartedExecution.getTaskRunList()).hasSize(4);
 
-        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size()).isEqualTo(1);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size()).isEqualTo(1);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts().size()).isEqualTo(2);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(3).getAttempts().size()).isEqualTo(1);
+        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts()).hasSize(1);
+        assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts()).hasSize(1);
+        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts()).hasSize(2);
+        assertThat(finishedRestartedExecution.getTaskRunList().get(3).getAttempts()).hasSize(1);
 
         finishedRestartedExecution
             .getTaskRunList()
@@ -517,7 +517,7 @@ class ExecutionControllerRunnerTest {
 
         // Update task's command to make second execution successful
         Optional<Flow> flow = flowRepositoryInterface.findById(null, TESTS_FLOW_NS, flowId);
-        assertThat(flow.isPresent()).isTrue();
+        assertThat(flow).isPresent();
 
         // Restart execution and wait until it finishes
         Execution finishedRestartedExecution = runnerUtils.awaitExecution(
@@ -534,19 +534,19 @@ class ExecutionControllerRunnerTest {
                 assertThat(restartedExec).isNotNull();
                 assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
                 assertThat(restartedExec.getParentId()).isNull();
-                assertThat(restartedExec.getTaskRunList().size()).isEqualTo(4);
+                assertThat(restartedExec.getTaskRunList()).hasSize(4);
                 assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
 
                 IntStream
                     .range(0, 2)
                     .mapToObj(value -> restartedExec.getTaskRunList().get(value)).forEach(taskRun -> {
                     assertThat(taskRun.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-                    assertThat(taskRun.getAttempts().size()).isEqualTo(1);
+                    assertThat(taskRun.getAttempts()).hasSize(1);
 
                     assertThat(restartedExec.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.RUNNING);
                     assertThat(restartedExec.getTaskRunList().get(3).getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
                     assertThat(restartedExec.getTaskRunList().get(2).getAttempts()).isNull();
-                    assertThat(restartedExec.getTaskRunList().get(3).getAttempts().size()).isEqualTo(1);
+                    assertThat(restartedExec.getTaskRunList().get(3).getAttempts()).hasSize(1);
                     });
             },
             Duration.ofSeconds(15)
@@ -555,14 +555,14 @@ class ExecutionControllerRunnerTest {
         assertThat(finishedRestartedExecution).isNotNull();
         assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
         assertThat(finishedRestartedExecution.getParentId()).isNull();
-        assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(5);
+        assertThat(finishedRestartedExecution.getTaskRunList()).hasSize(5);
 
-        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size()).isEqualTo(1);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts().size()).isEqualTo(1);
+        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts()).hasSize(1);
+        assertThat(finishedRestartedExecution.getTaskRunList().get(1).getAttempts()).hasSize(1);
         assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts()).isNull();
         assertThat(finishedRestartedExecution.getTaskRunList().get(2).getState().getHistories().stream().filter(state -> state.getState() == State.Type.PAUSED).count()).isEqualTo(1L);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(3).getAttempts().size()).isEqualTo(2);
-        assertThat(finishedRestartedExecution.getTaskRunList().get(4).getAttempts().size()).isEqualTo(1);
+        assertThat(finishedRestartedExecution.getTaskRunList().get(3).getAttempts()).hasSize(2);
+        assertThat(finishedRestartedExecution.getTaskRunList().get(4).getAttempts()).hasSize(1);
 
         finishedRestartedExecution
             .getTaskRunList()
@@ -675,9 +675,9 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("a")).isEqualTo(1);
+        assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("body"))).containsEntry("a", 1);
         assertThat((Boolean) ((Map<String, Object>) execution.getTrigger().getVariables().get("body")).get("b")).isTrue();
-        assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("parameters")).get("name")).isEqualTo(List.of("john"));
+        assertThat(((Map<String, Object>) execution.getTrigger().getVariables().get("parameters"))).containsEntry("name", List.of("john"));
         assertThat(((Map<String, List<String>>) execution.getTrigger().getVariables().get("parameters")).get("age")).containsExactlyInAnyOrder("12", "13");
         assertThat(execution.getLabels().getFirst()).isEqualTo(new Label("flow-label-1", "flow-label-1"));
         assertThat(execution.getLabels().get(1)).isEqualTo(new Label("flow-label-2", "flow-label-2"));
@@ -691,7 +691,7 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        assertThat(((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).getFirst().get("a")).isEqualTo(1);
+        assertThat(((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).getFirst()).containsEntry("a", 1);
         assertThat((Boolean) ((List<Map<String, Object>>) execution.getTrigger().getVariables().get("body")).getFirst().get("b")).isTrue();
 
         execution = client.toBlocking().retrieve(
@@ -703,7 +703,7 @@ class ExecutionControllerRunnerTest {
             Execution.class
         );
 
-        assertThat(execution.getTrigger().getVariables().get("body")).isEqualTo("bla");
+        assertThat(execution.getTrigger().getVariables()).containsEntry("body", "bla");
 
         execution = client.toBlocking().retrieve(
             GET("/api/v1/executions/webhook/" + TESTS_FLOW_NS + "/webhook/" + key),
@@ -719,7 +719,7 @@ class ExecutionControllerRunnerTest {
                 ),
             Execution.class
         );
-        assertThat(execution.getTrigger().getVariables().get("body")).isEqualTo("{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}");
+        assertThat(execution.getTrigger().getVariables()).containsEntry("body", "{\\\"a\\\":\\\"\\\",\\\"b\\\":{\\\"c\\\":{\\\"d\\\":{\\\"e\\\":\\\"\\\",\\\"f\\\":\\\"1\\\"}}}}");
 
     }
 
@@ -775,7 +775,7 @@ class ExecutionControllerRunnerTest {
         assertThat(execution.getState().isPaused()).isFalse();
 
         Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("pause").getFirst().getOutputs().get("onResume");
-        assertThat(outputs.get("asked")).isEqualTo("myString");
+        assertThat(outputs).containsEntry("asked", "myString");
         assertThat((String) outputs.get("data")).startsWith("kestra://");
     }
 
@@ -1090,7 +1090,7 @@ class ExecutionControllerRunnerTest {
             GET("/api/v1/executions/" + runningExecution.getId()),
             Execution.class);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.KILLED);
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
     }
 
@@ -1124,7 +1124,7 @@ class ExecutionControllerRunnerTest {
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
-        assertThat(e.getResponse().getBody(String.class).isPresent()).isTrue();
+        assertThat(e.getResponse().getBody(String.class)).isPresent();
         assertThat(e.getResponse().getBody(String.class).get()).contains("are mutually exclusive");
 
         executions = client.toBlocking().retrieve(
@@ -1404,7 +1404,7 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(null, result.getId());
-        assertThat(forcedRun.isPresent()).isTrue();
+        assertThat(forcedRun).isPresent();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.QUEUED);
 
         // waiting for the flow to complete successfully
@@ -1436,7 +1436,7 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(null, result.getId());
-        assertThat(forcedRun.isPresent()).isTrue();
+        assertThat(forcedRun).isPresent();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.CREATED);
     }
 
@@ -1449,7 +1449,7 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(null, result.getId());
-        assertThat(forcedRun.isPresent()).isTrue();
+        assertThat(forcedRun).isPresent();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.PAUSED);
     }
 
@@ -1463,7 +1463,7 @@ class ExecutionControllerRunnerTest {
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
         Optional<Execution> forcedRun = executionRepositoryInterface.findById(null, result.getId());
-        assertThat(forcedRun.isPresent()).isTrue();
+        assertThat(forcedRun).isPresent();
         assertThat(forcedRun.get().getState().getCurrent()).isNotEqualTo(State.Type.CREATED);
     }
 

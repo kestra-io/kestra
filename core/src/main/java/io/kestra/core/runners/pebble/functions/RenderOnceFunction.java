@@ -13,6 +13,7 @@ import java.util.Map;
 @Singleton
 @Requires(property = "kestra.variables.recursive-rendering", value = StringUtils.FALSE, defaultValue = StringUtils.FALSE)
 public class RenderOnceFunction extends RenderFunction {
+    @Override
     public List<String> getArgumentNames() {
         return List.of("toRender");
     }

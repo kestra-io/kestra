@@ -56,7 +56,7 @@ public abstract class AbstractJdbcRepository<T> {
         this.table = DSL.table(tableConfig.table());
     }
 
-    abstract public Condition fullTextCondition(List<String> fields, String query);
+    public abstract Condition fullTextCondition(List<String> fields, String query);
 
     public String key(T entity) {
         String key = queueService.key(entity);
@@ -200,7 +200,7 @@ public abstract class AbstractJdbcRepository<T> {
         return select.fetch().map(e -> this.mapMetricAggregation(e, groupByType));
     }
 
-    abstract public <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper);
+    public abstract <R extends Record, E> ArrayListTotal<E> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable, RecordMapper<R, E> mapper);
 
     public <R extends Record> ArrayListTotal<T> fetchPage(DSLContext context, SelectConditionStep<R> select, Pageable pageable) {
         return this.fetchPage(context, select, pageable, this::map);

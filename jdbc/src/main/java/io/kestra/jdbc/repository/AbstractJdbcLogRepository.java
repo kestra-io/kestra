@@ -44,7 +44,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         this.filterService = filterService;
     }
 
-    abstract protected Condition findCondition(String query);
+    protected abstract Condition findCondition(String query);
 
     @Getter
     private final JdbcFilterService filterService;
@@ -653,6 +653,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         return levelsCondition(LogEntry.findLevelsByMin(minLevel));
     }
 
+    @Override
     protected Condition levelsCondition(List<Level> levels) {
         return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
@@ -711,7 +712,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
             });
     }
 
-    abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
+    protected abstract Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
 
     protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
         DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,

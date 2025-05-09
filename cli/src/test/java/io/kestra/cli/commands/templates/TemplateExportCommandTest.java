@@ -54,7 +54,7 @@ class TemplateExportCommandTest {
             };
             PicocliRunner.call(TemplateExportCommand.class, ctx, exportArgs);
             File file = new File("/tmp/templates.zip");
-            assertThat(file.exists()).isTrue();
+            assertThat(file).exists();
             ZipFile zipFile = new ZipFile(file);
             assertThat(zipFile.stream().count()).isEqualTo(3L);
 

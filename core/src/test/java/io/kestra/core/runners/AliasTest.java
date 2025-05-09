@@ -15,13 +15,13 @@ public class AliasTest {
     @ExecuteFlow("flows/valids/alias-task.yaml")
     void taskAlias(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList().size()).isEqualTo(2);
+        assertThat(execution.getTaskRunList()).hasSize(2);
     }
 
     @Test
     @ExecuteFlow("flows/valids/alias-trigger.yaml")
     void triggerAlias(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList()).hasSize(1);
     }
 }

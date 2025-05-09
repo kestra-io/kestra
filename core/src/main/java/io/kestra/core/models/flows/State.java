@@ -115,7 +115,7 @@ public class State {
     }
 
     public Instant maxDate() {
-        if (this.histories.size() == 0) {
+        if (this.histories.isEmpty()) {
             return Instant.now();
         }
 
@@ -123,7 +123,7 @@ public class State {
     }
 
     public Instant minDate() {
-        if (this.histories.size() == 0) {
+        if (this.histories.isEmpty()) {
             return Instant.now();
         }
 

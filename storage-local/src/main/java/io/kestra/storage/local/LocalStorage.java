@@ -51,13 +51,13 @@ public class LocalStorage implements StorageInterface {
 
     private Path getPath(String tenantId, URI uri) {
         Path basePath = tenantId == null ? this.basePath.toAbsolutePath()
-            : Paths.get(this.basePath.toAbsolutePath().toString(), tenantId);
+            : Path.of(this.basePath.toAbsolutePath().toString(), tenantId);
         if(uri == null) {
             return basePath;
         }
 
         parentTraversalGuard(uri);
-        return Paths.get(basePath.toString(), windowsToUnixPath(uri.getPath()));
+        return Path.of(basePath.toString(), windowsToUnixPath(uri.getPath()));
     }
 
     @Override

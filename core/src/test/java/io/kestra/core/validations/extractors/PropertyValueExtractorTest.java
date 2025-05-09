@@ -26,7 +26,7 @@ public class PropertyValueExtractorTest {
 
         dto = new DynamicPropertyDto(Property.of(5), Property.of("Test"));
         violations = validator.validate(dto);
-        assertThat(violations.size()).isEqualTo(1);
+        assertThat(violations).hasSize(1);
         ConstraintViolation<DynamicPropertyDto> violation = violations.stream().findFirst().get();
         assertThat(violation.getMessage()).isEqualTo("must be greater than or equal to 10");
     }

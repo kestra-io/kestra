@@ -10,6 +10,6 @@ import io.kestra.core.models.HasUID;
     @JsonSubTypes.Type(value = WorkerTrigger.class, name = "trigger")
 })
 public abstract class WorkerJob implements HasUID {
-    abstract public String getType();
+    public abstract String getType();
 
 }

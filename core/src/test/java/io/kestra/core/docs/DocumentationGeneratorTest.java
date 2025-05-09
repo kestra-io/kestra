@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
@@ -34,12 +33,12 @@ class DocumentationGeneratorTest {
 
     @Test
     void tasks() throws URISyntaxException, IOException {
-        Path plugins = Paths.get(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
+        Path plugins = Path.of(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
 
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         List<RegisteredPlugin> scan = pluginScanner.scan(plugins);
 
-        assertThat(scan.size()).isEqualTo(1);
+        assertThat(scan).hasSize(1);
         PluginClassAndMetadata<Task> metadata = PluginClassAndMetadata.create(scan.getFirst(), scan.getFirst().getTasks().getFirst(), Task.class, null);
         ClassPluginDocumentation<? extends Task> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, false);
 
@@ -168,7 +167,7 @@ class DocumentationGeneratorTest {
 
     @Test
     void pluginEeDoc() throws Exception {
-        Path plugins = Paths.get(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
+        Path plugins = Path.of(Objects.requireNonNull(ClassPluginDocumentationTest.class.getClassLoader().getResource("plugins")).toURI());
 
         PluginScanner pluginScanner = new PluginScanner(ClassPluginDocumentationTest.class.getClassLoader());
         List<RegisteredPlugin> list = pluginScanner.scan(plugins);

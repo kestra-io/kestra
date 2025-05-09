@@ -63,6 +63,6 @@ class TimeoutTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         List<LogEntry> matchingLogs = TestsUtils.awaitLogs(logs, logEntry -> logEntry.getMessage().contains("Timeout"), 2);
         receive.blockLast();
-        assertThat(matchingLogs.size()).isEqualTo(2);
+        assertThat(matchingLogs).hasSize(2);
     }
 }

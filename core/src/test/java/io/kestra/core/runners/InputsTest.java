@@ -122,7 +122,7 @@ public class InputsTest {
         HashMap<String, Object> inputsWithMissingOptionalInput = new HashMap<>(inputs);
         inputsWithMissingOptionalInput.remove("bool");
 
-        assertThat(typedInputs(inputsWithMissingOptionalInput).containsKey("bool")).isTrue();
+        assertThat(typedInputs(inputsWithMissingOptionalInput)).containsKey("bool");
         assertThat(typedInputs(inputsWithMissingOptionalInput).get("bool")).isNull();
     }
 
@@ -132,34 +132,34 @@ public class InputsTest {
     void allValidInputs() throws URISyntaxException, IOException {
         Map<String, Object> typeds = typedInputs(inputs);
 
-        assertThat(typeds.get("string")).isEqualTo("myString");
-        assertThat(typeds.get("int")).isEqualTo(42);
-        assertThat(typeds.get("float")).isEqualTo(42.42F);
+        assertThat(typeds).containsEntry("string", "myString");
+        assertThat(typeds).containsEntry("int", 42);
+        assertThat(typeds).containsEntry("float", 42.42F);
         assertThat((Boolean) typeds.get("bool")).isFalse();
-        assertThat(typeds.get("instant")).isEqualTo(Instant.parse("2019-10-06T18:27:49Z"));
-        assertThat(typeds.get("instantDefaults")).isEqualTo(Instant.parse("2013-08-09T14:19:00Z"));
-        assertThat(typeds.get("date")).isEqualTo(LocalDate.parse("2019-10-06"));
-        assertThat(typeds.get("time")).isEqualTo(LocalTime.parse("18:27:49"));
-        assertThat(typeds.get("duration")).isEqualTo(Duration.parse("PT5M6S"));
+        assertThat(typeds).containsEntry("instant", Instant.parse("2019-10-06T18:27:49Z"));
+        assertThat(typeds).containsEntry("instantDefaults", Instant.parse("2013-08-09T14:19:00Z"));
+        assertThat(typeds).containsEntry("date", LocalDate.parse("2019-10-06"));
+        assertThat(typeds).containsEntry("time", LocalTime.parse("18:27:49"));
+        assertThat(typeds).containsEntry("duration", Duration.parse("PT5M6S"));
         assertThat((URI) typeds.get("file")).isEqualTo(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application-test.yml"));
         assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, (URI) typeds.get("file"))))).isEqualTo(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))));
-        assertThat(typeds.get("json")).isEqualTo(Map.of("a", "b"));
-        assertThat(typeds.get("uri")).isEqualTo("https://www.google.com");
-        assertThat(((Map<String, Object>) typeds.get("nested")).get("string")).isEqualTo("a string");
+        assertThat(typeds).containsEntry("json", Map.of("a", "b"));
+        assertThat(typeds).containsEntry("uri", "https://www.google.com");
+        assertThat(((Map<String, Object>) typeds.get("nested"))).containsEntry("string", "a string");
         assertThat((Boolean) ((Map<String, Object>) typeds.get("nested")).get("bool")).isTrue();
-        assertThat(((Map<String, Object>) ((Map<String, Object>) typeds.get("nested")).get("more")).get("int")).isEqualTo(123);
-        assertThat(typeds.get("validatedString")).isEqualTo("A123");
-        assertThat(typeds.get("validatedInt")).isEqualTo(12);
-        assertThat(typeds.get("validatedDate")).isEqualTo(LocalDate.parse("2023-01-02"));
-        assertThat(typeds.get("validatedDateTime")).isEqualTo(Instant.parse("2023-01-01T00:00:10Z"));
-        assertThat(typeds.get("validatedDuration")).isEqualTo(Duration.parse("PT15S"));
-        assertThat(typeds.get("validatedFloat")).isEqualTo(0.42F);
-        assertThat(typeds.get("validatedTime")).isEqualTo(LocalTime.parse("11:27:49"));
+        assertThat(((Map<String, Object>) ((Map<String, Object>) typeds.get("nested")).get("more"))).containsEntry("int", 123);
+        assertThat(typeds).containsEntry("validatedString", "A123");
+        assertThat(typeds).containsEntry("validatedInt", 12);
+        assertThat(typeds).containsEntry("validatedDate", LocalDate.parse("2023-01-02"));
+        assertThat(typeds).containsEntry("validatedDateTime", Instant.parse("2023-01-01T00:00:10Z"));
+        assertThat(typeds).containsEntry("validatedDuration", Duration.parse("PT15S"));
+        assertThat(typeds).containsEntry("validatedFloat", 0.42F);
+        assertThat(typeds).containsEntry("validatedTime", LocalTime.parse("11:27:49"));
         assertThat(typeds.get("secret")).isNotEqualTo("secret"); // secret inputs are encrypted
         assertThat(typeds.get("array")).isInstanceOf(List.class);
         assertThat((List<Integer>) typeds.get("array")).hasSize(3);
         assertThat((List<Integer>) typeds.get("array")).isEqualTo(List.of(1, 2, 3));
-        assertThat(typeds.get("yaml")).isEqualTo(Map.of(
+        assertThat(typeds).containsEntry("yaml", Map.of(
             "some", "property",
             "alist", List.of("of", "values")));
     }
@@ -172,10 +172,10 @@ public class InputsTest {
         typeds.put("float", 42.42F);
         typeds.put("bool", false);
 
-        assertThat(typeds.get("string")).isEqualTo("myString");
-        assertThat(typeds.get("enum")).isEqualTo("ENUM_VALUE");
-        assertThat(typeds.get("int")).isEqualTo(42);
-        assertThat(typeds.get("float")).isEqualTo(42.42F);
+        assertThat(typeds).containsEntry("string", "myString");
+        assertThat(typeds).containsEntry("enum", "ENUM_VALUE");
+        assertThat(typeds).containsEntry("int", 42);
+        assertThat(typeds).containsEntry("float", 42.42F);
         assertThat((Boolean) typeds.get("bool")).isFalse();
     }
 

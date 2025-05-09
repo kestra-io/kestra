@@ -291,7 +291,7 @@ public class PauseTest {
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
             Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").getFirst().getOutputs().get("values");
-            assertThat(outputs.get("asked")).isEqualTo("restarted");
+            assertThat(outputs).containsEntry("asked", "restarted");
             assertThat((String) outputs.get("data")).startsWith("kestra://");
             assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, URI.create((String) outputs.get("data")))))).isEqualTo(executionId);
         }
@@ -329,7 +329,7 @@ public class PauseTest {
             assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
             Map<String, Object> outputs = (Map<String, Object>) execution.findTaskRunsByTaskId("last").getFirst().getOutputs().get("values");
-            assertThat(outputs.get("asked")).isEqualTo("MISSING");
+            assertThat(outputs).containsEntry("asked", "MISSING");
         }
 
         public void runDurationWithBehavior(RunnerUtils runnerUtils, Pause.Behavior behavior) throws Exception {

@@ -39,8 +39,7 @@ public class Await {
         long start = System.currentTimeMillis();
         while (!condition.getAsBoolean()) {
             if (System.currentTimeMillis() - start > timeout.toMillis()) {
-                throw new TimeoutException(String.format(
-                    "Await failed to terminate within %s.%s",
+                throw new TimeoutException("Await failed to terminate within %s.%s".formatted(
                     timeout,
                     errorMessageInCaseOfFailure == null ? "" : " " + errorMessageInCaseOfFailure.get()
                 ));

@@ -283,8 +283,8 @@ public abstract class AbstractJdbcRepository {
 
         // Special handling for START_DATE and END_DATE
         if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE) {
-            OffsetDateTime dateTime = (value instanceof ZonedDateTime)
-                ? ((ZonedDateTime) value).toOffsetDateTime()
+            OffsetDateTime dateTime = (value instanceof ZonedDateTime zdt)
+                ? zdt.toOffsetDateTime()
                 : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
             return applyDateCondition(select, dateTime, operation, dateColumn);
         }
@@ -306,15 +306,15 @@ public abstract class AbstractJdbcRepository {
             case GREATER_THAN -> select = select.and(DSL.field(columnName).greaterThan(value));
             case LESS_THAN -> select = select.and(DSL.field(columnName).lessThan(value));
             case IN -> {
-                if (value instanceof Collection<?>) {
-                    select = select.and(DSL.field(columnName).in((Collection<?>) value));
+                if (value instanceof Collection<?> collection) {
+                    select = select.and(DSL.field(columnName).in(collection));
                 } else {
                     throw new IllegalArgumentException("IN operation requires a collection as value");
                 }
             }
             case NOT_IN -> {
-                if (value instanceof Collection<?>) {
-                    select = select.and(DSL.field(columnName).notIn((Collection<?>) value));
+                if (value instanceof Collection<?> collection) {
+                    select = select.and(DSL.field(columnName).notIn(collection));
                 } else {
                     throw new IllegalArgumentException("NOT_IN operation requires a collection as value");
                 }
@@ -400,7 +400,7 @@ public abstract class AbstractJdbcRepository {
         Object value,
         QueryFilter.Op operation
     ) {
-        Level minLevel = value instanceof Level ? (Level) value : Level.valueOf((String) value);
+        Level minLevel = value instanceof Level l ? l : Level.valueOf((String) value);
 
         switch (operation) {
             case EQUALS -> select = select.and(minLevelCondition(minLevel));

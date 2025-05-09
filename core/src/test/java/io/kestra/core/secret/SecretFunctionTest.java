@@ -57,9 +57,9 @@ public class SecretFunctionTest {
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, either -> logs.add(either.getLeft()));
 
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "secrets");
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("value")).isEqualTo("secretValue");
-        assertThat(execution.getTaskRunList().get(2).getOutputs().get("value")).isEqualTo("passwordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlong");
-        assertThat(execution.getTaskRunList().get(3).getOutputs().get("value")).isEqualTo("secretValue");
+        assertThat(execution.getTaskRunList().getFirst().getOutputs()).containsEntry("value", "secretValue");
+        assertThat(execution.getTaskRunList().get(2).getOutputs()).containsEntry("value", "passwordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlongpasswordveryveryveyrlong");
+        assertThat(execution.getTaskRunList().get(3).getOutputs()).containsEntry("value", "secretValue");
         assertThat(execution.getTaskRunList().get(4).getOutputs()).isEmpty();
         assertThat(execution.getTaskRunList().get(4).getState().getCurrent()).isEqualTo(State.Type.WARNING);
 
@@ -122,7 +122,7 @@ public class SecretFunctionTest {
     public static class TestSecretService extends SecretService {
 
         private static final Map<String, String> SECRETS = Map.of(
-            "io.kestra.unittest.json-secret", """ 
+            "io.kestra.unittest.json-secret", """
                 {
                 "string": "value",
                 "number": 42,
@@ -133,6 +133,8 @@ public class SecretFunctionTest {
                 """,
             "io.kestra.unittest.string-secret", "string-value"
         );
+
+        @Override
         public String findSecret(String tenantId, String namespace, String key) throws SecretNotFoundException, IOException {
             Optional<String> optional = Optional.ofNullable(SECRETS.get(namespace + "." + key));
             if (optional.isPresent()) {

@@ -62,7 +62,7 @@ class PurgeLogsTest {
         Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "purge_logs_full_arguments");
 
         assertTrue(execution.getState().isSuccess());
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getTaskRunList().getFirst().getOutputs().get("count")).as(failingReason).isEqualTo(resultCount);
     }
 

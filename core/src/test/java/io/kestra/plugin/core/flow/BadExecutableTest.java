@@ -14,7 +14,7 @@ public class BadExecutableTest {
     @Test
     @ExecuteFlow("flows/valids/executable-fail.yml")
     void badExecutable(Execution execution) {
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }

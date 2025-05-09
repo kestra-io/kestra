@@ -60,7 +60,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
             });
     }
 
-    abstract protected Condition findCondition(String query);
+    protected abstract Condition findCondition(String query);
 
     @Override
     public ArrayListTotal<Dashboard> list(Pageable pageable, String tenantId, String query) {

@@ -15,7 +15,8 @@ import java.util.Map;
 import java.util.stream.Stream;
 
 public class FromIonFunction implements Function {
-        public List<String> getArgumentNames() {
+    @Override
+    public List<String> getArgumentNames() {
             return List.of("ion", "allRows");
         }
 

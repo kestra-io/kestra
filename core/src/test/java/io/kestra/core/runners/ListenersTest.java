@@ -46,7 +46,7 @@ class ListenersTest {
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("ok");
-        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat((String) execution.getTaskRunList().get(2).getOutputs().get("value")).contains("flowId=listeners");
     }
 
@@ -61,7 +61,7 @@ class ListenersTest {
         );
 
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("ko");
-        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("execution-failed-listener");
     }
 
@@ -75,7 +75,7 @@ class ListenersTest {
             (f, e) -> ImmutableMap.of("string", "execution")
         );
 
-        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("parent-seq");
         assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("execution-success-listener");
         assertThat((String) execution.getTaskRunList().get(2).getOutputs().get("value")).contains(execution.getId());
@@ -89,7 +89,7 @@ class ListenersTest {
             "listeners-multiple"
         );
 
-        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("l1");
         assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("l2");
     }
@@ -103,7 +103,7 @@ class ListenersTest {
         );
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList().size()).isEqualTo(2);
+        assertThat(execution.getTaskRunList()).hasSize(2);
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("ko");
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
@@ -117,7 +117,7 @@ class ListenersTest {
         );
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getTaskRunList()).hasSize(3);
         assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("ko");
         assertThat(execution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("l2");

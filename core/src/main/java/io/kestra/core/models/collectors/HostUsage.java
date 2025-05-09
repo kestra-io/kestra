@@ -86,7 +86,7 @@ public class HostUsage {
         )
             .filter(Objects::nonNull)
             .filter(s -> !s.equals("unknown"))
-            .map(s -> String.format("%08x", s.hashCode()))
+            .map(s -> "%08x".formatted(s.hashCode()))
             .collect(Collectors.joining("-"));
 
         return HostUsage.builder()

@@ -183,12 +183,12 @@ public class FlowValidator implements ConstraintValidator<FlowValidation, Flow> 
             if (!dependencies.isEmpty()) {
                 dependencies.forEach(id -> {
                     if (graph.get(id) == null) {
-                        violations.add(String.format("Input with id '%s' depends on a non-existent input '%s'.", key, id));
+                        violations.add("Input with id '%s' depends on a non-existent input '%s'.".formatted(key, id));
                     }
                 });
             }
             CycleDependency.findCycle(key, graph).ifPresent(list -> {
-                violations.add(String.format("Cycle dependency detected for input with id '%s': %s", key, list));
+                violations.add("Cycle dependency detected for input with id '%s': %s".formatted(key, list));
             });
         });
 

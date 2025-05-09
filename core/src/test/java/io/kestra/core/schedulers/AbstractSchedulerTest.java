@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @KestraTest
-abstract public class AbstractSchedulerTest {
+public abstract class AbstractSchedulerTest {
     @Inject
     protected ApplicationContext applicationContext;
 
@@ -161,6 +161,7 @@ abstract public class AbstractSchedulerTest {
 
         private String defaultInjected;
 
+        @Override
         public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws InterruptedException {
             COUNTER++;
 

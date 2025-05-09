@@ -40,7 +40,7 @@ public class TaskWithAllowWarningTest {
     void runnableTask(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(2);
-        assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getAttempts().size()).isEqualTo(3);
+        assertThat(execution.findTaskRunsByTaskId("fail").getFirst().getAttempts()).hasSize(3);
     }
 
     @Test

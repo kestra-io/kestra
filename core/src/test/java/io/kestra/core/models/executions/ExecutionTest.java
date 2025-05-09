@@ -157,7 +157,7 @@ class ExecutionTest {
             .labels(List.of(new Label("test", "test-value")))
             .build();
 
-        assertThat(execution.getLabels().size()).isEqualTo(1);
+        assertThat(execution.getLabels()).hasSize(1);
         assertThat(execution.getLabels().getFirst()).isEqualTo(new Label("test", "test-value"));
     }
 }

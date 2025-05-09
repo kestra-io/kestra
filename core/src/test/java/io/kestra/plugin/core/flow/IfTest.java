@@ -94,7 +94,7 @@ class IfTest {
         execution = runnerUtils.runOne(null, "io.kestra.tests", "if-without-else", null,
             (f, e) -> Map.of("param", false) , Duration.ofSeconds(120));
         assertThat(execution.getTaskRunList()).hasSize(1);
-        assertThat(execution.findTaskRunsByTaskId("when-true").isEmpty()).isTrue();
+        assertThat(execution.findTaskRunsByTaskId("when-true")).isEmpty();
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 

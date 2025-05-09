@@ -28,7 +28,7 @@ public class AfterExecutionTestCase {
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(taskRun.getState().getEndDate().orElseThrow());
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(execution.getState().getEndDate().orElseThrow());
         Map<String, Object> outputs = (Map<String, Object> ) afterExecution.getOutputs().get("values");
-        assertThat(outputs.get("state")).isEqualTo("SUCCESS");
+        assertThat(outputs).containsEntry("state", "SUCCESS");
     }
 
     @SuppressWarnings("unchecked")
@@ -48,7 +48,7 @@ public class AfterExecutionTestCase {
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(finallyTaskRun.getState().getEndDate().orElseThrow());
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(execution.getState().getEndDate().orElseThrow());
         Map<String, Object> outputs = (Map<String, Object> ) afterExecution.getOutputs().get("values");
-        assertThat(outputs.get("state")).isEqualTo("SUCCESS");
+        assertThat(outputs).containsEntry("state", "SUCCESS");
     }
 
     @SuppressWarnings("unchecked")
@@ -68,7 +68,7 @@ public class AfterExecutionTestCase {
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(taskRun.getState().getEndDate().orElseThrow());
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(execution.getState().getEndDate().orElseThrow());
         Map<String, Object> outputs = (Map<String, Object> ) afterExecution.getOutputs().get("values");
-        assertThat(outputs.get("state")).isEqualTo("FAILED");
+        assertThat(outputs).containsEntry("state", "FAILED");
     }
 
     @SuppressWarnings("unchecked")
@@ -88,6 +88,6 @@ public class AfterExecutionTestCase {
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(listenerTaskRun.getState().getEndDate().orElseThrow());
         assertThat(afterExecution.getState().getStartDate()).isAfterOrEqualTo(execution.getState().getEndDate().orElseThrow());
         Map<String, Object> outputs = (Map<String, Object> ) afterExecution.getOutputs().get("values");
-        assertThat(outputs.get("state")).isEqualTo("SUCCESS");
+        assertThat(outputs).containsEntry("state", "SUCCESS");
     }
 }

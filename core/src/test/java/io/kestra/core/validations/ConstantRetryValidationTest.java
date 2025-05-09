@@ -26,7 +26,7 @@ public class ConstantRetryValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
-        assertThat(valid.isEmpty()).isTrue();
+        assertThat(valid).isEmpty();
     }
 
     @Test
@@ -38,7 +38,7 @@ public class ConstantRetryValidationTest {
             .build();
 
         Optional<ConstraintViolationException> valid = modelValidator.isValid(retry);
-        assertThat(valid.isEmpty()).isFalse();
+        assertThat(valid).isNotEmpty();
         assertThat(valid.get().getConstraintViolations()).hasSize(1);
         assertThat(valid.get().getMessage()).isEqualTo(": 'interval' must be less than 'maxDuration' but is PT10S\n");
     }

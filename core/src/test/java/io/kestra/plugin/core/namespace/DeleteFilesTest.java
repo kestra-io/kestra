@@ -41,13 +41,13 @@ class DeleteFilesTest {
         namespace.putFile(Path.of("/a/b/test1.txt"), new ByteArrayInputStream("1".getBytes(StandardCharsets.UTF_8)));
         namespace.putFile(Path.of("/a/b/test2.txt"), new ByteArrayInputStream("2".getBytes(StandardCharsets.UTF_8)));
 
-        assertThat(namespace.all("/a/b/", false).size()).isEqualTo(2);
+        assertThat(namespace.all("/a/b/", false)).hasSize(2);
 
         // When
         assertThat(deleteFiles.run(runContext)).isNotNull();
 
         // Then
-        assertThat(namespace.all("/a/b/", false).size()).isEqualTo(1);
+        assertThat(namespace.all("/a/b/", false)).hasSize(1);
     }
 
     @Test
@@ -68,14 +68,14 @@ class DeleteFilesTest {
 
         namespace.putFile(Path.of("/folder/file.txt"), new ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8)));
 
-        assertThat(namespace.all("/folder/", false).size()).isEqualTo(1);
+        assertThat(namespace.all("/folder/", false)).hasSize(1);
 
         // When
         assertThat(deleteFiles.run(runContext)).isNotNull();
 
         // Then
-        assertThat(namespace.all("/folder/", false).size()).isZero();
-        assertThat(namespace.all("/", false).size()).isZero();
+        assertThat(namespace.all("/folder/", false)).isEmpty();
+        assertThat(namespace.all("/", false)).isEmpty();
     }
 
     @Test
@@ -96,14 +96,14 @@ class DeleteFilesTest {
 
         namespace.putFile(Path.of("/folder/file.txt"), new ByteArrayInputStream("content".getBytes(StandardCharsets.UTF_8)));
 
-        assertThat(namespace.all("/folder/", false).size()).isEqualTo(1);
+        assertThat(namespace.all("/folder/", false)).hasSize(1);
 
         // When
         assertThat(deleteFiles.run(runContext)).isNotNull();
 
         // Then
-        assertThat(namespace.all("/folder/", false).size()).isZero();
-        assertThat(namespace.all("/", true).size()).isEqualTo(1); // Folder should still exist
+        assertThat(namespace.all("/folder/", false)).isEmpty();
+        assertThat(namespace.all("/", true)).hasSize(1); // Folder should still exist
     }
 
     @Test
@@ -125,13 +125,13 @@ class DeleteFilesTest {
         namespace.putFile(Path.of("/folder/file1.txt"), new ByteArrayInputStream("content1".getBytes(StandardCharsets.UTF_8)));
         namespace.putFile(Path.of("/folder/file2.txt"), new ByteArrayInputStream("content2".getBytes(StandardCharsets.UTF_8)));
 
-        assertThat(namespace.all("/folder/", false).size()).isEqualTo(2);
+        assertThat(namespace.all("/folder/", false)).hasSize(2);
 
         // When
         assertThat(deleteFiles.run(runContext)).isNotNull();
 
         // Then
-        assertThat(namespace.all("/folder/", false).size()).isEqualTo(1); // One file should still exist
-        assertThat(namespace.all("/", false).size()).isEqualTo(1); // Folder should still exist
+        assertThat(namespace.all("/folder/", false)).hasSize(1); // One file should still exist
+        assertThat(namespace.all("/", false)).hasSize(1); // Folder should still exist
     }
 }

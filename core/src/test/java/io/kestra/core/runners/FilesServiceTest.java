@@ -31,14 +31,14 @@ class FilesServiceTest {
     void renderInputFile() throws Exception {
         RunContext runContext = runContextFactory.of(Map.of("filename", "file.txt", "content", "Hello World"));
         Map<String, String> content = FilesService.inputFiles(runContext, Map.of("{{filename}}", "{{content}}"));
-        assertThat(content.get("file.txt")).isEqualTo("Hello World");
+        assertThat(content).containsEntry("file.txt", "Hello World");
     }
 
     @Test
     void renderRawFile() throws Exception {
         RunContext runContext = runContextFactory.of(Map.of("filename", "file.txt", "content", "Hello World"));
         Map<String, String> content = FilesService.inputFiles(runContext, Map.of("{{filename}}", "{% raw %}{{content}}{% endraw %}"));
-        assertThat(content.get("file.txt")).isEqualTo("{{content}}");
+        assertThat(content).containsEntry("file.txt", "{{content}}");
     }
 
     @Test
@@ -47,7 +47,7 @@ class FilesServiceTest {
         Map<String, String> files = FilesService.inputFiles(runContext, Map.of("file.txt", "content"));
 
         Map<String, URI> outputs = FilesService.outputFiles(runContext, files.keySet().stream().toList());
-        assertThat(outputs.size()).isEqualTo(1);
+        assertThat(outputs).hasSize(1);
     }
 
     @Test
@@ -56,6 +56,6 @@ class FilesServiceTest {
         Map<String, String> files = FilesService.inputFiles(runContext, Map.of("file.txt", "content"));
 
         Map<String, URI> outputs = FilesService.outputFiles(runContext, List.of("*.{{extension}}"));
-        assertThat(outputs.size()).isEqualTo(1);
+        assertThat(outputs).hasSize(1);
     }
 }

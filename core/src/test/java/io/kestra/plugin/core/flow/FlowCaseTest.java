@@ -71,11 +71,11 @@ public class FlowCaseTest {
 
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("executionId")).isEqualTo(triggered.get().getId());
+        assertThat(execution.getTaskRunList().getFirst().getOutputs()).containsEntry("executionId", triggered.get().getId());
         assertThat(triggered.get().getTrigger().getType()).isEqualTo("io.kestra.core.tasks.flows.Subflow");
-        assertThat(triggered.get().getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
-        assertThat(triggered.get().getTrigger().getVariables().get("flowId")).isEqualTo(execution.getFlowId());
-        assertThat(triggered.get().getTrigger().getVariables().get("namespace")).isEqualTo(execution.getNamespace());
+        assertThat(triggered.get().getTrigger().getVariables()).containsEntry("executionId", execution.getId());
+        assertThat(triggered.get().getTrigger().getVariables()).containsEntry("flowId", execution.getFlowId());
+        assertThat(triggered.get().getTrigger().getVariables()).containsEntry("namespace", execution.getNamespace());
     }
 
     @SuppressWarnings({"ResultOfMethodCallIgnored", "unchecked"})
@@ -113,25 +113,25 @@ public class FlowCaseTest {
             assertThat(((Map<String, String>) execution.getTaskRunList().getFirst().getOutputs().get("outputs")).get("extracted")).contains(outputs);
         }
 
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("executionId")).isEqualTo(triggered.get().getId());
+        assertThat(execution.getTaskRunList().getFirst().getOutputs()).containsEntry("executionId", triggered.get().getId());
 
         if (outputs != null) {
-            assertThat(execution.getTaskRunList().getFirst().getOutputs().get("state")).isEqualTo(triggered.get().getState().getCurrent().name());
+            assertThat(execution.getTaskRunList().getFirst().getOutputs()).containsEntry("state", triggered.get().getState().getCurrent().name());
         }
 
         assertThat(triggered.get().getTrigger().getType()).isEqualTo("io.kestra.plugin.core.flow.Subflow");
-        assertThat(triggered.get().getTrigger().getVariables().get("executionId")).isEqualTo(execution.getId());
-        assertThat(triggered.get().getTrigger().getVariables().get("flowId")).isEqualTo(execution.getFlowId());
-        assertThat(triggered.get().getTrigger().getVariables().get("namespace")).isEqualTo(execution.getNamespace());
+        assertThat(triggered.get().getTrigger().getVariables()).containsEntry("executionId", execution.getId());
+        assertThat(triggered.get().getTrigger().getVariables()).containsEntry("flowId", execution.getFlowId());
+        assertThat(triggered.get().getTrigger().getVariables()).containsEntry("namespace", execution.getNamespace());
 
         assertThat(triggered.get().getTaskRunList()).hasSize(count);
         assertThat(triggered.get().getState().getCurrent()).isEqualTo(triggerState);
 
         if (testInherited) {
-            assertThat(triggered.get().getLabels().size()).isEqualTo(6);
+            assertThat(triggered.get().getLabels()).hasSize(6);
             assertThat(triggered.get().getLabels()).contains(new Label(Label.CORRELATION_ID, execution.getId()), new Label("mainFlowExecutionLabel", "execFoo"), new Label("mainFlowLabel", "flowFoo"), new Label("launchTaskLabel", "launchFoo"), new Label("switchFlowLabel", "switchFoo"), new Label("overriding", "child"));
         } else {
-            assertThat(triggered.get().getLabels().size()).isEqualTo(4);
+            assertThat(triggered.get().getLabels()).hasSize(4);
             assertThat(triggered.get().getLabels()).contains(new Label(Label.CORRELATION_ID, execution.getId()), new Label("launchTaskLabel", "launchFoo"), new Label("switchFlowLabel", "switchFoo"), new Label("overriding", "child"));
             assertThat(triggered.get().getLabels()).doesNotContain(new Label("inherited", "label"));
         }

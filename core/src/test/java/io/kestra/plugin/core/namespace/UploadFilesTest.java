@@ -61,7 +61,7 @@ public class UploadFilesTest {
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
         uploadFile.run(runContext);
 
-        assertThat(runContext.storage().namespace(namespace).all().size()).isEqualTo(1);
+        assertThat(runContext.storage().namespace(namespace).all()).hasSize(1);
         assertThrows(IOException.class, () -> uploadFile.run(runContext));
     }
 
@@ -84,7 +84,7 @@ public class UploadFilesTest {
 
         Namespace namespaceStorage = runContext.storage().namespace(namespace);
         List<NamespaceFile> namespaceFiles = namespaceStorage.all();
-        assertThat(namespaceFiles.size()).isEqualTo(1);
+        assertThat(namespaceFiles).hasSize(1);
 
         String previousFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
@@ -96,7 +96,7 @@ public class UploadFilesTest {
         uploadFile.run(runContext);
 
         namespaceFiles = namespaceStorage.all();
-        assertThat(namespaceFiles.size()).isEqualTo(1);
+        assertThat(namespaceFiles).hasSize(1);
 
         String newFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
@@ -123,7 +123,7 @@ public class UploadFilesTest {
 
         Namespace namespaceStorage = runContext.storage().namespace(namespace);
         List<NamespaceFile> namespaceFiles = namespaceStorage.all();
-        assertThat(namespaceFiles.size()).isEqualTo(1);
+        assertThat(namespaceFiles).hasSize(1);
 
         String previousFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
@@ -135,11 +135,11 @@ public class UploadFilesTest {
         uploadFile.run(runContext);
 
         namespaceFiles = namespaceStorage.all();
-        assertThat(namespaceFiles.size()).isEqualTo(1);
+        assertThat(namespaceFiles).hasSize(1);
 
         String newFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
-        assertThat(previousFile.equals(newFile)).isTrue();
+        assertThat(previousFile).isEqualTo(newFile);
     }
 
     @Test
@@ -162,7 +162,7 @@ public class UploadFilesTest {
 
         Namespace namespaceStorage = runContext.storage().namespace(namespace);
         List<NamespaceFile> namespaceFiles = namespaceStorage.all();
-        assertThat(namespaceFiles.size()).isEqualTo(1);
+        assertThat(namespaceFiles).hasSize(1);
     }
 
     private URI addToStorage(String fileToLoad) throws IOException, URISyntaxException {

@@ -209,6 +209,7 @@ public sealed interface Variables extends Map<String, Object> {
     }
 
     class Serializer extends StdSerializer<Variables> {
+        private static final long serialVersionUID = 1L;
         protected Serializer() {
             super(Variables.class);
         }
@@ -238,6 +239,7 @@ public sealed interface Variables extends Map<String, Object> {
     }
 
     class Deserializer extends StdDeserializer<Variables> {
+        private static final long serialVersionUID = 1L;
         public Deserializer() {
             super(Variables.class);
         }

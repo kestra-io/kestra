@@ -158,8 +158,8 @@ class KVControllerTest {
         assertThat(expectedClass.isAssignableFrom(valueClazz)).as("Expected value to be a " + expectedClass + " but was " + valueClazz).isTrue();
 
         List<KVEntry> list = kvStore.list();
-        assertThat(list.size()).isEqualTo(1);
-        KVEntry kvEntry = list.get(0);
+        assertThat(list).hasSize(1);
+        KVEntry kvEntry = list.getFirst();
         assertThat(kvEntry.expirationDate().isAfter(Instant.now().plus(Duration.ofMinutes(4)))).isTrue();
         assertThat(kvEntry.expirationDate().isBefore(Instant.now().plus(Duration.ofMinutes(6)))).isTrue();
     }

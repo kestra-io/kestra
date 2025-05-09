@@ -120,7 +120,7 @@ public class DeleteFiles extends Task implements RunnableTask<Output> {
             .stream()
             .map(Rethrow.throwFunction(file -> {
                 if (namespace.delete(NamespaceFile.of(renderedNamespace, Path.of(file.path().replace("\\","/"))).storagePath())) {
-                    logger.debug(String.format("Deleted %s", (file.path())));
+                    logger.debug("Deleted %s".formatted((file.path())));
 
                     if (Boolean.TRUE.equals(deleteParent)) {
                         trackParentFolder(file, parentFolders);

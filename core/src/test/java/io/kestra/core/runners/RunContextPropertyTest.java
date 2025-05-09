@@ -44,10 +44,10 @@ class RunContextPropertyTest {
         var runContext = runContextFactory.of();
 
         var runContextProperty = new RunContextProperty<List<String>>(null, runContext);
-        assertThat(runContextProperty.asList(String.class)).hasSize(0);
+        assertThat(runContextProperty.asList(String.class)).isEmpty();
 
         runContextProperty = new RunContextProperty<>(null, runContext);
-        assertThat(runContextProperty.asList(String.class, Map.of("key", "value"))).hasSize(0);
+        assertThat(runContextProperty.asList(String.class, Map.of("key", "value"))).isEmpty();
     }
 
     @Test
@@ -66,10 +66,10 @@ class RunContextPropertyTest {
         var runContext = runContextFactory.of();
 
         var runContextProperty = new RunContextProperty<Map<String, String>>(null, runContext);
-        assertThat(runContextProperty.asMap(String.class, String.class)).hasSize(0);
+        assertThat(runContextProperty.asMap(String.class, String.class)).isEmpty();
 
         runContextProperty = new RunContextProperty<>(null, runContext);
-        assertThat(runContextProperty.asMap(String.class, String.class, Map.of("key", "value"))).hasSize(0);
+        assertThat(runContextProperty.asMap(String.class, String.class, Map.of("key", "value"))).isEmpty();
     }
 
     @Test

@@ -58,7 +58,7 @@ public class WaitForCaseTest {
         assertThat(execution.getTaskRunList().getFirst().getOutputs()).isNotNull();
         assertThat((Integer) execution.getTaskRunList().getFirst().getOutputs().get("iterationCount")).isEqualTo(3);
         Map<String,Object> values = (Map<String, Object>) execution.getTaskRunList().getLast().getOutputs().get("values");
-        assertThat(values.get("count")).isEqualTo("4");
+        assertThat(values).containsEntry("count", "4");
     }
 
     public void waitforMultipleTasksFailed() throws TimeoutException, QueueException {

@@ -23,7 +23,7 @@ class FlowExpandCommandTest {
             Integer call = PicocliRunner.call(FlowExpandCommand.class, ctx, args);
 
             assertThat(call).isZero();
-            assertThat(out.toString()).isEqualTo("id: include\n" +
+            assertThat(out).hasToString("id: include\n" +
                 "namespace: io.kestra.cli\n" +
                 "\n" +
                 "# The list of tasks\n" +

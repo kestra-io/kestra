@@ -12,6 +12,7 @@ import static io.kestra.core.utils.Rethrow.throwPredicate;
 @Singleton
 @Replaces(JdbcTestUtils.class)
 public class H2JdbcTestUtils extends JdbcTestUtils {
+    @Override
     @SneakyThrows
     public void drop() {
 //        dslContextWrapper.transaction((configuration) -> {

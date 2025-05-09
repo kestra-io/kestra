@@ -68,14 +68,17 @@ public class ManualConstraintViolation<T> implements ConstraintViolation<T> {
         )));
     }
 
+    @Override
     public String getMessageTemplate() {
         return "{messageTemplate}";
     }
 
+    @Override
     public Object[] getExecutableParameters() {
         return new Object[0];
     }
 
+    @Override
     public Object getExecutableReturnValue() {
         return null;
     }

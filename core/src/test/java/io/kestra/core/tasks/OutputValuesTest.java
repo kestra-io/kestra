@@ -26,13 +26,13 @@ class OutputValuesTest {
         TaskRun outputValues = execution.getTaskRunList().getFirst();
         assertThat(outputValues.getOutputs()).isInstanceOf(Variables.InMemoryVariables.class);
         Map<String, Object> values = (Map<String, Object>) outputValues.getOutputs().get("values");
-        assertThat(values.get("output1")).isEqualTo("xyz");
-        assertThat(values.get("output2")).isEqualTo("abc");
+        assertThat(values).containsEntry("output1", "xyz");
+        assertThat(values).containsEntry("output2", "abc");
 
         outputValues = execution.getTaskRunList().getLast();
         assertThat(outputValues.getOutputs()).isInstanceOf(Variables.InMemoryVariables.class);
         values = (Map<String, Object>) outputValues.getOutputs().get("values");
-        assertThat(values.get("output1")).isEqualTo("xyz");
-        assertThat(values.get("output2")).isEqualTo("abc");
+        assertThat(values).containsEntry("output1", "xyz");
+        assertThat(values).containsEntry("output2", "abc");
     }
 }

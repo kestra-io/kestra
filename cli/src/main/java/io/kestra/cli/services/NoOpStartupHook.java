@@ -5,7 +5,8 @@ import jakarta.inject.Singleton;
 
 @Singleton
 public class NoOpStartupHook implements StartupHookInterface {
-   public void start(AbstractCommand abstractCommand) {
+    @Override
+    public void start(AbstractCommand abstractCommand) {
 
    }
 }

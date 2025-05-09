@@ -45,6 +45,7 @@ public class Sleep extends Task implements RunnableTask<VoidOutput> {
     @NotNull
     private Property<Duration> duration;
 
+    @Override
     public VoidOutput run(RunContext runContext) throws Exception {
         Duration durationRendered = runContext.render(this.duration).as(Duration.class).orElseThrow();
         runContext.logger().info("Waiting for {}", durationRendered);

@@ -25,7 +25,7 @@ import java.time.Instant;
 @SuperBuilder
 @Introspected
 public abstract class AbstractRetry {
-    abstract public String getType();
+    public abstract String getType();
 
     private Duration maxDuration;
 

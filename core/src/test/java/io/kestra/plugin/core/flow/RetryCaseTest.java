@@ -207,7 +207,7 @@ public class RetryCaseTest {
 
     public void retrySubflow(Execution execution) {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.getTaskRunList().get(0).getAttempts().size()).isEqualTo(3);
+        assertThat(execution.getTaskRunList().getFirst().getAttempts()).hasSize(3);
     }
 
     public void retryFlowableChild(Execution execution) {

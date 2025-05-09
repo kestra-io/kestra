@@ -31,7 +31,7 @@ public class EncryptionServiceTest {
         assertThat(EncryptionService.decrypt(KEY, (String) null)).isNull();
         assertThat(EncryptionService.encrypt(KEY, (byte[]) null)).isNull();
         assertThat(EncryptionService.decrypt(KEY, (byte[]) null)).isNull();
-        assertThat(EncryptionService.encrypt(KEY, "")).isEqualTo("");
-        assertThat(EncryptionService.decrypt(KEY, "")).isEqualTo("");
+        assertThat(EncryptionService.encrypt(KEY, "")).isEmpty();
+        assertThat(EncryptionService.decrypt(KEY, "")).isEmpty();
     }
 }

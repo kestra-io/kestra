@@ -35,7 +35,7 @@ public class LogToFileTest {
         InputStream inputStream = storage.get(null, "io.kestra.tests", attempt.getLogFile());
         List<String> strings = IOUtils.readLines(inputStream, StandardCharsets.UTF_8);
         assertThat(strings).isNotNull();
-        assertThat(strings.size()).isEqualTo(1);
+        assertThat(strings).hasSize(1);
         assertThat(strings.getFirst()).contains("INFO");
         assertThat(strings.getFirst()).contains("Hello World!");
     }

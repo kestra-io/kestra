@@ -38,6 +38,7 @@ public class CounterMetric extends AbstractMetric {
         return Counter.of(name, description, value, tagsAsStrings);
     }
 
+    @Override
     public String getType() {
         return TYPE;
     }

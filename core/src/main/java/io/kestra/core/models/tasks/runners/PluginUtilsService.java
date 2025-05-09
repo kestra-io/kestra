@@ -24,7 +24,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -35,7 +34,7 @@ import java.util.Optional;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
-abstract public class PluginUtilsService {
+public abstract class PluginUtilsService {
 
     private static final TypeReference<Map<String, String>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
 
@@ -99,8 +98,8 @@ abstract public class PluginUtilsService {
 
     @SuppressWarnings("unchecked")
     public static Map<String, String> transformInputFiles(RunContext runContext, Map<String, Object> additionalVars, @NotNull Object inputFiles) throws IllegalVariableEvaluationException, JsonProcessingException {
-        if (inputFiles instanceof Map) {
-            Map<String, String> castedInputFiles = (Map<String, String>) ((Map<?, ?>) inputFiles);
+        if (inputFiles instanceof Map<?, ?> map) {
+            Map<String, String> castedInputFiles = (Map<String, String>) (map);
             Map<String, String> nullFilteredInputFiles = new HashMap<>();
             castedInputFiles.forEach((key, val) -> {
                 if (val != null) {
@@ -137,7 +136,7 @@ abstract public class PluginUtilsService {
 
                 // path with "/", create the subfolders
                 if (file.getParent() != null) {
-                    Path subFolder = Paths.get(
+                    Path subFolder = Path.of(
                         workingDirectory.toAbsolutePath().toString(),
                         new File(finalFileName).getParent()
                     );

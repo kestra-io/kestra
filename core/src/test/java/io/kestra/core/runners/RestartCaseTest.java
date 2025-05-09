@@ -59,7 +59,7 @@ public class RestartCaseTest {
                 assertThat(restartedExec).isNotNull();
                 assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
                 assertThat(restartedExec.getParentId()).isNull();
-                assertThat(restartedExec.getTaskRunList().size()).isEqualTo(3);
+                assertThat(restartedExec.getTaskRunList()).hasSize(3);
                 assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
 
                 executionQueue.emit(restartedExec);
@@ -70,9 +70,9 @@ public class RestartCaseTest {
         assertThat(finishedRestartedExecution).isNotNull();
         assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
         assertThat(finishedRestartedExecution.getParentId()).isNull();
-        assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(4);
+        assertThat(finishedRestartedExecution.getTaskRunList()).hasSize(4);
 
-        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts().size()).isEqualTo(2);
+        assertThat(finishedRestartedExecution.getTaskRunList().get(2).getAttempts()).hasSize(2);
 
         finishedRestartedExecution
             .getTaskRunList()
@@ -100,7 +100,7 @@ public class RestartCaseTest {
                 assertThat(restartedExec).isNotNull();
                 assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
                 assertThat(restartedExec.getParentId()).isNull();
-                assertThat(restartedExec.getTaskRunList().size()).isEqualTo(1);
+                assertThat(restartedExec.getTaskRunList()).hasSize(1);
                 assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
             }),
             Duration.ofSeconds(60)
@@ -109,9 +109,9 @@ public class RestartCaseTest {
         assertThat(finishedRestartedExecution).isNotNull();
         assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
         assertThat(finishedRestartedExecution.getParentId()).isNull();
-        assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(2);
+        assertThat(finishedRestartedExecution.getTaskRunList()).hasSize(2);
 
-        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts().size()).isEqualTo(2);
+        assertThat(finishedRestartedExecution.getTaskRunList().getFirst().getAttempts()).hasSize(2);
 
         assertThat(finishedRestartedExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
@@ -135,7 +135,7 @@ public class RestartCaseTest {
                 assertThat(restartedExec).isNotNull();
                 assertThat(restartedExec.getId()).isEqualTo(firstExecution.getId());
                 assertThat(restartedExec.getParentId()).isNull();
-                assertThat(restartedExec.getTaskRunList().size()).isEqualTo(4);
+                assertThat(restartedExec.getTaskRunList()).hasSize(4);
                 assertThat(restartedExec.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
             }),
             Duration.ofSeconds(60)
@@ -144,11 +144,11 @@ public class RestartCaseTest {
         assertThat(finishedRestartedExecution).isNotNull();
         assertThat(finishedRestartedExecution.getId()).isEqualTo(firstExecution.getId());
         assertThat(finishedRestartedExecution.getParentId()).isNull();
-        assertThat(finishedRestartedExecution.getTaskRunList().size()).isEqualTo(5);
+        assertThat(finishedRestartedExecution.getTaskRunList()).hasSize(5);
 
         Optional<TaskRun> taskRun = finishedRestartedExecution.findTaskRunsByTaskId("failStep").stream().findFirst();
         assertTrue(taskRun.isPresent());
-        assertThat(taskRun.get().getAttempts().size()).isEqualTo(2);
+        assertThat(taskRun.get().getAttempts()).hasSize(2);
 
         assertThat(finishedRestartedExecution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }

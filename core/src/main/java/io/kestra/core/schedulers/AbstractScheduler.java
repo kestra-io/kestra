@@ -492,7 +492,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             .filter(Objects::nonNull).toList();
     }
 
-    abstract public void handleNext(List<FlowWithSource> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer);
+    public abstract void handleNext(List<FlowWithSource> flows, ZonedDateTime now, BiConsumer<List<Trigger>, ScheduleContextInterface> consumer);
 
     public List<FlowWithTriggers> schedulerTriggers() {
         Map<String, FlowWithSource> flows = getFlowsWithDefaults().stream()

@@ -13,7 +13,7 @@ import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Paths;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.Set;
 import org.junit.jupiter.api.extension.AfterEachCallback;
@@ -62,7 +62,7 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
         Set<String> flowIds = new HashSet<>();
         for (String path : loadFlows.value()) {
             URL resource = loadFile(path);
-            Flow flow = YamlParser.parse(Paths.get(resource.toURI()).toFile(), Flow.class);
+            Flow flow = YamlParser.parse(Path.of(resource.toURI()).toFile(), Flow.class);
             flowIds.add(flow.getId());
         }
         flowRepository.findAllForAllTenants().stream()

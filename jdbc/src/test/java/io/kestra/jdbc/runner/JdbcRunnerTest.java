@@ -111,7 +111,7 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
         assertThat(matchingLog.getMessage()).contains("has exceeded the configured limit of 1048576");
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
-        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList()).hasSize(1);
 
     }
 

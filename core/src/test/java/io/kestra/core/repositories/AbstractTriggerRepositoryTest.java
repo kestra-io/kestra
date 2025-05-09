@@ -35,20 +35,20 @@ public abstract class AbstractTriggerRepositoryTest {
         Trigger.TriggerBuilder<?, ?> builder = trigger();
 
         Optional<Trigger> findLast = triggerRepository.findLast(builder.build());
-        assertThat(findLast.isPresent()).isFalse();
+        assertThat(findLast).isNotPresent();
 
         Trigger save = triggerRepository.save(builder.build());
 
         findLast = triggerRepository.findLast(save);
 
-        assertThat(findLast.isPresent()).isTrue();
+        assertThat(findLast).isPresent();
         assertThat(findLast.get().getExecutionId()).isEqualTo(save.getExecutionId());
 
         save = triggerRepository.save(builder.executionId(IdUtils.create()).build());
 
         findLast = triggerRepository.findLast(save);
 
-        assertThat(findLast.isPresent()).isTrue();
+        assertThat(findLast).isPresent();
         assertThat(findLast.get().getExecutionId()).isEqualTo(save.getExecutionId());
 
 
@@ -59,11 +59,11 @@ public abstract class AbstractTriggerRepositoryTest {
 
         List<Trigger> all = triggerRepository.findAllForAllTenants();
 
-        assertThat(all.size()).isEqualTo(4);
+        assertThat(all).hasSize(4);
 
         all = triggerRepository.findAll(null);
 
-        assertThat(all.size()).isEqualTo(4);
+        assertThat(all).hasSize(4);
 
         String namespacePrefix = "io.kestra.another";
         String namespace = namespacePrefix + ".ns";
@@ -71,29 +71,29 @@ public abstract class AbstractTriggerRepositoryTest {
         triggerRepository.save(trigger);
 
         List<Trigger> find = triggerRepository.find(Pageable.from(1, 4, Sort.of(Sort.Order.asc("namespace"))), null, null, null, null, null);
-        assertThat(find.size()).isEqualTo(4);
+        assertThat(find).hasSize(4);
         assertThat(find.getFirst().getNamespace()).isEqualTo(namespace);
 
         find = triggerRepository.find(Pageable.from(1, 4, Sort.of(Sort.Order.asc("namespace"))), null, null, null, searchedTrigger.getFlowId(), null);
-        assertThat(find.size()).isEqualTo(1);
+        assertThat(find).hasSize(1);
         assertThat(find.getFirst().getFlowId()).isEqualTo(searchedTrigger.getFlowId());
 
         find = triggerRepository.find(Pageable.from(1, 100, Sort.of(Sort.Order.asc(triggerRepository.sortMapping().apply("triggerId")))), null, null, namespacePrefix, null, null);
-        assertThat(find.size()).isEqualTo(1);
+        assertThat(find).hasSize(1);
         assertThat(find.getFirst().getTriggerId()).isEqualTo(trigger.getTriggerId());
 
         // Full text search is on namespace, flowId, triggerId, executionId
         find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), trigger.getNamespace(), null, null, null, null);
-        assertThat(find.size()).isEqualTo(1);
+        assertThat(find).hasSize(1);
         assertThat(find.getFirst().getTriggerId()).isEqualTo(trigger.getTriggerId());
         find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getFlowId(), null, null, null, null);
-        assertThat(find.size()).isEqualTo(1);
+        assertThat(find).hasSize(1);
         assertThat(find.getFirst().getTriggerId()).isEqualTo(searchedTrigger.getTriggerId());
         find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getTriggerId(), null, null, null, null);
-        assertThat(find.size()).isEqualTo(1);
+        assertThat(find).hasSize(1);
         assertThat(find.getFirst().getTriggerId()).isEqualTo(searchedTrigger.getTriggerId());
         find = triggerRepository.find(Pageable.from(1, 100, Sort.UNSORTED), searchedTrigger.getExecutionId(), null, null, null, null);
-        assertThat(find.size()).isEqualTo(1);
+        assertThat(find).hasSize(1);
         assertThat(find.getFirst().getTriggerId()).isEqualTo(searchedTrigger.getTriggerId());
     }
 

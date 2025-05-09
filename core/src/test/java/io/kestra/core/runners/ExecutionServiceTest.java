@@ -169,7 +169,7 @@ class ExecutionServiceTest {
         assertThat(restart.getState().getCurrent()).isEqualTo(State.Type.CREATED);
         assertThat(restart.getState().getHistories()).hasSize(1);
         assertThat(restart.getState().getHistories().getFirst().getDate(), not(is(execution.getState().getStartDate())));
-        assertThat(restart.getTaskRunList()).hasSize(0);
+        assertThat(restart.getTaskRunList()).isEmpty();
         assertThat(restart.getId()).isNotEqualTo(execution.getId());
         assertThat(restart.getLabels()).contains(new Label(Label.REPLAY, "true"));
     }

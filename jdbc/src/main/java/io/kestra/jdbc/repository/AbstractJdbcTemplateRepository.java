@@ -79,8 +79,9 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
             });
     }
 
-    abstract protected Condition findCondition(String query);
+    protected abstract Condition findCondition(String query);
 
+    @Override
     public ArrayListTotal<Template> find(
         Pageable pageable,
         @Nullable String query,
@@ -170,6 +171,7 @@ public abstract class AbstractJdbcTemplateRepository extends AbstractJdbcReposit
     }
 
 
+    @Override
     public Template update(Template template, Template previous) throws ConstraintViolationException {
         this
             .findById(previous.getTenantId(), previous.getNamespace(), previous.getId())

@@ -60,6 +60,6 @@ class DateFormatTest {
         Optional<ConstraintViolationException> valid = modelValidator.isValid(options);
 
         assertThat(valid.isPresent()).isEqualTo(present);
-        valid.ifPresent(e -> assertThat(e.getConstraintViolations().size()).isEqualTo(size));
+        valid.ifPresent(e -> assertThat(e.getConstraintViolations()).hasSize(size));
     }
 }

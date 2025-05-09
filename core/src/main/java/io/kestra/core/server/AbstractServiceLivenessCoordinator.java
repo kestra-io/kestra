@@ -23,7 +23,7 @@ import static io.kestra.core.server.Service.ServiceState.*;
 @Slf4j
 public abstract class AbstractServiceLivenessCoordinator extends AbstractServiceLivenessTask {
 
-    private final static int DEFAULT_SCHEDULE_JITTER_MAX_MS = 500;
+    private static final int DEFAULT_SCHEDULE_JITTER_MAX_MS = 500;
 
     protected static String DEFAULT_REASON_FOR_DISCONNECTED =
         "The service was detected as non-responsive after the session timeout. " +

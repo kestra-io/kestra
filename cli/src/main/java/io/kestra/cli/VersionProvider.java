@@ -10,6 +10,7 @@ import jakarta.inject.Singleton;
 class VersionProvider implements CommandLine.IVersionProvider {
     private static io.kestra.core.utils.VersionProvider versionProvider;
 
+    @Override
     public String[] getVersion() {
         return new String[] { versionProvider.getVersion() };
     }

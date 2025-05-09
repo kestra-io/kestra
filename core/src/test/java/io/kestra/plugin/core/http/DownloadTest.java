@@ -95,7 +95,7 @@ class DownloadTest {
         Download.Output output = assertDoesNotThrow(() -> task.run(runContext));
 
         assertThat(output.getLength()).isEqualTo(0L);
-        assertThat(IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8)).isEqualTo("");
+        assertThat(IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8)).isEmpty();
     }
 
     @Test
@@ -192,7 +192,7 @@ class DownloadTest {
 
             Download.Output output = task.run(runContext);
 
-            assertThat(output.getHeaders().get("content-type")).isEqualTo(List.of("application/json"));
+            assertThat(output.getHeaders()).containsEntry("content-type", List.of("application/json"));
             assertThat(output.getCode()).isEqualTo(417);
         }
     }

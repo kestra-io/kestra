@@ -72,8 +72,7 @@ public class SecretFunction implements Function {
                         secret = jsonNode.isValueNode() ? jsonNode.asText() : jsonNode.toString();
                     }
                 } catch (JsonProcessingException e) {
-                    throw new SecretException(String.format(
-                        "Failed to read secret sub-key '%s' from secret '%s'. Ensure the secret contains valid JSON value.",
+                    throw new SecretException("Failed to read secret sub-key '%s' from secret '%s'. Ensure the secret contains valid JSON value.".formatted(
                         subkey,
                         key
                     ));

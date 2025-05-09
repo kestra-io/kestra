@@ -173,8 +173,8 @@ class RunContextTest {
         assertThat(ZonedDateTime.parse((String) execution.getTaskRunList().getFirst().getOutputs().get("value")))
             .isCloseTo(ZonedDateTime.now(), within(10, ChronoUnit.SECONDS));
 
-        assertThat(execution.getTaskRunList().get(1).getOutputs().get("value")).isEqualTo("task-id");
-        assertThat(execution.getTaskRunList().get(2).getOutputs().get("value")).isEqualTo("return");
+        assertThat(execution.getTaskRunList().get(1).getOutputs()).containsEntry("value", "task-id");
+        assertThat(execution.getTaskRunList().get(2).getOutputs()).containsEntry("value", "return");
     }
 
     @Test
@@ -190,7 +190,7 @@ class RunContextTest {
 
         long size = 1024L * 1024 * 1024;
 
-        Process p = Runtime.getRuntime().exec(new String[] {"dd", "if=/dev/zero", String.format("of=%s", path), "bs=1", "count=1", String.format("seek=%s", size)});
+        Process p = Runtime.getRuntime().exec(new String[] {"dd", "if=/dev/zero", "of=%s".formatted(path), "bs=1", "count=1", "seek=%s".formatted(size)});
         p.waitFor();
         p.destroy();
 
@@ -219,10 +219,10 @@ class RunContextTest {
         assertThat(metricRegistry.timer("duration", null).totalTime(TimeUnit.SECONDS)).isEqualTo(42D);
 
         assertThat(runContext.metrics().get(2).getValue()).isEqualTo(123D);
-        assertThat(runContext.metrics().get(2).getTags().size()).isEqualTo(1);
+        assertThat(runContext.metrics().get(2).getTags()).hasSize(1);
 
         assertThat(runContext.metrics().get(3).getValue()).isEqualTo(Duration.ofSeconds(123));
-        assertThat(runContext.metrics().get(3).getTags().size()).isEqualTo(1);
+        assertThat(runContext.metrics().get(3).getTags()).hasSize(1);
     }
 
     @Test
@@ -246,13 +246,13 @@ class RunContextTest {
         assertThat(execution.getTaskRunList()).hasSize(2);
         TaskRun hello = execution.findTaskRunsByTaskId("hello").getFirst();
         Map<String, String> valueOutput = (Map<String, String>) hello.getOutputs().get("value");
-        assertThat(valueOutput.size()).isEqualTo(2);
-        assertThat(valueOutput.get("type")).isEqualTo(EncryptedString.TYPE);
+        assertThat(valueOutput).hasSize(2);
+        assertThat(valueOutput).containsEntry("type", EncryptedString.TYPE);
         // the value is encrypted so it's not the plaintext value of the task property
         assertThat(valueOutput.get("value")).isNotEqualTo("Hello World");
         TaskRun returnTask = execution.findTaskRunsByTaskId("return").getFirst();
         // the output is automatically decrypted so the return has the decrypted value of the hello task output
-        assertThat(returnTask.getOutputs().get("value")).isEqualTo("Hello World");
+        assertThat(returnTask.getOutputs()).containsEntry("value", "Hello World");
     }
 
     @Test
@@ -283,13 +283,13 @@ class RunContextTest {
         ));
 
         Map<String, String> rendered = runContext.renderMap(Map.of("{{key}}", "{{value}}"));
-        assertThat(rendered.get("default")).isEqualTo("default");
+        assertThat(rendered).containsEntry("default", "default");
 
         rendered = runContext.renderMap(Map.of("{{key}}", "{{value}}"), Map.of(
             "key", "key",
             "value", "value"
         ));
-        assertThat(rendered.get("key")).isEqualTo("value");
+        assertThat(rendered).containsEntry("key", "value");
     }
 
 

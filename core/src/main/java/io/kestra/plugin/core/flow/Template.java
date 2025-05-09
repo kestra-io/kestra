@@ -99,6 +99,7 @@ public class Template extends Task implements FlowableTask<Template.Output> {
     @Getter(AccessLevel.NONE)
     protected List<Task> _finally;
 
+    @Override
     public List<Task> getFinally() {
         return this._finally;
     }

@@ -47,7 +47,7 @@ class StateNamespaceTest {
             .build();
         Get.Output getOutput = get.run(runContextFlow2(get));
         assertThat(getOutput.getCount()).isEqualTo(1);
-        assertThat(getOutput.getData().get("john")).isEqualTo("doe");
+        assertThat(getOutput.getData()).containsEntry("john", "doe");
 
         get = Get.builder()
             .id(IdUtils.create())

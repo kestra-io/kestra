@@ -62,14 +62,14 @@ class JacksonMapperTest {
 
         List<Object> integerList = JacksonMapper.toList(list);
 
-        assertThat(integerList.size()).isEqualTo(3);
+        assertThat(integerList).hasSize(3);
         assertThat(integerList).containsExactlyInAnyOrder(1, 2, 3);
     }
 
     void test(Pojo original, Pojo deserialize) {
         assertThat(deserialize.getString()).isEqualTo(original.getString());
         assertThat(deserialize.getInstant().toEpochMilli()).isEqualTo(original.getInstant().toEpochMilli());
-        assertThat(deserialize.getInstant().toString()).isEqualTo(original.getInstant().toString());
+        assertThat(deserialize.getInstant()).hasToString(original.getInstant().toString());
         assertThat(deserialize.getZonedDateTime().toEpochSecond()).isEqualTo(original.getZonedDateTime().toEpochSecond());
         assertThat(deserialize.getZonedDateTime().getOffset()).isEqualTo(original.getZonedDateTime().getOffset());
     }

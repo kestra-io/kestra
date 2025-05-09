@@ -174,16 +174,14 @@ public class StorageContext {
 
         final String prefix;
         if (objectId == null) {
-            prefix = String.format(
-                PREFIX_FORMAT_CACHE,
+            prefix = PREFIX_FORMAT_CACHE.formatted(
                 getNamespaceAsPath(),
                 Slugify.of(getFlowId()),
                 Slugify.of(cacheId)
             );
         } else {
             String hashedObjectId = Hashing.hashToString(objectId);
-            prefix = String.format(
-                PREFIX_FORMAT_CACHE_OBJECT,
+            prefix = PREFIX_FORMAT_CACHE_OBJECT.formatted(
                 getNamespaceAsPath(),
                 Slugify.of(getFlowId()),
                 Slugify.of(cacheId),
@@ -232,7 +230,7 @@ public class StorageContext {
      */
     public URI getFlowStorageURI() {
         try {
-            var prefix = String.format(PREFIX_FORMAT_FLOWS, getNamespaceAsPath(), Slugify.of(getFlowId()));
+            var prefix = PREFIX_FORMAT_FLOWS.formatted(getNamespaceAsPath(), Slugify.of(getFlowId()));
             return new URI("//" + prefix);
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(e);
@@ -260,7 +258,7 @@ public class StorageContext {
                 .map(s -> s.endsWith("://") ? s : s + "://")
                 .orElse("//");
 
-            var prefix = String.format(PREFIX_FORMAT_EXECUTIONS,
+            var prefix = PREFIX_FORMAT_EXECUTIONS.formatted(
                 getNamespaceAsPath(),
                 Slugify.of(flowId),
                 executionId
@@ -290,12 +288,12 @@ public class StorageContext {
 
 
     public static String namespaceFilePrefix(String namespace) {
-        return String.format(PREFIX_FORMAT_NAMESPACE_FILE, namespace.replace(".", "/"));
+        return PREFIX_FORMAT_NAMESPACE_FILE.formatted(namespace.replace(".", "/"));
     }
 
 
     public static String kvPrefix(String namespace) {
-        return String.format(PREFIX_FORMAT_KV, namespace.replace(".", "/"));
+        return PREFIX_FORMAT_KV.formatted(namespace.replace(".", "/"));
     }
 
     /**
@@ -327,8 +325,7 @@ public class StorageContext {
         @Override
         public URI getContextStorageURI() {
             try {
-                var prefix = String.format(
-                    PREFIX_FORMAT_TASK,
+                var prefix = PREFIX_FORMAT_TASK.formatted(
                     getNamespaceAsPath(),
                     Slugify.of(getFlowId()),
                     getExecutionId(),
@@ -374,7 +371,7 @@ public class StorageContext {
         @Override
         public URI getContextStorageURI() {
             try {
-                String prefix = String.format(PREFIX_FORMAT_TRIGGER,
+                String prefix = PREFIX_FORMAT_TRIGGER.formatted(
                     getNamespaceAsPath(),
                     Slugify.of(getFlowId()),
                     getExecutionId(),
@@ -421,8 +418,7 @@ public class StorageContext {
         @Override
         public URI getContextStorageURI() {
             try {
-                var prefix = String.format(
-                    PREFIX_FORMAT_INPUTS,
+                var prefix = PREFIX_FORMAT_INPUTS.formatted(
                     getNamespaceAsPath(),
                     Slugify.of(getFlowId()),
                     getExecutionId(),

@@ -14,6 +14,7 @@ import java.util.Map;
 public class FromJsonFunction implements Function {
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson();
 
+    @Override
     public List<String> getArgumentNames() {
         return List.of("json");
     }

@@ -19,12 +19,33 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onActivated, onMounted, ref} from "vue";
+    import {computed, onActivated, onMounted, ref, inject, watch} from "vue";
     import {useStore} from "vuex";
     import Editor from "./Editor.vue";
     import KeyShortcuts from "./KeyShortcuts.vue";
 
+    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
+    import {TopologyClickParams} from "../code/utils/types";
+
     const store = useStore();
+
+    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
+
+    watch(topologyClick, (value: TopologyClickParams | undefined) => {
+        if (!value) return;
+
+        // TODO: Check if NoCode is open, retrurn if it is
+
+        const {action} = value;
+        // const {id, section} = params;
+
+        if (action === "create") {
+            // TODO: Position cursor in the editor based on params
+        }
+        else if(action === "edit"){
+            // TODO: Position cursor in the editor on ID field of the task to be edited
+        }
+    }, {deep: true});
 
     export interface EditorTabProps{
         name: string,

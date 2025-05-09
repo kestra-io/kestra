@@ -78,6 +78,7 @@
             .el-select-dropdown__item {
                 padding: 0;
                 margin: 0;
+                background: none;
 
                 &.is-hovering {
                     background: none;

@@ -406,6 +406,10 @@
         "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> en nuestra documentación.",
         "title": "No se han establecido valores predeterminados de plugin para este Namespace."
       },
+      "testSuites": {
+        "content": "Comienza a crear suites de prueba para probar tus Flows.",
+        "title": "¡Aún no tienes Test suites!"
+      },
       "triggers": {
         "content": "Lee más sobre <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> en nuestra documentación.",
         "title": "Tu flow no tiene ningún trigger."
@@ -1081,6 +1085,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "Intervalo de Auto Refresh",
             "default_namespace": "Namespace Predeterminado",
             "editor_type": "Tipo de Editor Predeterminado",
             "execute_default_tab": "Pestaña de Ejecución Predeterminada",
@@ -1204,7 +1209,7 @@
     "toggle fullscreen": "Alternar pantalla completa",
     "toggle output": "Alternar salidas",
     "toggle output display": "Alternar visualización de salida",
-    "toggle periodic refresh each 10 seconds": "Alternar actualización periódica cada 10 segundos",
+    "toggle periodic refresh each x seconds": "Alternar actualización periódica cada {interval} segundos",
     "toggle_word_wrap": "Alternar ajuste de línea",
     "topology": "Topología",
     "topology-graph": {

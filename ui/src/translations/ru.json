@@ -406,6 +406,10 @@
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> в нашей документации.",
         "title": "Для этого namespace не установлены значения по умолчанию для плагинов."
       },
+      "testSuites": {
+        "content": "Начните создавать тестовые наборы для проверки ваших Flows.",
+        "title": "У вас еще нет Test suites!"
+      },
       "triggers": {
         "content": "Узнайте больше о <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> в нашей документации.",
         "title": "Ваш flow не имеет никаких Triggers."
@@ -1081,6 +1085,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "Интервал автоматического обновления",
             "default_namespace": "Namespace по умолчанию",
             "editor_type": "Тип редактора по умолчанию",
             "execute_default_tab": "Вкладка выполнения по умолчанию",
@@ -1204,7 +1209,7 @@
     "toggle fullscreen": "Переключить полноэкранный режим",
     "toggle output": "Переключить выводы",
     "toggle output display": "Переключить отображение вывода",
-    "toggle periodic refresh each 10 seconds": "Переключить периодическое обновление каждые 10 секунд",
+    "toggle periodic refresh each x seconds": "Переключить периодическое обновление каждые {interval} секунд",
     "toggle_word_wrap": "Переключить перенос слов",
     "topology": "Топология",
     "topology-graph": {

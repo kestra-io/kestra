@@ -11,6 +11,7 @@ public enum SchemaType {
     TRIGGER,
     PLUGINDEFAULT,
     APPS,
+    TESTSUITES,
     DASHBOARD;
 
     @JsonCreator

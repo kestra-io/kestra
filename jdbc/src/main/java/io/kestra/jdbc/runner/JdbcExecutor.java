@@ -891,6 +891,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             return;
         }
 
+        metricRegistry
+            .counter(MetricRegistry.METRIC_EXECUTOR_KILLED_COUNT, MetricRegistry.METRIC_EXECUTOR_KILLED_COUNT_DESCRIPTION, metricRegistry.tags(killedExecution))
+            .increment();
+
         if (log.isDebugEnabled()) {
             executorService.log(log, true, killedExecution);
         }
@@ -1105,6 +1109,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 Executor executor = new Executor(pair.getLeft(), null);
                 Flow flow = flowRepository.findByExecution(pair.getLeft());
 
+                metricRegistry
+                    .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+                    .increment();
+
                 try {
                     // Handle paused tasks
                     if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)) {
@@ -1169,9 +1177,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
                 if (sla.isEmpty()) {
                     // this can happen in case the flow has been updated and the SLA removed
-                    log.debug("Cannot find the SLA '{}' if the flow for execution '{}', ignoring it.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
+                    log.debug("Cannot find the SLA '{}' in the flow for execution '{}', ignoring it.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
                     return null;
                 }
+
+                metricRegistry
+                    .counter(MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_EXPIRED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+                    .increment();
 
                 try {
                     RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
@@ -1179,6 +1191,10 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     if (violation.isPresent()) { // should always be true
                         log.info("Processing expired SLA monitor '{}' for execution '{}'.", slaMonitor.getSlaId(), slaMonitor.getExecutionId());
                         executor = executorService.processViolation(runContext, executor, violation.get());
+
+                        metricRegistry
+                            .counter(MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+                            .increment();
                     }
                 } catch (Exception e) {
                     executor = handleFailedExecutionFromExecutor(executor, e);

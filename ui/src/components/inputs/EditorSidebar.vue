@@ -501,7 +501,7 @@
             async loadNodes(node, resolve) {
                 if (node.level === 0) {
                     const payload = {
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.currentNS ?? this.$route.params.id,
                     };
                     const items = await this.readDirectory(payload);
 
@@ -511,7 +511,7 @@
                     resolve(this.items);
                 } else if (node.level >= 1) {
                     const payload = {
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.currentNS ?? this.$route.params.id,
                         path: this.getPath(node),
                     };
 
@@ -550,7 +550,7 @@
                 if (!value) return;
 
                 const results = await this.searchFiles({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
+                    namespace: this.currentNS ?? this.$route.params.id,
                     query: value,
                 });
                 this.searchResults = results.map((result) =>
@@ -623,7 +623,7 @@
                 const start = path.substring(0, path.lastIndexOf("/") + 1);
 
                 this.renameFileDirectory({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
+                    namespace: this.currentNS ?? this.$route.params.id,
                     old: `${start}${this.renameDialog.old}`,
                     new: `${start}${this.renameDialog.name}`,
                     type: this.renameDialog.type,
@@ -636,7 +636,7 @@
             async nodeMoved(draggedNode) {
                 try {
                     await this.moveFileDirectory({
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.currentNS ?? this.$route.params.id,
                         old: this.nodeBeforeDrag.path,
                         new: this.getPath(draggedNode.data.id),
                         type: draggedNode.data.type,
@@ -718,7 +718,7 @@
 
                             this.importFileDirectory({
                                 namespace:
-                                    this.currentNS ?? this.$route.params.namespace,
+                                    this.currentNS ?? this.$route.params.id,
                                 content,
                                 path: `${folderPath}/${fileName}`,
                             });
@@ -741,7 +741,7 @@
 
                             this.importFileDirectory({
                                 namespace:
-                                    this.currentNS ?? this.$route.params.namespace,
+                                    this.currentNS ?? this.$route.params.id,
                                 content,
                                 path: file.name,
                             });
@@ -771,7 +771,7 @@
             },
             exportFiles() {
                 this.exportFileDirectory({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
+                    namespace: this.currentNS ?? this.$route.params.id,
                 });
             },
             async addFile({file, creation, shouldReset = true}) {
@@ -807,7 +807,7 @@
                         return;
                     }
                     await this.createFile({
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.currentNS ?? this.$route.params.id,
                         path,
                         content,
                         name: NAME,
@@ -898,7 +898,7 @@
                 } = this.confirmation;
 
                 await this.deleteFileDirectory({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
+                    namespace: this.currentNS ?? this.$route.params.id,
                     path: this.getPath(node),
                     name: data.fileName,
                     type: data.type,
@@ -936,7 +936,7 @@
                     }${fileName}`;
 
                     await this.createDirectory({
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.currentNS ?? this.$route.params.id,
                         path,
                         name: fileName,
                     });
@@ -1063,7 +1063,7 @@
                     if (this.$refs.tree) {
                         this.items = undefined;
                         const items = await this.readDirectory({
-                            namespace: this.currentNS ?? this.$route.params.namespace
+                            namespace: this.currentNS ?? this.$route.params.id
                         });
                         this.renderNodes(items);
                         this.items = this.sorted(this.items);

@@ -1,0 +1,17 @@
+id: flow-trigger-paused-listen
+namespace: io.kestra.tests.trigger.paused
+
+triggers:
+  - id: flow
+    type: io.kestra.plugin.core.trigger.Flow
+    preconditions:
+      id: flow
+      flows:
+        - namespace: io.kestra.tests.trigger.paused
+          flowId: flow-trigger-paused-flow
+          states: [PAUSED]
+
+tasks:
+  - id: only
+    type: io.kestra.plugin.core.debug.Return
+    format: "It works"

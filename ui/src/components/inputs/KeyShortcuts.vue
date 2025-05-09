@@ -52,7 +52,7 @@
 
     const commands = [
         {
-            keys: ["⌘ Cmd/Ctrl", "SPACE"],
+            keys: ["Ctrl", "SPACE"],
             description: "editor_shortcuts.trigger_autocompletion",
         },
         {

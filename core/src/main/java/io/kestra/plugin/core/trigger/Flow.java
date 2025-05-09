@@ -49,6 +49,7 @@ import java.util.stream.Stream;
 import io.micronaut.core.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
+import static io.kestra.core.models.flows.State.Type.PAUSED;
 import static io.kestra.core.topologies.FlowTopologyService.SIMULATED_EXECUTION;
 import static io.kestra.core.utils.Rethrow.throwPredicate;
 
@@ -218,14 +219,14 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
     @Schema(
         title = "List of execution states that will be evaluated by the trigger",
         description = """
-            By default, only executions in a terminal state will be evaluated.
+            By default, only executions in a terminal state or in the PAUSED state will be evaluated.
             Any `ExecutionStatus`-type condition will be evaluated after the list of `states`. Note that a Flow trigger cannot react to the `CREATED` state because the Flow trigger reacts to state transitions. The `CREATED` state is the initial state of an execution and does not represent a state transition.
             ::alert{type="info"}
             The trigger will be evaluated for each state change of matching executions. If a flow has two `Pause` tasks, the execution will transition from PAUSED to a RUNNING state twice — one for each Pause task. In this case, a Flow trigger listening to a `PAUSED` state will be evaluated twice.
             ::"""
     )
     @Builder.Default
-    private List<State.Type> states = State.Type.terminatedTypes();
+    private List<State.Type> states = ListUtils.concat(State.Type.terminatedTypes(), List.of(PAUSED));
 
     @Valid
     @Schema(

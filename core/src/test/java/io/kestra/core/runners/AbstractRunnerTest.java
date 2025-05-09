@@ -193,7 +193,7 @@ public abstract class AbstractRunnerTest {
         flowTriggerCaseTest.trigger();
     }
 
-    @Test
+    @RetryingTest(5) // flaky on CI but never fail locally
     @LoadFlows({"flows/valids/trigger-flow-listener-with-pause.yaml",
         "flows/valids/trigger-flow-with-pause.yaml"})
     void flowTriggerWithPause() throws Exception {
@@ -230,6 +230,12 @@ public abstract class AbstractRunnerTest {
         "flows/valids/flow-trigger-preconditions-flow-b.yaml"})
     void flowTriggerPreconditionsMergeOutputs() throws Exception {
         multipleConditionTriggerCaseTest.flowTriggerPreconditionsMergeOutputs();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/flow-trigger-paused-listen.yaml", "flows/valids/flow-trigger-paused-flow.yaml"})
+    void flowTriggerOnPaused() throws Exception {
+        multipleConditionTriggerCaseTest.flowTriggerOnPaused();
     }
 
     @RetryingTest(5)

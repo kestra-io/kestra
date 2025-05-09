@@ -406,6 +406,10 @@
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Limitach Concurrency</a></strong> w naszej dokumentacji.",
         "title": "Dla tego namespace nie ustawiono domyślnych pluginów."
       },
+      "testSuites": {
+        "content": "Rozpocznij tworzenie zestawów testowych do testowania swoich flow.",
+        "title": "Nie masz jeszcze żadnych Test suites!"
+      },
       "triggers": {
         "content": "Przeczytaj więcej o <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> w naszej dokumentacji.",
         "title": "Twój flow nie ma żadnych Triggerów."
@@ -1081,6 +1085,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "Interwał automatycznego odświeżania",
             "default_namespace": "Domyślny Namespace",
             "editor_type": "Domyślny typ edytora",
             "execute_default_tab": "Domyślna karta Execution",
@@ -1204,7 +1209,7 @@
     "toggle fullscreen": "Przełącz pełny ekran",
     "toggle output": "Przełącz wyjścia",
     "toggle output display": "Przełącz wyświetlanie wyjścia",
-    "toggle periodic refresh each 10 seconds": "Przełącz okresowe odświeżanie co 10 sekund",
+    "toggle periodic refresh each x seconds": "Przełącz okresowe odświeżanie co {interval} sekund",
     "toggle_word_wrap": "Przełącz zawijanie wierszy",
     "topology": "Topologia",
     "topology-graph": {

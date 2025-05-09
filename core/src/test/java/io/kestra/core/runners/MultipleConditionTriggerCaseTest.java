@@ -211,4 +211,33 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(triggerExecution.getTrigger().getVariables().get("outputs")).isNotNull();
         assertThat((Map<String, Object>) triggerExecution.getTrigger().getVariables().get("outputs")).containsEntry("some", "value");
     }
+
+    public void flowTriggerOnPaused()
+        throws InterruptedException, TimeoutException, QueueException {
+        CountDownLatch countDownLatch = new CountDownLatch(1);
+        AtomicReference<Execution> flowTrigger = new AtomicReference<>();
+
+        Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
+            Execution execution = either.getLeft();
+            if (execution.getState().getCurrent() == State.Type.SUCCESS && execution.getFlowId()
+                .equals("flow-trigger-paused-listen")) {
+                flowTrigger.set(execution);
+                countDownLatch.countDown();
+            }
+        });
+
+        Execution execution = runnerUtils.runOne(null, "io.kestra.tests.trigger.paused",
+            "flow-trigger-paused-flow", Duration.ofSeconds(60));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(2);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+
+        // trigger is done
+        assertTrue(countDownLatch.await(1, TimeUnit.SECONDS));
+        receive.blockLast();
+        assertThat(flowTrigger.get()).isNotNull();
+
+        Execution triggerExecution = flowTrigger.get();
+        assertThat(triggerExecution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(triggerExecution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
 }

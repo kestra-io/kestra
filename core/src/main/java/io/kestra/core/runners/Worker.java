@@ -229,6 +229,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 return;
             }
 
+            metricRegistry
+                .counter(MetricRegistry.METRIC_WORKER_KILLED_COUNT, MetricRegistry.METRIC_WORKER_KILLED_COUNT_DESCRIPTION, metricRegistry.tags(executionKilled.getLeft()))
+                .increment();
+
             synchronized (this) {
                 if (executionKilled.getLeft() instanceof ExecutionKilledExecution executionKilledExecution) {
                     killedExecution.add(executionKilledExecution.getExecutionId());

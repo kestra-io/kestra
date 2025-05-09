@@ -406,6 +406,10 @@
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
         "title": "Für diesen Namespace sind keine Plugin-Standardeinstellungen festgelegt."
       },
+      "testSuites": {
+        "content": "Beginnen Sie mit der Erstellung von Testsuiten, um Ihre Flows zu testen.",
+        "title": "Sie haben noch keine Test-Suites!"
+      },
       "triggers": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in unserer Dokumentation.",
         "title": "Ihr flow hat keine Trigger."
@@ -1081,6 +1085,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "Automatisches Aktualisierungsintervall",
             "default_namespace": "Standard-Namespace",
             "editor_type": "Standard-Editor-Typ",
             "execute_default_tab": "Standard-Ausführungs-Registerkarte",
@@ -1204,7 +1209,7 @@
     "toggle fullscreen": "Vollbild umschalten",
     "toggle output": "Outputs umschalten",
     "toggle output display": "Outputanzeige umschalten",
-    "toggle periodic refresh each 10 seconds": "Periodische Aktualisierung alle 10 Sekunden umschalten",
+    "toggle periodic refresh each x seconds": "Periodische Aktualisierung alle {interval} Sekunden umschalten",
     "toggle_word_wrap": "Zeilenumbruch umschalten",
     "topology": "Topologie",
     "topology-graph": {

@@ -406,6 +406,10 @@
         "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
         "title": "このNamespaceにはプラグインのデフォルトが設定されていません。"
       },
+      "testSuites": {
+        "content": "テストスイートを作成して、flowをテストし始めましょう。",
+        "title": "テストスイートがまだありません！"
+      },
       "triggers": {
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
         "title": "あなたのflowにはTriggerがありません。"
@@ -1081,6 +1085,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "自動更新間隔",
             "default_namespace": "デフォルトNamespace",
             "editor_type": "デフォルトエディタータイプ",
             "execute_default_tab": "デフォルト実行タブ",
@@ -1204,7 +1209,7 @@
     "toggle fullscreen": "フルスクリーンを切り替え",
     "toggle output": "出力を切り替え",
     "toggle output display": "出力表示を切り替え",
-    "toggle periodic refresh each 10 seconds": "10秒ごとに定期的に更新を切り替え",
+    "toggle periodic refresh each x seconds": "{interval}秒ごとに定期的な更新を切り替える",
     "toggle_word_wrap": "ワードラップを切り替え",
     "topology": "トポロジー",
     "topology-graph": {

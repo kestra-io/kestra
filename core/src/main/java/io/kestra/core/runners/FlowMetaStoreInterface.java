@@ -7,7 +7,7 @@ import io.kestra.core.models.flows.FlowWithSource;
 import java.util.Collection;
 import java.util.Optional;
 
-public interface FlowExecutorInterface {
+public interface FlowMetaStoreInterface {
     /**
      * Find all flows.
      * WARNING: this method will NOT check if the namespace is allowed, so it should not be used inside a task.

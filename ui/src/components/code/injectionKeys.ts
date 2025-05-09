@@ -64,6 +64,6 @@ export const PANEL_INJECTION_KEY = Symbol("panel-injection-key") as InjectionKey
  */
 export const PARENT_TASKID_INJECTION_KEY = Symbol("parent-taskid-injection-key") as InjectionKey<Ref<string | undefined>>
 /**
- * When users click on one of topology buttons, such as create, edit or delete, multi-panel view needs to react accordingly
+ * When users click on one of topology buttons, such as create or edit, multi-panel view needs to react accordingly
  */
 export const TOPOLOGY_CLICK_INJECTION_KEY = Symbol("topology-click-injection-key") as InjectionKey<Ref<TopologyClickParams | undefined>>

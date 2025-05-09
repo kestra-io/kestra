@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed,  inject,  onBeforeUnmount,  provide, ref} from "vue";
+    import {computed, watch, inject,  onBeforeUnmount,  provide, ref} from "vue";
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
@@ -26,13 +26,42 @@
         PANEL_INJECTION_KEY, POSITION_INJECTION_KEY,
         SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY,
         TASKID_INJECTION_KEY, PARENT_TASKID_INJECTION_KEY,
-        TASK_CREATION_INDEX_INJECTION_KEY
+        TASK_CREATION_INDEX_INJECTION_KEY, TOPOLOGY_CLICK_INJECTION_KEY
     } from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
-    import {Breadcrumb} from "./utils/types";
+    import {Breadcrumb, TopologyClickParams} from "./utils/types";
 
     const store = useStore();
+
+    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
+
+    watch(topologyClick, (value: TopologyClickParams | undefined) => {
+        if (!value) return;
+
+        const {action, params} = value;
+        const {id, section} = params;
+
+        if (action === "create") {
+            // const {target, position} = params;
+
+            if(emit("createTask", section, injectedTaskId.value) === false){
+                return
+            }
+            parentTaskIdRef.value = injectedTaskId.value
+            injectedSection.value = section
+            creatingTaskRef.value = true
+            injectedTaskId.value = ""
+        }
+        else if(action === "edit"){
+            if(emit("editTask", section, id) === false){
+                return
+            }
+            injectedSection.value = section
+            creatingTaskRef.value = false
+            injectedTaskId.value = id
+        }
+    }, {deep: true});
 
     const emit = defineEmits<{
         (e: "updateTask", yaml: string): void

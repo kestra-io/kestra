@@ -84,11 +84,10 @@ type BasicParams = {
 }
 
 type CreationParams = BasicParams & {
-    target: string;
     position: "before" | "after";
+    target: string;
 }
 
-export type TopologyClickParams = {
-    action: "create" | "edit" | "delete";
-    params: BasicParams | CreationParams;
-}
+export type TopologyClickParams =
+  | { action: "edit"; params: BasicParams }
+  | { action: "create"; params: CreationParams };

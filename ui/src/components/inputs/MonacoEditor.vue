@@ -63,7 +63,9 @@
         if (!editor) return;
 
         editor.focus();
-        editor.setSelection(new monaco.Range(line, 0, line + 1, 0));
+        
+        const end = editor?.getModel()?.getLineMaxColumn(line) ?? 0
+        editor.setSelection(new monaco.Range(line, 0, line, end));
     });
 
     monaco.editor.defineTheme("dark", {

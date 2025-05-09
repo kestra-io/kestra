@@ -77,8 +77,6 @@
                 highlight.value = findLineNumber(section, id)
             }
         }
-
-        // TODO: Here is where we should handle situation where neither Code nor NoCode are opened
     }, {deep: true});
 
     export interface EditorTabProps{

@@ -135,7 +135,7 @@
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
 
-    import {TOPOLOGY_CLICK_INJECTION_KEY} from "./code/injectionKeys";
+    import {TOPOLOGY_CLICK_INJECTION_KEY, VISIBLE_PANELS_INJECTION_KEY} from "./code/injectionKeys";
     import {TopologyClickParams} from "./code/utils/types";
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
@@ -193,6 +193,8 @@
     const panels = defineModel<Panel[]>({
         required: true,
     })
+
+    provide(VISIBLE_PANELS_INJECTION_KEY, panels);
 
     const emit = defineEmits<{
         removeTab: [tab: string]

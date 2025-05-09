@@ -19,31 +19,68 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onActivated, onMounted, ref, inject, watch} from "vue";
+    import {computed, onActivated, onMounted, ref, inject, provide, watch} from "vue";
     import {useStore} from "vuex";
     import Editor from "./Editor.vue";
     import KeyShortcuts from "./KeyShortcuts.vue";
 
-    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
+    import {TOPOLOGY_CLICK_INJECTION_KEY, VISIBLE_PANELS_INJECTION_KEY, EDITOR_CURSOR_INJECTION_KEY, EDITOR_HIGHLIGHT_INJECTION_KEY} from "../code/injectionKeys";
     import {TopologyClickParams} from "../code/utils/types";
+    import {Panel, Tab} from "../MultiPanelTabs.vue";
 
     const store = useStore();
 
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
+    const panels = inject(VISIBLE_PANELS_INJECTION_KEY, ref());
 
-    watch(topologyClick, (value: TopologyClickParams | undefined) => {
-        if (!value) return;
+    const cursor = ref();
+    provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
 
-        // TODO: Check if NoCode is open, retrurn if it is
+    const highlight = ref();
+    provide(EDITOR_HIGHLIGHT_INJECTION_KEY, highlight);
 
-        const {action} = value;
-        // const {id, section} = params;
+    watch(topologyClick, (event: TopologyClickParams | undefined) => {
+        if (!event) return;
 
-        if (action === "create") {
-            // TODO: Position cursor in the editor based on params
+        const visible = panels.value?.map((p: Panel) => p.tabs.map((t: Tab) => t.value)).flat();
+        if(visible?.includes("nocode")) return;
+
+        const findLineNumber = (section: string, task: string): number | undefined => {
+            const lines = source.value.split("\n");
+
+            let inSection = false;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+
+                // Check for section entry
+                if (!inSection && line.startsWith(`${section}:`)) {
+                    inSection = true;
+                    continue;
+                }
+
+                // Exit section if indentation decreases (top-level section ends)
+                if (inSection && !lines[i].startsWith("  ") && !lines[i].startsWith("-")) {
+                    inSection = false;
+                }
+
+                // If in section, check for key-value match
+                if (inSection && line.trim().startsWith("- id:") && line.includes(task)) {
+                    return i + 1; // Line numbers are 1-based
+                }
+            }
+
+            return undefined; // Not found
         }
-        else if(action === "edit"){
-            // TODO: Position cursor in the editor on ID field of the task to be edited
+
+        if(visible?.includes("code")){
+            if (event.action === "create") {
+                // TODO: Position cursor in the editor based on params
+            }
+            else if(event.action === "edit"){
+                const {section, id} = event.params;
+                highlight.value = findLineNumber(section, id)
+            }
         }
     }, {deep: true});
 

@@ -59,11 +59,6 @@
                     continue;
                 }
 
-                // Exit section if indentation decreases (top-level section ends)
-                if (inSection && !lines[i].startsWith("  ") && !lines[i].startsWith("-")) {
-                    inSection = false;
-                }
-
                 // If in section, check for key-value match
                 if (inSection && line.trim().startsWith("- id:") && line.includes(task)) {
                     return i + 1; // Line numbers are 1-based
@@ -82,6 +77,8 @@
                 highlight.value = findLineNumber(section, id)
             }
         }
+
+        // TODO: Here is where we should handle situation where neither Code nor NoCode are opened
     }, {deep: true});
 
     export interface EditorTabProps{

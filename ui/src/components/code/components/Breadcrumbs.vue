@@ -32,7 +32,8 @@
         FLOW_INJECTION_KEY, PANEL_INJECTION_KEY,
         SECTION_INJECTION_KEY, TASKID_INJECTION_KEY,
         PARENT_TASKID_INJECTION_KEY,
-        SAVEMODE_INJECTION_KEY
+        SAVEMODE_INJECTION_KEY,
+        CLOSE_TASK_FUNCTION_INJECTION_KEY
     } from "../injectionKeys";
     const {t} = useI18n({useScope: "global"});
 
@@ -43,7 +44,8 @@
     const taskCreation = inject(CREATING_TASK_INJECTION_KEY, ref(false));
     const taskSection = inject(SECTION_INJECTION_KEY, ref(""));
     const parentTaskId = inject(PARENT_TASKID_INJECTION_KEY, ref(""));
-    const saveMode = inject(SAVEMODE_INJECTION_KEY, ref("auto"));
+    const saveMode = inject(SAVEMODE_INJECTION_KEY, "auto");
+    const closeTask = inject(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {});
 
     const flow = computed(() => {
         return YAML_UTILS.parse(flowYaml.value);
@@ -78,12 +80,20 @@
         {immediate: true}
     );
 
-    function clickBreadCrumb(index: number){
-        if (index === 0 && taskId.value.length > 0) {
-            taskId.value = "";
-            taskSection.value = "";
-            taskCreation.value = false;
+    function clickBreadCrumb(breadCrumbIndex: number){
+        // if it's a value, and the task has been clicked,
+        // only remove it from the breadcrumbs
+        // the "lastBreadcrumb.component" will be closed from the breadcrumbs
+        if (breadCrumbIndex === breadcrumbs.value.length - 2) {
+            const lastBreadcrumb = breadcrumbs.value[breadcrumbs.value.length - 1]
+            if(lastBreadcrumb.component){
+                breadcrumbs.value.pop();
+                return
+            }
         }
+
+        breadcrumbs.value.splice(breadCrumbIndex + 1);
+        closeTask();
     }
 </script>
 

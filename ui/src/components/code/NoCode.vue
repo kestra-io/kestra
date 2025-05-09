@@ -126,6 +126,7 @@
 
             injectedSection.value = "";
             injectedTaskId.value = "";
+            creatingTaskRef.value = false
         }
 
     })

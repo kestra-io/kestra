@@ -332,7 +332,7 @@ public abstract class AbstractJdbcRepository {
     private <T extends Record> SelectConditionStep<T> applyNamespaceCondition(SelectConditionStep<T> select, Object value, QueryFilter.Op operation) {
 
          switch (operation) {
-            case EQUALS -> select = select.and(NAMESPACE_FIELD.eq((String) value));
+             case EQUALS -> select = select.and(DSL.lower(NAMESPACE_FIELD).eq(DSL.lower((String) value)));
             case NOT_EQUALS -> select = select.and(NAMESPACE_FIELD.ne((String) value));
             case CONTAINS -> select = select.and(NAMESPACE_FIELD.eq((String) value)
                 .or(NAMESPACE_FIELD.like( value + ".%"))

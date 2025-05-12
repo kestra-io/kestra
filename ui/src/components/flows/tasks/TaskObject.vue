@@ -121,6 +121,45 @@
     import Markdown from "../../layout/Markdown.vue";
     import TaskDict from "./TaskDict.vue";
 
+    function sortProperties(properties, required) {
+        if (!properties) {
+            return properties;
+        }
+
+        return Object.entries(properties)
+            .sort((a, b) => {
+                if (a[0] === "id" || a[0] === "forced") {
+                    return -1;
+                } else if (b[0] === "id" || b[0] === "forced") {
+                    return 1;
+                }
+
+                const aRequired = (required || []).includes(
+                    a[0],
+                );
+                const bRequired = (required || []).includes(
+                    b[0],
+                );
+
+                if (aRequired && !bRequired) {
+                    return -1;
+                } else if (!aRequired && bRequired) {
+                    return 1;
+                }
+
+                const aDefault = "default" in a[1];
+                const bDefault = "default" in b[1];
+
+                if (aDefault && !bDefault) {
+                    return 1;
+                } else if (!aDefault && bDefault) {
+                    return -1;
+                }
+
+                return a[0].localeCompare(b[0]);
+            })
+    }
+
     export default {
         inheritAttrs: false,
         name: "TaskObject",
@@ -142,7 +181,7 @@
         emits: ["update:modelValue"],
         computed: {
             sortedProperties() {
-                return this.sortProperties(this.properties);
+                return sortProperties(this.properties, this.schema.required);
             },
             requiredProperties() {
                 return this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
@@ -152,44 +191,6 @@
             },
         },
         methods: {
-            sortProperties(properties) {
-                if (!properties) {
-                    return properties;
-                }
-
-                return Object.entries(properties)
-                    .sort((a, b) => {
-                        if (a[0] === "id") {
-                            return -1;
-                        } else if (b[0] === "id") {
-                            return 1;
-                        }
-
-                        const aRequired = (this.schema.required || []).includes(
-                            a[0],
-                        );
-                        const bRequired = (this.schema.required || []).includes(
-                            b[0],
-                        );
-
-                        if (aRequired && !bRequired) {
-                            return -1;
-                        } else if (!aRequired && bRequired) {
-                            return 1;
-                        }
-
-                        const aDefault = "default" in a[1];
-                        const bDefault = "default" in b[1];
-
-                        if (aDefault && !bDefault) {
-                            return 1;
-                        } else if (!aDefault && bDefault) {
-                            return -1;
-                        }
-
-                        return a[0].localeCompare(b[0]);
-                    })
-            },
             onObjectInput(properties, value) {
                 const currentValue = this.modelValue || {};
                 currentValue[properties] = value;

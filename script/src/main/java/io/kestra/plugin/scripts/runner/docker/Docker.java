@@ -307,7 +307,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     @Builder.Default
     @NotNull
     @Schema(
-        title = "When a task is killed, grace period before killing the container",
+        title = "When a task is killed, this property sets the grace period before killing the container.",
         description = "By default, we kill the container immediately when a task is killed. Optionally, you can configure a grace period so the container is stopped with a grace period instead."
     )
     private Duration killGracePeriod = Duration.ZERO;

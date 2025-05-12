@@ -123,6 +123,14 @@
 
     function onInput(val: PartialCodeElement | undefined) {
         taskObject.value = val;
+        if (isPluginDefaults.value) {
+            const {forced, type, ...rest} = val as any;
+            val = {
+                type,
+                forced,
+                values: rest
+            };
+        }
         modelValue.value = YAML_UTILS.stringify(val);
     }
 

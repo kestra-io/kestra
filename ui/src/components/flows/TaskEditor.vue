@@ -43,7 +43,12 @@
     const modelValue = defineModel<string>();
 
     const props = defineProps<{
-        section: string;
+        section: "tasks"|
+            "triggers"|
+            "error handlers"|
+            "finally"|
+            "after execution"|
+            "plugin defaults"
     }>();
 
     const store = useStore();
@@ -124,12 +129,21 @@
     function onInput(val: PartialCodeElement | undefined) {
         taskObject.value = val;
         if (isPluginDefaults.value) {
-            const {forced, type, ...rest} = val as any;
-            val = {
-                type,
+            const {
                 forced,
-                values: rest
-            };
+                type,
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                id,
+                ...rest
+            } = val as any;
+
+            if(Object.keys(rest).length){
+                val = {
+                    type,
+                    forced,
+                    values: rest,
+                };
+            }
         }
         modelValue.value = YAML_UTILS.stringify(val);
     }

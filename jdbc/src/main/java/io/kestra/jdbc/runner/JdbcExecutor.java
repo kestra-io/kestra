@@ -384,6 +384,9 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     void reEmitWorkerJobsForWorkers(final Configuration configuration,
                                     final List<String> ids) {
+        metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT, MetricRegistry.METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION)
+                .increment(ids.size());
+
         workerJobRunningRepository.getWorkerJobWithWorkerDead(configuration.dsl(), ids)
             .forEach(workerJobRunning -> {
                 // WorkerTaskRunning

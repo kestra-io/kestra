@@ -175,7 +175,7 @@
 
     const errors = computed(() => store.getters["flow/taskError"]);
 
-    const SECTIONS_MAP: Record<string, string> = {
+    const SECTIONS_MAP: Record<SectionKey, string> = {
         tasks: "task",
         triggers: "triggers",
         "error handlers": "errors",

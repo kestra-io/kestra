@@ -103,8 +103,8 @@
     function setup() {
         const parsed = YAML_UTILS.parse<PartialCodeElement>(modelValue.value);
         if(isPluginDefaults.value){
-            const {forced: __, type: _, ...rest} = parsed as any;
-            taskObject.value = rest
+            const {forced, type, values} = parsed as any;
+            taskObject.value = {...values, forced, type};
         }else{
             taskObject.value = parsed;
         }

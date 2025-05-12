@@ -226,9 +226,9 @@
                         position,
                         parentTaskId.value,
                     );
-                } else if (currentSection && SECTIONS_MAP[currentSection.toString()] && task?.length) {
+                } else if (currentSection && SECTIONS_MAP[currentSection] && task?.length) {
                     result = YAML_UTILS.insertSection(
-                        SECTIONS_MAP[currentSection.toString()],
+                        SECTIONS_MAP[currentSection],
                         flowBeforeAdd.value,
                         task,
                     );
@@ -237,8 +237,8 @@
         } else if (currentSection === PLUGIN_DEFAULTS_SECTION) {
             result = YAML_UTILS.replacePluginDefaultsInDocument(
                 flow.value,
+                parsedTask.value.type,
                 yaml.value,
-                parsedTask.value.type
             );
         } else {
             const originalTask = YAML_UTILS.extractTask(flow.value, taskId.value);

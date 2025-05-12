@@ -4,13 +4,11 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.FlowId;
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.LogRepositoryInterface;
-import io.micronaut.context.annotation.Value;
+import io.kestra.core.tenant.TenantsEnabled;
 import io.micronaut.data.model.Pageable;
 import io.micronaut.data.model.Sort;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import org.apache.commons.lang3.ArrayUtils;
 import org.slf4j.Logger;
@@ -19,6 +17,7 @@ import org.slf4j.event.Level;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Singleton
 public class LogService {
@@ -34,11 +33,14 @@ public class LogService {
     private static final String TASKRUN_PREFIX_NO_TENANT = FLOW_PREFIX_NO_TENANT + "[task: {}] [execution: {}] [taskrun: {}] ";
     private static final String TASKRUN_PREFIX_WITH_TENANT = FLOW_PREFIX_WITH_TENANT + "[task: {}] [execution: {}] [taskrun: {}] ";
 
-    @Value("${kestra.ee.tenants.enabled:false}")
     private boolean tenantEnabled;
 
-    @Inject
     private LogRepositoryInterface logRepository;
+
+    public LogService(Optional<TenantsEnabled> tenantEnabled, LogRepositoryInterface logRepository) {
+        this.tenantEnabled = tenantEnabled.isPresent();
+        this.logRepository = logRepository;
+    }
 
     public void logExecution(FlowId flow, Logger logger, Level level, String message, Object... args) {
         String finalMsg = tenantEnabled ? FLOW_PREFIX_WITH_TENANT + message : FLOW_PREFIX_NO_TENANT + message;

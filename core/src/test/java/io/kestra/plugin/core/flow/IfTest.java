@@ -116,4 +116,11 @@ class IfTest {
         assertThat(execution.findTaskRunsByTaskId("if").getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
+
+    @Test
+    @ExecuteFlow("flows/valids/if-in-parallel.yaml")
+    void ifOnParallelBranch(Execution execution) {
+        assertThat(execution.getTaskRunList()).hasSize(9);
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+    }
 }

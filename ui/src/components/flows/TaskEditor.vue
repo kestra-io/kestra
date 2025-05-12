@@ -32,7 +32,7 @@
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {useStore} from "vuex";
-    import {SECTIONS} from "../../utils/constants";
+    import {PLUGIN_DEFAULTS_SECTION, SECTIONS} from "../../utils/constants";
     import {NoCodeElement, Schemas, SectionKey} from "../code/utils/types";
 
     defineOptions({
@@ -73,7 +73,7 @@
     });
 
     const isPluginDefaults = computed(() => {
-        return props.section === "plugin defaults"
+        return props.section === PLUGIN_DEFAULTS_SECTION
     });
 
     const properties = computed(() => {
@@ -92,10 +92,13 @@
 
     const schemaProp = computed(() => {
         const prop = schema.value?.properties;
-        if(prop && isPluginDefaults.value){
-            prop.required = prop.required || [];
+        if(!prop){
+            return undefined;
+        }
+        prop.required = prop.required || [];
+        prop.required.push("id");
+        if(isPluginDefaults.value){
             prop.required.push("forced");
-            return prop;
         }
         return prop;
     });

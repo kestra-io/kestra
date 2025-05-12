@@ -34,7 +34,7 @@
     import {onBeforeMount, ref, watch, computed, inject} from "vue";
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    import {SECTIONS} from "../../../utils/constants";
+    import {PLUGIN_DEFAULTS_SECTION, SECTIONS} from "../../../utils/constants";
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
         FLOW_INJECTION_KEY, PARENT_TASKID_INJECTION_KEY, POSITION_INJECTION_KEY,
@@ -47,8 +47,6 @@
     import {SectionKey} from "../utils/types";
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
-
-    const PLUGIN_DEFAULTS_SECTION = "plugin defaults";
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");

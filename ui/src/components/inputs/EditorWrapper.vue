@@ -19,10 +19,12 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onActivated, onMounted, ref, inject, provide, watch} from "vue";
+    import {computed, onActivated, onMounted, ref, inject, provide, watch, nextTick} from "vue";
     import {useStore} from "vuex";
     import Editor from "./Editor.vue";
     import KeyShortcuts from "./KeyShortcuts.vue";
+
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     import {TOPOLOGY_CLICK_INJECTION_KEY, VISIBLE_PANELS_INJECTION_KEY, EDITOR_CURSOR_INJECTION_KEY, EDITOR_HIGHLIGHT_INJECTION_KEY} from "../code/injectionKeys";
     import {TopologyClickParams} from "../code/utils/types";
@@ -45,8 +47,8 @@
         const visible = panels.value?.map((p: Panel) => p.tabs.map((t: Tab) => t.value)).flat();
         if(visible?.includes("nocode")) return;
 
-        const findLineNumber = (section: string, task: string): number | undefined => {
-            const lines = source.value.split("\n");
+        const findLineNumber = (section: string, task: string, flow?: string): number | undefined => {
+            const lines = (flow ?? source.value).split("\n");
 
             let inSection = false;
 
@@ -69,11 +71,25 @@
         }
 
         if(visible?.includes("code")){
+            const {section, id} = event.params;
+
             if (event.action === "create") {
-                // TODO: Position cursor in the editor based on params
+                const {position, target} = event.params;
+
+                const ID = "NEW_TASK";
+
+                const task = YAML_UTILS.stringify({id: ID, type: ""});
+                const result = YAML_UTILS.insertTask(source.value, target, task, position);
+
+                // Add the new task
+                editorUpdate(result);
+
+                nextTick(() => {
+                    // Focus the newly created task
+                    highlight.value = findLineNumber(section, ID, result)
+                });
             }
             else if(event.action === "edit"){
-                const {section, id} = event.params;
                 highlight.value = findLineNumber(section, id)
             }
         }

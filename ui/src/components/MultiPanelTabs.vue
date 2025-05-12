@@ -135,8 +135,7 @@
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
 
-    import {TOPOLOGY_CLICK_INJECTION_KEY, VISIBLE_PANELS_INJECTION_KEY} from "./code/injectionKeys";
-    import {TopologyClickParams} from "./code/utils/types";
+    import {VISIBLE_PANELS_INJECTION_KEY} from "./code/injectionKeys";
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
@@ -147,9 +146,6 @@
     import Close from "vue-material-design-icons/Close.vue";
 
     const {t} = useI18n({useScope: "global"});
-    
-    const topologyClick = ref<TopologyClickParams | undefined>(undefined);
-    provide(TOPOLOGY_CLICK_INJECTION_KEY, topologyClick);
 
     function throttle(callback: () => void, limit: number): () => void {
         let waiting = false;

@@ -51,9 +51,6 @@
         },
     };
 
-    // const cursor = inject(EDITOR_CURSOR_INJECTION_KEY, ref());
-    // TODO: Add wathcer for cursor which will react when needed
-
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
     watch(highlight, (line) => {
         if (!line) return;

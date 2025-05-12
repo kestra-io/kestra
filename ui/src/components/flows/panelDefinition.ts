@@ -14,8 +14,7 @@ import LowCodeEditorWrapper from "../inputs/LowCodeEditorWrapper.vue";
 import PluginDocumentationWrapper from "../plugins/PluginDocumentationWrapper.vue";
 import BlueprintsWrapper from "../flows/blueprints/BlueprintsWrapper.vue";
 
-// Revert this to original
-export const DEFAULT_ACTIVE_TABS = ["code", "nocode", "topology"]
+export const DEFAULT_ACTIVE_TABS = ["code", "doc"]
 
 export const EDITOR_ELEMENTS = [
     {

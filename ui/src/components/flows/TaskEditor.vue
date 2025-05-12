@@ -101,7 +101,13 @@
     });
 
     function setup() {
-        taskObject.value = YAML_UTILS.parse<PartialCodeElement>(modelValue.value);
+        const parsed = YAML_UTILS.parse<PartialCodeElement>(modelValue.value);
+        if(isPluginDefaults.value){
+            const {forced: __, type: _, ...rest} = parsed as any;
+            taskObject.value = rest
+        }else{
+            taskObject.value = parsed;
+        }
         selectedTaskType.value = taskObject.value?.type;
 
         load();
@@ -127,8 +133,7 @@
             const {
                 forced,
                 type,
-                // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                id,
+                id: _,
                 ...rest
             } = val as any;
 

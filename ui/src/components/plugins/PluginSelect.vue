@@ -59,9 +59,11 @@
             ...mapState("plugin", ["plugin", "plugins", "icons"]),
             taskModels() {
                 const taskModels = [];
-                const pluginKeySection = this.section === "plugin defaults" ? "tasks" : upperSnakeToCamelCase(this.section);
+                const pluginKeySection = this.section === "plugin defaults" ? ["tasks", "triggers"] : [upperSnakeToCamelCase(this.section)];
                 for (const plugin of this.plugins || []) {
-                    taskModels.push.apply(taskModels, plugin[pluginKeySection]);
+                    for(const curSection of pluginKeySection){
+                        taskModels.push.apply(taskModels, plugin[curSection] ?? []);
+                    }
                 }
                 return taskModels;
             },

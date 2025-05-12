@@ -6,7 +6,7 @@
                     <code>{{ $t("type") }}</code>
                 </div>
             </template>
-            <plugin-select
+            <PluginSelect
                 v-model="selectedTaskType"
                 :section="section"
                 @update:model-value="onTaskTypeSelect"

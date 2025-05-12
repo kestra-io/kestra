@@ -817,7 +817,7 @@
         "error handlers": "Zamknij obsługę błędów",
         "finally": "Zamknij task",
         "input": "Zamknij input",
-        "plugin defaults": "Zamknij domyślną wtyczkę",
+        "plugin defaults": "Zamknij domyślny plugin",
         "tasks": "Zamknij task",
         "triggers": "Zamknij trigger"
       },
@@ -825,7 +825,7 @@
         "after execution": "Dodaj blok po wykonaniu",
         "error handlers": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
-        "plugin defaults": "Dodaj domyślną wtyczkę",
+        "plugin defaults": "Dodaj domyślny plugin",
         "tasks": "Dodaj task",
         "triggers": "Dodaj trigger"
       },

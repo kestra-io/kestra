@@ -771,7 +771,7 @@
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
             "flow_default_tab": "Default Flow Tab",
-            "auto_refresh_interval": "Auto Refresh Interval"            
+            "auto_refresh_interval": "Auto Refresh Interval"
           }
         },
         "theme": {
@@ -1198,8 +1198,15 @@
           "disabled": "Disabled"
         }
       },
+      "select": {
+        "tasks": "Select a task",
+        "triggers": "Select a trigger",
+        "error handlers": "Select a task",
+        "finally": "Select a task",
+        "plugin defaults": "Select a plugin",
+        "after execution": "Select a task"
+      },
       "creation": {
-        "select": "Select a {section}",
         "tasks": "Add a task",
         "triggers": "Add a trigger",
         "error handlers": "Add an error handler",

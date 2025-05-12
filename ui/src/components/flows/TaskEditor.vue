@@ -20,7 +20,7 @@
         name="root"
         :model-value="taskObject"
         @update:model-value="onInput"
-        :schema="schema.properties"
+        :schema="schemaProp"
         :properties="properties"
         :definitions="schema.definitions"
     />
@@ -72,16 +72,32 @@
         return plugin.value?.schema;
     });
 
+    const isPluginDefaults = computed(() => {
+        return props.section === "plugin defaults"
+    });
+
     const properties = computed(() => {
-        const updatedProperties = schema.value?.properties?.properties;
-        if(props.section === "plugins defaults" && updatedProperties["id"]){
+        const updatedProperties = schemaProp.value?.properties;
+        if(isPluginDefaults.value){
             updatedProperties["id"] = undefined
+            updatedProperties["forced"] = {type: "boolean", $required: true};
+
             return updatedProperties;
         }
-        if(updatedProperties && !updatedProperties["id"]){
+        if(!updatedProperties?.id){
             updatedProperties["id"] = {type: "string", $required: true};
         }
         return updatedProperties
+    });
+
+    const schemaProp = computed(() => {
+        const prop = schema.value?.properties;
+        if(prop && isPluginDefaults.value){
+            prop.required = prop.required || [];
+            prop.required.push("forced");
+            return prop;
+        }
+        return prop;
     });
 
     function setup() {

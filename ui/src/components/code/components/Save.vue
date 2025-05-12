@@ -1,7 +1,9 @@
 <template>
-    <el-button type="primary" :icon="saveMode === 'button' ? ContentSave: undefined">
-        {{ t(`no_code.${saveOrClose}.${props.what}`) }}
-    </el-button>
+    <div class="d-flex justify-content-end">
+        <el-button type="primary" :icon="saveMode === 'button' ? ContentSave: undefined">
+            {{ t(`no_code.${saveOrClose}.${props.what}`) }}
+        </el-button>
+    </div>
 </template>
 
 <script setup lang="ts">

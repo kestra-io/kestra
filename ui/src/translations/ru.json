@@ -817,6 +817,7 @@
         "error handlers": "Закрыть обработчик ошибок",
         "finally": "Закрыть task",
         "input": "Закрыть input",
+        "plugin defaults": "Закрыть плагин по умолчанию",
         "tasks": "Закрыть task",
         "triggers": "Закрыть trigger"
       },
@@ -824,7 +825,7 @@
         "after execution": "Добавить блок после выполнения",
         "error handlers": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
-        "select": "Выберите {section}",
+        "plugin defaults": "Добавить плагин по умолчанию",
         "tasks": "Добавить task",
         "triggers": "Добавить trigger"
       },
@@ -860,14 +861,23 @@
         "triggers": "Сохранить trigger"
       },
       "sections": {
-        "after_execution": "После выполнения",
-        "error_handlers": "Обработчики ошибок",
+        "afterExecution": "После выполнения",
+        "errors": "Обработчики ошибок",
         "finally": "Наконец",
         "general": "Общие свойства",
         "main": "Основные свойства",
         "optional": "Необязательные свойства",
+        "pluginDefaults": "Настройки плагина по умолчанию",
         "tasks": "Задачи",
         "triggers": "Триггеры"
+      },
+      "select": {
+        "after execution": "Выберите task",
+        "error handlers": "Выберите task",
+        "finally": "Выберите task",
+        "plugin defaults": "Выберите плагин",
+        "tasks": "Выберите task",
+        "triggers": "Выберите trigger"
       }
     },
     "no_data": "Похоже, здесь пока ничего нет…<br/>Измените фильтры или попробуйте снова!",

@@ -817,6 +817,7 @@
         "error handlers": "Chiudi gestore errori",
         "finally": "Chiudi task",
         "input": "Chiudi input",
+        "plugin defaults": "Chiudi plugin predefinito",
         "tasks": "Chiudi task",
         "triggers": "Chiudi trigger"
       },
@@ -824,7 +825,7 @@
         "after execution": "Aggiungi un blocco after execution",
         "error handlers": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
-        "select": "Seleziona una {section}",
+        "plugin defaults": "Aggiungi un plugin predefinito",
         "tasks": "Aggiungi un task",
         "triggers": "Aggiungi un trigger"
       },
@@ -860,14 +861,23 @@
         "triggers": "Salva trigger"
       },
       "sections": {
-        "after_execution": "Dopo l'Esecuzione",
-        "error_handlers": "Gestori degli Errori",
+        "afterExecution": "Dopo l'Esecuzione",
+        "errors": "Gestori degli Errori",
         "finally": "Infine",
         "general": "Proprietà generali",
         "main": "Proprietà principali",
         "optional": "Proprietà opzionali",
+        "pluginDefaults": "Predefiniti del Plugin",
         "tasks": "Attività",
         "triggers": "Trigger"
+      },
+      "select": {
+        "after execution": "Seleziona un task",
+        "error handlers": "Seleziona un task",
+        "finally": "Seleziona un task",
+        "plugin defaults": "Seleziona un plugin",
+        "tasks": "Seleziona un task",
+        "triggers": "Seleziona un trigger"
       }
     },
     "no_data": "Sembra che non ci sia ancora nulla qui… per ora!<br/>Modifica i tuoi filtri o riprova!",

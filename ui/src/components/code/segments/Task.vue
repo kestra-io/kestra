@@ -44,6 +44,7 @@
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
+    import {SectionKey} from "../utils/types";
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
@@ -51,7 +52,7 @@
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
-    const section = inject(SECTION_INJECTION_KEY, ref("tasks"));
+    const section = inject(SECTION_INJECTION_KEY, ref("tasks" as SectionKey));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
     const position = inject(POSITION_INJECTION_KEY, "after");
     const parentTaskId = inject(PARENT_TASKID_INJECTION_KEY, ref());

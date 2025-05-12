@@ -28,12 +28,13 @@
     import {computed, onBeforeMount} from "vue";
     import {useStore} from "vuex";
     import {TaskIcon} from "@kestra-io/ui-libs";
+    import {SectionKey} from "../code/utils/types";
 
     /**
      * For each section, pick the members of the
      * plugin to allow to select.
      */
-    const KEY_SECTIONS_MAP = {
+    const KEY_SECTIONS_MAP: Record<SectionKey, string[]> = {
         "tasks": ["tasks"],
         "triggers": ["triggers"],
         "error handlers": ["tasks"],

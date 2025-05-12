@@ -79,3 +79,10 @@ export type Breadcrumb = {
 };
 
 export type Component = ReturnType<typeof defineComponent>;
+
+export type SectionKey = "tasks"
+    |    "triggers"
+    |    "error handlers"
+    |    "finally"
+    |    "after execution"
+    |    "plugin defaults"

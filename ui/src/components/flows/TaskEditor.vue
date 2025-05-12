@@ -33,7 +33,7 @@
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {useStore} from "vuex";
     import {SECTIONS} from "../../utils/constants";
-    import {NoCodeElement, Schemas} from "../code/utils/types";
+    import {NoCodeElement, Schemas, SectionKey} from "../code/utils/types";
 
     defineOptions({
         name: "TaskEditor",
@@ -43,12 +43,7 @@
     const modelValue = defineModel<string>();
 
     const props = defineProps<{
-        section: "tasks"|
-            "triggers"|
-            "error handlers"|
-            "finally"|
-            "after execution"|
-            "plugin defaults"
+        section: SectionKey
     }>();
 
     const store = useStore();

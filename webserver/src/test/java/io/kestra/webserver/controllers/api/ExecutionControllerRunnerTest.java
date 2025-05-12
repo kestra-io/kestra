@@ -69,8 +69,8 @@ import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.Matchers.hasSize;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -1431,7 +1431,8 @@ class ExecutionControllerRunnerTest {
     @Test
     @LoadFlows({"flows/valids/minimal.yaml"})
     void shouldForceRunExecutionACreatedFlow() throws QueueException, TimeoutException {
-        Execution result = runUntilCreated("io.kestra.tests", "minimal");
+        Execution result = this.createExecution("io.kestra.tests", "minimal");
+        this.executionQueue.emit(result);
 
         var response = client.toBlocking().exchange(HttpRequest.POST("/api/v1/executions/" + result.getId() + "/force-run", null));
         assertThat(response.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
@@ -1589,15 +1590,15 @@ class ExecutionControllerRunnerTest {
         return runUntilState(namespace, flowId, State.Type.QUEUED);
     }
 
-    private Execution runUntilCreated(String namespace, String flowId) throws TimeoutException, QueueException {
-        return runUntilState(namespace, flowId, State.Type.CREATED);
+    private Execution createExecution(String namespace, String flowId) {
+        Flow flow = flowRepositoryInterface.findById(null, namespace, flowId).orElseThrow();
+        return Execution.newExecution(flow, null);
     }
 
     private Execution runUntilState(String namespace, String flowId, State.Type state) throws TimeoutException, QueueException {
-        Flow flow = flowRepositoryInterface.findById(null, namespace, flowId).orElseThrow();
-        Execution execution = Execution.newExecution(flow, null);
+        Execution execution = this.createExecution(namespace, flowId);
         return runnerUtils.awaitExecution(
-            it -> it.getState().getCurrent() == state,
+            it -> execution.getId().equals(it.getId()) && it.getState().getCurrent() == state,
             throwRunnable(() -> this.executionQueue.emit(execution)),
             Duration.ofSeconds(1));
     }

@@ -961,7 +961,7 @@
         }
     };
 
-    const  save = async () => {
+    const save = async () => {
         const result = await store.dispatch("flow/save", {
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
             namespace: props.namespace ?? route.params.namespace,

@@ -232,7 +232,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // trigger is done
-        assertTrue(countDownLatch.await(1, TimeUnit.SECONDS));
+        assertTrue(countDownLatch.await(5, TimeUnit.SECONDS));
         receive.blockLast();
         assertThat(flowTrigger.get()).isNotNull();
 

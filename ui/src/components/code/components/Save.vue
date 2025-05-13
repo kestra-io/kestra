@@ -12,7 +12,11 @@
     import {SAVEMODE_INJECTION_KEY} from "../injectionKeys";
 
     const props = defineProps({
-        what: {type: String, required: true, default: "tasks"},
+        what: {
+            type: String,
+            required: true,
+            default: "tasks"
+        },
     });
 
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");

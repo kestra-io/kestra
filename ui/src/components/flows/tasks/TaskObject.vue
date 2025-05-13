@@ -121,7 +121,47 @@
     import Markdown from "../../layout/Markdown.vue";
     import TaskDict from "./TaskDict.vue";
 
+    function sortProperties(properties, required) {
+        if (!properties) {
+            return properties;
+        }
+
+        return Object.entries(properties)
+            .sort((a, b) => {
+                if (a[0] === "id" || a[0] === "forced") {
+                    return -1;
+                } else if (b[0] === "id" || b[0] === "forced") {
+                    return 1;
+                }
+
+                const aRequired = (required || []).includes(
+                    a[0],
+                );
+                const bRequired = (required || []).includes(
+                    b[0],
+                );
+
+                if (aRequired && !bRequired) {
+                    return -1;
+                } else if (!aRequired && bRequired) {
+                    return 1;
+                }
+
+                const aDefault = "default" in a[1];
+                const bDefault = "default" in b[1];
+
+                if (aDefault && !bDefault) {
+                    return 1;
+                } else if (!aDefault && bDefault) {
+                    return -1;
+                }
+
+                return a[0].localeCompare(b[0]);
+            })
+    }
+
     export default {
+        inheritAttrs: false,
         name: "TaskObject",
         mixins: [Task],
         components: {
@@ -132,71 +172,29 @@
             Editor,
             Markdown,
         },
+        props: {
+            properties: {
+                type: Object,
+                default: () => ({}),
+            },
+        },
         emits: ["update:modelValue"],
         computed: {
             sortedProperties() {
-                if (this.schema?.properties) {
-                    return this.sortProperties(this.schema.properties);
-                }
-
-                return undefined;
+                return sortProperties(this.properties, this.schema.required);
             },
             requiredProperties() {
-                const properties = this.sortedProperties.filter(([p]) => this.isRequired(p));
-                // if the field id is not found in the required fields,
-                // we need to add it
-                if(!properties.find(([field]) => field === "id")) {
-                    properties.unshift(["id", {type: "string", $required: true}]);
-                }
-                return properties;
+                return this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
             },
             optionalProperties() {
-                return this.sortedProperties.filter(([p]) => !this.isRequired(p));
+                return this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p));
             },
         },
         methods: {
-            sortProperties(properties) {
-                if (!properties) {
-                    return properties;
-                }
-
-                return Object.entries(properties)
-                    .sort((a, b) => {
-                        if (a[0] === "id") {
-                            return -1;
-                        } else if (b[0] === "id") {
-                            return 1;
-                        }
-
-                        const aRequired = (this.schema.required || []).includes(
-                            a[0],
-                        );
-                        const bRequired = (this.schema.required || []).includes(
-                            b[0],
-                        );
-
-                        if (aRequired && !bRequired) {
-                            return -1;
-                        } else if (!aRequired && bRequired) {
-                            return 1;
-                        }
-
-                        const aDefault = "default" in a[1];
-                        const bDefault = "default" in b[1];
-
-                        if (aDefault && !bDefault) {
-                            return 1;
-                        } else if (!aDefault && bDefault) {
-                            return -1;
-                        }
-
-                        return a[0].localeCompare(b[0]);
-                    })
-            },
             onObjectInput(properties, value) {
                 const currentValue = this.modelValue || {};
                 currentValue[properties] = value;
-                this.$emit("update:modelValue", currentValue);
+                this.onInput(currentValue);
             },
             isValidated(key) {
                 return (
@@ -218,6 +216,18 @@
         },
     };
 </script>
+
+<style lang="scss">
+    .el-form-item {
+        margin-bottom: 1rem;
+    }
+
+    .el-form-item__content {
+        .el-form-item {
+            width: 100%;
+        }
+    }
+</style>
 
 <style lang="scss" scoped>
 @import "../../code/styles/code.scss";

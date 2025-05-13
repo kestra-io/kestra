@@ -1,5 +1,5 @@
 import type {ComputedRef, InjectionKey, Ref} from "vue"
-import {Breadcrumb, TopologyClickParams} from "./utils/types"
+import {Breadcrumb, SectionKey, TopologyClickParams} from "./utils/types"
 import {Panel} from "../MultiPanelTabs.vue"
 
 /**
@@ -9,9 +9,9 @@ export const FLOW_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<C
 /**
  * Current section name (Where a task is created or edited)
  */
-export const SECTION_INJECTION_KEY = Symbol("section-injection-key") as InjectionKey<Ref<string>>
+export const SECTION_INJECTION_KEY = Symbol("section-injection-key") as InjectionKey<Ref<SectionKey>>
 /**
- * Current task ID (When a task is edited) or target task ID (When a task is created)
+ * Current task ID (When a task is edited) or target task ID (When a task is created) or task type (when a pluginDefaults is edited)
  */
 export const TASKID_INJECTION_KEY = Symbol("taskid-injection-key") as InjectionKey<Ref<string>>
 /**

@@ -1,9 +1,8 @@
 <template>
     <el-select
-        :model-value="modelValue"
-        :placeholder="$t('no_code.creation.select', {section: section.toLowerCase().slice(0, -1)})"
+        v-model="modelValue"
+        :placeholder="$t(`no_code.select.${section}`)"
         filterable
-        @update:model-value="onInput"
     >
         <el-option
             v-for="item in taskModels.sort()"
@@ -25,51 +24,66 @@
     </el-select>
 </template>
 
-<script>
-    import {mapState} from "vuex";
+<script setup lang="ts">
+    import {computed, onBeforeMount} from "vue";
+    import {useStore} from "vuex";
     import {TaskIcon} from "@kestra-io/ui-libs";
+    import {SectionKey} from "../code/utils/types";
 
-    export default {
-        components: {
-            TaskIcon
-        },
-        props: {
-            modelValue: {
-                type: String,
-                required: false,
-                default: undefined,
-            },
-            section: {
-                type: String,
-                required: false,
-                default: undefined,
-            },
-        },
-        emits: ["update:modelValue"],
-        created() {
-            this.$store.dispatch("plugin/list");
-        },
-        computed: {
-            ...mapState("plugin", ["plugin", "plugins", "icons"]),
-            taskModels() {
-                const taskModels = [];
-                for (const plugin of this.plugins || []) {
-                    taskModels.push.apply(taskModels, plugin[this.upperSnakeToCamelCase(this.section)]);
+    /**
+     * For each section, pick the members of the
+     * plugin to allow to select.
+     */
+    const KEY_SECTIONS_MAP: Record<SectionKey, string[]> = {
+        "tasks": ["tasks"],
+        "triggers": ["triggers"],
+        "error handlers": ["tasks"],
+        "finally": ["tasks"],
+        "after execution": ["tasks"],
+        "plugin defaults": [
+            "tasks",
+            "triggers",
+            "conditions",
+            "taskRunners"
+        ],
+    }
+
+    const props = defineProps<{
+        section?: keyof typeof KEY_SECTIONS_MAP;
+    }>()
+
+    const modelValue = defineModel({
+        type: String,
+        default: "",
+    });
+
+    const store = useStore();
+
+    onBeforeMount(() => {
+        store.dispatch("plugin/list");
+    })
+
+    const plugins = computed(() => {
+        return store.state.plugin.plugins;
+    })
+    const icons = computed(() => {
+        return store.state.plugin.icons;
+    })
+
+    const taskModels = computed(() => {
+        const taskModels: string[] = [];
+        const pluginKeySection = KEY_SECTIONS_MAP[props.section || "tasks"] || ["tasks"];
+        for (const plugin of plugins.value || []) {
+            for(const curSection of pluginKeySection){
+                if (plugin[curSection] === undefined) {
+                    continue;
                 }
-                return taskModels;
-            },
-        },
-        methods: {
-            upperSnakeToCamelCase(str) {
-                return str.toLowerCase().replaceAll(/_([a-z])/g, function (g) {
-                    return g[1].toUpperCase();
-                });
-            },
-            onInput(value) {
-                this.$emit("update:modelValue", value);
-            },
-        },
-    };
+                taskModels.push.apply(taskModels, plugin[curSection] ?? []);
+            }
+        }
+        return taskModels;
+    })
+
 </script>
 
 <style lang="scss" scoped>

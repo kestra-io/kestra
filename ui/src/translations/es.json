@@ -817,6 +817,7 @@
         "error handlers": "Cerrar el manejador de errores",
         "finally": "Cerrar task",
         "input": "Cerrar input",
+        "plugin defaults": "Cerrar plugin por defecto",
         "tasks": "Cerrar task",
         "triggers": "Cerrar trigger"
       },
@@ -824,7 +825,7 @@
         "after execution": "Agregar un bloque después de la ejecución",
         "error handlers": "Agregar un manejador de errores",
         "finally": "Agregar un bloque finally",
-        "select": "Seleccione una {section}",
+        "plugin defaults": "Agregar un plugin predeterminado",
         "tasks": "Agregar una task",
         "triggers": "Agregar un trigger"
       },
@@ -860,14 +861,23 @@
         "triggers": "Guardar trigger"
       },
       "sections": {
-        "after_execution": "Después de la Ejecución",
-        "error_handlers": "Manejadores de Errores",
+        "afterExecution": "Después de la Ejecución",
+        "errors": "Manejadores de Errores",
         "finally": "Finalmente",
         "general": "Propiedades generales",
         "main": "Propiedades principales",
         "optional": "Propiedades opcionales",
+        "pluginDefaults": "Predeterminados del Plugin",
         "tasks": "Tareas",
         "triggers": "Disparadores"
+      },
+      "select": {
+        "after execution": "Selecciona una task",
+        "error handlers": "Selecciona una task",
+        "finally": "Seleccionar una task",
+        "plugin defaults": "Seleccionar un plugin",
+        "tasks": "Seleccionar una task",
+        "triggers": "Seleccione un trigger"
       }
     },
     "no_data": "Parece que no hay nada aquí... ¡todavía!<br/>Ajusta tus filtros o inténtalo de nuevo.",

@@ -11,12 +11,13 @@
             :value="input.type"
         />
     </el-select>
-    <task-root
+    <TaskObject
         v-loading="loading"
         name="root"
         :model-value="selectedInput"
         @update:model-value="updateSelected($event, selectedIndex)"
-        :schema="inputSchema?.schema"
+        :schema="inputSchema?.schema?.properties"
+        :properties="inputSchema?.schema?.properties?.properties"
         :definitions="inputSchema?.schema?.definitions"
     />
 
@@ -24,7 +25,7 @@
 </template>
 
 <script setup>
-    import TaskRoot from "./tasks/TaskRoot.vue";
+    import TaskObject from "./tasks/TaskObject.vue";
     import Save from "../code/components/Save.vue";
 </script>
 

@@ -47,11 +47,19 @@
     const expanded = ref<CollapseItem["title"]>(props.title);
 
     const removeElement = (title: string, index: number) => {
-        if(props.elements?.[index]?.id === undefined) return;
-        emits(
-            "remove",
-            YAML_UTILS.deleteTask(flow.value, props.elements[index].id, title),
-        );
+        const isPluginDefaults = title === "Plugin Defaults";
+        // plugin default do not have an id
+        // they have to be deleted separately
+        if (isPluginDefaults) {
+            if(props.elements?.[index]?.type === undefined) return;
+            emits("remove", YAML_UTILS.deletePluginDefaults(flow.value, props.elements[index].type));
+        } else {
+            if(props.elements?.[index]?.id === undefined) return;
+            emits(
+                "remove",
+                YAML_UTILS.deleteTask(flow.value, props.elements[index].id, title),
+            );
+        }
     };
 
     const moveElement = (

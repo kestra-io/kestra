@@ -34,7 +34,7 @@
     import {onBeforeMount, ref, watch, computed, inject} from "vue";
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    import {SECTIONS} from "../../../utils/constants";
+    import {PLUGIN_DEFAULTS_SECTION, SECTIONS} from "../../../utils/constants";
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
         FLOW_INJECTION_KEY, PARENT_TASKID_INJECTION_KEY, POSITION_INJECTION_KEY,
@@ -44,12 +44,13 @@
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
+    import {SectionKey} from "../utils/types";
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
-    const section = inject(SECTION_INJECTION_KEY, ref("tasks"));
+    const section = inject(SECTION_INJECTION_KEY, ref("tasks" as SectionKey));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
     const position = inject(POSITION_INJECTION_KEY, "after");
     const parentTaskId = inject(PARENT_TASKID_INJECTION_KEY, ref());
@@ -102,53 +103,69 @@
     )
 
     watch(
-        taskId,
-        (value) => {
+        [taskId, section],
+        ([id, section]) => {
             if(taskCreationIndex.value){
                 return;
             }
             yaml.value =
-                YAML_UTILS.extractTask(flow.value, value) ?? "";
+                section === PLUGIN_DEFAULTS_SECTION ?
+                    YAML_UTILS.extractPluginDefault(
+                        flow.value,
+                        id // this is the task type for the plugin defaults
+                    )
+                    :
+                    YAML_UTILS.extractTask(flow.value, id) ?? "";
         },
         {immediate: true},
     );
 
     watch(
         yaml,
-        (value) => {
+        () => {
             if(saveMode === "auto") {
-                store.dispatch("flow/validateTask", {task: value, section: validationSection.value});
+                if(errors.value?.length > 0){
+                    return;
+                }
                 saveTask();
             }
         },
     );
 
+    const parsedTask = computed(() => YAML_UTILS.parse(yaml.value));
+
     const CURRENT = ref<string|null>(null);
-    const validateTask = (task: string) => {
-        let temp = YAML_UTILS.parse(yaml.value);
+    const validateTask = (task?: string) => {
+        let temp = parsedTask.value;
 
         if (lastBreadcrumb.value.shown) {
             const field = breadcrumbs.value.at(-1)?.label;
             if (field) {
-                temp = {...temp, [field]: task};
+                temp[field] = task;
             }
         }
 
         temp = YAML_UTILS.stringify(temp);
 
-        store
-            .dispatch("flow/validateTask", {task: temp, section: validationSection.value})
-            .then(() => (yaml.value = temp));
+        if(section.value !== PLUGIN_DEFAULTS_SECTION){
+            store
+                .dispatch("flow/validateTask", {task: temp, section: validationSection.value})
+                .then(() => (yaml.value = temp));
+            CURRENT.value = temp;
 
-        CURRENT.value = temp;
+            clearTimeout(timer.value);
+            timer.value = setTimeout(() => {
+                if (lastValidatedValue.value !== temp) {
+                    lastValidatedValue.value = temp;
+                    store.dispatch("flow/validateTask", {task: temp, section: validationSection.value});
+                }
+            }, 500) as any;
+        } else {
+            yaml.value = temp;
+            CURRENT.value = temp;
+        }
 
-        clearTimeout(timer.value);
-        timer.value = setTimeout(() => {
-            if (lastValidatedValue.value !== temp) {
-                lastValidatedValue.value = temp;
-                store.dispatch("flow/validateTask", {task: temp, section: validationSection.value});
-            }
-        }, 500) as any;
+
     };
 
     const timer = ref<number>();
@@ -156,12 +173,13 @@
 
     const errors = computed(() => store.getters["flow/taskError"]);
 
-    const SECTIONS_MAP: Record<string, string> = {
+    const SECTIONS_MAP: Record<SectionKey, string> = {
         tasks: "task",
         triggers: "triggers",
         "error handlers": "errors",
         finally: "finally",
         "after execution": "afterExecution",
+        [PLUGIN_DEFAULTS_SECTION]: "pluginDefaults",
     };
 
     const saveTask = () => {
@@ -208,15 +226,21 @@
                         position,
                         parentTaskId.value,
                     );
-                } else if (currentSection && SECTIONS_MAP[currentSection.toString()] && task?.length) {
+                } else if (currentSection && SECTIONS_MAP[currentSection] && task?.length) {
                     result = YAML_UTILS.insertSection(
-                        SECTIONS_MAP[currentSection.toString()],
+                        SECTIONS_MAP[currentSection],
                         flowBeforeAdd.value,
                         task,
                     );
                 }
             }
-        } else{
+        } else if (currentSection === PLUGIN_DEFAULTS_SECTION) {
+            result = YAML_UTILS.replacePluginDefaultsInDocument(
+                flow.value,
+                parsedTask.value.type,
+                yaml.value,
+            );
+        } else {
             const originalTask = YAML_UTILS.extractTask(flow.value, taskId.value);
             if(!originalTask)return;
 

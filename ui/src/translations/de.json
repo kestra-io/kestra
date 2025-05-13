@@ -817,6 +817,7 @@
         "error handlers": "Fehlerbehandler schließen",
         "finally": "Task schließen",
         "input": "Eingabe schließen",
+        "plugin defaults": "Plugin-Defaults schließen",
         "tasks": "Task schließen",
         "triggers": "Trigger schließen"
       },
@@ -824,7 +825,7 @@
         "after execution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
         "finally": "Fügen Sie einen Finally-Block hinzu",
-        "select": "Wählen Sie einen {section} aus",
+        "plugin defaults": "Fügen Sie ein Plugin-Default hinzu",
         "tasks": "Aufgabe hinzufügen",
         "triggers": "Füge einen Trigger hinzu"
       },
@@ -860,14 +861,23 @@
         "triggers": "Speicher Trigger"
       },
       "sections": {
-        "after_execution": "Nach Ausführung",
-        "error_handlers": "Fehlerbehandler",
+        "afterExecution": "Nach Ausführung",
+        "errors": "Fehlerbehandler",
         "finally": "Schließlich",
         "general": "Allgemeine Eigenschaften",
         "main": "Haupteigenschaften",
         "optional": "Optionale Eigenschaften",
+        "pluginDefaults": "Plugin-Standardeinstellungen",
         "tasks": "Aufgaben",
         "triggers": "Trigger"
+      },
+      "select": {
+        "after execution": "Wählen Sie eine Task aus",
+        "error handlers": "Wählen Sie eine Task aus",
+        "finally": "Wählen Sie eine Task aus",
+        "plugin defaults": "Wählen Sie ein Plugin aus",
+        "tasks": "Wählen Sie eine Task aus",
+        "triggers": "Wählen Sie einen Trigger aus"
       }
     },
     "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",

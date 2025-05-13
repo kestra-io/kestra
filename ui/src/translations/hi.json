@@ -817,6 +817,7 @@
         "error handlers": "त्रुटि हैंडलर बंद करें",
         "finally": "टास्क बंद करें",
         "input": "इनपुट बंद करें",
+        "plugin defaults": "प्लगइन डिफ़ॉल्ट बंद करें",
         "tasks": "टास्क बंद करें",
         "triggers": "ट्रिगर बंद करें"
       },
@@ -824,7 +825,7 @@
         "after execution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
         "error handlers": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
-        "select": "किसी {section} का चयन करें",
+        "plugin defaults": "प्लगइन डिफ़ॉल्ट जोड़ें",
         "tasks": "कार्य जोड़ें",
         "triggers": "ट्रिगर जोड़ें"
       },
@@ -860,14 +861,23 @@
         "triggers": "ट्रिगर सहेजें"
       },
       "sections": {
-        "after_execution": "Execution के बाद",
-        "error_handlers": "त्रुटि हैंडलर",
+        "afterExecution": "Execution के बाद",
+        "errors": "त्रुटि हैंडलर्स",
         "finally": "अंत में",
         "general": "सामान्य गुणधर्म",
         "main": "मुख्य गुणधर्म",
         "optional": "वैकल्पिक गुण",
+        "pluginDefaults": "डिफ़ॉल्ट प्लगइन",
         "tasks": "कार्य",
         "triggers": "ट्रिगर्स"
+      },
+      "select": {
+        "after execution": "एक task चुनें",
+        "error handlers": "एक task चुनें",
+        "finally": "एक task चुनें",
+        "plugin defaults": "एक प्लगइन चुनें",
+        "tasks": "कार्य चुनें",
+        "triggers": "ट्रिगर चुनें"
       }
     },
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",

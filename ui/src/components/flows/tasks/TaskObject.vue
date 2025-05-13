@@ -178,7 +178,6 @@
                 default: () => ({}),
             },
         },
-        emits: ["update:modelValue"],
         computed: {
             sortedProperties() {
                 return sortProperties(this.properties, this.schema.required);
@@ -191,9 +190,9 @@
             },
         },
         methods: {
-            onObjectInput(properties, value) {
+            onObjectInput(propertyName, value) {
                 const currentValue = this.modelValue || {};
-                currentValue[properties] = value;
+                currentValue[propertyName] = value;
                 this.onInput(currentValue);
             },
             isValidated(key) {

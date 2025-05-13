@@ -1,6 +1,6 @@
 <template>
     <el-form-item>
-        <el-select :model-value="selectedSchema" @update:model-value="onSelect">
+        <el-select :model-value="selectedSchema" @update:model-value="onSelectType">
             <el-option
                 v-for="schema in schemaOptions"
                 :key="schema.label"
@@ -11,23 +11,24 @@
     </el-form-item>
     <el-form label-position="top" v-if="selectedSchema">
         <component
-            :is="`task-${getType(currentSchema)}`"
+            :is="`task-${currentSchemaType}`"
             v-if="currentSchema"
             :model-value="modelValue"
-            @update:model-value="onInput"
             :schema="currentSchema"
+            :properties="currentSchema?.properties"
             :definitions="definitions"
-            :properties="currentSchema.properties"
+            @update:model-value="onInput"
         />
     </el-form>
 </template>
 
 <script>
     import Task from "./Task";
-    import {mapState} from "vuex";
+    import {BREADCRUMB_INJECTION_KEY} from "../../code/injectionKeys";
 
     export default {
         mixins: [Task],
+        emits: ["update:modelValue"],
         data() {
             return {
                 isOpen: false,
@@ -44,11 +45,10 @@
                     : item.id === this.modelValue?.type,
             );
 
-            this.onSelect(schema?.value);
-        // }
+            this.onSelectType(schema?.value);
         },
         methods: {
-            onSelect(value) {
+            onSelectType(value) {
                 this.selectedSchema = value;
                 // Set up default values
                 if (
@@ -69,9 +69,10 @@
                 }
             },
         },
+        inject:{
+            breadcrumbs: {from: BREADCRUMB_INJECTION_KEY}
+        },
         computed: {
-            ...mapState("code", ["breadcrumbs"]),
-
             currentSchema() {
                 return (
                     this.definitions[this.selectedSchema] ??
@@ -83,6 +84,9 @@
                     acc[schema.type] = schema;
                     return acc;
                 }, {});
+            },
+            currentSchemaType() {
+                return this.selectedSchema ? this.getType(this.currentSchema) : undefined;
             },
             schemaOptions() {
                 return this.schemas.map((schema) => {

@@ -11,7 +11,7 @@
         :is="lastBreadcrumb.component.type"
         v-bind="lastBreadcrumb.component.props"
         :model-value="lastBreadcrumb.component.props.modelValue"
-        @update:model-value="validateTask"
+        @update:model-value="validateTaskElement"
     />
 
     <template v-if="yaml">
@@ -148,24 +148,46 @@
         temp = YAML_UTILS.stringify(temp);
 
         if(section.value !== PLUGIN_DEFAULTS_SECTION){
-            store
-                .dispatch("flow/validateTask", {task: temp, section: validationSection.value})
-                .then(() => (yaml.value = temp));
-            CURRENT.value = temp;
-
             clearTimeout(timer.value);
             timer.value = setTimeout(() => {
                 if (lastValidatedValue.value !== temp) {
                     lastValidatedValue.value = temp;
-                    store.dispatch("flow/validateTask", {task: temp, section: validationSection.value});
+                    store.dispatch("flow/validateTask", {
+                        task: temp,
+                        section: validationSection.value
+                    });
                 }
             }, 500) as any;
-        } else {
-            yaml.value = temp;
-            CURRENT.value = temp;
         }
 
+        yaml.value = temp;
+        CURRENT.value = temp;
+    };
 
+    const validateTaskElement = (taskElement?: Record<string, any>) => {
+        let temp = parsedTask.value;
+
+        if (lastBreadcrumb.value.shown) {
+            const field = breadcrumbs.value.at(-1)?.label;
+            if (field) {
+                temp[field] = taskElement;
+            }
+        }
+
+        temp = YAML_UTILS.stringify(temp);
+
+        clearTimeout(timer.value);
+        timer.value = setTimeout(() => {
+            if (lastValidatedValue.value !== temp) {
+                lastValidatedValue.value = temp;
+                store.dispatch("flow/validateTask", {
+                    task: temp,
+                    section: validationSection.value
+                });
+            }
+        }, 500) as any;
+
+        yaml.value = temp;
     };
 
     const timer = ref<number>();

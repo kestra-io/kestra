@@ -34,7 +34,6 @@
 
     import {setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
 
-
     function isFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.value)
             // when the flow file is dirty all the nocode tabs get splashed

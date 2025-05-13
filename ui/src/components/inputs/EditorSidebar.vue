@@ -501,7 +501,7 @@
             async loadNodes(node, resolve) {
                 if (node.level === 0) {
                     const payload = {
-                        namespace: this.currentNS ?? this.$route.params.id,
+                        namespace: this.currentNS ?? this.$route.params.namespace,
                     };
                     const items = await this.readDirectory(payload);
 

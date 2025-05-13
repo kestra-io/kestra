@@ -19,7 +19,7 @@
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import {configureMonacoYaml} from "monaco-yaml";
 
-    import {/* EDITOR_CURSOR_INJECTION_KEY */ EDITOR_HIGHLIGHT_INJECTION_KEY} from "../code/injectionKeys";
+    import {EDITOR_HIGHLIGHT_INJECTION_KEY} from "../code/injectionKeys";
 
     import YamlWorker from "./yaml.worker.js?worker";
     import {yamlSchemas} from "override/utils/yamlSchemas";

@@ -76,7 +76,7 @@ export default {
                         return tab.name === name;
                     });
 
-            if (state.current.name === name) {
+            if (state.current?.name === name) {
                 if(POSITION - 1 >= 0){
                     commit("setCurrentTab", state.tabs[POSITION - 1]);
                 }else{

@@ -80,6 +80,20 @@ export type Breadcrumb = {
 
 export type Component = ReturnType<typeof defineComponent>;
 
+type BasicParams = {
+    id: string;
+    section: string;
+}
+
+type CreationParams = BasicParams & {
+    position: "before" | "after";
+    target: string;
+}
+
+export type TopologyClickParams =
+  | { action: "edit"; params: BasicParams }
+  | { action: "create"; params: CreationParams };
+
 export type SectionKey = "tasks"
     |    "triggers"
     |    "error handlers"

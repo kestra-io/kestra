@@ -793,10 +793,10 @@ export default {
             }
         },
         namespace(state){
-            return state.flow.namespace;
+            return state.flow?.namespace;
         },
         id(state){
-            return state.flow.id;
+            return state.flow?.id;
         },
         flowYamlMetadata(state){
             return YAML_UTILS.getMetadata(state.flowYaml);

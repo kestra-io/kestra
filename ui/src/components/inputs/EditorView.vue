@@ -240,7 +240,6 @@
                 :flow="flowYaml"
                 :section="route.query.section?.toString()"
                 :task-id="route.query.identifier?.toString()"
-                :creating-task="isCreating"
                 :position="route.query.position === 'before' ? 'before' : 'after'"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
@@ -953,7 +952,7 @@
         }
     };
 
-    const  save = async () => {
+    const save = async () => {
         const result = await store.dispatch("flow/save", {
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
             namespace: props.namespace ?? route.params.namespace,

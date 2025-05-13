@@ -161,10 +161,10 @@ export default {
                 const message = JSON.parse(request.data)?.message;
                 this.$toast.bind({$t: this.$i18n.t})().error(message ?? "File not found");
 
-                return [];
+                return "";
             }
 
-            return request.data ?? [];
+            return request.data ?? "";
         },
 
         // Search for namespace files

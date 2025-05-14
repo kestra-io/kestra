@@ -751,7 +751,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             ZonedDateTime now = ZonedDateTime.now();
             List<Trigger> triggers = this.triggerState.findByNextExecutionDateReadyButLockedTriggers(now);
             if (CollectionUtils.isEmpty(triggers)) {
-                log.warn("executionMonitor triggers is empty, skip");
+                log.debug("executionMonitor triggers is empty, skip");
                 return;
             }
             triggers.forEach(lastTrigger -> {

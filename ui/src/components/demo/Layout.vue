@@ -13,7 +13,6 @@
                 <iframe
                     v-if="video.source"
                     :src="video.source"
-                    frameborder="0"
                     allowfullscreen
                     allow="accelerometer; clipboard-write; encrypted-media; gyroscope;"
                 />

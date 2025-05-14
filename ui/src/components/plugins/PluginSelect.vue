@@ -30,11 +30,12 @@
     import {TaskIcon} from "@kestra-io/ui-libs";
     import {SectionKey} from "../code/utils/types";
 
+    type ElementType = SectionKey | "tasks" | "triggers" | "conditions" | "taskRunners";
     /**
      * For each section, pick the members of the
      * plugin to allow to select.
      */
-    const KEY_SECTIONS_MAP: Record<SectionKey, string[]> = {
+    const KEY_SECTIONS_MAP: Record<ElementType, string[]> = {
         "tasks": ["tasks"],
         "triggers": ["triggers"],
         "error handlers": ["tasks"],
@@ -46,6 +47,8 @@
             "conditions",
             "taskRunners"
         ],
+        "conditions": ["conditions"],
+        "taskRunners": ["taskRunners"],
     }
 
     const props = defineProps<{

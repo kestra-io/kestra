@@ -57,6 +57,7 @@ import TaskAnyOf from "../components/flows/tasks/TaskAnyOf.vue";
 import TaskSubflowNamespace from "../components/flows/tasks/TaskSubflowNamespace.vue";
 import TaskSubflowId from "../components/flows/tasks/TaskSubflowId.vue";
 import TaskSubflowInputs from "../components/flows/tasks/TaskSubflowInputs.vue";
+import TaskConditions from "../components/flows/tasks/TaskConditions.vue";
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
@@ -196,6 +197,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
     app.component("TaskTaskRunner", TaskTaskRunner)
     app.component("LeftMenuLink", LeftMenuLink)
     app.component("RouterMd", RouterMd);
+    app.component("TaskConditions", TaskConditions);
     const components = {
         ...(import.meta.glob("../../node_modules/@nuxtjs/mdc/dist/runtime/components/prose/*.vue", {eager: true})),
         ...(import.meta.glob("../../node_modules/@kestra-io/ui-libs/src/components/content/*.vue", {eager: true})),

@@ -1204,7 +1204,8 @@
         "error handlers": "Select a task",
         "finally": "Select a task",
         "plugin defaults": "Select a plugin",
-        "after execution": "Select a task"
+        "after execution": "Select a task",
+        "conditions": "Select a condition"
       },
       "creation": {
         "tasks": "Add a task",
@@ -1212,7 +1213,8 @@
         "error handlers": "Add an error handler",
         "finally": "Add a finally block",
         "plugin defaults": "Add a plugin default",
-        "after execution": "Add an after execution block"
+        "after execution": "Add an after execution block",
+        "conditions": "Add a condition"
       },
       "save": {
         "tasks": "Save task",
@@ -1229,7 +1231,8 @@
         "finally": "Close task",
         "after execution": "Close task",
         "input": "Close input",
-        "plugin defaults": "Close plugin default"
+        "plugin defaults": "Close plugin default",
+        "conditions": "Close condition"
       }
     },
     "properties": {

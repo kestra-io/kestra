@@ -10,10 +10,13 @@ import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.dashboard.chart.KPI;
 import io.kestra.webserver.models.GlobalFilter;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.TimeLineSearch;
+import io.micronaut.core.annotation.Introspected;
+import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -24,9 +27,9 @@ import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,6 +46,7 @@ import static io.kestra.core.utils.DateUtils.validateTimeline;
 @Controller("/api/v1/main/dashboards")
 @Slf4j
 public class DashboardController {
+    protected static final YamlParser YAML_PARSER = new YamlParser();
 
     @Inject
     private DashboardRepositoryInterface dashboardRepository;
@@ -205,22 +209,56 @@ public class DashboardController {
 
             // StartDate & EndDate are only set in the globalFilter for JDBC
             // TODO: Check if we can remove them from generate() for ElasticSearch as they are already set in the where property
+            if (dataChart instanceof KPI KPIChart) {
+                return PagedResults.of(this.dashboardRepository.generateKPI(tenantId, KPIChart, startDate, endDate));
+            }
             return PagedResults.of(this.dashboardRepository.generate(tenantId, dataChart, startDate, endDate, pageNumber != null && pageSize != null ? PageableUtils.from(pageNumber, pageSize) : null));
+
         }
 
         throw new IllegalArgumentException("Only data charts can be generated.");
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "charts/preview", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "charts/preview")
     @Operation(tags = {"Dashboards"}, summary = "Preview a chart data")
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public PagedResults<Map<String, Object>> previewChartData(
-        @RequestBody(description = "The chart definition as YAML") @Body String chart
+    public PagedResults<Map<String, Object>> previewChart(
+        @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest
     ) throws IOException {
-        Chart<?> parsed = YamlParser.parse(chart, Chart.class);
+        Chart<?> parsed = YAML_PARSER.parse(previewRequest.chart(), Chart.class);
+        GlobalFilter globalFilter = previewRequest.globalFilter();
 
-        return PagedResults.of(this.dashboardRepository.generate(tenantService.resolveTenant(), (DataChart) parsed, ZonedDateTime.now().minusDays(8), ZonedDateTime.now(), null));
+        List<QueryFilter> filters =
+            globalFilter != null ? globalFilter.getFilters() : null;
+
+        ZonedDateTime endDate = null;
+        ZonedDateTime startDate = null;
+        if (filters != null) {
+            TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+            validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
+
+            endDate = timeLineSearch.getEndDate();
+            startDate = timeLineSearch.getStartDate();
+        } else {
+            endDate = ZonedDateTime.now();
+            startDate = endDate.minusDays(8);
+        }
+
+        if (endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("`endDate` must be after `startDate`.");
+        }
+
+        if (parsed instanceof DataChart dataChart) {
+            Integer pageNumber = globalFilter != null ?globalFilter.getPageNumber() : null;
+            Integer pageSize = globalFilter != null ? globalFilter.getPageSize(): null;
+
+            dataChart.getData().setGlobalFilter(filters, startDate, endDate);
+
+            return PagedResults.of(this.dashboardRepository.generate(tenantService.resolveTenant(), dataChart, startDate, endDate, pageNumber != null && pageSize != null ? PageableUtils.from(pageNumber, pageSize) : null));
+        }
+
+        throw new IllegalArgumentException("Chart is not an instance of DataChart.");
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -249,5 +287,9 @@ public class DashboardController {
         return validateConstraintViolationBuilder.build();
     }
 
+    @Introspected
+    public record PreviewRequest(
+        @Parameter(description = "The chart") String chart,
+        @Parameter(description = "The filters to apply, some can override chart definition like labels & namespace") @Nullable GlobalFilter globalFilter) {}
 
 }

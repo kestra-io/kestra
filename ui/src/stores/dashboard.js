@@ -54,7 +54,7 @@ export default {
             });
         },
         chartPreview(_, chart) {
-            return this.$http.post(`${apiUrl(this)}/dashboards/charts/preview`, chart, yamlContentHeader)
+            return this.$http.post(`${apiUrl(this)}/dashboards/charts/preview`, chart)
                 .then(response => response.data);
         }
     },

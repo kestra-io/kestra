@@ -56,6 +56,7 @@ public class StatsController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "summary")
     @Operation(tags = {"Stats"}, summary = "Get summary statistics")
+    @Deprecated
     public SummaryStatistics summary(@Body @Valid SummaryRequest request) {
         return new SummaryStatistics(
             flowRepositoryInterface.countForNamespace(tenantService.resolveTenant(), request.namespace()),
@@ -66,6 +67,7 @@ public class StatsController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/daily")
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions")
+    @Deprecated
     public List<DailyExecutionStatistics> dailyStatistics(@Body @Valid StatisticRequest statisticRequest) {
         // @TODO: seems to be converted back to utc by micronaut
         return executionRepository.dailyStatistics(
@@ -84,6 +86,7 @@ public class StatsController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "taskruns/daily")
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for taskRuns")
+    @Deprecated
     public List<DailyExecutionStatistics> taskRunsDailyStatistics(@Body @Valid StatisticRequest statisticRequest) {
         return executionRepository.dailyStatistics(
             statisticRequest.q(),
@@ -101,6 +104,7 @@ public class StatsController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/daily/group-by-flow")
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions group by namespaces and flows")
+    @Deprecated
     public Map<String, Map<String, List<DailyExecutionStatistics>>> dailyGroupByFlowStatistics(@Body @Valid ByFlowStatisticRequest statisticRequest) {
         return executionRepository.dailyGroupByFlowStatistics(
             statisticRequest.q(),
@@ -117,6 +121,7 @@ public class StatsController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/daily/group-by-namespace")
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for executions grouped by namespace")
+    @Deprecated
     public Map<String, ExecutionCountStatistics> dailyStatisticsGroupByNamespace(@Body @Valid ByNamespaceStatisticRequest request) {
         return executionRepository.executionCountsGroupedByNamespace(
             tenantService.resolveTenant(),
@@ -129,6 +134,7 @@ public class StatsController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "executions/latest/group-by-flow")
     @Operation(tags = {"Stats"}, summary = "Get latest execution by flows")
+    @Deprecated
     public List<Execution> lastExecutions(
         @Parameter(description = "A list of flows filter") @Body @Valid LastExecutionsRequest lastExecutionsRequest
     ) {
@@ -141,6 +147,7 @@ public class StatsController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "logs/daily")
     @Operation(tags = {"Stats"}, summary = "Get daily statistics for logs")
+    @Deprecated
     public List<LogStatistics> logsDailyStatistics(@Body @Valid LogStatisticRequest logStatisticRequest) {
         return logRepositoryInterface.statistics(
             logStatisticRequest.q(),

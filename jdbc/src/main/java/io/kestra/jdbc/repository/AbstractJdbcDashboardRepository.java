@@ -9,6 +9,8 @@ import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
+import io.kestra.plugin.core.dashboard.chart.KPI;
+import io.kestra.plugin.core.dashboard.chart.kpis.KpiOption;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
 import jakarta.validation.ConstraintViolationException;
@@ -165,6 +167,31 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
         );
 
         return queryBuilder.fetchData(tenantId, dataChart.getData(), startDate, endDate, pageable);
+    }
+
+    @Override
+    public <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generateKPI(String tenantId, KPI<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+        Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new HashMap<>();
+
+        @SuppressWarnings("unchecked")
+        QueryBuilderInterface<F> queryBuilder = (QueryBuilderInterface<F>) queryBuilderByHandledFields.computeIfAbsent(
+            dataChart.getData().repositoryClass(),
+            clazz -> queryBuilders
+                .stream()
+                .filter(b -> clazz.isAssignableFrom(b.getClass()))
+                .findFirst()
+                .orElseThrow(() -> new UnsupportedOperationException("No query builder found for " + clazz))
+        );
+
+        ArrayListTotal<Map<String, Object>> result = queryBuilder.fetchData(tenantId, dataChart.getData(), startDate, endDate, null);
+        if (result.getTotal() == 0) {
+            return result;
+        }
+        ArrayListTotal<Map<String, Object>> resultWithoutWhere;
+        if (dataChart.getChartOptions() != null && dataChart.getChartOptions().getNumberType().equals(KpiOption.NumberType.PERCENTAGE)) {
+            resultWithoutWhere = queryBuilder.fetchData(tenantId, dataChart.getData().clearFilters(), startDate, endDate, null);
+        }
+        return result;
     }
 
     @Override

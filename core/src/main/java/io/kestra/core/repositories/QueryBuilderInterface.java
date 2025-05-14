@@ -18,4 +18,6 @@ public interface QueryBuilderInterface<F extends Enum<F>> {
     F dateFilterField();
 
     ArrayListTotal<Map<String, Object>> fetchData(String tenantId, DataFilter<F, ? extends ColumnDescriptor<F>> filter, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException;
+
+    Float fetchKPI(String tenantId, DataFilter<F, ? extends ColumnDescriptor<F>> descriptors, ZonedDateTime startDate, ZonedDateTime endDate);
 }

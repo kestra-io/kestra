@@ -30,7 +30,6 @@ public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F
     @Pattern(regexp = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     private String type;
 
-
     private Map<String, C> columns;
 
     @Setter
@@ -40,6 +39,12 @@ public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F
 
     public Set<F> aggregationForbiddenFields() {
         return Collections.emptySet();
+    }
+
+    public DataFilter<F, C> clearFilters() {
+        this.where = Collections.emptyList();
+
+        return this;
     }
 
     public abstract Class<? extends QueryBuilderInterface<F>> repositoryClass();

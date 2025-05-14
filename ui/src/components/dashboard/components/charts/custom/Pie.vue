@@ -186,6 +186,7 @@
 
     const generated = ref();
     const generate = async () => {
+        let decodedParams = decodeSearchParams(route.query, undefined, []);
         if (!props.isPreview) {
             let params = {
                 id: dashboard.value.id,
@@ -197,13 +198,12 @@
             if (route.query.labels) {
                 params.labels = Object.fromEntries(route.query.labels.map(l => l.split(":")));
             }
-            let decodedParams = decodeSearchParams(route.query, undefined, []);
             if (decodedParams) {
                 params = {...params, filters: decodedParams}
             }
             generated.value = await store.dispatch("dashboard/generate", params);
         } else {
-            generated.value = await store.dispatch("dashboard/chartPreview", props.chart.content)
+            generated.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filter: decodedParams}})
         }
     };
 

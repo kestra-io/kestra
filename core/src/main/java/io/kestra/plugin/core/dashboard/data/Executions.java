@@ -73,24 +73,22 @@ public class Executions<C extends ColumnDescriptor<Executions.Fields>> extends D
     public void setGlobalFilter(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate) {
         List<AbstractFilter<Fields>> where = this.getWhere() != null ? new ArrayList<>(this.getWhere()) : new ArrayList<>();
 
-        if (filters == null) {
-            return;
-        }
+        if (filters != null) {
+            List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
+            if (!namespaceFilters.isEmpty()) {
+                where.removeIf(filter -> filter.getField().equals(Executions.Fields.NAMESPACE));
+                namespaceFilters.forEach(f -> {
+                    where.add(f.toDashboardFilterBuilder(Executions.Fields.NAMESPACE, f.value()));
+                });
+            }
 
-        List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
-        if (!namespaceFilters.isEmpty()) {
-            where.removeIf(filter -> filter.getField().equals(Executions.Fields.NAMESPACE));
-            namespaceFilters.forEach(f -> {
-                where.add(f.toDashboardFilterBuilder(Executions.Fields.NAMESPACE, f.value()));
-            });
-        }
-
-        List<QueryFilter> labelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.LABELS)).toList();
-        if (!labelFilters.isEmpty()) {
-            where.removeIf(filter -> filter.getField().equals(Fields.LABELS));
-            labelFilters.forEach(f -> {
-                where.add(Contains.<Executions.Fields>builder().field(Fields.LABELS).value(f.value()).build());
-            });
+            List<QueryFilter> labelFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.LABELS)).toList();
+            if (!labelFilters.isEmpty()) {
+                where.removeIf(filter -> filter.getField().equals(Fields.LABELS));
+                labelFilters.forEach(f -> {
+                    where.add(Contains.<Executions.Fields>builder().field(Fields.LABELS).value(f.value()).build());
+                });
+            }
         }
 
 

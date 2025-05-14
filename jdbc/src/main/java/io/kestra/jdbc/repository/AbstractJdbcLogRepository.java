@@ -15,8 +15,8 @@ import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
-import org.jooq.Record;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
@@ -28,8 +28,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.*;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -658,6 +658,35 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
 
     protected Condition levelsCondition(List<Level> levels) {
         return field("level").in(levels.stream().map(level -> level.name()).toList());
+    }
+
+    @Override
+    public Float fetchKPI(
+        String tenantId,
+        DataFilter<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> descriptors,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate
+    ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                Map<String, ? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
+                    .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                // KPI should only have 1 column, so we can safely get the first one
+                ColumnDescriptor<Logs.Fields> column = columnsWithoutDate.values().iterator().next();
+
+                // Generate the calculated field that will have filters applied
+//                Field field = columnToField(column, fieldsMapping).
+                // Generate the field that will be the agg without any filter
+
+                // Generate the field that will calculate the percentage
+
+                return null;
+            });
     }
 
     @Override

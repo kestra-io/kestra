@@ -1206,6 +1206,35 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     @Override
+    public Float fetchKPI(
+        String tenantId,
+        DataFilter<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> descriptors,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate
+    ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                Map<String, ? extends ColumnDescriptor<Executions.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
+                    .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                // KPI should only have 1 column, so we can safely get the first one
+                ColumnDescriptor<Executions.Fields> column = columnsWithoutDate.values().iterator().next();
+
+                // Generate the calculated field that will have filters applied
+//                Field field = columnToField(column, fieldsMapping).
+                // Generate the field that will be the agg without any filter
+
+                // Generate the field that will calculate the percentage
+
+                return null;
+            });
+    }
+
+    @Override
     protected <F extends Enum<F>> Field<?> columnToField(ColumnDescriptor<?> column, Map<F, String> fieldsMapping) {
         if (column.getField() == null) {
             return null;

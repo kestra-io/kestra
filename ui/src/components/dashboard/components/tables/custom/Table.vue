@@ -66,6 +66,7 @@
 
     const data = ref();
     const generate = async () => {
+        let decodedParams = decodeSearchParams(route.query, undefined, []);
         if (!props.isPreview) {
             let params = {
                 id: dashboard.value.id,
@@ -82,13 +83,12 @@
                 params.pageNumber = currentPage.value;
                 params.pageSize = pageSize.value;
             }
-            let decodedParams = decodeSearchParams(route.query, undefined, []);
             if (decodedParams) {
                 params = {...params, filters: decodedParams}
             }
             data.value = await store.dispatch("dashboard/generate", params);
         } else {
-            data.value = await store.dispatch("dashboard/chartPreview", props.chart.content)
+            data.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filter: decodedParams}})
         }
     };
 

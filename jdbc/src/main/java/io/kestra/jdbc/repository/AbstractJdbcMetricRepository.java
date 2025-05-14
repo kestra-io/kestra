@@ -15,8 +15,8 @@ import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.micrometer.common.lang.Nullable;
 import io.micronaut.data.model.Pageable;
 import lombok.Getter;
-import org.jooq.Record;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -372,6 +372,36 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         );
 
         return mapper::get;
+    }
+
+
+    @Override
+    public Float fetchKPI(
+        String tenantId,
+        DataFilter<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> descriptors,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate
+    ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                Map<String, ? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
+                    .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                // KPI should only have 1 column, so we can safely get the first one
+                ColumnDescriptor<Metrics.Fields> column = columnsWithoutDate.values().iterator().next();
+
+                // Generate the calculated field that will have filters applied
+//                Field field = columnToField(column, fieldsMapping).
+                // Generate the field that will be the agg without any filter
+
+                // Generate the field that will calculate the percentage
+
+                return null;
+            });
     }
 
     @Override

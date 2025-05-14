@@ -62,6 +62,7 @@ import lombok.experimental.SuperBuilder;
     }
 )
 public class TimeSeries<F extends Enum<F>, D extends DataFilter<F, ? extends TimeSeriesColumnDescriptor<F>>> extends DataChart<TimeSeriesOption, D> {
+
     @Override
     public Integer minNumberOfAggregations() {
         return 1;

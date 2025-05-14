@@ -72,16 +72,15 @@ public class Logs<C extends ColumnDescriptor<Logs.Fields>> extends DataFilter<Lo
     public void setGlobalFilter(List<QueryFilter> filters, ZonedDateTime startDate, ZonedDateTime endDate) {
         List<AbstractFilter<Fields>> where = this.getWhere() != null ? new ArrayList<>(this.getWhere()) : new ArrayList<>();
 
-        if (filters == null) {
-            return;
-        }
+        if (filters != null) {
 
-        List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
-        if (!namespaceFilters.isEmpty()) {
-            where.removeIf(filter -> filter.getField().equals(Logs.Fields.NAMESPACE));
-            namespaceFilters.forEach(f -> {
-                where.add(f.toDashboardFilterBuilder(Logs.Fields.NAMESPACE, f.value()));
-            });
+            List<QueryFilter> namespaceFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.NAMESPACE)).toList();
+            if (!namespaceFilters.isEmpty()) {
+                where.removeIf(filter -> filter.getField().equals(Logs.Fields.NAMESPACE));
+                namespaceFilters.forEach(f -> {
+                    where.add(f.toDashboardFilterBuilder(Logs.Fields.NAMESPACE, f.value()));
+                });
+            }
         }
 
         if (startDate != null || endDate != null) {

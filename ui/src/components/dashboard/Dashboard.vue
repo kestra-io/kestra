@@ -16,16 +16,7 @@
         <KestraFilter
             :key="custom.shown"
             :prefix="custom.shown ? 'custom_dashboard' : 'dashboard'"
-            :include="
-                custom.shown
-                    ? ['relative_date', 'absolute_date', 'namespace', 'labels']
-                    : [
-                        'namespace',
-                        'state',
-                        'scope',
-                        'absolute_date',
-                    ]
-            "
+            :include="['relative_date', 'absolute_date', 'namespace', 'labels']"
             :buttons="{
                 refresh: {
                     shown: true,
@@ -73,143 +64,40 @@
             </el-col>
         </el-row>
     </div>
-    <div v-else class="dashboard">
-        <Card
-            :icon="CheckBold"
-            :label="t('dashboard.success_ratio')"
-            :tooltip="t('dashboard.success_ratio_tooltip')"
-            :value="stats.success"
-            :loading="executionsLoading"
-            :redirect="{
-                name: 'executions/list',
-                query: {
-                    state: State.SUCCESS,
-                    scope: 'USER',
-                    size: 100,
-                    page: 1,
-                },
-            }"
-        />
-
-        <Card
-            :icon="Alert"
-            :label="t('dashboard.failure_ratio')"
-            :tooltip="t('dashboard.failure_ratio_tooltip')"
-            :value="stats.failed"
-            :loading="executionsLoading"
-            :redirect="{
-                name: 'executions/list',
-                query: {
-                    state: State.FAILED,
-                    scope: 'USER',
-                    size: 100,
-                    page: 1,
-                },
-            }"
-        />
-
-        <Card
-            :icon="FileTree"
-            :label="t('flows')"
-            :value="numbers.flows"
-            :loading="numbersLoading"
-            :redirect="{
-                name: 'flows/list',
-                query: {scope: 'USER', size: 100, page: 1},
-            }"
-        />
-
-        <Card
-            :icon="LightningBolt"
-            :label="t('triggers')"
-            :value="numbers.triggers"
-            :loading="numbersLoading"
-            :redirect="{
-                name: 'admin/triggers',
-                query: {size: 100, page: 1},
-            }"
-        />
-
-        <ExecutionsBar
-            :data="graphData"
-            :total="stats.total"
-            :loading="executionsLoading"
-            class="card card-2/3"
-        />
-
-        <ExecutionsDoughnut
-            :data="graphData"
-            :total="stats.total"
-            :loading="executionsLoading"
-            class="card card-1/3"
-        />
-
-        <div v-if="props.flow" class="h-100 p-4 card card-1/2">
-            <span class="d-flex justify-content-between">
-                <span class="fs-6 fw-bold">
-                    {{ t("dashboard.description") }}
-                </span>
-                <el-button
-                    :icon="BookOpenOutline"
-                    @click="descriptionDialog = true"
+    <div v-else>
+        <el-row class="custom">
+            <el-col
+                v-for="chart in defaultCharts"
+                :key="chart.content"
+                :xs="24"
+                :sm="12"
+            >
+                <div
+                    class="p-4 d-flex flex-column"
                 >
-                    {{ t("open") }}
-                </el-button>
+                    <p class="m-0 fs-6 fw-bold">
+                        {{ chart.chartOptions?.displayName ?? chart.id }}
+                    </p>
+                    <p
+                        v-if="chart.chartOptions?.description"
+                        class="m-0 fw-light"
+                    >
+                        <small>{{ chart.chartOptions.description }}</small>
+                    </p>
 
-                <el-dialog
-                    v-model="descriptionDialog"
-                    :title="$t('description')"
-                >
-                    <Markdown
-                        :source="description"
-                        :html="false"
-                        class="p-4 description"
-                    />
-                </el-dialog>
-            </span>
 
-            <Markdown :source="description" :html="false" class="p-4 description" />
-        </div>
-        <ExecutionsInProgress
-            v-else
-            :flow="props.flowId"
-            :namespace="props.namespace"
-            :loading="executionsLoading"
-            class="card card-1/2"
-        />
-
-        <ExecutionsNextScheduled
-            v-if="props.flow"
-            :flow="props.flowId"
-            :namespace="props.namespace"
-            :loading="executionsLoading"
-            class="card card-1/2"
-        />
-        <ExecutionsNextScheduled
-            v-else-if="isAllowedTriggers"
-            :flow="props.flowId"
-            :namespace="props.namespace"
-            :loading="executionsLoading"
-            class="card card-1/2"
-        />
-
-        <ExecutionsEmptyNextScheduled
-            v-else
-            :loading="executionsLoading"
-            class="card card-1/2"
-        />
-        <ExecutionsNamespace
-            v-if="!props.flow && Object.keys(namespaceExecutions).length > 1"
-            class="card card-1"
-            :data="namespaceExecutions"
-            :total="stats.total"
-        />
-        <Logs
-            v-if="!props.flow"
-            :data="logs"
-            :loading="executionsLoading"
-            class="card card-1"
-        />
+                    <div class="mt-4 flex-grow-1">
+                        <component
+                            :is="types[chart.type]"
+                            :source="chart.content"
+                            :chart
+                            :identifier="custom.id"
+                            is-preview
+                        />
+                    </div>
+                </div>
+            </el-col>
+        </el-row>
     </div>
 </template>
 
@@ -220,36 +108,21 @@
     import {useI18n} from "vue-i18n";
 
     import {apiUrl} from "override/utils/route";
-    import {State} from "@kestra-io/ui-libs"
+
+    import defautDashboardSource from "../../assets/dashboard/default_dashboard_definition.yaml?raw"
 
     import Header from "./components/Header.vue";
-    import Card from "./components/Card.vue";
 
     import KestraFilter from "../filter/KestraFilter.vue";
-
-    import ExecutionsBar from "./components/charts/executions/Bar.vue";
-    import ExecutionsDoughnut from "./components/charts/executions/Doughnut.vue";
-    import ExecutionsNamespace from "./components/charts/executions/Namespace.vue";
-    import Logs from "./components/charts/logs/Bar.vue";
-
-    import ExecutionsInProgress from "./components/tables/executions/InProgress.vue";
-    import ExecutionsNextScheduled from "./components/tables/executions/NextScheduled.vue";
-    import ExecutionsEmptyNextScheduled from "./components/tables/executions/EmptyNextScheduled.vue";
-
     import Markdown from "../layout/Markdown.vue";
     import TimeSeries from "./components/charts/custom/TimeSeries.vue";
     import Bar from "./components/charts/custom/Bar.vue";
     import Pie from "./components/charts/custom/Pie.vue";
     import Table from "./components/tables/custom/Table.vue";
 
-    import CheckBold from "vue-material-design-icons/CheckBold.vue";
-    import Alert from "vue-material-design-icons/Alert.vue";
-    import LightningBolt from "vue-material-design-icons/LightningBolt.vue";
-    import FileTree from "vue-material-design-icons/FileTree.vue";
-    import BookOpenOutline from "vue-material-design-icons/BookOpenOutline.vue";
-    import permission from "../../models/permission";
-    import action from "../../models/action";
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import _cloneDeep from "lodash/cloneDeep.js";
+    import yaml from "yaml";
 
     const router = useRouter();
     const route = useRoute();
@@ -298,6 +171,7 @@
 
     // Custom Dashboards
     const custom = ref({id: Math.random(), shown: false, dashboard: {}});
+    const defaultCharts = ref([]);
     const handleCustomUpdate = async (v) => {
         let dashboard = {};
 
@@ -308,6 +182,8 @@
             });
             if (v && v.id !== "default") {
                 dashboard = await store.dispatch("dashboard/load", v.id);
+            } else {
+                validateAndLoadAllCharts();
             }
 
             custom.value = {
@@ -330,12 +206,6 @@
         "io.kestra.plugin.core.dashboard.chart.Pie": Pie,
     };
 
-    const descriptionDialog = ref(false);
-    const description = props.flow
-        ? (store.state?.flow?.flow?.description ??
-            t("dashboard.no_flow_description"))
-        : undefined;
-
     const defaultNumbers = {flows: 0, triggers: 0};
     const numbers = ref({...defaultNumbers});
     const numbersLoading = ref(false);
@@ -357,40 +227,6 @@
     };
 
     const executions = ref({raw: {}, all: {}, yesterday: {}, today: {}});
-    const stats = computed(() => {
-        const counts = executions?.value?.all?.executionCounts || {};
-        const terminatedStates = State.getTerminatedStates();
-        const statesToCount = Object.fromEntries(
-            Object.entries(counts).filter(([key]) =>
-                terminatedStates.includes(key),
-            ),
-        );
-
-        const total = Object.values(counts).reduce(
-            (sum, count) => sum + count,
-            0,
-        );
-
-        const totalTerminated = Object.values(statesToCount).reduce(
-            (sum, count) => sum + count,
-            0,
-        );
-
-        const successStates = ["SUCCESS", "CANCELLED", "WARNING", "SKIPPED"];
-        const failedStates = ["FAILED", "KILLED"];
-        const sumStates = (states) =>
-            states.reduce((sum, state) => sum + (statesToCount[state] || 0), 0);
-        const successRatio =
-            totalTerminated > 0 ? (sumStates(successStates) / totalTerminated) * 100 : 0;
-        const failedRatio = totalTerminated > 0 ? (sumStates(failedStates) / totalTerminated) * 100 : 0;
-
-        return {
-            total: total,
-            totalTerminated: totalTerminated,
-            success: `${successRatio.toFixed(2)}%`,
-            failed: `${failedRatio.toFixed(2)}%`,
-        };
-    });
     const transformer = (data) => {
         return data.reduce((accumulator, value) => {
             accumulator = accumulator || {executionCounts: {}, duration: {}};
@@ -446,8 +282,6 @@
             });
     };
 
-    const graphData = computed(() => store.state.stat.daily || []);
-
     const namespaceExecutions = ref({});
 
     const fetchNamespaceExecutions = () => {
@@ -456,37 +290,16 @@
         });
     };
 
-    const logs = ref([]);
-    const fetchLogs = () => {
-        store.dispatch("stat/logDaily", mergeQuery()).then((response) => {
-            logs.value = response;
-        });
-    };
-
-    const fetchAll = async () => {
-        if (!custom.value.shown) {
-            try {
-                executionsLoading.value = true;
-                await Promise.all([
-                    fetchNumbers(),
-                    fetchExecutions(),
-                    fetchNamespaceExecutions(),
-                    fetchLogs(),
-                ]).catch(error => {
-                    console.error("Failed to fetch dashboard data:", error);
-                });
-            } finally {
-                executionsLoading.value = false;
-            }
+    const validateAndLoadAllCharts = async () => {
+        defaultCharts.value = [];
+        let charts = [];
+        const allCharts = YAML_UTILS.getAllCharts(defautDashboardSource);
+        for (const chart of allCharts) {
+            const yamlChart = yaml.stringify(chart);
+            charts.push({...chart, content: yamlChart});
         }
-    };
-
-    const isAllowedTriggers = computed(() => {
-        return (
-            user &&
-            user.isAllowed(permission.FLOW, action.READ, props.value?.namespace)
-        );
-    });
+        defaultCharts.value = charts;
+    }
 
     onBeforeMount(() => {
         handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
@@ -496,7 +309,7 @@
         route,
         async () => {
             await handleCustomUpdate(route.params?.id ? {id: route.params?.id} : undefined);
-            fetchAll();
+            validateAndLoadAllCharts();
         },
         {immediate: true, deep: true},
     );

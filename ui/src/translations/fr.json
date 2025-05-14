@@ -817,6 +817,7 @@
         "error handlers": "Fermer le gestionnaire d'erreurs",
         "finally": "Fermer la task",
         "input": "Fermer l'input",
+        "plugin defaults": "Fermer le plugin par défaut",
         "tasks": "Fermer la task",
         "triggers": "Fermer le trigger"
       },
@@ -824,7 +825,7 @@
         "after execution": "Ajouter un bloc après l'exécution",
         "error handlers": "Ajouter un gestionnaire d'erreurs",
         "finally": "Ajouter un bloc finally",
-        "select": "Sélectionnez une {section}",
+        "plugin defaults": "Ajouter un plugin par défaut",
         "tasks": "Ajouter une tâche",
         "triggers": "Ajouter un trigger"
       },
@@ -860,14 +861,23 @@
         "triggers": "Enregistrer le trigger"
       },
       "sections": {
-        "after_execution": "Après l'Exécution",
-        "error_handlers": "Gestionnaires d'erreurs",
+        "afterExecution": "Après l'Exécution",
+        "errors": "Gestionnaires d'erreurs",
         "finally": "Enfin",
         "general": "Propriétés générales",
         "main": "Principales propriétés",
         "optional": "Propriétés optionnelles",
+        "pluginDefaults": "Paramètres par défaut du plugin",
         "tasks": "Tâches",
         "triggers": "Déclencheurs"
+      },
+      "select": {
+        "after execution": "Sélectionnez une task",
+        "error handlers": "Sélectionnez une task",
+        "finally": "Sélectionnez une task",
+        "plugin defaults": "Sélectionner un plugin",
+        "tasks": "Sélectionnez une task",
+        "triggers": "Sélectionner un trigger"
       }
     },
     "no_data": "On dirait qu'il n'y a rien ici… pour l'instant !<br/>Ajustez vos filtres, ou réessayez !",

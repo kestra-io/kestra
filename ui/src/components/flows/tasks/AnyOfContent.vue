@@ -17,6 +17,7 @@
             @update:model-value="onInput"
             :schema="currentSchema"
             :definitions="definitions"
+            :properties="currentSchema.properties"
         />
     </el-form>
 </template>

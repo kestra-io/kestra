@@ -106,7 +106,7 @@
 
 <script setup>
     // Core
-    import {getCurrentInstance, nextTick, onMounted, ref, watch} from "vue";
+    import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
     import {useStore} from "vuex";
     import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
@@ -132,6 +132,9 @@
 
     const vueflowId = ref(Math.random().toString());
     const {fitView} = useVueFlow(vueflowId.value);
+
+    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
+    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY);
 
     // props
     const props = defineProps({
@@ -185,7 +188,6 @@
         "loading",
         "expand-subflow",
         "swapped-task",
-        "openNoCode",
     ]);
 
     // Vue instance variables
@@ -278,22 +280,17 @@
     };
 
     const onCreateNewTask = (details) => {
-        emit("openNoCode", {
-            section: SECTIONS.TASKS.toLowerCase(),
-            identifier: "new",
-            target: details[0],
-            position: details[1],
-        });
+        topologyClick.value = {
+            action: "create",
+            params: {section: SECTIONS.TASKS.toLowerCase(), position: details[1], target: details[0]}
+        };
     };
 
     const onEditTask = (event) => {
-        emit("openNoCode", {
-            section: event.section
-                ? event.section.toLowerCase()
-                : SECTIONS.TASKS.toLowerCase(),
-            identifier: event.task.id,
-            type: event.task.type,
-        });
+        topologyClick.value = {
+            action: "edit",
+            params: {id: event.task.id, section: (event.section ?? SECTIONS.TASKS).toLowerCase()}
+        };
     };
 
     const onAddFlowableError = (event) => {

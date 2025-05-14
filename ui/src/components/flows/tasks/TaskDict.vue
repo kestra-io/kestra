@@ -48,7 +48,10 @@
         mixins: [Task],
         emits: ["update:modelValue"],
         props: {
-            class: {type: String, default: undefined},
+            class: {
+                type: String,
+                default: undefined
+            },
         },
         data() {
             return {
@@ -71,7 +74,7 @@
             },
         },
         watch: {
-            modelValue(_newValue, _oldValue) {
+            modelValue() {
                 this.currentValue = Object.entries(toRaw(this.values));
             },
         },

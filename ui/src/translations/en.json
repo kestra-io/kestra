@@ -771,7 +771,7 @@
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
             "flow_default_tab": "Default Flow Tab",
-            "auto_refresh_interval": "Auto Refresh Interval"            
+            "auto_refresh_interval": "Auto Refresh Interval"
           }
         },
         "theme": {
@@ -1176,9 +1176,10 @@
         "optional": "Optional properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
-        "error_handlers": "Error Handlers",
+        "errors": "Error Handlers",
+        "afterExecution": "After Execution",
         "finally": "Finally",
-        "after_execution": "After Execution"
+        "pluginDefaults": "Plugin Defaults"
       },
       "fields": {
         "main": {
@@ -1197,12 +1198,20 @@
           "disabled": "Disabled"
         }
       },
+      "select": {
+        "tasks": "Select a task",
+        "triggers": "Select a trigger",
+        "error handlers": "Select a task",
+        "finally": "Select a task",
+        "plugin defaults": "Select a plugin",
+        "after execution": "Select a task"
+      },
       "creation": {
-        "select": "Select a {section}",
         "tasks": "Add a task",
         "triggers": "Add a trigger",
         "error handlers": "Add an error handler",
         "finally": "Add a finally block",
+        "plugin defaults": "Add a plugin default",
         "after execution": "Add an after execution block"
       },
       "save": {
@@ -1219,7 +1228,8 @@
         "error handlers": "Close error handler",
         "finally": "Close task",
         "after execution": "Close task",
-        "input": "Close input"
+        "input": "Close input",
+        "plugin defaults": "Close plugin default"
       }
     },
     "properties": {

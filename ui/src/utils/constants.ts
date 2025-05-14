@@ -51,3 +51,5 @@ export const stateDisplayValues = {
     INPROGRESS: "IN-PROGRESS"
 }
 
+export const PLUGIN_DEFAULTS_SECTION = "plugin defaults"
+

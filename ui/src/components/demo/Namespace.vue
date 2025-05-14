@@ -27,12 +27,12 @@
     }>();
 
     const videos = {
-        edit: "https://youtu.be/As4y2oliD_8",
-        secrets: "https://youtu.be/u0yuOYG-qMI",
-        variables: "https://youtu.be/1iSam2aftKo",
-        "plugin-defaults": "https://youtu.be/9zQTUeL0KMc",
-        history: "https://youtu.be/lpHl52Rlvr0",
-        "audit-logs": "https://youtu.be/Qz24gBPGZHs",
+        edit: "https://www.youtube.com/embed/As4y2oliD_8",
+        secrets: "https://www.youtube.com/embed/u0yuOYG-qMI",
+        variables: "https://www.youtube.com/embed/1iSam2aftKo",
+        "plugin-defaults": "https://www.youtube.com/embed/9zQTUeL0KMc",
+        history: "https://www.youtube.com/embed/lpHl52Rlvr0",
+        "audit-logs": "https://www.youtube.com/embed/Qz24gBPGZHs",
     };
 
     const videoSource = computed(() => ({

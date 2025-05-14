@@ -4,7 +4,7 @@
         :title="t(`demos.apps.title`)"
         :image="{source: sourceImg, alt: t(`demos.apps.title`)}"
         :video="{
-            source: 'https://youtu.be/KwBO8mcS3kk',
+            source: 'https://www.youtube.com/embed/KwBO8mcS3kk',
         }"
     >
         <template #message>

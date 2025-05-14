@@ -11,8 +11,11 @@
             <h2>{{ title }}</h2>
             <div v-if="video" class="video-container">
                 <iframe
-                    v-if="isYouTubeUrl(video.source)"
-                    :src="getYouTubeEmbedUrl(video.source)"
+                    v-if="video.source"
+                    :src="video.source"
+                    frameborder="0"
+                    allowfullscreen
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope;"
                 />
             </div>
             <p><slot name="message" /></p>
@@ -36,13 +39,6 @@
         };
         embed?: boolean;
     }>();
-
-    const isYouTubeUrl = (url: string) => /youtu\.?be/.test(url);
-
-    const getYouTubeEmbedUrl = (url: string) => {
-        const videoId = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|.*\/videos\/))([^&?]*)/)?.[1] || "";
-        return `https://www.youtube.com/embed/${videoId}`;
-    };
 </script>
 
 <style lang="scss" scoped>

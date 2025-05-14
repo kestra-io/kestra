@@ -1,6 +1,6 @@
 <template>
     <el-form-item class="tabs-wrapper">
-        <el-tabs v-model="selectedSchema" @tab-change="onSelect">
+        <el-tabs v-model="selectedSchema" @tab-change="onSelectType">
             <el-tab-pane
                 v-for="schema in schemaOptions"
                 :key="schema.label"
@@ -44,7 +44,7 @@
                     ? item.id === "string"
                     : item.id === this.modelValue?.type,
             );
-            this.onSelect(schema?.value || this.schemaOptions[0]?.value);
+            this.onSelectType(schema?.value || this.schemaOptions[0]?.value);
         },
         methods: {
             onSelectType(value) {

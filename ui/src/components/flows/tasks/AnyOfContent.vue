@@ -88,14 +88,32 @@
                 return this.selectedSchema ? this.getType(this.currentSchema) : undefined;
             },
             schemaOptions() {
+                // find the part of the prefix to schema references that is common to all schemas
+                const schemaRefsArray = this.schemas
+                    .map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
+                    .filter((schemaRef) => schemaRef)
+                    .map((schemaRef) => schemaRef.split("."))
+
+                const commonPart = schemaRefsArray[0]
+                    .filter((schemaRef, index) => schemaRefsArray.every((item) => item[index] === schemaRef))
+                    .map((schemaRef) => `${schemaRef}.`)
+                    .join("");
+
+                // remove the common part from all schema ids
                 return this.schemas.map((schema) => {
-                    const label = schema.$ref
+                    /** @type string */
+                    const schemaRef = schema.$ref
                         ? schema.$ref.split("/").pop()
                         : schema.type;
+
+                    const lastPartOfValue = schemaRef.slice(
+                        commonPart.length,
+                    );
+
                     return {
-                        label: label.capitalize(),
-                        value: label,
-                        id: label.split(".").pop().toLowerCase(),
+                        label: lastPartOfValue.capitalize(),
+                        value: schemaRef,
+                        id: lastPartOfValue.toLowerCase(),
                     };
                 });
             },

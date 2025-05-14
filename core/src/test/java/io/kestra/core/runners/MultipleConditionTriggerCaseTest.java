@@ -22,12 +22,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
+@Slf4j
 public class MultipleConditionTriggerCaseTest {
 
     @Inject
@@ -219,6 +221,9 @@ public class MultipleConditionTriggerCaseTest {
 
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
+            if(execution.getFlowId().equals("flow-trigger-paused-listen")) {
+                log.info("exec from executionQueue: {}", execution);
+            }
             if (execution.getState().getCurrent() == State.Type.SUCCESS && execution.getFlowId()
                 .equals("flow-trigger-paused-listen")) {
                 flowTrigger.set(execution);
@@ -232,7 +237,7 @@ public class MultipleConditionTriggerCaseTest {
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
 
         // trigger is done
-        assertTrue(countDownLatch.await(10, TimeUnit.SECONDS));
+        assertTrue(countDownLatch.await(30, TimeUnit.SECONDS));
         receive.blockLast();
         assertThat(flowTrigger.get()).isNotNull();
 

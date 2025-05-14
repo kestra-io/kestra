@@ -18,7 +18,6 @@ import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInte
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorService;
@@ -195,7 +194,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
     private final Tracer tracer;
 
-    private final FlowRepositoryInterface flowRepository;
+    private final FlowMetaStoreInterface flowMetaStore;
 
     private final JdbcServiceLivenessCoordinator serviceLivenessCoordinator;
 
@@ -217,20 +216,20 @@ public class JdbcExecutor implements ExecutorInterface, Service {
      * to force Micronaut to respect order when invoking pre-destroy order.
      *
      * @param serviceLivenessCoordinator The {@link JdbcServiceLivenessCoordinator}.
-     * @param flowRepository             The {@link FlowRepositoryInterface}.
+     * @param flowMetaStore             The {@link FlowMetaStoreInterface}.
      * @param flowTopologyRepository     The {@link AbstractJdbcFlowTopologyRepository}.
      * @param eventPublisher             The {@link ApplicationEventPublisher}.
      */
     @Inject
     public JdbcExecutor(
         @Nullable final JdbcServiceLivenessCoordinator serviceLivenessCoordinator,
-        final FlowRepositoryInterface flowRepository,
+        final FlowMetaStoreInterface flowMetaStore,
         final AbstractJdbcFlowTopologyRepository flowTopologyRepository,
         final ApplicationEventPublisher<ServiceStateChangeEvent> eventPublisher,
         final TracerFactory tracerFactory
         ) {
         this.serviceLivenessCoordinator = serviceLivenessCoordinator;
-        this.flowRepository = flowRepository;
+        this.flowMetaStore = flowMetaStore;
         this.flowTopologyRepository = flowTopologyRepository;
         this.eventPublisher = eventPublisher;
         this.tracer = tracerFactory.getTracer(JdbcExecutor.class, "EXECUTOR");
@@ -466,7 +465,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 () -> {
                     try {
 
-                        final FlowWithSource flow = transform(this.flowRepository.findByExecutionWithSource(execution), execution);
+                        final FlowWithSource flow = findFlow(execution);
                         Executor executor = new Executor(execution, null).withFlow(flow);
 
                         // schedule it for later if needed
@@ -575,7 +574,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                                 }));
 
                             try {
-                                executorService.addWorkerTaskResults(executor, flow, workerTaskResults);
+                                executorService.addWorkerTaskResults(executor, workerTaskResults);
                             } catch (InternalException e) {
                                 log.error("Unable to add a worker task result to the execution", e);
                             }
@@ -671,10 +670,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
             if (execution.hasTaskRunJoinable(message.getTaskRun())) {
                 try {
-                    Flow flow = flowRepository.findByExecution(current.getExecution());
-
                     // process worker task result
-                    executorService.addWorkerTaskResult(current, flow, message);
+                    executorService.addWorkerTaskResult(current, () -> findFlow(execution), message);
 
                     // send metrics on terminated
                     TaskRun taskRun = message.getTaskRun();
@@ -742,7 +739,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
             if (execution.hasTaskRunJoinable(message.getParentTaskRun())) { // TODO if we remove this check, we can avoid adding 'iteration' on the 'isSame()' method
                 try {
-                    Flow flow = flowRepository.findByExecution(current.getExecution());
+                    FlowWithSource flow = findFlow(execution);
                     Task task = flow.findTaskByTaskId(message.getParentTaskRun().getTaskId());
                     TaskRun taskRun;
 
@@ -840,7 +837,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 throw new IllegalStateException("Execution state don't exist for " + message.getParentExecutionId() + ", receive " + message);
             }
 
-            Flow flow = this.flowRepository.findByExecution(execution);
+            FlowWithSource flow = findFlow(execution);
             try {
                 ExecutableTask<?> executableTask = (ExecutableTask<?>) flow.findTaskByTaskId(message.getTaskId());
                 if (!executableTask.waitForExecution()) {
@@ -848,7 +845,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 }
 
                 TaskRun taskRun = execution.findTaskRunByTaskRunId(message.getTaskRunId()).withState(message.getState()).withOutputs(message.getOutputs());
-                Flow childFlow = this.flowRepository.findByExecution(message.getChildExecution());
+                FlowInterface childFlow = flowMetaStore.findByExecution(message.getChildExecution()).orElseThrow();
                 RunContext runContext = runContextFactory.of(
                     childFlow,
                     (Task) executableTask,
@@ -947,7 +944,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
     private Executor mayTransitExecutionToKillingStateAndGet(final String executionId) {
         return executionRepository.lock(executionId, pair -> {
             Execution currentExecution = pair.getLeft();
-            Flow flow = this.flowRepository.findByExecution(currentExecution);
+            FlowInterface flow = flowMetaStore.findByExecution(currentExecution).orElseThrow();
 
             Execution killing = executionService.kill(currentExecution, flow);
             Executor current = new Executor(currentExecution, null)
@@ -1079,11 +1076,14 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         }
     }
 
-    private FlowWithSource transform(FlowWithSource flow, Execution execution) {
+    private FlowWithSource findFlow(Execution execution) {
+        FlowInterface flow = this.flowMetaStore.findByExecution(execution).orElseThrow();
+        FlowWithSource flowWithSource = pluginDefaultService.injectDefaults(flow, execution);
+
         if (templateExecutorInterface.isPresent()) {
             try {
-                flow = Template.injectTemplate(
-                    flow,
+                flowWithSource = Template.injectTemplate(
+                    flowWithSource,
                     execution,
                     (tenantId, namespace, id) -> templateExecutorInterface.get().findById(tenantId, namespace, id).orElse(null)
                 );
@@ -1092,7 +1092,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             }
         }
 
-        return pluginDefaultService.injectDefaults(flow, execution);
+        return flowWithSource;
     }
 
     /**
@@ -1110,7 +1110,6 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         executionDelayStorage.get(executionDelay -> {
             Executor result = executionRepository.lock(executionDelay.getExecutionId(), pair -> {
                 Executor executor = new Executor(pair.getLeft(), null);
-                Flow flow = flowRepository.findByExecution(pair.getLeft());
 
                 metricRegistry
                     .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
@@ -1119,6 +1118,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 try {
                     // Handle paused tasks
                     if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)) {
+                        FlowInterface flow = flowMetaStore.findByExecution(pair.getLeft()).orElseThrow();
                         if (executionDelay.getTaskRunId() == null) {
                             // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)
                             Execution markAsExecution = pair.getKey().withState(executionDelay.getState());
@@ -1176,7 +1176,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         slaMonitorStorage.processExpired(Instant.now(), slaMonitor -> {
             Executor result = executionRepository.lock(slaMonitor.getExecutionId(), pair -> {
                 Executor executor = new Executor(pair.getLeft(), null);
-                Flow flow = flowRepository.findByExecution(pair.getLeft());
+                FlowInterface flow = flowMetaStore.findByExecution(pair.getLeft()).orElseThrow();
                 Optional<SLA> sla = flow.getSla().stream().filter(s -> s.getId().equals(slaMonitor.getSlaId())).findFirst();
                 if (sla.isEmpty()) {
                     // this can happen in case the flow has been updated and the SLA removed

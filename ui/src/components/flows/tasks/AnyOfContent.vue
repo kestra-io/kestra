@@ -1,13 +1,13 @@
 <template>
-    <el-form-item>
-        <el-select :model-value="selectedSchema" @update:model-value="onSelect">
-            <el-option
+    <el-form-item class="tabs-wrapper">
+        <el-tabs v-model="selectedSchema" @tab-change="onSelect">
+            <el-tab-pane
                 v-for="schema in schemaOptions"
                 :key="schema.label"
                 :label="schema.label"
-                :value="schema.value"
+                :name="schema.value"
             />
-        </el-select>
+        </el-tabs>
     </el-form-item>
     <el-form label-position="top" v-if="selectedSchema">
         <component
@@ -43,9 +43,7 @@
                     ? item.id === "string"
                     : item.id === this.modelValue?.type,
             );
-
-            this.onSelect(schema?.value);
-        // }
+            this.onSelect(schema?.value || this.schemaOptions[0]?.value);
         },
         methods: {
             onSelect(value) {
@@ -99,3 +97,34 @@
         },
     };
 </script>
+
+<style lang="scss" scoped>
+.tabs-wrapper {
+    .el-tabs {
+        width: 100%;
+    }
+
+    :deep(.el-tabs__header) {
+        margin: 0;
+    }
+
+    :deep(.el-tabs__item) {
+        padding: 0 8px;
+        color: var(--ks-content-tertiary);
+        font-size: 14px;
+
+        &.is-active {
+            color: var(--ks-content-link);
+        }
+
+        &:hover {
+            color: var(--ks-content-link-hover);
+        }
+    }
+
+    :deep(.el-tabs__active-bar) {
+        height: 2px;
+        background-color: var(--ks-content-link) !important;
+    }
+}
+</style>

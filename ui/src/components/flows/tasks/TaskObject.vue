@@ -178,6 +178,7 @@
                 default: () => ({}),
             },
         },
+        emits: ["update:modelValue"],
         computed: {
             sortedProperties() {
                 return sortProperties(this.properties, this.schema.required);

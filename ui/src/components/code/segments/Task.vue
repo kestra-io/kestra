@@ -10,7 +10,7 @@
         v-else-if="lastBreadcrumb.component"
         :is="lastBreadcrumb.component.type"
         v-bind="lastBreadcrumb.component.props"
-        :model-value="lastBreadcrumb.component.props.modelValue"
+        :model-value="parsedTask[field]"
         @update:model-value="validateTaskElement"
     />
 
@@ -134,64 +134,43 @@
 
     const parsedTask = computed(() => YAML_UTILS.parse(yaml.value));
 
-    const CURRENT = ref<string|null>(null);
     const validateTask = (task?: string) => {
-        let temp = parsedTask.value;
-
-        if (lastBreadcrumb.value.shown) {
-            const field = breadcrumbs.value.at(-1)?.label;
-            if (field) {
-                temp[field] = task;
-            }
-        }
-
-        temp = YAML_UTILS.stringify(temp);
-
         if(section.value !== PLUGIN_DEFAULTS_SECTION){
             clearTimeout(timer.value);
             timer.value = setTimeout(() => {
-                if (lastValidatedValue.value !== temp) {
-                    lastValidatedValue.value = temp;
+                if (lastValidatedValue.value !== task) {
+                    lastValidatedValue.value = task;
                     store.dispatch("flow/validateTask", {
-                        task: temp,
+                        task,
                         section: validationSection.value
                     });
                 }
             }, 500) as any;
         }
-
-        yaml.value = temp;
-        CURRENT.value = temp;
     };
+
+    const field = computed(() => {
+        const index = breadcrumbs.value.length - 1;
+        return breadcrumbs.value[index]?.label;
+    });
 
     const validateTaskElement = (taskElement?: Record<string, any>) => {
         let temp = parsedTask.value;
 
         if (lastBreadcrumb.value.shown) {
-            const field = breadcrumbs.value.at(-1)?.label;
-            if (field) {
-                temp[field] = taskElement;
+            if (field.value && Object.keys(taskElement ?? {}).length) {
+                temp[field.value] = taskElement;
             }
         }
 
-        temp = YAML_UTILS.stringify(temp);
+        const task = YAML_UTILS.stringify(temp);
 
-        clearTimeout(timer.value);
-        timer.value = setTimeout(() => {
-            if (lastValidatedValue.value !== temp) {
-                lastValidatedValue.value = temp;
-                store.dispatch("flow/validateTask", {
-                    task: temp,
-                    section: validationSection.value
-                });
-            }
-        }, 500) as any;
-
-        yaml.value = temp;
+        yaml.value = task;
     };
 
+
     const timer = ref<number>();
-    const lastValidatedValue = ref(null);
+    const lastValidatedValue = ref<string>();
 
     const errors = computed(() => store.getters["flow/taskError"]);
 

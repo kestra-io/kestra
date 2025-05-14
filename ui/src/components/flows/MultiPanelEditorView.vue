@@ -30,6 +30,8 @@
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
+    import {useCodeTopology} from "./useCodeTopology";
+
     import {setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
 
     function isFlowRelated(element: Tab){
@@ -150,6 +152,8 @@
     const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
 
     const {onRemoveTab, isFlowDirty} = useCodePanels(panels)
+
+    useCodeTopology(panels, openAddTaskTab, openEditTaskTab)
 
     watch(isFlowDirty, (dirty) => {
         for(const panel of panels.value){

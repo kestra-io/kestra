@@ -1,5 +1,6 @@
 import type {ComputedRef, InjectionKey, Ref} from "vue"
-import {Breadcrumb, SectionKey} from "./utils/types"
+import {Breadcrumb, SectionKey, TopologyClickParams} from "./utils/types"
+import {Panel} from "../MultiPanelTabs.vue"
 
 /**
  * Complete flow YAML string for the no-code
@@ -63,3 +64,19 @@ export const PANEL_INJECTION_KEY = Symbol("panel-injection-key") as InjectionKey
  * undefined when creating a task at the root level
  */
 export const PARENT_TASKID_INJECTION_KEY = Symbol("parent-taskid-injection-key") as InjectionKey<Ref<string | undefined>>
+/**
+ * When users click on one of topology buttons, such as create or edit, multi-panel view needs to react accordingly
+ */
+export const TOPOLOGY_CLICK_INJECTION_KEY = Symbol("topology-click-injection-key") as InjectionKey<Ref<TopologyClickParams | undefined>>
+/**
+* Array of visible panels in the multi-panel view
+*/
+export const VISIBLE_PANELS_INJECTION_KEY = Symbol("visible-panels-injection-key") as InjectionKey<Ref<Panel[]>>
+/**
+* The position of the cursor in the code editor
+*/
+export const EDITOR_CURSOR_INJECTION_KEY = Symbol("editor-cursor-injection-key") as InjectionKey<Ref<number | undefined>>
+/**
+* The range inside the code editor that we want to highlight
+*/
+export const EDITOR_HIGHLIGHT_INJECTION_KEY = Symbol("editor-highlight-injection-key") as InjectionKey<Ref<number | undefined>>

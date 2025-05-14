@@ -76,7 +76,6 @@
         },
         methods: {
             selectInput(input) {
-                this.loading = true;
                 this.selectedInput = input;
                 this.loadSchema(input.type);
             },
@@ -87,6 +86,8 @@
                 return this.inputsType.find((e) => e.cls === cls).type;
             },
             loadSchema(type) {
+                this.loading = true;
+
                 this.$store
                     .dispatch("plugin/loadInputSchema", {type: type})
                     .then((_) => (this.loading = false));
@@ -120,7 +121,6 @@
                 this.newInputs.push({type: "STRING"});
             },
             onChangeType(type) {
-                this.loading = true;
                 this.newInputs[this.selectedIndex].type = type;
                 this.loadSchema(type);
             },

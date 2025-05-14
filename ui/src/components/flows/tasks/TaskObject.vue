@@ -181,7 +181,7 @@
         emits: ["update:modelValue"],
         computed: {
             sortedProperties() {
-                return sortProperties(this.properties, this.schema.required);
+                return sortProperties(this.properties, this.schema?.required);
             },
             requiredProperties() {
                 return this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));

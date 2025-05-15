@@ -9,7 +9,7 @@
             />
         </el-tabs>
     </el-form-item>
-    <el-form label-position="top" v-if="selectedSchema">
+    <el-form label-position="top" v-if="selectedSchema" class="w-100">
         <component
             :is="`task-${currentSchemaType}`"
             v-if="currentSchema"
@@ -125,10 +125,6 @@
 .tabs-wrapper {
     .el-tabs {
         width: 100%;
-    }
-
-    :deep(.el-tabs__header) {
-        margin: 0;
     }
 
     :deep(.el-tabs__item) {

@@ -7,6 +7,7 @@ import io.kestra.cli.commands.plugins.PluginCommand;
 import io.kestra.cli.commands.servers.ServerCommand;
 import io.kestra.cli.commands.sys.SysCommand;
 import io.kestra.cli.commands.templates.TemplateCommand;
+import io.kestra.cli.commands.tenants.TenantsCommand;
 import io.micronaut.configuration.picocli.MicronautFactory;
 import io.micronaut.configuration.picocli.PicocliRunner;
 import io.micronaut.context.ApplicationContext;
@@ -42,6 +43,7 @@ import java.util.concurrent.Callable;
         SysCommand.class,
         ConfigCommand.class,
         NamespaceCommand.class,
+        TenantsCommand.class,
     }
 )
 @Introspected

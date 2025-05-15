@@ -315,7 +315,7 @@ public class ExecutionService {
         return revision != null ? newExecution.withFlowRevision(revision) : newExecution;
     }
 
-    public Execution markAs(final Execution execution, Flow flow, String taskRunId, State.Type newState) throws Exception {
+    public Execution markAs(final Execution execution, FlowInterface flow, String taskRunId, State.Type newState) throws Exception {
         return this.markAs(execution, flow, taskRunId, newState, null);
     }
 

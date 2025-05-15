@@ -240,7 +240,6 @@
                 :flow="flowYaml"
                 :section="route.query.section?.toString()"
                 :task-id="route.query.identifier?.toString()"
-                :creating-task="isCreating"
                 :position="route.query.position === 'before' ? 'before' : 'after'"
                 @update-metadata="(e) => onUpdateMetadata(e, true)"
                 @update-task="(e) => editorUpdate(e)"
@@ -270,7 +269,6 @@
                     @loading="loadingState"
                     @expand-subflow="onExpandSubflow"
                     @swapped-task="onSwappedTask"
-                    @open-no-code="(params) => handleTopologyEditClick(params)"
                     :flow-graph="flowGraph"
                     :flow-id="flowId"
                     :namespace="namespace"
@@ -599,14 +597,6 @@
             editorWidth.value = editorWidth.value > 33.3 ? 33.3 : editorWidth.value;
         }
     });
-
-    const handleTopologyEditClick = (params) => {
-        if (viewType.value === editorViewTypes.TOPOLOGY) {
-            switchViewType(editorViewTypes.SOURCE_TOPOLOGY);
-        }
-        editorViewType.value = "NO_CODE";
-        nextTick(() => router.replace({query: {...route.query, ...params}}))
-    }
 
     const loadViewType = () => {
         return localStorage.getItem(editorViewTypes.STORAGE_KEY);
@@ -962,7 +952,7 @@
         }
     };
 
-    const  save = async () => {
+    const save = async () => {
         const result = await store.dispatch("flow/save", {
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
             namespace: props.namespace ?? route.params.namespace,

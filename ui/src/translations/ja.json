@@ -817,6 +817,7 @@
         "error handlers": "エラーハンドラーを閉じる",
         "finally": "タスクを閉じる",
         "input": "入力を閉じる",
+        "plugin defaults": "プラグインのデフォルトを閉じる",
         "tasks": "タスクを閉じる",
         "triggers": "トリガーを閉じる"
       },
@@ -824,7 +825,7 @@
         "after execution": "実行後ブロックを追加",
         "error handlers": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
-        "select": "{section}を選択してください",
+        "plugin defaults": "プラグインのデフォルトを追加",
         "tasks": "タスクを追加",
         "triggers": "トリガーを追加"
       },
@@ -860,14 +861,23 @@
         "triggers": "トリガーを保存"
       },
       "sections": {
-        "after_execution": "実行後",
-        "error_handlers": "エラーハンドラー",
+        "afterExecution": "実行後",
+        "errors": "エラーハンドラー",
         "finally": "最後に",
         "general": "一般プロパティ",
         "main": "メインプロパティ",
         "optional": "オプションのプロパティ",
+        "pluginDefaults": "プラグインデフォルト",
         "tasks": "タスク",
         "triggers": "トリガー"
+      },
+      "select": {
+        "after execution": "タスクを選択",
+        "error handlers": "タスクを選択",
+        "finally": "タスクを選択",
+        "plugin defaults": "プラグインを選択",
+        "tasks": "タスクを選択",
+        "triggers": "トリガーを選択"
       }
     },
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",

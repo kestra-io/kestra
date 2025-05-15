@@ -89,9 +89,10 @@
     });
 
     async function save(){
+        const creating = isCreating.value
         await store.dispatch("flow/saveAll")
 
-        if(isCreating.value){
+        if(creating){
             await router.push({
                 name: "flows/update",
                 params: {

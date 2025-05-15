@@ -77,6 +77,7 @@ export default [
                 {
                     // args prefixed with '_' are ignored
                     argsIgnorePattern: "^_",
+                    varsIgnorePattern: "^_",
                 },
             ],
             "@typescript-eslint/no-this-alias": "off",

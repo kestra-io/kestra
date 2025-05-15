@@ -1,32 +1,34 @@
 <template>
-    <el-form-item>
-        <el-select :model-value="selectedSchema" @update:model-value="onSelect">
-            <el-option
+    <el-form-item class="tabs-wrapper">
+        <el-tabs v-model="selectedSchema" @tab-change="onSelectType">
+            <el-tab-pane
                 v-for="schema in schemaOptions"
                 :key="schema.label"
                 :label="schema.label"
-                :value="schema.value"
+                :name="schema.value"
             />
-        </el-select>
+        </el-tabs>
     </el-form-item>
     <el-form label-position="top" v-if="selectedSchema">
         <component
-            :is="`task-${getType(currentSchema)}`"
+            :is="`task-${currentSchemaType}`"
             v-if="currentSchema"
             :model-value="modelValue"
-            @update:model-value="onInput"
             :schema="currentSchema"
+            :properties="currentSchema?.properties"
             :definitions="definitions"
+            @update:model-value="onInput"
         />
     </el-form>
 </template>
 
 <script>
     import Task from "./Task";
-    import {mapState} from "vuex";
+    import {BREADCRUMB_INJECTION_KEY} from "../../code/injectionKeys";
 
     export default {
         mixins: [Task],
+        emits: ["update:modelValue"],
         data() {
             return {
                 isOpen: false,
@@ -42,12 +44,10 @@
                     ? item.id === "string"
                     : item.id === this.modelValue?.type,
             );
-
-            this.onSelect(schema?.value);
-        // }
+            this.onSelectType(schema?.value || this.schemaOptions[0]?.value);
         },
         methods: {
-            onSelect(value) {
+            onSelectType(value) {
                 this.selectedSchema = value;
                 // Set up default values
                 if (
@@ -68,9 +68,10 @@
                 }
             },
         },
+        inject:{
+            breadcrumbs: {from: BREADCRUMB_INJECTION_KEY}
+        },
         computed: {
-            ...mapState("code", ["breadcrumbs"]),
-
             currentSchema() {
                 return (
                     this.definitions[this.selectedSchema] ??
@@ -83,18 +84,70 @@
                     return acc;
                 }, {});
             },
+            currentSchemaType() {
+                return this.selectedSchema ? this.getType(this.currentSchema) : undefined;
+            },
             schemaOptions() {
+                // find the part of the prefix to schema references that is common to all schemas
+                const schemaRefsArray = this.schemas
+                    .map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
+                    .filter((schemaRef) => schemaRef)
+                    .map((schemaRef) => schemaRef.split("."))
+
+                const commonPart = schemaRefsArray[0]
+                    .filter((schemaRef, index) => schemaRefsArray.every((item) => item[index] === schemaRef))
+                    .map((schemaRef) => `${schemaRef}.`)
+                    .join("");
+
+                // remove the common part from all schema ids
                 return this.schemas.map((schema) => {
-                    const label = schema.$ref
+                    /** @type string */
+                    const schemaRef = schema.$ref
                         ? schema.$ref.split("/").pop()
                         : schema.type;
+
+                    const lastPartOfValue = schemaRef.slice(
+                        commonPart.length,
+                    );
+
                     return {
-                        label: label.capitalize(),
-                        value: label,
-                        id: label.split(".").pop().toLowerCase(),
+                        label: lastPartOfValue.capitalize(),
+                        value: schemaRef,
+                        id: lastPartOfValue.toLowerCase(),
                     };
                 });
             },
         },
     };
 </script>
+
+<style lang="scss" scoped>
+.tabs-wrapper {
+    .el-tabs {
+        width: 100%;
+    }
+
+    :deep(.el-tabs__header) {
+        margin: 0;
+    }
+
+    :deep(.el-tabs__item) {
+        padding: 0 8px;
+        color: var(--ks-content-tertiary);
+        font-size: 14px;
+
+        &.is-active {
+            color: var(--ks-content-link);
+        }
+
+        &:hover {
+            color: var(--ks-content-link-hover);
+        }
+    }
+
+    :deep(.el-tabs__active-bar) {
+        height: 2px;
+        background-color: var(--ks-content-link) !important;
+    }
+}
+</style>

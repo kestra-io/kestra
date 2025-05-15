@@ -393,7 +393,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             workerTaskResult = this.run(currentWorkerTask, false);
                         }
                     } catch (IllegalVariableEvaluationException e) {
-                        RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask.getTaskRun(), currentWorkerTask.getTask());
+                        RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
                         contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
                     } catch (QueueException e) {
                         log.error("Unable to emit the worker task result for task {} taskrun {}", currentWorkerTask.getTask().getId(), currentWorkerTask.getTaskRun().getId(), e);
@@ -696,7 +696,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 failed = failed.withOutputs(Variables.empty());
             }
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(failed);
-            RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask.getTaskRun(), workerTask.getTask());
+            RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask);
             contextLogger.logger().error("Unable to emit the worker task result to the queue: {}", e.getMessage(), e);
             try {
                 this.workerTaskResultQueue.emit(workerTaskResult);
@@ -817,7 +817,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         // metrics
         runContext.metrics().forEach(metric -> {
             try {
-                this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric));
+                this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric, workerTask.getExecutionKind()));
             } catch (QueueException e) {
                 // fail silently
             }

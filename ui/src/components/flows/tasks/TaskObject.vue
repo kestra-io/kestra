@@ -12,6 +12,7 @@
                         {{ getKey(key) }}
                     </span>
                     <el-tag
+                        v-if="!isAnyOf(schema)"
                         disable-transitions
                         size="small"
                         class="ms-2 type-tag"
@@ -19,7 +20,7 @@
                         {{ getType(schema) }}
                     </el-tag>
                     <el-tooltip
-                        v-if="hasTooltip(schema)"
+                        v-if="!isAnyOf(schema) && hasTooltip(schema)"
                         :persistent="false"
                         :hide-after="0"
                         effect="light"
@@ -59,6 +60,7 @@
                                 {{ getKey(key) }}
                             </span>
                             <el-tag
+                                v-if="!isAnyOf(schema)"
                                 disable-transitions
                                 size="small"
                                 class="ms-2 type-tag"
@@ -66,7 +68,7 @@
                                 {{ getType(schema) }}
                             </el-tag>
                             <el-tooltip
-                                v-if="hasTooltip(schema)"
+                                v-if="!isAnyOf(schema) && hasTooltip(schema)"
                                 :persistent="false"
                                 :hide-after="0"
                                 effect="light"
@@ -188,7 +190,7 @@
             },
             optionalProperties() {
                 return this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p));
-            },
+            }
         },
         methods: {
             onObjectInput(propertyName, value) {
@@ -213,6 +215,9 @@
                     (schema.description ? schema.description : "")
                 );
             },
+            isAnyOf(schema) {
+                return !!schema?.anyOf;
+            }
         },
     };
 </script>

@@ -141,7 +141,7 @@ abstract public class TestsUtils {
             .id(IdUtils.create())
             .executionId(execution.getId())
             .namespace(execution.getNamespace())
-            .tenantId(MAIN_TENANT)
+            .tenantId(execution.getTenantId())
             .flowId(execution.getFlowId())
             .taskId(task.getId())
             .state(new State())

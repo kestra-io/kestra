@@ -1,7 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
-
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.templates.TemplateEnabled;
 import io.kestra.core.models.validations.ManualConstraintViolation;
@@ -90,7 +88,7 @@ public class TemplateController {
     public HttpResponse<Template> create(
         @Parameter(description = "The template") @Valid @Body Template template
     ) throws ConstraintViolationException {
-        template.setTenantId(MAIN_TENANT);
+        template.setTenantId(tenantService.resolveTenant());
         if (templateRepository.findById(tenantService.resolveTenant(), template.getNamespace(), template.getId()).isPresent()) {
             throw new ConstraintViolationException(Collections.singleton(ManualConstraintViolation.of(
                 "Template id already exists",
@@ -112,7 +110,7 @@ public class TemplateController {
         @Parameter(description = "The template id") @PathVariable String id,
         @Parameter(description = "The template") @Valid @Body Template template
     ) throws ConstraintViolationException {
-        template.setTenantId(MAIN_TENANT);
+        template.setTenantId(tenantService.resolveTenant());
         Optional<Template> existingTemplate = templateRepository.findById(tenantService.resolveTenant(), namespace, id);
 
         if (existingTemplate.isEmpty()) {
@@ -160,7 +158,7 @@ public class TemplateController {
         @Parameter(description = "A list of templates") @Body @Valid List<Template> templates,
         @Parameter(description = "If missing template should be deleted") @QueryValue(defaultValue = "true") Boolean delete
     ) throws ConstraintViolationException {
-        templates.forEach(template -> template.setTenantId(MAIN_TENANT));
+        templates.forEach(template -> template.setTenantId(tenantService.resolveTenant()));
         return new ArrayList<>(this
             .updateCompleteNamespace(
                 namespace,
@@ -253,7 +251,7 @@ public class TemplateController {
                 validateConstraintViolationBuilder.index(index.getAndIncrement());
                 try {
                     Template templateParse = YamlParser.parse(template, Template.class);
-                    templateParse.setTenantId(MAIN_TENANT);
+                    templateParse.setTenantId(tenantService.resolveTenant());
                     validateConstraintViolationBuilder.flow(templateParse.getId());
                     validateConstraintViolationBuilder.namespace(templateParse.getNamespace());
 
@@ -363,7 +361,7 @@ public class TemplateController {
             List<String> sources = List.of(new String(fileUpload.getBytes()).split("---"));
             for (String source : sources) {
                 Template parsed = YamlParser.parse(source, Template.class);
-                parsed.setTenantId(MAIN_TENANT);
+                parsed.setTenantId(tenantService.resolveTenant());
                 importTemplate(parsed);
             }
         } else if (fileName.endsWith(".zip")) {
@@ -376,7 +374,7 @@ public class TemplateController {
 
                     String source = new String(archive.readAllBytes());
                     Template parsed = YamlParser.parse(source, Template.class);
-                    parsed.setTenantId(MAIN_TENANT);
+                    parsed.setTenantId(tenantService.resolveTenant());
                     importTemplate(parsed);
                 }
             }

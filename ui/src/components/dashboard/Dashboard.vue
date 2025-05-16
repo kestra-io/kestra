@@ -30,7 +30,8 @@
                 v-for="(chart, index) in charts"
                 :key="`${chart.id}__${index}`"
                 :xs="24"
-                :sm="(chart.chartOptions?.width || 6) * 2"
+                :sm="(chart.chartOptions?.width || 6) * 4"
+                :md="(chart.chartOptions?.width || 6) * 2"
             >
                 <div class="d-flex flex-column">
                     <p class="m-0">

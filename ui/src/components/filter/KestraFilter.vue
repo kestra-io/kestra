@@ -243,7 +243,7 @@
         },
         placeholder: {type: String, default: undefined},
         searchCallback: {type: Function, default: undefined},
-        isDefaultDashboard: {type: Boolean, default: false}
+        isDefaultDashboard: {type: Boolean, default: false} // TODO: remove this when the default dashboard is removed
     });
 
     const TEXT_PREFIX = `${t("filters.text_search")}: `;

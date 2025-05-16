@@ -2,7 +2,7 @@
     <div
         class="d-flex flex-row align-items-center justify-content-center h-100"
     >
-        <div class="w-75">
+        <div>
             <component
                 :is="chartOptions.graphStyle === 'PIE' ? Pie : Doughnut"
                 v-if="generated !== undefined"
@@ -43,13 +43,10 @@
 
     const store = useStore();
 
-    const dashboard = computed(() => store.state.dashboard.dashboard);
-
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: [Number, String], required: true},
         chart: {type: Object, required: true},
-        isPreview: {type: Boolean, required: false, default: false}
+        default: {type: Boolean, default: false}
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
@@ -185,13 +182,11 @@
     });
 
     const generated = ref();
-    const generate = async () => {
+    const generate = async (id) => {
         let decodedParams = decodeSearchParams(route.query, undefined, []);
-        if (!props.isPreview) {
-            let params = {
-                id: dashboard.value.id,
-                chartId: props.chart.id
-            };
+
+        if (!props.default) {
+            let params = {id, chartId: props.chart.id};
             if (route.query.namespace) {
                 params.namespace = route.query.namespace;
             }
@@ -207,12 +202,8 @@
         }
     };
 
-    watch(route, async () => await generate());
-    watch(
-        () => props.identifier,
-        () => generate(),
-    );
-    onMounted(() => generate());
+    watch(route, async (route) => await generate(route.params?.id));
+    onMounted(() => generate(route.params.id));
 </script>
 
 <style lang="scss" scoped>

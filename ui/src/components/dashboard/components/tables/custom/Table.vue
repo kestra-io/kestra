@@ -1,6 +1,6 @@
 <template>
     <template v-if="data !== undefined">
-        <el-table :id="containerID" :data="data.results" :height="240">
+        <el-table :id="containerID" :data="data.results" :height="240" size="small">
             <el-table-column
                 v-for="(column, index) in Object.entries(props.chart.data.columns)"
                 :key="index"
@@ -26,7 +26,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref, watch} from "vue";
+    import {onMounted, ref, watch} from "vue";
 
     import {useI18n} from "vue-i18n";
     import NoData from "../../../../layout/NoData.vue";
@@ -46,14 +46,11 @@
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: [Number, String], required: true},
         chart: {type: Object, required: true},
-        isPreview: {type: Boolean, required: false, default: false}
+        default: {type: Boolean, default: false}
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
-
-    const dashboard = computed(() => store.state.dashboard.dashboard);
 
     const currentPage = ref(1);
     const pageSize = ref(10);
@@ -61,15 +58,15 @@
     const handlePageChange = (options) => {
         currentPage.value = options.page;
         pageSize.value = options.size;
-        generate();
+        generate(route.params.id);
     };
 
     const data = ref();
-    const generate = async () => {
+    const generate = async (id) => {
         let decodedParams = decodeSearchParams(route.query, undefined, []);
-        if (!props.isPreview) {
+        if (!props.default) {
             let params = {
-                id: dashboard.value.id,
+                id,
                 chartId: props.chart.id
             };
             if (route.query.namespace) {
@@ -92,10 +89,6 @@
         }
     };
 
-    watch(route, async () => await generate());
-    watch(
-        () => props.identifier,
-        () => generate(),
-    );
-    onMounted(() => generate());
+    watch(route, async (route) => await generate(route.params?.id));
+    onMounted(() => generate(route.params.id));
 </script>

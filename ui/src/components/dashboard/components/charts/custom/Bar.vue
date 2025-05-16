@@ -17,6 +17,8 @@
 
     import {Bar} from "vue-chartjs";
 
+    import moment from "moment";
+
     import {customBarLegend} from "../legend.js";
     import {useTheme} from "../../../../../utils/utils.js";
     import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../../../utils/charts.js";
@@ -30,15 +32,12 @@
     const store = useStore();
     const router = useRouter();
 
-    const dashboard = computed(() => store.state.dashboard.dashboard);
-
     const route = useRoute();
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: [Number, String], required: true},
         chart: {type: Object, required: true},
-        isPreview: {type: Boolean, required: false, default: false}
+        default: {type: Boolean, default: false}
     });
 
     const {data, chartOptions} = props.chart;
@@ -158,11 +157,11 @@
     });
 
     const generated = ref();
-    const generate = async () => {
+    const generate = async (id) => {
         let decodedParams = decodeSearchParams(route.query, undefined, []);
-        if (!props.isPreview) {
+        if (!props.default) {
             let params = {
-                id: dashboard.value.id,
+                id,
                 chartId: props.chart.id
             };
             if (route.query.namespace) {
@@ -181,12 +180,8 @@
         }
     };
 
-    watch(route, async () => await generate());
-    watch(
-        () => props.identifier,
-        () => generate(),
-    );
-    onMounted(() => generate());
+    watch(route, async (route) => await generate(route.params?.id));
+    onMounted(() => generate(route.params.id));
 </script>
 
 <style lang="scss" scoped>

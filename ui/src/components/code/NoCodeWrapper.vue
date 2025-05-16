@@ -18,7 +18,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, provide, watch} from "vue";
+    import {computed, onBeforeUnmount, provide, ref, watch} from "vue";
     import debounce from "lodash/debounce";
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
@@ -97,6 +97,8 @@
         });
     };
 
+    const timeout = ref();
+
     const editorUpdate = (source: string) => {
         store.commit("flow/setFlowYaml", source);
         store.commit("flow/setHaveChange", true);
@@ -105,6 +107,16 @@
             name: "Flow",
             dirty: true
         });
+
+        // throttle the trigger of the flow update
+        clearTimeout(timeout.value);
+        timeout.value = setTimeout(() => {
+            store.dispatch("flow/onEdit", {
+                source,
+                currentIsFlow: true,
+                topologyVisible: true,
+            });
+        }, 1000);
     };
 
     const handleReorder = (source: string) => {

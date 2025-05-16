@@ -1,7 +1,9 @@
 <template>
-    <el-button type="primary" :icon="saveMode === 'button' ? ContentSave: undefined">
-        {{ t(`no_code.${saveOrClose}.${props.what}`) }}
-    </el-button>
+    <div class="d-flex justify-content-end mb-5">
+        <el-button type="primary" :icon="saveMode === 'button' ? ContentSave: undefined">
+            {{ t(`no_code.${saveOrClose}.${props.what}`) }}
+        </el-button>
+    </div>
 </template>
 
 <script setup lang="ts">
@@ -10,7 +12,11 @@
     import {SAVEMODE_INJECTION_KEY} from "../injectionKeys";
 
     const props = defineProps({
-        what: {type: String, required: true, default: "tasks"},
+        what: {
+            type: String,
+            required: true,
+            default: "tasks"
+        },
     });
 
     const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");

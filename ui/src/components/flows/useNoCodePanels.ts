@@ -4,6 +4,7 @@ import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import type {Panel, Tab} from "../MultiPanelTabs.vue";
 import NoCodeWrapper, {NoCodeProps} from "../code/NoCodeWrapper.vue";
+import {PLUGIN_DEFAULTS_SECTION} from "../../utils/constants";
 
 
 const NOCODE_PREFIX = "nocode"
@@ -65,10 +66,17 @@ export function setupInitialNoCodeTabIfExists(flow: string, tab: string, t: (key
         const taskInfoPath = tab.substring(7)
         const section = taskInfoPath.split("-").slice(1).shift() ?? ""
         const taskId = taskInfoPath.substring(section.length + 6)
-        // check if the task exists in the flow
-        if(!YAML_UTILS.extractTask(flow, taskId)){
-            // if the task is not found, we don't create the tab
-            return undefined
+        if(section === PLUGIN_DEFAULTS_SECTION){
+            if(!YAML_UTILS.extractPluginDefault(flow, taskId)){
+                // if the defaults is not found, we don't create the tab
+                return undefined
+            }
+        }else{
+            // check if the task exists in the flow
+            if(!YAML_UTILS.extractTask(flow, taskId)){
+                // if the task is not found, we don't create the tab
+                return undefined
+            }
         }
     }
 

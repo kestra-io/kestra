@@ -106,7 +106,7 @@ public class RunContextFactory {
     }
 
     public RunContext of(FlowInterface flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
-        RunContextLogger runContextLogger = runContextLoggerFactory.create(taskRun, task);
+        RunContextLogger runContextLogger = runContextLoggerFactory.create(taskRun, task, execution.getKind());
 
         return newBuilder()
             // Logger
@@ -129,7 +129,7 @@ public class RunContextFactory {
     }
 
     public RunContext of(Flow flow, AbstractTrigger trigger) {
-        RunContextLogger runContextLogger = runContextLoggerFactory.create(flow, trigger);
+        RunContextLogger runContextLogger = runContextLoggerFactory.create(flow, trigger, null);
         return newBuilder()
             // Logger
             .withLogger(runContextLogger)

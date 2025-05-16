@@ -129,11 +129,13 @@
 </template>
 
 <script lang="ts" setup>
-    import {nextTick, ref, watch} from "vue";
+    import {nextTick, ref, watch, provide} from "vue";
     import {useI18n} from "vue-i18n";
 
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
+
+    import {VISIBLE_PANELS_INJECTION_KEY} from "./code/injectionKeys";
 
     import CloseIcon from "vue-material-design-icons/Close.vue"
     import CircleMediumIcon from "vue-material-design-icons/CircleMedium.vue"
@@ -187,6 +189,8 @@
     const panels = defineModel<Panel[]>({
         required: true,
     })
+
+    provide(VISIBLE_PANELS_INJECTION_KEY, panels);
 
     const emit = defineEmits<{
         removeTab: [tab: string]

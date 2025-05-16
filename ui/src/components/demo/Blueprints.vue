@@ -2,6 +2,9 @@
     <Layout
         :title="t(`demos.blueprints.title`)"
         :image="{source: sourceImg, alt: t(`demos.blueprints.title`)}"
+        :video="{
+            source: 'https://www.youtube.com/embed/qbGfK-FJi6s?si=UTeK3V5Cj8FRHH91',
+        }"
         :embed="props.embed"
     >
         <template #message>

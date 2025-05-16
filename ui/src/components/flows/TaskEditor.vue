@@ -6,7 +6,7 @@
                     <code>{{ $t("type") }}</code>
                 </div>
             </template>
-            <plugin-select
+            <PluginSelect
                 v-model="selectedTaskType"
                 :section="section"
                 @update:model-value="onTaskTypeSelect"
@@ -14,110 +14,155 @@
         </el-form-item>
     </el-form>
 
-    <task-root
+    <TaskObject
         v-loading="isLoading"
-        v-if="plugin"
+        v-if="schema"
         name="root"
         :model-value="taskObject"
         @update:model-value="onInput"
-        :schema="plugin.schema"
-        :definitions="plugin.schema.definitions"
+        :schema="schemaProp"
+        :properties="properties"
+        :definitions="schema.definitions"
     />
 </template>
-<script>
-    import TaskRoot from "./tasks/TaskRoot.vue";
+
+<script lang="ts" setup>
+    import {computed, onBeforeMount, ref, watch} from "vue";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
-    import {mapGetters} from "vuex";
-    import {SECTIONS} from "../../utils/constants";
+    import {useStore} from "vuex";
+    import {PLUGIN_DEFAULTS_SECTION, SECTIONS} from "../../utils/constants";
+    import {NoCodeElement, Schemas, SectionKey} from "../code/utils/types";
 
-    export default {
+    defineOptions({
+        name: "TaskEditor",
         inheritAttrs: false,
-        computed: {
-            ...mapGetters("flow", ["taskError"]),
-        },
-        components: {
-            TaskRoot,
-            PluginSelect
-        },
-        emits: ["update:modelValue"],
-        created() {
-            if (this.modelValue) {
-                this.setup()
-            }
-        },
-        watch: {
-            modelValue: {
-                handler() {
-                    if (!this.modelValue) {
-                        this.taskObject = {};
-                        this.selectedTaskType = undefined;
-                    }
-                }
-            }
-        },
-        beforeUnmount() {
-            this.$store.commit("flow/setTaskError", undefined);
-        },
-        props: {
-            modelValue: {
-                type: String,
-                required: false,
-                default: undefined,
-            },
-            section: {
-                type: String,
-                required: true,
-                default: undefined,
-            }
-        },
-        data() {
-            return {
-                selectedTaskType: undefined,
-                taskObject: {},
-                isLoading: false,
-                plugin: undefined,
-            };
-        },
-        methods: {
-            setup() {
-                this.taskObject = YAML_UTILS.parse(this.modelValue);
-                this.selectedTaskType = this.taskObject.type;
-                this.$store.dispatch("flow/validateTask", {task: this.modelValue, section: this.section})
+    });
 
-                this.load();
-            },
-            load() {
-                this.isLoading = true;
-                this.$store
-                    .dispatch("plugin/load", {
-                        cls: this.selectedTaskType,
-                        all: true
-                    })
-                    .then((response) => {
-                        this.plugin = response;
-                        this.isLoading = false;
-                    })
+    const modelValue = defineModel<string>();
 
-            },
-            onInput(value) {
-                this.taskObject = value;
-                this.$emit("update:modelValue", YAML_UTILS.stringify(value));
-            },
-            onTaskTypeSelect() {
-                this.load();
-                const value = {
-                    type: this.selectedTaskType
+    const props = defineProps<{
+        section: SectionKey
+    }>();
+
+    const store = useStore();
+
+    onBeforeMount(() => {
+        if (modelValue.value) {
+            setup()
+        }
+    })
+
+    watch(modelValue, (v) => {
+        if (!v) {
+            taskObject.value = {};
+            selectedTaskType.value = undefined;
+        }
+    })
+
+    type PartialCodeElement = Partial<NoCodeElement>;
+
+    const taskObject = ref<PartialCodeElement | undefined>({});
+    const selectedTaskType = ref<string>();
+    const isLoading = ref(false);
+    const plugin = ref<{schema: Schemas}>();
+
+    const schema = computed(() => {
+        return plugin.value?.schema;
+    });
+
+    const isPluginDefaults = computed(() => {
+        return props.section === PLUGIN_DEFAULTS_SECTION
+    });
+
+    const properties = computed(() => {
+        const updatedProperties = schemaProp.value?.properties;
+        if(isPluginDefaults.value){
+            updatedProperties["id"] = undefined
+            updatedProperties["forced"] = {type: "boolean", $required: true};
+
+            return updatedProperties;
+        }
+        if(!updatedProperties?.id){
+            updatedProperties["id"] = {type: "string", $required: true};
+        }
+        return updatedProperties
+    });
+
+    const schemaProp = computed(() => {
+        const prop = schema.value?.properties;
+        if(!prop){
+            return undefined;
+        }
+        prop.required = prop.required || [];
+        prop.required.push("id");
+        if(isPluginDefaults.value){
+            prop.required.push("forced");
+        }
+        return prop;
+    });
+
+    function setup() {
+        const parsed = YAML_UTILS.parse<PartialCodeElement>(modelValue.value);
+        if(isPluginDefaults.value){
+            const {forced, type, values} = parsed as any;
+            taskObject.value = {...values, forced, type};
+        }else{
+            taskObject.value = parsed;
+        }
+        selectedTaskType.value = taskObject.value?.type;
+
+        load();
+    }
+
+    function load() {
+        isLoading.value = true;
+        store
+            .dispatch("plugin/load", {
+                cls: selectedTaskType.value,
+                all: true
+            })
+            .then((response) => {
+                plugin.value = response;
+                isLoading.value = false;
+            })
+
+    }
+
+    function onInput(val: PartialCodeElement | undefined) {
+        taskObject.value = val;
+        if (isPluginDefaults.value) {
+            const {
+                forced,
+                type,
+                id: _,
+                ...rest
+            } = val as any;
+
+            if(Object.keys(rest).length){
+                val = {
+                    type,
+                    forced,
+                    values: rest,
                 };
+            }
+        }
+        modelValue.value = YAML_UTILS.stringify(val);
+    }
 
-                if (this.section !== SECTIONS.TRIGGERS && this.section !== SECTIONS.TASK_RUNNERS) {
-                    value["id"] = this.taskObject && this.taskObject.id ? this.taskObject.id : undefined;
-                }
+    function onTaskTypeSelect() {
+        load();
+        const value: PartialCodeElement = {
+            type: selectedTaskType.value ?? ""
+        };
 
-                this.onInput(value);
-            },
-        },
-    };
+        if (props.section !== SECTIONS.TRIGGERS && props.section !== SECTIONS.TASK_RUNNERS) {
+            value["id"] = taskObject.value?.id ? taskObject.value.id : undefined;
+        }
+
+        onInput(value);
+    }
 </script>
 <style lang="scss" scoped>
     .type-div {

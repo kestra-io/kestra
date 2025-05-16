@@ -11,12 +11,13 @@
             :value="input.type"
         />
     </el-select>
-    <task-root
+    <TaskObject
         v-loading="loading"
         name="root"
         :model-value="selectedInput"
         @update:model-value="updateSelected($event, selectedIndex)"
-        :schema="inputSchema?.schema"
+        :schema="inputSchema?.schema?.properties"
+        :properties="inputSchema?.schema?.properties?.properties"
         :definitions="inputSchema?.schema?.definitions"
     />
 
@@ -24,7 +25,7 @@
 </template>
 
 <script setup>
-    import TaskRoot from "./tasks/TaskRoot.vue";
+    import TaskObject from "./tasks/TaskObject.vue";
     import Save from "../code/components/Save.vue";
 </script>
 
@@ -75,7 +76,6 @@
         },
         methods: {
             selectInput(input) {
-                this.loading = true;
                 this.selectedInput = input;
                 this.loadSchema(input.type);
             },
@@ -86,6 +86,8 @@
                 return this.inputsType.find((e) => e.cls === cls).type;
             },
             loadSchema(type) {
+                this.loading = true;
+
                 this.$store
                     .dispatch("plugin/loadInputSchema", {type: type})
                     .then((_) => (this.loading = false));
@@ -103,14 +105,14 @@
                 } else {
                     this.panel = undefined;
                     this.breadcrumbs.pop();
-                    this.$emit("update:modelValue", [...this.inputs]);
+                    this.$emit("update:modelValue", [...this.newInputs.filter(v => v.id)]);
                 }
             },
             updateSelected(value) {
-                if (!this.selectedIndex) {
-                    return;
+                if (this.selectedIndex >= 0) {
+                    this.newInputs[this.selectedIndex] = value;
+                    this.$emit("update:modelValue", [...this.newInputs]);
                 }
-                this.newInputs[this.selectedIndex] = value;
             },
             deleteInput(index) {
                 this.newInputs.splice(index, 1);
@@ -119,7 +121,6 @@
                 this.newInputs.push({type: "STRING"});
             },
             onChangeType(type) {
-                this.loading = true;
                 this.newInputs[this.selectedIndex].type = type;
                 this.loadSchema(type);
             },

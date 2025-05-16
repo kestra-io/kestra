@@ -34,7 +34,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository implements LogRepositoryInterface {
-
+    private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull();
     protected io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository;
 
     public AbstractJdbcLogRepository(io.kestra.jdbc.AbstractJdbcRepository<LogEntry> jdbcRepository,
@@ -96,6 +96,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
+                    .and(NORMAL_KIND_CONDITION)
                     .and(this.findCondition(query));
 
                select = this.filter(select, filters, "timestamp");
@@ -173,7 +174,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                     .select(field("value"))
                     .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
+                    .where(this.defaultFilter(tenantId))
+                    .and(NORMAL_KIND_CONDITION);
                 addNamespace(select, namespace);
                 addMinLevel(select, minLevel);
                 select = select.and(field("timestamp").greaterThan(startDate.toOffsetDateTime()));
@@ -243,7 +245,8 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 SelectConditionStep<Record> select = context
                     .select(selectFields)
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
+                    .where(this.defaultFilter(tenantId))
+                    .and(NORMAL_KIND_CONDITION);
 
                 this.filter(select, query, namespace, flowId, null, minLevel, startDate, endDate);
 

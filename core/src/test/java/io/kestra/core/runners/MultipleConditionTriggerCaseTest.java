@@ -13,6 +13,7 @@ import io.micronaut.context.ApplicationContext;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
@@ -28,6 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Singleton
+@Slf4j
 public class MultipleConditionTriggerCaseTest {
 
     @Inject
@@ -223,6 +225,9 @@ public class MultipleConditionTriggerCaseTest {
 
         Flux<Execution> receive = TestsUtils.receive(executionQueue, either -> {
             Execution execution = either.getLeft();
+            if(execution.getFlowId().equals("flow-trigger-paused-listen")) {
+                log.warn("debug exec: {}", execution);// TODO only to debug
+            }
             if (execution.getState().getCurrent() == State.Type.SUCCESS && execution.getFlowId()
                 .equals("flow-trigger-paused-listen")) {
                 flowTrigger.set(execution);

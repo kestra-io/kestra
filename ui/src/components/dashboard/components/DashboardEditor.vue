@@ -46,45 +46,8 @@
             {{ $t("save") }}
         </el-button>
     </div>
-    <div class="w-100" v-if="currentView === views.DASHBOARD">
-        <el-row class="custom">
-            <el-col
-                v-for="chart in charts"
-                :key="JSON.stringify(chart)"
-                :xs="24"
-                :sm="12"
-            >
-                <div
-                    v-if="chart.data"
-                    class="p-4 d-flex flex-column"
-                >
-                    <p class="m-0 fs-6 fw-bold">
-                        {{ chart.data.chartOptions?.displayName ?? chart.id }}
-                    </p>
-                    <p
-                        v-if="chart.chartOptions?.description"
-                        class="m-0 fw-light"
-                    >
-                        <small>{{ chart.data.chartOptions.description }}</small>
-                    </p>
-
-                    <div class="mt-4 flex-grow-1">
-                        <component
-                            :is="types[chart.data.type]"
-                            :source="chart.data.content"
-                            :chart="chart.data"
-                            :identifier="chart.data.id"
-                            is-preview
-                        />
-                    </div>
-                </div>
-                <div v-else class="d-flex justify-content-center align-items-center text-container">
-                    <el-tooltip :content="chart.error">
-                        {{ chart.error }}
-                    </el-tooltip>
-                </div>
-            </el-col>
-        </el-row>
+    <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
+        <ChartsSection :charts="charts.map(chart => chart.data)" />
     </div>
     <div class="main-editor" v-else>
         <div
@@ -161,6 +124,7 @@
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
+    import ChartsSection from "./ChartsSection.vue";
     import ValidationErrors from "../../flows/ValidationError.vue"
     import BookOpenVariant from "vue-material-design-icons/BookOpenVariant.vue";
     import ChartBar from "vue-material-design-icons/ChartBar.vue";

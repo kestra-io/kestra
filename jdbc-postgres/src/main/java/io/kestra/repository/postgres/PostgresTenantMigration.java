@@ -1,16 +1,16 @@
 package io.kestra.repository.postgres;
 
 import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.jdbc.repository.AbstractJdbcTenantMigrationRepository;
+import io.kestra.jdbc.repository.AbstractJdbcTenantMigration;
 import jakarta.inject.Singleton;
 import org.jooq.DSLContext;
 import org.jooq.Table;
 
 @Singleton
 @PostgresRepositoryEnabled
-public class PostgresJdbcTenantMigrationRepository extends AbstractJdbcTenantMigrationRepository {
+public class PostgresTenantMigration extends AbstractJdbcTenantMigration {
 
-    protected PostgresJdbcTenantMigrationRepository(
+    protected PostgresTenantMigration(
         JooqDSLContextWrapper dslContextWrapper) {
         super(dslContextWrapper);
     }

@@ -1,16 +1,16 @@
 package io.kestra.repository.mysql;
 
 import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.jdbc.repository.AbstractJdbcTenantMigrationRepository;
+import io.kestra.jdbc.repository.AbstractJdbcTenantMigration;
 import jakarta.inject.Singleton;
 import org.jooq.DSLContext;
 import org.jooq.Table;
 
 @Singleton
 @MysqlRepositoryEnabled
-public class MysqlJdbcTenantAccessRepository extends AbstractJdbcTenantMigrationRepository {
+public class MysqlTenantMigration extends AbstractJdbcTenantMigration {
 
-    protected MysqlJdbcTenantAccessRepository(JooqDSLContextWrapper dslContextWrapper) {
+    protected MysqlTenantMigration(JooqDSLContextWrapper dslContextWrapper) {
         super(dslContextWrapper);
     }
 

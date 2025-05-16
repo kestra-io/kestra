@@ -1,4 +1,4 @@
-package io.kestra.cli.commands.tenants;
+package io.kestra.cli.commands.migrations;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.cli.App;
@@ -8,21 +8,21 @@ import lombok.extern.slf4j.Slf4j;
 import picocli.CommandLine;
 
 @CommandLine.Command(
-    name = "tenants-oss",
-    description = "handle tenants",
+    name = "migrate",
+    description = "handle migrations",
     mixinStandardHelpOptions = true,
     subcommands = {
-        MigrationCommand.class
+        TenantMigrationCommand.class,
     }
 )
 @Slf4j
-public class TenantsCommand extends AbstractCommand {
+public class MigrationCommand extends AbstractCommand {
     @SneakyThrows
     @Override
     public Integer call() throws Exception {
         super.call();
 
-        PicocliRunner.call(App.class, "tenants-oss",  "--help");
+        PicocliRunner.call(App.class, "migrate",  "--help");
 
         return 0;
     }

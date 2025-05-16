@@ -1,4 +1,4 @@
-package io.kestra.cli.commands.tenants;
+package io.kestra.cli.commands.migrations;
 
 import io.kestra.cli.AbstractCommand;
 import io.kestra.core.repositories.TenantMigrationInterface;
@@ -9,16 +9,16 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 @CommandLine.Command(
-    name = "migrate",
-    description = "migrate every elements from the default tenant to a selected tenant"
+    name = "tenant",
+    description = "migrate every elements from no tenant to the main tenant"
 )
 @Slf4j
-public class MigrationCommand extends AbstractCommand {
+public class TenantMigrationCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
     @Option(names = "--dry-run", description = "Preview only, do not update")
-    boolean dryRun;
+    protected boolean dryRun;
 
     @Override
     public Integer call() throws Exception {
@@ -32,7 +32,7 @@ public class MigrationCommand extends AbstractCommand {
         try {
             TenantMigrationInterface tenantMigrationInterface = this.applicationContext.getBean(
                 TenantMigrationInterface.class);
-            tenantMigrationInterface.migrateTenant(dryRun);
+            tenantMigrationInterface.migrateTenant("main", dryRun);
             System.out.println("✅ Tenant migration complete.");
         } catch (Exception e) {
             System.err.println("❌ Tenant migration failed: " + e.getMessage());

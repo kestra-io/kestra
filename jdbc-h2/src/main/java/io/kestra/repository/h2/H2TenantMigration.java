@@ -1,16 +1,16 @@
 package io.kestra.repository.h2;
 
 import io.kestra.jdbc.JooqDSLContextWrapper;
-import io.kestra.jdbc.repository.AbstractJdbcTenantMigrationRepository;
+import io.kestra.jdbc.repository.AbstractJdbcTenantMigration;
 import jakarta.inject.Singleton;
 import org.jooq.DSLContext;
 import org.jooq.Table;
 
 @Singleton
 @H2RepositoryEnabled
-public class H2JdbcTenantAccessRepository extends AbstractJdbcTenantMigrationRepository {
+public class H2TenantMigration extends AbstractJdbcTenantMigration {
 
-    protected H2JdbcTenantAccessRepository(JooqDSLContextWrapper dslContextWrapper) {
+    protected H2TenantMigration(JooqDSLContextWrapper dslContextWrapper) {
         super(dslContextWrapper);
     }
 

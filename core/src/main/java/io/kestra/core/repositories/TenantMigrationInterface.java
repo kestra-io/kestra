@@ -2,6 +2,6 @@ package io.kestra.core.repositories;
 
 public interface TenantMigrationInterface {
 
-    void migrateTenant(boolean dryRun);
+    void migrateTenant(String tenantId, boolean dryRun);
 
 }

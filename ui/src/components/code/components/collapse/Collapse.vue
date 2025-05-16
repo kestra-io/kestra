@@ -57,7 +57,7 @@
             if(props.elements?.[index]?.id === undefined) return;
             emits(
                 "remove",
-                YAML_UTILS.deleteTask(flow.value, props.elements[index].id, title),
+                YAML_UTILS.deleteTask(flow.value, props.elements[index].id, title.toUpperCase()),
             );
         }
     };

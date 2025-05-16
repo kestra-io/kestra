@@ -183,6 +183,7 @@
     import Bar from "./charts/custom/Bar.vue";
     import Pie from "./charts/custom/Pie.vue";
     import Table from "./tables/custom/Table.vue";
+    import KPI from "./charts/custom/KPI.vue";
 
     export default {
         computed: {
@@ -320,7 +321,7 @@
                     "io.kestra.plugin.core.dashboard.chart.Markdown": shallowRef(Markdown),
                     "io.kestra.plugin.core.dashboard.chart.Table": shallowRef(Table),
                     "io.kestra.plugin.core.dashboard.chart.Pie": shallowRef(Pie),
-                    "io.kestra.plugin;core.dashboard.chart.KPI": shallowRef(null)
+                    "io.kestra.plugin;core.dashboard.chart.KPI": shallowRef(KPI)
                 }
             }
         },

@@ -58,7 +58,7 @@
 </template>
 
 <script setup>
-    import {ref} from "vue";
+    import {onBeforeMount, ref} from "vue";
 
     import Header from "./components/Header.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
@@ -78,6 +78,7 @@
     import Markdown from "../layout/Markdown.vue";
     import Table from "./components/tables/custom/Table.vue";
     import Pie from "./components/charts/custom/Pie.vue";
+    import KPI from "./components/charts/custom/KPI.vue";
 
     const TYPES = {
         "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
@@ -85,9 +86,14 @@
         "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
         "io.kestra.plugin.core.dashboard.chart.Table": Table,
         "io.kestra.plugin.core.dashboard.chart.Pie": Pie,
+        "io.kestra.plugin;core.dashboard.chart.KPI": KPI,
     };
 
-    defineProps({embed: {type: Boolean, default: false}});
+    const props = defineProps({
+        embed: {type: Boolean, default: false},
+        isFlow: {type: Boolean, default: false},
+        isNamespace: {type: Boolean, default: false},
+    });
 
     import yaml from "yaml";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
@@ -123,6 +129,14 @@
 
         loadCharts(dashboard.value.charts);
     };
+
+    onBeforeMount(() => {
+        if (props.isFlow) {
+        // TODO: Load dashboard for flow
+        } else if (props.isNamespace) {
+        // TODO: Load dashboard for namespace
+        }
+    });
 </script>
 
 <style lang="scss" scoped>

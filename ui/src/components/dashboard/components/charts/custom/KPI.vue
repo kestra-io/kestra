@@ -33,8 +33,12 @@
         default: {type: Boolean, default: false},
     });
 
-    const label = computed(() => props.chart?.chartOptions?.displayName || props.chart?.id);
-    const percentage = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE");
+    const label = computed(
+        () => props.chart?.chartOptions?.displayName || props.chart?.id,
+    );
+    const percentage = computed(
+        () => props.chart?.chartOptions?.numberType === "PERCENTAGE",
+    );
 
     const generated = ref();
     const generate = async (id) => {
@@ -66,3 +70,16 @@
     watch(route, async (route) => await generate(route.params?.id));
     onMounted(() => generate(route.params.id));
 </script>
+
+<style scoped lang="scss">
+@import "@kestra-io/ui-libs/src/scss/variables";
+
+section#kpi {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+</style>

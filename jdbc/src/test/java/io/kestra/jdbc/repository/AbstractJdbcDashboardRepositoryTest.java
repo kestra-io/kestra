@@ -1,6 +1,5 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.server.ServiceInstance;
@@ -13,7 +12,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@KestraTest
+
 public class AbstractJdbcDashboardRepositoryTest extends io.kestra.core.repositories.AbstractDashboardRepositoryTest {
     @Inject
     JdbcTestUtils jdbcTestUtils;

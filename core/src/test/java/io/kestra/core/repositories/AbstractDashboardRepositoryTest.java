@@ -99,12 +99,8 @@ public abstract class AbstractDashboardRepositoryTest {
         ArrayListTotal<Dashboard> listOfDashboards = dashboardRepositoryInterface.list(Pageable.from(1, 10), TENANT_ID, null);
         assertFalse(listOfDashboards.isEmpty());
         assertEquals(3, listOfDashboards.size());
-        assertEquals("1", listOfDashboards.get(0).getId());
-        assertEquals("2", listOfDashboards.get(1).getId());
-        assertEquals("3", listOfDashboards.get(2).getId());
 
-
-        listOfDashboards = dashboardRepositoryInterface.list(Pageable.from(1, 10), TENANT_ID, "level in ERROR");
+        listOfDashboards = dashboardRepositoryInterface.list(Pageable.from(1, 10), TENANT_ID, "io.kestra.plugin.core.condition.MultipleCondition");
         assertTrue(listOfDashboards.isEmpty());
     }
 

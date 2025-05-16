@@ -53,7 +53,11 @@
     import yaml from "yaml";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
-    import DEFAULT_DASHBOARD from "../../assets/dashboard/default_dashboard_definition.yaml?raw";
+    import YAML_MAIN from "../../assets/dashboard/default_main_definition.yaml?raw";
+    import YAML_FLOW from "../../assets/dashboard/default_flow_definition.yaml?raw";
+    import YAML_NAMESPACE from "../../assets/dashboard/default_namespace_definition.yaml?raw";
+
+    const initial = (dashboard) => ({id: "default", ...YAML_UTILS.parse(dashboard)});
 
     const dashboard = ref({});
     const charts = ref([]);
@@ -66,26 +70,22 @@
         }
     };
 
-    const load = async (id = "default") => {
-        if (route.name !== "home") return;
+    const load = async (id = "default", dashboard = YAML_MAIN) => {
+        if (!["home", "flows/update", "namespaces/update"].includes(route.name)) return;
 
         router.replace({
             params: {...route.params, id},
             query: route.params.id !== id ? {} : {...route.query},
         });
 
-        const initial = {id: "default", ...YAML_UTILS.parse(DEFAULT_DASHBOARD)};
-        dashboard.value = id === "default" ? initial : await store.dispatch("dashboard/load", id);
+        dashboard.value = id === "default" ? initial(dashboard) : await store.dispatch("dashboard/load", id);
 
         loadCharts(dashboard.value.charts);
     };
 
     onBeforeMount(() => {
-        if (props.isFlow) {
-        // TODO: Load dashboard for flow
-        } else if (props.isNamespace) {
-        // TODO: Load dashboard for namespace
-        }
+        if (props.isFlow) load("default", YAML_FLOW);
+        else if (props.isNamespace) load("default", YAML_NAMESPACE);
     });
 </script>
 

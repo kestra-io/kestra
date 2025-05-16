@@ -389,7 +389,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         poolExecutor.execute(() -> {
             List<Configuration.Step> steps = configuration.computeSteps();
-            Duration sleep = steps.getFirst().pollInterval();
+            Duration sleep = configuration.minPollInterval;
             ZonedDateTime lastPoll = ZonedDateTime.now();
             while (running.get() && !this.isClosed.get()) {
                 if (!this.isPaused.get()) {
@@ -404,8 +404,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                             List<Configuration.Step> selectedSteps = steps.stream()
                                 .takeWhile(step -> finalLastPoll.plus(step.switchInterval()).compareTo(ZonedDateTime.now()) < 0)
                                 .toList();
-                            // then select the last one (longest) or maxPoll if all are beyond
-                            sleep = selectedSteps.isEmpty() ? configuration.maxPollInterval : selectedSteps.getLast().pollInterval();
+                            // then select the last one (longest) or minPoll if all are beyond while means we are under the first interval
+                            sleep = selectedSteps.isEmpty() ? configuration.minPollInterval : selectedSteps.getLast().pollInterval();
                         }
                     } catch (CannotCreateTransactionException e) {
                         if (log.isDebugEnabled()) {

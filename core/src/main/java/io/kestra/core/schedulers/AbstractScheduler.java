@@ -91,6 +91,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
 
+    @Getter
     protected SchedulerTriggerStateInterface triggerState;
 
     // schedulable and schedulableNextDate must be volatile and their access synchronized as they are updated and read by different threads.

@@ -105,7 +105,7 @@
                 } else {
                     this.panel = undefined;
                     this.breadcrumbs.pop();
-                    this.$emit("update:modelValue", [...this.newInputs]);
+                    this.$emit("update:modelValue", [...this.newInputs.filter(v => v.id)]);
                 }
             },
             updateSelected(value) {

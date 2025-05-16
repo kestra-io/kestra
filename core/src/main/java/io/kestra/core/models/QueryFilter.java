@@ -113,7 +113,7 @@ public record QueryFilter(
         START_DATE("startDate") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.GREATER_THAN, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
+                return List.of(Op.GREATER_THAN_OR_EQUAL_TO, Op.GREATER_THAN, Op.LESS_THAN_OR_EQUAL_TO, Op.LESS_THAN, Op.EQUALS, Op.NOT_EQUALS);
             }
         },
         END_DATE("endDate") {

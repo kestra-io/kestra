@@ -36,6 +36,7 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.ListUtils;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.event.ApplicationEventPublisher;
+import io.micronaut.core.util.CollectionUtils;
 import io.micronaut.inject.qualifiers.Qualifiers;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PreDestroy;
@@ -90,7 +91,9 @@ public abstract class AbstractScheduler implements Scheduler, Service {
     private volatile Boolean isReady = false;
 
     private final ScheduledExecutorService scheduleExecutor = Executors.newSingleThreadScheduledExecutor();
+    private final ScheduledExecutorService executionMonitorExecutor = Executors.newSingleThreadScheduledExecutor();
 
+    @Getter
     protected SchedulerTriggerStateInterface triggerState;
 
     // schedulable and schedulableNextDate must be volatile and their access synchronized as they are updated and read by different threads.
@@ -169,6 +172,14 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     applicationContext.close();
                 }
             }
+        );
+
+        // Periodically report metrics and logs of running executions
+        executionMonitorExecutor.scheduleWithFixedDelay(
+            this::executionMonitor,
+            30,
+            10,
+            TimeUnit.SECONDS
         );
 
         // remove trigger on flow update, update local triggers store, and stop the trigger on the worker
@@ -564,7 +575,6 @@ public abstract class AbstractScheduler implements Scheduler, Service {
                     .build()
                 )
                 .filter(f -> f.getTriggerContext().getEvaluateRunningDate() == null)
-                .filter(this::isExecutionNotRunning)
                 .map(FlowWithWorkerTriggerNextDate::of)
                 .filter(Objects::nonNull)
                 .toList();
@@ -736,54 +746,54 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         }
     }
 
-    private boolean isExecutionNotRunning(FlowWithWorkerTrigger f) {
-        Trigger lastTrigger = f.getTriggerContext();
-
-        if (lastTrigger.getExecutionId() == null) {
-            return true;
-        }
-
-        Optional<Execution> execution = executionState.findById(lastTrigger.getTenantId(), lastTrigger.getExecutionId());
-
-        // executionState hasn't received the execution, we skip
-        if (execution.isEmpty()) {
-            if (lastTrigger.getUpdatedDate() != null) {
-                metricRegistry
-                    .timer(MetricRegistry.METRIC_SCHEDULER_EXECUTION_MISSING_DURATION, MetricRegistry.METRIC_SCHEDULER_EXECUTION_MISSING_DURATION_DESCRIPTION, metricRegistry.tags(lastTrigger))
-                    .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
+    private void executionMonitor() {
+        try {
+            // Retrieve triggers with non-null execution_id from all corresponding virtual nodes
+            ZonedDateTime now = ZonedDateTime.now();
+            List<Trigger> triggers = this.triggerState.findByNextExecutionDateReadyButLockedTriggers(now);
+            if (CollectionUtils.isEmpty(triggers)) {
+                log.debug("executionMonitor triggers is empty, skip");
+                return;
             }
-
-            if (lastTrigger.getUpdatedDate() == null || lastTrigger.getUpdatedDate().plusSeconds(60).isBefore(Instant.now())) {
-                logService.logTrigger(
-                    f.getTriggerContext(),
-                    Level.WARN,
-                    "Execution '{}' is not found, schedule is blocked since '{}'",
-                    lastTrigger.getExecutionId(),
-                    lastTrigger.getUpdatedDate()
-                );
-            }
-
-            return false;
+            triggers.forEach(lastTrigger -> {
+                Optional<Execution> execution = executionState.findById(lastTrigger.getTenantId(), lastTrigger.getExecutionId());
+                // executionState hasn't received the execution, we skip
+                if (execution.isEmpty()) {
+                    if (lastTrigger.getUpdatedDate() != null) {
+                        metricRegistry
+                            .timer(MetricRegistry.METRIC_SCHEDULER_EXECUTION_MISSING_DURATION, MetricRegistry.METRIC_SCHEDULER_EXECUTION_MISSING_DURATION_DESCRIPTION, metricRegistry.tags(lastTrigger))
+                            .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
+                    }
+                    if (lastTrigger.getUpdatedDate() == null || lastTrigger.getUpdatedDate().plusSeconds(60).isBefore(Instant.now())) {
+                        logService.logTrigger(
+                            lastTrigger,
+                            Level.WARN,
+                            "Execution '{}' is not found, schedule is blocked since '{}'",
+                            lastTrigger.getExecutionId(),
+                            lastTrigger.getUpdatedDate()
+                        );
+                    }
+                    return;
+                }
+                if (lastTrigger.getUpdatedDate() != null) {
+                    metricRegistry
+                        .timer(MetricRegistry.METRIC_SCHEDULER_EXECUTION_LOCK_DURATION, MetricRegistry.METRIC_SCHEDULER_EXECUTION_LOCK_DURATION_DESCRIPTION, metricRegistry.tags(lastTrigger))
+                        .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
+                }
+                if (log.isDebugEnabled()) {
+                    logService.logTrigger(
+                        lastTrigger,
+                        Level.DEBUG,
+                        "Execution '{}' is still '{}', updated at '{}'",
+                        lastTrigger.getExecutionId(),
+                        execution.get().getState().getCurrent(),
+                        lastTrigger.getUpdatedDate()
+                    );
+                }
+            });
+        } catch (Exception e) {
+            log.error("executionMonitor error", e);
         }
-
-        if (lastTrigger.getUpdatedDate() != null) {
-            metricRegistry
-                .timer(MetricRegistry.METRIC_SCHEDULER_EXECUTION_LOCK_DURATION, MetricRegistry.METRIC_SCHEDULER_EXECUTION_LOCK_DURATION_DESCRIPTION, metricRegistry.tags(lastTrigger))
-                .record(Duration.between(lastTrigger.getUpdatedDate(), Instant.now()));
-        }
-
-        if (log.isDebugEnabled()) {
-            logService.logTrigger(
-                f.getTriggerContext(),
-                Level.DEBUG,
-                "Execution '{}' is still '{}', updated at '{}'",
-                lastTrigger.getExecutionId(),
-                execution.get().getState().getCurrent(),
-                lastTrigger.getUpdatedDate()
-            );
-        }
-
-        return false;
     }
 
     private void log(SchedulerExecutionWithTrigger executionWithTrigger) {

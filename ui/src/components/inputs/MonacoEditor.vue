@@ -3,7 +3,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, h, onBeforeUnmount, onMounted, ref, render, watch} from "vue";
+    import {computed, h, inject, onBeforeUnmount, onMounted, ref, render, watch} from "vue";
     import {useStore} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
@@ -18,6 +18,8 @@
     import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
     import JsonWorker from "monaco-editor/esm/vs/language/json/json.worker?worker";
     import {configureMonacoYaml} from "monaco-yaml";
+
+    import {EDITOR_HIGHLIGHT_INJECTION_KEY} from "../code/injectionKeys";
 
     import YamlWorker from "./yaml.worker.js?worker";
     import {yamlSchemas} from "override/utils/yamlSchemas";
@@ -48,6 +50,20 @@
             }
         },
     };
+
+    const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
+    watch(highlight, (line) => {
+        if (!line) return;
+
+        const editor = getModifiedEditor();
+
+        if (!editor) return;
+
+        editor.focus();
+        
+        const end = editor?.getModel()?.getLineMaxColumn(line) ?? 0
+        editor.setSelection(new monaco.Range(line, 0, line, end));
+    });
 
     monaco.editor.defineTheme("dark", {
         base: "vs-dark",

@@ -14,6 +14,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.logs.LogRecord;
+import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
@@ -314,6 +315,22 @@ class JsonSchemaGeneratorTest {
                 Matchers.arrayContainingInAnyOrder(Arrays.stream(Executions.Fields.values()).map(Object::toString).toArray())
             );
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void subtypesTypePropertyAsConst() {
+        List<RegisteredPlugin> scan = pluginRegistry.externalPlugins();
+        Class<? extends Task> cls = scan.getFirst().getTasks().getFirst();
+
+        // Assert that properties that are part of type resolution are set as const from their default value
+        Map<String, Object> generate = jsonSchemaGenerator.properties(null, cls);
+        assertThat(((Map<String, Map<String, Object>>) ((Map<String, Map<String, Object>>) generate.get("$defs"))
+            .get("io.kestra.core.models.tasks.retrys.Constant")
+            .get("properties"))
+            .get("type")
+            .get("const"),
+            is(new Constant().getType()));
     }
 
     @SuppressWarnings("unchecked")

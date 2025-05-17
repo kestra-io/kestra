@@ -19,14 +19,23 @@
             <div class="no-secret-manager-block d-flex flex-column gap-6">
                 <div class="header-block d-flex align-items-center">
                     <div class="d-flex flex-column">
-                        <h5 class="mb-3">
-                            {{ $t('demos.secrets.title') }}
-                        </h5>
-                        <p>{{ $t('demos.secrets.message') }}</p>
-                        <DemoButtons />
-                    </div>
-                    <div class="img-wrapper">
-                        <img :src="sourceImg" :alt="$t('demos.secrets.title')">
+                        <div class="d-flex flex-row gap-2">
+                            <div class="d-flex flex-column align-items-start justify-content-center">
+                                <h5 class="fw-bold">
+                                    {{ $t('demos.secrets.title') }}
+                                </h5>
+                                <p>{{ $t('demos.secrets.message') }}</p>
+                            </div>
+                            <img :src="sourceImg" :alt="$t('demos.secrets.title')" class="img-wrapper">
+                        </div>
+                        <div>
+                            <div class="video-container">
+                                <iframe
+                                    src="https://www.youtube.com/embed/u0yuOYG-qMI"
+                                />
+                            </div>
+                            <DemoButtons />
+                        </div>
                     </div>
                 </div>
                 <p class="mb-0">
@@ -107,6 +116,7 @@
 
             .img-wrapper {
                 width: 350px;
+                height: 300px;
                 overflow: visible;
                 direction: rtl;
             }
@@ -117,6 +127,21 @@
 
             .bold {
                 font-weight: bold;
+            }
+        }
+
+        .video-container {
+            width: 640px;
+            height: 360px;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border: 1px solid var(--ks-border-primary);
+            overflow: hidden;
+
+            iframe {
+                width: 100%;
+                height: 100%;
+                border: 0;
             }
         }
     }

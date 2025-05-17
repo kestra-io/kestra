@@ -60,7 +60,7 @@
     const store = useStore();
 
     onBeforeMount(() => {
-        store.dispatch("plugin/list");
+        store.dispatch("plugin/listWithSubgroup", {includeDeprecated: false});
     })
 
     const plugins = computed(() => {
@@ -71,18 +71,22 @@
     })
 
     const taskModels = computed(() => {
-        const taskModels: string[] = [];
+        const models = new Set<string>();
         const pluginKeySection = KEY_SECTIONS_MAP[props.section || "tasks"] || ["tasks"];
+
         for (const plugin of plugins.value || []) {
-            for(const curSection of pluginKeySection){
-                if (plugin[curSection] === undefined) {
-                    continue;
+            for (const curSection of pluginKeySection) {
+                const entries = plugin[curSection];
+                if (entries) {
+                    for (const model of entries) {
+                        models.add(model);
+                    }
                 }
-                taskModels.push.apply(taskModels, plugin[curSection] ?? []);
             }
         }
-        return taskModels;
-    })
+
+        return Array.from(models);
+    });
 
 </script>
 

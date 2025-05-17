@@ -9,8 +9,8 @@
                     if (saveMode === 'button') {
                         breadcrumbs = breadcrumbs.slice(0, index + 1);
                         panel = null;
+                        clickBreadCrumb(index)
                     }
-                    clickBreadCrumb(index)
                 }
             "
         >

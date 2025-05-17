@@ -13,7 +13,6 @@
             @loading="loadingState"
             @expand-subflow="onExpandSubflow"
             @swapped-task="onSwappedTask"
-            @open-no-code="handleTopologyEditClick"
         />
     </div>
 </template>
@@ -21,13 +20,10 @@
 <script lang="ts" setup>
     import {computed, ref} from "vue";
     import {useStore} from "vuex";
-    import {useRouter, useRoute} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
     import LowCodeEditor from "./LowCodeEditor.vue";
 
     const store = useStore();
-    const router = useRouter();
-    const route = useRoute();
 
     const flowYaml = computed(() => store.getters["flow/flowYaml"]);
     const flowGraph = computed(() => store.state.flow.flowGraph);
@@ -82,13 +78,6 @@
             currentIsFlow,
             editorViewType: "YAML",
         })
-    }
-
-    const handleTopologyEditClick = (params: any) => {
-        router.replace({query: {
-            ...route.query,
-            ...params
-        }})
     }
 </script>
 

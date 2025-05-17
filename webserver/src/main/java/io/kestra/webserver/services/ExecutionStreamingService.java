@@ -116,7 +116,8 @@ public class ExecutionStreamingService {
      */
     public boolean isStopFollow(Flow flow, Execution execution) {
         return executionService.isTerminated(flow, execution) &&
-            execution.getState().getCurrent() != State.Type.PAUSED;
+            execution.getState().getCurrent() != State.Type.PAUSED &&
+            execution.getTaskRunList().stream().allMatch(taskRun -> taskRun.getState().isTerminated());
     }
 
     @PreDestroy

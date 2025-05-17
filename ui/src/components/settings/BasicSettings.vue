@@ -604,6 +604,9 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapGetters("misc", ["configs"]),
+            ...mapState({
+                mappedTheme: state => state.misc.theme
+            }),
             routeInfo() {
                 return {
                     title: this.$t("settings.label")
@@ -761,7 +764,15 @@
                     },
                 ]
             }
-        }
+        },
+        watch: {
+            mappedTheme: {
+                handler() {
+                    this.pendingSettings.theme = Utils.getTheme();
+                },
+                immediate: true,
+            },
+        },
     };
 </script>
 <style lang="scss">

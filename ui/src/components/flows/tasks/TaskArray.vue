@@ -6,12 +6,12 @@
         class="w-100"
     >
         <el-col :span="2" class="d-flex flex-column justify-content-center mt-1 mb-2 reorder" v-if="items.length > 1">
-            <ChevronUp 
-                @click.prevent.stop="moveItem(index, 'up')" 
+            <ChevronUp
+                @click.prevent.stop="moveItem(index, 'up')"
                 :class="{disabled: index === 0}"
             />
-            <ChevronDown 
-                @click.prevent.stop="moveItem(index, 'down')" 
+            <ChevronDown
+                @click.prevent.stop="moveItem(index, 'down')"
                 :class="{disabled: index === items.length - 1}"
             />
         </el-col>
@@ -42,7 +42,7 @@
 
     const emits = defineEmits(["update:modelValue"]);
     const props = withDefaults(defineProps<{
-        modelValue?: (string | number | boolean | undefined)[]
+        modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
     }>(), {
         modelValue: undefined
     });

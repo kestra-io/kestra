@@ -32,6 +32,7 @@
     import {inject, ref} from "vue";
 
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import {deleteBlock} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {CollapseItem} from "../../utils/types";
 
@@ -48,23 +49,18 @@
     const expanded = ref<CollapseItem["title"]>(props.title);
 
     const removeElement = (title: string, index: number) => {
-        const isPluginDefaults = title === "Plugin Defaults";
-        // plugin default do not have an id
-        // they have to be deleted separately
-        if (isPluginDefaults) {
-            if(props.elements?.[index]?.type === undefined) return;
-            emits("remove", YAML_UTILS.deletePluginDefaults(flow.value, props.elements[index].type));
-        } else {
-            if(props.elements?.[index]?.id === undefined) return;
-            emits(
-                "remove",
-                YAML_UTILS.deleteSection(
-                    flow.value,
-                    SECTIONS_MAP[title.toLowerCase() as keyof typeof SECTIONS_MAP],
-                    props.elements[index].id,
-                ),
-            );
-        }
+        const keyName = title === "Plugin Defaults" ? "type" : "id";
+
+        if(props.elements?.[index]?.[keyName] === undefined) return;
+        emits(
+            "remove",
+            deleteBlock({
+                source: flow.value,
+                section: SECTIONS_MAP[title.toLowerCase() as keyof typeof SECTIONS_MAP],
+                key: props.elements[index].id,
+                keyName,
+            }),
+        );
     };
 
     const moveElement = (

@@ -398,6 +398,14 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                         if (count > 0) {
                             lastPoll = ZonedDateTime.now();
                             sleep = configuration.minPollInterval;
+                            if (count.equals(configuration.pollSize)) {
+                                // Note: this provides better latency on high throughput: when Kestra is a top capacity,
+                                // it will not do a sleep and immediately poll again.
+                                // We can even have better latency at even higher latency by continuing for positive count,
+                                // but at higher database cost.
+                                // Current impl balance database cost with latency.
+                                continue;
+                            }
                         } else {
                             ZonedDateTime finalLastPoll = lastPoll;
                             // get all poll steps which duration is less than the duration between last poll and now

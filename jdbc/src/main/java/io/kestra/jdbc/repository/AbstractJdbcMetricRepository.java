@@ -2,6 +2,8 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
@@ -374,35 +376,42 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         return mapper::get;
     }
 
+    public Double fetchValue(String tenantId, DataFilterKPI<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean whereFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+            ColumnDescriptor<Metrics.Fields> columnDescriptor = dataFilter.getColumns();
+            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
+            Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
+            if (columnDescriptor.getAgg() != null) {
+                field = filterService.buildAggregation(field, columnDescriptor.getAgg());
+            }
 
-    @Override
-    public Float fetchKPI(
-        String tenantId,
-        DataFilter<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> descriptors,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate
-    ) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
+            List<AbstractFilter<Metrics.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getIn()));
+            if (whereFilter) {
+                filters.addAll(dataFilter.getWhere());
+            }
 
-                Map<String, ? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
-                    .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            SelectConditionStep selectStep = context
+                .select(field)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId));
 
-                // KPI should only have 1 column, so we can safely get the first one
-                ColumnDescriptor<Metrics.Fields> column = columnsWithoutDate.values().iterator().next();
+            var selectConditionStep = where(
+                selectStep,
+                filterService,
+                filters,
+                getFieldsMapping()
+            );
 
-                // Generate the calculated field that will have filters applied
-//                Field field = columnToField(column, fieldsMapping).
-                // Generate the field that will be the agg without any filter
-
-                // Generate the field that will calculate the percentage
-
+            Record result = selectConditionStep.fetchOne();
+            if (result != null) {
+                return result.getValue(field, Double.class);
+            } else {
                 return null;
-            });
+            }
+        });
     }
+
 
     @Override
     public ArrayListTotal<Map<String, Object>> fetchData(
@@ -436,7 +445,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors, fieldsMapping);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
 
                 List<? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)

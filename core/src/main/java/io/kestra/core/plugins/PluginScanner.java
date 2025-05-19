@@ -5,6 +5,7 @@ import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
@@ -109,6 +110,7 @@ public class PluginScanner {
         List<Class<? extends AppBlockInterface>> appBlocks = new ArrayList<>();
         List<Class<? extends Chart<?>>> charts = new ArrayList<>();
         List<Class<? extends DataFilter<?, ?>>> dataFilters = new ArrayList<>();
+        List<Class<? extends DataFilterKPI<?, ?>>> dataFiltersKPI = new ArrayList<>();
         List<Class<? extends LogExporter<?>>> logExporter = new ArrayList<>();
         List<Class<? extends AdditionalPlugin>> additionalPlugins = new ArrayList<>();
         List<String> guides = new ArrayList<>();
@@ -169,6 +171,11 @@ public class PluginScanner {
                         //noinspection unchecked
                         dataFilters.add((Class<? extends DataFilter<?, ?>>)  dataFilter.getClass());
                     }
+                    case DataFilterKPI<?, ?> dataFilterKPI -> {
+                        log.debug("Loading DataFilterKPI plugin: '{}'", plugin.getClass());
+                        //noinspection unchecked
+                        dataFiltersKPI.add((Class<? extends DataFilterKPI<?, ?>>)  dataFilterKPI.getClass());
+                    }
                     case LogExporter<?> shipper -> {
                         log.debug("Loading LogExporter plugin: '{}'", plugin.getClass());
                         logExporter.add((Class<? extends LogExporter<?>>)  shipper.getClass());
@@ -225,6 +232,7 @@ public class PluginScanner {
             .taskRunners(taskRunners)
             .charts(charts)
             .dataFilters(dataFilters)
+            .dataFiltersKPI(dataFiltersKPI)
             .guides(guides)
             .logExporters(logExporter)
             .additionalPlugins(additionalPlugins)

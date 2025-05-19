@@ -5,11 +5,12 @@ import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
-import io.kestra.plugin.core.dashboard.chart.KPI;
 import io.kestra.plugin.core.dashboard.chart.kpis.KpiOption;
 import io.micronaut.context.event.ApplicationEventPublisher;
 import io.micronaut.data.model.Pageable;
@@ -170,7 +171,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generateKPI(String tenantId, KPI<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+    public <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generateKPI(String tenantId, DataChartKPI<?, DataFilterKPI<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
         Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new HashMap<>();
 
         @SuppressWarnings("unchecked")
@@ -183,15 +184,15 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
                 .orElseThrow(() -> new UnsupportedOperationException("No query builder found for " + clazz))
         );
 
-        ArrayListTotal<Map<String, Object>> result = queryBuilder.fetchData(tenantId, dataChart.getData(), startDate, endDate, null);
-        if (result.getTotal() == 0) {
-            return result;
+        Double filteredValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, true);
+
+        if (dataChart.getChartOptions().getNumberType().equals(KpiOption.NumberType.PERCENTAGE)) {
+            Double totalValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, false);
+            Double percentageValue = (filteredValue / totalValue) * 100;
+            return new ArrayListTotal<>(List.of(Map.of("value", percentageValue)), 1);
         }
-        ArrayListTotal<Map<String, Object>> resultWithoutWhere;
-        if (dataChart.getChartOptions() != null && dataChart.getChartOptions().getNumberType().equals(KpiOption.NumberType.PERCENTAGE)) {
-            resultWithoutWhere = queryBuilder.fetchData(tenantId, dataChart.getData().clearFilters(), startDate, endDate, null);
-        }
-        return result;
+
+        return new ArrayListTotal<>(List.of(Map.of("value", filteredValue)), 1);
     }
 
     @Override

@@ -3,7 +3,7 @@
         <section id="kpi">
             <span class="pb-2">{{ label }}</span>
             <p class="m-0 fs-2 fw-bold">
-                <span>{{ 123 /* TODO: Value below to be amended */ }}</span>
+                <span>{{ generated.results[0].value }}</span>
                 <span v-if="percentage">%</span>
             </p>
         </section>
@@ -37,14 +37,13 @@
         () => props.chart?.chartOptions?.displayName || props.chart?.id,
     );
     const percentage = computed(
-        () => props.chart?.chartOptions?.numberType === "PERCENTAGE",
+        () => props.chart.chartOptions.numberType === "PERCENTAGE"
     );
 
     const generated = ref();
     const generate = async (id) => {
         // TODO: Tweak once the API is wrapped up
         let decodedParams = decodeSearchParams(route.query, undefined, []);
-
         if (!props.default) {
             let params = {id, chartId: props.chart.id};
             if (route.query.namespace) {

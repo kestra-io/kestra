@@ -2,8 +2,8 @@ package io.kestra.plugin.core.dashboard.chart;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
-import io.kestra.core.models.dashboards.DataFilter;
-import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.models.dashboards.DataFilterKPI;
+import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.validations.KPIChartValidation;
 import io.kestra.plugin.core.dashboard.chart.kpis.KpiOption;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -18,10 +18,10 @@ import lombok.experimental.SuperBuilder;
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
 @Schema(
-    title = "Track a specific metric."
+    title = "Track a specific value."
 )
 @KPIChartValidation
-public class KPI <F extends Enum<F>, D extends DataFilter<F, ? extends ColumnDescriptor<F>>> extends DataChart<KpiOption, D> {
+public class KPI <F extends Enum<F>, D extends DataFilterKPI<F, ? extends ColumnDescriptor<F>>> extends DataChartKPI<KpiOption, D> {
 
     @Override
     public Integer minNumberOfAggregations() {

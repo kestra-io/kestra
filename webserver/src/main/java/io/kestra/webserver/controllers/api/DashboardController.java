@@ -2,15 +2,17 @@ package io.kestra.webserver.controllers.api;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.Dashboard;
+import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.models.dashboards.charts.DataChartKPI;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
-import io.kestra.plugin.core.dashboard.chart.KPI;
 import io.kestra.webserver.models.GlobalFilter;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -200,20 +202,21 @@ public class DashboardController {
             return null;
         }
 
+        Integer pageNumber = globalFilter.getPageNumber();
+        Integer pageSize = globalFilter.getPageSize();
 
         if (chart instanceof DataChart dataChart) {
-            Integer pageNumber = globalFilter.getPageNumber();
-            Integer pageSize = globalFilter.getPageSize();
-
-            dataChart.getData().setGlobalFilter(filters, startDate, endDate);
+            DataFilter<?, ?> dataChartDatas = dataChart.getData();
+            dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
 
             // StartDate & EndDate are only set in the globalFilter for JDBC
             // TODO: Check if we can remove them from generate() for ElasticSearch as they are already set in the where property
-            if (dataChart instanceof KPI KPIChart) {
-                return PagedResults.of(this.dashboardRepository.generateKPI(tenantId, KPIChart, startDate, endDate));
-            }
             return PagedResults.of(this.dashboardRepository.generate(tenantId, dataChart, startDate, endDate, pageNumber != null && pageSize != null ? PageableUtils.from(pageNumber, pageSize) : null));
+        } else if (chart instanceof DataChartKPI dataChartKPI) {
+            DataFilterKPI<?, ?> dataChartDatas = dataChartKPI.getData();
+            dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
 
+            return PagedResults.of(this.dashboardRepository.generateKPI(tenantId, dataChartKPI, startDate, endDate));
         }
 
         throw new IllegalArgumentException("Only data charts can be generated.");
@@ -226,7 +229,7 @@ public class DashboardController {
     public PagedResults<Map<String, Object>> previewChart(
         @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest
     ) throws IOException {
-        Chart<?> parsed = YAML_PARSER.parse(previewRequest.chart(), Chart.class);
+        Chart<?> chart = YAML_PARSER.parse(previewRequest.chart(), Chart.class);
         GlobalFilter globalFilter = previewRequest.globalFilter();
 
         List<QueryFilter> filters =
@@ -249,13 +252,18 @@ public class DashboardController {
             throw new IllegalArgumentException("`endDate` must be after `startDate`.");
         }
 
-        if (parsed instanceof DataChart dataChart) {
-            Integer pageNumber = globalFilter != null ?globalFilter.getPageNumber() : null;
-            Integer pageSize = globalFilter != null ? globalFilter.getPageSize(): null;
+        if (chart instanceof DataChart dataChart) {
+            DataFilter<?, ?> dataChartDatas = dataChart.getData();
+            dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
 
-            dataChart.getData().setGlobalFilter(filters, startDate, endDate);
+            // StartDate & EndDate are only set in the globalFilter for JDBC
+            // TODO: Check if we can remove them from generate() for ElasticSearch as they are already set in the where property
+            return PagedResults.of(this.dashboardRepository.generate(this.tenantService.resolveTenant(), dataChart, startDate, endDate, null));
+        } else if (chart instanceof DataChartKPI dataChartKPI) {
+            DataFilterKPI<?, ?> dataChartDatas = dataChartKPI.getData();
+            dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
 
-            return PagedResults.of(this.dashboardRepository.generate(tenantService.resolveTenant(), dataChart, startDate, endDate, pageNumber != null && pageSize != null ? PageableUtils.from(pageNumber, pageSize) : null));
+            return PagedResults.of(this.dashboardRepository.generateKPI(this.tenantService.resolveTenant(), dataChartKPI, startDate, endDate));
         }
 
         throw new IllegalArgumentException("Chart is not an instance of DataChart.");

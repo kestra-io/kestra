@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
-import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.repositories.LogRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -55,9 +55,9 @@ import java.util.Set;
         )
     }
 )
-public class Logs<C extends ColumnDescriptor<Logs.Fields>> extends DataFilter<Logs.Fields, C> implements ILogs {
+public class LogsKPI<C extends ColumnDescriptor<LogsKPI.Fields>> extends DataFilterKPI<LogsKPI.Fields, C> implements ILogs {
     @Override
-    public Class<? extends QueryBuilderInterface<Logs.Fields>> repositoryClass() {
+    public Class<? extends QueryBuilderInterface<Fields>> repositoryClass() {
         return LogRepositoryInterface.class;
     }
 

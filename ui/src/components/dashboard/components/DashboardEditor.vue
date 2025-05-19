@@ -285,7 +285,7 @@
                     "io.kestra.plugin.core.dashboard.chart.Markdown": shallowRef(Markdown),
                     "io.kestra.plugin.core.dashboard.chart.Table": shallowRef(Table),
                     "io.kestra.plugin.core.dashboard.chart.Pie": shallowRef(Pie),
-                    "io.kestra.plugin;core.dashboard.chart.KPI": shallowRef(KPI)
+                    "io.kestra.plugin.core.dashboard.chart.KPI": shallowRef(KPI)
                 }
             }
         },

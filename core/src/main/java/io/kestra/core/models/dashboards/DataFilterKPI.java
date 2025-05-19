@@ -17,7 +17,6 @@ import lombok.experimental.SuperBuilder;
 import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 @SuperBuilder(toBuilder = true)
@@ -25,21 +24,27 @@ import java.util.Set;
 @NoArgsConstructor
 @Plugin
 @EqualsAndHashCode
-public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F>> implements io.kestra.core.models.Plugin, IData<F> {
+public abstract class DataFilterKPI<F extends Enum<F>, C extends ColumnDescriptor<F>> implements io.kestra.core.models.Plugin, IData<F> {
     @NotNull
     @NotBlank
     @Pattern(regexp = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     private String type;
 
-    private Map<String, C> columns;
+    private C columns;
 
     @Setter
     private List<AbstractFilter<F>> where;
 
-    private List<OrderBy> orderBy;
+    private List<AbstractFilter<F>> in;
 
     public Set<F> aggregationForbiddenFields() {
         return Collections.emptySet();
+    }
+
+    public DataFilterKPI<F, C> clearFilters() {
+        this.where = Collections.emptyList();
+
+        return this;
     }
 
     public void updateWhereWithGlobalFilters(List<QueryFilter> queryFilterList, ZonedDateTime startDate, ZonedDateTime endDate) {

@@ -3,6 +3,8 @@ package io.kestra.jdbc.repository;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.statistics.LogStatistics;
@@ -660,33 +662,51 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
 
-    @Override
-    public Float fetchKPI(
-        String tenantId,
-        DataFilter<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> descriptors,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate
-    ) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
+    public Double fetchValue(String tenantId, DataFilterKPI<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean whereFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+            ColumnDescriptor<Logs.Fields> columnDescriptor = dataFilter.getColumns();
+            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
+            Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
+            if (columnDescriptor.getAgg() != null) {
+                field = filterService.buildAggregation(field, columnDescriptor.getAgg());
+            }
 
-                Map<String, ? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
-                    .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+            List<AbstractFilter<Logs.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getIn()));
+            if (whereFilter) {
+                filters.addAll(dataFilter.getWhere());
+            }
 
-                // KPI should only have 1 column, so we can safely get the first one
-                ColumnDescriptor<Logs.Fields> column = columnsWithoutDate.values().iterator().next();
+            SelectConditionStep selectStep = context
+                .select(field)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId));
 
-                // Generate the calculated field that will have filters applied
-//                Field field = columnToField(column, fieldsMapping).
-                // Generate the field that will be the agg without any filter
+            var selectConditionStep = where(
+                selectStep,
+                filterService,
+                filters,
+                getFieldsMapping()
+            );
 
-                // Generate the field that will calculate the percentage
-
+            Record result = selectConditionStep.fetchOne();
+            if (result != null) {
+                return result.getValue(field, Double.class);
+            } else {
                 return null;
-            });
+            }
+        });
+    }
+
+    private Field<?> aggregate(String aggregation) {
+        return switch (aggregation) {
+            case "avg" -> DSL.avg(field("attempt_number", Double.class)).as("metric_value");
+            case "sum" -> DSL.sum(field("attempt_number", Double.class)).as("metric_value");
+            case "min" -> DSL.min(field("attempt_number", Double.class)).as("metric_value");
+            case "max" -> DSL.max(field("attempt_number", Double.class)).as("metric_value");
+            case "count" -> DSL.count().as("metric_value");
+            default -> throw new IllegalArgumentException("Invalid aggregation: " + aggregation);
+        };
     }
 
     @Override
@@ -721,7 +741,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors, getWhereMapping());
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), getWhereMapping());
 
                 List<? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)

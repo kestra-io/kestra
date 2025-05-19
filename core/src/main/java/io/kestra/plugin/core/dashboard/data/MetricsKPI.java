@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
-import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -51,9 +51,9 @@ import lombok.experimental.SuperBuilder;
         )
     }
 )
-public class Metrics<C extends ColumnDescriptor<Metrics.Fields>> extends DataFilter<Metrics.Fields, C> implements IMetrics {
+public class MetricsKPI<C extends ColumnDescriptor<MetricsKPI.Fields>> extends DataFilterKPI<MetricsKPI.Fields, C> implements IMetrics {
     @Override
-    public Class<? extends QueryBuilderInterface<Metrics.Fields>> repositoryClass() {
+    public Class<? extends QueryBuilderInterface<Fields>> repositoryClass() {
         return MetricRepositoryInterface.class;
     }
 }

@@ -50,7 +50,7 @@
         "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
         "io.kestra.plugin.core.dashboard.chart.Table": Table,
         "io.kestra.plugin.core.dashboard.chart.Pie": Pie,
-        "io.kestra.plugin;core.dashboard.chart.KPI": KPI,
+        "io.kestra.plugin.core.dashboard.chart.KPI": KPI,
     };
 
     const props = defineProps({

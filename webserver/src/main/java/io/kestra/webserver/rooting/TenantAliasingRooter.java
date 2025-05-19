@@ -26,9 +26,18 @@ public class TenantAliasingRooter extends DefaultRouter {
     @Override
     public <T, R> UriRouteMatch<T, R> findClosest(HttpRequest<?> request) {
         String path = request.getUri().getPath();
-        if (!path.matches("/api/v1/main/.*")){
-            return super.findClosest(request.toMutableRequest()
-                .uri(new URI(request.getUri().toString().replace("/v1", "/v1/main"))));
+        if (path.matches("/api/v1/.*") && !path.matches("/api/v1/main/.*")){
+            URI originalUri = request.getUri();
+            URI updatedUri = new URI(
+                originalUri.getScheme(),
+                originalUri.getUserInfo(),
+                request.getServerAddress().getHostName(),
+                request.getServerAddress().getPort(),
+                originalUri.getPath().replace("/api/v1", "/api/v1/main"),
+                originalUri.getQuery(),
+                originalUri.getFragment()
+            );
+            return super.findClosest(request.toMutableRequest().uri(updatedUri));
         }
         return super.findClosest(request);
     }

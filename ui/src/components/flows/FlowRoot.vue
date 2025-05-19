@@ -1,6 +1,9 @@
 <template>
     <template v-if="ready">
-        <FlowRootTopBar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName()" />
+        <FlowRootTopBar 
+            :route-info="routeInfo" 
+            :active-tab-name="activeTabName()" 
+        />
         <Tabs
             route-name="flows/update"
             ref="currentTab"

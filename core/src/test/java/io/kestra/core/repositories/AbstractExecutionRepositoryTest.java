@@ -8,6 +8,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.DailyExecutionStatistics;
@@ -139,6 +140,15 @@ public abstract class AbstractExecutionRepositoryTest {
                 i < 15 ? null : "second"
             ).trigger(executionTrigger).build());
         }
+
+        // add a test execution, this should be ignored in search & statistics
+        executionRepository.save(builder(
+            State.Type.SUCCESS,
+            null
+        )
+            .trigger(executionTrigger)
+            .kind(ExecutionKind.TEST)
+            .build());
     }
 
     @Test
@@ -277,7 +287,7 @@ public abstract class AbstractExecutionRepositoryTest {
         inject();
 
         ArrayListTotal<TaskRun> taskRuns = executionRepository.findTaskRun(Pageable.from(1, 10), null, null);
-        assertThat(taskRuns.getTotal()).isEqualTo(71L);
+        assertThat(taskRuns.getTotal()).isEqualTo(74L);
         assertThat(taskRuns.size()).isEqualTo(10);
 
         var filters = List.of(QueryFilter.builder()
@@ -301,6 +311,18 @@ public abstract class AbstractExecutionRepositoryTest {
 
         full.ifPresent(current -> {
             assertThat(full.get().getId()).isEqualTo(ExecutionFixture.EXECUTION_1.getId());
+        });
+    }
+
+    @Test
+    protected void shouldFindByIdTestExecution() {
+        executionRepository.save(ExecutionFixture.EXECUTION_TEST);
+
+        Optional<Execution> full = executionRepository.findById(null, ExecutionFixture.EXECUTION_TEST.getId());
+        assertThat(full.isPresent()).isTrue();
+
+        full.ifPresent(current -> {
+            assertThat(full.get().getId()).isEqualTo(ExecutionFixture.EXECUTION_TEST.getId());
         });
     }
 
@@ -790,6 +812,6 @@ public abstract class AbstractExecutionRepositoryTest {
         inject();
 
         List<Execution> executions = executionRepository.findAllAsync(null).collectList().block();
-        assertThat(executions).hasSize(28);
+        assertThat(executions).hasSize(29); // used by the backup so it contains TEST executions
     }
 }

@@ -1,6 +1,7 @@
 package io.kestra.core.runners;
 
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
@@ -23,10 +24,14 @@ public class RunContextLoggerFactory {
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
     private QueueInterface<LogEntry> logQueue;
 
-    public RunContextLogger create(TaskRun taskRun, Task task) {
+    public RunContextLogger create(WorkerTask workerTask) {
+        return create(workerTask.getTaskRun(), workerTask.getTask(), workerTask.getExecutionKind());
+    }
+
+    public RunContextLogger create(TaskRun taskRun, Task task, ExecutionKind executionKind) {
         return new RunContextLogger(
             logQueue,
-            LogEntry.of(taskRun),
+            LogEntry.of(taskRun, executionKind),
             task.getLogLevel(),
             task.isLogToFile()
         );
@@ -41,19 +46,19 @@ public class RunContextLoggerFactory {
         );
     }
 
-    public RunContextLogger create(TriggerContext triggerContext, AbstractTrigger trigger) {
+    public RunContextLogger create(TriggerContext triggerContext, AbstractTrigger trigger, ExecutionKind executionKind) {
         return new RunContextLogger(
             logQueue,
-            LogEntry.of(triggerContext, trigger),
+            LogEntry.of(triggerContext, trigger, executionKind),
             trigger.getLogLevel(),
             trigger.isLogToFile()
         );
     }
 
-    public RunContextLogger create(Flow flow, AbstractTrigger trigger) {
+    public RunContextLogger create(Flow flow, AbstractTrigger trigger, ExecutionKind executionKind) {
         return new RunContextLogger(
             logQueue,
-            LogEntry.of(flow, trigger),
+            LogEntry.of(flow, trigger, executionKind),
             trigger.getLogLevel(),
             trigger.isLogToFile()
         );

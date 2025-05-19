@@ -55,6 +55,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     private static final Field<String> STATE_CURRENT_FIELD = field("state_current", String.class);
     private static final Field<String> NAMESPACE_FIELD = field("namespace", String.class);
     private static final Field<Object> START_DATE_FIELD = field("start_date");
+    private static final Condition NORMAL_KIND_CONDITION = field("kind").isNull();
 
     protected final io.kestra.jdbc.AbstractJdbcRepository<Execution> jdbcRepository;
     private final ApplicationEventPublisher<CrudEvent<Execution>> eventPublisher;
@@ -286,7 +287,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             )
             .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
             .from(this.jdbcRepository.getTable())
-            .where(this.defaultFilter(tenantId, false));
+            .where(this.defaultFilter(tenantId, false))
+            .and(NORMAL_KIND_CONDITION);
 
         if (filters != null)
             for (QueryFilter filter : filters) {
@@ -594,6 +596,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .select(selectFields)
                     .from(this.jdbcRepository.getTable())
                     .where(defaultFilter)
+                    .and(NORMAL_KIND_CONDITION)
                     .and(START_DATE_FIELD.greaterOrEqual(startDate.toOffsetDateTime()))
                     .and(START_DATE_FIELD.lessOrEqual(endDate.toOffsetDateTime()));
 
@@ -694,6 +697,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .select(NAMESPACE_FIELD, STATE_CURRENT_FIELD, DSL.count().cast(Long.class))
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
+                    .and(NORMAL_KIND_CONDITION)
                     .and(START_DATE_FIELD.greaterOrEqual(finalStartDate.toOffsetDateTime()))
                     .and(START_DATE_FIELD.lessOrEqual(finalEndDate.toOffsetDateTime()));
 
@@ -905,7 +909,8 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                         DSL.count().as("count")
                     ))
                     .from(this.jdbcRepository.getTable())
-                    .where(this.defaultFilter(tenantId));
+                    .where(this.defaultFilter(tenantId))
+                    .and(NORMAL_KIND_CONDITION);
 
                 select = select.and(START_DATE_FIELD.greaterOrEqual(finalStartDate.toOffsetDateTime()));
                 select = select.and(START_DATE_FIELD.lessOrEqual(finalEndDate.toOffsetDateTime()));
@@ -1009,6 +1014,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     )
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId))
+                    .and(NORMAL_KIND_CONDITION)
                     .and(field("end_date").isNotNull())
                     .and(DSL.or(
                         flows

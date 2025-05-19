@@ -17,8 +17,14 @@ public class TenantMigrationCommand extends AbstractCommand {
     @Inject
     private ApplicationContext applicationContext;
 
+    @Option(names = "--tenant-id", description = "tenant identifier")
+    String tenantId;
+
+    @Option(names = "--tenant-name", description = "tenant name")
+    String tenantName;
+
     @Option(names = "--dry-run", description = "Preview only, do not update")
-    protected boolean dryRun;
+    boolean dryRun;
 
     @Override
     public Integer call() throws Exception {
@@ -28,11 +34,9 @@ public class TenantMigrationCommand extends AbstractCommand {
             System.out.println("🧪 Dry-run mode enabled. No changes will be applied.");
         }
 
-        System.out.println("🔁 Starting tenant migration...");
+        TenantMigrationService migrationService = this.applicationContext.getBean(TenantMigrationService.class);
         try {
-            TenantMigrationInterface tenantMigrationInterface = this.applicationContext.getBean(
-                TenantMigrationInterface.class);
-            tenantMigrationInterface.migrateTenant("main", dryRun);
+            migrationService.migrateTenant(tenantId, tenantName, dryRun);
             System.out.println("✅ Tenant migration complete.");
         } catch (Exception e) {
             System.err.println("❌ Tenant migration failed: " + e.getMessage());

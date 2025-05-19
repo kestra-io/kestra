@@ -31,8 +31,7 @@
 <script setup lang="ts">
     import {inject, ref} from "vue";
 
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    import {deleteBlock} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {deleteBlock, swapBlocks} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {CollapseItem} from "../../utils/types";
 
@@ -69,6 +68,7 @@
         index: number,
         direction: "up" | "down",
     ) => {
+        const keyName = props.title === "Plugin Defaults" ? "type" : "id";
         if (!items || !flow) return;
         if (
             (direction === "up" && index === 0) ||
@@ -79,7 +79,13 @@
         const newIndex = direction === "up" ? index - 1 : index + 1;
         emits(
             "reorder",
-            YAML_UTILS.swapTasks(flow.value, elementID, items[newIndex].id),
+            swapBlocks({
+                source:flow.value,
+                section: SECTIONS_MAP[props.title.toLowerCase() as keyof typeof SECTIONS_MAP],
+                key1:elementID,
+                key2:items[newIndex].id,
+                keyName,
+            }),
         );
     };
 </script>

@@ -56,7 +56,7 @@
             deleteBlock({
                 source: flow.value,
                 section: SECTIONS_MAP[title.toLowerCase() as keyof typeof SECTIONS_MAP],
-                key: props.elements[index].id,
+                key: props.elements[index][keyName],
                 keyName,
             }),
         );
@@ -83,7 +83,7 @@
                 source:flow.value,
                 section: SECTIONS_MAP[props.title.toLowerCase() as keyof typeof SECTIONS_MAP],
                 key1:elementID,
-                key2:items[newIndex].id,
+                key2:items[newIndex][keyName],
                 keyName,
             }),
         );

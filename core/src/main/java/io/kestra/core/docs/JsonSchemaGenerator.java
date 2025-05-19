@@ -2,6 +2,7 @@ package io.kestra.core.docs;
 
 import com.fasterxml.classmate.ResolvedType;
 import com.fasterxml.classmate.members.HierarchicType;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -525,7 +526,62 @@ public class JsonSchemaGenerator {
                     }
                 }
             });
+        } else {
+            typeDefiningPropertiesToConst(builder);
         }
+    }
+
+    /**
+     * Properties which are defining an implementation to choose among multiple ones (JsonTypeInfo.property) are simple String with default. We move them to be a "const": "defaultValue" instead
+     */
+    private void typeDefiningPropertiesToConst(SchemaGeneratorConfigBuilder builder) {
+        builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
+            final Class<?> targetType = scope.getType().getErasedType();
+            JsonTypeInfo jsonTypeInfo = Optional.ofNullable(targetType.getSuperclass()).map(c -> c.getAnnotation(JsonTypeInfo.class)).orElse(null);
+            if (jsonTypeInfo == null) {
+                return;
+            }
+
+            String property = jsonTypeInfo.property();
+            if (property == null) {
+                return;
+            }
+
+            ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
+            if (properties == null) {
+                return;
+            }
+
+            String defaultValue = Optional.ofNullable(properties.get(property))
+                .flatMap(p -> {
+                    Optional<String> defaultOpt = p.optional("default").map(JsonNode::asText);
+                    if (defaultOpt.isPresent()) {
+                        return defaultOpt;
+                    }
+
+                    return p.optional("allOf").flatMap(node -> {
+                        if (node.isArray()) {
+                            Iterable<JsonNode> iterable = node::values;
+                            return StreamSupport.stream(
+                                    iterable.spliterator(),
+                                    false
+                                ).filter(subNode -> subNode.has("default"))
+                                .findFirst()
+                                .map(subNode -> subNode.get("default").asText());
+                        }
+
+                        return Optional.empty();
+                    });
+                })
+                .orElse(null);
+            if (defaultValue == null) {
+                return;
+            }
+
+            properties.set(property, context.getGeneratorConfig().createObjectNode()
+                .put("const", defaultValue)
+            );
+        });
     }
 
     private boolean isAssignableFromResolvedAsString(Class<?> declaredType) {

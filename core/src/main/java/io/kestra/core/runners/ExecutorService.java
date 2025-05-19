@@ -577,6 +577,7 @@ public class ExecutorService {
                         ResolvedTask.of(pause.getOnPause())
                     ))
                     .task(pause.getOnPause())
+                    .executionKind(executor.getExecution().getKind())
                     .build());
             }
 
@@ -806,6 +807,7 @@ public class ExecutorService {
                         .runContext(runContext)
                         .taskRun(taskRun)
                         .task(task)
+                        .executionKind(executor.getExecution().getKind())
                         .build();
                     // Get worker group
                     Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(workerTask);

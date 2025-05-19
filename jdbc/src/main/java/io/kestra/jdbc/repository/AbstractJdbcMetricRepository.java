@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepository implements MetricRepositoryInterface {
+    private static final Condition NORMAL_KIND_CONDITION = field("execution_kind").isNull();
     protected io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository;
 
     public AbstractJdbcMetricRepository(io.kestra.jdbc.AbstractJdbcRepository<MetricEntry> jdbcRepository,
@@ -126,7 +127,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         return this.queryDistinct(
             tenantId,
             field("flow_id").eq(flowId)
-                .and(field("namespace").eq(namespace)),
+                .and(field("namespace").eq(namespace))
+                .and(NORMAL_KIND_CONDITION),
             "metric_name"
         );
     }
@@ -142,7 +144,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
             tenantId,
             field("flow_id").eq(flowId)
                 .and(field("namespace").eq(namespace))
-                .and(field("task_id").eq(taskId)),
+                .and(field("task_id").eq(taskId))
+                .and(NORMAL_KIND_CONDITION),
             "metric_name"
         );
     }
@@ -156,7 +159,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         return this.queryDistinct(
             tenantId,
             field("flow_id").eq(flowId)
-                .and(field("namespace").eq(namespace)),
+                .and(field("namespace").eq(namespace))
+                .and(NORMAL_KIND_CONDITION),
             "task_id"
         );
     }
@@ -174,7 +178,8 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     ) {
         Condition conditions = field("flow_id").eq(flowId)
             .and(field("namespace").eq(namespace))
-            .and(field("metric_name").eq(metric));
+            .and(field("metric_name").eq(metric))
+            .and(NORMAL_KIND_CONDITION);
         if (taskId != null) {
             conditions = conditions.and(field("task_id").eq(taskId));
         }

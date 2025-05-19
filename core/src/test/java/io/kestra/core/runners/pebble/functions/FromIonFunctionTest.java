@@ -14,6 +14,7 @@ import java.io.*;
 import java.net.URI;
 import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.not;
@@ -49,12 +50,12 @@ class FromIonFunctionTest {
         }
 
         Map<String, Object> variables = Map.of(
-            "flow", Map.of("id", "test", "namespace", "unit"),
+            "flow", Map.of("id", "test", "namespace", "unit", "tenantId", MAIN_TENANT),
             "execution", Map.of("id", "id-exec")
         );
 
         URI internalStorageURI = URI.create("/unit/test/executions/id-exec/" + IdUtils.create() + ".ion");
-        URI internalStorageFile = storageInterface.put(null, "unit", internalStorageURI, new FileInputStream(tempFile));
+        URI internalStorageFile = storageInterface.put(MAIN_TENANT, "unit", internalStorageURI, new FileInputStream(tempFile));
 
         String render = variableRenderer.render("{{ fromIon(read('" + internalStorageFile + "'), allRows=true) }}", variables);
         assertThat(render).contains("\"id\":0");

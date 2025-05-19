@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
@@ -46,17 +47,18 @@ public class SkipExecutionCaseTest {
         skipExecutionService.setSkipExecutions(List.of(execution1Id));
 
         executionQueue.emit(execution1);
-        Execution execution2 = runnerUtils.runOne(null, "io.kestra.tests", "minimal");
+        Execution execution2 = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "minimal");
 
         // the execution 2 should be in success and the 1 still created
         assertThat(execution2.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
-        execution1 = Await.until(() -> executionRepository.findById(null, execution1Id).orElse(null), Duration.ofMillis(100), Duration.ofSeconds(1));
+        execution1 = Await.until(() -> executionRepository.findById(MAIN_TENANT, execution1Id).orElse(null), Duration.ofMillis(100), Duration.ofSeconds(1));
         assertThat(execution1.getState().getCurrent()).isEqualTo(State.Type.CREATED);
     }
 
     private Flow createFlow() {
         return Flow.builder()
             .id(IdUtils.create())
+            .tenantId(MAIN_TENANT)
             .namespace("io.kestra.unittest")
             .revision(1)
             .tasks(Collections.singletonList(Return.builder()

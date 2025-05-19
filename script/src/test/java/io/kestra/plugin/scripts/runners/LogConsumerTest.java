@@ -1,6 +1,7 @@
 package io.kestra.plugin.scripts.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.TaskCommands;
@@ -41,7 +42,7 @@ class LogConsumerTest {
     };
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -115,6 +116,7 @@ class LogConsumerTest {
             Collections.emptyList()
         );
 
+        Await.until(() -> logs.size() == 10, null, Duration.ofSeconds(5));
         receive.blockLast();
 
         assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.INFO)).count()).isEqualTo(1L);

@@ -1,6 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.models.dashboards.charts.Chart;
@@ -8,7 +7,6 @@ import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
@@ -42,7 +40,7 @@ import java.util.Optional;
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
 @Validated
-@Controller("/api/v1/dashboards")
+@Controller("/api/v1/main/dashboards")
 @Slf4j
 public class DashboardController {
 
@@ -82,7 +80,7 @@ public class DashboardController {
     public HttpResponse<Dashboard> createDashboard(
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
     ) throws ConstraintViolationException {
-        Dashboard dashboardParsed = YamlParser.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
+        Dashboard dashboardParsed = parseDashboard(dashboard);
         modelValidator.validate(dashboardParsed);
 
         if (dashboardParsed.getId() != null) {
@@ -124,15 +122,21 @@ public class DashboardController {
     public HttpResponse<Dashboard> updateDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
-    ) throws ConstraintViolationException, JsonProcessingException {
+    ) throws ConstraintViolationException {
         Optional<Dashboard> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), id);
         if (existingDashboard.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-        Dashboard dashboardToSave = JacksonMapper.ofYaml().readValue(dashboard, Dashboard.class).toBuilder().deleted(false).build();
+        Dashboard dashboardToSave = parseDashboard(dashboard);
         modelValidator.validate(dashboardToSave);
 
         return HttpResponse.ok(this.save(existingDashboard.get(), dashboardToSave, dashboard));
+    }
+
+    private Dashboard parseDashboard(String dashboard) {
+        return YamlParser.parse(dashboard, Dashboard.class).toBuilder()
+            .tenantId(tenantService.resolveTenant())
+            .deleted(false).build();
     }
 
     protected Dashboard save(Dashboard previousDashboard, Dashboard dashboard, String source) {

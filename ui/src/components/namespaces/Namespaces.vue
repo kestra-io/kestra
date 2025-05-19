@@ -200,6 +200,7 @@
 
     .rounded-full {
         border-radius: var(--bs-border-radius-lg);
+        background-color: var(--ks-background-card)
     }
 
     :deep(.el-tree-node__content) {

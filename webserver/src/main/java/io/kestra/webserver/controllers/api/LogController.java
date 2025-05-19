@@ -41,7 +41,7 @@ import static io.kestra.core.utils.DateUtils.validateTimeline;
 
 
 @Validated
-@Controller("/api/v1/")
+@Controller("/api/v1/main/logs")
 @Requires(beans = LogRepositoryInterface.class)
 public class LogController {
     @Inject
@@ -57,7 +57,7 @@ public class LogController {
     private LogStreamingService logStreamingService;
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/search")
+    @Get(uri = "/search")
     @Operation(tags = {"Logs"}, summary = "Search for logs")
     public PagedResults<LogEntry> searchLogs(
         @Parameter(description = "The current page") @QueryValue(defaultValue = "1") @Min(1) int page,
@@ -106,7 +106,7 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/{executionId}")
+    @Get(uri = "/{executionId}")
     @Operation(tags = {"Logs"}, summary = "Get logs for a specific execution, taskrun or task")
     public List<LogEntry> listLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -127,7 +127,7 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/{executionId}/download", produces = MediaType.TEXT_PLAIN)
+    @Get(uri = "/{executionId}/download", produces = MediaType.TEXT_PLAIN)
     @Operation(tags = {"Logs"}, summary = "Download logs for a specific execution, taskrun or task")
     public StreamedFile downloadLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -149,7 +149,7 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Get(uri = "logs/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
+    @Get(uri = "/{executionId}/follow", produces = MediaType.TEXT_EVENT_STREAM)
     @Operation(tags = {"Logs"}, summary = "Follow logs for a specific execution")
     public Flux<Event<LogEntry>> followLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -173,7 +173,7 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "logs/{executionId}")
+    @Delete(uri = "/{executionId}")
     @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
     public void deleteLogsFromExecution(
         @Parameter(description = "The execution id") @PathVariable String executionId,
@@ -186,7 +186,7 @@ public class LogController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Delete(uri = "logs/{namespace}/{flowId}")
+    @Delete(uri = "/{namespace}/{flowId}")
     @Operation(tags = {"Logs"}, summary = "Delete logs for a specific execution, taskrun or task")
     public void deleteLogsFromFlow(
         @Parameter(description = "The namespace") @PathVariable String namespace,

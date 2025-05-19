@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
@@ -29,17 +30,17 @@ class StateTest {
     void set() throws TimeoutException, QueueException {
         String stateName = IdUtils.create();
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(((Map<String, Integer>) execution.findTaskRunsByTaskId("createGet").getFirst().getOutputs().get("data")).get("value")).isEqualTo(1);
 
-        execution = runnerUtils.runOne(null, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
+        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(((Map<String, Object>) execution.findTaskRunsByTaskId("updateGet").getFirst().getOutputs().get("data")).get("value")).isEqualTo("2");
 
-        execution = runnerUtils.runOne(null, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
+        execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", stateName));
         assertThat(execution.getTaskRunList()).hasSize(5);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat((Integer) execution.findTaskRunsByTaskId("deleteGet").getFirst().getOutputs().get("count")).isZero();
@@ -50,7 +51,7 @@ class StateTest {
     @LoadFlows({"flows/valids/state.yaml"})
     void each() throws TimeoutException, InternalException, QueueException {
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", "each"));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "state",  null, (f, e) -> ImmutableMap.of("state", "each"));
         assertThat(execution.getTaskRunList()).hasSize(17);
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(((Map<String, String>) execution.findTaskRunByTaskIdAndValue("regetEach1", List.of("b")).getOutputs().get("data")).get("value")).isEqualTo("null-b");

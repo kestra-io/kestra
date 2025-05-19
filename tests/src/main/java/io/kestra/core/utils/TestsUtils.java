@@ -1,5 +1,7 @@
 package io.kestra.core.utils;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.io.Files;
@@ -110,20 +112,16 @@ abstract public class TestsUtils {
         return Flow.builder()
             .namespace(caller.getClassName().toLowerCase())
             .id(caller.getMethodName().toLowerCase())
+            .tenantId(MAIN_TENANT)
             .revision(1)
             .build();
     }
 
     public static Execution mockExecution(FlowInterface flow, Map<String, Object> inputs) {
-        return TestsUtils.mockExecution(Thread.currentThread().getStackTrace()[2], flow, inputs, null);
+        return TestsUtils.mockExecution(flow, inputs, null);
     }
 
-    public static Execution mockExecution(FlowInterface flow, Map<String, Object> inputs, Map<String, Object> outputs) {
-        return TestsUtils.mockExecution(Thread.currentThread().getStackTrace()[2], flow, inputs, outputs);
-    }
-
-    private static Execution mockExecution(StackTraceElement caller,
-                                           FlowInterface flow,
+    public static Execution mockExecution(FlowInterface flow,
                                            Map<String, Object> inputs,
                                            Map<String, Object> outputs) {
         return Execution.builder()
@@ -138,15 +136,12 @@ abstract public class TestsUtils {
             .withState(State.Type.RUNNING);
     }
 
-    public static TaskRun mockTaskRun(FlowInterface flow, Execution execution, Task task) {
-        return TestsUtils.mockTaskRun(Thread.currentThread().getStackTrace()[2], execution, task);
-    }
-
-    private static TaskRun mockTaskRun(StackTraceElement caller, Execution execution, Task task) {
+    private static TaskRun mockTaskRun(Execution execution, Task task) {
         return TaskRun.builder()
             .id(IdUtils.create())
             .executionId(execution.getId())
             .namespace(execution.getNamespace())
+            .tenantId(execution.getTenantId())
             .flowId(execution.getFlowId())
             .taskId(task.getId())
             .state(new State())
@@ -178,8 +173,8 @@ abstract public class TestsUtils {
         StackTraceElement caller = Thread.currentThread().getStackTrace()[2];
 
         Flow flow = TestsUtils.mockFlow(caller);
-        Execution execution = TestsUtils.mockExecution(caller, flow, inputs, null);
-        TaskRun taskRun = TestsUtils.mockTaskRun(caller, execution, task);
+        Execution execution = TestsUtils.mockExecution(flow, inputs, null);
+        TaskRun taskRun = TestsUtils.mockTaskRun(execution, task);
 
         return runContextFactory.of(flow, task, execution, taskRun);
     }

@@ -21,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -55,7 +56,7 @@ class ExitTest {
         });
 
         // we cannot use the runnerUtils as it may not see the RUNNING state before the execution is killed
-        Flow flow = flowRepository.findById(null, "io.kestra.tests", "exit-killed", Optional.empty()).orElseThrow();
+        Flow flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "exit-killed", Optional.empty()).orElseThrow();
         Execution execution = Execution.newExecution(flow, null, null, Optional.empty());
         executionQueue.emit(execution);
 

@@ -1,6 +1,7 @@
 package io.kestra.plugin.core.http;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.http.client.HttpClientResponseException;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.kestra.core.junit.annotations.KestraTest;
@@ -26,6 +27,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -34,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class DownloadTest {
     public static final String FILE = "https://sampletestfile.com/wp-content/uploads/2023/07/500KB-CSV.csv";
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     private StorageInterface storageInterface;
@@ -54,7 +56,7 @@ class DownloadTest {
 
         Download.Output output = task.run(runContext);
 
-        assertThat(IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8)).isEqualTo(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8));
+        assertThat(IOUtils.toString(this.storageInterface.get(MAIN_TENANT, null, output.getUri()), StandardCharsets.UTF_8)).isEqualTo(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8));
         assertThat(output.getUri().toString()).endsWith(".csv");
     }
 
@@ -95,7 +97,7 @@ class DownloadTest {
         Download.Output output = assertDoesNotThrow(() -> task.run(runContext));
 
         assertThat(output.getLength()).isEqualTo(0L);
-        assertThat(IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8)).isEqualTo("");
+        assertThat(IOUtils.toString(this.storageInterface.get(MAIN_TENANT, null, output.getUri()), StandardCharsets.UTF_8)).isEqualTo("");
     }
 
     @Test
@@ -134,7 +136,7 @@ class DownloadTest {
 
         Download.Output output = task.run(runContext);
 
-        assertThat(this.storageInterface.get(null, null, output.getUri()).readAllBytes().length).isEqualTo(10000 * 12);
+        assertThat(this.storageInterface.get(MAIN_TENANT, null, output.getUri()).readAllBytes().length).isEqualTo(10000 * 12);
     }
 
     @Test

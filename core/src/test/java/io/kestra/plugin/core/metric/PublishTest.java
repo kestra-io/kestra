@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.metric;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.metrics.CounterMetric;
@@ -19,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @KestraTest
 public class PublishTest {
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void run() throws Exception {

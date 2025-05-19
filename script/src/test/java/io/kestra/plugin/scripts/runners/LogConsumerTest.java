@@ -23,6 +23,7 @@ import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -96,7 +97,7 @@ class LogConsumerTest {
 
     @Test
     void logs() throws Exception {
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> logs.add(l.getLeft()));
 
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());

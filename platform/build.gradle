@@ -103,8 +103,8 @@ dependencies {
         api 'com.h2database:h2:2.3.232'
         api 'mysql:mysql-connector-java:8.0.33'
         api 'org.postgresql:postgresql:42.7.5'
-        api 'com.github.docker-java:docker-java:3.5.0'
-        api 'com.github.docker-java:docker-java-transport-httpclient5:3.5.0'
+        api 'com.github.docker-java:docker-java:3.5.1'
+        api 'com.github.docker-java:docker-java-transport-httpclient5:3.5.1'
         api (group: 'org.opensearch.client', name: 'opensearch-java', version: "$opensearchVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-client', version: "$opensearchRestVersion")
         api (group: 'org.opensearch.client', name: 'opensearch-rest-high-level-client', version: "$opensearchRestVersion") // used by the elasticsearch plugin

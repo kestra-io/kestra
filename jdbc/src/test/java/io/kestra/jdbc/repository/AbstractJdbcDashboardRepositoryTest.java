@@ -1,16 +1,9 @@
 package io.kestra.jdbc.repository;
 
-import io.kestra.core.models.dashboards.Dashboard;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
-import io.kestra.core.server.ServiceInstance;
 import io.kestra.jdbc.JdbcTestUtils;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
-import java.util.List;
-
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public class AbstractJdbcDashboardRepositoryTest extends io.kestra.core.repositories.AbstractDashboardRepositoryTest {
@@ -23,15 +16,6 @@ public class AbstractJdbcDashboardRepositoryTest extends io.kestra.core.reposito
     protected void init() {
         jdbcTestUtils.drop();
         jdbcTestUtils.migrate();
-    }
-
-    @Test
-    void findAll() {
-        // Given
-        ServiceInstance instance = AbstractJdbcServiceInstanceRepositoryTest.Fixtures.RunningServiceInstance;
-
-        List<Dashboard> existingDashboards = dashboardRepository.findAll(instance.uid());
-        assertTrue(existingDashboards.isEmpty());
     }
 
 }

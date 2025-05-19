@@ -117,7 +117,7 @@ public abstract class AbstractDashboardRepositoryTest {
         assertEquals(expectedDashboard.getDescription(), optionalDashboard.get().getDescription());
 
         optionalDashboard = dashboardRepositoryInterface.get(TENANT_ID, "10");
-        assertFalse(optionalDashboard.isPresent());
+        assertTrue(optionalDashboard.isEmpty());
     }
 
 
@@ -130,11 +130,16 @@ public abstract class AbstractDashboardRepositoryTest {
         assertEquals("12", deletedDashboard.getId());
 
         final Optional<Dashboard> optionalDashboard = dashboardRepositoryInterface.get(TENANT_ID, "12");
-        assertFalse(optionalDashboard.isPresent());
+        assertTrue(optionalDashboard.isEmpty());
 
         final List<Dashboard> full = dashboardRepositoryInterface.findAll(TENANT_ID);
         assertFalse(full.isEmpty());
         assertEquals(1, full.size());
+
+        final Dashboard dashboard = full.getFirst();
+        assertEquals("11", dashboard.getId());
+        assertEquals(DASHBOARD_DESCRIPTION, dashboard.getDescription());
+
     }
 
 }

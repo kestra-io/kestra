@@ -93,8 +93,8 @@
                 </template>
             </template>
 
-            <el-collapse v-if="optionalProperties?.length" class="collapse">
-                <el-collapse-item :title="$t('no_code.sections.optional')">
+            <el-collapse v-model="activeNames" v-if="optionalProperties?.length" class="collapse">
+                <el-collapse-item name="optional" :title="$t('no_code.sections.optional')">
                     <template v-for="[key, schema] in optionalProperties" :key="key">
                         <template v-if="isAnyOf(schema)">
                             <TaskWrapper>
@@ -273,8 +273,19 @@
                 type: Object,
                 default: () => ({}),
             },
+            expandOptional: {type: Boolean, default: false}
         },
         emits: ["update:modelValue"],
+        data() {
+            return {
+                activeNames: [],
+            };
+        },
+        mounted() {
+            if (this.expandOptional) {
+                this.activeNames = ["optional"];
+            }
+        },
         computed: {
             sortedProperties() {
                 return sortProperties(this.properties, this.schema?.required);

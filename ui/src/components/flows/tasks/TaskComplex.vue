@@ -7,7 +7,7 @@
                     breadcrumbs[breadcrumbs.length] = {
                         label: root,
                         to: {},
-                        component: h(AnyOfContent, {
+                        component: h(TaskAnyOf, {
                             modelValue,
                             schema,
                             definitions,

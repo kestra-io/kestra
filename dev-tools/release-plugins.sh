@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 #===============================================================================
 # SCRIPT: release-plugins.sh
 #
@@ -212,6 +212,13 @@ do
     fi
 
     git push;
+    # Update the upper bound version of kestra
+    PLUGIN_KESTRA_VERSION="[${BASE_VERSION},)"
+    git checkout "$RELEASE_BRANCH" && git pull;
+    sed -i "s/^kestraVersion=.*/kestraVersion=${PLUGIN_KESTRA_VERSION}/" ./gradle.properties
+    git add ./gradle.properties
+    git commit -m"chore(deps): update kestraVersion to ${PLUGIN_KESTRA_VERSION}."
+    git push
     sleep 5; # add a short delay to not spam Maven Central
   else
     echo "Skip gradle release [DRY_RUN=true]";

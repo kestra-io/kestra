@@ -8,7 +8,7 @@
             @dragover.prevent="(e) => panelDragOver(e, panelIndex)"
             @dragleave.prevent="panelDragLeave"
             @drop.prevent="(e) => panelDrop(e, panelIndex)"
-            :class="{'d-block': true, 'panel-dragover': panel.dragover}"
+            :class="{'panel-dragover': panel.dragover}"
         >
             <div class="editor-tabs-container">
                 <el-button
@@ -58,52 +58,54 @@
                         </div>
                     </template>
                 </div>
-                <button
-                    v-if="panel.tabs.filter(t => !t.potential).length > 1"
-                    @click="splitPanel(panelIndex)"
-                    class="split_right"
-                    title="Split panel"
-                >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            fill-rule="evenodd"
-                            clip-rule="evenodd"
-                            d="M22.038 20.5599C22.0402 21.35 21.4014 21.9924 20.6112 21.9946L3.47196 22.0424C2.6818 22.0446 2.03946 21.4058 2.03725 20.6157L1.98939 3.45824C1.98718 2.66808 2.62595 2.02574 3.41611 2.02353L20.5554 1.97571C21.3455 1.97351 21.9879 2.61228 21.9901 3.40244L22.038 20.5599ZM20.626 20.5807L10.5998 20.6086L10.5517 3.37297L20.5779 3.345L20.626 20.5807ZM9.10343 20.611L3.38734 20.6269L3.33925 3.39126L9.05535 3.37531L9.10343 20.611Z"
-                            fill="currentColor"
-                        />
-                    </svg>
-                </button>
+                <div class="buttons-container">
+                    <button
+                        v-if="panel.tabs.filter(t => !t.potential).length > 1"
+                        @click="splitPanel(panelIndex)"
+                        class="split_right"
+                        title="Split panel"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                fill-rule="evenodd"
+                                clip-rule="evenodd"
+                                d="M22.038 20.5599C22.0402 21.35 21.4014 21.9924 20.6112 21.9946L3.47196 22.0424C2.6818 22.0446 2.03946 21.4058 2.03725 20.6157L1.98939 3.45824C1.98718 2.66808 2.62595 2.02574 3.41611 2.02353L20.5554 1.97571C21.3455 1.97351 21.9879 2.61228 21.9901 3.40244L22.038 20.5599ZM20.626 20.5807L10.5998 20.6086L10.5517 3.37297L20.5779 3.345L20.626 20.5807ZM9.10343 20.611L3.38734 20.6269L3.33925 3.39126L9.05535 3.37531L9.10343 20.611Z"
+                                fill="currentColor"
+                            />
+                        </svg>
+                    </button>
 
-                <el-dropdown trigger="click" placement="bottom-end">
-                    <el-button :icon="DotsVertical" link class="me-2 tab-icon" />
-                    <template #dropdown>
-                        <el-dropdown-menu class="m-2">
-                            <el-dropdown-item
-                                :icon="DockRight"
-                                :disabled="panelIndex === panels.length - 1"
-                                @click="movePanel(panelIndex, 'right')"
-                            >
-                                <span class="small-text">
-                                    {{ t("multi_panel_editor.move_right") }}
-                                </span>
-                            </el-dropdown-item>
-                            <el-dropdown-item
-                                :icon="DockLeft"
-                                :disabled="panelIndex === 0"
-                                @click="movePanel(panelIndex, 'left')"
-                            >
-                                <span class="small-text">
-                                    {{ t("multi_panel_editor.move_left") }}
-                                </span>
-                            </el-dropdown-item>
-                            <el-dropdown-item :icon="Close" @click="closeAllTabs(panelIndex)">
-                                <span class="small-text">
-                                    {{ t("multi_panel_editor.close_all_tabs") }}
-                                </span>
-                            </el-dropdown-item>
-                        </el-dropdown-menu>
-                    </template>
-                </el-dropdown>
+                    <el-dropdown trigger="click" placement="bottom-end">
+                        <el-button :icon="DotsVertical" link class="me-2 tab-icon" />
+                        <template #dropdown>
+                            <el-dropdown-menu class="m-2">
+                                <el-dropdown-item
+                                    :icon="DockRight"
+                                    :disabled="panelIndex === panels.length - 1"
+                                    @click="movePanel(panelIndex, 'right')"
+                                >
+                                    <span class="small-text">
+                                        {{ t("multi_panel_editor.move_right") }}
+                                    </span>
+                                </el-dropdown-item>
+                                <el-dropdown-item
+                                    :icon="DockLeft"
+                                    :disabled="panelIndex === 0"
+                                    @click="movePanel(panelIndex, 'left')"
+                                >
+                                    <span class="small-text">
+                                        {{ t("multi_panel_editor.move_left") }}
+                                    </span>
+                                </el-dropdown-item>
+                                <el-dropdown-item :icon="Close" @click="closeAllTabs(panelIndex)">
+                                    <span class="small-text">
+                                        {{ t("multi_panel_editor.close_all_tabs") }}
+                                    </span>
+                                </el-dropdown-item>
+                            </el-dropdown-menu>
+                        </template>
+                    </el-dropdown>
+                </div>
             </div>
             <div
                 class="content-panel"
@@ -462,8 +464,8 @@
 
 <style lang="scss" scoped>
     .editor-tabs-container{
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: auto 1fr auto;
         background-color: var(--ks-background-body);
         border-bottom: 1px solid var(--ks-border-primary);
         align-items: center;
@@ -478,6 +480,10 @@
                 height: 16px;
                 width: 16px;
             }
+        }
+        .buttons-container{
+            display: flex;
+
         }
         .drag-handle {
             cursor: grab;

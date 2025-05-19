@@ -1303,7 +1303,7 @@
       },
       "testSuites": {
         "title": "You have no Tests yet!",
-        "content": "Start creating Tests."
+        "content": "Add tests to validate quality and avoid regressions in your flows."
       },
       "concurrency_executions": {
         "title": "No ongoing Executions for this Flow.",

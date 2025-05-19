@@ -52,7 +52,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
      *
      * @param tenantId  The tenant ID.
      * @param namespace The namespace of execution.
-     * @param flowId    The flow ID  of execution.
+     * @param flowId    The flow ID of execution.
      * @param states     The execution's states.
      * @return an optional {@link Execution}.
      */
@@ -63,6 +63,7 @@ public interface ExecutionRepositoryInterface extends SaveRepositoryInterface<Ex
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters
     );
+
     default Flux<Execution> find(
         @Nullable String query,
         @Nullable String tenantId,

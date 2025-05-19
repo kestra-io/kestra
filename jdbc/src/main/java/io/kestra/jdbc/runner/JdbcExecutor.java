@@ -630,7 +630,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                                             JdbcExecutor.log.info(log);
 
-                                            logQueue.emit(LogEntry.of(subflowExecution.getParentTaskRun()).toBuilder()
+                                            logQueue.emit(LogEntry.of(subflowExecution.getParentTaskRun(), subflowExecution.getExecution().getKind()).toBuilder()
                                                 .level(Level.INFO)
                                                 .message(log)
                                                 .timestamp(subflowExecution.getParentTaskRun().getState().getStartDate())

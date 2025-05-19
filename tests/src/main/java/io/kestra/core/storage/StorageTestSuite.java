@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -51,24 +52,25 @@ public abstract class StorageTestSuite {
     @Test
     void getNoCrossTenant() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = IdUtils.create();
+        String fistTenant = IdUtils.create();
+        String secondTenant = IdUtils.create();
 
-        String withTenant = "/" + prefix + "/storage/withtenant.yml";
-        putFile(tenantId, withTenant);
-        String nullTenant = "/" + prefix + "/storage/nulltenant.yml";
-        putFile(null, nullTenant);
+        String fistTenantPath = "/" + prefix + "/storage/firstTenant.yml";
+        putFile(fistTenant, fistTenantPath);
+        String secondTenantPath = "/" + prefix + "/storage/secondTenant.yml";
+        putFile(secondTenant, secondTenantPath);
 
-        URI with = new URI(withTenant);
-        InputStream get = storageInterface.get(tenantId, prefix, with);
+        URI fistTenantUri = new URI(fistTenantPath);
+        InputStream get = storageInterface.get(fistTenant, prefix, fistTenantUri);
         assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
-        assertTrue(storageInterface.exists(tenantId, prefix, with));
-        assertThrows(FileNotFoundException.class, () -> storageInterface.get(null, null, with));
+        assertTrue(storageInterface.exists(fistTenant, prefix, fistTenantUri));
+        assertThrows(FileNotFoundException.class, () -> storageInterface.get(secondTenant, null, fistTenantUri));
 
-        URI without = new URI(nullTenant);
-        get = storageInterface.get(null, prefix, without);
+        URI secondTenantUri = new URI(secondTenantPath);
+        get = storageInterface.get(secondTenant, prefix, secondTenantUri);
         assertThat(CharStreams.toString(new InputStreamReader(get))).isEqualTo(CONTENT_STRING);
-        assertTrue(storageInterface.exists(null, prefix, without));
-        assertThrows(FileNotFoundException.class, () -> storageInterface.get(tenantId, null, without));
+        assertTrue(storageInterface.exists(secondTenant, prefix, secondTenantUri));
+        assertThrows(FileNotFoundException.class, () -> storageInterface.get(fistTenant, null, secondTenantUri));
 
     }
 
@@ -119,43 +121,43 @@ public abstract class StorageTestSuite {
 
     @Test
     void filesByPrefix() throws IOException {
-        storageInterface.put(null, "namespace", URI.create("/namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(MAIN_TENANT, "namespace", URI.create("/namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
         storageInterface.put("tenant", "namespace", URI.create("/namespace/tenant_file.txt"), new ByteArrayInputStream(new byte[0]));
-        storageInterface.put(null, "namespace", URI.create("/namespace/another_file.json"), new ByteArrayInputStream(new byte[0]));
-        storageInterface.put(null, "namespace", URI.create("/namespace/folder/file.txt"), new ByteArrayInputStream(new byte[0]));
-        storageInterface.put(null, "namespace", URI.create("/namespace/folder/some.yaml"), new ByteArrayInputStream(new byte[0]));
-        storageInterface.put(null, "namespace", URI.create("/namespace/folder/sub/script.py"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(MAIN_TENANT, "namespace", URI.create("/namespace/another_file.json"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(MAIN_TENANT, "namespace", URI.create("/namespace/folder/file.txt"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(MAIN_TENANT, "namespace", URI.create("/namespace/folder/some.yaml"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(MAIN_TENANT, "namespace", URI.create("/namespace/folder/sub/script.py"), new ByteArrayInputStream(new byte[0]));
 
-        List<URI> res = storageInterface.allByPrefix(null, "namespace", URI.create("kestra:///namespace/"), false);
+        List<URI> res = storageInterface.allByPrefix(MAIN_TENANT, "namespace", URI.create("kestra:///namespace/"), false);
         assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///namespace/file.txt"), URI.create("kestra:///namespace/another_file.json"), URI.create("kestra:///namespace/folder/file.txt"), URI.create("kestra:///namespace/folder/some.yaml"), URI.create("kestra:///namespace/folder/sub/script.py"));
 
         res = storageInterface.allByPrefix("tenant", "namespace", URI.create("/namespace"), false);
         assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///namespace/tenant_file.txt"));
 
-        res = storageInterface.allByPrefix(null, "namespace", URI.create("/namespace/folder"), false);
+        res = storageInterface.allByPrefix(MAIN_TENANT, "namespace", URI.create("/namespace/folder"), false);
         assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///namespace/folder/file.txt"), URI.create("kestra:///namespace/folder/some.yaml"), URI.create("kestra:///namespace/folder/sub/script.py"));
 
-        res = storageInterface.allByPrefix(null, "namespace", URI.create("/namespace/folder/sub"), false);
+        res = storageInterface.allByPrefix(MAIN_TENANT, "namespace", URI.create("/namespace/folder/sub"), false);
         assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///namespace/folder/sub/script.py"));
 
-        res = storageInterface.allByPrefix(null, "namespace", URI.create("/namespace/non-existing"), false);
+        res = storageInterface.allByPrefix(MAIN_TENANT, "namespace", URI.create("/namespace/non-existing"), false);
         assertThat(res).isEmpty();
     }
 
     @Test
     void objectsByPrefix() throws IOException {
-        storageInterface.put(null, "some_namespace", URI.create("/some_namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
+        storageInterface.put(MAIN_TENANT, "some_namespace", URI.create("/some_namespace/file.txt"), new ByteArrayInputStream(new byte[0]));
         storageInterface.put("tenant", "some_namespace", URI.create("/some_namespace/tenant_file.txt"), new ByteArrayInputStream(new byte[0]));
-        storageInterface.createDirectory(null, "some_namespace", URI.create("/some_namespace/folder/sub"));
+        storageInterface.createDirectory(MAIN_TENANT, "some_namespace", URI.create("/some_namespace/folder/sub"));
 
 
-        List<URI> res = storageInterface.allByPrefix(null, "some_namespace", URI.create("kestra:///some_namespace/"), true);
+        List<URI> res = storageInterface.allByPrefix(MAIN_TENANT, "some_namespace", URI.create("kestra:///some_namespace/"), true);
         assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///some_namespace/file.txt"), URI.create("kestra:///some_namespace/folder/"), URI.create("kestra:///some_namespace/folder/sub/"));
 
         res = storageInterface.allByPrefix("tenant", "some_namespace", URI.create("/some_namespace"), true);
         assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///some_namespace/tenant_file.txt"));
 
-        res = storageInterface.allByPrefix(null, "some_namespace", URI.create("/some_namespace/folder"), true);
+        res = storageInterface.allByPrefix(MAIN_TENANT, "some_namespace", URI.create("/some_namespace/folder"), true);
         assertThat(res).containsExactlyInAnyOrder(URI.create("kestra:///some_namespace/folder/sub/"));
     }
 
@@ -832,9 +834,9 @@ public abstract class StorageTestSuite {
     @Test
     void createDirectoryShouldBeRecursive() throws IOException {
         String prefix = IdUtils.create();
-        storageInterface.createDirectory(null, prefix, URI.create("/" + prefix + "/first/second/third"));
+        storageInterface.createDirectory(MAIN_TENANT, prefix, URI.create("/" + prefix + "/first/second/third"));
 
-        List<FileAttributes> list = storageInterface.list(null, prefix, URI.create("/" + prefix));
+        List<FileAttributes> list = storageInterface.list(MAIN_TENANT, prefix, URI.create("/" + prefix));
         assertThat(list, contains(
             hasProperty("fileName", is("first"))
         ));

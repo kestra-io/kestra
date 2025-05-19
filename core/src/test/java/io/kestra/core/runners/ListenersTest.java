@@ -15,6 +15,7 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
@@ -28,17 +29,17 @@ class ListenersTest {
 
     @BeforeEach
     void initListeners() throws IOException, URISyntaxException {
-        repositoryLoader.load(null, Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners.yaml")));
-        repositoryLoader.load(null, Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners-flowable.yaml")));
-        repositoryLoader.load(null, Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners-multiple.yaml")));
-        repositoryLoader.load(null, Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners-multiple-failed.yaml")));
-        repositoryLoader.load(null, Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners-failed.yaml")));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners.yaml")));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners-flowable.yaml")));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners-multiple.yaml")));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners-multiple-failed.yaml")));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/listeners-failed.yaml")));
     }
 
     @Test
     void success() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners",
             null,
@@ -53,7 +54,7 @@ class ListenersTest {
     @Test
     void failed() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners",
             null,
@@ -68,7 +69,7 @@ class ListenersTest {
     @Test
     void flowableExecution() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-flowable",
             null,
@@ -84,7 +85,7 @@ class ListenersTest {
     @Test
     void multipleListeners() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-multiple"
         );
@@ -97,7 +98,7 @@ class ListenersTest {
     @Test
     void failedListeners() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-failed"
         );
@@ -111,7 +112,7 @@ class ListenersTest {
     @Test
     void failedMultipleListeners() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-multiple-failed"
         );

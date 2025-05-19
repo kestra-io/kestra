@@ -15,6 +15,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
@@ -32,7 +33,7 @@ public class LogToFileTest {
         TaskRunAttempt attempt = taskRun.getAttempts().getFirst();
         assertThat(attempt.getLogFile()).isNotNull();
 
-        InputStream inputStream = storage.get(null, "io.kestra.tests", attempt.getLogFile());
+        InputStream inputStream = storage.get(MAIN_TENANT, "io.kestra.tests", attempt.getLogFile());
         List<String> strings = IOUtils.readLines(inputStream, StandardCharsets.UTF_8);
         assertThat(strings).isNotNull();
         assertThat(strings.size()).isEqualTo(1);

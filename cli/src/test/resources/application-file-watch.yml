@@ -2,6 +2,7 @@ micronaut:
   io:
     watch:
       enabled: true
+      tenantId: main
       paths:
         - build/file-watch
 

@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.execution;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.State;
@@ -20,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @KestraTest
 class PurgeExecutionsTest {
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     private ExecutionRepositoryInterface executionRepository;

@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.kestra.core.junit.annotations.ExecuteFlow;
@@ -42,7 +43,7 @@ public abstract class AbstractRunnerTest {
     private RestartCaseTest restartCaseTest;
 
     @Inject
-    private FlowTriggerCaseTest flowTriggerCaseTest;
+    protected FlowTriggerCaseTest flowTriggerCaseTest;
 
     @Inject
     protected MultipleConditionTriggerCaseTest multipleConditionTriggerCaseTest;
@@ -494,7 +495,7 @@ public abstract class AbstractRunnerTest {
     @Test
     @LoadFlows({"flows/valids/if.yaml"})
     void multipleIf() throws TimeoutException, QueueException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "if", null,
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "if", null,
             (f, e) -> Map.of("if1", true, "if2", false, "if3", true));
 
         assertThat(execution.getTaskRunList()).hasSize(12);

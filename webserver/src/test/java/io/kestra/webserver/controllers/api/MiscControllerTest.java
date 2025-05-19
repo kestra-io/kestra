@@ -32,7 +32,7 @@ class MiscControllerTest {
 
     @Test
     void getConfiguration() {
-        var response = client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class);
+        var response = client.toBlocking().retrieve("/api/v1/main/configs", MiscController.Configuration.class);
 
         assertThat(response).isNotNull();
         assertThat(response.getUuid()).isNotNull();
@@ -44,27 +44,27 @@ class MiscControllerTest {
 
     @Test
     void basicAuth() {
-        Assertions.assertDoesNotThrow(() -> client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class));
+        Assertions.assertDoesNotThrow(() -> client.toBlocking().retrieve("/api/v1/main/configs", MiscController.Configuration.class));
 
         String uid = "someUid";
         String username = "my.email@kestra.io";
         String password = "myPassword";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/basicAuth", new MiscController.BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new MiscController.BasicAuthCredentials(uid, username, password)));
         try {
             Assertions.assertThrows(
                 HttpClientResponseException.class,
-                () -> client.toBlocking().retrieve("/api/v1/configs", MiscController.Configuration.class)
+                () -> client.toBlocking().retrieve("/api/v1/main/configs", MiscController.Configuration.class)
             );
             Assertions.assertThrows(
                 HttpClientResponseException.class,
                 () -> client.toBlocking().retrieve(
-                    HttpRequest.GET("/api/v1/configs")
+                    HttpRequest.GET("/api/v1/main/configs")
                         .basicAuth("bad.user@kestra.io", "badPassword"),
                     MiscController.Configuration.class
                 )
             );
             Assertions.assertDoesNotThrow(() -> client.toBlocking().retrieve(
-                HttpRequest.GET("/api/v1/configs")
+                HttpRequest.GET("/api/v1/main/configs")
                     .basicAuth(username, password),
                 MiscController.Configuration.class)
             );

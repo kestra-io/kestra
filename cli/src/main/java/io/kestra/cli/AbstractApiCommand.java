@@ -1,5 +1,7 @@
 package io.kestra.cli;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpHeaders;
 import io.micronaut.http.HttpRequest;
@@ -90,7 +92,7 @@ public abstract class AbstractApiCommand extends AbstractCommand {
             throw new IllegalArgumentException("'path' must be non-null and start with '/'");
         }
 
-        return tenantId == null ? "/api/v1" + path : "/api/v1/" + tenantId + path;
+        return tenantId == null ? "/api/v1/" + MAIN_TENANT + path : "/api/v1/" + tenantId + path;
     }
 
     @Builder

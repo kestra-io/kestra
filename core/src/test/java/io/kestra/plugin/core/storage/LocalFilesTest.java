@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -35,7 +36,7 @@ class LocalFilesTest {
         var resource = ConcatTest.class.getClassLoader().getResource("application-test.yml");
 
         return storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/file/storage/get.yml"),
             new FileInputStream(Objects.requireNonNull(resource).getFile())
@@ -63,10 +64,10 @@ class LocalFilesTest {
         assertThat(outputs).isNotNull();
         assertThat(outputs.getUris()).isNotNull();
         assertThat(outputs.getUris().size()).isEqualTo(1);
-        assertThat(new String(storageInterface.get(null, null, outputs.getUris().get("hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
+        assertThat(new String(storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
         assertThat(runContext.workingDir().path().toFile().list().length).isEqualTo(2);
         assertThat(Files.readString(runContext.workingDir().path().resolve("execution.txt"))).isEqualTo("tata");
-        assertThat(Files.readString(runContext.workingDir().path().resolve("application-test.yml"))).isEqualTo(new String(storageInterface.get(null, null, storageFile).readAllBytes()));
+        assertThat(Files.readString(runContext.workingDir().path().resolve("application-test.yml"))).isEqualTo(new String(storageInterface.get(MAIN_TENANT, null, storageFile).readAllBytes()));
 
         runContext.cleanup();
     }
@@ -91,11 +92,11 @@ class LocalFilesTest {
         assertThat(outputs).isNotNull();
         assertThat(outputs.getUris()).isNotNull();
         assertThat(outputs.getUris().size()).isEqualTo(3);
-        assertThat(new String(storageInterface.get(null, null, outputs.getUris().get("test/hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
-        assertThat(new String(storageInterface.get(null, null, outputs.getUris().get("test/sub/dir/2/execution.txt"))
+        assertThat(new String(storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("test/hello-input.txt")).readAllBytes())).isEqualTo("Hello Input");
+        assertThat(new String(storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("test/sub/dir/2/execution.txt"))
             .readAllBytes())).isEqualTo("tata");
-        assertThat(new String(storageInterface.get(null, null, outputs.getUris().get("test/sub/dir/3/application-test.yml"))
-            .readAllBytes())).isEqualTo(new String(storageInterface.get(null, null, storageFile).readAllBytes()));
+        assertThat(new String(storageInterface.get(MAIN_TENANT, null, outputs.getUris().get("test/sub/dir/3/application-test.yml"))
+            .readAllBytes())).isEqualTo(new String(storageInterface.get(MAIN_TENANT, null, storageFile).readAllBytes()));
         runContext.cleanup();
     }
 

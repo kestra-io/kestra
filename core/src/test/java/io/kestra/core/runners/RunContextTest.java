@@ -60,6 +60,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -110,7 +111,7 @@ class RunContextTest {
         LogEntry matchingLog;
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "logs");
 
         assertThat(execution.getTaskRunList()).hasSize(5);
 
@@ -147,7 +148,7 @@ class RunContextTest {
         inputs.put("string", new String(chars));
 
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "inputs-large",
             null,
@@ -179,7 +180,7 @@ class RunContextTest {
 
     @Test
     void taskDefaults() throws TimeoutException, QueueException, IOException, URISyntaxException {
-        repositoryLoader.load(null, Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/plugin-defaults.yaml")));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/plugin-defaults.yaml")));
         pluginDefaultsCaseTest.taskDefaults();
     }
 
@@ -195,7 +196,7 @@ class RunContextTest {
         p.destroy();
 
         URI uri = runContext.storage().putFile(path.toFile());
-        assertThat(storageInterface.getAttributes(null, null, uri).getSize()).isEqualTo(size + 1);
+        assertThat(storageInterface.getAttributes(MAIN_TENANT, null, uri).getSize()).isEqualTo(size + 1);
     }
 
     @Test

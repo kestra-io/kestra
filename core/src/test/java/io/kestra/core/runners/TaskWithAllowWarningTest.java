@@ -22,6 +22,7 @@ import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.IntStream;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
@@ -47,7 +48,7 @@ public class TaskWithAllowWarningTest {
     @LoadFlows({"flows/valids/task-allow-warning-executable-flow.yml",
         "flows/valids/for-each-item-subflow-failed.yaml"})
     void executableTask_Flow() throws QueueException, TimeoutException {
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-warning-executable-flow");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "task-allow-warning-executable-flow");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(2);
     }
@@ -57,7 +58,7 @@ public class TaskWithAllowWarningTest {
     void executableTask_ForEachItem() throws TimeoutException, QueueException, URISyntaxException, IOException {
         URI file = storageUpload();
         Map<String, Object> inputs = Map.of("file", file.toString());
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "task-allow-warning-executable-foreachitem", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "task-allow-warning-executable-foreachitem", null, (flow, execution1) -> flowIO.readExecutionInputs(flow, execution1, inputs));
 
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
         assertThat(execution.getTaskRunList()).hasSize(4);
@@ -76,7 +77,7 @@ public class TaskWithAllowWarningTest {
         Files.write(tempFile.toPath(), content());
 
         return storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/file/storage/file.txt"),
             new FileInputStream(tempFile)

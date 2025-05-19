@@ -13,6 +13,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.net.URI;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
@@ -28,7 +29,7 @@ class ReverseTest {
         RunContext runContext = runContextFactory.of();
 
         URI put = storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/file/storage/get.yml"),
             new ByteArrayInputStream("1\n2\n3\n".getBytes())
@@ -42,6 +43,6 @@ class ReverseTest {
         Reverse.Output run = result.run(runContext);
 
         assertThat(run.getUri().getPath()).endsWith(".yml");
-        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, run.getUri())))).isEqualTo("3\n2\n1\n");
+        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, run.getUri())))).isEqualTo("3\n2\n1\n");
     }
 }

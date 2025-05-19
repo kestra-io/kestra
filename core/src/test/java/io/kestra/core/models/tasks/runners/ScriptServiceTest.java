@@ -1,5 +1,6 @@
 package io.kestra.core.models.tasks.runners;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
@@ -28,7 +29,7 @@ import static org.hamcrest.Matchers.*;
 @KestraTest
 class ScriptServiceTest {
     public static final Pattern COMMAND_PATTERN_CAPTURE_LOCAL_PATH = Pattern.compile("my command with an internal storage file: (.*)");
-    @Inject private RunContextFactory runContextFactory;
+    @Inject private TestRunContextFactory runContextFactory;
 
     @Test
     void replaceInternalStorage() throws IOException {
@@ -39,7 +40,7 @@ class ScriptServiceTest {
         command = ScriptService.replaceInternalStorage(runContext, "my command", false);
         assertThat(command).isEqualTo("my command");
 
-        Path path = Path.of("/tmp/unittest/file.txt");
+        Path path = Path.of("/tmp/unittest/main/file.txt");
         if (!path.toFile().exists()) {
             Files.createFile(path);
         }
@@ -71,7 +72,7 @@ class ScriptServiceTest {
     void uploadInputFiles() throws IOException {
         var runContext = runContextFactory.of();
 
-        Path path = Path.of("/tmp/unittest/file.txt");
+        Path path = Path.of("/tmp/unittest/main/file.txt");
         if (!path.toFile().exists()) {
             Files.createFile(path);
         }
@@ -118,12 +119,12 @@ class ScriptServiceTest {
     @Test
     void uploadOutputFiles() throws IOException {
         var runContext = runContextFactory.of();
-        Path path = Path.of("/tmp/unittest/file.txt");
+        Path path = Path.of("/tmp/unittest/main/file.txt");
         if (!path.toFile().exists()) {
             Files.createFile(path);
         }
 
-        var outputFiles = ScriptService.uploadOutputFiles(runContext, Path.of("/tmp/unittest"));
+        var outputFiles = ScriptService.uploadOutputFiles(runContext, Path.of("/tmp/unittest/main"));
         assertThat(outputFiles, not(anEmptyMap()));
         assertThat(outputFiles.get("file.txt")).isEqualTo(URI.create("kestra:///file.txt"));
 

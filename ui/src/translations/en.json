@@ -1162,6 +1162,7 @@
     "chart": "Chart",
     "chart preview": "Chart preview",
     "no_code": {
+      "unnamed": "No Name",
       "adding": "+ Add a {what}",
       "adding_default": "+ Add a new value",
       "labels": {
@@ -1174,6 +1175,7 @@
         "main": "Main properties",
         "general": "General properties",
         "optional": "Optional properties",
+        "deprecated": "Deprecated properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
         "errors": "Error Handlers",

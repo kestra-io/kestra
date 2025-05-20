@@ -10,11 +10,11 @@
             >
                 <div class="d-flex flex-column">
                     <p class="m-0">
-                        <span class="fs-6 fw-bold">{{ labels.title }}</span>
-                        <template v-if="labels?.description">
+                        <span class="fs-6 fw-bold">{{ labels(chart).title }}</span>
+                        <template v-if="labels(chart)?.description">
                             <br>
                             <small class="fw-light">
-                                {{ labels.description }}
+                                {{ labels(chart).description }}
                             </small>
                         </template>
                     </p>

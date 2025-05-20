@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -180,7 +182,7 @@ public class RunContextFactory {
                     @Override
                     public String getTenantId() {
                         var tenantId = ((Map<String, Object>)variables.getOrDefault("flow", Map.of())).get("tenantId");
-                        return Optional.ofNullable(tenantId).map(Object::toString).orElse(null);
+                        return Optional.ofNullable(tenantId).map(Object::toString).orElse(MAIN_TENANT);
                     }
 
                     @SuppressWarnings("unchecked")

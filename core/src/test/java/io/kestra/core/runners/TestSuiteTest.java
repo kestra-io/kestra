@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
 
@@ -133,7 +134,7 @@ class TestSuiteTest {
     }
 
     private Execution runReturnFlow(List<TaskFixture> fixtures) throws TimeoutException, QueueException {
-        var flow = flowRepository.findById(null, "io.kestra.tests", "return", Optional.empty()).orElseThrow();
+        var flow = flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "return", Optional.empty()).orElseThrow();
 
         var execution = Execution.builder()
             .id(IdUtils.create())

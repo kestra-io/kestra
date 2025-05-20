@@ -1,6 +1,7 @@
 package io.kestra.plugin.scripts.runners;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.runners.TaskCommands;
@@ -23,6 +24,7 @@ import reactor.core.publisher.Flux;
 
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -41,7 +43,7 @@ class LogConsumerTest {
     };
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -96,7 +98,7 @@ class LogConsumerTest {
 
     @Test
     void logs() throws Exception {
-        List<LogEntry> logs = new ArrayList<>();
+        List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> logs.add(l.getLeft()));
 
         RunContext runContext = TestsUtils.mockRunContext(runContextFactory, TASK, ImmutableMap.of());
@@ -115,6 +117,7 @@ class LogConsumerTest {
             Collections.emptyList()
         );
 
+        Await.until(() -> logs.size() == 10, null, Duration.ofSeconds(5));
         receive.blockLast();
 
         assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.INFO)).count()).isEqualTo(1L);

@@ -1,6 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -63,7 +64,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     private JdbcTestUtils jdbcTestUtils;
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)

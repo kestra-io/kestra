@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 @Validated
-@Controller("/api/v1/flows")
+@Controller("/api/v1/main/flows")
 @Slf4j
 public class FlowController {
     private static final String WARNING_JSON_FLOW_ENDPOINT = "This endpoint is deprecated. Handling flows as 'application/json' is no longer supported and will be removed in a future release. Please use the same endpoint with an 'application/x-yaml' content type.";
@@ -542,7 +542,7 @@ public class FlowController {
     ) throws ConstraintViolationException {
         List<String> sources = flows != null ? List.of(flows.split("---")) : new ArrayList<>();
         List<GenericFlow> genericFlows = sources.stream()
-            .map(source -> GenericFlow.fromYaml(null, source))
+            .map(source -> GenericFlow.fromYaml(tenantService.resolveTenant(), source))
             .toList();
         return this.bulkUpdateOrCreate(namespace, genericFlows, delete, allowNamespaceChild);
     }

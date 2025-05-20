@@ -17,6 +17,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Singleton
@@ -74,7 +75,7 @@ public class ChangeStateTestCase {
         });
 
         // run the parent flow
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "subflow-parent-of-failed");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "subflow-parent-of-failed");
         assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
         assertThat(execution.getTaskRunList()).hasSize(1);
         assertThat(execution.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.FAILED);

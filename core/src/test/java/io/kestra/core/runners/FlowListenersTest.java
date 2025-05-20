@@ -1,6 +1,5 @@
 package io.kestra.core.runners;
 
-import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
@@ -17,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import jakarta.inject.Inject;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
@@ -28,6 +28,7 @@ abstract public class FlowListenersTest {
         FlowWithSource flow = FlowWithSource.builder()
             .id(flowId)
             .namespace("io.kestra.unittest")
+            .tenantId(MAIN_TENANT)
             .revision(1)
             .tasks(Collections.singletonList(Return.builder()
                 .id(taskId)

@@ -32,7 +32,7 @@ import java.util.List;
 
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
-@Controller("/api/v1/taskruns")
+@Controller("/api/v1/main/taskruns")
 @Requires(property = "kestra.repository.type", value = "elasticsearch")
 public class TaskRunController {
     @Inject

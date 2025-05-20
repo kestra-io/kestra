@@ -55,20 +55,20 @@ class LogControllerTest {
         logRepository.save(log3);
 
         PagedResults<LogEntry> logs = client.toBlocking().retrieve(
-            GET("/api/v1/logs/search"),
+            GET("/api/v1/main/logs/search"),
             Argument.of(PagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(3L);
 
         logs = client.toBlocking().retrieve(
-            GET("/api/v1/logs/search?filters[level][EQUALS]=INFO"),
+            GET("/api/v1/main/logs/search?filters[level][EQUALS]=INFO"),
             Argument.of(PagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(2L);
 
         // Test with old parameters
         logs = client.toBlocking().retrieve(
-            GET("/api/v1/logs/search?minLevel=INFO"),
+            GET("/api/v1/main/logs/search?minLevel=INFO"),
             Argument.of(PagedResults.class, LogEntry.class)
         );
         assertThat(logs.getTotal()).isEqualTo(2L);
@@ -76,14 +76,14 @@ class LogControllerTest {
 
         HttpClientResponseException e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(GET("/api/v1/logs/search?page=1&size=-1"))
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/logs/search?page=1&size=-1"))
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
 
         e = assertThrows(
             HttpClientResponseException.class,
-            () -> client.toBlocking().retrieve(GET("/api/v1/logs/search?page=0"))
+            () -> client.toBlocking().retrieve(GET("/api/v1/main/logs/search?page=0"))
         );
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
@@ -100,7 +100,7 @@ class LogControllerTest {
         logRepository.save(log3);
 
         List<LogEntry> logs = client.toBlocking().retrieve(
-            GET("/api/v1/logs/" + log1.getExecutionId()),
+            GET("/api/v1/main/logs/" + log1.getExecutionId()),
             Argument.of(List.class, LogEntry.class)
         );
         assertThat(logs.size()).isEqualTo(2);
@@ -118,7 +118,7 @@ class LogControllerTest {
         logRepository.save(log3);
 
         String logs = client.toBlocking().retrieve(
-            GET("/api/v1/logs/" + log1.getExecutionId() + "/download"),
+            GET("/api/v1/main/logs/" + log1.getExecutionId() + "/download"),
             String.class
         );
         assertThat(logs).contains("john doe");
@@ -136,12 +136,12 @@ class LogControllerTest {
         logRepository.save(log3);
 
         HttpResponse<?> delete = client.toBlocking().exchange(
-            HttpRequest.DELETE("/api/v1/logs/" + log1.getExecutionId())
+            HttpRequest.DELETE("/api/v1/main/logs/" + log1.getExecutionId())
         );
         assertThat(delete.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
         List<LogEntry> logs = client.toBlocking().retrieve(
-            GET("/api/v1/logs/" + log1.getExecutionId()),
+            GET("/api/v1/main/logs/" + log1.getExecutionId()),
             Argument.of(List.class, LogEntry.class)
         );
         assertThat(logs.size()).isZero();
@@ -157,12 +157,12 @@ class LogControllerTest {
         logRepository.save(log3);
 
         HttpResponse<?> delete = client.toBlocking().exchange(
-            HttpRequest.DELETE("/api/v1/logs/" + log1.getNamespace() + "/" + log1.getFlowId())
+            HttpRequest.DELETE("/api/v1/main/logs/" + log1.getNamespace() + "/" + log1.getFlowId())
         );
         assertThat(delete.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
 
         List<LogEntry> logs = client.toBlocking().retrieve(
-            GET("/api/v1/logs/" + log1.getExecutionId()),
+            GET("/api/v1/main/logs/" + log1.getExecutionId()),
             Argument.of(List.class, LogEntry.class)
         );
         assertThat(logs.size()).isZero();
@@ -170,6 +170,7 @@ class LogControllerTest {
 
     private static LogEntry logEntry(Level level) {
         return LogEntry.builder()
+            .tenantId("main")
             .flowId(IdUtils.create())
             .namespace("io.kestra.unittest")
             .taskId("taskId")

@@ -17,7 +17,7 @@ class MiscUsageControllerTest {
         Helpers.runApplicationContext(new String[]{"test"}, Map.of("kestra.server-type", "STANDALONE"), (applicationContext, embeddedServer) -> {
             try (ReactorHttpClient client = ReactorHttpClient.create(embeddedServer.getURL())) {
 
-                var response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/usages/all"), Usage.class);
+                var response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/usages/all"), Usage.class);
 
                 assertThat(response.getUuid()).isNotNull();
                 assertThat(response.getVersion()).isNotNull();

@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.templating;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Output;
 import io.kestra.core.runners.RunContext;
@@ -18,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class TemplatedTaskTest {
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void templatedType() throws Exception {

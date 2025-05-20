@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.junit.jupiter.api.Assertions.*;
 
 @KestraTest
@@ -33,7 +34,7 @@ class FileExistsFunctionTest {
     }
 
     private URI getInternalStorageFile(URI internalStorageURI, String text) throws IOException {
-        return storageInterface.put(null, NAMESPACE, internalStorageURI, new ByteArrayInputStream(text.getBytes()));
+        return storageInterface.put(MAIN_TENANT, NAMESPACE, internalStorageURI, new ByteArrayInputStream(text.getBytes()));
     }
 
     @Test
@@ -46,7 +47,8 @@ class FileExistsFunctionTest {
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", FLOW,
-                "namespace", NAMESPACE),
+                "namespace", NAMESPACE,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", executionId)
         );
         boolean render = Boolean.parseBoolean(variableRenderer.render("{{ fileExists('" + internalStorageFile + "') }}", variables));
@@ -57,12 +59,12 @@ class FileExistsFunctionTest {
     void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";
-        storageInterface.createDirectory(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
-        storageInterface.put(null, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("NOT AN EMPTY FILE".getBytes()));
+        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("NOT AN EMPTY FILE".getBytes()));
 
         boolean render = Boolean.parseBoolean(
             variableRenderer.render("{{ fileExists('" + filePath + "', namespace='" + namespace + "') }}",
-                Map.of("flow", Map.of("namespace", "flow.namespace"))));
+                Map.of("flow", Map.of("namespace", "flow.namespace", "tenantId", MAIN_TENANT))));
         assertTrue(render);
     }
 
@@ -76,7 +78,8 @@ class FileExistsFunctionTest {
         Map<String, Object> variables = Map.of(
             "flow", Map.of(
                 "id", FLOW,
-                "namespace", NAMESPACE),
+                "namespace", NAMESPACE,
+                "tenantId", MAIN_TENANT),
             "execution", Map.of("id", executionId)
         );
         boolean render = Boolean.parseBoolean(variableRenderer.render("{{ fileExists('" + internalStorageFile + "') }}", variables));

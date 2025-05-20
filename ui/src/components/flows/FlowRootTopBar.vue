@@ -22,7 +22,7 @@
     import Alert from "vue-material-design-icons/Alert.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
     import BetaBadge from "../global/BetaBadge.vue";
-    import Actions from "../../override/components/flows/Actions.vue";
+    import Actions from "override/components/flows/Actions.vue";
     import NavBar from "../layout/TopNavBar.vue";
     import permission from "../../models/permission";
     import action from "../../models/action";

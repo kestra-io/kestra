@@ -24,7 +24,7 @@ class ClusterControllerTest {
     @Test
     void shouldGetServiceInfo() {
         ServiceInstance serviceInstance = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/cluster/services/" + worker.getId()),
+            HttpRequest.GET("/api/v1/main/cluster/services/" + worker.getId()),
             ServiceInstance.class
         );
 

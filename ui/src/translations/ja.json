@@ -862,6 +862,7 @@
       },
       "sections": {
         "afterExecution": "実行後",
+        "deprecated": "非推奨プロパティ",
         "errors": "エラーハンドラー",
         "finally": "最後に",
         "general": "一般プロパティ",

@@ -862,6 +862,7 @@
       },
       "sections": {
         "afterExecution": "Execution के बाद",
+        "deprecated": "अप्रचलित गुण",
         "errors": "त्रुटि हैंडलर्स",
         "finally": "अंत में",
         "general": "सामान्य गुणधर्म",

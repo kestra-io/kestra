@@ -862,6 +862,7 @@
       },
       "sections": {
         "afterExecution": "Após a Execução",
+        "deprecated": "Propriedades obsoletas",
         "errors": "Manipuladores de Erro",
         "finally": "Finalmente",
         "general": "Propriedades gerais",

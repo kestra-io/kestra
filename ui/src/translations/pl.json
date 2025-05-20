@@ -862,6 +862,7 @@
       },
       "sections": {
         "afterExecution": "Po wykonaniu",
+        "deprecated": "Właściwości przestarzałe",
         "errors": "Obsługa błędów",
         "finally": "Na koniec",
         "general": "Właściwości ogólne",

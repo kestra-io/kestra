@@ -132,6 +132,8 @@
                                     ?? setupInitialNoCodeTabIfExists(store.state.flow.flowYaml, tab, t, noCodeHandlers)
                                     ?? EDITOR_ELEMENTS.find(e => e.value === tab)!
                                 )
+                                    // filter out any tab that have disappeared
+                                    .filter(Boolean)
                                 const activeTab = tabs.find(t => t.value === p.activeTab)!
                                 return {
                                     activeTab,

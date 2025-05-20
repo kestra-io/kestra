@@ -13,7 +13,7 @@ if (root.endsWith("/")) {
 
 export const baseUrl = root;
 
-export const basePath = () => "/api/v1"
+export const basePath = () => "/api/v1/main"
 
 export const apiUrl = (_?: Store<any>) => `${baseUrl}${basePath()}`
 

@@ -60,7 +60,7 @@ class DeleteFilesTest {
             .type(DeleteFiles.class.getName())
             .files(List.of("**/file.txt"))
             .namespace(new Property<>("{{ inputs.namespace }}"))
-            .deleteParentFolder(Property.of(true))
+            .deleteParentFolder(Property.ofValue(true))
             .build();
 
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, deleteFiles, Map.of("namespace", namespaceId));
@@ -88,7 +88,7 @@ class DeleteFilesTest {
             .type(DeleteFiles.class.getName())
             .files(List.of("**/file.txt"))
             .namespace(new Property<>("{{ inputs.namespace }}"))
-            .deleteParentFolder(Property.of(false))
+            .deleteParentFolder(Property.ofValue(false))
             .build();
 
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, deleteFiles, Map.of("namespace", namespaceId));
@@ -116,7 +116,7 @@ class DeleteFilesTest {
             .type(DeleteFiles.class.getName())
             .files(List.of("**/file1.txt"))
             .namespace(new Property<>("{{ inputs.namespace }}"))
-            .deleteParentFolder(Property.of(true))
+            .deleteParentFolder(Property.ofValue(true))
             .build();
 
         final RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, deleteFiles, Map.of("namespace", namespaceId));

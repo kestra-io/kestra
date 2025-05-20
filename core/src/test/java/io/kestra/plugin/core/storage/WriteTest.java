@@ -26,8 +26,8 @@ class WriteTest {
         RunContext runContext = runContextFactory.of();
 
         Write write = Write.builder()
-            .content(Property.of("Hello World"))
-            .extension(Property.of(".txt"))
+            .content(Property.ofValue("Hello World"))
+            .extension(Property.ofValue(".txt"))
             .build();
 
         var output = write.run(runContext);

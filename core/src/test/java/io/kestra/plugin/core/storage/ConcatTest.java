@@ -49,8 +49,8 @@ class ConcatTest {
 
         Concat result = Concat.builder()
             .files(json ? JacksonMapper.ofJson().writeValueAsString(files) : files)
-            .separator(Property.of("\n"))
-            .extension(Property.of(".yml"))
+            .separator(Property.ofValue("\n"))
+            .extension(Property.ofValue(".yml"))
             .build();
 
         Concat.Output run = result.run(runContext);

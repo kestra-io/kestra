@@ -27,7 +27,7 @@ class ExecutionStatusTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionStatus build = ExecutionStatus.builder()
-            .in(Property.of(Collections.singletonList(State.Type.SUCCESS)))
+            .in(Property.ofValue(Collections.singletonList(State.Type.SUCCESS)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -41,7 +41,7 @@ class ExecutionStatusTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionStatus build = ExecutionStatus.builder()
-            .notIn(Property.of(Collections.singletonList(State.Type.SUCCESS)))
+            .notIn(Property.ofValue(Collections.singletonList(State.Type.SUCCESS)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);
@@ -55,8 +55,8 @@ class ExecutionStatusTest {
         Execution execution = TestsUtils.mockExecution(flow, ImmutableMap.of());
 
         ExecutionStatus build = ExecutionStatus.builder()
-            .in(Property.of(Collections.singletonList(State.Type.CREATED)))
-            .notIn(Property.of(Collections.singletonList(State.Type.SUCCESS)))
+            .in(Property.ofValue(Collections.singletonList(State.Type.CREATED)))
+            .notIn(Property.ofValue(Collections.singletonList(State.Type.SUCCESS)))
             .build();
 
         boolean test = conditionService.isValid(build, flow, execution);

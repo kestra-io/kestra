@@ -79,14 +79,14 @@ public class FilterItems extends Task implements RunnableTask<FilterItems.Output
         description = "Use `INCLUDE` to pass the item through, or `EXCLUDE` to drop the items."
     )
     @Builder.Default
-    private Property<FilterType> filterType = Property.of(FilterType.INCLUDE);
+    private Property<FilterType> filterType = Property.ofValue(FilterType.INCLUDE);
 
     @Schema(
         title = "Specifies the behavior when the expression fail to be evaluated on an item or return `null`.",
         description = "Use `FAIL` to throw the exception and fail the task, `INCLUDE` to pass the item through, or `EXCLUDE` to drop the item."
     )
     @Builder.Default
-    private Property<ErrorOrNullBehavior> errorOrNullBehavior = Property.of(ErrorOrNullBehavior.FAIL);
+    private Property<ErrorOrNullBehavior> errorOrNullBehavior = Property.ofValue(ErrorOrNullBehavior.FAIL);
 
     /**
      * {@inheritDoc}

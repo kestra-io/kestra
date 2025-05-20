@@ -88,7 +88,7 @@ class ExecutionServiceTest {
                 Return.builder()
                     .id("a")
                     .type(Return.class.getName())
-                    .format(Property.of("replace"))
+                    .format(Property.ofValue("replace"))
                     .build()
             )
         );

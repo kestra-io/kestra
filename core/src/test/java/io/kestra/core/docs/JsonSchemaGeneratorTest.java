@@ -394,7 +394,7 @@ class JsonSchemaGeneratorTest {
     @NoArgsConstructor
     private static abstract class ParentClass extends Task {
         @Builder.Default
-        private Property<String> stringWithDefault = Property.of("default");
+        private Property<String> stringWithDefault = Property.ofValue("default");
     }
 
     @SuperBuilder
@@ -428,7 +428,7 @@ class JsonSchemaGeneratorTest {
         @PluginProperty
         @NotNull
         @Builder.Default
-        private Property<TaskWithEnum.TestClass> requiredWithDefault = Property.of(TaskWithEnum.TestClass.builder().testProperty("test").build());
+        private Property<TaskWithEnum.TestClass> requiredWithDefault = Property.ofValue(TaskWithEnum.TestClass.builder().testProperty("test").build());
 
         @PluginProperty
         @NotNull
@@ -448,7 +448,7 @@ class JsonSchemaGeneratorTest {
             description = "integerPropertyWithDefault description"
         )
         @Builder.Default
-        protected Property<Integer> integerPropertyWithDefault = Property.of(10000);
+        protected Property<Integer> integerPropertyWithDefault = Property.ofValue(10000);
 
         @Deprecated(since="deprecation_version_1", forRemoval=true)
         @Schema(
@@ -456,7 +456,7 @@ class JsonSchemaGeneratorTest {
             description = "stringPropertyWithDefault description"
         )
         @Builder.Default
-        protected Property<String> stringPropertyWithDefault = Property.of("my string");
+        protected Property<String> stringPropertyWithDefault = Property.ofValue("my string");
 
 
         @Deprecated(since="deprecation_version_1", forRemoval=true)

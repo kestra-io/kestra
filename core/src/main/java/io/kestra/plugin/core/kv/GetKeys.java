@@ -57,7 +57,7 @@ public class GetKeys extends Task implements RunnableTask<GetKeys.Output> {
         title = "The namespace on which to get the value."
     )
     @Builder.Default
-    private Property<String> namespace = new Property<>("{{ flow.namespace }}");
+    private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
 
     @Override

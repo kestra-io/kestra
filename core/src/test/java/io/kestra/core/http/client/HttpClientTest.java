@@ -344,7 +344,7 @@ class HttpClientTest {
 
     @Test
     void noError404() throws IOException, IllegalVariableEvaluationException, HttpClientException {
-        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowFailed(Property.of(true)).build()))) {
+        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowFailed(Property.ofValue(true)).build()))) {
             HttpResponse<Map<String, String>> response = client.request(HttpRequest.of(URI.create(embeddedServerUri + "/http/error?status=404")));
 
             assertThat(response.getStatus().getCode()).isEqualTo(404);
@@ -353,7 +353,7 @@ class HttpClientTest {
 
     @Test
     void noErrorPost404() throws IOException, IllegalVariableEvaluationException, HttpClientException {
-        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowFailed(Property.of(true)).build()))) {
+        try (HttpClient client = client(b -> b.configuration(HttpConfiguration.builder().allowFailed(Property.ofValue(true)).build()))) {
             URI uri = URI.create(embeddedServerUri + "/http/post-error");
 
             HttpResponse<Map<String, String>> response = client.request(HttpRequest.builder().uri(uri).method("POST").body(HttpRequest.StringRequestBody.builder().content("OK").build()).build());
@@ -382,11 +382,11 @@ class HttpClientTest {
         try (HttpClient client = client(b -> b
             .configuration(HttpConfiguration.builder()
                 .proxy(ProxyConfiguration.builder()
-                    .type(Property.of(Proxy.Type.HTTP))
-                    .address(Property.of(proxy.getHost()))
-                    .username(Property.of("pr0xy"))
-                    .password(Property.of("p4ss"))
-                    .port(Property.of(proxy.getFirstMappedPort()))
+                    .type(Property.ofValue(Proxy.Type.HTTP))
+                    .address(Property.ofValue(proxy.getHost()))
+                    .username(Property.ofValue("pr0xy"))
+                    .password(Property.ofValue("p4ss"))
+                    .port(Property.ofValue(proxy.getFirstMappedPort()))
                     .build())
                 .build()))
         ) {

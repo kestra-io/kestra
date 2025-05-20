@@ -53,14 +53,14 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
         title = "The namespace on which to set the value."
     )
     @Builder.Default
-    private Property<String> namespace = new Property<>("{{ flow.namespace }}");
+    private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
     @NotNull
     @Schema(
         title = "Whether to fail if there is no value for the given key."
     )
     @Builder.Default
-    private Property<Boolean> errorOnMissing = Property.of(false);
+    private Property<Boolean> errorOnMissing = Property.ofValue(false);
 
     @Override
     public Output run(RunContext runContext) throws Exception {

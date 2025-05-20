@@ -69,7 +69,7 @@ public class Log extends Task implements RunnableTask<VoidOutput> {
         title = "The log level. If not specified, it defaults to `INFO`."
     )
     @Builder.Default
-    private Property<Level> level = Property.of(Level.INFO);
+    private Property<Level> level = Property.ofValue(Level.INFO);
 
     @SuppressWarnings("unchecked")
     @Override

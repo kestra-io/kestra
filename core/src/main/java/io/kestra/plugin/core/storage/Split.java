@@ -66,7 +66,7 @@ public class Split extends Task implements RunnableTask<Split.Output>, StorageSp
     private Property<Integer> rows;
 
     @Builder.Default
-    private Property<String> separator = Property.of("\n");
+    private Property<String> separator = Property.ofValue("\n");
 
     @Override
     public Split.Output run(RunContext runContext) throws Exception {

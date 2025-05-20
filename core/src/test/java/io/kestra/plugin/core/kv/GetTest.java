@@ -113,7 +113,7 @@ class GetTest {
         // Then
         assertThat(run.getValue()).isNull();
 
-        Get finalGet = get.toBuilder().errorOnMissing(Property.of(true)).build();
+        Get finalGet = get.toBuilder().errorOnMissing(Property.ofValue(true)).build();
         NoSuchElementException noSuchElementException = Assertions.assertThrows(NoSuchElementException.class, () -> finalGet.run(runContext));
         assertThat(noSuchElementException.getMessage()).isEqualTo("No value found for key 'my-key' in namespace '" + namespaceId + "' and `errorOnMissing` is set to true");
     }

@@ -35,16 +35,16 @@ public class HttpConfiguration {
 
     @Schema(title = "Whether redirects should be followed automatically.")
     @Builder.Default
-    private Property<Boolean> followRedirects = Property.of(true);
+    private Property<Boolean> followRedirects = Property.ofValue(true);
 
     @Setter
     @Schema(title = "If true, allow a failed response code (response code >= 400)")
     @Builder.Default
-    private Property<Boolean> allowFailed = Property.of(false);
+    private Property<Boolean> allowFailed = Property.ofValue(false);
 
     @Schema(title = "The default charset for the request.")
     @Builder.Default
-    private final Property<Charset> defaultCharset = Property.of(StandardCharsets.UTF_8);
+    private final Property<Charset> defaultCharset = Property.ofValue(StandardCharsets.UTF_8);
 
     @Schema(title = "The enabled log.")
     @PluginProperty
@@ -121,7 +121,7 @@ public class HttpConfiguration {
             }
 
             this.timeout = this.timeout.toBuilder()
-                .connectTimeout(Property.of(connectTimeout))
+                .connectTimeout(Property.ofValue(connectTimeout))
                 .build();
 
             return this;
@@ -135,7 +135,7 @@ public class HttpConfiguration {
             }
 
             this.timeout = this.timeout.toBuilder()
-                .readIdleTimeout(Property.of(readTimeout))
+                .readIdleTimeout(Property.ofValue(readTimeout))
                 .build();
 
             return this;
@@ -150,7 +150,7 @@ public class HttpConfiguration {
             }
 
             this.proxy = this.proxy.toBuilder()
-                .type(Property.of(proxyType))
+                .type(Property.ofValue(proxyType))
                 .build();
 
             return this;
@@ -164,7 +164,7 @@ public class HttpConfiguration {
             }
 
             this.proxy = this.proxy.toBuilder()
-                .address(Property.of(proxyAddress))
+                .address(Property.ofValue(proxyAddress))
                 .build();
 
             return this;
@@ -178,7 +178,7 @@ public class HttpConfiguration {
             }
 
             this.proxy = this.proxy.toBuilder()
-                .port(Property.of(proxyPort))
+                .port(Property.ofValue(proxyPort))
                 .build();
 
             return this;
@@ -192,7 +192,7 @@ public class HttpConfiguration {
             }
 
             this.proxy = this.proxy.toBuilder()
-                .username(Property.of(proxyUsername))
+                .username(Property.ofValue(proxyUsername))
                 .build();
 
             return this;
@@ -206,7 +206,7 @@ public class HttpConfiguration {
             }
 
             this.proxy = this.proxy.toBuilder()
-                .password(Property.of(proxyPassword))
+                .password(Property.ofValue(proxyPassword))
                 .build();
 
             return this;
@@ -222,7 +222,7 @@ public class HttpConfiguration {
             }
 
             this.auth = ((BasicAuthConfiguration) this.auth).toBuilder()
-                .username(Property.of(basicAuthUser))
+                .username(Property.ofValue(basicAuthUser))
                 .build();
 
             return this;
@@ -237,7 +237,7 @@ public class HttpConfiguration {
             }
 
             this.auth = ((BasicAuthConfiguration) this.auth).toBuilder()
-                .password(Property.of(basicAuthPassword))
+                .password(Property.ofValue(basicAuthPassword))
                 .build();
 
             return this;

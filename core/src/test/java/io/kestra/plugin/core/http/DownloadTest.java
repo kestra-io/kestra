@@ -7,7 +7,6 @@ import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
@@ -49,7 +48,7 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(FILE))
+            .uri(Property.ofValue(FILE))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -68,7 +67,7 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/204"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/204"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -88,9 +87,9 @@ class DownloadTest {
 
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
-            .failOnEmptyResponse(Property.of(false))
+            .failOnEmptyResponse(Property.ofValue(false))
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/204"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/204"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -108,7 +107,7 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/500"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/500"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -129,7 +128,7 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/chunked"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/chunked"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -147,7 +146,7 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/content-disposition"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -165,7 +164,7 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/content-disposition"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -186,8 +185,8 @@ class DownloadTest {
             Download task = Download.builder()
                 .id(Download.class.getSimpleName())
                 .type(Download.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/hello417"))
-                .options(HttpConfiguration.builder().allowFailed(Property.of(true)).build())
+                .uri(Property.ofValue(server.getURL().toString() + "/hello417"))
+                .options(HttpConfiguration.builder().allowFailed(Property.ofValue(true)).build())
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -207,7 +206,7 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/content-disposition-double-dot"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition-double-dot"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());

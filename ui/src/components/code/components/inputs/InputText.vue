@@ -1,7 +1,7 @@
 <template>
     <span v-if="required" class="me-1 text-danger">*</span>
     <label v-if="label" class="label" :for="uid">{{ label }}</label>
-    <div class="mt-1 mb-2 wrapper" :class="props.class">
+    <div class="wrapper" :class="[props.margin, props.class]">
         <el-input
             v-model="input"
             :id="uid"
@@ -27,6 +27,7 @@
         placeholder: {type: String, default: ""},
         required: {type: Boolean, default: false},
         disabled: {type: Boolean, default: false},
+        margin: {type: String, default: "mt-1 mb-2"},
         class: {type: String, default: undefined},
     });
 

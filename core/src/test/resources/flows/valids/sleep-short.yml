@@ -2,6 +2,9 @@ id: sleep-short
 namespace: io.kestra.tests
 
 tasks:
+  - id: log
+    type: io.kestra.plugin.core.log.Log
+    message: start sleeping
   - id: sleep-short
     type: io.kestra.plugin.core.flow.Sleep
     duration: PT3S

@@ -1,15 +1,31 @@
 <template>
     <template v-if="data !== undefined">
-        <el-table :id="containerID" :data="data.results" :height="240" size="small">
+        <el-table
+            :id="containerID"
+            :data="data.results"
+            :height="240"
+            size="small"
+        >
             <el-table-column
-                v-for="(column, index) in Object.entries(props.chart.data.columns)"
+                v-for="(column, index) in Object.entries(
+                    props.chart.data.columns,
+                )"
                 :key="index"
                 :label="column[0]"
             >
                 <template #default="scope">
-                    {{
-                        column[1].field === "DURATION" ? Utils.humanDuration(scope.row[column[0]]) : scope.row[column[0]]
-                    }}
+                    <code v-if="column[1].field === 'ID'">
+                        {{ scope.row[column[0]] }}
+                    </code>
+                    <Status
+                        v-else-if="column[1].field === 'STATE'"
+                        size="small"
+                        :status="scope.row[column[0]]"
+                    />
+                    <span v-else-if="column[1].field === 'DURATION'">
+                        {{ Utils.humanDuration(scope.row[column[0]]) }}
+                    </span>
+                    <span v-else>{{ scope.row[column[0]] }}</span>
                 </template>
             </el-table-column>
         </el-table>
@@ -29,6 +45,7 @@
     import {onMounted, ref, watch} from "vue";
 
     import {useI18n} from "vue-i18n";
+    import Status from "../../../../Status.vue";
     import NoData from "../../../../layout/NoData.vue";
     import Pagination from "../../../../layout/Pagination.vue";
 
@@ -47,7 +64,7 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({
         chart: {type: Object, required: true},
-        default: {type: Boolean, default: false}
+        default: {type: Boolean, default: false},
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
@@ -67,13 +84,15 @@
         if (!props.default) {
             let params = {
                 id,
-                chartId: props.chart.id
+                chartId: props.chart.id,
             };
             if (route.query.namespace) {
                 params.namespace = route.query.namespace;
             }
             if (route.query.labels) {
-                params.labels = Object.fromEntries(route.query.labels.map(l => l.split(":")));
+                params.labels = Object.fromEntries(
+                    route.query.labels.map((l) => l.split(":")),
+                );
             }
 
             if (props.chart.chartOptions?.pagination?.enabled) {
@@ -81,14 +100,23 @@
                 params.pageSize = pageSize.value;
             }
             if (decodedParams) {
-                params = {...params, filters: decodedParams}
+                params = {...params, filters: decodedParams};
             }
             data.value = await store.dispatch("dashboard/generate", params);
         } else {
-            data.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filter: decodedParams}})
+            data.value = await store.dispatch("dashboard/chartPreview", {
+                chart: props.chart.content,
+                globalFilter: {filter: decodedParams},
+            });
         }
     };
 
     watch(route, async (route) => await generate(route.params?.id));
     onMounted(() => generate(route.params.id));
 </script>
+
+<style lang="scss" scoped>
+code {
+    color: var(--ks-content-id);
+}
+</style>

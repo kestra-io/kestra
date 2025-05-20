@@ -518,7 +518,7 @@ $flow-image-size-container: 36px;
 
         &.fixed {
             position: fixed;
-            top: -1rem;
+            top: 1rem;
             left: 50%;
             transform: translateX(-50%);
             padding: 1rem;

@@ -9,7 +9,6 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
-import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthService;
@@ -33,7 +32,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-@Controller("/api/v1/main")
+@Controller("/api/v1")
 public class MiscController {
     @Inject
     VersionProvider versionProvider;
@@ -55,9 +54,6 @@ public class MiscController {
 
     @Inject
     Optional<TemplateRepositoryInterface> templateRepository;
-
-    @Inject
-    TenantService tenantService;
 
     @Inject
     NamespaceUtils namespaceUtils;

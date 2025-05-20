@@ -70,7 +70,7 @@
         }
     };
 
-    const load = async (id = "default", dashboard = YAML_MAIN) => {
+    const load = async (id = "default", defaultYAML = YAML_MAIN) => {
         if (!["home", "flows/update", "namespaces/update"].includes(route.name)) return;
 
         router.replace({
@@ -78,7 +78,7 @@
             query: route.params.id !== id ? {} : {...route.query},
         });
 
-        dashboard.value = id === "default" ? initial(dashboard) : await store.dispatch("dashboard/load", id);
+        dashboard.value = id === "default" ? initial(defaultYAML) : await store.dispatch("dashboard/load", id);
 
         loadCharts(dashboard.value.charts);
     };

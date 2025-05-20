@@ -8,6 +8,7 @@ import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
+import io.kestra.core.validations.ExecutionsDataFilterKPIValidation;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -45,6 +46,7 @@ import lombok.experimental.SuperBuilder;
     }
 )
 @JsonTypeName("ExecutionsKPI")
+@ExecutionsDataFilterKPIValidation
 public class ExecutionsKPI<C extends ColumnDescriptor<ExecutionsKPI.Fields>> extends DataFilterKPI<ExecutionsKPI.Fields, C> implements IExecutions {
     @Override
     public Class<? extends QueryBuilderInterface<ExecutionsKPI.Fields>> repositoryClass() {

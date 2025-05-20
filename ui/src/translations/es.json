@@ -878,7 +878,8 @@
         "plugin defaults": "Seleccionar un plugin",
         "tasks": "Seleccionar una task",
         "triggers": "Seleccione un trigger"
-      }
+      },
+      "unnamed": "Sin Nombre"
     },
     "no_data": "Parece que no hay nada aquí... ¡todavía!<br/>Ajusta tus filtros o inténtalo de nuevo.",
     "no_logs_data": "Sin datos",

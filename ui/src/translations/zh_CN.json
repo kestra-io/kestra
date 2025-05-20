@@ -878,7 +878,8 @@
         "plugin defaults": "选择插件",
         "tasks": "选择一个task",
         "triggers": "选择一个trigger"
-      }
+      },
+      "unnamed": "无名称"
     },
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "no_logs_data": "无数据",

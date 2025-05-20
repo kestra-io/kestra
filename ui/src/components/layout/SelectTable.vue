@@ -4,13 +4,12 @@
             <slot name="select-actions" />
         </div>
 
-        <NoData v-if="data.length === 0 && infiniteScrollLoad === undefined" />
-
         <template v-else>
             <el-table
                 ref="table"
                 v-bind="$attrs"
                 :data="data"
+                :empty-text="noDataValue"
                 @selection-change="selectionChanged"
                 v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
                 :infinite-scroll-disabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
@@ -25,11 +24,9 @@
 </template>
 
 <script>
-    import NoData from "./NoData.vue";
     import elTableInfiniteScroll from "el-table-infinite-scroll";
 
     export default {
-        components: {NoData},
         data() {
             return {
                 hasSelection: false,
@@ -55,6 +52,9 @@
             },
             stillHaveDataToFetch() {
                 return this.infiniteScrollDisabled === false;
+            },
+            noDataValue() {
+                return this.inifiniteScrollDisabled !== undefined ? undefined : this.noDataText;
             }
         },
         directives: {
@@ -137,6 +137,10 @@
             data: {
                 type: Array,
                 default: () => []
+            },
+            noDataText: {
+                type: String,
+                default: undefined
             },
             infiniteScrollLoad: {
                 type: Function,

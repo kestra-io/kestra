@@ -16,6 +16,7 @@
             :selectable="false"
             @sort-change="handleSort"
             :infinite-scroll-load="namespace === undefined ? fetchSecrets : undefined"
+            :no-data-text="$t('no_results.secrets')"
             class="fill-height"
         >
             <el-table-column

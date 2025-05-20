@@ -25,8 +25,8 @@
                     </el-card>
                 </template>
 
-                <template #table v-if="logs !== undefined && logs.length > 0">
-                    <div v-loading="isLoading">
+                <template #table>
+                    <div v-loading="isLoading" v-if="logs !== undefined && logs.length > 0">
                         <div class="logs-wrapper">
                             <log-line
                                 v-for="(log, i) in logs"
@@ -38,6 +38,7 @@
                             />
                         </div>
                     </div>
+                    <no-data v-else />
                 </template>
             </data-table>
         </div>
@@ -53,6 +54,7 @@
     import DataTableActions from "../../mixins/dataTableActions";
     import DataTable from "../../components/layout/DataTable.vue";
     import LogsNoData from "../dashboard/components/charts/logs/LogsNoData.vue";
+    import NoData from "../layout/NoData.vue";
     import _merge from "lodash/merge";
     import Logs from "../dashboard/components/charts/logs/Bar.vue";
     import {storageKeys} from "../../utils/constants";
@@ -63,7 +65,9 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             KestraFilter,
-            DataTable, LogLine, TopNavBar, Logs, LogsNoData},
+            DataTable, LogLine, TopNavBar, Logs, LogsNoData,
+            NoData
+        },
         props: {
             logLevel: {
                 type: String,

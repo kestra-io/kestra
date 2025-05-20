@@ -1338,6 +1338,14 @@
     "search_docs": "Search",
     "no_results_found": "No results found",
     "searching": "Searching...",
-    "worker information": "Worker Information"
+    "worker information": "Worker Information",
+    "no_results": {
+      "executions": "No Executions",
+      "triggers": "No Triggers",
+      "flows": "No Flows",
+      "kv_pairs": "No Key-Value pairs",
+      "secrets": "No Secrets",
+      "templates": "No Templates"
+    }
   }
 }

@@ -68,7 +68,7 @@
                 </el-card>
             </template>
 
-            <template #table v-if="executions?.length">
+            <template #table>
                 <select-table
                     ref="selectTable"
                     :data="executions"
@@ -79,6 +79,7 @@
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
+                    :no-data-text="$t('no_results.executions')"
                 >
                     <template #select-actions>
                         <bulk-select

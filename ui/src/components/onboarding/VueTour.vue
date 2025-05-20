@@ -27,7 +27,11 @@
                         <div
                             v-if="currentStep(tour).title"
                             class="title"
-                            :class="{dark: currentStep(tour).keepDark, empty: !flows.length}"
+                            :class="{
+                                dark: currentStep(tour).keepDark, 
+                                empty: !flows.length, 
+                                fixed: tour.currentStep === 1
+                            }"
                         >
                             <div v-if="currentStep(tour).icon">
                                 <img
@@ -512,6 +516,14 @@ $flow-image-size-container: 36px;
             color: $white;
         }
 
+        &.fixed {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem;
+        }
+
         @keyframes jump {
             0% {
                 transform: translateY(0);
@@ -530,7 +542,7 @@ $flow-image-size-container: 36px;
 
         margin-bottom: 2rem;
         text-align: center;
-        line-height: 3rem;
+        line-height: 2.5rem;
         font-size: 2rem;
         font-weight: 500;
         color: $color;
@@ -562,8 +574,11 @@ $flow-image-size-container: 36px;
     & div.flows {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        padding: 2rem;
+        padding: 0 0 0 2rem;
+        margin: 2rem 0;
         gap: 1rem;
+        max-height: 60dvh;
+        overflow-y: auto;
 
         & .el-button.card {
             height: unset;

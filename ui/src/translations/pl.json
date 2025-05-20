@@ -862,6 +862,7 @@
       },
       "sections": {
         "afterExecution": "Po wykonaniu",
+        "deprecated": "Właściwości przestarzałe",
         "errors": "Obsługa błędów",
         "finally": "Na koniec",
         "general": "Właściwości ogólne",
@@ -878,7 +879,8 @@
         "plugin defaults": "Wybierz plugin",
         "tasks": "Wybierz task",
         "triggers": "Wybierz trigger"
-      }
+      },
+      "unnamed": "Brak Nazwy"
     },
     "no_data": "Wygląda na to, że nic tu nie ma... jeszcze!<br/>Dostosuj swoje filtry lub spróbuj ponownie!",
     "no_logs_data": "Brak danych",

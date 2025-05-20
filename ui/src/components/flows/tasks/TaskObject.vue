@@ -188,6 +188,102 @@
                     </template>
                 </el-collapse-item>
             </el-collapse>
+
+            <el-collapse v-model="activeNames" v-if="deprecatedProperties?.length" class="collapse">
+                <el-collapse-item name="deprecated" :title="$t('no_code.sections.deprecated')">
+                    <template v-for="[key, schema] in deprecatedProperties" :key="key">
+                        <template v-if="isAnyOf(schema)">
+                            <TaskWrapper>
+                                <template #tasks>
+                                    <el-form-item :required="isRequired(key)">
+                                        <template #label>
+                                            <span v-if="getKey(key)" class="label">
+                                                {{ getKey(key) }}
+                                            </span>
+                                            <el-tag
+                                                v-if="!isAnyOf(schema)"
+                                                disable-transitions
+                                                size="small"
+                                                class="ms-2 type-tag"
+                                            >
+                                                {{ getType(schema) }}
+                                            </el-tag>
+                                            <el-tooltip
+                                                v-if="!isAnyOf(schema) && hasTooltip(schema)"
+                                                :persistent="false"
+                                                :hide-after="0"
+                                                effect="light"
+                                            >
+                                                <template #content>
+                                                    <markdown
+                                                        class="markdown-tooltip"
+                                                        :source="helpText(schema)"
+                                                    />
+                                                </template>
+                                                <help class="ms-2" />
+                                            </el-tooltip>
+                                        </template>
+                                        <component
+                                            :is="`task-${getType(schema, key)}`"
+                                            :model-value="modelValue?.[key]"
+                                            :task="modelValue"
+                                            @update:model-value="onObjectInput(key, $event)"
+                                            :root="getKey(key)"
+                                            :schema="schema"
+                                            :required="isRequired(key)"
+                                            :definitions="definitions"
+                                            class="mt-1 mb-2 wrapper"
+                                        />
+                                    </el-form-item>
+                                </template>
+                            </TaskWrapper>
+                        </template>
+                        
+                        <template v-else>
+                            <el-form-item :required="isRequired(key)">
+                                <template #label>
+                                    <span v-if="getKey(key)" class="label">
+                                        {{ getKey(key) }}
+                                    </span>
+                                    <el-tag
+                                        v-if="!isAnyOf(schema)"
+                                        disable-transitions
+                                        size="small"
+                                        class="ms-2 type-tag"
+                                    >
+                                        {{ getType(schema) }}
+                                    </el-tag>
+                                    <el-tooltip
+                                        v-if="!isAnyOf(schema) && hasTooltip(schema)"
+                                        :persistent="false"
+                                        :hide-after="0"
+                                        effect="light"
+                                    >
+                                        <template #content>
+                                            <markdown
+                                                class="markdown-tooltip"
+                                                :source="helpText(schema)"
+                                            />
+                                        </template>
+                                        <help class="ms-2" />
+                                    </el-tooltip>
+                                </template>
+                                <component
+                                    :is="`task-${getType(schema, key)}`"
+                                    :model-value="modelValue?.[key]"
+                                    :task="modelValue"
+                                    @update:model-value="onObjectInput(key, $event)"
+                                    :root="getKey(key)"
+                                    :schema="schema"
+                                    :required="isRequired(key)"
+                                    :definitions="definitions"
+                                    class="mt-1 mb-2 wrapper"
+                                />
+                            </el-form-item>
+                        </template>
+                    </template>
+                </el-collapse-item>
+            </el-collapse>
         </template>
 
         <template v-else>
@@ -295,6 +391,9 @@
             },
             optionalProperties() {
                 return this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p));
+            },
+            deprecatedProperties() {
+                return this.sortedProperties.filter(([_,v]) => v && v.$deprecated);
             }
         },
         methods: {

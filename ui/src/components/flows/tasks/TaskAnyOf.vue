@@ -1,25 +1,27 @@
 <template>
-    <el-form-item class="tabs-wrapper">
-        <el-tabs v-model="selectedSchema" @tab-change="onSelectType">
-            <el-tab-pane
-                v-for="schema in schemaOptions"
-                :key="schema.label"
-                :label="schema.label"
-                :name="schema.value"
+    <div>
+        <el-form-item class="tabs-wrapper">
+            <el-tabs v-model="selectedSchema" @tab-change="onSelectType">
+                <el-tab-pane
+                    v-for="schema in schemaOptions"
+                    :key="schema.label"
+                    :label="schema.label"
+                    :name="schema.value"
+                />
+            </el-tabs>
+        </el-form-item>
+        <el-form label-position="top" v-if="selectedSchema">
+            <component
+                :is="`task-${currentSchemaType}`"
+                v-if="currentSchema"
+                :model-value="modelValue"
+                :schema="currentSchema"
+                :properties="currentSchema?.properties"
+                :definitions="definitions"
+                @update:model-value="onInput"
             />
-        </el-tabs>
-    </el-form-item>
-    <el-form label-position="top" v-if="selectedSchema">
-        <component
-            :is="`task-${currentSchemaType}`"
-            v-if="currentSchema"
-            :model-value="modelValue"
-            :schema="currentSchema"
-            :properties="currentSchema?.properties"
-            :definitions="definitions"
-            @update:model-value="onInput"
-        />
-    </el-form>
+        </el-form>
+    </div>
 </template>
 
 <script>

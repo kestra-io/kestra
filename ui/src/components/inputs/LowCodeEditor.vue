@@ -123,8 +123,7 @@
     import {Topology} from "@kestra-io/ui-libs";
 
     // Utils
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    import {SECTIONS} from "../../utils/constants";
+    import {YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
     import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
 

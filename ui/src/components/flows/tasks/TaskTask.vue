@@ -29,7 +29,7 @@
 </template>
 
 <script setup>
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import {YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
 
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
@@ -39,7 +39,6 @@
     import Task from "./Task"
     import TaskEditor from "../TaskEditor.vue"
     import Drawer from "../../Drawer.vue"
-    import {SECTIONS as SECTION} from "../../../utils/constants";
 
     export default {
         inheritAttrs: false,
@@ -49,7 +48,7 @@
         props: {
             section: {
                 type: String,
-                default: SECTION.TASKS
+                default: SECTIONS.TASKS
             },
         },
         data() {

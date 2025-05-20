@@ -862,6 +862,7 @@
       },
       "sections": {
         "afterExecution": "Nach Ausführung",
+        "deprecated": "Veraltete Eigenschaften",
         "errors": "Fehlerbehandler",
         "finally": "Schließlich",
         "general": "Allgemeine Eigenschaften",
@@ -878,7 +879,8 @@
         "plugin defaults": "Wählen Sie ein Plugin aus",
         "tasks": "Wählen Sie eine Task aus",
         "triggers": "Wählen Sie einen Trigger aus"
-      }
+      },
+      "unnamed": "Kein Name"
     },
     "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
     "no_logs_data": "Keine Daten",

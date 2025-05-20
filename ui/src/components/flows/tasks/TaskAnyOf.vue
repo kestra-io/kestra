@@ -26,6 +26,7 @@
     import Task from "./Task";
 
     export default {
+        inheritAttrs: false,
         mixins: [Task],
         emits: ["update:modelValue"],
         data() {

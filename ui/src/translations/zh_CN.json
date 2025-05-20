@@ -862,6 +862,7 @@
       },
       "sections": {
         "afterExecution": "执行后",
+        "deprecated": "不推荐使用的属性",
         "errors": "错误处理程序",
         "finally": "最后",
         "general": "常规属性",
@@ -878,7 +879,8 @@
         "plugin defaults": "选择插件",
         "tasks": "选择一个task",
         "triggers": "选择一个trigger"
-      }
+      },
+      "unnamed": "无名称"
     },
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "no_logs_data": "无数据",

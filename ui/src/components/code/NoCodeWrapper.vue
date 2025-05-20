@@ -131,7 +131,7 @@
 
     onBeforeUnmount(() => {
         if(props.createIndex){
-            store.commit("flow/setCreatedTaskYaml", {
+            store.commit("flow/setCreatedTask", {
                 section: props.section,
                 index: props.createIndex,
                 yaml: undefined

@@ -19,7 +19,7 @@
                         </template>
                     </p>
 
-                    <div class="flex-grow-1 mt-2">
+                    <div class="flex-grow-1">
                         <component
                             :is="TYPES[chart.type]"
                             :default="route.params.id === 'default'"

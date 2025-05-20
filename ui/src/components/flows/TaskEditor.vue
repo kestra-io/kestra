@@ -28,7 +28,7 @@
 
 <script lang="ts" setup>
     import {computed, onBeforeMount, ref, watch} from "vue";
-    import {YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {useStore} from "vuex";
@@ -43,7 +43,7 @@
     const modelValue = defineModel<string>();
 
     const props = defineProps<{
-        section: SectionKey
+        section?: SectionKey
     }>();
 
     const store = useStore();
@@ -156,10 +156,6 @@
         const value: PartialCodeElement = {
             type: selectedTaskType.value ?? ""
         };
-
-        if (props.section !== SECTIONS.TRIGGERS && props.section !== SECTIONS.TASK_RUNNERS) {
-            value["id"] = taskObject.value?.id ? taskObject.value.id : undefined;
-        }
 
         onInput(value);
     }

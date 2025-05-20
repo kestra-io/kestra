@@ -23,6 +23,7 @@
 
 <script setup lang="ts">
     import {computed, inject} from "vue";
+    import {useI18n} from "vue-i18n";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
     import {EDIT_TASK_FUNCTION_INJECTION_KEY} from "../../injectionKeys";
@@ -31,12 +32,15 @@
 
     const emits = defineEmits(["removeElement", "moveElement"]);
 
+    const {t} = useI18n();
+
     const props = defineProps<{
         section: string;
         element: {
             id: string;
             type: string;
         };
+        elementIndex: number;
     }>();
 
     import {useStore} from "vuex";
@@ -48,15 +52,18 @@
         EDIT_TASK_FUNCTION_INJECTION_KEY,
         () => {},
     );
+
+    const identifier = computed(() => {
+        return props.element.id ?? props.element.type;
+    });
     const taskIdentifier = computed(() => {
-        return props.section === "Plugin Defaults"
-            ? props.element.type
-            : props.element.id
+
+        return identifier.value ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`;
     });
 
     const handleClick = () => {
         editTask(
-            props.section.toLowerCase(),
+            props.section.toLowerCase() as any,
             taskIdentifier.value
         );
     };

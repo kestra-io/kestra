@@ -13,6 +13,7 @@
                 :key="elementIndex"
                 :section="title"
                 :element
+                :element-index
                 @remove-element="removeElement(title, elementIndex)"
                 @move-element="
                     (direction: 'up' | 'down') =>
@@ -51,6 +52,7 @@
         const keyName = title === "Plugin Defaults" ? "type" : "id";
 
         if(props.elements?.[index]?.[keyName] === undefined) return;
+
         emits(
             "remove",
             deleteBlock({

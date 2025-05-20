@@ -164,7 +164,7 @@
     onBeforeUnmount(() => {
         // cleanup the addition model on close
         if(props.creatingTask) {
-            store.commit("flow/setCreatedTaskYaml", {
+            store.commit("flow/setCreatedTask", {
                 section: injectedSection.value,
                 index: taskCreationIndex.value - 1,
                 yaml: undefined,

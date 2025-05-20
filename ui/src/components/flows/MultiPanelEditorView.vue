@@ -134,7 +134,7 @@
                                 )
                                     // filter out any tab that have disappeared
                                     .filter(Boolean)
-                                const activeTab = tabs.find(t => t.value === p.activeTab)!
+                                const activeTab = tabs.find(t => t.value === p.activeTab) ?? tabs[0]
                                 return {
                                     activeTab,
                                     tabs,

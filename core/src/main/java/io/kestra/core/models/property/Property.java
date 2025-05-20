@@ -8,9 +8,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -45,10 +47,16 @@ public class Property<T> {
     private String expression;
     private T value;
 
+    /**
+     * @deprecated use {@link #ofExpression(String)} instead.
+     */
+    @Deprecated
+    // Note: when not used, this constructor would not be deleted but made private so it can only be used by ofExpression(String) and the deserializer
     public Property(String expression) {
         this.expression = expression;
     }
 
+    @VisibleForTesting
     public Property(Map<?, ?> map) {
         try {
             expression = MAPPER.writeValueAsString(map);
@@ -65,8 +73,10 @@ public class Property<T> {
      * Build a new Property object with a value already set.<br>
      *
      * A property build with this method will always return the value passed at build time, no rendering will be done.
+     *
+     * Use {@link #ofExpression(String)} to build a property with a Pebble expression instead.
      */
-    public static <V> Property<V> of(V value) {
+    public static <V> Property<V> ofValue(V value) {
         // trick the serializer so the property would not be null at deserialization time
         String expression;
         if (value instanceof Map<?, ?> || value instanceof List<?>) {
@@ -91,6 +101,28 @@ public class Property<T> {
         Property<V> p = new Property<>(expression);
         p.value = value;
         return p;
+    }
+
+    /**
+     * @deprecated use {@link #ofValue(Object)} instead.
+     */
+    @Deprecated
+    public static <V> Property<V> of(V value) {
+        return ofValue(value);
+    }
+
+    /**
+     * Build a new Property object with a Pebble expression.<br>
+     *
+     * Use {@link #ofValue(Object)} to build a property with a value instead.
+     */
+    public static <V> Property<V> ofExpression(@NotNull String expression) {
+        Objects.requireNonNull(expression, "'expression' is required");
+        if(!expression.contains("{")) {
+            throw new IllegalArgumentException("'expression' must be a valid Pebble expression");
+        }
+
+        return new Property<>(expression);
     }
 
     /**

@@ -88,6 +88,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                 .flowId(logEntry.getFlowId())
                 .taskId(logEntry.getTaskId())
                 .executionId(logEntry.getExecutionId())
+                .executionKind(logEntry.getExecutionKind())
                 .taskRunId(logEntry.getTaskRunId())
                 .attemptNumber(logEntry.getAttemptNumber())
                 .triggerId(logEntry.getTriggerId())

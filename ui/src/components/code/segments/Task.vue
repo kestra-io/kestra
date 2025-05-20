@@ -33,8 +33,9 @@
 <script setup lang="ts">
     import {onBeforeMount, ref, watch, computed, inject} from "vue";
     import {useStore} from "vuex";
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    import {PLUGIN_DEFAULTS_SECTION, SECTIONS} from "../../../utils/constants";
+    import {SECTIONS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
         FLOW_INJECTION_KEY, PARENT_TASKID_INJECTION_KEY, POSITION_INJECTION_KEY,
@@ -80,13 +81,19 @@
 
     const yaml = taskCreationIndex.value ? computed({
         get() {
-            return store.getters["flow/createdTaskYaml"][section.value]?.[taskCreationIndex.value - 1] ?? "";
+            if(!section.value){
+                return "";
+            }
+            return store.getters["flow/createdTasks"][section.value]?.[taskCreationIndex.value - 1]?.yaml ?? "";
         },
         set(val){
-            store.commit("flow/setCreatedTaskYaml", {
+            store.commit("flow/setCreatedTask", {
                 section: section.value,
                 index: taskCreationIndex.value - 1,
                 yaml: val,
+                position: position,
+                parentKey: parentTaskId.value,
+                refKey: taskId.value,
             });
         }
     }) : ref("");
@@ -99,13 +106,13 @@
     });
 
     const validationSection = computed(() =>
-        SECTIONS[section.value === "triggers" ? "TRIGGERS" : "TASKS"]
+        section.value === "triggers" ? SECTIONS.TRIGGERS : SECTIONS.TASKS
     )
 
     watch(
         [taskId, section],
         ([id, section]) => {
-            if(taskCreationIndex.value){
+            if(taskCreationIndex.value || !section){
                 return;
             }
             yaml.value =
@@ -115,7 +122,11 @@
                         id // this is the task type for the plugin defaults
                     )
                     :
-                    YAML_UTILS.extractTask(flow.value, id) ?? "";
+                    YAML_UTILS.extractBlock({
+                        source: flow.value,
+                        section,
+                        key: id
+                    }) ?? "";
         },
         {immediate: true},
     );
@@ -124,9 +135,6 @@
         yaml,
         () => {
             if(saveMode === "auto") {
-                if(errors.value?.length > 0){
-                    return;
-                }
                 saveTask();
             }
         },
@@ -174,38 +182,47 @@
 
     const errors = computed(() => store.getters["flow/taskError"]);
 
-    const SECTIONS_MAP: Record<SectionKey, string> = {
-        tasks: "task",
-        triggers: "triggers",
-        "error handlers": "errors",
-        finally: "finally",
-        "after execution": "afterExecution",
-        [PLUGIN_DEFAULTS_SECTION]: "pluginDefaults",
-    };
-
     const saveTask = () => {
         if (lastBreadcrumb.value.shown && saveMode === "button") {
             exitTaskElement();
             return;
         }
 
-        let result: string = "";
+        let result: string | undefined = "";
 
         const currentSection = section.value;
 
+        if(!currentSection) {
+            return;
+        }
+
+        const keyName = currentSection === PLUGIN_DEFAULTS_SECTION ? "type" : "id"
+
         if (taskCreationIndex.value) {
             // if multiple task creation tabs are open add them all
-            const tasks: string[] | undefined = store.getters["flow/createdTaskYaml"][section.value];
+            const tasks: {
+                yaml:string,
+                position?: "before" | "after",
+                parentKey?: string,
+                refKey?: string
+            }[] | undefined = store.getters["flow/createdTasks"][currentSection];
             result = flowBeforeAdd.value;
             if(!tasks || !tasks.length) {
                 return;
             }
+
             for(const task of tasks){
-                if (currentSection === "tasks" && task?.length) {
-                    const existing = YAML_UTILS.checkTaskAlreadyExist(
-                        flowBeforeAdd.value,
-                        task,
-                    );
+                if(!task?.yaml){
+                    continue;
+                }
+                const parsedTask = YAML_UTILS.parse(task.yaml);
+                if(parsedTask?.[keyName]){
+                    const existing = YAML_UTILS.checkBlockAlreadyExists({
+                        source: flowBeforeAdd.value,
+                        section: SECTIONS_MAP[currentSection],
+                        newContent: task.yaml,
+                        keyName,
+                    })
 
                     if (existing) {
                         store.dispatch("core/showMessage", {
@@ -218,43 +235,52 @@
                             return;
                         }
                     }
-
-                    result = YAML_UTILS.insertTask(
-                        result,
-                        // target task id (the one before of after the task will be inserted)
-                        taskId.value.length ? taskId.value : YAML_UTILS.getLastTask(flowBeforeAdd.value, parentTaskId.value) ?? "",
-                        task,
-                        position,
-                        parentTaskId.value,
-                    );
-                } else if (currentSection && SECTIONS_MAP[currentSection] && task?.length) {
-                    result = YAML_UTILS.insertSection(
-                        SECTIONS_MAP[currentSection],
-                        flowBeforeAdd.value,
-                        task,
-                    );
                 }
+
+                const refKey = taskId.value.length ? taskId.value : YAML_UTILS.getLastBlock({
+                    source: flowBeforeAdd.value,
+                    section: SECTIONS_MAP[currentSection],
+                    parentKey: task.parentKey,
+                })
+
+                result = YAML_UTILS.insertBlock({
+                    source: result ?? "",
+                    section: SECTIONS_MAP[currentSection],
+                    // target task id (the one before of after the task will be inserted)
+                    refKey,
+                    newBlock: task.yaml,
+                    position,
+                    parentKey: task.parentKey,
+                });
             }
         } else if (currentSection === PLUGIN_DEFAULTS_SECTION) {
-            result = YAML_UTILS.replacePluginDefaultsInDocument(
-                flow.value,
-                parsedTask.value.type,
-                yaml.value,
-            );
+            result = YAML_UTILS.replaceBlockInDocument({
+                source: flow.value,
+                section: SECTIONS_MAP[currentSection],
+                key: parsedTask.value.type,
+                newContent: yaml.value,
+                keyName: "type",
+            });
         } else {
-            const originalTask = YAML_UTILS.extractTask(flow.value, taskId.value);
+            const originalTask = YAML_UTILS.extractBlock({
+                source:flow.value,
+                section: currentSection,
+                key:taskId.value
+            });
             if(!originalTask)return;
 
-            result = YAML_UTILS.replaceTaskInDocument(
-                flow.value,
-                taskId.value,
-                yaml.value,
-            );
+            result = YAML_UTILS.replaceBlockInDocument({
+                source: flow.value,
+                section: SECTIONS_MAP[currentSection],
+                key: taskId.value,
+                newContent: yaml.value,
+                keyName: "id",
+            });
             const updatedTask = YAML_UTILS.parse(yaml.value);
             taskId.value = updatedTask.id;
         }
 
-        emits("updateTask", result);
+        emits("updateTask", result ?? "");
         if(saveMode === "button") {
             breadcrumbs.value.pop();
             emits("exitTask");

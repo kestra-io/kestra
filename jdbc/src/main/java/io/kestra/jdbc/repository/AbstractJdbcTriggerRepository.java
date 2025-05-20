@@ -20,7 +20,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.time.ZonedDateTime;
-import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -133,15 +132,32 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
             .select(field("value"))
             .from(this.jdbcRepository.getTable())
             .where(
-                field("next_execution_date").lessThan(now.toOffsetDateTime())
+                (field("next_execution_date").lessThan(now.toOffsetDateTime())
                     // we check for null for backwards compatibility
-                    .or(field("next_execution_date").isNull())
+                    .or(field("next_execution_date").isNull()))
+                    .and(field("execution_id").isNull())
             )
             .orderBy(field("next_execution_date").asc())
             .forUpdate()
             .skipLocked()
             .fetch()
             .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class)));
+    }
+
+    public List<Trigger> findByNextExecutionDateReadyButLockedTriggers(ZonedDateTime now) {
+        return this.jdbcRepository.getDslContextWrapper()
+            .transactionResult(configuration -> DSL.using(configuration)
+                .select(field("value"))
+                .from(this.jdbcRepository.getTable())
+                .where(
+                    (field("next_execution_date").lessThan(now.toOffsetDateTime())
+                        // we check for null for backwards compatibility
+                        .or(field("next_execution_date").isNull()))
+                        .and(field("execution_id").isNotNull())
+                )
+                .orderBy(field("next_execution_date").asc())
+                .fetch()
+                .map(r -> this.jdbcRepository.deserialize(r.get("value", String.class))));
     }
 
     public Trigger save(Trigger trigger, ScheduleContextInterface scheduleContextInterface) {

@@ -389,7 +389,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
         poolExecutor.execute(() -> {
             List<Configuration.Step> steps = configuration.computeSteps();
-            Duration sleep = steps.getFirst().pollInterval();
+            Duration sleep = configuration.minPollInterval;
             ZonedDateTime lastPoll = ZonedDateTime.now();
             while (running.get() && !this.isClosed.get()) {
                 if (!this.isPaused.get()) {
@@ -398,14 +398,22 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
                         if (count > 0) {
                             lastPoll = ZonedDateTime.now();
                             sleep = configuration.minPollInterval;
+                            if (count.equals(configuration.pollSize)) {
+                                // Note: this provides better latency on high throughput: when Kestra is a top capacity,
+                                // it will not do a sleep and immediately poll again.
+                                // We can even have better latency at even higher latency by continuing for positive count,
+                                // but at higher database cost.
+                                // Current impl balance database cost with latency.
+                                continue;
+                            }
                         } else {
                             ZonedDateTime finalLastPoll = lastPoll;
                             // get all poll steps which duration is less than the duration between last poll and now
                             List<Configuration.Step> selectedSteps = steps.stream()
                                 .takeWhile(step -> finalLastPoll.plus(step.switchInterval()).compareTo(ZonedDateTime.now()) < 0)
                                 .toList();
-                            // then select the last one (longest) or maxPoll if all are beyond
-                            sleep = selectedSteps.isEmpty() ? configuration.maxPollInterval : selectedSteps.getLast().pollInterval();
+                            // then select the last one (longest) or minPoll if all are beyond while means we are under the first interval
+                            sleep = selectedSteps.isEmpty() ? configuration.minPollInterval : selectedSteps.getLast().pollInterval();
                         }
                     } catch (CannotCreateTransactionException e) {
                         if (log.isDebugEnabled()) {
@@ -466,7 +474,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         Duration minPollInterval = Duration.ofMillis(25);
         Duration maxPollInterval = Duration.ofMillis(500);
         Duration pollSwitchInterval = Duration.ofSeconds(60);
-        Integer pollSize = 50;
+        Integer pollSize = 100;
         Integer switchSteps = 5;
 
         public List<Step> computeSteps() {

@@ -30,7 +30,7 @@
     } from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
-    import {Breadcrumb, TopologyClickParams} from "./utils/types";
+    import {Breadcrumb, SectionKey, TopologyClickParams} from "./utils/types";
 
     const store = useStore();
 
@@ -106,7 +106,7 @@
 
     const metadata = computed(() => YAML_UTILS.getMetadata(props.flow));
 
-    const injectedSection = ref<string>(props.section)
+    const injectedSection = ref<SectionKey | undefined>(props.section as SectionKey);
     const injectedTaskId = ref<string>(props.taskId)
 
     const creatingTaskRef = ref(props.creatingTask)
@@ -154,7 +154,7 @@
                 return
             }
 
-            injectedSection.value = "";
+            injectedSection.value = undefined;
             injectedTaskId.value = "";
             creatingTaskRef.value = false
         }
@@ -164,7 +164,7 @@
     onBeforeUnmount(() => {
         // cleanup the addition model on close
         if(props.creatingTask) {
-            store.commit("flow/setCreatedTaskYaml", {
+            store.commit("flow/setCreatedTask", {
                 section: injectedSection.value,
                 index: taskCreationIndex.value - 1,
                 yaml: undefined,

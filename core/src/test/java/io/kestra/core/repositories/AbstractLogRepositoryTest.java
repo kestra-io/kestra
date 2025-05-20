@@ -3,6 +3,7 @@ package io.kestra.core.repositories;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.statistics.LogStatistics;
 import io.kestra.core.utils.IdUtils;
@@ -48,6 +49,7 @@ public abstract class AbstractLogRepositoryTest {
 
 
         LogEntry save = logRepository.save(builder.build());
+        logRepository.save(builder.executionKind(ExecutionKind.TEST).build()); // should only be loaded by execution id
 
         find = logRepository.find(Pageable.UNPAGED, null, null);
         assertThat(find.size()).isEqualTo(1);
@@ -74,31 +76,31 @@ public abstract class AbstractLogRepositoryTest {
         assertThat(find.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
         List<LogEntry> list = logRepository.findByExecutionId(null, save.getExecutionId(), null);
-        assertThat(list.size()).isEqualTo(1);
+        assertThat(list.size()).isEqualTo(2);
         assertThat(list.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
         list = logRepository.findByExecutionId(null, "io.kestra.unittest", "flowId", save.getExecutionId(), null);
-        assertThat(list.size()).isEqualTo(1);
+        assertThat(list.size()).isEqualTo(2);
         assertThat(list.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
         list = logRepository.findByExecutionIdAndTaskId(null, save.getExecutionId(), save.getTaskId(), null);
-        assertThat(list.size()).isEqualTo(1);
+        assertThat(list.size()).isEqualTo(2);
         assertThat(list.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
         list = logRepository.findByExecutionIdAndTaskId(null, "io.kestra.unittest", "flowId", save.getExecutionId(), save.getTaskId(), null);
-        assertThat(list.size()).isEqualTo(1);
+        assertThat(list.size()).isEqualTo(2);
         assertThat(list.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
         list = logRepository.findByExecutionIdAndTaskRunId(null, save.getExecutionId(), save.getTaskRunId(), null);
-        assertThat(list.size()).isEqualTo(1);
+        assertThat(list.size()).isEqualTo(2);
         assertThat(list.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
         list = logRepository.findByExecutionIdAndTaskRunIdAndAttempt(null, save.getExecutionId(), save.getTaskRunId(), null, 0);
-        assertThat(list.size()).isEqualTo(1);
+        assertThat(list.size()).isEqualTo(2);
         assertThat(list.getFirst().getExecutionId()).isEqualTo(save.getExecutionId());
 
         Integer countDeleted = logRepository.purge(Execution.builder().id(save.getExecutionId()).build());
-        assertThat(countDeleted).isEqualTo(1);
+        assertThat(countDeleted).isEqualTo(2);
 
         list = logRepository.findByExecutionIdAndTaskId(null, save.getExecutionId(), save.getTaskId(), null);
         assertThat(list.size()).isZero();
@@ -151,6 +153,15 @@ public abstract class AbstractLogRepositoryTest {
     }
 
     @Test
+    void shouldFindByExecutionIdTestLogs() {
+        var builder = logEntry(Level.INFO).executionId("123").executionKind(ExecutionKind.TEST).build();
+        logRepository.save(builder);
+
+        List<LogEntry> logs = logRepository.findByExecutionId(null, builder.getExecutionId(), null);
+        assertThat(logs).hasSize(1);
+    }
+
+    @Test
     void delete() {
         LogEntry log1 = logEntry(Level.INFO).build();
         logRepository.save(log1);
@@ -195,6 +206,7 @@ public abstract class AbstractLogRepositoryTest {
                     .build()
             );
         }
+        logRepository.save(logEntry(Level.INFO).executionKind(ExecutionKind.TEST).build()); // should be ignored by stats
 
         // mysql need some time ...
         Thread.sleep(500);
@@ -215,6 +227,7 @@ public abstract class AbstractLogRepositoryTest {
         logRepository.save(logEntry(Level.INFO).build());
         logRepository.save(logEntry(Level.ERROR).build());
         logRepository.save(logEntry(Level.WARN).build());
+        logRepository.save(logEntry(Level.INFO).executionKind(ExecutionKind.TEST).build()); // should not be visible here
 
         ZonedDateTime startDate = ZonedDateTime.now().minusSeconds(1);
 
@@ -238,11 +251,12 @@ public abstract class AbstractLogRepositoryTest {
     @Test
     void findAllAsync() {
         logRepository.save(logEntry(Level.INFO).build());
+        logRepository.save(logEntry(Level.INFO).executionKind(ExecutionKind.TEST).build()); // should be present as it's used for backup
         logRepository.save(logEntry(Level.ERROR).build());
         logRepository.save(logEntry(Level.WARN).build());
 
         Flux<LogEntry> find = logRepository.findAllAsync(null);
         List<LogEntry> logEntries = find.collectList().block();
-        assertThat(logEntries).hasSize(3);
+        assertThat(logEntries).hasSize(4);
     }
 }

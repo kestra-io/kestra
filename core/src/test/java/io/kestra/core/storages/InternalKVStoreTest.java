@@ -28,6 +28,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 
 class InternalKVStoreTest {
     private static final Instant date = Instant.now().truncatedTo(ChronoUnit.MILLIS);
@@ -46,7 +47,7 @@ class InternalKVStoreTest {
 
     @Test
     void list() throws IOException {
-        Instant before = Instant.now().minusMillis(100);
+        Instant now = Instant.now();
         InternalKVStore kv = kv();
 
         assertThat(kv.list().size()).isZero();
@@ -54,14 +55,13 @@ class InternalKVStoreTest {
         kv.put(TEST_KV_KEY, new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(5)), complexValue));
         kv.put("my-second-key", new KVValueAndMetadata(new KVMetadata(Duration.ofMinutes(10)), complexValue));
         kv.put("expired-key", new KVValueAndMetadata(new KVMetadata(Duration.ofMillis(1)), complexValue));
-        Instant after = Instant.now().plusMillis(100);
 
         List<KVEntry> list = kv.list();
         assertThat(list.size()).isEqualTo(2);
 
         list.forEach(kvEntry -> {
-            assertThat(kvEntry.creationDate().isAfter(before) && kvEntry.creationDate().isBefore(after)).isTrue();
-            assertThat(kvEntry.updateDate().isAfter(before) && kvEntry.updateDate().isBefore(after)).isTrue();
+            assertThat(kvEntry.creationDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
+            assertThat(kvEntry.updateDate()).isCloseTo(now, within(1, ChronoUnit. SECONDS));
         });
 
         Map<String, KVEntry> map = list.stream().collect(Collectors.toMap(KVEntry::key, Function.identity()));

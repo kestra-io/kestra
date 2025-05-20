@@ -73,6 +73,6 @@
 
 .el-check-tag.el-check-tag--primary.is-checked {
     background-color: var(--el-color-primary);
-    color: var(--ks-content-primary);
+    color: var(--ks-button-content-primary);
 }
 </style>

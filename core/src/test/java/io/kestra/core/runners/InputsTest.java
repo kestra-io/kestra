@@ -34,6 +34,7 @@ import java.time.LocalTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -91,7 +92,7 @@ public class InputsTest {
     private FlowInputOutput flowInputOutput;
 
     private Map<String, Object> typedInputs(Map<String, Object> map) {
-        return typedInputs(map, flowRepository.findById(null, "io.kestra.tests", "inputs").get());
+        return typedInputs(map, flowRepository.findById(MAIN_TENANT, "io.kestra.tests", "inputs").get());
     }
 
     private Map<String, Object> typedInputs(Map<String, Object> map, Flow flow) {
@@ -100,6 +101,7 @@ public class InputsTest {
             Execution.builder()
                 .id("test")
                 .namespace(flow.getNamespace())
+                .tenantId(MAIN_TENANT)
                 .flowRevision(1)
                 .flowId(flow.getId())
                 .build(),
@@ -142,7 +144,7 @@ public class InputsTest {
         assertThat(typeds.get("time")).isEqualTo(LocalTime.parse("18:27:49"));
         assertThat(typeds.get("duration")).isEqualTo(Duration.parse("PT5M6S"));
         assertThat((URI) typeds.get("file")).isEqualTo(new URI("kestra:///io/kestra/tests/inputs/executions/test/inputs/file/application-test.yml"));
-        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, (URI) typeds.get("file"))))).isEqualTo(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))));
+        assertThat(CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, (URI) typeds.get("file"))))).isEqualTo(CharStreams.toString(new InputStreamReader(new FileInputStream((String) inputs.get("file")))));
         assertThat(typeds.get("json")).isEqualTo(Map.of("a", "b"));
         assertThat(typeds.get("uri")).isEqualTo("https://www.google.com");
         assertThat(((Map<String, Object>) typeds.get("nested")).get("string")).isEqualTo("a string");
@@ -183,7 +185,7 @@ public class InputsTest {
     @LoadFlows({"flows/valids/inputs.yaml"})
     void inputFlow() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "inputs",
             null,
@@ -358,7 +360,7 @@ public class InputsTest {
         map.put("json", "{}");
 
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "inputs",
             null,
@@ -379,7 +381,7 @@ public class InputsTest {
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> {});
 
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "input-log-secret",
             null,

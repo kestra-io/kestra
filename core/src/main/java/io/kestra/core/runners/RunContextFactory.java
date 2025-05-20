@@ -1,5 +1,7 @@
 package io.kestra.core.runners;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
@@ -106,7 +108,7 @@ public class RunContextFactory {
     }
 
     public RunContext of(FlowInterface flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
-        RunContextLogger runContextLogger = runContextLoggerFactory.create(taskRun, task);
+        RunContextLogger runContextLogger = runContextLoggerFactory.create(taskRun, task, execution.getKind());
 
         return newBuilder()
             // Logger
@@ -129,7 +131,7 @@ public class RunContextFactory {
     }
 
     public RunContext of(Flow flow, AbstractTrigger trigger) {
-        RunContextLogger runContextLogger = runContextLoggerFactory.create(flow, trigger);
+        RunContextLogger runContextLogger = runContextLoggerFactory.create(flow, trigger, null);
         return newBuilder()
             // Logger
             .withLogger(runContextLogger)
@@ -180,7 +182,7 @@ public class RunContextFactory {
                     @Override
                     public String getTenantId() {
                         var tenantId = ((Map<String, Object>)variables.getOrDefault("flow", Map.of())).get("tenantId");
-                        return Optional.ofNullable(tenantId).map(Object::toString).orElse(null);
+                        return Optional.ofNullable(tenantId).map(Object::toString).orElse(MAIN_TENANT);
                     }
 
                     @SuppressWarnings("unchecked")

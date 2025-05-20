@@ -20,6 +20,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class DashboardControllerTest {
+
+    public static final String DASHBOARD_PATH = "/api/v1/main/dashboards";
     @Inject
     @Client("/")
     ReactorHttpClient client;
@@ -63,7 +65,7 @@ class DashboardControllerTest {
 
         // Create a dashboard
         Dashboard dashboard = client.toBlocking().retrieve(
-            POST("/api/v1/dashboards", dashboardYaml).contentType(MediaType.APPLICATION_YAML),
+            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
             Dashboard.class
         );
         assertThat(dashboard).isNotNull();
@@ -73,7 +75,7 @@ class DashboardControllerTest {
 
         // Get a dashboard
         Dashboard get = client.toBlocking().retrieve(
-            GET("/api/v1/dashboards/" + dashboard.getId()),
+            GET(DASHBOARD_PATH + "/" + dashboard.getId()),
             Dashboard.class
         );
         assertThat(get).isNotNull();
@@ -81,14 +83,14 @@ class DashboardControllerTest {
 
         // List dashboards
         List<Dashboard> dashboards = client.toBlocking().retrieve(
-            GET("/api/v1/dashboards"),
+            GET(DASHBOARD_PATH),
             Argument.listOf(Dashboard.class)
         );
         assertThat(dashboards).hasSize(1);
 
         // Compute a dashboard
         List<Map> chartData = client.toBlocking().retrieve(
-            POST("/api/v1/dashboards/" + dashboard.getId() + "/charts/logs_timeseries", GlobalFilter.builder().filters(Collections.emptyList()).build()),
+            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/logs_timeseries", GlobalFilter.builder().filters(Collections.emptyList()).build()),
             Argument.listOf(Map.class)
         );
         assertThat(chartData).isNotNull();
@@ -96,7 +98,7 @@ class DashboardControllerTest {
 
         // Delete a dashboard
         HttpResponse<Void> deleted = client.toBlocking().exchange(
-            DELETE("/api/v1/dashboards/" + dashboard.getId())
+            DELETE(DASHBOARD_PATH + "/" + dashboard.getId())
         );
         assertThat(deleted).isNotNull();
         assertThat(deleted.code()).isEqualTo(204);

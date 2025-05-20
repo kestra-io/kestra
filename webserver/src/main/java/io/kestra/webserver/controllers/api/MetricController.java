@@ -30,7 +30,7 @@ import java.util.List;
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
 @Validated
-@Controller("/api/v1/metrics")
+@Controller("/api/v1/main/metrics")
 @Requires(beans = MetricRepositoryInterface.class)
 public class MetricController {
     @Inject

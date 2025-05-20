@@ -2,7 +2,6 @@ package io.kestra.core.junit.extensions;
 
 import static io.kestra.core.junit.extensions.ExtensionUtils.loadFile;
 
-import io.kestra.core.junit.annotations.ExecuteFlow;
 import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
@@ -45,12 +44,11 @@ public class FlowLoaderExtension implements BeforeEachCallback, AfterEachCallbac
             LocalFlowRepositoryLoader.class);
 
         LoadFlows loadFlows = getLoadFlows(extensionContext);
-        String tenantId = LoadFlows.DEFAULT_TENANT_ID.equals(loadFlows.tenantId()) ? null : loadFlows.tenantId();
 
         for (String path : loadFlows.value()) {
             URL resource = loadFile(path);
 
-            TestsUtils.loads(tenantId, repositoryLoader, resource);
+            TestsUtils.loads(loadFlows.tenantId(), repositoryLoader, resource);
         }
     }
 

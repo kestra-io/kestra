@@ -48,7 +48,7 @@ public class FlowExecutorExtension implements AfterEachCallback, ParameterResolv
         }
 
         ExecuteFlow executeFlow = getExecuteFlow(extensionContext);
-        String tenantId = ExecuteFlow.DEFAULT_TENANT_ID.equals(executeFlow.tenantId()) ? null : executeFlow.tenantId();
+        String tenantId = executeFlow.tenantId();
 
         String path = executeFlow.value();
         URL url = getClass().getClassLoader().getResource(path);

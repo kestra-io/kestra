@@ -34,7 +34,7 @@ import java.util.Map;
 import java.util.Optional;
 
 @Validated
-@Controller("/api/v1/blueprints/community")
+@Controller("/api/v1/main/blueprints/community")
 public class BlueprintController {
     @Inject
     @Client("api")

@@ -33,7 +33,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-@Controller("/api/v1")
+@Controller("/api/v1/main")
 public class MiscController {
     @Inject
     VersionProvider versionProvider;
@@ -87,7 +87,7 @@ public class MiscController {
     private List<String> hiddenLabelsPrefixes;
 
 
-    @Get("{/tenant}/configs")
+    @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get current configurations")
     public Configuration getConfiguration() throws JsonProcessingException {
@@ -123,14 +123,14 @@ public class MiscController {
         return builder.build();
     }
 
-    @Get("{/tenant}/usages/all")
+    @Get("/usages/all")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get instance usage information")
     public Usage getUsages() {
         return collectorService.metrics(true);
     }
 
-    @Post(uri = "{/tenant}/basicAuth")
+    @Post(uri = "/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Create basic auth for the current instance")
     public HttpResponse<Void> createBasicAuth(

@@ -1,5 +1,5 @@
 <template>
-    <div class="d-flex justify-content-end md-5">
+    <div class="d-flex justify-content-end mb-5">
         <el-button type="primary" :icon="saveMode === 'button' ? ContentSave: undefined">
             {{ t(`no_code.${saveOrClose}.${props.what}`) }}
         </el-button>

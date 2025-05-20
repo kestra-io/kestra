@@ -465,8 +465,8 @@
 
     import permission from "../../models/permission";
     import action from "../../models/action";
-    import {SECTIONS, storageKeys, editorViewTypes} from "../../utils/constants";
-    import {Utils, YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import {storageKeys, editorViewTypes} from "../../utils/constants";
+    import {Utils, YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
     import localUtils from "../../utils/utils";
 
     // editor components

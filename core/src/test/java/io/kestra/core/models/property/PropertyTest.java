@@ -1,5 +1,6 @@
 package io.kestra.core.models.property;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.runners.RunContextFactory;
@@ -20,6 +21,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static java.util.Map.entry;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -28,7 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class PropertyTest {
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     private StorageInterface storage;
@@ -155,7 +157,7 @@ class PropertyTest {
         FileSerde.writeAll(Files.newBufferedWriter(messages), Flux.fromIterable(inputValues)).block();
         URI uri;
         try (var input = new FileInputStream(messages.toFile())) {
-            uri = storage.put(null, null, URI.create("/messages.ion"), input);
+            uri = storage.put(MAIN_TENANT, null, URI.create("/messages.ion"), input);
         }
 
         var task = DynamicPropertyExampleTask.builder()

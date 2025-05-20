@@ -66,6 +66,7 @@ import java.util.stream.IntStream;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
@@ -1319,7 +1320,10 @@ class ExecutionControllerRunnerTest {
                 BulkResponse.class
             );
         } catch (HttpClientResponseException e){
+            String errorMessage = "Error while pausing execution, err: %s, response: %s";
+            String formatedError = String.format(errorMessage, e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids).orElse("errors"));
             log.error("Error while pausing execution, err: {}, response: {}", e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids), e);
+            fail(formatedError);
         }
 
         assertThat(response.getCount()).isEqualTo(3);

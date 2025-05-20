@@ -1,33 +1,32 @@
 <template>
-    <div>
-        <el-form-item class="tabs-wrapper">
-            <el-tabs v-model="selectedSchema" @tab-change="onSelectType">
-                <el-tab-pane
-                    v-for="schema in schemaOptions"
-                    :key="schema.label"
-                    :label="schema.label"
-                    :name="schema.value"
-                />
-            </el-tabs>
-        </el-form-item>
-        <el-form label-position="top" v-if="selectedSchema">
-            <component
-                :is="`task-${currentSchemaType}`"
-                v-if="currentSchema"
-                :model-value="modelValue"
-                :schema="currentSchema"
-                :properties="currentSchema?.properties"
-                :definitions="definitions"
-                @update:model-value="onInput"
+    <el-form-item class="tabs-wrapper">
+        <el-tabs v-model="selectedSchema" @tab-change="onSelectType">
+            <el-tab-pane
+                v-for="schema in schemaOptions"
+                :key="schema.label"
+                :label="schema.label"
+                :name="schema.value"
             />
-        </el-form>
-    </div>
+        </el-tabs>
+    </el-form-item>
+    <el-form label-position="top" v-if="selectedSchema">
+        <component
+            :is="`task-${currentSchemaType}`"
+            v-if="currentSchema"
+            :model-value="modelValue"
+            :schema="currentSchema"
+            :properties="currentSchema?.properties"
+            :definitions="definitions"
+            @update:model-value="onInput"
+        />
+    </el-form>
 </template>
 
 <script>
     import Task from "./Task";
 
     export default {
+        inheritAttrs: false,
         mixins: [Task],
         emits: ["update:modelValue"],
         data() {

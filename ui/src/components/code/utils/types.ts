@@ -82,7 +82,7 @@ export type Component = ReturnType<typeof defineComponent>;
 
 type BasicParams = {
     id: string;
-    section: string;
+    section: SectionKey;
 }
 
 type CreationParams = BasicParams & {

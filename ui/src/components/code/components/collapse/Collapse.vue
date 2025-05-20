@@ -13,6 +13,7 @@
                 :key="elementIndex"
                 :section="title"
                 :element
+                :element-index
                 @remove-element="removeElement(title, elementIndex)"
                 @move-element="
                     (direction: 'up' | 'down') =>
@@ -31,13 +32,14 @@
 <script setup lang="ts">
     import {inject, ref} from "vue";
 
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import {deleteBlock, swapBlocks} from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {CollapseItem} from "../../utils/types";
 
     import Creation from "./buttons/Creation.vue";
     import Element from "./Element.vue";
     import {FLOW_INJECTION_KEY} from "../../injectionKeys";
+    import {SECTIONS_MAP} from "../../../../utils/constants";
 
     const emits = defineEmits(["remove", "reorder"]);
 
@@ -47,19 +49,19 @@
     const expanded = ref<CollapseItem["title"]>(props.title);
 
     const removeElement = (title: string, index: number) => {
-        const isPluginDefaults = title === "Plugin Defaults";
-        // plugin default do not have an id
-        // they have to be deleted separately
-        if (isPluginDefaults) {
-            if(props.elements?.[index]?.type === undefined) return;
-            emits("remove", YAML_UTILS.deletePluginDefaults(flow.value, props.elements[index].type));
-        } else {
-            if(props.elements?.[index]?.id === undefined) return;
-            emits(
-                "remove",
-                YAML_UTILS.deleteTask(flow.value, props.elements[index].id, title.toUpperCase()),
-            );
-        }
+        const keyName = title === "Plugin Defaults" ? "type" : "id";
+
+        if(props.elements?.[index]?.[keyName] === undefined) return;
+
+        emits(
+            "remove",
+            deleteBlock({
+                source: flow.value,
+                section: SECTIONS_MAP[title.toLowerCase() as keyof typeof SECTIONS_MAP],
+                key: props.elements[index][keyName],
+                keyName,
+            }),
+        );
     };
 
     const moveElement = (
@@ -68,6 +70,7 @@
         index: number,
         direction: "up" | "down",
     ) => {
+        const keyName = props.title === "Plugin Defaults" ? "type" : "id";
         if (!items || !flow) return;
         if (
             (direction === "up" && index === 0) ||
@@ -78,7 +81,13 @@
         const newIndex = direction === "up" ? index - 1 : index + 1;
         emits(
             "reorder",
-            YAML_UTILS.swapTasks(flow.value, elementID, items[newIndex].id),
+            swapBlocks({
+                source:flow.value,
+                section: SECTIONS_MAP[props.title.toLowerCase() as keyof typeof SECTIONS_MAP],
+                key1:elementID,
+                key2:items[newIndex][keyName],
+                keyName,
+            }),
         );
     };
 </script>

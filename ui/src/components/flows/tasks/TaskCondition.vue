@@ -31,11 +31,10 @@
 </template>
 
 <script setup>
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import {YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
 
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import {SECTIONS} from "../../../utils/constants";
 </script>
 
 <script>

@@ -37,7 +37,7 @@ export default {
         haveChange: false,
         expandedSubflows: [],
         metadata: undefined,
-        createdTaskYaml: {}
+        createdTasks: {}
     },
 
     actions: {
@@ -679,16 +679,17 @@ export default {
         setMetadata(state, value) {
             state.metadata = value
         },
-        setCreatedTaskYaml(state, payload) {
-            if(state.createdTaskYaml[payload.section] === undefined){
-                state.createdTaskYaml[payload.section] = []
+        setCreatedTask(state, payload) {
+            const {section, index, ...rest} = payload;
+            if(state.createdTasks[section] === undefined){
+                state.createdTasks[section] = []
             }
-            state.createdTaskYaml[payload.section][payload.index] = payload.yaml
+            state.createdTasks[section][index] = rest
         }
     },
     getters: {
-        createdTaskYaml(state){
-            return state.createdTaskYaml;
+        createdTasks(state){
+            return state.createdTasks;
         },
         isFlow(state, _getters, rootState) {
             const currentTab = rootState.editor.current;

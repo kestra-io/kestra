@@ -1,8 +1,4 @@
-export const SECTIONS = {
-    TASKS: "TASKS",
-    TRIGGERS: "TRIGGERS",
-    TASK_RUNNERS: "TASK_RUNNERS",
-}
+import {SectionKey} from "../components/code/utils/types"
 
 export const stateGlobalChartTypes = {
     EXECUTIONS: "executions",
@@ -52,4 +48,13 @@ export const stateDisplayValues = {
 }
 
 export const PLUGIN_DEFAULTS_SECTION = "plugin defaults"
+
+export const SECTIONS_MAP: Record<SectionKey, string> = {
+        tasks: "tasks",
+        triggers: "triggers",
+        "error handlers": "errors",
+        finally: "finally",
+        "after execution": "afterExecution",
+        [PLUGIN_DEFAULTS_SECTION]: "pluginDefaults",
+    };
 

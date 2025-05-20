@@ -185,9 +185,8 @@
     import {State} from "@kestra-io/ui-libs"
     import FlowUtils from "../../utils/flowUtils";
     import {mapState} from "vuex";
-    import {SECTIONS} from "../../utils/constants";
     import _groupBy from "lodash/groupBy";
-    import {TaskIcon} from "@kestra-io/ui-libs";
+    import {TaskIcon, SECTIONS} from "@kestra-io/ui-libs";
     import Duration from "../layout/Duration.vue";
     import Utils from "../../utils/utils";
     import permission from "../../models/permission";

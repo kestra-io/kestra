@@ -47,7 +47,7 @@ public class Get extends AbstractState implements RunnableTask<Get.Output> {
         title = "Raise an error if the state file is not found."
     )
     @Builder.Default
-    private final Property<Boolean> errorOnMissing = Property.of(false);
+    private final Property<Boolean> errorOnMissing = Property.ofValue(false);
 
     @Override
     public Output run(RunContext runContext) throws Exception {

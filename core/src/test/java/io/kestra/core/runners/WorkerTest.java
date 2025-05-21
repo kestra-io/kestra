@@ -96,7 +96,7 @@ class WorkerTest {
 
         Pause pause = Pause.builder()
             .type(Pause.class.getName())
-            .delay(Property.of(Duration.ofSeconds(1)))
+            .delay(Property.ofValue(Duration.ofSeconds(1)))
             .id("unit-test")
             .build();
 
@@ -204,7 +204,7 @@ class WorkerTest {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
-            .duration(Property.of(Duration.ofMillis(sleepDuration)))
+            .duration(Property.ofValue(Duration.ofMillis(sleepDuration)))
             .build();
 
         Flow flow = Flow.builder()

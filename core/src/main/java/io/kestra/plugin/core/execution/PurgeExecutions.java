@@ -2,7 +2,6 @@ package io.kestra.plugin.core.execution;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
@@ -80,7 +79,7 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
         title = "Whether to purge executions."
     )
     @Builder.Default
-    private Property<Boolean> purgeExecution = Property.of(true);
+    private Property<Boolean> purgeExecution = Property.ofValue(true);
 
     @Schema(
         title = "Whether to purge execution's logs.",
@@ -89,19 +88,19 @@ public class PurgeExecutions extends Task implements RunnableTask<PurgeExecution
             The `io.kestra.plugin.core.log.PurgeLogs` task is a better fit to purge logs as it will purge logs in bulk, and will also purge logs not tied to an execution like trigger logs."""
     )
     @Builder.Default
-    private Property<Boolean> purgeLog = Property.of(true);
+    private Property<Boolean> purgeLog = Property.ofValue(true);
 
     @Schema(
         title = "Whether to purge execution's metrics."
     )
     @Builder.Default
-    private Property<Boolean> purgeMetric = Property.of(true);
+    private Property<Boolean> purgeMetric = Property.ofValue(true);
 
     @Schema(
         title = "Whether to purge execution's files from the Kestra's internal storage."
     )
     @Builder.Default
-    private Property<Boolean> purgeStorage = Property.of(true);
+    private Property<Boolean> purgeStorage = Property.ofValue(true);
 
     @Override
     public PurgeExecutions.Output run(RunContext runContext) throws Exception {

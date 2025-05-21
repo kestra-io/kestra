@@ -32,8 +32,8 @@ class StateNamespaceTest {
         Set set = Set.builder()
             .id(IdUtils.create())
             .type(Set.class.getSimpleName())
-            .namespace(Property.of(true))
-            .data(Property.of(Map.of(
+            .namespace(Property.ofValue(true))
+            .data(Property.ofValue(Map.of(
                 "john", "doe"
             )))
             .build();
@@ -43,7 +43,7 @@ class StateNamespaceTest {
         Get get = Get.builder()
             .id(IdUtils.create())
             .type(Get.class.getSimpleName())
-            .namespace(Property.of(true))
+            .namespace(Property.ofValue(true))
             .build();
         Get.Output getOutput = get.run(runContextFlow2(get));
         assertThat(getOutput.getCount()).isEqualTo(1);

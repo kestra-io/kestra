@@ -39,8 +39,8 @@ class SplitTest {
         URI put = storageUpload(1000);
 
         Split result = Split.builder()
-            .from(Property.of(put.toString()))
-            .partitions(Property.of(8))
+            .from(Property.ofValue(put.toString()))
+            .partitions(Property.ofValue(8))
             .build();
 
         Split.Output run = result.run(runContext);
@@ -56,8 +56,8 @@ class SplitTest {
         URI put = storageUpload(1000);
 
         Split result = Split.builder()
-            .from(Property.of(put.toString()))
-            .rows(Property.of(10))
+            .from(Property.ofValue(put.toString()))
+            .rows(Property.ofValue(10))
             .build();
 
         Split.Output run = result.run(runContext);
@@ -72,8 +72,8 @@ class SplitTest {
         URI put = storageUpload(12288);
 
         Split result = Split.builder()
-            .from(Property.of(put.toString()))
-            .bytes(Property.of("1KB"))
+            .from(Property.ofValue(put.toString()))
+            .bytes(Property.ofValue("1KB"))
             .build();
 
         Split.Output run = result.run(runContext);

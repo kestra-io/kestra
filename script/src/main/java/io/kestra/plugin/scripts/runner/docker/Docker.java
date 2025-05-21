@@ -241,7 +241,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         even if an image with the same tag already exists."""
     )
     @Builder.Default
-    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.IF_NOT_PRESENT);
+    protected Property<PullPolicy> pullPolicy = Property.ofValue(PullPolicy.IF_NOT_PRESENT);
 
     @Schema(
         title = "A list of device requests to be sent to device drivers."
@@ -289,21 +289,21 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     )
     @NotNull
     @Builder.Default
-    private Property<FileHandlingStrategy> fileHandlingStrategy = Property.of(FileHandlingStrategy.VOLUME);
+    private Property<FileHandlingStrategy> fileHandlingStrategy = Property.ofValue(FileHandlingStrategy.VOLUME);
 
     @Schema(
         title = "Whether the container should be deleted upon completion."
     )
     @NotNull
     @Builder.Default
-    private Property<Boolean> delete = Property.of(true);
+    private Property<Boolean> delete = Property.ofValue(true);
 
     @Builder.Default
     @Schema(
         title = "Whether to wait for the container to exit."
     )
     @NotNull
-    private Property<Boolean> wait = Property.of(true);
+    private Property<Boolean> wait = Property.ofValue(true);
 
     @Builder.Default
     @NotNull

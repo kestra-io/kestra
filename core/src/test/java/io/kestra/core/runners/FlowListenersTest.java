@@ -33,7 +33,7 @@ abstract public class FlowListenersTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id(taskId)
                 .type(Return.class.getName())
-                .format(Property.of("test"))
+                .format(Property.ofValue("test"))
                 .build()))
             .build();
         return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();

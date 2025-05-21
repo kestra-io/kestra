@@ -57,7 +57,7 @@ class LocalFilesTest {
                 "execution.txt", "{{toto}}",
                 "application-test.yml", storageFile.toString()
             ))
-            .outputs(Property.of(List.of("hello-input.txt")))
+            .outputs(Property.ofValue(List.of("hello-input.txt")))
             .build();
         var outputs = task.run(runContext);
 
@@ -85,7 +85,7 @@ class LocalFilesTest {
                 "test/sub/dir/2/execution.txt", "{{toto}}",
                 "test/sub/dir/3/application-test.yml", storageFile.toString()
             ))
-            .outputs(Property.of(List.of("test/**")))
+            .outputs(Property.ofValue(List.of("test/**")))
             .build();
         var outputs = task.run(runContext);
 

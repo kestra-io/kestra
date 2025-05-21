@@ -8,7 +8,7 @@ import io.micronaut.test.extensions.junit5.annotation.MicronautTest;
 import io.micronaut.validation.validator.Validator;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolation;
-import java.util.Optional;
+
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -20,11 +20,11 @@ public class PropertyValueExtractorTest {
 
     @Test
     public void should_extract_and_validate_integer_value(){
-        DynamicPropertyDto dto = new DynamicPropertyDto(Property.of(20), Property.of("Test"));
+        DynamicPropertyDto dto = new DynamicPropertyDto(Property.ofValue(20), Property.ofValue("Test"));
         Set<ConstraintViolation<DynamicPropertyDto>> violations = validator.validate(dto);
         assertTrue(violations.isEmpty());
 
-        dto = new DynamicPropertyDto(Property.of(5), Property.of("Test"));
+        dto = new DynamicPropertyDto(Property.ofValue(5), Property.ofValue("Test"));
         violations = validator.validate(dto);
         assertThat(violations.size()).isEqualTo(1);
         ConstraintViolation<DynamicPropertyDto> violation = violations.stream().findFirst().get();

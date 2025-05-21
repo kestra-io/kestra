@@ -316,7 +316,7 @@ public class Request extends AbstractHttp implements RunnableTask<Request.Output
         title = "If true, the HTTP response body will be automatically encrypted and decrypted in the outputs, provided that encryption is configured in your Kestra configuration.",
         description = "If this property is set to `true`, this task will output the request body using the `encryptedBody` output property; otherwise, the request body will be stored in the `body` output property."
     )
-    private Property<Boolean> encryptBody = Property.of(false);
+    private Property<Boolean> encryptBody = Property.ofValue(false);
 
     public Output run(RunContext runContext) throws Exception {
         try (HttpClient client = this.client(runContext)) {

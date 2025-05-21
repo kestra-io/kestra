@@ -37,7 +37,7 @@ class ReverseTest {
 
 
         Reverse result = Reverse.builder()
-            .from(Property.of(put.toString()))
+            .from(Property.ofValue(put.toString()))
             .build();
 
         Reverse.Output run = result.run(runContext);

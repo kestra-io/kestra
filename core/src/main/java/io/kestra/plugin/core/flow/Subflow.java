@@ -139,7 +139,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
         title = "Whether the subflow should inherit labels from this execution that triggered it.",
         description = "By default, labels are not passed to the subflow execution. If you set this option to `true`, the child flow execution will inherit all labels from the parent execution."
     )
-    private final Property<Boolean> inheritLabels = Property.of(false);
+    private final Property<Boolean> inheritLabels = Property.ofValue(false);
 
     /**
      * @deprecated Output value should now be defined part of the Flow definition.

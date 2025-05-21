@@ -39,7 +39,6 @@ import java.util.*;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
-import static org.hamcrest.Matchers.*;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -69,17 +68,17 @@ public abstract class AbstractExecutionRepositoryTest {
 
         List<TaskRun> taskRuns = Arrays.asList(
             TaskRun.of(execution.build(), ResolvedTask.of(
-                    Return.builder().id("first").type(Return.class.getName()).format(Property.of("test")).build())
+                    Return.builder().id("first").type(Return.class.getName()).format(Property.ofValue("test")).build())
                 )
                 .withState(State.Type.SUCCESS),
             spyTaskRun(TaskRun.of(execution.build(), ResolvedTask.of(
-                        Return.builder().id("second").type(Return.class.getName()).format(Property.of("test")).build())
+                        Return.builder().id("second").type(Return.class.getName()).format(Property.ofValue("test")).build())
                     )
                     .withState(state),
                 state
             ),
             TaskRun.of(execution.build(), ResolvedTask.of(
-                Return.builder().id("third").type(Return.class.getName()).format(Property.of("test")).build())).withState(state)
+                Return.builder().id("third").type(Return.class.getName()).format(Property.ofValue("test")).build())).withState(state)
         );
 
         if (flowId == null) {

@@ -45,7 +45,7 @@ class FlowServiceTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id(taskId)
                 .type(Return.class.getName())
-                .format(Property.of("test"))
+                .format(Property.ofValue("test"))
                 .build()))
             .build();
 
@@ -283,7 +283,7 @@ class FlowServiceTest {
             .tasks(Collections.singletonList(Echo.builder()
                 .id("taskId")
                 .type(Return.class.getName())
-                .format(Property.of("test"))
+                .format(Property.ofValue("test"))
                 .build()))
             .build();
 

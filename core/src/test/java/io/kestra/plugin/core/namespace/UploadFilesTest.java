@@ -54,9 +54,9 @@ public class UploadFilesTest {
             .id(UploadFiles.class.getSimpleName())
             .type(UploadFiles.class.getName())
             .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
-            .namespace(Property.of(namespace))
-            .conflict(Property.of(Namespace.Conflicts.ERROR))
-            .destination(Property.of("/folder"))
+            .namespace(Property.ofValue(namespace))
+            .conflict(Property.ofValue(Namespace.Conflicts.ERROR))
+            .destination(Property.ofValue("/folder"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
@@ -77,7 +77,7 @@ public class UploadFilesTest {
             .type(UploadFiles.class.getName())
             .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
             .namespace(new Property<>("{{ inputs.namespace }}"))
-            .destination(Property.of("/folder"))
+            .destination(Property.ofValue("/folder"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile,  ImmutableMap.of("namespace", namespace));
@@ -114,9 +114,9 @@ public class UploadFilesTest {
             .id(UploadFiles.class.getSimpleName())
             .type(UploadFiles.class.getName())
             .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
-            .namespace(Property.of(namespace))
-            .conflict(Property.of(Namespace.Conflicts.SKIP))
-            .destination(Property.of("/folder"))
+            .namespace(Property.ofValue(namespace))
+            .conflict(Property.ofValue(Namespace.Conflicts.SKIP))
+            .destination(Property.ofValue("/folder"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
@@ -151,10 +151,10 @@ public class UploadFilesTest {
         UploadFiles uploadFile = UploadFiles.builder()
             .id(UploadFiles.class.getSimpleName())
             .type(UploadFiles.class.getName())
-            .files(Property.of(List.of("glob:**application**")))
-            .namespace(Property.of(namespace))
-            .conflict(Property.of(Namespace.Conflicts.SKIP))
-            .destination(Property.of("/folder/"))
+            .files(Property.ofValue(List.of("glob:**application**")))
+            .namespace(Property.ofValue(namespace))
+            .conflict(Property.ofValue(Namespace.Conflicts.SKIP))
+            .destination(Property.ofValue("/folder/"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());

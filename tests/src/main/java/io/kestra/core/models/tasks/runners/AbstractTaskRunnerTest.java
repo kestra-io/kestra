@@ -40,7 +40,7 @@ public abstract class AbstractTaskRunnerTest {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getCommands()).thenReturn(
-            Property.of(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
+            Property.ofValue(ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
         );
 
         var taskRunner = taskRunner();
@@ -55,7 +55,7 @@ public abstract class AbstractTaskRunnerTest {
         var commands = initScriptCommands(runContext);
         Mockito.when(commands.getEnableOutputDirectory()).thenReturn(false);
         Mockito.when(commands.outputDirectoryEnabled()).thenReturn(false);
-        Mockito.when(commands.getCommands()).thenReturn(Property.of(
+        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(
             ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("echo 'Hello World'")))
         );
 
@@ -72,7 +72,7 @@ public abstract class AbstractTaskRunnerTest {
     protected void fail() throws IOException {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(Property.of(
+        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(
             ScriptService.scriptCommands(List.of("/bin/sh", "-c"), Collections.emptyList(), List.of("return 1"))));
 
         var taskRunner = taskRunner();
@@ -126,7 +126,7 @@ public abstract class AbstractTaskRunnerTest {
             )),
             taskRunner instanceof RemoteRunnerInterface
         );
-        Mockito.when(commands.getCommands()).thenReturn(Property.of(renderedCommands));
+        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(renderedCommands));
 
         List<String> filesToDownload = List.of("output.txt");
         TaskRunnerResult<?> run = taskRunner.run(runContext, commands, filesToDownload);
@@ -153,7 +153,7 @@ public abstract class AbstractTaskRunnerTest {
     protected void failWithInput() throws IOException {
         var runContext = runContext(this.runContextFactory);
         var commands = initScriptCommands(runContext);
-        Mockito.when(commands.getCommands()).thenReturn(Property.of(ScriptService.scriptCommands(
+        Mockito.when(commands.getCommands()).thenReturn(Property.ofValue(ScriptService.scriptCommands(
             List.of("/bin/sh", "-c"),
             Collections.emptyList(),
             List.of("echo '::{\"outputs\":{\"logOutput\":\"Hello World\"}}::'", "return 1")))

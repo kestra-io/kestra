@@ -21,7 +21,7 @@
     import {computed, onBeforeUnmount, provide, ref, watch} from "vue";
     import debounce from "lodash/debounce";
     import {useStore} from "vuex";
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import NoCode from "./NoCode.vue";
     import {TASK_CREATION_INDEX_INJECTION_KEY} from "./injectionKeys";
 

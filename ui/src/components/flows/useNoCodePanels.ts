@@ -1,7 +1,7 @@
 import {h, markRaw, Ref} from "vue"
 import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
-import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import type {Panel, Tab} from "../MultiPanelTabs.vue";
 import NoCodeWrapper, {NoCodeProps} from "../code/NoCodeWrapper.vue";
 import {PLUGIN_DEFAULTS_SECTION} from "../../utils/constants";
@@ -73,7 +73,7 @@ export function setupInitialNoCodeTabIfExists(flow: string, tab: string, t: (key
             }
         }else{
             // check if the task exists in the flow
-            if(!YAML_UTILS.extractTask(flow, taskId)){
+            if(!YAML_UTILS.extractBlock({source: flow, section, key: taskId})){
                 // if the task is not found, we don't create the tab
                 return undefined
             }

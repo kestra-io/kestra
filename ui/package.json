@@ -83,7 +83,7 @@
     "@shikijs/markdown-it": "^3.4.1",
     "@storybook/addon-essentials": "^8.6.12",
     "@storybook/addon-themes": "^8.6.12",
-    "@storybook/blocks": "^8.6.12",
+    "@storybook/blocks": "^8.6.14",
     "@storybook/experimental-addon-test": "^8.6.12",
     "@storybook/test": "^8.6.12",
     "@storybook/test-runner": "^0.22.0",

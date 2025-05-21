@@ -3,7 +3,6 @@ package io.kestra.core.models.property;
 import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.junit.annotations.KestraTest;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.serializers.FileSerde;
 import io.kestra.core.storages.StorageInterface;
 import jakarta.inject.Inject;
@@ -271,8 +270,8 @@ class PropertyTest {
     }
 
     @Test
-    void of() {
-        var prop = Property.of(TestObj.builder().key("key").value("value").build());
+    void ofValue() {
+        var prop = Property.ofValue(TestObj.builder().key("key").value("value").build());
         assertThat(prop).isNotNull();
     }
 

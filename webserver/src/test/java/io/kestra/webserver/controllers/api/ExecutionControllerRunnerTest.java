@@ -66,6 +66,7 @@ import java.util.stream.IntStream;
 import static io.kestra.core.utils.Rethrow.throwRunnable;
 import static io.micronaut.http.HttpRequest.GET;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.hasSize;
@@ -1309,9 +1310,11 @@ class ExecutionControllerRunnerTest {
     // use a dedicated Flow to avoid clash with other tests
     void shouldPauseExecutionByQueryRunningFlows() throws TimeoutException, QueueException {
         var flowId = "sleep-short";
+        long start = System.currentTimeMillis();
         Execution result1 = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, flowId);
         Execution result2 = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, flowId);
         Execution result3 = runnerUtils.runOneUntilRunning(TENANT_ID, TESTS_FLOW_NS, flowId);
+        long afterExec = System.currentTimeMillis();
         BulkResponse response = null;
         try {
             response = client.toBlocking().retrieve(
@@ -1319,7 +1322,11 @@ class ExecutionControllerRunnerTest {
                 BulkResponse.class
             );
         } catch (HttpClientResponseException e){
+            long afterException = System.currentTimeMillis();
+            String errorMessage = "Duration before executions -> %d <-> duration after the exception -> %d <-> Error while pausing execution, err: %s, response: %s";
+            String formatedError = String.format(errorMessage, afterExec - start, afterException - start, e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids).orElse("errors"));
             log.error("Error while pausing execution, err: {}, response: {}", e.getMessage(), e.getResponse().getBody(BulkErrorResponse.class).map(BulkErrorResponse::getInvalids), e);
+            fail(formatedError);
         }
 
         assertThat(response.getCount()).isEqualTo(3);

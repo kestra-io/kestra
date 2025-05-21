@@ -141,7 +141,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
         description = "Required when providing a list of files."
     )
     @Builder.Default
-    private Property<String> destination = Property.of("/");
+    private Property<String> destination = Property.ofValue("/");
 
     @Builder.Default
 
@@ -149,7 +149,7 @@ public class UploadFiles extends Task implements RunnableTask<UploadFiles.Output
         title = "Which action to take when uploading a file that already exists.",
         description = "Can be one of the following options: OVERWRITE, ERROR or SKIP. Default is OVERWRITE."
     )
-    private Property<Namespace.Conflicts> conflict = Property.of(Namespace.Conflicts.OVERWRITE);
+    private Property<Namespace.Conflicts> conflict = Property.ofValue(Namespace.Conflicts.OVERWRITE);
 
     @Override
     @SuppressWarnings({"unchecked"})

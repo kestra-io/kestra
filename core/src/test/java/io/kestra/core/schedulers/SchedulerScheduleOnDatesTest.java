@@ -46,7 +46,7 @@ public class SchedulerScheduleOnDatesTest extends AbstractSchedulerTest {
         return ScheduleOnDates.builder()
             .id(triggerId)
             .type(ScheduleOnDates.class.getName())
-            .dates(Property.of(dates))
+            .dates(Property.ofValue(dates))
             .timezone(zone)
             .inputs(Map.of(
                 "testInputs", "test-inputs"

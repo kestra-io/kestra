@@ -2,7 +2,6 @@ package io.kestra.plugin.core.execution;
 
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
@@ -34,12 +33,12 @@ import lombok.experimental.SuperBuilder;
             code = """
             id: fail_on_switch
             namespace: company.team
-            
+
             inputs:
               - id: param
                 type: STRING
                 required: true
-            
+
             tasks:
               - id: switch
                 type: io.kestra.plugin.core.flow.Switch
@@ -68,12 +67,12 @@ import lombok.experimental.SuperBuilder;
             code = """
             id: fail_on_condition
             namespace: company.team
-            
+
             inputs:
               - name: param
                 type: STRING
                 required: true
-            
+
             tasks:
               - id: before
                 type: io.kestra.plugin.core.debug.Echo
@@ -122,7 +121,7 @@ public class Fail extends Task implements RunnableTask<VoidOutput> {
 
     @Schema(title = "Optional error message.")
     @Builder.Default
-    private Property<String> errorMessage = Property.of("Task failure");
+    private Property<String> errorMessage = Property.ofValue("Task failure");
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {

@@ -40,7 +40,7 @@ class SizeTest {
         );
 
         Size bash = Size.builder()
-            .uri(Property.of(put.toString()))
+            .uri(Property.ofValue(put.toString()))
             .build();
 
         Size.Output run = bash.run(runContext);

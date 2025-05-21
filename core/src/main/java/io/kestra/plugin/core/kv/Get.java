@@ -62,14 +62,14 @@ public class Get extends Task implements RunnableTask<Get.Output> {
         title = "The namespace on which to get the value."
     )
     @Builder.Default
-    private Property<String> namespace = new Property<>("{{ flow.namespace }}");
+    private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
     @NotNull
     @Schema(
         title = "Whether to fail if there is no value for the given key."
     )
     @Builder.Default
-    private Property<Boolean> errorOnMissing = Property.of(false);
+    private Property<Boolean> errorOnMissing = Property.ofValue(false);
 
 
     @Override

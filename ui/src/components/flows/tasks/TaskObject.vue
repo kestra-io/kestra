@@ -390,7 +390,7 @@
                 return this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
             },
             optionalProperties() {
-                return this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p));
+                return this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !v.$deprecated);
             },
             deprecatedProperties() {
                 return this.sortedProperties.filter(([_,v]) => v && v.$deprecated);

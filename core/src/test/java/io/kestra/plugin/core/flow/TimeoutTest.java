@@ -51,8 +51,8 @@ class TimeoutTest {
             .tasks(Collections.singletonList(Sleep.builder()
                 .id("test")
                 .type(Sleep.class.getName())
-                .duration(Property.of(Duration.ofSeconds(100)))
-                .timeout(Property.of(Duration.ofNanos(100000)))
+                .duration(Property.ofValue(Duration.ofSeconds(100)))
+                .timeout(Property.ofValue(Duration.ofNanos(100000)))
                 .build()))
             .build();
 

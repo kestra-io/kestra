@@ -84,7 +84,7 @@ public class PublicHoliday extends Condition implements ScheduleCondition {
     )
     @NotNull
     @Builder.Default
-    private Property<String> date = new Property<>("{{ trigger.date }}");
+    private Property<String> date = Property.ofExpression("{{ trigger.date }}");
 
     @Schema(
         title = "[ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code. If not set, it uses the country code from the default locale.",

@@ -312,7 +312,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
-            .duration(io.kestra.core.models.property.Property.of(sleep))
+            .duration(io.kestra.core.models.property.Property.ofValue(sleep))
             .workerGroup(workerGroupKey != null ? new WorkerGroup(workerGroupKey, null) : null)
             .build();
 
@@ -352,7 +352,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
-            .duration(io.kestra.core.models.property.Property.of(sleep))
+            .duration(io.kestra.core.models.property.Property.ofValue(sleep))
             .build();
 
         SleepTrigger trigger = SleepTrigger.builder()

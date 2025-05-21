@@ -115,7 +115,7 @@ class FlowTest {
         Flow updated = flow.updateTask("1-2-2_return", Return.builder()
             .id("1-2-2_return")
             .type(Return.class.getName())
-            .format(new Property<>("{{task.id}}"))
+            .format(Property.ofExpression("{{task.id}}"))
             .build()
         );
 

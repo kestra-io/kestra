@@ -129,7 +129,7 @@ public class EachParallel extends Parallel implements FlowableTask<VoidOutput> {
         title = "Number of concurrent parallel tasks that can be running at any point in time.",
         description = "If the value is `0`, no limit exist and all the tasks will start at the same time."
     )
-    private final Property<Integer> concurrent = Property.of(0);
+    private final Property<Integer> concurrent = Property.ofValue(0);
 
     @NotNull
     @PluginProperty(dynamic = true)

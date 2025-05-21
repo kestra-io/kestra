@@ -50,11 +50,11 @@ class ConditionServiceTest {
 
         List<Condition> conditions = Arrays.asList(
             ExecutionFlow.builder()
-                .namespace(Property.of(flow.getNamespace()))
-                .flowId(Property.of(flow.getId()))
+                .namespace(Property.ofValue(flow.getNamespace()))
+                .flowId(Property.ofValue(flow.getId()))
                 .build(),
             ExecutionNamespace.builder()
-                .namespace(Property.of(flow.getNamespace()))
+                .namespace(Property.ofValue(flow.getNamespace()))
                 .build()
         );
 
@@ -77,8 +77,8 @@ class ConditionServiceTest {
 
         List<Condition> conditions = Collections.singletonList(
             ExecutionFlow.builder()
-                .namespace(Property.of(flow.getNamespace()))
-                .flowId(Property.of(flow.getId()))
+                .namespace(Property.ofValue(flow.getNamespace()))
+                .flowId(Property.ofValue(flow.getId()))
                 .build()
         );
 

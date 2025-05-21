@@ -40,7 +40,7 @@ class DeleteTest {
 
 
         Delete bash = Delete.builder()
-            .uri(Property.of(put.toString()))
+            .uri(Property.ofValue(put.toString()))
             .build();
 
         Delete.Output run = bash.run(runContext);
@@ -51,8 +51,8 @@ class DeleteTest {
 
         assertThrows(NoSuchElementException.class, () -> {
             Delete error = Delete.builder()
-                .uri(Property.of(put.toString()))
-                .errorOnMissing(Property.of(true))
+                .uri(Property.ofValue(put.toString()))
+                .errorOnMissing(Property.ofValue(true))
                 .build();
 
             error.run(runContext);

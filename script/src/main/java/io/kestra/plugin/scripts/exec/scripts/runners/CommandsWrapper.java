@@ -175,7 +175,7 @@ public class CommandsWrapper implements TaskCommands {
                 Optional.ofNullable(targetOS).orElse(TargetOS.AUTO)
             );
 
-        this.commands = Property.of(finalCommands);
+        this.commands = Property.ofValue(finalCommands);
 
         ScriptOutput.ScriptOutputBuilder scriptOutputBuilder = ScriptOutput.builder();
 

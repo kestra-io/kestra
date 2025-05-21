@@ -13,7 +13,6 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.core.services.FlowService;
 import io.kestra.plugin.core.debug.Return;
-import io.kestra.plugin.core.flow.Template;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -72,7 +71,7 @@ public abstract class AbstractFlowRepositoryTest {
         return FlowWithSource.builder()
             .id(flowId)
             .namespace(TEST_NAMESPACE)
-            .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()));
+            .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()));
     }
 
     @Test
@@ -301,7 +300,7 @@ public abstract class AbstractFlowRepositoryTest {
             .namespace(TEST_NAMESPACE)
             .tenantId(MAIN_TENANT)
             .inputs(List.of(StringInput.builder().type(Type.STRING).id("a").build()))
-            .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()))
+            .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()))
             .build();
 
         Flow save = flowRepository.create(GenericFlow.of(flow));
@@ -314,7 +313,7 @@ public abstract class AbstractFlowRepositoryTest {
                 .namespace("io.kestra.unittest2")
                 .tenantId(MAIN_TENANT)
                 .inputs(List.of(StringInput.builder().type(Type.STRING).id("b").build()))
-                .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()))
+                .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()))
                 .build();
             ;
 
@@ -341,7 +340,7 @@ public abstract class AbstractFlowRepositoryTest {
                 .id("sleep")
                 .type(AbstractSchedulerTest.UnitTest.class.getName())
                 .build()))
-            .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()))
+            .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()))
             .build();
 
         flow = flowRepository.create(GenericFlow.of(flow));
@@ -352,7 +351,7 @@ public abstract class AbstractFlowRepositoryTest {
                 .id(flowId)
                 .namespace(TEST_NAMESPACE)
                 .tenantId(MAIN_TENANT)
-                .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()))
+                .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()))
                 .build();
             ;
 
@@ -381,7 +380,7 @@ public abstract class AbstractFlowRepositoryTest {
                 .id("sleep")
                 .type(AbstractSchedulerTest.UnitTest.class.getName())
                 .build()))
-            .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.of(TEST_FLOW_ID)).build()))
+            .tasks(Collections.singletonList(Return.builder().id(TEST_FLOW_ID).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()))
             .build();
 
         Flow save = flowRepository.create(GenericFlow.of(flow));

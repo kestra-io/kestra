@@ -475,7 +475,13 @@ $flow-image-size-container: 36px;
     padding: 2rem;
 
     &.last {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         max-width: $last-step-max-width;
+        z-index: 9999;
+        box-shadow: 0 0 20px var(--ks-card-shadow);
     }
 
     &.condensed {

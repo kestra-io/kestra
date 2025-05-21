@@ -52,9 +52,9 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(Property.of(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString()))
+            .from(Property.ofValue(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString()))
             .filterCondition(" {{ value % 2 == 0 }} ")
-            .filterType(Property.of(FilterItems.FilterType.INCLUDE))
+            .filterType(Property.ofValue(FilterItems.FilterType.INCLUDE))
             .build();
 
         // When
@@ -75,9 +75,9 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(Property.of(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString()))
+            .from(Property.ofValue(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString()))
             .filterCondition(" {{ value % 2 == 0 }} ")
-            .filterType(Property.of(FilterItems.FilterType.EXCLUDE))
+            .filterType(Property.ofValue(FilterItems.FilterType.EXCLUDE))
             .build();
 
         // When
@@ -98,10 +98,10 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(Property.of(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString()))
+            .from(Property.ofValue(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString()))
             .filterCondition(" {{ value % 2 == 0 }}")
-            .filterType(Property.of(FilterItems.FilterType.INCLUDE))
-            .errorOrNullBehavior(Property.of(FilterItems.ErrorOrNullBehavior.FAIL))
+            .filterType(Property.ofValue(FilterItems.FilterType.INCLUDE))
+            .errorOrNullBehavior(Property.ofValue(FilterItems.ErrorOrNullBehavior.FAIL))
             .build();
 
         // When/Then
@@ -115,10 +115,10 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(Property.of(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString()))
+            .from(Property.ofValue(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString()))
             .filterCondition(" {{ value % 2 == 0 }}")
-            .filterType(Property.of(FilterItems.FilterType.INCLUDE))
-            .errorOrNullBehavior(Property.of(FilterItems.ErrorOrNullBehavior.INCLUDE))
+            .filterType(Property.ofValue(FilterItems.FilterType.INCLUDE))
+            .errorOrNullBehavior(Property.ofValue(FilterItems.ErrorOrNullBehavior.INCLUDE))
             .build();
 
         // When
@@ -139,10 +139,10 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(Property.of(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString()))
+            .from(Property.ofValue(generateKeyValueFile(TEST_INVALID_ITEMS, runContext).toString()))
             .filterCondition(" {{ value % 2 == 0 }}")
-            .filterType(Property.of(FilterItems.FilterType.INCLUDE))
-            .errorOrNullBehavior(Property.of(FilterItems.ErrorOrNullBehavior.EXCLUDE))
+            .filterType(Property.ofValue(FilterItems.FilterType.INCLUDE))
+            .errorOrNullBehavior(Property.ofValue(FilterItems.ErrorOrNullBehavior.EXCLUDE))
             .build();
 
         // When
@@ -163,10 +163,10 @@ class FilterItemsTest {
 
         FilterItems task = FilterItems
             .builder()
-            .from(Property.of(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString()))
+            .from(Property.ofValue(generateKeyValueFile(TEST_VALID_ITEMS, runContext).toString()))
             .filterCondition("{{ value }}")
-            .filterType(Property.of(FilterItems.FilterType.INCLUDE))
-            .errorOrNullBehavior(Property.of(FilterItems.ErrorOrNullBehavior.FAIL))
+            .filterType(Property.ofValue(FilterItems.FilterType.INCLUDE))
+            .errorOrNullBehavior(Property.ofValue(FilterItems.ErrorOrNullBehavior.FAIL))
             .build();
 
         // When

@@ -33,11 +33,11 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
 
     @NotNull
     @Builder.Default
-    private Property<String> withDefault = Property.of("Default Value");
+    private Property<String> withDefault = Property.ofValue("Default Value");
 
     @NotNull
     @Builder.Default
-    private Property<Level> level = Property.of(Level.INFO);
+    private Property<Level> level = Property.ofValue(Level.INFO);
 
     @NotNull
     private Property<Duration> someDuration;

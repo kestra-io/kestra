@@ -41,7 +41,7 @@ public abstract class AbstractTemplateRepositoryTest {
         return Template.builder()
             .id(IdUtils.create())
             .namespace(namespace == null ? "kestra.test" : namespace)
-            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.of("test")).build()));
+            .tasks(Collections.singletonList(Return.builder().id("test").type(Return.class.getName()).format(Property.ofValue("test")).build()));
     }
 
     @Test

@@ -34,21 +34,21 @@ public abstract class AbstractState extends Task {
     )
     @NotNull
     @Builder.Default
-    protected Property<String> name = Property.of("default");
+    protected Property<String> name = Property.ofValue("default");
 
     @Schema(
         title = "Share state for the current namespace.",
         description = "By default, the state is isolated by namespace **and** flow, setting to `true` will allow to share the state between the **same** namespace"
     )
     @Builder.Default
-    private final Property<Boolean> namespace = Property.of(false);
+    private final Property<Boolean> namespace = Property.ofValue(false);
 
     @Schema(
         title = "Isolate the state with `taskrun.value`.",
         description = "By default, the state will be isolated with `taskrun.value` (during iteration with each). Setting to `false` will allow using the same state for every run of the iteration."
     )
     @Builder.Default
-    private final Property<Boolean> taskrunValue = Property.of(true);
+    private final Property<Boolean> taskrunValue = Property.ofValue(true);
 
 
     protected Map<String, Object> get(RunContext runContext) throws IllegalVariableEvaluationException, IOException, ResourceExpiredException {

@@ -24,7 +24,6 @@ import io.micronaut.http.client.annotation.Client;
 import io.micronaut.http.client.exceptions.HttpClientResponseException;
 import io.micronaut.reactor.http.client.ReactorHttpClient;
 import jakarta.inject.Inject;
-import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -36,7 +35,6 @@ import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
-import static org.hamcrest.Matchers.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true, startScheduler = true)
@@ -394,7 +392,7 @@ class TriggerControllerTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("task")
                 .type(Return.class.getName())
-                .format(Property.of("return data"))
+                .format(Property.ofValue("return data"))
                 .build()))
             .triggers(List.of(
                 Schedule.builder()

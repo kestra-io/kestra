@@ -76,7 +76,7 @@ class DeleteTest {
 
         assertThat(run.isDeleted()).isFalse();
 
-        Delete finalDelete = delete.toBuilder().errorOnMissing(Property.of(true)).build();
+        Delete finalDelete = delete.toBuilder().errorOnMissing(Property.ofValue(true)).build();
         NoSuchElementException noSuchElementException = Assertions.assertThrows(NoSuchElementException.class, () -> finalDelete.run(runContext));
         assertThat(noSuchElementException.getMessage()).isEqualTo("No value found for key 'my-key' in namespace '" + namespaceId + "' and `errorOnMissing` is set to true");
     }

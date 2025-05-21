@@ -136,7 +136,7 @@ abstract public class TestsUtils {
             .withState(State.Type.RUNNING);
     }
 
-    private static TaskRun mockTaskRun(Execution execution, Task task) {
+    public static TaskRun mockTaskRun(Execution execution, Task task) {
         return TaskRun.builder()
             .id(IdUtils.create())
             .executionId(execution.getId())

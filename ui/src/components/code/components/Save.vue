@@ -14,7 +14,7 @@
     const props = defineProps({
         what: {
             type: String,
-            required: true,
+            required: false,
             default: "tasks"
         },
     });

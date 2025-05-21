@@ -25,6 +25,9 @@ public class MapUtilsBenchmark {
         mapB.put("nested", Map.of("b", 2));
     }
 
+    /**
+     * @see <a href="https://github.com/kestra-io/kestra/pull/8914">KESTRA#8914</a>
+     */
     @Benchmark
     public Map<String, Object> testMerge() {
         return MapUtils.merge(mapA, mapB);

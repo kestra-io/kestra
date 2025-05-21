@@ -23,7 +23,7 @@ class MiscControllerSecuredTest {
 
     @Test
     void getConfiguration() {
-        var response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/configs").basicAuth(
+        var response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/configs").basicAuth(
             basicAuthConfiguration.getUsername(),
             basicAuthConfiguration.getPassword()
         ), MiscController.Configuration.class);

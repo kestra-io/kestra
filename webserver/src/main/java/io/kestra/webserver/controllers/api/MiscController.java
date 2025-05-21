@@ -119,14 +119,14 @@ public class MiscController {
         return builder.build();
     }
 
-    @Get("/usages/all")
+    @Get("/main/usages/all")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get instance usage information")
     public Usage getUsages() {
         return collectorService.metrics(true);
     }
 
-    @Post(uri = "/basicAuth")
+    @Post(uri = "/main/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Create basic auth for the current instance")
     public HttpResponse<Void> createBasicAuth(

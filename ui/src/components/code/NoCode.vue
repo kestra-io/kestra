@@ -24,7 +24,7 @@
         CREATE_TASK_FUNCTION_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY, FLOW_INJECTION_KEY,
         PANEL_INJECTION_KEY, POSITION_INJECTION_KEY,
-        SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY,
+        SECTION_INJECTION_KEY,
         TASKID_INJECTION_KEY, PARENT_TASKID_INJECTION_KEY,
         TASK_CREATION_INDEX_INJECTION_KEY, TOPOLOGY_CLICK_INJECTION_KEY
     } from "./injectionKeys";
@@ -76,7 +76,6 @@
     const props = withDefaults(
         defineProps<{
             flow: string;
-            saveMode?: "button" | "auto";
             /**
              * Initial section name when opening
              * a no-code panel from topology
@@ -96,7 +95,6 @@
             creatingTask?: boolean;
             position?: "before" | "after";
         }>(), {
-            saveMode: "button",
             creatingTask: false,
             position: "after",
             section: "",
@@ -126,7 +124,6 @@
     provide(SECTION_INJECTION_KEY, injectedSection);
     provide(TASKID_INJECTION_KEY, injectedTaskId);
     provide(POSITION_INJECTION_KEY, props.position);
-    provide(SAVEMODE_INJECTION_KEY, props.saveMode);
     provide(CREATING_TASK_INJECTION_KEY, computed(() => creatingTaskRef.value));
     provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (section) => {
         if(emit("createTask", section, injectedTaskId.value) === false){

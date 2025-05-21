@@ -71,7 +71,7 @@
 
     import {
         CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
-        PANEL_INJECTION_KEY, SAVEMODE_INJECTION_KEY,
+        PANEL_INJECTION_KEY,
         SECTION_INJECTION_KEY, TASKID_INJECTION_KEY
     } from "../injectionKeys";
 
@@ -125,7 +125,6 @@
 
     const creatingTask = inject(CREATING_TASK_INJECTION_KEY);
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
-    const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
 
     const props = defineProps({
         metadata: {type: Object, required: true},
@@ -139,16 +138,12 @@
     };
 
     function exitTask() {
-        sectionInjected.value = "";
+        sectionInjected.value = undefined;
         taskId.value = "";
     }
 
     function onTaskUpdate(yaml: string) {
         emits("updateTask", yaml)
-
-        if(saveMode === "button") {
-            exitTask()
-        }
     }
 
     const schema = ref({})

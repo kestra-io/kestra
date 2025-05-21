@@ -39,7 +39,7 @@
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
         FLOW_INJECTION_KEY, PARENT_TASKID_INJECTION_KEY, POSITION_INJECTION_KEY,
-        SAVEMODE_INJECTION_KEY, SECTION_INJECTION_KEY,
+        SECTION_INJECTION_KEY,
         TASK_CREATION_INDEX_INJECTION_KEY, TASKID_INJECTION_KEY
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
@@ -50,7 +50,6 @@
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
-    const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
     const section = inject(SECTION_INJECTION_KEY, ref("tasks" as SectionKey));
     const taskId = inject(TASKID_INJECTION_KEY, ref(""));
     const position = inject(POSITION_INJECTION_KEY, "after");
@@ -134,9 +133,7 @@
     watch(
         yaml,
         () => {
-            if(saveMode === "auto") {
-                saveTask();
-            }
+            saveTask();
         },
     );
 
@@ -183,11 +180,6 @@
     const errors = computed(() => store.getters["flow/taskError"]);
 
     const saveTask = () => {
-        if (lastBreadcrumb.value.shown && saveMode === "button") {
-            exitTaskElement();
-            return;
-        }
-
         let result: string | undefined = "";
 
         const currentSection = section.value;
@@ -230,10 +222,6 @@
                             title: "Task with same ID already exist",
                             message: `Task in ${section} block  with ID: ${existing} already exist in the flow.`,
                         });
-
-                        if(saveMode === "button"){
-                            return;
-                        }
                     }
                 }
 
@@ -281,9 +269,5 @@
         }
 
         emits("updateTask", result ?? "");
-        if(saveMode === "button") {
-            breadcrumbs.value.pop();
-            emits("exitTask");
-        }
     };
 </script>

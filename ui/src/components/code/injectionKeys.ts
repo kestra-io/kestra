@@ -24,12 +24,6 @@ export const POSITION_INJECTION_KEY = Symbol("position-injection-key") as Inject
  */
 export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as InjectionKey<ComputedRef<boolean>>
 /**
- * auto in multi-panel mode, button in legacy edit mode
- * Kept for backward compatibility
- * @deprecated
- */
-export const SAVEMODE_INJECTION_KEY = Symbol("flow-id-injection-key") as InjectionKey<"button" | "auto">
-/**
  * Call this when starting to create a new task, when the user clicks on the add button
  * to start the addition process
  */

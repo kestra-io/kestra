@@ -1,8 +1,8 @@
 <template>
     <template v-if="ready">
-        <FlowRootTopBar 
-            :route-info="routeInfo" 
-            :active-tab-name="activeTabName()" 
+        <FlowRootTopBar
+            :route-info="routeInfo"
+            :active-tab-name="activeTabName()"
         />
         <Tabs
             route-name="flows/update"
@@ -187,7 +187,6 @@
                         props: {
                             expandedSubflows: this.expandedSubflows,
                             isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
-                            beta: localStorage.getItem("multiPanelEditor") === "true",
                         },
                     });
                 }

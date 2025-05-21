@@ -30,7 +30,7 @@
             openPanel() {
                 const current = {...this.panel};
 
-                this.panel = h(TaskComplexContent, {
+                const component = h(TaskComplexContent, {
                     modelValue: this.modelValue,
                     schema: this.schema,
                     definitions: this.definitions,
@@ -40,7 +40,8 @@
                     previousPanel: current,
                 });
 
-                this.breadcrumbs.push({label: this.root});
+                this.panel = component;
+                this.breadcrumbs.push({label: this.root, component});
             },
         },
     };

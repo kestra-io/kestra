@@ -19,6 +19,7 @@
         <ValidationError v-if="false" :errors link />
 
         <Save
+            v-if="!lastBreadcrumb.component"
             :disabled="(errors?.length ?? 0) > 0"
             @click="() => {
                 saveTask();

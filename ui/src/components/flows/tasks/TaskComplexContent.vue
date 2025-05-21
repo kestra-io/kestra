@@ -30,7 +30,7 @@
             breadcrumbs: {from: BREADCRUMB_INJECTION_KEY},
         },
         props: {
-            input: {type: Boolean, default: false},
+            metadataInputs: {type: Boolean, default: false},
             previousPanel: {type: Object, default: () => ({})},
         },
         components: {TaskObject, Save},
@@ -52,7 +52,7 @@
                     [this.root]: {...this.currentTask[this.root], ...v},
                 };
                 this.currentTask = updated;
-                this.onInput(this.input ? updated : v);
+                this.onInput(this.metadataInputs ? updated : v);
             },
             closePanel() {
                 this.panel = this.previousPanel ? h(this.previousPanel) : null;

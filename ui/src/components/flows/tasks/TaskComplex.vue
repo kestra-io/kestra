@@ -26,6 +26,9 @@
             panel: {from: PANEL_INJECTION_KEY},
             breadcrumbs: {from: BREADCRUMB_INJECTION_KEY},
         },
+        props:{
+            metadataInputs: {type: Boolean, default: false},
+        },
         methods: {
             openPanel() {
                 const current = {...this.panel};
@@ -38,6 +41,7 @@
                     root: this.root,
                     "onUpdate:modelValue": this.onInput,
                     previousPanel: current,
+                    metadataInputs: this.metadataInputs,
                 });
 
                 this.panel = component;

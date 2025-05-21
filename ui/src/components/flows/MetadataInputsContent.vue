@@ -19,6 +19,7 @@
         :schema="inputSchema?.schema?.properties"
         :properties="inputSchema?.schema?.properties?.properties"
         :definitions="inputSchema?.schema?.definitions"
+        metadata-inputs
     />
 
     <Save @click="update" what="input" class="w-100 mt-3" />
@@ -30,7 +31,7 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import {BREADCRUMB_INJECTION_KEY, PANEL_INJECTION_KEY} from "../code/injectionKeys";
 
     export default {
@@ -51,6 +52,7 @@
         },
         computed: {
             ...mapState("plugin", ["inputSchema", "inputsType"]),
+            ...mapGetters("flow", ["flowYamlMetadata"]),
         },
         created() {
             if (this.inputs && this.inputs.length > 0) {
@@ -105,7 +107,7 @@
                 } else {
                     this.panel = undefined;
                     this.breadcrumbs.pop();
-                    this.$emit("update:modelValue", [...this.newInputs.filter(v => v.id)]);
+                    this.$emit("update:modelValue", [this.flowYamlMetadata?.inputs]);
                 }
             },
             updateSelected(value) {

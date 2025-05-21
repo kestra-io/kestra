@@ -81,7 +81,7 @@
     "@eslint/js": "^9.26.0",
     "@rushstack/eslint-patch": "^1.11.0",
     "@shikijs/markdown-it": "^3.4.1",
-    "@storybook/addon-essentials": "^8.6.12",
+    "@storybook/addon-essentials": "^8.6.14",
     "@storybook/addon-themes": "^8.6.12",
     "@storybook/blocks": "^8.6.12",
     "@storybook/experimental-addon-test": "^8.6.12",

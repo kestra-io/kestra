@@ -281,8 +281,7 @@ public class FlowableUtils {
             return collect.values().stream()
                 .limit(concurrencySlots)
                 .map(resolvedTasks -> resolvedTasks.getFirst().toNextTaskRun(execution))
-                .toList()
-                .reversed();
+                .toList();
         }
 
         // start as many tasks as we have concurrency slots

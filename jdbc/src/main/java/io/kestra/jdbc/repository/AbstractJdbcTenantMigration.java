@@ -3,6 +3,7 @@ package io.kestra.jdbc.repository;
 import io.kestra.core.repositories.TenantMigrationInterface;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import java.util.List;
+import java.util.Locale;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.Condition;
 import org.jooq.DSLContext;
@@ -12,6 +13,9 @@ import org.jooq.impl.DSL;
 
 @Slf4j
 public abstract class AbstractJdbcTenantMigration implements TenantMigrationInterface {
+
+    private static final List<String> KEY_TABLES = List.of("dashboards", "flows", "multipleconditions",
+        "namespaces", "testsuites", "triggers", "templates");
 
     protected final JooqDSLContextWrapper dslContextWrapper;
 
@@ -41,10 +45,18 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
             }
 
             if (!dryRun) {
-                int updated = dslContextWrapper.transactionResult(configuration -> {
-                    DSLContext context = DSL.using(configuration);
-                    return updateTenantId(table, context);
-                });
+                int updated;
+                if (tableWithKey(table.getName())){
+                    updated = dslContextWrapper.transactionResult(configuration -> {
+                        DSLContext context = DSL.using(configuration);
+                        return updateTenantIdFieldAndKey(table, context);
+                    });
+                } else {
+                    updated = dslContextWrapper.transactionResult(configuration -> {
+                        DSLContext context = DSL.using(configuration);
+                        return updateTenantIdField(table, context);
+                    });
+                }
                 totalAffected += updated;
                 log.info("✅ Updated {} row(s) in {}", updated, table.getName());
             } else {
@@ -72,6 +84,13 @@ public abstract class AbstractJdbcTenantMigration implements TenantMigrationInte
         }
     }
 
-    protected abstract int updateTenantId(Table<?> table, DSLContext context);
+
+    private static boolean tableWithKey(String tableName){
+        return KEY_TABLES.stream().anyMatch(name -> tableName.toLowerCase(Locale.ROOT).contains(name));
+    }
+
+    protected abstract int updateTenantIdField(Table<?> table, DSLContext context);
+
+    protected abstract int updateTenantIdFieldAndKey(Table<?> table, DSLContext context);
 
 }

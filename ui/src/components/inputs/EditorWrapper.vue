@@ -14,7 +14,9 @@
         @save="save"
         @execute="execute"
     >
-        <KeyShortcuts />
+        <template #absolute>
+            <KeyShortcuts v-if="isCurrentTabFlow" />
+        </template>
     </editor>
 </template>
 

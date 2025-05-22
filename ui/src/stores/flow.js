@@ -82,7 +82,7 @@ export default {
                     return res
                 });
             } else {
-                if(!currentTab.dirty) return;
+                if(!currentTab?.dirty) return;
 
                 await dispatch("namespace/createFile", {
                     namespace: namespace ?? getters.namespace,

@@ -23,7 +23,7 @@ public class PostgresTenantMigration extends AbstractJdbcTenantMigration {
             "SET value = jsonb_set(value, '{tenantId}', ?::jsonb) " +
             "WHERE (value->>'tenantId') IS NULL";
 
-        return context.execute(query, MAIN_TENANT);
+        return context.execute(query, "\"" + MAIN_TENANT + "\"");
     }
 
     @Override

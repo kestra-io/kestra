@@ -7,8 +7,6 @@
         @update:model-value="validateTaskElement"
     />
 
-
-
     <TaskEditor
         v-else
         v-model="yaml"

@@ -26,7 +26,8 @@
     import {useI18n} from "vue-i18n";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
-    import {EDIT_TASK_FUNCTION_INJECTION_KEY} from "../../injectionKeys";
+    import {BlockType} from "../../utils/types";
+    import {EDIT_TASK_FUNCTION_INJECTION_KEY, PARENT_PATH_INJECTION_KEY} from "../../injectionKeys";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
@@ -35,6 +36,7 @@
     const {t} = useI18n();
 
     const props = defineProps<{
+        blockType: BlockType | "pluginDefaults";
         section: string;
         element: {
             id: string;
@@ -43,7 +45,10 @@
         elementIndex: number;
     }>();
 
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+
     import {useStore} from "vuex";
+
     const store = useStore();
 
     const icons = computed(() => store.state.plugin.icons);
@@ -54,17 +59,22 @@
     );
 
     const identifier = computed(() => {
-        return props.element.id ?? props.element.type;
+        return props.section === "pluginDefaults" ? props.element.type : props.element.id;
     });
-    const taskIdentifier = computed(() => {
 
+    const taskIdentifier = computed(() => {
         return identifier.value ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`;
+    });
+
+    const completeParentPath = computed(() => {
+        return [parentPath, props.section].filter(Boolean).join(".");
     });
 
     const handleClick = () => {
         editTask(
-            props.section.toLowerCase() as any,
-            taskIdentifier.value
+            props.blockType,
+            completeParentPath.value,
+            `[${props.elementIndex}]`,
         );
     };
 </script>

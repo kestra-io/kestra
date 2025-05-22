@@ -1,5 +1,5 @@
 import type {ComputedRef, InjectionKey, Ref} from "vue"
-import {Breadcrumb, SectionKey, TopologyClickParams} from "./utils/types"
+import {Breadcrumb, BlockType, TopologyClickParams} from "./utils/types"
 import {Panel} from "../MultiPanelTabs.vue"
 
 /**
@@ -7,13 +7,17 @@ import {Panel} from "../MultiPanelTabs.vue"
  */
 export const FLOW_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
 /**
- * Current section name (Where a task is created or edited)
+ * The type of the block that is being created
  */
-export const SECTION_INJECTION_KEY = Symbol("section-injection-key") as InjectionKey<Ref<SectionKey | undefined>>
+export const BLOCKTYPE_INJECT_KEY = Symbol("blocktype-injection-key") as InjectionKey<BlockType | undefined>
+/**
+ * When creating a subtask, this is the parent task path
+ */
+export const PARENT_PATH_INJECTION_KEY = Symbol("parent-path-injection-key") as InjectionKey<string>
 /**
  * Current task ID (When a task is edited) or target task ID (When a task is created) or task type (when a pluginDefaults is edited)
  */
-export const TASKID_INJECTION_KEY = Symbol("taskid-injection-key") as InjectionKey<Ref<string>>
+export const REF_PATH_INJECTION_KEY = Symbol("ref-path-injection-key") as InjectionKey<string | undefined>
 /**
  * Tells if the task should eb added before or after the target (When a task is created)
  */
@@ -27,12 +31,12 @@ export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as I
  * Call this when starting to create a new task, when the user clicks on the add button
  * to start the addition process
  */
-export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(section: SectionKey) => void>
+export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string) => void>
 /**
  * Call this when starting to edit a task, when the user clicks on the task line
  * to start the edition process
  */
-export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(section: SectionKey, taskId: string) => void>
+export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string, refPath: string) => void>
 /**
  * Call this when closing a task, when the user clicks on the close button
  */
@@ -53,11 +57,7 @@ export const BREADCRUMB_INJECTION_KEY = Symbol("breadcrumb-injection-key") as In
  * This is used to display the metadata edition inputs
  */
 export const PANEL_INJECTION_KEY = Symbol("panel-injection-key") as InjectionKey<Ref<any>>
-/**
- * When creating a subtask, this is the parent task ID
- * undefined when creating a task at the root level
- */
-export const PARENT_TASKID_INJECTION_KEY = Symbol("parent-taskid-injection-key") as InjectionKey<Ref<string | undefined>>
+
 /**
  * When users click on one of topology buttons, such as create or edit, multi-panel view needs to react accordingly
  */

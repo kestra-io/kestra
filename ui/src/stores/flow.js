@@ -37,7 +37,7 @@ export default {
         haveChange: false,
         expandedSubflows: [],
         metadata: undefined,
-        createdTasks: {}
+        createdTasks: []
     },
 
     actions: {
@@ -680,11 +680,8 @@ export default {
             state.metadata = value
         },
         setCreatedTask(state, payload) {
-            const {section, index, ...rest} = payload;
-            if(state.createdTasks[section] === undefined){
-                state.createdTasks[section] = []
-            }
-            state.createdTasks[section][index] = rest
+            const {index, ...rest} = payload;
+            state.createdTasks[index] = rest
         }
     },
     getters: {

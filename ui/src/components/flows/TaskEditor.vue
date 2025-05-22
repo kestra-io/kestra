@@ -7,8 +7,9 @@
                 </div>
             </template>
             <PluginSelect
+                v-if="blockType"
                 v-model="selectedTaskType"
-                :section="section"
+                :block-type="blockType"
                 @update:model-value="onTaskTypeSelect"
             />
         </el-form-item>
@@ -27,13 +28,13 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onBeforeMount, ref, watch} from "vue";
+    import {computed, inject, onBeforeMount, ref, watch} from "vue";
+    import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
-    import {useStore} from "vuex";
-    import {PLUGIN_DEFAULTS_SECTION} from "../../utils/constants";
-    import {NoCodeElement, Schemas, SectionKey} from "../code/utils/types";
+    import {NoCodeElement, Schemas} from "../code/utils/types";
+    import {BLOCKTYPE_INJECT_KEY, PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
 
     defineOptions({
         name: "TaskEditor",
@@ -41,10 +42,6 @@
     });
 
     const modelValue = defineModel<string>();
-
-    const props = defineProps<{
-        section?: SectionKey
-    }>();
 
     const store = useStore();
 
@@ -72,8 +69,11 @@
         return plugin.value?.schema;
     });
 
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const blockType = inject(BLOCKTYPE_INJECT_KEY, "");
+
     const isPluginDefaults = computed(() => {
-        return props.section === PLUGIN_DEFAULTS_SECTION
+        return parentPath.startsWith("pluginDefaults")
     });
 
     const properties = computed(() => {

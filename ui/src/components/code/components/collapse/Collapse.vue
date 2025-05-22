@@ -5,13 +5,14 @@
             :title="`${title}${elements ? ` (${elements.length})` : ''}`"
         >
             <template #icon>
-                <Creation :section="title" />
+                <Creation v-if="blockType" :block-type="blockType" />
             </template>
 
             <Element
                 v-for="(element, elementIndex) in elements"
                 :key="elementIndex"
-                :section="title"
+                :section="section"
+                :block-type="blockType"
                 :element
                 :element-index
                 @remove-element="removeElement(title, elementIndex)"
@@ -32,13 +33,13 @@
 <script setup lang="ts">
     import {inject, ref} from "vue";
 
-    import {deleteBlock, swapBlocks} from "@kestra-io/ui-libs/flow-yaml-utils";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {CollapseItem} from "../../utils/types";
 
     import Creation from "./buttons/Creation.vue";
     import Element from "./Element.vue";
-    import {FLOW_INJECTION_KEY} from "../../injectionKeys";
+    import {FLOW_INJECTION_KEY, PARENT_PATH_INJECTION_KEY} from "../../injectionKeys";
     import {SECTIONS_MAP} from "../../../../utils/constants";
 
     const emits = defineEmits(["remove", "reorder"]);
@@ -48,6 +49,8 @@
     const props = defineProps<CollapseItem>();
     const expanded = ref<CollapseItem["title"]>(props.title);
 
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+
     const removeElement = (title: string, index: number) => {
         const keyName = title === "Plugin Defaults" ? "type" : "id";
 
@@ -55,11 +58,9 @@
 
         emits(
             "remove",
-            deleteBlock({
+            YAML_UTILS.deleteBlockWithPath({
                 source: flow.value,
-                section: SECTIONS_MAP[title.toLowerCase() as keyof typeof SECTIONS_MAP],
-                key: props.elements[index][keyName],
-                keyName,
+                path: `${parentPath}[${index}]`,
             }),
         );
     };
@@ -79,9 +80,10 @@
             return;
 
         const newIndex = direction === "up" ? index - 1 : index + 1;
+
         emits(
             "reorder",
-            swapBlocks({
+            YAML_UTILS.swapBlocks({
                 source:flow.value,
                 section: SECTIONS_MAP[props.title.toLowerCase() as keyof typeof SECTIONS_MAP],
                 key1:elementID,

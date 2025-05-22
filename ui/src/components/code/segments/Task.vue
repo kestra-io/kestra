@@ -1,21 +1,19 @@
 <template>
-    <TaskEditor
-        v-if="!lastBreadcrumb.shown"
-        v-model="yaml"
-        :section
-        @update:model-value="validateTask"
-    />
-
     <component
-        v-else-if="lastBreadcrumb.component"
-        :is="lastBreadcrumb.component.type"
-        v-bind="lastBreadcrumb.component.props"
+        v-if="lastBreadcrumb"
+        :is="lastBreadcrumb.type"
+        v-bind="lastBreadcrumb.props"
         :model-value="parsedTask[field]"
         @update:model-value="validateTaskElement"
     />
 
+    <TaskEditor
+        v-else
+        v-model="yaml"
+        @update:model-value="validateTask"
+    />
+
     <template v-if="yaml">
-        <!-- TODO: Improve the validation for single tasks -->
         <ValidationError v-if="false" :errors link />
 
         <Save
@@ -38,22 +36,19 @@
     import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
-        FLOW_INJECTION_KEY, PARENT_TASKID_INJECTION_KEY, POSITION_INJECTION_KEY,
-        SECTION_INJECTION_KEY,
-        TASK_CREATION_INDEX_INJECTION_KEY, TASKID_INJECTION_KEY
+        FLOW_INJECTION_KEY, PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
+        TASK_CREATION_INDEX_INJECTION_KEY, REF_PATH_INJECTION_KEY
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
-    import {SectionKey} from "../utils/types";
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
-    const section = inject(SECTION_INJECTION_KEY, ref("tasks" as SectionKey));
-    const taskId = inject(TASKID_INJECTION_KEY, ref(""));
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const refPath = inject(REF_PATH_INJECTION_KEY, "");
     const position = inject(POSITION_INJECTION_KEY, "after");
-    const parentTaskId = inject(PARENT_TASKID_INJECTION_KEY, ref());
     const taskCreationIndex = inject(
         TASK_CREATION_INDEX_INJECTION_KEY,
         ref(0),
@@ -69,73 +64,53 @@
         BREADCRUMB_INJECTION_KEY,
         ref([])
     );
-    const lastBreadcrumb = computed(() => {
-        const index = breadcrumbs.value.length - 1;
 
-        return {
-            shown: parentTaskId.value ? index >= 3 : index >= 2,
-            component: breadcrumbs.value?.[index]?.component,
-        };
+    const lastBreadcrumb = computed(() => {
+        return breadcrumbs.value?.[breadcrumbs.value.length - 1]?.component
     });
+
+    interface TaskModel {
+        newBlock: string,
+        parentPath: string,
+        refPath?: string
+        position?: "before" | "after",
+    }
 
     const yaml = taskCreationIndex.value ? computed({
         get() {
-            if(!section.value){
-                return "";
-            }
-            return store.getters["flow/createdTasks"][section.value]?.[taskCreationIndex.value - 1]?.yaml ?? "";
+            return store.getters["flow/createdTasks"]?.[taskCreationIndex.value - 1]?.yaml ?? "";
         },
         set(val){
             store.commit("flow/setCreatedTask", {
-                section: section.value,
                 index: taskCreationIndex.value - 1,
-                yaml: val,
-                position: position,
-                parentKey: parentTaskId.value,
-                refKey: taskId.value,
-            });
+                newBlock: val,
+                parentPath,
+                refPath,
+                position
+            } satisfies (TaskModel & {
+                index: number,
+            }));
         }
     }) : ref("");
 
     const flowBeforeAdd = ref(flow.value);
 
     onBeforeMount(() => {
+        if(!taskCreationIndex.value){
+            yaml.value = YAML_UTILS.extractBlockWithPath({
+                source: flow.value,
+                path: parentPath + refPath,
+            })
+        }
         const type = YAML_UTILS.parse(yaml.value)?.type ?? null;
         emits("updateDocumentation", type);
     });
 
+    const section = computed(() => /^(\w+)(\[\d+\])?/.exec(parentPath)?.[1]);
+
     const validationSection = computed(() =>
         section.value === "triggers" ? SECTIONS.TRIGGERS : SECTIONS.TASKS
     )
-
-    watch(
-        [taskId, section],
-        ([id, section]) => {
-            if(taskCreationIndex.value || !section){
-                return;
-            }
-            yaml.value =
-                section === PLUGIN_DEFAULTS_SECTION ?
-                    YAML_UTILS.extractPluginDefault(
-                        flow.value,
-                        id // this is the task type for the plugin defaults
-                    )
-                    :
-                    YAML_UTILS.extractBlock({
-                        source: flow.value,
-                        section,
-                        key: id
-                    }) ?? "";
-        },
-        {immediate: true},
-    );
-
-    watch(
-        yaml,
-        () => {
-            saveTask();
-        },
-    );
 
     const parsedTask = computed(() => YAML_UTILS.parse(yaml.value));
 
@@ -180,9 +155,9 @@
     const errors = computed(() => store.getters["flow/taskError"]);
 
     const saveTask = () => {
-        let result: string | undefined = "";
+        let result: string = "";
 
-        const currentSection = section.value;
+        const currentSection = section.value as keyof typeof SECTIONS_MAP;
 
         if(!currentSection) {
             return;
@@ -192,82 +167,55 @@
 
         if (taskCreationIndex.value) {
             // if multiple task creation tabs are open add them all
-            const tasks: {
-                yaml:string,
-                position?: "before" | "after",
-                parentKey?: string,
-                refKey?: string
-            }[] | undefined = store.getters["flow/createdTasks"][currentSection];
+            const tasks: TaskModel[] | undefined = store.getters["flow/createdTasks"][currentSection];
             result = flowBeforeAdd.value;
             if(!tasks || !tasks.length) {
                 return;
             }
 
             for(const task of tasks){
-                if(!task?.yaml){
+                if(!task?.newBlock){
                     continue;
                 }
-                const parsedTask = YAML_UTILS.parse(task.yaml);
-                if(parsedTask?.[keyName]){
-                    const existing = YAML_UTILS.checkBlockAlreadyExists({
-                        source: flowBeforeAdd.value,
-                        section: SECTIONS_MAP[currentSection],
-                        newContent: task.yaml,
-                        keyName,
-                    })
+                if([PLUGIN_DEFAULTS_SECTION, "tasks", "triggers"].includes(currentSection)){
+                    const parsedTask = YAML_UTILS.parse(task.newBlock);
+                    // this condition will ignore trigger "conditions" unicity
+                    if(parsedTask?.[keyName]){
+                        const existing = YAML_UTILS.checkBlockAlreadyExists({
+                            source: flowBeforeAdd.value,
+                            section: SECTIONS_MAP[currentSection],
+                            newContent: task.newBlock,
+                            keyName,
+                        })
 
-                    if (existing) {
-                        store.dispatch("core/showMessage", {
-                            variant: "error",
-                            title: "Task with same ID already exist",
-                            message: `Task in ${section} block  with ID: ${existing} already exist in the flow.`,
-                        });
+                        if (existing) {
+                            store.dispatch("core/showMessage", {
+                                variant: "error",
+                                title: "Block with same ID already exist",
+                                message: `Block in ${section.value} section with ID: ${existing} already exist in the flow.`,
+                            });
+                        }
                     }
                 }
 
-                const refKey = taskId.value.length ? taskId.value : YAML_UTILS.getLastBlock({
-                    source: flowBeforeAdd.value,
-                    section: SECTIONS_MAP[currentSection],
-                    parentKey: task.parentKey,
-                })
-
-                result = YAML_UTILS.insertBlock({
-                    source: result ?? "",
-                    section: SECTIONS_MAP[currentSection],
-                    // target task id (the one before of after the task will be inserted)
-                    refKey,
-                    newBlock: task.yaml,
-                    position,
-                    parentKey: task.parentKey,
+                result = YAML_UTILS.insertBlockWithPath({
+                    source: result,
+                    ...task,
                 });
             }
-        } else if (currentSection === PLUGIN_DEFAULTS_SECTION) {
-            result = YAML_UTILS.replaceBlockInDocument({
-                source: flow.value,
-                section: SECTIONS_MAP[currentSection],
-                key: parsedTask.value.type,
-                newContent: yaml.value,
-                keyName: "type",
-            });
         } else {
-            const originalTask = YAML_UTILS.extractBlock({
-                source:flow.value,
-                section: currentSection,
-                key:taskId.value
+            result = YAML_UTILS.replaceBlockWithPath({
+                source: result,
+                path: `${parentPath}${refPath}`,
+                newBlock: yaml.value,
             });
-            if(!originalTask)return;
-
-            result = YAML_UTILS.replaceBlockInDocument({
-                source: flow.value,
-                section: SECTIONS_MAP[currentSection],
-                key: taskId.value,
-                newContent: yaml.value,
-                keyName: "id",
-            });
-            const updatedTask = YAML_UTILS.parse(yaml.value);
-            taskId.value = updatedTask.id;
         }
 
         emits("updateTask", result ?? "");
     };
+
+    watch(
+        yaml,
+        saveTask,
+    );
 </script>

@@ -4,119 +4,121 @@ import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import type {Panel, Tab} from "../MultiPanelTabs.vue";
 import NoCodeWrapper, {NoCodeProps} from "../code/NoCodeWrapper.vue";
-import {PLUGIN_DEFAULTS_SECTION} from "../../utils/constants";
+import {BlockType} from "../code/utils/types";
 
 
 const NOCODE_PREFIX = "nocode"
 
-interface Opener{
+interface Opener {
     panelIndex: number,
     tabIndex: number
 }
 
-interface Handlers{
-    onCreateTask: (opener: Opener, section: string, parentTaskId?: string) => boolean,
-    onEditTask: (opener: Opener, section: string, taskId: string) => boolean
+interface Handlers {
+    onCreateTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: string, position?: "before" | "after") => boolean,
+    onEditTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath: string) => boolean
     onCloseTask: (opener: Opener) => boolean
 }
 
 export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string, handlers: Handlers): Tab {
-    const preTab = tab?.taskId?.length ? {
-        value: `${NOCODE_PREFIX}-edit-${tab.section}-${tab.taskId}`,
-        button: {
-            label: `${tab.section} / ${tab.taskId}`,
-            icon:  markRaw(MouseRightClickIcon),
-        },
-        dirty: false,
-    } : tab?.section?.length ? {
-        value: `${NOCODE_PREFIX}-create-${tab.section}-${tab.createIndex}${tab.parentTaskId?.length ? `-${tab.parentTaskId}` : ""}`,
-        button: {
-            label: `${tab.section} / ${t(`no_code.creation.${tab.section}`)}`,
-            icon:  markRaw(MouseRightClickIcon),
-        },
-        dirty: false,
-    } : {
-        value: NOCODE_PREFIX,
-        button: {
-            icon: markRaw(MouseRightClickIcon),
-            label: "No-code"
-        },
-        dirty: false,
+    function getTabValues(tab: NoCodeProps) {
+        if (tab.createIndex !== undefined) {
+            return {
+                value: `${NOCODE_PREFIX}-create-${tab.parentPath}-${tab.refPath}-${tab.blockType}-${tab.createIndex}-${tab.position}`,
+                button: {
+                    label: `${tab.parentPath} / ${t(`no_code.creation.${tab.blockType}`)}`,
+                    icon: markRaw(MouseRightClickIcon),
+                },
+            }
+        } else if (tab.refPath !== undefined) {
+            return {
+                value: `${NOCODE_PREFIX}-edit-${tab.parentPath}.${tab.refPath}`,
+                button: {
+                    label: `${tab.parentPath} / ${tab.refPath}`,
+                    icon: markRaw(MouseRightClickIcon),
+                },
+            }
+        }
+        return {
+            value: NOCODE_PREFIX,
+            button: {
+                label: "No-code",
+                icon: markRaw(MouseRightClickIcon),
+            },
+        }
     }
 
     const {onCreateTask, onEditTask, onCloseTask} = handlers ?? {}
 
     return {
-        ...preTab,
+        ...getTabValues(tab),
+        dirty: false,
         component: markRaw({
             name: "NoCodeTab",
             props: ["panelIndex", "tabIndex"],
-            setup:(props: Opener) => () => h(NoCodeWrapper, {
+            setup: (props: Opener) => () => h(NoCodeWrapper, {
                 ...tab,
                 onCloseTask: onCloseTask?.bind({}, props),
-                onCreateTask: onCreateTask?.bind({}, props),
-                onEditTask: onEditTask?.bind({}, props),
+                onCreateTask: onCreateTask?.bind({}, props) as any,
+                onEditTask: onEditTask?.bind({}, props) as any,
             })
         }),
     }
 }
 
 export function setupInitialNoCodeTabIfExists(flow: string, tab: string, t: (key: string) => string, handlers: Handlers) {
-    if(tab.startsWith(`${NOCODE_PREFIX}-`) && tab.substring(7).startsWith("edit-")){
+    if (tab.startsWith(`${NOCODE_PREFIX}-`) && tab.substring(7).startsWith("edit-")) {
         const taskInfoPath = tab.substring(7)
-        const section = taskInfoPath.split("-").slice(1).shift() ?? ""
-        const taskId = taskInfoPath.substring(section.length + 6)
-        if(section === PLUGIN_DEFAULTS_SECTION){
-            if(!YAML_UTILS.extractPluginDefault(flow, taskId)){
-                // if the defaults is not found, we don't create the tab
-                return undefined
-            }
-        }else{
-            // check if the task exists in the flow
-            if(!YAML_UTILS.extractBlock({source: flow, section, key: taskId})){
-                // if the task is not found, we don't create the tab
-                return undefined
-            }
+        if (!YAML_UTILS.extractBlockWithPath({source: flow, path: taskInfoPath})) {
+            // if the task is not found, we don't create the tab
+            return undefined
         }
     }
 
     return setupInitialNoCodeTab(tab, t, handlers)
 }
 
-export function setupInitialNoCodeTab(tab: string, t: (key: string) => string, handlers:Handlers) {
+export function setupInitialNoCodeTab(tab: string, t: (key: string) => string, handlers: Handlers) {
     function getNoCodeProps(tab: string): NoCodeProps {
-        if(tab === NOCODE_PREFIX){
+        if (tab === NOCODE_PREFIX) {
             return {}
         }
         const taskInfoPath = tab.substring(7)
         const section = taskInfoPath.split("-").slice(1).shift() ?? ""
-        if(taskInfoPath.startsWith("create-")){
-            const [createIndexPathPart, ...parentTaskIdArray] = taskInfoPath.substring(section.length + 8).split("-")
+        if (taskInfoPath.startsWith("create-")) {
+            const [
+                parentPath,
+                refPath,
+                blockType,
+                createIndexPathPart,
+                position
+            ] = taskInfoPath.substring(section.length + 8).split("-") as any
             const createIndex = parseInt(createIndexPathPart, 10)
-            const parentTaskId = parentTaskIdArray.join("-")
             return {
-                section,
                 createIndex,
-                parentTaskId
+                parentPath,
+                refPath,
+                blockType,
+                position,
             }
-        }else if(taskInfoPath.startsWith("edit-")){
-            const taskId = taskInfoPath.substring(section.length + 6)
+        } else if (taskInfoPath.startsWith("edit-")) {
+            const [parentPath, refPath] = taskInfoPath.substring(section.length + 6).split("-")
             return {
-                section,
-                taskId
+                parentPath,
+                refPath,
             }
         }
         return {}
     }
 
-    if(tab !== NOCODE_PREFIX && !tab.startsWith(`${NOCODE_PREFIX}-`)){
+    if (tab !== NOCODE_PREFIX && !tab.startsWith(`${NOCODE_PREFIX}-`)) {
         return undefined
     }
 
     return getTabFromNoCodeTab(getNoCodeProps(tab), t, handlers)
 }
 
-export function useNoCodePanels(panels: Ref<Panel[]>, handlers:Handlers) {
+export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
     const {t} = useI18n()
 
     function openAddTaskTab(
@@ -124,13 +126,14 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers:Handlers) {
             panelIndex: number,
             tabIndex: number
         },
-        section: string,
-        parentTaskId?: string,
+        blockType: BlockType,
+        parentPath: string,
+        refPath?: string,
         position: "before" | "after" = "after"
     ) {
         // find all nocode task creating tabs for this section
         const existingTabs = panels.value.flatMap(p => p.tabs).filter((tab) => {
-            return tab.value.startsWith(`${NOCODE_PREFIX}-create-${section}-`)
+            return tab.value.startsWith(`${NOCODE_PREFIX}-create-`)
         })
 
         // find the biggest createIndex
@@ -141,8 +144,9 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers:Handlers) {
 
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab({
-            section,
-            parentTaskId,
+            blockType,
+            parentPath,
+            refPath,
             position,
             createIndex
         }, t, handlers)
@@ -157,10 +161,11 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers:Handlers) {
         openerPanel.activeTab = tab
     }
 
-    function openEditTaskTab(opener: {panelIndex: number, tabIndex: number}, section: string, taskId: string) {
+    function openEditTaskTab(opener: { panelIndex: number, tabIndex: number }, blockType: BlockType, parentPath: string, refPath: string) {
         const tab = getTabFromNoCodeTab({
-            section,
-            taskId
+            blockType,
+            parentPath,
+            refPath,
         }, t, handlers)
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
@@ -170,7 +175,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers:Handlers) {
         openerPanel.activeTab = tab
     }
 
-    function closeTaskTab(opener: {panelIndex: number, tabIndex: number}) {
+    function closeTaskTab(opener: { panelIndex: number, tabIndex: number }) {
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
             return

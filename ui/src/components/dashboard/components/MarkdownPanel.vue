@@ -32,37 +32,32 @@
 
     const source = ref();
     const generate = async (id) => {
-        // TODO: Tweak once the API is wrapped up
         let decodedParams = decodeSearchParams(route.query, undefined, []);
-        if (!props.default) {
-            let params = {id, chartId: props.chart.id};
-            if (route.query.namespace) {
-                params.namespace = route.query.namespace;
-            }
-            if (route.query.labels) {
-                params.labels = Object.fromEntries(
-                    route.query.labels.map((l) => l.split(":")),
-                );
-            }
-            if (decodedParams) {
-                params = {...params, filters: decodedParams};
-            }
-            const result = await store.dispatch("dashboard/generate", params);
-            source.value =result.results[0].description;
-        } else {
-            source.value = await store.dispatch("dashboard/chartPreview", {
-                chart: props.chart.content,
-                globalFilter: {filter: decodedParams},
-            });
+        
+        let params = {id, chartId: props.chart.id};
+        if (route.query.namespace) {
+            params.namespace = route.query.namespace;
         }
+        if (route.query.labels) {
+            params.labels = Object.fromEntries(
+                route.query.labels.map((l) => l.split(":")),
+            );
+        }
+        if (decodedParams) {
+            params = {...params, filters: decodedParams};
+        }
+        const result = await store.dispatch("dashboard/generate", params);
+        const description = result.results[0].description;
+
+        source.value = description ? description : t("dashboard.no_flow_description")
     };
 
     watch(route, async (r) => {
-        if(props.chart.source.type === "FlowDescription") generate(r.params?.id);
-        else source.value = props.chart.content ?? props.chart.source.content ?? t("custom_dashboard_empty");
+        if (props.chart.source.type === "FlowDescription") generate(r.params?.id);
+        else source.value = props.chart.content ?? props.chart.source.content;
     });
     onMounted(() => {
-        if(props.chart.source.type === "FlowDescription") generate(route.params?.id);
-        else source.value = props.chart.content ?? props.chart.source.content ?? t("custom_dashboard_empty");
+        if (props.chart.source?.type === "FlowDescription") generate(route.params?.id);
+        else source.value = props.chart.content ?? props.chart.source.content;
     });
 </script>

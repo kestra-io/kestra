@@ -39,7 +39,7 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string
             path: tab.parentPath.replace(/\.[^.]+$/, ""),
         })) : {}
 
-        const parentName = parentBlock.id ?? parentBlock.type ?? tab.parentPath
+        const parentName = parentBlock ? parentBlock.id ?? parentBlock.type ?? tab.parentPath : tab.parentPath
         if (tab.createIndex !== undefined) {
             return {
                 value: `${NOCODE_PREFIX}-${JSON.stringify({
@@ -145,13 +145,13 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
     ) {
         // find all nocode task creating tabs for this section
         const existingTabs = panels.value.flatMap(p => p.tabs).filter((tab) => {
-            return tab.value.startsWith(`${NOCODE_PREFIX}-create-`)
+            return tab.value.startsWith(`${NOCODE_PREFIX}-`) && JSON.parse(tab.value.substring(7)).action === "create"
         })
 
         // find the biggest createIndex
         const createIndex = existingTabs.reduce((acc, tab) => {
-            const index = parseInt(tab.value.split("-").slice(-1).shift() ?? "")
-            return Math.max(acc, index)
+            const index = JSON.parse(tab.value.substring(7)).createIndex
+            return acc < index ? index : acc
         }, 0) + 1
 
         // create a new tab with the next createIndex

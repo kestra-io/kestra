@@ -764,21 +764,4 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
-
-    protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
-        DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,
-        Map<F, String> fieldsMapping,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        Set<F> dateFields
-    ) {
-        return descriptors.getColumns().entrySet().stream()
-            .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
-            .map(entry -> {
-                Duration duration = Duration.between(startDate, endDate);
-                return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
-            })
-            .toList();
-
-    }
 }

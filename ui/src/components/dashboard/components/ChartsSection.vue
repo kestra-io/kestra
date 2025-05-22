@@ -24,7 +24,7 @@
                             :is="TYPES[chart.type]"
                             :default="route.params.id === 'default'"
                             :source="chart.content"
-                            :chart
+                            :chart="chart.type === 'io.kestra.plugin.core.dashboard.chart.Markdown' ? chart.raw : chart"
                         />
                     </div>
                 </div>
@@ -54,7 +54,7 @@
     };
 
     const props = defineProps({
-        charts: {type: Array, requierd: true, default: () => []},
+        charts: {type: Array, required: true, default: () => []},
     });
 
     const labels = (chart) => ({

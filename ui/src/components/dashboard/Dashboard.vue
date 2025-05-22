@@ -66,7 +66,7 @@
         charts.value = [];
 
         for (const chart of allCharts) {
-            charts.value.push({...chart, content: yaml.stringify(chart)});
+            charts.value.push({...chart, content: yaml.stringify(chart), raw: chart});
         }
     };
 

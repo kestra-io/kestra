@@ -53,11 +53,12 @@
     };
 
     watch(route, async (r) => {
-        if (props.chart.source.type === "FlowDescription") generate(r.params?.id);
-        else source.value = props.chart.content ?? props.chart.source.content;
+        if (props.chart.source?.type === "FlowDescription") generate(r.params?.id);        
+        else source.value = props.chart.content ?? props.chart.source.content; 
     });
+    
     onMounted(() => {
-        if (props.chart.source?.type === "FlowDescription") generate(route.params?.id);
-        else source.value = props.chart.content ?? props.chart.source.content;
+        if (props.chart.source?.type === "FlowDescription") generate(route.params?.id);        
+        else source.value = props.chart.content ?? props.chart.source.content;        
     });
 </script>

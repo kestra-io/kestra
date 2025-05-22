@@ -7,25 +7,27 @@
             size="small"
         >
             <el-table-column
-                v-for="(column, index) in Object.entries(
-                    props.chart.data.columns,
-                )"
-                :key="index"
-                :label="column[0]"
+                v-for="key in Object.keys(props.chart.data.columns)"
+                :label="key"
+                :key
             >
                 <template #default="scope">
-                    <code v-if="column[1].field === 'ID'">
-                        {{ scope.row[column[0]] }}
-                    </code>
-                    <Status
-                        v-else-if="column[1].field === 'STATE'"
-                        size="small"
-                        :status="scope.row[column[0]]"
-                    />
-                    <span v-else-if="column[1].field === 'DURATION'">
-                        {{ Utils.humanDuration(scope.row[column[0]]) }}
-                    </span>
-                    <span v-else>{{ scope.row[column[0]] }}</span>
+                    <RouterLink
+                        v-if="key === 'id'"
+                        :to="{
+                            name: 'executions/update',
+                            params: {
+                                namespace: scope.row.namespace,
+                                flowId: scope.row.flowId,
+                                id: scope.row.id,
+                            },
+                        }"
+                    >
+                        <code>{{ scope.row.id.slice(0, 8) }}</code>
+                    </RouterLink>
+                    <Status v-else-if="key === 'state'" size="small" :status="scope.row[key]" />
+                    <span v-else-if="key === 'duration'">{{ Utils.humanDuration(scope.row[key]) }}</span>
+                    <span v-else>{{ scope.row[key] }}</span>
                 </template>
             </el-table-column>
         </el-table>

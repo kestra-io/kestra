@@ -10,7 +10,7 @@
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => handleReorder(yaml)"
         @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
-        @create-task="(blockType, parentPath) => emit('createTask', blockType, parentPath)"
+        @create-task="(blockType, parentPath, refPath) => emit('createTask', blockType, parentPath, refPath)"
         @close-task="() => emit('closeTask')"
         @edit-task="(blockType, parentPath, refPath) => emit('editTask', blockType, parentPath, refPath)"
     />

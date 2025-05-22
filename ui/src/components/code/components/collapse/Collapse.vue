@@ -5,7 +5,12 @@
             :title="`${title}${elements ? ` (${elements.length})` : ''}`"
         >
             <template #icon>
-                <Creation v-if="blockType" :block-type="blockType" />
+                <Creation
+                    v-if="blockType"
+                    :block-type="blockType"
+                    :parent-path-complete="parentPathComplete"
+                    :ref-path="`[${elements?.length ?? 0}]`"
+                />
             </template>
 
             <Element
@@ -54,7 +59,13 @@
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
 
     const parentPathComplete = computed(() => {
-        return `${[[parentPath, refPath].filter(Boolean).join(""), props.blockType].filter(p => p.length).join(".")}`;
+        return `${[
+            [
+                parentPath,
+                refPath,
+            ].filter(Boolean).join(""),
+            props.blockType
+        ].filter(p => p.length).join(".")}`;
     });
 
     const removeElement = (index: number) => {

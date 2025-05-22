@@ -42,11 +42,11 @@
         const {action, params} = value;
         const {id, section} = params;
 
-        // FIXME: manage create and edit task from topology
+        // FIXME manage create and edit task from topology
         if (action === "create") {
             // find the path of the block with id
             // and create a new task
-            emit("createTask", "tasks", section)
+            emit("createTask", "tasks", section, id)
             return
         } else if(action === "edit"){
             emit("editTask", "tasks", section, id)
@@ -58,7 +58,7 @@
         (e: "updateMetadata", value: {[key: string]: any}): void
         (e: "updateDocumentation", task: string): void
         (e: "reorder", yaml: string): void
-        (e: "createTask", blockType: string, parentPath: string): boolean | void
+        (e: "createTask", blockType: string, parentPath: string, refPath: string): boolean | void
         (e: "editTask", blockType: string, parentPath: string, refPath: string): boolean | void
         (e: "closeTask"): boolean | void
     }>()
@@ -108,8 +108,8 @@
     provide(BLOCKTYPE_INJECT_KEY, props.blockType);
     provide(POSITION_INJECTION_KEY, props.position);
     provide(CREATING_TASK_INJECTION_KEY, computed(() => creatingTaskRef.value));
-    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath) => {
-        emit("createTask", blockType, parentPath)
+    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
+        emit("createTask", blockType, parentPath, refPath)
     });
     provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
         emit("editTask", blockType, parentPath, refPath)

@@ -5,10 +5,9 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject} from "vue";
+    import {inject} from "vue";
     import {
         CREATE_TASK_FUNCTION_INJECTION_KEY,
-        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY
     } from "../../../injectionKeys";
     import {Plus} from "../../../utils/icons";
     import {BlockType} from "../../../utils/types";
@@ -19,15 +18,13 @@
 
     const props = defineProps<{
         blockType: BlockType | "pluginDefaults";
+        parentPathComplete: string;
+        refPath: string;
     }>()
 
     const createTask = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {});
-    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
-    const refPath = inject(REF_PATH_INJECTION_KEY, "");
-
-    const parentPathComplete = computed(() => [[parentPath,refPath].filter(Boolean).join(""), props.blockType].filter(p => p.length).join("."));
 
     const handleClick = () => {
-        createTask(props.blockType, parentPathComplete.value);
+        createTask(props.blockType, props.parentPathComplete, props.refPath);
     };
 </script>

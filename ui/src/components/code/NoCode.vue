@@ -115,7 +115,7 @@
         emit("editTask", blockType, parentPath, refPath)
     });
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {
-        if (breadcrumbs.value.length > 2) {
+        if (breadcrumbs.value[breadcrumbs.value.length - 1].component) {
             breadcrumbs.value.pop();
         } else {
             // only close the tab if saving a task not a value

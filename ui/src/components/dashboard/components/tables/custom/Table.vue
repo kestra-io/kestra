@@ -18,7 +18,7 @@
                             name: 'executions/update',
                             params: {
                                 namespace: scope.row.namespace,
-                                flowId: scope.row.flowId,
+                                flowId: scope.row.flowId ?? (route.name === 'flows/update' ? route.params.id : null),
                                 id: scope.row.id,
                             },
                         }"
@@ -66,7 +66,7 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({
         chart: {type: Object, required: true},
-        default: {type: Boolean, default: false},
+        showDefault: {type: Boolean, default: false},
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
@@ -83,7 +83,7 @@
     const data = ref();
     const generate = async (id) => {
         let decodedParams = decodeSearchParams(route.query, undefined, []);
-        if (!props.default) {
+        if (!props.showDefault) {
             let params = {
                 id,
                 chartId: props.chart.id,

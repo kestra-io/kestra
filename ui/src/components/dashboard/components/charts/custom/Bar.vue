@@ -37,7 +37,7 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({
         chart: {type: Object, required: true},
-        default: {type: Boolean, default: false}
+        showDefault: {type: Boolean, default: false}
     });
 
     const {data, chartOptions} = props.chart;
@@ -159,7 +159,7 @@
     const generated = ref();
     const generate = async (id) => {
         let decodedParams = decodeSearchParams(route.query, undefined, []);
-        if (!props.default) {
+        if (!props.showDefault) {
             let params = {
                 id,
                 chartId: props.chart.id

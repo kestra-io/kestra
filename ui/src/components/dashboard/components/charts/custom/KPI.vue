@@ -30,7 +30,7 @@
 
     const props = defineProps({
         chart: {type: Object, required: true},
-        default: {type: Boolean, default: false},
+        showDefault: {type: Boolean, default: false},
     });
 
     const label = computed(
@@ -44,7 +44,7 @@
     const generate = async (id) => {
         // TODO: Tweak once the API is wrapped up
         let decodedParams = decodeSearchParams(route.query, undefined, []);
-        if (!props.default) {
+        if (!props.showDefault) {
             let params = {id, chartId: props.chart.id};
             if (route.query.namespace) {
                 params.namespace = route.query.namespace;

@@ -24,7 +24,7 @@
         <small>{{ dashboard.description }}</small>
     </section>
 
-    <ChartsSection :charts />
+    <ChartsSection :charts :show-default="props.isFlow || props.isNamespace" />
 </template>
 
 <script setup>
@@ -73,10 +73,12 @@
     const load = async (id = "default", defaultYAML = YAML_MAIN) => {
         if (!["home", "flows/update", "namespaces/update"].includes(route.name)) return;
 
-        router.replace({
-            params: {...route.params, id},
-            query: route.params.id !== id ? {} : {...route.query},
-        });
+        if(!props.isFlow && !props.isNamespace) {
+            router.replace({
+                params: {...route.params, id},
+                query: route.params.id !== id ? {} : {...route.query},
+            });
+        }
 
         dashboard.value = id === "default" ? initial(defaultYAML) : await store.dispatch("dashboard/load", id);
 

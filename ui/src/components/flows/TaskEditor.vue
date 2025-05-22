@@ -1,5 +1,4 @@
 <template>
-    <pre>{{ modelValue }}</pre>
     <el-form label-position="top">
         <el-form-item>
             <template #label>

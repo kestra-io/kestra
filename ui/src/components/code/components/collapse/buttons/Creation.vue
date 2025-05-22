@@ -26,6 +26,7 @@
     const refPath = inject(REF_PATH_INJECTION_KEY, "");
 
     const handleClick = () => {
-        createTask(props.blockType, `${parentPath}${refPath}`);
+        const parentPathArray = [[parentPath,refPath].filter(Boolean).join(""), props.blockType];
+        createTask(props.blockType, parentPathArray.filter(p => p.length).join("."));
     };
 </script>

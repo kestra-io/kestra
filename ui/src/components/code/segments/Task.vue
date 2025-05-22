@@ -1,4 +1,11 @@
 <template>
+    <pre>{{ {
+        parentPath,
+        refPath,
+        position,
+        taskCreationIndex,
+    } }}</pre>
+
     <component
         v-if="lastBreadcrumb"
         :is="lastBreadcrumb.type"
@@ -6,6 +13,8 @@
         :model-value="parsedTask[field]"
         @update:model-value="validateTaskElement"
     />
+
+
 
     <TaskEditor
         v-else
@@ -35,7 +44,6 @@
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
         FLOW_INJECTION_KEY, PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         TASK_CREATION_INDEX_INJECTION_KEY, REF_PATH_INJECTION_KEY,
-        BLOCKTYPE_INJECT_KEY
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
@@ -48,7 +56,6 @@
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, "");
     const position = inject(POSITION_INJECTION_KEY, "after");
-    const blockType = inject(BLOCKTYPE_INJECT_KEY, "task") as BlockType;
     const taskCreationIndex = inject(
         TASK_CREATION_INDEX_INJECTION_KEY,
         ref(0),
@@ -85,7 +92,7 @@
             store.commit("flow/setCreatedTask", {
                 index: taskCreationIndex.value - 1,
                 newBlock: val,
-                parentPath: `${parentPath}.${blockType}`,
+                parentPath,
                 refPath,
                 position,
             } satisfies (TaskModel & {

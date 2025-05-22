@@ -568,9 +568,9 @@ public class PluginDefaultService {
 
         for (PluginDefault pluginDefault : matching) {
             if (pluginDefault.isForced()) {
-                result = MapUtils.merge(result, pluginDefault.getValues());
+                result = MapUtils.deepMerge(result, pluginDefault.getValues());
             } else {
-                result = MapUtils.merge(pluginDefault.getValues(), result);
+                result = MapUtils.deepMerge(pluginDefault.getValues(), result);
             }
         }
 

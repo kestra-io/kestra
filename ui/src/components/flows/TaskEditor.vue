@@ -1,4 +1,5 @@
 <template>
+    <pre>{{ modelValue }}</pre>
     <el-form label-position="top">
         <el-form-item>
             <template #label>
@@ -28,7 +29,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject, onBeforeMount, ref, watch} from "vue";
+    import {computed, inject, onBeforeMount, ref, toRaw, watch} from "vue";
     import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
@@ -84,7 +85,7 @@
 
             return updatedProperties;
         }
-        if(!updatedProperties?.id){
+        if(!updatedProperties?.id && ["triggers", "tasks"].includes(blockType ?? "")){
             updatedProperties["id"] = {type: "string", $required: true};
         }
         return updatedProperties
@@ -148,7 +149,7 @@
                 };
             }
         }
-        modelValue.value = YAML_UTILS.stringify(val);
+        modelValue.value = YAML_UTILS.stringify(toRaw(val));
     }
 
     function onTaskTypeSelect() {

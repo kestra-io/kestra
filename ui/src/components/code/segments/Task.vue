@@ -18,10 +18,7 @@
 
         <Save
             :disabled="(errors?.length ?? 0) > 0"
-            @click="() => {
-                saveTask();
-                exitTaskElement();
-            }"
+            @click="exitTaskElement"
             :what="section"
             class="w-100 mt-3"
         />
@@ -37,11 +34,13 @@
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
         FLOW_INJECTION_KEY, PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
-        TASK_CREATION_INDEX_INJECTION_KEY, REF_PATH_INJECTION_KEY
+        TASK_CREATION_INDEX_INJECTION_KEY, REF_PATH_INJECTION_KEY,
+        BLOCKTYPE_INJECT_KEY
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
     import Save from "../components/Save.vue";
+    import {BlockType} from "../utils/types";
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
@@ -49,6 +48,7 @@
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, "");
     const position = inject(POSITION_INJECTION_KEY, "after");
+    const blockType = inject(BLOCKTYPE_INJECT_KEY, "task") as BlockType;
     const taskCreationIndex = inject(
         TASK_CREATION_INDEX_INJECTION_KEY,
         ref(0),
@@ -74,19 +74,20 @@
         parentPath: string,
         refPath?: string
         position?: "before" | "after",
+        blockType?: BlockType
     }
 
     const yaml = taskCreationIndex.value ? computed({
         get() {
-            return store.getters["flow/createdTasks"]?.[taskCreationIndex.value - 1]?.yaml ?? "";
+            return store.getters["flow/createdTasks"]?.[taskCreationIndex.value - 1]?.newBlock ?? "";
         },
         set(val){
             store.commit("flow/setCreatedTask", {
                 index: taskCreationIndex.value - 1,
                 newBlock: val,
-                parentPath,
+                parentPath: `${parentPath}.${blockType}`,
                 refPath,
-                position
+                position,
             } satisfies (TaskModel & {
                 index: number,
             }));
@@ -101,9 +102,9 @@
                 source: flow.value,
                 path: parentPath + refPath,
             })
+            const type = YAML_UTILS.parse(yaml.value)?.type ?? null;
+            emits("updateDocumentation", type);
         }
-        const type = YAML_UTILS.parse(yaml.value)?.type ?? null;
-        emits("updateDocumentation", type);
     });
 
     const section = computed(() => /^(\w+)(\[\d+\])?/.exec(parentPath)?.[1]);
@@ -167,7 +168,7 @@
 
         if (taskCreationIndex.value) {
             // if multiple task creation tabs are open add them all
-            const tasks: TaskModel[] | undefined = store.getters["flow/createdTasks"][currentSection];
+            const tasks: TaskModel[] | undefined = store.getters["flow/createdTasks"];
             result = flowBeforeAdd.value;
             if(!tasks || !tasks.length) {
                 return;
@@ -205,7 +206,7 @@
             }
         } else {
             result = YAML_UTILS.replaceBlockWithPath({
-                source: flowBeforeAdd.value,
+                source: flow.value,
                 path: `${parentPath}${refPath}`,
                 newContent: yaml.value,
             });
@@ -216,6 +217,8 @@
 
     watch(
         yaml,
-        saveTask,
+        () => {
+            saveTask()
+        },
     );
 </script>

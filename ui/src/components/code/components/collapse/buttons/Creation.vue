@@ -6,7 +6,10 @@
 
 <script setup lang="ts">
     import {inject} from "vue";
-    import {CREATE_TASK_FUNCTION_INJECTION_KEY, PARENT_PATH_INJECTION_KEY} from "../../../injectionKeys";
+    import {
+        CREATE_TASK_FUNCTION_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY
+    } from "../../../injectionKeys";
     import {Plus} from "../../../utils/icons";
     import {BlockType} from "../../../utils/types";
 
@@ -20,7 +23,7 @@
 
     const createTask = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {});
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
-    const refPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const refPath = inject(REF_PATH_INJECTION_KEY, "");
 
     const handleClick = () => {
         createTask(props.blockType, `${parentPath}${refPath}`);

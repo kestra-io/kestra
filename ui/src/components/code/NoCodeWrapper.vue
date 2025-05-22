@@ -27,7 +27,7 @@
 
     export interface NoCodeProps {
         createIndex?: number;
-        blockType?: BlockType;
+        blockType?: BlockType | "pluginDefaults";
         parentPath?: string;
         refPath?: string;
         position?: "before" | "after";

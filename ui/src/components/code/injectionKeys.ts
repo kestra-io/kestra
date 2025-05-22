@@ -9,7 +9,7 @@ export const FLOW_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<C
 /**
  * The type of the block that is being created
  */
-export const BLOCKTYPE_INJECT_KEY = Symbol("blocktype-injection-key") as InjectionKey<BlockType | undefined>
+export const BLOCKTYPE_INJECT_KEY = Symbol("blocktype-injection-key") as InjectionKey<BlockType | "pluginDefaults" | undefined>
 /**
  * When creating a subtask, this is the parent task path
  */

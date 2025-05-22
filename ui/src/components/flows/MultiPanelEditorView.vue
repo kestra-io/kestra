@@ -32,9 +32,9 @@
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
     import {useCodeTopology} from "./useCodeTopology";
 
-    import {setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
+    import {getEditTabKey, setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
 
-    function isFlowRelated(element: Tab){
+    function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.value)
             // when the flow file is dirty all the nocode tabs get splashed
             || element.value.startsWith("nocode-")
@@ -79,6 +79,21 @@
             return false
         },
         onEditTask(...args){
+            const [
+                ,
+                blockType,
+                parentPath,
+                refPath,
+            ] = args
+            const editKey = getEditTabKey({
+                blockType,
+                parentPath,
+                refPath
+            })
+            if(openTabs.value.includes(editKey)){
+                focusTab(editKey)
+                return false
+            }
             openEditTaskTab(...args)
             return false
         },
@@ -90,10 +105,10 @@
 
     const {t} = useI18n()
     function getPanelFromValue(value: string, dirtyFlow = false): {prepend: boolean, panel: Panel}{
-        const tab = setupInitialNoCodeTab(value, t, noCodeHandlers)
+        const tab = setupInitialNoCodeTab(value, t, noCodeHandlers, flow.value)
         const element: Tab = tab ?? EDITOR_ELEMENTS.find(e => e.value === value)!
 
-        if(isFlowRelated(element)){
+        if(isTabFlowRelated(element)){
             element.dirty = dirtyFlow
         }
         return {
@@ -159,11 +174,11 @@
 
     watch(isFlowDirty, (dirty) => {
         for(const panel of panels.value){
-            if(panel.activeTab && isFlowRelated(panel.activeTab)){
+            if(panel.activeTab && isTabFlowRelated(panel.activeTab)){
                 panel.activeTab.dirty = dirty
             }
             for(const tab of panel.tabs){
-                if(isFlowRelated(tab)){
+                if(isTabFlowRelated(tab)){
                     tab.dirty = dirty
                 }
             }

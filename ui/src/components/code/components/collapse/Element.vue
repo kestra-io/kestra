@@ -58,7 +58,7 @@
     );
 
     const identifier = computed(() => {
-        return props.section === "pluginDefaults" ? props.element.type : props.element.id;
+        return props.section === "pluginDefaults" || props.blockType === "conditions" ? props.element.type : props.element.id;
     });
 
     const taskIdentifier = computed(() => {

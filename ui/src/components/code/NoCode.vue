@@ -73,7 +73,7 @@
             /**
              * Type of block to create
              */
-            blockType?: BlockType;
+            blockType?: BlockType | "pluginDefaults";
             /**
              * Initial block index when opening
              * a no-code panel from topology

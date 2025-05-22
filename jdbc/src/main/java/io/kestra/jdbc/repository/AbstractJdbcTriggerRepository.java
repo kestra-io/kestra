@@ -474,7 +474,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
 
 
-    public Double fetchValue(String tenantId, DataFilterKPI<ITriggers.Fields, ? extends ColumnDescriptor<ITriggers.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean whereFilter) {
+    public Double fetchValue(String tenantId, DataFilterKPI<ITriggers.Fields, ? extends ColumnDescriptor<ITriggers.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
             DSLContext context = DSL.using(configuration);
             ColumnDescriptor<ITriggers.Fields> columnDescriptor = dataFilter.getColumns();
@@ -484,9 +484,9 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                 field = filterService.buildAggregation(field, columnDescriptor.getAgg());
             }
 
-            List<AbstractFilter<ITriggers.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getIn()));
-            if (whereFilter) {
-                filters.addAll(dataFilter.getWhere());
+            List<AbstractFilter<ITriggers.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getWhere()));
+            if (numeratorFilter) {
+                filters.addAll(dataFilter.getNumerator());
             }
 
             SelectConditionStep selectStep = context

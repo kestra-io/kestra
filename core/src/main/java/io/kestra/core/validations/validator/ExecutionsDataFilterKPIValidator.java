@@ -32,7 +32,7 @@ public class ExecutionsDataFilterKPIValidator implements ConstraintValidator<Exe
             violations.add("Column must have a `labelKey`.");
         }
 
-        executionsDataFilter.getWhere().forEach(filter -> {
+        executionsDataFilter.getNumerator().forEach(filter -> {
             if (filter.getField() == Executions.Fields.LABELS && filter.getLabelKey() == null) {
                 violations.add("Label filters must have a `labelKey`.");
             }

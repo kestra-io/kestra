@@ -20,5 +20,5 @@ public interface QueryBuilderInterface<F extends Enum<F>> {
 
     ArrayListTotal<Map<String, Object>> fetchData(String tenantId, DataFilter<F, ? extends ColumnDescriptor<F>> filter, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException;
 
-    Double fetchValue(String tenantId, DataFilterKPI<F, ? extends ColumnDescriptor<F>> descriptors, ZonedDateTime startDate, ZonedDateTime endDate, boolean whereFilter) throws IOException;
+    Double fetchValue(String tenantId, DataFilterKPI<F, ? extends ColumnDescriptor<F>> descriptors, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) throws IOException;
 }

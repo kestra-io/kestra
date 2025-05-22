@@ -33,22 +33,22 @@ public abstract class DataFilterKPI<F extends Enum<F>, C extends ColumnDescripto
     private C columns;
 
     @Setter
-    private List<AbstractFilter<F>> where;
+    private List<AbstractFilter<F>> numerator;
 
-    private List<AbstractFilter<F>> in;
+    private List<AbstractFilter<F>> where;
 
     public Set<F> aggregationForbiddenFields() {
         return Collections.emptySet();
     }
 
     public DataFilterKPI<F, C> clearFilters() {
-        this.where = Collections.emptyList();
+        this.numerator = Collections.emptyList();
 
         return this;
     }
 
     public void updateWhereWithGlobalFilters(List<QueryFilter> queryFilterList, ZonedDateTime startDate, ZonedDateTime endDate) {
-        this.where = whereWithGlobalFilters(queryFilterList, startDate, endDate, this.where);
+        this.numerator = whereWithGlobalFilters(queryFilterList, startDate, endDate, this.numerator);
     }
 
     public abstract Class<? extends QueryBuilderInterface<F>> repositoryClass();

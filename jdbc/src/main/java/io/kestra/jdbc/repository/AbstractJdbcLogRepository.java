@@ -662,7 +662,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
 
-    public Double fetchValue(String tenantId, DataFilterKPI<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean whereFilter) {
+    public Double fetchValue(String tenantId, DataFilterKPI<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
         return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
             DSLContext context = DSL.using(configuration);
             ColumnDescriptor<Logs.Fields> columnDescriptor = dataFilter.getColumns();
@@ -672,9 +672,9 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 field = filterService.buildAggregation(field, columnDescriptor.getAgg());
             }
 
-            List<AbstractFilter<Logs.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getIn()));
-            if (whereFilter) {
-                filters.addAll(dataFilter.getWhere());
+            List<AbstractFilter<Logs.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getWhere()));
+            if (numeratorFilter) {
+                filters.addAll(dataFilter.getNumerator());
             }
 
             SelectConditionStep selectStep = context

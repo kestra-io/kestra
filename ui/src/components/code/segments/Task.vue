@@ -205,13 +205,13 @@
             }
         } else {
             result = YAML_UTILS.replaceBlockWithPath({
-                source: result,
+                source: flowBeforeAdd.value,
                 path: `${parentPath}${refPath}`,
-                newBlock: yaml.value,
+                newContent: yaml.value,
             });
         }
 
-        emits("updateTask", result ?? "");
+        emits("updateTask", result);
     };
 
     watch(

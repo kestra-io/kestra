@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, inject, onMounted, ref, watch} from "vue";
+    import {computed, inject, onMounted, ref} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {useStore} from "vuex";
@@ -42,27 +42,21 @@
                 ? t("create_flow")
                 : flow.value.id,
         }
-    });
 
-    watch(
-        [taskCreation, refPath, parentPath],
-        () => {
-            const index = parentPath ? 2 : 1;
-            if(parentPath){
-                breadcrumbs.value[1] = {
-                    label: parentPath,
-                }
+        const index = parentPath ? 2 : 1;
+        if(parentPath){
+            breadcrumbs.value[1] = {
+                label: parentPath,
             }
-            if(taskCreation.value || (refPath?.length && refPath.length > 0)){
-                breadcrumbs.value[index] = {
-                    label: taskCreation.value
-                        ? t(`no_code.creation.${blockType}`)
-                        : refPath ?? ""
-                }
+        }
+        if(taskCreation.value || (refPath?.length && refPath.length > 0)){
+            breadcrumbs.value[index] = {
+                label: taskCreation.value
+                    ? t(`no_code.creation.${blockType}`)
+                    : refPath ?? ""
             }
-        },
-        {immediate: true}
-    );
+        }
+    });
 </script>
 
 <style scoped lang="scss">

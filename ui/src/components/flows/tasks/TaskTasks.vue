@@ -3,6 +3,8 @@
         <Collapse
             title="tasks"
             :elements="items"
+            section="tasks"
+            block-type="tasks"
             @remove="(yaml) => emits('update:modelValue', yaml)"
             @reorder="(yaml) => emits('update:modelValue', yaml)"
         />

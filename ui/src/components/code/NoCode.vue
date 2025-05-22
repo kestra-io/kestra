@@ -39,29 +39,18 @@
     watch(topologyClick, (value: TopologyClickParams | undefined) => {
         if (!value) return;
 
-        // const {action, params} = value;
-        // const {id, section} = params;
-
-        // console.log("topologyClick", action, id, section);
+        const {action, params} = value;
+        const {id, section} = params;
 
         // FIXME: manage create and edit task from topology
-        // if (action === "create") {
-        //     if(emit("createTask", section, props.parentPath) === false){
-        //         return
-        //     }
-        //     parentTaskIdRef.value = injectedRefPath.value
-        //     injectedBlockType.value = section
-        //     creatingTaskRef.value = true
-        //     injectedRefPath.value = ""
-        // }
-        // else if(action === "edit"){
-        //     if(emit("editTask", section, id) === false){
-        //         return
-        //     }
-        //     injectedBlockType.value = section
-        //     creatingTaskRef.value = false
-        //     injectedRefPath.value = id
-        // }
+        if (action === "create") {
+            // find the path of the block with id
+            // and create a new task
+            emit("createTask", "tasks", section)
+            return
+        } else if(action === "edit"){
+            emit("editTask", "tasks", section, id)
+        }
     }, {deep: true});
 
     const emit = defineEmits<{

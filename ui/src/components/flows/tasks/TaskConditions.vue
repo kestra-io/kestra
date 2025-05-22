@@ -3,6 +3,8 @@
         <Collapse
             title="conditions"
             :elements="items"
+            section="conditions"
+            block-type="conditions"
             @remove="(yaml) => emits('update:modelValue', yaml)"
             @reorder="(yaml) => emits('update:modelValue', yaml)"
         />

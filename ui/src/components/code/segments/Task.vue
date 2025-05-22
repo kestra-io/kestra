@@ -1,11 +1,4 @@
 <template>
-    <pre>{{ {
-        parentPath,
-        refPath,
-        position,
-        taskCreationIndex,
-    } }}</pre>
-
     <component
         v-if="lastBreadcrumb"
         :is="lastBreadcrumb.type"

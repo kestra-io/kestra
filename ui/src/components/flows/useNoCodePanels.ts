@@ -75,9 +75,9 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string
 }
 
 export function setupInitialNoCodeTabIfExists(flow: string, tab: string, t: (key: string) => string, handlers: Handlers) {
-    if (tab.startsWith(`${NOCODE_PREFIX}-`) && tab.substring(7).startsWith("edit-")) {
-        const taskInfoPath = tab.substring(7)
-        if (!YAML_UTILS.extractBlockWithPath({source: flow, path: taskInfoPath})) {
+    if (tab.startsWith(`${NOCODE_PREFIX}-`) && JSON.parse(tab.substring(7)).action === "edit") {
+        const {parentPath, refPath} = JSON.parse(tab.substring(7))
+        if (!YAML_UTILS.extractBlockWithPath({source: flow, path: parentPath+refPath})) {
             // if the task is not found, we don't create the tab
             return undefined
         }

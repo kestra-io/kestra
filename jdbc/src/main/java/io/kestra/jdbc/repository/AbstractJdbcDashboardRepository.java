@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.kestra.core.utils.MathUtils.roundDouble;
+
 @Slf4j
 @AllArgsConstructor
 public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcRepository implements DashboardRepositoryInterface {
@@ -189,10 +191,10 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
         if (dataChart.getChartOptions() != null && dataChart.getChartOptions().getNumberType().equals(KpiOption.NumberType.PERCENTAGE)) {
             Double totalValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, false);
             Double percentageValue = (filteredValue / totalValue) * 100;
-            return new ArrayListTotal<>(List.of(Map.of("value", percentageValue)), 1);
+            return new ArrayListTotal<>(List.of(Map.of("value", roundDouble(percentageValue, 2))), 1);
         }
 
-        return new ArrayListTotal<>(List.of(Map.of("value", filteredValue)), 1);
+        return new ArrayListTotal<>(List.of(Map.of("value", roundDouble(filteredValue, 2))), 1);
     }
 
     @Override

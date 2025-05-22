@@ -1,7 +1,7 @@
 package io.kestra.core.validations.validator;
 
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
-import io.kestra.core.validations.DataChartValidation;
+import io.kestra.core.validations.DataChartKPIValidation;
 import io.kestra.plugin.core.dashboard.data.Executions;
 import io.micronaut.context.annotation.Value;
 import io.micronaut.core.annotation.AnnotationValue;
@@ -17,14 +17,14 @@ import java.util.List;
 
 @Singleton
 @Introspected
-public class DataChartKPIValidator implements ConstraintValidator<DataChartValidation, DataChartKPI<?, ?>> {
+public class DataChartKPIValidator implements ConstraintValidator<DataChartKPIValidation, DataChartKPI<?, ?>> {
     @Value("${kestra.repository.type}")
     private String repositoryType;
 
     @Override
     public boolean isValid(
         @Nullable DataChartKPI<?, ?> dataChart,
-        @NonNull AnnotationValue<DataChartValidation> annotationMetadata,
+        @NonNull AnnotationValue<DataChartKPIValidation> annotationMetadata,
         @NonNull ConstraintValidatorContext context) {
         if (dataChart == null) {
             return true;

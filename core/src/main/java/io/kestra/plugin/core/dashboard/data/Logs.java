@@ -55,9 +55,9 @@ import java.util.Set;
         )
     }
 )
-public class Logs<C extends ColumnDescriptor<Logs.Fields>> extends DataFilter<Logs.Fields, C> implements ILogs {
+public class Logs<C extends ColumnDescriptor<ILogs.Fields>> extends DataFilter<ILogs.Fields, C> implements ILogs {
     @Override
-    public Class<? extends QueryBuilderInterface<Logs.Fields>> repositoryClass() {
+    public Class<? extends QueryBuilderInterface<ILogs.Fields>> repositoryClass() {
         return LogRepositoryInterface.class;
     }
 

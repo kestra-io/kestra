@@ -37,7 +37,7 @@
         () => props.chart?.chartOptions?.displayName || props.chart?.id,
     );
     const percentage = computed(
-        () => props.chart.chartOptions.numberType === "PERCENTAGE"
+        () => props.chart?.chartOptions?.numberType === "PERCENTAGE"
     );
 
     const generated = ref();

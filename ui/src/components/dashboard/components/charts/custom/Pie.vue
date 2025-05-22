@@ -9,7 +9,7 @@
                 :data="parsedData"
                 :options="options"
                 :plugins="
-                    chartOptions.legend.enabled
+                    chartOptions?.legend?.enabled
                         ? [isDuration ? totalsDurationLegend : totalsLegend, centerPlugin, thicknessPlugin]
                         : [centerPlugin, thicknessPlugin]
                 "
@@ -60,7 +60,7 @@
     const options = computed(() => {
         return defaultConfig({
             plugins: {
-                ...(chartOptions.legend.enabled
+                ...(chartOptions?.legend?.enabled
                     ? {
                         totalsLegend: {
                             containerID,

@@ -4,9 +4,9 @@
         v-if="generated !== undefined"
         :data="parsedData"
         :options
-        :plugins="chartOptions.legend.enabled ? [customBarLegend] : []"
+        :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
         class="chart"
-        :class="chartOptions.legend.enabled ? 'with-legend' : ''"
+        :class="chartOptions?.legend?.enabled ? 'with-legend' : ''"
     />
     <NoData v-else />
 </template>
@@ -65,7 +65,7 @@
             borderColor: "transparent",
             borderWidth: 2,
             plugins: {
-                ...(chartOptions.legend.enabled
+                ...(chartOptions?.legend?.enabled
                     ? {
                         customBarLegend: {
                             containerID,

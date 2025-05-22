@@ -55,7 +55,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
     @Override
     public Set<Triggers.Fields> dateFields() {
-        return Set.of(Triggers.Fields.NEXT_EXECUTION_DATE);
+        return Set.of();
     }
 
     @Override

@@ -7,12 +7,17 @@ import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
 import io.kestra.core.models.dashboards.charts.DataChartKPI;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.dashboard.chart.Markdown;
+import io.kestra.plugin.core.dashboard.chart.mardown.sources.FlowDescription;
 import io.kestra.webserver.models.GlobalFilter;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
@@ -52,6 +57,9 @@ public class DashboardController {
 
     @Inject
     private DashboardRepositoryInterface dashboardRepository;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     @Inject
     protected TenantService tenantService;
@@ -217,6 +225,20 @@ public class DashboardController {
             dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
 
             return PagedResults.of(this.dashboardRepository.generateKPI(tenantId, dataChartKPI, startDate, endDate));
+        } else if (chart instanceof Markdown markdownChart) {
+            if (markdownChart.getSource() != null && markdownChart.getSource() instanceof FlowDescription flowDescription) {
+                Optional<Flow> optionalFlow = flowRepository.findById(this.tenantService.resolveTenant(), flowDescription.getNamespace(), flowDescription.getFlowId());
+                if (optionalFlow.isPresent()) {
+                    Flow flow = optionalFlow.get();
+                    Map<String, Object> descriptionMap = Map.of(
+                        "description", flow.getDescription() != null ? flow.getDescription() : ""
+                    );
+
+                    return PagedResults.of(new ArrayListTotal<>(List.of(descriptionMap), 1));
+                } else {
+                    throw new IllegalArgumentException("Flow not found");
+                }
+            }
         }
 
         throw new IllegalArgumentException("Only data charts can be generated.");
@@ -264,6 +286,20 @@ public class DashboardController {
             dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
 
             return PagedResults.of(this.dashboardRepository.generateKPI(this.tenantService.resolveTenant(), dataChartKPI, startDate, endDate));
+        } else if (chart instanceof Markdown markdownChart) {
+            if (markdownChart.getSource() != null && markdownChart.getSource() instanceof FlowDescription flowDescription) {
+                Optional<Flow> optionalFlow = flowRepository.findById(this.tenantService.resolveTenant(), flowDescription.getNamespace(), flowDescription.getFlowId());
+                if (optionalFlow.isPresent()) {
+                    Flow flow = optionalFlow.get();
+                    Map<String, Object> descriptionMap = Map.of(
+                        "description", flow.getDescription() != null ? flow.getDescription() : ""
+                    );
+
+                    return PagedResults.of(new ArrayListTotal<>(List.of(descriptionMap), 1));
+                } else {
+                    throw new IllegalArgumentException("Flow not found");
+                }
+            }
         }
 
         throw new IllegalArgumentException("Chart is not an instance of DataChart.");

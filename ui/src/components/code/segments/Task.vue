@@ -23,7 +23,7 @@
             :disabled="(errors?.length ?? 0) > 0"
             @click="() => {
                 saveTask();
-                exitTaskElement();
+                exitTask();
             }"
             :what="section"
             class="w-100 mt-3"
@@ -79,6 +79,16 @@
             component: breadcrumbs.value?.[index]?.component,
         };
     });
+
+    const exitTask = () => {
+        /*
+            Removing the created task from the store, so it would not overlap with other creation tabs.
+            See https://github.com/kestra-io/kestra/issues/8781 for more details.
+        */
+        store.commit("flow/removeCreatedTask", {section: section.value, index: taskCreationIndex.value - 1});
+
+        exitTaskElement();
+    };
 
     const yaml = taskCreationIndex.value ? computed({
         get() {

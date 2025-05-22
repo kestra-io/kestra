@@ -685,6 +685,10 @@ export default {
                 state.createdTasks[section] = []
             }
             state.createdTasks[section][index] = rest
+        },
+        removeCreatedTask(state, payload) {
+            const {section, index} = payload;
+            state.createdTasks[section]?.splice(index, 1);
         }
     },
     getters: {

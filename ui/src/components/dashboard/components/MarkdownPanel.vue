@@ -57,11 +57,12 @@
         }
     };
 
-    const getSource = async (ID) => {
-        if(props.chart.source.type === "FlowDescription") generate(ID);
+    watch(route, async (r) => {
+        if(props.chart.source.type === "FlowDescription") generate(r.params?.id);
         else source.value = props.chart.content ?? props.chart.source.content ?? t("custom_dashboard_empty");
-    }
-
-    watch(route, async (route) => getSource(route.params?.id));
-    onMounted(() => getSource(route.params?.id));
+    });
+    onMounted(() => {
+        if(props.chart.source.type === "FlowDescription") generate(route.params?.id);
+        else source.value = props.chart.content ?? props.chart.source.content ?? t("custom_dashboard_empty");
+    });
 </script>

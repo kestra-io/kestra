@@ -1,0 +1,67 @@
+<template>
+    <template v-if="source">
+        <section id="markdown" class="p-2">
+            <Markdown :source />
+        </section>
+    </template>
+
+    <NoData v-else :text="t('custom_dashboard_empty')" />
+</template>
+
+<script setup lang="ts">
+    import {onMounted, ref, watch} from "vue";
+
+    import Markdown from "../../layout/Markdown.vue";
+    import NoData from "../../layout/NoData.vue";
+
+    import {useRoute} from "vue-router";
+    const route = useRoute();
+
+    import {useStore} from "vuex";
+    const store = useStore();
+
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
+
+    import {decodeSearchParams} from "../../filter/utils/helpers.ts";
+
+    const props = defineProps({
+        chart: {type: Object, required: true},
+        default: {type: Boolean, default: false},
+    });
+
+    const source = ref();
+    const generate = async (id) => {
+        // TODO: Tweak once the API is wrapped up
+        let decodedParams = decodeSearchParams(route.query, undefined, []);
+        if (!props.default) {
+            let params = {id, chartId: props.chart.id};
+            if (route.query.namespace) {
+                params.namespace = route.query.namespace;
+            }
+            if (route.query.labels) {
+                params.labels = Object.fromEntries(
+                    route.query.labels.map((l) => l.split(":")),
+                );
+            }
+            if (decodedParams) {
+                params = {...params, filters: decodedParams};
+            }
+            const result = await store.dispatch("dashboard/generate", params);
+            source.value =result.results[0].description;
+        } else {
+            source.value = await store.dispatch("dashboard/chartPreview", {
+                chart: props.chart.content,
+                globalFilter: {filter: decodedParams},
+            });
+        }
+    };
+
+    const getSource = async (ID) => {
+        if(props.chart.source.type === "FlowDescription") generate(ID);
+        else source.value = props.chart.content ?? props.chart.source.content ?? t("custom_dashboard_empty");
+    }
+
+    watch(route, async (route) => getSource(route.params?.id));
+    onMounted(() => getSource(route.params?.id));
+</script>

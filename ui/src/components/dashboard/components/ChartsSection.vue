@@ -39,7 +39,7 @@
 
     import TimeSeries from "./charts/custom/TimeSeries.vue";
     import Bar from "./charts/custom/Bar.vue";
-    import Markdown from "../../layout/Markdown.vue";
+    import Markdown from "./MarkdownPanel.vue";
     import Table from "./tables/custom/Table.vue";
     import Pie from "./charts/custom/Pie.vue";
     import KPI from "./charts/custom/KPI.vue";

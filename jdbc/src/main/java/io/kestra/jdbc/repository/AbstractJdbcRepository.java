@@ -331,32 +331,30 @@ public abstract class AbstractJdbcRepository {
 
     private <T extends Record> SelectConditionStep<T> applyNamespaceCondition(SelectConditionStep<T> select, Object value, QueryFilter.Op operation) {
 
-         switch (operation) {
-                case EQUALS -> select = select.and(DSL.lower(NAMESPACE_FIELD).eq(DSL.lower((String) value)));
-                case NOT_EQUALS -> select = select.and(NAMESPACE_FIELD.ne((String) value));
-                case CONTAINS -> select = select.and(NAMESPACE_FIELD.eq((String) value)
-                    .or(NAMESPACE_FIELD.like( value + ".%"))
-                    .or(NAMESPACE_FIELD.like("%." + value)));
-                case STARTS_WITH -> select = select.and(NAMESPACE_FIELD.like(value + ".%")
-                    .or(NAMESPACE_FIELD.eq((String) value)));
-                case ENDS_WITH -> select = select.and(NAMESPACE_FIELD.like("%." + value));
-                case IN ->  {
-                    if (value instanceof Collection<?> values) {
-                    select = select.and(NAMESPACE_FIELD.in(values.stream()
-                        .map(String.class::cast)
-                        .toList()));
-                    }
+         switch (operation) {case EQUALS -> select = select.and(DSL.lower(NAMESPACE_FIELD).eq(DSL.lower((String) value)));
+            case NOT_EQUALS -> select = select.and(NAMESPACE_FIELD.ne((String) value));
+            case CONTAINS -> select = select.and(NAMESPACE_FIELD.eq((String) value)
+                    .or(NAMESPACE_FIELD.like( "%" + value + "%")));
+            case STARTS_WITH -> select = select.and(NAMESPACE_FIELD.like(value + ".%")
+                .or(NAMESPACE_FIELD.eq((String) value)));
+            case ENDS_WITH -> select = select.and(NAMESPACE_FIELD.like("%." + value));
+            case IN ->  {
+                if (value instanceof Collection<?> values) {
+                select = select.and(NAMESPACE_FIELD.in(values.stream()
+                    .map(String.class::cast)
+                    .toList()));
                 }
-                case NOT_IN ->  {
-                     if (value instanceof Collection<?> values) {
-                         select = select.and(NAMESPACE_FIELD.notIn(values.stream()
-                             .map(String.class::cast)
-                             .toList()));
-                     }
-                }
-                default ->
-                    throw new UnsupportedOperationException("Unsupported operation '%s' for field 'namespace'.".formatted(operation));
-         }
+             }
+             case NOT_IN ->  {
+                 if (value instanceof Collection<?> values) {
+                     select = select.and(NAMESPACE_FIELD.notIn(values.stream()
+                         .map(String.class::cast)
+                         .toList()));
+                 }
+             }
+             default ->
+                throw new UnsupportedOperationException("Unsupported operation '%s' for field 'namespace'.".formatted(operation));
+        }
          return select;
     }
 

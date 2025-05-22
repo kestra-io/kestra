@@ -27,7 +27,7 @@
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
     import {BlockType} from "../../utils/types";
-    import {EDIT_TASK_FUNCTION_INJECTION_KEY, PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY} from "../../injectionKeys";
+    import {EDIT_TASK_FUNCTION_INJECTION_KEY} from "../../injectionKeys";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
@@ -38,15 +38,13 @@
     const props = defineProps<{
         blockType: BlockType | "pluginDefaults";
         section: string;
+        parentPathComplete: string;
         element: {
             id: string;
             type: string;
         };
         elementIndex: number;
     }>();
-
-    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
-    const refPath = inject(REF_PATH_INJECTION_KEY, "");
 
     import {useStore} from "vuex";
 
@@ -67,14 +65,10 @@
         return identifier.value ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`;
     });
 
-    const completeParentPath = computed(() => {
-        return [parentPath + (refPath ?? ""), props.section].filter(Boolean).join(".");
-    });
-
     const handleClick = () => {
         editTask(
             props.blockType,
-            completeParentPath.value,
+            props.parentPathComplete,
             `[${props.elementIndex}]`,
         );
     };

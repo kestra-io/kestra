@@ -5,7 +5,7 @@
 </template>
 
 <script setup lang="ts">
-    import {inject} from "vue";
+    import {computed, inject} from "vue";
     import {
         CREATE_TASK_FUNCTION_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY
@@ -25,8 +25,9 @@
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, "");
 
+    const parentPathComplete = computed(() => [[parentPath,refPath].filter(Boolean).join(""), props.blockType].filter(p => p.length).join("."));
+
     const handleClick = () => {
-        const parentPathArray = [[parentPath,refPath].filter(Boolean).join(""), props.blockType];
-        createTask(props.blockType, parentPathArray.filter(p => p.length).join("."));
+        createTask(props.blockType, parentPathComplete.value);
     };
 </script>

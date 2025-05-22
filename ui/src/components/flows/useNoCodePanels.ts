@@ -24,7 +24,10 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string
     function getTabValues(tab: NoCodeProps) {
         if (tab.createIndex !== undefined) {
             return {
-                value: `${NOCODE_PREFIX}-create-${tab.parentPath}-${tab.refPath}-${tab.blockType}-${tab.createIndex}-${tab.position}`,
+                value: `${NOCODE_PREFIX}-${JSON.stringify({
+                    action:"create",
+                    ...tab
+                })}`,
                 button: {
                     label: `${tab.parentPath} / ${t(`no_code.creation.${tab.blockType}`)}`,
                     icon: markRaw(MouseRightClickIcon),
@@ -32,7 +35,12 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string
             }
         } else if (tab.refPath !== undefined) {
             return {
-                value: `${NOCODE_PREFIX}-edit-${tab.parentPath}.${tab.refPath}`,
+                value: `${NOCODE_PREFIX}-${JSON.stringify({
+                    action: "edit",
+                    parentPath: tab.parentPath,
+                    refPath: tab.refPath,
+                    blockType: tab.blockType,
+                })}`,
                 button: {
                     label: `${tab.parentPath} / ${tab.refPath}`,
                     icon: markRaw(MouseRightClickIcon),
@@ -84,29 +92,15 @@ export function setupInitialNoCodeTab(tab: string, t: (key: string) => string, h
             return {}
         }
         const taskInfoPath = tab.substring(7)
-        const section = taskInfoPath.split("-").slice(1).shift() ?? ""
-        if (taskInfoPath.startsWith("create-")) {
-            const [
-                parentPath,
-                refPath,
-                blockType,
-                createIndexPathPart,
-                position
-            ] = taskInfoPath.substring(section.length + 8).split("-") as any
+        const {action, createIndex: createIndexPathPart, ...rest} = JSON.parse(taskInfoPath) ?? {}
+        if (action === "create") {
             const createIndex = parseInt(createIndexPathPart, 10)
             return {
                 createIndex,
-                parentPath,
-                refPath,
-                blockType,
-                position,
+                ...rest
             }
-        } else if (taskInfoPath.startsWith("edit-")) {
-            const [parentPath, refPath] = taskInfoPath.substring(section.length + 6).split("-")
-            return {
-                parentPath,
-                refPath,
-            }
+        } else if (action === "edit") {
+            return rest
         }
         return {}
     }

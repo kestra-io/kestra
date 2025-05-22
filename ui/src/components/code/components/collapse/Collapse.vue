@@ -13,9 +13,10 @@
                 :key="elementIndex"
                 :section="section"
                 :block-type="blockType"
+                :parent-path-complete="parentPathComplete"
                 :element
                 :element-index
-                @remove-element="removeElement(title, elementIndex)"
+                @remove-element="removeElement(elementIndex)"
                 @move-element="
                     (direction: 'up' | 'down') =>
                         moveElement(
@@ -31,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-    import {inject, ref} from "vue";
+    import {computed, inject, ref} from "vue";
 
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
@@ -39,7 +40,7 @@
 
     import Creation from "./buttons/Creation.vue";
     import Element from "./Element.vue";
-    import {FLOW_INJECTION_KEY, PARENT_PATH_INJECTION_KEY} from "../../injectionKeys";
+    import {FLOW_INJECTION_KEY, PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY} from "../../injectionKeys";
     import {SECTIONS_MAP} from "../../../../utils/constants";
 
     const emits = defineEmits(["remove", "reorder"]);
@@ -50,17 +51,18 @@
     const expanded = ref<CollapseItem["title"]>(props.title);
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
 
-    const removeElement = (title: string, index: number) => {
-        const keyName = title === "Plugin Defaults" ? "type" : "id";
+    const parentPathComplete = computed(() => {
+        return `${[[parentPath, refPath].filter(Boolean).join(""), props.blockType].filter(p => p.length).join(".")}`;
+    });
 
-        if(props.elements?.[index]?.[keyName] === undefined) return;
-
+    const removeElement = (index: number) => {
         emits(
             "remove",
             YAML_UTILS.deleteBlockWithPath({
                 source: flow.value,
-                path: `${parentPath}[${index}]`,
+                path: `${parentPathComplete.value}[${index}]`,
             }),
         );
     };

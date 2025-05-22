@@ -19,7 +19,7 @@
     const props = defineProps<{
         blockType: BlockType | "pluginDefaults";
         parentPathComplete: string;
-        refPath: string;
+        refPath?: number;
     }>()
 
     const createTask = inject(CREATE_TASK_FUNCTION_INJECTION_KEY, () => {});

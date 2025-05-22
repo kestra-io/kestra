@@ -16,8 +16,8 @@ interface Opener {
 }
 
 interface Handlers {
-    onCreateTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: string, position?: "before" | "after") => boolean,
-    onEditTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath: string) => boolean
+    onCreateTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number, position?: "before" | "after") => boolean,
+    onEditTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath: number) => boolean
     onCloseTask: (opener: Opener) => boolean
 }
 
@@ -140,27 +140,16 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         },
         blockType: BlockType | "pluginDefaults",
         parentPath: string,
-        refPath?: string,
+        refPath?: number,
         position: "before" | "after" = "after"
     ) {
-        // find all nocode task creating tabs for this section
-        const existingTabs = panels.value.flatMap(p => p.tabs).filter((tab) => {
-            return tab.value.startsWith(`${NOCODE_PREFIX}-`) && JSON.parse(tab.value.substring(7)).action === "create"
-        })
-
-        // find the biggest createIndex
-        const createIndex = existingTabs.reduce((acc, tab) => {
-            const index = JSON.parse(tab.value.substring(7)).createIndex
-            return acc < index ? index : acc
-        }, 0) + 1
-
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab({
             blockType,
             parentPath,
             refPath,
             position,
-            createIndex
+            createIndex: store.getters["flow/createdTasks"]?.length + 1,
         }, t, handlers, store.state.flow.flowYaml)
 
         panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)
@@ -173,7 +162,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         openerPanel.activeTab = tab
     }
 
-    function openEditTaskTab(opener: { panelIndex: number, tabIndex: number }, blockType: BlockType | "pluginDefaults", parentPath: string, refPath: string) {
+    function openEditTaskTab(opener: { panelIndex: number, tabIndex: number }, blockType: BlockType | "pluginDefaults", parentPath: string, refPath: number) {
         const tab = getTabFromNoCodeTab({
             blockType,
             parentPath,

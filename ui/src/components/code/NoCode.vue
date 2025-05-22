@@ -22,11 +22,11 @@
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
         CREATE_TASK_FUNCTION_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
-        EDIT_TASK_FUNCTION_INJECTION_KEY, FLOW_INJECTION_KEY,
+        EDIT_TASK_FUNCTION_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
         PANEL_INJECTION_KEY, POSITION_INJECTION_KEY,
-        BLOCKTYPE_INJECT_KEY,
         REF_PATH_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
-        TASK_CREATION_INDEX_INJECTION_KEY, TOPOLOGY_CLICK_INJECTION_KEY
+        TASK_CREATION_INDEX_INJECTION_KEY, TOPOLOGY_CLICK_INJECTION_KEY,
+        FLOW_BEFORE_ADD_INJECTION_KEY, FLOW_INJECTION_KEY,
     } from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
@@ -46,10 +46,10 @@
         if (action === "create") {
             // find the path of the block with id
             // and create a new task
-            emit("createTask", "tasks", section, id)
+            emit("createTask", "tasks", section, 0)
             return
         } else if(action === "edit"){
-            emit("editTask", "tasks", section, id)
+            emit("editTask", "tasks", section+id, 0)
         }
     }, {deep: true});
 
@@ -58,8 +58,8 @@
         (e: "updateMetadata", value: {[key: string]: any}): void
         (e: "updateDocumentation", task: string): void
         (e: "reorder", yaml: string): void
-        (e: "createTask", blockType: string, parentPath: string, refPath: string): boolean | void
-        (e: "editTask", blockType: string, parentPath: string, refPath: string): boolean | void
+        (e: "createTask", blockType: string, parentPath: string, refPath?: number): boolean | void
+        (e: "editTask", blockType: string, parentPath: string, refPath?: number): boolean | void
         (e: "closeTask"): boolean | void
     }>()
 
@@ -78,7 +78,7 @@
              * Initial block index when opening
              * a no-code panel from topology
              */
-            refPath?: string;
+            refPath?: number;
             creatingTask?: boolean;
             position?: "before" | "after";
         }>(), {
@@ -100,7 +100,10 @@
         ref(0),
     );
 
+    const flowBeforeAdd = ref(props.flow)
+
     provide(FLOW_INJECTION_KEY, computed(() => props.flow));
+    provide(FLOW_BEFORE_ADD_INJECTION_KEY, computed(() => flowBeforeAdd.value));
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath ?? "");
     provide(REF_PATH_INJECTION_KEY, props.refPath);
     provide(PANEL_INJECTION_KEY, panel)
@@ -127,9 +130,16 @@
     onBeforeUnmount(() => {
         // cleanup the addition model on close
         if(props.creatingTask) {
+            const task = store.getters["flow/createdTasks"]?.[taskCreationIndex.value - 1];
+            if (!task) return;
+
+            YAML_UTILS.insertBlockWithPath({
+                source: flowBeforeAdd.value,
+                ...task
+            });
+
             store.commit("flow/setCreatedTask", {
                 index: taskCreationIndex.value - 1,
-                yaml: undefined,
             });
         }
     })

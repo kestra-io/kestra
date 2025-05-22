@@ -9,7 +9,7 @@
                     v-if="blockType"
                     :block-type="blockType"
                     :parent-path-complete="parentPathComplete"
-                    :ref-path="`[${elements?.length ?? 0}]`"
+                    :ref-path="elements?.length ? elements.length - 1 : undefined"
                 />
             </template>
 
@@ -45,7 +45,10 @@
 
     import Creation from "./buttons/Creation.vue";
     import Element from "./Element.vue";
-    import {FLOW_INJECTION_KEY, PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY} from "../../injectionKeys";
+    import {
+        CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY
+    } from "../../injectionKeys";
     import {SECTIONS_MAP} from "../../../../utils/constants";
 
     const emits = defineEmits(["remove", "reorder"]);
@@ -57,12 +60,17 @@
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, ref(false));
 
     const parentPathComplete = computed(() => {
         return `${[
             [
                 parentPath,
-                refPath,
+                creatingTask.value && refPath !== undefined
+                    ? `[${refPath + 1}]`
+                    : refPath !== undefined
+                        ? `[${refPath}]`
+                        : undefined,
             ].filter(Boolean).join(""),
             props.blockType
         ].filter(p => p.length).join(".")}`;

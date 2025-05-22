@@ -74,7 +74,7 @@
     import Task from "./Task.vue";
 
     const panel = inject(PANEL_INJECTION_KEY, ref());
-    const refPath = inject(REF_PATH_INJECTION_KEY, "");
+    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
 
 
     import {useI18n} from "vue-i18n";
@@ -82,7 +82,6 @@
 
     import {useStore} from "vuex";
     const store = useStore();
-
 
     const emits = defineEmits([
         "save",

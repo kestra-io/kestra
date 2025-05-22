@@ -29,15 +29,15 @@
         createIndex?: number;
         blockType?: BlockType | "pluginDefaults";
         parentPath?: string;
-        refPath?: string;
+        refPath?: number;
         position?: "before" | "after";
     }
 
     const props = defineProps<NoCodeProps>();
 
     const emit = defineEmits<{
-        (e: "createTask", blockType: string, parentPath: string, refPath?: string, position?: "after" | "before"): boolean | void;
-        (e: "editTask", blockType: string, parentPath: string, refPath: string): boolean | void;
+        (e: "createTask", blockType: string, parentPath: string, refPath?: number, position?: "after" | "before"): boolean | void;
+        (e: "editTask", blockType: string, parentPath: string, refPath: number): boolean | void;
         (e: "closeTask"): boolean | void;
     }>();
 

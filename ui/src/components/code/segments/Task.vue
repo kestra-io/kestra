@@ -33,7 +33,8 @@
     import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
-        FLOW_INJECTION_KEY, PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
+        FLOW_INJECTION_KEY, FLOW_BEFORE_ADD_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         TASK_CREATION_INDEX_INJECTION_KEY, REF_PATH_INJECTION_KEY,
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
@@ -44,8 +45,9 @@
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
+    const flowBeforeAdd = inject(FLOW_BEFORE_ADD_INJECTION_KEY, ref(""));
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
-    const refPath = inject(REF_PATH_INJECTION_KEY, "");
+    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
     const position = inject(POSITION_INJECTION_KEY, "after");
     const taskCreationIndex = inject(
         TASK_CREATION_INDEX_INJECTION_KEY,
@@ -70,7 +72,7 @@
     interface TaskModel {
         newBlock: string,
         parentPath: string,
-        refPath?: string
+        refPath?: number
         position?: "before" | "after",
         blockType?: BlockType
     }
@@ -91,8 +93,6 @@
             }));
         }
     }) : ref("");
-
-    const flowBeforeAdd = ref(flow.value);
 
     onBeforeMount(() => {
         if(!taskCreationIndex.value){
@@ -205,8 +205,8 @@
         } else {
             result = YAML_UTILS.replaceBlockWithPath({
                 source: flow.value,
-                path: `${parentPath}${refPath}`,
-                newContent: yaml.value,
+                path: `${parentPath}[${refPath}]`,
+                newContent: yaml.value ?? "",
             });
         }
 
@@ -219,4 +219,10 @@
             saveTask()
         },
     );
+
+    watch(flowBeforeAdd, () => {
+        if (taskCreationIndex.value) {
+            saveTask()
+        }
+    });
 </script>

@@ -6,6 +6,7 @@ import {Panel} from "../MultiPanelTabs.vue"
  * Complete flow YAML string for the no-code
  */
 export const FLOW_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
+export const FLOW_BEFORE_ADD_INJECTION_KEY = Symbol("flow-before-add-injection-key") as InjectionKey<ComputedRef<string>>
 /**
  * The type of the block that is being created
  */
@@ -17,7 +18,7 @@ export const PARENT_PATH_INJECTION_KEY = Symbol("parent-path-injection-key") as 
 /**
  * Current task ID (When a task is edited) or target task ID (When a task is created) or task type (when a pluginDefaults is edited)
  */
-export const REF_PATH_INJECTION_KEY = Symbol("ref-path-injection-key") as InjectionKey<string | undefined>
+export const REF_PATH_INJECTION_KEY = Symbol("ref-path-injection-key") as InjectionKey<number | undefined>
 /**
  * Tells if the task should eb added before or after the target (When a task is created)
  */
@@ -31,12 +32,12 @@ export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as I
  * Call this when starting to create a new task, when the user clicks on the add button
  * to start the addition process
  */
-export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string, refPath: string) => void>
+export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string, refPat?: number) => void>
 /**
  * Call this when starting to edit a task, when the user clicks on the task line
  * to start the edition process
  */
-export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string, refPath: string) => void>
+export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number) => void>
 /**
  * Call this when closing a task, when the user clicks on the close button
  */

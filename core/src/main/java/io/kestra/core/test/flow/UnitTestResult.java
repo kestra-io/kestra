@@ -13,14 +13,23 @@ public record UnitTestResult(
     @NotNull
     String unitTestType,
     @NotNull
+    String executionId,
+    @NotNull
     TestState state,
     @NotNull
     List<AssertionResult> assertionResults,
+    @NotNull
+    List<AssertionRunError> errors,
     Fixtures fixtures
 ) {
 
-    public static UnitTestResult of(String unitTestId, String unitTestType, List<AssertionResult> results, @Nullable Fixtures fixtures) {
-        var state = results.stream().anyMatch(assertion -> !assertion.isSuccess()) ? TestState.FAILED : TestState.SUCCESS;
-        return new UnitTestResult(unitTestId, unitTestType, state, results, fixtures);
+    public static UnitTestResult of(String unitTestId, String unitTestType, String executionId, List<AssertionResult> results, List<AssertionRunError> errors, @Nullable Fixtures fixtures) {
+        TestState state;
+        if(!errors.isEmpty()){
+            state = TestState.ERROR;
+        } else {
+            state = results.stream().anyMatch(assertion -> !assertion.isSuccess()) ? TestState.FAILED : TestState.SUCCESS;
+        }
+        return new UnitTestResult(unitTestId, unitTestType, executionId, state, results, errors, fixtures);
     }
 }

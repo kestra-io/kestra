@@ -12,7 +12,11 @@ public record TestSuiteRunResult(
     List<UnitTestResult> results) {
 
     public static TestSuiteRunResult of(String id, String testSuiteId, List<UnitTestResult> results) {
-        var state = results.stream().anyMatch(result -> result.state().equals(TestState.FAILED)) ? TestState.FAILED : TestState.SUCCESS;
-        return new TestSuiteRunResult(id, testSuiteId, state, results);
+        for (UnitTestResult result : results) {
+            if(result.state().equals(TestState.ERROR) || result.state().equals(TestState.FAILED)) {
+                return new TestSuiteRunResult(id, testSuiteId, result.state(), results);
+            }
+        }
+        return new TestSuiteRunResult(id, testSuiteId, TestState.SUCCESS, results);
     }
 }

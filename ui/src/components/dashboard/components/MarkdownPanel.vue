@@ -1,6 +1,6 @@
 <template>
     <template v-if="source">
-        <section id="markdown" class="p-2">
+        <section id="markdown">
             <Markdown :source />
         </section>
     </template>

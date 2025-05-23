@@ -165,7 +165,7 @@ allprojects {
  * Test
  **********************************************************************************************************************/
 subprojects {
-    if (it.name != 'platform') {
+    if (it.name != 'platform' && it.name != 'jmh-benchmarks') {
         apply plugin: "com.adarshr.test-logger"
 
         java {
@@ -268,7 +268,7 @@ subprojects {
  * Allure Reports
  **********************************************************************************************************************/
 subprojects {
-    if (it.name != 'platform') {
+    if (it.name != 'platform' && it.name != 'jmh-benchmarks') {
         dependencies {
             testImplementation platform("io.qameta.allure:allure-bom")
             testImplementation "io.qameta.allure:allure-junit5"
@@ -295,7 +295,7 @@ subprojects {
  * Jacoco
  **********************************************************************************************************************/
 subprojects {
-    if (it.name != 'platform') {
+    if (it.name != 'platform' && it.name != 'jmh-benchmarks') {
         apply plugin: 'jacoco'
 
         test {
@@ -496,98 +496,101 @@ nexusPublishing {
 }
 
 subprojects {
-    apply plugin: "maven-publish"
-    apply plugin: 'signing'
-    apply plugin: 'ru.vyarus.pom'
-    apply plugin: 'ru.vyarus.github-info'
 
-    javadoc {
-        options {
-            locale = 'en_US'
-            encoding = 'UTF-8'
-            addStringOption("Xdoclint:none", "-quiet")
-        }
-    }
+    if (it.name != 'jmh-benchmarks') {
+        apply plugin: "maven-publish"
+        apply plugin: 'signing'
+        apply plugin: 'ru.vyarus.pom'
+        apply plugin: 'ru.vyarus.github-info'
 
-    tasks.register('sourcesJar', Jar) {
-        dependsOn = [':core:copyGradleProperties']
-        dependsOn = [':ui:assembleFrontend']
-        archiveClassifier.set('sources')
-        from sourceSets.main.allSource
-    }
-    sourcesJar.dependsOn ':core:copyGradleProperties'
-    sourcesJar.dependsOn ':ui:assembleFrontend'
-
-    tasks.register('javadocJar', Jar) {
-        archiveClassifier.set('javadoc')
-        from javadoc
-    }
-
-    tasks.register('testsJar', Jar) {
-        group = 'build'
-        description = 'Build the tests jar'
-
-        archiveClassifier.set('tests')
-        if (sourceSets.matching { it.name == 'test'}) {
-            from sourceSets.named('test').get().output
-        }
-    }
-
-    github {
-        user 'kestra-io'
-        license 'Apache'
-        repository 'kestra'
-        site 'https://kestra.io'
-    }
-
-    maven.pom {
-        description = 'The modern, scalable orchestrator & scheduler open source platform'
-
-        developers {
-            developer {
-                id = "tchiotludo"
-                name = "Ludovic Dehon"
+        javadoc {
+            options {
+                locale = 'en_US'
+                encoding = 'UTF-8'
+                addStringOption("Xdoclint:none", "-quiet")
             }
         }
-    }
 
-    publishing {
-        publications {
-            sonatypePublication(MavenPublication) {
-                version project.version
+        tasks.register('sourcesJar', Jar) {
+            dependsOn = [':core:copyGradleProperties']
+            dependsOn = [':ui:assembleFrontend']
+            archiveClassifier.set('sources')
+            from sourceSets.main.allSource
+        }
+        sourcesJar.dependsOn ':core:copyGradleProperties'
+        sourcesJar.dependsOn ':ui:assembleFrontend'
 
-                if (project.name.contains('cli')) {
-                    groupId "io.kestra"
-                    artifactId "kestra"
+        tasks.register('javadocJar', Jar) {
+            archiveClassifier.set('javadoc')
+            from javadoc
+        }
 
-                    artifact shadowJar
-                    artifact executableJar
-                } else if (project.name.contains('platform')){
-                    groupId project.group
-                    artifactId project.name
-                } else {
-                    from components.java
+        tasks.register('testsJar', Jar) {
+            group = 'build'
+            description = 'Build the tests jar'
 
-                    groupId project.group
-                    artifactId project.name
+            archiveClassifier.set('tests')
+            if (sourceSets.matching { it.name == 'test'}) {
+                from sourceSets.named('test').get().output
+            }
+        }
 
-                    artifact sourcesJar
-                    artifact javadocJar
-                    artifact testsJar
+        github {
+            user 'kestra-io'
+            license 'Apache'
+            repository 'kestra'
+            site 'https://kestra.io'
+        }
+
+        maven.pom {
+            description = 'The modern, scalable orchestrator & scheduler open source platform'
+
+            developers {
+                developer {
+                    id = "tchiotludo"
+                    name = "Ludovic Dehon"
                 }
             }
         }
-    }
 
-    signing {
-        // only sign JARs that we publish to Sonatype
-        required { gradle.taskGraph.hasTask("publishSonatypePublicationPublicationToSonatypeRepository") }
-        sign publishing.publications.sonatypePublication
-    }
+        publishing {
+            publications {
+                sonatypePublication(MavenPublication) {
+                    version project.version
 
-    tasks.withType(GenerateModuleMetadata).configureEach {
-        // Suppression this validation error as we want to enforce the Kestra platform
-        suppressedValidationErrors.add('enforced-platform')
+                    if (project.name.contains('cli')) {
+                        groupId "io.kestra"
+                        artifactId "kestra"
+
+                        artifact shadowJar
+                        artifact executableJar
+                    } else if (project.name.contains('platform')){
+                        groupId project.group
+                        artifactId project.name
+                    } else {
+                        from components.java
+
+                        groupId project.group
+                        artifactId project.name
+
+                        artifact sourcesJar
+                        artifact javadocJar
+                        artifact testsJar
+                    }
+                }
+            }
+        }
+
+        signing {
+            // only sign JARs that we publish to Sonatype
+            required { gradle.taskGraph.hasTask("publishSonatypePublicationPublicationToSonatypeRepository") }
+            sign publishing.publications.sonatypePublication
+        }
+
+        tasks.withType(GenerateModuleMetadata).configureEach {
+            // Suppression this validation error as we want to enforce the Kestra platform
+            suppressedValidationErrors.add('enforced-platform')
+        }
     }
 }
 

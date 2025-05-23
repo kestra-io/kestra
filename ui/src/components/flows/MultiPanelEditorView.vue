@@ -151,7 +151,7 @@
     const {setupInitialCodeTab} = useInitialCodeTabs()
 
     const panels: Ref<Panel[]> = useStorage<any>(
-        `panels-${flow.value.namespace}-${flow.value.id}`,
+        `panel-${flow.value.namespace}-${flow.value.id}`,
         DEFAULT_ACTIVE_TABS
             .map((t):Panel => getPanelFromValue(t).panel),
         undefined,

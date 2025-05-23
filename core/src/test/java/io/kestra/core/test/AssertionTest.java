@@ -29,7 +29,7 @@ class AssertionTest {
             .description(Property.ofValue("my description"))
             .build();
 
-        assertThat(assertion.run(runContextFactory.of()))
+        assertThat(assertion.run(runContextFactory.of()).results())
             .hasSize(1)
             .first()
             .satisfies(result -> {
@@ -47,12 +47,31 @@ class AssertionTest {
             .errorMessage(Property.ofValue("error message"))
             .build();
 
-        assertThat(assertion.run(runContextFactory.of()))
+        assertThat(assertion.run(runContextFactory.of()).results())
             .hasSize(1)
             .first()
             .satisfies(result -> {
                 assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(false);
                 assertThat(result).extracting(AssertionResult::errorMessage).isEqualTo("error message");
+            });
+    }
+
+    @Test
+    void shouldBrokenAssert_returnError() {
+        var assertion = Assertion.builder()
+            .value(new Property<>("{{ invalid-pebble-expression() }}"))
+            .equalsTo(Property.ofValue("value"))
+            .build();
+
+        assertThat(assertion.run(runContextFactory.of()).results())
+            .hasSize(0);
+        assertThat(assertion.run(runContextFactory.of()).errors())
+            .hasSize(1)
+            .first()
+            .satisfies(result -> {
+                assertThat(result.message()).contains("Could not evaluate assertion");
+                assertThat(result.details()).contains("invalid-pebble-expression()");
+                assertThat(result.details()).contains("io.pebbletemplates.pebble.error.PebbleException");
             });
     }
 
@@ -64,7 +83,7 @@ class AssertionTest {
             .build();
         var runContext = runContextFactory.of(Map.of("outputs", Map.of("my_task", Map.of("res", "value1"))));
 
-        assertThat(assertion.run(runContext))
+        assertThat(assertion.run(runContext).results())
             .hasSize(1)
             .first()
             .extracting(AssertionResult::isSuccess).isEqualTo(true);
@@ -78,7 +97,7 @@ class AssertionTest {
             .build();
         var runContext = runContextFactory.of(Map.of("outputs", Map.of("my_task", Map.of("res", "actualValue1"))));
 
-        assertThat(assertion.run(runContext))
+        assertThat(assertion.run(runContext).results())
             .hasSize(1)
             .first()
             .satisfies(result -> {
@@ -324,7 +343,7 @@ class AssertionTest {
             .value(Property.ofValue("value1"))
             .isNull(Property.ofValue(true))
             .build();
-        assertThat(testedAssertion.run(runContextFactory.of()))
+        assertThat(testedAssertion.run(runContextFactory.of()).results())
             .first()
             .satisfies(result -> {
                     assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(false);
@@ -349,7 +368,7 @@ class AssertionTest {
             .value(Property.ofValue(null))
             .isNotNull(Property.ofValue(true))
             .build();
-        assertThat(testedAssertion.run(runContextFactory.of()))
+        assertThat(testedAssertion.run(runContextFactory.of()).results())
             .first()
             .satisfies(result -> {
                     assertThat(result).extracting(AssertionResult::isSuccess).isEqualTo(false);
@@ -366,7 +385,7 @@ class AssertionTest {
             .equalsTo(Property.ofValue("value222"))
             .build();
 
-        var testResults = testedAssertion.run(runContextFactory.of());
+        var testResults = testedAssertion.run(runContextFactory.of()).results();
         assertThat(testResults)
             .hasSize(2);
         assertThat(testResults)
@@ -380,14 +399,14 @@ class AssertionTest {
     }
 
     void testAssertionResultSuccess(Assertion testedAssertion) {
-        assertThat(testedAssertion.run(runContextFactory.of()))
+        assertThat(testedAssertion.run(runContextFactory.of()).results())
             .hasSize(1)
             .first()
             .extracting(AssertionResult::isSuccess).isEqualTo(true);
     }
 
     void testAssertionResultFails(Assertion testedAssertion) {
-        assertThat(testedAssertion.run(runContextFactory.of()))
+        assertThat(testedAssertion.run(runContextFactory.of()).results())
             .hasSize(1)
             .first()
             .extracting(AssertionResult::isSuccess).isEqualTo(false);

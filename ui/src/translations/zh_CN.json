@@ -1213,6 +1213,8 @@
       "name": "租户",
       "names": "租户"
     },
+    "test-badge-text": "测试",
+    "test-badge-tooltip": "此执行由测试创建",
     "theme": "主题",
     "this_task_has": "此task已",
     "timezone": "时区",

@@ -1213,6 +1213,8 @@
       "name": "Mandant",
       "names": "Mandants"
     },
+    "test-badge-text": "Test",
+    "test-badge-tooltip": "Cette exécution a été créée par un Test",
     "theme": "Thème",
     "this_task_has": "Cette tâche a",
     "timezone": "Fuseau horaire",

@@ -1,8 +1,11 @@
 package io.kestra.core.test.flow;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
+import io.kestra.core.serializers.JacksonMapper;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
@@ -15,6 +18,7 @@ import static io.kestra.core.test.flow.Assertion.Operator.*;
 
 @Getter
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class Assertion {
     @NotNull
     private Property<Object> value;
@@ -65,7 +69,13 @@ public class Assertion {
         }
     }
 
-    public List<AssertionResult> run(RunContext runContext) {
+    public record AssertionRunResult(List<AssertionResult> results, List<AssertionRunError> errors) {
+    }
+
+    public AssertionRunResult run(RunContext runContext) {
+        var results = new ArrayList<AssertionResult>();
+        var errors = new ArrayList<AssertionRunError>();
+
         try {
             var actualValueQuery = this.getValue().toString();
             var actualValue = runContext.render(this.getValue()).as(Object.class).orElse(null);
@@ -73,7 +83,6 @@ public class Assertion {
             var description = runContext.render(this.getDescription()).as(String.class);
             var taskId = Optional.ofNullable(this.getTaskId());
 
-            var results = new ArrayList<AssertionResult>();
 
             runContext.render(this.getIsNull()).as(Boolean.class)
                 .ifPresent(isNullExpected ->
@@ -142,10 +151,21 @@ public class Assertion {
             }
 
             if (results.isEmpty()) {
-                throw new IllegalArgumentException("no assertion to run found");
+                errors.add(new AssertionRunError("no assertions found", null));
             }
-            return results;
         } catch (IllegalVariableEvaluationException e) {
+            errors.add(new AssertionRunError(
+                "Could not evaluate assertion: `%s`".formatted(getDisplayableAssertion()),
+                "error was: %s".formatted(e.getMessage())
+            ));
+        }
+        return new AssertionRunResult(results, errors);
+    }
+
+    private String getDisplayableAssertion() {
+        try {
+            return JacksonMapper.ofJson().writeValueAsString(this);
+        } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
         }
     }

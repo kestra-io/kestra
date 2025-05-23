@@ -1213,6 +1213,8 @@
       "name": "テナント",
       "names": "テナント"
     },
+    "test-badge-text": "テスト",
+    "test-badge-tooltip": "この実行はテストによって作成されました",
     "theme": "テーマ",
     "this_task_has": "このtaskは",
     "timezone": "タイムゾーン",

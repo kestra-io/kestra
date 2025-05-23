@@ -1,5 +1,5 @@
 <template>
-    <Badge content="Beta" />
+    <Badge :content="$t('test-badge-text')" :tooltip="$t('test-badge-tooltip')" />
 </template>
 
 <script setup lang="ts">

@@ -221,22 +221,25 @@
                 source: result,
                 ...task,
             });
+        }
 
-            if(task.blockType && task.refPath !== undefined){
-                editTask(
-                    task.blockType,
-                    task.parentPath,
-                    task.refPath + 1,
-                );
-                nextTick(() => {
-                    closeTask();
-                });
-            }
-
+        if(taskCreationIndex.value && !hasMovedToEdit.value && blockType){
+            const currentRefPath = (refPath ?? -1) + 1
+            editTask(
+                blockType,
+                parentPath,
+                currentRefPath,
+            );
+            hasMovedToEdit.value = true;
+            nextTick(() => {
+                closeTask();
+            });
         }
 
         emits("updateTask", result);
     };
+
+    const hasMovedToEdit = ref(false);
 
     watch(
         yaml,

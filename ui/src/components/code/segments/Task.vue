@@ -33,7 +33,7 @@
     import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
-        FLOW_INJECTION_KEY, FLOW_BEFORE_ADD_INJECTION_KEY,
+        FLOW_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         TASK_CREATION_INDEX_INJECTION_KEY, REF_PATH_INJECTION_KEY,
     } from "../injectionKeys";
@@ -44,8 +44,12 @@
 
     const emits = defineEmits(["updateTask", "exitTask", "updateDocumentation"]);
 
+    const store = useStore();
+
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
-    const flowBeforeAdd = inject(FLOW_BEFORE_ADD_INJECTION_KEY, ref(""));
+    const flowBeforeAdd = computed(() => {
+        return store.state.flow.flowYamlBeforeAdd;
+    });
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
     const position = inject(POSITION_INJECTION_KEY, "after");
@@ -57,8 +61,6 @@
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
         () => {},
     );
-
-    const store = useStore();
 
     const breadcrumbs = inject(
         BREADCRUMB_INJECTION_KEY,
@@ -154,7 +156,17 @@
     const errors = computed(() => store.getters["flow/taskError"]);
 
     const saveTask = () => {
-        let result: string = "";
+        let result: string = flowBeforeAdd.value;
+
+        if (taskCreationIndex.value === undefined) {
+            result = YAML_UTILS.replaceBlockWithPath({
+                source: result,
+                path: `${parentPath}[${refPath}]`,
+                newContent: yaml.value ?? "",
+            });
+
+            store.commit("flow/setFlowYamlBeforeAdd", result);
+        }
 
         const currentSection = section.value as keyof typeof SECTIONS_MAP;
 
@@ -164,49 +176,37 @@
 
         const keyName = currentSection === PLUGIN_DEFAULTS_SECTION ? "type" : "id"
 
-        if (taskCreationIndex.value) {
-            // if multiple task creation tabs are open add them all
-            const tasks: TaskModel[] | undefined = store.getters["flow/createdTasks"];
-            result = flowBeforeAdd.value;
-            if(!tasks || !tasks.length) {
-                return;
+        // if multiple task creation tabs are open add them all
+        const tasks: TaskModel[] = store.getters["flow/createdTasks"];
+
+        for(const task of tasks){
+            if(!task?.newBlock){
+                continue;
             }
+            if([PLUGIN_DEFAULTS_SECTION, "tasks", "triggers"].includes(currentSection)){
+                const parsedTask = YAML_UTILS.parse(task.newBlock);
+                // this condition will ignore trigger "conditions" unicity
+                if(parsedTask?.[keyName]){
+                    const existing = YAML_UTILS.checkBlockAlreadyExists({
+                        source: flowBeforeAdd.value,
+                        section: SECTIONS_MAP[currentSection],
+                        newContent: task.newBlock,
+                        keyName,
+                    })
 
-            for(const task of tasks){
-                if(!task?.newBlock){
-                    continue;
-                }
-                if([PLUGIN_DEFAULTS_SECTION, "tasks", "triggers"].includes(currentSection)){
-                    const parsedTask = YAML_UTILS.parse(task.newBlock);
-                    // this condition will ignore trigger "conditions" unicity
-                    if(parsedTask?.[keyName]){
-                        const existing = YAML_UTILS.checkBlockAlreadyExists({
-                            source: flowBeforeAdd.value,
-                            section: SECTIONS_MAP[currentSection],
-                            newContent: task.newBlock,
-                            keyName,
-                        })
-
-                        if (existing) {
-                            store.dispatch("core/showMessage", {
-                                variant: "error",
-                                title: "Block with same ID already exist",
-                                message: `Block in ${section.value} section with ID: ${existing} already exist in the flow.`,
-                            });
-                        }
+                    if (existing) {
+                        store.dispatch("core/showMessage", {
+                            variant: "error",
+                            title: "Block with same ID already exist",
+                            message: `Block in ${section.value} section with ID: ${existing} already exist in the flow.`,
+                        });
                     }
                 }
-
-                result = YAML_UTILS.insertBlockWithPath({
-                    source: result,
-                    ...task,
-                });
             }
-        } else {
-            result = YAML_UTILS.replaceBlockWithPath({
-                source: flow.value,
-                path: `${parentPath}[${refPath}]`,
-                newContent: yaml.value ?? "",
+
+            result = YAML_UTILS.insertBlockWithPath({
+                source: result,
+                ...task,
             });
         }
 
@@ -220,6 +220,8 @@
         },
     );
 
+    // in case another creation gets closed
+    // we need to update the flow with the last created tasks
     watch(flowBeforeAdd, () => {
         if (taskCreationIndex.value) {
             saveTask()

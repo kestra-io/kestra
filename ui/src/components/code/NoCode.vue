@@ -26,7 +26,7 @@
         PANEL_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         TASK_CREATION_INDEX_INJECTION_KEY, TOPOLOGY_CLICK_INJECTION_KEY,
-        FLOW_BEFORE_ADD_INJECTION_KEY, FLOW_INJECTION_KEY,
+        FLOW_INJECTION_KEY,
     } from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
@@ -103,7 +103,6 @@
     const flowBeforeAdd = ref(props.flow)
 
     provide(FLOW_INJECTION_KEY, computed(() => props.flow));
-    provide(FLOW_BEFORE_ADD_INJECTION_KEY, computed(() => flowBeforeAdd.value));
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath ?? "");
     provide(REF_PATH_INJECTION_KEY, props.refPath);
     provide(PANEL_INJECTION_KEY, panel)

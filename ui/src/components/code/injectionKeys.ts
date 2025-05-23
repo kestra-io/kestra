@@ -6,7 +6,6 @@ import {Panel} from "../MultiPanelTabs.vue"
  * Complete flow YAML string for the no-code
  */
 export const FLOW_INJECTION_KEY = Symbol("flow-injection-key") as InjectionKey<ComputedRef<string>>
-export const FLOW_BEFORE_ADD_INJECTION_KEY = Symbol("flow-before-add-injection-key") as InjectionKey<ComputedRef<string>>
 /**
  * The type of the block that is being created
  */

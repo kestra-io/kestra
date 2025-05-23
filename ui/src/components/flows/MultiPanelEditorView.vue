@@ -83,7 +83,7 @@
                 // optimization: stop searching after finding the first one
                 if(acc.tabId) return acc
                 if(!t.startsWith("nocode-")) return acc
-                const parsedTab = JSON.parse(t.slice(8))
+                const parsedTab = JSON.parse(t.slice(7))
                 if(parsedTab?.action !== "create") return acc
                 if(parsedTab.blockType !== blockType) return acc
                 if(parsedTab.parentPath !== parentPath) return acc

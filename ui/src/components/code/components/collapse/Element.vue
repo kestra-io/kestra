@@ -1,7 +1,7 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element">
         <div class="me-2 icon">
-            <TaskIcon :cls="element?.type" :icons only-icon />
+            <TaskIcon :cls="element.type" :icons only-icon />
         </div>
 
         <div class="flex-grow-1 label">

@@ -14,7 +14,7 @@
             </template>
 
             <Element
-                v-for="(element, elementIndex) in elements"
+                v-for="(element, elementIndex) in filteredElements"
                 :key="elementIndex"
                 :section="section"
                 :block-type="blockType"
@@ -56,6 +56,7 @@
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
 
     const props = defineProps<CollapseItem>();
+    const filteredElements = computed(() => props.elements?.filter(e => e !== undefined) ?? []);
     const expanded = ref<CollapseItem["title"]>(props.title);
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");

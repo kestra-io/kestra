@@ -211,18 +211,6 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
 
         const tab = parseTabId(tabId)
 
-        // cleanup the addition model on close
-        const task = store.getters["flow/createdTasks"]?.[tab.createIndex - 1];
-
-        if (!task || tab?.action !== "create") return;
-
-        store.commit("flow/setFlowYamlBeforeAdd",
-                        YAML_UTILS.insertBlockWithPath({
-                            source: store.state.flow.flowYamlBeforeAdd,
-                            ...task
-                        })
-        );
-
         store.commit("flow/setCreatedTask", {
             index: tab.createIndex - 1,
         });

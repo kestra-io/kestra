@@ -529,6 +529,8 @@
         top: 8px;
         right: 20px;
         z-index: 10;
+        color: var(--ks-content-secondary);
+        cursor: pointer;
     }
 
     .editor-absolute-container > * {

@@ -817,7 +817,7 @@
         "error handlers": "Chiudi gestore errori",
         "finally": "Chiudi task",
         "input": "Chiudi input",
-        "plugin defaults": "Chiudi plugin predefinito",
+        "pluginDefaults": "Chiudi plugin predefinito",
         "tasks": "Chiudi task",
         "triggers": "Chiudi trigger"
       },
@@ -825,7 +825,7 @@
         "after execution": "Aggiungi un blocco after execution",
         "error handlers": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
-        "plugin defaults": "Aggiungi un plugin predefinito",
+        "pluginDefaults": "Aggiungi un plugin predefinito",
         "tasks": "Aggiungi un task",
         "triggers": "Aggiungi un trigger"
       },
@@ -975,7 +975,7 @@
     "pause confirm": "Sei sicuro di mettere in pausa l'esecuzione <code>{id}</code>?",
     "pause done": "L'esecuzione è PAUSED",
     "pause title": "Metti in pausa l'esecuzione <code>{id}</code>.<br/>Nota che i task attualmente in esecuzione verranno comunque elaborati e l'esecuzione dovrà essere ripresa manualmente.",
-    "plugin defaults": "Plugin predefiniti",
+    "pluginDefaults": "Plugin predefiniti",
     "pluginPage": {
       "search": "Cerca tra oltre {count} plugin",
       "title1": "I plugin sono i blocchi di costruzione per i tuoi flussi di lavoro.",

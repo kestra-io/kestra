@@ -817,7 +817,7 @@
         "error handlers": "Fehlerbehandler schließen",
         "finally": "Task schließen",
         "input": "Eingabe schließen",
-        "plugin defaults": "Plugin-Defaults schließen",
+        "pluginDefaults": "Plugin-Defaults schließen",
         "tasks": "Task schließen",
         "triggers": "Trigger schließen"
       },
@@ -825,7 +825,7 @@
         "after execution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
         "finally": "Fügen Sie einen Finally-Block hinzu",
-        "plugin defaults": "Fügen Sie ein Plugin-Default hinzu",
+        "pluginDefaults": "Fügen Sie ein Plugin-Default hinzu",
         "tasks": "Aufgabe hinzufügen",
         "triggers": "Füge einen Trigger hinzu"
       },
@@ -876,7 +876,7 @@
         "after execution": "Wählen Sie eine Task aus",
         "error handlers": "Wählen Sie eine Task aus",
         "finally": "Wählen Sie eine Task aus",
-        "plugin defaults": "Wählen Sie ein Plugin aus",
+        "pluginDefaults": "Wählen Sie ein Plugin aus",
         "tasks": "Wählen Sie eine Task aus",
         "triggers": "Wählen Sie einen Trigger aus"
       },

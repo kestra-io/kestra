@@ -817,7 +817,7 @@
         "error handlers": "Zamknij obsługę błędów",
         "finally": "Zamknij task",
         "input": "Zamknij input",
-        "plugin defaults": "Zamknij domyślny plugin",
+        "pluginDefaults": "Zamknij domyślny plugin",
         "tasks": "Zamknij task",
         "triggers": "Zamknij trigger"
       },
@@ -825,7 +825,7 @@
         "after execution": "Dodaj blok po wykonaniu",
         "error handlers": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
-        "plugin defaults": "Dodaj domyślny plugin",
+        "pluginDefaults": "Dodaj domyślny plugin",
         "tasks": "Dodaj task",
         "triggers": "Dodaj trigger"
       },
@@ -876,7 +876,7 @@
         "after execution": "Wybierz task",
         "error handlers": "Wybierz task",
         "finally": "Wybierz task",
-        "plugin defaults": "Wybierz plugin",
+        "pluginDefaults": "Wybierz plugin",
         "tasks": "Wybierz task",
         "triggers": "Wybierz trigger"
       },

@@ -817,7 +817,7 @@
         "error handlers": "오류 처리기 닫기",
         "finally": "작업 닫기",
         "input": "입력 닫기",
-        "plugin defaults": "플러그인 기본값 닫기",
+        "pluginDefaults": "플러그인 기본값 닫기",
         "tasks": "작업 닫기",
         "triggers": "트리거 닫기"
       },
@@ -825,7 +825,7 @@
         "after execution": "실행 후 블록 추가",
         "error handlers": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
-        "plugin defaults": "플러그인 기본값 추가",
+        "pluginDefaults": "플러그인 기본값 추가",
         "tasks": "작업 추가",
         "triggers": "트리거 추가"
       },
@@ -876,7 +876,7 @@
         "after execution": "작업 선택",
         "error handlers": "작업 선택",
         "finally": "작업 선택",
-        "plugin defaults": "플러그인 선택",
+        "pluginDefaults": "플러그인 선택",
         "tasks": "작업 선택",
         "triggers": "트리거 선택"
       },

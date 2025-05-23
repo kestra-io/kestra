@@ -817,7 +817,7 @@
         "error handlers": "关闭错误处理程序",
         "finally": "关闭 task",
         "input": "关闭输入",
-        "plugin defaults": "关闭插件默认",
+        "pluginDefaults": "关闭插件默认",
         "tasks": "关闭task",
         "triggers": "关闭 trigger"
       },
@@ -825,7 +825,7 @@
         "after execution": "添加执行后块",
         "error handlers": "添加错误处理程序",
         "finally": "添加一个finally块",
-        "plugin defaults": "添加插件默认值",
+        "pluginDefaults": "添加插件默认值",
         "tasks": "添加任务",
         "triggers": "添加一个trigger"
       },
@@ -876,7 +876,7 @@
         "after execution": "选择一个task",
         "error handlers": "选择一个task",
         "finally": "选择一个task",
-        "plugin defaults": "选择插件",
+        "pluginDefaults": "选择插件",
         "tasks": "选择一个task",
         "triggers": "选择一个trigger"
       },

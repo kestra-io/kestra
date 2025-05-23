@@ -817,7 +817,7 @@
         "error handlers": "エラーハンドラーを閉じる",
         "finally": "タスクを閉じる",
         "input": "入力を閉じる",
-        "plugin defaults": "プラグインのデフォルトを閉じる",
+        "pluginDefaults": "プラグインのデフォルトを閉じる",
         "tasks": "タスクを閉じる",
         "triggers": "トリガーを閉じる"
       },
@@ -825,7 +825,7 @@
         "after execution": "実行後ブロックを追加",
         "error handlers": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
-        "plugin defaults": "プラグインのデフォルトを追加",
+        "pluginDefaults": "プラグインのデフォルトを追加",
         "tasks": "タスクを追加",
         "triggers": "トリガーを追加"
       },
@@ -876,7 +876,7 @@
         "after execution": "タスクを選択",
         "error handlers": "タスクを選択",
         "finally": "タスクを選択",
-        "plugin defaults": "プラグインを選択",
+        "pluginDefaults": "プラグインを選択",
         "tasks": "タスクを選択",
         "triggers": "トリガーを選択"
       },

@@ -817,7 +817,7 @@
         "error handlers": "Закрыть обработчик ошибок",
         "finally": "Закрыть task",
         "input": "Закрыть input",
-        "plugin defaults": "Закрыть плагин по умолчанию",
+        "pluginDefaults": "Закрыть плагин по умолчанию",
         "tasks": "Закрыть task",
         "triggers": "Закрыть trigger"
       },
@@ -825,7 +825,7 @@
         "after execution": "Добавить блок после выполнения",
         "error handlers": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
-        "plugin defaults": "Добавить плагин по умолчанию",
+        "pluginDefaults": "Добавить плагин по умолчанию",
         "tasks": "Добавить task",
         "triggers": "Добавить trigger"
       },
@@ -876,7 +876,7 @@
         "after execution": "Выберите task",
         "error handlers": "Выберите task",
         "finally": "Выберите task",
-        "plugin defaults": "Выберите плагин",
+        "pluginDefaults": "Выберите плагин",
         "tasks": "Выберите task",
         "triggers": "Выберите trigger"
       },

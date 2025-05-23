@@ -55,7 +55,7 @@
         (e: "updateDocumentation", task: string): void
         (e: "reorder", yaml: string): void
         (e: "createTask", blockType: string, parentPath: string, refPath?: number): boolean | void
-        (e: "editTask", blockType: string, parentPath: string, refPath?: number): boolean | void
+        (e: "editTask", blockType: string, parentPath: string, refPath: number): boolean | void
         (e: "closeTask"): boolean | void
     }>()
 

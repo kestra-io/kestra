@@ -36,7 +36,7 @@ export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-inje
  * Call this when starting to edit a task, when the user clicks on the task line
  * to start the edition process
  */
-export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number) => void>
+export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string, refPath: number) => void>
 /**
  * Call this when closing a task, when the user clicks on the close button
  */

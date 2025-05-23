@@ -26,11 +26,14 @@
             panel: {from: PANEL_INJECTION_KEY},
             breadcrumbs: {from: BREADCRUMB_INJECTION_KEY},
         },
+        props:{
+            metadataInputs: {type: Boolean, default: false},
+        },
         methods: {
             openPanel() {
                 const current = {...this.panel};
 
-                this.panel = h(TaskComplexContent, {
+                const component = h(TaskComplexContent, {
                     modelValue: this.modelValue,
                     schema: this.schema,
                     definitions: this.definitions,
@@ -38,9 +41,11 @@
                     root: this.root,
                     "onUpdate:modelValue": this.onInput,
                     previousPanel: current,
+                    metadataInputs: this.metadataInputs,
                 });
 
-                this.breadcrumbs.push({label: this.root});
+                this.panel = component;
+                this.breadcrumbs.push({label: this.root, component});
             },
         },
     };

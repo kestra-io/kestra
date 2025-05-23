@@ -47,6 +47,6 @@ public abstract class H2ExecutionRepositoryService {
             });
 
 
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.or(conditions);
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 }

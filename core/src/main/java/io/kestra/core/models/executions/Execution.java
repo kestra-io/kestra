@@ -853,10 +853,12 @@ public class Execution implements DeletedInterface, TenantInterface {
             .forEach((taskId, taskRuns) -> {
                 Map<String, Object> taskOutputs = new HashMap<>();
                 for (TaskRun current : taskRuns) {
-                    if (current.getIteration() != null) {
-                        taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
-                    } else {
-                        taskOutputs.putAll(outputs(current, byIds));
+                    if (!MapUtils.isEmpty(current.getOutputs())) {
+                        if (current.getIteration() != null) {
+                            taskOutputs = MapUtils.merge(taskOutputs, outputs(current, byIds));
+                        } else {
+                            taskOutputs.putAll(outputs(current, byIds));
+                        }
                     }
                 }
                 result.put(taskId, taskOutputs);

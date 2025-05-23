@@ -44,6 +44,7 @@ class FileChangedEventListenerTest {
     @AfterAll
     static void tearDown() throws IOException {
         if (Files.exists(Path.of(FILE_WATCH))) {
+            FileUtils.cleanDirectory(Path.of(FILE_WATCH).toFile());
             FileUtils.deleteDirectory(Path.of(FILE_WATCH).toFile());
         }
     }

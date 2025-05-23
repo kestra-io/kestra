@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.*;
 
-@SuppressWarnings({"rawtypes", "unchecked"})
+@SuppressWarnings({"unchecked"})
 @Slf4j
 public class MapUtils {
     private static final String CONFLICT_AT_KEY_MSG = "Conflict at key: '{}', ignoring it. Map keys are: {}";
@@ -23,91 +23,71 @@ public class MapUtils {
             return a;
         }
 
-        Map copy = copyMap(a);
+        Map<String, Object> result = HashMap.newHashMap(Math.max(a.size(), b.size()));
+        result.putAll(deepCloneMap(a));
 
-        Map<String, Object> copyMap = b
-            .entrySet()
-            .stream()
-            .collect(
-                () -> HashMap.newHashMap(copy.size()),
-                (m, v) -> {
-                    Object original = copy.get(v.getKey());
-                    Object value = v.getValue();
-                    Object found;
+        for (Map.Entry<String, Object> entry : b.entrySet()) {
+            String key = entry.getKey();
+            Object valueB = entry.getValue();
+            Object valueA = result.get(key);
 
-                    if (value == null) {
-                        found = original;
-                    } else if (original == null) {
-                        found = value;
-                    } else if (value instanceof Map mapValue && original instanceof Map mapOriginal) {
-                        found = merge(mapOriginal, mapValue);
-                    } else if (value instanceof Collection collectionValue
-                        && original instanceof Collection collectionOriginal) {
-                        found = mergeCollections(collectionOriginal, collectionValue);
-                    } else {
-                        found = value;
-                    }
+            Object mergedValue;
+            if (valueB == null) {
+                mergedValue = valueA;
+            } else if (valueA == null) {
+                mergedValue = valueB;
+            } else if (valueA instanceof Map<?, ?> mapA && valueB instanceof Map<?, ?> mapB) {
+                mergedValue = merge(castMap(mapA), castMap(mapB));
+            } else if (valueA instanceof Collection<?> colA && valueB instanceof Collection<?> colB) {
+                mergedValue = mergeCollections(colA, colB);
+            } else {
+                mergedValue = valueB;
+            }
 
-                    m.put(v.getKey(), found);
-                },
-                HashMap::putAll
-            );
+            result.put(key, mergedValue);
+        }
 
-        copy.putAll(copyMap);
-
-        return copy;
+        return result;
     }
 
-    private static Collection mergeCollections(Collection collectionOriginal, Collection collectionValue) {
-        List<?> newList = new ArrayList<>(collectionOriginal.size() + collectionValue.size());
-        newList.addAll(collectionOriginal);
-        newList.addAll(collectionValue);
-        return newList;
+    private static Map<String, Object> deepCloneMap(Map<String, Object> original) {
+        Map<String, Object> cloned = new HashMap<>(original.size());
+        for (Map.Entry<String, Object> entry : original.entrySet()) {
+            cloned.put(entry.getKey(), deepClone(entry.getValue()));
+        }
+        return cloned;
     }
 
-    private static Map copyMap(Map original) {
-        return ((Map<?, ?>) original)
-            .entrySet()
-            .stream()
-            .collect(
-                () -> HashMap.newHashMap(original.size()),
-                (map, entry) -> {
-                    Object value = entry.getValue();
-                    Object found;
-
-                    if (value instanceof Map mapValue) {
-                        found = cloneMap(mapValue);
-                    } else if (value instanceof Collection collectionValue) {
-                        found = cloneCollection(collectionValue);
-                    } else {
-                        found = value;
-                    }
-
-                    map.put(entry.getKey(), found);
-
-                },
-                Map::putAll
-            );
-    }
-
-    private static Map cloneMap(Map elements) {
-        try {
-            Map newInstance = elements.getClass().getDeclaredConstructor().newInstance();
-            newInstance.putAll(elements);
-            return newInstance;
-        } catch (Exception e) {
-            return new HashMap(elements);
+    private static Object deepClone(Object value) {
+        if (value instanceof Map<?, ?> map) {
+            return deepCloneMap(castMap(map));
+        } else if (value instanceof Collection<?> col) {
+            return cloneCollection(col);
+        } else {
+            return value;
         }
     }
 
-    private static Collection cloneCollection(Collection elements) {
+    private static Collection<?> mergeCollections(Collection<?> colA, Collection<?> colB) {
+        List<Object> merged = new ArrayList<>(colA.size() + colB.size());
+        merged.addAll(colA);
+        merged.addAll(colB);
+        return merged;
+    }
+
+    private static Collection<?> cloneCollection(Collection<?> elements) {
         try {
-            Collection newInstance = elements.getClass().getDeclaredConstructor().newInstance();
+            Collection<Object> newInstance = elements.getClass().getDeclaredConstructor().newInstance();
             newInstance.addAll(elements);
             return newInstance;
         } catch (Exception e) {
             return new ArrayList<>(elements);
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static Map<String, Object> castMap(Map<?, ?> map) {
+        return (Map<String, Object>) map;
     }
 
     /**

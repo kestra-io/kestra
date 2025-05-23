@@ -35,8 +35,8 @@ import io.kestra.core.utils.ListUtils;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.event.ApplicationEventPublisher;
-import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.multipart.CompletedPart;
+import jakarta.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -656,28 +656,34 @@ public class ExecutionService {
      *
      * @return the execution in a KILLING state if not already terminated
      */
-    public Execution kill(Execution execution, FlowInterface flow) {
-        if (execution.getState().getCurrent() == State.Type.KILLING || execution.getState().isTerminated()) {
+    public Execution kill(Execution execution, FlowInterface flow, Optional<State.Type> afterKillState) {
+        // We afford the double kill potential (KILLING & afterKillState != null) to ensure we put the afterKillState
+        if ((execution.getState().getCurrent() == State.Type.KILLING && afterKillState.isEmpty()) || execution.getState().isTerminated()) {
             return execution;
         }
 
         Execution newExecution;
+        State.Type killingOrAfterKillState = afterKillState.orElse(State.Type.KILLING);
         if (execution.getState().isPaused()) {
             // Must be resumed and killed, no need to send killing event to the worker as the execution is not executing anything in it.
             // An edge case can exist where the execution is resumed automatically before we resume it with a killing.
             try {
                 newExecution = this.resume(execution, flow, State.Type.KILLING);
+                newExecution = newExecution.withState(afterKillState.orElse(newExecution.getState().getCurrent()));
             } catch (Exception e) {
                 // if we cannot resume, we set it anyway to killing, so we don't throw
                 log.warn("Unable to resume a paused execution before killing it", e);
-                newExecution = execution.withState(State.Type.KILLING);
+                newExecution = execution.withState(killingOrAfterKillState);
             }
         } else {
-            newExecution = execution.withState(State.Type.KILLING);
+            newExecution = execution.withState(killingOrAfterKillState);
         }
 
         eventPublisher.publishEvent(new CrudEvent<>(newExecution, execution, CrudEventType.UPDATE));
         return newExecution;
+    }
+    public Execution kill(Execution execution, FlowInterface flow) {
+        return this.kill(execution, flow, Optional.empty());
     }
 
     /**

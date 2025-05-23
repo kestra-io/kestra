@@ -17,7 +17,7 @@
         <ValidationError v-if="false" :errors link />
 
         <Save
-            v-if="!lastBreadcrumb.component"
+            v-if="!lastBreadcrumb"
             :disabled="(errors?.length ?? 0) > 0"
             @click="exitTask"
             :what="section"

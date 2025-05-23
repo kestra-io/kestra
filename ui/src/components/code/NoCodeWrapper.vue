@@ -10,7 +10,7 @@
         @update-task="(e) => editorUpdate(e)"
         @reorder="(yaml) => handleReorder(yaml)"
         @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
-        @create-task="(blockType, parentPath, refPath) => emit('createTask', blockType, parentPath, refPath)"
+        @create-task="(blockType, parentPath, refPath) => emit('createTask', blockType, parentPath, refPath, 'after')"
         @close-task="() => emit('closeTask')"
         @edit-task="(blockType, parentPath, refPath) => emit('editTask', blockType, parentPath, refPath)"
     />
@@ -36,7 +36,7 @@
     const props = defineProps<NoCodeProps>();
 
     const emit = defineEmits<{
-        (e: "createTask", blockType: string, parentPath: string, refPath?: number, position?: "after" | "before"): boolean | void;
+        (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined, position: "after" | "before"): boolean | void;
         (e: "editTask", blockType: string, parentPath: string, refPath: number): boolean | void;
         (e: "closeTask"): boolean | void;
     }>();

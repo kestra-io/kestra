@@ -74,8 +74,34 @@
 
 
     const noCodeHandlers: Parameters<typeof setupInitialNoCodeTab>[2] = {
-        onCreateTask(...args){
-            openAddTaskTab(...args)
+        onCreateTask(opener, blockType, parentPath, refPath, position){
+
+            const createIndex = store.getters["flow/createdTasks"].length + 1
+
+            // get nocode create tabs
+            const createTab = openTabs.value.reduce((acc: {createTab: any, tabId?: string}, t) => {
+                // optimization: stop searching after finding the first one
+                if(acc.tabId) return acc
+                if(!t.startsWith("nocode-")) return acc
+                const parsedTab = JSON.parse(t.slice(8))
+                if(parsedTab?.action !== "create") return acc
+                if(parsedTab.blockType !== blockType) return acc
+                if(parsedTab.parentPath !== parentPath) return acc
+                if(parsedTab.refPath !== refPath) return acc
+                return {
+                    createTab: parsedTab,
+                    tabId: t
+                }
+            }, {createTab: undefined, tabId: undefined})
+
+            // if the tab is already open and has no data, to avoid conflicting data
+            // focus it and don't open a new one
+            if(createTab.tabId && !store.getters["flow/createdTasks"][createTab.createTab.createIndex -1]){
+                focusTab(createTab.tabId)
+                return false
+            }
+
+            openAddTaskTab(opener, blockType, parentPath, refPath, position, createIndex)
             return false
         },
         onEditTask(...args){

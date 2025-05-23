@@ -11,7 +11,7 @@
             <h1 class="h5 fw-semibold m-0 d-inline-flex">
                 <slot name="title">
                     {{ title }}
-                    <BetaBadge v-if="beta" />
+                    <Badge v-if="beta" label="Beta" />
                 </slot>
                 <el-button
                     class="star-button"
@@ -47,14 +47,14 @@
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
-    import BetaBadge from "../global/BetaBadge.vue";
+    import Badge from "../global/Badge.vue";
 
     export default {
         components: {
             GlobalSearch,
             TrashCan,
             Impersonating,
-            BetaBadge
+            Badge
         },
         props: {
             title: {

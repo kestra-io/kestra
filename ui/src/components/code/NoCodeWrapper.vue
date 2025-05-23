@@ -1,39 +1,40 @@
 <template>
-    <NoCode
-        :flow="lastValidFlowYaml"
-        :parent-path="parentPath"
-        :ref-path="refPath"
-        :block-type="blockType"
-        :creating-task="Boolean(createIndex)"
-        :position
-        @update-metadata="(e) => onUpdateMetadata(e)"
-        @update-task="(e) => editorUpdate(e)"
-        @reorder="(yaml) => handleReorder(yaml)"
-        @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
-        @create-task="(blockType, parentPath, refPath) => emit('createTask', blockType, parentPath, refPath, 'after')"
-        @close-task="() => emit('closeTask')"
-        @edit-task="(blockType, parentPath, refPath) => emit('editTask', blockType, parentPath, refPath)"
-    />
+    <div>
+        <NoCode
+            :flow="lastValidFlowYaml"
+            :parent-path="parentPath"
+            :ref-path="refPath"
+            :block-type="blockType"
+            :creating-task="creatingTask"
+            :position
+            @update-metadata="(e) => onUpdateMetadata(e)"
+            @update-task="(e) => editorUpdate(e)"
+            @reorder="(yaml) => handleReorder(yaml)"
+            @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
+            @create-task="(blockType, parentPath, refPath) => emit('createTask', blockType, parentPath, refPath, 'after')"
+            @close-task="() => emit('closeTask')"
+            @edit-task="(blockType, parentPath, refPath) => emit('editTask', blockType, parentPath, refPath)"
+        />
+    </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, onBeforeUnmount, provide, ref} from "vue";
+    import {computed, ref} from "vue";
     import debounce from "lodash/debounce";
     import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import NoCode from "./NoCode.vue";
-    import {TASK_CREATION_INDEX_INJECTION_KEY} from "./injectionKeys";
     import {BlockType} from "./utils/types";
 
     export interface NoCodeProps {
-        createIndex?: number;
+        creatingTask?: boolean;
         blockType?: BlockType | "pluginDefaults";
         parentPath?: string;
         refPath?: number;
         position?: "before" | "after";
     }
 
-    const props = defineProps<NoCodeProps>();
+    defineProps<NoCodeProps>();
 
     const emit = defineEmits<{
         (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined, position: "after" | "before"): boolean | void;
@@ -104,15 +105,4 @@
     const updatePluginDocumentation = (event: string | undefined, task: any) => {
         store.dispatch("plugin/updateDocumentation", {event, task});
     };
-
-    onBeforeUnmount(() => {
-        if(props.createIndex){
-            store.commit("flow/setCreatedTask", {
-                index: props.createIndex,
-                yaml: undefined
-            });
-        }
-    });
-
-    provide(TASK_CREATION_INDEX_INJECTION_KEY, computed(() => props.createIndex ?? 0));
 </script>

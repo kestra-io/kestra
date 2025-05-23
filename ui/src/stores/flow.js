@@ -38,7 +38,6 @@ export default {
         haveChange: false,
         expandedSubflows: [],
         metadata: undefined,
-        createdTasks: []
     },
 
     actions: {
@@ -684,19 +683,8 @@ export default {
         setMetadata(state, value) {
             state.metadata = value
         },
-        setCreatedTask(state, payload) {
-            const {index, ...rest} = payload;
-            state.createdTasks[index] = rest
-        },
-        removeCreatedTask(state, payload) {
-            const {index} = payload;
-            state.createdTasks.splice(index, 1);
-        }
     },
     getters: {
-        createdTasks(state){
-            return state.createdTasks;
-        },
         isFlow(state, _getters, rootState) {
             const currentTab = rootState.editor.current;
             return currentTab?.flow !== undefined || state.isCreating;

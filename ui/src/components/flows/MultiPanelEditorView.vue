@@ -32,7 +32,7 @@
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
     import {useCodeTopology} from "./useCodeTopology";
 
-    import {getEditTabKey, setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
+    import {getCreateTabKey, getEditTabKey, setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
 
     function isTabFlowRelated(element: Tab){
         return ["code", "nocode", "topology"].includes(element.value)
@@ -75,33 +75,21 @@
 
     const noCodeHandlers: Parameters<typeof setupInitialNoCodeTab>[2] = {
         onCreateTask(opener, blockType, parentPath, refPath, position){
-
-            const createIndex = store.getters["flow/createdTasks"].length + 1
-
-            // get nocode create tabs
-            const createTab = openTabs.value.reduce((acc: {createTab: any, tabId?: string}, t) => {
-                // optimization: stop searching after finding the first one
-                if(acc.tabId) return acc
-                if(!t.startsWith("nocode-")) return acc
-                const parsedTab = JSON.parse(t.slice(7))
-                if(parsedTab?.action !== "create") return acc
-                if(parsedTab.blockType !== blockType) return acc
-                if(parsedTab.parentPath !== parentPath) return acc
-                if(parsedTab.refPath !== refPath) return acc
-                return {
-                    createTab: parsedTab,
-                    tabId: t
-                }
-            }, {createTab: undefined, tabId: undefined})
+            const createTabId = getCreateTabKey({
+                blockType,
+                parentPath,
+                refPath,
+                position,
+            })
 
             // if the tab is already open and has no data, to avoid conflicting data
             // focus it and don't open a new one
-            if(createTab.tabId && !store.getters["flow/createdTasks"][createTab.createTab.createIndex -1]){
-                focusTab(createTab.tabId)
+            if(openTabs.value.includes(createTabId)){
+                focusTab(createTabId)
                 return false
             }
 
-            openAddTaskTab(opener, blockType, parentPath, refPath, position, createIndex, isFlowDirty.value)
+            openAddTaskTab(opener, blockType, parentPath, refPath, position, isFlowDirty.value)
             return false
         },
         onEditTask(...args){
@@ -192,7 +180,7 @@
         },
     )
 
-    const {openAddTaskTab, openEditTaskTab, closeTaskTab, onCloseTab: onCloseNoCodeTab} = useNoCodePanels(panels, noCodeHandlers)
+    const {openAddTaskTab, openEditTaskTab, closeTaskTab} = useNoCodePanels(panels, noCodeHandlers)
 
     const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
 
@@ -200,7 +188,6 @@
 
     function onRemoveTab(tab: string){
         onRemoveCodeTab(tab)
-        onCloseNoCodeTab(tab)
     }
 
     useCodeTopology(panels, openAddTaskTab, openEditTaskTab)

@@ -42,13 +42,6 @@ export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-
  */
 export const CLOSE_TASK_FUNCTION_INJECTION_KEY = Symbol("close-function-injection-key") as InjectionKey<() => void>
 /**
- * Index in the open creation tabs list
- * When users autosave on any of the tabs, to avoid losing the other tasks added at the same time, we assign them a number
- * and we use this number to order the tasks in the flow
- * NOTE: numbers are unique per section at a single moment. But once a number is freed, it can be reused.
- */
-export const TASK_CREATION_INDEX_INJECTION_KEY = Symbol("task-creation-index-injection-key") as InjectionKey<ComputedRef<number>>
-/**
  * Breadcrumbs for the no-code panel
  */
 export const BREADCRUMB_INJECTION_KEY = Symbol("breadcrumb-injection-key") as InjectionKey<Ref<Breadcrumb[]>>

@@ -115,10 +115,10 @@
                 @dragleave.prevent="removeAllPotentialTabs"
                 @dragenter.prevent
             >
-                <KeepAlive>
+                <KeepAlive v-if="panel.activeTab">
                     <component
-                        :key="panel.activeTab?.value"
-                        :is="panel.activeTab?.component"
+                        :key="panel.activeTab.value"
+                        :is="panel.activeTab.component"
                         :panel-index="panelIndex"
                         :tab-index="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
                     />

@@ -96,8 +96,8 @@
             },
             update() {
                 if (
-                    this.newInputs.map((e) => e.id).length !==
-                    new Set(this.newInputs.map((e) => e.id)).size
+                    this.newInputs.map((e) => e?.id).length !==
+                    new Set(this.newInputs.map((e) => e?.id)).size
                 ) {
                     this.$store.dispatch("core/showMessage", {
                         variant: "error",
@@ -107,7 +107,8 @@
                 } else {
                     this.panel = undefined;
                     this.breadcrumbs.pop();
-                    this.$emit("update:modelValue", [this.flowYamlMetadata?.inputs]);
+                    const value = this.newInputs.filter(input => input?.id);
+                    this.$emit("update:modelValue", value.length ? value : undefined);
                 }
             },
             updateSelected(value) {

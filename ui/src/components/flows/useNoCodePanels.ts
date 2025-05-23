@@ -102,16 +102,22 @@ export function setupInitialNoCodeTabIfExists(flow: string, tab: string, t: (key
 
     return setupInitialNoCodeTab(tab, t, handlers, flow)
 }
+interface NoCodeTabWithAction {
+    action: "edit" | "create", createIndex: number, parentPath: string, refPath: number, blockType: BlockType
+}
+
+
+function parseTabId(tabId: string) {
+    return JSON.parse(tabId.substring(7)) as NoCodeTabWithAction
+}
 
 export function setupInitialNoCodeTab(tab: string, t: (key: string) => string, handlers: Handlers, flowYaml: string) {
     function getNoCodeProps(tab: string): NoCodeProps {
         if (tab === NOCODE_PREFIX) {
             return {}
         }
-        const taskInfoPath = tab.substring(7)
-        const {action, createIndex: createIndexPathPart, ...rest} = JSON.parse(taskInfoPath) ?? {}
+        const {action, createIndex, ...rest} = parseTabId(tab)
         if (action === "create") {
-            const createIndex = parseInt(createIndexPathPart, 10)
             return {
                 createIndex,
                 ...rest
@@ -188,12 +194,38 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             if (openerPanel.activeTab === tab) {
                 openerPanel.activeTab = openerPanel.tabs[opener.tabIndex - 1] ?? openerPanel.tabs[opener.tabIndex + 1]
             }
+            onCloseTab(tab.value)
         }
+    }
+
+    function onCloseTab(tabId: string){
+        if(!tabId.startsWith(`${NOCODE_PREFIX}-`)) {
+            return
+        }
+
+        const tab = parseTabId(tabId)
+
+        // cleanup the addition model on close
+        const task = store.getters["flow/createdTasks"]?.[tab.createIndex - 1];
+
+        if (!task || tab?.action !== "create") return;
+
+        store.commit("flow/setFlowYamlBeforeAdd",
+                        YAML_UTILS.insertBlockWithPath({
+                            source: store.state.flow.flowYamlBeforeAdd,
+                            ...task
+                        })
+        );
+
+        store.commit("flow/setCreatedTask", {
+            index: tab.createIndex - 1,
+        });
     }
 
     return {
         openAddTaskTab,
         openEditTaskTab,
         closeTaskTab,
+        onCloseTab,
     }
 }

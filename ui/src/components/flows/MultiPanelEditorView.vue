@@ -166,11 +166,16 @@
         },
     )
 
-    const {openAddTaskTab, openEditTaskTab, closeTaskTab} = useNoCodePanels(panels, noCodeHandlers)
+    const {openAddTaskTab, openEditTaskTab, closeTaskTab, onCloseTab: onCloseNoCodeTab} = useNoCodePanels(panels, noCodeHandlers)
 
     const openTabs = computed(() => panels.value.flatMap(p => p.tabs.map(t => t.value)))
 
-    const {onRemoveTab, isFlowDirty} = useCodePanels(panels)
+    const {onRemoveTab: onRemoveCodeTab, isFlowDirty} = useCodePanels(panels)
+
+    function onRemoveTab(tab: string){
+        onRemoveCodeTab(tab)
+        onCloseNoCodeTab(tab)
+    }
 
     useCodeTopology(panels, openAddTaskTab, openEditTaskTab)
 

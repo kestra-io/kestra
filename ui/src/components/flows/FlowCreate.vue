@@ -7,7 +7,7 @@
 
 <script>
     import {mapGetters, mapMutations, mapState} from "vuex";
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import MultiPanelEditorView from "./MultiPanelEditorView.vue";
@@ -40,27 +40,31 @@
             async setupFlow() {
                 const blueprintId = this.$route.query.blueprintId;
                 const blueprintSource = this.$route.query.blueprintSource;
+                let flowYaml = ""
                 if (this.$route.query.copy && this.flow){
-                    this.$store.commit("flow/setFlowYaml", this.flow.source);
+                    flowYaml = this.flow.source;
                 } else if (blueprintId && blueprintSource) {
-                    this.$store.commit("flow/setFlowYaml", await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId}));
+                    flowYaml = await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
                     const selectedNamespace = this.$route.query.namespace || "company.team";
-                    this.$store.commit("flow/setFlowYaml", `id: ${getRandomFlowID()}
+                    flowYaml = `id: ${getRandomFlowID()}
 namespace: ${selectedNamespace}
 
 tasks:
   - id: hello
     type: io.kestra.plugin.core.log.Log
-    message: Hello World! 🚀`);
+    message: Hello World! 🚀`;
                 }
+
+                this.$store.commit("flow/setFlowYaml", flowYaml);
+                this.$store.commit("flow/setFlowYamlBeforeAdd", flowYaml);
 
                 this.$store.commit("flow/setFlow", {...YAML_UTILS.parse(this.flowYaml), source: this.flowYaml});
                 this.$store.dispatch("flow/initYamlSource", {});
             }
         },
         computed: {
-            ...mapState("flow", ["flowGraph"]),
+            ...mapState("flow", ["flowGraph", "flowYaml"]),
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),

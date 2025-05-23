@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
+    import {computed} from "vue";
     import Collapse from "../../code/components/collapse/Collapse.vue";
 
     defineOptions({inheritAttrs: false});
@@ -29,7 +29,7 @@
         modelValue: () => []
     });
 
-    const items = ref(
+    const items = computed(() =>
         !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
 </script>

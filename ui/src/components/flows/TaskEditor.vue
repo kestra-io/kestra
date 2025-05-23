@@ -109,8 +109,14 @@
         }
         selectedTaskType.value = taskObject.value?.type;
 
-        load();
+
     }
+
+    watch(selectedTaskType, (v) => {
+        if (v) {
+            load();
+        }
+    }, {immediate: true});
 
     function load() {
         isLoading.value = true;

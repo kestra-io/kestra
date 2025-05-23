@@ -30,6 +30,13 @@ export function getEditTabKey(tab: NoCodeProps) {
                 })}`
 }
 
+export function getCreateTabKey(tab: NoCodeProps) {
+    return `${NOCODE_PREFIX}-${JSON.stringify({
+                    action: "create",
+                    ...tab,
+                })}`
+}
+
 export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string, handlers: Handlers, flow: string, dirty: boolean = false): Tab {
     function getTabValues(tab: NoCodeProps) {
         // FIXME optimize by avoiding to stringify then parse again the yaml object.
@@ -42,10 +49,7 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string
         const parentName = parentBlock ? parentBlock.id ?? parentBlock.type ?? tab.parentPath : tab.parentPath
         if (tab.createIndex !== undefined) {
             return {
-                value: `${NOCODE_PREFIX}-${JSON.stringify({
-                    action:"create",
-                    ...tab
-                })}`,
+                value: getCreateTabKey(tab),
                 button: {
                     label: `${parentName} / ${t(`no_code.creation.${tab.blockType}`)}`,
                     icon: markRaw(MouseRightClickIcon),
@@ -147,7 +151,8 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         blockType: BlockType | "pluginDefaults",
         parentPath: string,
         refPath?: number,
-        position: "before" | "after" = "after"
+        position: "before" | "after" = "after",
+        createIndex?: number,
     ) {
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab({
@@ -155,7 +160,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             parentPath,
             refPath,
             position,
-            createIndex: store.getters["flow/createdTasks"]?.length + 1,
+            createIndex,
         }, t, handlers, store.state.flow.flowYaml)
 
         panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)

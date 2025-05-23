@@ -82,7 +82,7 @@ export default {
                     return res
                 });
             } else {
-                if(!currentTab.dirty) return;
+                if(!currentTab?.dirty) return;
 
                 await dispatch("namespace/createFile", {
                     namespace: namespace ?? getters.namespace,
@@ -685,6 +685,10 @@ export default {
                 state.createdTasks[section] = []
             }
             state.createdTasks[section][index] = rest
+        },
+        removeCreatedTask(state, payload) {
+            const {section, index} = payload;
+            state.createdTasks[section]?.splice(index, 1);
         }
     },
     getters: {

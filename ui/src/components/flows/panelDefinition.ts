@@ -23,7 +23,7 @@ export const EDITOR_ELEMENTS = [
             label: "Flow Code"
         },
         value: "code",
-        component: () => h(EditorWrapper, {path: "Flow.yml", name: "Flow.yml"}),
+        component: () => h(EditorWrapper, {path: "Flow.yaml", name: "Flow.yaml"}),
     },
     {
         button: {

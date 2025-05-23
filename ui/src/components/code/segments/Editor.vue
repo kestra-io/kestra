@@ -11,7 +11,7 @@
             />
         </template>
 
-        <template v-else-if="!creatingTask && !refPath">
+        <template v-else-if="!creatingTask && refPath === undefined">
             <component
                 v-for="(v, k) in mainFields"
                 :key="k"

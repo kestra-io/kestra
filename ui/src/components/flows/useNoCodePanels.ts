@@ -54,12 +54,12 @@ export function getTabFromNoCodeTab(tab: NoCodeProps, t: (key: string) => string
         } else if (tab.refPath !== undefined) {
             const currentBlock: any = tab.parentPath ? YAML_UTILS.parse(YAML_UTILS.extractBlockWithPath({
                 source: flow,
-                path: tab.parentPath+tab.refPath,
+                path: `${tab.parentPath}[${tab.refPath}]`,
             })) : {}
             return {
                 value: getEditTabKey(tab),
                 button: {
-                    label: `${parentName} / ${currentBlock.id ?? tab.refPath}`,
+                    label: `${parentName} / ${currentBlock?.id ?? tab.refPath}`,
                     icon: markRaw(MouseRightClickIcon),
                 },
             }
@@ -168,6 +168,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             parentPath,
             refPath,
         }, t, handlers, store.state.flow.flowYaml)
+
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {
             return

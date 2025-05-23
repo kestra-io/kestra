@@ -98,7 +98,7 @@
         if(!taskCreationIndex.value){
             yaml.value = YAML_UTILS.extractBlockWithPath({
                 source: flow.value,
-                path: parentPath + refPath,
+                path: `${parentPath}[${refPath}]`,
             })
             const type = YAML_UTILS.parse(yaml.value)?.type ?? null;
             emits("updateDocumentation", type);

@@ -69,7 +69,7 @@
         editTask(
             props.blockType,
             props.parentPathComplete,
-            `[${props.elementIndex}]`,
+            props.elementIndex,
         );
     };
 </script>

@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, ref, watch, computed, inject, nextTick} from "vue";
+    import {ref, watch, computed, inject, nextTick} from "vue";
     import {useStore} from "vuex";
     import {SECTIONS} from "@kestra-io/ui-libs";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -109,17 +109,23 @@
         }
     }) : ref("");
 
-    onBeforeMount(() => {
+    watch(flow, (source) => {
         if(!taskCreationIndex.value){
-            yaml.value = YAML_UTILS.extractBlockWithPath({
-                source: flow.value,
+            const taskYaml = YAML_UTILS.extractBlockWithPath({
+                source,
                 path: `${parentPath}[${refPath}]`,
             }) ?? ""
+
+            if(taskYaml === yaml.value){
+                return;
+            }
+            yaml.value = taskYaml;
             const type = YAML_UTILS.parse(yaml.value)?.type ?? null;
             emits("updateDocumentation", type);
         }
+    }, {
+        immediate: true,
     });
-
     const section = computed(() => /^(\w+)(\[\d+\])?/.exec(parentPath)?.[1]);
 
     const validationSection = computed(() =>
@@ -169,7 +175,7 @@
     const errors = computed(() => store.getters["flow/taskError"]);
 
     const saveTask = () => {
-        let result: string = flowBeforeAdd.value;
+        let result: string = flow.value;
 
         if (!taskCreationIndex.value) {
             result = YAML_UTILS.replaceBlockWithPath({

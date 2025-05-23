@@ -28,7 +28,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject, onBeforeMount, ref, toRaw, watch} from "vue";
+    import {computed, inject, ref, toRaw, watch} from "vue";
     import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
@@ -45,19 +45,6 @@
 
     const store = useStore();
 
-    onBeforeMount(() => {
-        if (modelValue.value) {
-            setup()
-        }
-    })
-
-    watch(modelValue, (v) => {
-        if (!v) {
-            taskObject.value = {};
-            selectedTaskType.value = undefined;
-        }
-    })
-
     type PartialCodeElement = Partial<NoCodeElement>;
 
     const taskObject = ref<PartialCodeElement | undefined>({});
@@ -65,15 +52,24 @@
     const isLoading = ref(false);
     const plugin = ref<{schema: Schemas}>();
 
-    const schema = computed(() => {
-        return plugin.value?.schema;
-    });
-
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const blockType = inject(BLOCKTYPE_INJECT_KEY, "");
 
     const isPluginDefaults = computed(() => {
         return parentPath.startsWith("pluginDefaults")
+    });
+
+    watch(modelValue, (v) => {
+        if (!v) {
+            taskObject.value = {};
+            selectedTaskType.value = undefined;
+        } else {
+            setup()
+        }
+    }, {immediate: true});
+
+    const schema = computed(() => {
+        return plugin.value?.schema;
     });
 
     const properties = computed(() => {

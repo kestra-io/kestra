@@ -30,6 +30,8 @@
                                     :hide-after="0"
                                     effect="light"
                                     placement="left-start"
+                                    :show-arrow="false"
+                                    popper-class="singleton-tooltip"
                                 >
                                     <template #content>
                                         <markdown
@@ -83,6 +85,8 @@
                                             :hide-after="0"
                                             effect="light"
                                             placement="left-start"
+                                            :show-arrow="false"
+                                            popper-class="singleton-tooltip"
                                         >
                                             <template #content>
                                                 <markdown
@@ -141,6 +145,8 @@
                                                 :hide-after="0"
                                                 effect="light"
                                                 placement="left-start"
+                                                :show-arrow="false"
+                                                popper-class="singleton-tooltip"
                                             >
                                                 <template #content>
                                                     <markdown
@@ -200,6 +206,8 @@
                                                 :hide-after="0"
                                                 effect="light"
                                                 placement="left-start"
+                                                :show-arrow="false"
+                                                popper-class="singleton-tooltip"
                                             >
                                                 <template #content>
                                                     <markdown
@@ -405,6 +413,11 @@
             width: 100%;
         }
     }
+
+    .el-popper.singleton-tooltip {
+        max-width: 300px !important;
+        background: var(--ks-tooltip-background);
+    }
 </style>
 
 <style lang="scss" scoped>
@@ -452,29 +465,6 @@
         padding: 0 8px;
         padding-bottom: 2px;
         border-radius: 8px;
-    }
-}
-
-.collapse {
-    :deep(.el-collapse-item) {
-        transition: all 0.3s ease-out;
-        
-        &.is-active {
-            border: 1px solid var(--ks-border-primary);
-            border-radius: 8px;
-            padding: 1rem;
-            transition: padding 0.3s ease-out;
-        }
-        
-        .el-collapse-item__wrap {
-            will-change: height;
-            transition: height 0.3s ease-out;
-        }
-
-        .el-collapse-item__content {
-            padding: 1rem 0 0 0;
-            transition: padding 0.3s ease-out;
-        }
     }
 }
 </style>

@@ -583,14 +583,14 @@
 
     .default-theme{
         .splitpanes__pane {
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-background-input);
             display: grid;
             grid-template-rows: auto 1fr;
         }
 
         :deep(.splitpanes__splitter){
             border-left-color: var(--ks-border-primary);
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-background-input);
             &:before, &:after{
                 background-color: var(--ks-content-secondary);
             }

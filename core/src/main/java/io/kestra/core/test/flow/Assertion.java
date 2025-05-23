@@ -151,11 +151,12 @@ public class Assertion {
             }
 
             if (results.isEmpty()) {
-                errors.add(new AssertionRunError("no assertions found"));
+                errors.add(new AssertionRunError("no assertions found", null));
             }
         } catch (IllegalVariableEvaluationException e) {
             errors.add(new AssertionRunError(
-                "Could not evaluate assertion: `%s`, error was: %s".formatted(getDisplayableAssertion(), e.getMessage())
+                "Could not evaluate assertion: `%s`".formatted(getDisplayableAssertion()),
+                "error was: %s".formatted(e.getMessage())
             ));
         }
         return new AssertionRunResult(results, errors);

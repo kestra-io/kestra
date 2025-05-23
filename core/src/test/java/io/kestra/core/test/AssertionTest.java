@@ -69,9 +69,9 @@ class AssertionTest {
             .hasSize(1)
             .first()
             .satisfies(result -> {
-                assertThat(result.message()).contains("invalid-pebble-expression()");
                 assertThat(result.message()).contains("Could not evaluate assertion");
-                assertThat(result.message()).contains("io.pebbletemplates.pebble.error.PebbleException");
+                assertThat(result.details()).contains("invalid-pebble-expression()");
+                assertThat(result.details()).contains("io.pebbletemplates.pebble.error.PebbleException");
             });
     }
 

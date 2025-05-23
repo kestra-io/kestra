@@ -2,15 +2,57 @@
     <el-form label-position="top">
         <template v-if="sortedProperties">
             <template v-for="[key, schema] in requiredProperties" :key="key">
-                <template v-if="isAnyOf(schema)">
+                <!-- For id or nested properties, don't use TaskWrapper -->
+                <template v-if="key === 'id' || isNestedProperty(key)">
+                    <el-form-item :required="isRequired(key)">
+                        <template #label>
+                            <div class="inline-wrapper">
+                                <div class="inline-start">
+                                    <TaskLabelWithBoolean
+                                        :type="getType(schema)"
+                                        :is-boolean="isBoolean(schema)"
+                                        :component-props="componentProps(key, schema)"
+                                    />
+                                    <span v-if="getKey(key)" class="label">
+                                        {{ getKey(key) }}
+                                    </span>
+                                </div>
+                                <el-tag
+                                    v-if="!isAnyOf(schema)"
+                                    disable-transitions
+                                    size="small"
+                                    class="type-tag"
+                                >
+                                    {{ getType(schema) }}
+                                </el-tag>
+                            </div>
+                        </template>
+                        <component
+                            v-if="!isBoolean(schema)"
+                            :is="`task-${getType(schema, key)}`"
+                            v-bind="componentProps(key, schema)"
+                            class="mt-1 mb-2 wrapper"
+                        />
+                    </el-form-item>
+                </template>
+                
+                <!-- For parent-level properties, use TaskWrapper -->
+                <template v-else>
                     <TaskWrapper>
                         <template #tasks>
                             <el-form-item :required="isRequired(key)">
                                 <template #label>
                                     <div class="inline-wrapper">
-                                        <span v-if="getKey(key)" class="label">
-                                            {{ getKey(key) }}
-                                        </span>
+                                        <div class="inline-start">
+                                            <TaskLabelWithBoolean
+                                                :type="getType(schema)"
+                                                :is-boolean="isBoolean(schema)"
+                                                :component-props="componentProps(key, schema)"
+                                            />
+                                            <span v-if="getKey(key)" class="label">
+                                                {{ getKey(key) }}
+                                            </span>
+                                        </div>
                                         <el-tag
                                             v-if="!isAnyOf(schema)"
                                             disable-transitions
@@ -19,11 +61,6 @@
                                         >
                                             {{ getType(schema) }}
                                         </el-tag>
-                                        <TaskLabelWithBoolean
-                                            :type="getType(schema)"
-                                            :is-boolean="isBoolean(schema)"
-                                            :component-props="componentProps(key, schema)"
-                                        />
                                     </div>
                                 </template>
                                 <component
@@ -36,107 +73,45 @@
                         </template>
                     </TaskWrapper>
                 </template>
-                
-                <template v-else>
-                    <el-form-item :required="isRequired(key)">
-                        <template #label>
-                            <div class="inline-wrapper">
-                                <span v-if="getKey(key)" class="label">
-                                    {{ getKey(key) }}
-                                </span>
-                                <el-tag
-                                    v-if="!isAnyOf(schema)"
-                                    disable-transitions
-                                    size="small"
-                                    class="type-tag"
-                                >
-                                    {{ getType(schema) }}
-                                </el-tag>
-                                <TaskLabelWithBoolean
-                                    :type="getType(schema)"
-                                    :is-boolean="isBoolean(schema)"
-                                    :component-props="componentProps(key, schema)"
-                                />
-                            </div>
-                        </template>
-                        <component
-                            :is="`task-${getType(schema, key)}`"
-                            v-bind="componentProps(key, schema)"
-                            v-if="!isBoolean(schema)"
-                            class="mt-1 mb-2 wrapper"
-                        />
-                    </el-form-item>
-                </template>
             </template>
 
             <el-collapse v-model="activeNames" v-if="optionalProperties?.length" class="collapse">
                 <el-collapse-item name="optional" :title="$t('no_code.sections.optional')">
                     <template v-for="[key, schema] in optionalProperties" :key="key">
-                        <template v-if="isAnyOf(schema)">
-                            <TaskWrapper>
-                                <template #tasks>
-                                    <el-form-item :required="isRequired(key)">
-                                        <template #label>
-                                            <div class="inline-wrapper">
-                                                <span v-if="getKey(key)" class="label">
-                                                    {{ getKey(key) }}
-                                                </span>
-                                                <el-tag
-                                                    v-if="!isAnyOf(schema)"
-                                                    disable-transitions
-                                                    size="small"
-                                                    class="type-tag"
-                                                >
-                                                    {{ getType(schema) }}
-                                                </el-tag>
+                        <TaskWrapper>
+                            <template #tasks>
+                                <el-form-item :required="isRequired(key)">
+                                    <template #label>
+                                        <div class="inline-wrapper">
+                                            <div class="inline-start">
                                                 <TaskLabelWithBoolean
                                                     :type="getType(schema)"
                                                     :is-boolean="isBoolean(schema)"
                                                     :component-props="componentProps(key, schema)"
                                                 />
+                                                <span v-if="getKey(key)" class="label">
+                                                    {{ getKey(key) }}
+                                                </span>
                                             </div>
-                                        </template>
-                                        <component
-                                            :is="`task-${getType(schema, key)}`"
-                                            v-bind="componentProps(key, schema)"
-                                            v-if="!isBoolean(schema)"
-                                            class="mt-1 mb-2 wrapper"
-                                        />
-                                    </el-form-item>
-                                </template>
-                            </TaskWrapper>
-                        </template>
-                        
-                        <template v-else>
-                            <el-form-item :required="isRequired(key)">
-                                <template #label>
-                                    <div class="inline-wrapper">
-                                        <span v-if="getKey(key)" class="label">
-                                            {{ getKey(key) }}
-                                        </span>
-                                        <el-tag
-                                            v-if="!isAnyOf(schema)"
-                                            disable-transitions
-                                            size="small"
-                                            class="type-tag"
-                                        >
-                                            {{ getType(schema) }}
-                                        </el-tag>
-                                        <TaskLabelWithBoolean
-                                            :type="getType(schema)"
-                                            :is-boolean="isBoolean(schema)"
-                                            :component-props="componentProps(key, schema)"
-                                        />
-                                    </div>
-                                </template>
-                                <component
-                                    :is="`task-${getType(schema, key)}`"
-                                    v-bind="componentProps(key, schema)"
-                                    v-if="!isBoolean(schema)"
-                                    class="mt-1 mb-2 wrapper"
-                                />
-                            </el-form-item>
-                        </template>
+                                            <el-tag
+                                                v-if="!isAnyOf(schema)"
+                                                disable-transitions
+                                                size="small"
+                                                class="type-tag"
+                                            >
+                                                {{ getType(schema) }}
+                                            </el-tag>
+                                        </div>
+                                    </template>
+                                    <component
+                                        :is="`task-${getType(schema, key)}`"
+                                        v-bind="componentProps(key, schema)"
+                                        v-if="!isBoolean(schema)"
+                                        class="mt-1 mb-2 wrapper"
+                                    />
+                                </el-form-item>
+                            </template>
+                        </TaskWrapper>
                     </template>
                 </el-collapse-item>
             </el-collapse>
@@ -144,71 +119,40 @@
             <el-collapse v-model="activeNames" v-if="deprecatedProperties?.length" class="collapse">
                 <el-collapse-item name="deprecated" :title="$t('no_code.sections.deprecated')">
                     <template v-for="[key, schema] in deprecatedProperties" :key="key">
-                        <template v-if="isAnyOf(schema)">
-                            <TaskWrapper>
-                                <template #tasks>
-                                    <el-form-item :required="isRequired(key)">
-                                        <template #label>
-                                            <div class="inline-wrapper">
-                                                <span v-if="getKey(key)" class="label">
-                                                    {{ getKey(key) }}
-                                                </span>
-                                                <el-tag
-                                                    v-if="!isAnyOf(schema)"
-                                                    disable-transitions
-                                                    size="small"
-                                                    class="type-tag"
-                                                >
-                                                    {{ getType(schema) }}
-                                                </el-tag>
+                        <TaskWrapper>
+                            <template #tasks>
+                                <el-form-item :required="isRequired(key)">
+                                    <template #label>
+                                        <div class="inline-wrapper">
+                                            <div class="inline-start">
                                                 <TaskLabelWithBoolean
                                                     :type="getType(schema)"
                                                     :is-boolean="isBoolean(schema)"
                                                     :component-props="componentProps(key, schema)"
                                                 />
+                                                <span v-if="getKey(key)" class="label">
+                                                    {{ getKey(key) }}
+                                                </span>
                                             </div>
-                                        </template>
-                                        <component
-                                            :is="`task-${getType(schema, key)}`"
-                                            v-bind="componentProps(key, schema)"
-                                            v-if="!isBoolean(schema)"
-                                            class="mt-1 mb-2 wrapper"
-                                        />
-                                    </el-form-item>
-                                </template>
-                            </TaskWrapper>
-                        </template>
-                        
-                        <template v-else>
-                            <el-form-item :required="isRequired(key)">
-                                <template #label>
-                                    <div class="inline-wrapper">
-                                        <span v-if="getKey(key)" class="label">
-                                            {{ getKey(key) }}
-                                        </span>
-                                        <el-tag
-                                            v-if="!isAnyOf(schema)"
-                                            disable-transitions
-                                            size="small"
-                                            class="type-tag"
-                                        >
-                                            {{ getType(schema) }}
-                                        </el-tag>
-                                        <TaskLabelWithBoolean
-                                            :type="getType(schema)"
-                                            :is-boolean="isBoolean(schema)"
-                                            :component-props="componentProps(key, schema)"
-                                        />
-                                    </div>
-                                </template>
-                                <component
-                                    :is="`task-${getType(schema, key)}`"
-                                    v-bind="componentProps(key, schema)"
-                                    v-if="!isBoolean(schema)"
-                                    class="mt-1 mb-2 wrapper"
-                                />
-                            </el-form-item>
-                        </template>
+                                            <el-tag
+                                                v-if="!isAnyOf(schema)"
+                                                disable-transitions
+                                                size="small"
+                                                class="type-tag"
+                                            >
+                                                {{ getType(schema) }}
+                                            </el-tag>
+                                        </div>
+                                    </template>
+                                    <component
+                                        :is="`task-${getType(schema, key)}`"
+                                        v-bind="componentProps(key, schema)"
+                                        v-if="!isBoolean(schema)"
+                                        class="mt-1 mb-2 wrapper"
+                                    />
+                                </el-form-item>
+                            </template>
+                        </TaskWrapper>
                     </template>
                 </el-collapse-item>
             </el-collapse>
@@ -366,6 +310,11 @@
             isBoolean(schema) {
                 return this.getType(schema) === "boolean";
             },
+            isNestedProperty(key) {
+                return key.includes(".") || 
+                    ["interval", "type"].includes(key) ||
+                    (this.schema?.properties?.[key]?.$ref?.includes("#/definitions/"));
+            },
         },
     };
 </script>
@@ -385,38 +334,48 @@
 <style lang="scss" scoped>
 @import "../../code/styles/code.scss";
 
-.type-tag {
-    background-color: var(--ks-tag-background);
-    color: var(--ks-tag-content);
-}
-
-.el-form-item.is-required:not(.is-no-asterisk).asterisk-left {
-    > :deep(.el-form-item__label) {
-        display: flex;
-    }
-}
-
-.label {
-    color: var(--ks-content-primary);
-}
-
-.el-tooltip__trigger {
-    > :deep(svg) {
-        fill: var(--ks-content-tertiary);
-    }
-}
-
 .el-form-item {
+    width: 100%;
+    
     > :deep(.el-form-item__label) {
+        width: 100%;
+        display: flex;
         align-items: center;
-        justify-content: flex-start;
+        padding: 0;
     }
 }
 
 .inline-wrapper {
+    width: 100%;
     display: flex;
     align-items: center;
-    justify-content: space-around;
     gap: 0.5rem;
+    min-width: 0;
+
+    .inline-start {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .label {
+        color: var(--ks-content-primary);
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .type-tag {
+        background-color: var(--ks-tag-background-active);
+        color: var(--ks-tag-content);
+        font-size: 12px;
+        line-height: 20px;
+        padding: 0 8px;
+        padding-bottom: 2px;
+        border-radius: 8px;
+    }
 }
 </style>

@@ -153,6 +153,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         refPath?: number,
         position: "before" | "after" = "after",
         createIndex?: number,
+        dirty: boolean = false,
     ) {
         // create a new tab with the next createIndex
         const tab = getTabFromNoCodeTab({
@@ -161,7 +162,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             refPath,
             position,
             createIndex,
-        }, t, handlers, store.state.flow.flowYaml)
+        }, t, handlers, store.state.flow.flowYaml, dirty)
 
         panels.value[opener.panelIndex]?.tabs.splice(opener.tabIndex + 1, 0, tab)
 
@@ -173,12 +174,12 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         openerPanel.activeTab = tab
     }
 
-    function openEditTaskTab(opener: { panelIndex: number, tabIndex: number }, blockType: BlockType | "pluginDefaults", parentPath: string, refPath: number) {
+    function openEditTaskTab(opener: { panelIndex: number, tabIndex: number }, blockType: BlockType | "pluginDefaults", parentPath: string, refPath: number, dirty: boolean = false) {
         const tab = getTabFromNoCodeTab({
             blockType,
             parentPath,
             refPath,
-        }, t, handlers, store.state.flow.flowYaml)
+        }, t, handlers, store.state.flow.flowYaml, dirty)
 
         const openerPanel = panels.value[opener.panelIndex]
         if (!openerPanel) {

@@ -101,7 +101,7 @@
                 return false
             }
 
-            openAddTaskTab(opener, blockType, parentPath, refPath, position, createIndex)
+            openAddTaskTab(opener, blockType, parentPath, refPath, position, createIndex, isFlowDirty.value)
             return false
         },
         onEditTask(...args){
@@ -122,7 +122,7 @@
                 focusTab(editKey)
                 return false
             }
-            openEditTaskTab(...args)
+            openEditTaskTab(...args, isFlowDirty.value)
             return false
         },
         onCloseTask(...args){

@@ -15,8 +15,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, watch, inject,  onBeforeUnmount,  provide, ref} from "vue";
-    import {useStore} from "vuex";
+    import {computed, watch, inject, provide, ref} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {
@@ -25,14 +24,11 @@
         EDIT_TASK_FUNCTION_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
         PANEL_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
-        TASK_CREATION_INDEX_INJECTION_KEY, TOPOLOGY_CLICK_INJECTION_KEY,
-        FLOW_INJECTION_KEY,
+        TOPOLOGY_CLICK_INJECTION_KEY, FLOW_INJECTION_KEY,
     } from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
     import {Breadcrumb, BlockType, TopologyClickParams} from "./utils/types";
-
-    const store = useStore();
 
     const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
 
@@ -95,13 +91,6 @@
     const breadcrumbs = ref<Breadcrumb[]>([])
     const panel = ref()
 
-    const taskCreationIndex = inject(
-        TASK_CREATION_INDEX_INJECTION_KEY,
-        ref(0),
-    );
-
-    const flowBeforeAdd = ref(props.flow)
-
     provide(FLOW_INJECTION_KEY, computed(() => props.flow));
     provide(PARENT_PATH_INJECTION_KEY, props.parentPath ?? "");
     provide(REF_PATH_INJECTION_KEY, props.refPath);
@@ -124,23 +113,6 @@
             emit("closeTask")
         }
 
-    })
-
-    onBeforeUnmount(() => {
-        // cleanup the addition model on close
-        if(props.creatingTask) {
-            const task = store.getters["flow/createdTasks"]?.[taskCreationIndex.value - 1];
-            if (!task) return;
-
-            YAML_UTILS.insertBlockWithPath({
-                source: flowBeforeAdd.value,
-                ...task
-            });
-
-            store.commit("flow/setCreatedTask", {
-                index: taskCreationIndex.value - 1,
-            });
-        }
     })
 </script>
 

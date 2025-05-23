@@ -194,7 +194,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
             return
         }
         const tab = openerPanel.tabs[opener.tabIndex]
-        if (tab.value.startsWith(NOCODE_PREFIX)) {
+        if (tab?.value.startsWith(NOCODE_PREFIX)) {
             openerPanel.tabs.splice(opener.tabIndex, 1)
             if (openerPanel.activeTab === tab) {
                 openerPanel.activeTab = openerPanel.tabs[opener.tabIndex - 1] ?? openerPanel.tabs[opener.tabIndex + 1]

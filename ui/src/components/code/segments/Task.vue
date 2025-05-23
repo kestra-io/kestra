@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, ref, watch, computed, inject} from "vue";
+    import {onBeforeMount, ref, watch, computed, inject, nextTick} from "vue";
     import {useStore} from "vuex";
     import {SECTIONS} from "@kestra-io/ui-libs";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
@@ -37,6 +37,7 @@
         FLOW_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
         TASK_CREATION_INDEX_INJECTION_KEY, REF_PATH_INJECTION_KEY,
+        EDIT_TASK_FUNCTION_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
     import ValidationError from "../../../components/flows/ValidationError.vue";
@@ -53,6 +54,7 @@
     });
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
+    const blockType = inject(BLOCKTYPE_INJECT_KEY, undefined);
     const position = inject(POSITION_INJECTION_KEY, "after");
     const taskCreationIndex = inject(
         TASK_CREATION_INDEX_INJECTION_KEY,
@@ -60,6 +62,15 @@
     );
     const exitTaskElement = inject(
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
+        () => {},
+    );
+
+    const closeTask = inject(
+        CLOSE_TASK_FUNCTION_INJECTION_KEY,
+        () => {},
+    );
+    const editTask = inject(
+        EDIT_TASK_FUNCTION_INJECTION_KEY,
         () => {},
     );
 
@@ -77,7 +88,7 @@
         parentPath: string,
         refPath?: number
         position?: "before" | "after",
-        blockType?: BlockType
+        blockType?: BlockType | "pluginDefaults"
     }
 
     const yaml = taskCreationIndex.value ? computed({
@@ -91,6 +102,7 @@
                 parentPath,
                 refPath,
                 position,
+                blockType,
             } satisfies (TaskModel & {
                 index: number,
             }));
@@ -117,7 +129,7 @@
     const parsedTask = computed(() => YAML_UTILS.parse(yaml.value));
 
     const validateTask = (task?: string) => {
-        if(section.value !== PLUGIN_DEFAULTS_SECTION){
+        if(section.value !== PLUGIN_DEFAULTS_SECTION && task){
             clearTimeout(timer.value);
             timer.value = setTimeout(() => {
                 if (lastValidatedValue.value !== task) {
@@ -209,6 +221,18 @@
                 source: result,
                 ...task,
             });
+
+            if(task.blockType && task.refPath !== undefined){
+                editTask(
+                    task.blockType,
+                    task.parentPath,
+                    task.refPath + 1,
+                );
+                nextTick(() => {
+                    closeTask();
+                });
+            }
+
         }
 
         emits("updateTask", result);

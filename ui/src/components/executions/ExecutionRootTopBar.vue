@@ -1,5 +1,9 @@
 <template>
     <top-nav-bar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
+        <template #title>
+            {{ routeInfo?.title }}
+            <TestBadge v-if="isATestExecution" />
+        </template>
         <template #additional-right v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul id="list">
                 <li v-if="isAllowedEdit">
@@ -31,6 +35,7 @@
     import Api from "vue-material-design-icons/Api.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
+    import TestBadge from "../global/TestBadge.vue";
 </script>
 
 <script>
@@ -71,6 +76,9 @@
             isAllowedTrigger() {
                 return this.user && this.execution && this.user.isAllowed(permission.EXECUTION, action.CREATE, this.execution.namespace);
             },
+            isATestExecution() {
+                return this.execution.labels && this.execution.labels.some(label => label.key === "system.test" && label.value === "true");
+            }
         },
         methods: {
             editFlow() {
@@ -105,9 +113,9 @@
                             if(value === "confirm") {
                                 return this.$store
                                     .dispatch("execution/deleteExecution", {
-                                        ...item, 
+                                        ...item,
                                         deleteLogs: deleteLogs.value,
-                                        deleteMetrics: deleteMetrics.value, 
+                                        deleteMetrics: deleteMetrics.value,
                                         deleteStorage: deleteStorage.value
                                     })
                                     .then(() => {
@@ -149,8 +157,8 @@
 </script>
 <style>
 @media (max-width: 768px) {
-           
-       
+
+
            #list {
                 display:contents;
                 background-color: blue;
@@ -158,8 +166,8 @@
             #list  li:first-child {
                 grid-row:1;
                 grid-column:1;
-            } 
-          
+            }
+
             #list  li:nth-child(2){
                 grid-row:1;
                 grid-column:2;
@@ -171,7 +179,7 @@
             #list li:nth-child(4){
                 grid-row:2;
                 grid-column:1;
-            }   
+            }
         }
 
 </style>

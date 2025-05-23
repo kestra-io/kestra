@@ -28,4 +28,8 @@
         color: var(--ks-content-tertiary);
     }
 }
+
+:deep(.el-select__suffix) {
+    display: flex !important;
+}
 </style>

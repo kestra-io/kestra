@@ -104,4 +104,8 @@
             margin-right: 0;
         }
     }
+
+    :deep(.el-select__suffix) {
+        display: flex !important;
+    }
 </style>

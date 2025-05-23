@@ -1213,6 +1213,8 @@
       "name": "Mandant",
       "names": "Najemcy"
     },
+    "test-badge-text": "Test",
+    "test-badge-tooltip": "To wykonanie zostało utworzone przez Test.",
     "theme": "Motyw",
     "this_task_has": "To zadanie ma",
     "timezone": "Strefa czasowa",

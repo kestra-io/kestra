@@ -114,7 +114,7 @@
             yaml.value = YAML_UTILS.extractBlockWithPath({
                 source: flow.value,
                 path: `${parentPath}[${refPath}]`,
-            })
+            }) ?? ""
             const type = YAML_UTILS.parse(yaml.value)?.type ?? null;
             emits("updateDocumentation", type);
         }
@@ -171,31 +171,31 @@
     const saveTask = () => {
         let result: string = flowBeforeAdd.value;
 
-        if (taskCreationIndex.value === undefined) {
+        if (!taskCreationIndex.value) {
             result = YAML_UTILS.replaceBlockWithPath({
                 source: result,
                 path: `${parentPath}[${refPath}]`,
                 newContent: yaml.value ?? "",
             });
-
-            store.commit("flow/setFlowYamlBeforeAdd", result);
         }
 
-        const currentSection = section.value as keyof typeof SECTIONS_MAP;
+        if(taskCreationIndex.value && !hasMovedToEdit.value && blockType){
+            const currentSection = section.value as keyof typeof SECTIONS_MAP;
 
-        if(!currentSection) {
-            return;
-        }
-
-        const keyName = currentSection === PLUGIN_DEFAULTS_SECTION ? "type" : "id"
-
-        // if multiple task creation tabs are open add them all
-        const tasks: TaskModel[] = store.getters["flow/createdTasks"];
-
-        for(const task of tasks){
-            if(!task?.newBlock){
-                continue;
+            if(!currentSection) {
+                return;
             }
+
+            const keyName = currentSection === PLUGIN_DEFAULTS_SECTION ? "type" : "id"
+
+            const task = {
+                newBlock: yaml.value,
+                parentPath,
+                refPath,
+                position,
+                blockType,
+            } satisfies TaskModel;
+
             if([PLUGIN_DEFAULTS_SECTION, "tasks", "triggers"].includes(currentSection)){
                 const parsedTask = YAML_UTILS.parse(task.newBlock);
                 // this condition will ignore trigger "conditions" unicity
@@ -221,9 +221,8 @@
                 source: result,
                 ...task,
             });
-        }
 
-        if(taskCreationIndex.value && !hasMovedToEdit.value && blockType){
+
             const currentRefPath = (refPath ?? -1) + 1
             editTask(
                 blockType,

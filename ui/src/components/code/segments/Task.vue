@@ -34,9 +34,9 @@
     import {PLUGIN_DEFAULTS_SECTION, SECTIONS_MAP} from "../../../utils/constants";
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
-        FLOW_INJECTION_KEY,
+        FLOW_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
         PARENT_PATH_INJECTION_KEY, POSITION_INJECTION_KEY,
-        TASK_CREATION_INDEX_INJECTION_KEY, REF_PATH_INJECTION_KEY,
+        REF_PATH_INJECTION_KEY,
         EDIT_TASK_FUNCTION_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
     } from "../injectionKeys";
     import TaskEditor from "../../../components/flows/TaskEditor.vue";
@@ -56,9 +56,9 @@
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
     const blockType = inject(BLOCKTYPE_INJECT_KEY, undefined);
     const position = inject(POSITION_INJECTION_KEY, "after");
-    const taskCreationIndex = inject(
-        TASK_CREATION_INDEX_INJECTION_KEY,
-        ref(0),
+    const creatingTask = inject(
+        CREATING_TASK_INJECTION_KEY,
+        ref(false),
     );
     const exitTaskElement = inject(
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -91,26 +91,10 @@
         blockType?: BlockType | "pluginDefaults"
     }
 
-    const yaml = taskCreationIndex.value ? computed({
-        get() {
-            return store.getters["flow/createdTasks"]?.[taskCreationIndex.value - 1]?.newBlock ?? "";
-        },
-        set(val){
-            store.commit("flow/setCreatedTask", {
-                index: taskCreationIndex.value - 1,
-                newBlock: val,
-                parentPath,
-                refPath,
-                position,
-                blockType,
-            } satisfies (TaskModel & {
-                index: number,
-            }));
-        }
-    }) : ref("");
+    const yaml = ref("");
 
     watch(flow, (source) => {
-        if(!taskCreationIndex.value){
+        if(!creatingTask.value){
             const taskYaml = YAML_UTILS.extractBlockWithPath({
                 source,
                 path: `${parentPath}[${refPath}]`,
@@ -120,12 +104,20 @@
                 return;
             }
             yaml.value = taskYaml;
-            const type = YAML_UTILS.parse(yaml.value)?.type ?? null;
-            emits("updateDocumentation", type);
         }
     }, {
         immediate: true,
     });
+
+    const type = computed(() => {
+        const parsed = YAML_UTILS.parse(yaml.value);
+        return parsed?.type ?? null;
+    });
+
+    watch(type, (t) => {
+        emits("updateDocumentation", t);
+    });
+
     const section = computed(() => /^(\w+)(\[\d+\])?/.exec(parentPath)?.[1]);
 
     const validationSection = computed(() =>
@@ -177,15 +169,13 @@
     const saveTask = () => {
         let result: string = flow.value;
 
-        if (!taskCreationIndex.value) {
+        if (!creatingTask.value) {
             result = YAML_UTILS.replaceBlockWithPath({
                 source: result,
                 path: `${parentPath}[${refPath}]`,
                 newContent: yaml.value ?? "",
             });
-        }
-
-        if(taskCreationIndex.value && !hasMovedToEdit.value && blockType){
+        }else if(!hasMovedToEdit.value && blockType){
             const currentSection = section.value as keyof typeof SECTIONS_MAP;
 
             if(!currentSection) {
@@ -256,7 +246,7 @@
     // in case another creation gets closed
     // we need to update the flow with the last created tasks
     watch(flowBeforeAdd, () => {
-        if (taskCreationIndex.value) {
+        if (creatingTask.value) {
             saveTask()
         }
     });

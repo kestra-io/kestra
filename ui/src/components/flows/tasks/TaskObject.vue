@@ -2,7 +2,6 @@
     <el-form label-position="top">
         <template v-if="sortedProperties">
             <template v-for="[key, schema] in requiredProperties" :key="key">
-                <!-- For id or nested properties, don't use TaskWrapper -->
                 <template v-if="key === 'id' || isNestedProperty(key)">
                     <el-form-item :required="isRequired(key)">
                         <template #label>
@@ -30,13 +29,15 @@
                         <component
                             v-if="!isBoolean(schema)"
                             :is="`task-${getType(schema, key)}`"
-                            v-bind="componentProps(key, schema)"
+                            v-bind="{
+                                ...componentProps(key, schema),
+                                ...(getType(schema, key) === 'complex' ? {metadataInputs} : {})
+                            }"
                             class="mt-1 mb-2 wrapper"
                         />
                     </el-form-item>
                 </template>
                 
-                <!-- For parent-level properties, use TaskWrapper -->
                 <template v-else>
                     <TaskWrapper>
                         <template #tasks>
@@ -64,9 +65,12 @@
                                     </div>
                                 </template>
                                 <component
-                                    :is="`task-${getType(schema, key)}`"
-                                    v-bind="componentProps(key, schema)"
                                     v-if="!isBoolean(schema)"
+                                    :is="`task-${getType(schema, key)}`"
+                                    v-bind="{
+                                        ...componentProps(key, schema),
+                                        ...(getType(schema, key) === 'complex' ? {metadataInputs} : {})
+                                    }"
                                     class="mt-1 mb-2 wrapper"
                                 />
                             </el-form-item>
@@ -105,7 +109,10 @@
                                     </template>
                                     <component
                                         :is="`task-${getType(schema, key)}`"
-                                        v-bind="componentProps(key, schema)"
+                                        v-bind="{
+                                            ...componentProps(key, schema),
+                                            ...(getType(schema, key) === 'complex' ? {metadataInputs} : {})
+                                        }"
                                         v-if="!isBoolean(schema)"
                                         class="mt-1 mb-2 wrapper"
                                     />
@@ -146,7 +153,10 @@
                                     </template>
                                     <component
                                         :is="`task-${getType(schema, key)}`"
-                                        v-bind="componentProps(key, schema)"
+                                        v-bind="{
+                                            ...componentProps(key, schema),
+                                            ...(getType(schema, key) === 'complex' ? {metadataInputs} : {})
+                                        }"
                                         v-if="!isBoolean(schema)"
                                         class="mt-1 mb-2 wrapper"
                                     />
@@ -243,7 +253,8 @@
                 type: Object,
                 default: () => ({}),
             },
-            expandOptional: {type: Boolean, default: false}
+            expandOptional: {type: Boolean, default: false},
+            metadataInputs: {type: Boolean, default: false}
         },
         emits: ["update:modelValue"],
         data() {

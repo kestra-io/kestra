@@ -72,7 +72,7 @@
                         ? `[${refPath}]`
                         : undefined,
             ].filter(Boolean).join(""),
-            props.blockType
+            props.section
         ].filter(p => p.length).join(".")}`;
     });
 

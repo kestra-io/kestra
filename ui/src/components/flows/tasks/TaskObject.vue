@@ -383,4 +383,28 @@
         border-radius: 8px;
     }
 }
+
+.collapse {
+    :deep(.el-collapse-item) {
+        transition: all 0.3s ease-out;
+        
+        &.is-active {
+            border: 1px solid var(--ks-border-primary);
+            border-radius: 8px;
+            padding: 1rem;
+            transition: padding 0.3s ease-out;
+
+        }
+        
+        .el-collapse-item__wrap {
+            will-change: height;
+            transition: height 0.3s ease-out;
+        }
+
+        .el-collapse-item__content {
+            padding: 1rem 0 0 0;
+            transition: padding 0.3s ease-out;
+        }
+    }
+}
 </style>

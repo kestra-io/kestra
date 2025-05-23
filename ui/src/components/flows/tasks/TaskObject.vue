@@ -312,8 +312,13 @@
             },
             isNestedProperty(key) {
                 return key.includes(".") || 
-                    ["interval", "type"].includes(key) ||
-                    (this.schema?.properties?.[key]?.$ref?.includes("#/definitions/"));
+                    ["interval", "maxInterval", "minInterval", "type"].includes(key);
+            },
+            getKey(key) {
+                if (this.isNestedProperty(key) || key === "id") {
+                    return key;
+                }
+                return key.charAt(0).toUpperCase() + key.slice(1);
             },
         },
     };

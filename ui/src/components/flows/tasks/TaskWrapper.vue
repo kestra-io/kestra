@@ -10,10 +10,10 @@
 
 <style lang= "scss" scoped>
 .schema-wrapper {
-    border: 1px solid var(--ks-border-primary);
+    border: 1px solid var(--ks-border-secondary);
     padding: 1rem;
-    padding-bottom: 0;
-    border-radius: 4px;
+    padding-bottom: .25rem;
+    border-radius: 8px;
     margin: 1rem 0;
     background: var(--ks-background-body);
 }

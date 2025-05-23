@@ -4,6 +4,7 @@
             :model-value="durationValue"
             type="time"
             :default-value="defaultDuration"
+            :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'duration'}`"
             @update:model-value="onInputDuration"
         />
     </template>
@@ -77,3 +78,11 @@
         },
     };
 </script>
+
+<style lang="scss" scoped>
+:deep(.el-input__inner) {
+    &::placeholder {
+        color: var(--ks-content-tertiary) !important;
+    }
+}
+</style>

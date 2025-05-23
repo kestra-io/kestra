@@ -1,5 +1,6 @@
 // Coloring
 $code-primary: var(--ks-content-link);
+$code-secondary: var(--ks-content-secondary);
 $code-gray-700: var(--bs-gray-700);
 $code-card-color: var(--ks-background-card);
 $code-border-color: var(--ks-border-primary);
@@ -14,7 +15,7 @@ $code-font-sm: var(--el-font-size-small);
 
     :deep(*) {
         --el-collapse-header-bg-color: initial;
-        --el-collapse-header-text-color: #{$code-gray-700};
+        --el-collapse-header-text-color: #{--ks-content-secondary};
         --el-collapse-content-bg-color: initial;
 
         .el-collapse-item__header,
@@ -24,10 +25,7 @@ $code-font-sm: var(--el-font-size-small);
 
         .el-collapse-item__header {
             justify-content: space-between;
-
-            &.is-active {
-                color: $code-primary;
-            }
+            color: $code-secondary;
         }
     }
 }

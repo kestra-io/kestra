@@ -47,7 +47,7 @@
             params = {...params, filters: decodedParams};
         }
         const result = await store.dispatch("dashboard/generate", params);
-        const description = result.results[0].description;
+        const description = result.results?.[0]?.description;
 
         source.value = description ? description : t("dashboard.no_flow_description")
     };

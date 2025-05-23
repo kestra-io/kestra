@@ -142,7 +142,7 @@
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
-    import Markdown from "../../layout/Markdown.vue";
+    import Markdown from "./MarkdownPanel.vue";
     import TimeSeries from "./charts/custom/TimeSeries.vue";
     import Bar from "./charts/custom/Bar.vue";
     import Pie from "./charts/custom/Pie.vue";
@@ -251,13 +251,13 @@
             },
             async loadChart(chart) {
                 const yamlChart = yaml.stringify(chart);
-                const result = {error: null, data: null};
+                const result = {error: null, data: null, raw: {}};
                 await this.$store.dispatch("dashboard/validateChart", yamlChart)
                     .then(errors => {
                         if (errors.constraints) {
                             result.error = errors.constraints;
                         } else {
-                            result.data = {...chart, content: yamlChart};
+                            result.data = {...chart, content: yamlChart, raw: chart};
                         }
                     });
                 return result;

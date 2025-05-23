@@ -56,7 +56,7 @@
 
     const props = defineProps({
         charts: {type: Array, required: true, default: () => []},
-        showDefault: {type: Boolean, required: true},
+        showDefault: {type: Boolean, default: false},
     });
 
     const labels = (chart) => ({

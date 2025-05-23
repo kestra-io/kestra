@@ -115,7 +115,9 @@
     });
 
     watch(type, (t) => {
-        emits("updateDocumentation", t);
+        if(t)
+            emits("updateDocumentation", t);
+
     });
 
     const section = computed(() => /^(\w+)(\[\d+\])?/.exec(parentPath)?.[1]);

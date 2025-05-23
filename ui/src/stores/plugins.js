@@ -1,5 +1,6 @@
 import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
 import {YamlUtils} from "@kestra-io/ui-libs";
+import semver from "semver";
 
 export default {
     namespaced: true,
@@ -125,8 +126,23 @@ export default {
                 options.event.position,
                 getters["getPluginSingleList"]
             );
+            const taskVersion = YamlUtils.getVersionAtPosition(
+                options.event.model.getValue(),
+                options.event.position
+            );
             if (taskType) {
-                dispatch("load", {cls: taskType}).then((plugin) => {
+                let payload = {cls: taskType};
+                if (taskVersion !== undefined) {
+                    // Check if the version is valid to avoid error
+                    // when loading plugin
+                    if (semver.valid(taskVersion) !== null ||
+                        "latest" === taskVersion.toString().toLowerCase() ||
+                        "oldest" === taskVersion.toString().toLowerCase()
+                    ) {
+                        payload = {...payload, version: taskVersion};
+                    }
+                }
+                dispatch("load", payload).then((plugin) => {
                     commit("setEditorPlugin", {cls: taskType, ...plugin});
                 });
             } else {

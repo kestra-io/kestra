@@ -1213,6 +1213,8 @@
       "name": "Mandante",
       "names": "Arrendatarios"
     },
+    "test-badge-text": "Prueba",
+    "test-badge-tooltip": "Esta ejecución fue creada por una prueba",
     "theme": "Tema",
     "this_task_has": "Esta tarea tiene",
     "timezone": "Zona horaria",

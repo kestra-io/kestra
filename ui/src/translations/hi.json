@@ -1213,6 +1213,8 @@
       "name": "मंडल",
       "names": "मंडल"
     },
+    "test-badge-text": "परीक्षण",
+    "test-badge-tooltip": "यह execution एक Test द्वारा बनाया गया था",
     "theme": "थीम",
     "this_task_has": "यह task है",
     "timezone": "समय क्षेत्र",

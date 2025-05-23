@@ -1213,6 +1213,8 @@
       "name": "테넌트",
       "names": "테넌트"
     },
+    "test-badge-text": "테스트",
+    "test-badge-tooltip": "이 실행은 테스트에 의해 생성되었습니다.",
     "theme": "테마",
     "this_task_has": "이 task는",
     "timezone": "시간대",

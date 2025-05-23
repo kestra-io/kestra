@@ -79,6 +79,8 @@
             return false
         },
         onEditTask(...args){
+            // if the tab is already open, focus it
+            // and don't open a new one)
             const [
                 ,
                 blockType,

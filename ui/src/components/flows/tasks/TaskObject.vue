@@ -7,41 +7,29 @@
                         <template #tasks>
                             <el-form-item :required="isRequired(key)">
                                 <template #label>
-                                    <span v-if="getKey(key)" class="label">
-                                        {{ getKey(key) }}
-                                    </span>
-                                    <el-tag
-                                        v-if="!isAnyOf(schema)"
-                                        disable-transitions
-                                        size="small"
-                                        class="ms-2 type-tag"
-                                    >
-                                        {{ getType(schema) }}
-                                    </el-tag>
-                                    <el-tooltip
-                                        v-if="!isAnyOf(schema) && hasTooltip(schema)"
-                                        :persistent="false"
-                                        :hide-after="0"
-                                        effect="light"
-                                    >
-                                        <template #content>
-                                            <markdown
-                                                class="markdown-tooltip"
-                                                :source="helpText(schema)"
-                                            />
-                                        </template>
-                                        <help class="ms-2" />
-                                    </el-tooltip>
+                                    <div class="inline-wrapper">
+                                        <span v-if="getKey(key)" class="label">
+                                            {{ getKey(key) }}
+                                        </span>
+                                        <el-tag
+                                            v-if="!isAnyOf(schema)"
+                                            disable-transitions
+                                            size="small"
+                                            class="type-tag"
+                                        >
+                                            {{ getType(schema) }}
+                                        </el-tag>
+                                        <TaskLabelWithBoolean
+                                            :type="getType(schema)"
+                                            :is-boolean="isBoolean(schema)"
+                                            :component-props="componentProps(key, schema)"
+                                        />
+                                    </div>
                                 </template>
                                 <component
                                     :is="`task-${getType(schema, key)}`"
-                                    :model-value="modelValue?.[key]"
-                                    :task="modelValue"
-                                    @update:model-value="onObjectInput(key, $event)"
-                                    :root="getKey(key)"
-                                    :schema="schema"
-                                    :required="isRequired(key)"
-                                    :definitions="definitions"
+                                    v-bind="componentProps(key, schema)"
+                                    v-if="!isBoolean(schema)"
                                     class="mt-1 mb-2 wrapper"
                                 />
                             </el-form-item>
@@ -52,41 +40,29 @@
                 <template v-else>
                     <el-form-item :required="isRequired(key)">
                         <template #label>
-                            <span v-if="getKey(key)" class="label">
-                                {{ getKey(key) }}
-                            </span>
-                            <el-tag
-                                v-if="!isAnyOf(schema)"
-                                disable-transitions
-                                size="small"
-                                class="ms-2 type-tag"
-                            >
-                                {{ getType(schema) }}
-                            </el-tag>
-                            <el-tooltip
-                                v-if="!isAnyOf(schema) && hasTooltip(schema)"
-                                :persistent="false"
-                                :hide-after="0"
-                                effect="light"
-                            >
-                                <template #content>
-                                    <markdown
-                                        class="markdown-tooltip"
-                                        :source="helpText(schema)"
-                                    />
-                                </template>
-                                <help class="ms-2" />
-                            </el-tooltip>
+                            <div class="inline-wrapper">
+                                <span v-if="getKey(key)" class="label">
+                                    {{ getKey(key) }}
+                                </span>
+                                <el-tag
+                                    v-if="!isAnyOf(schema)"
+                                    disable-transitions
+                                    size="small"
+                                    class="type-tag"
+                                >
+                                    {{ getType(schema) }}
+                                </el-tag>
+                                <TaskLabelWithBoolean
+                                    :type="getType(schema)"
+                                    :is-boolean="isBoolean(schema)"
+                                    :component-props="componentProps(key, schema)"
+                                />
+                            </div>
                         </template>
                         <component
                             :is="`task-${getType(schema, key)}`"
-                            :model-value="modelValue?.[key]"
-                            :task="modelValue"
-                            @update:model-value="onObjectInput(key, $event)"
-                            :root="getKey(key)"
-                            :schema="schema"
-                            :required="isRequired(key)"
-                            :definitions="definitions"
+                            v-bind="componentProps(key, schema)"
+                            v-if="!isBoolean(schema)"
                             class="mt-1 mb-2 wrapper"
                         />
                     </el-form-item>
@@ -101,41 +77,29 @@
                                 <template #tasks>
                                     <el-form-item :required="isRequired(key)">
                                         <template #label>
-                                            <span v-if="getKey(key)" class="label">
-                                                {{ getKey(key) }}
-                                            </span>
-                                            <el-tag
-                                                v-if="!isAnyOf(schema)"
-                                                disable-transitions
-                                                size="small"
-                                                class="ms-2 type-tag"
-                                            >
-                                                {{ getType(schema) }}
-                                            </el-tag>
-                                            <el-tooltip
-                                                v-if="!isAnyOf(schema) && hasTooltip(schema)"
-                                                :persistent="false"
-                                                :hide-after="0"
-                                                effect="light"
-                                            >
-                                                <template #content>
-                                                    <markdown
-                                                        class="markdown-tooltip"
-                                                        :source="helpText(schema)"
-                                                    />
-                                                </template>
-                                                <help class="ms-2" />
-                                            </el-tooltip>
+                                            <div class="inline-wrapper">
+                                                <span v-if="getKey(key)" class="label">
+                                                    {{ getKey(key) }}
+                                                </span>
+                                                <el-tag
+                                                    v-if="!isAnyOf(schema)"
+                                                    disable-transitions
+                                                    size="small"
+                                                    class="type-tag"
+                                                >
+                                                    {{ getType(schema) }}
+                                                </el-tag>
+                                                <TaskLabelWithBoolean
+                                                    :type="getType(schema)"
+                                                    :is-boolean="isBoolean(schema)"
+                                                    :component-props="componentProps(key, schema)"
+                                                />
+                                            </div>
                                         </template>
                                         <component
                                             :is="`task-${getType(schema, key)}`"
-                                            :model-value="modelValue?.[key]"
-                                            :task="modelValue"
-                                            @update:model-value="onObjectInput(key, $event)"
-                                            :root="getKey(key)"
-                                            :schema="schema"
-                                            :required="isRequired(key)"
-                                            :definitions="definitions"
+                                            v-bind="componentProps(key, schema)"
+                                            v-if="!isBoolean(schema)"
                                             class="mt-1 mb-2 wrapper"
                                         />
                                     </el-form-item>
@@ -146,41 +110,29 @@
                         <template v-else>
                             <el-form-item :required="isRequired(key)">
                                 <template #label>
-                                    <span v-if="getKey(key)" class="label">
-                                        {{ getKey(key) }}
-                                    </span>
-                                    <el-tag
-                                        v-if="!isAnyOf(schema)"
-                                        disable-transitions
-                                        size="small"
-                                        class="ms-2 type-tag"
-                                    >
-                                        {{ getType(schema) }}
-                                    </el-tag>
-                                    <el-tooltip
-                                        v-if="!isAnyOf(schema) && hasTooltip(schema)"
-                                        :persistent="false"
-                                        :hide-after="0"
-                                        effect="light"
-                                    >
-                                        <template #content>
-                                            <markdown
-                                                class="markdown-tooltip"
-                                                :source="helpText(schema)"
-                                            />
-                                        </template>
-                                        <help class="ms-2" />
-                                    </el-tooltip>
+                                    <div class="inline-wrapper">
+                                        <span v-if="getKey(key)" class="label">
+                                            {{ getKey(key) }}
+                                        </span>
+                                        <el-tag
+                                            v-if="!isAnyOf(schema)"
+                                            disable-transitions
+                                            size="small"
+                                            class="type-tag"
+                                        >
+                                            {{ getType(schema) }}
+                                        </el-tag>
+                                        <TaskLabelWithBoolean
+                                            :type="getType(schema)"
+                                            :is-boolean="isBoolean(schema)"
+                                            :component-props="componentProps(key, schema)"
+                                        />
+                                    </div>
                                 </template>
                                 <component
                                     :is="`task-${getType(schema, key)}`"
-                                    :model-value="modelValue?.[key]"
-                                    :task="modelValue"
-                                    @update:model-value="onObjectInput(key, $event)"
-                                    :root="getKey(key)"
-                                    :schema="schema"
-                                    :required="isRequired(key)"
-                                    :definitions="definitions"
+                                    v-bind="componentProps(key, schema)"
+                                    v-if="!isBoolean(schema)"
                                     class="mt-1 mb-2 wrapper"
                                 />
                             </el-form-item>
@@ -197,41 +149,29 @@
                                 <template #tasks>
                                     <el-form-item :required="isRequired(key)">
                                         <template #label>
-                                            <span v-if="getKey(key)" class="label">
-                                                {{ getKey(key) }}
-                                            </span>
-                                            <el-tag
-                                                v-if="!isAnyOf(schema)"
-                                                disable-transitions
-                                                size="small"
-                                                class="ms-2 type-tag"
-                                            >
-                                                {{ getType(schema) }}
-                                            </el-tag>
-                                            <el-tooltip
-                                                v-if="!isAnyOf(schema) && hasTooltip(schema)"
-                                                :persistent="false"
-                                                :hide-after="0"
-                                                effect="light"
-                                            >
-                                                <template #content>
-                                                    <markdown
-                                                        class="markdown-tooltip"
-                                                        :source="helpText(schema)"
-                                                    />
-                                                </template>
-                                                <help class="ms-2" />
-                                            </el-tooltip>
+                                            <div class="inline-wrapper">
+                                                <span v-if="getKey(key)" class="label">
+                                                    {{ getKey(key) }}
+                                                </span>
+                                                <el-tag
+                                                    v-if="!isAnyOf(schema)"
+                                                    disable-transitions
+                                                    size="small"
+                                                    class="type-tag"
+                                                >
+                                                    {{ getType(schema) }}
+                                                </el-tag>
+                                                <TaskLabelWithBoolean
+                                                    :type="getType(schema)"
+                                                    :is-boolean="isBoolean(schema)"
+                                                    :component-props="componentProps(key, schema)"
+                                                />
+                                            </div>
                                         </template>
                                         <component
                                             :is="`task-${getType(schema, key)}`"
-                                            :model-value="modelValue?.[key]"
-                                            :task="modelValue"
-                                            @update:model-value="onObjectInput(key, $event)"
-                                            :root="getKey(key)"
-                                            :schema="schema"
-                                            :required="isRequired(key)"
-                                            :definitions="definitions"
+                                            v-bind="componentProps(key, schema)"
+                                            v-if="!isBoolean(schema)"
                                             class="mt-1 mb-2 wrapper"
                                         />
                                     </el-form-item>
@@ -242,41 +182,29 @@
                         <template v-else>
                             <el-form-item :required="isRequired(key)">
                                 <template #label>
-                                    <span v-if="getKey(key)" class="label">
-                                        {{ getKey(key) }}
-                                    </span>
-                                    <el-tag
-                                        v-if="!isAnyOf(schema)"
-                                        disable-transitions
-                                        size="small"
-                                        class="ms-2 type-tag"
-                                    >
-                                        {{ getType(schema) }}
-                                    </el-tag>
-                                    <el-tooltip
-                                        v-if="!isAnyOf(schema) && hasTooltip(schema)"
-                                        :persistent="false"
-                                        :hide-after="0"
-                                        effect="light"
-                                    >
-                                        <template #content>
-                                            <markdown
-                                                class="markdown-tooltip"
-                                                :source="helpText(schema)"
-                                            />
-                                        </template>
-                                        <help class="ms-2" />
-                                    </el-tooltip>
+                                    <div class="inline-wrapper">
+                                        <span v-if="getKey(key)" class="label">
+                                            {{ getKey(key) }}
+                                        </span>
+                                        <el-tag
+                                            v-if="!isAnyOf(schema)"
+                                            disable-transitions
+                                            size="small"
+                                            class="type-tag"
+                                        >
+                                            {{ getType(schema) }}
+                                        </el-tag>
+                                        <TaskLabelWithBoolean
+                                            :type="getType(schema)"
+                                            :is-boolean="isBoolean(schema)"
+                                            :component-props="componentProps(key, schema)"
+                                        />
+                                    </div>
                                 </template>
                                 <component
                                     :is="`task-${getType(schema, key)}`"
-                                    :model-value="modelValue?.[key]"
-                                    :task="modelValue"
-                                    @update:model-value="onObjectInput(key, $event)"
-                                    :root="getKey(key)"
-                                    :schema="schema"
-                                    :required="isRequired(key)"
-                                    :definitions="definitions"
+                                    v-bind="componentProps(key, schema)"
+                                    v-if="!isBoolean(schema)"
                                     class="mt-1 mb-2 wrapper"
                                 />
                             </el-form-item>
@@ -311,6 +239,7 @@
     import Markdown from "../../layout/Markdown.vue";
     import TaskDict from "./TaskDict.vue";
     import TaskWrapper from "./TaskWrapper.vue";
+    import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
 
     function sortProperties(properties, required) {
         if (!properties) {
@@ -363,6 +292,7 @@
             Editor,
             Markdown,
             TaskWrapper,
+            TaskLabelWithBoolean,
         },
         props: {
             properties: {
@@ -394,6 +324,17 @@
             },
             deprecatedProperties() {
                 return this.sortedProperties.filter(([_,v]) => v && v.$deprecated);
+            },
+            componentProps() {
+                return (key, schema) => ({
+                    modelValue: this.modelValue?.[key],
+                    task: this.modelValue,
+                    "onUpdate:modelValue": (event) => this.onObjectInput(key, event),
+                    root: this.getKey(key),
+                    schema: schema,
+                    required: this.isRequired(key),
+                    definitions: this.definitions
+                })
             }
         },
         methods: {
@@ -421,7 +362,10 @@
             },
             isAnyOf(schema) {
                 return !!schema?.anyOf;
-            }
+            },
+            isBoolean(schema) {
+                return this.getType(schema) === "boolean";
+            },
         },
     };
 </script>
@@ -467,5 +411,12 @@
         align-items: center;
         justify-content: flex-start;
     }
+}
+
+.inline-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 0.5rem;
 }
 </style>

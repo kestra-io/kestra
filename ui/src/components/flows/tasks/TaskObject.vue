@@ -24,6 +24,21 @@
                                 >
                                     {{ getType(schema) }}
                                 </el-tag>
+                                <el-tooltip
+                                    v-if="!isAnyOf(schema) && hasTooltip(schema)"
+                                    :persistent="false"
+                                    :hide-after="0"
+                                    effect="light"
+                                    placement="left-start"
+                                >
+                                    <template #content>
+                                        <markdown
+                                            class="markdown-tooltip"
+                                            :source="helpText(schema)"
+                                        />
+                                    </template>
+                                    <help />
+                                </el-tooltip>
                             </div>
                         </template>
                         <component
@@ -62,6 +77,21 @@
                                         >
                                             {{ getType(schema) }}
                                         </el-tag>
+                                        <el-tooltip
+                                            v-if="!isAnyOf(schema) && hasTooltip(schema)"
+                                            :persistent="false"
+                                            :hide-after="0"
+                                            effect="light"
+                                            placement="left-start"
+                                        >
+                                            <template #content>
+                                                <markdown
+                                                    class="markdown-tooltip"
+                                                    :source="helpText(schema)"
+                                                />
+                                            </template>
+                                            <help />
+                                        </el-tooltip>
                                     </div>
                                 </template>
                                 <component
@@ -105,6 +135,21 @@
                                             >
                                                 {{ getType(schema) }}
                                             </el-tag>
+                                            <el-tooltip
+                                                v-if="!isAnyOf(schema) && hasTooltip(schema)"
+                                                :persistent="false"
+                                                :hide-after="0"
+                                                effect="light"
+                                                placement="left-start"
+                                            >
+                                                <template #content>
+                                                    <markdown
+                                                        class="markdown-tooltip"
+                                                        :source="helpText(schema)"
+                                                    />
+                                                </template>
+                                                <help />
+                                            </el-tooltip>
                                         </div>
                                     </template>
                                     <component
@@ -149,6 +194,21 @@
                                             >
                                                 {{ getType(schema) }}
                                             </el-tag>
+                                            <el-tooltip
+                                                v-if="!isAnyOf(schema) && hasTooltip(schema)"
+                                                :persistent="false"
+                                                :hide-after="0"
+                                                effect="light"
+                                                placement="left-start"
+                                            >
+                                                <template #content>
+                                                    <markdown
+                                                        class="markdown-tooltip"
+                                                        :source="helpText(schema)"
+                                                    />
+                                                </template>
+                                                <help />
+                                            </el-tooltip>
                                         </div>
                                     </template>
                                     <component
@@ -187,7 +247,7 @@
 <script>
     import Task from "./Task";
     import Information from "vue-material-design-icons/InformationOutline.vue";
-    import Help from "vue-material-design-icons/HelpBox.vue";
+    import Help from "vue-material-design-icons/Information.vue";
     import Kicon from "../../Kicon.vue";
     import Editor from "../../inputs/Editor.vue";
     import Markdown from "../../layout/Markdown.vue";
@@ -404,7 +464,6 @@
             border-radius: 8px;
             padding: 1rem;
             transition: padding 0.3s ease-out;
-
         }
         
         .el-collapse-item__wrap {

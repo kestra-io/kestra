@@ -21,8 +21,9 @@ interface Handlers {
     onCloseTask: (opener: Opener) => boolean
 }
 
-export function getEditTabKey(tab: NoCodeProps) {
-    return `${NOCODE_PREFIX}-${JSON.stringify({
+export function getEditTabKey(tab: NoCodeProps, index: number) {
+    const indexWithLeftPadding = String(index).padStart(4, "0")
+    return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify({
                     action: "edit",
                     blockType: tab.blockType,
                     parentPath: tab.parentPath,
@@ -30,8 +31,9 @@ export function getEditTabKey(tab: NoCodeProps) {
                 })}`
 }
 
-export function getCreateTabKey(tab: NoCodeProps) {
-    return `${NOCODE_PREFIX}-${JSON.stringify({
+export function getCreateTabKey(tab: NoCodeProps, index: number) {
+    const indexWithLeftPadding = String(index).padStart(4, "0")
+    return `${NOCODE_PREFIX}-${indexWithLeftPadding}-${JSON.stringify({
                     action: "create",
                     ...tab,
                 })}`
@@ -40,6 +42,8 @@ export function getCreateTabKey(tab: NoCodeProps) {
 interface NoCodeTabWithAction extends NoCodeProps {
     action: "edit" | "create"
 }
+
+let keepAliveCacheBuster = 0
 
 export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) => string, handlers: Handlers, flow: string, dirty: boolean = false): Tab {
     function getTabValues(tab: NoCodeTabWithAction) {
@@ -53,7 +57,7 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
         const parentName = parentBlock ? parentBlock.id ?? parentBlock.type ?? tab.parentPath : tab.parentPath
         if (tab.action === "create") {
             return {
-                value: getCreateTabKey(tab),
+                value: getCreateTabKey(tab, keepAliveCacheBuster++),
                 button: {
                     label: `${parentName} / ${t(`no_code.creation.${tab.blockType}`)}`,
                     icon: markRaw(MouseRightClickIcon),
@@ -65,7 +69,7 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
                 path: `${tab.parentPath}[${tab.refPath}]`,
             })) : {}
             return {
-                value: getEditTabKey(tab),
+                value: getEditTabKey(tab, keepAliveCacheBuster++),
                 button: {
                     label: `${parentName} / ${currentBlock?.id ?? tab.refPath}`,
                     icon: markRaw(MouseRightClickIcon),
@@ -117,7 +121,7 @@ export function setupInitialNoCodeTabIfExists(flow: string, tab: string, t: (key
 function parseTabId(tabId: string) {
     try {
         if (tabId.startsWith(`${NOCODE_PREFIX}-`)){
-           return JSON.parse(tabId.substring(7)) as NoCodeTabWithAction
+           return JSON.parse(tabId.substring(12)) as NoCodeTabWithAction
         } else {
             return {} as NoCodeTabWithAction
         }

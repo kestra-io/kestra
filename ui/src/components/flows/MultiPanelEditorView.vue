@@ -80,12 +80,14 @@
                 parentPath,
                 refPath,
                 position,
-            })
+            }, 0).slice(12)
+
+            const tAdd = openTabs.value.find(t => t.endsWith(createTabId))
 
             // if the tab is already open and has no data, to avoid conflicting data
             // focus it and don't open a new one
-            if(openTabs.value.includes(createTabId)){
-                focusTab(createTabId)
+            if(tAdd && tAdd.startsWith("nocode-")){
+                focusTab(tAdd)
                 return false
             }
 
@@ -105,9 +107,11 @@
                 blockType,
                 parentPath,
                 refPath
-            })
-            if(openTabs.value.includes(editKey)){
-                focusTab(editKey)
+            }, 0).slice(12)
+
+            const tEdit = openTabs.value.find(t => t.endsWith(editKey))
+            if(tEdit && tEdit.startsWith("nocode-")){
+                focusTab(tEdit)
                 return false
             }
             openEditTaskTab(...args, isFlowDirty.value)

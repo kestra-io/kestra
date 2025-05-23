@@ -43,6 +43,7 @@
                                     :required="isRequired(key)"
                                     :definitions="definitions"
                                     class="mt-1 mb-2 wrapper"
+                                    v-bind="getType(schema, key) === 'complex' ? {metadataInputs} : {}"
                                 />
                             </el-form-item>
                         </template>
@@ -88,6 +89,7 @@
                             :required="isRequired(key)"
                             :definitions="definitions"
                             class="mt-1 mb-2 wrapper"
+                            v-bind="getType(schema, key) === 'complex' ? {metadataInputs} : {}"
                         />
                     </el-form-item>
                 </template>
@@ -137,6 +139,7 @@
                                             :required="isRequired(key)"
                                             :definitions="definitions"
                                             class="mt-1 mb-2 wrapper"
+                                            v-bind="getType(schema, key) === 'complex' ? {metadataInputs} : {}"
                                         />
                                     </el-form-item>
                                 </template>
@@ -182,6 +185,7 @@
                                     :required="isRequired(key)"
                                     :definitions="definitions"
                                     class="mt-1 mb-2 wrapper"
+                                    v-bind="getType(schema, key) === 'complex' ? {metadataInputs} : {}"
                                 />
                             </el-form-item>
                         </template>
@@ -233,6 +237,7 @@
                                             :required="isRequired(key)"
                                             :definitions="definitions"
                                             class="mt-1 mb-2 wrapper"
+                                            v-bind="getType(schema, key) === 'complex' ? {metadataInputs} : {}"
                                         />
                                     </el-form-item>
                                 </template>
@@ -278,6 +283,7 @@
                                     :required="isRequired(key)"
                                     :definitions="definitions"
                                     class="mt-1 mb-2 wrapper"
+                                    v-bind="getType(schema, key) === 'complex' ? {metadataInputs} : {}"
                                 />
                             </el-form-item>
                         </template>
@@ -369,7 +375,8 @@
                 type: Object,
                 default: () => ({}),
             },
-            expandOptional: {type: Boolean, default: false}
+            expandOptional: {type: Boolean, default: false},
+            metadataInputs: {type: Boolean, default: false}
         },
         emits: ["update:modelValue"],
         data() {

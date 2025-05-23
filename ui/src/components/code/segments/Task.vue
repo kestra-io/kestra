@@ -17,8 +17,9 @@
         <ValidationError v-if="false" :errors link />
 
         <Save
+            v-if="!lastBreadcrumb.component"
             :disabled="(errors?.length ?? 0) > 0"
-            @click="exitTaskElement"
+            @click="exitTask"
             :what="section"
             class="w-100 mt-3"
         />
@@ -78,6 +79,16 @@
         position?: "before" | "after",
         blockType?: BlockType
     }
+
+    const exitTask = () => {
+        /*
+            Removing the created task from the store, so it would not overlap with other creation tabs.
+            See https://github.com/kestra-io/kestra/issues/8781 for more details.
+        */
+        store.commit("flow/removeCreatedTask", {index: taskCreationIndex.value - 1});
+
+        exitTaskElement();
+    };
 
     const yaml = taskCreationIndex.value ? computed({
         get() {

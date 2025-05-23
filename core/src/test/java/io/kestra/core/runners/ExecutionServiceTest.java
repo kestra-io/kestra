@@ -8,8 +8,8 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.FlowWithSource;
-import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.GenericFlow;
+import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.FlowRepositoryInterface;
@@ -32,8 +32,8 @@ import java.util.concurrent.TimeoutException;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.not;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Slf4j
@@ -427,5 +427,18 @@ class ExecutionServiceTest {
         Flow flow = flowRepository.findByExecution(execution);
         Execution markedAs = executionService.markAs(execution, flow, execution.getTaskRunList().getFirst().getId(), State.Type.SUCCESS);
         assertThat(markedAs.getState().getCurrent()).isEqualTo(State.Type.RESTARTED);
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/pause_no_tasks.yaml"})
+    void killToState() throws Exception {
+        Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause_no_tasks");
+        Flow flow = flowRepository.findByExecution(execution);
+
+        Execution killed = executionService.kill(execution, flow, Optional.of(State.Type.CANCELLED));
+
+        assertThat(killed.getState().getCurrent()).isEqualTo(State.Type.CANCELLED);
+        assertThat(killed.findTaskRunsByTaskId("pause").getFirst().getState().getCurrent()).isEqualTo(State.Type.KILLED);
+        assertThat(killed.getState().getHistories()).hasSize(5);
     }
 }

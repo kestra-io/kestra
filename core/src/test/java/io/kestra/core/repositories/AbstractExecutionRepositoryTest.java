@@ -191,7 +191,7 @@ public abstract class AbstractExecutionRepositoryTest {
                 .build()
         );
         executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
-        assertThat(executions.getTotal()).isEqualTo(1L);
+        assertThat(executions.getTotal()).isEqualTo(0L);
 
         filters = List.of(QueryFilter.builder()
             .field(QueryFilter.Field.FLOW_ID)
@@ -815,5 +815,27 @@ public abstract class AbstractExecutionRepositoryTest {
 
         List<Execution> executions = executionRepository.findAllAsync(MAIN_TENANT).collectList().block();
         assertThat(executions).hasSize(29); // used by the backup so it contains TEST executions
+    }
+
+    @Test
+    protected void shouldFindByLabel() {
+        inject();
+
+        List<QueryFilter> filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(Map.of("key", "value"))
+            .build());
+        List<Execution> executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        assertThat(executions.size()).isEqualTo(1L);
+
+        // Filtering by two pairs of labels, since now its a and behavior, it should not return anything
+        filters = List.of(QueryFilter.builder()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(Map.of("key", "value", "keyother", "valueother"))
+            .build());
+        executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
+        assertThat(executions.size()).isEqualTo(0L);
     }
 }

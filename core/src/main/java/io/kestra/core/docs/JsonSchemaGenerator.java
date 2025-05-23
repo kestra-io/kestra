@@ -56,6 +56,7 @@ import static io.kestra.core.serializers.JacksonMapper.MAP_TYPE_REFERENCE;
 @Singleton
 public class JsonSchemaGenerator {
     private static final List<Class<?>> TYPES_RESOLVED_AS_STRING = List.of(Duration.class, LocalTime.class, LocalDate.class, LocalDateTime.class, ZonedDateTime.class, OffsetDateTime.class, OffsetTime.class);
+    private static final List<Class<?>> SUBTYPE_RESOLUTION_EXCLUSION_FOR_PLUGIN_SCHEMA = List.of(Task.class, AbstractTrigger.class);
 
     private static final ObjectMapper MAPPER = JacksonMapper.ofJson().copy()
         .configure(SerializationFeature.WRITE_DURATIONS_AS_TIMESTAMPS, false);
@@ -239,15 +240,12 @@ public class JsonSchemaGenerator {
             .with(Option.DEFINITIONS_FOR_ALL_OBJECTS)
             .with(Option.DEFINITION_FOR_MAIN_SCHEMA)
             .with(Option.PLAIN_DEFINITION_KEYS)
-            .with(Option.ALLOF_CLEANUP_AT_THE_END);
+            .with(Option.ALLOF_CLEANUP_AT_THE_END);;
 
         if (!draft7) {
-            builder
-                .with(new JacksonModule(JacksonOption.IGNORE_TYPE_INFO_TRANSFORM))
-                .with(Option.MAP_VALUES_AS_ADDITIONAL_PROPERTIES);
+            builder.with(new JacksonModule(JacksonOption.IGNORE_TYPE_INFO_TRANSFORM));
         } else {
-            builder
-                .with(new JacksonModule());
+            builder.with(new JacksonModule());
         }
 
         // default value
@@ -438,8 +436,8 @@ public class JsonSchemaGenerator {
             return Object.class;
         });
 
-        // Subtype resolver for all plugins
         if (builder.build().getSchemaVersion() != SchemaVersion.DRAFT_2019_09) {
+            // Subtype resolver for all plugins
             builder.forTypesInGeneral()
                 .withSubtypeResolver((declaredType, context) -> {
                     TypeContext typeContext = context.getTypeContext();
@@ -512,23 +510,34 @@ public class JsonSchemaGenerator {
                     collectedTypeAttributes.remove("$examples");
                 }
             });
-
-            // Ensure that `type` is defined as a constant in JSON Schema.
-            // The `const` property is used by editors for auto-completion based on that schema.
-            builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
-                final Class<?> pluginType = scope.getType().getErasedType();
-                if (pluginType.getAnnotation(Plugin.class) != null) {
-                    ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
-                    if (properties != null) {
-                        properties.set("type", context.getGeneratorConfig().createObjectNode()
-                            .put("const", pluginType.getName())
-                        );
-                    }
-                }
-            });
         } else {
-            typeDefiningPropertiesToConst(builder);
+            builder.forTypesInGeneral()
+                .withSubtypeResolver((declaredType, context) -> {
+                    TypeContext typeContext = context.getTypeContext();
+
+                    if (SUBTYPE_RESOLUTION_EXCLUSION_FOR_PLUGIN_SCHEMA.contains(declaredType.getErasedType())) {
+                        return null;
+                    }
+
+                    return this.subtypeResolver(declaredType, typeContext);
+                });
         }
+
+        // Ensure that `type` is defined as a constant in JSON Schema.
+        // The `const` property is used by editors for auto-completion based on that schema.
+        builder.forTypesInGeneral().withTypeAttributeOverride((collectedTypeAttributes, scope, context) -> {
+            final Class<?> pluginType = scope.getType().getErasedType();
+            if (pluginType.getAnnotation(Plugin.class) != null) {
+                ObjectNode properties = (ObjectNode) collectedTypeAttributes.get("properties");
+                if (properties != null) {
+                    properties.set("type", context.getGeneratorConfig().createObjectNode()
+                        .put("const", pluginType.getName())
+                    );
+                }
+            }
+        });
+
+        typeDefiningPropertiesToConst(builder);
     }
 
     /**

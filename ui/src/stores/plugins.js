@@ -126,10 +126,14 @@ export default {
                 options.event.position,
                 getters["getPluginSingleList"]
             );
-            const taskVersion = YamlUtils.getVersionAtPosition(
-                options.event.model.getValue(),
-                options.event.position
-            );
+
+            const taskVersion = options.event
+                ? YamlUtils.getVersionAtPosition(
+                      options?.event?.model?.getValue(),
+                      options?.event?.position,
+                  )
+                : undefined;
+
             if (taskType) {
                 let payload = {cls: taskType};
                 if (taskVersion !== undefined) {

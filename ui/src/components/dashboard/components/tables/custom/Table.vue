@@ -12,19 +12,22 @@
                 :key
             >
                 <template #default="scope">
-                    <RouterLink
-                        v-if="key === 'id'"
-                        :to="{
-                            name: 'executions/update',
-                            params: {
-                                namespace: scope.row.namespace,
-                                flowId: scope.row.flowId ?? (route.name === 'flows/update' ? route.params.id : null),
-                                id: scope.row.id,
-                            },
-                        }"
-                    >
-                        <code>{{ scope.row.id.slice(0, 8) }}</code>
-                    </RouterLink>
+                    <template v-if="key === 'id'">
+                        <RouterLink
+                            v-if="scope.row.namespace && scope.row.flowId"
+                            :to="{
+                                name: 'executions/update',
+                                params: {
+                                    namespace: scope.row.namespace,
+                                    flowId: scope.row.flowId,
+                                    id: scope.row.id,
+                                },
+                            }"
+                        >
+                            <code>{{ scope.row.id.slice(0, 8) }}</code>
+                        </RouterLink>
+                        <code v-else>{{ scope.row.id }}</code>
+                    </template>
                     <Status v-else-if="key === 'state'" size="small" :status="scope.row[key]" />
                     <span v-else-if="key === 'duration'">{{ Utils.humanDuration(scope.row[key]) }}</span>
                     <span v-else>{{ scope.row[key] }}</span>

@@ -814,15 +814,16 @@
       "adding_default": "+ Adicionar um novo value",
       "close": {
         "after execution": "Fechar task",
+        "conditions": "Condição de fechamento",
         "error handlers": "Fechar manipulador de erro",
         "finally": "Fechar task",
         "input": "Fechar input",
-        "pluginDefaults": "Fechar plugin padrão",
         "tasks": "Fechar task",
         "triggers": "Fechar trigger"
       },
       "creation": {
         "after execution": "Adicionar um bloco após a execução",
+        "conditions": "Adicionar uma condição",
         "error handlers": "Adicionar um manipulador de erro",
         "finally": "Adicionar um bloco finally",
         "pluginDefaults": "Adicionar um padrão de plugin",
@@ -874,6 +875,7 @@
       },
       "select": {
         "after execution": "Selecione uma task",
+        "conditions": "Selecione uma condição",
         "error handlers": "Selecione uma task",
         "finally": "Selecione uma task",
         "pluginDefaults": "Selecione um plugin",
@@ -975,7 +977,7 @@
     "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
-    "plugin defaults": "Padrões do Plugin",
+    "pluginDefaults": "Padrões do plugin",
     "pluginPage": {
       "search": "Pesquisar em mais de {count} plugins",
       "title1": "Plugins são blocos de construção para seus workflows.",

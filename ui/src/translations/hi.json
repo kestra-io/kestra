@@ -814,15 +814,16 @@
       "adding_default": "+ एक नया value जोड़ें",
       "close": {
         "after execution": "टास्क बंद करें",
+        "conditions": "बंद करने की शर्त",
         "error handlers": "त्रुटि हैंडलर बंद करें",
         "finally": "टास्क बंद करें",
         "input": "इनपुट बंद करें",
-        "pluginDefaults": "प्लगइन डिफ़ॉल्ट बंद करें",
         "tasks": "टास्क बंद करें",
         "triggers": "ट्रिगर बंद करें"
       },
       "creation": {
         "after execution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
+        "conditions": "एक शर्त जोड़ें",
         "error handlers": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
         "pluginDefaults": "प्लगइन डिफ़ॉल्ट जोड़ें",
@@ -874,9 +875,10 @@
       },
       "select": {
         "after execution": "एक task चुनें",
+        "conditions": "कंडीशन चुनें",
         "error handlers": "एक task चुनें",
         "finally": "एक task चुनें",
-        "plugin defaults": "एक प्लगइन चुनें",
+        "pluginDefaults": "एक प्लगइन चुनें",
         "tasks": "कार्य चुनें",
         "triggers": "ट्रिगर चुनें"
       },
@@ -975,7 +977,7 @@
     "pause confirm": "क्या आप वाकई <code>{id}</code> की execution को PAUSE करना चाहते हैं?",
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
-    "plugin defaults": "Plugin का पूर्व-निर्धारित मूल्य",
+    "pluginDefaults": "प्लगइन डिफॉल्ट्स",
     "pluginPage": {
       "search": "{count}+ प्लगइन्स में खोजें",
       "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",

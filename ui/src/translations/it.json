@@ -814,15 +814,16 @@
       "adding_default": "+ Aggiungi un nuovo value",
       "close": {
         "after execution": "Chiudi task",
+        "conditions": "Condizione di chiusura",
         "error handlers": "Chiudi gestore errori",
         "finally": "Chiudi task",
         "input": "Chiudi input",
-        "pluginDefaults": "Chiudi plugin predefinito",
         "tasks": "Chiudi task",
         "triggers": "Chiudi trigger"
       },
       "creation": {
         "after execution": "Aggiungi un blocco after execution",
+        "conditions": "Aggiungi una condizione",
         "error handlers": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
         "pluginDefaults": "Aggiungi un plugin predefinito",
@@ -874,9 +875,10 @@
       },
       "select": {
         "after execution": "Seleziona un task",
+        "conditions": "Seleziona una condizione",
         "error handlers": "Seleziona un task",
         "finally": "Seleziona un task",
-        "plugin defaults": "Seleziona un plugin",
+        "pluginDefaults": "Seleziona un plugin",
         "tasks": "Seleziona un task",
         "triggers": "Seleziona un trigger"
       },

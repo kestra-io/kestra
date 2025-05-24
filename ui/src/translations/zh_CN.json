@@ -814,15 +814,16 @@
       "adding_default": "+ 添加新value",
       "close": {
         "after execution": "关闭task",
+        "conditions": "关闭条件",
         "error handlers": "关闭错误处理程序",
         "finally": "关闭 task",
         "input": "关闭输入",
-        "pluginDefaults": "关闭插件默认",
         "tasks": "关闭task",
         "triggers": "关闭 trigger"
       },
       "creation": {
         "after execution": "添加执行后块",
+        "conditions": "添加条件",
         "error handlers": "添加错误处理程序",
         "finally": "添加一个finally块",
         "pluginDefaults": "添加插件默认值",
@@ -874,6 +875,7 @@
       },
       "select": {
         "after execution": "选择一个task",
+        "conditions": "选择条件",
         "error handlers": "选择一个task",
         "finally": "选择一个task",
         "pluginDefaults": "选择插件",
@@ -975,7 +977,7 @@
     "pause confirm": "您确定要暂停执行<code>{id}</code>吗？",
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
-    "plugin defaults": "插件默认值",
+    "pluginDefaults": "插件默认值",
     "pluginPage": {
       "search": "在{count}+个插件中搜索",
       "title1": "插件是你的工作流构建块。",

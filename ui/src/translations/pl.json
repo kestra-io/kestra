@@ -814,15 +814,16 @@
       "adding_default": "+ Dodaj nową wartość",
       "close": {
         "after execution": "Zamknij task",
+        "conditions": "Zamknij warunek",
         "error handlers": "Zamknij obsługę błędów",
         "finally": "Zamknij task",
         "input": "Zamknij input",
-        "pluginDefaults": "Zamknij domyślny plugin",
         "tasks": "Zamknij task",
         "triggers": "Zamknij trigger"
       },
       "creation": {
         "after execution": "Dodaj blok po wykonaniu",
+        "conditions": "Dodaj warunek",
         "error handlers": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
         "pluginDefaults": "Dodaj domyślny plugin",
@@ -874,6 +875,7 @@
       },
       "select": {
         "after execution": "Wybierz task",
+        "conditions": "Wybierz warunek",
         "error handlers": "Wybierz task",
         "finally": "Wybierz task",
         "pluginDefaults": "Wybierz plugin",
@@ -975,7 +977,7 @@
     "pause confirm": "Czy na pewno chcesz wstrzymać wykonanie <code>{id}</code>?",
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
-    "plugin defaults": "Domyślne ustawienia pluginu",
+    "pluginDefaults": "Domyślne ustawienia pluginu",
     "pluginPage": {
       "search": "Wyszukaj wśród {count}+ wtyczek",
       "title1": "Pluginy są elementami budulcowymi dla twoich flowów.",

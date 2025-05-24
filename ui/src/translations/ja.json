@@ -814,15 +814,16 @@
       "adding_default": "+ 新しいvalueを追加",
       "close": {
         "after execution": "タスクを閉じる",
+        "conditions": "クローズ条件",
         "error handlers": "エラーハンドラーを閉じる",
         "finally": "タスクを閉じる",
         "input": "入力を閉じる",
-        "pluginDefaults": "プラグインのデフォルトを閉じる",
         "tasks": "タスクを閉じる",
         "triggers": "トリガーを閉じる"
       },
       "creation": {
         "after execution": "実行後ブロックを追加",
+        "conditions": "条件を追加",
         "error handlers": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
         "pluginDefaults": "プラグインのデフォルトを追加",
@@ -874,6 +875,7 @@
       },
       "select": {
         "after execution": "タスクを選択",
+        "conditions": "条件を選択",
         "error handlers": "タスクを選択",
         "finally": "タスクを選択",
         "pluginDefaults": "プラグインを選択",
@@ -975,7 +977,7 @@
     "pause confirm": "実行 <code>{id}</code> を一時停止してもよろしいですか？",
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
-    "plugin defaults": "プラグインのデフォルト設定",
+    "pluginDefaults": "プラグインのデフォルト",
     "pluginPage": {
       "search": "{count}+ プラグインを検索",
       "title1": "プラグインはワークフローの構成要素です。",

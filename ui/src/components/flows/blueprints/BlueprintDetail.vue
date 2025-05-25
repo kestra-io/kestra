@@ -17,6 +17,9 @@
                     <ArrowLeft />
                 </el-icon>
             </button>
+            {{ $t('Blueprints') }}
+        </div>
+        <div>
             <h2 class="blueprint-title align-self-center">
                 {{ blueprint.title }}
             </h2>
@@ -219,7 +222,8 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .header-wrapper {
-        margin-bottom: calc($spacer * 2);
+        margin-top: calc($spacer * 2);    // 32px (assuming $spacer = 1rem = 16px)
+        margin-bottom: $spacer;
 
         .el-card & {
             margin-top: 2.5rem;
@@ -246,7 +250,9 @@
             }
 
             .blueprint-title {
-                font-weight: bold;
+                font-weight: 600;
+                font-size: 20px;
+                line-height: 30px;
                 text-overflow: ellipsis;
                 overflow: hidden;
             }
@@ -265,7 +271,7 @@
         h4 {
             margin-top: calc($spacer * 2);
             margin-bottom: 0;
-            font-weight: bold;
+            font-weight: normal;
         }
 
         .embedded-topology {

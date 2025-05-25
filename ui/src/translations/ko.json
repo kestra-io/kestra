@@ -507,7 +507,6 @@
     "export": "내보내기",
     "export all flows": "모든 flow 내보내기",
     "export all templates": "모든 템플릿 내보내기",
-    "export_to_file": "파일로 내보내기",
     "exports": "내보내기 목록",
     "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",
     "false": "False",

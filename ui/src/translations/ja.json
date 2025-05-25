@@ -507,7 +507,6 @@
     "export": "エクスポート",
     "export all flows": "すべてのflowをエクスポート",
     "export all templates": "すべてのテンプレートをエクスポート",
-    "export_to_file": "ファイルにエクスポート",
     "exports": "エクスポート",
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",
     "false": "False",

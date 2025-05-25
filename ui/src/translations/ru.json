@@ -814,18 +814,19 @@
       "adding_default": "+ Добавить новое value",
       "close": {
         "after execution": "Закрыть task",
+        "conditions": "Закрыть условие",
         "error handlers": "Закрыть обработчик ошибок",
         "finally": "Закрыть task",
         "input": "Закрыть input",
-        "plugin defaults": "Закрыть плагин по умолчанию",
         "tasks": "Закрыть task",
         "triggers": "Закрыть trigger"
       },
       "creation": {
         "after execution": "Добавить блок после выполнения",
+        "conditions": "Добавить условие",
         "error handlers": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
-        "plugin defaults": "Добавить плагин по умолчанию",
+        "pluginDefaults": "Добавить плагин по умолчанию",
         "tasks": "Добавить task",
         "triggers": "Добавить trigger"
       },
@@ -874,9 +875,10 @@
       },
       "select": {
         "after execution": "Выберите task",
+        "conditions": "Выберите условие",
         "error handlers": "Выберите task",
         "finally": "Выберите task",
-        "plugin defaults": "Выберите плагин",
+        "pluginDefaults": "Выберите плагин",
         "tasks": "Выберите task",
         "triggers": "Выберите trigger"
       },
@@ -975,7 +977,7 @@
     "pause confirm": "Вы уверены, что хотите приостановить выполнение <code>{id}</code>?",
     "pause done": "Выполнение приостановлено",
     "pause title": "Приостановить выполнение <code>{id}</code>.<br/>Обратите внимание, что текущие RUNNING задачи все равно будут обрабатываться, и выполнение придется возобновить вручную.",
-    "plugin defaults": "Параметры по умолчанию для плагина",
+    "pluginDefaults": "Настройки плагина по умолчанию",
     "pluginPage": {
       "search": "Поиск среди {count}+ плагинов",
       "title1": "Плагины — это строительные блоки для ваших рабочих процессов.",

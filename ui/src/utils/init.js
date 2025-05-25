@@ -41,26 +41,14 @@ import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"
 
-import TaskArray from "../components/flows/tasks/TaskArray.vue";
-import TaskTasks from "../components/flows/tasks/TaskTasks.vue";
-import TaskBoolean from "../components/flows/tasks/TaskBoolean.vue";
-import TaskComplex from "../components/flows/tasks/TaskComplex.vue";
-import TaskCondition from "../components/flows/tasks/TaskCondition.vue";
-import TaskDict from "../components/flows/tasks/TaskDict.vue";
-import TaskExpression from "../components/flows/tasks/TaskExpression.vue";
-import TaskEnum from "../components/flows/tasks/TaskEnum.vue";
-import TaskNumber from "../components/flows/tasks/TaskNumber.vue";
-import TaskObject from "../components/flows/tasks/TaskObject.vue";
-import TaskString from "../components/flows/tasks/TaskString.vue";
-import TaskTask from "../components/flows/tasks/TaskTask.vue";
-import TaskAnyOf from "../components/flows/tasks/TaskAnyOf.vue";
-import TaskSubflowNamespace from "../components/flows/tasks/TaskSubflowNamespace.vue";
-import TaskSubflowId from "../components/flows/tasks/TaskSubflowId.vue";
-import TaskSubflowInputs from "../components/flows/tasks/TaskSubflowInputs.vue";
+const TasksComponentsRaw = import.meta.glob("../components/flows/tasks/Task*.vue", {eager: true});
+
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
-import TaskTaskRunner from "../components/flows/tasks/TaskTaskRunner.vue";
+
+const TasksComponents = Object.entries(TasksComponentsRaw)
+    .map(([path, component]) => [path.replace(/^.*\/(.*)\.vue$/, "$1"), component.default]);
 
 export default async (app, routes, stores, translations, additionalTranslations = {}) => {
     // charts
@@ -177,24 +165,10 @@ export default async (app, routes, stores, translations, additionalTranslations 
     createEventsRouter(app, store, router);
 
     // Task have some recursion and need to be register globally
-    app.component("TaskArray", TaskArray)
-    app.component("TaskTasks", TaskTasks)
-    app.component("TaskBoolean", TaskBoolean)
-    app.component("TaskCondition", TaskCondition)
-    app.component("TaskDict", TaskDict)
-    app.component("TaskExpression", TaskExpression)
-    app.component("TaskEnum", TaskEnum)
-    app.component("TaskNumber", TaskNumber)
-    app.component("TaskObject", TaskObject)
-    app.component("TaskComplex", TaskComplex)
-    app.component("TaskString", TaskString)
-    app.component("TaskTask", TaskTask)
-    app.component("TaskAnyOf", TaskAnyOf)
-    app.component("TaskSubflowNamespace", TaskSubflowNamespace)
-    app.component("TaskSubflowId", TaskSubflowId)
-    app.component("TaskSubflowInputs", TaskSubflowInputs)
-    app.component("TaskTaskRunner", TaskTaskRunner)
-    app.component("LeftMenuLink", LeftMenuLink)
+    for(const [name, comp] of TasksComponents){
+        app.component(name, comp)
+    }
+    app.component("LeftMenuLink", LeftMenuLink);
     app.component("RouterMd", RouterMd);
     const components = {
         ...(import.meta.glob("../../node_modules/@nuxtjs/mdc/dist/runtime/components/prose/*.vue", {eager: true})),

@@ -814,18 +814,19 @@
       "adding_default": "+ Ajouter une nouvelle valeur",
       "close": {
         "after execution": "Fermer la task",
+        "conditions": "Condition de fermeture",
         "error handlers": "Fermer le gestionnaire d'erreurs",
         "finally": "Fermer la task",
         "input": "Fermer l'input",
-        "plugin defaults": "Fermer le plugin par défaut",
         "tasks": "Fermer la task",
         "triggers": "Fermer le trigger"
       },
       "creation": {
         "after execution": "Ajouter un bloc après l'exécution",
+        "conditions": "Ajouter une condition",
         "error handlers": "Ajouter un gestionnaire d'erreurs",
         "finally": "Ajouter un bloc finally",
-        "plugin defaults": "Ajouter un plugin par défaut",
+        "pluginDefaults": "Ajouter un plugin par défaut",
         "tasks": "Ajouter une tâche",
         "triggers": "Ajouter un trigger"
       },
@@ -874,9 +875,10 @@
       },
       "select": {
         "after execution": "Sélectionnez une task",
+        "conditions": "Sélectionner une condition",
         "error handlers": "Sélectionnez une task",
         "finally": "Sélectionnez une task",
-        "plugin defaults": "Sélectionner un plugin",
+        "pluginDefaults": "Sélectionner un plugin",
         "tasks": "Sélectionnez une task",
         "triggers": "Sélectionner un trigger"
       },
@@ -975,7 +977,7 @@
     "pause confirm": "Êtes-vous sûr de vouloir mettre en pause l'exécution <code>{id}</code> ?",
     "pause done": "L'exécution est en PAUSE",
     "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tasks actuellement en cours d'exécution seront toujours traitées, et l'exécution devra être reprise manuellement.",
-    "plugin defaults": "Paramètres par défaut du plugin",
+    "pluginDefaults": "Par défaut du plugin",
     "pluginPage": {
       "search": "Rechercher parmi {count}+ plugins",
       "title1": "Les plugins sont des blocs pour vos workflows.",

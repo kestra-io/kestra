@@ -814,18 +814,19 @@
       "adding_default": "+ Neuen Wert hinzufügen",
       "close": {
         "after execution": "Task schließen",
+        "conditions": "Bedingung schließen",
         "error handlers": "Fehlerbehandler schließen",
         "finally": "Task schließen",
         "input": "Eingabe schließen",
-        "plugin defaults": "Plugin-Defaults schließen",
         "tasks": "Task schließen",
         "triggers": "Trigger schließen"
       },
       "creation": {
         "after execution": "Fügen Sie einen Block nach der Ausführung hinzu",
+        "conditions": "Bedingung hinzufügen",
         "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
         "finally": "Fügen Sie einen Finally-Block hinzu",
-        "plugin defaults": "Fügen Sie ein Plugin-Default hinzu",
+        "pluginDefaults": "Fügen Sie ein Plugin-Default hinzu",
         "tasks": "Aufgabe hinzufügen",
         "triggers": "Füge einen Trigger hinzu"
       },
@@ -874,9 +875,10 @@
       },
       "select": {
         "after execution": "Wählen Sie eine Task aus",
+        "conditions": "Wählen Sie eine Bedingung aus",
         "error handlers": "Wählen Sie eine Task aus",
         "finally": "Wählen Sie eine Task aus",
-        "plugin defaults": "Wählen Sie ein Plugin aus",
+        "pluginDefaults": "Wählen Sie ein Plugin aus",
         "tasks": "Wählen Sie eine Task aus",
         "triggers": "Wählen Sie einen Trigger aus"
       },
@@ -975,7 +977,7 @@
     "pause confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> pausieren möchten?",
     "pause done": "Die Ausführung ist PAUSED.",
     "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
-    "plugin defaults": "Plugin-Standardeinstellungen",
+    "pluginDefaults": "Plugin-Standardeinstellungen",
     "pluginPage": {
       "search": "Suche in {count}+ Plugins",
       "title1": "Plugins sind Bausteine für Ihre Workflows.",

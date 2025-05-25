@@ -1,10 +1,10 @@
 <template>
-    <div class="tasks-wrapper">
+    <div class="conditions-wrapper">
         <Collapse
-            title="tasks"
+            title="conditions"
             :elements="items"
-            section="tasks"
-            block-type="tasks"
+            section="conditions"
+            block-type="conditions"
             @remove="(yaml) => emits('update:modelValue', yaml)"
             @reorder="(yaml) => emits('update:modelValue', yaml)"
         />
@@ -17,14 +17,14 @@
 
     defineOptions({inheritAttrs: false});
 
-    interface Task {id:string, type:string}
+    interface Condition {id:string, type:string}
 
     const emits = defineEmits<{
-        (e: "update:modelValue", tasks: Task[]): void
+        (e: "update:modelValue", conditions: Condition[]): void
     }>();
 
     const props = withDefaults(defineProps<{
-        modelValue?: Task[]
+        modelValue?: Condition[]
     }>(), {
         modelValue: () => []
     });
@@ -37,13 +37,7 @@
 <style scoped lang="scss">
 @import "../../code/styles/code.scss";
 
-.tasks-wrapper {
+.conditions-wrapper {
     width: 100%;
-}
-
-.disabled {
-    opacity: 0.5;
-    pointer-events: none;
-    cursor: not-allowed;
 }
 </style>

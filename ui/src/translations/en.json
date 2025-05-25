@@ -955,7 +955,7 @@
     "no_namespaces": "Zero namespaces match the search criteria.",
     "system_namespace": "Keep your platform in check with system flows.",
     "system_namespace_description": "Automate maintenance tasks, from failure alerts to automated cleanups.",
-    "plugin defaults": "Plugin defaults",
+    "pluginDefaults": "Plugin defaults",
     "secret": {
       "add": "New secret",
       "update": "Update secret '{name}'",
@@ -1205,16 +1205,18 @@
         "triggers": "Select a trigger",
         "error handlers": "Select a task",
         "finally": "Select a task",
-        "plugin defaults": "Select a plugin",
-        "after execution": "Select a task"
+        "pluginDefaults": "Select a plugin",
+        "after execution": "Select a task",
+        "conditions": "Select a condition"
       },
       "creation": {
         "tasks": "Add a task",
         "triggers": "Add a trigger",
         "error handlers": "Add an error handler",
         "finally": "Add a finally block",
-        "plugin defaults": "Add a plugin default",
-        "after execution": "Add an after execution block"
+        "pluginDefaults": "Add a plugin default",
+        "after execution": "Add an after execution block",
+        "conditions": "Add a condition"
       },
       "save": {
         "tasks": "Save task",
@@ -1231,7 +1233,8 @@
         "finally": "Close task",
         "after execution": "Close task",
         "input": "Close input",
-        "plugin defaults": "Close plugin default"
+        "plugin defaults": "Close plugin default",
+        "conditions": "Close condition"
       }
     },
     "properties": {

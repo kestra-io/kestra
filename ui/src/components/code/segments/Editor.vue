@@ -1,53 +1,50 @@
 <template>
     <div class="p-4">
-        <template v-if="!taskSection && !taskId && !creatingTask">
-            <template v-if="panel">
-                <component
-                    :is="panel.type"
-                    :model-value="panel.props.modelValue"
-                    v-bind="panel.props"
-                    @update:model-value="
-                        (value: any) => emits('updateMetadata', 'inputs', value)
-                    "
-                />
-            </template>
+        <template v-if="panel">
+            <component
+                :is="panel.type"
+                :model-value="panel.props.modelValue"
+                v-bind="panel.props"
+                @update:model-value="
+                    (value: any) => emits('updateMetadata', 'inputs', value)
+                "
+            />
+        </template>
 
-            <template v-else>
-                <component
-                    v-for="(v, k) in mainFields"
-                    :key="k"
-                    :is="v.component"
-                    v-model="v.value"
-                    v-bind="trimmed(v)"
-                    @update:model-value="emits('updateMetadata', k, v.value)"
-                />
+        <template v-else-if="!creatingTask && refPath === undefined">
+            <component
+                v-for="(v, k) in mainFields"
+                :key="k"
+                :is="v.component"
+                v-model="v.value"
+                v-bind="trimmed(v)"
+                @update:model-value="emits('updateMetadata', k, v.value)"
+            />
 
-                <hr class="my-4">
+            <hr class="my-4">
 
-                <Collapse
-                    v-for="(section, index) in sections"
-                    :key="index"
-                    v-bind="section"
-                    @remove="(yaml) => emits('updateTask', yaml)"
-                    @reorder="(yaml) => emits('reorder', yaml)"
-                />
+            <Collapse
+                v-for="(section, index) in sections"
+                :key="index"
+                v-bind="section"
+                @remove="(yaml) => emits('updateTask', yaml)"
+                @reorder="(yaml) => emits('reorder', yaml)"
+            />
 
-                <hr class="my-4">
+            <hr class="my-4">
 
-                <component
-                    v-for="(v, k) in otherFields"
-                    :key="k"
-                    :is="v.component"
-                    v-model="v.value"
-                    v-bind="trimmed(v)"
-                    @update:model-value="emits('updateMetadata', k, v.value)"
-                />
-            </template>
+            <component
+                v-for="(v, k) in otherFields"
+                :key="k"
+                :is="v.component"
+                v-model="v.value"
+                v-bind="trimmed(v)"
+                @update:model-value="emits('updateMetadata', k, v.value)"
+            />
         </template>
 
         <Task
             v-else
-            @exit-task="exitTask"
             @update-task="onTaskUpdate"
             @update-documentation="(task) => emits('updateDocumentation', task)"
         />
@@ -55,10 +52,10 @@
 </template>
 
 <script setup lang="ts">
-    import {onMounted, watch, computed, inject, ref} from "vue";
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import {onMounted, computed, inject, ref} from "vue";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
-    import {Field, Fields, CollapseItem, NoCodeElement} from "../utils/types";
+    import {Field, Fields, CollapseItem, NoCodeElement, BlockType} from "../utils/types";
 
     import Collapse from "../components/collapse/Collapse.vue";
     import InputText from "../components/inputs/InputText.vue";
@@ -71,36 +68,20 @@
 
     import {
         CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
-        PANEL_INJECTION_KEY, SAVEMODE_INJECTION_KEY,
-        SECTION_INJECTION_KEY, TASKID_INJECTION_KEY
+        PANEL_INJECTION_KEY, REF_PATH_INJECTION_KEY,
     } from "../injectionKeys";
 
     import Task from "./Task.vue";
 
-
-    const sectionInjected = inject(SECTION_INJECTION_KEY, ref(""));
-    const taskId = inject(TASKID_INJECTION_KEY, ref(""));
     const panel = inject(PANEL_INJECTION_KEY, ref());
+    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
 
-    watch(
-        [sectionInjected, taskId],
-        ([section, id]) => {
-            if (section && id) {
-                emits("updateDocumentation", null);
-            }
-        },
-    );
-
-    const taskSection = computed(() => {
-        return (sectionInjected.value ?? "TASKS").toString() as "tasks" | "triggers"
-    });
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
     import {useStore} from "vuex";
     const store = useStore();
-
 
     const emits = defineEmits([
         "save",
@@ -125,7 +106,6 @@
 
     const creatingTask = inject(CREATING_TASK_INJECTION_KEY);
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
-    const saveMode = inject(SAVEMODE_INJECTION_KEY, "button");
 
     const props = defineProps({
         metadata: {type: Object, required: true},
@@ -138,17 +118,8 @@
         return rest;
     };
 
-    function exitTask() {
-        sectionInjected.value = "";
-        taskId.value = "";
-    }
-
     function onTaskUpdate(yaml: string) {
         emits("updateTask", yaml)
-
-        if(saveMode === "button") {
-            exitTask()
-        }
     }
 
     const schema = ref({})
@@ -256,6 +227,16 @@
         "pluginDefaults",
     ] as const
 
+
+    const SECTION_BLOCK_MAP: Record<typeof SECTIONS_IDS[number], BlockType | "pluginDefaults"> = {
+        tasks: "tasks",
+        triggers: "triggers",
+        errors: "tasks",
+        finally: "tasks",
+        afterExecution: "tasks",
+        pluginDefaults: "pluginDefaults",
+    } as const;
+
     type SectionKey = typeof SECTIONS_IDS[number];
 
     const sections = computed((): CollapseItem[] => {
@@ -263,6 +244,8 @@
         return SECTIONS_IDS.map((section) => ({
             elements: parsedFlow?.[section] ?? [],
             title: t(`no_code.sections.${section}`),
+            blockType: SECTION_BLOCK_MAP[section],
+            section,
         }))
     });
 </script>

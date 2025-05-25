@@ -2,7 +2,7 @@ import {h} from "vue";
 import {ElMessageBox} from "element-plus";
 import permission from "../models/permission";
 import action from "../models/action";
-import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import Utils from "../utils/utils";
 import {editorViewTypes} from "../utils/constants";
 import {apiUrl} from "override/utils/route";
@@ -33,11 +33,11 @@ export default {
         isCreating: false,
         flowYaml: undefined,
         flowYamlOrigin: undefined,
+        flowYamlBeforeAdd: undefined,
         confirmOutdatedSaveDialog: false,
         haveChange: false,
         expandedSubflows: [],
         metadata: undefined,
-        createdTasks: {}
     },
 
     actions: {
@@ -313,6 +313,7 @@ export default {
                     commit("setFlow", response.data);
                     commit("setFlowYaml", response.data.source);
                     commit("setFlowYamlOrigin", response.data.source);
+                    commit("setFlowYamlBeforeAdd", response.data.source);
                     commit("setOverallTotal", 1)
                     return response.data;
                 })
@@ -670,6 +671,9 @@ export default {
         setFlowYamlOrigin(state, value) {
             state.flowYamlOrigin = value
         },
+        setFlowYamlBeforeAdd(state, value) {
+            state.flowYamlBeforeAdd = value
+        },
         setHaveChange(state, value) {
             state.haveChange = value
         },
@@ -679,22 +683,8 @@ export default {
         setMetadata(state, value) {
             state.metadata = value
         },
-        setCreatedTask(state, payload) {
-            const {section, index, ...rest} = payload;
-            if(state.createdTasks[section] === undefined){
-                state.createdTasks[section] = []
-            }
-            state.createdTasks[section][index] = rest
-        },
-        removeCreatedTask(state, payload) {
-            const {section, index} = payload;
-            state.createdTasks[section]?.splice(index, 1);
-        }
     },
     getters: {
-        createdTasks(state){
-            return state.createdTasks;
-        },
         isFlow(state, _getters, rootState) {
             const currentTab = rootState.editor.current;
             return currentTab?.flow !== undefined || state.isCreating;

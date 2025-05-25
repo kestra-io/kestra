@@ -65,6 +65,8 @@ export interface NoCodeElement {
 
 export type CollapseItem = {
     title: string;
+    blockType: BlockType | "pluginDefaults";
+    section: string;
     elements?: NoCodeElement[];
 };
 
@@ -82,7 +84,7 @@ export type Component = ReturnType<typeof defineComponent>;
 
 type BasicParams = {
     id: string;
-    section: SectionKey;
+    section: BlockType;
 }
 
 type CreationParams = BasicParams & {
@@ -94,9 +96,7 @@ export type TopologyClickParams =
   | { action: "edit"; params: BasicParams }
   | { action: "create"; params: CreationParams };
 
-export type SectionKey = "tasks"
+export type BlockType = "tasks"
     |    "triggers"
-    |    "error handlers"
-    |    "finally"
-    |    "after execution"
-    |    "plugin defaults"
+    |    "conditions"
+    |    "taskRunners"

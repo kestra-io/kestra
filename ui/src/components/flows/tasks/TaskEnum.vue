@@ -5,7 +5,7 @@
         filterable
         clearable
         :persistent="false"
-        placeholder=" "
+        :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'value'}`"
     >
         <el-option
             v-for="item in schema.enum"
@@ -21,3 +21,15 @@
         mixins: [Task],
     };
 </script>
+
+<style lang="scss" scoped>
+:deep(.el-input__inner) {
+    &::placeholder {
+        color: var(--ks-content-tertiary);
+    }
+}
+
+:deep(.el-select__suffix) {
+    display: flex !important;
+}
+</style>

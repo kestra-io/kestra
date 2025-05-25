@@ -87,6 +87,10 @@ export default {
                     return "tasks";
                 }
 
+                if (property.items?.$ref?.includes("conditions.Condition")) {
+                    return "conditions";
+                }
+
                 return "array";
             }
 

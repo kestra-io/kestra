@@ -839,6 +839,7 @@
           "labels": "Etichette",
           "outputs": "Output",
           "retry": "Riprova",
+          "sla": "SLA",
           "variables": "Variabili"
         },
         "main": {

@@ -839,6 +839,7 @@
           "labels": "Etykiety",
           "outputs": "Wyjścia",
           "retry": "Ponów próbę",
+          "sla": "SLA",
           "variables": "Zmienne"
         },
         "main": {

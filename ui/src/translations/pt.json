@@ -839,6 +839,7 @@
           "labels": "Etiquetas",
           "outputs": "Saídas",
           "retry": "Repetir",
+          "sla": "SLA",
           "variables": "Variáveis"
         },
         "main": {

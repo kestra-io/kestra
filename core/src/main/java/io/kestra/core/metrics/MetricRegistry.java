@@ -52,6 +52,8 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_KILLED_COUNT = "worker.killed.count";
     public static final String METRIC_WORKER_KILLED_COUNT_DESCRIPTION = "The total number of executions killed events received the Executor";
 
+    public static final String METRIC_EXECUTOR_THREAD_COUNT = "executor.thread.count";
+    public static final String METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION = "The number of executor threads";
     public static final String METRIC_EXECUTOR_TASKRUN_CREATED_COUNT = "executor.taskrun.created.count";
     public static final String METRIC_EXECUTOR_TASKRUN_CREATED_COUNT_DESCRIPTION = "The total number of tasks created by the Executor";
     public static final String METRIC_EXECUTOR_TASKRUN_ENDED_COUNT = "executor.taskrun.ended.count";

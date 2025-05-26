@@ -14,10 +14,12 @@
         <div class="header d-flex">
             <button class="back-button align-self-center">
                 <el-icon size="medium" @click="goBack">
-                    <ArrowLeft />
+                    <ChevronLeft />
                 </el-icon>
             </button>
-            {{ $t('Blueprints') }}
+            <span class="header-title align-self-center">
+                {{ $t('Blueprints') }}
+            </span>
         </div>
         <div>
             <h2 class="blueprint-title align-self-center">
@@ -83,8 +85,7 @@
 </template>
 <script setup>
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-
-    import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import Editor from "../../inputs/Editor.vue";
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
     import TaskIcon from  "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
@@ -237,15 +238,27 @@
             }
 
             .back-button {
-                padding-left: 0;
-                padding-right: calc($spacer * 1.5);
+                margin-left: 0;
+                margin-right: calc($spacer);
                 cursor: pointer;
                 border: none;
-                background: none;
+                background: var(--ks-background-card);
                 display: flex;
                 align-items: center;
+                border-radius: var(--bs-border-radius); // 加圓角
+                padding: 8px;
                 :deep(.material-design-icon) {
-                    font-size: $h4-font-size;
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                }
+
+                :deep(.header-tittle) {
+                    font-size: 1.25rem;
+                    font-weight: 600;
+                    line-height: 1;
+                    margin: 0;
                 }
             }
 
@@ -270,7 +283,7 @@
 
         h4 {
             margin-top: calc($spacer * 2);
-            //margin-bottom: 0; 
+            //margin-bottom: 0;
             font-weight: normal;
         }
 

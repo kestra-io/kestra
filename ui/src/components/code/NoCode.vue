@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, watch, inject, provide, ref} from "vue";
+    import {computed, provide, ref} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {
@@ -24,35 +24,11 @@
         EDIT_TASK_FUNCTION_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
         PANEL_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
-        TOPOLOGY_CLICK_INJECTION_KEY, FLOW_INJECTION_KEY,
+        FLOW_INJECTION_KEY,
     } from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
-    import {Breadcrumb, BlockType, TopologyClickParams} from "./utils/types";
-
-    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
-
-    watch(topologyClick, (value: TopologyClickParams | undefined) => {
-        if (!value) return;
-
-        const {action, params} = value;
-        const {id, section} = params;
-
-        const path = YAML_UTILS.getPathFromIdAndSection(props.flow, section, id)
-        const refPath = /\[(\d+)\]$/.exec(path)?.[1];
-        if (!refPath) {
-            console.error("No refPath found for id", id, "in section", section);
-            return;
-        }
-        const refPathIndex = parseInt(refPath, 10);
-        const parentPath = path.slice(0, (refPath.length * -1) - 3); // remove the [refPath] part
-
-        if (action === "create") {
-            emit("createTask", "tasks", section, refPathIndex, params.position)
-        } else if(action === "edit"){
-            emit("editTask", "tasks", parentPath, refPathIndex)
-        }
-    }, {deep: true});
+    import {Breadcrumb, BlockType} from "./utils/types";
 
     const emit = defineEmits<{
         (e: "updateTask", yaml: string): void

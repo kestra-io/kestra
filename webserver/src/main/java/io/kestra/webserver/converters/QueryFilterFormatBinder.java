@@ -10,11 +10,7 @@ import jakarta.inject.Singleton;
 
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.HashMap;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,15 +24,18 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         List<QueryFilter> filters = new ArrayList<>();
         Map<QueryFilter.Op, Map<String, String>> labelsByOperation = new HashMap<>(); // Group labels by operation
 
-        queryParams.forEach((key, values) -> {
-            if (!key.startsWith("filters[")) return;
+        for (Map.Entry<String, List<String>> entry : queryParams.entrySet()) {
+            String key = entry.getKey();
+            if (!key.startsWith("filters[")) {
+                continue;
+            }
 
             Matcher matcher = FILTER_PATTERN.matcher(key);
 
             if (matcher.matches()) {
-                parseFilters(values, matcher, filters, labelsByOperation);
+                parseFilters(entry.getValue(), matcher, filters, labelsByOperation);
             }
-        });
+        }
         // Add a QueryFilter for each operation's labels
         labelsByOperation.forEach((operation, labels) -> {
             if (!labels.isEmpty()) {

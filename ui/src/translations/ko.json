@@ -980,6 +980,7 @@
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
     "pluginDefaults": "플러그인 기본값",
     "pluginPage": {
+      "alt": "플러그인 아이콘",
       "search": "{count}+ 플러그인 검색",
       "title1": "플러그인은 워크플로우의 구성 요소입니다.",
       "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요."

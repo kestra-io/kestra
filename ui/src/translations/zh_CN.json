@@ -980,6 +980,7 @@
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
     "pluginDefaults": "插件默认值",
     "pluginPage": {
+      "alt": "插件图标",
       "search": "在{count}+个插件中搜索",
       "title1": "插件是你的工作流构建块。",
       "title2": "搜索任务和触发器以构建你的流程。"

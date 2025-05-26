@@ -5,11 +5,12 @@
             <template #navbar>
                 <KestraFilter
                     prefix="taskruns"
-                    :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
+                    :domain="TaskRunFilterLanguage.domain"
                     :buttons="{
-                        refresh: {shown: true, callback: load},
+                        refresh: {shown: true, callback: () => load()},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
                     }"
+                    legacy-query
                 />
             </template>
 
@@ -104,6 +105,7 @@
 </template>
 <script setup>
     import KestraFilter from "../filter/KestraFilter.vue";
+    import TaskRunFilterLanguage from "../../composables/monaco/languages/filters/impl/taskRunFilterLanguage.js";
 </script>
 <script>
     import {mapState} from "vuex";

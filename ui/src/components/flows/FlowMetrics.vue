@@ -1,26 +1,12 @@
 <template>
     <KestraFilter
         prefix="flow_metrics"
-        :include="[
-            'task',
-            'metric',
-            'aggregation',
-            'absolute_date',
-        ]"
-        :values="{
-            task: tasksWithMetrics.map((value) => ({
-                label: value,
-                value,
-            })),
-            metric: metrics.map((value) => ({
-                label: value,
-                value,
-            })),
-        }"
+        :domain="FlowMetricFilterLanguage.domain"
         :buttons="{
             refresh: {shown: true, callback: load},
             settings: {shown: false},
         }"
+        legacy-query
     />
 
     <div v-bind="$attrs" v-loading="isLoading">
@@ -55,7 +41,11 @@
     </div>
 </template>
 
-<script>
+<script setup lang="ts">
+    import FlowMetricFilterLanguage from "../../composables/monaco/languages/filters/impl/flowMetricFilterLanguage.js";
+</script>
+
+<script lang="ts">
     import {Bar} from "vue-chartjs";
     import {mapState, mapGetters} from "vuex";
     import moment from "moment";
@@ -69,8 +59,8 @@
             Bar,
             KestraFilter,
         },
-        async created() {
-            await this.loadMetrics();
+        created() {
+            this.loadMetrics();
         },
         computed: {
             ...mapState("flow", [

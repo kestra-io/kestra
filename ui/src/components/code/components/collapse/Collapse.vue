@@ -56,7 +56,7 @@
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
 
     const props = defineProps<CollapseItem>();
-    const filteredElements = computed(() => props.elements?.filter(e => e !== undefined) ?? []);
+    const filteredElements = computed(() => props.elements?.filter(Boolean) ?? []);
     const expanded = ref<CollapseItem["title"]>(props.title);
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");

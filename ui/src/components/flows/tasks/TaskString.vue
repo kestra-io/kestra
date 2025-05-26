@@ -18,6 +18,7 @@
             lang="plaintext"
             input
             :placeholder="`Your ${root || 'value'} here...`"
+            @update:model-value="onInput"
         />
     </template>
 </template>
@@ -75,6 +76,9 @@
                             .toString();
 
                 this.$emit("update:modelValue", emitted);
+            },
+            onInput(value) {
+                this.$emit("update:modelValue", value);
             },
         },
     };

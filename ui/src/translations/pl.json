@@ -813,18 +813,19 @@
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
       "close": {
-        "after execution": "Zamknij task",
+        "afterExecution": "Zamknij po wykonaniu task",
         "conditions": "Zamknij warunek",
-        "error handlers": "Zamknij obsługę błędów",
+        "errors": "Zamknij obsługę błędów",
         "finally": "Zamknij task",
         "input": "Zamknij input",
+        "pluginDefaults": "Zamknij domyślną wtyczkę",
         "tasks": "Zamknij task",
         "triggers": "Zamknij trigger"
       },
       "creation": {
-        "after execution": "Dodaj blok po wykonaniu",
+        "afterExecution": "Dodaj blok po wykonaniu",
         "conditions": "Dodaj warunek",
-        "error handlers": "Dodaj obsługę błędów",
+        "errors": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
         "pluginDefaults": "Dodaj domyślny plugin",
         "tasks": "Dodaj task",
@@ -837,7 +838,6 @@
           "inputs": "Wejścia",
           "labels": "Etykiety",
           "outputs": "Wyjścia",
-          "plugin_defaults": "Domyślne ustawienia pluginu",
           "retry": "Ponów próbę",
           "variables": "Zmienne"
         },
@@ -853,14 +853,6 @@
         "variable": "Zmienna",
         "yaml": "Edytor YAML"
       },
-      "save": {
-        "after execution": "Zapisz task",
-        "error handlers": "Zapisz obsługę błędów",
-        "finally": "Zapisz task",
-        "input": "Zapisz input",
-        "tasks": "Zapisz task",
-        "triggers": "Zapisz trigger"
-      },
       "sections": {
         "afterExecution": "Po wykonaniu",
         "deprecated": "Właściwości przestarzałe",
@@ -874,9 +866,9 @@
         "triggers": "Triggery"
       },
       "select": {
-        "after execution": "Wybierz task",
+        "afterExecution": "Wybierz task",
         "conditions": "Wybierz warunek",
-        "error handlers": "Wybierz task",
+        "errors": "Wybierz task",
         "finally": "Wybierz task",
         "pluginDefaults": "Wybierz plugin",
         "tasks": "Wybierz task",

@@ -15,50 +15,60 @@
     import NoData from "../../layout/NoData.vue";
 
     import {useRoute} from "vue-router";
+
     const route = useRoute();
 
     import {useStore} from "vuex";
+
     const store = useStore();
 
     import {useI18n} from "vue-i18n";
+
     const {t} = useI18n({useScope: "global"});
 
     import {decodeSearchParams} from "../../filter/utils/helpers.ts";
 
     const props = defineProps({
         chart: {type: Object, required: true},
-        default: {type: Boolean, default: false},
+        showDefault: {type: Boolean, default: false}
     });
 
     const source = ref();
     const generate = async (id) => {
         let decodedParams = decodeSearchParams(route.query, undefined, []);
-        
-        let params = {id, chartId: props.chart.id};
-        if (route.query.namespace) {
-            params.namespace = route.query.namespace;
-        }
-        if (route.query.labels) {
-            params.labels = Object.fromEntries(
-                route.query.labels.map((l) => l.split(":")),
-            );
-        }
-        if (decodedParams) {
-            params = {...params, filters: decodedParams};
-        }
-        const result = await store.dispatch("dashboard/generate", params);
-        const description = result.results?.[0]?.description;
+        if (!props.showDefault) {
+            let params = {id, chartId: props.chart.id};
+            if (route.query.namespace) {
+                params.namespace = route.query.namespace;
+            }
+            if (route.query.labels) {
+                params.labels = Object.fromEntries(
+                    route.query.labels.map((l) => l.split(":"))
+                );
+            }
+            if (decodedParams) {
+                params = {...params, filters: decodedParams};
+            }
+            const result = await store.dispatch("dashboard/generate", params);
+            const description = result.results?.[0]?.description;
 
-        source.value = description ? description : t("dashboard.no_flow_description")
+            source.value = description ? description : t("dashboard.no_flow_description");
+        } else {
+            const result = await store.dispatch("dashboard/chartPreview", {
+                chart: props.chart.content,
+                globalFilter: {filter: decodedParams},
+            })
+            source.value = result.results[0]?.description;
+        }
     };
 
     watch(route, async (r) => {
-        if (props.chart.source?.type === "FlowDescription") generate(r.params?.id);        
-        else source.value = props.chart.content ?? props.chart.source.content; 
+        if (props.chart.source?.type === "FlowDescription") generate(r.params?.id);
+        else source.value = props.chart.content ?? props.chart.source.content;
     });
-    
+
     onMounted(() => {
-        if (props.chart.source?.type === "FlowDescription") generate(route.params?.id);        
-        else source.value = props.chart.content ?? props.chart.source.content;        
+        if (props.chart.source?.type === "FlowDescription") generate(route.params?.id);
+        else source.value = props.chart.content ?? props.chart.source.content;
     });
 </script>

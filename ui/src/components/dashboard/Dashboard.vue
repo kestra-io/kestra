@@ -85,8 +85,16 @@
         loadCharts(dashboard.value.charts);
     };
 
+    const templateYamlFlow = () => {
+        let yamlFlow = YAML_FLOW;
+        yamlFlow = yamlFlow.replace(/{{namespace}}/g, route.params.namespace);
+        yamlFlow = yamlFlow.replace(/{{flowId}}/g, route.params.id);
+
+        return yamlFlow;
+    }
+
     onBeforeMount(() => {
-        if (props.isFlow) load("default", YAML_FLOW);
+        if (props.isFlow) load("default", templateYamlFlow());
         else if (props.isNamespace) load("default", YAML_NAMESPACE);
     });
 </script>

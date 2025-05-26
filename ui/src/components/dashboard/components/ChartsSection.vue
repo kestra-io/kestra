@@ -24,7 +24,7 @@
                             :is="TYPES[chart.type]"
                             :default="route.params.id === 'default'"
                             :source="chart.content"
-                            :chart="chart.type === 'io.kestra.plugin.core.dashboard.chart.Markdown' ? chart.raw : chart"
+                            :chart="chart"
                             :show-default="props.showDefault"
                         />
                     </div>

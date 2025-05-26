@@ -74,6 +74,15 @@ charts:
           values:
             - CREATED
             - QUEUED
+  - id: description
+    type: io.kestra.plugin.core.dashboard.chart.Markdown
+    chartOptions:
+      displayName: Description
+      width: 12
+    source:
+      type: FlowDescription
+      flowId: {{flowId}}
+      namespace: {{namespace}}
   - id: total_executions_timeseries
     type: io.kestra.plugin.core.dashboard.chart.TimeSeries
     chartOptions:

@@ -270,7 +270,7 @@
 
         h4 {
             margin-top: calc($spacer * 2);
-            margin-bottom: 0;
+            //margin-bottom: 0; 
             font-weight: normal;
         }
 

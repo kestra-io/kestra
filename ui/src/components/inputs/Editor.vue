@@ -557,7 +557,7 @@
             padding-top: 7px;
 
             &.custom-dark-vs-theme {
-                background-color: $input-bg;
+                background-color: var(--ks-background-input);
             }
 
             &.theme-light {

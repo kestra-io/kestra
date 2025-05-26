@@ -61,9 +61,6 @@
             defaultDuration() {
                 return this.$moment().seconds(0).minutes(0).hours(0).toDate();
             },
-            editorValue() {
-                return this.modelValue || "";
-            },
         },
         methods: {
             onInputDuration(value) {

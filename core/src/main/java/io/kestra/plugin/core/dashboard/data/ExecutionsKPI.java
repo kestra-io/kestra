@@ -22,25 +22,31 @@ import lombok.experimental.SuperBuilder;
 @EqualsAndHashCode
 //@ExecutionsDataFilterValidation
 @Schema(
-    title = "Display Execution data in a dashboard chart.",
+    title = "Display a chart with executions in success in a given namespace.",
     description = "Change."
 )
 @Plugin(
     examples = {
         @Example(
-            title = "Display a chart with a Executions in success in given Namespace.",
+            title = "Display a chart with executions in success in a given namespace.",
             full = true,
             code = {
-                "id: executions_success_in_namespace\n" +
+                "id: kpi_success_ratio\n" +
                 "type: io.kestra.plugin.core.dashboard.chart.KPI\n" +
                 "chartOptions:\n" +
-                  "displayName: Executions (per namespace)\n" +
-                  "description: Executions count per namespace\n" +
-                "data\n" +
-                  "type: io.kestra.plugin.core.dashboard.data.Executions\n" +
-                  "columns:\n" +
-                    "state:\n" +
-                      "field: STATE\n"
+                "  displayName: Success Ratio\n" +
+                "  numberType: PERCENTAGE\n" +
+                "  width: 3\n" +
+                "data:\n" +
+                "  type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI\n" +
+                "  columns:\n" +
+                "    field: ID\n" +
+                "    agg: COUNT\n" +
+                "  numerator:\n" +
+                "    - type: IN\n" +
+                "      field: STATE\n" +
+                "      values:\n" +
+                "        - SUCCESS\n"
             }
         )
     }

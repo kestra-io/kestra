@@ -34,5 +34,5 @@ public interface DashboardRepositoryInterface {
 
     <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generate(String tenantId, DataChart<?, DataFilter<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate, Pageable pageable) throws IOException;
 
-    <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generateKPI(String tenantId, DataChartKPI<?, DataFilterKPI<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException;
+    <F extends Enum<F>> List<Map<String, Object>> generateKPI(String tenantId, DataChartKPI<?, DataFilterKPI<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException;
 }

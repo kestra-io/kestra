@@ -173,7 +173,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
     }
 
     @Override
-    public <F extends Enum<F>> ArrayListTotal<Map<String, Object>> generateKPI(String tenantId, DataChartKPI<?, DataFilterKPI<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
+    public <F extends Enum<F>> List<Map<String, Object>> generateKPI(String tenantId, DataChartKPI<?, DataFilterKPI<F, ? extends ColumnDescriptor<F>>> dataChart, ZonedDateTime startDate, ZonedDateTime endDate) throws IOException {
         Map<Class<? extends QueryBuilderInterface<?>>, QueryBuilderInterface<?>> queryBuilderByHandledFields = new HashMap<>();
 
         @SuppressWarnings("unchecked")
@@ -191,10 +191,10 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
         if (dataChart.getChartOptions() != null && dataChart.getChartOptions().getNumberType().equals(KpiOption.NumberType.PERCENTAGE)) {
             Double totalValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, false);
             Double percentageValue = (filteredValue / totalValue) * 100;
-            return new ArrayListTotal<>(List.of(Map.of("value", roundDouble(percentageValue, 2))), 1);
+            return List.of(Map.of("value", roundDouble(percentageValue, 2)));
         }
 
-        return new ArrayListTotal<>(List.of(Map.of("value", roundDouble(filteredValue, 2))), 1);
+        return List.of(Map.of("value", roundDouble(filteredValue, 2)));
     }
 
     @Override

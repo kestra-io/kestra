@@ -224,7 +224,7 @@ public class DashboardController {
             DataFilterKPI<?, ?> dataChartDatas = dataChartKPI.getData();
             dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
 
-            return PagedResults.of(this.dashboardRepository.generateKPI(tenantId, dataChartKPI, startDate, endDate));
+            return PagedResults.of(new ArrayListTotal<>(this.dashboardRepository.generateKPI(tenantId, dataChartKPI, startDate, endDate), 1));
         } else if (chart instanceof Markdown markdownChart) {
             if (markdownChart.getSource() != null && markdownChart.getSource() instanceof FlowDescription flowDescription) {
                 Optional<Flow> optionalFlow = flowRepository.findById(this.tenantService.resolveTenant(), flowDescription.getNamespace(), flowDescription.getFlowId());
@@ -285,7 +285,7 @@ public class DashboardController {
             DataFilterKPI<?, ?> dataChartDatas = dataChartKPI.getData();
             dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
 
-            return PagedResults.of(this.dashboardRepository.generateKPI(this.tenantService.resolveTenant(), dataChartKPI, startDate, endDate));
+            return PagedResults.of(new ArrayListTotal<>(this.dashboardRepository.generateKPI(this.tenantService.resolveTenant(), dataChartKPI, startDate, endDate),1));
         } else if (chart instanceof Markdown markdownChart) {
             if (markdownChart.getSource() != null && markdownChart.getSource() instanceof FlowDescription flowDescription) {
                 Optional<Flow> optionalFlow = flowRepository.findById(this.tenantService.resolveTenant(), flowDescription.getNamespace(), flowDescription.getFlowId());

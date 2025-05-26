@@ -813,18 +813,19 @@
       "adding": "+ Добавить {what}",
       "adding_default": "+ Добавить новое value",
       "close": {
-        "after execution": "Закрыть task",
+        "afterExecution": "Закрыть после выполнения task",
         "conditions": "Закрыть условие",
-        "error handlers": "Закрыть обработчик ошибок",
+        "errors": "Закрыть обработчик ошибок",
         "finally": "Закрыть task",
         "input": "Закрыть input",
+        "pluginDefaults": "Закрыть плагин по умолчанию",
         "tasks": "Закрыть task",
         "triggers": "Закрыть trigger"
       },
       "creation": {
-        "after execution": "Добавить блок после выполнения",
+        "afterExecution": "Добавить блок после выполнения",
         "conditions": "Добавить условие",
-        "error handlers": "Добавить обработчик ошибок",
+        "errors": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
         "pluginDefaults": "Добавить плагин по умолчанию",
         "tasks": "Добавить task",
@@ -837,7 +838,6 @@
           "inputs": "Входные данные",
           "labels": "Метки",
           "outputs": "Выходы",
-          "plugin_defaults": "Настройки плагина по умолчанию",
           "retry": "Повторить попытку",
           "variables": "Переменные"
         },
@@ -853,14 +853,6 @@
         "variable": "Переменная",
         "yaml": "Редактор YAML"
       },
-      "save": {
-        "after execution": "Сохранить task",
-        "error handlers": "Сохранить обработчик ошибок",
-        "finally": "Сохранить task",
-        "input": "Сохранить input",
-        "tasks": "Сохранить task",
-        "triggers": "Сохранить trigger"
-      },
       "sections": {
         "afterExecution": "После выполнения",
         "deprecated": "Устаревшие свойства",
@@ -874,9 +866,9 @@
         "triggers": "Триггеры"
       },
       "select": {
-        "after execution": "Выберите task",
+        "afterExecution": "Выберите task",
         "conditions": "Выберите условие",
-        "error handlers": "Выберите task",
+        "errors": "Выберите task",
         "finally": "Выберите task",
         "pluginDefaults": "Выберите плагин",
         "tasks": "Выберите task",

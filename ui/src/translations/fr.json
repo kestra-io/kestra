@@ -813,18 +813,19 @@
       "adding": "+ Ajouter un {what}",
       "adding_default": "+ Ajouter une nouvelle valeur",
       "close": {
-        "after execution": "Fermer la task",
+        "afterExecution": "Fermer après l'exécution de la task",
         "conditions": "Condition de fermeture",
-        "error handlers": "Fermer le gestionnaire d'erreurs",
+        "errors": "Fermer le gestionnaire d'erreurs",
         "finally": "Fermer la task",
         "input": "Fermer l'input",
+        "pluginDefaults": "Fermer le plugin par défaut",
         "tasks": "Fermer la task",
         "triggers": "Fermer le trigger"
       },
       "creation": {
-        "after execution": "Ajouter un bloc après l'exécution",
+        "afterExecution": "Ajouter un bloc après l'exécution",
         "conditions": "Ajouter une condition",
-        "error handlers": "Ajouter un gestionnaire d'erreurs",
+        "errors": "Ajouter un gestionnaire d'erreurs",
         "finally": "Ajouter un bloc finally",
         "pluginDefaults": "Ajouter un plugin par défaut",
         "tasks": "Ajouter une tâche",
@@ -837,7 +838,6 @@
           "inputs": "Entrées",
           "labels": "Étiquettes",
           "outputs": "Sorties",
-          "plugin_defaults": "Paramètres par défaut du Plugin",
           "retry": "Réessayer",
           "variables": "Variables"
         },
@@ -853,14 +853,6 @@
         "variable": "Variable",
         "yaml": "Éditeur YAML"
       },
-      "save": {
-        "after execution": "Enregistrer la task",
-        "error handlers": "Enregistrer le gestionnaire d'erreurs",
-        "finally": "Enregistrer la task",
-        "input": "Enregistrer l'input",
-        "tasks": "Enregistrer la tâche",
-        "triggers": "Enregistrer le trigger"
-      },
       "sections": {
         "afterExecution": "Après l'Exécution",
         "deprecated": "Propriétés obsolètes",
@@ -874,9 +866,9 @@
         "triggers": "Déclencheurs"
       },
       "select": {
-        "after execution": "Sélectionnez une task",
+        "afterExecution": "Sélectionnez une task",
         "conditions": "Sélectionner une condition",
-        "error handlers": "Sélectionnez une task",
+        "errors": "Sélectionner une task",
         "finally": "Sélectionnez une task",
         "pluginDefaults": "Sélectionner un plugin",
         "tasks": "Sélectionnez une task",

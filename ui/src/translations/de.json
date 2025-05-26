@@ -813,18 +813,19 @@
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",
       "close": {
-        "after execution": "Task schließen",
+        "afterExecution": "Nach Ausführung Task schließen",
         "conditions": "Bedingung schließen",
-        "error handlers": "Fehlerbehandler schließen",
+        "errors": "Fehlerbehandler schließen",
         "finally": "Task schließen",
         "input": "Eingabe schließen",
+        "pluginDefaults": "Plugin-Standard schließen",
         "tasks": "Task schließen",
         "triggers": "Trigger schließen"
       },
       "creation": {
-        "after execution": "Fügen Sie einen Block nach der Ausführung hinzu",
+        "afterExecution": "Fügen Sie einen Block nach der Ausführung hinzu",
         "conditions": "Bedingung hinzufügen",
-        "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
+        "errors": "Einen Fehler-Handler hinzufügen",
         "finally": "Fügen Sie einen Finally-Block hinzu",
         "pluginDefaults": "Fügen Sie ein Plugin-Default hinzu",
         "tasks": "Aufgabe hinzufügen",
@@ -837,7 +838,6 @@
           "inputs": "Eingaben",
           "labels": "Labels",
           "outputs": "Ausgaben",
-          "plugin_defaults": "Plugin-Standardeinstellungen",
           "retry": "Wiederholen",
           "variables": "Variablen"
         },
@@ -853,14 +853,6 @@
         "variable": "Variable",
         "yaml": "YAML-Editor"
       },
-      "save": {
-        "after execution": "Task speichern",
-        "error handlers": "Fehlerbehandlungsroutine speichern",
-        "finally": "Aufgabe speichern",
-        "input": "Eingabe speichern",
-        "tasks": "Aufgabe speichern",
-        "triggers": "Speicher Trigger"
-      },
       "sections": {
         "afterExecution": "Nach Ausführung",
         "deprecated": "Veraltete Eigenschaften",
@@ -874,9 +866,9 @@
         "triggers": "Trigger"
       },
       "select": {
-        "after execution": "Wählen Sie eine Task aus",
+        "afterExecution": "Wählen Sie eine Task aus",
         "conditions": "Wählen Sie eine Bedingung aus",
-        "error handlers": "Wählen Sie eine Task aus",
+        "errors": "Wählen Sie eine Task aus",
         "finally": "Wählen Sie eine Task aus",
         "pluginDefaults": "Wählen Sie ein Plugin aus",
         "tasks": "Wählen Sie eine Task aus",

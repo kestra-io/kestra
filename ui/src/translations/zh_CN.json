@@ -813,18 +813,19 @@
       "adding": "+ 添加{what}",
       "adding_default": "+ 添加新value",
       "close": {
-        "after execution": "关闭task",
+        "afterExecution": "执行任务后关闭",
         "conditions": "关闭条件",
-        "error handlers": "关闭错误处理程序",
+        "errors": "关闭错误处理程序",
         "finally": "关闭 task",
         "input": "关闭输入",
+        "pluginDefaults": "关闭插件默认",
         "tasks": "关闭task",
         "triggers": "关闭 trigger"
       },
       "creation": {
-        "after execution": "添加执行后块",
+        "afterExecution": "添加执行后块",
         "conditions": "添加条件",
-        "error handlers": "添加错误处理程序",
+        "errors": "添加错误处理程序",
         "finally": "添加一个finally块",
         "pluginDefaults": "添加插件默认值",
         "tasks": "添加任务",
@@ -837,7 +838,6 @@
           "inputs": "输入",
           "labels": "标签",
           "outputs": "输出",
-          "plugin_defaults": "插件默认值",
           "retry": "重试",
           "variables": "变量"
         },
@@ -853,14 +853,6 @@
         "variable": "变量",
         "yaml": "YAML编辑器"
       },
-      "save": {
-        "after execution": "保存task",
-        "error handlers": "保存错误处理程序",
-        "finally": "保存任务",
-        "input": "保存输入",
-        "tasks": "保存任务",
-        "triggers": "保存 trigger"
-      },
       "sections": {
         "afterExecution": "执行后",
         "deprecated": "不推荐使用的属性",
@@ -874,9 +866,9 @@
         "triggers": "触发器"
       },
       "select": {
-        "after execution": "选择一个task",
+        "afterExecution": "选择一个task",
         "conditions": "选择条件",
-        "error handlers": "选择一个task",
+        "errors": "选择一个task",
         "finally": "选择一个task",
         "pluginDefaults": "选择插件",
         "tasks": "选择一个task",

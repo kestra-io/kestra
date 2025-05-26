@@ -813,18 +813,19 @@
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",
       "close": {
-        "after execution": "टास्क बंद करें",
+        "afterExecution": "कार्य पूरा होने के बाद बंद करें",
         "conditions": "बंद करने की शर्त",
-        "error handlers": "त्रुटि हैंडलर बंद करें",
+        "errors": "त्रुटि हैंडलर बंद करें",
         "finally": "टास्क बंद करें",
         "input": "इनपुट बंद करें",
+        "pluginDefaults": "प्लगइन डिफ़ॉल्ट बंद करें",
         "tasks": "टास्क बंद करें",
         "triggers": "ट्रिगर बंद करें"
       },
       "creation": {
-        "after execution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
+        "afterExecution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
         "conditions": "एक शर्त जोड़ें",
-        "error handlers": "त्रुटि हैंडलर जोड़ें",
+        "errors": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
         "pluginDefaults": "प्लगइन डिफ़ॉल्ट जोड़ें",
         "tasks": "कार्य जोड़ें",
@@ -837,7 +838,6 @@
           "inputs": "इनपुट्स",
           "labels": "लेबल्स",
           "outputs": "आउटपुट्स",
-          "plugin_defaults": "प्लगइन डिफॉल्ट्स",
           "retry": "पुनः प्रयास करें",
           "variables": "वेरिएबल्स"
         },
@@ -853,14 +853,6 @@
         "variable": "वेरिएबल",
         "yaml": "YAML संपादक"
       },
-      "save": {
-        "after execution": "टास्क सहेजें",
-        "error handlers": "त्रुटि हैंडलर सहेजें",
-        "finally": "कार्य सहेजें",
-        "input": "इनपुट सहेजें",
-        "tasks": "कार्य सहेजें",
-        "triggers": "ट्रिगर सहेजें"
-      },
       "sections": {
         "afterExecution": "Execution के बाद",
         "deprecated": "अप्रचलित गुण",
@@ -874,9 +866,9 @@
         "triggers": "ट्रिगर्स"
       },
       "select": {
-        "after execution": "एक task चुनें",
+        "afterExecution": "एक task चुनें",
         "conditions": "कंडीशन चुनें",
-        "error handlers": "एक task चुनें",
+        "errors": "एक task चुनें",
         "finally": "एक task चुनें",
         "pluginDefaults": "एक प्लगइन चुनें",
         "tasks": "कार्य चुनें",

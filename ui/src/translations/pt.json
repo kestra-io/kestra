@@ -813,18 +813,19 @@
       "adding": "+ Adicionar um {what}",
       "adding_default": "+ Adicionar um novo value",
       "close": {
-        "after execution": "Fechar task",
+        "afterExecution": "Fechar após execução da task",
         "conditions": "Condição de fechamento",
-        "error handlers": "Fechar manipulador de erro",
+        "errors": "Fechar manipulador de erro",
         "finally": "Fechar task",
         "input": "Fechar input",
+        "pluginDefaults": "Fechar plugin padrão",
         "tasks": "Fechar task",
         "triggers": "Fechar trigger"
       },
       "creation": {
-        "after execution": "Adicionar um bloco após a execução",
+        "afterExecution": "Adicionar um bloco após a execução",
         "conditions": "Adicionar uma condição",
-        "error handlers": "Adicionar um manipulador de erro",
+        "errors": "Adicionar um manipulador de erro",
         "finally": "Adicionar um bloco finally",
         "pluginDefaults": "Adicionar um padrão de plugin",
         "tasks": "Adicionar uma task",
@@ -837,7 +838,6 @@
           "inputs": "Entradas",
           "labels": "Etiquetas",
           "outputs": "Saídas",
-          "plugin_defaults": "Padrões do Plugin",
           "retry": "Repetir",
           "variables": "Variáveis"
         },
@@ -853,14 +853,6 @@
         "variable": "Variável",
         "yaml": "Editor YAML"
       },
-      "save": {
-        "after execution": "Salvar task",
-        "error handlers": "Salvar manipulador de erro",
-        "finally": "Salvar task",
-        "input": "Salvar input",
-        "tasks": "Salvar task",
-        "triggers": "Salvar trigger"
-      },
       "sections": {
         "afterExecution": "Após a Execução",
         "deprecated": "Propriedades obsoletas",
@@ -874,9 +866,9 @@
         "triggers": "Triggers"
       },
       "select": {
-        "after execution": "Selecione uma task",
+        "afterExecution": "Selecione uma task",
         "conditions": "Selecione uma condição",
-        "error handlers": "Selecione uma task",
+        "errors": "Selecione uma task",
         "finally": "Selecione uma task",
         "pluginDefaults": "Selecione um plugin",
         "tasks": "Selecione uma task",

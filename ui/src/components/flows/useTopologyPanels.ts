@@ -4,7 +4,7 @@ import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
 import {TopologyClickParams} from "../code/utils/types";
 import {Panel, Tab} from "../MultiPanelTabs.vue";
 
-export function useCodeTopology(
+export function useTopologyPanels(
     panels: Ref<Panel[]>,
     openAddTaskTab: any,
     openEditTaskTab: any,

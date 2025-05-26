@@ -46,7 +46,6 @@
         <Task
             v-else
             @update-task="onTaskUpdate"
-            @update-documentation="(task) => emits('updateDocumentation', task)"
         />
     </div>
 </template>
@@ -87,7 +86,6 @@
         "save",
         "updateTask",
         "updateMetadata",
-        "updateDocumentation",
         "reorder",
     ]);
 

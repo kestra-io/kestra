@@ -28,7 +28,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, inject, ref, toRaw, watch} from "vue";
+    import {computed, inject, onActivated, ref, toRaw, watch} from "vue";
     import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
@@ -112,9 +112,17 @@
 
     }
 
-    watch(selectedTaskType, (v) => {
-        if (v) {
+    // when tab is clicked, load the documentation
+    onActivated(() => {
+        if(selectedTaskType.value){
+            store.dispatch("plugin/updateDocumentation", {task: selectedTaskType.value});
+        }
+    });
+
+    watch(selectedTaskType, (task) => {
+        if (task) {
             load();
+            store.dispatch("plugin/updateDocumentation", {task});
         }
     }, {immediate: true});
 

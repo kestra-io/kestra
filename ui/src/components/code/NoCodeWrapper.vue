@@ -10,7 +10,6 @@
             @update-metadata="(e) => onUpdateMetadata(e)"
             @update-task="(e) => editorUpdate(e)"
             @reorder="(yaml) => handleReorder(yaml)"
-            @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
             @create-task="(blockType, parentPath, refPath) => emit('createTask', blockType, parentPath, refPath, 'after')"
             @close-task="() => emit('closeTask')"
             @edit-task="(blockType, parentPath, refPath) => emit('editTask', blockType, parentPath, refPath)"
@@ -100,9 +99,5 @@
         store.commit("flow/setFlowYaml", source);
         store.commit("flow/setHaveChange", true)
         store.dispatch("flow/save", {content: source});
-    };
-
-    const updatePluginDocumentation = (event: string | undefined, task: any) => {
-        store.dispatch("plugin/updateDocumentation", {event, task});
     };
 </script>

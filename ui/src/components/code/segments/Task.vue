@@ -109,17 +109,6 @@
         immediate: true,
     });
 
-    const type = computed(() => {
-        const parsed = YAML_UTILS.parse(yaml.value);
-        return parsed?.type ?? null;
-    });
-
-    watch(type, (t) => {
-        if(t)
-            emits("updateDocumentation", t);
-
-    });
-
     const section = computed(() => /^(\w+)(\[\d+\])?/.exec(parentPath)?.[1]);
 
     const validationSection = computed(() =>

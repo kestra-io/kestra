@@ -9,7 +9,6 @@
             @update-metadata="(k, v) => emit('updateMetadata', {[k]: v})"
             @update-task="(yaml) => emit('updateTask', yaml)"
             @reorder="(yaml) => emit('reorder', yaml)"
-            @update-documentation="(task) => emit('updateDocumentation', task)"
         />
     </div>
 </template>
@@ -52,7 +51,6 @@
     const emit = defineEmits<{
         (e: "updateTask", yaml: string): void
         (e: "updateMetadata", value: {[key: string]: any}): void
-        (e: "updateDocumentation", task: string): void
         (e: "reorder", yaml: string): void
         (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined): boolean | void
         (e: "editTask", blockType: string, parentPath: string, refPath: number): boolean | void

@@ -13,6 +13,7 @@ import java.net.Proxy;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.List;
 
 @Builder(toBuilder = true)
 @Getter
@@ -41,6 +42,10 @@ public class HttpConfiguration {
     @Schema(title = "If true, allow a failed response code (response code >= 400)")
     @Builder.Default
     private Property<Boolean> allowFailed = Property.ofValue(false);
+
+    @Setter
+    @Schema(title = "List of response code allowed for this request")
+    private Property<List<Integer>> allowedResponseCodes;
 
     @Schema(title = "The default charset for the request.")
     @Builder.Default

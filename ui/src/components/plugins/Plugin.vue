@@ -115,7 +115,8 @@
                     if (newValue.name === "plugins/list") {
                         this.pluginType = undefined;
                         this.version = undefined;
-                    } else if (newValue.name.startsWith("plugins/")) {
+                    } 
+                    if (newValue.name.startsWith("plugins/")) {
                         this.onRouterChange();
                     }
                 },

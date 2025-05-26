@@ -18,6 +18,7 @@
             lang="plaintext"
             input
             :placeholder="`Your ${root || 'value'} here...`"
+            @update:model-value="onInput"
         />
     </template>
 </template>
@@ -60,6 +61,9 @@
             defaultDuration() {
                 return this.$moment().seconds(0).minutes(0).hours(0).toDate();
             },
+            editorValue() {
+                return this.modelValue || "";
+            },
         },
         methods: {
             onInputDuration(value) {
@@ -75,6 +79,9 @@
                             .toString();
 
                 this.$emit("update:modelValue", emitted);
+            },
+            onInput(value) {
+                this.$emit("update:modelValue", value);
             },
         },
     };

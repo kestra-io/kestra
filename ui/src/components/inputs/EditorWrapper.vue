@@ -22,83 +22,20 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onActivated, onMounted, ref, inject, provide, watch, nextTick} from "vue";
+    import {computed, onActivated, onMounted, ref, provide} from "vue";
     import {useStore} from "vuex";
     import Editor from "./Editor.vue";
     import KeyShortcuts from "./KeyShortcuts.vue";
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
-    import {TOPOLOGY_CLICK_INJECTION_KEY, VISIBLE_PANELS_INJECTION_KEY, EDITOR_CURSOR_INJECTION_KEY, EDITOR_HIGHLIGHT_INJECTION_KEY} from "../code/injectionKeys";
-    import {TopologyClickParams} from "../code/utils/types";
-    import {Panel, Tab} from "../MultiPanelTabs.vue";
+    import {EDITOR_CURSOR_INJECTION_KEY} from "../code/injectionKeys";
 
     const store = useStore();
-
-    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
-    const panels = inject(VISIBLE_PANELS_INJECTION_KEY, ref());
-
     const cursor = ref();
     provide(EDITOR_CURSOR_INJECTION_KEY, cursor);
 
-    const highlight = ref();
-    provide(EDITOR_HIGHLIGHT_INJECTION_KEY, highlight);
-
-    watch(topologyClick, (event: TopologyClickParams | undefined) => {
-        if (!event) return;
-
-        const visible = panels.value?.map((p: Panel) => p.tabs.map((t: Tab) => t.value)).flat();
-        if(visible?.includes("nocode")) return;
-
-        const findLineNumber = (section: string, task: string, flow?: string): number | undefined => {
-            const lines = (flow ?? source.value).split("\n");
-
-            let inSection = false;
-
-            for (let i = 0; i < lines.length; i++) {
-                const line = lines[i].trim();
-
-                // Check for section entry
-                if (!inSection && line.startsWith(`${section}:`)) {
-                    inSection = true;
-                    continue;
-                }
-
-                // If in section, check for key-value match
-                if (inSection && line.trim().startsWith("- id:") && line.includes(task)) {
-                    return i + 1; // Line numbers are 1-based
-                }
-            }
-
-            return undefined; // Not found
-        }
-
-        if(visible?.includes("code")){
-            const {section, id} = event.params;
-
-            if (event.action === "create") {
-                const {position, target} = event.params;
-
-                const ID = "NEW_TASK";
-
-                const task = YAML_UTILS.stringify({id: ID, type: ""});
-                const result = YAML_UTILS.insertTask(source.value, target, task, position);
-
-                // Add the new task
-                editorUpdate(result);
-
-                nextTick(() => {
-                    // Focus the newly created task
-                    highlight.value = findLineNumber(section, ID, result)
-                });
-            }
-            else if(event.action === "edit"){
-                highlight.value = findLineNumber(section, id)
-            }
-        }
-    }, {deep: true});
 
     export interface EditorTabProps{
         name: string,

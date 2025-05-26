@@ -31,8 +31,6 @@ yarn.lock
 ui/node_modules
 ui/.env.local
 ui/.env.*.local
-ui/package.json
-ui/package-lock.json
 webserver/src/main/resources/ui
 yarn.lock
 ui/coverage
@@ -61,5 +59,3 @@ core/src/main/resources/gradle.properties
 
 *storybook.log
 storybook-static
-
-dev-tools/*

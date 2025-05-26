@@ -16,12 +16,6 @@ micronaut:
         paths: classpath:static
         mapping: /static/**
   server:
-    cors:
-      enabled: true
-      configurations:
-        all:
-          allowOrigin:
-            - http://localhost:5173
     max-request-size: 10GB
     multipart:
       max-file-size: 10GB

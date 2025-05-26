@@ -4,7 +4,7 @@
             <el-radio
                 v-for="schema in schemaOptions"
                 :key="schema.label"
-                :label="schema.value"
+                :value="schema.value"
             >
                 {{ schema.label }}
             </el-radio>

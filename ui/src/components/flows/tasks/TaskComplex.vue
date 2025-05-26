@@ -1,24 +1,22 @@
 <template>
-    <el-input :model-value="JSON.stringify(values)">
-        <template #append>
-            <el-button :icon="TextSearch" @click="openPanel" />
-        </template>
-    </el-input>
+    <TaskObject
+        :model-value="modelValue"
+        :schema
+        :definitions
+        :properties="computedProperties"
+        merge
+        @update:model-value="onInput"
+    />
 </template>
 
-<script setup>
-    import {h} from "vue";
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
+<script>
+    import Task from "./Task";
+    import TaskObject from "./TaskObject.vue";
 
     import {
         BREADCRUMB_INJECTION_KEY,
         PANEL_INJECTION_KEY,
     } from "../../code/injectionKeys";
-</script>
-
-<script>
-    import Task from "./Task";
-    import TaskComplexContent from "./TaskComplexContent.vue";
 
     export default {
         mixins: [Task],
@@ -26,26 +24,11 @@
             panel: {from: PANEL_INJECTION_KEY},
             breadcrumbs: {from: BREADCRUMB_INJECTION_KEY},
         },
-        props:{
-            metadataInputs: {type: Boolean, default: false},
-        },
-        methods: {
-            openPanel() {
-                const current = {...this.panel};
-
-                const component = h(TaskComplexContent, {
-                    modelValue: this.modelValue,
-                    schema: this.schema,
-                    definitions: this.definitions,
-                    task: this.task,
-                    root: this.root,
-                    "onUpdate:modelValue": this.onInput,
-                    previousPanel: current,
-                    metadataInputs: this.metadataInputs,
-                });
-
-                this.panel = component;
-                this.breadcrumbs.push({label: this.root, component});
+        components: {TaskObject},
+        computed: {
+            computedProperties() {
+                const type = this.schema.$ref.split("/").pop();
+                return this.definitions[type]?.properties;
             },
         },
     };

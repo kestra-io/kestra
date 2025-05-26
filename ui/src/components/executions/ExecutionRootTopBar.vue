@@ -2,7 +2,7 @@
     <top-nav-bar :title="routeInfo?.title" :breadcrumb="routeInfo?.breadcrumb">
         <template #title>
             {{ routeInfo?.title }}
-            <TestBadge v-if="isATestExecution" />
+            <Badge v-if="isATestExecution" :label="$t('test-badge-text')" :tooltip="$t('test-badge-tooltip')" />
         </template>
         <template #additional-right v-if="canDelete || isAllowedTrigger || isAllowedEdit">
             <ul id="list">
@@ -35,7 +35,7 @@
     import Api from "vue-material-design-icons/Api.vue";
     import Delete from "vue-material-design-icons/Delete.vue";
     import Pencil from "vue-material-design-icons/Pencil.vue";
-    import TestBadge from "../global/TestBadge.vue";
+    import Badge from "../global/Badge.vue";
 </script>
 
 <script>

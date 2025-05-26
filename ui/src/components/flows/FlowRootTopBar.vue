@@ -7,7 +7,7 @@
             <Lock v-else-if="!isAllowedToEdit" class="me-2 gray-700" />
             <span :class="{'body-color': isDeleted}">
                 {{ routeInfo.title }}
-                <BetaBadge v-if="routeInfo.beta" />
+                <Badge v-if="routeInfo.beta" label="Beta" />
             </span>
         </template>
         <template #additional-right>
@@ -21,7 +21,7 @@
     import {useStore} from "vuex";
     import Alert from "vue-material-design-icons/Alert.vue";
     import Lock from "vue-material-design-icons/Lock.vue";
-    import BetaBadge from "../global/BetaBadge.vue";
+    import Badge from "../global/Badge.vue";
     import Actions from "override/components/flows/Actions.vue";
     import NavBar from "../layout/TopNavBar.vue";
     import permission from "../../models/permission";

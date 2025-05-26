@@ -33,9 +33,11 @@
 #plugin-github:io.kestra.plugin:plugin-github:LATEST
 #plugin-googleworkspace:io.kestra.plugin:plugin-googleworkspace:LATEST
 #plugin-graalvm:io.kestra.plugin:plugin-graalvm:LATEST
+#plugin-graphql:io.kestra.plugin:plugin-graphql:LATEST
 #plugin-hightouch:io.kestra.plugin:plugin-hightouch:LATEST
 #plugin-hubspot:io.kestra.plugin:plugin-hubspot:LATEST
 #plugin-huggingface:io.kestra.plugin:plugin-huggingface:LATEST
+#plugin-influxdb:io.kestra.plugin:plugin-influxdb:LATEST
 #plugin-jdbc:io.kestra.plugin:plugin-jdbc-as400:LATEST
 #plugin-jdbc:io.kestra.plugin:plugin-jdbc-clickhouse:LATEST
 #plugin-jdbc:io.kestra.plugin:plugin-jdbc-db2:LATEST
@@ -56,6 +58,7 @@
 #plugin-jdbc:io.kestra.plugin:plugin-jdbc-arrow-flight:LATEST
 #plugin-jdbc:io.kestra.plugin:plugin-jdbc-sqlite:LATEST
 #plugin-jdbc:io.kestra.plugin:plugin-jdbc-sybase:LATEST
+#plugin-jenkins:io.kestra.plugin:plugin-jenkins:LATEST
 #plugin-jira:io.kestra.plugin:plugin-jira:LATEST
 #plugin-kafka:io.kestra.plugin:plugin-kafka:LATEST
 #plugin-kubernetes:io.kestra.plugin:plugin-kubernetes:LATEST
@@ -71,6 +74,7 @@
 #plugin-nats:io.kestra.plugin:plugin-nats:LATEST
 #plugin-neo4j:io.kestra.plugin:plugin-neo4j:LATEST
 #plugin-notifications:io.kestra.plugin:plugin-notifications:LATEST
+#plugin-ollama:io.kestra.plugin:plugin-ollama:LATEST
 #plugin-openai:io.kestra.plugin:plugin-openai:LATEST
 #plugin-opensearch:io.kestra.plugin:plugin-opensearch:LATEST
 #plugin-powerbi:io.kestra.plugin:plugin-powerbi:LATEST

@@ -11,7 +11,7 @@
         :path="props.path"
         @update:model-value="editorUpdate"
         @cursor="updatePluginDocumentation"
-        @save="save"
+        @save="saveFileContent"
         @execute="execute"
     >
         <template #absolute>
@@ -184,13 +184,6 @@
     function updatePluginDocumentation(event: string | undefined, task: any){
         store.dispatch("plugin/updateDocumentation", {event,task});
     };
-
-    function save(){
-        store.commit("editor/setCurrentTab", store.state.editor.tabs.find((t:any) => t.path === props.path));
-        return store.dispatch("flow/save", {
-            content: editorDomElement.value.$refs.monacoEditor.value,
-        })
-    }
 
     const saveFileContent =  async ()=>{
         await store.dispatch("namespace/createFile", {

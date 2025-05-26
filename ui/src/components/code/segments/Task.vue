@@ -184,8 +184,6 @@
                 return;
             }
 
-            const keyName = currentSection === PLUGIN_DEFAULTS_SECTION ? "type" : "id"
-
             const task = {
                 newBlock: yaml.value,
                 parentPath,
@@ -194,34 +192,13 @@
                 blockType,
             } satisfies TaskModel;
 
-            if([PLUGIN_DEFAULTS_SECTION, "tasks", "triggers"].includes(currentSection)){
-                const parsedTask = YAML_UTILS.parse(task.newBlock);
-                // this condition will ignore trigger "conditions" unicity
-                if(parsedTask?.[keyName]){
-                    const existing = YAML_UTILS.checkBlockAlreadyExists({
-                        source: flowBeforeAdd.value,
-                        section: SECTIONS_MAP[currentSection],
-                        newContent: task.newBlock,
-                        keyName,
-                    })
-
-                    if (existing) {
-                        store.dispatch("core/showMessage", {
-                            variant: "error",
-                            title: "Block with same ID already exist",
-                            message: `Block in ${section.value} section with ID: ${existing} already exist in the flow.`,
-                        });
-                    }
-                }
-            }
-
             result = YAML_UTILS.insertBlockWithPath({
                 source: result,
                 ...task,
             });
 
 
-            const currentRefPath = (refPath ?? -1) + 1
+            const currentRefPath = refPath ? refPath + (position === "after" ? 1 : 0) : 0;
             editTask(
                 blockType,
                 parentPath,

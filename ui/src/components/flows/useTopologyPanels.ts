@@ -4,7 +4,7 @@ import {useStore} from "vuex"
 
 import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
 import {TopologyClickParams} from "../code/utils/types";
-import {Panel, Tab} from "../MultiPanelTabs.vue";
+import {Panel} from "../MultiPanelTabs.vue";
 
 export function useTopologyPanels(
     panels: Ref<Panel[]>,
@@ -32,38 +32,31 @@ export function useTopologyPanels(
     watch(topologyClick, (value: TopologyClickParams | undefined) => {
         if (!value) return;
 
-        const visible = panels.value
-            ?.map((p: Panel) => p.tabs.map((t: Tab) => t.value))
-            .flat();
-        if (!visible.includes("code") && !visible.includes("nocode")) {
-            const {
-                action,
-                params,
-            } = value;
+        const {
+            action,
+            params,
+        } = value;
 
-            const target = findTopologyIndexes(panels.value);
+        const target = findTopologyIndexes(panels.value);
 
-            const path = YAML_UTILS.getPathFromSectionAndId({
-                source: store.getters["flow/flowYaml"],
-                section: params.section,
-                id: params.id,
-            })
+        const path = YAML_UTILS.getPathFromSectionAndId({
+            source: store.getters["flow/flowYaml"],
+            section: params.section,
+            id: params.id,
+        })
 
-            if (!path) {
-                console.error("No path found for id", params.id, "in section", params.section);
-                return;
-            }
-
-            const refPath = /\[(\d+)\]$/.exec(path)?.[1];
-            if (!refPath) {
-                console.error("No refPath found for id", params.id, "in section", params.section);
-                return;
-            }
-            const refPathIndex = parseInt(refPath, 10);
-            const parentPath = path.slice(0, (refPath.length * -1) - 3); // remove the [refPath] part
-
-            if (action === "create") openAddTaskTab(target, params.section, parentPath, refPathIndex, params.position);
-            else if (action === "edit") openEditTaskTab(target, params.section, parentPath, refPathIndex);
+        if (!path) {
+            return;
         }
+
+        const refPath = /\[(\d+)\]$/.exec(path)?.[1];
+        if (!refPath) {
+            return;
+        }
+        const refPathIndex = parseInt(refPath, 10);
+        const parentPath = path.slice(0, (refPath.length * -1) - 2); // remove the [refPath] part
+
+        if (action === "create") openAddTaskTab(target, params.section, parentPath, refPathIndex, params.position);
+        else if (action === "edit") openEditTaskTab(target, params.section, parentPath, refPathIndex);
     });
 }

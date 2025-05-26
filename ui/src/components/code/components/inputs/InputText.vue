@@ -41,8 +41,11 @@
     });
 </script>
 
-<style scoped lang="scss" src="../../styles/code.scss">
-:deep(.lock-icon) {
-    color: var(--ks-content-inactive);
+<style scoped lang="scss">
+@import "../../styles/code.scss";
+:deep(.el-input__icon) {
+    .lock-icon {
+        color: var(--ks-content-inactive);
+    }
 }
 </style>

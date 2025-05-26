@@ -813,18 +813,19 @@
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
       "close": {
-        "after execution": "タスクを閉じる",
+        "afterExecution": "実行後にタスクを閉じる",
         "conditions": "クローズ条件",
-        "error handlers": "エラーハンドラーを閉じる",
+        "errors": "エラーハンドラーを閉じる",
         "finally": "タスクを閉じる",
         "input": "入力を閉じる",
+        "pluginDefaults": "プラグインのデフォルトを閉じる",
         "tasks": "タスクを閉じる",
         "triggers": "トリガーを閉じる"
       },
       "creation": {
-        "after execution": "実行後ブロックを追加",
+        "afterExecution": "実行後ブロックを追加",
         "conditions": "条件を追加",
-        "error handlers": "エラーハンドラーを追加",
+        "errors": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
         "pluginDefaults": "プラグインのデフォルトを追加",
         "tasks": "タスクを追加",
@@ -837,7 +838,6 @@
           "inputs": "入力",
           "labels": "ラベル",
           "outputs": "出力",
-          "plugin_defaults": "プラグインデフォルト",
           "retry": "リトライ",
           "variables": "変数"
         },
@@ -853,14 +853,6 @@
         "variable": "変数",
         "yaml": "YAMLエディター"
       },
-      "save": {
-        "after execution": "タスクを保存",
-        "error handlers": "エラーハンドラーを保存",
-        "finally": "タスクを保存",
-        "input": "入力を保存",
-        "tasks": "タスクを保存",
-        "triggers": "トリガーを保存"
-      },
       "sections": {
         "afterExecution": "実行後",
         "deprecated": "非推奨プロパティ",
@@ -874,9 +866,9 @@
         "triggers": "トリガー"
       },
       "select": {
-        "after execution": "タスクを選択",
+        "afterExecution": "タスクを選択",
         "conditions": "条件を選択",
-        "error handlers": "タスクを選択",
+        "errors": "タスクを選択",
         "finally": "タスクを選択",
         "pluginDefaults": "プラグインを選択",
         "tasks": "タスクを選択",

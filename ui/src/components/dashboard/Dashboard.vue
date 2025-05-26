@@ -24,7 +24,7 @@
         <small>{{ dashboard.description }}</small>
     </section>
 
-    <ChartsSection :charts :show-default="props.isFlow || props.isNamespace" />
+    <ChartsSection :charts :show-default="dashboard.id === 'default'" />
 </template>
 
 <script setup>

@@ -3,7 +3,7 @@
         <section id="kpi">
             <span class="pb-2">{{ label }}</span>
             <p class="m-0 fs-2 fw-bold">
-                <span>{{ generated.results[0].value }}</span>
+                <span>{{ generated?.results[0]?.value }}</span>
                 <span v-if="percentage">%</span>
             </p>
         </section>

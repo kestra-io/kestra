@@ -38,14 +38,19 @@
         const {action, params} = value;
         const {id, section} = params;
 
-        // FIXME manage create and edit task from topology
+        const path = YAML_UTILS.getPathFromIdAndSection(props.flow, section, id)
+        const refPath = /\[(\d+)\]$/.exec(path)?.[1];
+        if (!refPath) {
+            console.error("No refPath found for id", id, "in section", section);
+            return;
+        }
+        const refPathIndex = parseInt(refPath, 10);
+        const parentPath = path.slice(0, (refPath.length * -1) - 3); // remove the [refPath] part
+
         if (action === "create") {
-            // find the path of the block with id
-            // and create a new task
-            emit("createTask", "tasks", section, 0)
-            return
+            emit("createTask", "tasks", section, refPathIndex, params.position)
         } else if(action === "edit"){
-            emit("editTask", "tasks", section+id, 0)
+            emit("editTask", "tasks", parentPath, refPathIndex)
         }
     }, {deep: true});
 
@@ -54,7 +59,7 @@
         (e: "updateMetadata", value: {[key: string]: any}): void
         (e: "updateDocumentation", task: string): void
         (e: "reorder", yaml: string): void
-        (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined): boolean | void
+        (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined, position?: "before" | "after"): boolean | void
         (e: "editTask", blockType: string, parentPath: string, refPath: number): boolean | void
         (e: "closeTask"): boolean | void
     }>()

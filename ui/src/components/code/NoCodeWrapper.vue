@@ -13,7 +13,7 @@
             @update-documentation="(task) => updatePluginDocumentation(undefined, task)"
             @create-task="(blockType, parentPath, refPath) => emit('createTask', blockType, parentPath, refPath, 'after')"
             @close-task="() => emit('closeTask')"
-            @edit-task="(blockType, parentPath, refPath) => emit('editTask', blockType, parentPath, refPath)"
+            @edit-task="(blockType, parentPath, refPath, position) => emit('editTask', blockType, parentPath, refPath, position)"
         />
     </div>
 </template>

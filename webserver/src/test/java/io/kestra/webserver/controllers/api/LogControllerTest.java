@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 
 import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 import static io.micronaut.http.HttpRequest.GET;
@@ -168,7 +169,28 @@ class LogControllerTest {
         assertThat(logs.size()).isZero();
     }
 
+    @Test
+    void searchLogsFilteredByDate() {
+        LogEntry log1 = logEntry(Level.INFO, Instant.now().minus(2, ChronoUnit.DAYS));
+        LogEntry log2 = logEntry(Level.WARN, Instant.now().minus(1, ChronoUnit.DAYS));
+        LogEntry log3 = logEntry(Level.DEBUG);
+        logRepository.save(log1);
+        logRepository.save(log2);
+        logRepository.save(log3);
+
+
+        PagedResults<LogEntry> logs = client.toBlocking().retrieve(
+            GET("/api/v1/logs/search?filters[timeRange][EQUALS]=PT25H"),
+            Argument.of(PagedResults.class, LogEntry.class)
+        );
+        assertThat(logs.getTotal()).isEqualTo(2L);
+    }
+
     private static LogEntry logEntry(Level level) {
+        return logEntry(level, Instant.now());
+    }
+
+    private static LogEntry logEntry(Level level, Instant timestamp) {
         return LogEntry.builder()
             .tenantId("main")
             .flowId(IdUtils.create())
@@ -177,7 +199,7 @@ class LogControllerTest {
             .executionId(IdUtils.create())
             .taskRunId(IdUtils.create())
             .attemptNumber(0)
-            .timestamp(Instant.now())
+            .timestamp(timestamp)
             .level(level)
             .thread("")
             .message("john doe")

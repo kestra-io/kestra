@@ -65,7 +65,7 @@
                 },
                 type: {
                     type: "string",
-                    enum: ["exponential"],
+                    enum: ["random"],
                 },
                 warningOnRetry: {
                     type: "boolean",

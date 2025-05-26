@@ -63,6 +63,7 @@
 
     import Editor from "../../inputs/Editor.vue";
     import MetadataInputs from "../../flows/MetadataInputs.vue";
+    import MetadataRetry from "../../flows/MetadataRetry.vue";
     import TaskBasic from "../../flows/tasks/TaskBasic.vue";
 
     import {
@@ -149,15 +150,9 @@
                 label: t("no_code.fields.main.description"),
             },
             retry: {
-                component: Editor,
+                component: MetadataRetry,
                 value: props.metadata.retry,
-                label: t("no_code.fields.general.retry"),
-                navbar: false,
-                input: true,
-                lang: "yaml",
-                shouldFocus: false,
-                showScroll: true,
-                style: {height: "100px"},
+                label: t("no_code.fields.general.retry")
             },
             labels: {
                 component: InputPair,

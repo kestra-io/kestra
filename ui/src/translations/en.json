@@ -1191,6 +1191,7 @@
         },
         "general": {
           "retry": "Retry",
+          "sla": "SLA",
           "labels": "Labels",
           "inputs": "Inputs",
           "outputs": "Outputs",

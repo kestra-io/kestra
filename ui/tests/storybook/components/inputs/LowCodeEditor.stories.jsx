@@ -1,3 +1,5 @@
+import {provide, ref} from "vue";
+import {TOPOLOGY_CLICK_INJECTION_KEY} from "../../../../src/components/code/injectionKeys";
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import LowCodeEditor from "../../../../src/components/inputs/LowCodeEditor.vue";
@@ -17,6 +19,7 @@ export default {
 const Template= (args) => ({
     setup() {
         const store = useStore()
+        provide(TOPOLOGY_CLICK_INJECTION_KEY, ref())
         store.$http = {
             get(){
                 return  Promise.resolve({data: {}})

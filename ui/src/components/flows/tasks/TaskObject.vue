@@ -51,7 +51,7 @@
                         />
                     </el-form-item>
                 </template>
-                
+
                 <template v-else>
                     <TaskWrapper :merge>
                         <template #tasks>
@@ -331,8 +331,10 @@
             deprecatedProperties() {
                 return this.merge ? [] : this.sortedProperties.filter(([_,v]) => v && v.$deprecated);
             },
-            componentProps() {
-                return (key, schema) => ({
+        },
+        methods: {
+            componentProps(key, schema){
+                return {
                     modelValue: this.modelValue?.[key],
                     task: this.modelValue,
                     "onUpdate:modelValue": (event) => this.onObjectInput(key, event),
@@ -340,10 +342,8 @@
                     schema: schema,
                     required: this.isRequired(key),
                     definitions: this.definitions
-                })
-            }
-        },
-        methods: {
+                }
+            },
             onObjectInput(propertyName, value) {
                 const currentValue = this.modelValue || {};
                 currentValue[propertyName] = value;
@@ -373,7 +373,7 @@
                 return this.getType(schema) === "boolean";
             },
             isNestedProperty(key) {
-                return key.includes(".") || 
+                return key.includes(".") ||
                     ["interval", "maxInterval", "minInterval", "type"].includes(key);
             },
             getKey(key) {
@@ -408,7 +408,7 @@
 
 .el-form-item {
     width: 100%;
-    
+
     > :deep(.el-form-item__label) {
         width: 100%;
         display: flex;

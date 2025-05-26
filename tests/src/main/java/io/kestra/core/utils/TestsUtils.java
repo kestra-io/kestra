@@ -215,8 +215,7 @@ abstract public class TestsUtils {
         };
         Runnable receiveCancellation = queueType == null ? queue.receive(consumerGroup, eitherConsumer, false) : queue.receive(consumerGroup, queueType, eitherConsumer, false);
 
-        AtomicBoolean isCancelled = new AtomicBoolean(false);
-        Flux<T> flux = Flux.<T>create(sink -> {
+        return Flux.<T>create(sink -> {
             DeserializationException exception = exceptionRef.get();
             if (exception == null) {
                 elements.forEach(sink::next);
@@ -224,24 +223,12 @@ abstract public class TestsUtils {
             } else {
                 sink.error(exception);
             }
-        }).doFinally(signalType -> {
-            isCancelled.set(true);
-            receiveCancellation.run();
-        });
-
-        new Thread(() -> {
-            try {
-                Await.until(isCancelled::get, null, Optional.ofNullable(timeout).orElse(Duration.ofMinutes(1)));
-            } catch (TimeoutException e) {
-                // If the receive hasn't been stopped after the given timeout (which means no subscription was done), we stop it
-                receiveCancellation.run();
-            }
-        }).start();
-
-        return flux;
+        })
+            .timeout(Optional.ofNullable(timeout).orElse(Duration.ofMinutes(1)))
+            .doFinally(signalType -> receiveCancellation.run());
     }
 
     public static <T> Property<List<T>> propertyFromList(List<T> list) throws JsonProcessingException {
-        return new Property<>(JacksonMapper.ofJson().writeValueAsString(list));
+        return Property.ofExpression(JacksonMapper.ofJson().writeValueAsString(list));
     }
 }

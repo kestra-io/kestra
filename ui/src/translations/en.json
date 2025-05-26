@@ -1196,44 +1196,35 @@
           "outputs": "Outputs",
           "variables": "Variables",
           "concurrency": "Concurrency",
-          "plugin_defaults": "Plugin Defaults",
           "disabled": "Disabled"
         }
       },
       "select": {
         "tasks": "Select a task",
         "triggers": "Select a trigger",
-        "error handlers": "Select a task",
+        "errors": "Select a task",
         "finally": "Select a task",
         "pluginDefaults": "Select a plugin",
-        "after execution": "Select a task",
+        "afterExecution": "Select a task",
         "conditions": "Select a condition"
       },
       "creation": {
         "tasks": "Add a task",
         "triggers": "Add a trigger",
-        "error handlers": "Add an error handler",
+        "errors": "Add an error handler",
         "finally": "Add a finally block",
         "pluginDefaults": "Add a plugin default",
-        "after execution": "Add an after execution block",
+        "afterExecution": "Add an after execution block",
         "conditions": "Add a condition"
-      },
-      "save": {
-        "tasks": "Save task",
-        "triggers": "Save trigger",
-        "error handlers": "Save error handler",
-        "finally": "Save task",
-        "after execution": "Save task",
-        "input": "Save input"
       },
       "close": {
         "tasks": "Close task",
         "triggers": "Close trigger",
-        "error handlers": "Close error handler",
-        "finally": "Close task",
-        "after execution": "Close task",
+        "errors": "Close error handler",
+        "finally": "Close finally task",
+        "afterExecution": "Close after execution task",
         "input": "Close input",
-        "plugin defaults": "Close plugin default",
+        "pluginDefaults": "Close plugin default",
         "conditions": "Close condition"
       }
     },

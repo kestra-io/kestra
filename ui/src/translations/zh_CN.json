@@ -839,6 +839,7 @@
           "labels": "标签",
           "outputs": "输出",
           "retry": "重试",
+          "sla": "SLA",
           "variables": "变量"
         },
         "main": {

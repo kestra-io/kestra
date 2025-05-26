@@ -839,6 +839,7 @@
           "labels": "레이블",
           "outputs": "출력",
           "retry": "재시도",
+          "sla": "SLA",
           "variables": "변수"
         },
         "main": {

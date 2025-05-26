@@ -1,9 +1,6 @@
 package io.kestra.core.docs;
 
 import com.google.common.base.CaseFormat;
-import io.kestra.core.models.Plugin;
-import io.kestra.core.models.tasks.retrys.AbstractRetry;
-import io.kestra.core.models.tasks.runners.TaskRunner;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -59,7 +56,7 @@ public abstract class AbstractClassDocumentation<T> {
             .filter(entry -> (baseCls == null) || !entry.getKey().startsWith("io.kestra.core.models.flows.input."))
             .map(entry -> {
                 Map<String, Object> value = (Map<String, Object>) entry.getValue();
-                value.put("properties", flatten(properties(value), required(value), isTypeToKeep(entry.getKey())));
+                value.put("properties", flatten(properties(value), required(value), null));
 
                 return new AbstractMap.SimpleEntry<>(
                     entry.getKey(),
@@ -92,20 +89,13 @@ public abstract class AbstractClassDocumentation<T> {
         }
 
         if (this.propertiesSchema.containsKey("properties")) {
-            this.inputs = flatten(properties(this.propertiesSchema), required(this.propertiesSchema));
+            this.inputs = flattenWithoutType(properties(this.propertiesSchema), required(this.propertiesSchema));
         }
     }
 
-    protected static Map<String, Object> flatten(Map<String, Object> map, List<String> required) {
+    protected static Map<String, Object> flattenWithoutType(Map<String, Object> map, List<String> required) {
         map.remove("type");
-        return flatten(map, required, (String) null);
-    }
-
-    protected static Map<String, Object> flatten(Map<String, Object> map, List<String> required, Boolean keepType) {
-        if (!keepType) {
-            map.remove("type");
-        }
-        return flatten(map, required, (String) null);
+        return flatten(map, required, null);
     }
 
     @SuppressWarnings("unchecked")
@@ -139,23 +129,6 @@ public abstract class AbstractClassDocumentation<T> {
         }
 
         return result;
-    }
-
-    // Some task can have the `type` property but not to represent the task
-    // so we cant to keep it in the doc
-    private Boolean isTypeToKeep(String key){
-        try {
-            if (AbstractRetry.class.isAssignableFrom(Class.forName(key))) {
-                return true;
-            }
-
-            if (TaskRunner.class.isAssignableFrom(Class.forName(key))) {
-                return true;
-            }
-        } catch (ClassNotFoundException ignored) {
-            log.debug(ignored.getMessage(), ignored);
-        }
-        return false;
     }
 
     protected static String flattenKey(String current, String parent) {

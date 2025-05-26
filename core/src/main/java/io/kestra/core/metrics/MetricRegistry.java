@@ -52,6 +52,8 @@ public class MetricRegistry {
     public static final String METRIC_WORKER_KILLED_COUNT = "worker.killed.count";
     public static final String METRIC_WORKER_KILLED_COUNT_DESCRIPTION = "The total number of executions killed events received the Executor";
 
+    public static final String METRIC_EXECUTOR_THREAD_COUNT = "executor.thread.count";
+    public static final String METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION = "The number of executor threads";
     public static final String METRIC_EXECUTOR_TASKRUN_CREATED_COUNT = "executor.taskrun.created.count";
     public static final String METRIC_EXECUTOR_TASKRUN_CREATED_COUNT_DESCRIPTION = "The total number of tasks created by the Executor";
     public static final String METRIC_EXECUTOR_TASKRUN_ENDED_COUNT = "executor.taskrun.ended.count";
@@ -120,6 +122,12 @@ public class MetricRegistry {
 
     public static final String METRIC_QUEUE_BIG_MESSAGE_COUNT = "queue.big_message.count";
     public static final String METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION = "Total number of big messages";
+    public static final String METRIC_QUEUE_PRODUCE_COUNT = "queue.produce.count";
+    public static final String METRIC_QUEUE_PRODUCE_COUNT_DESCRIPTION = "Total number of produced messages";
+    public static final String METRIC_QUEUE_RECEIVE_DURATION = "queue.receive.duration";
+    public static final String METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION = "Queue duration to receive and consume a batch of messages";
+    public static final String METRIC_QUEUE_POLL_SIZE = "queue.poll.size";
+    public static final String METRIC_QUEUE_POLL_SIZE_DESCRIPTION = "Size of a poll to the queue (message batch size)";
 
     public static final String TAG_TASK_TYPE = "task_type";
     public static final String TAG_TRIGGER_TYPE = "trigger_type";
@@ -131,6 +139,9 @@ public class MetricRegistry {
     public static final String TAG_TENANT_ID = "tenant_id";
     public static final String TAG_CLASS_NAME = "class_name";
     public static final String TAG_EXECUTION_KILLED_TYPE = "execution_killed_type";
+    public static final String TAG_QUEUE_CONSUMER = "consumer";
+    public static final String TAG_QUEUE_CONSUMER_GROUP = "consumer_group";
+    public static final String TAG_QUEUE_TYPE = "queue_type";
 
     @Inject
     private MeterRegistry meterRegistry;

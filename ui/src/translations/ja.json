@@ -839,6 +839,7 @@
           "labels": "ラベル",
           "outputs": "出力",
           "retry": "リトライ",
+          "sla": "SLA",
           "variables": "変数"
         },
         "main": {

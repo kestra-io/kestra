@@ -1,35 +1,72 @@
 <template>
-    <el-form-item class="radio-wrapper">
-        <el-radio-group v-model="selectedSchema" @change="onSelectType">
-            <el-radio
-                v-for="schema in schemaOptions"
-                :key="schema.label"
-                :value="schema.value"
-            >
-                {{ schema.label }}
-            </el-radio>
-        </el-radio-group>
-    </el-form-item>
-    <el-form label-position="top" v-if="selectedSchema">
-        <component
-            :is="`task-${currentSchemaType}`"
-            v-if="currentSchema"
-            :model-value="modelValue"
-            :schema="currentSchema"
-            :properties="currentSchema?.properties"
-            :definitions="definitions"
-            @update:model-value="onInput"
-        />
-    </el-form>
+    <TaskWrapper v-if="wrap">
+        <template #tasks>
+            <el-form-item class="radio-wrapper">
+                <el-radio-group v-model="selectedSchema" @change="onSelectType">
+                    <el-radio
+                        v-for="schema in schemaOptions"
+                        :key="schema.label"
+                        :value="schema.value"
+                    >
+                        {{ schema.label }}
+                    </el-radio>
+                </el-radio-group>
+            </el-form-item>
+            <el-form label-position="top" v-if="selectedSchema">
+                <component
+                    :is="`task-${currentSchemaType}`"
+                    v-if="currentSchema"
+                    :model-value="modelValue"
+                    :schema="currentSchema"
+                    :properties="currentSchema?.properties"
+                    :definitions="definitions"
+                    @update:model-value="onInput"
+                />
+            </el-form>
+        </template>
+    </TaskWrapper>
+
+    <template v-else>
+        <el-form-item class="radio-wrapper">
+            <el-radio-group v-model="selectedSchema" @change="onSelectType">
+                <el-radio
+                    v-for="schema in schemaOptions"
+                    :key="schema.label"
+                    :value="schema.value"
+                >
+                    {{ schema.label }}
+                </el-radio>
+            </el-radio-group>
+        </el-form-item>
+        <el-form label-position="top" v-if="selectedSchema">
+            <component
+                :is="`task-${currentSchemaType}`"
+                v-if="currentSchema"
+                :model-value="modelValue"
+                :schema="currentSchema"
+                :properties="currentSchema?.properties"
+                :definitions="definitions"
+                @update:model-value="onInput"
+            />
+        </el-form>
+    </template>
 </template>
 
 <script>
     import Task from "./Task";
+    import TaskWrapper from "./TaskWrapper.vue";
 
     export default {
         inheritAttrs: false,
         mixins: [Task],
-        emits: ["update:modelValue"],
+        emits: ["update:modelValue", "any-of-type"],
+        components: {TaskWrapper},
+        props: {
+            wrap: {
+                type: Boolean,
+                default: true,
+            },
+        },
         data() {
             return {
                 isOpen: false,
@@ -49,6 +86,7 @@
         },
         methods: {
             onSelectType(value) {
+                this.$emit("any-of-type", value);
                 this.selectedSchema = value;
                 // Set up default values
                 if (
@@ -109,7 +147,7 @@
                     );
 
                     return {
-                        label: lastPartOfValue.capitalize(),
+                        label: lastPartOfValue.split("-")[0].capitalize(),
                         value: schemaRef,
                         id: lastPartOfValue.toLowerCase(),
                     };

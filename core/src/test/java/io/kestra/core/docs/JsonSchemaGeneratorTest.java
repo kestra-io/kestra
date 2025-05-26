@@ -66,7 +66,7 @@ class JsonSchemaGeneratorTest {
         Class<? extends Task> cls = scan.getFirst().getTasks().getFirst();
 
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, cls);
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(5));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
 
         Map<String, Object> format = properties(generate).get("format");
         assertThat(format.get("default"), is("{}"));
@@ -164,9 +164,10 @@ class JsonSchemaGeneratorTest {
 
             Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
             assertThat((Map<String, Object>) jsonSchema.get("properties"), allOf(
-                Matchers.aMapWithSize(2),
+                Matchers.aMapWithSize(3),
                 hasKey("conditions"),
-                hasKey("stopAfter")
+                hasKey("stopAfter"),
+                hasKey("type")
             ));
         });
     }
@@ -226,7 +227,7 @@ class JsonSchemaGeneratorTest {
     void testEnum() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(5));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("uri").get("$internalStorageURI"), is(true));
     }
@@ -237,7 +238,7 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, BetaTask.class);
         assertThat(generate, is(not(nullValue())));
         assertThat(generate.get("$beta"), is(true));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(1));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(2));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$beta"), is(true));
     }
 
@@ -334,6 +335,14 @@ class JsonSchemaGeneratorTest {
     }
 
     @SuppressWarnings("unchecked")
+    @Test
+    void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() throws URISyntaxException {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
+        var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
+        assertThat(definitions.size(), is(26));
+    }
+
+    @SuppressWarnings("unchecked")
     private Map<String, Map<String, Object>> properties(Map<String, Object> generate) {
         return (Map<String, Map<String, Object>>) generate.get("properties");
     }
@@ -384,6 +393,27 @@ class JsonSchemaGeneratorTest {
         private static class TestClass {
             @Schema(title = "Test property")
             public String testProperty;
+        }
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
+    public static class TaskWithSubTaskAndSubTrigger extends Task implements RunnableTask<VoidOutput>  {
+
+        @PluginProperty
+        @Schema(title = "Subtask")
+        private Task subTask;
+
+        @PluginProperty
+        @Schema(title = "Subtrigger")
+        private AbstractTrigger subTrigger;
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            return null;
         }
     }
 

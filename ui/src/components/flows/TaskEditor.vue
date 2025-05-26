@@ -3,6 +3,7 @@
         <el-form-item>
             <template #label>
                 <div class="type-div">
+                    <span class="asterisk">*</span>
                     <code>{{ $t("type") }}</code>
                 </div>
             </template>
@@ -166,5 +167,15 @@
     .type-div {
         display: flex;
         justify-content: space-between;
+        text-transform: lowercase;
+        align-items: center;
+        gap: 0.25rem;
+        font-weight: 600;
+        .asterisk {
+            color: var(--ks-content-alert);
+        }
+        code {
+            color: var(--ks-content-primary);
+        }
     }
 </style>

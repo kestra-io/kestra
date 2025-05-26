@@ -5,6 +5,7 @@
         :full-height="false"
         :input="true"
         lang="yaml"
+        :placeholder="`Your ${root || 'value'} here...`"
         @update:model-value="editorInput"
     />
 </template>
@@ -39,3 +40,9 @@
         }
     };
 </script>
+
+<style lang="scss" scoped>
+:deep(.placeholder) {
+    top: -7px !important;
+}
+</style>

@@ -7,7 +7,8 @@
             :id="uid"
             :placeholder
             :disabled
-            type="textarea"
+            :type="disabled ? '' : 'textarea'"
+            :suffix-icon="Lock"
             :autosize="{minRows: 1}"
         />
     </div>
@@ -15,6 +16,7 @@
 
 <script setup lang="ts">
     import {useId, computed} from "vue";
+    import Lock from "vue-material-design-icons/Lock.vue";
 
     defineOptions({inheritAttrs: false});
 
@@ -39,6 +41,8 @@
     });
 </script>
 
-<style scoped lang="scss">
-@import "../../styles/code.scss";
+<style scoped lang="scss" src="../../styles/code.scss">
+:deep(.lock-icon) {
+    color: var(--ks-content-inactive);
+}
 </style>

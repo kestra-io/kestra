@@ -438,6 +438,7 @@
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
+        font-weight: 600;
     }
 
     .type-tag {
@@ -448,6 +449,12 @@
         padding: 0 8px;
         padding-bottom: 2px;
         border-radius: 8px;
+        text-transform: capitalize;
+    }
+
+    .information-icon {
+        color: var(--ks-content-secondary);
+        cursor: pointer;
     }
 }
 </style>

@@ -167,13 +167,9 @@
             showPlaceholder() {
                 return (
                     this.input === true &&
-                    !this.focus &&
-                    (!Object.hasOwn(this, "editor") ||
-                        this.editor === undefined ||
-                        !(
-                            this.editor.getValue() !== undefined &&
-                            this.editor.getValue() !== ""
-                        ))
+                    !this.shouldFocus &&
+                    (!this.modelValue || this.modelValue.trim() === "") &&
+                    !this.focus
                 );
             },
             options() {
@@ -650,7 +646,7 @@
 }
 
 .disable-text {
-    color: grey !important;
+    color: var(--ks-content-inactive) !important;
 }
 
 div.img {

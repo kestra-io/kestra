@@ -10,7 +10,7 @@
     <section id="filter">
         <KestraFilter
             prefix="dashboard"
-            :domain="DashboardFilterLanguage.domain"
+            :domain="filterDomain"
             :buttons="{
                 refresh: {
                     shown: true,
@@ -31,7 +31,7 @@
 </template>
 
 <script setup>
-    import {onBeforeMount, ref} from "vue";
+    import {computed, onBeforeMount, ref} from "vue";
     import {useRoute, useRouter} from "vue-router";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
@@ -41,6 +41,8 @@
     import ChartsSection from "./components/ChartsSection.vue";
 
     import DashboardFilterLanguage from "../../composables/monaco/languages/filters/impl/dashboardFilterLanguage.js";
+    import NamespaceDashboardFilterLanguage from "../../composables/monaco/languages/filters/impl/namespaceDashboardFilterLanguage.js";
+    import FlowDashboardFilterLanguage from "../../composables/monaco/languages/filters/impl/flowDashboardFilterLanguage.js";
 
     import yaml from "yaml";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
@@ -59,6 +61,18 @@
         isFlow: {type: Boolean, default: false},
         isNamespace: {type: Boolean, default: false},
     });
+
+    const filterDomain = computed(() => {
+        if (props.isNamespace) {
+            return NamespaceDashboardFilterLanguage.domain;
+        }
+
+        if (props.isFlow) {
+            return FlowDashboardFilterLanguage.domain;
+        }
+
+        return DashboardFilterLanguage.domain;
+    })
 
     const initial = (dashboard) => ({id: "default", ...YAML_UTILS.parse(dashboard)});
 

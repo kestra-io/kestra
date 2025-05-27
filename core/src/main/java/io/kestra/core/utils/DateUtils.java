@@ -1,8 +1,10 @@
 package io.kestra.core.utils;
 
 import io.kestra.core.exceptions.InternalException;
+import io.kestra.core.models.QueryFilter;
 
 import java.time.*;
+import java.util.List;
 import java.util.Locale;
 
 public class DateUtils {
@@ -87,5 +89,36 @@ public class DateUtils {
                 throw new IllegalArgumentException("Start date must be before End Date");
             }
         }
+    }
+    public static void validateTimeline(List<QueryFilter> filters) {
+        if(filters == null || filters.isEmpty()) {
+            return;
+        }
+        ZonedDateTime startDate = null;
+        ZonedDateTime endDate = null;
+        for (QueryFilter filter : filters) {
+            if(isStartDateFilter(filter)) {
+                startDate = parse(filter.value());
+            } else if(isEndDateFilter(filter)) {
+                endDate = parse(filter.value());
+            }
+        }
+        validateTimeline(startDate, endDate);
+    }
+
+    private static ZonedDateTime parse(Object o){
+        if(o instanceof ZonedDateTime){
+            return (ZonedDateTime) o;
+        } else {
+            return ZonedDateTime.parse(o.toString());
+        }
+    }
+
+    private static boolean isEndDateFilter(QueryFilter filter) {
+        return filter.operation().equals(QueryFilter.Op.LESS_THAN) && filter.field().equals(QueryFilter.Field.END_DATE);
+    }
+
+    private static boolean isStartDateFilter(QueryFilter filter) {
+        return filter.operation().equals(QueryFilter.Op.GREATER_THAN) && filter.field().equals(QueryFilter.Field.START_DATE);
     }
 }

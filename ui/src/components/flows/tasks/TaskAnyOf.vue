@@ -1,6 +1,18 @@
 <template>
-    <el-form-item class="radio-wrapper">
-        <el-radio-group v-model="selectedSchema" @change="onSelectType">
+    <el-form-item :class="{'radio-wrapper':isSelectingPlugins}">
+        <el-select
+            v-if="isSelectingPlugins"
+            v-model="selectedSchema"
+            filterable
+        >
+            <el-option
+                v-for="item in schemaOptions"
+                :key="item.value"
+                :label="item.value"
+                :value="item.value"
+            />
+        </el-select>
+        <el-radio-group v-else v-model="selectedSchema" @change="onSelectType">
             <el-radio
                 v-for="schema in schemaOptions"
                 :key="schema.label"
@@ -24,9 +36,14 @@
 </template>
 
 <script>
+    import {mapState} from "vuex";
     import Task from "./Task";
+    import {TaskIcon} from "@kestra-io/ui-libs";
 
     export default {
+        components: {
+            TaskIcon,
+        },
         inheritAttrs: false,
         mixins: [Task],
         emits: ["update:modelValue"],
@@ -96,6 +113,7 @@
         },
 
         computed: {
+            ...mapState("plugin", ["icons"]),
             constantType() {
                 return this.currentSchema?.properties?.type?.const;
             },
@@ -118,6 +136,9 @@
             },
             currentSchemaType() {
                 return this.selectedSchema ? this.getType(this.currentSchema) : undefined;
+            },
+            isSelectingPlugins() {
+                return this.schemas.some((schema) => (schema.$ref?.split("/").pop() ?? schema.type).includes("io.kestra."));
             },
             schemaOptions() {
                 // find the part of the prefix to schema references that is common to all schemas
@@ -142,12 +163,11 @@
                 // remove the common part from all schema ids
                 return [
                     ...this.required ? [] : [{
-                        label: "<none>",
+                        label: "<Reset>",
                         value: "",
                         id: "<none>",
                     }],
                     ...this.schemas.map((schema) => {
-                        /** @type string */
                         const schemaRef = schema.$ref
                             ? schema.$ref.split("/").pop()
                             : schema.type;
@@ -157,7 +177,7 @@
                         );
 
                         return {
-                            label: lastPartOfValue.capitalize(),
+                            label: schemaRef.capitalize(),
                             value: schemaRef,
                             id: lastPartOfValue.toLowerCase(),
                         };

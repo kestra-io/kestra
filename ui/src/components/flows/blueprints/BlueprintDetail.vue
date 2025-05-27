@@ -18,7 +18,7 @@
                 </el-icon>
             </button>
             <span class="header-title align-self-center">
-                {{ $t('Blueprints') }}
+                {{ $t('blueprints.title') }}
             </span>
         </div>
         <div>
@@ -223,7 +223,7 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .header-wrapper {
-        margin-top: calc($spacer * 2);    // 32px (assuming $spacer = 1rem = 16px)
+        margin-top: calc($spacer * 2);
         margin-bottom: $spacer;
 
         .el-card & {
@@ -238,6 +238,7 @@
             }
 
             .back-button {
+                height: 32px;
                 margin-left: 0;
                 margin-right: calc($spacer);
                 cursor: pointer;
@@ -245,21 +246,9 @@
                 background: var(--ks-background-card);
                 display: flex;
                 align-items: center;
-                border-radius: var(--bs-border-radius); // 加圓角
-                padding: 8px;
-                :deep(.material-design-icon) {
-                    position: absolute;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                }
-
-                :deep(.header-tittle) {
-                    font-size: 1.25rem;
-                    font-weight: 600;
-                    line-height: 1;
-                    margin: 0;
-                }
+                border-radius: 5px;
+                padding: 4px 10px;
+                border: 1px solid var(--ks-border-primary);
             }
 
             .blueprint-title {
@@ -283,8 +272,9 @@
 
         h4 {
             margin-top: calc($spacer * 2);
-            //margin-bottom: 0;
-            font-weight: normal;
+            font-weight: 600;
+            font-size: 18.4px;
+            line-height: 28px;
         }
 
         .embedded-topology {

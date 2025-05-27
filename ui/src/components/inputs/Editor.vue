@@ -557,7 +557,7 @@
             padding-top: 7px;
 
             &.custom-dark-vs-theme {
-                background-color: var(--ks-background-input);
+                background-color: $input-bg;
             }
 
             &.theme-light {
@@ -620,14 +620,14 @@
     .monaco-editor,
     .monaco-editor-background {
         outline: none;
-        background-color: var(--ks-background-input);
-        --vscode-editor-background: var(--ks-background-input);
-        --vscode-breadcrumb-background: var(--ks-background-input);
-        --vscode-editorGutter-background: var(--ks-background-input);
+        background-color: $input-bg;
+        --vscode-editor-background: $input-bg;
+        --vscode-breadcrumb-background: $input-bg;
+        --vscode-editorGutter-background: $input-bg;
     }
 
     .monaco-editor .margin {
-        background-color: var(--ks-background-input);
+        background-color: $input-bg;
     }
 }
 

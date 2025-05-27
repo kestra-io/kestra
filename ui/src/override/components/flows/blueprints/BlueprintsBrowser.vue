@@ -425,7 +425,7 @@
                     min-width: 0;
                     .title {
                         width: 500px;
-                        font-weight: normal;
+                        font-weight: bold;
                         font-size: $small-font-size;
                         padding-left: 0;
                         margin-right: 15px;
@@ -440,7 +440,7 @@
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
-
+                        font-weight: 400;
                     }
 
                     .tags {

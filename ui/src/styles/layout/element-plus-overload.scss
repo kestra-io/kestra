@@ -600,9 +600,9 @@ form.ks-horizontal {
     }
 
     &.el-tabs--card{
-        margin-top: 32px; // fix 8950 , Improve padding
+        margin-top: 32px;
         .el-tabs__nav-wrap{
-            margin-bottom: 1px; // fix tabs overflowing over the bottom line
+            margin-bottom: 1px;
         }
         & > .el-tabs__header .el-tabs__nav{
             background-color: var(--ks-background-card);
@@ -629,7 +629,7 @@ form.ks-horizontal {
                     }
                 }
                 &.is-active a{
-                    background-color: var(--ks-background-input);
+                    background-color: var(--ks-background-body);
                     color: var(--ks-content-link);
                     position: relative;
                     z-index: 1;

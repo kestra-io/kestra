@@ -121,7 +121,6 @@
                             params: {tenant: routeParams.tenant},
                         })
                 "
-                @export="exportYaml"
                 :is-namespace="isNamespace"
             />
         </div>
@@ -467,7 +466,6 @@
     import action from "../../models/action";
     import {storageKeys, editorViewTypes} from "../../utils/constants";
     import {Utils, YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
-    import localUtils from "../../utils/utils";
 
     // editor components
     import Editor from "./Editor.vue";
@@ -1185,11 +1183,6 @@
 
     const closeTabsToRight = (index) => {
         closeTabs(openedTabs.value.slice(index + 1).filter(tab => tab !== FLOW_TAB.value), openedTabs.value[index]);
-    };
-
-    const exportYaml = () => {
-        const blob = new Blob([flowYaml.value], {type: "text/yaml"});
-        localUtils.downloadUrl(window.URL.createObjectURL(blob), "flow.yaml");
     };
 
     const dialog = ref({

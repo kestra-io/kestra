@@ -1,11 +1,9 @@
 <template>
     <div class="d-flex flex-column fill-height">
-        <template v-if="filterable">
-            <KestraFilter v-if="namespace" :placeholder="$t('search')" :decode="false" />
-            <section v-else class="d-inline-flex mb-3 filters">
-                <el-input v-model="search" :placeholder="$t('search')" />
-            </section>
-        </template>
+        <KestraFilter
+            :placeholder="$t('search')"
+            legacy-query
+        />
 
         <select-table
             :data="filteredSecrets"
@@ -180,9 +178,12 @@
         },
         computed: {
             ...mapState("auth", ["user"]),
+            searchQuery() {
+                return this.$route.query.q;
+            },
             filteredSecrets() {
                 return this.namespace === undefined
-                    ? this.secrets?.filter((secret: {key: string}) => !this.search || secret.key.toLowerCase().includes(this.search.toLowerCase()))
+                    ? this.secrets?.filter((secret: {key: string}) => !this.searchQuery || secret.key.toLowerCase().includes(this.searchQuery.toLowerCase()))
                     : this.secrets;
             },
             secretModalTitle() {
@@ -240,20 +241,9 @@
                     this.$emit("hasData", newValue);
                 }
             },
-            search(newValue) {
-                if (newValue !== undefined) {
-                    this.$router.push({query: {
-                        q: newValue
-                    }})
-                }
-            },
-            "$route.query.q"(newValue, oldValue) {
-                if (newValue !== undefined && newValue !== oldValue) {
-                    if (this.namespace === undefined && this.search !== newValue) {
-                        this.search = newValue;
-
-                        this.reloadSecrets();
-                    }
+            searchQuery(newValue, oldValue) {
+                if (newValue !== oldValue) {
+                    this.reloadSecrets();
                 }
             }
         },
@@ -294,7 +284,6 @@
                     ]
                 },
                 hasData: undefined,
-                search: this.$route.query?.q ?? ""
             };
         },
         methods: {
@@ -308,9 +297,9 @@
                 if (this.secretsIterator === undefined) {
                     this.secretsIterator = this.namespace === undefined ? useAllSecrets(this.$store, 20) : useNamespaceSecrets(this.$store, this.namespace, 20, {
                         sort: this.$route.query.sort || "key:asc",
-                        ...(this.$route.query.q === undefined ? {} : {filters: {
+                        ...(this.searchQuery === undefined ? {} : {filters: {
                             q: {
-                                STARTS_WITH: this.$route.query.q[0]
+                                EQUALS: this.searchQuery
                             }
                         }})
                     });
@@ -391,7 +380,7 @@
 
                 // If we are in the global Secrets view we let the infinite scroll handling the fetch
                 if (this.namespace !== undefined || previousLength === 0) {
-                    this.fetchSecrets();
+                    return this.fetchSecrets();
                 }
             },
             removeSecret({key, namespace}) {
@@ -433,9 +422,9 @@
                         .then(() => {
                             this.secret.update = true;
                             this.$toast().saved(this.secret.key);
-                            this.reloadSecrets();
                             this.addSecretDrawerVisible = false;
                             this.resetForm();
+                            return this.reloadSecrets();
                         })
                 });
             },

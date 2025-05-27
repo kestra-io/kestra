@@ -17,7 +17,7 @@
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'STRING' || input.type === 'URI' || input.type === 'EMAIL'"
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 @confirm="onSubmit"
@@ -27,7 +27,7 @@
                 :input="true"
                 :navbar="false"
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && !input.isRadio"
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 v-model="selectedTriggerLocal[input.id]"
                 @update:model-value="onChange(input)"
                 :allow-create="input.allowCustomValue"
@@ -45,7 +45,7 @@
             </el-select>
             <el-radio-group
                 v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.isRadio"
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             >
@@ -62,7 +62,7 @@
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'MULTISELECT'"
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 v-model="multiSelectInputs[input.id]"
                 @update:model-value="onMultiSelectChange(input, $event)"
                 multiple
@@ -82,14 +82,14 @@
             <el-input
                 type="password"
                 v-if="input.type === 'SECRET'"
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 show-password
             />
             <span v-if="input.type === 'INT'">
                 <el-input-number
-                    :data-test-id="`input-form-${input.id}`"
+                    :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
                     :min="input.min"
@@ -100,7 +100,7 @@
             </span>
             <span v-if="input.type === 'FLOAT'">
                 <el-input-number
-                    :data-test-id="`input-form-${input.id}`"
+                    :data-testid="`input-form-${input.id}`"
                     v-model="inputsValues[input.id]"
                     @update:model-value="onChange(input)"
                     :min="input.min"
@@ -110,7 +110,7 @@
                 <div v-if="input.min || input.max" class="hint">{{ numberHint(input) }}</div>
             </span>
             <el-radio-group
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOLEAN'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
@@ -121,28 +121,28 @@
                 <el-radio-button :label="$t('undefined')" value="undefined" />
             </el-radio-group>
             <el-switch
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'BOOL'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 class="w-100 boolean-inputs"
             />
             <el-date-picker
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'DATETIME'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 type="datetime"
             />
             <el-date-picker
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'DATE'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
                 type="date"
             />
             <el-time-picker
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 v-if="input.type === 'TIME'"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
@@ -151,7 +151,7 @@
             <div class="el-input el-input-file" v-if="input.type === 'FILE'">
                 <div class="el-input__wrapper">
                     <input
-                        :data-test-id="`input-form-${input.id}`"
+                        :data-testid="`input-form-${input.id}`"
                         :id="input.id+'-file'"
                         class="el-input__inner"
                         type="file"
@@ -167,7 +167,7 @@
             </div>
             <div
                 v-if="input.type === 'ARRAY'"
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 class="w-100"
             >
                 <div v-if="editingArrayId !== input.id" class="preview">
@@ -179,8 +179,8 @@
                             {{ item }}
                         </el-tag>
                     </div>
-                    <el-button 
-                        class="p-3" 
+                    <el-button
+                        class="p-3"
                         @click="toggleArrayEdit(input.id)"
                         :icon="Pencil"
                     >
@@ -202,15 +202,15 @@
                             </div>
                         </div>
                     </div>
-                    <el-button 
-                        class="add-new mt-1 border-0" 
+                    <el-button
+                        class="add-new mt-1 border-0"
                         @click="addNewArrayItem(input)"
                         :icon="Plus"
                     >
                         {{ $t('add_new_item') }}
                     </el-button>
                     <div class="d-flex justify-content-end mt-2">
-                        <el-button 
+                        <el-button
                             @click="toggleArrayEdit(input.id)"
                             type="primary"
                             :icon="ContentSave"
@@ -226,7 +226,7 @@
                 :navbar="false"
                 v-if="input.type === 'JSON'"
                 :show-scroll="inputsValues[input.id]?.length > 530 ? true : false"
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 lang="json"
                 v-model="inputsValues[input.id]"
             />
@@ -235,18 +235,18 @@
                 :input="true"
                 :navbar="false"
                 v-if="input.type === 'YAML'"
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 lang="yaml"
                 :model-value="inputsValues[input.id]"
                 @change="onYamlChange(input, $event)"
             />
             <duration-picker
                 v-if="input.type === 'DURATION'"
-                :data-test-id="`input-form-${input.id}`"
+                :data-testid="`input-form-${input.id}`"
                 v-model="inputsValues[input.id]"
                 @update:model-value="onChange(input)"
             />
-            <markdown v-if="input.description" :data-test-id="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
+            <markdown v-if="input.description" :data-testid="`input-form-${input.id}`" class="markdown-tooltip text-description" :source="input.description" font-size-var="font-size-xs" />
             <template v-if="executeClicked">
                 <template v-for="err in input.errors ?? []" :key="err">
                     <el-text type="warning">
@@ -530,7 +530,7 @@
             parseArrayValue(inputId) {
                 const value = this.inputsValues[inputId];
                 if (!value) return [];
-                
+
                 if (typeof value === "string") {
                     return JSON.parse(value);
                 }
@@ -545,7 +545,7 @@
                 const validItems = this.editableItems[input.id]
                     .filter(item => item && item.trim() !== "")
                     .map(item => item.trim());
-                    
+
                 this.inputsValues[input.id] = JSON.stringify(validItems);
                 this.onChange(input);
             },
@@ -573,7 +573,7 @@
                 if (!isValidMove) return;
                 const targetIndex = direction === "up" ? index - 1 : index + 1;
                 [items[index], items[targetIndex]] = [items[targetIndex], items[index]];
-                
+
                 this.updateArrayValue(input);
             }
         },
@@ -639,7 +639,7 @@
     display: flex;
     align-items: center;
 }
-    
+
 .preview {
     display: flex;
     align-items: center;
@@ -697,7 +697,7 @@
             border: none;
             color: var(--ks-content-secondary);
             background: transparent;
-                
+
             &:hover {
                 color: var(--ks-content-error);
             }
@@ -738,7 +738,7 @@
 
 :deep(.editor-container){
         max-height: 200px;
-        
+
         & .ks-monaco-editor {
             overflow-x: hidden;
         }

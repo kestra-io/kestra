@@ -6,7 +6,7 @@
                 <template #navbar v-if="!embed || showFilters">
                     <KestraFilter
                         prefix="logs"
-                        :include="['namespace', 'level', 'absolute_date', 'relative_date']"
+                        :domain="LogFilterLanguage.domain"
                         :buttons="{
                             refresh: {shown: true, callback: refresh},
                             settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
@@ -44,7 +44,11 @@
     </section>
 </template>
 
-<script>
+<script setup lang="ts">
+    import LogFilterLanguage from "../../composables/monaco/languages/filters/impl/logFilterLanguage";
+</script>
+
+<script lang="ts">
     import LogLine from "../logs/LogLine.vue";
     import {mapState} from "vuex";
     import RouteContext from "../../mixins/routeContext";
@@ -167,6 +171,9 @@
             });
         },
         methods: {
+            LogFilterLanguage() {
+                return LogFilterLanguage
+            },
             onDateFilterTypeChange(event) {
                 this.canAutoRefresh = event;
             },

@@ -14,7 +14,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, watch, inject, provide, ref} from "vue";
+    import {computed, provide, ref} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {
@@ -23,36 +23,17 @@
         EDIT_TASK_FUNCTION_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
         PANEL_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
-        TOPOLOGY_CLICK_INJECTION_KEY, FLOW_INJECTION_KEY,
+        FLOW_INJECTION_KEY,
     } from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
-    import {Breadcrumb, BlockType, TopologyClickParams} from "./utils/types";
-
-    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY, ref());
-
-    watch(topologyClick, (value: TopologyClickParams | undefined) => {
-        if (!value) return;
-
-        const {action, params} = value;
-        const {id, section} = params;
-
-        // FIXME manage create and edit task from topology
-        if (action === "create") {
-            // find the path of the block with id
-            // and create a new task
-            emit("createTask", "tasks", section, 0)
-            return
-        } else if(action === "edit"){
-            emit("editTask", "tasks", section+id, 0)
-        }
-    }, {deep: true});
+    import {Breadcrumb, BlockType} from "./utils/types";
 
     const emit = defineEmits<{
         (e: "updateTask", yaml: string): void
         (e: "updateMetadata", value: {[key: string]: any}): void
         (e: "reorder", yaml: string): void
-        (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined): boolean | void
+        (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined, position?: "before" | "after"): boolean | void
         (e: "editTask", blockType: string, parentPath: string, refPath: number): boolean | void
         (e: "closeTask"): boolean | void
     }>()

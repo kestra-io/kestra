@@ -9,10 +9,13 @@
 
     <section id="filter">
         <KestraFilter
-            :prefix="dashboard.id"
-            :include="['relative_date', 'absolute_date', 'namespace', 'labels']"
+            prefix="dashboard"
+            :domain="DashboardFilterLanguage.domain"
             :buttons="{
-                refresh: {shown: true, callback: () => load()},
+                refresh: {
+                    shown: true,
+                    callback: () => load(),
+                },
                 settings: {shown: false},
             }"
             :dashboards="{shown: route.name === 'home'}"
@@ -29,26 +32,15 @@
 
 <script setup>
     import {onBeforeMount, ref} from "vue";
+    import {useRoute, useRouter} from "vue-router";
+    import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
 
     import Header from "./components/Header.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import ChartsSection from "./components/ChartsSection.vue";
 
-    import {useRoute, useRouter} from "vue-router";
-    const router = useRouter();
-    const route = useRoute();
-
-    import {useStore} from "vuex";
-    const store = useStore();
-
-    import {useI18n} from "vue-i18n";
-    const {t} = useI18n({useScope: "global"});
-
-    const props = defineProps({
-        embed: {type: Boolean, default: false},
-        isFlow: {type: Boolean, default: false},
-        isNamespace: {type: Boolean, default: false},
-    });
+    import DashboardFilterLanguage from "../../composables/monaco/languages/filters/impl/dashboardFilterLanguage.js";
 
     import yaml from "yaml";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
@@ -56,6 +48,17 @@
     import YAML_MAIN from "../../assets/dashboard/default_main_definition.yaml?raw";
     import YAML_FLOW from "../../assets/dashboard/default_flow_definition.yaml?raw";
     import YAML_NAMESPACE from "../../assets/dashboard/default_namespace_definition.yaml?raw";
+
+    const router = useRouter();
+    const route = useRoute();
+    const store = useStore();
+    const {t} = useI18n({useScope: "global"});
+
+    const props = defineProps({
+        embed: {type: Boolean, default: false},
+        isFlow: {type: Boolean, default: false},
+        isNamespace: {type: Boolean, default: false},
+    });
 
     const initial = (dashboard) => ({id: "default", ...YAML_UTILS.parse(dashboard)});
 
@@ -100,16 +103,16 @@
 </script>
 
 <style lang="scss" scoped>
-@import "@kestra-io/ui-libs/src/scss/variables";
+    @import "@kestra-io/ui-libs/src/scss/variables";
 
-section#filter {
-    margin: 2rem 0.25rem 0;
-    padding: 0 2rem;
-}
+    section#filter {
+        margin: 2rem 0.25rem 0;
+        padding: 0 2rem;
+    }
 
-section#description {
-    margin: 0 0.25rem;
-    padding: 0 2rem 1rem;
-    color: var(--ks-content-secondary);
-}
+    section#description {
+        margin: 0 0.25rem;
+        padding: 0 2rem 1rem;
+        color: var(--ks-content-secondary);
+    }
 </style>

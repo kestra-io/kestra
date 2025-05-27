@@ -507,7 +507,6 @@
     "export": "Esporta",
     "export all flows": "Esporta tutti i flows",
     "export all templates": "Esporta tutti i template",
-    "export_to_file": "Esporta su file",
     "exports": "Esportazioni",
     "failed to render pdf": "Impossibile visualizzare l'anteprima PDF",
     "false": "Falso",
@@ -881,6 +880,14 @@
     "no_logs_data": "Nessun dato",
     "no_logs_data_description": "O non ci sono flow in esecuzione, oppure potrebbe essere necessario modificare i filtri.",
     "no_namespaces": "Nessun namespace corrisponde ai criteri di ricerca.",
+    "no_results": {
+      "executions": "Nessuna Esecuzione Trovata",
+      "flows": "Nessun Flow Trovato",
+      "kv_pairs": "Nessuna coppia Key-Value trovata",
+      "secrets": "Nessun Secret Trovato",
+      "templates": "Nessun Template Trovato",
+      "triggers": "Nessun Trigger Trovato"
+    },
     "no_results_found": "Nessun risultato trovato",
     "no_tasks_running": "Nessun task è ancora in esecuzione.",
     "now": "Ora",
@@ -972,6 +979,7 @@
     "pause title": "Metti in pausa l'esecuzione <code>{id}</code>.<br/>Nota che i task attualmente in esecuzione verranno comunque elaborati e l'esecuzione dovrà essere ripresa manualmente.",
     "pluginDefaults": "Plugin predefiniti",
     "pluginPage": {
+      "alt": "Icona Plugin",
       "search": "Cerca tra oltre {count} plugin",
       "title1": "I plugin sono i blocchi di costruzione per i tuoi flussi di lavoro.",
       "title2": "Cerca tasks e triggers per costruire il tuo flow."

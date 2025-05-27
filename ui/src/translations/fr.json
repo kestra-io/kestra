@@ -507,7 +507,6 @@
     "export": "Exporter",
     "export all flows": "Exporter tous les flows",
     "export all templates": "Exporter tous les templates",
-    "export_to_file": "Exporter vers un fichier",
     "exports": "Exporter",
     "failed to render pdf": "Impossible de rendre l'aperçu PDF",
     "false": "Faux",
@@ -881,6 +880,14 @@
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Soit aucun flow n'est en cours d'exécution, soit vous devez ajuster vos filtres.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
+    "no_results": {
+      "executions": "Aucune exécution trouvée",
+      "flows": "Aucun flow trouvé",
+      "kv_pairs": "Aucune paire clé-valeur trouvée",
+      "secrets": "Aucun secret trouvé",
+      "templates": "Aucun modèle trouvé",
+      "triggers": "Aucun Trigger trouvé"
+    },
     "no_results_found": "Aucun résultat trouvé",
     "no_tasks_running": "Aucune tâche n'est encore en cours d'exécution.",
     "now": "Maintenant",
@@ -972,6 +979,7 @@
     "pause title": "Mettre en pause l'exécution <code>{id}</code>.<br/>Notez que les tasks actuellement en cours d'exécution seront toujours traitées, et l'exécution devra être reprise manuellement.",
     "pluginDefaults": "Par défaut du plugin",
     "pluginPage": {
+      "alt": "Icône des plugins",
       "search": "Rechercher parmi {count}+ plugins",
       "title1": "Les plugins sont des blocs pour vos workflows.",
       "title2": "Cherchez des tâches et des déclencheurs pour créer vos flux."

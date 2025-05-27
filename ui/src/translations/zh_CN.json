@@ -507,7 +507,6 @@
     "export": "导出",
     "export all flows": "导出所有流程",
     "export all templates": "导出所有模板",
-    "export_to_file": "导出到文件",
     "exports": "导出",
     "failed to render pdf": "渲染PDF预览失败",
     "false": "假",
@@ -881,6 +880,14 @@
     "no_logs_data": "无数据",
     "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
+    "no_results": {
+      "executions": "未找到执行",
+      "flows": "未找到Flows",
+      "kv_pairs": "未找到Key-Value对",
+      "secrets": "未找到Secrets",
+      "templates": "未找到模板",
+      "triggers": "未找到Triggers"
+    },
     "no_results_found": "未找到结果",
     "no_tasks_running": "尚无任务正在运行。",
     "now": "现在",
@@ -972,6 +979,7 @@
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
     "pluginDefaults": "插件默认值",
     "pluginPage": {
+      "alt": "插件图标",
       "search": "在{count}+个插件中搜索",
       "title1": "插件是你的工作流构建块。",
       "title2": "搜索任务和触发器以构建你的流程。"

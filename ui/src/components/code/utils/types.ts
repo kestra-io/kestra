@@ -90,7 +90,6 @@ type BasicParams = {
 
 type CreationParams = BasicParams & {
     position: "before" | "after";
-    target: string;
 }
 
 export type TopologyClickParams =

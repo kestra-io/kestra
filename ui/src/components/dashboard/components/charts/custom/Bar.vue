@@ -164,12 +164,6 @@
                 id,
                 chartId: props.chart.id
             };
-            if (route.query.namespace) {
-                params.namespace = route.query.namespace;
-            }
-            if (route.query.labels) {
-                params.labels = Object.fromEntries(route.query.labels.map(l => l.split(":")));
-            }
             if (decodedParams) {
                 params = {...params, filters: decodedParams}
             }

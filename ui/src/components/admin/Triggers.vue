@@ -10,9 +10,9 @@
                 <template #navbar>
                     <KestraFilter
                         prefix="triggers"
-                        :include="['namespace', 'trigger_state']"
+                        :domain="TriggerFilterLanguage.domain"
                         :buttons="{
-                            refresh: {shown: true, callback: load},
+                            refresh: {shown: true, callback: () => load()},
                             settings: {shown: false}
                         }"
                     />
@@ -262,9 +262,10 @@
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
-    import Cron from "../layout/Cron.vue"
-    import TriggerAvatar from "../flows/TriggerAvatar.vue"
-    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
+    import Cron from "../layout/Cron.vue";
+    import TriggerAvatar from "../flows/TriggerAvatar.vue";
+    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
+    import TriggerFilterLanguage from "../../composables/monaco/languages/filters/impl/triggerFilterLanguage.ts";
 </script>
 <script>
     import RouteContext from "../../mixins/routeContext";
@@ -295,7 +296,6 @@
                 triggers: undefined,
                 total: undefined,
                 triggerToUnlock: undefined,
-                state: undefined,
                 states: [
                     {label: this.$t("triggers_state.options.enabled"), value: "ENABLED"},
                     {label: this.$t("triggers_state.options.disabled"), value: "DISABLED"}

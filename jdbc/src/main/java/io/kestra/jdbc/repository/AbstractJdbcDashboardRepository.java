@@ -190,6 +190,7 @@ public abstract class AbstractJdbcDashboardRepository extends AbstractJdbcReposi
 
         if (dataChart.getChartOptions() != null && dataChart.getChartOptions().getNumberType().equals(KpiOption.NumberType.PERCENTAGE)) {
             Double totalValue = queryBuilder.fetchValue(tenantId, dataChart.getData(), startDate, endDate, false);
+            if (totalValue == null || totalValue == 0) return List.of(Map.of("value", 0.0));
             Double percentageValue = (filteredValue / totalValue) * 100;
             return List.of(Map.of("value", roundDouble(percentageValue, 2)));
         }

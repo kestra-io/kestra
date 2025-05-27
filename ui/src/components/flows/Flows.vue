@@ -52,7 +52,7 @@
                 <template #navbar>
                     <KestraFilter
                         prefix="flows"
-                        :include="['namespace', 'scope', 'labels']"
+                        :domain="FlowFilterLanguage.domain"
                         :buttons="{
                             refresh: {shown: false},
                             settings: {
@@ -334,6 +334,7 @@
     import KestraFilter from "../filter/KestraFilter.vue";
     import {chartClick} from "../../utils/charts.js";
     import {useRoute, useRouter} from "vue-router";
+    import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
 
     const route = useRoute();
     const router = useRouter();

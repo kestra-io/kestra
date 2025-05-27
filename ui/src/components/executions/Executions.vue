@@ -41,7 +41,7 @@
             <template #navbar v-if="isDisplayedTop">
                 <KestraFilter
                     prefix="executions"
-                    :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
+                    :domain="ExecutionFilterLanguage.domain"
                     :buttons="{
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
@@ -261,7 +261,7 @@
 
                         <el-table-column
                             prop="flowRevision"
-                            v-if="displayColumn('revision')"
+                            v-if="displayColumn('flowRevision')"
                             :label="$t('revision')"
                             class-name="shrink"
                         >
@@ -411,6 +411,7 @@
     import KestraFilter from "../filter/KestraFilter.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import RunFast from "vue-material-design-icons/RunFast.vue";
+    import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage.ts";
 </script>
 
 <script>

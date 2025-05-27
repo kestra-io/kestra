@@ -1,7 +1,8 @@
 <template>
-    <section class="d-inline-flex mb-3 filters">
-        <el-input v-model="search" :placeholder="$t('search')" />
-    </section>
+    <KestraFilter
+        :placeholder="$t('search')"
+        legacy-query
+    />
 
     <select-table
         :data="filteredKvs"
@@ -196,6 +197,7 @@
     import NamespaceSelect from "../namespaces/components/NamespaceSelect.vue";
 
     import Utils from "../../utils/utils";
+    import KestraFilter from "../filter/KestraFilter.vue";
 </script>
 
 <script lang="ts">
@@ -219,8 +221,11 @@
         computed: {
             ...mapState("auth", ["user"]),
             ...mapState("namespace", ["addKvModalVisible"]),
+            searchQuery() {
+                return this.$route.query.q;
+            },
             filteredKvs() {
-                return this.kvs?.filter(kv => !this.search || kv.key.toLowerCase().includes(this.search.toLowerCase()));
+                return this.kvs?.filter(kv => !this.searchQuery || kv.key.toLowerCase().includes(this.searchQuery.toLowerCase()));
             },
             kvModalTitle() {
                 return this.kv.key ? this.$t("kv.update", {key: this.kv.key}) : this.$t("kv.add");
@@ -256,11 +261,9 @@
                     this.$refs.form.clearValidate("value");
                 }
             },
-            search(newValue) {
-                if (newValue !== undefined) {
-                    this.$router.push({query: {
-                        q: newValue
-                    }})
+            searchQuery(newValue, oldValue) {
+                if (newValue !== oldValue) {
+                    this.reloadKvs();
                 }
             }
         },
@@ -276,7 +279,6 @@
                 },
                 kvs: undefined,
                 namespaceIterator: undefined,
-                search: this.$route.query?.q ?? "",
                 rules: {
                     key: [
                         {required: true, trigger: "change"},

@@ -507,7 +507,6 @@
     "export": "내보내기",
     "export all flows": "모든 flow 내보내기",
     "export all templates": "모든 템플릿 내보내기",
-    "export_to_file": "파일로 내보내기",
     "exports": "내보내기 목록",
     "failed to render pdf": "PDF 미리보기를 렌더링하지 못했습니다",
     "false": "False",
@@ -881,6 +880,14 @@
     "no_logs_data": "데이터 없음",
     "no_logs_data_description": "흐름이 실행 중이지 않거나 필터를 조정해야 할 수 있습니다.",
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
+    "no_results": {
+      "executions": "실행을 찾을 수 없음",
+      "flows": "flow를 찾을 수 없음",
+      "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
+      "secrets": "비밀 없음",
+      "templates": "템플릿을 찾을 수 없음",
+      "triggers": "트리거를 찾을 수 없음"
+    },
     "no_results_found": "결과를 찾을 수 없습니다",
     "no_tasks_running": "아직 실행 중인 task가 없습니다.",
     "now": "지금",
@@ -972,6 +979,7 @@
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
     "pluginDefaults": "플러그인 기본값",
     "pluginPage": {
+      "alt": "플러그인 아이콘",
       "search": "{count}+ 플러그인 검색",
       "title1": "플러그인은 워크플로우의 구성 요소입니다.",
       "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요."

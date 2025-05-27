@@ -284,7 +284,7 @@
             params: {
                 section: SECTIONS.TASKS.toLowerCase(),
                 position: event[1],
-                target: event[0],
+                id: event[0],
             }
         };
     };

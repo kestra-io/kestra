@@ -67,6 +67,10 @@ export function getType(property: any, key?: string, schema?: any): string {
     return property.type || "expression";
 }
 
+export function collapseEmptyValues(value: any): any {
+    return value === "" || value === null || JSON.stringify(value) === "{}" ? undefined : value
+}
+
 export default defineComponent({
     props: {
         modelValue: {
@@ -109,7 +113,7 @@ export default defineComponent({
         },
 
         onInput(value:any) {
-            this.$emit("update:modelValue", value === "" || value === null || JSON.stringify(value) === "{}" ? undefined : value);
+            this.$emit("update:modelValue", collapseEmptyValues(value));
         }
     },
     computed: {

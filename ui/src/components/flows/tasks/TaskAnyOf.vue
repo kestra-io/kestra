@@ -16,9 +16,9 @@
             v-if="currentSchema"
             :model-value="modelValue"
             :schema="currentSchema"
-            :properties="currentSchema?.properties"
+            :properties="Object.fromEntries(filteredProperties)"
             :definitions="definitions"
-            @update:model-value="onInput"
+            @update:model-value="onAnyOfInput"
         />
     </el-form>
 </template>
@@ -47,6 +47,24 @@
             );
             this.onSelectType(schema?.value || this.schemaOptions[0]?.value);
         },
+        watch: {
+            constantType(val) {
+                if(!val) {
+                    this.onInput(undefined);
+                    return;
+                }
+                // If the constant type changes, we need to update the modelValue
+                if(this.modelValue){
+                    for(const val in this.modelValue) {
+                        if(val !== "type" && !this.filteredProperties?.some(([key]) => key === val)) {
+                            delete this.modelValue[val];
+                        }
+                    }
+                }
+                this.onAnyOfInput(this.modelValue || {type: val});
+            },
+        },
+
         methods: {
             onSelectType(value) {
                 this.selectedSchema = value;
@@ -65,11 +83,27 @@
                                 this.currentSchema.properties[prop].default;
                         }
                     }
-                    this.onInput(defaultValues);
+
+                    this.onInput(defaultValues)
                 }
             },
+            onAnyOfInput(value) {
+                if(this.constantType?.length && typeof value === "object") {
+                    value.type = this.constantType;
+                }
+                this.onInput(value);
+            },
         },
+
         computed: {
+            constantType() {
+                return this.currentSchema?.properties?.type?.const;
+            },
+            filteredProperties() {
+                return this.currentSchema?.properties ? Object.entries(this.currentSchema.properties).filter(([key, schema]) => {
+                    return !(key === "type" && schema?.const);
+                }) : [];
+            },
             currentSchema() {
                 return (
                     this.definitions[this.selectedSchema] ??
@@ -92,28 +126,42 @@
                     .filter((schemaRef) => schemaRef)
                     .map((schemaRef) => schemaRef.split("."))
 
+                let mismatch = false
                 const commonPart = schemaRefsArray[0]
-                    .filter((schemaRef, index) => schemaRefsArray.every((item) => item[index] === schemaRef))
+                    .filter((schemaRef, index) => {
+                        if(!mismatch && schemaRefsArray.every((item) => item[index] === schemaRef)){
+                            return true;
+                        } else {
+                            mismatch = true;
+                            return false;
+                        }
+                    })
                     .map((schemaRef) => `${schemaRef}.`)
                     .join("");
 
                 // remove the common part from all schema ids
-                return this.schemas.map((schema) => {
-                    /** @type string */
-                    const schemaRef = schema.$ref
-                        ? schema.$ref.split("/").pop()
-                        : schema.type;
+                return [
+                    ...this.required ? [] : [{
+                        label: "<none>",
+                        value: "",
+                        id: "<none>",
+                    }],
+                    ...this.schemas.map((schema) => {
+                        /** @type string */
+                        const schemaRef = schema.$ref
+                            ? schema.$ref.split("/").pop()
+                            : schema.type;
 
-                    const lastPartOfValue = schemaRef.slice(
-                        commonPart.length,
-                    );
+                        const lastPartOfValue = schemaRef.slice(
+                            commonPart.length,
+                        );
 
-                    return {
-                        label: lastPartOfValue.capitalize(),
-                        value: schemaRef,
-                        id: lastPartOfValue.toLowerCase(),
-                    };
-                });
+                        return {
+                            label: lastPartOfValue.capitalize(),
+                            value: schemaRef,
+                            id: lastPartOfValue.toLowerCase(),
+                        };
+                    })];
             },
         },
     };
@@ -135,13 +183,13 @@
     :deep(.el-radio) {
         margin-right: 0;
         height: 40px;
-        
+
         .el-radio__inner {
             width: 24px;
             height: 24px;
             border: 2px solid var(--ks-content-link);
             background: transparent;
-            
+
             &::after {
                 width: 12px;
                 height: 12px;
@@ -149,7 +197,7 @@
             }
         }
 
-        
+
         &.is-checked {
             .el-radio__label {
                 color: var(--ks-content-link);

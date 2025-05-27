@@ -123,15 +123,8 @@
             };
         },
         computed: {
-            constantType() {
-                return Object.entries(this.properties).find(([key, schema]) => {
-                    return key === "type" && schema?.const;
-                })?.[1].const || null;
-            },
             sortedProperties() {
-                return sortProperties(this.properties, this.schema?.required).filter(([key, schema]) => {
-                    return !(key === "type" && schema?.const);
-                });
+                return sortProperties(this.properties, this.schema?.required);
             },
             requiredProperties() {
                 return this.merge ? this.sortedProperties : this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
@@ -147,7 +140,7 @@
             onObjectInput(propertyName, value) {
                 const currentValue = this.modelValue || {};
                 currentValue[propertyName] = value;
-                this.onInput(currentValue, "object");
+                this.onInput(currentValue);
             },
             isNestedProperty(key) {
                 return key.includes(".") ||
@@ -163,25 +156,11 @@
                     task: this.modelValue,
                     schema: schema,
                     definitions: this.definitions,
+                    required: this.schema?.required,
                 };
             },
         },
-        watch: {
-            constantType() {
-                if(!this.modelValue){
-                    return
-                }
 
-                for(const val in this.modelValue) {
-                    if(val !== "type" && !this.sortedProperties.some(([key]) => key === val)) {
-                        delete this.modelValue[val];
-                    }
-                }
-
-                this.onObjectInput("type", this.constantType);
-
-            },
-        },
     };
 </script>
 

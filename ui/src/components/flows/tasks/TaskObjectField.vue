@@ -30,7 +30,7 @@
                     popper-class="singleton-tooltip"
                 >
                     <template #content>
-                        <markdown
+                        <Markdown
                             class="markdown-tooltip"
                             :source="helpText(schema)"
                         />
@@ -41,8 +41,8 @@
         </template>
         <component
             v-if="!isBoolean(schema)"
-            v-model="model[fieldKey]"
-            :is="`task-${getType(schema, fieldKey)}`"
+            v-model="model"
+            :is="`task-${getType(schema, fieldKey, props.definitions)}`"
             v-bind="{...componentProps(fieldKey, schema)}"
             class="mt-1 mb-2 wrapper"
         />
@@ -59,10 +59,11 @@
         schema: any;
         definitions: any;
         fieldKey: string;
+        task: any;
     }>()
 
     const model = defineModel<any>({
-        type: Object,
+        type: [Object, String, Number, Boolean, Array],
         default: () => ({})
     });
 
@@ -72,7 +73,7 @@
 
     function componentProps(key: string, schema: any){
         return {
-            task: model.value,
+            task: props.task,
             root: getKey(key),
             schema: schema,
             required: isRequired(key),
@@ -107,3 +108,59 @@
         return key.charAt(0).toUpperCase() + key.slice(1);
     }
 </script>
+
+<style lang="scss" scoped>
+@import "../../code/styles/code.scss";
+
+.el-form-item {
+    width: 100%;
+
+    > :deep(.el-form-item__label) {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 0;
+    }
+}
+
+.inline-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+
+    .inline-start {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .label {
+        color: var(--ks-content-primary);
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 600;
+    }
+
+    .type-tag {
+        background-color: var(--ks-tag-background-active);
+        color: var(--ks-tag-content);
+        font-size: 12px;
+        line-height: 20px;
+        padding: 0 8px;
+        padding-bottom: 2px;
+        border-radius: 8px;
+        text-transform: capitalize;
+    }
+
+    .information-icon {
+        color: var(--ks-content-secondary);
+        cursor: pointer;
+    }
+}
+</style>

@@ -1,7 +1,7 @@
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import {defineComponent} from "vue";
 
-export function getType(property: any, key: string, schema: any): string {
+export function getType(property: any, key?: string, schema?: any): string {
     if (property.enum !== undefined) {
         return "enum";
     }
@@ -70,7 +70,7 @@ export function getType(property: any, key: string, schema: any): string {
 export default defineComponent({
     props: {
         modelValue: {
-            type: Object,
+            type: [Object, String, Number, Boolean, Array],
             default: undefined
         },
         schema: {

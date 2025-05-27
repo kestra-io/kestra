@@ -186,7 +186,7 @@
             });
 
 
-            const currentRefPath = refPath ? refPath + (position === "after" ? 1 : 0) : 0;
+            const currentRefPath = (refPath !== undefined && refPath !== null) ? refPath + (position === "after" ? 1 : 0) : 0;
             editTask(
                 blockType,
                 parentPath,

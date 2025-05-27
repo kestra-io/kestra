@@ -8,7 +8,7 @@
             <el-option
                 v-for="item in schemaOptions"
                 :key="item.value"
-                :label="item.value"
+                :label="item.id"
                 :value="item.value"
             />
         </el-select>
@@ -166,21 +166,23 @@
                     ...this.required ? [] : [{
                         label: "<Reset>",
                         value: "",
-                        id: "<none>",
+                        id: "<Reset>",
                     }],
                     ...this.schemas.map((schema) => {
                         const schemaRef = schema.$ref
                             ? schema.$ref.split("/").pop()
                             : schema.type;
 
-                        const lastPartOfValue = schemaRef.slice(
+                        const cleanSchemaRef = schemaRef.replace(/-\d+$/, "");
+
+                        const lastPartOfValue = cleanSchemaRef.slice(
                             commonPart.length,
-                        ).replace(/-\d+$/, "");;
+                        )
 
                         return {
-                            label: schemaRef.capitalize(),
+                            label: lastPartOfValue.capitalize(),
                             value: schemaRef,
-                            id: lastPartOfValue.toLowerCase(),
+                            id: cleanSchemaRef,
                         };
                     })];
             },

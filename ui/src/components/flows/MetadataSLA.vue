@@ -60,8 +60,8 @@
                     minLength: 1,
                 },
                 type: {
-                    type: "string",
-                    enum: ["EXECUTION_ASSERTION"],
+                    type: "constant",
+                    const: "EXECUTION_ASSERTION",
                 },
                 assert: {
                     type: "string",
@@ -93,8 +93,8 @@
                     minLength: 1,
                 },
                 type: {
-                    type: "string",
-                    enum: ["MAX_DURATION"],
+                    type: "constant",
+                    const: ["MAX_DURATION"],
                 },
                 behavior: {
                     type: "string",

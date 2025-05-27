@@ -44,19 +44,19 @@
     const schema = {
         anyOf: [
             {
-                $ref: "#/definitions/io.kestra.core.models.tasks.retrys.Constant-2",
+                $ref: "#/definitions/kestra_frontend.core.models.tasks.retrys.Constant-2",
             },
             {
-                $ref: "#/definitions/io.kestra.core.models.tasks.retrys.Exponential-2",
+                $ref: "#/definitions/kestra_frontend.core.models.tasks.retrys.Exponential-2",
             },
             {
-                $ref: "#/definitions/io.kestra.core.models.tasks.retrys.Random-2",
+                $ref: "#/definitions/kestra_frontend.core.models.tasks.retrys.Random-2",
             },
         ],
     };
 
     const definitions = {
-        "io.kestra.core.models.tasks.retrys.Random-2": {
+        "kestra_frontend.core.models.tasks.retrys.Random-2": {
             type: "object",
             properties: {
                 behavior: {
@@ -82,8 +82,8 @@
                     format: "duration",
                 },
                 type: {
-                    type: "string",
-                    enum: ["random"],
+                    type: "constant",
+                    const: "random",
                 },
                 warningOnRetry: {
                     type: "boolean",
@@ -93,7 +93,7 @@
             },
             required: ["type", "maxInterval", "minInterval"],
         },
-        "io.kestra.core.models.tasks.retrys.Exponential-2": {
+        "kestra_frontend.core.models.tasks.retrys.Exponential-2": {
             type: "object",
             properties: {
                 behavior: {
@@ -122,8 +122,8 @@
                     format: "duration",
                 },
                 type: {
-                    type: "string",
-                    enum: ["exponential"],
+                    type: "constant",
+                    const: "exponential",
                 },
                 warningOnRetry: {
                     type: "boolean",
@@ -133,7 +133,7 @@
             },
             required: ["type", "interval", "maxInterval"],
         },
-        "io.kestra.core.models.tasks.retrys.Constant-2": {
+        "kestra_frontend.core.models.tasks.retrys.Constant-2": {
             type: "object",
             properties: {
                 behavior: {
@@ -155,8 +155,8 @@
                     format: "duration",
                 },
                 type: {
-                    type: "string",
-                    enum: ["constant"],
+                    type: "constant",
+                    const: "constant",
                 },
                 warningOnRetry: {
                     type: "boolean",

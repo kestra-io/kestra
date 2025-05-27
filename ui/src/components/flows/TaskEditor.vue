@@ -18,7 +18,7 @@
 
     <TaskObject
         v-loading="isLoading"
-        v-if="schema"
+        v-if="selectedTaskType && schema"
         name="root"
         :model-value="taskObject"
         @update:model-value="onTaskInput"

@@ -10,7 +10,10 @@
     </Navbar>
 
     <el-row class="p-5">
-        <KestraFilter :placeholder="t('search')" />
+        <KestraFilter
+            :placeholder="t('search')"
+            legacy-query
+        />
 
         <el-col v-if="namespaces.length === 0" class="p-3 namespaces">
             <span>{{ t("no_namespaces") }}</span>
@@ -61,7 +64,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, Ref, onMounted, watch} from "vue";
+    import {computed, onMounted, Ref, ref, watch} from "vue";
 
     import {useRoute} from "vue-router";
     import useRouteContext from "../../mixins/useRouteContext.ts";

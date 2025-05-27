@@ -178,6 +178,9 @@
                             <el-dropdown-item @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </el-dropdown-item>
+                            <el-dropdown-item v-if="data.leaf" @click="exportFile(node, data)">
+                                {{ $t("namespace files.export_single") }}
+                            </el-dropdown-item>
                             <el-dropdown-item
                                 @click="
                                     toggleRenameDialog(
@@ -1032,6 +1035,15 @@
                     this.$toast().error(this.$t("namespace files.path.error"));
                 }
             },
+            async exportFile(node, data){
+                const content = await  this.$store.dispatch("namespace/readFile", {
+                    path: this.getPath(node),
+                    namespace: this.namespaceId,
+                })
+
+                const blob = new Blob([content], {type: "text/plain"});
+                Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
+            },
             onTabContextMenu(event) {
                 this.tabContextMenu = {
                     visible: true,
@@ -1082,7 +1094,7 @@
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 .sidebar {
-    background: var(--ks-background-card);
+    background: var(--ks-background-panel);
     border-right: 1px solid var(--ks-border-primary);
     overflow-x: hidden;
     min-width: calc(20% - 11px);
@@ -1162,6 +1174,7 @@
     :deep(.el-tree) {
         height: calc(100% - 64px);
         overflow: auto;
+        background: var(--ks-background-panel);
 
         .el-tree__empty-block {
             height: auto;

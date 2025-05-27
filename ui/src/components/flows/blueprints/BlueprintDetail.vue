@@ -14,9 +14,14 @@
         <div class="header d-flex">
             <button class="back-button align-self-center">
                 <el-icon size="medium" @click="goBack">
-                    <ArrowLeft />
+                    <ChevronLeft />
                 </el-icon>
             </button>
+            <span class="header-title align-self-center">
+                {{ $t('blueprints.title') }}
+            </span>
+        </div>
+        <div>
             <h2 class="blueprint-title align-self-center">
                 {{ blueprint.title }}
             </h2>
@@ -80,8 +85,7 @@
 </template>
 <script setup>
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-
-    import ArrowLeft from "vue-material-design-icons/ArrowLeft.vue";
+    import ChevronLeft from "vue-material-design-icons/ChevronLeft.vue";
     import Editor from "../../inputs/Editor.vue";
     import LowCodeEditor from "../../inputs/LowCodeEditor.vue";
     import TaskIcon from  "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
@@ -219,7 +223,8 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     .header-wrapper {
-        margin-bottom: calc($spacer * 2);
+        margin-top: calc($spacer * 2);
+        margin-bottom: $spacer;
 
         .el-card & {
             margin-top: 2.5rem;
@@ -233,20 +238,23 @@
             }
 
             .back-button {
-                padding-left: 0;
-                padding-right: calc($spacer * 1.5);
+                height: 32px;
+                margin-left: 0;
+                margin-right: calc($spacer);
                 cursor: pointer;
                 border: none;
-                background: none;
+                background: var(--ks-background-card);
                 display: flex;
                 align-items: center;
-                :deep(.material-design-icon) {
-                    font-size: $h4-font-size;
-                }
+                border-radius: 5px;
+                padding: 4px 10px;
+                border: 1px solid var(--ks-border-primary);
             }
 
             .blueprint-title {
-                font-weight: bold;
+                font-weight: 600;
+                font-size: 20px;
+                line-height: 30px;
                 text-overflow: ellipsis;
                 overflow: hidden;
             }
@@ -264,8 +272,9 @@
 
         h4 {
             margin-top: calc($spacer * 2);
-            margin-bottom: 0;
-            font-weight: bold;
+            font-weight: 600;
+            font-size: 18.4px;
+            line-height: 28px;
         }
 
         .embedded-topology {

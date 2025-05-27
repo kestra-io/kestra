@@ -507,7 +507,6 @@
     "export": "Exportar",
     "export all flows": "Exportar todos os flows",
     "export all templates": "Exportar todos os templates",
-    "export_to_file": "Exportar para arquivo",
     "exports": "Exportações",
     "failed to render pdf": "Falha ao renderizar a pré-visualização do PDF",
     "false": "Falso",
@@ -593,6 +592,7 @@
     "flow source not found": "Fonte do flow não encontrada",
     "flow-dependencies": "dependências",
     "flow-no-dependencies": "Seu flow não possui dependências",
+    "flow_export": "Exportar flow",
     "flow_only": "Disponível apenas na aba Flow.",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
@@ -746,6 +746,7 @@
         "parent_folder": "Pasta pai:"
       },
       "export": "Exportar arquivos do namespace",
+      "export_single": "Exportar arquivo",
       "filter": "Filtro",
       "import": {
         "error": "Ocorreu(ram) erro(s) ao importar o(s) arquivo(s)",
@@ -839,6 +840,7 @@
           "labels": "Etiquetas",
           "outputs": "Saídas",
           "retry": "Repetir",
+          "sla": "SLA",
           "variables": "Variáveis"
         },
         "main": {
@@ -880,6 +882,14 @@
     "no_logs_data": "Sem Dados",
     "no_logs_data_description": "Nenhum flow está em execução, ou você pode precisar ajustar seus filtros.",
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
+    "no_results": {
+      "executions": "Nenhuma Execução Encontrada",
+      "flows": "Nenhum Flow Encontrado",
+      "kv_pairs": "Nenhum par de Key-Value encontrado",
+      "secrets": "Nenhum Secret Encontrado",
+      "templates": "Nenhum Template Encontrado",
+      "triggers": "Nenhum Trigger Encontrado"
+    },
     "no_results_found": "Nenhum resultado encontrado",
     "no_tasks_running": "Ainda não há tasks em execução.",
     "now": "Agora",
@@ -971,6 +981,7 @@
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
     "pluginDefaults": "Padrões do plugin",
     "pluginPage": {
+      "alt": "Ícone de Plugins",
       "search": "Pesquisar em mais de {count} plugins",
       "title1": "Plugins são blocos de construção para seus workflows.",
       "title2": "Pesquise por tasks e triggers para construir seu flow."

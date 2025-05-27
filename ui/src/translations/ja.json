@@ -507,7 +507,6 @@
     "export": "エクスポート",
     "export all flows": "すべてのflowをエクスポート",
     "export all templates": "すべてのテンプレートをエクスポート",
-    "export_to_file": "ファイルにエクスポート",
     "exports": "エクスポート",
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",
     "false": "False",
@@ -593,6 +592,7 @@
     "flow source not found": "フローソースが見つかりません",
     "flow-dependencies": "依存関係",
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
+    "flow_export": "フローをエクスポート",
     "flow_only": "Flowタブでのみ利用可能です。",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code>件のflowが削除されました",
@@ -746,6 +746,7 @@
         "parent_folder": "親フォルダー:"
       },
       "export": "namespaceファイルをエクスポート",
+      "export_single": "ファイルをエクスポート",
       "filter": "フィルター",
       "import": {
         "error": "ファイルのインポート中にエラーが発生しました",
@@ -839,6 +840,7 @@
           "labels": "ラベル",
           "outputs": "出力",
           "retry": "リトライ",
+          "sla": "SLA",
           "variables": "変数"
         },
         "main": {
@@ -880,6 +882,14 @@
     "no_logs_data": "データなし",
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
+    "no_results": {
+      "executions": "実行が見つかりません",
+      "flows": "フローが見つかりません",
+      "kv_pairs": "キー-バリュー ペアが見つかりません",
+      "secrets": "シークレットが見つかりません",
+      "templates": "テンプレートが見つかりません",
+      "triggers": "トリガーが見つかりません"
+    },
     "no_results_found": "結果が見つかりません",
     "no_tasks_running": "タスクはまだ実行されていません。",
     "now": "現在",
@@ -971,6 +981,7 @@
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
     "pluginDefaults": "プラグインのデフォルト",
     "pluginPage": {
+      "alt": "プラグインアイコン",
       "search": "{count}+ プラグインを検索",
       "title1": "プラグインはワークフローの構成要素です。",
       "title2": "taskやtriggerを検索してflowを構築します。"

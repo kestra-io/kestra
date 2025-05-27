@@ -17,14 +17,16 @@ const buildFromArray = (values: string[], isCapitalized = false): Value[] =>
         value,
     }));
 
-const bulidFromObject = (object: object): Value[] =>
+const buildFromObject = (object: object): Value[] =>
     Object.entries(object).map(([key, value]) => ({
         label: key,
         value,
     }));
 
-export function useValues(label: string) {
-    const {t} = useI18n({useScope: "global"});
+export function useValues(label: string, t?: ReturnType<typeof useI18n>["t"]) {
+    if (t === undefined) {
+        t = useI18n({useScope: "global"}).t;
+    }
 
     // Override for the scope labels on the dashboard
     const DASHBOARDS = ["dashboard", "custom_dashboard"];
@@ -52,8 +54,8 @@ export function useValues(label: string) {
         ],
         LEVELS: buildFromArray(["TRACE", "DEBUG", "INFO", "WARN", "ERROR"]),
         TYPES: auditLogTypes,
-        PERMISSIONS: bulidFromObject(permission),
-        ACTIONS: bulidFromObject({
+        PERMISSIONS: buildFromObject(permission),
+        ACTIONS: buildFromObject({
             ...action,
             LOGIN: "LOGIN",
             LOGOUT: "LOGOUT",

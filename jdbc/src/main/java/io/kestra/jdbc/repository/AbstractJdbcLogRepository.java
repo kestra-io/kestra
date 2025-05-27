@@ -3,6 +3,8 @@ package io.kestra.jdbc.repository;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.statistics.LogStatistics;
@@ -15,8 +17,8 @@ import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import lombok.Getter;
-import org.jooq.Record;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
@@ -28,8 +30,8 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
 import java.util.*;
+import java.util.Comparator;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -660,6 +662,53 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
         return field("level").in(levels.stream().map(level -> level.name()).toList());
     }
 
+    public Double fetchValue(String tenantId, DataFilterKPI<Logs.Fields, ? extends ColumnDescriptor<Logs.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+            ColumnDescriptor<Logs.Fields> columnDescriptor = dataFilter.getColumns();
+            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
+            Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
+            if (columnDescriptor.getAgg() != null) {
+                field = filterService.buildAggregation(field, columnDescriptor.getAgg());
+            }
+
+            List<AbstractFilter<Logs.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getWhere()));
+            if (numeratorFilter) {
+                filters.addAll(dataFilter.getNumerator());
+            }
+
+            SelectConditionStep selectStep = context
+                .select(field)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId));
+
+            var selectConditionStep = where(
+                selectStep,
+                filterService,
+                filters,
+                getFieldsMapping()
+            );
+
+            Record result = selectConditionStep.fetchOne();
+            if (result != null) {
+                return result.getValue(field, Double.class);
+            } else {
+                return null;
+            }
+        });
+    }
+
+    private Field<?> aggregate(String aggregation) {
+        return switch (aggregation) {
+            case "avg" -> DSL.avg(field("attempt_number", Double.class)).as("metric_value");
+            case "sum" -> DSL.sum(field("attempt_number", Double.class)).as("metric_value");
+            case "min" -> DSL.min(field("attempt_number", Double.class)).as("metric_value");
+            case "max" -> DSL.max(field("attempt_number", Double.class)).as("metric_value");
+            case "count" -> DSL.count().as("metric_value");
+            default -> throw new IllegalArgumentException("Invalid aggregation: " + aggregation);
+        };
+    }
+
     @Override
     public ArrayListTotal<Map<String, Object>> fetchData(
         String tenantId,
@@ -692,7 +741,7 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors, getWhereMapping());
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), getWhereMapping());
 
                 List<? extends ColumnDescriptor<Logs.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)
@@ -715,21 +764,4 @@ public abstract class AbstractJdbcLogRepository extends AbstractJdbcRepository i
     }
 
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
-
-    protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
-        DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,
-        Map<F, String> fieldsMapping,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        Set<F> dateFields
-    ) {
-        return descriptors.getColumns().entrySet().stream()
-            .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
-            .map(entry -> {
-                Duration duration = Duration.between(startDate, endDate);
-                return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
-            })
-            .toList();
-
-    }
 }

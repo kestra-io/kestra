@@ -507,7 +507,6 @@
     "export": "Exportar",
     "export all flows": "Exportar todos los flows",
     "export all templates": "Exportar todas las plantillas",
-    "export_to_file": "Exportar a archivo",
     "exports": "Exportaciones",
     "failed to render pdf": "Error al renderizar la vista previa del PDF",
     "false": "Falso",
@@ -593,6 +592,7 @@
     "flow source not found": "Fuente de flow no encontrada",
     "flow-dependencies": "dependencias",
     "flow-no-dependencies": "Tu flow no tiene dependencias.",
+    "flow_export": "Exportar flow",
     "flow_only": "Solo disponible en la pestaña Flow.",
     "flows": "Flujos",
     "flows deleted": "<code>{count}</code> Flow(s) eliminados",
@@ -746,6 +746,7 @@
         "parent_folder": "Carpeta padre:"
       },
       "export": "Exportar archivos del namespace",
+      "export_single": "Exportar archivo",
       "filter": "Filtro",
       "import": {
         "error": "Ocurrieron errores al importar el/los archivo(s)",
@@ -839,6 +840,7 @@
           "labels": "Etiquetas",
           "outputs": "Salidas",
           "retry": "Reintentar",
+          "sla": "SLA",
           "variables": "Variables"
         },
         "main": {
@@ -880,6 +882,14 @@
     "no_logs_data": "Sin datos",
     "no_logs_data_description": "Ya sea que no haya flows en ejecución, o puede que necesite ajustar sus filtros.",
     "no_namespaces": "Ningún namespace coincide con los criterios de búsqueda.",
+    "no_results": {
+      "executions": "No se encontraron ejecuciones",
+      "flows": "No se encontraron Flows",
+      "kv_pairs": "No se encontraron pares Key-Value",
+      "secrets": "No se encontraron Secrets",
+      "templates": "No se encontraron plantillas",
+      "triggers": "No se encontraron Triggers"
+    },
     "no_results_found": "No se encontraron resultados",
     "no_tasks_running": "Todavía no hay tasks en ejecución.",
     "now": "Ahora",
@@ -971,6 +981,7 @@
     "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
     "pluginDefaults": "Valores predeterminados del plugin",
     "pluginPage": {
+      "alt": "Icono de Plugins",
       "search": "Buscar en más de {count} plugins",
       "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
       "title2": "Busca tasks y triggers para construir tu flow."

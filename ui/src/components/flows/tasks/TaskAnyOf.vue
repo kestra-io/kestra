@@ -46,7 +46,7 @@
         },
         inheritAttrs: false,
         mixins: [Task],
-        emits: ["update:modelValue"],
+        emits: ["update:modelValue", "any-of-type"],
         data() {
             return {
                 isOpen: false,
@@ -84,6 +84,7 @@
 
         methods: {
             onSelectType(value) {
+                if(this.selectedSchema) this.$emit("any-of-type", value);
                 this.selectedSchema = value;
                 // Set up default values
                 if (
@@ -174,7 +175,7 @@
 
                         const lastPartOfValue = schemaRef.slice(
                             commonPart.length,
-                        );
+                        ).replace(/-\d+$/, "");;
 
                         return {
                             label: schemaRef.capitalize(),

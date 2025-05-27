@@ -12,7 +12,25 @@ export default [
     {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
 
     //Dashboards
-    {name: "home", path: "/:tenant?/dashboards/:id?", component: () => import("../components/dashboard/Dashboard.vue")},
+    {
+        name: "home",
+        path: "/:tenant?/dashboards/:id?",
+        component: () => import("../components/dashboard/Dashboard.vue"),
+        beforeEnter: (to, from, next) => {
+            if (!to.params.id) {
+                next({
+                    name: "home",
+                    params: {
+                        ...to.params,
+                        id: "default",
+                    },
+                    query: to.query,
+                });
+            } else {
+                next();
+            }
+        },
+    },
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/DashboardCreate.vue")},
     {name: "dashboards/update", path: "/:tenant?/dashboards/:id/edit", component: () => import("override/components/dashboard/components/DashboardEdit.vue")},
 

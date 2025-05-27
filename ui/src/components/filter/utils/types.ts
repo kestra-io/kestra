@@ -1,3 +1,5 @@
+import {Comparators} from "../../../composables/monaco/languages/filters/filterCompletion.ts";
+
 export type Shown = {
     shown: boolean;
 };
@@ -16,7 +18,7 @@ export type Buttons = {
     settings: Shown & {
         charts: Shown & {
             value: boolean;
-            callback: () => void;
+            callback: (newVal: string) => void;
         };
     };
 };
@@ -26,7 +28,7 @@ export type CurrentItem = {
     field?: string;
     value: string[] | { startDate: Date; endDate: Date }[];
     operation?: string;
-    comparator?: Comparator;
+    comparator?: Comparators;
     persistent?: boolean;
 };
 
@@ -35,20 +37,16 @@ type Pair = {
     value: string;
 };
 
-export type Comparator = Pair & {
-    multiple?: boolean;
-};
-
 export type Option = {
     key: string;
     icon: any;
     label: string;
     value: {
         label: string;
-        comparator?: Comparator;
+        comparator?: Comparators;
         value: string[];
     };
-    comparators: Comparator[];
+    comparators: Comparators[];
 };
 
 export type Value = Pair;

@@ -507,7 +507,6 @@
     "export": "निर्यात करें",
     "export all flows": "सभी Flows निर्यात करें",
     "export all templates": "सभी templates निर्यात करें",
-    "export_to_file": "फ़ाइल में निर्यात करें",
     "exports": "निर्यात",
     "failed to render pdf": "PDF प्रस्तुत करने में विफल",
     "false": "असत्य",
@@ -593,6 +592,7 @@
     "flow source not found": "Flow source नहीं मिला",
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
+    "flow_export": "flow निर्यात करें",
     "flow_only": "केवल Flow टैब पर उपलब्ध है।",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) हटाए गए",
@@ -746,6 +746,7 @@
         "parent_folder": "मूल फ़ोल्डर:"
       },
       "export": "Namespace फ़ाइलें निर्यात करें",
+      "export_single": "फ़ाइल निर्यात करें",
       "filter": "फ़िल्टर",
       "import": {
         "error": "फ़ाइलें आयात करते समय त्रुटि हुई",
@@ -839,6 +840,7 @@
           "labels": "लेबल्स",
           "outputs": "आउटपुट्स",
           "retry": "पुनः प्रयास करें",
+          "sla": "SLA",
           "variables": "वेरिएबल्स"
         },
         "main": {
@@ -880,6 +882,14 @@
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
+    "no_results": {
+      "executions": "कोई Executions नहीं मिला",
+      "flows": "कोई Flows नहीं मिला",
+      "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
+      "secrets": "कोई Secrets नहीं मिले",
+      "templates": "कोई टेम्पलेट नहीं मिला",
+      "triggers": "कोई Triggers नहीं मिले"
+    },
     "no_results_found": "कोई परिणाम नहीं मिला",
     "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
     "now": "अब",
@@ -971,6 +981,7 @@
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
     "pluginDefaults": "प्लगइन डिफॉल्ट्स",
     "pluginPage": {
+      "alt": "प्लगइन्स आइकन",
       "search": "{count}+ प्लगइन्स में खोजें",
       "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",
       "title2": "अपने flow को बनाने के लिए Tasks और Triggers खोजें।"

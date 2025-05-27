@@ -1,5 +1,5 @@
 <template>
-    <metrics-table
+    <MetricsTable
         ref="table"
         :task-run-id="$route.query.metric?.[0] ?? undefined"
         :show-task="true"
@@ -7,50 +7,26 @@
     >
         <template #navbar>
             <KestraFilter
-                :include="['metric']"
+                :domain="MetricFilterLanguage.domain"
                 :placeholder="`${$t('display metric for specific task')}...`"
-                :values="{metric: selectOptions}"
+                legacy-query
             />
         </template>
-    </metrics-table>
+    </MetricsTable>
 </template>
-<script>
-    import {mapState} from "vuex";
-
+<script setup lang="ts">
+    import {useStore} from "vuex";
+    import MetricFilterLanguage from "../../composables/monaco/languages/filters/impl/metricFilterLanguage.ts";
     import MetricsTable from "../executions/MetricsTable.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
+    import {onMounted, ref} from "vue";
 
-    export default {
-        components: {
-            MetricsTable,
-            KestraFilter,
-        },
-        emits: ["follow"],
-        mounted() {
-            if (this.$refs.table) {
-                this.$refs.table.loadData(this.$refs.table.onDataLoaded);
-            }
-        },
-        data() {
-            return {
-                isModalOpen: false,
-            };
-        },
-        computed: {
-            ...mapState("execution", ["execution"]),
-            selectOptions() {
-                const options = {};
-                for (const taskRun of this.execution.taskRunList || []) {
-                    options[taskRun.id] = {
-                        label:
-                            taskRun.taskId +
-                            (taskRun.value ? ` - ${taskRun.value}` : ""),
-                        value: taskRun.id,
-                    };
-                }
+    const table = ref<typeof MetricsTable>();
 
-                return Object.values(options);
-            },
-        },
-    };
+    const store = useStore();
+    const execution = store.state["execution"].execution;
+
+    onMounted(() => {
+        table.value!.loadData(table.value!.onDataLoaded);
+    })
 </script>

@@ -2,7 +2,7 @@
     <TopNavBar :title="routeInfo.title" :breadcrumb="props.breadcrumb">
         <template #additional-right v-if="canCreate">
             <ul>
-                <li v-if="props.id">
+                <li v-if="props.id && props.id !== 'default'">
                     <router-link
                         :to="{
                             name: 'dashboards/update',

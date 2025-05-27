@@ -2,10 +2,12 @@
     <KestraFilter
         v-if="triggersWithType.length"
         prefix="flow_triggers"
+        read-only
         :buttons="{
             refresh: {shown: true, callback: loadData},
             settings: {shown: false}
         }"
+        legacy-query
     />
 
     <el-table
@@ -281,7 +283,7 @@
     import {storageKeys} from "../../utils/constants.js";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, Empty},
+        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
         props:{
             embed: {
                 type: Boolean,

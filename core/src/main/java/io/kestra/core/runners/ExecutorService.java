@@ -313,6 +313,11 @@ public class ExecutorService {
         Task parent = executor.getFlow().findTaskByTaskId(parentTaskRun.getTaskId());
 
         if (parent instanceof FlowableTask<?> flowableParent) {
+            // Count the number of flowable tasks executions, some flowable are being called multiple times,
+            // so this is not exactly the number of flowable taskruns but the number of times they are executed.
+            metricRegistry
+                .counter(MetricRegistry.METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT, MetricRegistry.METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT_DESCRIPTION, metricRegistry.tags(parent))
+                .increment();
 
             try {
                 List<NextTaskRun> nexts = flowableParent.resolveNexts(

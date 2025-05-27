@@ -2,6 +2,10 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.conditions.ConditionContext;
+import io.kestra.core.models.dashboards.ColumnDescriptor;
+import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -10,28 +14,60 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.TriggerRepositoryInterface;
 import io.kestra.core.schedulers.ScheduleContextInterface;
+import io.kestra.core.utils.DateUtils;
+import io.kestra.core.utils.ListUtils;
 import io.kestra.jdbc.runner.JdbcQueueIndexerInterface;
 import io.kestra.jdbc.runner.JdbcSchedulerContext;
+import io.kestra.jdbc.services.JdbcFilterService;
+import io.kestra.plugin.core.dashboard.data.ITriggers;
+import io.kestra.plugin.core.dashboard.data.Triggers;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
+import lombok.Getter;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
 import java.time.ZonedDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcRepository implements TriggerRepositoryInterface, JdbcQueueIndexerInterface<Trigger> {
     public static final Field<Object> NAMESPACE_FIELD = field("namespace");
 
     protected io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository;
 
-    public AbstractJdbcTriggerRepository(io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository) {
+    private final JdbcFilterService filterService;
+
+    @Getter
+    private final Map<Triggers.Fields, String> fieldsMapping = Map.of(
+        Triggers.Fields.ID, "key",
+        Triggers.Fields.NAMESPACE, "namespace",
+        Triggers.Fields.FLOW_ID, "flow_id",
+        Triggers.Fields.TRIGGER_ID, "trigger_id",
+        Triggers.Fields.EXECUTION_ID, "execution_id",
+        Triggers.Fields.NEXT_EXECUTION_DATE, "next_execution_date",
+        Triggers.Fields.WORKER_ID, "worker_id"
+    );
+
+    @Override
+    public Set<Triggers.Fields> dateFields() {
+        return Set.of();
+    }
+
+    @Override
+    public Triggers.Fields dateFilterField() {
+        return null;
+    }
+
+    public AbstractJdbcTriggerRepository(io.kestra.jdbc.AbstractJdbcRepository<Trigger> jdbcRepository,
+                                         JdbcFilterService filterService) {
         this.jdbcRepository = jdbcRepository;
+
+        this.filterService = filterService;
     }
 
     @Override
@@ -381,4 +417,99 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
         return s -> mapper.getOrDefault(s, s);
     }
+
+    @Override
+    public ArrayListTotal<Map<String, Object>> fetchData(
+        String tenantId,
+        DataFilter<Triggers.Fields, ? extends ColumnDescriptor<Triggers.Fields>> descriptors,
+        ZonedDateTime startDate,
+        ZonedDateTime endDate,
+        Pageable pageable
+    ) {
+        return this.jdbcRepository
+            .getDslContextWrapper()
+            .transactionResult(configuration -> {
+                DSLContext context = DSL.using(configuration);
+
+                Map<String, ? extends ColumnDescriptor<Triggers.Fields>> columnsWithoutDate = descriptors.getColumns().entrySet().stream()
+                    .filter(entry -> entry.getValue().getField() == null || !dateFields().contains(entry.getValue().getField()))
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+                // Generate custom fields for date as they probably need formatting
+                List<Field<Date>> dateFields = generateDateFields(descriptors, fieldsMapping, startDate, endDate, dateFields());
+
+                // Init request
+                SelectConditionStep<Record> selectConditionStep = select(
+                    context,
+                    filterService,
+                    columnsWithoutDate,
+                    dateFields,
+                    this.getFieldsMapping(),
+                    this.jdbcRepository.getTable(),
+                    tenantId
+                );
+
+                // Apply Where filter
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
+
+                List<? extends ColumnDescriptor<Triggers.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
+                    .filter(column -> column.getAgg() == null)
+                    .toList();
+
+                // Apply GroupBy for aggregation
+                SelectHavingStep<Record> selectHavingStep = groupBy(
+                    selectConditionStep,
+                    columnsWithoutDateWithOutAggs,
+                    dateFields,
+                    fieldsMapping
+                );
+
+                // Apply OrderBy
+                SelectSeekStepN<Record> selectSeekStep = orderBy(selectHavingStep, descriptors);
+
+                // Fetch and paginate if provided
+                return fetchSeekStep(selectSeekStep, pageable);
+            });
+    }
+
+
+
+    public Double fetchValue(String tenantId, DataFilterKPI<ITriggers.Fields, ? extends ColumnDescriptor<ITriggers.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+            ColumnDescriptor<ITriggers.Fields> columnDescriptor = dataFilter.getColumns();
+            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
+            Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
+            if (columnDescriptor.getAgg() != null) {
+                field = filterService.buildAggregation(field, columnDescriptor.getAgg());
+            }
+
+            List<AbstractFilter<ITriggers.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getWhere()));
+            if (numeratorFilter) {
+                filters.addAll(dataFilter.getNumerator());
+            }
+
+            SelectConditionStep selectStep = context
+                .select(field)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId));
+
+            var selectConditionStep = where(
+                selectStep,
+                filterService,
+                filters,
+                getFieldsMapping()
+            );
+
+            Record result = selectConditionStep.fetchOne();
+            if (result != null) {
+                return result.getValue(field, Double.class);
+            } else {
+                return null;
+            }
+        });
+    }
+
+
+    abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
 }

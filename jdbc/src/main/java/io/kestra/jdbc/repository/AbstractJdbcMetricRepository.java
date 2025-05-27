@@ -2,6 +2,8 @@ package io.kestra.jdbc.repository;
 
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
+import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.executions.metrics.MetricAggregation;
@@ -15,8 +17,8 @@ import io.kestra.plugin.core.dashboard.data.Metrics;
 import io.micrometer.common.lang.Nullable;
 import io.micronaut.data.model.Pageable;
 import lombok.Getter;
-import org.jooq.Record;
 import org.jooq.*;
+import org.jooq.Record;
 import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
@@ -374,6 +376,43 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
         return mapper::get;
     }
 
+    public Double fetchValue(String tenantId, DataFilterKPI<Metrics.Fields, ? extends ColumnDescriptor<Metrics.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+            ColumnDescriptor<Metrics.Fields> columnDescriptor = dataFilter.getColumns();
+            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
+            Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
+            if (columnDescriptor.getAgg() != null) {
+                field = filterService.buildAggregation(field, columnDescriptor.getAgg());
+            }
+
+            List<AbstractFilter<Metrics.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getWhere()));
+            if (numeratorFilter) {
+                filters.addAll(dataFilter.getNumerator());
+            }
+
+            SelectConditionStep selectStep = context
+                .select(field)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId));
+
+            var selectConditionStep = where(
+                selectStep,
+                filterService,
+                filters,
+                getFieldsMapping()
+            );
+
+            Record result = selectConditionStep.fetchOne();
+            if (result != null) {
+                return result.getValue(field, Double.class);
+            } else {
+                return null;
+            }
+        });
+    }
+
+
     @Override
     public ArrayListTotal<Map<String, Object>> fetchData(
         String tenantId,
@@ -406,7 +445,7 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors, fieldsMapping);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
 
                 List<? extends ColumnDescriptor<Metrics.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)
@@ -429,21 +468,4 @@ public abstract class AbstractJdbcMetricRepository extends AbstractJdbcRepositor
     }
 
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
-
-    protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
-        DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,
-        Map<F, String> fieldsMapping,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        Set<F> dateFields
-    ) {
-        return descriptors.getColumns().entrySet().stream()
-            .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
-            .map(entry -> {
-                Duration duration = Duration.between(startDate, endDate);
-                return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
-            })
-            .toList();
-
-    }
 }

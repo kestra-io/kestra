@@ -1,11 +1,11 @@
 package io.kestra.plugin.core.dashboard.chart;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ChartOption;
 import io.kestra.core.models.dashboards.charts.Chart;
+import io.kestra.plugin.core.dashboard.chart.mardown.sources.MarkdownSource;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -45,5 +45,12 @@ import lombok.experimental.SuperBuilder;
     }
 )
 public class Markdown extends Chart<ChartOption> {
+    @Deprecated(forRemoval = true)
+    @Schema(
+        title = "[DEPRECATED]Markdown content to display",
+        description = "Use the String source instead"
+    )
     private String content;
+
+    private MarkdownSource source;
 }

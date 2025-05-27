@@ -470,6 +470,7 @@
     "template export": "Are you sure you want to export <code>{templateCount}</code> template(s)?",
     "templates exported": "Templates exported",
     "export all templates": "Export all templates",
+    "flow_export": "Export flow",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
     "flows exported": "Flows exported",
     "export all flows": "Export all flows",
@@ -514,7 +515,6 @@
     "focus task": "Click on any element to see its documentation.",
     "validate": "Validate",
     "add error handler": "Add an error handler",
-    "export_to_file": "Export to file",
     "taskDefaults": "Task Defaults",
     "disabled": "Disabled",
     "before": "before",
@@ -682,6 +682,7 @@
         "error": "Error(s) occurred while importing the file(s)"
       },
       "export": "Export namespace files",
+      "export_single": "Export file",
       "dialog": {
         "name": {
           "file": "Name with extension:",
@@ -753,7 +754,8 @@
     "pluginPage": {
       "title1": "Plugins are building blocks for your workflows.",
       "title2": "Search for tasks and triggers to build your flow.",
-      "search": "Search across {count}+ plugins"
+      "search": "Search across {count}+ plugins",
+      "alt": "Plugins Icon"
     },
     "no inputs": "This flow has no inputs.",
     "settings": {
@@ -1191,6 +1193,7 @@
         },
         "general": {
           "retry": "Retry",
+          "sla": "SLA",
           "labels": "Labels",
           "inputs": "Inputs",
           "outputs": "Outputs",
@@ -1334,6 +1337,14 @@
     "searching": "Searching...",
     "worker information": "Worker Information",
     "test-badge-text": "Test",
-    "test-badge-tooltip": "This execution was created by a Test"
+    "test-badge-tooltip": "This execution was created by a Test",
+    "no_results": {
+      "executions": "No Executions Found",
+      "triggers": "No Triggers Found",
+      "flows": "No Flows Found",
+      "kv_pairs": "No Key-Value pairs Found",
+      "secrets": "No Secrets Found",
+      "templates": "No Templates Found"
+    }
   }
 }

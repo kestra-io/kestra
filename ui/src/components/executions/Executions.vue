@@ -41,7 +41,7 @@
             <template #navbar v-if="isDisplayedTop">
                 <KestraFilter
                     prefix="executions"
-                    :include="['namespace', 'state', 'scope', 'labels', 'child', 'relative_date', 'absolute_date']"
+                    :domain="ExecutionFilterLanguage.domain"
                     :buttons="{
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
@@ -68,7 +68,7 @@
                 </el-card>
             </template>
 
-            <template #table v-if="executions?.length">
+            <template #table>
                 <select-table
                     ref="selectTable"
                     :data="executions"
@@ -79,6 +79,7 @@
                     @sort-change="onSort"
                     @selection-change="handleSelectionChange"
                     :selectable="!hidden?.includes('selection') && canCheck"
+                    :no-data-text="$t('no_results.executions')"
                 >
                     <template #select-actions>
                         <bulk-select
@@ -260,7 +261,7 @@
 
                         <el-table-column
                             prop="flowRevision"
-                            v-if="displayColumn('revision')"
+                            v-if="displayColumn('flowRevision')"
                             :label="$t('revision')"
                             class-name="shrink"
                         >
@@ -410,6 +411,7 @@
     import KestraFilter from "../filter/KestraFilter.vue"
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import RunFast from "vue-material-design-icons/RunFast.vue";
+    import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage.ts";
 </script>
 
 <script>

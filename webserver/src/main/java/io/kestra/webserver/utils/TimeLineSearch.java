@@ -20,6 +20,9 @@ public class TimeLineSearch {
         Duration timeRange = null;
 
         for (QueryFilter filter : filters) {
+            if (filter.field() == null) {
+                continue;
+            }
             switch (filter.field()) {
                 case START_DATE -> startDate = ZonedDateTime.parse(filter.value().toString());
                 case END_DATE -> endDate = ZonedDateTime.parse(filter.value().toString());

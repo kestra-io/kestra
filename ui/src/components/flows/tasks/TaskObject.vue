@@ -165,10 +165,6 @@
 </script>
 
 <style lang="scss">
-    .el-form-item {
-        margin-bottom: 1rem;
-    }
-
     .el-form-item__content {
         .el-form-item {
             width: 100%;
@@ -183,4 +179,56 @@
 
 <style lang="scss" scoped>
 @import "../../code/styles/code.scss";
+
+.el-form-item {
+    width: 100%;
+    margin-bottom: 0;
+    > :deep(.el-form-item__label) {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        padding: 0;
+    }
+}
+
+.inline-wrapper {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+
+    .inline-start {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 0;
+        flex: 1 1 auto;
+    }
+
+    .label {
+        color: var(--ks-content-primary);
+        min-width: 0;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-weight: 600;
+    }
+
+    .type-tag {
+        background-color: var(--ks-tag-background-active);
+        color: var(--ks-tag-content);
+        font-size: 12px;
+        line-height: 20px;
+        padding: 0 8px;
+        padding-bottom: 2px;
+        border-radius: 8px;
+        text-transform: capitalize;
+    }
+
+    .information-icon {
+        color: var(--ks-content-secondary);
+        cursor: pointer;
+    }
+}
 </style>

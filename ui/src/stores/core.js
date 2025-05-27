@@ -12,7 +12,7 @@ export default {
             template: undefined,
         },
         monacoYamlConfigured: false,
-        tutorialFlows: []
+        tutorialFlows: [],
     },
     actions: {
         showMessage({commit}, message) {
@@ -57,6 +57,6 @@ export default {
         },
         error(state) {
             return state.error;
-        }
+        },
     }
 }

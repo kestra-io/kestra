@@ -16,8 +16,12 @@
 <style scoped lang="scss">
 .plugin-doc-wrapper {
     padding: 1px 1rem;
-    background-color: var(--ks-background-body);
+    background-color: var(--ks-background-panel);
     padding-bottom: 5rem;
+}
+
+.plugin-doc {
+    background-color: var(--ks-background-panel) !important;
 }
 
 .editorPlugin{

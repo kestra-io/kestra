@@ -16,7 +16,7 @@
     padding: 1rem;
     border-radius: 8px;
     margin: 1rem 0;
-    background: var(--ks-background-body);
+    background: var(--ks-background-box);
 }
 .bordered {
     border: 1px solid var(--ks-border-secondary);

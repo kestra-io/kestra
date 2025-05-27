@@ -756,7 +756,7 @@
     @import "../../styles/layout/root-dark";
 
     .custom-dark-vs-theme .ks-monaco-editor .sticky-widget {
-        background-color: $input-bg;
+        background-color: var(--ks-background-input);
     }
 
     .monaco-editor {

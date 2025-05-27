@@ -1082,7 +1082,7 @@
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 .sidebar {
-    background: var(--ks-background-card);
+    background: var(--ks-background-panel);
     border-right: 1px solid var(--ks-border-primary);
     overflow-x: hidden;
     min-width: calc(20% - 11px);
@@ -1162,6 +1162,7 @@
     :deep(.el-tree) {
         height: calc(100% - 64px);
         overflow: auto;
+        background: var(--ks-background-panel);
 
         .el-tree__empty-block {
             height: auto;

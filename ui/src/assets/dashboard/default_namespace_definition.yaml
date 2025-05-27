@@ -40,7 +40,7 @@ charts:
   - id: kpi_in_progress_ration
     type: io.kestra.plugin.core.dashboard.chart.KPI
     chartOptions:
-      displayName: In progress Ratio
+      displayName: Running Ratio
       numberType: PERCENTAGE
       width: 3
     data:
@@ -60,7 +60,7 @@ charts:
   - id: kpi_pending_ration
     type: io.kestra.plugin.core.dashboard.chart.KPI
     chartOptions:
-      displayName: In Pending Ratio
+      displayName: Pending Ratio
       numberType: PERCENTAGE
       width: 3
     data:

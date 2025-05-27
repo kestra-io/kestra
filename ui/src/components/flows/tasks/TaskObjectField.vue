@@ -1,5 +1,5 @@
 <template>
-    <el-form-item :required="isRequired(fieldKey)">
+    <el-form-item v-if="fieldKey" :required="isRequired(fieldKey)">
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -64,7 +64,7 @@
 
     const model = defineModel<any>({
         type: [Object, String, Number, Boolean, Array],
-        default: () => ({})
+        default:undefined
     });
 
     function isRequired(fieldKey: string) {
@@ -94,13 +94,16 @@
     function isAnyOf(schema: any) {
         return !!schema?.anyOf;
     }
+
     function isBoolean(schema: any) {
         return getType(schema) === "boolean";
     }
+
     function isNestedProperty(key: string) {
         return key.includes(".") ||
             ["interval", "maxInterval", "minInterval", "type"].includes(key);
     }
+
     function getKey(key: string) {
         if (isNestedProperty(key) || key === "id") {
             return key;

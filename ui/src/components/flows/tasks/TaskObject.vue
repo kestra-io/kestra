@@ -1,14 +1,10 @@
 <template>
     <el-form label-position="top" class="w-100">
         <template v-if="sortedProperties">
-            <template v-for="[key, fieldSchema] in requiredProperties" :key="key">
-                <template v-if="key === 'id' || isNestedProperty(key)">
+            <template v-for="[fieldKey, fieldSchema] in requiredProperties" :key="fieldKey">
+                <template v-if="fieldKey === 'id' || isNestedProperty(fieldKey)">
                     <TaskObjectField
-                        v-model="modelValue[key]"
-                        :field-key="key"
-                        :schema="fieldSchema"
-                        :definitions
-                        :task="modelValue"
+                        v-bind="fieldProps(fieldKey, fieldSchema)"
                     />
                 </template>
 
@@ -16,11 +12,7 @@
                     <TaskWrapper :merge>
                         <template #tasks>
                             <TaskObjectField
-                                v-model="modelValue[key]"
-                                :field-key="key"
-                                :schema="fieldSchema"
-                                :definitions
-                                :task="modelValue"
+                                v-bind="fieldProps(fieldKey, fieldSchema)"
                             />
                         </template>
                     </TaskWrapper>
@@ -29,15 +21,11 @@
 
             <el-collapse v-model="activeNames" v-if="optionalProperties?.length || deprecatedProperties?.length" class="collapse">
                 <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="$t('no_code.sections.optional')">
-                    <template v-for="[key, fieldSchema] in optionalProperties" :key="key">
+                    <template v-for="[fieldKey, fieldSchema] in optionalProperties" :key="fieldKey">
                         <TaskWrapper>
                             <template #tasks>
                                 <TaskObjectField
-                                    v-model="modelValue[key]"
-                                    :field-key="key"
-                                    :schema="fieldSchema"
-                                    :definitions
-                                    :task="modelValue"
+                                    v-bind="fieldProps(fieldKey, fieldSchema)"
                                 />
                             </template>
                         </TaskWrapper>
@@ -45,15 +33,11 @@
                 </el-collapse-item>
 
                 <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
-                    <template v-for="[key, fieldSchema] in deprecatedProperties" :key="key">
+                    <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
                         <TaskWrapper>
                             <template #tasks>
                                 <TaskObjectField
-                                    v-model="modelValue[key]"
-                                    :field-key="key"
-                                    :schema="fieldSchema"
-                                    :definitions
-                                    :task="modelValue"
+                                    v-bind="fieldProps(fieldKey, fieldSchema)"
                                 />
                             </template>
                         </TaskWrapper>
@@ -161,9 +145,26 @@
             },
         },
         methods: {
+            onObjectInput(propertyName, value) {
+                const currentValue = this.modelValue || {};
+                currentValue[propertyName] = value;
+                this.onInput(currentValue);
+            },
             isNestedProperty(key) {
                 return key.includes(".") ||
                     ["interval", "maxInterval", "minInterval", "type"].includes(key);
+            },
+            fieldProps(key, schema) {
+                return {
+                    modelValue: this.modelValue?.[key],
+                    "onUpdate:modelValue": (value) => {
+                        this.onObjectInput(key, value);
+                    },
+                    fieldKey: key,
+                    task: this.modelValue,
+                    schema: schema,
+                    definitions: this.definitions,
+                };
             },
         },
     };

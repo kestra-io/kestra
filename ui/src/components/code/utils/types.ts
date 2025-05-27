@@ -54,6 +54,7 @@ export type Fields = {
     outputs: EditorField;
     variables: PairField;
     concurrency: ConcurrencyField;
+    sla: Field;
     disabled: Field;
 };
 

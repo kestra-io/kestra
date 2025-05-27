@@ -86,7 +86,7 @@
         },
         methods: {
             onSelectType(value) {
-                this.$emit("any-of-type", value);
+                if(this.selectedSchema) this.$emit("any-of-type", value);
                 this.selectedSchema = value;
                 // Set up default values
                 if (

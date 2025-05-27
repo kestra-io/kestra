@@ -64,6 +64,7 @@
     import Editor from "../../inputs/Editor.vue";
     import MetadataInputs from "../../flows/MetadataInputs.vue";
     import MetadataRetry from "../../flows/MetadataRetry.vue";
+    import MetadataSLA from "../../flows/MetadataSLA.vue";
     import TaskBasic from "../../flows/tasks/TaskBasic.vue";
 
     import {
@@ -189,6 +190,11 @@
                 label: t("no_code.fields.general.concurrency"),
                 schema: schema.value?.definitions?.["io.kestra.core.models.flows.Concurrency"] ?? {},
                 root: "concurrency",
+            },
+            sla: {
+                component: MetadataSLA,
+                value: props.metadata.sla ?? [],
+                label: t("no_code.fields.general.sla")
             },
             disabled: {
                 component: InputSwitch,

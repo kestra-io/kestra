@@ -1,11 +1,18 @@
 <template>
-    <el-checkbox :model-value="modelValue" @update:model-value="onInput" />
+    <el-switch
+        :model-value="modelValue"
+        @update:model-value="onInput"
+        :active-action-icon="Check"
+    />
 </template>
 
-<script>
-    import Task from "./Task";
+<script setup lang="ts">
+    import Check from "vue-material-design-icons/Check.vue"
 
-    export default {
-        mixins: [Task],
-    };
+
+    defineProps<{modelValue?: boolean}>()
+
+    const emit = defineEmits<{(e: "update:modelValue", value: boolean): void}>()
+
+    const onInput = (value: boolean) => emit("update:modelValue", value)
 </script>

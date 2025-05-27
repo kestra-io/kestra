@@ -11,11 +11,12 @@
         :path="props.path"
         @update:model-value="editorUpdate"
         @cursor="updatePluginDocumentation"
-        @save="save"
+        @save="saveFileContent"
         @execute="execute"
     >
         <template #absolute>
             <KeyShortcuts v-if="isCurrentTabFlow" />
+            <ContentSave v-else @click="saveFileContent" />
         </template>
     </editor>
 </template>
@@ -25,6 +26,8 @@
     import {useStore} from "vuex";
     import Editor from "./Editor.vue";
     import KeyShortcuts from "./KeyShortcuts.vue";
+
+    import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
@@ -182,11 +185,16 @@
         store.dispatch("plugin/updateDocumentation", {event,task});
     };
 
-    function save(){
-        store.commit("editor/setCurrentTab", store.state.editor.tabs.find((t:any) => t.path === props.path));
-        return store.dispatch("flow/save", {
-            content: editorDomElement.value.$refs.monacoEditor.value,
-        })
+    const saveFileContent =  async ()=>{
+        await store.dispatch("namespace/createFile", {
+            namespace: namespace.value,
+            path: props.path,
+            content: editorDomElement.value.modelValue,
+        });
+        store.commit("editor/setTabDirty", {
+            path: props.path,
+            dirty: false
+        });
     }
 
     const execute = () => {

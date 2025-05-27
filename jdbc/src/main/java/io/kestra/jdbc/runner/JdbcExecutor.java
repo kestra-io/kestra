@@ -22,10 +22,7 @@ import io.kestra.core.runners.*;
 import io.kestra.core.runners.Executor;
 import io.kestra.core.runners.ExecutorService;
 import io.kestra.core.schedulers.SchedulerTriggerStateInterface;
-import io.kestra.core.server.ClusterEvent;
-import io.kestra.core.server.Service;
-import io.kestra.core.server.ServiceStateChangeEvent;
-import io.kestra.core.server.ServiceType;
+import io.kestra.core.server.*;
 import io.kestra.core.services.*;
 import io.kestra.core.storages.StorageContext;
 import io.kestra.core.topologies.FlowTopologyService;
@@ -44,6 +41,7 @@ import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -61,6 +59,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static io.kestra.core.utils.Rethrow.throwConsumer;
@@ -244,6 +243,29 @@ public class JdbcExecutor implements ExecutorInterface, Service {
         this.numberOfThreads = threadCount != 0 ? threadCount : Math.max(4, Runtime.getRuntime().availableProcessors() / 2);
         this.workerTaskResultExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "jdbc-worker-task-result-executor");
         this.executionExecutorService = executorsUtils.maxCachedThreadPool(numberOfThreads, "jdbc-execution-executor");
+    }
+
+    @PostConstruct
+    void initMetrics() {
+        // create metrics to store thread count
+        this.metricRegistry.gauge(MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT, MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT_DESCRIPTION, numberOfThreads);
+    }
+
+    @Override
+    public Set<Metric> getMetrics() {
+        if (this.metricRegistry == null) {
+            // can arrive if called before the instance is fully created
+            return Collections.emptySet();
+        }
+
+        Stream<String> metrics = Stream.of(
+            MetricRegistry.METRIC_EXECUTOR_THREAD_COUNT
+        );
+
+        return metrics
+            .flatMap(metric -> Optional.ofNullable(metricRegistry.findGauge(metric)).stream())
+            .map(Metric::of)
+            .collect(Collectors.toSet());
     }
 
     @SneakyThrows

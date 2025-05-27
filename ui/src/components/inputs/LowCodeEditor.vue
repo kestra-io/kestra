@@ -278,17 +278,24 @@
         );
     };
 
-    const onCreateNewTask = (details) => {
+    const onCreateNewTask = (event) => {
         topologyClick.value = {
             action: "create",
-            params: {section: SECTIONS.TASKS.toLowerCase(), position: details[1], target: details[0]}
+            params: {
+                section: SECTIONS.TASKS.toLowerCase(),
+                position: event[1],
+                target: event[0],
+            }
         };
     };
 
     const onEditTask = (event) => {
         topologyClick.value = {
             action: "edit",
-            params: {id: event.task.id, section: (event.section ?? SECTIONS.TASKS).toLowerCase()}
+            params: {
+                section: (event.section ?? SECTIONS.TASKS).toLowerCase(),
+                id: event.task.id,
+            }
         };
     };
 

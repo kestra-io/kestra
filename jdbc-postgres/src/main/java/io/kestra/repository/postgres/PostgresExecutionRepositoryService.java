@@ -4,7 +4,6 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.jdbc.AbstractJdbcRepository;
 import org.jooq.Condition;
-import org.jooq.Field;
 import org.jooq.impl.DSL;
 
 import java.util.ArrayList;
@@ -44,7 +43,7 @@ public abstract class PostgresExecutionRepositoryService {
 
             });
 
-        return conditions.isEmpty() ? DSL.trueCondition() : DSL.or(conditions);
+        return conditions.isEmpty() ? DSL.trueCondition() : DSL.and(conditions);
     }
 
 }

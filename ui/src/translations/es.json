@@ -813,19 +813,21 @@
       "adding": "+ Agregar un {what}",
       "adding_default": "+ Añadir un nuevo value",
       "close": {
-        "after execution": "Cerrar task",
-        "error handlers": "Cerrar el manejador de errores",
+        "afterExecution": "Cerrar después de la ejecución de la task",
+        "conditions": "Condición de cierre",
+        "errors": "Cerrar el manejador de errores",
         "finally": "Cerrar task",
         "input": "Cerrar input",
-        "plugin defaults": "Cerrar plugin por defecto",
+        "pluginDefaults": "Cerrar plugin predeterminado",
         "tasks": "Cerrar task",
         "triggers": "Cerrar trigger"
       },
       "creation": {
-        "after execution": "Agregar un bloque después de la ejecución",
-        "error handlers": "Agregar un manejador de errores",
+        "afterExecution": "Agregar un bloque después de la ejecución",
+        "conditions": "Agregar una condición",
+        "errors": "Agregar un manejador de errores",
         "finally": "Agregar un bloque finally",
-        "plugin defaults": "Agregar un plugin predeterminado",
+        "pluginDefaults": "Agregar un plugin predeterminado",
         "tasks": "Agregar una task",
         "triggers": "Agregar un trigger"
       },
@@ -836,8 +838,8 @@
           "inputs": "Entradas",
           "labels": "Etiquetas",
           "outputs": "Salidas",
-          "plugin_defaults": "Valores Predeterminados del Plugin",
           "retry": "Reintentar",
+          "sla": "SLA",
           "variables": "Variables"
         },
         "main": {
@@ -852,14 +854,6 @@
         "variable": "Variable",
         "yaml": "Editor YAML"
       },
-      "save": {
-        "after execution": "Guardar task",
-        "error handlers": "Guardar controlador de errores",
-        "finally": "Guardar tarea",
-        "input": "Guardar input",
-        "tasks": "Guardar tarea",
-        "triggers": "Guardar trigger"
-      },
       "sections": {
         "afterExecution": "Después de la Ejecución",
         "deprecated": "Propiedades obsoletas",
@@ -873,10 +867,11 @@
         "triggers": "Disparadores"
       },
       "select": {
-        "after execution": "Selecciona una task",
-        "error handlers": "Selecciona una task",
+        "afterExecution": "Seleccionar una task",
+        "conditions": "Seleccione una condición",
+        "errors": "Selecciona una task",
         "finally": "Seleccionar una task",
-        "plugin defaults": "Seleccionar un plugin",
+        "pluginDefaults": "Seleccionar un plugin",
         "tasks": "Seleccionar una task",
         "triggers": "Seleccione un trigger"
       },
@@ -975,7 +970,7 @@
     "pause confirm": "¿Está seguro de pausar la ejecución <code>{id}</code>?",
     "pause done": "La ejecución está PAUSED",
     "pause title": "Pausar la ejecución <code>{id}</code>.<br/>Tenga en cuenta que las tasks que se están ejecutando actualmente seguirán siendo procesadas, y la ejecución tendrá que reanudarse manualmente.",
-    "plugin defaults": "Valores predeterminados del plugin",
+    "pluginDefaults": "Valores predeterminados del plugin",
     "pluginPage": {
       "search": "Buscar en más de {count} plugins",
       "title1": "Los plugins son bloques de construcción para tus flujos de trabajo.",
@@ -1213,6 +1208,8 @@
       "name": "Mandante",
       "names": "Arrendatarios"
     },
+    "test-badge-text": "Prueba",
+    "test-badge-tooltip": "Esta ejecución fue creada por una prueba",
     "theme": "Tema",
     "this_task_has": "Esta tarea tiene",
     "timezone": "Zona horaria",

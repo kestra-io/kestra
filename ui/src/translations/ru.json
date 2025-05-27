@@ -813,19 +813,21 @@
       "adding": "+ Добавить {what}",
       "adding_default": "+ Добавить новое value",
       "close": {
-        "after execution": "Закрыть task",
-        "error handlers": "Закрыть обработчик ошибок",
+        "afterExecution": "Закрыть после выполнения task",
+        "conditions": "Закрыть условие",
+        "errors": "Закрыть обработчик ошибок",
         "finally": "Закрыть task",
         "input": "Закрыть input",
-        "plugin defaults": "Закрыть плагин по умолчанию",
+        "pluginDefaults": "Закрыть плагин по умолчанию",
         "tasks": "Закрыть task",
         "triggers": "Закрыть trigger"
       },
       "creation": {
-        "after execution": "Добавить блок после выполнения",
-        "error handlers": "Добавить обработчик ошибок",
+        "afterExecution": "Добавить блок после выполнения",
+        "conditions": "Добавить условие",
+        "errors": "Добавить обработчик ошибок",
         "finally": "Добавить блок finally",
-        "plugin defaults": "Добавить плагин по умолчанию",
+        "pluginDefaults": "Добавить плагин по умолчанию",
         "tasks": "Добавить task",
         "triggers": "Добавить trigger"
       },
@@ -836,8 +838,8 @@
           "inputs": "Входные данные",
           "labels": "Метки",
           "outputs": "Выходы",
-          "plugin_defaults": "Настройки плагина по умолчанию",
           "retry": "Повторить попытку",
+          "sla": "SLA",
           "variables": "Переменные"
         },
         "main": {
@@ -852,14 +854,6 @@
         "variable": "Переменная",
         "yaml": "Редактор YAML"
       },
-      "save": {
-        "after execution": "Сохранить task",
-        "error handlers": "Сохранить обработчик ошибок",
-        "finally": "Сохранить task",
-        "input": "Сохранить input",
-        "tasks": "Сохранить task",
-        "triggers": "Сохранить trigger"
-      },
       "sections": {
         "afterExecution": "После выполнения",
         "deprecated": "Устаревшие свойства",
@@ -873,10 +867,11 @@
         "triggers": "Триггеры"
       },
       "select": {
-        "after execution": "Выберите task",
-        "error handlers": "Выберите task",
+        "afterExecution": "Выберите task",
+        "conditions": "Выберите условие",
+        "errors": "Выберите task",
         "finally": "Выберите task",
-        "plugin defaults": "Выберите плагин",
+        "pluginDefaults": "Выберите плагин",
         "tasks": "Выберите task",
         "triggers": "Выберите trigger"
       },
@@ -975,7 +970,7 @@
     "pause confirm": "Вы уверены, что хотите приостановить выполнение <code>{id}</code>?",
     "pause done": "Выполнение приостановлено",
     "pause title": "Приостановить выполнение <code>{id}</code>.<br/>Обратите внимание, что текущие RUNNING задачи все равно будут обрабатываться, и выполнение придется возобновить вручную.",
-    "plugin defaults": "Параметры по умолчанию для плагина",
+    "pluginDefaults": "Настройки плагина по умолчанию",
     "pluginPage": {
       "search": "Поиск среди {count}+ плагинов",
       "title1": "Плагины — это строительные блоки для ваших рабочих процессов.",
@@ -1213,6 +1208,8 @@
       "name": "Мандант",
       "names": "Арендаторы"
     },
+    "test-badge-text": "Тест",
+    "test-badge-tooltip": "Это выполнение было создано тестом",
     "theme": "Тема",
     "this_task_has": "Эта задача имеет",
     "timezone": "Часовой пояс",

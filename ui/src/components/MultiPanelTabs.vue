@@ -115,11 +115,14 @@
                 @dragleave.prevent="removeAllPotentialTabs"
                 @dragenter.prevent
             >
-                <component
-                    :is="panel.activeTab?.component"
-                    :panel-index="panelIndex"
-                    :tab-index="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
-                />
+                <KeepAlive v-if="panel.activeTab">
+                    <component
+                        :key="panel.activeTab.value"
+                        :is="panel.activeTab.component"
+                        :panel-index="panelIndex"
+                        :tab-index="panel.tabs.findIndex(t => t.value === panel.activeTab.value)"
+                    />
+                </KeepAlive>
                 <div
                     v-if="dragging"
                     class="editor-content-overlay"
@@ -583,14 +586,14 @@
 
     .default-theme{
         .splitpanes__pane {
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-background-input);
             display: grid;
             grid-template-rows: auto 1fr;
         }
 
         :deep(.splitpanes__splitter){
             border-left-color: var(--ks-border-primary);
-            background-color: var(--ks-background-card);
+            background-color: var(--ks-background-input);
             &:before, &:after{
                 background-color: var(--ks-content-secondary);
             }

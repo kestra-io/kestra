@@ -1,33 +1,15 @@
 <template>
     <top-nav-bar :title="routeInfo.title" />
     <section class="full-container">
-        <template v-if="multiPanelEditor">
-            <MultiPanelEditorView v-if="flow" />
-        </template>
-        <template v-else>
-            <editor-view
-                v-if="flow"
-                :flow-id="flow?.id"
-                :namespace="flow?.namespace"
-                :flow-validation="flowValidation"
-                :flow-graph="flowGraph"
-                :is-read-only="false"
-                is-creating
-                is-dirty
-                :flow="flow"
-                :next-revision="1"
-            />
-        </template>
+        <MultiPanelEditorView v-if="flow" />
     </section>
 </template>
 
 <script>
     import {mapGetters, mapMutations, mapState} from "vuex";
-    import {useStorage} from "@vueuse/core";
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import EditorView from "../inputs/EditorView.vue";
     import MultiPanelEditorView from "./MultiPanelEditorView.vue";
 
     import {getRandomFlowID} from "../../../scripts/product/flow";
@@ -36,15 +18,9 @@
         mixins: [RouteContext],
         components: {
             MultiPanelEditorView,
-            EditorView,
             TopNavBar
         },
 
-        setup() {
-            return {
-                multiPanelEditor: useStorage("multiPanelEditor", false)
-            }
-        },
         created() {
             this.$store.commit("flow/setIsCreating", true);
             if (this.$route.query.reset) {
@@ -64,27 +40,31 @@
             async setupFlow() {
                 const blueprintId = this.$route.query.blueprintId;
                 const blueprintSource = this.$route.query.blueprintSource;
+                let flowYaml = ""
                 if (this.$route.query.copy && this.flow){
-                    this.$store.commit("flow/setFlowYaml", this.flow.source);
+                    flowYaml = this.flow.source;
                 } else if (blueprintId && blueprintSource) {
-                    this.$store.commit("flow/setFlowYaml", await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId}));
+                    flowYaml = await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
                     const selectedNamespace = this.$route.query.namespace || "company.team";
-                    this.$store.commit("flow/setFlowYaml", `id: ${getRandomFlowID()}
+                    flowYaml = `id: ${getRandomFlowID()}
 namespace: ${selectedNamespace}
 
 tasks:
   - id: hello
     type: io.kestra.plugin.core.log.Log
-    message: Hello World! 🚀`);
+    message: Hello World! 🚀`;
                 }
+
+                this.$store.commit("flow/setFlowYaml", flowYaml);
+                this.$store.commit("flow/setFlowYamlBeforeAdd", flowYaml);
 
                 this.$store.commit("flow/setFlow", {...YAML_UTILS.parse(this.flowYaml), source: this.flowYaml});
                 this.$store.dispatch("flow/initYamlSource", {});
             }
         },
         computed: {
-            ...mapState("flow", ["flowGraph"]),
+            ...mapState("flow", ["flowGraph", "flowYaml"]),
             ...mapState("auth", ["user"]),
             ...mapState("plugin", ["pluginSingleList", "pluginsDocumentation"]),
             ...mapGetters("core", ["guidedProperties"]),

@@ -1,7 +1,7 @@
 <template>
     <el-select
         v-model="modelValue"
-        :placeholder="$t(`no_code.select.${section}`)"
+        :placeholder="$t(`no_code.select.${blockType}`)"
         filterable
     >
         <el-option
@@ -28,28 +28,10 @@
     import {computed, onBeforeMount} from "vue";
     import {useStore} from "vuex";
     import {TaskIcon} from "@kestra-io/ui-libs";
-    import {SectionKey} from "../code/utils/types";
-
-    /**
-     * For each section, pick the members of the
-     * plugin to allow to select.
-     */
-    const KEY_SECTIONS_MAP: Record<SectionKey, string[]> = {
-        "tasks": ["tasks"],
-        "triggers": ["triggers"],
-        "error handlers": ["tasks"],
-        "finally": ["tasks"],
-        "after execution": ["tasks"],
-        "plugin defaults": [
-            "tasks",
-            "triggers",
-            "conditions",
-            "taskRunners"
-        ],
-    }
+    import {BlockType} from "../code/utils/types";
 
     const props = defineProps<{
-        section?: keyof typeof KEY_SECTIONS_MAP;
+        blockType: BlockType | "pluginDefaults";
     }>()
 
     const modelValue = defineModel({
@@ -72,7 +54,10 @@
 
     const taskModels = computed(() => {
         const models = new Set<string>();
-        const pluginKeySection = KEY_SECTIONS_MAP[props.section || "tasks"] || ["tasks"];
+        const pluginKeySection: BlockType[] =
+            props.blockType === "pluginDefaults"
+                ? ["tasks", "conditions", "triggers", "taskRunners"]
+                : [props.blockType];
 
         for (const plugin of plugins.value || []) {
             for (const curSection of pluginKeySection) {
@@ -103,5 +88,9 @@
             top: 0;
             margin-right: 0;
         }
+    }
+
+    :deep(.el-select__suffix) {
+        display: flex !important;
     }
 </style>

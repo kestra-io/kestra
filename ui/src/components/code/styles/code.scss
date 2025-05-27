@@ -1,6 +1,7 @@
 // Coloring
 $code-primary: var(--ks-content-link);
-$code-gray-700: var(--bs-gray-700);
+$code-secondary: var(--ks-content-secondary);
+$code-gray: var(--ks-content-primary);
 $code-card-color: var(--ks-background-card);
 $code-border-color: var(--ks-border-primary);
 
@@ -14,7 +15,7 @@ $code-font-sm: var(--el-font-size-small);
 
     :deep(*) {
         --el-collapse-header-bg-color: initial;
-        --el-collapse-header-text-color: #{$code-gray-700};
+        --el-collapse-header-text-color: #{--ks-content-secondary};
         --el-collapse-content-bg-color: initial;
 
         .el-collapse-item__header,
@@ -24,16 +25,13 @@ $code-font-sm: var(--el-font-size-small);
 
         .el-collapse-item__header {
             justify-content: space-between;
-
-            &.is-active {
-                color: $code-primary;
-            }
+            color: $code-secondary;
         }
     }
 }
 
 .label {
-    color: $code-gray-700;
+    color: $code-gray;
     font-size: $code-font-sm;
 }
 
@@ -41,18 +39,24 @@ $code-font-sm: var(--el-font-size-small);
 .reorder {
     cursor: pointer;
     padding-left: 0;
-    color: $code-gray-700;
+    color: $code-gray;
     text-align: right;
 }
 
 .wrapper {
     :deep(*) {
-        --el-disabled-text-color: #{$code-gray-700};
+        --el-disabled-text-color: #{$code-gray};
 
         .el-input__inner,
         .el-textarea__inner {
-            color: $code-gray-700;
+            color: $code-gray;
             font-size: $code-font-sm;
         }
+    }
+}
+
+:deep(.is-disabled) {
+    .el-input__inner{
+        -webkit-text-fill-color: var(--ks-content-inactive);
     }
 }

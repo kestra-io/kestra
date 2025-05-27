@@ -3,12 +3,14 @@
         <el-form-item>
             <template #label>
                 <div class="type-div">
+                    <span class="asterisk">*</span>
                     <code>{{ $t("type") }}</code>
                 </div>
             </template>
             <PluginSelect
+                v-if="blockType"
                 v-model="selectedTaskType"
-                :section="section"
+                :block-type="blockType"
                 @update:model-value="onTaskTypeSelect"
             />
         </el-form-item>
@@ -27,13 +29,13 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onBeforeMount, ref, watch} from "vue";
+    import {computed, inject, onActivated, ref, toRaw, watch} from "vue";
+    import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import TaskObject from "./tasks/TaskObject.vue";
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
-    import {useStore} from "vuex";
-    import {PLUGIN_DEFAULTS_SECTION} from "../../utils/constants";
-    import {NoCodeElement, Schemas, SectionKey} from "../code/utils/types";
+    import {NoCodeElement, Schemas} from "../code/utils/types";
+    import {BLOCKTYPE_INJECT_KEY, PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
 
     defineOptions({
         name: "TaskEditor",
@@ -42,24 +44,7 @@
 
     const modelValue = defineModel<string>();
 
-    const props = defineProps<{
-        section?: SectionKey
-    }>();
-
     const store = useStore();
-
-    onBeforeMount(() => {
-        if (modelValue.value) {
-            setup()
-        }
-    })
-
-    watch(modelValue, (v) => {
-        if (!v) {
-            taskObject.value = {};
-            selectedTaskType.value = undefined;
-        }
-    })
 
     type PartialCodeElement = Partial<NoCodeElement>;
 
@@ -68,12 +53,24 @@
     const isLoading = ref(false);
     const plugin = ref<{schema: Schemas}>();
 
-    const schema = computed(() => {
-        return plugin.value?.schema;
-    });
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const blockType = inject(BLOCKTYPE_INJECT_KEY, "");
 
     const isPluginDefaults = computed(() => {
-        return props.section === PLUGIN_DEFAULTS_SECTION
+        return parentPath.startsWith("pluginDefaults")
+    });
+
+    watch(modelValue, (v) => {
+        if (!v) {
+            taskObject.value = {};
+            selectedTaskType.value = undefined;
+        } else {
+            setup()
+        }
+    }, {immediate: true});
+
+    const schema = computed(() => {
+        return plugin.value?.schema;
     });
 
     const properties = computed(() => {
@@ -84,7 +81,7 @@
 
             return updatedProperties;
         }
-        if(!updatedProperties?.id){
+        if(!updatedProperties?.id && ["triggers", "tasks"].includes(blockType ?? "")){
             updatedProperties["id"] = {type: "string", $required: true};
         }
         return updatedProperties
@@ -113,8 +110,22 @@
         }
         selectedTaskType.value = taskObject.value?.type;
 
-        load();
+
     }
+
+    // when tab is clicked, load the documentation
+    onActivated(() => {
+        if(selectedTaskType.value){
+            store.dispatch("plugin/updateDocumentation", {task: selectedTaskType.value});
+        }
+    });
+
+    watch(selectedTaskType, (task) => {
+        if (task) {
+            load();
+            store.dispatch("plugin/updateDocumentation", {task});
+        }
+    }, {immediate: true});
 
     function load() {
         isLoading.value = true;
@@ -148,7 +159,7 @@
                 };
             }
         }
-        modelValue.value = YAML_UTILS.stringify(val);
+        modelValue.value = YAML_UTILS.stringify(toRaw(val));
     }
 
     function onTaskTypeSelect() {
@@ -164,5 +175,15 @@
     .type-div {
         display: flex;
         justify-content: space-between;
+        text-transform: lowercase;
+        align-items: center;
+        gap: 0.25rem;
+        font-weight: 600;
+        .asterisk {
+            color: var(--ks-content-alert);
+        }
+        code {
+            color: var(--ks-content-primary);
+        }
     }
 </style>

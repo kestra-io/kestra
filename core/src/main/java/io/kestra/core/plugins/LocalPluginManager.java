@@ -120,6 +120,7 @@ public class LocalPluginManager implements PluginManager {
                                   @Nullable Path localRepositoryPath) {
         Objects.requireNonNull(artifact, "cannot install null artifact");
 
+        log.info("Installing managed plugin artifact '{}'", artifact);
         final PluginArtifact resolvedPluginArtifact = mavenPluginDownloader.resolve(artifact.toString(), repositoryConfigs);
 
         return install(resolvedPluginArtifact, installForRegistration, localRepositoryPath);
@@ -129,7 +130,6 @@ public class LocalPluginManager implements PluginManager {
                                    final boolean installForRegistration,
                                    Path localRepositoryPath) {
 
-        log.info("Installing managed plugin artifact '{}'", artifact);
         localRepositoryPath = createLocalRepositoryIfNotExist(Optional.ofNullable(localRepositoryPath).orElse(this.localRepositoryPath));
         Path localPluginPath = getLocalPluginPath(localRepositoryPath, artifact);
 
@@ -153,7 +153,9 @@ public class LocalPluginManager implements PluginManager {
     @Override
     public PluginArtifact install(File file, boolean installForRegistration, @Nullable Path localRepositoryPath) {
         try {
-            return install(PluginArtifact.fromFile(file), installForRegistration, localRepositoryPath);
+            PluginArtifact artifact = PluginArtifact.fromFile(file);
+            log.info("Installing managed plugin artifact '{}'", artifact);
+            return install(artifact, installForRegistration, localRepositoryPath);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

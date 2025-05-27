@@ -1,34 +1,72 @@
 <template>
-    <el-form-item class="tabs-wrapper">
-        <el-tabs v-model="selectedSchema" @tab-change="onSelectType">
-            <el-tab-pane
-                v-for="schema in schemaOptions"
-                :key="schema.label"
-                :label="schema.label"
-                :name="schema.value"
+    <TaskWrapper v-if="wrap">
+        <template #tasks>
+            <el-form-item class="radio-wrapper">
+                <el-radio-group v-model="selectedSchema" @change="onSelectType">
+                    <el-radio
+                        v-for="schema in schemaOptions"
+                        :key="schema.label"
+                        :value="schema.value"
+                    >
+                        {{ schema.label }}
+                    </el-radio>
+                </el-radio-group>
+            </el-form-item>
+            <el-form label-position="top" v-if="selectedSchema">
+                <component
+                    :is="`task-${currentSchemaType}`"
+                    v-if="currentSchema"
+                    :model-value="modelValue"
+                    :schema="currentSchema"
+                    :properties="currentSchema?.properties"
+                    :definitions="definitions"
+                    @update:model-value="onInput"
+                />
+            </el-form>
+        </template>
+    </TaskWrapper>
+
+    <template v-else>
+        <el-form-item class="radio-wrapper">
+            <el-radio-group v-model="selectedSchema" @change="onSelectType">
+                <el-radio
+                    v-for="schema in schemaOptions"
+                    :key="schema.label"
+                    :value="schema.value"
+                >
+                    {{ schema.label }}
+                </el-radio>
+            </el-radio-group>
+        </el-form-item>
+        <el-form label-position="top" v-if="selectedSchema">
+            <component
+                :is="`task-${currentSchemaType}`"
+                v-if="currentSchema"
+                :model-value="modelValue"
+                :schema="currentSchema"
+                :properties="currentSchema?.properties"
+                :definitions="definitions"
+                @update:model-value="onInput"
             />
-        </el-tabs>
-    </el-form-item>
-    <el-form label-position="top" v-if="selectedSchema">
-        <component
-            :is="`task-${currentSchemaType}`"
-            v-if="currentSchema"
-            :model-value="modelValue"
-            :schema="currentSchema"
-            :properties="currentSchema?.properties"
-            :definitions="definitions"
-            @update:model-value="onInput"
-        />
-    </el-form>
+        </el-form>
+    </template>
 </template>
 
 <script>
     import Task from "./Task";
+    import TaskWrapper from "./TaskWrapper.vue";
 
     export default {
         inheritAttrs: false,
         mixins: [Task],
-        emits: ["update:modelValue"],
+        emits: ["update:modelValue", "any-of-type"],
+        components: {TaskWrapper},
+        props: {
+            wrap: {
+                type: Boolean,
+                default: true,
+            },
+        },
         data() {
             return {
                 isOpen: false,
@@ -48,6 +86,7 @@
         },
         methods: {
             onSelectType(value) {
+                this.$emit("any-of-type", value);
                 this.selectedSchema = value;
                 // Set up default values
                 if (
@@ -108,7 +147,7 @@
                     );
 
                     return {
-                        label: lastPartOfValue.capitalize(),
+                        label: lastPartOfValue.split("-")[0].capitalize(),
                         value: schemaRef,
                         id: lastPartOfValue.toLowerCase(),
                     };
@@ -123,28 +162,50 @@
     width: 100%;
 }
 
-.tabs-wrapper {
-    .el-tabs {
-        width: 100%;
+.radio-wrapper {
+    :deep(.el-radio-group) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+        margin-bottom: .5rem;
     }
 
-    :deep(.el-tabs__item) {
-        padding: 0 8px;
-        color: var(--ks-content-tertiary);
-        font-size: 14px;
+    :deep(.el-radio) {
+        margin-right: 0;
+        height: 40px;
+        
+        .el-radio__inner {
+            width: 24px;
+            height: 24px;
+            border: 2px solid var(--ks-content-link);
+            background: transparent;
+            
+            &::after {
+                width: 12px;
+                height: 12px;
+                background-color: var(--ks-content-link);
+            }
+        }
 
-        &.is-active {
-            color: var(--ks-content-link);
+        
+        &.is-checked {
+            .el-radio__label {
+                color: var(--ks-content-link);
+            }
+            .el-radio__inner {
+                border-color: var(--ks-content-link);
+                background: transparent;
+            }
         }
 
         &:hover {
-            color: var(--ks-content-link-hover);
+            .el-radio__label {
+                color: var(--ks-content-link-hover);
+            }
+            .el-radio__inner {
+                border-color: var(--ks-content-link-hover);
+            }
         }
-    }
-
-    :deep(.el-tabs__active-bar) {
-        height: 2px;
-        background-color: var(--ks-content-link) !important;
     }
 }
 </style>

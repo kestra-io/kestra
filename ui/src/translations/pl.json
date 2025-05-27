@@ -813,19 +813,21 @@
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
       "close": {
-        "after execution": "Zamknij task",
-        "error handlers": "Zamknij obsługę błędów",
+        "afterExecution": "Zamknij po wykonaniu task",
+        "conditions": "Zamknij warunek",
+        "errors": "Zamknij obsługę błędów",
         "finally": "Zamknij task",
         "input": "Zamknij input",
-        "plugin defaults": "Zamknij domyślny plugin",
+        "pluginDefaults": "Zamknij domyślną wtyczkę",
         "tasks": "Zamknij task",
         "triggers": "Zamknij trigger"
       },
       "creation": {
-        "after execution": "Dodaj blok po wykonaniu",
-        "error handlers": "Dodaj obsługę błędów",
+        "afterExecution": "Dodaj blok po wykonaniu",
+        "conditions": "Dodaj warunek",
+        "errors": "Dodaj obsługę błędów",
         "finally": "Dodaj blok finally",
-        "plugin defaults": "Dodaj domyślny plugin",
+        "pluginDefaults": "Dodaj domyślny plugin",
         "tasks": "Dodaj task",
         "triggers": "Dodaj trigger"
       },
@@ -836,8 +838,8 @@
           "inputs": "Wejścia",
           "labels": "Etykiety",
           "outputs": "Wyjścia",
-          "plugin_defaults": "Domyślne ustawienia pluginu",
           "retry": "Ponów próbę",
+          "sla": "SLA",
           "variables": "Zmienne"
         },
         "main": {
@@ -852,14 +854,6 @@
         "variable": "Zmienna",
         "yaml": "Edytor YAML"
       },
-      "save": {
-        "after execution": "Zapisz task",
-        "error handlers": "Zapisz obsługę błędów",
-        "finally": "Zapisz task",
-        "input": "Zapisz input",
-        "tasks": "Zapisz task",
-        "triggers": "Zapisz trigger"
-      },
       "sections": {
         "afterExecution": "Po wykonaniu",
         "deprecated": "Właściwości przestarzałe",
@@ -873,10 +867,11 @@
         "triggers": "Triggery"
       },
       "select": {
-        "after execution": "Wybierz task",
-        "error handlers": "Wybierz task",
+        "afterExecution": "Wybierz task",
+        "conditions": "Wybierz warunek",
+        "errors": "Wybierz task",
         "finally": "Wybierz task",
-        "plugin defaults": "Wybierz plugin",
+        "pluginDefaults": "Wybierz plugin",
         "tasks": "Wybierz task",
         "triggers": "Wybierz trigger"
       },
@@ -975,7 +970,7 @@
     "pause confirm": "Czy na pewno chcesz wstrzymać wykonanie <code>{id}</code>?",
     "pause done": "Wykonanie jest PAUSED",
     "pause title": "Wstrzymaj wykonanie <code>{id}</code>.<br/>Zauważ, że aktualnie uruchomione taski nadal będą przetwarzane, a wykonanie będzie musiało zostać wznowione ręcznie.",
-    "plugin defaults": "Domyślne ustawienia pluginu",
+    "pluginDefaults": "Domyślne ustawienia pluginu",
     "pluginPage": {
       "search": "Wyszukaj wśród {count}+ wtyczek",
       "title1": "Pluginy są elementami budulcowymi dla twoich flowów.",
@@ -1213,6 +1208,8 @@
       "name": "Mandant",
       "names": "Najemcy"
     },
+    "test-badge-text": "Test",
+    "test-badge-tooltip": "To wykonanie zostało utworzone przez Test.",
     "theme": "Motyw",
     "this_task_has": "To zadanie ma",
     "timezone": "Strefa czasowa",

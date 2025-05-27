@@ -21,7 +21,7 @@
 
 .adding {
     cursor: pointer;
-    color: $code-gray-700;
+    color: var(--ks-content-secondary);
     font-size: $code-font-sm;
 }
 </style>

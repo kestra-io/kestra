@@ -98,11 +98,6 @@
                         </el-input-number>
                     </Column>
                 </Row>
-                <Row>
-                    <Column :label="$t('settings.blocks.configuration.fields.multi_panel_editor')">
-                        <el-switch :aria-label="$t('settings.blocks.configuration.fields.multi_panel_editor')" :model-value="pendingSettings.multiPanelEditor" @update:model-value="onMultiPanelEditor" />
-                    </Column>
-                </Row>
             </template>
         </Block>
 
@@ -315,7 +310,6 @@
                     envName: undefined,
                     envColor: undefined,
                     executeDefaultTab: undefined,
-                    multiPanelEditor: undefined,
                     autoRefreshInterval: undefined,
                     flowDefaultTab: undefined,
                     logsFontSize: undefined
@@ -365,7 +359,6 @@
             this.pendingSettings.envName = store.getters["layout/envName"] || this.configs?.environment?.name;
             this.pendingSettings.envColor = store.getters["layout/envColor"] || this.configs?.environment?.color;
             this.pendingSettings.logsFontSize = parseInt(localStorage.getItem("logsFontSize")) || 12;
-            this.pendingSettings.multiPanelEditor = localStorage.getItem("multiPanelEditor") === "true";
             this.pendingSettings.autoRefreshInterval = parseInt(localStorage.getItem(storageKeys.AUTO_REFRESH_INTERVAL)) || 10;
             this.originalSettings = JSON.parse(JSON.stringify(this.pendingSettings));
         },
@@ -375,7 +368,7 @@
             },
             async confirmNavigation() {
                 if (!this.hasUnsavedChanges) return true;
-                
+
                 try {
                     await this.$confirm(
                         this.$t("settings.blocks.save.unsaved_warning"),
@@ -412,7 +405,7 @@
                 if (this.hasUnsavedChanges) {
                     e.preventDefault();
                     e.stopPropagation();
-                    
+
                     const shouldNavigate = await this.confirmNavigation();
                     if (shouldNavigate) {
                         const href = link.getAttribute("href");
@@ -503,10 +496,6 @@
                 this.pendingSettings.executeDefaultTab = value;
                 this.checkForChanges();
             },
-            onMultiPanelEditor(value) {
-                this.pendingSettings.multiPanelEditor = value;
-                this.checkForChanges();
-            },
             onAutoRefreshInterval(value) {
                 this.pendingSettings.autoRefreshInterval = value;
                 this.checkForChanges();
@@ -593,7 +582,7 @@
         mounted() {
             const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
             mediaQuery.addEventListener("change", this.updateThemeBasedOnSystem);
-            
+
             window.addEventListener("beforeunload", this.handleBeforeUnload);
             document.addEventListener("click", this.handleNavigationClick, true); // Use capture phase
         },

@@ -813,19 +813,21 @@
       "adding": "+ Adicionar um {what}",
       "adding_default": "+ Adicionar um novo value",
       "close": {
-        "after execution": "Fechar task",
-        "error handlers": "Fechar manipulador de erro",
+        "afterExecution": "Fechar após execução da task",
+        "conditions": "Condição de fechamento",
+        "errors": "Fechar manipulador de erro",
         "finally": "Fechar task",
         "input": "Fechar input",
-        "plugin defaults": "Fechar plugin padrão",
+        "pluginDefaults": "Fechar plugin padrão",
         "tasks": "Fechar task",
         "triggers": "Fechar trigger"
       },
       "creation": {
-        "after execution": "Adicionar um bloco após a execução",
-        "error handlers": "Adicionar um manipulador de erro",
+        "afterExecution": "Adicionar um bloco após a execução",
+        "conditions": "Adicionar uma condição",
+        "errors": "Adicionar um manipulador de erro",
         "finally": "Adicionar um bloco finally",
-        "plugin defaults": "Adicionar um padrão de plugin",
+        "pluginDefaults": "Adicionar um padrão de plugin",
         "tasks": "Adicionar uma task",
         "triggers": "Adicionar um trigger"
       },
@@ -836,8 +838,8 @@
           "inputs": "Entradas",
           "labels": "Etiquetas",
           "outputs": "Saídas",
-          "plugin_defaults": "Padrões do Plugin",
           "retry": "Repetir",
+          "sla": "SLA",
           "variables": "Variáveis"
         },
         "main": {
@@ -852,14 +854,6 @@
         "variable": "Variável",
         "yaml": "Editor YAML"
       },
-      "save": {
-        "after execution": "Salvar task",
-        "error handlers": "Salvar manipulador de erro",
-        "finally": "Salvar task",
-        "input": "Salvar input",
-        "tasks": "Salvar task",
-        "triggers": "Salvar trigger"
-      },
       "sections": {
         "afterExecution": "Após a Execução",
         "deprecated": "Propriedades obsoletas",
@@ -873,10 +867,11 @@
         "triggers": "Triggers"
       },
       "select": {
-        "after execution": "Selecione uma task",
-        "error handlers": "Selecione uma task",
+        "afterExecution": "Selecione uma task",
+        "conditions": "Selecione uma condição",
+        "errors": "Selecione uma task",
         "finally": "Selecione uma task",
-        "plugin defaults": "Selecione um plugin",
+        "pluginDefaults": "Selecione um plugin",
         "tasks": "Selecione uma task",
         "triggers": "Selecione um trigger"
       },
@@ -975,7 +970,7 @@
     "pause confirm": "Tem certeza de que deseja pausar a execução <code>{id}</code>?",
     "pause done": "A execução está PAUSED",
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
-    "plugin defaults": "Padrões do Plugin",
+    "pluginDefaults": "Padrões do plugin",
     "pluginPage": {
       "search": "Pesquisar em mais de {count} plugins",
       "title1": "Plugins são blocos de construção para seus workflows.",
@@ -1213,6 +1208,8 @@
       "name": "Mandante",
       "names": "Mandantes"
     },
+    "test-badge-text": "Teste",
+    "test-badge-tooltip": "Esta execução foi criada por um Teste",
     "theme": "Tema",
     "this_task_has": "Esta task tem",
     "timezone": "Fuso horário",

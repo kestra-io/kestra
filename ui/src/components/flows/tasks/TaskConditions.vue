@@ -1,10 +1,10 @@
 <template>
-    <div class="tasks-wrapper">
+    <div class="conditions-wrapper">
         <Collapse
-            title="tasks"
+            title="conditions"
             :elements="items"
-            section="tasks"
-            block-type="tasks"
+            section="conditions"
+            block-type="conditions"
             @remove="(yaml) => store.commit('flow/setFlowYaml', yaml)"
             @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
         />
@@ -20,10 +20,10 @@
 
     const store = useStore();
 
-    interface Task {id:string, type:string}
+    interface Condition {id:string, type:string}
 
     const props = withDefaults(defineProps<{
-        modelValue?: Task[]
+        modelValue?: Condition[]
     }>(), {
         modelValue: () => []
     });
@@ -36,13 +36,7 @@
 <style scoped lang="scss">
 @import "../../code/styles/code.scss";
 
-.tasks-wrapper {
+.conditions-wrapper {
     width: 100%;
-}
-
-.disabled {
-    opacity: 0.5;
-    pointer-events: none;
-    cursor: not-allowed;
 }
 </style>

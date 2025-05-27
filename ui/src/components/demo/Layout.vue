@@ -171,6 +171,7 @@
             border: 1px solid var(--ks-border-primary);
             overflow: hidden;
             margin-top: 1rem;
+            margin-bottom: 1rem;
 
             iframe {
                 position: absolute;

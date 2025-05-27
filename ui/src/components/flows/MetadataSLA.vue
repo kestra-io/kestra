@@ -52,13 +52,13 @@
         "io.kestra.core.models.flows.sla.types.ExecutionAssertionSLA-1": {
             type: "object",
             properties: {
-                type: {
-                    type: "string",
-                    enum: ["EXECUTION_ASSERTION"],
-                },
                 id: {
                     type: "string",
                     minLength: 1,
+                },
+                type: {
+                    type: "string",
+                    enum: ["EXECUTION_ASSERTION"],
                 },
                 assert: {
                     type: "string",
@@ -80,7 +80,7 @@
                     ],
                 },
             },
-            required: ["type", "id,", "assert", "behavior"],
+            required: ["type", "id", "assert", "behavior"],
         },
         "io.kestra.core.models.flows.sla.types.MaxDurationSLA-1": {
             type: "object",
@@ -113,7 +113,7 @@
                     ],
                 },
             },
-            required: ["id", "type", "behavior", "duration"],
+            required: ["type", "id", "behavior", "duration"],
         },
     };
 </script>

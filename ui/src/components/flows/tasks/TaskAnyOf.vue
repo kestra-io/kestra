@@ -124,30 +124,18 @@
                 return this.selectedSchema ? this.getType(this.currentSchema) : undefined;
             },
             schemaOptions() {
-                // find the part of the prefix to schema references that is common to all schemas
-                const schemaRefsArray = this.schemas
-                    .map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
-                    .filter((schemaRef) => schemaRef)
-                    .map((schemaRef) => schemaRef.split("."))
-
-                const commonPart = schemaRefsArray[0]
-                    .filter((schemaRef, index) => schemaRefsArray.every((item) => item[index] === schemaRef))
-                    .map((schemaRef) => `${schemaRef}.`)
-                    .join("");
-
                 // remove the common part from all schema ids
                 return this.schemas.map((schema) => {
+                    // If the schema has a $ref, we use the last part of the reference
                     /** @type string */
                     const schemaRef = schema.$ref
                         ? schema.$ref.split("/").pop()
                         : schema.type;
 
-                    const lastPartOfValue = schemaRef.slice(
-                        commonPart.length,
-                    );
+                    const lastPartOfValue = (schemaRef.split(".").pop() || schemaRef).replace(/-\d+$/, "");
 
                     return {
-                        label: lastPartOfValue.split("-")[0].capitalize(),
+                        label: lastPartOfValue.capitalize(),
                         value: schemaRef,
                         id: lastPartOfValue.toLowerCase(),
                     };

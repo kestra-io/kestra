@@ -48,7 +48,7 @@
         (oldValue) => {
             try {
                 YAML_UTILS.parse(flowYaml.value);
-                return flowYaml.value;
+                return oldValue ?? flowYaml.value ?? "";
             } catch {
                 return oldValue ?? "";
             }

@@ -42,14 +42,6 @@ public abstract class StorageTestSuite {
     }
 
     @Test
-    void getNoTenant() throws Exception {
-        String prefix = IdUtils.create();
-        String tenantId = null;
-
-        get(tenantId, prefix);
-    }
-
-    @Test
     void getNoCrossTenant() throws Exception {
         String prefix = IdUtils.create();
         String fistTenant = IdUtils.create();
@@ -171,14 +163,6 @@ public abstract class StorageTestSuite {
     }
 
     @Test
-    void listNoTenant() throws Exception {
-        String prefix = IdUtils.create();
-        String tenantId = null;
-
-        list(prefix, tenantId);
-    }
-
-    @Test
     void listNoTraversal() throws Exception {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
@@ -276,15 +260,7 @@ public abstract class StorageTestSuite {
     @Test
     void exists() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = null;
-
-        exists(prefix, tenantId);
-    }
-
-    @Test
-    void existsNoTenant() throws Exception {
-        String prefix = IdUtils.create();
-        String tenantId = null;
+        String tenantId = IdUtils.create();
 
         exists(prefix, tenantId);
     }
@@ -347,15 +323,7 @@ public abstract class StorageTestSuite {
     @Test
     void size() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = null;
-
-        size(prefix, tenantId);
-    }
-
-    @Test
-    void sizeNoTenant() throws Exception {
-        String prefix = IdUtils.create();
-        String tenantId = null;
+        String tenantId = IdUtils.create();
 
         size(prefix, tenantId);
     }
@@ -429,15 +397,7 @@ public abstract class StorageTestSuite {
     @Test
     void lastModifiedTime() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = null;
-
-        lastModifiedTime(prefix, tenantId);
-    }
-
-    @Test
-    void lastModifiedTimeNoTenant() throws Exception {
-        String prefix = IdUtils.create();
-        String tenantId = null;
+        String tenantId = IdUtils.create();
 
         lastModifiedTime(prefix, tenantId);
     }
@@ -512,14 +472,6 @@ public abstract class StorageTestSuite {
     void getAttributes() throws Exception {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
-
-        getAttributes(prefix, tenantId);
-    }
-
-    @Test
-    void getAttributesNoTenant() throws Exception {
-        String prefix = IdUtils.create();
-        String tenantId = null;
 
         getAttributes(prefix, tenantId);
     }
@@ -644,14 +596,6 @@ public abstract class StorageTestSuite {
     }
 
     @Test
-    void putNoTenant() throws Exception {
-        String prefix = IdUtils.create();
-        String tenantId = null;
-
-        put(tenantId, prefix);
-    }
-
-    @Test
     void putWithScheme() throws URISyntaxException, IOException {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
@@ -699,14 +643,6 @@ public abstract class StorageTestSuite {
     void delete() throws Exception {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
-
-        delete(prefix, tenantId);
-    }
-
-    @Test
-    void deleteNoTenant() throws Exception {
-        String prefix = IdUtils.create();
-        String tenantId = null;
 
         delete(prefix, tenantId);
     }
@@ -781,15 +717,7 @@ public abstract class StorageTestSuite {
     @Test
     void createDirectory() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = null;
-
-        createDirectory(prefix, tenantId);
-    }
-
-    @Test
-    void createDirectoryNoTenant() throws Exception {
-        String prefix = IdUtils.create();
-        String tenantId = null;
+        String tenantId = IdUtils.create();
 
         createDirectory(prefix, tenantId);
     }
@@ -847,15 +775,7 @@ public abstract class StorageTestSuite {
     @Test
     void move() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = null;
-
-        move(prefix, tenantId);
-    }
-
-    @Test
-    void moveNoTenant() throws Exception {
-        String prefix = IdUtils.create();
-        String tenantId = null;
+        String tenantId = IdUtils.create();
 
         move(prefix, tenantId);
     }
@@ -927,14 +847,6 @@ public abstract class StorageTestSuite {
     void deleteByPrefix() throws Exception {
         String prefix = IdUtils.create();
         String tenantId = IdUtils.create();
-
-        deleteByPrefix(prefix, tenantId);
-    }
-
-    @Test
-    void deleteByPrefixNoTenant() throws Exception {
-        String prefix = IdUtils.create();
-        String tenantId = null;
 
         deleteByPrefix(prefix, tenantId);
     }

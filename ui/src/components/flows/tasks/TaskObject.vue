@@ -3,17 +3,13 @@
         <template v-if="sortedProperties">
             <template v-for="[fieldKey, fieldSchema] in requiredProperties" :key="fieldKey">
                 <template v-if="fieldKey === 'id' || isNestedProperty(fieldKey)">
-                    <TaskObjectField
-                        v-bind="fieldProps(fieldKey, fieldSchema)"
-                    />
+                    <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
                 </template>
 
                 <template v-else>
                     <TaskWrapper :merge>
                         <template #tasks>
-                            <TaskObjectField
-                                v-bind="fieldProps(fieldKey, fieldSchema)"
-                            />
+                            <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
                         </template>
                     </TaskWrapper>
                 </template>
@@ -24,9 +20,7 @@
                     <template v-for="[fieldKey, fieldSchema] in optionalProperties" :key="fieldKey">
                         <TaskWrapper>
                             <template #tasks>
-                                <TaskObjectField
-                                    v-bind="fieldProps(fieldKey, fieldSchema)"
-                                />
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
                             </template>
                         </TaskWrapper>
                     </template>
@@ -36,9 +30,7 @@
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
                         <TaskWrapper>
                             <template #tasks>
-                                <TaskObjectField
-                                    v-bind="fieldProps(fieldKey, fieldSchema)"
-                                />
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
                             </template>
                         </TaskWrapper>
                     </template>
@@ -131,8 +123,15 @@
             };
         },
         computed: {
+            constantType() {
+                return Object.entries(this.properties).find(([key, schema]) => {
+                    return key === "type" && schema?.const;
+                })?.[1].const || null;
+            },
             sortedProperties() {
-                return sortProperties(this.properties, this.schema?.required);
+                return sortProperties(this.properties, this.schema?.required).filter(([key, schema]) => {
+                    return !(key === "type" && schema?.const);
+                });
             },
             requiredProperties() {
                 return this.merge ? this.sortedProperties : this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
@@ -148,7 +147,7 @@
             onObjectInput(propertyName, value) {
                 const currentValue = this.modelValue || {};
                 currentValue[propertyName] = value;
-                this.onInput(currentValue);
+                this.onInput(currentValue, "object");
             },
             isNestedProperty(key) {
                 return key.includes(".") ||
@@ -165,6 +164,22 @@
                     schema: schema,
                     definitions: this.definitions,
                 };
+            },
+        },
+        watch: {
+            constantType() {
+                if(!this.modelValue){
+                    return
+                }
+
+                for(const val in this.modelValue) {
+                    if(val !== "type" && !this.sortedProperties.some(([key]) => key === val)) {
+                        delete this.modelValue[val];
+                    }
+                }
+
+                this.onObjectInput("type", this.constantType);
+
             },
         },
     };

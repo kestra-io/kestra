@@ -41,7 +41,8 @@
         </template>
         <component
             v-if="!isBoolean(schema)"
-            v-model="model"
+            :model-value="modelValue"
+            @update:model-value="emit('update:modelValue', $event)"
             :is="`task-${getType(schema, fieldKey, props.definitions)}`"
             v-bind="{...componentProps(fieldKey, schema)}"
             class="mt-1 mb-2 wrapper"
@@ -60,12 +61,12 @@
         definitions: any;
         fieldKey: string;
         task: any;
+        modelValue?: Record<string, any> | string | number | boolean | Array<any>,
     }>()
 
-    const model = defineModel<any>({
-        type: [Object, String, Number, Boolean, Array],
-        default:undefined
-    });
+    const emit = defineEmits<{
+        (e: "update:modelValue", value: Record<string, any> | string | number | boolean | Array<any>): void;
+    }>();
 
     function isRequired(fieldKey: string) {
         return props.schema.required?.includes(fieldKey);

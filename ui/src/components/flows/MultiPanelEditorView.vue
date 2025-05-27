@@ -30,7 +30,7 @@
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
     import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
-    import {useCodeTopology} from "./useCodeTopology";
+    import {useTopologyPanels} from "./useTopologyPanels";
 
     import {getCreateTabKey, getEditTabKey, setupInitialNoCodeTab, setupInitialNoCodeTabIfExists, useNoCodePanels} from "./useNoCodePanels";
 
@@ -194,7 +194,7 @@
         onRemoveCodeTab(tab)
     }
 
-    useCodeTopology(panels, openAddTaskTab, openEditTaskTab)
+    useTopologyPanels(panels, openAddTaskTab, openEditTaskTab)
 
     watch(isFlowDirty, (dirty) => {
         for(const panel of panels.value){

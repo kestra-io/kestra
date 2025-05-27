@@ -1,35 +1,72 @@
 <template>
-    <el-form-item class="radio-wrapper">
-        <el-radio-group v-model="selectedSchema" @change="onSelectType">
-            <el-radio
-                v-for="schema in schemaOptions"
-                :key="schema.label"
-                :label="schema.value"
-            >
-                {{ schema.label }}
-            </el-radio>
-        </el-radio-group>
-    </el-form-item>
-    <el-form label-position="top" v-if="selectedSchema">
-        <component
-            :is="`task-${currentSchemaType}`"
-            v-if="currentSchema"
-            :model-value="modelValue"
-            :schema="currentSchema"
-            :properties="currentSchema?.properties"
-            :definitions="definitions"
-            @update:model-value="onInput"
-        />
-    </el-form>
+    <TaskWrapper v-if="wrap">
+        <template #tasks>
+            <el-form-item class="radio-wrapper">
+                <el-radio-group v-model="selectedSchema" @change="onSelectType">
+                    <el-radio
+                        v-for="schema in schemaOptions"
+                        :key="schema.label"
+                        :value="schema.value"
+                    >
+                        {{ schema.label }}
+                    </el-radio>
+                </el-radio-group>
+            </el-form-item>
+            <el-form label-position="top" v-if="selectedSchema">
+                <component
+                    :is="`task-${currentSchemaType}`"
+                    v-if="currentSchema"
+                    :model-value="modelValue"
+                    :schema="currentSchema"
+                    :properties="currentSchema?.properties"
+                    :definitions="definitions"
+                    @update:model-value="onInput"
+                />
+            </el-form>
+        </template>
+    </TaskWrapper>
+
+    <template v-else>
+        <el-form-item class="radio-wrapper">
+            <el-radio-group v-model="selectedSchema" @change="onSelectType">
+                <el-radio
+                    v-for="schema in schemaOptions"
+                    :key="schema.label"
+                    :value="schema.value"
+                >
+                    {{ schema.label }}
+                </el-radio>
+            </el-radio-group>
+        </el-form-item>
+        <el-form label-position="top" v-if="selectedSchema">
+            <component
+                :is="`task-${currentSchemaType}`"
+                v-if="currentSchema"
+                :model-value="modelValue"
+                :schema="currentSchema"
+                :properties="currentSchema?.properties"
+                :definitions="definitions"
+                @update:model-value="onInput"
+            />
+        </el-form>
+    </template>
 </template>
 
 <script>
     import Task from "./Task";
+    import TaskWrapper from "./TaskWrapper.vue";
 
     export default {
         inheritAttrs: false,
         mixins: [Task],
-        emits: ["update:modelValue"],
+        emits: ["update:modelValue", "any-of-type"],
+        components: {TaskWrapper},
+        props: {
+            wrap: {
+                type: Boolean,
+                default: true,
+            },
+        },
         data() {
             return {
                 isOpen: false,
@@ -49,6 +86,7 @@
         },
         methods: {
             onSelectType(value) {
+                if(this.selectedSchema) this.$emit("any-of-type", value);
                 this.selectedSchema = value;
                 // Set up default values
                 if (
@@ -86,27 +124,15 @@
                 return this.selectedSchema ? this.getType(this.currentSchema) : undefined;
             },
             schemaOptions() {
-                // find the part of the prefix to schema references that is common to all schemas
-                const schemaRefsArray = this.schemas
-                    .map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
-                    .filter((schemaRef) => schemaRef)
-                    .map((schemaRef) => schemaRef.split("."))
-
-                const commonPart = schemaRefsArray[0]
-                    .filter((schemaRef, index) => schemaRefsArray.every((item) => item[index] === schemaRef))
-                    .map((schemaRef) => `${schemaRef}.`)
-                    .join("");
-
                 // remove the common part from all schema ids
                 return this.schemas.map((schema) => {
+                    // If the schema has a $ref, we use the last part of the reference
                     /** @type string */
                     const schemaRef = schema.$ref
                         ? schema.$ref.split("/").pop()
                         : schema.type;
 
-                    const lastPartOfValue = schemaRef.slice(
-                        commonPart.length,
-                    );
+                    const lastPartOfValue = (schemaRef.split(".").pop() || schemaRef).replace(/-\d+$/, "");
 
                     return {
                         label: lastPartOfValue.capitalize(),

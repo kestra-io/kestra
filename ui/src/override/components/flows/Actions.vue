@@ -1,14 +1,14 @@
 <template>
     <Action
         v-if="deleted"
-        type="secondary"
+        type="default"
         :icon="BackupRestore"
         :label="$t('restore')"
         @click="restoreFlow"
     />
     <Action
         v-if="canEdit && !deleted && tab !== 'edit'"
-        type="secondary"
+        type="default"
         :icon="Pencil"
         :label="$t('edit flow')"
         @click="editFlow"
@@ -24,7 +24,7 @@
 
 <script setup lang="ts">
     import {computed} from "vue";
-    import {useRouter, useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {useStore} from "vuex";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     import Pencil from "vue-material-design-icons/Pencil.vue";
@@ -43,11 +43,11 @@
     const deleted = computed(() => flow.value?.deleted || false);
     const tab = computed(() => route.params?.tab as string);
 
-    const canExecute = computed(() => 
+    const canExecute = computed(() =>
         flow.value && user.value?.isAllowed(permission.EXECUTION, action.CREATE, flow.value.namespace)
     );
 
-    const canEdit = computed(() => 
+    const canEdit = computed(() =>
         user.value?.isAllowed(permission.FLOW, action.UPDATE, flow.value?.namespace)
     );
 

@@ -6,6 +6,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.models.dashboards.filters.Contains;
 import io.kestra.core.models.dashboards.filters.In;
@@ -41,7 +42,10 @@ import org.jooq.impl.DSL;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 
-import java.time.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -1183,7 +1187,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 );
 
                 // Apply Where filter
-                selectConditionStep = where(selectConditionStep, filterService, descriptors, fieldsMapping);
+                selectConditionStep = where(selectConditionStep, filterService, descriptors.getWhere(), fieldsMapping);
 
                 List<? extends ColumnDescriptor<Executions.Fields>> columnsWithoutDateWithOutAggs = columnsWithoutDate.values().stream()
                     .filter(column -> column.getAgg() == null)
@@ -1203,6 +1207,42 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 // Fetch and paginate if provided
                 return fetchSeekStep(selectSeekStep, pageable);
             });
+    }
+
+    public Double fetchValue(String tenantId, DataFilterKPI<Executions.Fields, ? extends ColumnDescriptor<Executions.Fields>> dataFilter, ZonedDateTime startDate, ZonedDateTime endDate, boolean numeratorFilter) {
+        return this.jdbcRepository.getDslContextWrapper().transactionResult(configuration -> {
+            DSLContext context = DSL.using(configuration);
+            ColumnDescriptor<Executions.Fields> columnDescriptor = dataFilter.getColumns();
+            String columnKey = this.getFieldsMapping().get(columnDescriptor.getField());
+            Field<?> field = columnToField(columnDescriptor, getFieldsMapping());
+            if (columnDescriptor.getAgg() != null) {
+                field = filterService.buildAggregation(field, columnDescriptor.getAgg());
+            }
+
+            List<AbstractFilter<Executions.Fields>> filters = new ArrayList<>(ListUtils.emptyOnNull(dataFilter.getWhere()));
+            if (numeratorFilter) {
+                filters.addAll(dataFilter.getNumerator());
+            }
+
+            SelectConditionStep selectStep = context
+                .select(field)
+                .from(this.jdbcRepository.getTable())
+                .where(this.defaultFilter(tenantId));
+
+            var selectConditionStep = where(
+                selectStep,
+                filterService,
+                filters,
+                getFieldsMapping()
+            );
+
+            Record result = selectConditionStep.fetchOne();
+            if (result != null) {
+                return result.getValue(field, Double.class);
+            } else {
+                return null;
+            }
+        });
     }
 
     @Override
@@ -1226,10 +1266,10 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     @Override
     @SuppressWarnings("unchecked")
-    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, DataFilter<F, ? extends ColumnDescriptor<F>> descriptors, Map<F, String> fieldsMapping) {
-        if (!ListUtils.isEmpty(descriptors.getWhere())) {
+    protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters, Map<F, String> fieldsMapping) {
+        if (!ListUtils.isEmpty(filters)) {
             // Check if descriptors contain a filter of type Executions.Fields.STATE and apply the custom filter "statesFilter" if present
-            List<In<Executions.Fields>> stateFilters = descriptors.getWhere().stream()
+            List<In<Executions.Fields>> stateFilters = filters.stream()
                 .filter(descriptor -> descriptor.getField().equals(Executions.Fields.STATE) && descriptor instanceof In)
                 .map(descriptor -> (In<Executions.Fields>) descriptor)
                 .toList();
@@ -1244,7 +1284,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             }
 
             // Check if descriptors contain a filter of type EXECUTIONS.Fields.LABELS and apply the findCondition() method if present
-            List<Contains<Executions.Fields>> labelFilters = descriptors.getWhere().stream()
+            List<Contains<Executions.Fields>> labelFilters = filters.stream()
                 .filter(descriptor -> descriptor.getField().equals(Executions.Fields.LABELS) && descriptor instanceof Contains<F>)
                 .map(descriptor -> (Contains<Executions.Fields>) descriptor)
                 .toList();
@@ -1264,7 +1304,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             }
 
             // Remove the state filters from descriptors
-            List<AbstractFilter<F>> remainingFilters = descriptors.getWhere().stream()
+            List<AbstractFilter<F>> remainingFilters = filters.stream()
                 .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.STATE) || !(descriptor instanceof In)) // Filter state
                 .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.LABELS) || !(descriptor instanceof Contains<F>)) // Filter labels
                 .toList();
@@ -1279,21 +1319,4 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);
-
-    protected <F extends Enum<F>> List<Field<Date>> generateDateFields(
-        DataFilter<F, ? extends ColumnDescriptor<F>> descriptors,
-        Map<F, String> fieldsMapping,
-        ZonedDateTime startDate,
-        ZonedDateTime endDate,
-        Set<F> dateFields
-    ) {
-        return descriptors.getColumns().entrySet().stream()
-            .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
-            .map(entry -> {
-                Duration duration = Duration.between(startDate, endDate);
-                return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
-            })
-            .toList();
-
-    }
 }

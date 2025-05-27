@@ -754,7 +754,8 @@
     "pluginPage": {
       "title1": "Plugins are building blocks for your workflows.",
       "title2": "Search for tasks and triggers to build your flow.",
-      "search": "Search across {count}+ plugins"
+      "search": "Search across {count}+ plugins",
+      "alt": "Plugins Icon"
     },
     "no inputs": "This flow has no inputs.",
     "settings": {
@@ -1192,49 +1193,41 @@
         },
         "general": {
           "retry": "Retry",
+          "sla": "SLA",
           "labels": "Labels",
           "inputs": "Inputs",
           "outputs": "Outputs",
           "variables": "Variables",
           "concurrency": "Concurrency",
-          "plugin_defaults": "Plugin Defaults",
           "disabled": "Disabled"
         }
       },
       "select": {
         "tasks": "Select a task",
         "triggers": "Select a trigger",
-        "error handlers": "Select a task",
+        "errors": "Select a task",
         "finally": "Select a task",
         "pluginDefaults": "Select a plugin",
-        "after execution": "Select a task",
+        "afterExecution": "Select a task",
         "conditions": "Select a condition"
       },
       "creation": {
         "tasks": "Add a task",
         "triggers": "Add a trigger",
-        "error handlers": "Add an error handler",
+        "errors": "Add an error handler",
         "finally": "Add a finally block",
         "pluginDefaults": "Add a plugin default",
-        "after execution": "Add an after execution block",
+        "afterExecution": "Add an after execution block",
         "conditions": "Add a condition"
-      },
-      "save": {
-        "tasks": "Save task",
-        "triggers": "Save trigger",
-        "error handlers": "Save error handler",
-        "finally": "Save task",
-        "after execution": "Save task",
-        "input": "Save input"
       },
       "close": {
         "tasks": "Close task",
         "triggers": "Close trigger",
-        "error handlers": "Close error handler",
-        "finally": "Close task",
-        "after execution": "Close task",
+        "errors": "Close error handler",
+        "finally": "Close finally task",
+        "afterExecution": "Close after execution task",
         "input": "Close input",
-        "plugin defaults": "Close plugin default",
+        "pluginDefaults": "Close plugin default",
         "conditions": "Close condition"
       }
     },
@@ -1344,6 +1337,14 @@
     "searching": "Searching...",
     "worker information": "Worker Information",
     "test-badge-text": "Test",
-    "test-badge-tooltip": "This execution was created by a Test"
+    "test-badge-tooltip": "This execution was created by a Test",
+    "no_results": {
+      "executions": "No Executions Found",
+      "triggers": "No Triggers Found",
+      "flows": "No Flows Found",
+      "kv_pairs": "No Key-Value pairs Found",
+      "secrets": "No Secrets Found",
+      "templates": "No Templates Found"
+    }
   }
 }

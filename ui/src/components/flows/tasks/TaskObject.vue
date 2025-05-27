@@ -1,5 +1,5 @@
 <template>
-    <el-form label-position="top">
+    <el-form label-position="top" class="w-100">
         <template v-if="sortedProperties">
             <template v-for="[key, schema] in requiredProperties" :key="key">
                 <template v-if="key === 'id' || isNestedProperty(key)">
@@ -46,17 +46,14 @@
                         <component
                             v-if="!isBoolean(schema)"
                             :is="`task-${getType(schema, key)}`"
-                            v-bind="{
-                                ...componentProps(key, schema),
-                                ...(getType(schema, key) === 'complex' ? {metadataInputs} : {})
-                            }"
+                            v-bind="{...componentProps(key, schema)}"
                             class="mt-1 mb-2 wrapper"
                         />
                     </el-form-item>
                 </template>
                 
                 <template v-else>
-                    <TaskWrapper>
+                    <TaskWrapper :merge>
                         <template #tasks>
                             <el-form-item :required="isRequired(key)">
                                 <template #label>
@@ -101,10 +98,7 @@
                                 <component
                                     v-if="!isBoolean(schema)"
                                     :is="`task-${getType(schema, key)}`"
-                                    v-bind="{
-                                        ...componentProps(key, schema),
-                                        ...(getType(schema, key) === 'complex' ? {metadataInputs} : {})
-                                    }"
+                                    v-bind="{...componentProps(key, schema)}"
                                     class="mt-1 mb-2 wrapper"
                                 />
                             </el-form-item>
@@ -160,10 +154,7 @@
                                     </template>
                                     <component
                                         :is="`task-${getType(schema, key)}`"
-                                        v-bind="{
-                                            ...componentProps(key, schema),
-                                            ...(getType(schema, key) === 'complex' ? {metadataInputs} : {})
-                                        }"
+                                        v-bind="{...componentProps(key, schema)}"
                                         v-if="!isBoolean(schema)"
                                         class="mt-1 mb-2 wrapper"
                                     />
@@ -221,10 +212,7 @@
                                     </template>
                                     <component
                                         :is="`task-${getType(schema, key)}`"
-                                        v-bind="{
-                                            ...componentProps(key, schema),
-                                            ...(getType(schema, key) === 'complex' ? {metadataInputs} : {})
-                                        }"
+                                        v-bind="{...componentProps(key, schema)}"
                                         v-if="!isBoolean(schema)"
                                         class="mt-1 mb-2 wrapper"
                                     />
@@ -321,7 +309,7 @@
                 type: Object,
                 default: () => ({}),
             },
-            expandOptional: {type: Boolean, default: false},
+            merge: {type: Boolean, default: false},
             metadataInputs: {type: Boolean, default: false}
         },
         emits: ["update:modelValue"],
@@ -330,23 +318,18 @@
                 activeNames: [],
             };
         },
-        mounted() {
-            if (this.expandOptional) {
-                this.activeNames = ["optional"];
-            }
-        },
         computed: {
             sortedProperties() {
                 return sortProperties(this.properties, this.schema?.required);
             },
             requiredProperties() {
-                return this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
+                return this.merge ? this.sortedProperties : this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
             },
             optionalProperties() {
-                return this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !v.$deprecated);
+                return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !v.$deprecated);
             },
             deprecatedProperties() {
-                return this.sortedProperties.filter(([_,v]) => v && v.$deprecated);
+                return this.merge ? [] : this.sortedProperties.filter(([_,v]) => v && v.$deprecated);
             },
             componentProps() {
                 return (key, schema) => ({
@@ -404,10 +387,6 @@
 </script>
 
 <style lang="scss">
-    .el-form-item {
-        margin-bottom: 1rem;
-    }
-
     .el-form-item__content {
         .el-form-item {
             width: 100%;
@@ -425,7 +404,7 @@
 
 .el-form-item {
     width: 100%;
-    
+    margin-bottom: 0;    
     > :deep(.el-form-item__label) {
         width: 100%;
         display: flex;
@@ -455,6 +434,7 @@
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
+        font-weight: 600;
     }
 
     .type-tag {
@@ -465,6 +445,12 @@
         padding: 0 8px;
         padding-bottom: 2px;
         border-radius: 8px;
+        text-transform: capitalize;
+    }
+
+    .information-icon {
+        color: var(--ks-content-secondary);
+        cursor: pointer;
     }
 }
 </style>

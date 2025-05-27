@@ -46,7 +46,6 @@
         <Task
             v-else
             @update-task="onTaskUpdate"
-            @update-documentation="(task) => emits('updateDocumentation', task)"
         />
     </div>
 </template>
@@ -64,6 +63,8 @@
 
     import Editor from "../../inputs/Editor.vue";
     import MetadataInputs from "../../flows/MetadataInputs.vue";
+    import MetadataRetry from "../../flows/MetadataRetry.vue";
+    import MetadataSLA from "../../flows/MetadataSLA.vue";
     import TaskBasic from "../../flows/tasks/TaskBasic.vue";
 
     import {
@@ -87,7 +88,6 @@
         "save",
         "updateTask",
         "updateMetadata",
-        "updateDocumentation",
         "reorder",
     ]);
 
@@ -151,15 +151,9 @@
                 label: t("no_code.fields.main.description"),
             },
             retry: {
-                component: Editor,
+                component: MetadataRetry,
                 value: props.metadata.retry,
-                label: t("no_code.fields.general.retry"),
-                navbar: false,
-                input: true,
-                lang: "yaml",
-                shouldFocus: false,
-                showScroll: true,
-                style: {height: "100px"},
+                label: t("no_code.fields.general.retry")
             },
             labels: {
                 component: InputPair,
@@ -196,6 +190,11 @@
                 label: t("no_code.fields.general.concurrency"),
                 schema: schema.value?.definitions?.["io.kestra.core.models.flows.Concurrency"] ?? {},
                 root: "concurrency",
+            },
+            sla: {
+                component: MetadataSLA,
+                value: props.metadata.sla ?? [],
+                label: t("no_code.fields.general.sla")
             },
             disabled: {
                 component: InputSwitch,

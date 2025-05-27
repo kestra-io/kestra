@@ -7,7 +7,6 @@ const config: StorybookConfig = {
   addons: [
     "@storybook/addon-essentials",
     "@storybook/addon-themes",
-    "@chromatic-com/storybook",
     "@storybook/experimental-addon-test"
   ],
   framework: {

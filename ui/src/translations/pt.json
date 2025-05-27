@@ -812,18 +812,19 @@
       "adding": "+ Adicionar um {what}",
       "adding_default": "+ Adicionar um novo value",
       "close": {
-        "after execution": "Fechar task",
+        "afterExecution": "Fechar após execução da task",
         "conditions": "Condição de fechamento",
-        "error handlers": "Fechar manipulador de erro",
+        "errors": "Fechar manipulador de erro",
         "finally": "Fechar task",
         "input": "Fechar input",
+        "pluginDefaults": "Fechar plugin padrão",
         "tasks": "Fechar task",
         "triggers": "Fechar trigger"
       },
       "creation": {
-        "after execution": "Adicionar um bloco após a execução",
+        "afterExecution": "Adicionar um bloco após a execução",
         "conditions": "Adicionar uma condição",
-        "error handlers": "Adicionar um manipulador de erro",
+        "errors": "Adicionar um manipulador de erro",
         "finally": "Adicionar um bloco finally",
         "pluginDefaults": "Adicionar um padrão de plugin",
         "tasks": "Adicionar uma task",
@@ -836,8 +837,8 @@
           "inputs": "Entradas",
           "labels": "Etiquetas",
           "outputs": "Saídas",
-          "plugin_defaults": "Padrões do Plugin",
           "retry": "Repetir",
+          "sla": "SLA",
           "variables": "Variáveis"
         },
         "main": {
@@ -852,14 +853,6 @@
         "variable": "Variável",
         "yaml": "Editor YAML"
       },
-      "save": {
-        "after execution": "Salvar task",
-        "error handlers": "Salvar manipulador de erro",
-        "finally": "Salvar task",
-        "input": "Salvar input",
-        "tasks": "Salvar task",
-        "triggers": "Salvar trigger"
-      },
       "sections": {
         "afterExecution": "Após a Execução",
         "deprecated": "Propriedades obsoletas",
@@ -873,9 +866,9 @@
         "triggers": "Triggers"
       },
       "select": {
-        "after execution": "Selecione uma task",
+        "afterExecution": "Selecione uma task",
         "conditions": "Selecione uma condição",
-        "error handlers": "Selecione uma task",
+        "errors": "Selecione uma task",
         "finally": "Selecione uma task",
         "pluginDefaults": "Selecione um plugin",
         "tasks": "Selecione uma task",
@@ -887,6 +880,14 @@
     "no_logs_data": "Sem Dados",
     "no_logs_data_description": "Nenhum flow está em execução, ou você pode precisar ajustar seus filtros.",
     "no_namespaces": "Nenhum namespace corresponde aos critérios de busca.",
+    "no_results": {
+      "executions": "Nenhuma Execução Encontrada",
+      "flows": "Nenhum Flow Encontrado",
+      "kv_pairs": "Nenhum par de Key-Value encontrado",
+      "secrets": "Nenhum Secret Encontrado",
+      "templates": "Nenhum Template Encontrado",
+      "triggers": "Nenhum Trigger Encontrado"
+    },
     "no_results_found": "Nenhum resultado encontrado",
     "no_tasks_running": "Ainda não há tasks em execução.",
     "now": "Agora",
@@ -978,6 +979,7 @@
     "pause title": "Pausar execução <code>{id}</code>.<br/>Note que as tasks atualmente em execução ainda serão processadas, e a execução terá que ser retomada manualmente.",
     "pluginDefaults": "Padrões do plugin",
     "pluginPage": {
+      "alt": "Ícone de Plugins",
       "search": "Pesquisar em mais de {count} plugins",
       "title1": "Plugins são blocos de construção para seus workflows.",
       "title2": "Pesquise por tasks e triggers para construir seu flow."

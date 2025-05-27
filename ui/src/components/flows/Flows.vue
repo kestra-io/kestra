@@ -52,7 +52,7 @@
                 <template #navbar>
                     <KestraFilter
                         prefix="flows"
-                        :include="['namespace', 'scope', 'labels']"
+                        :domain="FlowFilterLanguage.domain"
                         :buttons="{
                             refresh: {shown: false},
                             settings: {
@@ -86,7 +86,6 @@
 
                 <template #table>
                     <select-table
-                        v-if="flows.length"
                         ref="selectTable"
                         :data="flows"
                         :default-sort="{prop: 'id', order: 'ascending'}"
@@ -97,6 +96,7 @@
                         :row-class-name="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
+                        :no-data-text="$t('no_results.flows')"
                         class="flows-table"
                     >
                         <template #select-actions>
@@ -334,6 +334,7 @@
     import KestraFilter from "../filter/KestraFilter.vue";
     import {chartClick} from "../../utils/charts.js";
     import {useRoute, useRouter} from "vue-router";
+    import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
 
     const route = useRoute();
     const router = useRouter();

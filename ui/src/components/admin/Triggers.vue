@@ -10,9 +10,9 @@
                 <template #navbar>
                     <KestraFilter
                         prefix="triggers"
-                        :include="['namespace', 'trigger_state']"
+                        :domain="TriggerFilterLanguage.domain"
                         :buttons="{
-                            refresh: {shown: true, callback: load},
+                            refresh: {shown: true, callback: () => load()},
                             settings: {shown: false}
                         }"
                     />
@@ -28,6 +28,7 @@
                         @selection-change="onSelectionChange"
                         expandable
                         :row-class-name="getClasses"
+                        :no-data-text="$t('no_results.triggers')"
                     >
                         <template #expand>
                             <el-table-column type="expand">
@@ -261,9 +262,10 @@
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
-    import Cron from "../layout/Cron.vue"
-    import TriggerAvatar from "../flows/TriggerAvatar.vue"
-    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
+    import Cron from "../layout/Cron.vue";
+    import TriggerAvatar from "../flows/TriggerAvatar.vue";
+    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
+    import TriggerFilterLanguage from "../../composables/monaco/languages/filters/impl/triggerFilterLanguage.ts";
 </script>
 <script>
     import RouteContext from "../../mixins/routeContext";
@@ -294,7 +296,6 @@
                 triggers: undefined,
                 total: undefined,
                 triggerToUnlock: undefined,
-                state: undefined,
                 states: [
                     {label: this.$t("triggers_state.options.enabled"), value: "ENABLED"},
                     {label: this.$t("triggers_state.options.disabled"), value: "DISABLED"}
@@ -517,7 +518,7 @@
         margin-left: 0 !important;
         padding-left: 0 !important;
     }
-    
+
     .backfillContainer{
         display: flex;
         align-items: center;
@@ -525,17 +526,17 @@
     .statusIcon{
         font-size: large;
     }
-    
+
     .trigger-issue-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;
     }
-    
+
     .alert-circle-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;
     }
-    
+
     :deep(.el-table__expand-icon) {
         pointer-events: none;
         .el-icon {
@@ -547,7 +548,7 @@
             padding: 0 3px;
             color: inherit;
         }
-        
+
         &.is-checked {
             .is-text {
                 color: #ffffff;

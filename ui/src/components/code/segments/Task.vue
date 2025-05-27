@@ -49,9 +49,6 @@
     const store = useStore();
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
-    const flowBeforeAdd = computed(() => {
-        return store.state.flow.flowYamlBeforeAdd;
-    });
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
     const blockType = inject(BLOCKTYPE_INJECT_KEY, undefined);
@@ -109,17 +106,6 @@
         immediate: true,
     });
 
-    const type = computed(() => {
-        const parsed = YAML_UTILS.parse(yaml.value);
-        return parsed?.type ?? null;
-    });
-
-    watch(type, (t) => {
-        if(t)
-            emits("updateDocumentation", t);
-
-    });
-
     const section = computed(() => /^(\w+)(\[\d+\])?/.exec(parentPath)?.[1]);
 
     const validationSection = computed(() =>
@@ -172,19 +158,19 @@
         let result: string = flow.value;
 
         if (!creatingTask.value) {
-            result = YAML_UTILS.replaceBlockWithPath({
-                source: result,
-                path: `${parentPath}[${refPath}]`,
-                newContent: yaml.value ?? "",
-            });
+            if(yaml.value){
+                result = YAML_UTILS.replaceBlockWithPath({
+                    source: result,
+                    path: `${parentPath}[${refPath}]`,
+                    newContent: yaml.value,
+                });
+            }
         }else if(!hasMovedToEdit.value && blockType){
             const currentSection = section.value as keyof typeof SECTIONS_MAP;
 
             if(!currentSection) {
                 return;
             }
-
-            const keyName = currentSection === PLUGIN_DEFAULTS_SECTION ? "type" : "id"
 
             const task = {
                 newBlock: yaml.value,
@@ -194,34 +180,13 @@
                 blockType,
             } satisfies TaskModel;
 
-            if([PLUGIN_DEFAULTS_SECTION, "tasks", "triggers"].includes(currentSection)){
-                const parsedTask = YAML_UTILS.parse(task.newBlock);
-                // this condition will ignore trigger "conditions" unicity
-                if(parsedTask?.[keyName]){
-                    const existing = YAML_UTILS.checkBlockAlreadyExists({
-                        source: flowBeforeAdd.value,
-                        section: SECTIONS_MAP[currentSection],
-                        newContent: task.newBlock,
-                        keyName,
-                    })
-
-                    if (existing) {
-                        store.dispatch("core/showMessage", {
-                            variant: "error",
-                            title: "Block with same ID already exist",
-                            message: `Block in ${section.value} section with ID: ${existing} already exist in the flow.`,
-                        });
-                    }
-                }
-            }
-
             result = YAML_UTILS.insertBlockWithPath({
                 source: result,
                 ...task,
             });
 
 
-            const currentRefPath = (refPath ?? -1) + 1
+            const currentRefPath = (refPath !== undefined && refPath !== null) ? refPath + (position === "after" ? 1 : 0) : 0;
             editTask(
                 blockType,
                 parentPath,
@@ -244,12 +209,4 @@
             saveTask()
         },
     );
-
-    // in case another creation gets closed
-    // we need to update the flow with the last created tasks
-    watch(flowBeforeAdd, () => {
-        if (creatingTask.value) {
-            saveTask()
-        }
-    });
 </script>

@@ -812,18 +812,19 @@
       "adding": "+ {what} 추가",
       "adding_default": "+ 새 value 추가",
       "close": {
-        "after execution": "작업 닫기",
+        "afterExecution": "실행 task 후 닫기",
         "conditions": "닫기 조건",
-        "error handlers": "오류 처리기 닫기",
+        "errors": "오류 처리기 닫기",
         "finally": "작업 닫기",
         "input": "입력 닫기",
+        "pluginDefaults": "플러그인 기본값 닫기",
         "tasks": "작업 닫기",
         "triggers": "트리거 닫기"
       },
       "creation": {
-        "after execution": "실행 후 블록 추가",
+        "afterExecution": "실행 후 블록 추가",
         "conditions": "조건 추가",
-        "error handlers": "오류 처리기 추가",
+        "errors": "오류 처리기 추가",
         "finally": "마지막 블록 추가",
         "pluginDefaults": "플러그인 기본값 추가",
         "tasks": "작업 추가",
@@ -836,8 +837,8 @@
           "inputs": "입력",
           "labels": "레이블",
           "outputs": "출력",
-          "plugin_defaults": "플러그인 기본값",
           "retry": "재시도",
+          "sla": "SLA",
           "variables": "변수"
         },
         "main": {
@@ -852,14 +853,6 @@
         "variable": "변수",
         "yaml": "YAML 편집기"
       },
-      "save": {
-        "after execution": "작업 저장",
-        "error handlers": "오류 처리기 저장",
-        "finally": "작업 저장",
-        "input": "입력 저장",
-        "tasks": "작업 저장",
-        "triggers": "트리거 저장"
-      },
       "sections": {
         "afterExecution": "실행 후",
         "deprecated": "사용되지 않는 속성",
@@ -873,9 +866,9 @@
         "triggers": "트리거"
       },
       "select": {
-        "after execution": "작업 선택",
+        "afterExecution": "작업 선택",
         "conditions": "조건 선택",
-        "error handlers": "작업 선택",
+        "errors": "작업 선택",
         "finally": "작업 선택",
         "pluginDefaults": "플러그인 선택",
         "tasks": "작업 선택",
@@ -887,6 +880,14 @@
     "no_logs_data": "데이터 없음",
     "no_logs_data_description": "흐름이 실행 중이지 않거나 필터를 조정해야 할 수 있습니다.",
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
+    "no_results": {
+      "executions": "실행을 찾을 수 없음",
+      "flows": "flow를 찾을 수 없음",
+      "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
+      "secrets": "비밀 없음",
+      "templates": "템플릿을 찾을 수 없음",
+      "triggers": "트리거를 찾을 수 없음"
+    },
     "no_results_found": "결과를 찾을 수 없습니다",
     "no_tasks_running": "아직 실행 중인 task가 없습니다.",
     "now": "지금",
@@ -978,6 +979,7 @@
     "pause title": "실행 <code>{id}</code>을(를) 일시 중지합니다.<br/>현재 실행 중인 task는 계속 처리되며, 실행은 수동으로 다시 시작해야 합니다.",
     "pluginDefaults": "플러그인 기본값",
     "pluginPage": {
+      "alt": "플러그인 아이콘",
       "search": "{count}+ 플러그인 검색",
       "title1": "플러그인은 워크플로우의 구성 요소입니다.",
       "title2": "flow를 구축하기 위해 task와 trigger를 검색하세요."

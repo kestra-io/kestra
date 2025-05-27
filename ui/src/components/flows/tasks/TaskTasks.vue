@@ -5,23 +5,22 @@
             :elements="items"
             section="tasks"
             block-type="tasks"
-            @remove="(yaml) => emits('update:modelValue', yaml)"
-            @reorder="(yaml) => emits('update:modelValue', yaml)"
+            @remove="(yaml) => store.commit('flow/setFlowYaml', yaml)"
+            @reorder="(yaml) => store.commit('flow/setFlowYaml', yaml)"
         />
     </div>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue";
+    import {useStore} from "vuex";
     import Collapse from "../../code/components/collapse/Collapse.vue";
 
     defineOptions({inheritAttrs: false});
 
-    interface Task {id:string, type:string}
+    const store = useStore();
 
-    const emits = defineEmits<{
-        (e: "update:modelValue", tasks: Task[]): void
-    }>();
+    interface Task {id:string, type:string}
 
     const props = withDefaults(defineProps<{
         modelValue?: Task[]

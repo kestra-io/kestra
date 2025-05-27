@@ -167,13 +167,9 @@
             showPlaceholder() {
                 return (
                     this.input === true &&
-                    !this.focus &&
-                    (!Object.hasOwn(this, "editor") ||
-                        this.editor === undefined ||
-                        !(
-                            this.editor.getValue() !== undefined &&
-                            this.editor.getValue() !== ""
-                        ))
+                    !this.shouldFocus &&
+                    (!this.modelValue || this.modelValue.trim() === "") &&
+                    !this.focus
                 );
             },
             options() {
@@ -444,7 +440,7 @@
 
                 // attach an imperative method to the element so tests can programmatically update
                 // the value of the editor without dealing with how Monaco handles the exact keystrokes
-                this.$refs.monacoEditor.$el.__setValueInTests = (value) => {
+                this.$refs.monacoEditor.$el.querySelector(".ks-monaco-editor").__setValueInTests = (value) => {
                     this.editor.setValue(value);
                 };
             },
@@ -650,7 +646,7 @@
 }
 
 .disable-text {
-    color: grey !important;
+    color: var(--ks-content-inactive) !important;
 }
 
 div.img {

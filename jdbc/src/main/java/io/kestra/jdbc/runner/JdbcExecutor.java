@@ -558,6 +558,8 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                             // the execution has been queued, we save the queued execution and stops here
                             if (executor.getExecutionRunning() != null && executor.getExecutionRunning().getConcurrencyState() == ExecutionRunning.ConcurrencyState.QUEUED) {
                                 executionQueuedStorage.save(ExecutionQueued.fromExecutionRunning(executor.getExecutionRunning()));
+                                metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution().withState(State.Type.QUEUED))).increment();
+
                                 return Pair.of(
                                     executor,
                                     executorState
@@ -821,7 +823,6 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                     // send metrics on parent taskRun terminated
                     if (taskRun.getState().isTerminated()) {
-                        // TODO maybe use a specific metric to track subflow instead of these two.
                         metricRegistry
                             .counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(message))
                             .increment();
@@ -1078,7 +1079,11 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                     executionQueuedStorage.pop(executor.getFlow().getTenantId(),
                         executor.getFlow().getNamespace(),
                         executor.getFlow().getId(),
-                        throwConsumer(queued -> executionQueue.emit(queued.withState(State.Type.RUNNING)))
+                        throwConsumer(queued -> {
+                            var newExecution = queued.withState(State.Type.RUNNING);
+                            metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION, metricRegistry.tags(newExecution)).increment();
+                            executionQueue.emit(newExecution);
+                        })
                     );
                 }
 

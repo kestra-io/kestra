@@ -108,6 +108,10 @@ class JsonSchemaGeneratorTest {
             var bashType = definitions.get(Log.class.getName());
             assertThat(bashType, is(notNullValue()));
 
+            var requiredWithDefault = definitions.get("io.kestra.core.docs.JsonSchemaGeneratorTest-RequiredWithDefault");
+            assertThat(requiredWithDefault, is(notNullValue()));
+            assertThat((List<String>) requiredWithDefault.get("required"), not(contains("requiredWithDefault")));
+
             var properties = (Map<String, Map<String, Object>>) flow.get("properties");
             var listeners = properties.get("listeners");
             assertThat(listeners.get("$deprecated"), is(true));

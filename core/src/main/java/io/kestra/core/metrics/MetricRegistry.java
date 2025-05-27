@@ -2,7 +2,6 @@ package io.kestra.core.metrics;
 
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
-import io.kestra.core.models.flows.sla.SLA;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
@@ -60,6 +59,8 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION = "The total number of tasks ended by the Executor";
     public static final String METRIC_EXECUTOR_TASKRUN_ENDED_DURATION = "executor.taskrun.ended.duration";
     public static final String METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION = "Task duration inside the Executor";
+    public static final String METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT = "executor.flowable.execution.count";
+    public static final String METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT_DESCRIPTION = "The total number of flowable tasks executed by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_STARTED_COUNT = "executor.execution.started.count";
     public static final String METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION = "The total number of executions started by the Executor";
     public static final String METRIC_EXECUTOR_EXECUTION_END_COUNT = "executor.execution.end.count";
@@ -80,7 +81,10 @@ public class MetricRegistry {
     public static final String METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION = "The total number of execution delays ended (resumed) by the Executor";
     public static final String METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT = "executor.worker.job.resubmit.count";
     public static final String METRIC_EXECUTOR_WORKER_JOB_RESUBMIT_COUNT_DESCRIPTION = "The total number of worker jobs resubmitted to the Worker by the Executor";
-
+    public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT = "executor.execution.queued.count";
+    public static final String METRIC_EXECUTOR_EXECUTION_QUEUED_COUNT_DESCRIPTION = "The total number of executions queued by the Executor";
+    public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT = "executor.execution.popped.count";
+    public static final String METRIC_EXECUTOR_EXECUTION_POPPED_COUNT_DESCRIPTION = "The total number of executions popped by the Executor";
 
     public static final String METRIC_INDEXER_REQUEST_COUNT = "indexer.request.count";
     public static final String METRIC_INDEXER_REQUEST_COUNT_DESCRIPTION = "Total number of batches of records received by the Indexer";

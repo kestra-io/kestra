@@ -132,6 +132,15 @@ public class JsonSchemaGenerator {
                 }
             }
         });
+
+        // do the same for all definitions
+        if (objectNode.get("definitions") instanceof ObjectNode definitions) {
+            definitions.forEach(jsonNode -> {
+                if (jsonNode instanceof ObjectNode definition) {
+                    removeRequiredOnPropsWithDefaults(definition);
+                }
+            });
+        }
     }
 
     // This hack exists because for Property we generate a anyOf for properties that are not strings.

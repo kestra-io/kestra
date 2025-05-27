@@ -2,17 +2,19 @@
     <span class="label">{{ props.label }}</span>
     <div class="mt-1 mb-2 wrapper">
         <TaskAnyOf
-            :model-value="props.modelValue"
+            :model-value="value"
             :schema
             :definitions
             @update:model-value="emits('update:modelValue', $event)"
-            @any-of-type="emits('update:modelValue', undefined)"
+            @any-of-type="changeType"
             wrap
         />
     </div>
 </template>
 
 <script setup lang="ts">
+    import {computed} from "vue";
+
     import TaskAnyOf from "./tasks/TaskAnyOf.vue";
 
     const emits = defineEmits(["update:modelValue"]);
@@ -20,6 +22,18 @@
     const props = defineProps({
         modelValue: {type: Object, default: () => ({})},
         label: {type: String, required: true},
+    });
+
+    const changeType = (v: any) => {
+        if (!v) return;
+
+        const type = definitions[v].properties.type.enum[0];
+        value.value = type ? {type} : {};
+    };
+
+    const value = computed({
+        get: () => props.modelValue,
+        set: (v) => emits("update:modelValue", v),
     });
 
     // FIXME: Properly fetch and parse the schema and definitions

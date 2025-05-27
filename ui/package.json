@@ -10,7 +10,7 @@
     "preview": "vite preview",
     "test:unit": "vitest run",
     "test:lint": "eslint",
-    "test:cicd": "vitest run --coverage --exclude=\"**/translation.spec.js\"",
+    "test:cicd": "vitest run --coverage",
     "test:storybook": "vitest run --project=storybook",
     "translations:check": "node ./src/translations/check.js",
     "lint": "eslint --fix",

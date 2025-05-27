@@ -8,7 +8,7 @@
     defineOptions({inheritAttrs: false});
 
     const model = defineModel("modelValue", {
-        type: String,
+        type: [String, Object],
         default: "",
     });
 

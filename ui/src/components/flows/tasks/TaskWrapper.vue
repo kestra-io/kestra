@@ -12,8 +12,8 @@
 
 <style lang="scss" scoped>
 .schema-wrapper {
+    width: 100%;
     padding: 1rem;
-    padding-bottom: 0.2rem;
     border-radius: 8px;
     margin: 1rem 0;
     background: var(--ks-background-body);

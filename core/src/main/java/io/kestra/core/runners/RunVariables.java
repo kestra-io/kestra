@@ -12,7 +12,6 @@ import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
-import io.kestra.core.utils.MapUtils;
 import lombok.AllArgsConstructor;
 import lombok.With;
 
@@ -78,7 +77,7 @@ public final class RunVariables {
     static Map<String, Object> of(final FlowInterface flow) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
         builder.put("id", flow.getId())
-               .put("namespace", flow.getNamespace());
+            .put("namespace", flow.getNamespace());
 
         Optional.ofNullable(flow.getRevision())
             .ifPresent(revision ->  builder.put("revision", revision));

@@ -387,10 +387,6 @@
 </script>
 
 <style lang="scss">
-    .el-form-item {
-        margin-bottom: 1rem;
-    }
-
     .el-form-item__content {
         .el-form-item {
             width: 100%;
@@ -408,7 +404,7 @@
 
 .el-form-item {
     width: 100%;
-    
+    margin-bottom: 0;    
     > :deep(.el-form-item__label) {
         width: 100%;
         display: flex;
@@ -438,6 +434,7 @@
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
+        font-weight: 600;
     }
 
     .type-tag {
@@ -448,6 +445,12 @@
         padding: 0 8px;
         padding-bottom: 2px;
         border-radius: 8px;
+        text-transform: capitalize;
+    }
+
+    .information-icon {
+        color: var(--ks-content-secondary);
+        cursor: pointer;
     }
 }
 </style>

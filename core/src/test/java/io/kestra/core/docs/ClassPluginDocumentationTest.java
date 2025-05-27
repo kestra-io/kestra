@@ -103,7 +103,7 @@ class ClassPluginDocumentationTest {
             PluginClassAndMetadata<AbstractTrigger> metadata = PluginClassAndMetadata.create(scan, Schedule.class, AbstractTrigger.class, null);
             ClassPluginDocumentation<? extends AbstractTrigger> doc = ClassPluginDocumentation.of(jsonSchemaGenerator, metadata, true);
 
-            assertThat(doc.getDefs().size()).isEqualTo(1);
+            assertThat(doc.getDefs().size()).isEqualTo(20);
             assertThat(doc.getDocLicense()).isNull();
 
             assertThat(((Map<String, Object>) doc.getDefs().get("io.kestra.core.models.tasks.WorkerGroup")).get("type")).isEqualTo("object");

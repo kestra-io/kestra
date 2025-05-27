@@ -142,6 +142,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         } catch (DataException e) { // The exception is from the data itself, not the database/network/driver so instead of fail fast, we throw a recoverable QueueException
             throw new QueueException("Unable to emit a message to the queue", e);
         }
+
+        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType() } :
+            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        metricRegistry
+            .counter(MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT, MetricRegistry.METRIC_QUEUE_PRODUCE_COUNT_DESCRIPTION, tags)
+            .increment();
     }
 
     public void emitOnly(String consumerGroup, T message) throws QueueException{
@@ -252,6 +258,12 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
 
     @Override
     public Runnable receive(String consumerGroup, Consumer<Either<T, DeserializationException>> consumer, boolean forUpdate) {
+        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType() } :
+            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        AtomicInteger pollSize = new AtomicInteger();
+        this.metricRegistry
+            .gauge(MetricRegistry.METRIC_QUEUE_POLL_SIZE, MetricRegistry.METRIC_QUEUE_POLL_SIZE_DESCRIPTION, pollSize, tags);
+
         AtomicInteger maxOffset = new AtomicInteger();
 
         // fetch max offset
@@ -274,23 +286,28 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         });
 
         return this.poll(() -> {
-            Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
-                DSLContext ctx = DSL.using(configuration);
+            return this.metricRegistry
+                .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags)
+                .record(() -> {
+                    Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
+                        DSLContext ctx = DSL.using(configuration);
 
-                Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
+                        Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
 
-                if (!result.isEmpty()) {
-                    List<Integer> offsets = result.map(record -> record.get("offset", Integer.class));
+                        if (!result.isEmpty()) {
+                            List<Integer> offsets = result.map(record -> record.get("offset", Integer.class));
 
-                    maxOffset.set(offsets.getLast());
-                }
+                            maxOffset.set(offsets.getLast());
+                        }
 
-                return result;
-            });
+                        return result;
+                    });
 
-            this.send(fetch, consumer);
+                    this.send(fetch, consumer);
 
-            return fetch.size();
+                    pollSize.set(fetch.size());
+                    return fetch.size();
+                });
         });
     }
 
@@ -345,34 +362,44 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         boolean forUpdate
     ) {
         String queueName = queueName(queueType);
+        String[] tags = consumerGroup == null ? new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName } :
+            new String [] { MetricRegistry.TAG_QUEUE_TYPE, queueType(), MetricRegistry.TAG_QUEUE_CONSUMER, queueName, MetricRegistry.TAG_QUEUE_CONSUMER_GROUP, consumerGroup };
+        AtomicInteger pollSize = new AtomicInteger();
+        this.metricRegistry
+            .gauge(MetricRegistry.METRIC_QUEUE_POLL_SIZE, MetricRegistry.METRIC_QUEUE_POLL_SIZE_DESCRIPTION, pollSize, tags);
 
         return this.poll(() -> {
-            Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
-                DSLContext ctx = DSL.using(configuration);
+            return this.metricRegistry
+                .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags)
+                .record(() -> {
+                    Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
+                        DSLContext ctx = DSL.using(configuration);
 
-                Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName, forUpdate);
+                        Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName, forUpdate);
 
-                if (!result.isEmpty()) {
-                    if (inTransaction) {
-                        consumer.accept(ctx, this.map(result));
+                        if (!result.isEmpty()) {
+                            if (inTransaction) {
+                                consumer.accept(ctx, this.map(result));
+                            }
+
+                            this.updateGroupOffsets(
+                                ctx,
+                                consumerGroup,
+                                queueName,
+                                result.map(record -> record.get("offset", Integer.class))
+                            );
+                        }
+
+                        return result;
+                    });
+
+                    if (!inTransaction) {
+                        consumer.accept(null, this.map(fetch));
                     }
 
-                    this.updateGroupOffsets(
-                        ctx,
-                        consumerGroup,
-                        queueName,
-                        result.map(record -> record.get("offset", Integer.class))
-                    );
-                }
-
-                return result;
-            });
-
-            if (!inTransaction) {
-                consumer.accept(null, this.map(fetch));
-            }
-
-            return fetch.size();
+                    pollSize.set(fetch.size());
+                    return fetch.size();
+                });
         });
     }
 

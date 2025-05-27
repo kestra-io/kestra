@@ -82,7 +82,7 @@ export function useHelpers() {
             name: "overview",
             title: t("overview"),
             component: Dashboard,
-            props: {namespace, containerClass: "full-container flex-0"},
+            props: {isNamespace: true},
         },
         {
             name: "flows",

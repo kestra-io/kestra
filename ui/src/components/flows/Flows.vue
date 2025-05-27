@@ -86,7 +86,6 @@
 
                 <template #table>
                     <select-table
-                        v-if="flows.length"
                         ref="selectTable"
                         :data="flows"
                         :default-sort="{prop: 'id', order: 'ascending'}"
@@ -97,6 +96,7 @@
                         :row-class-name="rowClasses"
                         @selection-change="handleSelectionChange"
                         :selectable="canCheck"
+                        :no-data-text="$t('no_results.flows')"
                         class="flows-table"
                     >
                         <template #select-actions>

@@ -4,9 +4,9 @@
         v-if="generated !== undefined"
         :data="parsedData"
         :options
-        :plugins="chartOptions.legend.enabled ? [customBarLegend] : []"
+        :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
         class="chart"
-        :class="chartOptions.legend.enabled ? 'with-legend' : ''"
+        :class="chartOptions?.legend?.enabled ? 'with-legend' : ''"
     />
     <NoData v-else />
 </template>
@@ -31,16 +31,13 @@
 
     const store = useStore();
 
-    const dashboard = computed(() => store.state.dashboard.dashboard);
-
     const route = useRoute();
     const router = useRouter();
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: [Number, String], required: true},
         chart: {type: Object, required: true},
-        isPreview: {type: Boolean, required: false, default: false}
+        showDefault: {type: Boolean, default: false}
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
@@ -68,7 +65,7 @@
             borderColor: "transparent",
             borderWidth: 2,
             plugins: {
-                ...(chartOptions.legend.enabled
+                ...(chartOptions?.legend?.enabled
                     ? {
                         customBarLegend: {
                             containerID,
@@ -241,10 +238,11 @@
     });
 
     const generated = ref();
-    const generate = async () => {
-        if (!props.isPreview) {
+    const generate = async (id) => {
+        let decodedParams = decodeSearchParams(route.query, undefined, []);
+        if (!props.showDefault) {
             let params = {
-                id: dashboard.value.id,
+                id,
                 chartId: props.chart.id
             };
             if (route.query.namespace) {
@@ -253,22 +251,17 @@
             if (route.query.labels) {
                 params.labels = Object.fromEntries(route.query.labels.map(l => l.split(":")));
             }
-            let decodedParams = decodeSearchParams(route.query, undefined, []);
             if (decodedParams) {
                 params = {...params, filters: decodedParams}
             }
             generated.value = await store.dispatch("dashboard/generate", params);
         } else {
-            generated.value = await store.dispatch("dashboard/chartPreview", props.chart.content)
+            generated.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filter: decodedParams}})
         }
     };
 
-    watch(route, async () => await generate());
-    watch(
-        () => props.identifier,
-        () => generate(),
-    );
-    onMounted(() => generate());
+    watch(route, async (route) => await generate(route.params?.id));
+    onMounted(() => generate(route.params.id));
 </script>
 
 <style lang="scss" scoped>

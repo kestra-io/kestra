@@ -63,7 +63,6 @@ import java.util.concurrent.TimeoutException;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
@@ -293,7 +292,6 @@ class RunContextTest {
         assertThat(rendered.get("key")).isEqualTo("value");
     }
 
-
     @Test
     @EnabledIfEnvironmentVariable(named = "SECRET_PASSWORD", matches = ".*")
     void secretTrigger() throws IllegalVariableEvaluationException {
@@ -337,6 +335,21 @@ class RunContextTest {
         TestBean testBean = new TestBean(null);
 
         assertThrows(ConstraintViolationException.class, () -> runContext.validate(testBean));
+    }
+
+    @Test
+    @ExecuteFlow("flows/invalids/foreach-switch-failed.yaml")
+    void failedTasksVariable(Execution execution) throws Exception {
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        TaskRun taskRun = execution.getTaskRunList().stream()
+            .filter(tr -> tr.getTaskId().equals("errorforeach"))
+            .findFirst()
+            .orElseThrow(() -> new Exception("TaskRun not found"));
+
+        assertThat(taskRun.getOutputs().get("value").toString().contains("{\"state\":\"FAILED\",\"value\":\"2\",\"taskId\":\"switch\"}")).isEqualTo(true);
+
     }
 
     @SuperBuilder

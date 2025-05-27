@@ -2,17 +2,17 @@ import Utils from "../../../../utils/utils";
 import {cssVariable} from "@kestra-io/ui-libs";
 import {getConsistentHEXColor} from "../../../../utils/charts.js";
 
-const getOrCreateLegendList = (chart, id, direction = "row") => {
+const getOrCreateLegendList = (chart, id, direction = "row", width = "100%") => {
     const legendContainer = document.getElementById(id);
 
-    legendContainer.style.width = "100%";
+    legendContainer.style.width = width;
     legendContainer.style.justifyItems = "end";
 
     let listContainer = legendContainer?.querySelector("ul");
 
     if (!listContainer) {
         listContainer = document.createElement("ul");
-        listContainer.classList.add("w-100", "fw-light", "legend", direction === "row" ? "small" : "tall");
+        listContainer.classList.add("mb-3", "fw-light", "legend", direction === "row" ? "small" : "tall");
         listContainer.style.display = "flex";
         listContainer.style.flexDirection = direction;
         listContainer.style.margin = 0;
@@ -175,7 +175,7 @@ export const customBarLegend = {
 const generateTotalsLegend = (isDuration) => ({
     id: "totalsLegend",
     afterUpdate(chart, args, options) {
-        const ul = getOrCreateLegendList(chart, options.containerID, "column");
+        const ul = getOrCreateLegendList(chart, options.containerID, "column", "auto");
 
         while (ul.firstChild) {
             ul.firstChild.remove();

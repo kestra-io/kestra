@@ -1,15 +1,36 @@
 <template>
     <template v-if="data !== undefined">
-        <el-table :id="containerID" :data="data.results" :height="240">
+        <el-table
+            :id="containerID"
+            :data="data.results"
+            :height="240"
+            size="small"
+        >
             <el-table-column
-                v-for="(column, index) in Object.entries(props.chart.data.columns)"
-                :key="index"
-                :label="column[0]"
+                v-for="key in Object.keys(props.chart.data.columns)"
+                :label="key"
+                :key
             >
                 <template #default="scope">
-                    {{
-                        column[1].field === "DURATION" ? Utils.humanDuration(scope.row[column[0]]) : scope.row[column[0]]
-                    }}
+                    <template v-if="key === 'id'">
+                        <RouterLink
+                            v-if="scope.row.namespace && scope.row.flowId"
+                            :to="{
+                                name: 'executions/update',
+                                params: {
+                                    namespace: scope.row.namespace,
+                                    flowId: scope.row.flowId,
+                                    id: scope.row.id,
+                                },
+                            }"
+                        >
+                            <code>{{ scope.row.id.slice(0, 8) }}</code>
+                        </RouterLink>
+                        <code v-else>{{ scope.row.id }}</code>
+                    </template>
+                    <Status v-else-if="key === 'state'" size="small" :status="scope.row[key]" />
+                    <span v-else-if="key === 'duration'">{{ Utils.humanDuration(scope.row[key]) }}</span>
+                    <span v-else>{{ scope.row[key] }}</span>
                 </template>
             </el-table-column>
         </el-table>
@@ -26,9 +47,10 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref, watch} from "vue";
+    import {onMounted, ref, watch} from "vue";
 
     import {useI18n} from "vue-i18n";
+    import Status from "../../../../Status.vue";
     import NoData from "../../../../layout/NoData.vue";
     import Pagination from "../../../../layout/Pagination.vue";
 
@@ -46,14 +68,11 @@
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: [Number, String], required: true},
         chart: {type: Object, required: true},
-        isPreview: {type: Boolean, required: false, default: false}
+        showDefault: {type: Boolean, default: false},
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
-
-    const dashboard = computed(() => store.state.dashboard.dashboard);
 
     const currentPage = ref(1);
     const pageSize = ref(10);
@@ -61,41 +80,48 @@
     const handlePageChange = (options) => {
         currentPage.value = options.page;
         pageSize.value = options.size;
-        generate();
+        generate(route.params.id);
     };
 
     const data = ref();
-    const generate = async () => {
-        if (!props.isPreview) {
+    const generate = async (id) => {
+        let decodedParams = decodeSearchParams(route.query, undefined, []);
+        if (!props.showDefault) {
             let params = {
-                id: dashboard.value.id,
-                chartId: props.chart.id
+                id,
+                chartId: props.chart.id,
             };
             if (route.query.namespace) {
                 params.namespace = route.query.namespace;
             }
             if (route.query.labels) {
-                params.labels = Object.fromEntries(route.query.labels.map(l => l.split(":")));
+                params.labels = Object.fromEntries(
+                    route.query.labels.map((l) => l.split(":")),
+                );
             }
 
             if (props.chart.chartOptions?.pagination?.enabled) {
                 params.pageNumber = currentPage.value;
                 params.pageSize = pageSize.value;
             }
-            let decodedParams = decodeSearchParams(route.query, undefined, []);
             if (decodedParams) {
-                params = {...params, filters: decodedParams}
+                params = {...params, filters: decodedParams};
             }
             data.value = await store.dispatch("dashboard/generate", params);
         } else {
-            data.value = await store.dispatch("dashboard/chartPreview", props.chart.content)
+            data.value = await store.dispatch("dashboard/chartPreview", {
+                chart: props.chart.content,
+                globalFilter: {filter: decodedParams},
+            });
         }
     };
 
-    watch(route, async () => await generate());
-    watch(
-        () => props.identifier,
-        () => generate(),
-    );
-    onMounted(() => generate());
+    watch(route, async (route) => await generate(route.params?.id));
+    onMounted(() => generate(route.params.id));
 </script>
+
+<style lang="scss" scoped>
+code {
+    color: var(--ks-content-id);
+}
+</style>

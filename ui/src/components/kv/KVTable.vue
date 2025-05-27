@@ -12,6 +12,7 @@
         @selection-change="handleSelectionChange"
         @sort-change="handleSort"
         :infinite-scroll-load="namespace === undefined ? fetchKvs : undefined"
+        :no-data-text="$t('no_results.kv_pairs')"
         class="fill-height"
     >
         <template #select-actions>

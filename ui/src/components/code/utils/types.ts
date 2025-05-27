@@ -48,12 +48,13 @@ export type Fields = {
     id: Field;
     namespace: Field;
     description: Field;
-    retry: EditorField;
+    retry: Field;
     labels: PairField;
     inputs: InputField;
     outputs: EditorField;
     variables: PairField;
     concurrency: ConcurrencyField;
+    sla: Field;
     disabled: Field;
 };
 

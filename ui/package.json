@@ -22,7 +22,7 @@
   },
   "dependencies": {
     "@js-joda/core": "^5.6.5",
-    "@kestra-io/ui-libs": "^0.0.195",
+    "@kestra-io/ui-libs": "^0.0.196",
     "@vue-flow/background": "^1.3.2",
     "@vue-flow/controls": "^1.1.2",
     "@vue-flow/core": "^1.44.0",
@@ -76,7 +76,6 @@
     "yaml": "^2.7.1"
   },
   "devDependencies": {
-    "@chromatic-com/storybook": "^3.2.5",
     "@codecov/vite-plugin": "^1.9.1",
     "@esbuild-plugins/node-modules-polyfill": "^0.2.2",
     "@eslint/js": "^9.27.0",

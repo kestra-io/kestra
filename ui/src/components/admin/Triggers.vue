@@ -28,6 +28,7 @@
                         @selection-change="onSelectionChange"
                         expandable
                         :row-class-name="getClasses"
+                        :no-data-text="$t('no_results.triggers')"
                     >
                         <template #expand>
                             <el-table-column type="expand">
@@ -517,7 +518,7 @@
         margin-left: 0 !important;
         padding-left: 0 !important;
     }
-    
+
     .backfillContainer{
         display: flex;
         align-items: center;
@@ -525,17 +526,17 @@
     .statusIcon{
         font-size: large;
     }
-    
+
     .trigger-issue-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;
     }
-    
+
     .alert-circle-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;
     }
-    
+
     :deep(.el-table__expand-icon) {
         pointer-events: none;
         .el-icon {
@@ -547,7 +548,7 @@
             padding: 0 3px;
             color: inherit;
         }
-        
+
         &.is-checked {
             .is-text {
                 color: #ffffff;

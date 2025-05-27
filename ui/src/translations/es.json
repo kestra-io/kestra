@@ -507,7 +507,6 @@
     "export": "Exportar",
     "export all flows": "Exportar todos los flows",
     "export all templates": "Exportar todas las plantillas",
-    "export_to_file": "Exportar a archivo",
     "exports": "Exportaciones",
     "failed to render pdf": "Error al renderizar la vista previa del PDF",
     "false": "Falso",

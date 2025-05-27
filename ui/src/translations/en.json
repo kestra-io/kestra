@@ -470,6 +470,7 @@
     "template export": "Are you sure you want to export <code>{templateCount}</code> template(s)?",
     "templates exported": "Templates exported",
     "export all templates": "Export all templates",
+    "flow_export": "Export flow",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
     "flows exported": "Flows exported",
     "export all flows": "Export all flows",
@@ -514,7 +515,6 @@
     "focus task": "Click on any element to see its documentation.",
     "validate": "Validate",
     "add error handler": "Add an error handler",
-    "export_to_file": "Export to file",
     "taskDefaults": "Task Defaults",
     "disabled": "Disabled",
     "before": "before",
@@ -682,6 +682,7 @@
         "error": "Error(s) occurred while importing the file(s)"
       },
       "export": "Export namespace files",
+      "export_single": "Export file",
       "dialog": {
         "name": {
           "file": "Name with extension:",

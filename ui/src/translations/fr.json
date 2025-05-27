@@ -507,7 +507,6 @@
     "export": "Exporter",
     "export all flows": "Exporter tous les flows",
     "export all templates": "Exporter tous les templates",
-    "export_to_file": "Exporter vers un fichier",
     "exports": "Exporter",
     "failed to render pdf": "Impossible de rendre l'aperçu PDF",
     "false": "Faux",

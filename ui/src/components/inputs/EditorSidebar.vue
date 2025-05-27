@@ -178,6 +178,9 @@
                             <el-dropdown-item @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </el-dropdown-item>
+                            <el-dropdown-item v-if="data.leaf" @click="exportFile(node, data)">
+                                {{ $t("namespace files.export_single") }}
+                            </el-dropdown-item>
                             <el-dropdown-item
                                 @click="
                                     toggleRenameDialog(
@@ -1031,6 +1034,15 @@
                 } catch {
                     this.$toast().error(this.$t("namespace files.path.error"));
                 }
+            },
+            async exportFile(node, data){
+                const content = await  this.$store.dispatch("namespace/readFile", {
+                    path: this.getPath(node),
+                    namespace: this.namespaceId,
+                })
+
+                const blob = new Blob([content], {type: "text/plain"});
+                Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
             },
             onTabContextMenu(event) {
                 this.tabContextMenu = {

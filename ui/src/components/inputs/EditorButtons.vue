@@ -13,7 +13,7 @@
                         size="large"
                         @click="forwardEvent('export')"
                     >
-                        {{ $t("export_to_file") }}
+                        {{ $t("flow_export") }}
                     </el-dropdown-item>
                     <el-dropdown-item
                         v-if="!isCreating && canDelete"

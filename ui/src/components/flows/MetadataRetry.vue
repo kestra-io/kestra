@@ -1,8 +1,8 @@
 <template>
-    <span class="label">{{ props.label }}</span>
-    <div class="mt-1 mb-2 wrapper">
-        <TaskWrapper>
-            <template #tasks>
+    <TaskWrapper>
+        <template #tasks>
+            <span class="label">{{ props.label }}</span>
+            <div class="mt-1 mb-2 wrapper">
                 <TaskAnyOf
                     :model-value="value"
                     :schema
@@ -10,9 +10,9 @@
                     @update:model-value="emits('update:modelValue', $event)"
                     @any-of-type="changeType"
                 />
-            </template>
-        </TaskWrapper>
-    </div>
+            </div>
+        </template>
+    </TaskWrapper>
 </template>
 
 <script setup lang="ts">

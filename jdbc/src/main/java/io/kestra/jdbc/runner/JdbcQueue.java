@@ -18,6 +18,8 @@ import io.kestra.jdbc.JdbcMapper;
 import io.kestra.jdbc.JooqDSLContextWrapper;
 import io.kestra.core.queues.MessageTooBigException;
 import io.kestra.jdbc.repository.AbstractJdbcRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.transaction.exceptions.CannotCreateTransactionException;
@@ -68,6 +70,8 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
     private final AtomicBoolean isPaused = new AtomicBoolean(false);
 
+    private final Counter bigMessageCounter;
+
     public JdbcQueue(Class<T> cls, ApplicationContext applicationContext) {
         ExecutorsUtils executorsUtils = applicationContext.getBean(ExecutorsUtils.class);
         this.poolExecutor = executorsUtils.cachedThreadPool("jdbc-queue-" + cls.getSimpleName());
@@ -85,6 +89,10 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.table = DSL.table(jdbcTableConfigs.tableConfig("queues").table());
 
         this.jdbcQueueIndexer = applicationContext.getBean(JdbcQueueIndexer.class);
+
+        // init metrics we can at post construct to avoid costly Metric.Id computation
+        this.bigMessageCounter = metricRegistry
+            .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, queueType());
     }
 
     protected Map<Field<Object>, Object> produceFields(String consumerGroup, String key, T message) throws QueueException {
@@ -96,9 +104,7 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         }
 
         if (messageProtectionConfiguration.enabled && bytes.length >= messageProtectionConfiguration.limit) {
-            metricRegistry
-                .counter(MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT, MetricRegistry.METRIC_QUEUE_BIG_MESSAGE_COUNT_DESCRIPTION, MetricRegistry.TAG_CLASS_NAME, queueType())
-                .increment();
+            this.bigMessageCounter.increment();
 
             // we let terminated execution messages to go through anyway
             if (!(message instanceof Execution execution) || !execution.getState().isTerminated()) {
@@ -285,30 +291,28 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
             }
         });
 
-        return this.poll(() -> {
-            return this.metricRegistry
-                .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags)
-                .record(() -> {
-                    Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
-                        DSLContext ctx = DSL.using(configuration);
+        Timer timer = this.metricRegistry
+            .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags);
+        return this.poll(() -> timer.record(() -> {
+            Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
+                DSLContext ctx = DSL.using(configuration);
 
-                        Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
+                Result<Record> result = this.receiveFetch(ctx, consumerGroup, maxOffset.get(), forUpdate);
 
-                        if (!result.isEmpty()) {
-                            List<Integer> offsets = result.map(record -> record.get("offset", Integer.class));
+                if (!result.isEmpty()) {
+                    List<Integer> offsets = result.map(record -> record.get("offset", Integer.class));
 
-                            maxOffset.set(offsets.getLast());
-                        }
+                    maxOffset.set(offsets.getLast());
+                }
 
-                        return result;
-                    });
+                return result;
+            });
 
-                    this.send(fetch, consumer);
+            this.send(fetch, consumer);
 
-                    pollSize.set(fetch.size());
-                    return fetch.size();
-                });
-        });
+            pollSize.set(fetch.size());
+            return fetch.size();
+        }));
     }
 
     @Override
@@ -368,39 +372,37 @@ public abstract class JdbcQueue<T> implements QueueInterface<T> {
         this.metricRegistry
             .gauge(MetricRegistry.METRIC_QUEUE_POLL_SIZE, MetricRegistry.METRIC_QUEUE_POLL_SIZE_DESCRIPTION, pollSize, tags);
 
-        return this.poll(() -> {
-            return this.metricRegistry
-                .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags)
-                .record(() -> {
-                    Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
-                        DSLContext ctx = DSL.using(configuration);
+        Timer timer = this.metricRegistry
+            .timer(MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION, MetricRegistry.METRIC_QUEUE_RECEIVE_DURATION_DESCRIPTION, tags);
+        return this.poll(() -> timer.record(() -> {
+            Result<Record> fetch = dslContextWrapper.transactionResult(configuration -> {
+                DSLContext ctx = DSL.using(configuration);
 
-                        Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName, forUpdate);
+                Result<Record> result = this.receiveFetch(ctx, consumerGroup, queueName, forUpdate);
 
-                        if (!result.isEmpty()) {
-                            if (inTransaction) {
-                                consumer.accept(ctx, this.map(result));
-                            }
-
-                            this.updateGroupOffsets(
-                                ctx,
-                                consumerGroup,
-                                queueName,
-                                result.map(record -> record.get("offset", Integer.class))
-                            );
-                        }
-
-                        return result;
-                    });
-
-                    if (!inTransaction) {
-                        consumer.accept(null, this.map(fetch));
+                if (!result.isEmpty()) {
+                    if (inTransaction) {
+                        consumer.accept(ctx, this.map(result));
                     }
 
-                    pollSize.set(fetch.size());
-                    return fetch.size();
-                });
-        });
+                    this.updateGroupOffsets(
+                        ctx,
+                        consumerGroup,
+                        queueName,
+                        result.map(record -> record.get("offset", Integer.class))
+                    );
+                }
+
+                return result;
+            });
+
+            if (!inTransaction) {
+                consumer.accept(null, this.map(fetch));
+            }
+
+            pollSize.set(fetch.size());
+            return fetch.size();
+        }));
     }
 
     protected String queueName(Class<?> queueType) {

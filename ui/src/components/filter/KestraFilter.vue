@@ -1,5 +1,5 @@
 <template>
-    <section class="d-flex flex-column mb-3">
+    <section class="d-flex flex-column mb-3 w-100">
         <div class="d-flex">
             <Items :prefix="itemsPrefix" @search="handleClickedItems" />
 
@@ -67,22 +67,22 @@
 </template>
 
 <script setup lang="ts">
-    import MonacoEditor, { ThemeBase } from "../inputs/MonacoEditor.vue";
-    import { computed, getCurrentInstance, ref, watch } from "vue";
+    import MonacoEditor, {ThemeBase} from "../inputs/MonacoEditor.vue";
+    import {computed, getCurrentInstance, ref, watch} from "vue";
     import Utils from "../../utils/utils";
-    import { Buttons, Property, Shown } from "./utils/types";
-    import { editor } from "monaco-editor/esm/vs/editor/editor.api";
+    import {Buttons, Property, Shown} from "./utils/types";
+    import {editor} from "monaco-editor/esm/vs/editor/editor.api";
     import Items from "./segments/Items.vue";
-    import { cssVariable } from "@kestra-io/ui-libs";
-    import { LocationQuery, useRoute, useRouter } from "vue-router";
+    import {cssVariable} from "@kestra-io/ui-libs";
+    import {LocationQuery, useRoute, useRouter} from "vue-router";
     import Save from "./segments/Save.vue";
     import Settings from "./segments/Settings.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
     import Dashboards from "./segments/Dashboards.vue";
     import Properties from "./segments/Properties.vue";
-    import { COMPARATOR_CHARS } from "../../composables/monaco/languages/filters/filterLanguageConfigurator.ts";
-    import { Comparators } from "../../composables/monaco/languages/filters/filterCompletion.ts";
-    import { watchDebounced } from "@vueuse/core";
+    import {COMPARATOR_CHARS} from "../../composables/monaco/languages/filters/filterLanguageConfigurator.ts";
+    import {Comparators} from "../../composables/monaco/languages/filters/filterCompletion.ts";
+    import {watchDebounced} from "@vueuse/core";
 
     const router = useRouter();
     const route = useRoute();
@@ -215,7 +215,7 @@
                 })
                 .join(" ");
         }
-    }, { immediate: true, deep: true });
+    }, {immediate: true, deep: true});
 
     const COMPARATOR_LABEL_BY_VALUE: Record<Comparators, keyof typeof Comparators> = Object.fromEntries(
         Object.entries(Comparators)
@@ -248,14 +248,14 @@
             let comparatorLabel: keyof typeof Comparators | "IN" | "NOT_IN" = COMPARATOR_LABEL_BY_VALUE[comparator];
             if (values.length > 1) {
                 switch (comparator) {
-                    case "=": {
-                        comparatorLabel = "IN";
-                        break;
-                    }
-                    case "!=": {
-                        comparatorLabel = "NOT_IN";
-                        break;
-                    }
+                case "=": {
+                    comparatorLabel = "IN";
+                    break;
+                }
+                case "!=": {
+                    comparatorLabel = "NOT_IN";
+                    break;
+                }
                 }
             }
 
@@ -267,7 +267,7 @@
         }
 
         // TODO REGEX NOT WORKING
-        let queryEntries = filters.flatMap(({ key: key, comparator: comparator, value: value }) => {
+        let queryEntries = filters.flatMap(({key: key, comparator: comparator, value: value}) => {
             let queryKey = reversedQueryRemapper?.[key] ?? key;
 
             if (!props.legacyQuery) {
@@ -311,7 +311,7 @@
             "editor.background": cssVariable("--ks-background-input")!
         },
         rules: [
-            { token: "variable.value", foreground: cssVariable("--ks-badge-content") }
+            {token: "variable.value", foreground: cssVariable("--ks-badge-content")}
         ]
     };
     const options: editor.IStandaloneEditorConstructionOptions = {
@@ -391,7 +391,7 @@
         router.push({
             query: filterQueryString.value
         });
-    }, { immediate: true, debounce: 500 });
+    }, {immediate: true, debounce: 500});
 </script>
 
 <style lang="scss" scoped>

@@ -116,7 +116,7 @@
         },
         computed: {
             searchInput() {
-                return this.$route.query.q.toLowerCase();
+                return this.$route.query?.q?.toLowerCase() ?? "";
             },
             countPlugin() {
                 let allTasks = [];

@@ -592,6 +592,7 @@
     "flow source not found": "Flow-Quelle nicht gefunden",
     "flow-dependencies": "Abhängigkeiten",
     "flow-no-dependencies": "Ihr Flow hat keine Abhängigkeiten.",
+    "flow_export": "Flow exportieren",
     "flow_only": "Nur auf der Flow-Registerkarte verfügbar.",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) gelöscht",
@@ -745,6 +746,7 @@
         "parent_folder": "Übergeordneter Ordner:"
       },
       "export": "Namespace-Dateien exportieren",
+      "export_single": "Datei exportieren",
       "filter": "Filter",
       "import": {
         "error": "Fehler beim Importieren der Datei(en)",

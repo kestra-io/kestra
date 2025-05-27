@@ -592,6 +592,7 @@
     "flow source not found": "Fuente de flow no encontrada",
     "flow-dependencies": "dependencias",
     "flow-no-dependencies": "Tu flow no tiene dependencias.",
+    "flow_export": "Exportar flow",
     "flow_only": "Solo disponible en la pestaña Flow.",
     "flows": "Flujos",
     "flows deleted": "<code>{count}</code> Flow(s) eliminados",
@@ -745,6 +746,7 @@
         "parent_folder": "Carpeta padre:"
       },
       "export": "Exportar archivos del namespace",
+      "export_single": "Exportar archivo",
       "filter": "Filtro",
       "import": {
         "error": "Ocurrieron errores al importar el/los archivo(s)",

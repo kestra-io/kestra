@@ -592,6 +592,7 @@
     "flow source not found": "フローソースが見つかりません",
     "flow-dependencies": "依存関係",
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
+    "flow_export": "フローをエクスポート",
     "flow_only": "Flowタブでのみ利用可能です。",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code>件のflowが削除されました",
@@ -745,6 +746,7 @@
         "parent_folder": "親フォルダー:"
       },
       "export": "namespaceファイルをエクスポート",
+      "export_single": "ファイルをエクスポート",
       "filter": "フィルター",
       "import": {
         "error": "ファイルのインポート中にエラーが発生しました",

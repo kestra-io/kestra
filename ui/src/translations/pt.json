@@ -592,6 +592,7 @@
     "flow source not found": "Fonte do flow não encontrada",
     "flow-dependencies": "dependências",
     "flow-no-dependencies": "Seu flow não possui dependências",
+    "flow_export": "Exportar flow",
     "flow_only": "Disponível apenas na aba Flow.",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) deletado(s)",
@@ -745,6 +746,7 @@
         "parent_folder": "Pasta pai:"
       },
       "export": "Exportar arquivos do namespace",
+      "export_single": "Exportar arquivo",
       "filter": "Filtro",
       "import": {
         "error": "Ocorreu(ram) erro(s) ao importar o(s) arquivo(s)",

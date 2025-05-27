@@ -592,6 +592,7 @@
     "flow source not found": "Flow source를 찾을 수 없음",
     "flow-dependencies": "종속성",
     "flow-no-dependencies": "귀하의 flow에는 종속성이 없습니다.",
+    "flow_export": "flow 내보내기",
     "flow_only": "Flow 탭에서만 사용 가능합니다.",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> 개의 flow가 삭제되었습니다",
@@ -745,6 +746,7 @@
         "parent_folder": "부모 폴더:"
       },
       "export": "namespace 파일 내보내기",
+      "export_single": "파일 내보내기",
       "filter": "필터",
       "import": {
         "error": "파일을 가져오는 동안 오류가 발생했습니다",

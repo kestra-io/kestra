@@ -592,6 +592,7 @@
     "flow source not found": "Źródło flow nie znalezione",
     "flow-dependencies": "zależności",
     "flow-no-dependencies": "Twój flow nie ma żadnych zależności",
+    "flow_export": "Eksportuj flow",
     "flow_only": "Dostępne tylko na zakładce Flow.",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) usunięte",
@@ -745,6 +746,7 @@
         "parent_folder": "Folder nadrzędny:"
       },
       "export": "Eksportuj pliki namespace",
+      "export_single": "Eksportuj plik",
       "filter": "Filtr",
       "import": {
         "error": "Wystąpiły błędy podczas importowania pliku(ów)",

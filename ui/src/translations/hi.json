@@ -592,6 +592,7 @@
     "flow source not found": "Flow source नहीं मिला",
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
+    "flow_export": "flow निर्यात करें",
     "flow_only": "केवल Flow टैब पर उपलब्ध है।",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) हटाए गए",
@@ -745,6 +746,7 @@
         "parent_folder": "मूल फ़ोल्डर:"
       },
       "export": "Namespace फ़ाइलें निर्यात करें",
+      "export_single": "फ़ाइल निर्यात करें",
       "filter": "फ़िल्टर",
       "import": {
         "error": "फ़ाइलें आयात करते समय त्रुटि हुई",

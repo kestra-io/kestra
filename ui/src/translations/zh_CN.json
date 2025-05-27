@@ -592,6 +592,7 @@
     "flow source not found": "未找到flow源",
     "flow-dependencies": "依赖项",
     "flow-no-dependencies": "您的flow没有任何依赖项",
+    "flow_export": "导出flow",
     "flow_only": "仅在流程标签中可用。",
     "flows": "流程",
     "flows deleted": "<code>{count}</code> 个流程已删除",
@@ -745,6 +746,7 @@
         "parent_folder": "父文件夹："
       },
       "export": "导出命名空间文件",
+      "export_single": "导出文件",
       "filter": "过滤",
       "import": {
         "error": "导入文件时出错",

@@ -592,6 +592,7 @@
     "flow source not found": "Источник flow не найден",
     "flow-dependencies": "зависимости",
     "flow-no-dependencies": "Ваш flow не имеет зависимостей",
+    "flow_export": "Экспорт flow",
     "flow_only": "Доступно только на вкладке Flow.",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(ы) удалены",
@@ -745,6 +746,7 @@
         "parent_folder": "Родительская папка:"
       },
       "export": "Экспортировать файлы namespace",
+      "export_single": "Экспортировать файл",
       "filter": "Фильтр",
       "import": {
         "error": "Произошли ошибки при импорте файла(ов)",

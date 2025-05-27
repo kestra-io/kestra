@@ -881,6 +881,14 @@
     "no_logs_data": "Pas de données",
     "no_logs_data_description": "Soit aucun flow n'est en cours d'exécution, soit vous devez ajuster vos filtres.",
     "no_namespaces": "Zéro espace de noms correspond aux critères de recherche.",
+    "no_results": {
+      "executions": "Aucune exécution trouvée",
+      "flows": "Aucun flow trouvé",
+      "kv_pairs": "Aucune paire clé-valeur trouvée",
+      "secrets": "Aucun secret trouvé",
+      "templates": "Aucun modèle trouvé",
+      "triggers": "Aucun Trigger trouvé"
+    },
     "no_results_found": "Aucun résultat trouvé",
     "no_tasks_running": "Aucune tâche n'est encore en cours d'exécution.",
     "now": "Maintenant",

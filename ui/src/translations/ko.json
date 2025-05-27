@@ -881,6 +881,14 @@
     "no_logs_data": "데이터 없음",
     "no_logs_data_description": "흐름이 실행 중이지 않거나 필터를 조정해야 할 수 있습니다.",
     "no_namespaces": "검색 기준에 맞는 namespace가 없습니다.",
+    "no_results": {
+      "executions": "실행을 찾을 수 없음",
+      "flows": "flow를 찾을 수 없음",
+      "kv_pairs": "Key-Value 쌍을 찾을 수 없음",
+      "secrets": "비밀 없음",
+      "templates": "템플릿을 찾을 수 없음",
+      "triggers": "트리거를 찾을 수 없음"
+    },
     "no_results_found": "결과를 찾을 수 없습니다",
     "no_tasks_running": "아직 실행 중인 task가 없습니다.",
     "now": "지금",

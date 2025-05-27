@@ -881,6 +881,14 @@
     "no_logs_data": "Нет данных",
     "no_logs_data_description": "Либо никакие flows не выполняются, либо вам нужно изменить фильтры.",
     "no_namespaces": "Ни один namespace не соответствует критериям поиска.",
+    "no_results": {
+      "executions": "Исполнения не найдены",
+      "flows": "Потоки не найдены",
+      "kv_pairs": "Пары kv store не найдены",
+      "secrets": "Секреты не найдены",
+      "templates": "Шаблоны не найдены",
+      "triggers": "Триггеры не найдены"
+    },
     "no_results_found": "Результаты не найдены",
     "no_tasks_running": "Ещё нет запущенных tasks.",
     "now": "Сейчас",

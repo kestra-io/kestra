@@ -881,6 +881,14 @@
     "no_logs_data": "Brak danych",
     "no_logs_data_description": "Albo żadne flow nie są uruchomione, albo musisz dostosować swoje filtry.",
     "no_namespaces": "Zero namespaces spełnia kryteria wyszukiwania.",
+    "no_results": {
+      "executions": "Nie znaleziono wykonania",
+      "flows": "Nie znaleziono flowów",
+      "kv_pairs": "Nie znaleziono par klucz-wartość",
+      "secrets": "Nie znaleziono sekretów",
+      "templates": "Nie znaleziono szablonów",
+      "triggers": "Nie znaleziono Triggerów"
+    },
     "no_results_found": "Nie znaleziono wyników",
     "no_tasks_running": "Jeszcze nie ma uruchomionych tasków.",
     "now": "Teraz",

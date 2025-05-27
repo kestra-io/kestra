@@ -881,6 +881,14 @@
     "no_logs_data": "无数据",
     "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
+    "no_results": {
+      "executions": "未找到执行",
+      "flows": "未找到Flows",
+      "kv_pairs": "未找到Key-Value对",
+      "secrets": "未找到Secrets",
+      "templates": "未找到模板",
+      "triggers": "未找到Triggers"
+    },
     "no_results_found": "未找到结果",
     "no_tasks_running": "尚无任务正在运行。",
     "now": "现在",

@@ -387,10 +387,6 @@
 </script>
 
 <style lang="scss">
-    .el-form-item {
-        margin-bottom: 1rem;
-    }
-
     .el-form-item__content {
         .el-form-item {
             width: 100%;
@@ -408,7 +404,7 @@
 
 .el-form-item {
     width: 100%;
-    
+    margin-bottom: 0;    
     > :deep(.el-form-item__label) {
         width: 100%;
         display: flex;

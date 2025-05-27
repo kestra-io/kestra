@@ -110,8 +110,6 @@
 </script>
 
 <style lang="scss" scoped>
-@import "../../code/styles/code.scss";
-
 .el-form-item {
     width: 100%;
 

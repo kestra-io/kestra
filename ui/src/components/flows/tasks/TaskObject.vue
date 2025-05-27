@@ -27,8 +27,8 @@
                 </template>
             </template>
 
-            <el-collapse v-model="activeNames" v-if="optionalProperties?.length" class="collapse">
-                <el-collapse-item name="optional" :title="$t('no_code.sections.optional')">
+            <el-collapse v-model="activeNames" v-if="optionalProperties?.length || deprecatedProperties?.length" class="collapse">
+                <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="$t('no_code.sections.optional')">
                     <template v-for="[key, fieldSchema] in optionalProperties" :key="key">
                         <TaskWrapper>
                             <template #tasks>
@@ -43,10 +43,8 @@
                         </TaskWrapper>
                     </template>
                 </el-collapse-item>
-            </el-collapse>
 
-            <el-collapse v-model="activeNames" v-if="deprecatedProperties?.length" class="collapse">
-                <el-collapse-item name="deprecated" :title="$t('no_code.sections.deprecated')">
+                <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
                     <template v-for="[key, fieldSchema] in deprecatedProperties" :key="key">
                         <TaskWrapper>
                             <template #tasks>
@@ -186,4 +184,8 @@
         max-width: 300px !important;
         background: var(--ks-tooltip-background);
     }
+</style>
+
+<style lang="scss" scoped>
+@import "../../code/styles/code.scss";
 </style>

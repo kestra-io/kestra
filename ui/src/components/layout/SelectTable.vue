@@ -4,22 +4,20 @@
             <slot name="select-actions" />
         </div>
 
-        <template v-else>
-            <el-table
-                ref="table"
-                v-bind="$attrs"
-                :data="data"
-                :empty-text="noDataValue"
-                @selection-change="selectionChanged"
-                v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
-                :infinite-scroll-disabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
-                :infinite-scroll-delay="0"
-                :height="tableHeight"
-            >
-                <el-table-column type="selection" v-if="selectable" />
-                <slot name="default" />
-            </el-table>
-        </template>
+        <el-table
+            ref="table"
+            v-bind="$attrs"
+            :data="data"
+            :empty-text="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
+            @selection-change="selectionChanged"
+            v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
+            :infinite-scroll-disabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
+            :infinite-scroll-delay="0"
+            :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
+        >
+            <el-table-column type="selection" v-if="selectable" />
+            <slot name="default" />
+        </el-table>
     </div>
 </template>
 
@@ -53,9 +51,6 @@
             stillHaveDataToFetch() {
                 return this.infiniteScrollDisabled === false;
             },
-            noDataValue() {
-                return this.inifiniteScrollDisabled !== undefined ? undefined : this.noDataText;
-            }
         },
         directives: {
             elTableInfiniteScroll

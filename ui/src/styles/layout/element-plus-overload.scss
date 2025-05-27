@@ -404,7 +404,7 @@ form.ks-horizontal {
     }
 
     .el-table__empty-text {
-        color: var(--bs-gray-600);
+        color: var(--ks-content-tertiary) !important;
     }
 
     th {

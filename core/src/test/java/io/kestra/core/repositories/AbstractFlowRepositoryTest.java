@@ -232,22 +232,36 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     protected void find() {
-        List<Flow> save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), null, MAIN_TENANT, null, null, null);
+        List<Flow> save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), MAIN_TENANT, null);
         assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 1);
 
-        save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), null, MAIN_TENANT, null, null, null);
+        save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), MAIN_TENANT, null);
         assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT);
 
-        save = flowRepository.find(Pageable.from(1), null, MAIN_TENANT, null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
+        var namespaceFilter = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests.minimal.bis").build()
+        );
+        save = flowRepository.find(Pageable.from(1), MAIN_TENANT, namespaceFilter);
         assertThat((long) save.size()).isEqualTo(1L);
 
-        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), null, MAIN_TENANT, null, null, Map.of("country", "FR"));
+        var labelFilter = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("country", "FR")).build()
+        );
+        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), MAIN_TENANT, labelFilter);
         assertThat(save.size()).isEqualTo(1);
 
-        save = flowRepository.find(Pageable.from(1), null, MAIN_TENANT, null, "io.kestra.tests", Map.of("key2", "value2"));
+        var filterLabelAndNamespace = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
+            QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key2", "value2")).build()
+        );
+        save = flowRepository.find(Pageable.from(1), MAIN_TENANT, filterLabelAndNamespace);
         assertThat((long) save.size()).isEqualTo(1L);
 
-        save = flowRepository.find(Pageable.from(1), null, MAIN_TENANT, null, "io.kestra.tests", Map.of("key1", "value2"));
+        var filterNamespaceButNotInLabel = List.of(
+            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
+            QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key1", "value2")).build()
+        );
+        save = flowRepository.find(Pageable.from(1), MAIN_TENANT, filterNamespaceButNotInLabel);
         assertThat((long) save.size()).isEqualTo(0L);
     }
 
@@ -552,13 +566,6 @@ public abstract class AbstractFlowRepositoryTest {
         } finally {
             toDelete.forEach(this::deleteFlow);
         }
-    }
-
-    @Test
-    void shouldReturnForFindGivenQueryWildcard() {
-        ArrayListTotal<Flow> flows = flowRepository.find(Pageable.from(1, 10), "*", MAIN_TENANT, null, null, Map.of());
-        assertThat(flows.size()).isEqualTo(10);
-        assertThat(flows.getTotal()).isEqualTo(Helpers.FLOWS_COUNT);
     }
 
     @Test

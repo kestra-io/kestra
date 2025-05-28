@@ -139,15 +139,6 @@ public interface FlowRepositoryInterface {
 
     ArrayListTotal<Flow> find(
         Pageable pageable,
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable Map<String, String> labels
-    );
-
-    ArrayListTotal<Flow> find(
-        Pageable pageable,
         @Nullable String tenantId,
         @Nullable List<QueryFilter> filters
     );

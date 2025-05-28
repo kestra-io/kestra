@@ -567,41 +567,6 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
     }
 
     @Override
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    public ArrayListTotal<Flow> find(
-        Pageable pageable,
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable Map<String, String> labels
-    ) {
-        return this.jdbcRepository
-            .getDslContextWrapper()
-            .transactionResult(configuration -> {
-                DSLContext context = DSL.using(configuration);
-
-                SelectConditionStep<Record1<Object>> select = this.fullTextSelect(tenantId, context, Collections.emptyList());
-
-                select.and(this.findCondition(query, labels));
-
-                if (scope != null && !scope.containsAll(Arrays.stream(FlowScope.values()).toList())) {
-                    if (scope.contains(FlowScope.USER)) {
-                        select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
-                    } else if (scope.contains(FlowScope.SYSTEM)) {
-                        select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
-                    }
-                }
-
-                if (namespace != null) {
-                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
-                }
-
-                return (ArrayListTotal)this.jdbcRepository.fetchPage(context, select, pageable);
-            });
-    }
-
-    @Override
     public List<FlowWithSource> findWithSource(
         @Nullable String query,
         @Nullable String tenantId,

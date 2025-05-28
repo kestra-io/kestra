@@ -10,7 +10,7 @@
     <TaskEditor
         v-else
         v-model="yaml"
-        @update:model-value="validateTask"
+        @update:model-value="validateTask(); saveTask();"
     />
 
     <template v-if="yaml">
@@ -202,11 +202,4 @@
     };
 
     const hasMovedToEdit = ref(false);
-
-    watch(
-        yaml,
-        () => {
-            saveTask()
-        },
-    );
 </script>

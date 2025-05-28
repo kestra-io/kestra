@@ -5,6 +5,7 @@ import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Input;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.input.SecretInput;
@@ -73,10 +74,10 @@ public final class RunVariables {
      * @param flow The flow from which to create variables.
      * @return a new immutable {@link Map}.
      */
-    static Map<String, Object> of(final Flow flow) {
+    static Map<String, Object> of(final FlowInterface flow) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
         builder.put("id", flow.getId())
-               .put("namespace", flow.getNamespace());
+            .put("namespace", flow.getNamespace());
 
         Optional.ofNullable(flow.getRevision())
             .ifPresent(revision ->  builder.put("revision", revision));
@@ -105,7 +106,7 @@ public final class RunVariables {
      */
     public interface Builder {
 
-        Builder withFlow(Flow flow);
+        Builder withFlow(FlowInterface flow);
 
         Builder withInputs(Map<String, Object> inputs);
 
@@ -127,6 +128,8 @@ public final class RunVariables {
 
         Builder withSecretInputs(List<String> secretInputs);
 
+        Builder withKestraConfiguration(KestraConfiguration kestraConfiguration);
+
         /**
          * Builds the immutable map of run variables.
          *
@@ -136,6 +139,8 @@ public final class RunVariables {
         Map<String, Object> build(final RunContextLogger logger);
     }
 
+    public record  KestraConfiguration(String environment, String url) { }
+
     /**
      * Default builder class for constructing variables.
      */
@@ -143,7 +148,7 @@ public final class RunVariables {
     @With
     public static class DefaultBuilder implements RunVariables.Builder {
 
-        protected Flow flow;
+        protected FlowInterface flow;
         protected Task task;
         protected Execution execution;
         protected TaskRun taskRun;
@@ -155,6 +160,7 @@ public final class RunVariables {
         protected Map<?, ?> globals;
         private final Optional<String> secretKey;
         private List<String> secretInputs;
+        private KestraConfiguration kestraConfiguration;
 
         public DefaultBuilder() {
             this(Optional.empty());
@@ -164,6 +170,7 @@ public final class RunVariables {
             this.secretKey = secretKey;
         }
 
+        // Note: for performance reason, cloning maps should be avoided as much as possible.
         @Override
         public Map<String, Object> build(final RunContextLogger logger) {
             ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
@@ -209,6 +216,10 @@ public final class RunVariables {
 
                 executionMap.put("id", execution.getId());
 
+                if (execution.getState() != null) { // can occurs in tests
+                    executionMap.put("state", execution.getState().getCurrent());
+                }
+
                 Optional.ofNullable(execution.getState()).map(State::getStartDate)
                     .ifPresent(startDate -> executionMap.put("startDate", startDate));
 
@@ -218,7 +229,7 @@ public final class RunVariables {
                 builder.put("execution", executionMap.build());
 
                 if (execution.getTaskRunList() != null) {
-                    Map<String, Object> outputs = new HashMap<>(execution.outputs());
+                    Map<String, Object> outputs = execution.outputs();
                     if (decryptVariables) {
                         final Secret secret = new Secret(secretKey, logger);
                         outputs = secret.decrypt(outputs);
@@ -233,11 +244,14 @@ public final class RunVariables {
                                 tasksMap.put(taskRun.getTaskId(), Map.of("state", taskRun.getState().getCurrent()));
                             } else {
                                 if (tasksMap.containsKey(taskRun.getTaskId())) {
-                                    Map<String, Object> taskRunMap = new HashMap<>((Map<String, Object>) tasksMap.get(taskRun.getTaskId()));
+                                    @SuppressWarnings("unchecked")
+                                    Map<String, Object> taskRunMap = (Map<String, Object>) tasksMap.get(taskRun.getTaskId());
                                     taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
                                     tasksMap.put(taskRun.getTaskId(), taskRunMap);
                                 } else {
-                                    tasksMap.put(taskRun.getTaskId(), Map.of(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent())));
+                                    Map<String, Object> taskRunMap = new HashMap<>();
+                                    taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
+                                    tasksMap.put(taskRun.getTaskId(), taskRunMap);
                                 }
                             }
                         }
@@ -254,13 +268,8 @@ public final class RunVariables {
                         // if some inputs are of type secret, we decode them
                         final Secret secret = new Secret(secretKey, logger);
                         for (Input<?> input : flow.getInputs()) {
-                            if (input instanceof SecretInput && inputs.containsKey(input.getId())) {
-                                try {
-                                    String decoded = secret.decrypt(((String) inputs.get(input.getId())));
-                                    inputs.put(input.getId(), decoded);
-                                } catch (GeneralSecurityException e) {
-                                    throw new RuntimeException(e);
-                                }
+                            if (input instanceof SecretInput) {
+                                decodeInput(secret, input.getId(), inputs);
                             }
                         }
                     }
@@ -310,6 +319,18 @@ public final class RunVariables {
                 }
             }
 
+            // Kestra configuration
+            if (kestraConfiguration != null) {
+                Map<String, String> kestra = HashMap.newHashMap(2);
+                if (kestraConfiguration.environment() != null) {
+                    kestra.put("environment", kestraConfiguration.environment());
+                }
+                if (kestraConfiguration.url() != null) {
+                    kestra.put("url", kestraConfiguration.url());
+                }
+                builder.put("kestra", kestra);
+            }
+
             // adds any additional variables
             if (variables != null) {
                 builder.putAll(variables);
@@ -320,6 +341,23 @@ public final class RunVariables {
             }
 
             return builder.build();
+        }
+
+        @SuppressWarnings("unchecked")
+        private void decodeInput(Secret secret, String id, Map<String, Object> inputs) {
+            // find the input value that can be nested in case the input has a '.' in it.
+            if (id.indexOf('.') > -1) {
+                String nestedId = id.substring(0, id.indexOf('.'));
+                String restOfId = id.substring(id.indexOf('.') + 1);
+                decodeInput(secret, restOfId, (Map<String, Object>) inputs.get(nestedId));
+            } else if (inputs.containsKey(id)) {
+                try {
+                    String decoded = secret.decrypt(((String) inputs.get(id)));
+                    inputs.put(id, decoded);
+                } catch (GeneralSecurityException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
     }
 

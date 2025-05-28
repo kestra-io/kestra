@@ -11,11 +11,15 @@ import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.WorkerGroup;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
+import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
+import io.kestra.core.services.ExecutionService;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.flow.Sleep;
 import io.micronaut.context.ApplicationContext;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
@@ -38,18 +42,24 @@ abstract public class AbstractSchedulerTest {
     @Named(QueueFactoryInterface.EXECUTION_NAMED)
     protected QueueInterface<Execution> executionQueue;
 
-    public static Flow createThreadFlow() {
+    @Inject
+    protected Optional<SchedulerTriggerStateInterface> triggerState;
+
+    @Inject
+    protected ExecutionService executionService;
+
+    public static FlowWithSource createThreadFlow() {
         return createThreadFlow(null);
     }
 
-    public static Flow createThreadFlow(String workerGroup) {
+    public static FlowWithSource createThreadFlow(String workerGroup) {
         UnitTest schedule = UnitTest.builder()
             .id("sleep")
             .type(UnitTest.class.getName())
             .workerGroup(workerGroup == null ? null : new WorkerGroup(workerGroup, null))
             .build();
 
-        return createFlow(Collections.singletonList(schedule), List.of(
+        return createFlow(null, Collections.singletonList(schedule), List.of(
             PluginDefault.builder()
                 .type(UnitTest.class.getName())
                 .values(Map.of("defaultInjected", "done"))
@@ -57,13 +67,23 @@ abstract public class AbstractSchedulerTest {
         ));
     }
 
+    /**
+     * @deprecated try to use {@link AbstractSchedulerTest#createFlow(String, List)} with 'tenantId' instead to be
+     * extra sure these tests do not share resources
+     */
+    @Deprecated
     protected static FlowWithSource createFlow(List<AbstractTrigger> triggers) {
-        return createFlow(triggers, null);
+        return createFlow(null, triggers);
     }
 
-    protected static FlowWithSource createFlow(List<AbstractTrigger> triggers, List<PluginDefault> list) {
-        Flow.FlowBuilder<?, ?> builder = Flow.builder()
+    protected static FlowWithSource createFlow(String tenantId, List<AbstractTrigger> triggers) {
+        return createFlow(tenantId, triggers, null);
+    }
+
+    protected static FlowWithSource createFlow(String tenantId, List<AbstractTrigger> triggers, List<PluginDefault> list) {
+        FlowWithSource.FlowWithSourceBuilder<?, ?> builder = FlowWithSource.builder()
             .id(IdUtils.create())
+            .tenantId(tenantId)
             .namespace("io.kestra.unittest")
             .inputs(List.of(
                 StringInput.builder()
@@ -97,9 +117,36 @@ abstract public class AbstractSchedulerTest {
             builder.pluginDefaults(list);
         }
 
-        Flow flow = builder.build();
-        return FlowWithSource.of(flow, flow.generateSource());
+        FlowWithSource flow = builder.build();
+        return flow.toBuilder().source(flow.sourceOrGenerateIfNull()).build();
     }
+
+    protected static FlowWithSource createLongRunningFlow(String tenantId, List<AbstractTrigger> triggers, List<PluginDefault> list) {
+        return createFlow(tenantId, triggers, list)
+            .toBuilder()
+            .tasks(
+                Collections.singletonList(
+                    Sleep.builder().id("sleep").type(Sleep.class.getName()).duration(Property.ofValue(Duration.ofSeconds(125))).build()
+                )
+            )
+            .build();
+    }
+
+    protected void terminateExecution(Execution execution, Trigger trigger, FlowWithSource flow) throws QueueException {
+        terminateExecution(execution, State.Type.SUCCESS, trigger, flow);
+    }
+
+    protected void terminateExecution(Execution execution, State.Type newState, Trigger trigger, FlowWithSource flow) throws QueueException {
+        if (triggerState.isEmpty()) {
+            throw new IllegalStateException("No triggerState available in the bean factory");
+        }
+
+        Execution terminated = execution.withState(newState);
+        executionQueue.emit(terminated);
+        triggerState.get().findLast(trigger)
+            .ifPresent(t -> triggerState.get().update(executionService.resetExecution(flow, terminated, t)));
+    }
+
 
     protected static int COUNTER = 0;
 
@@ -124,6 +171,7 @@ abstract public class AbstractSchedulerTest {
             } else {
                 Execution execution = Execution.builder()
                     .id(IdUtils.create())
+                    .tenantId(context.getTenantId())
                     .namespace(context.getNamespace())
                     .flowId(context.getFlowId())
                     .flowRevision(conditionContext.getFlow().getRevision())

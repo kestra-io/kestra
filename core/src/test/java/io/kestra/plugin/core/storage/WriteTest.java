@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import java.io.InputStream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.notNullValue;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class WriteTest {
@@ -26,16 +26,16 @@ class WriteTest {
         RunContext runContext = runContextFactory.of();
 
         Write write = Write.builder()
-            .content(Property.of("Hello World"))
-            .extension(Property.of(".txt"))
+            .content(Property.ofValue("Hello World"))
+            .extension(Property.ofValue(".txt"))
             .build();
 
         var output = write.run(runContext);
-        assertThat(output, notNullValue());
-        assertThat(output.getUri(), notNullValue());
+        assertThat(output).isNotNull();
+        assertThat(output.getUri()).isNotNull();
 
-        InputStream inputStream = storageInterface.get(null, null, output.getUri());
-        assertThat(inputStream, notNullValue());
+        InputStream inputStream = storageInterface.get(MAIN_TENANT, null, output.getUri());
+        assertThat(inputStream).isNotNull();
         inputStream.close();
     }
 }

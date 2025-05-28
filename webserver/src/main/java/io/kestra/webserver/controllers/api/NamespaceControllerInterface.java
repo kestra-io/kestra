@@ -10,9 +10,9 @@ import jakarta.validation.constraints.Min;
 import java.util.List;
 
 public interface NamespaceControllerInterface<N extends NamespaceInterface, D extends NamespaceInterface & DisabledInterface> {
-    N index(String id);
+    N getNamespace(String id);
 
-    PagedResults<D> find(String query, @Min(1) int page, @Min(1) int size, List<String> sort, Boolean existingOnly) throws HttpStatusException;
+    PagedResults<D> searchNamespaces(String query, @Min(1) int page, @Min(1) int size, List<String> sort, Boolean existingOnly) throws HttpStatusException;
 
-    FlowTopologyGraph dependencies(String namespace, boolean destinationOnly);
+    FlowTopologyGraph getFlowDependenciesFromNamespace(String namespace, boolean destinationOnly);
 }

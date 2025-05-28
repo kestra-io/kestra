@@ -1,0 +1,45 @@
+id: if
+namespace: sanitychecks.core
+
+tasks:
+  - id: if_true
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ true }}"
+    then:
+      - id: true_return
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ true }}"
+
+  - id: if_false
+    type: io.kestra.plugin.core.flow.If
+    condition: "{{ false }}"
+    then:
+      - id: does_not_run
+        type: io.kestra.plugin.core.log.Log
+        message: This won't run
+    else:
+      - id: false_return
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ false }}"
+
+  - id: run_if_true
+    type: io.kestra.plugin.core.execution.Assert
+    runIf: "{{ true }}"
+    conditions:
+      - "{{ true }}"
+
+  - id: run_if_false
+    type: io.kestra.plugin.core.execution.Assert
+    runIf: "{{ false }}"
+    conditions:
+      - "{{ false }}"
+
+  - id: if_true_assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.true_return.value == 'true' }}"
+
+  - id: if_false_assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.false_return.value == 'false' }}"

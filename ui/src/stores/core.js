@@ -12,8 +12,7 @@ export default {
             template: undefined,
         },
         monacoYamlConfigured: false,
-        autocompletionSource: undefined,
-        tutorialFlows: []
+        tutorialFlows: [],
     },
     actions: {
         showMessage({commit}, message) {
@@ -45,9 +44,6 @@ export default {
         setMonacoYamlConfigured(state, monacoYamlConfigured) {
             state.monacoYamlConfigured = monacoYamlConfigured
         },
-        setAutocompletionSource(state, autocompletionSource) {
-            state.autocompletionSource = autocompletionSource
-        },
         setTutorialFlows(state, flows) {
             state.tutorialFlows = flows
         },
@@ -61,6 +57,6 @@ export default {
         },
         error(state) {
             return state.error;
-        }
+        },
     }
 }

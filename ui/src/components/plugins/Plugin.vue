@@ -9,10 +9,30 @@
         </template>
         <template #content>
             <div class="plugin-doc">
+                <div class="versions" v-if="versions?.length > 0">
+                    <el-select
+                        v-model="version"
+                        placeholder="Version"
+                        size="small"
+                        :disabled="versions?.length === 1"
+                        @change="selectVersion(version)"
+                    >
+                        <template #label="{value}">
+                            <span>Version: </span>
+                            <span style="font-weight: bold">{{ value }}</span>
+                        </template>
+                        <el-option
+                            v-for="item in versions"
+                            :key="item"
+                            :label="item"
+                            :value="item"
+                        />
+                    </el-select>
+                </div>
                 <div class="d-flex gap-3 mb-3 align-items-center">
                     <task-icon
                         class="plugin-icon"
-                        :cls="$route.params.cls"
+                        :cls="pluginType"
                         only-icon
                         :icons="icons"
                     />
@@ -21,7 +41,13 @@
                     </h4>
                 </div>
                 <Suspense v-loading="isLoading">
-                    <schema-to-html class="plugin-schema" :dark-mode="theme === 'dark'" :schema="plugin.schema" :props-initially-expanded="true" :plugin-type="$route.params.cls">
+                    <schema-to-html
+                        class="plugin-schema"
+                        :dark-mode="theme === 'dark'"
+                        :schema="plugin.schema"
+                        :props-initially-expanded="true"
+                        :plugin-type="pluginType"
+                    >
                         <template #markdown="{content}">
                             <markdown font-size-var="font-size-base" :source="content" />
                         </template>
@@ -49,12 +75,12 @@
     export default {
         mixins: [RouteContext],
         computed: {
-            ...mapState("plugin", ["plugin", "plugins", "icons"]),
+            ...mapState("plugin", ["plugin", "plugins", "icons", "versions"]),
             ...mapGetters("misc", ["theme"]),
             routeInfo() {
                 return {
-                    title: this.$route.params.cls ? this.$route.params.cls : this.$t("plugins.names"),
-                    breadcrumb: !this.$route.params.cls ? undefined : [
+                    title: this.pluginType ?? this.$t("plugins.names"),
+                    breadcrumb: this.pluginType === undefined ? undefined : [
                         {
                             label: this.$t("plugins.names"),
                             link: {
@@ -65,16 +91,18 @@
                 }
             },
             pluginName() {
-                const split = this.$route.params.cls.split(".");
+                const split = this.pluginType?.split(".");
                 return split[split.length - 1];
             },
             pluginIsSelected() {
-                return this.plugin && this.$route.params.cls
+                return this.pluginType !== undefined && this.plugin !== undefined
             }
         },
         data() {
             return {
-                isLoading: false
+                isLoading: false,
+                version: undefined,
+                pluginType: undefined
             };
         },
         created() {
@@ -82,10 +110,17 @@
             this.loadPlugin()
         },
         watch: {
-            $route(newValue, _oldValue) {
-                if (newValue.name.startsWith("plugins/")) {
-                    this.onRouterChange();
-                }
+            $route: {
+                handler(newValue, _oldValue) {
+                    if (newValue.name === "plugins/list") {
+                        this.pluginType = undefined;
+                        this.version = undefined;
+                    } 
+                    if (newValue.name.startsWith("plugins/")) {
+                        this.onRouterChange();
+                    }
+                },
+                immediate: true
             }
         },
         methods: {
@@ -95,15 +130,31 @@
                 })
             },
 
-            loadPlugin() {
-                if (this.$route.params.cls) {
-                    this.isLoading = true;
+            selectVersion(version) {
+                this.$router.push({name: "plugins/view", params: {cls: this.pluginType, version: version}});
+            },
 
-                    this.$store
-                        .dispatch("plugin/load", this.$route.params)
-                        .finally(() => {
-                            this.isLoading = false
-                        });
+            loadPlugin() {
+                if (this.$route.params.version) {
+                    this.version = this.$route.params.version;
+                }
+                const params = {...this.$route.params};
+                if (params.cls) {
+                    this.isLoading = true;
+                    Promise.all([
+                        this.$store.dispatch("plugin/load", params),
+                        this.$store.dispatch("plugin/loadVersions", params)
+                            .then(data => {
+                                if (data.versions && data.versions.length > 0) {
+                                    if (this.version === undefined) {
+                                        this.version = data.versions[0];
+                                    }
+                                }
+                            })
+                    ]).finally(() => {
+                        this.isLoading = false
+                        this.pluginType = params.cls;
+                    });
                 }
             },
 
@@ -112,7 +163,6 @@
                     top: 0,
                     behavior: "smooth"
                 })
-
                 this.loadPlugin();
             }
         }
@@ -121,4 +171,10 @@
 
 <style scoped lang="scss">
     @import "../../styles/components/plugin-doc";
+
+    .versions {
+        min-width: 200px;
+        display: inline-grid;
+        float: right;
+    }
 </style>

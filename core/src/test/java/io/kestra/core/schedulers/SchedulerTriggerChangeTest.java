@@ -5,7 +5,10 @@ import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.ExecutionKilledTrigger;
 import io.kestra.core.models.executions.LogEntry;
+import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.GenericFlow;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.PollingTriggerInterface;
@@ -13,12 +16,16 @@ import io.kestra.core.models.triggers.TriggerContext;
 import io.kestra.core.models.triggers.TriggerService;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.runners.*;
-import io.kestra.jdbc.runner.JdbcScheduler;
-import io.kestra.plugin.core.debug.Return;
+import io.kestra.core.repositories.FlowRepositoryInterface;
+import io.kestra.core.runners.FlowListeners;
+import io.kestra.core.runners.TestMethodScopedWorker;
+import io.kestra.core.runners.Worker;
+import io.kestra.core.runners.WorkerTrigger;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
+import io.kestra.jdbc.runner.JdbcScheduler;
+import io.kestra.plugin.core.debug.Return;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.*;
@@ -27,14 +34,16 @@ import org.junit.jupiter.api.Test;
 import reactor.core.publisher.Flux;
 
 import java.time.Duration;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.is;
-import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
     @Inject
@@ -42,7 +51,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
 
     @Inject
     @Named(QueueFactoryInterface.FLOW_NAMED)
-    protected QueueInterface<FlowWithSource> flowQueue;
+    protected QueueInterface<FlowInterface> flowQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKLOG_NAMED)
@@ -52,6 +61,10 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
     @Named(QueueFactoryInterface.KILL_NAMED)
     protected QueueInterface<ExecutionKilled> killedQueue;
 
+    @Inject
+    protected FlowRepositoryInterface flowRepository;
+
+
     public static FlowWithSource createFlow(Duration sleep) {
         SleepTriggerTest schedule = SleepTriggerTest.builder()
             .id("sleep")
@@ -59,7 +72,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
             .sleep(sleep)
             .build();
 
-        return FlowWithSource.builder()
+        Flow flow = Flow.builder()
             .id(SchedulerTriggerChangeTest.class.getSimpleName())
             .namespace("io.kestra.unittest")
             .revision(1)
@@ -71,6 +84,8 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
                 .build())
             )
             .build();
+
+        return FlowWithSource.of(flow, flow.getSource());
     }
 
     @Test
@@ -106,6 +121,7 @@ public class SchedulerTriggerChangeTest extends AbstractSchedulerTest {
 
             // emit a flow trigger to be started
             FlowWithSource flow = createFlow(Duration.ofSeconds(10));
+            flowRepository.create(GenericFlow.of(flow));
             flowQueue.emit(flow);
 
             Await.until(() -> STARTED_COUNT == 1, Duration.ofMillis(100), Duration.ofSeconds(30));

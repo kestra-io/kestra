@@ -44,7 +44,7 @@
         methods: {
             startTour() {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
+                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
                 this.$tours["guidedTour"]?.start();
             },
             handleCardClick(card) {

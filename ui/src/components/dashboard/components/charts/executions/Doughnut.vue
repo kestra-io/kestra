@@ -9,7 +9,13 @@
         >
             <div class="w-75">
                 <Doughnut
-                    v-if="total > 0"
+                    v-if="loading"
+                    :data="skeletonData"
+                    :options="skeletonOptions"
+                    class="tall"
+                />
+                <Doughnut
+                    v-else-if="total > 0"
                     :data="parsedData"
                     :options="options"
                     :plugins="[totalsLegend, centerPlugin, thicknessPlugin]"
@@ -25,16 +31,18 @@
 <script setup>
     import {computed} from "vue";
     import {useI18n} from "vue-i18n";
-    import {useRouter} from "vue-router";
+    import {useRouter, useRoute} from "vue-router";
+    import moment from "moment";
 
     import {Doughnut} from "vue-chartjs";
 
     import {totalsLegend} from "../legend.js";
     import {useTheme} from "../../../../../utils/utils";
-    import {defaultConfig} from "../../../../../utils/charts.js";
+    import {defaultConfig, chartClick} from "../../../../../utils/charts";
     import {useScheme} from "../../../../../utils/scheme";
 
     const router = useRouter();
+    const route = useRoute();
     const scheme = useScheme();
 
     import NoData from "../../../../layout/NoData.vue";
@@ -50,6 +58,10 @@
             type: Number,
             required: true,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
 
     const theme = useTheme();
@@ -82,8 +94,6 @@
         };
     });
 
-
-
     const options = computed(() =>
         defaultConfig({
             plugins: {
@@ -102,19 +112,7 @@
                 },
             },
             onClick: (e, elements) => {
-                if (elements.length > 0) {
-                    const index = elements[0].index;
-                    const state = parsedData.value.labels[index];
-                    router.push({
-                        name: "executions/list",
-                        query: {
-                            state: state,
-                            scope: "USER",
-                            size: 100,
-                            page: 1,
-                        },
-                    });
-                }
+                chartClick(moment, router, route, {}, parsedData.value, elements, "dataset");
             },
         }, theme.value),
     );
@@ -161,6 +159,35 @@
             });
         },
     };
+
+    const skeletonData = computed(() => {
+        const barColor = theme.value === "dark"
+            ? "rgba(255, 255, 255, 0.08)"
+            : "rgba(0, 0, 0, 0.06)";
+
+        return {
+            labels: ["Loading"],
+            datasets: [{
+                data: [100],
+                backgroundColor: [barColor],
+                borderWidth: 0
+            }]
+        };
+    });
+
+    const skeletonOptions = computed(() => ({
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                enabled: false
+            }
+        },
+        cutout: "40%"
+    }));
 </script>
 
 <style lang="scss" scoped>

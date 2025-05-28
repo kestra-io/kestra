@@ -1,0 +1,15 @@
+id: return
+namespace: sanitychecks.core
+
+variables:
+  my_var: test
+
+tasks:
+  - id: return_value
+    type: io.kestra.plugin.core.debug.Return
+    format: "some string with pebble {{ vars.my_var }}"
+
+  - id: assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions: 
+      - "{{ outputs.return_value.value == 'some string with pebble test'}}"

@@ -28,7 +28,7 @@
                 />
 
                 <el-dropdown-item
-                    @click="selectDashboard(null)"
+                    @click="selectDashboard({id: 'default'})"
                     :class="{'mt-3': filtered.length < 10}"
                 >
                     <small>{{ t("default_dashboard") }}</small>
@@ -71,25 +71,27 @@
 </template>
 
 <script setup lang="ts">
-    import {onBeforeMount, ref, computed, getCurrentInstance} from "vue";
+    import {onBeforeMount, ref, computed, getCurrentInstance, watch} from "vue";
     import KestraIcon from "../../Kicon.vue";
     import {Menu, Plus, DeleteOutline, Magnify, Pencil} from "../utils/icons";
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
     import {useRouter, useRoute} from "vue-router";
+    import {storageKeys} from "../../../utils/constants";
 
     const {t} = useI18n({useScope: "global"});
     const store = useStore();
     const route = useRoute();
+    const routeTenant = ref(route.params.tenant);
     const router = useRouter();
     const emits = defineEmits(["dashboard"]);
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
 
     const remove = (dashboard: any) => {
-        toast.confirm(t("delete confirm", {name: dashboard.title}), () => {
-            store.dispatch("dashboard/delete", dashboard.id).then((item) => {
+        toast.confirm(t("custom_dashboard_confirm_deletion", {title: dashboard.title}), () => {
+            store.dispatch("dashboard/delete", dashboard.id).then(() => {
                 dashboards.value = dashboards.value.filter((d) => d.id !== dashboard.id);
-                toast.deleted(item.title);
+                toast.deleted(dashboard.title);
                 router.push({name: "home"});
             });
         });
@@ -107,28 +109,56 @@
 
     const selectedDashboard = ref(null)
 
+    const DASHBOARD_KEY = storageKeys.DASHBORD_SELECTED + (routeTenant.value ? `_${routeTenant.value}` : "")
+
     const selectDashboard = (dashboard: any) => {
         selectedDashboard.value = dashboard?.title;
-        emits("dashboard", dashboard)
+        if (dashboard?.id) {
+            localStorage.setItem(DASHBOARD_KEY, dashboard.id);
+        } else {
+            localStorage.removeItem(DASHBOARD_KEY);
+        }
+        emits("dashboard", dashboard.id)
     }
 
     const editDashboard = (dashboard: any) => {
         router.push({name: "dashboards/update", params: {id: dashboard.id}});
     }
 
-    onBeforeMount(() => {
+    const fetchDashboards = () => {
         store
             .dispatch("dashboard/list", {})
             .then((response: { results: { id: string; title: string }[] }) => {
                 dashboards.value = response.results;
-                if (route.params?.id) {
-                    const dashboard = dashboards.value.find(d => d.id === route.params.id);
+                const lastSelected =  fetchLastDashboard() ?? route.params?.id;
+                if (lastSelected) {
+                    const dashboard = dashboards.value.find(d => d.id === lastSelected);
                     if (dashboard) {
-                        selectedDashboard.value = dashboard.title;
+                        selectDashboard(dashboard);
+                    } else {
+                        selectedDashboard.value = null;
+                        emits("dashboard", "default")
                     }
                 }
             });
+    }
+
+    const fetchLastDashboard = () => {
+        return localStorage.getItem(DASHBOARD_KEY)
+    }
+
+    onBeforeMount(() => {
+        fetchDashboards()
     });
+
+    watch(
+        route,
+        (newRoute) => {
+            if (routeTenant.value !== newRoute.params.tenant) {
+                fetchDashboards();
+                routeTenant.value = newRoute.params.tenant;
+            }
+        }, {deep: true});
 </script>
 
 <style scoped lang="scss">
@@ -136,10 +166,22 @@
 
 .dropdown {
     width: 300px;
+    background: var(ks-select-background);
+
+    :deep(li.el-dropdown-menu__item) {
+        &:hover,
+        &:focus {
+            background: var(--ks-select-hover);
+        }
+    }
 }
 
 .items {
     max-height: 160px !important; // 5 visible items
+
+    :deep(li.el-dropdown-menu__item) {
+        border-radius: unset;
+    }
 }
 
 .main-button {

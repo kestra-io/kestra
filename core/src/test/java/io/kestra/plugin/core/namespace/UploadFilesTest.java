@@ -26,8 +26,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 
@@ -45,7 +45,7 @@ public class UploadFilesTest {
         File file = new File(Objects.requireNonNull(UploadFilesTest.class.getClassLoader().getResource("application-test.yml")).toURI());
 
         URI fileStorage = storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/" + FriendlyId.createFriendlyId()),
             new FileInputStream(file)
@@ -54,15 +54,15 @@ public class UploadFilesTest {
             .id(UploadFiles.class.getSimpleName())
             .type(UploadFiles.class.getName())
             .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
-            .namespace(Property.of(namespace))
-            .conflict(Property.of(Namespace.Conflicts.ERROR))
-            .destination(Property.of("/folder"))
+            .namespace(Property.ofValue(namespace))
+            .conflict(Property.ofValue(Namespace.Conflicts.ERROR))
+            .destination(Property.ofValue("/folder"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
         uploadFile.run(runContext);
 
-        assertThat(runContext.storage().namespace(namespace).all().size(), is(1));
+        assertThat(runContext.storage().namespace(namespace).all().size()).isEqualTo(1);
         assertThrows(IOException.class, () -> uploadFile.run(runContext));
     }
 
@@ -77,7 +77,7 @@ public class UploadFilesTest {
             .type(UploadFiles.class.getName())
             .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
             .namespace(new Property<>("{{ inputs.namespace }}"))
-            .destination(Property.of("/folder"))
+            .destination(Property.ofValue("/folder"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile,  ImmutableMap.of("namespace", namespace));
@@ -85,7 +85,7 @@ public class UploadFilesTest {
 
         Namespace namespaceStorage = runContext.storage().namespace(namespace);
         List<NamespaceFile> namespaceFiles = namespaceStorage.all();
-        assertThat(namespaceFiles.size(), is(1));
+        assertThat(namespaceFiles.size()).isEqualTo(1);
 
         String previousFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
@@ -97,11 +97,11 @@ public class UploadFilesTest {
         uploadFile.run(runContext);
 
         namespaceFiles = namespaceStorage.all();
-        assertThat(namespaceFiles.size(), is(1));
+        assertThat(namespaceFiles.size()).isEqualTo(1);
 
         String newFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
-        assertThat(previousFile.equals(newFile), is(false));
+        assertThat(previousFile.equals(newFile)).isFalse();
     }
 
     @Test
@@ -114,9 +114,9 @@ public class UploadFilesTest {
             .id(UploadFiles.class.getSimpleName())
             .type(UploadFiles.class.getName())
             .filesMap(Map.of("/path/file.txt", fileStorage.toString()))
-            .namespace(Property.of(namespace))
-            .conflict(Property.of(Namespace.Conflicts.SKIP))
-            .destination(Property.of("/folder"))
+            .namespace(Property.ofValue(namespace))
+            .conflict(Property.ofValue(Namespace.Conflicts.SKIP))
+            .destination(Property.ofValue("/folder"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
@@ -124,7 +124,7 @@ public class UploadFilesTest {
 
         Namespace namespaceStorage = runContext.storage().namespace(namespace);
         List<NamespaceFile> namespaceFiles = namespaceStorage.all();
-        assertThat(namespaceFiles.size(), is(1));
+        assertThat(namespaceFiles.size()).isEqualTo(1);
 
         String previousFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
@@ -136,11 +136,11 @@ public class UploadFilesTest {
         uploadFile.run(runContext);
 
         namespaceFiles = namespaceStorage.all();
-        assertThat(namespaceFiles.size(), is(1));
+        assertThat(namespaceFiles.size()).isEqualTo(1);
 
         String newFile = IOUtils.toString(namespaceStorage.getFileContent(Path.of(namespaceFiles.getFirst().path())), StandardCharsets.UTF_8);
 
-        assertThat(previousFile.equals(newFile), is(true));
+        assertThat(previousFile.equals(newFile)).isTrue();
     }
 
     @Test
@@ -151,10 +151,10 @@ public class UploadFilesTest {
         UploadFiles uploadFile = UploadFiles.builder()
             .id(UploadFiles.class.getSimpleName())
             .type(UploadFiles.class.getName())
-            .files(Property.of(List.of("glob:**application**")))
-            .namespace(Property.of(namespace))
-            .conflict(Property.of(Namespace.Conflicts.SKIP))
-            .destination(Property.of("/folder/"))
+            .files(Property.ofValue(List.of("glob:**application**")))
+            .namespace(Property.ofValue(namespace))
+            .conflict(Property.ofValue(Namespace.Conflicts.SKIP))
+            .destination(Property.ofValue("/folder/"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, uploadFile, ImmutableMap.of());
@@ -163,14 +163,14 @@ public class UploadFilesTest {
 
         Namespace namespaceStorage = runContext.storage().namespace(namespace);
         List<NamespaceFile> namespaceFiles = namespaceStorage.all();
-        assertThat(namespaceFiles.size(), is(1));
+        assertThat(namespaceFiles.size()).isEqualTo(1);
     }
 
     private URI addToStorage(String fileToLoad) throws IOException, URISyntaxException {
         File file = new File(Objects.requireNonNull(UploadFilesTest.class.getClassLoader().getResource(fileToLoad)).toURI());
 
         return storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/" + FriendlyId.createFriendlyId()),
             new FileInputStream(file)

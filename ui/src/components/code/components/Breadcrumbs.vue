@@ -3,77 +3,68 @@
         <el-breadcrumb-item
             v-for="(breadcrumb, index) in breadcrumbs"
             :key="index"
-            class="item"
-            @click="
-                (store.commit('code/removeBreadcrumb', {position: index}),
-                 store.commit('code/unsetPanel', false))
-            "
         >
-            <router-link :to="breadcrumb.to">
-                {{ breadcrumb.label }}
-            </router-link>
+            {{ breadcrumb?.label }}
         </el-breadcrumb-item>
     </el-breadcrumb>
 </template>
 
 <script setup lang="ts">
-    import {computed, onMounted, watch} from "vue";
-
-    import {useRoute} from "vue-router";
-    const route = useRoute();
+    import {computed, inject, onMounted, ref} from "vue";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {useStore} from "vuex";
     const store = useStore();
 
     import {useI18n} from "vue-i18n";
+    import {
+        BREADCRUMB_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
+        FLOW_INJECTION_KEY,
+        BLOCKTYPE_INJECT_KEY, REF_PATH_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY
+    } from "../injectionKeys";
     const {t} = useI18n({useScope: "global"});
 
-    const props = defineProps({flow: {type: Object, required: true}});
+    const breadcrumbs = inject(BREADCRUMB_INJECTION_KEY, ref([]));
+    const flowYaml = inject(FLOW_INJECTION_KEY, ref(""));
+    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
+    const taskCreation = inject(CREATING_TASK_INJECTION_KEY, ref(false));
+    const blockType = inject(BLOCKTYPE_INJECT_KEY, undefined);
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
 
-    store.commit("code/clearBreadcrumbs");
-
-    const breadcrumbs = computed(() => store.state.code.breadcrumbs);
-
-    const params = {
-        namespace: route.params.namespace,
-        id: props.flow.id ?? "new",
-        tab: "edit",
-    };
-
-    onMounted(() => {
-        store.commit("code/addBreadcrumbs", {
-            breadcrumb: {
-                label:
-                    route.name === "flows/create"
-                        ? t("create_flow")
-                        : props.flow.id,
-                to: {name: route.name, params, query: {}},
-            },
-            position: 0,
-        });
+    const flow = computed(() => {
+        return YAML_UTILS.parse(flowYaml.value);
     });
 
-    watch(
-        () => route.query.identifier,
-        (value) => {
-            if (!value) return;
+    onMounted(() => {
+        breadcrumbs.value[0] = {
+            label: store.state.flow.isCreating
+                ? t("create_flow")
+                : flow.value.id,
+        }
 
-            store.commit("code/addBreadcrumbs", {
-                breadcrumb: {
-                    label:
-                        route.query.identifier === "new"
-                            ? t(`no_code.creation.${route.query.section}`)
-                            : route.query.identifier,
-                    to: {name: route.name, params, query: route.query},
-                },
-                position: 1,
-            });
-        },
-    );
+        const index = parentPath ? 2 : 1;
+        if(parentPath){
+            breadcrumbs.value[1] = {
+                label: parentPath,
+            }
+        }
+        if(taskCreation.value || (refPath?.length && refPath.length > 0)){
+            breadcrumbs.value[index] = {
+                label: taskCreation.value
+                    ? t(`no_code.creation.${blockType}`)
+                    : refPath ?? ""
+            }
+        }
+    });
 </script>
 
 <style scoped lang="scss">
 @import "../styles/code.scss";
+
+.clickable{
+    cursor: pointer;
+}
 
 .item:last-child > .el-breadcrumb__inner > a {
     color: $code-primary !important;

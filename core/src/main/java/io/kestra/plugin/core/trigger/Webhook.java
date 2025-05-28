@@ -31,13 +31,13 @@ import jakarta.validation.constraints.Size;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Trigger a flow from a webhook.",
+    title = "Execute a flow from an API call triggered by a webhook.",
     description = """
         Webhook trigger allows you to create a unique URL that you can use to trigger a Kestra flow execution based on events in another application such as GitHub or Amazon EventBridge. In order to use that URL, you have to add a secret key that will secure your webhook URL.
 
         The URL will then follow the following format: `https://{your_hostname}/api/v1/executions/webhook/{namespace}/{flowId}/{key}`. Replace the templated values according to your workflow setup.
 
-        The webhook URL accepts `GET`, `POST` and `PUT` requests.
+        The webhook URL accepts `GET`, `POST`, and `PUT` requests.
 
         You can access the request body and headers sent by another application using the following template variables:
         - `{{ trigger.body }}`
@@ -48,7 +48,7 @@ import jakarta.validation.constraints.Size;
         - 200 if the webhook triggers an execution.
         - 204 if the webhook cannot trigger an execution due to a lack of matching event conditions sent by other application.
 
-        A webhook trigger can have conditions but it doesn't support conditions of type `MultipleCondition`."""
+        A webhook trigger can have conditions, but it doesn't support conditions of type `MultipleCondition`."""
 )
 @Plugin(
     examples = {

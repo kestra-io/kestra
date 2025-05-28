@@ -1,4 +1,15 @@
 <template>
+    <KestraFilter
+        v-if="triggersWithType.length"
+        prefix="flow_triggers"
+        read-only
+        :buttons="{
+            refresh: {shown: true, callback: loadData},
+            settings: {shown: false}
+        }"
+        legacy-query
+    />
+
     <el-table
         v-if="triggersWithType.length"
         v-bind="$attrs"
@@ -8,7 +19,7 @@
     >
         <el-table-column type="expand">
             <template #default="props">
-                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purge-filters :charts="false" embed />
+                <LogsWrapper class="m-3" :filters="{...props.row, triggerId: props.row.id}" purge-filters :with-charts="false" embed />
             </template>
         </el-table-column>
         <el-table-column prop="id" :label="$t('id')">
@@ -39,12 +50,6 @@
         <el-table-column column-key="backfill" v-if="userCan(action.UPDATE) || userCan(action.CREATE)">
             <template #header>
                 {{ $t("backfill") }}
-                <refresh-button
-                    :can-auto-refresh="true"
-                    @refresh="loadData"
-                    size="small"
-                    custom-class="mx-1"
-                />
             </template>
             <template #default="scope">
                 <el-button
@@ -145,12 +150,31 @@
         </el-table-column>
     </el-table>
 
-    <empty-state
+    <div v-if="triggersWithType.length" class="mt-4">
+        <el-button
+            @click="addNewTrigger"
+            :icon="Plus"
+            class="border-0 p-3"
+        >
+            {{ $t('no_code.creation.triggers') }}
+        </el-button>
+    </div>
+
+    <Empty
         v-else
-        :title="$t('triggers-view.title_no_triggers')"
-        :description="$t('triggers-view.desc_no_triggers')"
-        :image="TriggersEmptyImage"
-    />
+        type="triggers"
+    >
+        <template #button>
+            <el-button
+                type="primary"
+                @click="addNewTrigger"
+                :icon="Plus"
+                class="mt-3"
+            >
+                {{ $t('no_code.creation.triggers') }}
+            </el-button>
+        </template>
+    </Empty>
 
     <el-dialog v-model="isBackfillOpen" destroy-on-close :append-to-body="true">
         <template #header>
@@ -183,10 +207,26 @@
         <flow-run
             @update-inputs="backfill.inputs = $event"
             @update-labels="backfill.labels = $event"
+            :selected-trigger="selectedTrigger"
             :redirect="false"
             :embed="true"
         />
         <template #footer>
+            <router-link
+                v-if="isSchedule(selectedTrigger.type)"
+                :to="{
+                    name: 'admin/triggers',
+                    query: {
+                        namespace: selectedTrigger.namespace,
+                        flowId: selectedTrigger.flowId,
+                        q: selectedTrigger.triggerId
+                    }
+                }"
+            >
+                <el-button class="me-2">
+                    {{ $t("backfill") }}
+                </el-button>
+            </router-link>
             <el-button
                 type="primary"
                 @click="postBackfill()"
@@ -219,10 +259,13 @@
     import Check from "vue-material-design-icons/Check.vue";
     import Restart from "vue-material-design-icons/Restart.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue"
+    import Plus from "vue-material-design-icons/Plus.vue";
     import FlowRun from "./FlowRun.vue";
-    import RefreshButton from "../layout/RefreshButton.vue";
     import Id from "../Id.vue";
     import TriggerAvatar from "./TriggerAvatar.vue";
+
+    import KestraFilter from "../filter/KestraFilter.vue";
+    import Empty from "../layout/empty/Empty.vue";
 </script>
 
 <script>
@@ -236,11 +279,17 @@
     import action from "../../models/action";
     import moment from "moment";
     import LogsWrapper from "../logs/LogsWrapper.vue";
-    import EmptyState from "../layout/EmptyState.vue";
-    import TriggersEmptyImage from "../../assets/triggers_empty.svg";
+    import _isEqual from "lodash/isEqual";
+    import {storageKeys} from "../../utils/constants.js";
 
     export default {
-        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper, EmptyState},
+        components: {Markdown, Kicon, DateAgo, Vars, Drawer, LogsWrapper},
+        props:{
+            embed: {
+                type: Boolean,
+                default: false
+            }
+        },
         data() {
             return {
                 triggerId: undefined,
@@ -259,9 +308,19 @@
         created() {
             this.loadData();
         },
+        watch: {
+            $route(newValue, oldValue) {
+                if (oldValue.name === newValue.name && !_isEqual(newValue.query, oldValue.query)) {
+                    this.loadData();
+                }
+            }
+        },
         computed: {
             ...mapState("auth", ["user"]),
             ...mapGetters("flow", ["flow"]),
+            query() {
+                return Array.isArray(this.$route.query.q) ? this.$route.query.q[0] : this.$route.query.q;
+            },
             modalData() {
                 return Object
                     .entries(this.triggersWithType.filter(trigger => trigger.triggerId === this.triggerId)[0])
@@ -284,10 +343,12 @@
                     return {...trigger, sourceDisabled: trigger.disabled ?? false}
                 })
                 if (flowTriggers) {
-                    return flowTriggers.map(flowTrigger => {
+                    const triggers = flowTriggers.map(flowTrigger => {
                         let pollingTrigger = this.triggers.find(trigger => trigger.triggerId === flowTrigger.id)
                         return {...flowTrigger, ...(pollingTrigger || {})}
                     })
+
+                    return !this.query ? triggers : triggers.filter(trigger => trigger.id.includes(this.query))
                 }
                 return this.triggers
             },
@@ -323,6 +384,9 @@
                 }
                 return false
             },
+            editorViewType() {
+                return localStorage.getItem(storageKeys.EDITOR_VIEW_TYPE) === "NO_CODE";
+            },
         },
         methods: {
             userCan(action) {
@@ -332,7 +396,7 @@
                 if(!this.triggersWithType.length) return;
 
                 this.$store
-                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length})
+                    .dispatch("trigger/find", {namespace: this.flow.namespace, flowId: this.flow.id, size: this.triggersWithType.length, q: this.query})
                     .then(triggers => this.triggers = triggers.results);
             },
             setBackfillModal(trigger, bool) {
@@ -455,6 +519,41 @@
             canBeDisabled(trigger) {
                 return this.triggers.map(trigg => trigg.triggerId).includes(trigger.id)
                     && !trigger.sourceDisabled;
+            },
+            addNewTrigger() {
+                localStorage.setItem(storageKeys.EDITOR_VIEW_TYPE, "NO_CODE");
+
+                const baseUrl = {
+                    name: "flows/update",
+                    params: {
+                        tenant: this.$route.params.tenant,
+                        namespace: this.flow.namespace,
+                        id: this.flow.id,
+                        tab: "edit"
+                    }
+                };
+
+                if (this.editorViewType) {
+                    const route = {
+                        ...baseUrl,
+                        query: {
+                            section: "triggers"
+                        }
+                    };
+
+                    this.$nextTick(() => {
+                        this.$router.push(route).then(() => {
+                            this.$router.replace({
+                                ...route,
+                                query: {
+                                    ...route.query,
+                                }
+                            });
+                        });
+                    });
+                } else {
+                    this.$router.push(baseUrl);
+                }
             }
         }
     };

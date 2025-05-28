@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.storage;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.runners.RunContextFactory;
@@ -8,13 +9,12 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class PurgeCurrentExecutionFilesTest {
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void run() throws Exception {
@@ -35,6 +35,6 @@ class PurgeCurrentExecutionFilesTest {
             .build();
         var output = purge.run(runContext);
 
-        assertThat(output.getUris().size(), is(2));
+        assertThat(output.getUris().size()).isEqualTo(2);
     }
 }

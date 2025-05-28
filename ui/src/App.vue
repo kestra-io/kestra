@@ -20,7 +20,7 @@
     import DocIdDisplay from "./components/DocIdDisplay.vue";
     import posthog from "posthog-js";
     import "@kestra-io/ui-libs/style.css";
-
+    // Main App
     export default {
         name: "App",
         components: {
@@ -143,22 +143,26 @@
                     return;
                 }
 
-                posthog.init(
-                    apiConfig.posthog.token,
-                    {
-                        api_host: apiConfig.posthog.apiHost,
-                        ui_host: "https://eu.posthog.com",
-                        capture_pageview: false,
-                        capture_pageleave: true,
-                        autocapture: false,
+                // only run posthog in production
+                if (import.meta.env.MODE === "production") {
+                    posthog.init(
+                        apiConfig.posthog.token,
+                        {
+                            api_host: apiConfig.posthog.apiHost,
+                            ui_host: "https://eu.posthog.com",
+                            capture_pageview: false,
+                            capture_pageleave: true,
+                            autocapture: false,
+                        }
+                    )
+
+                    posthog.register_once(this.statsGlobalData(config, uid));
+
+                    if (!posthog.get_property("__alias")) {
+                        posthog.alias(apiConfig.id);
                     }
-                )
-
-                posthog.register_once(this.statsGlobalData(config, uid));
-
-                if (!posthog.get_property("__alias")) {
-                    posthog.alias(apiConfig.id);
                 }
+
 
                 // close survey on page change
                 let surveyVisible = false;

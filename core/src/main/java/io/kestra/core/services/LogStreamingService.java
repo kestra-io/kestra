@@ -45,6 +45,11 @@ public class LogStreamingService {
             }
 
             LogEntry current = either.getLeft();
+            if (current.getExecutionId() == null) {
+                // some logs are not about any execution, we skip them
+                return;
+            }
+
             // Get all subscribers for this execution
             Map<String, Pair<FluxSink<Event<LogEntry>>, List<String>>> executionSubscribers = subscribers.get(current.getExecutionId());
 

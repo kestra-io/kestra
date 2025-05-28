@@ -15,12 +15,11 @@ import java.net.URISyntaxException;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest(startRunner = true)
-public class ListenersTest {
+class ListenersTest {
 
     @Inject
     private RunnerUtils runnerUtils;
@@ -40,89 +39,89 @@ public class ListenersTest {
     @Test
     void success() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners",
             null,
             (f, e) -> ImmutableMap.of("string", "OK")
         );
 
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("ok"));
-        assertThat(execution.getTaskRunList().size(), is(3));
-        assertThat((String) execution.getTaskRunList().get(2).getOutputs().get("value"), containsString("flowId=listeners"));
+        assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("ok");
+        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat((String) execution.getTaskRunList().get(2).getOutputs().get("value")).contains("flowId=listeners");
     }
 
     @Test
     void failed() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners",
             null,
             (f, e) -> ImmutableMap.of("string", "KO")
         );
 
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("ko"));
-        assertThat(execution.getTaskRunList().size(), is(3));
-        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("execution-failed-listener"));
+        assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("ko");
+        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("execution-failed-listener");
     }
 
     @Test
     void flowableExecution() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-flowable",
             null,
             (f, e) -> ImmutableMap.of("string", "execution")
         );
 
-        assertThat(execution.getTaskRunList().size(), is(3));
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("parent-seq"));
-        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("execution-success-listener"));
-        assertThat((String) execution.getTaskRunList().get(2).getOutputs().get("value"), containsString(execution.getId()));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("parent-seq");
+        assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("execution-success-listener");
+        assertThat((String) execution.getTaskRunList().get(2).getOutputs().get("value")).contains(execution.getId());
     }
 
     @Test
     void multipleListeners() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-multiple"
         );
 
-        assertThat(execution.getTaskRunList().size(), is(3));
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("l1"));
-        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("l2"));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("l1");
+        assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("l2");
     }
 
     @Test
     void failedListeners() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-failed"
         );
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList().size(), is(2));
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("ko"));
-        assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.FAILED));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList().size()).isEqualTo(2);
+        assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("ko");
+        assertThat(execution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.FAILED);
     }
 
     @Test
     void failedMultipleListeners() throws TimeoutException, QueueException{
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "listeners-multiple-failed"
         );
 
-        assertThat(execution.getState().getCurrent(), is(State.Type.SUCCESS));
-        assertThat(execution.getTaskRunList().size(), is(3));
-        assertThat(execution.getTaskRunList().get(1).getTaskId(), is("ko"));
-        assertThat(execution.getTaskRunList().get(1).getState().getCurrent(), is(State.Type.FAILED));
-        assertThat(execution.getTaskRunList().get(2).getTaskId(), is("l2"));
-        assertThat(execution.getTaskRunList().get(2).getState().getCurrent(), is(State.Type.SUCCESS));
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.getTaskRunList().size()).isEqualTo(3);
+        assertThat(execution.getTaskRunList().get(1).getTaskId()).isEqualTo("ko");
+        assertThat(execution.getTaskRunList().get(1).getState().getCurrent()).isEqualTo(State.Type.FAILED);
+        assertThat(execution.getTaskRunList().get(2).getTaskId()).isEqualTo("l2");
+        assertThat(execution.getTaskRunList().get(2).getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 }

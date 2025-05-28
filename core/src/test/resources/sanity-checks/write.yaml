@@ -1,0 +1,18 @@
+id: write
+namespace: sanitychecks.core
+
+tasks:
+  - id: write
+    type: io.kestra.plugin.core.storage.Write
+    content: |
+      test
+    extension: .txt
+
+  - id: return
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{read(outputs.write.uri)}}"
+
+  - id: assertContent
+    type: io.kestra.plugin.core.execution.Fail
+    condition: "{{ outputs.return.value != 'test\n'}}"
+  

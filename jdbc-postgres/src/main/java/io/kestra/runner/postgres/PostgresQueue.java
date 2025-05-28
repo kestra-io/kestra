@@ -12,6 +12,8 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -35,7 +37,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
 
         map.put(
             AbstractJdbcRepository.field("type"),
-            DSL.field("CAST(? AS queue_type)", this.cls.getName())
+            DSL.field("CAST(? AS queue_type)", queueType())
         );
 
         return map;
@@ -57,7 +59,7 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
                 AbstractJdbcRepository.field("offset")
             )
             .from(this.table)
-            .where(DSL.condition("type = CAST(? AS queue_type)", this.cls.getName()))
+            .where(DSL.condition("type = CAST(? AS queue_type)", queueType()))
             .and(AbstractJdbcRepository.field("consumer_" + queueType, Boolean.class).isFalse());
 
         if (consumerGroup != null) {
@@ -80,15 +82,12 @@ public class PostgresQueue<T> extends JdbcQueue<T> {
             .getFirst();
     }
 
-    @SuppressWarnings("RedundantCast")
     @Override
     protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
         var update = ctx.update(DSL.table(table.getName()))
-            .set(
-                AbstractJdbcRepository.field("consumer_" + queueType),
-                true
-            )
-            .where(AbstractJdbcRepository.field("offset").in((Object[]) offsets.toArray(Integer[]::new)));
+            .set(AbstractJdbcRepository.field("consumer_" + queueType), true)
+            .set(AbstractJdbcRepository.field("updated"), LocalDateTime.now())
+            .where(AbstractJdbcRepository.field("offset").in(offsets));
 
         if (consumerGroup != null) {
             update = update.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));

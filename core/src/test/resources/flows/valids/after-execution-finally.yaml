@@ -1,0 +1,18 @@
+id: after-execution-finally
+namespace: io.kestra.tests
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+
+finally:
+  - id: finally
+    type: io.kestra.plugin.core.log.Log
+    message: I'm a finally block
+
+afterExecution:
+  - id: end
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      state: "{{execution.state}}"

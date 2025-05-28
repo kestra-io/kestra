@@ -1,0 +1,44 @@
+id: namespace_files
+namespace: sanitychecks.core
+
+tasks:
+  - id: download
+    type: io.kestra.plugin.core.http.Download
+    uri: https://raw.githubusercontent.com/kestra-io/scripts/refs/heads/main/automation/list_kestra_repos.py
+
+  - id: upload_files
+    type: io.kestra.plugin.core.namespace.UploadFiles
+    filesMap: 
+      main.py: "{{ outputs.download.uri }}"
+    namespace: "{{ flow.namespace }}"
+
+  - id: download_files
+    type: io.kestra.plugin.core.namespace.DownloadFiles
+    namespace: "{{ flow.namespace }}"
+    files:
+      - "main.py"
+
+  - id: assert_upload_download
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ read(outputs.download.uri) == read(outputs.download_files.files['/main.py']) }}"
+
+  - id: delete_files
+    type: io.kestra.plugin.core.namespace.DeleteFiles
+    namespace: "{{ flow.namespace }}"
+    files:
+      - "main.py"
+
+  - id: download_files_check
+    type: io.kestra.plugin.core.namespace.DownloadFiles
+    namespace: "{{ flow.namespace }}"
+    files:
+      - "main.py"
+
+  - id: assert_delete
+    type: io.kestra.plugin.core.execution.Assert
+    conditions: 
+      - "{{ outputs.download_files_check.files | length == 0 }}"
+
+  - id: purge
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles

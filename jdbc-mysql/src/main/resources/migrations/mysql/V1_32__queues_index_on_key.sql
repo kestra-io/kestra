@@ -1,0 +1,1 @@
+CREATE INDEX ix_type__key ON queues(`type`, `key`);

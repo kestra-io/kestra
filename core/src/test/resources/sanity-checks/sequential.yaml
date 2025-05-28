@@ -1,0 +1,22 @@
+id: sequential
+namespace: sanitychecks.core
+
+tasks:
+  - id: sequential_root
+    type: io.kestra.plugin.core.flow.Sequential
+    tasks:
+      - id: n1_task
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }} - {{ taskrun.id }} - {{ taskrun.startDate }}"
+
+      - id: sequential_child
+        type: io.kestra.plugin.core.flow.Sequential
+        tasks:
+
+        - id: n2_task
+          type: io.kestra.plugin.core.debug.Return
+          format: "{{ task.id }} - {{ taskrun.id }} - {{ taskrun.startDate }}"
+
+  - id: last
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ task.id }} > {{ taskrun.startDate }}"

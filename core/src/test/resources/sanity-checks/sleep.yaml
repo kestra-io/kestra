@@ -1,0 +1,20 @@
+id: sleep
+namespace: sanitychecks.core
+
+tasks:
+  - id: before
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ now() | timestamp('Europe/London') }}"
+
+  - id: sleep_5
+    type: io.kestra.plugin.core.flow.Sleep
+    duration: "PT5S"
+
+  - id: after
+    type: io.kestra.plugin.core.debug.Return
+    format: "{{ now() | timestamp('Europe/London') }}"
+
+  - id: assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.after.value | number - outputs.before.value | number >= 5 }}"

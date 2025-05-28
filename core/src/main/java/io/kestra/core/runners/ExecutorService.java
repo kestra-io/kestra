@@ -1,12 +1,11 @@
 package io.kestra.core.runners;
 
-import com.google.common.collect.ImmutableMap;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.*;
 import io.kestra.core.models.flows.Flow;
-import io.kestra.core.models.flows.FlowWithSource;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.flows.sla.Violation;
 import io.kestra.core.models.tasks.*;
@@ -15,16 +14,20 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
 import io.kestra.core.services.*;
+import io.kestra.core.storages.StorageContext;
+import io.kestra.core.test.flow.TaskFixture;
 import io.kestra.core.trace.propagation.RunContextTextMapSetter;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.TruthUtils;
+import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.Pause;
 import io.kestra.plugin.core.flow.Subflow;
-import io.kestra.plugin.core.flow.LoopUntil;
 import io.kestra.plugin.core.flow.WorkingDirectory;
 import io.micronaut.context.ApplicationContext;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.context.Context;
+import io.opentelemetry.context.propagation.ContextPropagators;
+import io.opentelemetry.context.propagation.TextMapPropagator;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -35,6 +38,7 @@ import org.slf4j.event.Level;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.utils.Rethrow.throwFunction;
@@ -63,7 +67,7 @@ public class ExecutorService {
     @Inject
     private WorkerGroupExecutorInterface workerGroupExecutorInterface;
 
-    protected FlowExecutorInterface flowExecutorInterface;
+    protected FlowMetaStoreInterface flowExecutorInterface;
 
     @Inject
     private ExecutionService executionService;
@@ -75,22 +79,25 @@ public class ExecutorService {
     private SLAService slaService;
 
     @Inject
-    private OpenTelemetry openTelemetry;
+    private Optional<OpenTelemetry> openTelemetry;
+
+    @Inject
+    private VariablesService variablesService;
 
     @Inject
     @Named(QueueFactoryInterface.KILL_NAMED)
     protected QueueInterface<ExecutionKilled> killQueue;
 
-    protected FlowExecutorInterface flowExecutorInterface() {
+    protected FlowMetaStoreInterface flowExecutorInterface() {
         // bean is injected late, so we need to wait
         if (this.flowExecutorInterface == null) {
-            this.flowExecutorInterface = applicationContext.getBean(FlowExecutorInterface.class);
+            this.flowExecutorInterface = applicationContext.getBean(FlowMetaStoreInterface.class);
         }
 
         return this.flowExecutorInterface;
     }
 
-    public Executor checkConcurrencyLimit(Executor executor, Flow flow, Execution execution, long count) {
+    public Executor checkConcurrencyLimit(Executor executor, FlowInterface flow, Execution execution, long count) {
         // if above the limit, handle concurrency limit based on its behavior
         if (count >= flow.getConcurrency().getLimit()) {
             return switch (flow.getConcurrency().getBehavior()) {
@@ -108,7 +115,6 @@ public class ExecutorService {
                     // when max concurrency is reached, we throttle the execution and stop processing
                     logService.logExecution(
                         newExecution,
-                        flow.logger(),
                         Level.INFO,
                         "Flow is queued due to concurrency limit exceeded, {} running(s)",
                         count
@@ -139,10 +145,11 @@ public class ExecutorService {
     public Executor process(Executor executor) {
         // previous failed (flow join can fail), just forward
         // or concurrency limit failed/cancelled the execution
-        if (!executor.canBeProcessed() || conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())) {
+        if (!executor.canBeProcessed() || executionService.isTerminated(executor.getFlow(), executor.getExecution())) {
             return executor;
         }
 
+        long nanos = System.nanoTime();
         try {
             executor = this.handleRestart(executor);
             executor = this.handleEnd(executor);
@@ -158,7 +165,7 @@ public class ExecutorService {
             }
 
             // but keep listeners on killing
-            executor = this.handleListeners(executor);
+            executor = this.handleAfterExecution(executor);
 
             // search for worker task
             executor = this.handleWorkerTask(executor);
@@ -173,16 +180,19 @@ public class ExecutorService {
             executor = this.handleExecutableTask(executor);
         } catch (Exception e) {
             return executor.withException(e, "process");
+        } finally {
+            metricRegistry
+                .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_MESSAGE_PROCESS_DURATION, MetricRegistry.METRIC_EXECUTOR_EXECUTION_MESSAGE_PROCESS_DURATION_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+                .record(Duration.ofNanos(System.nanoTime() - nanos));
         }
 
         return executor;
     }
 
-    public Execution onNexts(Flow flow, Execution execution, List<TaskRun> nexts) {
+    public Execution onNexts(Execution execution, List<TaskRun> nexts) {
         if (log.isTraceEnabled()) {
             logService.logExecution(
                 execution,
-                flow.logger(),
                 Level.TRACE,
                 "Found {} next(s) {}",
                 nexts.size(),
@@ -205,22 +215,17 @@ public class ExecutorService {
 
         if (execution.getState().getCurrent() == State.Type.CREATED) {
             metricRegistry
-                .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(execution))
+                .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(execution))
                 .increment();
 
             logService.logExecution(
                 execution,
-                flow.logger(),
                 Level.INFO,
                 "Flow started"
             );
 
             newExecution = newExecution.withState(State.Type.RUNNING);
         }
-
-        metricRegistry
-            .counter(MetricRegistry.EXECUTOR_TASKRUN_NEXT_COUNT, metricRegistry.tags(execution))
-            .increment(nexts.size());
 
         return newExecution;
     }
@@ -253,10 +258,11 @@ public class ExecutorService {
                 if (workerTaskResult.getTaskRun().getState().isTerminated()) {
                     try {
                         Output outputs = flowableParent.outputs(runContext);
+                        Variables variables = variablesService.of(StorageContext.forTask(workerTaskResult.getTaskRun()), outputs);
                         return Optional.of(new WorkerTaskResult(workerTaskResult
                             .getTaskRun()
-                            .withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of()))
-                        );
+                            .withOutputs(variables)
+                        ));
                     } catch (Exception e) {
                         runContext.logger().error("Unable to resolve outputs from the Flowable task: {}", e.getMessage(), e);
                     }
@@ -300,24 +306,18 @@ public class ExecutorService {
         TaskRun taskRun
     ) {
         return findState
-            .map(throwFunction(type -> new WorkerTaskResult(taskRun.withState(type))))
-            .stream()
-            .peek(workerTaskResult -> {
-                metricRegistry
-                    .counter(
-                        MetricRegistry.EXECUTOR_WORKERTASKRESULT_COUNT,
-                        metricRegistry.tags(workerTaskResult)
-                    )
-                    .increment();
-
-            })
-            .findFirst();
+            .map(throwFunction(type -> new WorkerTaskResult(taskRun.withState(type))));
     }
 
     private List<TaskRun> childNextsTaskRun(Executor executor, TaskRun parentTaskRun) throws InternalException {
         Task parent = executor.getFlow().findTaskByTaskId(parentTaskRun.getTaskId());
 
         if (parent instanceof FlowableTask<?> flowableParent) {
+            // Count the number of flowable tasks executions, some flowable are being called multiple times,
+            // so this is not exactly the number of flowable taskruns but the number of times they are executed.
+            metricRegistry
+                .counter(MetricRegistry.METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT, MetricRegistry.METRIC_EXECUTOR_FLOWABLE_EXECUTION_COUNT_DESCRIPTION, metricRegistry.tags(parent))
+                .increment();
 
             try {
                 List<NextTaskRun> nexts = flowableParent.resolveNexts(
@@ -355,19 +355,19 @@ public class ExecutorService {
                     return taskRun;
                 }
                 FlowableTask<?> flowableTask = (FlowableTask<?>) t.getTask();
+                RunContext runContext = runContextFactory.of(
+                    executor.getFlow(),
+                    t.getTask(),
+                    executor.getExecution(),
+                    t.getTaskRun()
+                );
 
                 try {
-                    RunContext runContext = runContextFactory.of(
-                        executor.getFlow(),
-                        t.getTask(),
-                        executor.getExecution(),
-                        t.getTaskRun()
-                    );
-
                     Output outputs = flowableTask.outputs(runContext);
-                    taskRun = taskRun.withOutputs(outputs != null ? outputs.toMap() : ImmutableMap.of());
+                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
+                    taskRun = taskRun.withOutputs(variables);
                 } catch (Exception e) {
-                    executor.getFlow().logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
+                    runContext.logger().warn("Unable to save output on taskRun '{}'", taskRun, e);
                 }
 
                 return taskRun;
@@ -377,8 +377,6 @@ public class ExecutorService {
 
     private Executor onEnd(Executor executor) {
         final Flow flow = executor.getFlow();
-
-        Logger logger = flow.logger();
 
         Execution newExecution = executor.getExecution()
             .withState(executor.getExecution().guessFinalState(flow));
@@ -395,7 +393,6 @@ public class ExecutorService {
             } catch (Exception e) {
                 logService.logExecution(
                     executor.getExecution(),
-                    logger,
                     Level.ERROR,
                     "Failed to render output values",
                     e
@@ -407,23 +404,22 @@ public class ExecutorService {
 
         logService.logExecution(
             newExecution,
-            logger,
             Level.INFO,
             "Flow completed with state {} in {}",
             newExecution.getState().getCurrent(),
             newExecution.getState().humanDuration()
         );
 
-        if (logger.isTraceEnabled()) {
-            logger.trace(newExecution.toString(true));
+        if (log.isTraceEnabled()) {
+            log.trace(newExecution.toString(true));
         }
 
         metricRegistry
-            .counter(MetricRegistry.EXECUTOR_EXECUTION_END_COUNT, metricRegistry.tags(newExecution))
+            .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_END_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_END_COUNT_DESCRIPTION, metricRegistry.tags(newExecution))
             .increment();
 
         metricRegistry
-            .timer(MetricRegistry.EXECUTOR_EXECUTION_DURATION, metricRegistry.tags(newExecution))
+            .timer(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DURATION_DESCRIPTION, metricRegistry.tags(newExecution))
             .record(newExecution.getState().getDuration());
 
         return executor.withExecution(newExecution, "onEnd");
@@ -480,6 +476,7 @@ public class ExecutorService {
 
         List<WorkerTaskResult> list = new ArrayList<>();
         List<ExecutionDelay> executionDelays = new ArrayList<>();
+        List<WorkerTask> onPauses = new ArrayList<>();
 
         for (TaskRun taskRun : executor.getExecution().getTaskRunList()) {
             if (taskRun.getState().isRunning()) {
@@ -493,53 +490,43 @@ public class ExecutorService {
             }
 
             Task task = executor.getFlow().findTaskByTaskIdOrNull(taskRun.getTaskId());
-            String taskId = taskRun.getTaskId();
-            Task parentTask = null;
-            if (taskRun.getParentTaskRunId() != null) {
-                do {
-                    parentTask = executor.getFlow().findParentTasksByTaskId(taskId);
-                    if (parentTask != null) {
-                        taskId = parentTask.getId();
-                    }
-                } while (parentTask != null && parentTask.getRetry() == null);
-            }
-
             /*
              * Check if the task is failed and if it has a retry policy
              */
             if (!executor.getExecution().getState().isRetrying() &&
                 taskRun.getState().isFailed() &&
-                (task instanceof RunnableTask<?> || task instanceof Subflow) &&
-                (task.getRetry() != null || executor.getFlow().getRetry() != null || (parentTask != null && parentTask.getRetry() != null))
+                (task instanceof RunnableTask<?> || task instanceof Subflow)
             ) {
-                Instant nextRetryDate;
-                AbstractRetry retry;
-                AbstractRetry.Behavior behavior;
+                Instant nextRetryDate = null;
+                AbstractRetry.Behavior behavior = null;
 
                 // Case task has a retry
                 if (task.getRetry() != null) {
-                    retry = task.getRetry();
+                    AbstractRetry retry = task.getRetry();
                     behavior = retry.getBehavior();
                     nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
                         taskRun.nextRetryDate(retry, executor.getExecution()) :
                         taskRun.nextRetryDate(retry);
                 }
-                // Case parent task has a retry
-                else if (parentTask != null && parentTask.getRetry() != null) {
-                    retry = parentTask.getRetry();
-                    behavior = retry.getBehavior();
-                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
-                        taskRun.nextRetryDate(retry, executor.getExecution()) :
-                        taskRun.nextRetryDate(retry);
-                }
-                // Case flow has a retry
                 else {
-                    retry = executor.getFlow().getRetry();
-                    behavior = retry.getBehavior();
-                    nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
-                        executionService.nextRetryDate(retry, executor.getExecution()) :
-                        taskRun.nextRetryDate(retry);
+                    // Case parent task has a retry
+                    AbstractRetry retry = searchForParentRetry(taskRun, executor);
+                    if (retry != null) {
+                        behavior = retry.getBehavior();
+                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
+                            taskRun.nextRetryDate(retry, executor.getExecution()) :
+                            taskRun.nextRetryDate(retry);
+                    }
+                    // Case flow has a retry
+                    else if (executor.getFlow().getRetry() != null) {
+                        retry = executor.getFlow().getRetry();
+                        behavior = retry.getBehavior();
+                        nextRetryDate = behavior.equals(AbstractRetry.Behavior.CREATE_NEW_EXECUTION) ?
+                            executionService.nextRetryDate(retry, executor.getExecution()) :
+                            taskRun.nextRetryDate(retry);
+                    }
                 }
+
                 if (nextRetryDate != null) {
                     ExecutionDelay.ExecutionDelayBuilder executionDelayBuilder = ExecutionDelay.builder()
                         .taskRunId(taskRun.getId())
@@ -557,15 +544,15 @@ public class ExecutorService {
                     // Prevent workerTaskResult of flowable to be sent
                     // because one of its children is retrying
                     if (taskRun.getParentTaskRunId() != null) {
-                        list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId())).toList();
+                        list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId()))
+                            .collect(Collectors.toCollection(ArrayList::new));
                     }
                 }
-            }
-            // WaitFor case
-            else if (task instanceof LoopUntil waitFor && taskRun.getState().isRunning()) {
+            } else if (task instanceof LoopUntil waitFor && taskRun.getState().isRunning()) {
                 if (waitFor.childTaskRunExecuted(executor.getExecution(), taskRun)) {
                     Output newOutput = waitFor.outputs(taskRun);
-                    TaskRun updatedTaskRun = taskRun.withOutputs(newOutput.toMap());
+                    Variables variables = variablesService.of(StorageContext.forTask(taskRun), newOutput);
+                    TaskRun updatedTaskRun = taskRun.withOutputs(variables);
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution().withTaskRun(updatedTaskRun), updatedTaskRun);
                     List<NextTaskRun> next = ((FlowableTask<?>) task).resolveNexts(runContext, executor.getExecution(), updatedTaskRun);
                     Instant nextDate = waitFor.nextExecutionDate(runContext, executor.getExecution(), updatedTaskRun);
@@ -585,14 +572,31 @@ public class ExecutorService {
                         executor.withExecution(executor.getExecution().withTaskRun(updatedTaskRun), "handleWaitFor");
                     }
                 }
+            } else if (task instanceof Pause pause && pause.getOnPause() != null) {
+                // if a Pause task defines an onPause, we must create a TaskRun and a WorkerTask
+                RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+                onPauses.add(WorkerTask.builder()
+                    .runContext(runContext)
+                    .taskRun(TaskRun.of(
+                        executor.getExecution(),
+                        ResolvedTask.of(pause.getOnPause())
+                    ))
+                    .task(pause.getOnPause())
+                    .executionKind(executor.getExecution().getKind())
+                    .build());
             }
 
             // If the task is retrying
             // make sure that the workerTaskResult of the parent task is not sent
             if (taskRun.getState().isRetrying() && taskRun.getParentTaskRunId() != null) {
-                list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId())).toList();
+                list = list.stream().filter(workerTaskResult -> !workerTaskResult.getTaskRun().getId().equals(taskRun.getParentTaskRunId()))
+                    .collect(Collectors.toCollection(ArrayList::new));
             }
         }
+
+        metricRegistry
+            .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_CREATED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+            .increment(executionDelays.size());
 
         executor.withWorkerTaskDelays(executionDelays, "handleChildWorkerTaskDelay");
 
@@ -600,11 +604,38 @@ public class ExecutorService {
             return executor;
         }
 
+
+        if (!onPauses.isEmpty()) {
+            List<TaskRun> taskRuns = onPauses.stream().map(WorkerTask::getTaskRun).toList();
+            executor.withTaskRun(taskRuns, "handlePauses");
+            executor.withWorkerTasks(onPauses, "handlePauses");
+        }
+
         executor = this.handlePausedDelay(executor, list);
 
-        this.addWorkerTaskResults(executor, executor.getFlow(), list);
+        this.addWorkerTaskResults(executor, list);
 
         return executor;
+    }
+
+    private AbstractRetry searchForParentRetry(TaskRun taskRun, Executor executor) {
+        // search in all parents, recursively
+        if (taskRun.getParentTaskRunId() != null) {
+            String taskId = taskRun.getTaskId();
+            Task parentTask;
+            do {
+                parentTask = executor.getFlow().findParentTasksByTaskId(taskId);
+                if (parentTask != null) {
+                    taskId = parentTask.getId();
+                }
+            } while (parentTask != null && parentTask.getRetry() == null);
+
+            if (parentTask != null) {
+                return parentTask.getRetry();
+            }
+        }
+
+        return null;
     }
 
     private Executor handlePausedDelay(Executor executor, List<WorkerTaskResult> workerTaskResults) throws InternalException {
@@ -621,16 +652,19 @@ public class ExecutorService {
                 Task task = executor.getFlow().findTaskByTaskId(workerTaskResult.getTaskRun().getTaskId());
 
                 if (task instanceof Pause pauseTask) {
-                    if (pauseTask.getDelay() != null || pauseTask.getTimeout() != null) {
+                    if (pauseTask.getPauseDuration() != null || pauseTask.getTimeout() != null) {
                         RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
-                        Duration delay = runContext.render(pauseTask.getDelay()).as(Duration.class).orElse(null);
+                        Duration duration = runContext.render(pauseTask.getPauseDuration()).as(Duration.class).orElse(null);
                         Duration timeout = runContext.render(pauseTask.getTimeout()).as(Duration.class).orElse(null);
-                        if (delay != null || timeout != null) { // rendering can lead to null, so we must re-check here
+                        Pause.Behavior behavior  = runContext.render(pauseTask.getBehavior()).as(Pause.Behavior.class).orElse(Pause.Behavior.RESUME);
+                        if (duration != null || timeout != null) { // rendering can lead to null, so we must re-check here
+                            // if duration is set, we use it, and we use the Pause behavior as a state
+                            // if no duration, we use the standard timeout property and use FAILED as the target state
                             return ExecutionDelay.builder()
                                 .taskRunId(workerTaskResult.getTaskRun().getId())
                                 .executionId(executor.getExecution().getId())
-                                .date(workerTaskResult.getTaskRun().getState().maxDate().plus(delay != null ? delay : timeout))
-                                .state(delay != null ? State.Type.RUNNING : State.Type.FAILED)
+                                .date(workerTaskResult.getTaskRun().getState().maxDate().plus(duration != null ? duration : timeout))
+                                .state(duration != null ? behavior.mapToState() : State.Type.FAILED)
                                 .delayType(ExecutionDelay.DelayType.RESUME_FLOW)
                                 .build();
                         }
@@ -668,27 +702,43 @@ public class ExecutorService {
             .map(Optional::get)
             .toList();
 
-        this.addWorkerTaskResults(executor, executor.getFlow(), workerTaskResults);
+        this.addWorkerTaskResults(executor, workerTaskResults);
         return executor;
     }
 
-    private Executor handleListeners(Executor executor) {
+    private Executor handleAfterExecution(Executor executor) {
         if (!executor.getExecution().getState().isTerminated()) {
             return executor;
         }
 
-        List<ResolvedTask> currentTasks = conditionService.findValidListeners(executor.getFlow(), executor.getExecution());
-
-        List<TaskRun> nexts = FlowableUtils.resolveSequentialNexts(executor.getExecution(), currentTasks)
+        // first, execute listeners
+        List<ResolvedTask> listenerResolvedTasks = conditionService.findValidListeners(executor.getFlow(), executor.getExecution());
+        List<TaskRun> listenerNexts = FlowableUtils.resolveSequentialNexts(executor.getExecution(), listenerResolvedTasks)
             .stream()
             .map(throwFunction(NextTaskRun::getTaskRun))
             .toList();
 
-        if (nexts.isEmpty()) {
+        if (!listenerNexts.isEmpty()) {
+            return executor.withTaskRun(listenerNexts, "handleListeners");
+        }
+
+        // then, check if all listener tasks are terminated
+        if (!listenerResolvedTasks.isEmpty() && !executor.getExecution().isTerminated(listenerResolvedTasks)) {
             return executor;
         }
 
-        return executor.withTaskRun(nexts, "handleListeners");
+        // then, when no more listeners, execute afterExecution tasks
+        List<ResolvedTask> afterExecutionResolvedTasks = executionService.resolveAfterExecutionTasks(executor.getFlow());
+        List<TaskRun> afterExecutionNexts = FlowableUtils.resolveSequentialNexts(executor.getExecution(), afterExecutionResolvedTasks)
+            .stream()
+            .map(throwFunction(NextTaskRun::getTaskRun))
+            .toList();
+        if (!afterExecutionNexts.isEmpty()) {
+            return executor.withTaskRun(afterExecutionNexts, "handleAfterExecution ");
+        }
+
+        // if nothing more, just return the executor as is
+        return executor;
     }
 
     private Executor handleEnd(Executor executor) {
@@ -715,12 +765,11 @@ public class ExecutorService {
         }
 
         metricRegistry
-            .counter(MetricRegistry.EXECUTOR_EXECUTION_STARTED_COUNT, metricRegistry.tags(executor.getExecution()))
+            .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_STARTED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
             .increment();
 
         logService.logExecution(
             executor.getExecution(),
-            executor.getFlow().logger(),
             Level.INFO,
             "Flow restarted"
         );
@@ -743,28 +792,34 @@ public class ExecutorService {
             return executor;
         }
 
-        var propagator = openTelemetry.getPropagators().getTextMapPropagator();
+        Optional<TextMapPropagator> textMapPropagator = openTelemetry
+            .map(OpenTelemetry::getPropagators)
+            .map(ContextPropagators::getTextMapPropagator);
 
         // submit TaskRun when receiving created, must be done after the state execution store
         Map<Boolean, List<WorkerTask>> workerTasks = executor.getExecution()
             .getTaskRunList()
             .stream()
-            .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
+            .filter(taskRun -> taskRun.getState().getCurrent().isCreated() && executor.getExecution().getFixtureForTaskRun(taskRun).isEmpty())
             .map(throwFunction(taskRun -> {
                     Task task = executor.getFlow().findTaskByTaskId(taskRun.getTaskId());
                     RunContext runContext = runContextFactory.of(executor.getFlow(), task, executor.getExecution(), taskRun);
-                    propagator.inject(Context.current(), runContext, RunContextTextMapSetter.INSTANCE); // inject the traceparent into the run context
+
+                    // inject the traceparent into the run context
+                    textMapPropagator.ifPresent(propagator -> propagator.inject(Context.current(), runContext, RunContextTextMapSetter.INSTANCE));
+
                     WorkerTask workerTask = WorkerTask.builder()
                         .runContext(runContext)
                         .taskRun(taskRun)
                         .task(task)
+                        .executionKind(executor.getExecution().getKind())
                         .build();
                     // Get worker group
                     Optional<WorkerGroup> workerGroup = workerGroupService.resolveGroupFromJob(workerTask);
                     if (workerGroup.isPresent()) {
                         // Check if the worker group exist
                         String tenantId = executor.getFlow().getTenantId();
-                        String workerGroupKey = workerGroup.get().getKey();
+                        String workerGroupKey = runContext.render(workerGroup.get().getKey());
                         if (workerGroupExecutorInterface.isWorkerGroupExistForKey(workerGroupKey, tenantId)) {
                             // Check whether at-least one worker is available
                             if (workerGroupExecutorInterface.isWorkerGroupAvailableForKey(workerGroupKey)) {
@@ -802,7 +857,35 @@ public class ExecutorService {
             )
             .collect(Collectors.groupingBy(workerTask -> workerTask.getTaskRun().getState().isFailed() || workerTask.getTaskRun().getState().getCurrent() == State.Type.CANCELLED));
 
-        if (workerTasks.isEmpty()) {
+        // mock WorkerTaskResult for mocked execution
+        // submit TaskRun when receiving created, must be done after the state execution store
+        boolean hasMockedWorkerTask = false;
+        record FixtureAndTaskRun(TaskFixture fixture, TaskRun taskRun) {}
+        if (executor.getExecution().getFixtures() != null) {
+            RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
+            List<WorkerTaskResult> workerTaskResults = executor.getExecution()
+                .getTaskRunList()
+                .stream()
+                .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
+                .flatMap(taskRun -> executor.getExecution().getFixtureForTaskRun(taskRun).stream().map(fixture -> new FixtureAndTaskRun(fixture, taskRun)))
+                .map(throwFunction(fixtureAndTaskRun -> WorkerTaskResult.builder()
+                    .taskRun(fixtureAndTaskRun.taskRun()
+                        .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
+                        .withOutputs(
+                            variablesService.of(StorageContext.forTask(fixtureAndTaskRun.taskRun),
+                                fixtureAndTaskRun.fixture().getOutputs() == null ? null : runContext.render(fixtureAndTaskRun.fixture().getOutputs()))
+                        )
+                    )
+                    .build()
+                ))
+                .toList();
+
+            hasMockedWorkerTask = !workerTaskResults.isEmpty();
+            this.addWorkerTaskResults(executor, workerTaskResults);
+        }
+
+
+        if (workerTasks.isEmpty() || hasMockedWorkerTask) {
             return executor;
         }
 
@@ -816,13 +899,15 @@ public class ExecutorService {
                 .map(workerTask -> WorkerTaskResult.builder().taskRun(workerTask.getTaskRun()).build())
                 .toList();
 
-            this.addWorkerTaskResults(executor, executor.getFlow(), failed);
+            this.addWorkerTaskResults(executor, failed);
         }
 
         // Send other TaskRun to the worker (create worker tasks)
         List<WorkerTask> processingTasks = workerTasks.get(false);
         if (processingTasks != null && !processingTasks.isEmpty()) {
             executorToReturn = executorToReturn.withWorkerTasks(processingTasks, "handleWorkerTask");
+
+            metricRegistry.counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_CREATED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_CREATED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution())).increment(processingTasks.size());
         }
 
         return executorToReturn;
@@ -878,7 +963,7 @@ public class ExecutorService {
                         );
                     } else {
                         executions.addAll(subflowExecutions);
-                        Optional<FlowWithSource> flow = flowExecutorInterface.findByExecution(subflowExecutions.getFirst().getExecution());
+                        Optional<FlowInterface> flow = flowExecutorInterface.findByExecution(subflowExecutions.getFirst().getExecution());
                         if (flow.isPresent()) {
                             // add SubflowExecutionResults to notify parents
                             for (SubflowExecution<?> subflowExecution : subflowExecutions) {
@@ -957,18 +1042,18 @@ public class ExecutorService {
                 return true;
             });
 
-        this.addWorkerTaskResults(executor, executor.getFlow(), workerTaskResults);
+        this.addWorkerTaskResults(executor, workerTaskResults);
 
         return executor;
     }
 
-    public void addWorkerTaskResults(Executor executor, Flow flow, List<WorkerTaskResult> workerTaskResults) throws InternalException {
+    public void addWorkerTaskResults(Executor executor, List<WorkerTaskResult> workerTaskResults) throws InternalException {
         for (WorkerTaskResult workerTaskResult : workerTaskResults) {
-            this.addWorkerTaskResult(executor, flow, workerTaskResult);
+            this.addWorkerTaskResult(executor, () -> executor.getFlow(), workerTaskResult);
         }
     }
 
-    public void addWorkerTaskResult(Executor executor, Flow flow, WorkerTaskResult workerTaskResult) throws InternalException {
+    public void addWorkerTaskResult(Executor executor, Supplier<Flow> flow, WorkerTaskResult workerTaskResult) throws InternalException {
         // dynamic tasks
         Execution newExecution = this.addDynamicTaskRun(
             executor.getExecution(),
@@ -989,8 +1074,9 @@ public class ExecutorService {
         executor.withExecution(newExecution, "addWorkerTaskResult");
     }
 
-    private Execution addDynamicTaskRun(Execution execution, Flow flow, WorkerTaskResult workerTaskResult) throws InternalException {
-        ArrayList<TaskRun> taskRuns = new ArrayList<>(execution.getTaskRunList());
+    // Note: as the flow is only used in an error branch and it can take time to load, we pass it thought a Supplier
+    private Execution addDynamicTaskRun(Execution execution, Supplier<Flow> flow, WorkerTaskResult workerTaskResult) throws InternalException {
+        ArrayList<TaskRun> taskRuns = new ArrayList<>(ListUtils.emptyOnNull(execution.getTaskRunList()));
 
         // declared dynamic tasks
         if (!ListUtils.isEmpty(workerTaskResult.getDynamicTaskRuns())) {
@@ -1003,7 +1089,7 @@ public class ExecutorService {
                 execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getId());
             } catch (InternalException e) {
                 TaskRun parentTaskRun = execution.findTaskRunByTaskRunId(workerTaskResult.getTaskRun().getParentTaskRunId());
-                Task parentTask = flow.findTaskByTaskId(parentTaskRun.getTaskId());
+                Task parentTask = flow.get().findTaskByTaskId(parentTaskRun.getTaskId());
 
                 if (parentTask instanceof WorkingDirectory) {
                     taskRuns.add(workerTaskResult.getTaskRun());
@@ -1018,7 +1104,7 @@ public class ExecutorService {
         return executor.getExecution().isDeleted() || (
             executor.getFlow() != null &&
                 // is terminated
-                conditionService.isTerminatedWithListeners(executor.getFlow(), executor.getExecution())
+                executionService.isTerminated(executor.getFlow(), executor.getExecution())
                 // we don't purge pause execution in order to be able to restart automatically in case of delay
                 && executor.getExecution().getState().getCurrent() != State.Type.PAUSED
                 // we don't purge killed execution in order to have feedback about child running tasks
@@ -1122,6 +1208,10 @@ public class ExecutorService {
         RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
         List<Violation> violations = slaService.evaluateExecutionChangedSLA(runContext, executor.getFlow(), executor.getExecution());
         if (!violations.isEmpty()) {
+            metricRegistry
+                .counter(MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT, MetricRegistry.METRIC_EXECUTOR_SLA_VIOLATION_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
+                .increment(violations.size());
+
             // For now, we only consider the first violation to be capable of updating the execution.
             // Other violations would only be logged.
             Violation violation = violations.getFirst();
@@ -1182,6 +1272,7 @@ public class ExecutorService {
         killQueue.emit(ExecutionKilledExecution
             .builder()
             .state(ExecutionKilled.State.REQUESTED)
+            .executionState(state)
             .executionId(execution.getId())
             .isOnKillCascade(false) // TODO we may offer the choice to the user here
             .tenantId(execution.getTenantId())

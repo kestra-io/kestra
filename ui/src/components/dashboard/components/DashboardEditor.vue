@@ -1,26 +1,30 @@
 <template>
     <div class="button-top">
-        <el-button-group>
+        <el-button-group class="view-buttons">
             <el-tooltip :content="$t('source only')">
                 <el-button
+                    :type="buttonType(views.NONE)"
                     :icon="FileDocumentEditOutline"
                     @click="setView(views.NONE)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('documentation.documentation')">
                 <el-button
+                    :type="buttonType(views.DOC)"
                     :icon="BookOpenVariant"
                     @click="setView(views.DOC)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('chart preview')">
                 <el-button
+                    :type="buttonType(views.CHART)"
                     :icon="ChartBar"
                     @click="setView(views.CHART)"
                 />
             </el-tooltip>
             <el-tooltip :content="$t('dashboard.preview')">
                 <el-button
+                    :type="buttonType(views.DASHBOARD)"
                     :icon="ViewDashboard"
                     @click="setView(views.DASHBOARD)"
                 />
@@ -36,51 +40,14 @@
         <el-button
             :icon="ContentSave"
             @click="$emit('save', source)"
-            :type="buttonType"
+            :type="saveButtonType"
             :disabled="!allowSaveUnchanged && source === initialSource"
         >
             {{ $t("save") }}
         </el-button>
     </div>
-    <div class="w-100" v-if="currentView === views.DASHBOARD">
-        <el-row class="custom">
-            <el-col
-                v-for="chart in charts"
-                :key="JSON.stringify(chart)"
-                :xs="24"
-                :sm="12"
-            >
-                <div
-                    v-if="chart.data"
-                    class="p-4 d-flex flex-column"
-                >
-                    <p class="m-0 fs-6 fw-bold">
-                        {{ chart.data.chartOptions?.displayName ?? chart.id }}
-                    </p>
-                    <p
-                        v-if="chart.chartOptions?.description"
-                        class="m-0 fw-light"
-                    >
-                        <small>{{ chart.data.chartOptions.description }}</small>
-                    </p>
-
-                    <div class="mt-4 flex-grow-1">
-                        <component
-                            :is="types[chart.data.type]"
-                            :source="chart.data.content"
-                            :chart="chart.data"
-                            :identifier="chart.data.id"
-                            is-preview
-                        />
-                    </div>
-                </div>
-                <div v-else class="d-flex justify-content-center align-items-center text-container">
-                    <el-tooltip :content="chart.error">
-                        {{ chart.error }}
-                    </el-tooltip>
-                </div>
-            </el-col>
-        </el-row>
+    <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
+        <ChartsSection :charts="charts.map(chart => chart.data)" />
     </div>
     <div class="main-editor" v-else>
         <div
@@ -108,11 +75,12 @@
         >
             <PluginDocumentation
                 v-if="currentView === views.DOC"
-                class="plugin-doc combined-right-view enhance-readability"
+                class="combined-right-view enhance-readability"
                 :override-intro="intro"
+                absolute
             />
             <div
-                class="d-flex justify-content-center align-items-center w-100 p-5"
+                class="d-flex justify-content-center align-items-center w-100 p-3"
                 v-else-if="currentView === views.CHART"
             >
                 <div v-if="selectedChart" class="w-100">
@@ -125,7 +93,7 @@
                         <small>{{ selectedChart.chartOptions.description }}</small>
                     </p>
 
-                    <div class="w-100">
+                    <div :style="`position: relative; width:calc(${100}% - 10px)`">
                         <component
                             :key="selectedChart.id"
                             :is="types[selectedChart.type]"
@@ -153,7 +121,10 @@
     </div>
 </template>
 <script setup>
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
+    import ChartsSection from "./ChartsSection.vue";
     import ValidationErrors from "../../flows/ValidationError.vue"
     import BookOpenVariant from "vue-material-design-icons/BookOpenVariant.vue";
     import ChartBar from "vue-material-design-icons/ChartBar.vue";
@@ -165,26 +136,25 @@
     defineEmits(["save"])
 </script>
 <script>
+    import {shallowRef} from "vue";
+
     import Editor from "../../inputs/Editor.vue";
-    import YamlUtils from "../../../utils/yamlUtils.js";
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
-    import Markdown from "../../layout/Markdown.vue";
+    import Markdown from "./MarkdownPanel.vue";
     import TimeSeries from "./charts/custom/TimeSeries.vue";
     import Bar from "./charts/custom/Bar.vue";
     import Pie from "./charts/custom/Pie.vue";
     import Table from "./tables/custom/Table.vue";
+    import KPI from "./charts/custom/KPI.vue";
 
     export default {
         computed: {
             ContentSave() {
                 return ContentSave
             },
-            YamlUtils() {
-                return YamlUtils
-            },
-            buttonType() {
+            saveButtonType() {
                 if (this.errors) {
                     return "danger";
                 }
@@ -216,7 +186,7 @@
         methods: {
             async updatePluginDocumentation(event) {
                 if (this.currentView === this.views.DOC) {
-                    const type = YamlUtils.getTaskType(event.model.getValue(), event.position, this.plugins)
+                    const type = YAML_UTILS.getTaskType(event.model.getValue(), event.position, this.plugins)
                     if (type) {
                         this.$store.dispatch("plugin/load", {cls: type})
                             .then(plugin => {
@@ -226,7 +196,7 @@
                         this.$store.commit("plugin/setEditorPlugin", undefined);
                     }
                 } else if (this.currentView === this.views.CHART) {
-                    const chart = YamlUtils.getChartAtPosition(event.model.getValue(), event.position)
+                    const chart = YAML_UTILS.getChartAtPosition(event.model.getValue(), event.position)
                     if (chart && this.selectedChart?.id !== chart.id) {
                         const result = await this.loadChart(chart);
                         this.selectedChart = result.data;
@@ -261,6 +231,9 @@
                         }).flat();
                     })
             },
+            buttonType(view) {
+                return view === this.currentView ? "primary" : "default";
+            },
             setView(view) {
                 this.currentView = view;
 
@@ -270,7 +243,7 @@
             },
             async validateAndLoadAllCharts() {
                 this.charts = [];
-                const allCharts = YamlUtils.getAllCharts(this.source);
+                const allCharts = YAML_UTILS.getAllCharts(this.source);
                 for (const chart of allCharts) {
                     const loadedChart = await this.loadChart(chart);
                     this.charts.push(loadedChart);
@@ -278,13 +251,13 @@
             },
             async loadChart(chart) {
                 const yamlChart = yaml.stringify(chart);
-                const result = {error: null, data: null};
+                const result = {error: null, data: null, raw: {}};
                 await this.$store.dispatch("dashboard/validateChart", yamlChart)
                     .then(errors => {
                         if (errors.constraints) {
                             result.error = errors.constraints;
                         } else {
-                            result.data = {...chart, content: yamlChart};
+                            result.data = {...chart, content: yamlChart, raw: chart};
                         }
                     });
                 return result;
@@ -307,11 +280,12 @@
                 charts: [],
                 chartError: null,
                 types: {
-                    "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
-                    "io.kestra.plugin.core.dashboard.chart.Bar": Bar,
-                    "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
-                    "io.kestra.plugin.core.dashboard.chart.Table": Table,
-                    "io.kestra.plugin.core.dashboard.chart.Pie": Pie,
+                    "io.kestra.plugin.core.dashboard.chart.TimeSeries": shallowRef(TimeSeries),
+                    "io.kestra.plugin.core.dashboard.chart.Bar": shallowRef(Bar),
+                    "io.kestra.plugin.core.dashboard.chart.Markdown": shallowRef(Markdown),
+                    "io.kestra.plugin.core.dashboard.chart.Table": shallowRef(Table),
+                    "io.kestra.plugin.core.dashboard.chart.Pie": shallowRef(Pie),
+                    "io.kestra.plugin.core.dashboard.chart.KPI": shallowRef(KPI)
                 }
             }
         },
@@ -321,6 +295,8 @@
                     .then(errors => {
                         if (errors.constraints) {
                             this.errors = [errors.constraints];
+                        } else {
+                            this.errors = undefined;
                         }
                     });
             }
@@ -334,7 +310,6 @@
     @import "@kestra-io/ui-libs/src/scss/variables";
 
     $spacing: 20px;
-
 
     .main-editor {
         padding: .5rem 0px;
@@ -404,20 +379,6 @@
             padding: calc(var(--spacer) * 1.5);
             background-color: var(--bs-gray-100);
         }
-
-        &::-webkit-scrollbar {
-            width: 10px;
-            height: 2px;
-        }
-
-        &::-webkit-scrollbar-track {
-            background: var(--card-bg);
-        }
-
-        &::-webkit-scrollbar-thumb {
-            background: var(--bs-primary);
-            border-radius: 20px;
-        }
     }
 
     .slider {
@@ -441,5 +402,20 @@
         text-align: center;
         word-wrap: break-word; /* Ensures long words break and wrap to the next line */
         white-space: normal; /* Allows text to wrap to the next line */
+    }
+
+    .view-buttons {
+        .el-button {
+            &.el-button--primary {
+                color: var(--ks-content-link);
+                opacity: 1;
+            }
+
+            border: 0;
+            background: none;
+            opacity: 0.5;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
     }
 </style>

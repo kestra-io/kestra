@@ -7,6 +7,7 @@ import org.jooq.*;
 import org.jooq.Record;
 import org.jooq.impl.DSL;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -36,7 +37,7 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
             )
             // force using the dedicated index, or it made a scan of the PK index
             .from(this.table.useIndex("ix_type__consumers"))
-            .where(AbstractJdbcRepository.field("type").eq(this.cls.getName()))
+            .where(AbstractJdbcRepository.field("type").eq(queueType()))
             .and(DSL.or(List.of(
                 AbstractJdbcRepository.field("consumers").isNull(),
                 AbstractJdbcRepository.field("consumers").in(QUEUE_CONSUMERS.allForConsumerNotIn(queueType))
@@ -62,7 +63,6 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
             .getFirst();
     }
 
-    @SuppressWarnings("RedundantCast")
     @Override
     protected void updateGroupOffsets(DSLContext ctx, String consumerGroup, String queueType, List<Integer> offsets) {
         var update = ctx
@@ -71,7 +71,8 @@ public class MysqlQueue<T> extends JdbcQueue<T> {
                 AbstractJdbcRepository.field("consumers"),
                 DSL.field("CONCAT_WS(',', consumers, ?)", String.class, queueType)
             )
-            .where(AbstractJdbcRepository.field("offset").in((Object[]) offsets.toArray(Integer[]::new)));
+            .set(AbstractJdbcRepository.field("updated"), LocalDateTime.now())
+            .where(AbstractJdbcRepository.field("offset").in(offsets));
 
         if (consumerGroup != null) {
             update = update.and(AbstractJdbcRepository.field("consumer_group").eq(consumerGroup));

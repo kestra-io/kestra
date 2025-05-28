@@ -20,11 +20,23 @@ public class TimeLineSearch {
         Duration timeRange = null;
 
         for (QueryFilter filter : filters) {
+            if (filter.field() == null) {
+                continue;
+            }
             switch (filter.field()) {
                 case START_DATE -> startDate = ZonedDateTime.parse(filter.value().toString());
                 case END_DATE -> endDate = ZonedDateTime.parse(filter.value().toString());
                 case TIME_RANGE -> timeRange = parseDuration(filter.value().toString());
             }
+        }
+
+        if ((startDate != null || endDate != null) && timeRange != null) {
+            throw new IllegalArgumentException("Parameters 'startDate'/'endDate' and 'timeRange' are mutually exclusive");
+        }
+
+        if (timeRange != null) {
+            startDate = ZonedDateTime.now().minus(timeRange);
+            endDate = ZonedDateTime.now();
         }
 
         return new TimeLineSearch(startDate, endDate, timeRange);

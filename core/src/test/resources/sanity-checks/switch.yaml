@@ -1,0 +1,33 @@
+id: switch
+namespace: sanitychecks.core
+
+variables:
+  switch_value: 3
+
+tasks:
+  - id: switch
+    type: io.kestra.plugin.core.flow.Switch
+    value: "{{ vars.switch_value }}"
+    cases:
+      1:
+        - id: first
+          type: io.kestra.plugin.core.debug.Return
+          format: "{{ task.id }} > {{ taskrun.startDate }}"
+      2:
+        - id: second
+          type: io.kestra.plugin.core.debug.Return
+          format: "{{ task.id }} > {{ taskrun.startDate }}"
+      3:
+        - id: third
+          type: io.kestra.plugin.core.debug.Return
+          format: "third"
+    defaults:
+      - id: default
+        type: io.kestra.plugin.core.debug.Return
+        format: "{{ task.id }} > {{ taskrun.startDate }}"
+
+  - id: assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.switch.value == '3' }}"
+      - "{{ outputs.third.value == 'third' }}"

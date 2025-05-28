@@ -30,7 +30,7 @@ import java.util.Optional;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Exit the execution: terminate it in the state defined by the property `state`.",
+    title = "Terminate an execution in the state defined by the property state.",
     description = "Note that if this execution has running tasks, for example in a parallel branch, the tasks will not be terminated except if `state` is set to `KILLED`."
 )
 @Plugin(
@@ -75,7 +75,7 @@ public class Exit extends Task implements ExecutionUpdatableTask {
         description = "Using `KILLED` will end existing running tasks, and any other execution with a different state will continue to run."
     )
     @Builder.Default
-    private Property<ExitState> state = Property.of(ExitState.SUCCESS);
+    private Property<ExitState> state = Property.ofValue(ExitState.SUCCESS);
 
     @Override
     public Execution update(Execution execution, RunContext runContext) throws Exception {
@@ -83,6 +83,7 @@ public class Exit extends Task implements ExecutionUpdatableTask {
 
         // if the state is killed, we send a kill event and end here
         if (exitState == State.Type.KILLED) {
+            @SuppressWarnings("unchecked")
             QueueInterface<ExecutionKilled> killQueue = ((DefaultRunContext) runContext).getApplicationContext().getBean(QueueInterface.class, Qualifiers.byName(QueueFactoryInterface.KILL_NAMED));
             killQueue.emit(ExecutionKilledExecution
                 .builder()

@@ -1,0 +1,20 @@
+id: allow_failure
+namespace: sanitychecks.core
+
+tasks:
+  - id: allow_failure
+    type: io.kestra.plugin.core.flow.AllowFailure
+    tasks:
+      - id: hello
+        type: io.kestra.plugin.core.log.Log
+        message: Hello World! 🚀
+        level: ERROR
+
+      - id: error
+        type: io.kestra.plugin.core.log.Log
+        message: "{{ inputs.test }}"
+    errors:
+      - id: exec_success
+        type: io.kestra.plugin.core.execution.Exit
+        state: SUCCESS
+  

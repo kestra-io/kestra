@@ -44,7 +44,7 @@ public class Data<T> {
      * @see #ofList(List)
      */
     public static Data<?> ofURI(URI uri) {
-        return Data.builder().fromURI(Property.of(uri)).build();
+        return Data.builder().fromURI(Property.ofValue(uri)).build();
     }
 
     /**
@@ -54,7 +54,7 @@ public class Data<T> {
      * @see #ofList(List)
      */
     public static Data<?> ofMap(Map<String, Object> map) {
-        return Data.builder().fromMap(Property.of(map)).build();
+        return Data.builder().fromMap(Property.ofValue(map)).build();
     }
 
     /**
@@ -64,7 +64,7 @@ public class Data<T> {
      * @see #ofMap(Map)
      */
     public static Data<?> ofList(List<Map<String, Object>> list) {
-        return Data.builder().fromList(Property.of(list)).build();
+        return Data.builder().fromList(Property.ofValue(list)).build();
     }
 
     /**

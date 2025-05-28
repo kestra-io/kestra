@@ -5,17 +5,15 @@
         >
             <div class="info-block">
                 <p class="m-0 fs-6">
-                    <span class="fw-bold">{{ t("executions") }}</span>
-                    <span class="fw-light small">
-                        {{ t("dashboard.per_day") }}
-                    </span>
+                    <span class="fw-bold">{{ t("dashboard.total_executions") }}</span>
                 </p>
                 <p class="m-0 fs-2">
-                    {{ total }}
+                    <el-skeleton v-if="loading" :rows="0" />
+                    <span v-else>{{ total }}</span>
                 </p>
             </div>
 
-            <div class="switch-container">
+            <div v-if="total > 0" class="switch-container w-100">
                 <div
                     class="d-flex justify-content-end align-items-center switch-content"
                 >
@@ -23,20 +21,22 @@
                         v-model="duration"
                         :active-icon="CheckIcon"
                         inline-prompt
+                        :disabled="loading"
                     />
                     <span class="d-flex align-items-center ps-2 fw-light small">{{ t("duration") }}</span>
                 </div>
-                <div id="executions" />
+                <div id="executions" class="w-100" />
             </div>
         </div>
 
         <BarChart
-            v-if="total > 0"
+            v-if="total > 0 || loading"
             :data="data"
             :total="total"
             :duration="duration"
             :plugins="[barLegend]"
             :small="isSmallScreen"
+            :loading="loading"
             class="tall"
         />
 
@@ -71,6 +71,10 @@
             type: Number,
             required: true,
         },
+        loading: {
+            type: Boolean,
+            default: false
+        }
     });
 </script>
 

@@ -2,13 +2,13 @@
     <el-form label-position="top">
         <el-form-item :required="true">
             <template #label>
-                <code>id</code>
+                <code>{{ $t("id") }}</code>
             </template>
             <el-input :disabled="editing" v-model="newMetadata.id" />
         </el-form-item>
         <el-form-item :required="true">
             <template #label>
-                <code>namespace</code>
+                <code>{{ $t("namespace") }}</code>
             </template>
             <el-input :disabled="editing" v-model="newMetadata.namespace" />
         </el-form-item>
@@ -52,7 +52,7 @@
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>labels</code>
+                <code>{{ $t("labels") }}</code>
             </template>
             <div class="d-flex w-100" v-for="(item, index) in newMetadata.labels" :key="index">
                 <div class="flex-fill flex-grow-1 w-100 me-2">
@@ -81,13 +81,13 @@
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>inputs</code>
+                <code>{{ $t("inputs") }}</code>
             </template>
             <metadata-inputs v-model="newMetadata.inputs" :inputs="newMetadata.inputs" />
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>outputs</code>
+                <code>{{ $t("outputs") }}</code>
             </template>
             <editor
                 :model-value="newMetadata.outputs"
@@ -100,7 +100,7 @@
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>variables</code>
+                <code>{{ $t("variables") }}</code>
             </template>
             <metadata-variables v-model="newMetadata.variables" :variables="newMetadata.variables" />
         </el-form-item>
@@ -111,7 +111,7 @@
         />
         <el-form-item v-if="concurrencySchema">
             <template #label>
-                <code>concurrency</code>
+                <code>{{ $t("concurrency") }}</code>
                 <br>
                 <task-basic
                     :schema="concurrencySchema"
@@ -123,20 +123,7 @@
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>pluginDefaults</code>
-            </template>
-            <editor
-                :model-value="newMetadata.pluginDefaults"
-                :navbar="false"
-                :full-height="false"
-                :input="true"
-                lang="yaml"
-                @update:model-value="(value) => newMetadata.pluginDefaults = value"
-            />
-        </el-form-item>
-        <el-form-item>
-            <template #label>
-                <code>disabled</code>
+                <code>{{ $t("disabled") }}</code>
             </template>
             <div>
                 <el-switch active-color="green" v-model="newMetadata.disabled" @update:model-value="(value) => newMetadata.disabled = value" />
@@ -145,6 +132,8 @@
     </el-form>
 </template>
 <script setup>
+    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+
     import TaskBasic from "./tasks/TaskBasic.vue";
 
     import Pencil from "vue-material-design-icons/Pencil.vue";
@@ -157,7 +146,6 @@
     import markdown from "../layout/Markdown.vue";
     import MetadataInputs from "./MetadataInputs.vue";
     import MetadataVariables from "./MetadataVariables.vue";
-    import yamlUtils from "../../utils/yamlUtils";
     import Editor from "../inputs/Editor.vue";
     import {mapState} from "vuex";
 
@@ -203,7 +191,6 @@
                     inputs: [],
                     variables: [["", undefined]],
                     concurrency: {},
-                    pluginDefaults: "",
                     outputs: "",
                     disabled: false
                 },
@@ -230,10 +217,9 @@
                 this.newMetadata.inputs = this.metadata.inputs || []
                 this.newMetadata.variables = this.metadata.variables ? Object.entries(toRaw(this.metadata.variables)) : [["", undefined]]
                 this.newMetadata.concurrency = this.metadata.concurrency || {}
-                this.newMetadata.pluginDefaults = yamlUtils.stringify(this.metadata.pluginDefaults) || ""
-                this.newMetadata.outputs = yamlUtils.stringify(this.metadata.outputs) || ""
+                this.newMetadata.outputs = YAML_UTILS.stringify(this.metadata.outputs) || ""
                 this.newMetadata.disabled = this.metadata.disabled || false
-                this.newMetadata.retry = yamlUtils.stringify(this.metadata.retry) || ""
+                this.newMetadata.retry = YAML_UTILS.stringify(this.metadata.retry) || ""
                 this.showConcurrency = !!this.metadata.concurrency
             },
             addItem() {
@@ -288,9 +274,8 @@
         computed: {
             ...mapState("plugin", ["inputSchema", "inputsType"]),
             cleanMetadata() {
-                const pluginDefaults = yamlUtils.parse(this.newMetadata.pluginDefaults);
-                const outputs = yamlUtils.parse(this.newMetadata.outputs);
-                const retry = yamlUtils.parse(this.newMetadata.retry);
+                const outputs = YAML_UTILS.parse(this.newMetadata.outputs);
+                const retry = YAML_UTILS.parse(this.newMetadata.retry);
                 const metadata = {
                     id: this.newMetadata.id,
                     namespace: this.newMetadata.namespace,
@@ -300,7 +285,6 @@
                     inputs: this.newMetadata.inputs.filter(e => e.id && e.type),
                     variables: this.arrayToObject(this.newMetadata.variables),
                     concurrency: this.cleanConcurrency(this.newMetadata.concurrency),
-                    pluginDefaults: pluginDefaults,
                     outputs: outputs,
                     disabled: this.newMetadata.disabled
                 }

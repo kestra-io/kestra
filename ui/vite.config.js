@@ -85,7 +85,11 @@ export default defineConfig({
             // without allowing interop in typescript
             "dayjs",
             "debug",
-            "@braintree/sanitize-url"
+            "@braintree/sanitize-url",
+            "monaco-yaml/yaml.worker",
+            "vue-axios",
+            "lodash-es",
+            "nprogress"
         ],
         exclude: [
             "* > @kestra-io/ui-libs"

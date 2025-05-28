@@ -1,12 +1,10 @@
 package io.kestra.plugin.core.dashboard.data;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
-import io.kestra.core.models.dashboards.GlobalFilter;
-import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.models.dashboards.filters.EqualTo;
 import io.kestra.core.repositories.MetricRepositoryInterface;
 import io.kestra.core.repositories.QueryBuilderInterface;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -15,44 +13,47 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @SuperBuilder(toBuilder = true)
 @Getter
 @NoArgsConstructor
-@Plugin
 @JsonInclude(JsonInclude.Include.NON_DEFAULT)
 @EqualsAndHashCode
-@Schema(title = "Metrics")
-public class Metrics<C extends ColumnDescriptor<Metrics.Fields>> extends DataFilter<Metrics.Fields, C> {
+@Schema(
+    title = "Metrics are data exposed by tasks after execution.",
+    description = "A chart using Metrics could display the number of rows loaded in a bigQuery task or an output count from a SQL Query; anything exposed by an execution." 
+    )
+@Plugin(
+    examples = {
+        @Example(
+            title = "Display a chart with rows inserted by Namespace.",
+            full = true,
+            code = {
+                "id: table_metrics\n" +
+                "type: io.kestra.plugin.core.dashboard.chart.Table\n" +
+                "chartOptions:\n" +
+                  "displayName: Rows Inserted by Namespace\n" +
+                "data:\n" +
+                  "type: io.kestra.plugin.core.dashboard.data.Metrics\n" +
+                  "columns:\n" +
+                    "namespace:\n" +
+                      "field: NAMESPACE\n" +
+                    "inserted_rows:\n" +
+                      "field: VALUE\n" +
+                      "agg: SUM\n" +
+                  "where:\n" +
+                    "- field: NAME\n" +
+                      "type: EQUAL_TO\n" +
+                      "value: rows\n" +
+                  "orderBy:\n" +
+                    "- column: inserted_rows\n" +
+                      "order: DESC\n"
+            }
+        )
+    }
+)
+public class Metrics<C extends ColumnDescriptor<Metrics.Fields>> extends DataFilter<Metrics.Fields, C> implements IMetrics {
     @Override
     public Class<? extends QueryBuilderInterface<Metrics.Fields>> repositoryClass() {
         return MetricRepositoryInterface.class;
-    }
-
-    @Override
-    public void setGlobalFilter(GlobalFilter globalFilter) {
-        List<AbstractFilter<Fields>> where = this.getWhere() != null ? new ArrayList<>(this.getWhere()) : new ArrayList<>();
-
-        if (globalFilter.getNamespace() != null) {
-            where.removeIf(f -> f.getField().equals(Fields.NAMESPACE));
-            where.add(EqualTo.<Fields>builder().field(Fields.NAMESPACE).value(globalFilter.getNamespace()).build());
-        }
-
-        this.setWhere(where);
-    }
-
-
-    public enum Fields {
-        NAMESPACE,
-        FLOW_ID,
-        TASK_ID,
-        EXECUTION_ID,
-        TASK_RUN_ID,
-        TYPE,
-        NAME,
-        VALUE,
-        DATE
     }
 }

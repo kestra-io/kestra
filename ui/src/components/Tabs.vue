@@ -22,8 +22,8 @@
         </el-tab-pane>
     </el-tabs>
 
-    <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab, 'namespace-editor': isNamespaceEditor, 'maximized': activeTab.maximized}">
-        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${explorerWidth}% - 11px);`" :current-n-s="namespace" />
+    <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab, 'maximized': activeTab.maximized}">
+        <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${explorerWidth}% - 11px);`" :current-n-s="namespace" v-show="explorerVisible" />
         <div v-if="isEditorActiveTab && explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
         <div v-if="isEditorActiveTab" :style="`flex: 1 1 ${100 - (isEditorActiveTab && explorerVisible ? explorerWidth : 0)}%;`">
             <component
@@ -150,18 +150,25 @@
                     };
                 }
             },
+            getTabClasses(tab) {
+                const isEnterpriseTab = tab.locked;
+                const isGanttTab = tab.name === "gantt";
+                const ROUTES = ["/flows/edit/", "/namespaces/edit/"];
+                const EDIT_ROUTES = ROUTES.some(route => this.$route.path.startsWith(route));
+                const isOverviewTab = EDIT_ROUTES && tab.title === "Overview";
+
+                return {
+                    "container": !isEnterpriseTab && !isOverviewTab,
+                    "mt-4": !isEnterpriseTab && !isOverviewTab,
+                    "px-0": isEnterpriseTab && isOverviewTab,
+                    "gantt-container": isGanttTab
+                };
+            },
         },
         computed: {
-            ...mapState({
-                explorerVisible: (state) => state.editor.explorerVisible,
-                explorerWidth: (state) => state.editor.explorerWidth,
-            }),
+            ...mapState("editor", ["explorerVisible", "explorerWidth"]),
             containerClass() {
-                if (this.activeTab.containerClass) {
-                    return {[this.activeTab.containerClass] : true};
-                }
-
-                return {"container" : true, "mt-4": true};
+                return this.getTabClasses(this.activeTab);
             },
             activeTab() {
                 return this.tabs
@@ -184,9 +191,6 @@
 
                 return false;
             },
-            isNamespaceEditor(){
-                return this.activeTab?.props?.isNamespace === true;
-            },
             // Those are passed to the rendered component
             // We need to exclude class as it's already applied to this component root div
             attrsWithoutClass() {
@@ -200,6 +204,11 @@
 </script>
 
 <style lang="scss" scoped>
+    section.container.mt-4:has(> section.empty){
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     :deep(.el-tabs) {
         .el-tabs__item.is-disabled {
             &:after {
@@ -232,12 +241,6 @@
         }
     }
 
-    .namespace-editor {
-        margin: 0 !important;
-        padding: 0;
-        flex-grow: 1;
-    }
-
     .maximized {
         margin: 0 !important;
         padding: 0;
@@ -245,11 +248,10 @@
         flex-grow: 1;
         flex-direction: column;
     }
-</style>
 
-<style lang="scss">
-    .el-tabs__nav-next, .el-tabs__nav-prev{
-        &.is-disabled{
+    :deep(.el-tabs__nav-next),
+    :deep(.el-tabs__nav-prev) {
+        &.is-disabled {
             display: none;
         }
     }

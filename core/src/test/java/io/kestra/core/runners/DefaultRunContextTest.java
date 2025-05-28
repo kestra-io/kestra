@@ -1,5 +1,6 @@
 package io.kestra.core.runners;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.encryption.EncryptionService;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.tasks.common.EncryptedString;
@@ -13,8 +14,7 @@ import org.junit.jupiter.api.Test;
 import java.security.GeneralSecurityException;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @MicronautTest
 class DefaultRunContextTest {
@@ -26,7 +26,7 @@ class DefaultRunContextTest {
     private String secretKey;
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void shouldGetKestraVersion() {
@@ -44,6 +44,6 @@ class DefaultRunContextTest {
             "secret", Map.of("type", EncryptedString.TYPE, "value", encryptedSecret));
 
         String render = runContext.render("What ? {{secret}}", variables);
-        assertThat(render, is(("What ? It's a secret")));
+        assertThat(render).isEqualTo(("What ? It's a secret"));
     }
 }

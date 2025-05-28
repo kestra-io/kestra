@@ -17,6 +17,14 @@ flyway:
 
 kestra:
   server-type: STANDALONE
+  server:
+    liveness:
+      enabled: false
+    service:
+      purge:
+        initial-delay: 1h
+        fixed-delay: 1d
+        retention: 30d
   queue:
     type: mysql
   repository:

@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static io.kestra.core.models.QueryFilter.Op.EQUALS;
-
 public abstract class H2ExecutionRepositoryService {
     public static Condition findCondition(AbstractJdbcRepository<Execution> jdbcRepository, String query, Map<String, String> labels) {
         List<Condition> conditions = new ArrayList<>();

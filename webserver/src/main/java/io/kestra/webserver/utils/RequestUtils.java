@@ -1,6 +1,7 @@
 package io.kestra.webserver.utils;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;
 import io.kestra.core.models.flows.FlowScope;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.repositories.ExecutionRepositoryInterface;
@@ -10,7 +11,11 @@ import org.slf4j.event.Level;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class RequestUtils {
@@ -44,7 +49,8 @@ public class RequestUtils {
         Duration timeRange,
         ExecutionRepositoryInterface.ChildFilter childFilter,
         List<State.Type> state,
-        String workerId
+        String workerId,
+        String triggerExecutionId
     ) {
 
         List<QueryFilter> filters = new ArrayList<>();
@@ -111,39 +117,46 @@ public class RequestUtils {
                 .value(scope)
                 .build());
         }
-        if (labels != null) {
+        if (labels != null && !labels.isEmpty()) {
             filters.add(QueryFilter.builder()
                 .field(QueryFilter.Field.LABELS)
                 .operation(QueryFilter.Op.EQUALS)
                 .value(RequestUtils.toMap(labels))
                 .build());
         }
-        if(timeRange != null) {
+        if (timeRange != null) {
             filters.add(QueryFilter.builder()
                 .field(QueryFilter.Field.TIME_RANGE)
                 .operation(QueryFilter.Op.EQUALS)
                 .value(timeRange)
                 .build());
         }
-        if(childFilter != null) {
+        if (childFilter != null) {
             filters.add(QueryFilter.builder()
                 .field(QueryFilter.Field.CHILD_FILTER)
                 .operation(QueryFilter.Op.EQUALS)
                 .value(childFilter)
                 .build());
         }
-        if(state != null) {
+        if (state != null) {
             filters.add(QueryFilter.builder()
                 .field(QueryFilter.Field.STATE)
                 .operation(QueryFilter.Op.IN)
                 .value(state)
                 .build());
         }
-        if(workerId != null) {
+        if (workerId != null) {
             filters.add(QueryFilter.builder()
                 .field(QueryFilter.Field.WORKER_ID)
                 .operation(QueryFilter.Op.EQUALS)
                 .value(workerId)
+                .build());
+        }
+        if (triggerExecutionId != null) {
+            filters.add(QueryFilter.builder()
+                .field(Field.TRIGGER_EXECUTION_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value(triggerExecutionId)
                 .build());
         }
 
@@ -160,18 +173,6 @@ public class RequestUtils {
                 }
             })
             .collect(Collectors.toList());
-    }
-
-
-    public static ZonedDateTime resolveAbsoluteDateTime(ZonedDateTime absoluteDateTime, Duration timeRange, ZonedDateTime now) {
-        if (timeRange != null) {
-            if (absoluteDateTime != null) {
-                throw new IllegalArgumentException("Parameters 'startDate' and 'timeRange' are mutually exclusive");
-            }
-            return now.minus(timeRange.abs());
-        }
-
-        return absoluteDateTime;
     }
 
 }

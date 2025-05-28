@@ -20,7 +20,7 @@ import java.util.Map;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Set a state in the state store.",
+    title = "Set a state in the state store (Deprecated).",
     description = "Values will be merged: \n" +
         "* If you provide a new key, the new key will be added.\n" +
         "* If you provide an existing key, the previous key will be overwrite.\n" +

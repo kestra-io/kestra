@@ -6,7 +6,7 @@
         </el-alert>
 
         <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="false">
-            <inputs-form :initial-inputs="flow.inputs" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
+            <inputs-form :initial-inputs="flow.inputs" :selected-trigger="selectedTrigger" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
 
             <el-collapse v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
@@ -70,7 +70,7 @@
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import {executeTask} from "../../utils/submitTask"
     import InputsForm from "../../components/inputs/InputsForm.vue";
     import LabelInput from "../../components/labels/LabelInput.vue";
@@ -90,6 +90,10 @@
             embed: {
                 type: Boolean,
                 default: false
+            },
+            selectedTrigger:{
+                type: Object,
+                default: undefined
             }
         },
         data() {
@@ -108,6 +112,7 @@
         computed: {
             ...mapState("execution", ["flow", "execution"]),
             ...mapState("core", ["guidedProperties"]),
+            ...mapGetters("misc", ["configs"]),
             haveBadLabels() {
                 return this.executionLabels.some(label => (label.key && !label.value) || (!label.key && label.value));
             },
@@ -132,7 +137,8 @@
             },
             fillInputsFromExecution(){
                 // Add all labels except the one from flow to prevent duplicates
-                this.executionLabels = this.getExecutionLabels().filter(item => !item.key.startsWith("system."));
+                const toIgnore = this.configs.hiddenLabelsPrefixes || [];
+                this.executionLabels = this.getExecutionLabels().filter(item => !toIgnore.some(prefix => item.key.startsWith(prefix)));
 
                 if (!this.flow.inputs) {
                     return;

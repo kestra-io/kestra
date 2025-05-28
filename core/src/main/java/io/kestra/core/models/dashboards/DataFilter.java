@@ -1,13 +1,10 @@
 package io.kestra.core.models.dashboards;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeName;
+import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.annotations.Plugin;
 import io.kestra.core.models.dashboards.filters.AbstractFilter;
 import io.kestra.core.repositories.QueryBuilderInterface;
-import io.kestra.plugin.core.dashboard.data.Executions;
-import io.kestra.plugin.core.dashboard.data.Logs;
+import io.kestra.plugin.core.dashboard.data.IData;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
@@ -17,6 +14,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
+import java.time.ZonedDateTime;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -27,12 +25,11 @@ import java.util.Set;
 @NoArgsConstructor
 @Plugin
 @EqualsAndHashCode
-public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F>> implements io.kestra.core.models.Plugin {
+public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F>> implements io.kestra.core.models.Plugin, IData<F> {
     @NotNull
     @NotBlank
     @Pattern(regexp = "\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*(\\.\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*)*")
     private String type;
-
 
     private Map<String, C> columns;
 
@@ -45,8 +42,10 @@ public abstract class DataFilter<F extends Enum<F>, C extends ColumnDescriptor<F
         return Collections.emptySet();
     }
 
-    public abstract Class<? extends QueryBuilderInterface<F>> repositoryClass();
+    public void updateWhereWithGlobalFilters(List<QueryFilter> queryFilterList, ZonedDateTime startDate, ZonedDateTime endDate) {
+        this.where = whereWithGlobalFilters(queryFilterList, startDate, endDate, this.where);
+    }
 
-    public abstract void setGlobalFilter(GlobalFilter globalFilter);
+    public abstract Class<? extends QueryBuilderInterface<F>> repositoryClass();
 
 }

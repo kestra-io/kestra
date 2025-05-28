@@ -10,10 +10,10 @@
                 alt="Dark version logo"
             >
             <p class="title">
-                Dark version
+                {{ $t('dark_version') }}
             </p>
             <p class="description">
-                Use this version when working on a dark background to ensure our name remains readable.
+                {{ $t('use_dark_background') }}
             </p>
         </div>
 
@@ -27,10 +27,10 @@
                 alt="Light version logo"
             >
             <p class="title">
-                Light version
+                {{ $t('light_version') }}
             </p>
             <p class="description">
-                This is the preferred option when working with a light background.
+                {{ $t('light_background') }}
             </p>
         </div>
 
@@ -44,10 +44,10 @@
                 alt="Monogram version logo"
             >
             <p class="title">
-                Monogram
+                {{ $t('monogram') }}
             </p>
             <p class="description">
-                The wordmark colors adapt based on the background, while the icon remains without a background when placed on a dark background.
+                {{ $t('wordmark_colors') }}
             </p>
         </div>
     </div>

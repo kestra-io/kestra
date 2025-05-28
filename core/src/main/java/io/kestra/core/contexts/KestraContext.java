@@ -2,14 +2,18 @@ package io.kestra.core.contexts;
 
 import io.kestra.core.models.ServerType;
 import io.kestra.core.plugins.PluginRegistry;
+import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
+import io.micronaut.context.env.PropertySource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -25,7 +29,11 @@ public abstract class KestraContext {
     private static final AtomicReference<KestraContext> INSTANCE = new AtomicReference<>();
 
     // Properties
-    private static final String KESTRA_SERVER_TYPE = "kestra.server-type";
+    public static final String KESTRA_SERVER_TYPE = "kestra.server-type";
+
+    // Those properties are injected bases on the CLI args.
+    private static final String KESTRA_WORKER_MAX_NUM_THREADS = "kestra.worker.max-num-threads";
+    private static final String KESTRA_WORKER_GROUP_KEY = "kestra.worker.group-key";
 
     /**
      * Gets the current {@link KestraContext}.
@@ -54,6 +62,12 @@ public abstract class KestraContext {
      */
     public abstract ServerType getServerType();
 
+    public abstract Optional<Integer> getWorkerMaxNumThreads();
+
+    public abstract Optional<String> getWorkerGroupKey();
+
+    public abstract void injectWorkerConfigs(Integer maxNumThreads, String workerGroupKey);
+
     /**
      * Returns the Kestra Version.
      *
@@ -67,6 +81,8 @@ public abstract class KestraContext {
      * @return the {@link PluginRegistry}.
      */
     public abstract PluginRegistry getPluginRegistry();
+
+    public abstract StorageInterface getStorageInterface();
 
     /**
      * Shutdowns the Kestra application.
@@ -112,6 +128,34 @@ public abstract class KestraContext {
 
         /** {@inheritDoc} **/
         @Override
+        public Optional<Integer> getWorkerMaxNumThreads() {
+            return Optional.ofNullable(environment)
+                .flatMap(env -> env.getProperty(KESTRA_WORKER_MAX_NUM_THREADS, Integer.class));
+        }
+
+        /** {@inheritDoc} **/
+        @Override
+        public Optional<String> getWorkerGroupKey() {
+            return Optional.ofNullable(environment)
+                .flatMap(env -> env.getProperty(KESTRA_WORKER_GROUP_KEY, String.class));
+        }
+        /** {@inheritDoc} **/
+        @Override
+        public void injectWorkerConfigs(Integer maxNumThreads, String workerGroupKey) {
+            final Map<String, Object> configs = new HashMap<>();
+            Optional.ofNullable(maxNumThreads)
+                .ifPresent(val -> configs.put(KESTRA_WORKER_MAX_NUM_THREADS, val));
+
+            Optional.ofNullable(workerGroupKey)
+                .ifPresent(val -> configs.put(KESTRA_WORKER_GROUP_KEY, val));
+
+            if (!configs.isEmpty()) {
+                environment.addPropertySource(PropertySource.of("kestra-runtime", configs));
+            }
+        }
+
+        /** {@inheritDoc} **/
+        @Override
         public void shutdown() {
             if (isShutdown.compareAndSet(false, true)) {
                 log.info("Kestra server - Shutdown initiated");
@@ -131,6 +175,12 @@ public abstract class KestraContext {
         public PluginRegistry getPluginRegistry() {
             // Lazy init of the PluginRegistry.
             return this.applicationContext.getBean(PluginRegistry.class);
+        }
+
+        @Override
+        public StorageInterface getStorageInterface() {
+            // Lazy init of the PluginRegistry.
+            return this.applicationContext.getBean(StorageInterface.class);
         }
     }
 }

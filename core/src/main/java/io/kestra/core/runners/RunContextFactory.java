@@ -1,10 +1,13 @@
 package io.kestra.core.runners;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.metrics.MetricRegistry;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.flows.Type;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
@@ -16,6 +19,7 @@ import io.kestra.core.storages.StorageContext;
 import io.kestra.core.storages.StorageInterface;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Value;
+import io.micronaut.core.annotation.Nullable;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -55,6 +59,14 @@ public class RunContextFactory {
     @Value("${kestra.encryption.secret-key}")
     protected Optional<String> secretKey;
 
+    @Value("${kestra.environment.name}")
+    @Nullable
+    protected String kestraEnvironment;
+
+    @Value("${kestra.url}")
+    @Nullable
+    protected String kestraUrl;
+
     @Inject
     private RunContextLoggerFactory runContextLoggerFactory;
 
@@ -66,11 +78,11 @@ public class RunContextFactory {
         return applicationContext.getBean(RunContextInitializer.class);
     }
 
-    public RunContext of(Flow flow, Execution execution) {
+    public RunContext of(FlowInterface flow, Execution execution) {
         return of(flow, execution, Function.identity());
     }
 
-    public RunContext of(Flow flow, Execution execution, Function<RunVariables.Builder, RunVariables.Builder> runVariableModifier) {
+    public RunContext of(FlowInterface flow, Execution execution, Function<RunVariables.Builder, RunVariables.Builder> runVariableModifier) {
         RunContextLogger runContextLogger = runContextLoggerFactory.create(execution);
 
         return newBuilder()
@@ -91,12 +103,12 @@ public class RunContextFactory {
             .build();
     }
 
-    public RunContext of(Flow flow, Task task, Execution execution, TaskRun taskRun) {
+    public RunContext of(FlowInterface flow, Task task, Execution execution, TaskRun taskRun) {
         return this.of(flow, task, execution, taskRun, true);
     }
 
-    public RunContext of(Flow flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
-        RunContextLogger runContextLogger = runContextLoggerFactory.create(taskRun, task);
+    public RunContext of(FlowInterface flow, Task task, Execution execution, TaskRun taskRun, boolean decryptVariables) {
+        RunContextLogger runContextLogger = runContextLoggerFactory.create(taskRun, task, execution.getKind());
 
         return newBuilder()
             // Logger
@@ -119,7 +131,7 @@ public class RunContextFactory {
     }
 
     public RunContext of(Flow flow, AbstractTrigger trigger) {
-        RunContextLogger runContextLogger = runContextLoggerFactory.create(flow, trigger);
+        RunContextLogger runContextLogger = runContextLoggerFactory.create(flow, trigger, null);
         return newBuilder()
             // Logger
             .withLogger(runContextLogger)
@@ -170,7 +182,7 @@ public class RunContextFactory {
                     @Override
                     public String getTenantId() {
                         var tenantId = ((Map<String, Object>)variables.getOrDefault("flow", Map.of())).get("tenantId");
-                        return Optional.ofNullable(tenantId).map(Object::toString).orElse(null);
+                        return Optional.ofNullable(tenantId).map(Object::toString).orElse(MAIN_TENANT);
                     }
 
                     @SuppressWarnings("unchecked")
@@ -193,7 +205,7 @@ public class RunContextFactory {
         return of(Map.of());
     }
 
-    private List<String> secretInputsFromFlow(Flow flow) {
+    private List<String> secretInputsFromFlow(FlowInterface flow) {
         if (flow == null || flow.getInputs() == null) {
             return Collections.emptyList();
         }
@@ -218,6 +230,7 @@ public class RunContextFactory {
     protected RunVariables.Builder newRunVariablesBuilder() {
         return new RunVariables.DefaultBuilder(secretKey)
             .withEnvs(runContextCache.getEnvVars())
-            .withGlobals(runContextCache.getGlobalVars());
+            .withGlobals(runContextCache.getGlobalVars())
+            .withKestraConfiguration(new RunVariables.KestraConfiguration(kestraEnvironment, kestraUrl));
     }
 }

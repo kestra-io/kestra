@@ -27,7 +27,11 @@
                         <div
                             v-if="currentStep(tour).title"
                             class="title"
-                            :class="{dark: currentStep(tour).keepDark, empty: !flows.length}"
+                            :class="{
+                                dark: currentStep(tour).keepDark, 
+                                empty: !flows.length, 
+                                fixed: tour.currentStep === 1
+                            }"
                         >
                             <div v-if="currentStep(tour).icon">
                                 <img
@@ -239,8 +243,6 @@
         case "business_processes":
         case "data_engineering_pipeline":
             return 94;
-        case "business_automation":
-            return 134;
         case "dwh_and_analytics":
         case "file_processing":
         case "infrastructure_automation":
@@ -263,7 +265,7 @@
         ...(p ? {primary: t(`onboarding.steps.${step}.primary`)} : {}),
         ...(s ? {secondary: t(`onboarding.steps.${step}.secondary`)} : {}),
     });
-    const wait = (time) =>
+    const wait = (time = 200) =>
         new Promise((resolve) => setTimeout(() => resolve(true), time));
 
     const toggleScroll = (enabled = true) => {
@@ -288,7 +290,7 @@
                     fullscreen: true,
                 });
 
-                return wait(1);
+                return wait();
             },
         },
         {
@@ -316,7 +318,7 @@
                     template: flows.value[activeFlow.value]?.id,
                 });
 
-                return wait(1);
+                return wait();
             },
         },
         {
@@ -327,7 +329,7 @@
             params: {...STEP_OPTIONS, placement: "right"},
             before: () => {
                 toggleScroll();
-                return wait(1);
+                return wait();
             },
         },
         {
@@ -350,7 +352,7 @@
             highlightElement: ".top-bar",
             params: {...STEP_OPTIONS, placement: "bottom"},
             before: () => {
-                return wait(200);
+                return wait();
             },
         },
         {
@@ -366,7 +368,7 @@
                 placement: "bottom",
             },
             before: () => {
-                return wait(200)
+                return wait()
             },
         },
         {
@@ -383,7 +385,7 @@
                 ],
                 placement: "bottom",
             },
-            before: () => wait(1),
+            before: () => wait(),
         },
     ];
 
@@ -411,6 +413,7 @@
         store.commit("core/setGuidedProperties", {tourStarted: false});
 
         TOURS[TOUR_NAME].stop();
+        router.push({name: "flows/create"});
     };
     const finishTour = (current, push = true) => {
         toggleScroll();
@@ -472,7 +475,13 @@ $flow-image-size-container: 36px;
     padding: 2rem;
 
     &.last {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
         max-width: $last-step-max-width;
+        z-index: 9999;
+        box-shadow: 0 0 20px var(--ks-card-shadow);
     }
 
     &.condensed {
@@ -513,6 +522,14 @@ $flow-image-size-container: 36px;
             color: $white;
         }
 
+        &.fixed {
+            position: fixed;
+            top: 1rem;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem;
+        }
+
         @keyframes jump {
             0% {
                 transform: translateY(0);
@@ -531,7 +548,7 @@ $flow-image-size-container: 36px;
 
         margin-bottom: 2rem;
         text-align: center;
-        line-height: 3rem;
+        line-height: 2.5rem;
         font-size: 2rem;
         font-weight: 500;
         color: $color;
@@ -563,8 +580,11 @@ $flow-image-size-container: 36px;
     & div.flows {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        padding: 2rem;
+        padding: 0 0 0 2rem;
+        margin: 2rem 0;
         gap: 1rem;
+        max-height: 60dvh;
+        overflow-y: auto;
 
         & .el-button.card {
             height: unset;

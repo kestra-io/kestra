@@ -1,0 +1,10 @@
+id: purge_current_execution_files
+namespace: sanitychecks.core
+
+tasks:
+  - id: download
+    type: io.kestra.plugin.core.http.Download
+    uri: https://huggingface.co/datasets/kestra/datasets/raw/main/csv/orders.csv
+
+  - id: purge
+    type: io.kestra.plugin.core.storage.PurgeCurrentExecutionFiles

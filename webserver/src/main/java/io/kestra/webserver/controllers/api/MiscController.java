@@ -9,7 +9,6 @@ import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.TemplateRepositoryInterface;
 import io.kestra.core.services.CollectorService;
 import io.kestra.core.services.InstanceService;
-import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.NamespaceUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.kestra.webserver.services.BasicAuthService;
@@ -22,6 +21,7 @@ import io.micronaut.http.annotation.Post;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
@@ -56,9 +56,6 @@ public class MiscController {
     Optional<TemplateRepositoryInterface> templateRepository;
 
     @Inject
-    TenantService tenantService;
-
-    @Inject
     NamespaceUtils namespaceUtils;
 
     @io.micronaut.context.annotation.Value("${kestra.anonymous-usage-report.enabled}")
@@ -72,6 +69,10 @@ public class MiscController {
     @Nullable
     protected String environmentColor;
 
+    @io.micronaut.context.annotation.Value("${kestra.url}")
+    @Nullable
+    protected String kestraUrl;
+
     @io.micronaut.context.annotation.Value("${kestra.server.preview.initial-rows:100}")
     private Integer initialPreviewRows;
 
@@ -82,10 +83,10 @@ public class MiscController {
     private List<String> hiddenLabelsPrefixes;
 
 
-    @Get("{/tenant}/configs")
+    @Get("/configs")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get current configurations")
-    public Configuration configuration() throws JsonProcessingException {
+    public Configuration getConfiguration() throws JsonProcessingException {
         Configuration.ConfigurationBuilder<?, ?> builder = Configuration
             .builder()
             .uuid(instanceService.fetch())
@@ -103,7 +104,8 @@ public class MiscController {
             ).isBasicAuthEnabled(basicAuthService.isEnabled())
             .systemNamespace(namespaceUtils.getSystemFlowNamespace())
             .resourceToFilters(QueryFilter.Resource.asResourceList())
-            .hiddenLabelsPrefixes(hiddenLabelsPrefixes);
+            .hiddenLabelsPrefixes(hiddenLabelsPrefixes)
+            .url(kestraUrl);
 
         if (this.environmentName != null || this.environmentColor != null) {
             builder.environment(
@@ -117,18 +119,18 @@ public class MiscController {
         return builder.build();
     }
 
-    @Get("{/tenant}/usages/all")
+    @Get("/main/usages/all")
     @ExecuteOn(TaskExecutors.IO)
     @Operation(tags = {"Misc"}, summary = "Get instance usage information")
-    public Usage usages() {
+    public Usage getUsages() {
         return collectorService.metrics(true);
     }
 
-    @Post(uri = "{/tenant}/basicAuth")
+    @Post(uri = "/main/basicAuth")
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Misc"}, summary = "Add basic auth to current instance")
-    public HttpResponse<Void> addBasicAuth(
-        @Body BasicAuthCredentials basicAuthCredentials
+    @Operation(tags = {"Misc"}, summary = "Create basic auth for the current instance")
+    public HttpResponse<Void> createBasicAuth(
+        @RequestBody(description = "") @Body BasicAuthCredentials basicAuthCredentials
     ) {
         basicAuthService.save(basicAuthCredentials.getUid(), new BasicAuthService.BasicAuthConfiguration(basicAuthCredentials.getUsername(), basicAuthCredentials.getPassword()));
 
@@ -160,6 +162,8 @@ public class MiscController {
         Boolean isTemplateEnabled;
 
         Environment environment;
+
+        String url;
 
         Preview preview;
 

@@ -1,0 +1,34 @@
+id: kv
+namespace: sanitychecks.core
+
+variables:
+  key: mykey
+  data: test12345
+
+tasks:
+  - id: set
+    type: io.kestra.plugin.core.kv.Set
+    key: "{{ vars.key }}"
+    value: "{{ vars.data }}"
+    kvType: STRING
+
+  - id: get
+    type: io.kestra.plugin.core.kv.Get
+    key: "{{ vars.key }}"
+
+  - id: assert_get_set
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ vars.data == outputs.get.value }}"
+
+  - id: delete
+    type: io.kestra.plugin.core.kv.Delete
+    key: "{{ vars.key }}"
+
+  - id: get_keys
+    type: io.kestra.plugin.core.kv.GetKeys
+
+  - id: assert_delete_get_keys
+    type: io.kestra.plugin.core.execution.Assert
+    conditions: 
+      - "{{ outputs.get_keys.keys | length == 0 }}"

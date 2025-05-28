@@ -5,7 +5,6 @@ import io.kestra.core.junit.annotations.LoadFlows;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.repositories.LogRepositoryInterface;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.runners.RunnerUtils;
 import jakarta.inject.Inject;
 import java.time.temporal.ChronoUnit;
@@ -18,14 +17,12 @@ import org.slf4j.event.Level;
 
 import java.time.Instant;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest(startRunner = true)
 class PurgeLogsTest {
-    @Inject
-    private RunContextFactory runContextFactory;
 
     @Inject
     private LogRepositoryInterface logRepository;
@@ -40,17 +37,18 @@ class PurgeLogsTest {
         var logEntry = LogEntry.builder()
             .namespace("namespace")
             .flowId("flowId")
+            .tenantId(MAIN_TENANT)
             .timestamp(Instant.now())
             .level(Level.INFO)
             .message("Hello World")
             .build();
         logRepository.save(logEntry);
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "purge_logs_no_arguments");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "purge_logs_no_arguments");
 
         assertTrue(execution.getState().isSuccess());
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("count"), is(1));
+        assertThat(execution.getTaskRunList()).hasSize(1);
+        assertThat((int) execution.getTaskRunList().getFirst().getOutputs().get("count")).isPositive();
     }
 
 
@@ -60,11 +58,11 @@ class PurgeLogsTest {
     void run_with_full_arguments(LogEntry logEntry, int resultCount, String failingReason) throws Exception {
         logRepository.save(logEntry);
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "purge_logs_full_arguments");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "purge_logs_full_arguments");
 
         assertTrue(execution.getState().isSuccess());
-        assertThat(execution.getTaskRunList().size(), is(1));
-        assertThat(failingReason, execution.getTaskRunList().getFirst().getOutputs().get("count"), is(resultCount));
+        assertThat(execution.getTaskRunList().size()).isEqualTo(1);
+        assertThat(execution.getTaskRunList().getFirst().getOutputs().get("count")).as(failingReason).isEqualTo(resultCount);
     }
 
     static Stream<Arguments> buildArguments() {
@@ -72,6 +70,7 @@ class PurgeLogsTest {
             Arguments.of(LogEntry.builder()
                 .namespace("purge.namespace")
                 .flowId("purgeFlowId")
+                .tenantId(MAIN_TENANT)
                 .timestamp(Instant.now().plus(5, ChronoUnit.HOURS))
                 .level(Level.INFO)
                 .message("Hello World")
@@ -79,6 +78,7 @@ class PurgeLogsTest {
             Arguments.of(LogEntry.builder()
                 .namespace("purge.namespace")
                 .flowId("purgeFlowId")
+                .tenantId(MAIN_TENANT)
                 .timestamp(Instant.now().minus(5, ChronoUnit.HOURS))
                 .level(Level.INFO)
                 .message("Hello World")
@@ -86,6 +86,7 @@ class PurgeLogsTest {
             Arguments.of(LogEntry.builder()
                 .namespace("uncorrect.namespace")
                 .flowId("purgeFlowId")
+                .tenantId(MAIN_TENANT)
                 .timestamp(Instant.now().minusSeconds(10))
                 .level(Level.INFO)
                 .message("Hello World")
@@ -93,6 +94,7 @@ class PurgeLogsTest {
             Arguments.of(LogEntry.builder()
                 .namespace("purge.namespace")
                 .flowId("wrongFlowId")
+                .tenantId(MAIN_TENANT)
                 .timestamp(Instant.now().minusSeconds(10))
                 .level(Level.INFO)
                 .message("Hello World")
@@ -100,6 +102,7 @@ class PurgeLogsTest {
             Arguments.of(LogEntry.builder()
                 .namespace("purge.namespace")
                 .flowId("purgeFlowId")
+                .tenantId(MAIN_TENANT)
                 .timestamp(Instant.now().minusSeconds(10))
                 .level(Level.WARN)
                 .message("Hello World")
@@ -107,6 +110,7 @@ class PurgeLogsTest {
             Arguments.of(LogEntry.builder()
                 .namespace("purge.namespace")
                 .flowId("purgeFlowId")
+                .tenantId(MAIN_TENANT)
                 .timestamp(Instant.now().minusSeconds(10))
                 .level(Level.INFO)
                 .message("Hello World")

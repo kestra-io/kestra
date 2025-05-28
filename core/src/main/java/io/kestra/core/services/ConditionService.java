@@ -7,6 +7,7 @@ import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.conditions.ScheduleCondition;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.Flow;
+import io.kestra.core.models.flows.FlowInterface;
 import io.kestra.core.models.tasks.ResolvedTask;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.multipleflows.MultipleCondition;
@@ -18,7 +19,6 @@ import io.micronaut.core.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -33,7 +33,7 @@ public class ConditionService {
     private RunContextFactory runContextFactory;
 
     @VisibleForTesting
-    public boolean isValid(Condition condition, Flow flow, @Nullable Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
+    public boolean isValid(Condition condition, FlowInterface flow, @Nullable Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
         ConditionContext conditionContext = this.conditionContext(
             runContextFactory.of(flow, execution),
             flow,
@@ -44,11 +44,11 @@ public class ConditionService {
         return this.valid(flow, Collections.singletonList(condition), conditionContext);
     }
 
-    public boolean isValid(Condition condition, Flow flow, @Nullable Execution execution) {
+    public boolean isValid(Condition condition, FlowInterface flow, @Nullable Execution execution) {
         return this.isValid(condition, flow, execution, null);
     }
 
-    private void logException(Flow flow, Object condition, ConditionContext conditionContext, Exception e) {
+    private void logException(FlowInterface flow, Object condition, ConditionContext conditionContext, Exception e) {
         conditionContext.getRunContext().logger().warn(
             "[namespace: {}] [flow: {}] [condition: {}] Evaluate Condition Failed with error '{}'",
             flow.getNamespace(),
@@ -117,7 +117,7 @@ public class ConditionService {
         }
     }
 
-    public ConditionContext conditionContext(RunContext runContext, Flow flow, @Nullable Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
+    public ConditionContext conditionContext(RunContext runContext, FlowInterface flow, @Nullable Execution execution, MultipleConditionStorageInterface multipleConditionStorage) {
         return ConditionContext.builder()
             .flow(flow)
             .execution(execution)
@@ -130,7 +130,7 @@ public class ConditionService {
         return this.conditionContext(runContext, flow, execution, null);
     }
 
-    boolean valid(Flow flow, List<Condition> list, ConditionContext conditionContext) {
+    boolean valid(FlowInterface flow, List<Condition> list, ConditionContext conditionContext) {
         return list
             .stream()
             .allMatch(condition -> {
@@ -144,18 +144,10 @@ public class ConditionService {
             });
     }
 
-    public boolean isTerminatedWithListeners(Flow flow, Execution execution) {
-        if (!execution.getState().isTerminated()) {
-            return false;
-        }
-
-        return execution.isTerminated(this.findValidListeners(flow, execution));
-    }
-
     @SuppressWarnings("deprecation")
     public List<ResolvedTask> findValidListeners(Flow flow, Execution execution) {
         if (flow == null || flow.getListeners() == null) {
-            return new ArrayList<>();
+            return Collections.emptyList();
         }
 
         ConditionContext conditionContext = this.conditionContext(

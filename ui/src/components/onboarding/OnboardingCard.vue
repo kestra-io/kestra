@@ -4,7 +4,7 @@
             <div class="card-header">
                 <el-link
                     v-if="isOpenInNewCategory"
-                    :underline="false"
+                    underline="never"
                     :icon="OpenInNew"
                     :href="getLink()"
                     target="_blank"

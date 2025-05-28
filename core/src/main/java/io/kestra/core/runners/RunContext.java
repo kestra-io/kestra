@@ -13,6 +13,7 @@ import org.slf4j.Logger;
 
 import java.net.URI;
 import java.security.GeneralSecurityException;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -74,6 +75,11 @@ public abstract class RunContext {
     public abstract Map<String, String> renderMap(Map<String, String> inline) throws IllegalVariableEvaluationException;
 
     public abstract Map<String, String> renderMap(Map<String, String> inline, Map<String, Object> variables) throws IllegalVariableEvaluationException;
+
+    /**
+     * Validate a bean using Jakarta Bean Validation.
+     */
+    public abstract <T> void validate(T bean);
 
     public abstract String decrypt(String encrypted) throws GeneralSecurityException;
 

@@ -11,5 +11,5 @@ public record ClusterEvent(String uid, EventType eventType, LocalDateTime eventD
         this(IdUtils.create(), eventType, eventDate, message);
     }
 
-    public enum EventType { MAINTENANCE_ENTER, MAINTENANCE_EXIT }
+    public enum EventType { MAINTENANCE_ENTER, MAINTENANCE_EXIT, PLUGINS_SYNC_REQUESTED }
 }

@@ -8,19 +8,19 @@
             @click="selectInput(input, index)"
         >
             <el-col :span="24" class="d-flex">
-                <InputText disabled :model-value="input.id" class="w-100" />
+                <InputText readonly :model-value="input.id" class="w-100" />
                 <DeleteOutline
                     @click.prevent.stop="deleteInput(index)"
                     class="ms-2 delete"
                 />
             </el-col>
         </el-row>
-        <Add @add="addInput(index)" />
+        <Add @add="addInput()" />
     </div>
 </template>
 
 <script setup>
-    import MetadataInputsContent from "./MetadataInputsContent.vue";
+
     import InputText from "../code/components/inputs/InputText.vue";
     import Add from "../code/components/Add.vue";
 
@@ -29,8 +29,10 @@
 
 <script>
     import {h} from "vue";
+    import MetadataInputsContent from "./MetadataInputsContent.vue";
 
     import {mapState} from "vuex";
+    import {BREADCRUMB_INJECTION_KEY, PANEL_INJECTION_KEY} from "../code/injectionKeys";
 
     export default {
         emits: ["update:modelValue"],
@@ -66,31 +68,30 @@
                 loading: false,
             };
         },
+        inject:{
+            panel: {from: PANEL_INJECTION_KEY},
+            breadcrumbs: {from: BREADCRUMB_INJECTION_KEY}
+        },
         methods: {
             selectInput(input, index) {
                 this.loading = true;
                 this.selectedInput = input;
                 this.selectedIndex = index;
-                // this.isEditOpen = true;
+
                 this.loadSchema(input.type);
 
-                this.$store.commit("code/setPanel", {
-                    breadcrumb: {
+                this.panel = h(MetadataInputsContent, {
+                    modelValue: input,
+                    inputs: this.inputs,
+                    label: this.$t("inputs"),
+                    selectedIndex: index,
+                    "onUpdate:modelValue": this.updateSelected,
+                })
+
+                this.breadcrumbs.push(
+                    {
                         label: this.$t("inputs").toLowerCase(),
-                        to: {
-                            name: this.$route.name,
-                            params: this.$route.params,
-                            query: this.$route.query,
-                        },
-                    },
-                    panel: h(MetadataInputsContent, {
-                        modelValue: input,
-                        inputs: this.inputs,
-                        label: this.$t("inputs"),
-                        selectedIndex: index,
-                        "onUpdate:modelValue": this.updateSelected,
-                    }),
-                });
+                    });
             },
             getCls(type) {
                 return this.inputsType.find((e) => e.type === type).cls;
@@ -127,7 +128,7 @@
             },
             addInput() {
                 this.newInputs.push({type: "STRING"});
-                this.selectInput(this.newInputs.at(-1), 0);
+                this.selectInput(this.newInputs.at(-1), this.newInputs.length - 1);
             },
             onChangeType(value) {
                 this.loading = true;

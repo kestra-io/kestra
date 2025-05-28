@@ -2,6 +2,7 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.server.Service;
 import io.kestra.core.server.ServiceInstance;
+import io.kestra.core.server.ServiceType;
 import io.micronaut.data.model.Pageable;
 
 import java.time.Instant;
@@ -40,7 +41,7 @@ public interface ServiceInstanceRepositoryInterface {
      */
     ArrayListTotal<ServiceInstance> find(Pageable pageable,
                                          Set<Service.ServiceState> states,
-                                         Set<Service.ServiceType> types);
+                                         Set<ServiceType> types);
 
     /**
      * Deletes the given service instance.
@@ -79,12 +80,19 @@ public interface ServiceInstanceRepositoryInterface {
      * @param to   The date to (exclusive)
      * @return the list of {@link ServiceInstance}.
      */
-    List<ServiceInstance> findAllInstancesBetween(final Service.ServiceType type,
+    List<ServiceInstance> findAllInstancesBetween(final ServiceType type,
                                                   final Instant from,
                                                   final Instant to);
 
     /**
-     * Returns the function to be used for mapping column used to sort result.
+     * Purge all instances in the EMPTY state older than the until date.
+     *
+     * @return the number of purged instances
+     */
+    int purgeEmptyInstances(Instant until);
+
+    /**
+     * Returns the function to be used for mapping column used to sort results.
      *
      * @return the mapping function.
      */

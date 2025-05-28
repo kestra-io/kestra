@@ -1,45 +1,41 @@
 <template>
-    <editor-view
+    <multi-panel-editor-view
         v-if="flow"
-        :flow-id="flow.id"
-        :namespace="flow.namespace"
-        :flow-graph="flowGraph"
-        :flow="flow"
-        :is-read-only="isReadOnly"
-        :flow-validation="flowValidation"
-        :expanded-subflows="expandedSubflows"
-        @expand-subflow="$emit('expand-subflow', $event)"
-        :next-revision="flow.revision + 1"
     />
 </template>
 
-<script>
-    import {mapGetters, mapState} from "vuex";
-    import EditorView from "../inputs/EditorView.vue";
+<script setup>
+    import {onBeforeUnmount, computed} from "vue"
+    import {useStore} from "vuex";
+    import MultiPanelEditorView from "./MultiPanelEditorView.vue";
 
-    export default {
-        components: {
-            EditorView,
+    defineEmits([
+        "expand-subflow"
+    ])
+
+    defineProps({
+        isReadOnly: {
+            type: Boolean,
+            default: false
         },
-        emits: [
-            "expand-subflow"
-        ],
-        props: {
-            isReadOnly: {
-                type: Boolean,
-                default: false
-            },
-            expandedSubflows: {
-                type: Array,
-                default: () => []
-            }
+        expandedSubflows: {
+            type: Array,
+            default: () => []
         },
-        computed: {
-            ...mapState("flow", ["flow", "flowGraph"]),
-            ...mapGetters("flow", ["flowValidation"]),
+        embed: {
+            type: Boolean,
+            default: false
         },
-        beforeUnmount() {
-            this.$store.commit("flow/setFlowValidation", undefined);
-        },
-    };
+        beta: {
+            type: Boolean,
+            default: false
+        }
+    })
+
+    const store = useStore();
+    const flow = computed(() => store.state.flow.flow);
+
+    onBeforeUnmount(() => {
+        store.commit("flow/setFlowValidation", undefined);
+    })
 </script>

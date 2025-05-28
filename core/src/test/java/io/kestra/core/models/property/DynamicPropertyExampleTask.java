@@ -1,6 +1,7 @@
 package io.kestra.core.models.property;
 
 import io.kestra.core.models.annotations.Plugin;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -32,11 +33,11 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
 
     @NotNull
     @Builder.Default
-    private Property<String> withDefault = Property.of("Default Value");
+    private Property<String> withDefault = Property.ofValue("Default Value");
 
     @NotNull
     @Builder.Default
-    private Property<Level> level = Property.of(Level.INFO);
+    private Property<Level> level = Property.ofValue(Level.INFO);
 
     @NotNull
     private Property<Duration> someDuration;
@@ -49,6 +50,9 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
 
     @NotNull
     private Data<Message> data;
+
+    @PluginProperty(internalStorageURI = true)
+    private Property<String> uri;
 
 
     @Override

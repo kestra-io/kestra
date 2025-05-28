@@ -1,12 +1,12 @@
 package io.kestra.plugin.core.http;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.http.client.HttpClientResponseException;
 import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.runners.RunContext;
-import io.kestra.core.runners.RunContextFactory;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.utils.TestsUtils;
 import io.micronaut.context.ApplicationContext;
@@ -26,8 +26,8 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class DownloadTest {
     public static final String FILE = "https://sampletestfile.com/wp-content/uploads/2023/07/500KB-CSV.csv";
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     private StorageInterface storageInterface;
@@ -48,18 +48,15 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(FILE))
+            .uri(Property.ofValue(FILE))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
         Download.Output output = task.run(runContext);
 
-        assertThat(
-            IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8),
-            is(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8))
-        );
-        assertThat(output.getUri().toString(), endsWith(".csv"));
+        assertThat(IOUtils.toString(this.storageInterface.get(MAIN_TENANT, null, output.getUri()), StandardCharsets.UTF_8)).isEqualTo(IOUtils.toString(new URI(FILE).toURL().openStream(), StandardCharsets.UTF_8));
+        assertThat(output.getUri().toString()).endsWith(".csv");
     }
 
     @Test
@@ -70,7 +67,7 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/204"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/204"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -80,7 +77,7 @@ class DownloadTest {
             () -> task.run(runContext)
         );
 
-        assertThat(exception.getMessage(), is("No response from server"));
+        assertThat(exception.getMessage()).isEqualTo("No response from server");
     }
 
     @Test
@@ -90,16 +87,16 @@ class DownloadTest {
 
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
-            .failOnEmptyResponse(Property.of(false))
+            .failOnEmptyResponse(Property.ofValue(false))
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/204"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/204"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
         Download.Output output = assertDoesNotThrow(() -> task.run(runContext));
 
-        assertThat(output.getLength(), is(0L));
-        assertThat(IOUtils.toString(this.storageInterface.get(null, null, output.getUri()), StandardCharsets.UTF_8), is(""));
+        assertThat(output.getLength()).isEqualTo(0L);
+        assertThat(IOUtils.toString(this.storageInterface.get(MAIN_TENANT, null, output.getUri()), StandardCharsets.UTF_8)).isEqualTo("");
     }
 
     @Test
@@ -110,7 +107,7 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/500"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/500"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
@@ -120,7 +117,7 @@ class DownloadTest {
             () -> task.run(runContext)
         );
 
-        assertThat(exception.getMessage(), containsString("Failed http request with response code '500'"));
+        assertThat(exception.getMessage()).contains("Failed http request with response code '500'");
     }
 
     @Test
@@ -131,14 +128,14 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/chunked"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/chunked"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
         Download.Output output = task.run(runContext);
 
-        assertThat(this.storageInterface.get(null, null, output.getUri()).readAllBytes().length, is(10000 * 12));
+        assertThat(this.storageInterface.get(MAIN_TENANT, null, output.getUri()).readAllBytes().length).isEqualTo(10000 * 12);
     }
 
     @Test
@@ -149,14 +146,14 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/content-disposition"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
         Download.Output output = task.run(runContext);
 
-        assertThat(output.getUri().toString(), endsWith("filename.jpg"));
+        assertThat(output.getUri().toString()).endsWith("filename.jpg");
     }
 
     @Test
@@ -167,15 +164,15 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/content-disposition"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
         Download.Output output = task.run(runContext);
 
-        assertThat(output.getUri().toString(), not(containsString("/secure-path/")));
-        assertThat(output.getUri().toString(), endsWith("filename.jpg"));
+        assertThat(output.getUri().toString()).doesNotContain("/secure-path/");
+        assertThat(output.getUri().toString()).endsWith("filename.jpg");
     }
 
     @Test
@@ -188,16 +185,16 @@ class DownloadTest {
             Download task = Download.builder()
                 .id(Download.class.getSimpleName())
                 .type(Download.class.getName())
-                .uri(Property.of(server.getURL().toString() + "/hello417"))
-                .options(HttpConfiguration.builder().allowFailed(Property.of(true)).build())
+                .uri(Property.ofValue(server.getURL().toString() + "/hello417"))
+                .options(HttpConfiguration.builder().allowFailed(Property.ofValue(true)).build())
                 .build();
 
             RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
             Download.Output output = task.run(runContext);
 
-            assertThat(output.getHeaders().get("content-type"), is(List.of("application/json")));
-            assertThat(output.getCode(), is(417));
+            assertThat(output.getHeaders().get("content-type")).isEqualTo(List.of("application/json"));
+            assertThat(output.getCode()).isEqualTo(417);
         }
     }
 
@@ -209,15 +206,15 @@ class DownloadTest {
         Download task = Download.builder()
             .id(DownloadTest.class.getSimpleName())
             .type(DownloadTest.class.getName())
-            .uri(Property.of(embeddedServer.getURI() + "/content-disposition-double-dot"))
+            .uri(Property.ofValue(embeddedServer.getURI() + "/content-disposition-double-dot"))
             .build();
 
         RunContext runContext = TestsUtils.mockRunContext(this.runContextFactory, task, ImmutableMap.of());
 
         Download.Output output = task.run(runContext);
 
-        assertThat(output.getUri().toString(), not(containsString("/secure-path/")));
-        assertThat(output.getUri().toString(), endsWith("filename..jpg"));
+        assertThat(output.getUri().toString()).doesNotContain("/secure-path/");
+        assertThat(output.getUri().toString()).endsWith("filename..jpg");
     }
 
     @Controller()

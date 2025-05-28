@@ -1,5 +1,5 @@
 <template>
-    <el-cascader-panel :options="options">
+    <el-cascader-panel :options :id>
         <template #default="{data}">
             <div v-if="isFile(data.value)">
                 <VarValue :value="data.value" :execution="execution" />
@@ -25,12 +25,14 @@
 </template>
 
 <script setup lang="ts">
+    import {onMounted} from "vue";
+
     import VarValue from "../executions/VarValue.vue";
 
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    const isFile = (data) =>
+    const isFile = (data: any) =>
         typeof data === "string" && data.startsWith("kestra:///");
 
     interface Options {
@@ -39,7 +41,12 @@
         children?: Options[];
     }
 
-    defineProps<{ options: Options; execution: any }>();
+    const props = defineProps<{ options: Options; execution: any, id: string }>();
+
+    onMounted(() => {
+        const nodes = document.querySelectorAll(`#${props.id} .el-cascader-node`);    
+        if(nodes.length > 0) nodes[0].click();
+    });
 </script>
 
 <style lang="scss" scoped>

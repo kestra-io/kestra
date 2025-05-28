@@ -4,6 +4,7 @@
             :model-value="durationValue"
             type="time"
             :default-value="defaultDuration"
+            :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'duration'}`"
             @update:model-value="onInputDuration"
         />
     </template>
@@ -12,9 +13,11 @@
             :model-value="editorValue"
             :navbar="false"
             :full-height="false"
+            :should-focus="false"
             schema-type="flow"
             lang="plaintext"
             input
+            :placeholder="`Your ${root || 'value'} here...`"
             @update:model-value="onInput"
         />
     </template>
@@ -74,6 +77,20 @@
 
                 this.$emit("update:modelValue", emitted);
             },
+            onInput(value) {
+                this.$emit("update:modelValue", value);
+            },
         },
     };
 </script>
+
+<style lang="scss" scoped>
+:deep(.el-input__inner) {
+    &::placeholder {
+        color: var(--ks-content-inactive) !important;
+    }
+}
+:deep(.placeholder) {
+    top: -7px !important;
+}
+</style>

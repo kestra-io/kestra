@@ -17,9 +17,9 @@ class QueryFilterFormatBinderTest {
     void testGetQueryFiltersWithSimpleFilters() {
         // GIVEN
         Map<String, List<String>> queryParams = Map.of(
-            "filters[namespace][$eq]", List.of("test-namespace"),
-            "filters[startDate][$gte]", List.of("2024-01-01T00:00:00Z"),
-            "filters[state][$in]", List.of("[RUNNING,FAILED]")
+            "filters[namespace][EQUALS]", List.of("test-namespace"),
+            "filters[startDate][GREATER_THAN_OR_EQUAL_TO]", List.of("2024-01-01T00:00:00Z"),
+            "filters[state][IN]", List.of("[RUNNING,FAILED]")
         );
 
         //WHEN
@@ -33,7 +33,7 @@ class QueryFilterFormatBinderTest {
         ));
 
         assertTrue(filters.stream().anyMatch(f ->
-            f.field() == QueryFilter.Field.START_DATE && f.operation() == QueryFilter.Op.GREATER_THAN && f.value().equals("2024-01-01T00:00:00Z")
+            f.field() == QueryFilter.Field.START_DATE && f.operation() == QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO && f.value().equals("2024-01-01T00:00:00Z")
         ));
 
         assertTrue(filters.stream().anyMatch(f ->
@@ -45,7 +45,7 @@ class QueryFilterFormatBinderTest {
     void testGetQueryFiltersWithNestedFilters() {
         // GIVEN
         Map<String, List<String>> queryParams = Map.of(
-            "filters[labels][$eq][key]", List.of("value")
+            "filters[labels][EQUALS][key with special chars [(_-|&/*^)]]", List.of("value with special chars [(_-|&/*^)]")
         );
 
         // WHEN
@@ -54,32 +54,32 @@ class QueryFilterFormatBinderTest {
         // THEN
         assertEquals(1, filters.size());
 
-        QueryFilter filter = filters.get(0);
+        QueryFilter filter = filters.getFirst();
         assertEquals(QueryFilter.Field.LABELS, filter.field());
         assertEquals(QueryFilter.Op.EQUALS, filter.operation());
-        assertEquals(Map.of("key", "value"), filter.value());
+        assertEquals(Map.of("key with special chars [(_-|&/*^)]", "value with special chars [(_-|&/*^)]"), filter.value());
     }
 
     @Test
     void testGetQueryFiltersWithScopeParsing() {
         // GIVEN
         Map<String, List<String>> queryParams = Map.of(
-            "filters[scope][$eq]", List.of("USER,SYSTEM")
+            "filters[scope][EQUALS]", List.of("USER,SYSTEM")
         );
         // WHEN
         List<QueryFilter> filters = QueryFilterFormatBinder.getQueryFilters(queryParams);
         // THEN
         assertEquals(1, filters.size());
-        assertEquals(QueryFilter.Field.SCOPE, filters.get(0).field());
-        assertEquals(RequestUtils.toFlowScopes(List.of("USER,SYSTEM")), filters.get(0).value());
+        assertEquals(QueryFilter.Field.SCOPE, filters.getFirst().field());
+        assertEquals(RequestUtils.toFlowScopes(List.of("USER,SYSTEM")), filters.getFirst().value());
     }
 
     @Test
     void testBindHttpRequest() {
         // GIVEN
         HttpRequest<?> request = HttpRequest.GET(UriBuilder.of("/")
-            .queryParam("filters[namespace][$eq]", "test-namespace")
-            .queryParam("filters[state][$in]", "[RUNNING,FAILED]")
+            .queryParam("filters[namespace][EQUALS]", "test-namespace")
+            .queryParam("filters[state][IN]", "[RUNNING,FAILED]")
             .build());
 
         // WHEN

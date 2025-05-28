@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static java.util.function.Predicate.not;
@@ -36,6 +37,7 @@ public class Plugin {
     private List<String> charts;
     private List<String> dataFilters;
     private List<String> logExporters;
+    private List<String> additionalPlugins;
     private List<PluginSubGroup.PluginCategory> categories;
     private String subGroup;
 
@@ -50,9 +52,12 @@ public class Plugin {
         if (subgroup == null) {
             plugin.title = registeredPlugin.title();
         } else {
-            subGroupInfos = registeredPlugin.allClass().stream().filter(c -> c.getName().contains(subgroup)).map(clazz -> clazz.getPackage().getDeclaredAnnotation(PluginSubGroup.class)).toList().getFirst();
-            plugin.title = !subGroupInfos.title().isEmpty() ? subGroupInfos.title() : subgroup.substring(subgroup.lastIndexOf('.') + 1);;
-
+            subGroupInfos = registeredPlugin.allClass().stream()
+                .filter(c -> c.getPackageName().contains(subgroup))
+                .min(Comparator.comparingInt(a -> a.getPackageName().length()))
+                .map(clazz -> clazz.getPackage().getDeclaredAnnotation(PluginSubGroup.class))
+                .orElseThrow();
+            plugin.title = !subGroupInfos.title().isEmpty() ? subGroupInfos.title() : subgroup.substring(subgroup.lastIndexOf('.') + 1);
         }
         plugin.group = registeredPlugin.group();
         plugin.description = subGroupInfos != null && !subGroupInfos.description().isEmpty() ? subGroupInfos.description() : registeredPlugin.description();
@@ -74,27 +79,29 @@ public class Plugin {
         plugin.categories = subGroupInfos != null ?
             Arrays.stream(subGroupInfos.categories()).toList() :
             registeredPlugin
-            .allClass()
-            .stream()
-            .map(clazz -> clazz.getPackage().getDeclaredAnnotation(PluginSubGroup.class))
-            .filter(Objects::nonNull)
-            .flatMap(r -> Arrays.stream(r.categories()))
-            .distinct()
-            .toList();
+                .allClass()
+                .stream()
+                .map(clazz -> clazz.getPackage().getDeclaredAnnotation(PluginSubGroup.class))
+                .filter(Objects::nonNull)
+                .flatMap(r -> Arrays.stream(r.categories()))
+                .distinct()
+                .toList();
 
         plugin.subGroup = subgroup;
 
-        plugin.tasks = filterAndGetClassName(registeredPlugin.getTasks(), includeDeprecated).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
-        plugin.triggers = filterAndGetClassName(registeredPlugin.getTriggers(), includeDeprecated).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
-        plugin.conditions = filterAndGetClassName(registeredPlugin.getConditions(), includeDeprecated).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
-        plugin.storages = filterAndGetClassName(registeredPlugin.getStorages(), includeDeprecated).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
-        plugin.secrets = filterAndGetClassName(registeredPlugin.getSecrets(), includeDeprecated).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
-        plugin.taskRunners = filterAndGetClassName(registeredPlugin.getTaskRunners(), includeDeprecated).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
-        plugin.apps = filterAndGetClassName(registeredPlugin.getApps(), includeDeprecated).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
-        plugin.appBlocks = filterAndGetClassName(registeredPlugin.getAppBlocks(), includeDeprecated).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
-        plugin.charts = filterAndGetClassName(registeredPlugin.getCharts(), includeDeprecated).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
-        plugin.dataFilters = filterAndGetClassName(registeredPlugin.getDataFilters(), includeDeprecated).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
-        plugin.logExporters = filterAndGetClassName(registeredPlugin.getLogExporters(), includeDeprecated).stream().filter(c -> subgroup == null || c.startsWith(subgroup)).toList();
+        Predicate<Class<?>> packagePredicate = c -> subgroup == null || c.getPackageName().equals(subgroup);
+        plugin.tasks = filterAndGetClassName(registeredPlugin.getTasks(), includeDeprecated, packagePredicate);
+        plugin.triggers = filterAndGetClassName(registeredPlugin.getTriggers(), includeDeprecated, packagePredicate);
+        plugin.conditions = filterAndGetClassName(registeredPlugin.getConditions(), includeDeprecated, packagePredicate);
+        plugin.storages = filterAndGetClassName(registeredPlugin.getStorages(), includeDeprecated, packagePredicate);
+        plugin.secrets = filterAndGetClassName(registeredPlugin.getSecrets(), includeDeprecated, packagePredicate);
+        plugin.taskRunners = filterAndGetClassName(registeredPlugin.getTaskRunners(), includeDeprecated, packagePredicate);
+        plugin.apps = filterAndGetClassName(registeredPlugin.getApps(), includeDeprecated, packagePredicate);
+        plugin.appBlocks = filterAndGetClassName(registeredPlugin.getAppBlocks(), includeDeprecated, packagePredicate);
+        plugin.charts = filterAndGetClassName(registeredPlugin.getCharts(), includeDeprecated, packagePredicate);
+        plugin.dataFilters = filterAndGetClassName(registeredPlugin.getDataFilters(), includeDeprecated, packagePredicate);
+        plugin.logExporters = filterAndGetClassName(registeredPlugin.getLogExporters(), includeDeprecated, packagePredicate);
+        plugin.additionalPlugins = filterAndGetClassName(registeredPlugin.getAdditionalPlugins(), includeDeprecated, packagePredicate);
 
         return plugin;
     }
@@ -103,15 +110,16 @@ public class Plugin {
      * Filters the given list of class all internal Plugin, as well as, all legacy org.kestra classes.
      * Those classes are only filtered from the documentation to ensure backward compatibility.
      *
-     * @param list The list of classes?
+     * @param list              The list of classes?
      * @param includeDeprecated whether to include deprecated plugins or not
-     * @return  a filtered streams.
+     * @return a filtered streams.
      */
-    private static List<String> filterAndGetClassName(final List<? extends Class<?>> list, boolean includeDeprecated) {
+    private static List<String> filterAndGetClassName(final List<? extends Class<?>> list, boolean includeDeprecated, Predicate<Class<?>> clazzFilter) {
         return list
             .stream()
             .filter(not(io.kestra.core.models.Plugin::isInternal))
             .filter(p -> includeDeprecated || !io.kestra.core.models.Plugin.isDeprecated(p))
+            .filter(clazzFilter)
             .map(Class::getName)
             .filter(c -> !c.startsWith("org.kestra."))
             .toList();

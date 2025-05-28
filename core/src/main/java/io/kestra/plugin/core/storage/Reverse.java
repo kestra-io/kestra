@@ -30,7 +30,7 @@ import java.nio.charset.StandardCharsets;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Reserve a file from the Kestra's internal storage, last line first."
+    title = "Reverse a file from Kestra's internal storage, last line first."
 )
 @Plugin(
     examples = {
@@ -47,19 +47,20 @@ public class Reverse extends Task implements RunnableTask<Reverse.Output> {
         title = "The file to be split."
     )
     @NotNull
+    @PluginProperty(internalStorageURI = true)
     private Property<String> from;
 
     @Schema(
         title = "The separator used to join the file into chunks. By default, it's a newline `\\n` character. If you are on Windows, you might want to use `\\r\\n` instead."
     )
     @Builder.Default
-    private Property<String> separator = Property.of("\n");
+    private Property<String> separator = Property.ofValue("\n");
 
     @Schema(
         title = "The name of a supported charset"
     )
     @Builder.Default
-    private final Property<String> charset = Property.of(StandardCharsets.UTF_8.name());
+    private final Property<String> charset = Property.ofValue(StandardCharsets.UTF_8.name());
 
     @Override
     public Reverse.Output run(RunContext runContext) throws Exception {

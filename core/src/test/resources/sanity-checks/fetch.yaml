@@ -1,0 +1,28 @@
+id: fetch
+namespace: sanitychecks.core
+
+tasks:
+  - id: log_info
+    type: io.kestra.plugin.core.log.Log
+    message: "test"
+
+  - id: log_warn
+    type: io.kestra.plugin.core.log.Log
+    message: "warning"
+    level: WARN
+
+  - id: fetch_info
+    type: io.kestra.plugin.core.log.Fetch
+    level: INFO
+    executionId: "{{ execution.id }}"
+
+  - id: fetch_warning
+    type: "io.kestra.plugin.core.log.Fetch"
+    level: WARN
+    executionId: "{{ execution.id }}"
+
+  - id: assert
+    type: io.kestra.plugin.core.execution.Assert
+    conditions:
+      - "{{ outputs.fetch_info.size == 2 }}"
+      - "{{ outputs.fetch_warning.size == 1 }}"

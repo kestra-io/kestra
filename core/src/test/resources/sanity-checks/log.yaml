@@ -1,0 +1,20 @@
+id: log
+namespace: sanitychecks.core
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+
+
+  - id: trace
+    type: io.kestra.plugin.core.log.Log
+    message: Hello World! 🚀
+    level: TRACE
+
+  - id: many_messages
+    type: io.kestra.plugin.core.log.Log
+    message: 
+      - Hello World! 🚀
+      - From Kestra
+      - ...and beyond

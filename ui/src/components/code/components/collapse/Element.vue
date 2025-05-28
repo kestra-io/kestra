@@ -1,11 +1,11 @@
 <template>
     <div @click="handleClick" class="d-flex my-2 p-2 rounded element">
         <div class="me-2 icon">
-            <TaskIcon :cls="props.element.type" :icons only-icon />
+            <TaskIcon :cls="element.type" :icons only-icon />
         </div>
 
         <div class="flex-grow-1 label">
-            {{ props.element.id }}
+            {{ taskIdentifier }}
         </div>
 
         <el-button
@@ -22,37 +22,55 @@
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, inject} from "vue";
+    import {useI18n} from "vue-i18n";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
+    import {BlockType} from "../../utils/types";
+    import {EDIT_TASK_FUNCTION_INJECTION_KEY} from "../../injectionKeys";
 
     import TaskIcon from "@kestra-io/ui-libs/src/components/misc/TaskIcon.vue";
 
     const emits = defineEmits(["removeElement", "moveElement"]);
 
-    const props = defineProps({
-        section: {type: String, required: true},
-        element: {type: Object, required: true},
-    });
+    const {t} = useI18n();
+
+    const props = defineProps<{
+        blockType: BlockType | "pluginDefaults";
+        section: string;
+        parentPathComplete: string;
+        element: {
+            id: string;
+            type: string;
+        };
+        elementIndex: number;
+    }>();
 
     import {useStore} from "vuex";
+
     const store = useStore();
 
     const icons = computed(() => store.state.plugin.icons);
 
-    import {useRouter, useRoute} from "vue-router";
-    const router = useRouter();
-    const route = useRoute();
+    const editTask = inject(
+        EDIT_TASK_FUNCTION_INJECTION_KEY,
+        () => {},
+    );
+
+    const identifier = computed(() => {
+        return props.section === "pluginDefaults" || props.blockType === "conditions" ? props.element.type : props.element.id;
+    });
+
+    const taskIdentifier = computed(() => {
+        return identifier.value ?? `<${t("no_code.unnamed")} ${props.elementIndex}>`;
+    });
 
     const handleClick = () => {
-        router.replace({
-            query: {
-                ...route.query,
-                section: props.section.toLowerCase(),
-                identifier: props.element.id,
-                type: props.element.type,
-            },
-        });
+        editTask(
+            props.blockType,
+            props.parentPathComplete,
+            props.elementIndex,
+        );
     };
 </script>
 
@@ -69,7 +87,7 @@
     }
 
     & > .label {
-        color: initial;
+        color: inherit;
         font-size: $code-font-sm;
     }
 }

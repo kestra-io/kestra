@@ -65,6 +65,10 @@
     </data-table>
 </template>
 
+<script setup lang="ts">
+
+</script>
+
 <script>
     import Kicon from "../Kicon.vue";
     import Timer from "vue-material-design-icons/Timer.vue";

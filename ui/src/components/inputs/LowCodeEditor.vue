@@ -7,7 +7,7 @@
             :is-read-only="isReadOnly"
             :is-allowed-edit="isAllowedEdit"
             :source="source"
-            :toggle-orientation-button="['topology'].includes(viewType)"
+            :toggle-orientation-button="toggleOrientationButton"
             :flow-graph="props.flowGraph"
             :flow-id="flowId"
             :namespace="namespace"
@@ -95,7 +95,6 @@
                     :input="true"
                     :full-height="false"
                     :navbar="false"
-                    :minimap="false"
                     :model-value="selectedTask.runIf"
                     lang="yaml"
                     class="mt-3"
@@ -106,11 +105,12 @@
 </template>
 
 <script setup>
-// Core
-    import {getCurrentInstance, nextTick, onMounted, ref, watch} from "vue";
+    // Core
+    import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
     import {useStore} from "vuex";
-    import {useVueFlow} from "@vue-flow/core";
+    import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
+    import {useVueFlow} from "@vue-flow/core";
 
     import TaskEdit from "../flows/TaskEdit.vue";
     import SearchField from "../layout/SearchField.vue";
@@ -123,16 +123,17 @@
     import {Topology} from "@kestra-io/ui-libs";
 
     // Utils
-    import {YamlUtils} from "@kestra-io/ui-libs";
-    import {SECTIONS} from "../../utils/constants";
+    import {YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
     import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
 
     const router = useRouter();
 
     const vueflowId = ref(Math.random().toString());
-    // Vue flow methods to interact with Graph
-    const {fitView} = useVueFlow({id: vueflowId.value});
+    const {fitView} = useVueFlow(vueflowId.value);
+
+    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
+    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY);
 
     // props
     const props = defineProps({
@@ -166,9 +167,13 @@
             type: Boolean,
             default: false,
         },
-        viewType: {
-            type: String,
+        horizontalDefault: {
+            type: Boolean,
             default: undefined,
+        },
+        toggleOrientationButton: {
+            type: Boolean,
+            default: false,
         },
         expandedSubflows: {
             type: Array,
@@ -182,7 +187,6 @@
         "loading",
         "expand-subflow",
         "swapped-task",
-        "openNoCode",
     ]);
 
     // Vue instance variables
@@ -190,17 +194,9 @@
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
     const t = getCurrentInstance().appContext.config.globalProperties.$t;
 
-    // Init variables functions
-    const isHorizontalDefault = () => {
-        return props.viewType === "source-topology"
-            ? false
-            : props.viewType?.indexOf("blueprint") !== -1
-                ? true
-                : localStorage.getItem("topology-orientation") === "1";
-    };
-
     // Components variables
-    const isHorizontal = ref(isHorizontalDefault());
+    const isHorizontalLS = useStorage("topology-orientation", props.horizontalDefault);
+    const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value === "true"));
     const vueFlow = ref(null);
     const timer = ref(null);
     const icons = ref(store.getters["plugin/getIcons"]);
@@ -235,18 +231,6 @@
         },
     );
 
-    watch(
-        () => props.viewType,
-        () => {
-            isHorizontal.value =
-                props.viewType === "source-topology"
-                    ? false
-                    : props.viewType?.indexOf("blueprint") !== -1
-                        ? true
-                        : localStorage.getItem("topology-orientation") === "1";
-        },
-    );
-
     // Event listeners & Watchers
     const observeWidth = () => {
         const resizeObserver = new ResizeObserver(function () {
@@ -266,7 +250,7 @@
     // Source edit functions
 
     const onDelete = (event) => {
-        const flowParsed = YamlUtils.parse(props.source);
+        const flowParsed = YAML_UTILS.parse(props.source);
         toast.confirm(
             t("delete task confirm", {taskId: event.id}),
             () => {
@@ -283,9 +267,10 @@
                     });
                     return;
                 }
+                const updatedYmlSource = YAML_UTILS.deleteTask(props.source, event.id, section)
                 emit(
                     "on-edit",
-                    YamlUtils.deleteTask(props.source, event.id, section),
+                    updatedYmlSource,
                     true,
                 );
             },
@@ -293,23 +278,25 @@
         );
     };
 
-    const onCreateNewTask = (details) => {
-        emit("openNoCode", {
-            section: SECTIONS.TASKS.toLowerCase(),
-            identifier: "new",
-            target: details[0],
-            position: details[1],
-        });
+    const onCreateNewTask = (event) => {
+        topologyClick.value = {
+            action: "create",
+            params: {
+                section: SECTIONS.TASKS.toLowerCase(),
+                position: event[1],
+                id: event[0],
+            }
+        };
     };
 
     const onEditTask = (event) => {
-        emit("openNoCode", {
-            section: event.section
-                ? event.section.toLowerCase()
-                : SECTIONS.TASKS.toLowerCase(),
-            identifier: event.task.id,
-            type: event.task.type,
-        });
+        topologyClick.value = {
+            action: "edit",
+            params: {
+                section: (event.section ?? SECTIONS.TASKS).toLowerCase(),
+                id: event.task.id,
+            }
+        };
     };
 
     const onAddFlowableError = (event) => {
@@ -322,16 +309,16 @@
 
     const confirmEdit = (event) => {
         const source = props.source;
-        const task = YamlUtils.extractTask(props.source, YamlUtils.parse(event).id);
+        const task = YAML_UTILS.extractTask(props.source, YAML_UTILS.parse(event).id);
         if (
             task === undefined ||
-            (task && YamlUtils.parse(event).id === taskEditData.value.oldTaskId)
+            (task && YAML_UTILS.parse(event).id === taskEditData.value.oldTaskId)
         ) {
             switch (taskEditData.value.action) {
             case "create_task":
                 emit(
                     "on-edit",
-                    YamlUtils.insertTask(
+                    YAML_UTILS.insertTask(
                         source,
                         taskEditData.value.insertionDetails[0],
                         event,
@@ -343,7 +330,7 @@
             case "edit_task":
                 emit(
                     "on-edit",
-                    YamlUtils.replaceTaskInDocument(
+                    YAML_UTILS.replaceTaskInDocument(
                         source,
                         taskEditData.value.oldTaskId,
                         event,
@@ -354,7 +341,7 @@
             case "add_flowable_error":
                 emit(
                     "on-edit",
-                    YamlUtils.insertErrorInFlowable(
+                    YAML_UTILS.insertErrorInFlowable(
                         props.source,
                         event,
                         taskEditData.value.taskId,
@@ -368,7 +355,7 @@
                 variant: "error",
                 title: t("error detected"),
                 message: t("Task Id already exist in the flow", {
-                    taskId: YamlUtils.parse(event).id,
+                    taskId: YAML_UTILS.parse(event).id,
                 }),
             });
         }
@@ -392,11 +379,8 @@
     };
 
     const toggleOrientation = () => {
-        localStorage.setItem(
-            "topology-orientation",
-            localStorage.getItem("topology-orientation") !== "0" ? "0" : "1",
-        );
-        isHorizontal.value = localStorage.getItem("topology-orientation") === "1";
+        isHorizontal.value = !isHorizontal.value;
+        isHorizontalLS.value = isHorizontal.value;
         fitViewOrientation();
     };
 

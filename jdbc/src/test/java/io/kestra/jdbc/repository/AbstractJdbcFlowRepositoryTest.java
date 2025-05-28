@@ -20,9 +20,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.jdbc.repository.AbstractJdbcRepository.field;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repositories.AbstractFlowRepositoryTest {
     @Inject
@@ -36,9 +36,9 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
 
     @Test
     public void findSourceCode() {
-        List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "io.kestra.plugin.core.condition.MultipleCondition", null, null);
+        List<SearchResult<Flow>> search = flowRepository.findSourceCode(Pageable.from(1, 10, Sort.UNSORTED), "io.kestra.plugin.core.condition.MultipleCondition", MAIN_TENANT, null);
 
-        assertThat((long) search.size(), is(2L));
+        assertThat((long) search.size()).isEqualTo(2L);
 
         SearchResult<Flow> flow = search
             .stream()
@@ -47,7 +47,7 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                 .equals("trigger-multiplecondition-listener"))
             .findFirst()
             .orElseThrow();
-        assertThat(flow.getFragments().getFirst(), containsString("condition.MultipleCondition[/mark]"));
+        assertThat(flow.getFragments().getFirst()).contains("condition.MultipleCondition[/mark]");
     }
 
     @Disabled("Test disabled: no exception thrown when converting to dynamic properties")
@@ -73,12 +73,12 @@ public abstract class AbstractJdbcFlowRepositoryTest extends io.kestra.core.repo
                 .execute();
         });
 
-        Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(null, "io.kestra.unittest", "invalid");
+        Optional<FlowWithSource> flow = flowRepository.findByIdWithSource(MAIN_TENANT, "io.kestra.unittest", "invalid");
 
         try {
-            assertThat(flow.isPresent(), is(true));
-            assertThat(flow.get(), instanceOf(FlowWithException.class));
-            assertThat(((FlowWithException) flow.get()).getException(), containsString("Cannot deserialize value of type `org.slf4j.event.Level`"));
+            assertThat(flow.isPresent()).isTrue();
+            assertThat(flow.get()).isInstanceOf(FlowWithException.class);
+            assertThat(((FlowWithException) flow.get()).getException()).contains("Cannot deserialize value of type `org.slf4j.event.Level`");
         } finally {
             flow.ifPresent(value -> flowRepository.delete(value));
         }

@@ -1,7 +1,7 @@
 import {createStore} from "vuex";
 import {createRouter, createWebHistory} from "vue-router";
 import VueGtag from "vue-gtag";
-import {setI18nLanguage, loadLocaleMessages, setupI18n} from "../translations/i18n";
+import {loadLocaleMessages, setI18nLanguage, setupI18n} from "../translations/i18n";
 import moment from "moment-timezone";
 import "moment/dist/locale/de"
 import "moment/dist/locale/es"
@@ -17,21 +17,20 @@ import "moment/dist/locale/zh-cn"
 import {extendMoment} from "moment-range";
 import VueSidebarMenu from "vue-sidebar-menu";
 import {
-    Chart,
-    CategoryScale,
-    LinearScale,
-    BarElement,
+    ArcElement,
     BarController,
-    LineElement,
-    LineController,
-    PointElement,
-    Tooltip,
+    BarElement,
+    CategoryScale,
+    Chart,
+    DoughnutController,
     Filler,
     Legend,
-    ArcElement,
-    DoughnutController,
+    LinearScale,
+    LineController,
+    LineElement,
+    PointElement,
+    Tooltip,
 } from "chart.js";
-import {TreemapController, TreemapElement} from "chartjs-chart-treemap"
 import Vue3Tour from "vue3-tour"
 import VueVirtualScroller from "vue-virtual-scroller";
 
@@ -42,25 +41,14 @@ import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"
 
-import TaskArray from "../components/flows/tasks/TaskArray.vue";
-import TaskBoolean from "../components/flows/tasks/TaskBoolean.vue";
-import TaskComplex from "../components/flows/tasks/TaskComplex.vue";
-import TaskCondition from "../components/flows/tasks/TaskCondition.vue";
-import TaskDict from "../components/flows/tasks/TaskDict.vue";
-import TaskExpression from "../components/flows/tasks/TaskExpression.vue";
-import TaskEnum from "../components/flows/tasks/TaskEnum.vue";
-import TaskNumber from "../components/flows/tasks/TaskNumber.vue";
-import TaskObject from "../components/flows/tasks/TaskObject.vue";
-import TaskString from "../components/flows/tasks/TaskString.vue";
-import TaskTask from "../components/flows/tasks/TaskTask.vue";
-import TaskOneOf from "../components/flows/tasks/TaskOneOf.vue";
-import TaskSubflowNamespace from "../components/flows/tasks/TaskSubflowNamespace.vue";
-import TaskSubflowId from "../components/flows/tasks/TaskSubflowId.vue";
-import TaskSubflowInputs from "../components/flows/tasks/TaskSubflowInputs.vue";
+const TasksComponentsRaw = import.meta.glob("../components/flows/tasks/Task*.vue", {eager: true});
+
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
-import TaskTaskRunner from "../components/flows/tasks/TaskTaskRunner.vue";
+
+const TasksComponents = Object.entries(TasksComponentsRaw)
+    .map(([path, component]) => [path.replace(/^.*\/(.*)\.vue$/, "$1"), component.default]);
 
 export default async (app, routes, stores, translations, additionalTranslations = {}) => {
     // charts
@@ -78,9 +66,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
         Tooltip,
         Legend,
         CategoryScale,
-        LinearScale,
-        TreemapController,
-        TreemapElement
+        LinearScale
     );
 
     // store
@@ -152,6 +138,7 @@ export default async (app, routes, stores, translations, additionalTranslations 
         await setI18nLanguage(i18n, locale);
     }
     app.use(i18n);
+    store.$i18n = i18n.global;
 
     // moment
     moment.locale(locale);
@@ -164,6 +151,9 @@ export default async (app, routes, stores, translations, additionalTranslations 
     app.use(Vue3Tour)
     app.use(VueVirtualScroller)
 
+    // Passing toast to VUEX store to be used in modules
+    store.$toast = app.config.globalProperties.$toast;
+
     // filters
     app.config.globalProperties.$filters = filters;
 
@@ -175,23 +165,10 @@ export default async (app, routes, stores, translations, additionalTranslations 
     createEventsRouter(app, store, router);
 
     // Task have some recursion and need to be register globally
-    app.component("TaskArray", TaskArray)
-    app.component("TaskBoolean", TaskBoolean)
-    app.component("TaskCondition", TaskCondition)
-    app.component("TaskDict", TaskDict)
-    app.component("TaskExpression", TaskExpression)
-    app.component("TaskEnum", TaskEnum)
-    app.component("TaskNumber", TaskNumber)
-    app.component("TaskObject", TaskObject)
-    app.component("TaskComplex", TaskComplex)
-    app.component("TaskString", TaskString)
-    app.component("TaskTask", TaskTask)
-    app.component("TaskOneOf", TaskOneOf)
-    app.component("TaskSubflowNamespace", TaskSubflowNamespace)
-    app.component("TaskSubflowId", TaskSubflowId)
-    app.component("TaskSubflowInputs", TaskSubflowInputs)
-    app.component("TaskTaskRunner", TaskTaskRunner)
-    app.component("LeftMenuLink", LeftMenuLink)
+    for(const [name, comp] of TasksComponents){
+        app.component(name, comp)
+    }
+    app.component("LeftMenuLink", LeftMenuLink);
     app.component("RouterMd", RouterMd);
     const components = {
         ...(import.meta.glob("../../node_modules/@nuxtjs/mdc/dist/runtime/components/prose/*.vue", {eager: true})),

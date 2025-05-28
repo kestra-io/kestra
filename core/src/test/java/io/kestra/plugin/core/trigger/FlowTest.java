@@ -2,8 +2,10 @@ package io.kestra.plugin.core.trigger;
 
 import io.kestra.core.models.Label;
 import io.kestra.core.models.executions.Execution;
+import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.property.Property;
+import io.kestra.core.models.triggers.multipleflows.MultipleConditionStorageInterface;
 import io.kestra.core.runners.RunContextFactory;
 import io.kestra.plugin.core.debug.Return;
 import io.kestra.core.utils.IdUtils;
@@ -13,17 +15,18 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.hasItem;
-import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class FlowTest {
     @Inject
     RunContextFactory runContextFactory;
+
+    @Inject
+    Optional<MultipleConditionStorageInterface> multipleConditionStorage;
 
     @Test
     void success() {
@@ -40,7 +43,7 @@ class FlowTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format(Property.of("test"))
+                .format(Property.ofValue("test"))
                 .build()))
             .build();
         var execution = Execution.builder()
@@ -49,6 +52,10 @@ class FlowTest {
             .flowId("flow-with-flow-trigger")
             .flowRevision(1)
             .state(State.of(State.Type.RUNNING, Collections.emptyList()))
+            .labels(List.of(
+                new Label("execution-label", "execution"),
+                new Label (Label.CORRELATION_ID, "correlationId")
+            ))
             .build();
         var flowTrigger = Flow.builder()
             .id("flow")
@@ -56,15 +63,17 @@ class FlowTest {
             .build();
 
         Optional<Execution> evaluate = flowTrigger.evaluate(
-            runContextFactory.of(),
+                multipleConditionStorage, runContextFactory.of(),
             flow,
             execution
         );
 
-        assertThat(evaluate.isPresent(), is(true));
-        assertThat(evaluate.get().getFlowId(), is("flow-with-flow-trigger"));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
+        assertThat(evaluate.isPresent()).isTrue();
+        assertThat(evaluate.get().getFlowId()).isEqualTo("flow-with-flow-trigger");
+        assertThat(evaluate.get().getLabels()).hasSize(3);
+        assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
+        assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-2", "flow-label-2"));
+        assertThat(evaluate.get().getLabels()).contains(new Label(Label.CORRELATION_ID, "correlationId"));
     }
 
     @Test
@@ -83,7 +92,7 @@ class FlowTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format(Property.of("test"))
+                .format(Property.ofValue("test"))
                 .build()))
             .build();
         var execution = Execution.builder()
@@ -93,6 +102,10 @@ class FlowTest {
             .flowId("flow-with-flow-trigger")
             .flowRevision(1)
             .state(State.of(State.Type.RUNNING, Collections.emptyList()))
+            .labels(List.of(
+                new Label("execution-label", "execution"),
+                new Label (Label.CORRELATION_ID, "correlationId")
+            ))
             .build();
         var flowTrigger = Flow.builder()
             .id("flow")
@@ -100,16 +113,18 @@ class FlowTest {
             .build();
 
         Optional<Execution> evaluate = flowTrigger.evaluate(
-            runContextFactory.of(),
+                multipleConditionStorage, runContextFactory.of(),
             flow,
             execution
         );
 
-        assertThat(evaluate.isPresent(), is(true));
-        assertThat(evaluate.get().getFlowId(), is("flow-with-flow-trigger"));
-        assertThat(evaluate.get().getTenantId(), is("tenantId"));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
+        assertThat(evaluate.isPresent()).isTrue();
+        assertThat(evaluate.get().getFlowId()).isEqualTo("flow-with-flow-trigger");
+        assertThat(evaluate.get().getTenantId()).isEqualTo("tenantId");
+        assertThat(evaluate.get().getLabels()).hasSize(3);
+        assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
+        assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-2", "flow-label-2"));
+        assertThat(evaluate.get().getLabels()).contains(new Label(Label.CORRELATION_ID, "correlationId"));
     }
 
     @Test
@@ -125,7 +140,7 @@ class FlowTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format(Property.of("test"))
+                .format(Property.ofValue("test"))
                 .build()))
             .build();
         var execution = Execution.builder()
@@ -134,6 +149,10 @@ class FlowTest {
             .flowId("flow-with-flow-trigger")
             .flowRevision(1)
             .state(State.of(State.Type.RUNNING, Collections.emptyList()))
+            .labels(List.of(
+                new Label("execution-label", "execution"),
+                new Label (Label.CORRELATION_ID, "correlationId")
+            ))
             .build();
         var flowTrigger = Flow.builder()
             .id("flow")
@@ -146,14 +165,17 @@ class FlowTest {
             ))
             .build();
 
-        Optional<Execution> evaluate = flowTrigger.evaluate(runContextFactory.of(), flow, execution);
+        Optional<Execution> evaluate = flowTrigger.evaluate(multipleConditionStorage, runContextFactory.of(), flow, execution);
 
-        assertThat(evaluate.isPresent(), is(true));
-        assertThat(evaluate.get().getLabels(), hasSize(5));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-1", "flow-label-1")));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("flow-label-2", "flow-label-2")));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-1", "trigger-label-1")));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-2", "trigger-label-2")));
-        assertThat(evaluate.get().getLabels(), hasItem(new Label("trigger-label-3", "")));
+        assertThat(evaluate.isPresent()).isTrue();
+        assertThat(evaluate.get().getLabels()).hasSize(6);
+        assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-1", "flow-label-1"));
+        assertThat(evaluate.get().getLabels()).contains(new Label("flow-label-2", "flow-label-2"));
+        assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-1", "trigger-label-1"));
+        assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-2", "trigger-label-2"));
+        assertThat(evaluate.get().getLabels()).contains(new Label("trigger-label-3", ""));
+        assertThat(evaluate.get().getLabels()).contains(new Label(Label.CORRELATION_ID, "correlationId"));
+        assertThat(evaluate.get().getTrigger()).extracting(ExecutionTrigger::getVariables).hasFieldOrProperty("executionLabels");
+        assertThat(evaluate.get().getTrigger().getVariables().get("executionLabels")).isEqualTo(Map.of("execution-label", "execution"));
     }
 }

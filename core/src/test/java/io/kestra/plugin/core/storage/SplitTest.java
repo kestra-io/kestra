@@ -22,9 +22,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.endsWith;
-import static org.hamcrest.Matchers.is;
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class SplitTest {
@@ -40,15 +39,15 @@ class SplitTest {
         URI put = storageUpload(1000);
 
         Split result = Split.builder()
-            .from(Property.of(put.toString()))
-            .partitions(Property.of(8))
+            .from(Property.ofValue(put.toString()))
+            .partitions(Property.ofValue(8))
             .build();
 
         Split.Output run = result.run(runContext);
 
-        assertThat(run.getUris().size(), is(8));
-        assertThat(run.getUris().getFirst().getPath(), endsWith(".yml"));
-        assertThat(StringUtils.countMatches(readAll(run.getUris()), "\n"), is(1000));
+        assertThat(run.getUris().size()).isEqualTo(8);
+        assertThat(run.getUris().getFirst().getPath()).endsWith(".yml");
+        assertThat(StringUtils.countMatches(readAll(run.getUris()), "\n")).isEqualTo(1000);
     }
 
     @Test
@@ -57,14 +56,14 @@ class SplitTest {
         URI put = storageUpload(1000);
 
         Split result = Split.builder()
-            .from(Property.of(put.toString()))
-            .rows(Property.of(10))
+            .from(Property.ofValue(put.toString()))
+            .rows(Property.ofValue(10))
             .build();
 
         Split.Output run = result.run(runContext);
 
-        assertThat(run.getUris().size(), is(100));
-        assertThat(readAll(run.getUris()), is(String.join("\n", content(1000)) + "\n"));
+        assertThat(run.getUris().size()).isEqualTo(100);
+        assertThat(readAll(run.getUris())).isEqualTo(String.join("\n", content(1000)) + "\n");
     }
 
     @Test
@@ -73,14 +72,14 @@ class SplitTest {
         URI put = storageUpload(12288);
 
         Split result = Split.builder()
-            .from(Property.of(put.toString()))
-            .bytes(Property.of("1KB"))
+            .from(Property.ofValue(put.toString()))
+            .bytes(Property.ofValue("1KB"))
             .build();
 
         Split.Output run = result.run(runContext);
 
-        assertThat(run.getUris().size(), is(251));
-        assertThat(readAll(run.getUris()), is(String.join("\n", content(12288)) + "\n"));
+        assertThat(run.getUris().size()).isEqualTo(251);
+        assertThat(readAll(run.getUris())).isEqualTo(String.join("\n", content(12288)) + "\n");
     }
 
     private List<String> content(int count) {
@@ -93,7 +92,7 @@ class SplitTest {
     private String readAll(List<URI> uris) throws IOException {
         return uris
             .stream()
-            .map(Rethrow.throwFunction(uri -> CharStreams.toString(new InputStreamReader(storageInterface.get(null, null, uri)))))
+            .map(Rethrow.throwFunction(uri -> CharStreams.toString(new InputStreamReader(storageInterface.get(MAIN_TENANT, null, uri)))))
             .collect(Collectors.joining());
     }
 
@@ -104,7 +103,7 @@ class SplitTest {
         Files.write(tempFile.toPath(), content(count));
 
         return storageInterface.put(
-            null,
+            MAIN_TENANT,
             null,
             new URI("/file/storage/get.yml"),
             new FileInputStream(tempFile)

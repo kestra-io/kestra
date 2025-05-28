@@ -1,4 +1,4 @@
-import YamlUtils from "../utils/yamlUtils";
+import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 import Utils from "../utils/utils";
 import {apiUrl} from "override/utils/route";
 
@@ -37,7 +37,7 @@ export default {
             })
         },
         saveTemplate({commit}, options) {
-            const template = YamlUtils.parse(options.template)
+            const template = YAML_UTILS.parse(options.template)
             return this.$http.put(`${apiUrl(this)}/templates/${template.namespace}/${template.id}`, template).then(response => {
                 if (response.status >= 300) {
                     return Promise.reject(new Error("Server error on template save"))
@@ -49,7 +49,7 @@ export default {
             })
         },
         createTemplate({commit}, options) {
-            return this.$http.post(`${apiUrl(this)}/templates`, YamlUtils.parse(options.template)).then(response => {
+            return this.$http.post(`${apiUrl(this)}/templates`, YAML_UTILS.parse(options.template)).then(response => {
                 commit("setTemplate", response.data)
 
                 return response.data;

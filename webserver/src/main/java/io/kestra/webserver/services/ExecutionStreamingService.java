@@ -5,7 +5,7 @@ import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.services.ConditionService;
+import io.kestra.core.services.ExecutionService;
 import io.micronaut.http.sse.Event;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
@@ -34,17 +34,17 @@ public class ExecutionStreamingService {
     private final Object subscriberLock = new Object();
 
     private final QueueInterface<Execution> executionQueue;
-    private final ConditionService conditionService;
+    private final ExecutionService executionService;
 
     private Runnable queueConsumer;
 
     @Inject
     public ExecutionStreamingService(
         @Named(QueueFactoryInterface.EXECUTION_NAMED) QueueInterface<Execution> executionQueue,
-        ConditionService conditionService
+        ExecutionService executionService
     ) {
         this.executionQueue = executionQueue;
-        this.conditionService = conditionService;
+        this.executionService = executionService;
     }
 
     @PostConstruct
@@ -115,8 +115,9 @@ public class ExecutionStreamingService {
      * Utility method to know if following an execution can be stopped.
      */
     public boolean isStopFollow(Flow flow, Execution execution) {
-        return conditionService.isTerminatedWithListeners(flow, execution) &&
-            execution.getState().getCurrent() != State.Type.PAUSED;
+        return executionService.isTerminated(flow, execution) &&
+            execution.getState().getCurrent() != State.Type.PAUSED &&
+            execution.getTaskRunList().stream().allMatch(taskRun -> taskRun.getState().isTerminated());
     }
 
     @PreDestroy

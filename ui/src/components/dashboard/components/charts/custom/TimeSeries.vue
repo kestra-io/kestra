@@ -4,9 +4,9 @@
         v-if="generated !== undefined"
         :data="parsedData"
         :options
-        :plugins="chartOptions.legend.enabled ? [customBarLegend] : []"
+        :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
         class="chart"
-        :class="chartOptions.legend.enabled ? 'with-legend' : ''"
+        :class="chartOptions?.legend?.enabled ? 'with-legend' : ''"
     />
     <NoData v-else />
 </template>
@@ -19,26 +19,25 @@
     import {Bar} from "vue-chartjs";
 
     import {customBarLegend} from "../legend.js";
-    import {defaultConfig, getConsistentHEXColor} from "../../../../../utils/charts.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../../../utils/charts.js";
 
     import {useStore} from "vuex";
     import moment from "moment";
 
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../../../utils/utils"
+    import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
 
     const store = useStore();
 
-    const dashboard = computed(() => store.state.dashboard.dashboard);
-
     const route = useRoute();
+    const router = useRouter();
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: Number, required: true},
         chart: {type: Object, required: true},
-        isPreview: {type: Boolean, required: false, default: false}
+        showDefault: {type: Boolean, default: false}
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
@@ -66,7 +65,7 @@
             borderColor: "transparent",
             borderWidth: 2,
             plugins: {
-                ...(chartOptions.legend.enabled
+                ...(chartOptions?.legend?.enabled
                     ? {
                         customBarLegend: {
                             containerID,
@@ -121,6 +120,12 @@
                         }
                     },
                 }),
+            },
+            onClick: (e, elements) => {
+                if (data.type === "io.kestra.plugin.core.dashboard.data.Logs") {
+                    return;
+                }
+                chartClick(moment, router, route, {}, parsedData.value, elements, "label");
             },
         }, theme.value);
     });
@@ -233,44 +238,24 @@
     });
 
     const generated = ref();
-    const generate = async () => {
-        if (!props.isPreview) {
-            const params = {
-                id: dashboard.value.id,
-                chartId: props.chart.id,
-                startDate: route.query.timeRange
-                    ? moment()
-                        .subtract(
-                            moment.duration(route.query.timeRange).as("milliseconds"),
-                        )
-                        .toISOString(true)
-                    : route.query.startDate ||
-                        moment()
-                            .subtract(moment.duration("PT720H").as("milliseconds"))
-                            .toISOString(true),
-                endDate: route.query.timeRange
-                    ? moment().toISOString(true)
-                    : route.query.endDate || moment().toISOString(true),
+    const generate = async (id) => {
+        let decodedParams = decodeSearchParams(route.query, undefined, []);
+        if (!props.showDefault) {
+            let params = {
+                id,
+                chartId: props.chart.id
             };
-            if (route.query.namespace) {
-                params.namespace = route.query.namespace;
+            if (decodedParams) {
+                params = {...params, filters: decodedParams}
             }
-            if (route.query.labels) {
-                params.labels = Object.fromEntries(route.query.labels.map(l => l.split(":")));
-            }
-
             generated.value = await store.dispatch("dashboard/generate", params);
         } else {
-            generated.value = await store.dispatch("dashboard/chartPreview", props.chart.content)
+            generated.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filter: decodedParams}})
         }
     };
 
-    watch(route, async () => await generate());
-    watch(
-        () => props.identifier,
-        () => generate(),
-    );
-    onMounted(() => generate());
+    watch(route, async (route) => await generate(route.params?.id));
+    onMounted(() => generate(route.params.id));
 </script>
 
 <style lang="scss" scoped>
@@ -285,4 +270,3 @@
     max-height: var(--chart-height);
 }
 </style>
-

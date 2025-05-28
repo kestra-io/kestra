@@ -2,7 +2,7 @@
     <TopNavBar :title="routeInfo.title" :breadcrumb="props.breadcrumb">
         <template #additional-right v-if="canCreate">
             <ul>
-                <li v-if="props.id">
+                <li v-if="props.id && props.id !== 'default'">
                     <router-link
                         :to="{
                             name: 'dashboards/update',
@@ -54,6 +54,7 @@
     import Pencil from "vue-material-design-icons/Pencil.vue";
     import Plus from "vue-material-design-icons/Plus.vue";
     import ViewDashboardEdit from "vue-material-design-icons/ViewDashboardEdit.vue";
+    import useRouteContext from "../../../mixins/useRouteContext.js";
 
     const store = useStore();
     const {t} = useI18n({useScope: "global"});
@@ -72,4 +73,6 @@
     const routeInfo = computed(() => ({
         title: props.title ?? t("homeDashboard.title"),
     }));
+
+    useRouteContext(routeInfo);
 </script>

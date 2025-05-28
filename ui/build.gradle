@@ -7,15 +7,16 @@ node {
     version = '22.11.0'
 }
 
-
-tasks.register('installFrontend', NpmTask) {
-    description = 'Installs dependencies'
-    args = ['install']
-}
-
 tasks.register('assembleFrontend', NpmTask) {
-    dependsOn installFrontend
+    dependsOn npmInstall
     description = 'Builds the frontend'
+
+    inputs.files(fileTree('node_modules'))
+    inputs.files(fileTree('src'))
+    inputs.file('index.html')
+    inputs.file('package.json')
+    inputs.file('vite.config.js')
+
     args = ['run', 'build']
     outputs.dir('../webserver/src/main/resources/ui')
 }

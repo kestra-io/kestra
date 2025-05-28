@@ -19,8 +19,7 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.notNullValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 class StatsControllerTest {
@@ -33,36 +32,36 @@ class StatsControllerTest {
     void dailyStatistics() {
         var dailyStatistics = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/stats/executions/daily", new StatsController.StatisticRequest(null, null, null, null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), null))
+                .POST("/api/v1/main/stats/executions/daily", new StatsController.StatisticRequest(null, null, null, null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), null))
                 .contentType(MediaType.APPLICATION_JSON),
             Argument.listOf(DailyExecutionStatistics.class)
         );
 
-        assertThat(dailyStatistics, notNullValue());
+        assertThat(dailyStatistics).isNotNull();
     }
 
     @Test
     void logsDailyStatistics() {
         var dailyStatistics = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/stats/logs/daily", new StatsController.LogStatisticRequest(null, null, null, null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now()))
+                .POST("/api/v1/main/stats/logs/daily", new StatsController.LogStatisticRequest(null, null, null, null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now()))
                 .contentType(MediaType.APPLICATION_JSON),
             Argument.listOf(LogStatistics.class)
         );
 
-        assertThat(dailyStatistics, notNullValue());
+        assertThat(dailyStatistics).isNotNull();
     }
 
     @Test
     void logDailyExecutions() {
         var dailyStatistics = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/stats/executions/latest/group-by-flow", new StatsController.LastExecutionsRequest(List.of(ExecutionRepositoryInterface.FlowFilter.builder().namespace("io.kestra.test").id("logs").build())))
+                .POST("/api/v1/main/stats/executions/latest/group-by-flow", new StatsController.LastExecutionsRequest(List.of(ExecutionRepositoryInterface.FlowFilter.builder().namespace("io.kestra.test").id("logs").build())))
                 .contentType(MediaType.APPLICATION_JSON),
             Argument.listOf(Execution.class)
         );
 
-        assertThat(dailyStatistics, notNullValue());
+        assertThat(dailyStatistics).isNotNull();
     }
 
 
@@ -70,12 +69,12 @@ class StatsControllerTest {
     void lastExecutions() {
         var dailyStatistics = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/stats/executions/latest/group-by-flow", new StatsController.LastExecutionsRequest(List.of(ExecutionRepositoryInterface.FlowFilter.builder().namespace("io.kestra.test").id("logs").build())))
+                .POST("/api/v1/main/stats/executions/latest/group-by-flow", new StatsController.LastExecutionsRequest(List.of(ExecutionRepositoryInterface.FlowFilter.builder().namespace("io.kestra.test").id("logs").build())))
                 .contentType(MediaType.APPLICATION_JSON),
             Argument.listOf(Execution.class)
         );
 
-        assertThat(dailyStatistics, notNullValue());
+        assertThat(dailyStatistics).isNotNull();
     }
 
     @Test
@@ -86,13 +85,13 @@ class StatsControllerTest {
         // When
         Map<String, ExecutionCountStatistics> response = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/stats/executions/daily/group-by-namespace", body)
+                .POST("/api/v1/main/stats/executions/daily/group-by-namespace", body)
                 .contentType(MediaType.APPLICATION_JSON),
             Argument.mapOf(String.class, ExecutionCountStatistics.class)
         );
 
         // Then
-        assertThat(response, notNullValue());
+        assertThat(response).isNotNull();
     }
 
     @Test
@@ -103,13 +102,13 @@ class StatsControllerTest {
         // When
         SummaryStatistics response = client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/stats/summary", body)
+                .POST("/api/v1/main/stats/summary", body)
                 .contentType(MediaType.APPLICATION_JSON),
             SummaryStatistics.class
         );
 
         // Then
-        assertThat(response, notNullValue());
+        assertThat(response).isNotNull();
     }
 
 }

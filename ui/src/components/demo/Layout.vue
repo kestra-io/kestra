@@ -6,42 +6,26 @@
                 <div class="flare" />
                 {{ $t('demos.enterprise_edition') }}
             </div>
+        </div>
+        <div class="msg-block">
             <h2>{{ title }}</h2>
+            <div v-if="video" class="video-container">
+                <iframe
+                    v-if="video.source"
+                    :src="video.source"
+                    allowfullscreen
+                    allow="accelerometer; clipboard-write; encrypted-media; gyroscope;"
+                />
+            </div>
             <p><slot name="message" /></p>
-            <a class="el-button el-button--large el-button--primary" target="_blank" :href="getADemoUrl.href">
-                {{ $t("demos.get_a_demo_button") }}
-            </a>
+            <DemoButtons />
         </div>
     </EmptyTemplate>
 </template>
 
 <script lang="ts" setup>
-    import {onMounted, nextTick, computed} from "vue";
-    import {useStore} from "vuex";
-    import {useRoute} from "vue-router";
     import EmptyTemplate from "../layout/EmptyTemplate.vue";
-
-    const store = useStore();
-    const route = useRoute();
-
-    onMounted(() => {
-        store.commit("doc/setDocPath", "<reset>")
-        nextTick(() => {
-            store.commit("doc/setDocPath", "")
-            store.commit("misc/setContextInfoBarOpenTab", "docs")
-        })
-    });
-
-    const getADemoUrl = computed(() => {
-        const demoUrl = new URL("https://kestra.io/demo");
-        // set all utm params from the route query
-        for (const [key, value] of Object.entries(route.query)) {
-            if (key.startsWith("utm_")) {
-                demoUrl.searchParams.set(key, value as string);
-            }
-        }
-        return demoUrl;
-    });
+    import DemoButtons from "./DemoButtons.vue";
 
     defineProps<{
         title: string;
@@ -49,6 +33,10 @@
             source: string;
             alt: string;
         };
+        video?: {
+            source: string;
+        };
+        embed?: boolean;
     }>();
 </script>
 
@@ -56,7 +44,9 @@
     @import "@kestra-io/ui-libs/src/scss/color-palette.scss";
 
     .img {
-        width: 400px;
+        width: 253px;
+        height: 212px;
+        margin-bottom: -1.5rem;
     }
 
     @keyframes move-border {
@@ -65,9 +55,8 @@
         100%{background-position: 0% 0%}
     }
 
-    .message-block{
-        text-align: left;
-        width: 400px;
+    .message-block {
+        width: 665px;
         margin: 0 auto;
 
         .enterprise-tag::before,
@@ -90,8 +79,6 @@
             animation: move-border 3s linear infinite;
         }
 
-
-
         .enterprise-tag::after{
             z-index: -1;
             background: $base-gray-100;
@@ -111,6 +98,7 @@
             border-radius: 1rem;
             display: inline-block;
             z-index: 2;
+            margin: 0 auto;
             html.dark &{
                 background: #FBFBFB26;
             }
@@ -156,18 +144,44 @@
 
             }
         }
+    }
 
-        h2 {
-            margin-top: 1rem;
+.msg-block {
+    text-align: left;
+    width: 665px;
+    margin: 0 auto;
+    h2 {
+            margin: 1.5rem 0;
             line-height: 30px;
             font-size: 20px;
             font-weight: 600;
+            text-align: center;
         }
 
         p {
             line-height: 22px;
             font-size: 14px;
+            text-align: left;
         }
-    }
 
+        .video-container {
+            position: relative;
+            padding-bottom: 56.25%;
+            border-radius: 8px;
+            border: 1px solid var(--ks-border-primary);
+            overflow: hidden;
+            margin: 1rem auto;
+
+            iframe {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                width: 100%;
+                height: 100%;
+                object-fit: contain;
+                margin: 0;
+            }
+        }
+}
 </style>

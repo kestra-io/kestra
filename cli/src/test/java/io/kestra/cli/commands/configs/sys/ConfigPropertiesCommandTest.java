@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.StringContains.containsString;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ConfigPropertiesCommandTest {
     @Test
@@ -20,8 +19,8 @@ class ConfigPropertiesCommandTest {
         try (ApplicationContext ctx = ApplicationContext.run(Environment.CLI, Environment.TEST)) {
             PicocliRunner.call(ConfigPropertiesCommand.class, ctx);
 
-            assertThat(out.toString(), containsString("activeEnvironments:"));
-            assertThat(out.toString(), containsString("- test"));
+            assertThat(out.toString()).contains("activeEnvironments:");
+            assertThat(out.toString()).contains("- test");
         }
     }
 }

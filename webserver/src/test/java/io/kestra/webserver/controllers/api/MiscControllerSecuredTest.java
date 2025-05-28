@@ -1,6 +1,5 @@
 package io.kestra.webserver.controllers.api;
 
-import io.kestra.webserver.controllers.api.MiscController;
 import io.kestra.webserver.services.BasicAuthService;
 import io.micronaut.context.annotation.Property;
 import io.micronaut.http.HttpRequest;
@@ -10,8 +9,7 @@ import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import org.junit.jupiter.api.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
 @Property(name = "kestra.server.basic-auth.enabled", value = "true")
@@ -24,12 +22,12 @@ class MiscControllerSecuredTest {
     private BasicAuthService.BasicAuthConfiguration basicAuthConfiguration;
 
     @Test
-    void configuration() {
+    void getConfiguration() {
         var response = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/configs").basicAuth(
             basicAuthConfiguration.getUsername(),
             basicAuthConfiguration.getPassword()
         ), MiscController.Configuration.class);
 
-        assertThat(response.getIsBasicAuthEnabled(), is(true));
+        assertThat(response.getIsBasicAuthEnabled()).isTrue();
     }
 }

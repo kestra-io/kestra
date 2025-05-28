@@ -29,25 +29,26 @@
 </template>
 
 <script setup>
+    import {YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
+
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 </script>
 
 <script>
     import Task from "./Task"
-    import YamlUtils from "../../../utils/yamlUtils";
     import TaskEditor from "../TaskEditor.vue"
     import Drawer from "../../Drawer.vue"
-    import {SECTIONS as SECTION} from "../../../utils/constants.js";
 
     export default {
+        inheritAttrs: false,
         mixins: [Task],
         components: {TaskEditor, Drawer},
         emits: ["update:modelValue"],
         props: {
             section: {
                 type: String,
-                default: SECTION.TASKS
+                default: SECTIONS.TASKS
             },
         },
         data() {
@@ -57,12 +58,12 @@
         },
         computed: {
             taskYaml() {
-                return YamlUtils.stringify(this.modelValue);
+                return YAML_UTILS.stringify(this.modelValue);
             }
         },
         methods: {
             onInput(value) {
-                this.$emit("update:modelValue", YamlUtils.parse(value));
+                this.$emit("update:modelValue", YAML_UTILS.parse(value));
             },
         }
     };

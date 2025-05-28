@@ -1,22 +1,26 @@
 <template>
     <span v-if="required" class="me-1 text-danger">*</span>
-    <span v-if="label" class="label">{{ label }}</span>
-    <div class="mt-1 mb-2 wrapper" :class="props.class">
+    <label v-if="label" class="label" :for="uid">{{ label }}</label>
+    <div class="wrapper" :class="[props.margin, props.class]">
         <el-input
             v-model="input"
-            @input="handleInput"
+            :id="uid"
             :placeholder
             :disabled
-            type="textarea"
+            :type="disabled ? '' : 'textarea'"
+            :suffix-icon="Lock"
             :autosize="{minRows: 1}"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {ref, watch} from "vue";
+    import {useId, computed} from "vue";
+    import Lock from "vue-material-design-icons/Lock.vue";
 
     defineOptions({inheritAttrs: false});
+
+    const uid = useId();
 
     const emits = defineEmits(["update:modelValue"]);
     const props = defineProps({
@@ -25,25 +29,23 @@
         placeholder: {type: String, default: ""},
         required: {type: Boolean, default: false},
         disabled: {type: Boolean, default: false},
+        margin: {type: String, default: "mt-1 mb-2"},
         class: {type: String, default: undefined},
     });
 
-    const input = ref(props.modelValue);
-
-    const handleInput = (value: string) => {
-        emits("update:modelValue", value);
-    };
-
-    watch(
-        () => props.modelValue,
-        (newValue) => {
-            if (newValue !== input.value) {
-                input.value = newValue;
-            }
+    const input = computed({
+        get: () => props.modelValue,
+        set: (value) => {
+            emits("update:modelValue", value);
         },
-    );
+    });
 </script>
 
 <style scoped lang="scss">
 @import "../../styles/code.scss";
+:deep(.el-input__icon) {
+    .lock-icon {
+        color: var(--ks-content-inactive);
+    }
+}
 </style>

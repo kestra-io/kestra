@@ -2,15 +2,16 @@
     <nav data-component="FILENAME_PLACEHOLDER" class="d-flex w-100 gap-3 top-bar">
         <div class="d-flex flex-column flex-grow-1 flex-shrink-1 overflow-hidden top-title">
             <el-breadcrumb v-if="breadcrumb">
-                <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x">
-                    <router-link :to="item.link">
+                <el-breadcrumb-item v-for="(item, x) in breadcrumb" :key="x" :class="{'pe-none': item.disabled}">
+                    <router-link :to="!item.disabled ? item.link : {}">
                         {{ item.label }}
                     </router-link>
                 </el-breadcrumb-item>
             </el-breadcrumb>
-            <h1 class="h5 fw-semibold m-0 d-inline-fle">
+            <h1 class="h5 fw-semibold m-0 d-inline-flex">
                 <slot name="title">
                     {{ title }}
+                    <Badge v-if="beta" label="Beta" />
                 </slot>
                 <el-button
                     class="star-button"
@@ -34,7 +35,6 @@
             <slot name="additional-right" />
             <div class="d-flex fixed-buttons icons">
                 <impersonating />
-                <auth />
             </div>
         </div>
     </nav>
@@ -42,20 +42,19 @@
 
 <script>
     import {mapState, mapGetters} from "vuex";
-    import Auth from "override/components/auth/Auth.vue";
     import Impersonating from "override/components/auth/Impersonating.vue";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
-
+    import Badge from "../global/Badge.vue";
 
     export default {
         components: {
-            Auth,
             GlobalSearch,
             TrashCan,
-            Impersonating
+            Impersonating,
+            Badge
         },
         props: {
             title: {
@@ -65,6 +64,10 @@
             breadcrumb: {
                 type: Array,
                 default: undefined
+            },
+            beta: {
+                type: Boolean,
+                required: false
             },
         },
         computed: {
@@ -105,7 +108,7 @@
         methods: {
             restartGuidedTour() {
                 localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: false});
+                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
 
                 this.$tours["guidedTour"]?.start();
             },
@@ -186,7 +189,7 @@
                 }
             }
 
-            :slotted(ul) {
+            :slotted(ul), :deep(ul) {
                 display: flex;
                 list-style: none;
                 padding: 0;

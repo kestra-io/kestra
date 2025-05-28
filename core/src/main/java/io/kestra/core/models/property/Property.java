@@ -8,9 +8,11 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
+import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.JacksonMapper;
+import jakarta.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -21,6 +23,8 @@ import java.io.Serial;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
 /**
  * Define a plugin properties that will be rendered and converted to a target type at use time.
@@ -43,10 +47,16 @@ public class Property<T> {
     private String expression;
     private T value;
 
+    /**
+     * @deprecated use {@link #ofExpression(String)} instead.
+     */
+    @Deprecated
+    // Note: when not used, this constructor would not be deleted but made private so it can only be used by ofExpression(String) and the deserializer
     public Property(String expression) {
         this.expression = expression;
     }
 
+    @VisibleForTesting
     public Property(Map<?, ?> map) {
         try {
             expression = MAPPER.writeValueAsString(map);
@@ -63,8 +73,10 @@ public class Property<T> {
      * Build a new Property object with a value already set.<br>
      *
      * A property build with this method will always return the value passed at build time, no rendering will be done.
+     *
+     * Use {@link #ofExpression(String)} to build a property with a Pebble expression instead.
      */
-    public static <V> Property<V> of(V value) {
+    public static <V> Property<V> ofValue(V value) {
         // trick the serializer so the property would not be null at deserialization time
         String expression;
         if (value instanceof Map<?, ?> || value instanceof List<?>) {
@@ -89,6 +101,28 @@ public class Property<T> {
         Property<V> p = new Property<>(expression);
         p.value = value;
         return p;
+    }
+
+    /**
+     * @deprecated use {@link #ofValue(Object)} instead.
+     */
+    @Deprecated
+    public static <V> Property<V> of(V value) {
+        return ofValue(value);
+    }
+
+    /**
+     * Build a new Property object with a Pebble expression.<br>
+     *
+     * Use {@link #ofValue(Object)} to build a property with a value instead.
+     */
+    public static <V> Property<V> ofExpression(@NotNull String expression) {
+        Objects.requireNonNull(expression, "'expression' is required");
+        if(!expression.contains("{")) {
+            throw new IllegalArgumentException("'expression' must be a valid Pebble expression");
+        }
+
+        return new Property<>(expression);
     }
 
     /**
@@ -136,12 +170,31 @@ public class Property<T> {
      *
      * @see io.kestra.core.runners.RunContextProperty#asList(Class, Map)
      */
+    @SuppressWarnings("unchecked")
     public static <T, I> T asList(Property<T> property, RunContext runContext, Class<I> itemClazz, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.value == null) {
-            String rendered =  runContext.render(property.expression, variables);
             JavaType type = MAPPER.getTypeFactory().constructCollectionLikeType(List.class, itemClazz);
             try {
-                property.value = MAPPER.readValue(rendered, type);
+                String trimmedExpression = property.expression.trim();
+                // We need to detect if the expression is already a list or if it's a pebble expression (for eg. referencing a variable containing a list).
+                // Doing that allows us to, if it's an expression, first render then read it as a list.
+                if (trimmedExpression.startsWith("{{") && trimmedExpression.endsWith("}}")) {
+                    property.value = MAPPER.readValue(runContext.render(property.expression, variables), type);
+                }
+                // Otherwise, if it's already a list, we read it as a list first then render it from run context which handle list rendering by rendering each item of the list
+                else {
+                    List<?> asRawList = MAPPER.readValue(property.expression, List.class);
+                    property.value = (T) asRawList.stream()
+                        .map(throwFunction(item -> {
+                            if (item instanceof String str) {
+                                return MAPPER.convertValue(runContext.render(str, variables), itemClazz);
+                            } else if (item instanceof Map map) {
+                                return MAPPER.convertValue(runContext.render(map, variables), itemClazz);
+                            }
+                            return item;
+                        }))
+                        .toList();
+                }
             } catch (JsonProcessingException e) {
                 throw new IllegalVariableEvaluationException(e);
             }
@@ -169,6 +222,7 @@ public class Property<T> {
      *
      * @see io.kestra.core.runners.RunContextProperty#asMap(Class, Class, Map)
      */
+    @SuppressWarnings({"rawtypes", "unchecked"})
     public static <T, K,V> T asMap(Property<T> property, RunContext runContext, Class<K> keyClass, Class<V> valueClass, Map<String, Object> variables) throws IllegalVariableEvaluationException {
         if (property.value == null) {
             JavaType targetMapType = MAPPER.getTypeFactory().constructMapType(Map.class, keyClass, valueClass);

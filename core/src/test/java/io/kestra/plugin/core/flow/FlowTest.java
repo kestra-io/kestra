@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import jakarta.inject.Inject;
 
 @KestraTest(startRunner = true)
-public class FlowTest {
+class FlowTest {
     @Inject
     FlowCaseTest flowCaseTest;
 
@@ -15,7 +15,7 @@ public class FlowTest {
     @LoadFlows({"flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml",
         "flows/valids/switch.yaml"})
-    public void waitSuccess() throws Exception {
+    void waitSuccess() throws Exception {
         flowCaseTest.waitSuccess();
     }
 
@@ -23,7 +23,7 @@ public class FlowTest {
     @LoadFlows({"flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml",
         "flows/valids/switch.yaml"})
-    public void waitFailed() throws Exception {
+    void waitFailed() throws Exception {
         flowCaseTest.waitFailed();
     }
 
@@ -31,7 +31,7 @@ public class FlowTest {
     @LoadFlows({"flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml",
         "flows/valids/switch.yaml"})
-    public void invalidOutputs() throws Exception {
+    void invalidOutputs() throws Exception {
         flowCaseTest.invalidOutputs();
     }
 
@@ -39,7 +39,14 @@ public class FlowTest {
     @LoadFlows({"flows/valids/task-flow.yaml",
         "flows/valids/task-flow-inherited-labels.yaml",
         "flows/valids/switch.yaml"})
-    public void noLabels() throws Exception {
+    void noLabels() throws Exception {
         flowCaseTest.noLabels();
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/subflow-old-task-name.yaml",
+        "flows/valids/minimal.yaml"})
+    void oldTaskName() throws Exception {
+        flowCaseTest.oldTaskName();
     }
 }

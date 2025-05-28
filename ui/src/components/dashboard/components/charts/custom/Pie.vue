@@ -2,14 +2,14 @@
     <div
         class="d-flex flex-row align-items-center justify-content-center h-100"
     >
-        <div class="w-75">
+        <div>
             <component
                 :is="chartOptions.graphStyle === 'PIE' ? Pie : Doughnut"
                 v-if="generated !== undefined"
                 :data="parsedData"
                 :options="options"
                 :plugins="
-                    chartOptions.legend.enabled
+                    chartOptions?.legend?.enabled
                         ? [isDuration ? totalsDurationLegend : totalsLegend, centerPlugin, thicknessPlugin]
                         : [centerPlugin, thicknessPlugin]
                 "
@@ -29,25 +29,24 @@
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {defaultConfig, getConsistentHEXColor,} from "../../../../../utils/charts.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../../../utils/charts.js";
     import {totalsDurationLegend, totalsLegend} from "../legend.js";
 
     import moment from "moment";
 
-    import {useRoute} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
     import {useStore} from "vuex";
+    import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
 
     const route = useRoute();
+    const router = useRouter();
 
     const store = useStore();
 
-    const dashboard = computed(() => store.state.dashboard.dashboard);
-
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: Number, required: true},
         chart: {type: Object, required: true},
-        isPreview: {type: Boolean, required: false, default: false}
+        showDefault: {type: Boolean, default: false}
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
@@ -61,7 +60,7 @@
     const options = computed(() => {
         return defaultConfig({
             plugins: {
-                ...(chartOptions.legend.enabled
+                ...(chartOptions?.legend?.enabled
                     ? {
                         totalsLegend: {
                             containerID,
@@ -78,6 +77,9 @@
                         },
                     }
                 },
+            },
+            onClick: (e, elements) => {
+                chartClick(moment, router, route, {}, parsedData.value, elements, "dataset");
             },
         }, theme.value);
     });
@@ -180,44 +182,22 @@
     });
 
     const generated = ref();
-    const generate = async () => {
-        if (!props.isPreview) {
-            const params = {
-                id: dashboard.value.id,
-                chartId: props.chart.id,
-                startDate: route.query.timeRange
-                    ? moment()
-                        .subtract(
-                            moment.duration(route.query.timeRange).as("milliseconds"),
-                        )
-                        .toISOString(true)
-                    : route.query.startDate ||
-                        moment()
-                            .subtract(moment.duration("PT720H").as("milliseconds"))
-                            .toISOString(true),
-                endDate: route.query.timeRange
-                    ? moment().toISOString(true)
-                    : route.query.endDate || moment().toISOString(true),
-            };
-            if (route.query.namespace) {
-                params.namespace = route.query.namespace;
-            }
-            if (route.query.labels) {
-                params.labels = Object.fromEntries(route.query.labels.map(l => l.split(":")));
-            }
+    const generate = async (id) => {
+        let decodedParams = decodeSearchParams(route.query, undefined, []);
 
+        if (!props.showDefault) {
+            let params = {id, chartId: props.chart.id};
+            if (decodedParams) {
+                params = {...params, filters: decodedParams}
+            }
             generated.value = await store.dispatch("dashboard/generate", params);
         } else {
-            generated.value = await store.dispatch("dashboard/chartPreview", props.chart.content)
+            generated.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filter: decodedParams}})
         }
     };
 
-    watch(route, async () => await generate());
-    watch(
-        () => props.identifier,
-        () => generate(),
-    );
-    onMounted(() => generate());
+    watch(route, async (route) => await generate(route.params?.id));
+    onMounted(() => generate(route.params.id));
 </script>
 
 <style lang="scss" scoped>
@@ -227,4 +207,3 @@
         max-height: $height;
     }
 </style>
-ss

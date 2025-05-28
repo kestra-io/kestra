@@ -2,19 +2,23 @@
     <dotted-layout
         :embed="embed"
         :phrase="$t('pluginPage.title2')"
-        :alt="$t('blueprints.header.alt')"
+        :alt="$t('pluginPage.alt')"
         :image="headerImage"
         :image-dark="headerImageDark"
     >
         <el-row class="my-4 px-3">
-            <KestraFilter :placeholder="$t('pluginPage.search', {count: countPlugin})" :search-callback="(input)=> searchInput = input" />
+            <KestraFilter
+                :placeholder="$t('pluginPage.search',
+                                 {count: countPlugin})"
+                legacy-query
+            />
         </el-row>
         <section class="px-3 plugins-container">
             <el-tooltip v-for="(plugin, index) in pluginsList" :show-after="1000" :key="plugin.name + '-' + index" effect="light">
                 <template #content>
                     <div class="tasks-tooltips">
                         <p v-if="plugin?.tasks.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Tasks
+                            {{ $t('tasks') }}
                         </p>
                         <ul>
                             <li
@@ -25,7 +29,7 @@
                             </li>
                         </ul>
                         <p v-if="plugin?.triggers.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Triggers
+                            {{ $t('triggers') }}
                         </p>
                         <ul>
                             <li
@@ -36,7 +40,7 @@
                             </li>
                         </ul>
                         <p v-if="plugin?.conditions.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Conditions
+                            {{ $t('conditions') }}
                         </p>
                         <ul>
                             <li
@@ -47,8 +51,7 @@
                             </li>
                         </ul>
                         <p v-if="plugin?.taskRunners.filter(t => t.toLowerCase().includes(searchInput)).length > 0" class="mb-0">
-                            Task
-                            Runners
+                            {{ $t('task_runners') }}
                         </p>
                         <ul>
                             <li
@@ -100,7 +103,6 @@
         data() {
             return {
                 icons: [],
-                searchInput: "",
                 headerImage,
                 headerImageDark
             }
@@ -113,6 +115,9 @@
             )
         },
         computed: {
+            searchInput() {
+                return this.$route.query?.q?.toLowerCase() ?? "";
+            },
             countPlugin() {
                 let allTasks = [];
                 let allTriggers = [];
@@ -140,11 +145,11 @@
                         ));
                     })
                     .filter(plugin => {
-                        return plugin.title.toLowerCase().includes(this.searchInput.toLowerCase()) ||
-                            plugin.tasks.some(task => task.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                            plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                            plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput.toLowerCase())) ||
-                            plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput.toLowerCase()))
+                        return plugin.title.toLowerCase().includes(this.searchInput) ||
+                            plugin.tasks.some(task => task.toLowerCase().includes(this.searchInput)) ||
+                            plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput)) ||
+                            plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput)) ||
+                            plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput))
                     })
                     .filter(plugin => this.isVisible(plugin))
                     .sort((a, b) => {
@@ -211,19 +216,6 @@
         &.enhance-readability {
             padding: 1.5rem;
             background-color: var(--bs-gray-100);
-        }
-
-        &::-webkit-scrollbar {
-            width: 5px;
-        }
-
-        &::-webkit-scrollbar-track {
-            -webkit-border-radius: 10px;
-        }
-
-        &::-webkit-scrollbar-thumb {
-            -webkit-border-radius: 10px;
-            background: var(--ks-button-background-primary);
         }
     }
 

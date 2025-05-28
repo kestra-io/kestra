@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.is;
+import static org.assertj.core.api.Assertions.assertThat;
 
 class ServerCommandValidatorTest {
 
@@ -40,8 +39,8 @@ class ServerCommandValidatorTest {
                 .start()
         );
         final Throwable rootException = getRootException(exception);
-        assertThat(rootException.getClass(), is(ServerCommandValidator.ServerCommandException.class));
-        assertThat(rootException.getMessage(), is("Incomplete server configuration - missing required properties"));
+        assertThat(rootException.getClass()).isEqualTo(ServerCommandValidator.ServerCommandException.class);
+        assertThat(rootException.getMessage()).isEqualTo("Incomplete server configuration - missing required properties");
     }
 
     private Throwable getRootException(Throwable exception) {

@@ -4,12 +4,21 @@ import io.kestra.core.models.Plugin;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 /**
  * Registry for managing all Kestra's {@link Plugin}.
  */
 public interface PluginRegistry {
+
+    /**
+     * Gets all versions for a given plugin type.
+     *
+     * @param type  The plugin type.
+     * @return      The list of supported versions,or an empty list if the type is unknown.
+     */
+    List<String> getAllVersionsForType(final String type);
 
     /**
      * Scans and registers the given plugin path, if the path is not already registered.
@@ -28,6 +37,24 @@ public interface PluginRegistry {
     void register(final Path pluginPath);
 
     /**
+     * Unregisters the given plugin bundle.
+     *
+     * @param plugin the plugin bundle to un-register.
+     */
+    void unregister(List<RegisteredPlugin> plugin);
+
+    /**
+     * Registers a plugin class with the given identifier.
+     * <p>
+     * Any plugin class registered through this method will be then accessible from
+     * the method {@link #findClassByIdentifier(PluginIdentifier)}.
+     *
+     * @param identifier  The plugin identifier.
+     * @param plugin      The class for the register.
+     */
+    void registerClassForIdentifier(PluginIdentifier identifier, PluginClassAndMetadata<? extends Plugin> plugin);
+
+    /**
      * Finds the Java class corresponding to the given plugin identifier.
      *
      * @param identifier The plugin identifier - must not be {@code null}.
@@ -42,6 +69,22 @@ public interface PluginRegistry {
      * @return the {@link Class} of the plugin or {@code null} if no plugin can be found.
      */
     Class<? extends Plugin> findClassByIdentifier(String identifier);
+
+    /**
+     * Finds the Java class and metadata corresponding to the given identifier.
+     *
+     * @param identifier The raw plugin identifier - must not be {@code null}.
+     * @return the {@link PluginClassAndMetadata} of the plugin or {@link Optional#empty()} if no plugin can be found.
+     */
+    Optional<PluginClassAndMetadata<? extends Plugin>> findMetadataByIdentifier(String identifier);
+
+    /**
+     * Finds the Java class and metadata corresponding to the given identifier.
+     *
+     * @param identifier The raw plugin identifier - must not be {@code null}.
+     * @return the {@link PluginClassAndMetadata} of the plugin or {@link Optional#empty()} if no plugin can be found.
+     */
+    Optional<PluginClassAndMetadata<? extends Plugin>> findMetadataByIdentifier(PluginIdentifier identifier);
 
     /**
      * Gets the list of all registered plugins.

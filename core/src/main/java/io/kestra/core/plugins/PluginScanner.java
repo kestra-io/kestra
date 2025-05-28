@@ -5,6 +5,7 @@ import io.kestra.core.app.AppPluginInterface;
 import io.kestra.core.models.Plugin;
 import io.kestra.core.models.conditions.Condition;
 import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.logs.LogExporter;
@@ -78,9 +79,11 @@ public class PluginScanner {
     public RegisteredPlugin scan() {
         try {
             long start = System.currentTimeMillis();
-            Manifest manifest = new Manifest(IOUtils.toInputStream("Manifest-Version: 1.0\n" +
-                "X-Kestra-Title: core\n" +
-                "X-Kestra-Group: io.kestra.plugin.core\n",
+            Manifest manifest = new Manifest(IOUtils.toInputStream("""
+                    Manifest-Version: 1.0
+                    X-Kestra-Title: core
+                    X-Kestra-Group: io.kestra.plugin.core
+                    """,
                 StandardCharsets.UTF_8
             ));
 
@@ -93,6 +96,7 @@ public class PluginScanner {
 
     }
 
+    @SuppressWarnings("unchecked")
     private RegisteredPlugin scanClassLoader(final ClassLoader classLoader,
                                              final ExternalPlugin externalPlugin,
                                              Manifest manifest) {
@@ -106,7 +110,9 @@ public class PluginScanner {
         List<Class<? extends AppBlockInterface>> appBlocks = new ArrayList<>();
         List<Class<? extends Chart<?>>> charts = new ArrayList<>();
         List<Class<? extends DataFilter<?, ?>>> dataFilters = new ArrayList<>();
-        List<Class<? extends LogExporter>> logExporter = new ArrayList<>();
+        List<Class<? extends DataFilterKPI<?, ?>>> dataFiltersKPI = new ArrayList<>();
+        List<Class<? extends LogExporter<?>>> logExporter = new ArrayList<>();
+        List<Class<? extends AdditionalPlugin>> additionalPlugins = new ArrayList<>();
         List<String> guides = new ArrayList<>();
         Map<String, Class<?>> aliases = new HashMap<>();
 
@@ -139,7 +145,7 @@ public class PluginScanner {
                         storages.add(storage.getClass());
                     }
                     case SecretPluginInterface storage -> {
-                        log.debug("Loading SecretPlugin plugin: '{}'", plugin.getClass());
+                        log.debug("Loading Secret plugin: '{}'", plugin.getClass());
                         secrets.add(storage.getClass());
                     }
                     case TaskRunner<?> runner -> {
@@ -148,11 +154,11 @@ public class PluginScanner {
                         taskRunners.add((Class<? extends TaskRunner<?>>) runner.getClass());
                     }
                     case AppPluginInterface app -> {
-                        log.debug("Loading AppPlugin plugin: '{}'", plugin.getClass());
+                        log.debug("Loading App plugin: '{}'", plugin.getClass());
                         apps.add(app.getClass());
                     }
                     case AppBlockInterface appBlock -> {
-                        log.debug("Loading AppBlocking plugin: '{}'", plugin.getClass());
+                        log.debug("Loading AppBlock plugin: '{}'", plugin.getClass());
                         appBlocks.add(appBlock.getClass());
                     }
                     case Chart<?> chart -> {
@@ -165,9 +171,18 @@ public class PluginScanner {
                         //noinspection unchecked
                         dataFilters.add((Class<? extends DataFilter<?, ?>>)  dataFilter.getClass());
                     }
-                    case LogExporter shipper -> {
+                    case DataFilterKPI<?, ?> dataFilterKPI -> {
+                        log.debug("Loading DataFilterKPI plugin: '{}'", plugin.getClass());
+                        //noinspection unchecked
+                        dataFiltersKPI.add((Class<? extends DataFilterKPI<?, ?>>)  dataFilterKPI.getClass());
+                    }
+                    case LogExporter<?> shipper -> {
                         log.debug("Loading LogExporter plugin: '{}'", plugin.getClass());
-                        logExporter.add(shipper.getClass());
+                        logExporter.add((Class<? extends LogExporter<?>>)  shipper.getClass());
+                    }
+                    case AdditionalPlugin additionalPlugin -> {
+                        log.debug("Loading additional plugin: '{}'", plugin.getClass());
+                        additionalPlugins.add(additionalPlugin.getClass());
                     }
                     default -> {
                     }
@@ -217,8 +232,10 @@ public class PluginScanner {
             .taskRunners(taskRunners)
             .charts(charts)
             .dataFilters(dataFilters)
+            .dataFiltersKPI(dataFiltersKPI)
             .guides(guides)
             .logExporters(logExporter)
+            .additionalPlugins(additionalPlugins)
             .aliases(aliases.entrySet().stream().collect(Collectors.toMap(
                 e -> e.getKey().toLowerCase(),
                 Function.identity()

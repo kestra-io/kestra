@@ -1,9 +1,12 @@
 import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
+import {YamlUtils} from "@kestra-io/ui-libs";
+import semver from "semver";
 
 export default {
     namespaced: true,
     state: {
         plugin: undefined,
+        versions: undefined,
         pluginAllProps: undefined,
         plugins: undefined,
         pluginSingleList: undefined,
@@ -35,13 +38,18 @@ export default {
                 throw new Error("missing required cls");
             }
 
-            const cachedPluginDoc = state.pluginsDocumentation[options.cls];
+            const id = options.version ? `${options.cls}/${options.version}` : options.cls;
+            const cachedPluginDoc = state.pluginsDocumentation[id];
             if (!options.all && cachedPluginDoc) {
                 commit("setPlugin", cachedPluginDoc);
                 return Promise.resolve(cachedPluginDoc);
             }
 
-            return this.$http.get(`${apiUrl(this)}/plugins/${options.cls}`, {params: options}).then(response => {
+            const url = options.version ?
+                `${apiUrl(this)}/plugins/${options.cls}/versions/${options.version}` :
+                `${apiUrl(this)}/plugins/${options.cls}`;
+
+            return this.$http.get(url, {params: options}).then(response => {
                 if (options.commit !== false) {
                     if (options.all === true) {
                         commit("setPluginAllProps", response.data);
@@ -51,9 +59,20 @@ export default {
                 }
 
                 if (!options.all) {
-                    commit("addPluginDocumentation", {[options.cls]: response.data});
+                    commit("addPluginDocumentation", {[id]: response.data});
                 }
 
+                return response.data;
+            })
+        },
+        loadVersions({commit}, options) {
+            const promise = this.$http.get(
+                `${apiUrl(this)}/plugins/${options.cls}/versions`
+            );
+            return promise.then(response => {
+                if (options.commit !== false) {
+                    commit("setVersions", response.data.versions);
+                }
                 return response.data;
             })
         },
@@ -100,12 +119,47 @@ export default {
             return this.$http.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
                 return response.data;
             })
-        }
+        },
+        updateDocumentation({commit, dispatch, getters}, options) {
+            const taskType = options.task !== undefined ? options.task : YamlUtils.getTaskType(
+                options.event.model.getValue(),
+                options.event.position,
+                getters["getPluginSingleList"]
+            );
 
+            const taskVersion = options.event
+                ? YamlUtils.getVersionAtPosition(
+                      options?.event?.model?.getValue(),
+                      options?.event?.position,
+                  )
+                : undefined;
+
+            if (taskType) {
+                let payload = {cls: taskType};
+                if (taskVersion !== undefined) {
+                    // Check if the version is valid to avoid error
+                    // when loading plugin
+                    if (semver.valid(taskVersion) !== null ||
+                        "latest" === taskVersion.toString().toLowerCase() ||
+                        "oldest" === taskVersion.toString().toLowerCase()
+                    ) {
+                        payload = {...payload, version: taskVersion};
+                    }
+                }
+                dispatch("load", payload).then((plugin) => {
+                    commit("setEditorPlugin", {cls: taskType, ...plugin});
+                });
+            } else {
+                commit("setEditorPlugin", undefined);
+            }
+        }
     },
     mutations: {
         setPlugin(state, plugin) {
             state.plugin = plugin
+        },
+        setVersions(state, versions) {
+            state.versions = versions
         },
         setPluginAllProps(state, pluginAllProps) {
             state.pluginAllProps = pluginAllProps

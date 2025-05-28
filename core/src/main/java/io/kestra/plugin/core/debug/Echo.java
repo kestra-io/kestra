@@ -22,7 +22,7 @@ import org.slf4j.event.Level;
 @Getter
 @NoArgsConstructor
 @Schema(
-    title = "Log a message in the task logs.",
+    title = "Log a message in the task logs (Deprecated).",
     description = "This task is deprecated, please use the `io.kestra.plugin.core.log.Log` task instead.",
     deprecated = true
 )
@@ -49,7 +49,7 @@ public class Echo extends Task implements RunnableTask<VoidOutput> {
     private Property<String> format;
 
     @Builder.Default
-    private Property<Level> level = Property.of(Level.INFO);
+    private Property<Level> level = Property.ofValue(Level.INFO);
 
     @Override
     public VoidOutput run(RunContext runContext) throws Exception {

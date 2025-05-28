@@ -11,25 +11,28 @@
             :value="input.type"
         />
     </el-select>
-    <task-root
+    <TaskObject
         v-loading="loading"
         name="root"
         :model-value="selectedInput"
         @update:model-value="updateSelected($event, selectedIndex)"
-        :schema="inputSchema?.schema"
+        :schema="inputSchema?.schema?.properties"
+        :properties="inputSchema?.schema?.properties?.properties"
         :definitions="inputSchema?.schema?.definitions"
+        metadata-inputs
     />
 
     <Save @click="update" what="input" class="w-100 mt-3" />
 </template>
 
 <script setup>
-    import TaskRoot from "./tasks/TaskRoot.vue";
+    import TaskObject from "./tasks/TaskObject.vue";
     import Save from "../code/components/Save.vue";
 </script>
 
 <script>
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
+    import {BREADCRUMB_INJECTION_KEY, PANEL_INJECTION_KEY} from "../code/injectionKeys";
 
     export default {
         emits: ["update:modelValue"],
@@ -49,6 +52,7 @@
         },
         computed: {
             ...mapState("plugin", ["inputSchema", "inputsType"]),
+            ...mapGetters("flow", ["flowYamlMetadata"]),
         },
         created() {
             if (this.inputs && this.inputs.length > 0) {
@@ -68,9 +72,12 @@
                 loading: false,
             };
         },
+        inject:{
+            panel: {from: PANEL_INJECTION_KEY},
+            breadcrumbs: {from: BREADCRUMB_INJECTION_KEY}
+        },
         methods: {
             selectInput(input) {
-                this.loading = true;
                 this.selectedInput = input;
                 this.loadSchema(input.type);
             },
@@ -81,14 +88,16 @@
                 return this.inputsType.find((e) => e.cls === cls).type;
             },
             loadSchema(type) {
+                this.loading = true;
+
                 this.$store
                     .dispatch("plugin/loadInputSchema", {type: type})
                     .then((_) => (this.loading = false));
             },
             update() {
                 if (
-                    this.newInputs.map((e) => e.id).length !==
-                    new Set(this.newInputs.map((e) => e.id)).size
+                    this.newInputs.map((e) => e?.id).length !==
+                    new Set(this.newInputs.map((e) => e?.id)).size
                 ) {
                     this.$store.dispatch("core/showMessage", {
                         variant: "error",
@@ -96,15 +105,17 @@
                         message: this.$t("duplicate input id"),
                     });
                 } else {
-                    this.$store.commit("code/unsetPanel");
-                    this.$emit("update:modelValue", [...this.inputs]);
+                    this.panel = undefined;
+                    this.breadcrumbs.pop();
+                    const value = this.newInputs.filter(input => input?.id);
+                    this.$emit("update:modelValue", value.length ? value : undefined);
                 }
             },
             updateSelected(value) {
-                if (!this.selectedIndex) {
-                    return;
+                if (this.selectedIndex >= 0) {
+                    this.newInputs[this.selectedIndex] = value;
+                    this.$emit("update:modelValue", [...this.newInputs]);
                 }
-                this.newInputs[this.selectedIndex] = value;
             },
             deleteInput(index) {
                 this.newInputs.splice(index, 1);
@@ -112,14 +123,9 @@
             addInput() {
                 this.newInputs.push({type: "STRING"});
             },
-            onChangeType(value) {
-                this.loading = true;
-                this.selectedInput = {
-                    type: value,
-                    id: this.newInputs[this.selectedIndex].id,
-                };
-                this.newInputs[this.selectedIndex] = this.selectedInput;
-                this.loadSchema(value);
+            onChangeType(type) {
+                this.newInputs[this.selectedIndex].type = type;
+                this.loadSchema(type);
             },
         },
     };

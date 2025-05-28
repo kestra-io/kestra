@@ -29,6 +29,7 @@ import org.apache.hc.core5.http.io.HttpClientResponseHandler;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.apache.hc.core5.util.Timeout;
+import org.codehaus.plexus.util.StringUtils;
 
 import java.io.Closeable;
 import java.io.IOException;
@@ -87,47 +88,49 @@ public class HttpClient implements Closeable {
 
         // Timeout
         if (this.configuration.getTimeout() != null) {
-            var connectTiemout = runContext.render(this.configuration.getTimeout().getConnectTimeout()).as(Duration.class);
-            connectTiemout.ifPresent(duration -> connectionConfig.setConnectTimeout(Timeout.of(duration)));
+            var connectTimeout = runContext.render(this.configuration.getTimeout().getConnectTimeout()).as(Duration.class);
+            connectTimeout.ifPresent(duration -> connectionConfig.setConnectTimeout(Timeout.of(duration)));
 
-            var readIdleTiemout = runContext.render(this.configuration.getTimeout().getReadIdleTimeout()).as(Duration.class);
-            readIdleTiemout.ifPresent(duration -> connectionConfig.setSocketTimeout(Timeout.of(duration)));
+            var readIdleTimeout = runContext.render(this.configuration.getTimeout().getReadIdleTimeout()).as(Duration.class);
+            readIdleTimeout.ifPresent(duration -> connectionConfig.setSocketTimeout(Timeout.of(duration)));
         }
 
         // proxy
-        if (this.configuration.getProxy() != null) {
-            SocketAddress proxyAddr = new InetSocketAddress(
-                runContext.render(configuration.getProxy().getAddress()).as(String.class).orElse(null),
-                runContext.render(configuration.getProxy().getPort()).as(Integer.class).orElse(null)
-            );
+        if (this.configuration.getProxy() != null && configuration.getProxy().getAddress() != null) {
+            String proxyAddress = runContext.render(configuration.getProxy().getAddress()).as(String.class).orElse(null);
 
-            Proxy proxy = new Proxy(runContext.render(configuration.getProxy().getType()).as(Proxy.Type.class).orElse(null), proxyAddr);
-
-            builder.setProxySelector(new ProxySelector() {
-                @Override
-                public void connectFailed(URI uri, SocketAddress sa, IOException e) {
-                    /* ignore */
-                }
-
-                @Override
-                public List<Proxy> select(URI uri) {
-                    return List.of(proxy);
-                }
-            });
-
-            if (this.configuration.getProxy().getUsername() != null && this.configuration.getProxy().getPassword() != null) {
-                builder.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
-
-                credentialsStore.setCredentials(
-                    new AuthScope(
-                        runContext.render(this.configuration.getProxy().getAddress()).as(String.class).orElse(null),
-                        runContext.render(this.configuration.getProxy().getPort()).as(Integer.class).orElse(null)
-                    ),
-                    new UsernamePasswordCredentials(
-                        runContext.render(this.configuration.getProxy().getUsername()).as(String.class).orElseThrow(),
-                        runContext.render(this.configuration.getProxy().getPassword()).as(String.class).orElseThrow().toCharArray()
-                    )
+            if (StringUtils.isNotEmpty(proxyAddress)) {
+                int port = runContext.render(configuration.getProxy().getPort()).as(Integer.class).orElseThrow();
+                SocketAddress proxyAddr = new InetSocketAddress(
+                    proxyAddress,
+                    port
                 );
+
+                Proxy proxy = new Proxy(runContext.render(configuration.getProxy().getType()).as(Proxy.Type.class).orElse(null), proxyAddr);
+
+                builder.setProxySelector(new ProxySelector() {
+                    @Override
+                    public void connectFailed(URI uri, SocketAddress sa, IOException e) {
+                        /* ignore */
+                    }
+
+                    @Override
+                    public List<Proxy> select(URI uri) {
+                        return List.of(proxy);
+                    }
+                });
+
+                if (this.configuration.getProxy().getUsername() != null && this.configuration.getProxy().getPassword() != null) {
+                    builder.setProxyAuthenticationStrategy(new DefaultAuthenticationStrategy());
+
+                    credentialsStore.setCredentials(
+                        new AuthScope(proxyAddress, port),
+                        new UsernamePasswordCredentials(
+                            runContext.render(this.configuration.getProxy().getUsername()).as(String.class).orElseThrow(),
+                            runContext.render(this.configuration.getProxy().getPassword()).as(String.class).orElseThrow().toCharArray()
+                        )
+                    );
+                }
             }
         }
 
@@ -150,6 +153,14 @@ public class HttpClient implements Closeable {
 
         if (!runContext.render(this.configuration.getAllowFailed()).as(Boolean.class).orElseThrow()) {
             builder.addResponseInterceptorLast(new FailedResponseInterceptor());
+        }
+
+        if (this.configuration.getAllowedResponseCodes() != null) {
+            List<Integer> list = runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class);
+
+            if (!list.isEmpty()) {
+                builder.addResponseInterceptorLast(new FailedResponseInterceptor(list));
+            }
         }
 
         builder.addResponseInterceptorLast(new RunContextResponseInterceptor(this.runContext));

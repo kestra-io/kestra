@@ -3,7 +3,7 @@
         download
         :href="$store.getters['doc/resourceUrl']('kestra-logo-kit.zip')"
     >
-        <LinkVariant />   Download Logo Pack
+        <LinkVariant />   {{ $t('download_logos') }}
     </a>
 </template>
 

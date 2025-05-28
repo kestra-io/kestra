@@ -36,6 +36,7 @@
                 v-html="renderedMarkdown"
             />
         </div>
+        <CopyToClipboard :text="`${log.level} ${log.timestamp} ${log.message}`" link />
     </div>
 </template>
 <script>
@@ -44,13 +45,14 @@
     import * as Markdown from "../../utils/markdown";
     import MenuRight from "vue-material-design-icons/MenuRight.vue";
     import linkify from "./linkify";
-
+    import CopyToClipboard from "../layout/CopyToClipboard.vue";
 
     let convert = new Convert();
 
     export default {
         components: {
             MenuRight,
+            CopyToClipboard
         },
         props: {
             cursor: {
@@ -85,7 +87,7 @@
             };
         },
         async created() {
-            this.renderedMarkdown = await Markdown.render(this.message, {onlyLink: true});
+            this.renderedMarkdown = await Markdown.render(this.message, {onlyLink: true, html: true});
         },
         computed: {
             logLineStyle() {
@@ -218,7 +220,7 @@ div.line {
     }
 
     .log-content {
-        // prevent Firefox word breaks 
+        // prevent Firefox word breaks
         flex-grow: 1;
 
         .header > * + * {

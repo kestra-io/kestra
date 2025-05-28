@@ -397,9 +397,6 @@ form.ks-horizontal {
         font-weight: 400;
     }
 
-    .el-table__cell {
-        vertical-align: top;
-    }
 
 
     .el-table__inner-wrapper::before {
@@ -407,7 +404,7 @@ form.ks-horizontal {
     }
 
     .el-table__empty-text {
-        color: var(--bs-gray-600);
+        color: var(--ks-content-tertiary) !important;
     }
 
     th {
@@ -507,7 +504,8 @@ form.ks-horizontal {
         }
 
         &.is-active > * {
-            background-color: var(--ks-content-link);
+            background-color: var(--ks-button-background-primary);
+            color: var(--ks-button-content-primary);
         }
 
         &.is-disabled a {
@@ -602,8 +600,9 @@ form.ks-horizontal {
     }
 
     &.el-tabs--card{
+        margin-top: 32px;
         .el-tabs__nav-wrap{
-            margin-bottom: 1px; // fix tabs overflowing over the bottom line
+            margin-bottom: 1px;
         }
         & > .el-tabs__header .el-tabs__nav{
             background-color: var(--ks-background-card);
@@ -812,12 +811,18 @@ form.ks-horizontal {
 .el-autocomplete-suggestion {
     .el-autocomplete-suggestion__wrap {
         max-height: 40vh;
+        padding: 10px 12px 10px 10px;
     }
 
     li {
         // highlight of keyboard selection & element plus hover
         --el-fill-color-light: var(--ks-select-hover);
         padding: 0 1rem;
+        border-radius: 5px;
+
+        &.highlighted {
+            margin-bottom: 3px;
+        }
 
         a {
             color: var(--ks-content-primary);
@@ -1206,4 +1211,8 @@ form.ks-horizontal {
 
 .el-empty {
     background-color: var(--ks-background-card);
+}
+
+.el-scrollbar__thumb {
+    background-color: var(--ks-border-primary) !important;
 }

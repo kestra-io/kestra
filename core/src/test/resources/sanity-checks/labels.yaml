@@ -1,0 +1,21 @@
+id: labels
+namespace: sanitychecks.core
+
+variables:
+  label_1: test1
+  label_2: test2
+  label_3: test3
+
+tasks:
+  - id: update_labels_with_map
+    type: io.kestra.plugin.core.execution.Labels
+    labels:
+      label_1: "{{ vars.label_1 }}"
+
+  - id: update_labels_by_list
+    type: io.kestra.plugin.core.execution.Labels
+    labels:
+      - key: label_2
+        value: "{{ vars.label_2 }}"
+      - key: label_3
+        value: "{{ vars.label_3 }}"

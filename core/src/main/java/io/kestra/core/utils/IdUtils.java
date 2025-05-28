@@ -5,9 +5,8 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import java.nio.charset.StandardCharsets;
 
-import java.util.Arrays;
+import java.util.StringJoiner;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @SuppressWarnings({"deprecation"})
 abstract public class IdUtils {
@@ -31,8 +30,12 @@ abstract public class IdUtils {
     }
 
     public static String fromPartsAndSeparator(char separator, String... parts) {
-        return Arrays.stream(parts)
-            .filter(part -> part != null)
-            .collect(Collectors.joining(String.valueOf(separator)));
+        StringJoiner sj = new StringJoiner(String.valueOf(separator));
+        for (String str : parts) {
+            if (str != null) {
+                sj.add(str);
+            }
+        }
+        return sj.toString();
     }
 }

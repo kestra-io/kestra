@@ -22,13 +22,13 @@ import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.ListUtils;
 import io.kestra.core.utils.RetryUtils;
+import io.kestra.core.utils.UnixModeToPosixFilePermissions;
 import io.kestra.plugin.scripts.exec.scripts.models.DockerOptions;
 import io.micronaut.core.convert.format.ReadableBytesTypeConverter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
-import org.apache.commons.compress.archivers.ArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
@@ -44,6 +44,7 @@ import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.attribute.PosixFilePermission;
 import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -202,10 +203,11 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
     @Schema(
         title = "List of port bindings.",
-        description = "Corresponds to the --publish (-p) option of the docker run CLI command using the format `ip:dockerHostPort:containerPort/protocol`. Possible example : \n" +
-            "- 8080:80/udp" +
-            "- 127.0.0.1:8080:80" +
-            "- 127.0.0.1:8080:80/udp"
+        description = "Corresponds to the `--publish` (`-p`) option of the docker run CLI command using the format `ip:dockerHostPort:containerPort/protocol`.\n" +
+            "Possible example :\n" +
+            "- `8080:80/udp`" +
+            "- `127.0.0.1:8080:80`" +
+            "- `127.0.0.1:8080:80/udp`"
     )
     @PluginProperty(dynamic = true)
     protected List<String> portBindings;
@@ -239,7 +241,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         even if an image with the same tag already exists."""
     )
     @Builder.Default
-    protected Property<PullPolicy> pullPolicy = Property.of(PullPolicy.ALWAYS);
+    protected Property<PullPolicy> pullPolicy = Property.ofValue(PullPolicy.IF_NOT_PRESENT);
 
     @Schema(
         title = "A list of device requests to be sent to device drivers."
@@ -287,20 +289,29 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
     )
     @NotNull
     @Builder.Default
-    private Property<FileHandlingStrategy> fileHandlingStrategy = Property.of(FileHandlingStrategy.VOLUME);
+    private Property<FileHandlingStrategy> fileHandlingStrategy = Property.ofValue(FileHandlingStrategy.VOLUME);
 
     @Schema(
         title = "Whether the container should be deleted upon completion."
     )
     @NotNull
     @Builder.Default
-    private Property<Boolean> delete = Property.of(true);
+    private Property<Boolean> delete = Property.ofValue(true);
 
     @Builder.Default
     @Schema(
         title = "Whether to wait for the container to exit."
     )
-    private final Property<Boolean> wait = Property.of(true);
+    @NotNull
+    private Property<Boolean> wait = Property.ofValue(true);
+
+    @Builder.Default
+    @NotNull
+    @Schema(
+        title = "When a task is killed, this property sets the grace period before killing the container.",
+        description = "By default, we kill the container immediately when a task is killed. Optionally, you can configure a grace period so the container is stopped with a grace period instead."
+    )
+    private Duration killGracePeriod = Duration.ZERO;
 
     /**
      * Convenient default instance to be used as task default value for a 'taskRunner' property.
@@ -336,6 +347,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
     @Override
     public TaskRunnerResult<DockerTaskRunnerDetailResult> run(RunContext runContext, TaskCommands taskCommands, List<String> filesToDownload) throws Exception {
+        Boolean renderedDelete = runContext.render(delete).as(Boolean.class).orElseThrow();
+
         if (taskCommands.getContainerImage() == null && this.image == null) {
             throw new IllegalArgumentException("This task runner needs the `containerImage` property to be set");
         }
@@ -394,6 +407,13 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     for (Path file: relativeWorkingDirectoryFilesPaths) {
                         Path resolvedFile = runContext.workingDir().resolve(file);
                         TarArchiveEntry entry = out.createArchiveEntry(resolvedFile.toFile(), file.toString());
+                        // Preserve POSIX permissions if supported
+                        try {
+                            Set<PosixFilePermission> perms = Files.getPosixFilePermissions(resolvedFile);
+                            entry.setMode(UnixModeToPosixFilePermissions.fromPosixFilePermissions(perms));
+                        } catch (UnsupportedOperationException | IOException ignore) {
+                            // Skipping unix file permission
+                        }
                         out.putArchiveEntry(entry);
                         if (!Files.isDirectory(resolvedFile)) {
                             try (InputStream fis = Files.newInputStream(resolvedFile)) {
@@ -427,11 +447,13 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             // start container
             dockerClient.startContainerCmd(exec.getId()).exec();
 
+            List<String> renderedCommands = runContext.render(taskCommands.getCommands()).asList(String.class);
+
             if (logger.isDebugEnabled()) {
                 logger.debug(
                     "Starting command with container id {} [{}]",
                     exec.getId(),
-                    String.join(" ", taskCommands.getCommands())
+                    String.join(" ", renderedCommands)
                 );
             }
 
@@ -535,7 +557,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                     // come to a normal end.
                     kill();
 
-                    if (Boolean.TRUE.equals(runContext.render(delete).as(Boolean.class).orElseThrow())) {
+                    if (Boolean.TRUE.equals(renderedDelete)) {
                         dockerClient.removeContainerCmd(exec.getId()).exec();
                         if (logger.isTraceEnabled()) {
                             logger.trace("Container deleted: {}", exec.getId());
@@ -575,26 +597,43 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         CopyArchiveFromContainerCmd copyArchiveFromContainerCmd = dockerClient.copyArchiveFromContainerCmd(execId, windowsToUnixPath(taskCommands.getWorkingDirectory().toString()));
         try (InputStream is = copyArchiveFromContainerCmd.exec();
              TarArchiveInputStream tar = new TarArchiveInputStream(is)) {
-            ArchiveEntry entry;
+            TarArchiveEntry entry;
             while ((entry = tar.getNextEntry()) != null) {
                 // each entry contains the working directory as the first part, we need to remove it
-                Path extractTo = runContext.workingDir().resolve(Path.of(entry.getName().substring(runContext.workingDir().id().length() +1)));
+                Path extractTo = runContext.workingDir().resolve(Path.of(entry.getName().substring(runContext.workingDir().id().length() + 1)));
                 if (entry.isDirectory()) {
                     if (!Files.exists(extractTo)) {
                         Files.createDirectories(extractTo);
                     }
                 } else {
                     Files.copy(tar, extractTo, StandardCopyOption.REPLACE_EXISTING);
+                    try {
+                        Files.setPosixFilePermissions(extractTo, UnixModeToPosixFilePermissions.toPosixPermissions(entry.getMode()));
+                    } catch (UnsupportedOperationException | IOException e) {
+                        // File system does not support POSIX permissions (e.g., Windows)
+                    }
                 }
             }
         }
     }
 
+    /**
+     * Kill the container immediately or attempts to gracefully stop the specified Docker container if a `killGracePeriod` is set.
+     * See <a href="https://docs.docker.com/reference/cli/docker/container/stop/">{@code docker container stop}</a>.
+     *
+     * @param dockerClient client for the Docker Engine API
+     * @param containerId  container to kill
+     * @param logger       standard logger
+     */
     private void kill(final DockerClient dockerClient, final String containerId, final Logger logger) {
         try {
             InspectContainerResponse inspect = dockerClient.inspectContainerCmd(containerId).exec();
             if (Boolean.TRUE.equals(inspect.getState().getRunning())) {
-                dockerClient.killContainerCmd(containerId).exec();
+                if (killGracePeriod.isPositive()) {
+                    dockerClient.stopContainerCmd(containerId).withTimeout((int) killGracePeriod.toSeconds()).exec();
+                } else {
+                    dockerClient.killContainerCmd(containerId).exec();
+                }
 
                 if (logger.isTraceEnabled()) {
                     logger.trace("Container was killed.");
@@ -639,7 +678,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
         return DockerService.client(dockerClientConfig);
     }
 
-    private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars) throws IllegalVariableEvaluationException {
+    private CreateContainerCmd configure(TaskCommands taskCommands, DockerClient dockerClient, RunContext runContext, Map<String, Object> additionalVars) throws IllegalVariableEvaluationException, IOException {
         Optional<Boolean> volumeEnabledConfig = runContext.pluginConfiguration(VOLUME_ENABLED_CONFIG);
         if (volumeEnabledConfig.isEmpty()) {
             // check the legacy property and emit a warning if used
@@ -777,7 +816,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
 
         return container
             .withHostConfig(hostConfig)
-            .withCmd(taskCommands.getCommands())
+            .withCmd(runContext.render(taskCommands.getCommands()).asList(String.class))
             .withAttachStderr(true)
             .withAttachStdout(true);
     }

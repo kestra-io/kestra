@@ -69,14 +69,14 @@ public class Set extends Task implements RunnableTask<VoidOutput> {
         title = "The namespace in which the KV pair will be stored. By default, Kestra will use the namespace of the flow."
     )
     @Builder.Default
-    private Property<String> namespace = new Property<>("{{ flow.namespace }}");
+    private Property<String> namespace = Property.ofExpression("{{ flow.namespace }}");
 
     @NotNull
     @Schema(
         title = "Whether to overwrite or fail if a value for the given key already exists."
     )
     @Builder.Default
-    private Property<Boolean> overwrite = Property.of(true);
+    private Property<Boolean> overwrite = Property.ofValue(true);
 
     @Schema(
         title = "Optional Time-To-Live (TTL) duration for the key-value pair. If not set, the KV pair will never be deleted from internal storage."

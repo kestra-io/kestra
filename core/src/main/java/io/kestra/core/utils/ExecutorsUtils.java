@@ -43,16 +43,6 @@ public class ExecutorsUtils {
         );
     }
 
-    public ExecutorService fixedThreadPool(int thread, String name) {
-        return this.wrap(
-            name,
-            Executors.newFixedThreadPool(
-                thread,
-                threadFactoryBuilder.build(name + "_%d")
-            )
-        );
-    }
-
     public ExecutorService singleThreadExecutor(String name) {
         return this.wrap(
             name,

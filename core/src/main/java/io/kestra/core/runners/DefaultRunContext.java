@@ -15,9 +15,13 @@ import io.kestra.core.storages.Storage;
 import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.kv.KVStore;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.core.utils.MapUtils;
 import io.kestra.core.utils.VersionProvider;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.core.annotation.Introspected;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Validator;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
 import lombok.With;
@@ -51,6 +55,7 @@ public class DefaultRunContext extends RunContext {
     private KVStoreService kvStoreService;
     private Optional<String> secretKey;
     private WorkingDir workingDir;
+    private Validator validator;
 
     private Map<String, Object> variables;
     private List<AbstractMetricEntry<?>> metrics = new ArrayList<>();
@@ -147,6 +152,7 @@ public class DefaultRunContext extends RunContext {
             this.version = applicationContext.getBean(VersionProvider.class);
             this.kvStoreService = applicationContext.getBean(KVStoreService.class);
             this.secretKey = applicationContext.getProperty("kestra.encryption.secret-key", String.class);
+            this.validator = applicationContext.getBean(Validator.class);
         }
     }
 
@@ -163,14 +169,27 @@ public class DefaultRunContext extends RunContext {
 
         // this is used when a run context is re-hydrated so we need to add again the secrets from the inputs
         if (!ListUtils.isEmpty(secretInputs) && getVariables().containsKey("inputs")) {
+            @SuppressWarnings("unchecked")
             Map<String, Object> inputs = (Map<String, Object>) getVariables().get("inputs");
             for (String secretInput : secretInputs) {
-                String secret = (String) inputs.get(secretInput);
+                String secret = findSecret(secretInput, inputs);
                 if (secret != null) {
                     logger.usedSecret(secret);
                 }
             }
         }
+    }
+
+    @SuppressWarnings("unchecked")
+    private String findSecret(String secretInput, Map<String, Object> inputs) {
+        if (secretInput.indexOf('.') > 0) {
+            String prefix = secretInput.substring(0, secretInput.indexOf('.'));
+            String suffix = secretInput.substring(secretInput.indexOf('.') + 1);
+            Map<String, Object> subInputs = (Map<String, Object>) inputs.get(prefix);
+            return findSecret(suffix, subInputs);
+        }
+
+        return (String) inputs.get(secretInput);
     }
 
     void setPluginConfiguration(final Map<String, Object> pluginConfiguration) {
@@ -308,6 +327,16 @@ public class DefaultRunContext extends RunContext {
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
+    @Override
+    public <T> void validate(T bean) {
+        // It can be null in unit test as init() is not always called there
+        Validator theValidator = validator != null ? validator : applicationContext.getBean(Validator.class);
+        Set<ConstraintViolation<T>> violations = theValidator.validate(bean);
+        if (!violations.isEmpty()) {
+            throw new ConstraintViolationException(violations);
+        }
+    }
+
     /**
      * {@inheritDoc}
      */
@@ -396,7 +425,8 @@ public class DefaultRunContext extends RunContext {
         }
 
         try {
-            metricEntry.register(this.meterRegistry, this.metricPrefix(), this.metricsTags());
+            // FIXME there seems to be a bug as the metric name is never used
+            metricEntry.register(this.meterRegistry, this.metricPrefix(), metricEntry.getDescription(), this.metricsTags());
         } catch (IllegalArgumentException e) {
             // https://github.com/micrometer-metrics/micrometer/issues/877
             // https://github.com/micrometer-metrics/micrometer/issues/2399
@@ -475,7 +505,9 @@ public class DefaultRunContext extends RunContext {
             logger().warn("Unable to cleanup worker task", ex);
         }
 
-        logger.resetMDC();
+        if (logger != null){
+            logger.resetMDC();
+        }
     }
 
     /**

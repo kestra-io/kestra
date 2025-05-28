@@ -1,6 +1,7 @@
 package io.kestra.core.models;
 
 import io.kestra.core.models.annotations.Plugin.Id;
+import jakarta.annotation.Nullable;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.Arrays;

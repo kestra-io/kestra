@@ -1,14 +1,14 @@
 package io.kestra.core.runners;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.tasks.Task;
+import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.Data;
 import lombok.With;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import jakarta.validation.constraints.NotNull;
 
@@ -31,12 +31,8 @@ public class WorkerTask extends WorkerJob {
     @NotNull
     private RunContext runContext;
 
-    public Logger logger() {
-        return LoggerFactory.getLogger(
-            "flow." + this.getTaskRun().getFlowId() + "." +
-                this.getTask().getId()
-        );
-    }
+    @Nullable
+    private ExecutionKind  executionKind;
 
     /**
      * {@inheritDoc}

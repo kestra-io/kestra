@@ -1,28 +1,33 @@
 <template>
     <template v-if="ready">
-        <flow-root-top-bar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName()" />
-        <tabs
-            @expand-subflow="updateExpandedSubflows"
+        <FlowRootTopBar
+            :route-info="routeInfo"
+            :active-tab-name="activeTabName()"
+        />
+        <Tabs
             route-name="flows/update"
             ref="currentTab"
             :tabs="tabs"
+            @expand-subflow="updateExpandedSubflows"
         />
     </template>
 </template>
 
 <script>
+    import {h} from "vue";
+
     import Topology from "./Topology.vue";
     import FlowRevisions from "./FlowRevisions.vue";
     import LogsWrapper from "../logs/LogsWrapper.vue"
     import FlowExecutions from "./FlowExecutions.vue";
     import RouteContext from "../../mixins/routeContext";
-    import {mapState} from "vuex";
+    import {mapState, mapGetters} from "vuex";
     import permission from "../../models/permission";
     import action from "../../models/action";
     import Tabs from "../Tabs.vue";
     import Overview from "./Overview.vue";
     import FlowDependencies from "./FlowDependencies.vue";
-    import FlowNoDependencies from "./FlowNoDependencies.vue";
+    import Empty from "../layout/empty/Empty.vue";
     import FlowMetrics from "./FlowMetrics.vue";
     import FlowEditor from "./FlowEditor.vue";
     import FlowTriggers from "./FlowTriggers.vue";
@@ -42,7 +47,6 @@
                 tabIndex: undefined,
                 previousFlow: undefined,
                 dependenciesCount: undefined,
-                expandedSubflows: [],
                 deleted: false,
             };
         },
@@ -66,6 +70,19 @@
             },
         },
         created() {
+            if(!this.$route.params.tab) {
+                const tab = localStorage.getItem("flowDefaultTab") || undefined;
+                this.$router.replace({name: "flows/update", params: {...this.$route.params, tab}});
+            }
+            // since this component is only used in edition
+            // we need to set the flag as editing in the store.
+            // Specifically, it would be a problem when saving a new flow
+            // and moving to edit mode.
+            // NOTE: Flow creation component is ./FlowCreate.vue
+            this.$store.commit("flow/setIsCreating", false);
+
+            this.$store.commit("flow/setIsCreating", false);
+
             this.load();
         },
         methods: {
@@ -166,6 +183,7 @@
                         component: FlowEditor,
                         title: this.$t("edit"),
                         containerClass: "full-container",
+                        maximized: true,
                         props: {
                             expandedSubflows: this.expandedSubflows,
                             isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
@@ -279,14 +297,15 @@
                 return tabs;
             },
             updateExpandedSubflows(expandedSubflows) {
-                this.expandedSubflows = expandedSubflows;
+                this.$store.commit("flow/setExpandedSubflows", expandedSubflows);
             },
             activeTabName() {
                 return this.$refs.currentTab?.activeTab?.name ?? "home";
             }
         },
         computed: {
-            ...mapState("flow", ["flow"]),
+            ...mapGetters("flow", ["flow", "isAllowedEdit", "readOnlySystemLabel"]),
+            ...mapState("flow", ["expandedSubflows"]),
             ...mapState("auth", ["user"]),
             ...mapState("core", ["guidedProperties"]),
             routeInfo() {
@@ -309,6 +328,7 @@
                             },
                         },
                     ],
+                    beta: this.tabs.find(tab => tab.name === this.$route.params.tab)?.props?.beta,
                 };
             },
             tabs() {
@@ -317,26 +337,9 @@
             ready() {
                 return this.user && this.flow;
             },
-            isAllowedEdit() {
-                if (!this.flow || !this.user) {
-                    return false;
-                }
-
-                return this.user.isAllowed(
-                    permission.FLOW,
-                    action.UPDATE,
-                    this.flow.namespace,
-                );
-            },
-            readOnlySystemLabel() {
-                if (!this.flow) {
-                    return false;
-                }
-
-                return (this.flow.labels?.["system.readOnly"] === "true") || (this.flow.labels?.["system.readOnly"] === true);
-            },
             routeFlowDependencies() {
-                return this.dependenciesCount > 0 ? FlowDependencies : FlowNoDependencies;
+                const EMPTY = () => h(Empty, {type: "dependencies"});
+                return this.dependenciesCount > 0 ? FlowDependencies : EMPTY;
             }
         },
         unmounted() {

@@ -1,17 +1,14 @@
 <template>
     <Dashboard
         v-if="loaded && total && flow"
-        :restore-u-r-l="false"
-        flow
-        :flow-id="flow.id"
-        :namespace="flow.namespace"
         embed
+        :is-flow="true"
     />
     <NoExecutions v-else-if="loaded && flow && !total" />
 </template>
 
 <script setup lang="ts">
-    import {computed, ref, onMounted} from "vue";
+    import {computed, onMounted, ref} from "vue";
     import {useStore} from "vuex";
 
     import Dashboard from "../dashboard/Dashboard.vue";
@@ -22,6 +19,8 @@
 
     const total = ref(0);
     const loaded = ref(false);
+
+    defineEmits(["expand-subflow"]);
 
     onMounted(() => {
         if (flow.value?.id) {

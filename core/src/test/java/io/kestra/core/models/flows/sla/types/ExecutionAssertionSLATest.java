@@ -1,5 +1,6 @@
 package io.kestra.core.models.flows.sla.types;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.flows.sla.Violation;
@@ -11,15 +12,14 @@ import org.junit.jupiter.api.Test;
 import java.util.Map;
 import java.util.Optional;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.MatcherAssert.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @KestraTest
 class ExecutionAssertionSLATest {
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void shouldEvaluateToAViolation() throws InternalException {
@@ -30,7 +30,7 @@ class ExecutionAssertionSLATest {
 
         Optional<Violation> evaluate = sla.evaluate(runContext, null);
         assertTrue(evaluate.isPresent());
-        assertThat(evaluate.get().reason(), is("assertion is false: {{ condition == 'true'}}."));
+        assertThat(evaluate.get().reason()).isEqualTo("assertion is false: {{ condition == 'true'}}.");
     }
 
     @Test

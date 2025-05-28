@@ -45,8 +45,9 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
      **/
     @Override
     public void run() {
-        final Instant now = Instant.now();
-        run(now);
+        if (!isStopped.get()) {
+            run(Instant.now());
+        }
     }
 
     @VisibleForTesting
@@ -133,7 +134,19 @@ public abstract class AbstractServiceLivenessTask implements Runnable, AutoClose
     public void close() {
         if (isStopped.compareAndSet(false, true) && scheduledExecutorService != null) {
             scheduledExecutorService.shutdown();
-            log.debug("Stopped scheduled '{}' task.", name);
+            if (scheduledExecutorService.isTerminated()) {
+                return;
+            }
+            try {
+                if (!scheduledExecutorService.awaitTermination(5, TimeUnit.SECONDS)) {
+                    log.debug("Failed to wait for scheduled '{}' task termination. Cause: Timeout", name);
+                }
+                log.debug("Stopped scheduled '{}' task.", name);
+            } catch (InterruptedException e) {
+                scheduledExecutorService.shutdownNow();
+                Thread.currentThread().interrupt();
+                log.debug("Failed to wait for scheduled '{}' task termination. Cause: Interrupted.", name);
+            }
         }
     }
 }

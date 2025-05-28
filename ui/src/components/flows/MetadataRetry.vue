@@ -31,7 +31,7 @@
     const changeType = (v: any) => {
         if (!v) return;
 
-        const type = definitions[v].properties.type.enum[0];
+        const type = definitions[v].properties.type.const;
         value.value = type ? {type} : {};
     };
 

@@ -1,5 +1,5 @@
 <template>
-    <el-form-item v-if="fieldKey" :required="isRequired">
+    <el-form-item v-if="fieldKey" :required>
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -11,6 +11,14 @@
                     <span v-if="realKey" class="label">
                         {{ realKey }}
                     </span>
+                    <button
+                        v-if="isAnyOf && !required"
+                        class="clear-button"
+                        type="button"
+                        @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
+                    >
+                        <CloseIcon />Clear Selection
+                    </button>
                 </div>
                 <el-tag
                     v-if="!isAnyOf"
@@ -21,7 +29,7 @@
                     {{ simpleType }}
                 </el-tag>
                 <el-tooltip
-                    v-if="!isAnyOf && hasTooltip(schema)"
+                    v-if="!isAnyOf && hasTooltip"
                     :persistent="false"
                     :hide-after="0"
                     effect="light"
@@ -41,6 +49,7 @@
         </template>
         <component
             v-if="!isBoolean"
+            ref="taskComponent"
             :is="`task-${type}`"
             v-bind="{...componentProps}"
             class="mt-1 mb-2 wrapper"
@@ -54,6 +63,8 @@
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
     import {getType} from "./Task";
     import {computed} from "vue";
+    import CloseIcon from "vue-material-design-icons/Close.vue";
+    import {templateRef} from "@vueuse/core";
 
     const props = defineProps<{
         schema: any;
@@ -65,10 +76,12 @@
     }>()
 
     const emit = defineEmits<{
-        (e: "update:modelValue", value: Record<string, any> | string | number | boolean | Array<any>): void;
+        (e: "update:modelValue", value?: Record<string, any> | string | number | boolean | Array<any>): void;
     }>();
 
-    const isRequired = computed(() => {
+    const taskComponent = templateRef<{resetSelectType?: () => void}>("taskComponent");
+
+    const required = computed(() => {
         return props.required?.includes(props.fieldKey);
     })
 
@@ -81,7 +94,7 @@
             task: props.task,
             root: realKey.value,
             schema: props.schema,
-            required: isRequired.value,
+            required: required.value,
             definitions: props.definitions
         }
     })
@@ -120,7 +133,7 @@
     })
 
     const simpleType = computed(() => {
-        return getType(props.schema.type);
+        return getType(props.schema);
     })
 
     const type = computed(() => {
@@ -164,6 +177,10 @@
         font-weight: 600;
     }
 
+    .label-anyof{
+        background-color: red;
+    }
+
     .type-tag {
         background-color: var(--ks-tag-background-active);
         color: var(--ks-tag-content);
@@ -178,6 +195,15 @@
     .information-icon {
         color: var(--ks-content-secondary);
         cursor: pointer;
+    }
+
+    .clear-button{
+        border: none;
+        background: transparent;
+        color: var(--ks-content-link);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }
 }
 </style>

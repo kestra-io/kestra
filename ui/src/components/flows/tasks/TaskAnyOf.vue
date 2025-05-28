@@ -111,7 +111,16 @@
                 }
                 this.onInput(value);
             },
+            resetSelectType() {
+                this.selectedSchema = this.schemaOptions[0]?.value;
+                this.$nextTick(() => {
+                    this.onInput(undefined);
+                });
+            },
         },
+        expose: [
+            "resetSelectType",
+        ],
 
         computed: {
             ...mapState("plugin", ["icons"]),

@@ -17,7 +17,7 @@
                         type="button"
                         @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
                     >
-                        <CloseIcon class="clear-icon" />Clear Selection
+                        <CloseIcon class="clear-icon" />{{ $t("no_code.clearSelection") }}
                     </button>
                 </div>
                 <el-tag

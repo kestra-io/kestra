@@ -47,9 +47,6 @@
         inheritAttrs: false,
         mixins: [Task],
         emits: ["any-of-type"],
-        beforeMount() {
-            this.autodetectSimpleType()
-        },
         data() {
             return {
                 isOpen: false,
@@ -113,15 +110,6 @@
                     value.type = this.constantType;
                 }
                 this.onInput(value);
-            },
-            autodetectSimpleType(){
-                if(this.schemaOptions.some((item) => item.value === "number") && typeof this.modelValue === "number"){
-                    this.selectedSchema = "number";
-                } else if(this.schemaOptions.some((item) => item.value === "string" && typeof this.modelValue === "string")) {
-                    this.selectedSchema = "string";
-                } else if (this.schemaOptions.some((item) => item.value === "array" && Array.isArray(this.modelValue))) {
-                    this.selectedSchema = "array";
-                }
             },
         },
 

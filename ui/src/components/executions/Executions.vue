@@ -567,7 +567,6 @@
                     }
                 ],
                 displayColumns: [],
-                childFilter: "ALL",
                 storageKey: storageKeys.DISPLAY_EXECUTIONS_COLUMNS,
                 isOpenLabelsModal: false,
                 executionLabels: [],
@@ -661,7 +660,7 @@
                 return this.namespace !== null && this.namespace !== undefined ? this.namespace : this.$route.query?.namespace;
             }
         },
-        beforeRouteEnter(to, from, next) {
+        beforeRouteEnter(to, _, next) {
             const defaultNamespace = localStorage.getItem(
                 storageKeys.DEFAULT_NAMESPACE,
             );

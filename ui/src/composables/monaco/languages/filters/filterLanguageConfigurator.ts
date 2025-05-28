@@ -12,6 +12,7 @@ import IWordAtPosition = editor.IWordAtPosition;
 const legacyFilterLanguage = "legacy-filter";
 export const languages = ["filter", legacyFilterLanguage];
 export const COMPARATOR_CHARS = [...new Set(Object.values(Comparators).flatMap(c => c.split("")))];
+export const COMPARATORS_REGEX = "(?:(?:" + Object.values(Comparators).map(c => c.replaceAll(/./g, (match) => `\\${match}`)).join(")|(?:") + "))";
 
 let filterLanguages: FilterLanguage[];
 
@@ -53,7 +54,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
             monaco.languages.register({id: this.language});
             monaco.languages.setMonarchTokensProvider(this.language, {
                 operators: Object.values(Comparators),
-                symbols: new RegExp("[" + COMPARATOR_CHARS.join("") + "]+"),
+                symbols: new RegExp(COMPARATORS_REGEX),
                 includeLF: true,
                 tokenizer: {
                     root: [
@@ -73,11 +74,11 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                     ],
                     value: [
                         [/"[^"]+(?![^"]*")/, "invalid"],
-                        [new RegExp("\"[^,\"" + COMPARATOR_CHARS.join("") + "]*\""), {
+                        [new RegExp("\"[^\\n,\"]*\""), {
                             token: "variable.value",
                             next: "@separator"
                         }],
-                        [new RegExp("[^\\s,\"" + COMPARATOR_CHARS.join("") + "]*"), {
+                        [new RegExp("[^\\s,\"]*"), {
                             token: "variable.value",
                             next: "@separator"
                         }]
@@ -181,7 +182,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
 
                     if (offset === 0 || (SEPARATOR_CHARS.includes(previousChar) && !inQuotedString)) {
                         const comparatorsAfterCurrentWord = model.findNextMatch(
-                            "([" + COMPARATOR_CHARS.join("") + "]+)",
+                            "(" + COMPARATORS_REGEX + ")",
                             position.with(undefined, wordAtPosition.endColumn),
                             true,
                             false,
@@ -215,11 +216,11 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                         );
                     }
 
-                    const previousColumn = wordAtPosition.startColumn - 1;
+                    const previousColumn = wordAtPosition.startColumn;
                     const beforeWordPosition = previousColumn > 0
                         ? position.with(undefined, previousColumn)
                         : undefined;
-                    const charBeforeCurrentWord = beforeWordPosition === undefined ? "" : modelValue.charAt(model.getOffsetAt(beforeWordPosition));
+                    const charBeforeCurrentWord = beforeWordPosition === undefined ? "" : modelValue.charAt(model.getOffsetAt(beforeWordPosition) - 1);
 
                     if (
                         COMPARATOR_CHARS.includes(previousChar)

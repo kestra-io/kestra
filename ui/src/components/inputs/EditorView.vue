@@ -478,6 +478,7 @@
     import ValidationError from "../flows/ValidationError.vue";
     import EditorButtons from "./EditorButtons.vue";
     import MetadataEditor from "../flows/MetadataEditor.vue";
+    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
 
     const store = useStore();
     const router = useRouter();
@@ -558,13 +559,15 @@
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
     const isFlow = computed(() => currentTab?.value?.flow || props.isCreating);
 
+    const {translateError, translateErrorWithKey} = useFlowOutdatedErrors()
+
     const baseOutdatedTranslationKey = computed(() => store.getters["flow/baseOutdatedTranslationKey"]);
-    const flowErrors = computed(() => store.getters["flow/flowErrors"]);
+    const flowErrors = computed(() => store.getters["flow/flowErrors"]?.map(translateError));
     const flowWarnings = computed(() => {
         if (isFlow.value) {
             const outdatedWarning =
                 store.state.flow.flowValidation?.outdated && !store.state.flow.isCreating
-                    ? [store.getters["flow/outdatedMessage"]]
+                    ? [translateErrorWithKey(store.getters["flow/baseOutdatedTranslationKey"])]
                     : [];
 
             const deprecationWarnings =

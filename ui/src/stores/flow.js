@@ -737,16 +737,11 @@ export default {
                 const createOrUpdateKey = state.isCreating ? "create" : "update";
                 return "outdated revision save confirmation." + createOrUpdateKey;
         },
-        outdatedMessage(_, getters){
-            return `${this.$i18n.t(getters.baseOutdatedTranslationKey + ".description")} ${this.$i18n.t(
-                getters.baseOutdatedTranslationKey + ".details"
-            )}`;
-        },
         flowErrors(state, getters){
             if (getters.isFlow) {
                 const flowExistsError =
                     state.flowValidation?.outdated && state.isCreating
-                        ? [getters.outdatedMessage]
+                        ? [`>>>>${getters.baseOutdatedTranslationKey}`] // because translating is impossible here
                         : [];
 
                 const constraintsError =

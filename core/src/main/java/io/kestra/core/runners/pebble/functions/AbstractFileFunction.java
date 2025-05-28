@@ -90,17 +90,19 @@ abstract class AbstractFileFunction implements Function {
 
     boolean isFileUriValid(String namespace, String flowId, String executionId, URI path) {
         // Internal storage URI should be: kestra:///$namespace/$flowId/executions/$executionId/tasks/$taskName/$taskRunId/$random.ion or kestra:///$namespace/$flowId/executions/$executionId/trigger/$triggerName/$random.ion
+        // Namespace file URI should be: kestra:///$namespace/_files/$random'
         // We check that the file is for the given flow execution
         if (namespace == null || flowId == null || executionId == null) {
             return false;
         }
 
-        String authorizedBasePath = KESTRA_SCHEME + namespace.replace(".", "/") + "/" + Slugify.of(flowId) + "/executions/" + executionId + "/";
-        return path.toString().startsWith(authorizedBasePath);
+        String executionAuthorizedBasePath = KESTRA_SCHEME + namespace.replace(".", "/") + "/" + Slugify.of(flowId) + "/executions/" + executionId + "/";
+        String nsFileAuthorizedBasePath = KESTRA_SCHEME + namespace.replace(".", "/") + "/_files/"  ;
+        return path.toString().startsWith(executionAuthorizedBasePath) || path.toString().startsWith(nsFileAuthorizedBasePath);
     }
 
     @SuppressWarnings("unchecked")
-    String checkAllowedFileAndReturnNamespace(EvaluationContext context, URI path) {
+    private String checkAllowedFileAndReturnNamespace(EvaluationContext context, URI path) {
         Map<String, String> flow = (Map<String, String>) context.getVariable("flow");
         Map<String, String> execution = (Map<String, String>) context.getVariable("execution");
 

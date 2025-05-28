@@ -11,6 +11,8 @@ import java.util.Map;
 public class Fixtures {
     private Map<String, Object> inputs;
 
+    private Map<String, String> files;
+
     private List<TaskFixture> tasks;
 
     private TriggerFixture trigger;

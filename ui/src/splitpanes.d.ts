@@ -1,4 +1,5 @@
 declare module "splitpanes" {
+    // Linked issue, for now we need to provide manually the types https://github.com/antoniandre/splitpanes/issues/144
     import {DefineComponent} from "vue";
 
     export interface PaneProps {

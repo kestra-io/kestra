@@ -72,7 +72,7 @@
 section#charts {
 
     & .el-row .el-col {
-        margin-bottom: 0.5rem;
+        margin-bottom: 1rem;
 
         & > div {
             height: 100%;

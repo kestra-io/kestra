@@ -36,7 +36,7 @@
     "cronstrue": "^2.61.0",
     "dagre": "^0.8.5",
     "el-table-infinite-scroll": "^3.0.6",
-    "element-plus": "^2.9.10",
+    "element-plus": "^2.9.11",
     "humanize-duration": "^3.32.2",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",

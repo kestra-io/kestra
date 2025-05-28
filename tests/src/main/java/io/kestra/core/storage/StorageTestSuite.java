@@ -202,31 +202,32 @@ public abstract class StorageTestSuite {
     @Test
     void listNoCrossTenant() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = IdUtils.create();
+        String tenantId1 = IdUtils.create();
+        String tenantId2 = IdUtils.create();
 
-        List<String> withTenant = Arrays.asList(
+        List<String> firstTenant = Arrays.asList(
             "/" + prefix + "/with/1.yml",
             "/" + prefix + "/with/2.yml",
             "/" + prefix + "/with/3.yml"
         );
-        withTenant.forEach(throwConsumer(s -> putFile(tenantId, s)));
-        List<String> nullTenant = Arrays.asList(
+        firstTenant.forEach(throwConsumer(s -> putFile(tenantId1, s)));
+        List<String> secondTenant = Arrays.asList(
             "/" + prefix + "/notenant/1.yml",
             "/" + prefix + "/notenant/2.yml",
             "/" + prefix + "/notenant/3.yml"
         );
-        nullTenant.forEach(throwConsumer(s -> putFile(null, s)));
+        secondTenant.forEach(throwConsumer(s -> putFile(tenantId2, s)));
 
-        List<FileAttributes> with = storageInterface.list(tenantId, prefix, new URI("/" + prefix + "/with"));
+        List<FileAttributes> with = storageInterface.list(tenantId1, prefix, new URI("/" + prefix + "/with"));
         assertThat(with.stream().map(FileAttributes::getFileName).toList()).containsExactlyInAnyOrder("1.yml", "2.yml", "3.yml");
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.list(tenantId, prefix, new URI("/" + prefix + "/notenant/"));
+            storageInterface.list(tenantId1, prefix, new URI("/" + prefix + "/notenant/"));
         });
 
-        List<FileAttributes> notenant = storageInterface.list(null, prefix, new URI("/" + prefix + "/notenant"));
+        List<FileAttributes> notenant = storageInterface.list(tenantId2, prefix, new URI("/" + prefix + "/notenant"));
         assertThat(notenant.stream().map(FileAttributes::getFileName).toList()).containsExactlyInAnyOrder("1.yml", "2.yml", "3.yml");
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.list(null, prefix, new URI("/" + prefix + "/with/"));
+            storageInterface.list(tenantId2, prefix, new URI("/" + prefix + "/with/"));
         });
     }
 
@@ -301,20 +302,21 @@ public abstract class StorageTestSuite {
     @Test
     void existsNoCrossTenant() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = IdUtils.create();
+        String tenantId1 = IdUtils.create();
+        String tenantId2 = IdUtils.create();
 
-        String withTenant = "/" + prefix + "/storage/withtenant.yml";
-        putFile(tenantId, withTenant);
-        String nullTenant = "/" + prefix + "/storage/nulltenant.yml";
-        putFile(null, nullTenant);
+        String firstTenant = "/" + prefix + "/storage/firstTenant.yml";
+        putFile(tenantId1, firstTenant);
+        String secondTenant = "/" + prefix + "/storage/secondTenant.yml";
+        putFile(tenantId2, secondTenant);
 
-        URI with = new URI(withTenant);
-        assertTrue(storageInterface.exists(tenantId, prefix, with));
-        assertFalse(storageInterface.exists(null, prefix, with));
+        URI with = new URI(firstTenant);
+        assertTrue(storageInterface.exists(tenantId1, prefix, with));
+        assertFalse(storageInterface.exists(tenantId2, prefix, with));
 
-        URI without = new URI(nullTenant);
-        assertFalse(storageInterface.exists(tenantId, prefix, without));
-        assertTrue(storageInterface.exists(null, prefix, without));
+        URI without = new URI(secondTenant);
+        assertFalse(storageInterface.exists(tenantId1, prefix, without));
+        assertTrue(storageInterface.exists(tenantId2, prefix, without));
 
     }
 
@@ -371,23 +373,24 @@ public abstract class StorageTestSuite {
     @Test
     void sizeNoCrossTenant() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = IdUtils.create();
+        String tenantId1 = IdUtils.create();
+        String tenantId2 = IdUtils.create();
 
-        String withTenant = "/" + prefix + "/storage/withtenant.yml";
-        putFile(tenantId, withTenant);
-        String nullTenant = "/" + prefix + "/storage/nulltenant.yml";
-        putFile(null, nullTenant);
+        String firstTenant = "/" + prefix + "/storage/firstTenant.yml";
+        putFile(tenantId1, firstTenant);
+        String secondTenant = "/" + prefix + "/storage/secondTenant.yml";
+        putFile(tenantId2, secondTenant);
 
-        URI with = new URI(withTenant);
-        assertThat(storageInterface.getAttributes(tenantId, prefix, with).getSize()).isEqualTo((long) CONTENT_STRING.length());
+        URI with = new URI(firstTenant);
+        assertThat(storageInterface.getAttributes(tenantId1, prefix, with).getSize()).isEqualTo((long) CONTENT_STRING.length());
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.getAttributes(null, prefix, with).getSize();
+            storageInterface.getAttributes(tenantId2, prefix, with).getSize();
         });
 
-        URI without = new URI(nullTenant);
-        assertThat(storageInterface.getAttributes(null, prefix, without).getSize()).isEqualTo((long) CONTENT_STRING.length());
+        URI without = new URI(secondTenant);
+        assertThat(storageInterface.getAttributes(tenantId2, prefix, without).getSize()).isEqualTo((long) CONTENT_STRING.length());
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.getAttributes(tenantId, prefix, without).getSize();
+            storageInterface.getAttributes(tenantId1, prefix, without).getSize();
         });
 
     }
@@ -445,23 +448,24 @@ public abstract class StorageTestSuite {
     @Test
     void lastModifiedTimeNoCrossTenant() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = IdUtils.create();
+        String tenantId1 = IdUtils.create();
+        String tenantId2 = IdUtils.create();
 
-        String withTenant = "/" + prefix + "/storage/withtenant.yml";
-        putFile(tenantId, withTenant);
-        String nullTenant = "/" + prefix + "/storage/nulltenant.yml";
-        putFile(null, nullTenant);
+        String firstTenant = "/" + prefix + "/storage/firstTenant.yml";
+        putFile(tenantId1, firstTenant);
+        String secondTenant = "/" + prefix + "/storage/secondTenant.yml";
+        putFile(tenantId2, secondTenant);
 
-        URI with = new URI(withTenant);
-        assertThat(storageInterface.getAttributes(tenantId, prefix, with).getLastModifiedTime()).isNotNull();
+        URI with = new URI(firstTenant);
+        assertThat(storageInterface.getAttributes(tenantId1, prefix, with).getLastModifiedTime()).isNotNull();
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.getAttributes(null, prefix, with).getLastModifiedTime();
+            storageInterface.getAttributes(tenantId2, prefix, with).getLastModifiedTime();
         });
 
-        URI without = new URI(nullTenant);
-        assertThat(storageInterface.getAttributes(null, prefix, without).getLastModifiedTime()).isNotNull();
+        URI without = new URI(secondTenant);
+        assertThat(storageInterface.getAttributes(tenantId2, prefix, without).getLastModifiedTime()).isNotNull();
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.getAttributes(tenantId, prefix, without).getLastModifiedTime();
+            storageInterface.getAttributes(tenantId1, prefix, without).getLastModifiedTime();
         });
 
     }
@@ -543,25 +547,26 @@ public abstract class StorageTestSuite {
     @Test
     void getAttributesNoCrossTenant() throws Exception {
         String prefix = IdUtils.create();
-        String tenantId = IdUtils.create();
+        String tenantId1 = IdUtils.create();
+        String tenantId2 = IdUtils.create();
 
-        String withTenant = "/" + prefix + "/storage/withtenant.yml";
-        putFile(tenantId, withTenant);
-        String nullTenant = "/" + prefix + "/storage/nulltenant.yml";
-        putFile(null, nullTenant);
+        String firstTenant = "/" + prefix + "/storage/firstTenant.yml";
+        putFile(tenantId1, firstTenant);
+        String secondTenant = "/" + prefix + "/storage/secondTenant.yml";
+        putFile(tenantId2, secondTenant);
 
-        URI with = new URI(withTenant);
-        FileAttributes attr = storageInterface.getAttributes(tenantId, prefix, with);
-        assertThat(attr.getFileName()).isEqualTo("withtenant.yml");
+        URI with = new URI(firstTenant);
+        FileAttributes attr = storageInterface.getAttributes(tenantId1, prefix, with);
+        assertThat(attr.getFileName()).isEqualTo("firstTenant.yml");
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.getAttributes(null, prefix, with);
+            storageInterface.getAttributes(tenantId2, prefix, with);
         });
 
-        URI without = new URI(nullTenant);
-        attr = storageInterface.getAttributes(null, prefix, without);
-        assertThat(attr.getFileName()).isEqualTo("nulltenant.yml");
+        URI without = new URI(secondTenant);
+        attr = storageInterface.getAttributes(tenantId2, prefix, without);
+        assertThat(attr.getFileName()).isEqualTo("secondTenant.yml");
         assertThrows(FileNotFoundException.class, () -> {
-            storageInterface.getAttributes(tenantId, prefix, without);
+            storageInterface.getAttributes(tenantId1, prefix, without);
         });
     }
 

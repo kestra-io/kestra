@@ -38,8 +38,6 @@ import jakarta.validation.ConstraintViolationException;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.spy;
 
 // If some counts are wrong in this test it means that one of the tests is not properly deleting what it created
 @KestraTest
@@ -231,74 +229,158 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
-    protected void find() {
-        List<Flow> save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), MAIN_TENANT, null);
-        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 1);
+    void find_paginationPartial() {
+        assertThat(flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), MAIN_TENANT, null)
+            .size())
+            .describedAs("When paginating at MAX-1, it should return MAX-1")
+            .isEqualTo(Helpers.FLOWS_COUNT - 1);
 
-        save = flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), MAIN_TENANT, null);
-        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT);
+        assertThat(flowRepository.findWithSource(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), MAIN_TENANT, null)
+            .size())
+            .describedAs("When paginating at MAX-1, it should return MAX-1")
+            .isEqualTo(Helpers.FLOWS_COUNT - 1);
+    }
 
-        var namespaceFilter = List.of(
-            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests.minimal.bis").build()
-        );
-        save = flowRepository.find(Pageable.from(1), MAIN_TENANT, namespaceFilter);
-        assertThat((long) save.size()).isEqualTo(1L);
+    @Test
+    void find_paginationGreaterThanExisting() {
+        assertThat(flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), MAIN_TENANT, null)
+            .size())
+            .describedAs("When paginating requesting a larger amount than existing, it should return existing MAX")
+            .isEqualTo(Helpers.FLOWS_COUNT);
+        assertThat(flowRepository.findWithSource(Pageable.from(1, (int) Helpers.FLOWS_COUNT + 1, Sort.UNSORTED), MAIN_TENANT, null)
+            .size())
+            .describedAs("When paginating requesting a larger amount than existing, it should return existing MAX")
+            .isEqualTo(Helpers.FLOWS_COUNT);
+    }
 
-        var labelFilter = List.of(
-            QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("country", "FR")).build()
-        );
-        save = flowRepository.find(Pageable.from(1, 100, Sort.UNSORTED), MAIN_TENANT, labelFilter);
-        assertThat(save.size()).isEqualTo(1);
+    @Test
+    void find_prefixMatchingAllNamespaces() {
+        assertThat(flowRepository.find(
+            Pageable.UNPAGED,
+            MAIN_TENANT,
+            List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.STARTS_WITH).value("io.kestra.tests").build()
+            )
+        ).size())
+            .describedAs("When filtering on NAMESPACE START_WITH a pattern that match all, it should return all")
+            .isEqualTo(Helpers.FLOWS_COUNT);
 
-        var filterLabelAndNamespace = List.of(
-            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
-            QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key2", "value2")).build()
-        );
-        save = flowRepository.find(Pageable.from(1), MAIN_TENANT, filterLabelAndNamespace);
-        assertThat((long) save.size()).isEqualTo(1L);
+        assertThat(flowRepository.findWithSource(
+            Pageable.UNPAGED,
+            MAIN_TENANT,
+            List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.STARTS_WITH).value("io.kestra.tests").build()
+            )
+        ).size())
+            .describedAs("When filtering on NAMESPACE START_WITH a pattern that match all, it should return all")
+            .isEqualTo(Helpers.FLOWS_COUNT);
+    }
 
-        var filterNamespaceButNotInLabel = List.of(
-            QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
-            QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key1", "value2")).build()
-        );
-        save = flowRepository.find(Pageable.from(1), MAIN_TENANT, filterNamespaceButNotInLabel);
-        assertThat((long) save.size()).isEqualTo(0L);
+    @Test
+    void find_aSpecifiedNamespace() {
+        assertThat(flowRepository.find(
+            Pageable.UNPAGED,
+            MAIN_TENANT,
+            List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests2").build()
+            )
+        ).size()).isEqualTo(1L);
+
+        assertThat(flowRepository.findWithSource(
+            Pageable.UNPAGED,
+            MAIN_TENANT,
+            List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests2").build()
+            )
+        ).size()).isEqualTo(1L);
+    }
+
+    @Test
+    void find_aSpecificSubNamespace() {
+        assertThat(flowRepository.find(
+            Pageable.UNPAGED,
+            MAIN_TENANT,
+            List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests.minimal.bis").build()
+            )
+        ).size())
+            .isEqualTo(1L);
+
+        assertThat(flowRepository.findWithSource(
+            Pageable.UNPAGED,
+            MAIN_TENANT,
+            List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests.minimal.bis").build()
+            )
+        ).size())
+            .isEqualTo(1L);
+    }
+
+    @Test
+    void find_aSpecificLabel() {
+        assertThat(
+            flowRepository.find(Pageable.UNPAGED, MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("country", "FR")).build()
+                )
+            ).size())
+            .isEqualTo(1);
+
+        assertThat(
+            flowRepository.findWithSource(Pageable.UNPAGED, MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("country", "FR")).build()
+                )
+            ).size())
+            .isEqualTo(1);
+    }
+
+    @Test
+    void find_aSpecificFlowByNamespaceAndLabel() {
+        assertThat(
+            flowRepository.find(Pageable.UNPAGED, MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
+                    QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key2", "value2")).build()
+                )
+            ).size())
+            .isEqualTo(1);
+
+        assertThat(
+            flowRepository.findWithSource(Pageable.UNPAGED, MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
+                    QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key2", "value2")).build()
+                )
+            ).size())
+            .isEqualTo(1);
+    }
+
+    @Test
+    void find_noResult_forAnUnknownNamespace() {
+        assertThat(
+            flowRepository.find(Pageable.UNPAGED, MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
+                    QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key1", "value2")).build()
+                )
+            ).size())
+            .isEqualTo(0);
+
+        assertThat(
+            flowRepository.findWithSource(Pageable.UNPAGED, MAIN_TENANT,
+                List.of(
+                    QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests").build(),
+                    QueryFilter.builder().field(QueryFilter.Field.LABELS).operation(QueryFilter.Op.EQUALS).value(Map.of("key1", "value2")).build()
+                )
+            ).size())
+            .isEqualTo(0);
     }
 
     @Test
     protected void findSpecialChars() {
         ArrayListTotal<SearchResult<Flow>> save = flowRepository.findSourceCode(Pageable.unpaged(), "https://api.chucknorris.io", MAIN_TENANT, null);
         assertThat((long) save.size()).isEqualTo(2L);
-    }
-
-    @Test
-    void findWithSource() {
-        List<FlowWithSource> save = flowRepository.findWithSource(
-            Pageable.UNPAGED,
-            MAIN_TENANT,
-            List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.STARTS_WITH).value("io.kestra.tests").build()
-            )
-        );
-        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 1);
-
-        save = flowRepository.findWithSource(
-            Pageable.UNPAGED,
-            MAIN_TENANT,
-            List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests2").build()
-            )
-        );
-        assertThat((long) save.size()).isEqualTo(1L);
-
-        save = flowRepository.findWithSource(
-            Pageable.UNPAGED,
-            MAIN_TENANT,
-            List.of(
-                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests.minimal.bis").build()
-            )
-        );
-        assertThat((long) save.size()).isEqualTo(1L);
     }
 
     @Test

@@ -57,13 +57,17 @@
 
         <editor
             class="mt-1"
-            v-if="revisionLeftText && revisionRightText"
+            v-if="revisionLeftText && revisionRightText && !isLoadingRevisions"
             :diff-side-by-side="sideBySide"
             :model-value="revisionRightText"
             :original="revisionLeftText"
             lang="yaml"
             :show-doc="false"
         />
+
+        <div v-if="isLoadingRevisions" class="text-center p-4">
+            <span class="ml-2">Loading revisions...</span>
+        </div>
 
         <drawer v-if="isModalOpen" v-model="isModalOpen">
             <template #header>
@@ -159,10 +163,14 @@
                     });
             },
             addQuery() {
+                if (this.isLoadingRevisions) {
+                    return;
+                }
+                
                 this.$router.push({query: {
                     ...this.$route.query,
-                    ...{revisionLeft:this.revisionLeftIndex + 1, revisionRight: this.revisionRightIndex + 1}}
-                });
+                    ...{revisionLeft: this.revisionLeftIndex + 1, revisionRight: this.revisionRightIndex + 1}
+                }});
             },
             async fetchRevision(revision) {
                 const revisionFetched = await this.$store.dispatch("flow/loadFlow", {
@@ -180,45 +188,77 @@
                 return this.revisions
                     .filter((_, index) => index !== excludeRevisionIndex)
                     .map(({revision}) => ({value: this.revisionIndex(revision), text: revision}));
+            },
+            async loadRevisionContent(index, side) {
+                if (index === undefined) {
+                    if (side === "left") {
+                        this.revisionLeftText = undefined;
+                    } else {
+                        this.revisionRightText = undefined;
+                    }
+                    return;
+                }
+
+                const revision = this.revisions[index];
+                let source = revision.source;
+                
+                if (!source) {
+                    source = (await this.fetchRevision(revision.revision)).source;
+                }
+
+                if (side === "left") {
+                    this.revisionLeftText = source;
+                } else {
+                    this.revisionRightText = source;
+                }
             }
         },
         computed: {
             ...mapState("flow", ["flow"])
         },
         watch: {
+            "$route.query": {
+                handler(newQuery, oldQuery) {
+                    if (newQuery.revisionLeft !== oldQuery.revisionLeft && newQuery.revisionLeft) {
+                        const newLeftIndex = this.revisionIndex(parseInt(newQuery.revisionLeft));
+                        if (newLeftIndex !== this.revisionLeftIndex) {
+                            this.revisionLeftIndex = newLeftIndex;
+                        }
+                    }
+                    
+                    if (newQuery.revisionRight !== oldQuery.revisionRight && newQuery.revisionRight) {
+                        const newRightIndex = this.revisionIndex(parseInt(newQuery.revisionRight));
+                        if (newRightIndex !== this.revisionRightIndex) {
+                            this.revisionRightIndex = newRightIndex;
+                        }
+                    }
+                },
+                deep: true
+            },
+            
             revisionLeftIndex: async function (newValue, oldValue) {
                 if (newValue === oldValue) {
                     return;
                 }
 
-                if (newValue === undefined) {
-                    this.revisionLeftText = undefined;
+                this.isLoadingRevisions = true;
+                try {
+                    await this.loadRevisionContent(newValue, "left");
+                } finally {
+                    this.isLoadingRevisions = false;
                 }
-
-                const leftRevision = this.revisions[newValue];
-                let source = leftRevision.source;
-                if (!source) {
-                    source = (await this.fetchRevision(leftRevision.revision)).source;
-                }
-
-                this.revisionLeftText = source;
             },
             revisionRightIndex: async function (newValue, oldValue) {
                 if (newValue === oldValue) {
                     return;
                 }
 
-                if (newValue === undefined) {
-                    this.revisionRightText = undefined;
+                this.isLoadingRevisions = true;
+                try {
+                    await this.loadRevisionContent(newValue, "right");
+                } finally {
+                    this.isLoadingRevisions = false;
                 }
-
-                const rightRevision = this.revisions[newValue];
-                let source = rightRevision.source;
-                if (!source) {
-                    source = (await this.fetchRevision(rightRevision.revision)).source;
-                }
-
-                this.revisionRightText = source;
             }
         },
         data() {
@@ -232,6 +272,7 @@
                 revisionId: undefined,
                 revisionYaml: undefined,
                 sideBySide: true,
+                isLoadingRevisions: false,
                 displayTypes: [
                     {value: true, text: this.$t("side-by-side")},
                     {value: false, text:  this.$t("line-by-line")},

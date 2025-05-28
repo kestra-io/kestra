@@ -1,21 +1,25 @@
 <template>
-    <span class="label">{{ props.label }}</span>
-    <div class="mt-1 mb-2 wrapper">
-        <TaskAnyOf
-            :model-value="value"
-            :schema
-            :definitions
-            @update:model-value="emits('update:modelValue', $event)"
-            @any-of-type="changeType"
-            wrap
-        />
-    </div>
+    <TaskWrapper>
+        <template #tasks>
+            <span class="label">{{ props.label }}</span>
+            <div class="mt-1 mb-2 wrapper">
+                <TaskAnyOf
+                    :model-value="value"
+                    :schema
+                    :definitions
+                    @update:model-value="emits('update:modelValue', $event)"
+                    @any-of-type="changeType"
+                />
+            </div>
+        </template>
+    </TaskWrapper>
 </template>
 
 <script setup lang="ts">
     import {computed} from "vue";
 
     import TaskAnyOf from "./tasks/TaskAnyOf.vue";
+    import TaskWrapper from "./tasks/TaskWrapper.vue";
 
     const emits = defineEmits(["update:modelValue"]);
 
@@ -27,7 +31,7 @@
     const changeType = (v: any) => {
         if (!v) return;
 
-        const type = definitions[v].properties.type.enum[0];
+        const type = definitions[v].properties.type.const;
         value.value = type ? {type} : {};
     };
 
@@ -40,19 +44,19 @@
     const schema = {
         anyOf: [
             {
-                $ref: "#/definitions/io.kestra.core.models.tasks.retrys.Constant-2",
+                $ref: "#/definitions/kestra_frontend.core.models.tasks.retrys.Constant-2",
             },
             {
-                $ref: "#/definitions/io.kestra.core.models.tasks.retrys.Exponential-2",
+                $ref: "#/definitions/kestra_frontend.core.models.tasks.retrys.Exponential-2",
             },
             {
-                $ref: "#/definitions/io.kestra.core.models.tasks.retrys.Random-2",
+                $ref: "#/definitions/kestra_frontend.core.models.tasks.retrys.Random-2",
             },
         ],
     };
 
     const definitions = {
-        "io.kestra.core.models.tasks.retrys.Random-2": {
+        "kestra_frontend.core.models.tasks.retrys.Random-2": {
             type: "object",
             properties: {
                 behavior: {
@@ -78,8 +82,8 @@
                     format: "duration",
                 },
                 type: {
-                    type: "string",
-                    enum: ["random"],
+                    type: "constant",
+                    const: "random",
                 },
                 warningOnRetry: {
                     type: "boolean",
@@ -89,7 +93,7 @@
             },
             required: ["type", "maxInterval", "minInterval"],
         },
-        "io.kestra.core.models.tasks.retrys.Exponential-2": {
+        "kestra_frontend.core.models.tasks.retrys.Exponential-2": {
             type: "object",
             properties: {
                 behavior: {
@@ -118,8 +122,8 @@
                     format: "duration",
                 },
                 type: {
-                    type: "string",
-                    enum: ["exponential"],
+                    type: "constant",
+                    const: "exponential",
                 },
                 warningOnRetry: {
                     type: "boolean",
@@ -129,7 +133,7 @@
             },
             required: ["type", "interval", "maxInterval"],
         },
-        "io.kestra.core.models.tasks.retrys.Constant-2": {
+        "kestra_frontend.core.models.tasks.retrys.Constant-2": {
             type: "object",
             properties: {
                 behavior: {
@@ -151,8 +155,8 @@
                     format: "duration",
                 },
                 type: {
-                    type: "string",
-                    enum: ["constant"],
+                    type: "constant",
+                    const: "constant",
                 },
                 warningOnRetry: {
                     type: "boolean",

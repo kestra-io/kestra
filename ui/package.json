@@ -92,7 +92,6 @@
     "@types/humanize-duration": "^3.27.4",
     "@types/js-yaml": "^4.0.9",
     "@types/path-browserify": "^1.0.3",
-    "@types/splitpanes": "^2.2.6",
     "@typescript-eslint/parser": "^8.32.1",
     "@vitejs/plugin-vue": "^5.2.4",
     "@vitejs/plugin-vue-jsx": "^4.2.0",
@@ -139,8 +138,8 @@
     "bootstrap": {
       "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7"
     },
-    "storybook-vue3-router": {
-      "vue-router": "$vue-router"
+    "el-table-infinite-scroll": {
+      "vue": "$vue"
     }
   },
   "lint-staged": {

@@ -1,15 +1,18 @@
 <template>
-    <span class="label">{{ props.label }}</span>
-    <div class="mt-1 mb-2 wrapper">
-        <TaskAnyOf
-            :model-value="value"
-            :schema
-            :definitions
-            @update:model-value="emits('update:modelValue', [$event])"
-            @any-of-type="changeType"
-            wrap
-        />
-    </div>
+    <TaskWrapper>
+        <template #tasks>
+            <span class="label">{{ props.label }}</span>
+            <div class="mt-1 mb-2 wrapper">
+                <TaskAnyOf
+                    :model-value="value"
+                    :schema
+                    :definitions
+                    @update:model-value="emits('update:modelValue', [$event])"
+                    @any-of-type="changeType"
+                />
+            </div>
+        </template>
+    </TaskWrapper>
 </template>
 
 <script setup lang="ts">
@@ -57,8 +60,8 @@
                     minLength: 1,
                 },
                 type: {
-                    type: "string",
-                    enum: ["EXECUTION_ASSERTION"],
+                    type: "constant",
+                    const: "EXECUTION_ASSERTION",
                 },
                 assert: {
                     type: "string",
@@ -90,8 +93,8 @@
                     minLength: 1,
                 },
                 type: {
-                    type: "string",
-                    enum: ["MAX_DURATION"],
+                    type: "constant",
+                    const: ["MAX_DURATION"],
                 },
                 behavior: {
                     type: "string",

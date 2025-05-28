@@ -14,12 +14,12 @@
                 <template #default="scope">
                     <template v-if="key === 'id'">
                         <RouterLink
-                            v-if="scope.row.namespace && scope.row.flowId"
+                            v-if="showLink(scope.row)"
                             :to="{
                                 name: 'executions/update',
                                 params: {
-                                    namespace: scope.row.namespace,
-                                    flowId: scope.row.flowId,
+                                    namespace: showLink(scope.row)?.NAMESPACE,
+                                    flowId: showLink(scope.row)?.FLOW_ID,
                                     id: scope.row.id,
                                 },
                             }"
@@ -73,6 +73,25 @@
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
+
+    const showLink = (row: Record<string, any>) => {
+        const fields: Record<string, { field: string; displayName: string }> = props.chart.data.columns;
+
+        function getField(args: Record<string, any>) {
+            const result: Partial<Record<"FLOW_ID" | "NAMESPACE", any>> = {};
+
+            for (const key in args) {
+                const config = fields[key];
+                if (config && (config.field === "FLOW_ID" || config.field === "NAMESPACE")) {
+                    result[config.field] = args[key];
+                }
+            }
+
+            return Object.keys(result).length > 0 ? result : undefined;
+        }
+
+        return getField(row);
+    };
 
     const currentPage = ref(1);
     const pageSize = ref(10);

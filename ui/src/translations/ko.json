@@ -813,6 +813,7 @@
     "no_code": {
       "adding": "+ {what} 추가",
       "adding_default": "+ 새 value 추가",
+      "clearSelection": "선택 해제",
       "close": {
         "afterExecution": "실행 task 후 닫기",
         "conditions": "닫기 조건",

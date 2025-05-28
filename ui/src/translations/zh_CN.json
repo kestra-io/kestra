@@ -813,6 +813,7 @@
     "no_code": {
       "adding": "+ 添加{what}",
       "adding_default": "+ 添加新value",
+      "clearSelection": "清除选择",
       "close": {
         "afterExecution": "执行任务后关闭",
         "conditions": "关闭条件",

@@ -11,6 +11,7 @@
     import RouteContext from "../../mixins/routeContext";
     import TopNavBar from "../../components/layout/TopNavBar.vue";
     import MultiPanelEditorView from "./MultiPanelEditorView.vue";
+    import {storageKeys} from "../../utils/constants";
 
     import {getRandomFlowID} from "../../../scripts/product/flow";
 
@@ -46,7 +47,8 @@
                 } else if (blueprintId && blueprintSource) {
                     flowYaml = await this.$store.dispatch("blueprints/getBlueprintSource", {type: blueprintSource, kind: "flow", id: blueprintId});
                 } else {
-                    const selectedNamespace = this.$route.query.namespace || "company.team";
+                    const defaultNamespace = localStorage.getItem(storageKeys.DEFAULT_NAMESPACE);
+                    const selectedNamespace = this.$route.query.namespace || defaultNamespace || "company.team";
                     flowYaml = `id: ${getRandomFlowID()}
 namespace: ${selectedNamespace}
 

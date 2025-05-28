@@ -18,10 +18,10 @@
 
     <TaskObject
         v-loading="isLoading"
-        v-if="schema"
+        v-if="selectedTaskType && schema"
         name="root"
         :model-value="taskObject"
-        @update:model-value="onInput"
+        @update:model-value="onTaskInput"
         :schema="schemaProp"
         :properties="properties"
         :definitions="schema.definitions"
@@ -141,7 +141,7 @@
 
     }
 
-    function onInput(val: PartialCodeElement | undefined) {
+    function onTaskInput(val: PartialCodeElement | undefined) {
         taskObject.value = val;
         if (isPluginDefaults.value) {
             const {
@@ -168,7 +168,7 @@
             type: selectedTaskType.value ?? ""
         };
 
-        onInput(value);
+        onTaskInput(value);
     }
 </script>
 <style lang="scss" scoped>

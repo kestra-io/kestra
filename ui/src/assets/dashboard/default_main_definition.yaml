@@ -1,7 +1,8 @@
 title: Overview
-description: Default overview dashboard
+description: Default Main Overview
+
 timeWindow:
-  default: P30D # P30DT30H
+  default: P30D
   max: P365D
 
 charts:
@@ -21,6 +22,7 @@ charts:
           field: STATE
           values:
             - SUCCESS
+
   - id: kpi_failed_ratio
     type: io.kestra.plugin.core.dashboard.chart.KPI
     chartOptions:
@@ -37,6 +39,7 @@ charts:
           field: STATE
           values:
             - FAILED
+
   - id: kpi_in_progress_ration
     type: io.kestra.plugin.core.dashboard.chart.KPI
     chartOptions:
@@ -57,6 +60,7 @@ charts:
             - KILLING
             - RETRYING
             - RESTARTED
+
   - id: kpi_pending_ration
     type: io.kestra.plugin.core.dashboard.chart.KPI
     chartOptions:
@@ -74,16 +78,17 @@ charts:
           values:
             - CREATED
             - QUEUED
+
   - id: total_executions_timeseries
     type: io.kestra.plugin.core.dashboard.chart.TimeSeries
     chartOptions:
-      width: 9
       displayName: Total Executions
       description: Executions duration and count per date
       legend:
         enabled: true
       column: date
       colorByColumn: state
+      width: 9
     data:
       type: io.kestra.plugin.core.dashboard.data.Executions
       columns:
@@ -101,6 +106,7 @@ charts:
           field: DURATION
           agg: SUM
           graphStyle: LINES
+
   - id: total_executions_pie
     type: io.kestra.plugin.core.dashboard.chart.Pie
     chartOptions:
@@ -118,14 +124,20 @@ charts:
         state:
           displayName: State
           field: STATE
+
   - id: executions_in_progress
     type: io.kestra.plugin.core.dashboard.chart.Table
+    chartOptions:
+      displayName: Executions In Progress
+      pagination:
+        enabled: true
+      width: 6
     data:
       type: io.kestra.plugin.core.dashboard.data.Executions
       columns:
         id:
           field: ID
-          displayName: Execution Id
+          displayName: Execution ID
         namespace:
           field: NAMESPACE
           displayName: Namespace
@@ -138,20 +150,24 @@ charts:
         state:
           displayName: State
           field: STATE
+
   - id: next_executions
+    type: io.kestra.plugin.core.dashboard.chart.Table
     chartOptions:
       displayName: Next Executions
+      pagination:
+        enabled: true
       width: 6
-    type: io.kestra.plugin.core.dashboard.chart.Table
     data:
       type: io.kestra.plugin.core.dashboard.data.Triggers
       columns:
         flowId:
           field: FLOW_ID
-          displayName: FlowId
+          displayName: Flow ID
         nextExec:
           field: NEXT_EXECUTION_DATE
-          displayName: nextExec
+          displayName: Next Execution Date
+
   - id: executions_per_namespace_bars
     type: io.kestra.plugin.core.dashboard.chart.Bar
     chartOptions:
@@ -171,6 +187,7 @@ charts:
         total:
           displayName: Executions
           agg: COUNT
+
   - id: logs_timeseries
     type: io.kestra.plugin.core.dashboard.chart.TimeSeries
     chartOptions:
@@ -193,5 +210,3 @@ charts:
           displayName: Total Executions
           agg: COUNT
           graphStyle: BARS
-
-        

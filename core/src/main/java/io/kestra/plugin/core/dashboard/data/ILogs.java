@@ -23,6 +23,14 @@ public interface ILogs extends IData<ILogs.Fields> {
                     updatedWhere.add(f.toDashboardFilterBuilder(Fields.NAMESPACE, f.value()));
                 });
             }
+
+            List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
+            if (!flowFilters.isEmpty()) {
+                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.FLOW_ID));
+                flowFilters.forEach(f -> {
+                    updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
+                });
+            }
         }
 
         if (startDate != null || endDate != null) {

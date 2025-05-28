@@ -5,7 +5,7 @@ import {useI18n} from "vue-i18n";
 
 export default abstract class AbstractLanguageConfigurator {
     private readonly _language: string;
-    private static configuredLanguages: string[] = [];
+    protected static configuredLanguages: string[] = [];
 
     protected constructor(language: string) {
         this._language = language;

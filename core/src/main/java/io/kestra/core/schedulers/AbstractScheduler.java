@@ -150,20 +150,20 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         this.flowListeners.run();
         this.flowListeners.listen(this::initializedTriggers);
 
-        ScheduledFuture<?> handle = scheduleExecutor.scheduleAtFixedRate(
+        ScheduledFuture<?> evaluationLoop = scheduleExecutor.scheduleAtFixedRate(
             this::handle,
             0,
             1,
             TimeUnit.SECONDS
         );
 
-        // look at exception on the main thread
-        Thread.ofVirtual().name("scheduler-listener").start(
+        // look at exception on the evaluation loop thread
+        Thread.ofVirtual().name("scheduler-evaluation-loop-watch").start(
             () -> {
-                Await.until(handle::isDone);
+                Await.until(evaluationLoop::isDone);
 
                 try {
-                    handle.get();
+                    evaluationLoop.get();
                 } catch (CancellationException ignored) {
 
                 } catch (ExecutionException | InterruptedException e) {
@@ -175,11 +175,28 @@ public abstract class AbstractScheduler implements Scheduler, Service {
         );
 
         // Periodically report metrics and logs of running executions
-        executionMonitorExecutor.scheduleWithFixedDelay(
+        ScheduledFuture<?> monitoringLoop = executionMonitorExecutor.scheduleWithFixedDelay(
             this::executionMonitor,
             30,
             10,
             TimeUnit.SECONDS
+        );
+
+        // look at exception on the monitoring loop thread
+        Thread.ofVirtual().name("scheduler-monitoring-loop-watch").start(
+            () -> {
+                Await.until(monitoringLoop::isDone);
+
+                try {
+                    monitoringLoop.get();
+                } catch (CancellationException ignored) {
+
+                } catch (ExecutionException | InterruptedException e) {
+                    log.error("Scheduler fatal exception", e);
+                    close();
+                    applicationContext.close();
+                }
+            }
         );
 
         // remove trigger on flow update, update local triggers store, and stop the trigger on the worker
@@ -988,6 +1005,7 @@ public abstract class AbstractScheduler implements Scheduler, Service {
             }
             this.receiveCancellations.forEach(Runnable::run);
             this.scheduleExecutor.shutdown();
+            this.executionMonitorExecutor.shutdown();
             setState(ServiceState.TERMINATED_GRACEFULLY);
 
             if (log.isDebugEnabled()) {

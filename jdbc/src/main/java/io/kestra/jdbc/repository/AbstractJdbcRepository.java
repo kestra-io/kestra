@@ -487,7 +487,7 @@ public abstract class AbstractJdbcRepository {
         return descriptors.getColumns().entrySet().stream()
             .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
             .map(entry -> {
-                Duration duration = Duration.between(startDate, endDate);
+                Duration duration = Duration.between(startDate, endDate == null ? ZonedDateTime.now() : endDate);
                 return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
             })
             .toList();

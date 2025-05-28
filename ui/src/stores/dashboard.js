@@ -13,9 +13,9 @@ export default {
     },
     actions: {
         list(_, options) {
-            const sortString = options.sort ? `?sort=${options.sort}` : ""
+            const sortString = options.sort ? `&sort=${options.sort}` : ""
             delete options.sort
-            return this.$http.get(`${apiUrl(this)}/dashboards${sortString}`, {
+            return this.$http.get(`${apiUrl(this)}/dashboards?size=100${sortString}`, {
                 params: options
             }).then(response => response.data);
         },

@@ -88,7 +88,6 @@ export const barLegend = {
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
                 : "";
-            textContainer.style.textTransform = "capitalize";
 
             if (!options.uppercase) item.text = item.text.toLowerCase();
 
@@ -142,7 +141,7 @@ export const customBarLegend = {
             };
 
             const boxSpan = document.createElement("span");
-            const color = getConsistentHEXColor(Utils.getTheme(), item.text);
+            const color = item.strokeStyle === "transparent" ? getConsistentHEXColor(Utils.getTheme(), item.text) : item.strokeStyle;
             boxSpan.style.background = color;
             boxSpan.style.borderColor = "transparent";
             boxSpan.style.height = "5px";
@@ -160,7 +159,6 @@ export const customBarLegend = {
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
                 : "";
-            textContainer.style.textTransform = "capitalize";
 
             const text = document.createTextNode(item.text);
             textContainer.appendChild(text);
@@ -236,7 +234,6 @@ const generateTotalsLegend = (isDuration) => ({
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
                 : "";
-            textContainer.style.textTransform = "capitalize";
             textContainer.style.textAlign = "left";
 
             const executionsText = document.createElement("p");

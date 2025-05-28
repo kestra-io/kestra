@@ -25,6 +25,14 @@ public interface ITriggers extends IData<ITriggers.Fields> {
             });
         }
 
+        List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
+        if (!flowFilters.isEmpty()) {
+            updatedWhere.removeIf(filter -> filter.getField().equals(Fields.FLOW_ID));
+            flowFilters.forEach(f -> {
+                updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
+            });
+        }
+
         return updatedWhere;
     }
 

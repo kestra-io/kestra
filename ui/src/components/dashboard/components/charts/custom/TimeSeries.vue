@@ -25,7 +25,7 @@
     import moment from "moment";
 
     import {useRoute, useRouter} from "vue-router";
-    import {Utils} from "@kestra-io/ui-libs";
+    import {cssVariable, Utils} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../../../utils/utils"
     import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
 
@@ -37,7 +37,8 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({
         chart: {type: Object, required: true},
-        showDefault: {type: Boolean, default: false}
+        showDefault: {type: Boolean, default: false},
+        defaultFilters: {type: Array, default: () => []},
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
@@ -229,7 +230,7 @@
                         pointRadius: 0,
                         borderWidth: 0.75,
                         label: label,
-                        borderColor: getConsistentHEXColor(theme.value, label),
+                        borderColor: cssVariable("--ks-border-running")
                     },
                     ...yDatasetData,
                 ]
@@ -243,14 +244,12 @@
         if (!props.showDefault) {
             let params = {
                 id,
-                chartId: props.chart.id
+                chartId: props.chart.id,
+                filters: props.defaultFilters.concat(decodedParams?? [])
             };
-            if (decodedParams) {
-                params = {...params, filters: decodedParams}
-            }
             generated.value = await store.dispatch("dashboard/generate", params);
         } else {
-            generated.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filter: decodedParams}})
+            generated.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filters: props.defaultFilters.concat(decodedParams?? [])}})
         }
     };
 

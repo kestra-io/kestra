@@ -25,7 +25,7 @@
     import moment from "moment";
 
     import {useRoute, useRouter} from "vue-router";
-    import {Utils} from "@kestra-io/ui-libs";
+    import {cssVariable, Utils} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../../../utils/utils"
     import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
 
@@ -229,7 +229,7 @@
                         pointRadius: 0,
                         borderWidth: 0.75,
                         label: label,
-                        borderColor: getConsistentHEXColor(theme.value, label),
+                        borderColor: cssVariable("--ks-border-running")
                     },
                     ...yDatasetData,
                 ]

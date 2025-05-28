@@ -35,13 +35,11 @@ const executionFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     scope: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.SCOPES,
-        true
+        async (_, hardcodedValues) => hardcodedValues.SCOPES
     ),
-    child: new FilterKeyCompletions(
+    childFilter: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.CHILDS,
-        true
+        async (_, hardcodedValues) => hardcodedValues.CHILDS
     ),
     timeRange: new FilterKeyCompletions(
         [Comparators.EQUALS],

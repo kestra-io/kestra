@@ -138,6 +138,9 @@
   "overrides": {
     "bootstrap": {
       "@popperjs/core": "npm:@sxzz/popperjs-es@^2.11.7"
+    },
+    "storybook-vue3-router": {
+      "vue-router": "$vue-router"
     }
   },
   "lint-staged": {

@@ -11,7 +11,7 @@
         :path="props.path"
         @update:model-value="editorUpdate"
         @cursor="updatePluginDocumentation"
-        @save="saveFileContent"
+        @save="isCurrentTabFlow ? save(): saveFileContent()"
         @execute="execute"
     >
         <template #absolute>
@@ -29,6 +29,9 @@
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
+    import {useRoute, useRouter} from "vue-router";
+    const route = useRoute()
+    const router = useRouter()
 
     import {EDITOR_CURSOR_INJECTION_KEY} from "../code/injectionKeys";
 
@@ -120,6 +123,22 @@
 
     function updatePluginDocumentation(event: string | undefined, task: any){
         store.dispatch("plugin/updateDocumentation", {event,task});
+    };
+
+    const flowParsed = computed(() => store.getters["flow/flowParsed"]);
+    const save = async () => {
+        const result = await store.dispatch("flow/save", {content: editorDomElement.value.$refs.monacoEditor.value})
+        if(result === "redirect_to_update"){
+            await router.push({
+                name: "flows/update",
+                params: {
+                    id: flowParsed.value.id,
+                    namespace: flowParsed.value.namespace,
+                    tab: "edit",
+                    tenant: route.params?.tenant,
+                },
+            });
+        }
     };
 
     const saveFileContent =  async ()=>{

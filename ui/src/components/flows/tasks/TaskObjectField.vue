@@ -17,7 +17,7 @@
                         type="button"
                         @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
                     >
-                        <CloseIcon />Clear Selection
+                        <CloseIcon class="clear-icon" />Clear Selection
                     </button>
                 </div>
                 <el-tag
@@ -204,6 +204,13 @@
         display: flex;
         align-items: center;
         gap: 0.5rem;
+    }
+
+    .clear-icon * {
+        font-size: 20px;
+    }
+    .clear-icon {
+        height: 20px;
     }
 }
 </style>

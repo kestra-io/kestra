@@ -27,24 +27,13 @@ import java.util.function.Consumer;
 public class JdbcWorkerTriggerResultQueueService implements Closeable {
     private final static ObjectMapper MAPPER = JdbcMapper.of();
 
-    private final JdbcQueue<WorkerTriggerResult> workerTriggerResultQueue;
-
     @Inject
     private AbstractJdbcWorkerJobRunningRepository jdbcWorkerJobRunningRepository;
     private final AtomicReference<Runnable> disposable = new AtomicReference<>();
 
     private final AtomicBoolean isClosed = new AtomicBoolean(false);
 
-    private Runnable queueStop;
-
-    @SuppressWarnings("unchecked")
-    public JdbcWorkerTriggerResultQueueService(ApplicationContext applicationContext) {
-        this.workerTriggerResultQueue = (JdbcQueue<WorkerTriggerResult>) applicationContext.getBean(
-            QueueInterface.class,
-            Qualifiers.byName(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED));
-    }
-
-    public Runnable receive(String consumerGroup, Class<?> queueType, Consumer<Either<WorkerTriggerResult, DeserializationException>> consumer) {
+    public Runnable receive(JdbcQueue<WorkerTriggerResult> workerTriggerResultQueue, String consumerGroup, Class<?> queueType, Consumer<Either<WorkerTriggerResult, DeserializationException>> consumer) {
         disposable.set(workerTriggerResultQueue.receiveTransaction(consumerGroup, queueType, (dslContext, eithers) -> {
             eithers.forEach(either -> {
                 if (either.isRight()) {

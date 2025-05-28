@@ -41,7 +41,7 @@
                 this.$toast().success(this.$t("custom_dashboard_validate_creation", {title: dashboard.title}));
 
                 this.$store.dispatch("core/isUnsaved", false);
-                this.$router.push({name: "home", params: {id: dashboard.id}});
+                this.$router.push({name: "home", params: {id: dashboard.id}, query: {created: true}});
             }
         },
         computed: {

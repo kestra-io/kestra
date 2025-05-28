@@ -130,11 +130,9 @@
             .dispatch("dashboard/list", {})
             .then((response: { results: { id: string; title: string }[] }) => {
                 dashboards.value = response.results;
-                /*
-                    First, check the route ID parameter for a specific dashboard ID
-                    to ensure that redirection after creation works correctly.
-                */
-                const lastSelected = route.params?.id ?? fetchLastDashboard();
+
+                const creation = Boolean(route.query.created);
+                const lastSelected = creation ? route.params?.id : (fetchLastDashboard() ?? route.params?.id);
 
                 if (lastSelected) {
                     const dashboard = dashboards.value.find(d => d.id === lastSelected);

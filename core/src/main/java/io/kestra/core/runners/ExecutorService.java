@@ -862,18 +862,22 @@ public class ExecutorService {
         boolean hasMockedWorkerTask = false;
         record FixtureAndTaskRun(TaskFixture fixture, TaskRun taskRun) {}
         if (executor.getExecution().getFixtures() != null) {
+            RunContext runContext = runContextFactory.of(executor.getFlow(), executor.getExecution());
             List<WorkerTaskResult> workerTaskResults = executor.getExecution()
                 .getTaskRunList()
                 .stream()
                 .filter(taskRun -> taskRun.getState().getCurrent().isCreated())
                 .flatMap(taskRun -> executor.getExecution().getFixtureForTaskRun(taskRun).stream().map(fixture -> new FixtureAndTaskRun(fixture, taskRun)))
-                .map(fixtureAndTaskRun -> WorkerTaskResult.builder()
+                .map(throwFunction(fixtureAndTaskRun -> WorkerTaskResult.builder()
                     .taskRun(fixtureAndTaskRun.taskRun()
                         .withState(Optional.ofNullable(fixtureAndTaskRun.fixture().getState()).orElse(State.Type.SUCCESS))
-                        .withOutputs(variablesService.of(StorageContext.forTask(fixtureAndTaskRun.taskRun), fixtureAndTaskRun.fixture().getOutputs()))
+                        .withOutputs(
+                            variablesService.of(StorageContext.forTask(fixtureAndTaskRun.taskRun),
+                                fixtureAndTaskRun.fixture().getOutputs() == null ? null : runContext.render(fixtureAndTaskRun.fixture().getOutputs()))
+                        )
                     )
                     .build()
-                )
+                ))
                 .toList();
 
             hasMockedWorkerTask = !workerTaskResults.isEmpty();

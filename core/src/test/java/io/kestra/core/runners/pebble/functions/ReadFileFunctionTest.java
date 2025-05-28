@@ -43,6 +43,25 @@ class ReadFileFunctionTest {
     }
 
     @Test
+    void readNamespaceFileFromURI() throws IllegalVariableEvaluationException, IOException {
+        String namespace = "io.kestra.tests";
+        String filePath = "file.txt";
+        storageInterface.createDirectory(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace)));
+        storageInterface.put(MAIN_TENANT, namespace, URI.create(StorageContext.namespaceFilePrefix(namespace) + "/" + filePath), new ByteArrayInputStream("Hello from {{ flow.namespace }}".getBytes()));
+
+        Map<String, Object> variables = Map.of(
+            "flow", Map.of(
+                "id", "flow",
+                "namespace", namespace,
+                "tenantId", MAIN_TENANT),
+            "execution", Map.of("id", IdUtils.create())
+        );
+
+        String render = variableRenderer.render("{{ render(read(fileURI('" + filePath + "'))) }}", variables);
+        assertThat(render).isEqualTo("Hello from " + namespace);
+    }
+
+    @Test
     void readNamespaceFileWithNamespace() throws IllegalVariableEvaluationException, IOException {
         String namespace = "io.kestra.tests";
         String filePath = "file.txt";

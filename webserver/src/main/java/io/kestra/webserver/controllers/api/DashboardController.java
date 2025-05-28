@@ -266,11 +266,10 @@ public class DashboardController {
             endDate = timeLineSearch.getEndDate();
             startDate = timeLineSearch.getStartDate();
         } else {
-            endDate = ZonedDateTime.now();
-            startDate = endDate.minusDays(8);
+            startDate = ZonedDateTime.now().minusDays(8);
         }
 
-        if (endDate.isBefore(startDate)) {
+        if (endDate != null && endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("`endDate` must be after `startDate`.");
         }
 

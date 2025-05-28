@@ -46,7 +46,8 @@
     defineOptions({inheritAttrs: false});
     const props = defineProps({
         chart: {type: Object, required: true},
-        showDefault: {type: Boolean, default: false}
+        showDefault: {type: Boolean, default: false},
+        defaultFilters: {type: Array, default: () => []},
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
@@ -186,13 +187,14 @@
         let decodedParams = decodeSearchParams(route.query, undefined, []);
 
         if (!props.showDefault) {
-            let params = {id, chartId: props.chart.id};
-            if (decodedParams) {
-                params = {...params, filters: decodedParams}
-            }
+            let params = {
+                id,
+                chartId: props.chart.id,
+                filters: props.defaultFilters.concat(decodedParams?? [])
+            };
             generated.value = await store.dispatch("dashboard/generate", params);
         } else {
-            generated.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filters: decodedParams}})
+            generated.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filters: props.defaultFilters.concat(decodedParams?? [])}})
         }
     };
 

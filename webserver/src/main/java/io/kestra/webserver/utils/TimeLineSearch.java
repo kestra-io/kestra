@@ -39,6 +39,10 @@ public class TimeLineSearch {
             endDate = ZonedDateTime.now();
         }
 
+        if (startDate == null) {
+            startDate = ZonedDateTime.now().minusDays(8);
+        }
+
         return new TimeLineSearch(startDate, endDate, timeRange);
     }
     private static Duration parseDuration(String duration) {

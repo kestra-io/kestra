@@ -48,7 +48,7 @@ public abstract class DataFilterKPI<F extends Enum<F>, C extends ColumnDescripto
     }
 
     public void updateWhereWithGlobalFilters(List<QueryFilter> queryFilterList, ZonedDateTime startDate, ZonedDateTime endDate) {
-        this.numerator = whereWithGlobalFilters(queryFilterList, startDate, endDate, this.numerator);
+        this.where = whereWithGlobalFilters(queryFilterList, startDate, endDate, this.where);
     }
 
     public abstract Class<? extends QueryBuilderInterface<F>> repositoryClass();

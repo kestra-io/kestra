@@ -30,17 +30,19 @@
 
     const props = defineProps({
         chart: {type: Object, required: true},
-        showDefault: {type: Boolean, default: false}
+        showDefault: {type: Boolean, default: false},
+        defaultFilters: {type: Array, default: () => []},
     });
 
     const source = ref();
     const generate = async (id) => {
         let decodedParams = decodeSearchParams(route.query, undefined, []);
         if (!props.showDefault) {
-            let params = {id, chartId: props.chart.id};
-            if (decodedParams) {
-                params = {...params, filters: decodedParams};
-            }
+            let params = {
+                id,
+                chartId: props.chart.id,
+                filters: props.defaultFilters.concat(decodedParams?? [])
+            };
             const result = await store.dispatch("dashboard/generate", params);
             const description = result.results?.[0]?.description;
 
@@ -48,7 +50,7 @@
         } else {
             const result = await store.dispatch("dashboard/chartPreview", {
                 chart: props.chart.content,
-                globalFilter: {filters: decodedParams},
+                globalFilter: {filters: props.defaultFilters.concat(decodedParams?? [])},
             })
             source.value = result.results[0]?.description;
         }

@@ -31,6 +31,7 @@
     const props = defineProps({
         chart: {type: Object, required: true},
         showDefault: {type: Boolean, default: false},
+        defaultFilters: {type: Array, default: () => []},
     });
 
     const label = computed(
@@ -45,15 +46,16 @@
         // TODO: Tweak once the API is wrapped up
         let decodedParams = decodeSearchParams(route.query, undefined, []);
         if (!props.showDefault) {
-            let params = {id, chartId: props.chart.id};
-            if (decodedParams) {
-                params = {...params, filters: decodedParams};
-            }
+            let params = {
+                id,
+                chartId: props.chart.id,
+                filters: props.defaultFilters.concat(decodedParams?? [])
+            };
             generated.value = await store.dispatch("dashboard/generate", params);
         } else {
             generated.value = await store.dispatch("dashboard/chartPreview", {
                 chart: props.chart.content,
-                globalFilter: {filters: decodedParams},
+                globalFilter: {filters: props.defaultFilters.concat(decodedParams?? [])},
             });
         }
     };

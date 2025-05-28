@@ -103,6 +103,7 @@
     const props = defineProps({
         chart: {type: Object, required: true},
         showDefault: {type: Boolean, default: false},
+        defaultFilters: {type: Array, default: () => []},
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
@@ -142,8 +143,8 @@
             let params = {
                 id,
                 chartId: props.chart.id,
+                filters: props.defaultFilters.concat(decodedParams?? [])
             };
-
             if (props.chart.chartOptions?.pagination?.enabled) {
                 params.pageNumber = currentPage.value;
                 params.pageSize = pageSize.value;
@@ -162,7 +163,7 @@
 
             data.value = await store.dispatch("dashboard/chartPreview", {
                 chart: props.chart.content,
-                globalFilter: params,
+                globalFilter: {filters: props.defaultFilters.concat(decodedParams?? [])},
             });
         }
     };

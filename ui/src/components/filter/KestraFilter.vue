@@ -6,7 +6,7 @@
             <MonacoEditor
                 ref="monacoEditor"
                 class="border flex-grow-1 position-relative"
-                :language="`${legacyQuery ? 'legacy-' : ''}filter`"
+                :language="`${domain === undefined ? '' : (domain + '-')}${legacyQuery ? 'legacy-' : ''}filter`"
                 :schema-type="domain"
                 :value="filter"
                 @change="filter = $event"
@@ -225,6 +225,8 @@
                 })
                 .join(" ");
         }
+
+        filter.value = filter.value + " "; // Add a trailing space to allow for autocompletion to work properly
     }, {immediate: true, deep: true});
 
     const COMPARATOR_LABEL_BY_VALUE: Record<Comparators, keyof typeof Comparators> = Object.fromEntries(

@@ -1,5 +1,5 @@
 <template>
-    <el-form-item :class="{'radio-wrapper':isSelectingPlugins}">
+    <el-form-item :class="{'radio-wrapper':!isSelectingPlugins}">
         <el-select
             v-if="isSelectingPlugins"
             v-model="selectedSchema"
@@ -219,7 +219,6 @@
                 background-color: var(--ks-content-link);
             }
         }
-
 
         &.is-checked {
             .el-radio__label {

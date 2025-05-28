@@ -11,7 +11,7 @@ export default async function configure(store: Store<Record<string, any>>, t: Re
     if (language === "yaml") {
         const yamlAutoCompletion = domain === "flow" ? new FlowAutoCompletion(store) : new YamlAutoCompletion();
         disposables = await new YamlLanguageConfigurator(yamlAutoCompletion).configure(store, t, editorInstance);
-    } else if (filterLanguages.includes(language)) {
+    } else if (filterLanguages.some(languageRegex => languageRegex.test(language))) {
         disposables = await new FilterLanguageConfigurator(language, domain).configure(store, t, editorInstance);
     }
 

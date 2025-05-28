@@ -9,8 +9,8 @@ import {Comparators, Completion, PICK_DATE_VALUE} from "./filterCompletion";
 import loadFilterLanguages from "override/services/filterLanguagesProvider";
 import IWordAtPosition = editor.IWordAtPosition;
 
-const legacyFilterLanguage = "legacy-filter";
-export const languages = ["filter", legacyFilterLanguage];
+const legacyFilterRegex = /.*((?<=.)-)?legacy-filter/;
+export const languages = [/.*((?<=.)-)?filter/, legacyFilterRegex];
 export const COMPARATOR_CHARS = [...new Set(Object.values(Comparators).flatMap(c => c.split("")))];
 export const COMPARATORS_REGEX = "(?:(?:" + Object.values(Comparators).map(c => c.replaceAll(/./g, (match) => `\\${match}`)).join(")|(?:") + "))";
 
@@ -22,14 +22,14 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
     private keyCompletions: Completion[] | undefined;
     private keyCompletionsRegex: RegExp | undefined;
 
-    constructor(language: typeof languages[number], domain: string | undefined) {
+    constructor(language: string, domain: string | undefined) {
         super(language);
 
         this._domain = domain;
     }
 
     isLegacy() {
-        return this.language === legacyFilterLanguage;
+        return legacyFilterRegex.test(this.language);
     }
 
     async configure(store: Store<Record<string, any>>, t: ReturnType<typeof useI18n>["t"], editorInstance: editor.ICodeEditor | undefined): Promise<monaco.IDisposable[]> {
@@ -46,6 +46,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                         .replaceAll(/\{[^}]*}/g, "(?:(?:\"[^,\"" + COMPARATOR_CHARS.join("") + "]*\")|(?:[^\\s,\"" + COMPARATOR_CHARS.join("") + "]*))"))
                     ?.join(")|(?:") + ")"
             ));
+
         return super.configure(store, t, editorInstance);
     }
 
@@ -138,7 +139,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
             monaco.languages.registerCompletionItemProvider({
                 language: this.language, pattern: {
                     base: "/",
-                    pattern: `${this._domain === undefined ? "" : (this._domain + "-")}*.${this.language}`
+                    pattern: `*.${this.language}`
                 }
             }, {
                 triggerCharacters: [" ", "\n", ","],

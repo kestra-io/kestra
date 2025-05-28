@@ -25,8 +25,7 @@ const logFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     level: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.LEVELS,
-        true
+        async (_, hardcodedValues) => hardcodedValues.LEVELS
     ),
     timeRange: new FilterKeyCompletions(
         [Comparators.EQUALS],

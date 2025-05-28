@@ -41,7 +41,7 @@
             <template #navbar v-if="isDisplayedTop">
                 <KestraFilter
                     prefix="executions"
-                    :domain="ExecutionFilterLanguage.domain"
+                    :domain="namespace === undefined || flowId === undefined ? ExecutionFilterLanguage.domain : FlowExecutionFilterLanguage.domain"
                     :buttons="{
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}
@@ -409,6 +409,7 @@
     import QueueFirstInLastOut from "vue-material-design-icons/QueueFirstInLastOut.vue";
     import RunFast from "vue-material-design-icons/RunFast.vue";
     import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage.ts";
+    import FlowExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/flowExecutionFilterLanguage.js";
     import ChartsSection from "../dashboard/components/ChartsSection.vue";
 </script>
 
@@ -437,7 +438,6 @@
     import DateAgo from "../layout/DateAgo.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../../assets/dashboard/executions_timeseries_chart.yaml?raw";
-
 
     import {filterLabels} from "./utils"
 
@@ -1030,42 +1030,42 @@
 
 
 <style scoped lang="scss">
-.shadow {
-    box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
-}
-
-.padding-bottom {
-    padding-bottom: 4rem;
-}
-.custom-warning {
-    border: 1px solid #ffb703;
-    border-radius: 7px;
-    box-shadow: 1px 1px 3px 1px #ffb703;
-
-    :deep(.el-alert__title) {
-        font-size: 16px;
-        color: #ffb703;
-        font-weight: bold;
+    .shadow {
+        box-shadow: 0px 2px 4px 0px var(--ks-card-shadow) !important;
     }
 
-    :deep(.el-alert__description) {
-        font-size: 12px;
+    .padding-bottom {
+        padding-bottom: 4rem;
     }
+    .custom-warning {
+        border: 1px solid #ffb703;
+        border-radius: 7px;
+        box-shadow: 1px 1px 3px 1px #ffb703;
 
-    :deep(.el-alert__icon) {
-        color: #ffb703;
+        :deep(.el-alert__title) {
+            font-size: 16px;
+            color: #ffb703;
+            font-weight: bold;
+        }
+
+        :deep(.el-alert__description) {
+            font-size: 12px;
+        }
+
+        :deep(.el-alert__icon) {
+            color: #ffb703;
+        }
     }
-}
 </style>
 
 <style lang="scss">
-.el-message-box {
-    padding: 2rem;
-    max-width: initial;
-    width: 500px;
+    .el-message-box {
+        padding: 2rem;
+        max-width: initial;
+        width: 500px;
 
-    .custom-warning {
-        margin: 1rem 0;
+        .custom-warning {
+            margin: 1rem 0;
+        }
     }
-}
 </style>

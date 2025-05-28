@@ -40,6 +40,7 @@ import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
+import io.micronaut.data.model.Pageable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
 import io.micronaut.http.MediaType;
@@ -232,30 +233,13 @@ public class FlowController {
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort,
         @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
         // Deprecated params
-        @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
-        @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels
+        @Deprecated @Parameter(description = "A string filter", deprecated = true) @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the flows to include", deprecated = true) @Nullable @QueryValue List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix", deprecated = true) @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'", deprecated = true) @Nullable @QueryValue @Format("MULTI") List<String> labels
 
     ) throws HttpStatusException {
-        // If filters is empty, map old params to QueryFilter
-        if (filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                null,
-                null,
-                null,
-                null,
-                null,
-                scope,
-                labels,
-                null,
-                null,
-                null,
-                null,
-                null);
-        }
+        filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
 
         return PagedResults.of(flowRepository.find(
             PageableUtils.from(page, size, sort),
@@ -726,12 +710,16 @@ public class FlowController {
         summary = "Export flows as a ZIP archive of yaml sources."
     )
     public HttpResponse<byte[]> exportFlowsByQuery(
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
+        @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
+
+        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) throws IOException {
-        var flows = flowRepository.findWithSource(query, tenantService.resolveTenant(), scope, namespace, RequestUtils.toMap(labels));
+        filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
+
+        var flows = flowRepository.findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters);
         var bytes = HasSource.asZipFile(flows, flow -> flow.getNamespace() + "-" + flow.getId() + ".yml");
 
         return HttpResponse.ok(bytes).header("Content-Disposition", "attachment; filename=\"flows.zip\"");
@@ -760,13 +748,17 @@ public class FlowController {
         summary = "Delete flows returned by the query parameters."
     )
     public HttpResponse<BulkResponse> deleteFlowsByQuery(
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
+        @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
+
+        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
     ) {
+        filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
+
         List<Flow> list = flowRepository
-            .findWithSource(query, tenantService.resolveTenant(), scope, namespace, RequestUtils.toMap(labels))
+            .findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters)
             .stream()
             .peek(flowRepository::delete)
             .collect(Collectors.toList());
@@ -799,13 +791,16 @@ public class FlowController {
         summary = "Disable flows returned by the query parameters."
     )
     public HttpResponse<BulkResponse> disableFlowsByQuery(
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
-    ) {
+        @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
 
-        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(query, scope, namespace, labels, true).size()).build());
+        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
+    ) {
+        filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
+
+        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(filters, true).size()).build());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -828,13 +823,37 @@ public class FlowController {
         summary = "Enable flows returned by the query parameters."
     )
     public HttpResponse<BulkResponse> enableFlowsByQuery(
-        @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
-        @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
-        @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
-        @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
-    ) {
+        @Parameter(description = "Filters") @QueryFilterFormat() List<QueryFilter> filters,
 
-        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(query, scope, namespace, labels, false).size()).build());
+        @Deprecated @Parameter(description = "A string filter") @Nullable @QueryValue(value = "q") String query,
+        @Deprecated @Parameter(description = "The scope of the flows to include") @Nullable @QueryValue List<FlowScope> scope,
+        @Deprecated @Parameter(description = "A namespace filter prefix") @Nullable @QueryValue String namespace,
+        @Deprecated @Parameter(description = "A labels filter as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels
+    ) {
+        filters = mapLegacyQueryParamsToNewFilters(filters, query, scope, namespace, labels);
+
+        return HttpResponse.ok(BulkResponse.builder().count(setFlowsDisableByQuery(filters, false).size()).build());
+    }
+
+    protected static List<QueryFilter> mapLegacyQueryParamsToNewFilters(List<QueryFilter> filters, String query, List<FlowScope> scope, String namespace, List<String> labels) {
+        if (filters == null || filters.isEmpty()) {
+            filters = RequestUtils.mapLegacyParamsToFilters(
+                query,
+                namespace,
+                null,
+                null,
+                null,
+                null,
+                null,
+                scope,
+                labels,
+                null,
+                null,
+                null,
+                null,
+                null);
+        }
+        return filters;
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -904,9 +923,9 @@ public class FlowController {
             .toList();
     }
 
-    protected List<FlowWithSource> setFlowsDisableByQuery(String query, List<FlowScope> scope, String namespace, List<String> labels, boolean disable) {
+    protected List<FlowWithSource> setFlowsDisableByQuery(List<QueryFilter> filters, boolean disable) {
         return flowRepository
-            .findWithSource(query, tenantService.resolveTenant(), scope, namespace, RequestUtils.toMap(labels))
+            .findWithSource(Pageable.UNPAGED, tenantService.resolveTenant(), filters)
             .stream()
             .filter(flowWithSource -> disable != flowWithSource.isDisabled())
             .peek(flow -> {

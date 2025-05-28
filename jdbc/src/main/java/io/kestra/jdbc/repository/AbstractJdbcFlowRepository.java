@@ -548,59 +548,50 @@ public abstract class AbstractJdbcFlowRepository extends AbstractJdbcRepository 
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
 
-                SelectConditionStep<Record1<Object>> select = this.fullTextSelect(tenantId, context, List.of());
+                SelectConditionStep<Record1<Object>> select = getFindFlowSelect(tenantId, filters, context, null);
 
-                if (filters != null)
-                    for (QueryFilter filter : filters) {
-                        QueryFilter.Field field = filter.field();
-                        QueryFilter.Op operation = filter.operation();
-                        Object value = filter.value();
-                        if (field.equals(QueryFilter.Field.QUERY)) {
-                            select = select.and(this.findCondition(filter.value().toString(), Map.of()));
-                        } else if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
-                            select = select.and(findCondition(labels, operation));
-                        else
-                            select = getConditionOnField(select, field, value, operation, null);
-                    }
-                return (ArrayListTotal)this.jdbcRepository.fetchPage(context, select, pageable);
+                return (ArrayListTotal) this.jdbcRepository.fetchPage(context, select, pageable);
             });
     }
 
     @Override
-    public List<FlowWithSource> findWithSource(
-        @Nullable String query,
-        @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable Map<String, String> labels
-    ) {
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public ArrayListTotal<FlowWithSource> findWithSource(Pageable pageable, @Nullable String tenantId, @Nullable List<QueryFilter> filters) {
         return this.jdbcRepository
             .getDslContextWrapper()
             .transactionResult(configuration -> {
                 DSLContext context = DSL.using(configuration);
-                SelectConditionStep<Record> select = this.fullTextSelect(tenantId, context, List.of(field("source_code")));
+                SelectConditionStep<Record> select = getFindFlowSelect(tenantId, filters, context, List.of(field("source_code")));
 
-                select.and(this.findCondition(query, labels));
-
-                if (scope != null && !new HashSet<>(scope).containsAll(Arrays.stream(FlowScope.values()).toList())) {
-                    if (scope.contains(FlowScope.USER)) {
-                        select = select.and(field("namespace").ne(namespaceUtils.getSystemFlowNamespace()));
-                    } else if (scope.contains(FlowScope.SYSTEM)) {
-                        select = select.and(field("namespace").eq(namespaceUtils.getSystemFlowNamespace()));
-                    }
-                }
-
-                if (namespace != null) {
-                    select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
-                }
-
-                return select.fetch().map(record -> FlowWithSource.of(
-                    (Flow)jdbcRepository.map(record),
-                    record.get("source_code", String.class)
-                ));
+                return (ArrayListTotal) this.jdbcRepository.fetchPage(
+                    context,
+                    select,
+                    pageable,
+                    record ->FlowWithSource.of(
+                        (Flow)jdbcRepository.map(record),
+                        record.get("source_code", String.class)
+                    )
+                );
             });
     }
 
+    @SuppressWarnings("unchecked")
+    private <R extends Record, E> SelectConditionStep<R> getFindFlowSelect(String tenantId, List<QueryFilter> filters, DSLContext context, List<Field<Object>> additionalFieldsToSelect) {
+        var select = this.fullTextSelect(tenantId, context, additionalFieldsToSelect != null ? additionalFieldsToSelect : List.of());
+        if (filters != null)
+            for (QueryFilter filter : filters) {
+                QueryFilter.Field field = filter.field();
+                QueryFilter.Op operation = filter.operation();
+                Object value = filter.value();
+                if (field.equals(QueryFilter.Field.QUERY)) {
+                    select = select.and(this.findCondition(filter.value().toString(), Map.of()));
+                } else if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
+                    select = select.and(findCondition(labels, operation));
+                else
+                    select = getConditionOnField(select, field, value, operation, null);
+            }
+        return (SelectConditionStep<R>) select;
+    }
 
     abstract protected Condition findSourceCodeCondition(String query);
 

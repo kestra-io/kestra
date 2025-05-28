@@ -273,13 +273,31 @@ public abstract class AbstractFlowRepositoryTest {
 
     @Test
     void findWithSource() {
-        List<FlowWithSource> save = flowRepository.findWithSource(null, MAIN_TENANT, null, "io.kestra.tests", Collections.emptyMap());
+        List<FlowWithSource> save = flowRepository.findWithSource(
+            Pageable.UNPAGED,
+            MAIN_TENANT,
+            List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.STARTS_WITH).value("io.kestra.tests").build()
+            )
+        );
         assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 1);
 
-        save = flowRepository.findWithSource(null, MAIN_TENANT, null, "io.kestra.tests2", Collections.emptyMap());
+        save = flowRepository.findWithSource(
+            Pageable.UNPAGED,
+            MAIN_TENANT,
+            List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests2").build()
+            )
+        );
         assertThat((long) save.size()).isEqualTo(1L);
 
-        save = flowRepository.findWithSource(null, MAIN_TENANT, null, "io.kestra.tests.minimal.bis", Collections.emptyMap());
+        save = flowRepository.findWithSource(
+            Pageable.UNPAGED,
+            MAIN_TENANT,
+            List.of(
+                QueryFilter.builder().field(QueryFilter.Field.NAMESPACE).operation(QueryFilter.Op.EQUALS).value("io.kestra.tests.minimal.bis").build()
+            )
+        );
         assertThat((long) save.size()).isEqualTo(1L);
     }
 

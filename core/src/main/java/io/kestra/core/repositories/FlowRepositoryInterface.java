@@ -143,12 +143,10 @@ public interface FlowRepositoryInterface {
         @Nullable List<QueryFilter> filters
     );
 
-    List<FlowWithSource> findWithSource(
-        @Nullable String query,
+    ArrayListTotal<FlowWithSource> findWithSource(
+        Pageable pageable,
         @Nullable String tenantId,
-        @Nullable List<FlowScope> scope,
-        @Nullable String namespace,
-        @Nullable Map<String, String> labels
+        @Nullable List<QueryFilter> filters
     );
 
     ArrayListTotal<SearchResult<Flow>> findSourceCode(Pageable pageable, @Nullable String query, @Nullable String tenantId, @Nullable String namespace);

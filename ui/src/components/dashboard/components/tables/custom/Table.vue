@@ -101,9 +101,16 @@
             }
             data.value = await store.dispatch("dashboard/generate", params);
         } else {
+            let filter = {...decodedParams}
+
+            if (props.chart.chartOptions?.pagination?.enabled) {
+                filter.pageNumber = currentPage.value;
+                filter.pageSize = pageSize.value;
+            }
+
             data.value = await store.dispatch("dashboard/chartPreview", {
                 chart: props.chart.content,
-                globalFilter: {filter: decodedParams},
+                globalFilter: {filter},
             });
         }
     };

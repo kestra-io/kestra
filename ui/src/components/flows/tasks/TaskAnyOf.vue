@@ -1,5 +1,5 @@
 <template>
-    <el-form-item :class="{'radio-wrapper':isSelectingPlugins || true}">
+    <el-form-item :class="{'radio-wrapper':!isSelectingPlugins}">
         <el-select
             v-if="isSelectingPlugins"
             v-model="selectedSchema"

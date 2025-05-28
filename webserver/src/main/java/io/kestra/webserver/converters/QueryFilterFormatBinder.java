@@ -74,21 +74,21 @@ public class QueryFilterFormatBinder implements AnnotatedRequestArgumentBinder<Q
         if (field == QueryFilter.Field.LABELS && nestedKey != null) {
             labelsByOperation.computeIfAbsent(operation, k -> new HashMap<>()).put(nestedKey, values.getFirst());
         } else {
-            Object value = nestedKey != null ? Map.of(nestedKey, values.getFirst()) : getFlatValue(values, field, operation);
-            filters.add(QueryFilter.builder()
+            List<Object> parsedValues = nestedKey != null ? List.of(Map.of(nestedKey, values.getFirst())) : parseValues(values, field, operation);
+            filters.addAll(parsedValues.stream().map(parsedValue -> QueryFilter.builder()
                 .field(field)
                 .operation(operation)
-                .value(value)
-                .build());
+                .value(parsedValue)
+                .build()).toList());
         }
     }
 
-    private static Object getFlatValue(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {
-        return switch (field) {
+    private static List<Object> parseValues(List<String> values, QueryFilter.Field field, QueryFilter.Op operation) {
+        return values.stream().map(value -> switch (field) {
             case SCOPE -> RequestUtils.toFlowScopes(values);
             default -> (operation == QueryFilter.Op.IN || operation == QueryFilter.Op.NOT_IN)
-                ? List.of(URLDecoder.decode(values.getFirst(), StandardCharsets.UTF_8).replaceAll("[\\[\\]]", "").split(","))
-                : values.size() == 1 ? values.getFirst() : values;
-        };
+                ? Arrays.asList(URLDecoder.decode(value, StandardCharsets.UTF_8).replaceAll("[\\[\\]]", "").split(","))
+                : value;
+        }).toList();
     }
 }

@@ -9,7 +9,7 @@
                 :md="(chart.chartOptions?.width || 6) * 2"
             >
                 <div class="d-flex flex-column">
-                    <p v-if="!chart.type === 'io.kestra.plugin.core.dashboard.chart.KPI'" class="m-0">
+                    <p v-if="chart.type !== 'io.kestra.plugin.core.dashboard.chart.KPI'" class="m-0">
                         <span class="fs-6 fw-bold">{{ labels(chart).title }}</span>
                         <template v-if="labels(chart)?.description">
                             <br>

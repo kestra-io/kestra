@@ -23,14 +23,14 @@ const buildFromObject = (object: object): Value[] =>
         value,
     }));
 
-export function useValues(label: string, t?: ReturnType<typeof useI18n>["t"]) {
+export function useValues(label: string | undefined, t?: ReturnType<typeof useI18n>["t"]) {
     if (t === undefined) {
         t = useI18n({useScope: "global"}).t;
     }
 
     // Override for the scope labels on the dashboard
     const DASHBOARDS = ["dashboard", "custom_dashboard"];
-    const SCOPE_LABEL = DASHBOARDS.includes(label) ? t("executions") : label;
+    const SCOPE_LABEL = label === undefined || DASHBOARDS.includes(label) ? t("executions") : label;
 
     const VALUES = {
         EXECUTION_STATES: buildFromArray(
@@ -48,7 +48,6 @@ export function useValues(label: string, t?: ReturnType<typeof useI18n>["t"]) {
             },
         ],
         CHILDS: [
-            {label: t("trigger filter.options.ALL"), value: "ALL"},
             {label: t("trigger filter.options.CHILD"), value: "CHILD"},
             {label: t("trigger filter.options.MAIN"), value: "MAIN"},
         ],

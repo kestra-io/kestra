@@ -152,7 +152,7 @@ public abstract class AbstractJdbcRepository {
      *
      * @param selectConditionStep the select condition step to which the filters will be applied
      * @param jdbcFilterService   the service used to apply the filters
-     * @param descriptors         the data filter containing the filter conditions
+     * @param filters             the data filter containing the filter conditions
      * @param fieldsMapping       a map of field enums to their corresponding database column names
      * @param <F>                 the type of the fields enum
      * @return the select condition step with the applied filters
@@ -225,7 +225,7 @@ public abstract class AbstractJdbcRepository {
 
         int totalCount = DSL.using(selectSeekStep.configuration())
             .fetchCount(selectSeekStep);
-        var results =  (pageable != null && pageable.getSize() != -1 ?
+        var results = (pageable != null && pageable.getSize() != -1 ?
             selectSeekStep.limit(pageable.getSize()).offset(pageable.getOffset() - pageable.getSize()) :
             selectSeekStep
         ).fetch()
@@ -254,14 +254,13 @@ public abstract class AbstractJdbcRepository {
         return select;
     }
 
-    protected  <T extends Record> SelectConditionStep<T> getConditionOnField(
+    protected <T extends Record> SelectConditionStep<T> getConditionOnField(
         SelectConditionStep<T> select,
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation,
-        String dateColumn)
-    {
-        if(field.equals(QueryFilter.Field.QUERY)) {
+        String dateColumn) {
+        if (field.equals(QueryFilter.Field.QUERY)) {
             return select;
         }
         // Handling for Field.STATE
@@ -327,45 +326,45 @@ public abstract class AbstractJdbcRepository {
     }
 
     private <T extends Record> SelectConditionStep<T> applyNamespaceCondition(SelectConditionStep<T> select, Object value, QueryFilter.Op operation) {
-
-         switch (operation) {case EQUALS -> select = select.and(DSL.lower(NAMESPACE_FIELD).eq(DSL.lower((String) value)));
+        switch (operation) {
+            case EQUALS -> select = select.and(DSL.lower(NAMESPACE_FIELD).eq(DSL.lower((String) value)));
             case NOT_EQUALS -> select = select.and(NAMESPACE_FIELD.ne((String) value));
             case CONTAINS -> select = select.and(NAMESPACE_FIELD.eq((String) value)
-                    .or(NAMESPACE_FIELD.like( "%" + value + "%")));
+                .or(NAMESPACE_FIELD.like("%" + value + "%")));
             case STARTS_WITH -> select = select.and(NAMESPACE_FIELD.like(value + ".%")
                 .or(NAMESPACE_FIELD.eq((String) value)));
             case ENDS_WITH -> select = select.and(NAMESPACE_FIELD.like("%." + value));
-            case IN ->  {
+            case IN -> {
                 if (value instanceof Collection<?> values) {
-                select = select.and(NAMESPACE_FIELD.in(values.stream()
-                    .map(String.class::cast)
-                    .toList()));
+                    select = select.and(NAMESPACE_FIELD.in(values.stream()
+                        .map(String.class::cast)
+                        .toList()));
                 }
-             }
-             case NOT_IN ->  {
-                 if (value instanceof Collection<?> values) {
-                     select = select.and(NAMESPACE_FIELD.notIn(values.stream()
-                         .map(String.class::cast)
-                         .toList()));
-                 }
-             }
-             default ->
+            }
+            case NOT_IN -> {
+                if (value instanceof Collection<?> values) {
+                    select = select.and(NAMESPACE_FIELD.notIn(values.stream()
+                        .map(String.class::cast)
+                        .toList()));
+                }
+            }
+            case REGEX -> select = select.and(NAMESPACE_FIELD.likeRegex((String) value));
+            default ->
                 throw new UnsupportedOperationException("Unsupported operation '%s' for field 'namespace'.".formatted(operation));
         }
-         return select;
+        return select;
     }
 
     // Generate the condition for Field.STATE
     @SuppressWarnings("unchecked")
     private Condition generateStateCondition(Object value, QueryFilter.Op operation) {
         List<State.Type> stateList = switch (value) {
-            case List<?> list when !list.isEmpty() && list.getFirst() instanceof State.Type ->
-                (List<State.Type>) list;
-            case List<?> list ->
-                list.stream().map(item -> State.Type.valueOf(item.toString())).toList();
+            case List<?> list when !list.isEmpty() && list.getFirst() instanceof State.Type -> (List<State.Type>) list;
+            case List<?> list -> list.stream().map(item -> State.Type.valueOf(item.toString())).toList();
             case State.Type state -> List.of(state);
             case String state -> List.of(State.Type.valueOf(state));
-            default -> throw new IllegalArgumentException("Field 'state' requires a State.Type or List<State.Type> value");
+            default ->
+                throw new IllegalArgumentException("Field 'state' requires a State.Type or List<State.Type> value");
         };
 
         return switch (operation) {
@@ -374,6 +373,7 @@ public abstract class AbstractJdbcRepository {
             default -> throw new IllegalArgumentException("Unsupported operation for State.Type: " + operation);
         };
     }
+
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
             .in(state.stream().map(Enum::name).toList());
@@ -381,7 +381,7 @@ public abstract class AbstractJdbcRepository {
 
     // Handle CHILD_FILTER field logic
     private <T extends Record> SelectConditionStep<T> handleChildFilter(SelectConditionStep<T> select, Object value) {
-        ChildFilter childFilter = (value instanceof String val)? ChildFilter.valueOf(val) : (ChildFilter) value;
+        ChildFilter childFilter = (value instanceof String val) ? ChildFilter.valueOf(val) : (ChildFilter) value;
 
         return switch (childFilter) {
             case CHILD -> select.and(field("trigger_execution_id").isNotNull());
@@ -405,6 +405,7 @@ public abstract class AbstractJdbcRepository {
         }
         return select;
     }
+
     private Condition minLevelCondition(Level minLevel) {
         return levelsCondition(LogEntry.findLevelsByMin(minLevel));
     }
@@ -414,7 +415,7 @@ public abstract class AbstractJdbcRepository {
     }
 
     private <T extends Record> SelectConditionStep<T> applyDateCondition(
-        SelectConditionStep<T> select, OffsetDateTime dateTime, QueryFilter.Op operation,String fieldName
+        SelectConditionStep<T> select, OffsetDateTime dateTime, QueryFilter.Op operation, String fieldName
     ) {
         switch (operation) {
             case LESS_THAN -> select = select.and(field(fieldName).lessThan(dateTime));
@@ -423,10 +424,12 @@ public abstract class AbstractJdbcRepository {
             case GREATER_THAN_OR_EQUAL_TO -> select = select.and(field(fieldName).greaterOrEqual(dateTime));
             case EQUALS -> select = select.and(field(fieldName).eq(dateTime));
             case NOT_EQUALS -> select = select.and(field(fieldName).ne(dateTime));
-            default -> throw new UnsupportedOperationException("Unsupported operation for date condition: " + operation);
+            default ->
+                throw new UnsupportedOperationException("Unsupported operation for date condition: " + operation);
         }
         return select;
     }
+
     protected static String getQuery(List<QueryFilter> filters) {
         if (filters == null || filters.isEmpty()) return null;
         return filters.stream()
@@ -435,6 +438,7 @@ public abstract class AbstractJdbcRepository {
             .findFirst()
             .orElse(null);
     }
+
     private <T extends Record> SelectConditionStep<T> applyScopeCondition(
         SelectConditionStep<T> select, Object value, QueryFilter.Op operation) {
 

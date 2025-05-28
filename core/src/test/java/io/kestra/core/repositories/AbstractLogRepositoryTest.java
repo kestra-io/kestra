@@ -2,14 +2,22 @@ package io.kestra.core.repositories;
 
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.dashboards.AggregationType;
+import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.ExecutionKind;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.statistics.LogStatistics;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.dashboard.data.Executions;
+import io.kestra.plugin.core.dashboard.data.ILogs;
+import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
+
+import java.io.IOException;
 import java.time.temporal.ChronoUnit;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
@@ -17,6 +25,8 @@ import org.slf4j.event.Level;
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Map;
+
 import reactor.core.publisher.Flux;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -258,5 +268,23 @@ public abstract class AbstractLogRepositoryTest {
         Flux<LogEntry> find = logRepository.findAllAsync(null);
         List<LogEntry> logEntries = find.collectList().block();
         assertThat(logEntries).hasSize(4);
+    }
+
+    @Test
+    void fetchData() throws IOException {
+        logRepository.save(logEntry(Level.INFO).build());
+
+        var results = logRepository.fetchData(TenantService.MAIN_TENANT,
+            Logs.builder()
+                .type(Logs.class.getName())
+                .columns(Map.of(
+                    "count", ColumnDescriptor.<Logs.Fields>builder().field(Logs.Fields.LEVEL).agg(AggregationType.COUNT).build()
+                ))
+                .build(),
+            ZonedDateTime.now().minusHours(1),
+            ZonedDateTime.now(),
+            null);
+
+        assertThat(results).hasSize(1);
     }
 }

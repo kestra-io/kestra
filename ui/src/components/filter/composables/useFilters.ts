@@ -1,4 +1,4 @@
-import {Comparators} from "../../../composables/monaco/languages/filters/filterCompletion.ts";
+import {Comparators, getComparator} from "../../../composables/monaco/languages/filters/filterCompletion.ts";
 
 type LegacyFilter = { field: string, operation: (keyof typeof Comparators) | "IN" | "NOT_IN", value: string };
 const getItem: (key: string) => { name: string, value: string | LegacyFilter[] }[] = (key) => {
@@ -34,9 +34,7 @@ export function useFilters(prefix: string) {
                 } else {
                     hasLegacyFilter = true;
 
-                    const comparator = (operation: LegacyFilter["operation"]) => operation === "IN" ? Comparators.EQUALS
-                        : operation === "NOT_IN" ? Comparators.NOT_EQUALS
-                            : Comparators[operation];
+                    const comparator = (operation: LegacyFilter["operation"]) => getComparator(operation);
                     stringValue = (value as LegacyFilter[]).map(f =>
                         `${f.field}${comparator(f.operation)}${f.value.includes(" ") ? `"${f.value}"` : f.value}`
                     ).join(" ")

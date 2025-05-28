@@ -286,7 +286,7 @@
             const vsCodeIcon = node.querySelector(".suggest-icon") as HTMLElement;
             node.querySelector(`.${KESTRA_ICON_WRAPPER_CLASS}`)?.remove();
 
-            if (completionValue.includes(".")) {
+            if (completionValue.includes(".") && !completionValue.includes("{")) {
                 if (store.state.plugin.icons[completionValue] !== undefined) {
                     replaceRowIcon(vsCodeIcon, h(TaskIcon, {
                         cls: completionValue,

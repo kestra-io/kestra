@@ -1,5 +1,5 @@
 <template>
-    <section class="d-flex flex-column mb-3">
+    <section class="d-flex flex-column mb-3 w-100">
         <div class="d-flex">
             <Items :prefix="itemsPrefix" @search="handleClickedItems" />
 
@@ -67,22 +67,22 @@
 </template>
 
 <script setup lang="ts">
-    import MonacoEditor, { ThemeBase } from "../inputs/MonacoEditor.vue";
-    import { computed, getCurrentInstance, ref, watch } from "vue";
+    import MonacoEditor, {ThemeBase} from "../inputs/MonacoEditor.vue";
+    import {computed, getCurrentInstance, ref, watch} from "vue";
     import Utils from "../../utils/utils";
-    import { Buttons, Property, Shown } from "./utils/types";
-    import { editor } from "monaco-editor/esm/vs/editor/editor.api";
+    import {Buttons, Property, Shown} from "./utils/types";
+    import {editor} from "monaco-editor/esm/vs/editor/editor.api";
     import Items from "./segments/Items.vue";
-    import { cssVariable } from "@kestra-io/ui-libs";
-    import { LocationQuery, useRoute, useRouter } from "vue-router";
+    import {cssVariable} from "@kestra-io/ui-libs";
+    import {LocationQuery, useRoute, useRouter} from "vue-router";
     import Save from "./segments/Save.vue";
     import Settings from "./segments/Settings.vue";
     import RefreshButton from "../layout/RefreshButton.vue";
     import Dashboards from "./segments/Dashboards.vue";
     import Properties from "./segments/Properties.vue";
-    import { COMPARATOR_CHARS } from "../../composables/monaco/languages/filters/filterLanguageConfigurator.ts";
-    import { Comparators } from "../../composables/monaco/languages/filters/filterCompletion.ts";
-    import { watchDebounced } from "@vueuse/core";
+    import {COMPARATORS_REGEX} from "../../composables/monaco/languages/filters/filterLanguageConfigurator.ts";
+    import {Comparators, getComparator} from "../../composables/monaco/languages/filters/filterCompletion.ts";
+    import {watchDebounced} from "@vueuse/core";
 
     const router = useRouter();
     const route = useRoute();
@@ -198,10 +198,17 @@
             Handling that would require passing the language filter here which we don't want so we'll just wait for the full filters migration
              */
             filter.value = Object.entries(query)
-                .map(([key, value]) => key + Comparators.EQUALS + value).join(" ");
+                .flatMap(([key, values]) => {
+                    if (!Array.isArray(values)) {
+                        values = [values];
+                    }
+
+                    return values.map(value => key + Comparators.EQUALS + value);
+                }).join(" ");
         } else {
             filter.value = Object.entries(query)
-                .map(([key, value]) => {
+                .filter(([key]) => key.startsWith("filters["))
+                .flatMap(([key, values]) => {
                     const [_, filterKey, comparator, subKey] = key.match(/filters\[([^\]]+)]\[([^\]]+)](?:\[([^\]]+)])?/) ?? [];
                     let maybeSubKeyString;
                     if (subKey === undefined) {
@@ -210,12 +217,15 @@
                         maybeSubKeyString = "." + (subKey.includes(" ") ? `"${subKey}"` : subKey);
                     }
 
-                    const stringValue = Array.isArray(value) ? value.join(",") : value as string;
-                    return filterKey + maybeSubKeyString + Comparators[comparator as keyof typeof Comparators] + stringValue;
+                    if (!Array.isArray(values)) {
+                        values = [values];
+                    }
+
+                    return values.map(value => filterKey + maybeSubKeyString + getComparator(comparator as Parameters<typeof getComparator>[0]) + value);
                 })
                 .join(" ");
         }
-    }, { immediate: true, deep: true });
+    }, {immediate: true, deep: true});
 
     const COMPARATOR_LABEL_BY_VALUE: Record<Comparators, keyof typeof Comparators> = Object.fromEntries(
         Object.entries(Comparators)
@@ -232,11 +242,10 @@
             return {};
         }
 
-        const JOINED_COMPARATOR_CHARS = COMPARATOR_CHARS.join("");
-        const KEY_MATCHER = "([^\\s" + JOINED_COMPARATOR_CHARS + "]+)";
-        const COMPARATOR_MATCHER = "([" + JOINED_COMPARATOR_CHARS + "]+)";
-        const MAYBE_PREVIOUS_VALUE = "(?:(?<=[^\\s" + JOINED_COMPARATOR_CHARS + "]),)?";
-        const VALUE_MATCHER = "((?:" + MAYBE_PREVIOUS_VALUE + "(?:(?:\"[^\\n," + JOINED_COMPARATOR_CHARS + "]+\")|(?:[^\\s," + JOINED_COMPARATOR_CHARS + "]+)))+)";
+        const KEY_MATCHER = "(\\S+?)";
+        const COMPARATOR_MATCHER = "(" + COMPARATORS_REGEX + ")";
+        const MAYBE_PREVIOUS_VALUE = "(?:(?<=\\S),)?";
+        const VALUE_MATCHER = "((?:" + MAYBE_PREVIOUS_VALUE + "(?:(?:\"[^\\n,]+\")|(?:[^\\s,]+)))+)";
         const filterMatcher = new RegExp("\\s*" + KEY_MATCHER + COMPARATOR_MATCHER + VALUE_MATCHER + "\\s*", "g");
         let matches: RegExpExecArray | null;
         const filters: Filter[] = [];
@@ -248,14 +257,14 @@
             let comparatorLabel: keyof typeof Comparators | "IN" | "NOT_IN" = COMPARATOR_LABEL_BY_VALUE[comparator];
             if (values.length > 1) {
                 switch (comparator) {
-                    case "=": {
-                        comparatorLabel = "IN";
-                        break;
-                    }
-                    case "!=": {
-                        comparatorLabel = "NOT_IN";
-                        break;
-                    }
+                case "=": {
+                    comparatorLabel = "IN";
+                    break;
+                }
+                case "!=": {
+                    comparatorLabel = "NOT_IN";
+                    break;
+                }
                 }
             }
 
@@ -267,7 +276,7 @@
         }
 
         // TODO REGEX NOT WORKING
-        let queryEntries = filters.flatMap(({ key: key, comparator: comparator, value: value }) => {
+        let queryEntries = filters.flatMap(({key: key, comparator: comparator, value: value}) => {
             let queryKey = reversedQueryRemapper?.[key] ?? key;
 
             if (!props.legacyQuery) {
@@ -294,9 +303,15 @@
             queryEntries = queryEntries.map(([queryKey, value]) => [`${props.queryNamespace}[${queryKey}]`, value]);
         }
 
-        return Object.fromEntries(
-            queryEntries
-        );
+        return queryEntries.reduce((acc, [key, value]) => {
+            if (acc[key] === undefined) {
+                acc[key] = value;
+            } else {
+                acc[key] = Array.isArray(acc[key]) ? [...acc[key], value] : [acc[key], value];
+            }
+
+            return acc;
+        }, {} as LocationQuery)
     });
 
     const handleClickedItems = (value: string | undefined) => {
@@ -311,7 +326,7 @@
             "editor.background": cssVariable("--ks-background-input")!
         },
         rules: [
-            { token: "variable.value", foreground: cssVariable("--ks-badge-content") }
+            {token: "variable.value", foreground: cssVariable("--ks-badge-content")}
         ]
     };
     const options: editor.IStandaloneEditorConstructionOptions = {
@@ -389,9 +404,14 @@
     watchDebounced(filterQueryString, () => {
         skipRouteWatcherOnce.value = true;
         router.push({
-            query: filterQueryString.value
+            query: {
+                sort: route.query.sort,
+                size: route.query.size,
+                page: route.query.page,
+                ...filterQueryString.value
+            }
         });
-    }, { immediate: true, debounce: 500 });
+    }, {immediate: true, debounce: 500});
 </script>
 
 <style lang="scss" scoped>

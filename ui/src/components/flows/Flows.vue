@@ -520,20 +520,33 @@
                 }, 0);
             },
         },
-        beforeRouteEnter(to, from, next) {
+        beforeRouteEnter(to, _, next) {
             const defaultNamespace = localStorage.getItem(
                 storageKeys.DEFAULT_NAMESPACE,
             );
             const query = {...to.query};
-            if (defaultNamespace) {
-                query.namespace = defaultNamespace;
+            let queryHasChanged = false;
+
+            const queryKeys = Object.keys(query);
+            if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+                query["filters[namespace][EQUALS]"] = defaultNamespace;
+                queryHasChanged = true;
             }
-            if (!query.scope) {
-                query.scope = ["USER"];
+
+            if (!queryKeys.some(key => key.startsWith("filters[scope]"))) {
+                query["filters[scope][EQUALS]"] = "USER";
+                queryHasChanged = true;
             }
-            next((vm) => {
-                vm.$router?.replace({query});
-            });
+
+            if (queryHasChanged) {
+                next({
+                    ...to,
+                    query,
+                    replace: true
+                });
+            } else {
+                next();
+            }
         },
         created() {
             this.displayColumns = this.loadDisplayColumns();

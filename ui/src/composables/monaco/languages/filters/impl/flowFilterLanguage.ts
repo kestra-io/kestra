@@ -25,8 +25,7 @@ const flowFilterKeys: Record<string, FilterKeyCompletions> = {
     ),
     scope: new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],
-        async (_, hardcodedValues) => hardcodedValues.SCOPES,
-        true
+        async (_, hardcodedValues) => hardcodedValues.SCOPES
     ),
     "labels.{key}": new FilterKeyCompletions(
         [Comparators.EQUALS, Comparators.NOT_EQUALS],

@@ -15,6 +15,20 @@ export enum Comparators {
     REGEX = "~="
 }
 
+export function getComparator(comparatorKey: keyof typeof Comparators | "IN" | "NOT_IN"): Comparators {
+    switch(comparatorKey) {
+        case "IN": {
+            return Comparators.EQUALS;
+        }
+        case "NOT_IN": {
+            return Comparators.NOT_EQUALS;
+        }
+        default: {
+            return Comparators[comparatorKey as keyof typeof Comparators];
+        }
+    }
+}
+
 export class Completion {
     private readonly _label: string;
     private readonly _value: string;

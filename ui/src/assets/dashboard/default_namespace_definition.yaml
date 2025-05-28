@@ -137,7 +137,7 @@ charts:
       columns:
         id:
           field: ID
-          displayName: Execution Id
+          displayName: Execution ID
         namespace:
           field: NAMESPACE
           displayName: Namespace
@@ -163,10 +163,10 @@ charts:
       columns:
         flowId:
           field: FLOW_ID
-          displayName: FlowId
+          displayName: Flow ID
         nextExec:
           field: NEXT_EXECUTION_DATE
-          displayName: nextExec
+          displayName: Next Execution Date
 
   - id: executions_per_namespace_bars
     type: io.kestra.plugin.core.dashboard.chart.Bar

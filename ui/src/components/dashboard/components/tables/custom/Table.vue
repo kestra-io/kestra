@@ -7,29 +7,62 @@
             size="small"
         >
             <el-table-column
-                v-for="key in Object.keys(props.chart.data.columns)"
+                v-for="[key, value] in Object.entries(props.chart.data.columns)"
                 :label="key"
                 :key
             >
                 <template #default="scope">
-                    <template v-if="key === 'id'">
+                    <template v-if="value.field === 'ID'">
                         <RouterLink
-                            v-if="showLink(scope.row)"
+                            v-if="linkData(scope.row)"
                             :to="{
                                 name: 'executions/update',
                                 params: {
-                                    namespace: showLink(scope.row)?.NAMESPACE,
-                                    flowId: showLink(scope.row)?.FLOW_ID,
-                                    id: scope.row.id,
+                                    namespace: linkData(scope.row)?.NAMESPACE,
+                                    flowId: linkData(scope.row)?.FLOW_ID,
+                                    id: scope.row[key],
                                 },
                             }"
                         >
-                            <code>{{ scope.row.id.slice(0, 8) }}</code>
+                            <code>{{ scope.row[key].slice(0, 8) }}</code>
+                        </RouterLink>
+                        <code v-else>{{ scope.row[key] }}</code>
+                    </template>
+                    <template v-else-if="value.field === 'FLOW_ID'">
+                        <RouterLink
+                            v-if="linkData(scope.row)"
+                            :to="{
+                                name: 'flows/update',
+                                params: {
+                                    namespace: linkData(scope.row)?.NAMESPACE,
+                                    id: linkData(scope.row)?.FLOW_ID,
+                                },
+                            }"
+                        >
+                            <code>{{ scope.row[key] }}</code>
                         </RouterLink>
                         <code v-else>{{ scope.row.id }}</code>
                     </template>
-                    <Status v-else-if="key === 'state'" size="small" :status="scope.row[key]" />
-                    <span v-else-if="key === 'duration'">{{ Utils.humanDuration(scope.row[key]) }}</span>
+                    <template v-else-if="value.field === 'NAMESPACE'">
+                        <RouterLink
+                            :to="{
+                                name: 'namespaces/update',
+                                params: {
+                                    id: scope.row[key],
+                                },
+                            }"
+                        >
+                            <code>{{ scope.row[key] }}</code>
+                        </RouterLink>
+                    </template>
+                    <Status
+                        v-else-if="value.field === 'STATE'"
+                        size="small"
+                        :status="scope.row[key]"
+                    />
+                    <span v-else-if="value.field === 'DURATION'">{{
+                        Utils.humanDuration(scope.row[key])
+                    }}</span>
                     <span v-else>{{ scope.row[key] }}</span>
                 </template>
             </el-table-column>
@@ -74,7 +107,7 @@
 
     const containerID = `${props.chart.id}__${Math.random()}`;
 
-    const showLink = (row: Record<string, any>) => {
+    const linkData = (row: Record<string, any>) => {
         const fields: Record<string, { field: string; displayName: string }> = props.chart.data.columns;
 
         function getField(args: Record<string, any>) {
@@ -87,7 +120,7 @@
                 }
             }
 
-            return Object.keys(result).length > 0 ? result : undefined;
+            return result.FLOW_ID && result.NAMESPACE ? result : undefined;
         }
 
         return getField(row);
@@ -120,7 +153,7 @@
             }
             data.value = await store.dispatch("dashboard/generate", params);
         } else {
-            const params = {filters: {...decodedParams}}
+            const params = {filters: {...decodedParams}};
 
             if (props.chart.chartOptions?.pagination?.enabled) {
                 params.pageNumber = currentPage.value;

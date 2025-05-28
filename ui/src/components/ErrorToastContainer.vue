@@ -49,6 +49,9 @@
         components: {Slack},
         methods: {
             async renderMarkdown() {
+                if (this.message.response && this.message.response.status === 503) {
+                    return await Markdown.render("Server is temporarily unavailable. Please try again later.", {html: true});
+                }
                 return await Markdown.render(this.message.message || this.message.content.message, {html: true});
             },
         },

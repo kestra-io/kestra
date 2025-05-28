@@ -28,6 +28,10 @@
                     return this.message.title;
                 }
 
+                if (this.message.response.status === 503) {
+                    return "503 Service Unavailable";
+                }
+
                 if (this.message.content && this.message.content.message && this.message.content.message.indexOf(":") > 0) {
                     return this.message.content.message.substring(0, this.message.content.message.indexOf(":"));
                 }
@@ -53,7 +57,7 @@
                 const error =  {
                     type: "ERROR",
                     error: {
-                        message: this.text,
+                        message: this.title,
                         errors: this.items,
                     },
                     page: pageFromRoute(this.$route)

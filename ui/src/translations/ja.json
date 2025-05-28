@@ -813,6 +813,7 @@
     "no_code": {
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
+      "clearSelection": "選択をクリア",
       "close": {
         "afterExecution": "実行後にタスクを閉じる",
         "conditions": "クローズ条件",

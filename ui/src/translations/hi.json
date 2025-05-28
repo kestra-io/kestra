@@ -813,6 +813,7 @@
     "no_code": {
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",
+      "clearSelection": "चयन साफ़ करें",
       "close": {
         "afterExecution": "कार्य पूरा होने के बाद बंद करें",
         "conditions": "बंद करने की शर्त",

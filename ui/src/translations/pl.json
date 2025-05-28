@@ -813,6 +813,7 @@
     "no_code": {
       "adding": "+ Dodaj {what}",
       "adding_default": "+ Dodaj nową wartość",
+      "clearSelection": "Wyczyść zaznaczenie",
       "close": {
         "afterExecution": "Zamknij po wykonaniu task",
         "conditions": "Zamknij warunek",

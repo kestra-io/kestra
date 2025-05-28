@@ -813,6 +813,7 @@
     "no_code": {
       "adding": "+ Добавить {what}",
       "adding_default": "+ Добавить новое value",
+      "clearSelection": "Очистить выбор",
       "close": {
         "afterExecution": "Закрыть после выполнения task",
         "conditions": "Закрыть условие",

@@ -53,7 +53,7 @@
         } else {
             generated.value = await store.dispatch("dashboard/chartPreview", {
                 chart: props.chart.content,
-                globalFilter: {filter: decodedParams},
+                globalFilter: {filters: decodedParams},
             });
         }
     };

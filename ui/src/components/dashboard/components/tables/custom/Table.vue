@@ -120,16 +120,16 @@
             }
             data.value = await store.dispatch("dashboard/generate", params);
         } else {
-            let filter = {...decodedParams}
+            const params = {filters: {...decodedParams}}
 
             if (props.chart.chartOptions?.pagination?.enabled) {
-                filter.pageNumber = currentPage.value;
-                filter.pageSize = pageSize.value;
+                params.pageNumber = currentPage.value;
+                params.pageSize = pageSize.value;
             }
 
             data.value = await store.dispatch("dashboard/chartPreview", {
                 chart: props.chart.content,
-                globalFilter: {filter},
+                globalFilter: params,
             });
         }
     };

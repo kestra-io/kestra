@@ -48,7 +48,7 @@
         } else {
             const result = await store.dispatch("dashboard/chartPreview", {
                 chart: props.chart.content,
-                globalFilter: {filter: decodedParams},
+                globalFilter: {filters: decodedParams},
             })
             source.value = result.results[0]?.description;
         }

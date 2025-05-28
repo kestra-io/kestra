@@ -11,6 +11,9 @@
             <h1 class="h5 fw-semibold m-0 d-inline-flex">
                 <slot name="title">
                     {{ title }}
+                    <el-tooltip v-if="description" :content="description">
+                        <Information class="ms-2" />
+                    </el-tooltip>
                     <Badge v-if="beta" label="Beta" />
                 </slot>
                 <el-button
@@ -47,6 +50,7 @@
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
     import StarOutlineIcon from "vue-material-design-icons/StarOutline.vue";
     import StarIcon from "vue-material-design-icons/Star.vue";
+    import Information from "vue-material-design-icons/Information.vue"
     import Badge from "../global/Badge.vue";
 
     export default {
@@ -54,12 +58,17 @@
             GlobalSearch,
             TrashCan,
             Impersonating,
+            Information,
             Badge
         },
         props: {
             title: {
                 type: String,
                 required: true
+            },
+            description: {
+                type: String,
+                default: undefined
             },
             breadcrumb: {
                 type: Array,

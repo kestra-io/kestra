@@ -83,11 +83,29 @@ charts:
     type: io.kestra.plugin.core.dashboard.chart.Markdown
     chartOptions:
       displayName: Description
-      width: 12
+      width: 6
     source:
       type: FlowDescription
       flowId: { { flowId } }
       namespace: { { namespace } }
+
+  - id: total_executions_pie
+    type: io.kestra.plugin.core.dashboard.chart.Pie
+    chartOptions:
+      displayName: Total Executions
+      graphStyle: DONUT
+      tooltip: ALL
+      width: 6
+    data:
+      type: io.kestra.plugin.core.dashboard.data.Executions
+      columns:
+        id:
+          field: ID
+          displayName: Execution Id
+          agg: COUNT
+        state:
+          displayName: State
+          field: STATE
 
   - id: total_executions_timeseries
     type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -98,7 +116,7 @@ charts:
         enabled: true
       column: date
       colorByColumn: state
-      width: 9
+      width: 12
     data:
       type: io.kestra.plugin.core.dashboard.data.Executions
       columns:
@@ -117,24 +135,6 @@ charts:
           agg: SUM
           graphStyle: LINES
 
-  - id: total_executions_pie
-    type: io.kestra.plugin.core.dashboard.chart.Pie
-    chartOptions:
-      displayName: Total Executions
-      graphStyle: DONUT
-      tooltip: ALL
-      width: 3
-    data:
-      type: io.kestra.plugin.core.dashboard.data.Executions
-      columns:
-        id:
-          field: ID
-          displayName: Execution Id
-          agg: COUNT
-        state:
-          displayName: State
-          field: STATE
-
   - id: executions_in_progress
     type: io.kestra.plugin.core.dashboard.chart.Table
     chartOptions:
@@ -147,7 +147,7 @@ charts:
       columns:
         id:
           field: ID
-          displayName: Execution Id
+          displayName: Execution ID
         namespace:
           field: NAMESPACE
           displayName: Namespace
@@ -158,8 +158,8 @@ charts:
           field: DURATION
           displayName: Duration
         state:
-          displayName: State
           field: STATE
+          displayName: State
 
   - id: next_executions
     type: io.kestra.plugin.core.dashboard.chart.Table
@@ -173,10 +173,10 @@ charts:
       columns:
         flowId:
           field: FLOW_ID
-          displayName: FlowId
+          displayName: Flow ID
         nextExec:
           field: NEXT_EXECUTION_DATE
-          displayName: nextExec
+          displayName: Next Execution Date
 
   - id: executions_per_namespace_bars
     type: io.kestra.plugin.core.dashboard.chart.Bar

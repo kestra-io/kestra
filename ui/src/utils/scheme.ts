@@ -62,7 +62,7 @@ export const useScheme = (type = "executions") => {
         const TYPES = getSchemes();
         // force recalculation of css variables on theme change
         if(theme.value !== undefined) {
-            return TYPES[type]
+            return TYPES[type as keyof typeof TYPES] ?? {};
         }else {
             return {}
         }

@@ -8,7 +8,7 @@
         >
             <el-table-column
                 v-for="[key, value] in Object.entries(props.chart.data.columns)"
-                :label="key"
+                :label="value.displayName || key"
                 :key
             >
                 <template #default="scope">

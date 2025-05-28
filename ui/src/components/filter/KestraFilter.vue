@@ -159,7 +159,14 @@
             .map(([key, value]) => [value, key])
     );
 
-    watch(() => route.query, (newVal) => {
+    const EXCLUDED_QUERY_FIELDS = ["sort", "size", "page"];
+
+    const filteredRouteQuery = computed(() => route.query === undefined
+        ? undefined
+        : Object.fromEntries(Object.entries(route.query).filter(([key]) => !EXCLUDED_QUERY_FIELDS.includes(key))) as LocationQuery
+    );
+
+    watch(filteredRouteQuery, (newVal) => {
         if (skipRouteWatcherOnce.value) {
             skipRouteWatcherOnce.value = false;
             return;
@@ -169,16 +176,12 @@
             return;
         }
 
-        let query = newVal as LocationQuery;
+        let query = newVal;
         if (props.queryNamespace !== undefined) {
             query = Object.fromEntries(
                 Object.entries(newVal)
                     .filter(([key]) => {
-                        if (key.startsWith(props.queryNamespace + "[")) {
-                            return true;
-                        }
-
-                        return false;
+                        return key.startsWith(props.queryNamespace + "[");
                     })
                     .map(([key, value]) =>
                         // We trim the queryNamespace from the key
@@ -277,7 +280,6 @@
             });
         }
 
-        // TODO REGEX NOT WORKING
         let queryEntries = filters.flatMap(({key: key, comparator: comparator, value: value}) => {
             let queryKey = reversedQueryRemapper?.[key] ?? key;
 
@@ -313,7 +315,7 @@
             }
 
             return acc;
-        }, {} as LocationQuery)
+        }, {} as LocationQuery);
     });
 
     const handleClickedItems = (value: string | undefined) => {

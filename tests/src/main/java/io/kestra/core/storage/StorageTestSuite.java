@@ -7,6 +7,7 @@ import io.kestra.core.storages.StorageInterface;
 import io.kestra.core.storages.StorageObject;
 import io.kestra.core.utils.IdUtils;
 import jakarta.inject.Inject;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.Test;
 
 import java.io.*;
@@ -32,6 +33,14 @@ public abstract class StorageTestSuite {
     @Inject
     protected StorageInterface storageInterface;
 
+    @Test
+    void getPath(){
+        String path = storageInterface.getPath(MAIN_TENANT, null);
+        AssertionsForClassTypes.assertThat(path).isEqualTo("main/");
+
+        path = storageInterface.getPath(MAIN_TENANT, URI.create("/folder1/folder2"));
+        AssertionsForClassTypes.assertThat(path).isEqualTo("main/folder1/folder2");
+    }
 
     //region test GET
     @Test

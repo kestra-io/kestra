@@ -58,9 +58,10 @@
             this.schemas = this.schema?.anyOf ?? [];
 
             const schema = this.schemaOptions.find((item) =>
-                typeof this.modelValue === "string"
-                    ? item.id === "string"
-                    : item.id === this.modelValue?.type,
+                typeof item.value === this.modelValue?.type ||
+                (this.modelValue === "string" && item.value === "string") ||
+                (this.modelValue === "number" && item.value === "integer") ||
+                (Array.isArray(this.modelValue) && item.value === "array"),
             );
             this.onSelectType(schema?.value || this.schemaOptions[0]?.value);
         },

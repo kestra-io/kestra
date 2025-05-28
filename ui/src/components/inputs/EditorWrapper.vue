@@ -29,7 +29,8 @@
 
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
 
-    import {useRouter} from "vue-router";
+    import {useRoute, useRouter} from "vue-router";
+    const route = useRoute()
     const router = useRouter()
 
     import {EDITOR_CURSOR_INJECTION_KEY} from "../code/injectionKeys";
@@ -134,7 +135,7 @@
                     id: flowParsed.value.id,
                     namespace: flowParsed.value.namespace,
                     tab: "edit",
-                    tenant: router.currentRoute.value.params.tenant,
+                    tenant: route.params?.tenant,
                 },
             });
         }

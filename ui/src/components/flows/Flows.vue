@@ -74,14 +74,12 @@
                     />
                 </template>
 
-                <template #top>
-                    <el-card v-if="showStatChart()" class="mb-4 shadow">
-                        <ExecutionsBar
-                            :data="daily"
-                            :total="executionsCount"
-                            :loading="loading"
-                        />
-                    </el-card>
+                <template v-if="showStatChart()" #top>
+                    <ChartsSection
+                        :charts="charts"
+                        :show-default="true"
+                        :full-size="true"
+                    />
                 </template>
 
                 <template #table>
@@ -246,36 +244,6 @@
                             </el-table-column>
 
                             <el-table-column
-                                prop="state"
-                                v-if="
-                                    displayColumn('state') &&
-                                        user.hasAny(permission.EXECUTION)
-                                "
-                                :label="$t('execution statistics')"
-                                class-name="row-graph"
-                            >
-                                <template #default="scope">
-                                    <ExecutionsBarChart
-                                        v-if="dailyGroupByFlowReady"
-                                        class="stats-chart"
-                                        :duration="false"
-                                        :scales="false"
-                                        :data="chartData(scope.row)"
-                                        small
-                                        external-tooltip
-                                        :plugins="[]"
-                                        @click="
-                                            tableChartClick.bind(
-                                                null,
-                                                scope.row.namespace,
-                                                scope.row.id,
-                                            )
-                                        "
-                                    />
-                                </template>
-                            </el-table-column>
-
-                            <el-table-column
                                 v-if="displayColumn('triggers')"
                                 :label="$t('triggers')"
                                 class-name="row-action"
@@ -319,10 +287,9 @@
 
 <script setup>
     import {ref} from "vue";
-    import moment from "moment";
     import BulkSelect from "../layout/BulkSelect.vue";
     import SelectTable from "../layout/SelectTable.vue";
-    import ExecutionsBar from "../dashboard/components/charts/executions/Bar.vue";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Plus from "vue-material-design-icons/Plus.vue";
     import TextBoxSearch from "vue-material-design-icons/TextBoxSearch.vue";
     import Download from "vue-material-design-icons/Download.vue";
@@ -330,31 +297,12 @@
     import FileDocumentRemoveOutline from "vue-material-design-icons/FileDocumentRemoveOutline.vue";
     import FileDocumentCheckOutline from "vue-material-design-icons/FileDocumentCheckOutline.vue";
     import Upload from "vue-material-design-icons/Upload.vue";
-    import ExecutionsBarChart from "../dashboard/components/charts/executions/BarChart.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
-    import {chartClick} from "../../utils/charts.js";
-    import {useRoute, useRouter} from "vue-router";
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
-
-    const route = useRoute();
-    const router = useRouter();
+    import YAML_CHART from "../../assets/dashboard/executions_timeseries_chart.yaml?raw";
+    import ChartsSection from "../dashboard/components/ChartsSection.vue";
 
     const file = ref(null);
-
-    function tableChartClick(namespace, flowId, e, elements) {
-        if (
-            elements.length > 0 &&
-            elements[0].index !== undefined &&
-            elements[0].datasetIndex !== undefined
-        ) {
-            chartClick(moment, router, route, {
-                date: e.chart.data.labels[elements[0].index],
-                state: e.chart.data.datasets[elements[0].datasetIndex].label,
-                namespace,
-                flowId,
-            });
-        }
-    }
 </script>
 
 <script>
@@ -519,6 +467,11 @@
                     );
                 }, 0);
             },
+            charts() {
+                return [
+                    {...YAML_UTILS.parse(YAML_CHART), content: YAML_CHART}
+                ];
+            }
         },
         beforeRouteEnter(to, _, next) {
             const defaultNamespace = localStorage.getItem(
@@ -577,12 +530,11 @@
                 this.displayColumns = newColumns;
             },
             showStatChart() {
-                return this.daily && this.showChart;
+                return this.showChart;
             },
             onShowChartChange(value) {
                 this.showChart = value;
                 localStorage.setItem(storageKeys.SHOW_FLOWS_CHART, value);
-                if (this.showStatChart()) this.loadStats();
             },
             exportFlows() {
                 this.$toast().confirm(
@@ -801,17 +753,6 @@
                     this.loadData(() => {});
                 });
             },
-            chartData(row) {
-                if (
-                    this.dailyGroupByFlow &&
-                    this.dailyGroupByFlow[row.namespace] &&
-                    this.dailyGroupByFlow[row.namespace][row.id]
-                ) {
-                    return this.dailyGroupByFlow[row.namespace][row.id];
-                } else {
-                    return [];
-                }
-            },
             getLastExecution(row) {
                 let noState = {state: null, startDate: null};
                 if (this.lastExecutions && this.lastExecutions.length > 0) {
@@ -840,33 +781,7 @@
 
                 return _merge(base, queryFilter);
             },
-            loadStats() {
-                this.dailyReady = false;
-                this.loading = true;
-
-                if (this.user.hasAny(permission.EXECUTION) && this.showStatChart) {
-                    this.$store
-                        .dispatch(
-                            "stat/daily",
-                            this.loadQuery({
-                                startDate: this.$moment(this.startDate)
-                                    .add(-1, "day")
-                                    .startOf("day")
-                                    .toISOString(true),
-                                endDate: this.$moment(this.endDate)
-                                    .endOf("day")
-                                    .toISOString(true),
-                            }),
-                        )
-                        .then(() => {
-                            this.dailyReady = true;
-                            this.loading = false;
-                        });
-                }
-            },
             loadData(callback) {
-                this.loadStats();
-
                 this.$store
                     .dispatch(
                         "flow/findFlows",

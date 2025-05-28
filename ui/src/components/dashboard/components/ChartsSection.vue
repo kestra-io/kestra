@@ -1,6 +1,6 @@
 <template>
-    <section id="charts">
-        <el-row :gutter="8">
+    <section id="charts" :class="fullSize ? '' : 'charts-padding'">
+        <el-row :gutter="16">
             <el-col
                 v-for="(chart, index) in props.charts"
                 :key="`${chart.id}__${index}`"
@@ -57,6 +57,7 @@
     const props = defineProps({
         charts: {type: Array, required: true, default: () => []},
         showDefault: {type: Boolean, default: false},
+        fullSize: {type: Boolean, default: false},
     });
 
     const labels = (chart) => ({
@@ -69,7 +70,6 @@
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 section#charts {
-    padding: 0 2rem 1rem;
 
     & .el-row .el-col {
         margin-bottom: 0.5rem;
@@ -82,5 +82,9 @@ section#charts {
             border-radius: $border-radius;
         }
     }
+}
+
+.charts-padding {
+    padding: 0 2rem 1rem;
 }
 </style>

@@ -41,7 +41,7 @@
                         >
                             <code>{{ scope.row[key] }}</code>
                         </RouterLink>
-                        <code v-else>{{ scope.row.id }}</code>
+                        <code v-else>{{ scope.row[key] }}</code>
                     </template>
                     <template v-else-if="value.field === 'NAMESPACE'">
                         <RouterLink

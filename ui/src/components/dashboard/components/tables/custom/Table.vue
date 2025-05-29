@@ -63,6 +63,9 @@
                     <span v-else-if="value.field === 'DURATION'">{{
                         Utils.humanDuration(scope.row[key])
                     }}</span>
+                    <span v-else-if="value.field.toLowerCase().includes('date')">
+                        {{ moment(scope.row[key])?.format(dateFormat) ?? scope.row[key] }}
+                    </span>
                     <span v-else>{{ scope.row[key] }}</span>
                 </template>
             </el-table-column>
@@ -81,6 +84,7 @@
 
 <script lang="ts" setup>
     import {onMounted, ref, watch} from "vue";
+    import moment from "moment";
 
     import {useI18n} from "vue-i18n";
     import Status from "../../../../Status.vue";
@@ -94,6 +98,8 @@
     import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
 
     const {t} = useI18n({useScope: "global"});
+
+    const dateFormat = localStorage.getItem("dateFormat") ?? "llll"
 
     const store = useStore();
 

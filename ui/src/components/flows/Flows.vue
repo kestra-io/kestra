@@ -77,8 +77,6 @@
                 <template v-if="showStatChart()" #top>
                     <Sections
                         :charts="charts"
-                        :show-default="true"
-                        :full-size="true"
                     />
                 </template>
 

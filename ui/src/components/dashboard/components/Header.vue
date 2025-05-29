@@ -1,12 +1,16 @@
 <template>
-    <TopNavBar :title="routeInfo.title" :breadcrumb="props.breadcrumb" :description="props.description">
+    <TopNavBar
+        :title="routeInfo.title"
+        :breadcrumb
+        :description="props.dashboard?.description"
+    >
         <template #additional-right v-if="canCreate">
             <ul>
-                <li v-if="props.id && props.id !== 'default'">
+                <li v-if="props.dashboard?.id && props.dashboard?.id !== 'default'">
                     <router-link
                         :to="{
                             name: 'dashboards/update',
-                            params: {id: props.id},
+                            params: {id: props.dashboard?.id},
                         }"
                         data-test-id="dashboard-update-dashboard-button"
                     >
@@ -15,7 +19,7 @@
                         </el-button>
                     </router-link>
                 </li>
-                <li v-if="!props.id">
+                <li v-if="!props.dashboard?.id">
                     <router-link
                         :to="{name: 'dashboards/create'}"
                         data-test-id="dashboard-create-dashboard-button"
@@ -60,11 +64,10 @@
     const {t} = useI18n({useScope: "global"});
 
     const props = defineProps({
-        title: {type: String, default: undefined},
-        description: {type: String, default: undefined},
-        breadcrumb: {type: Array, default: () => []},
-        id: {type: String, default: undefined},
+        dashboard: {type: Object, default: undefined},
     });
+
+    const breadcrumb = [{label: t("dashboard_label"), link: {}}];
 
     const user = computed(() => store.state.auth.user);
     const canCreate = computed(() =>
@@ -72,7 +75,7 @@
     );
 
     const routeInfo = computed(() => ({
-        title: props.title ?? t("homeDashboard.title"),
+        title: props.dashboard?.title ?? t("overview"),
     }));
 
     useRouteContext(routeInfo);

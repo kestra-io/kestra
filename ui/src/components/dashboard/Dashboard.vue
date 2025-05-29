@@ -1,5 +1,5 @@
 <template>
-    <section id="header" v-if="!embed">
+    <section id="header" v-if="header">
         <Header
             :title="dashboard.title ?? t('overview')"
             :description="dashboard.description"
@@ -54,7 +54,7 @@
     const {t} = useI18n({useScope: "global"});
 
     const props = defineProps({
-        embed: {type: Boolean, default: false},
+        header: {type: Boolean, default: true},
         isFlow: {type: Boolean, default: false},
         isNamespace: {type: Boolean, default: false},
     });

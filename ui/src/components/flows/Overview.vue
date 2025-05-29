@@ -1,7 +1,7 @@
 <template>
     <Dashboard
         v-if="loaded && total && flow"
-        embed
+        :header="false"
         :is-flow="true"
     />
     <NoExecutions v-else-if="loaded && flow && !total" />

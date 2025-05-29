@@ -82,7 +82,7 @@ export function useHelpers() {
             name: "overview",
             title: t("overview"),
             component: Dashboard,
-            props: {isNamespace: true},
+            props: {isNamespace: true, header: false},
         },
         {
             name: "flows",

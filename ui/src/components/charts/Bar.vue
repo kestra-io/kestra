@@ -53,7 +53,7 @@
 
     import {barLegend} from "../dashboard/composables/useDashboard";
 
-    import NoData from "../../../../layout/NoData.vue";
+    import NoData from "../layout/NoData.vue";
 
     import BarChart from "./BarChart.vue";
 

@@ -671,7 +671,7 @@
             let queryHasChanged = false;
 
             const queryKeys = Object.keys(query);
-            if (this.namespace === undefined && defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+            if (this?.namespace === undefined && defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
                 query["filters[namespace][EQUALS]"] = defaultNamespace;
                 queryHasChanged = true;
             }

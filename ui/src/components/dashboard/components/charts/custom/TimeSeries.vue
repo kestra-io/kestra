@@ -225,7 +225,7 @@
                     {
                         yAxisID: "yB",
                         type: "line",
-                        data: rawData.map((v) => v[aggregator[1][0]]),
+                        data: rawData.map((v) => v[aggregator[1][0]]).sort(),
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,

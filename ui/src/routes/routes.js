@@ -31,7 +31,7 @@ export default [
             }
         },
     },
-    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/DashboardCreate.vue")},
+    {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/Create.vue")},
     {name: "dashboards/update", path: "/:tenant?/dashboards/:id/edit", component: () => import("override/components/dashboard/components/DashboardEdit.vue")},
 
     //Flows

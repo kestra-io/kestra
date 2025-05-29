@@ -12,7 +12,7 @@
 <script>
     import RouteContext from "../../../../mixins/routeContext.js";
     import TopNavBar from "../../../../components/layout/TopNavBar.vue";
-    import DashboardEditor from "../../../../components/dashboard/components/DashboardEditor.vue";
+    import DashboardEditor from "../../../../components/dashboard/components/Editor.vue";
 
     export default {
         mixins: [RouteContext],

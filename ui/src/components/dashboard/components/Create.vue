@@ -8,7 +8,7 @@
 <script>
     import RouteContext from "../../../mixins/routeContext";
     import TopNavBar from "../../../components/layout/TopNavBar.vue";
-    import DashboardEditor from "./DashboardEditor.vue";
+    import DashboardEditor from "./Editor.vue";
 
     import YAML_MAIN from "../../../assets/dashboard/default_main_definition.yaml?raw";
 

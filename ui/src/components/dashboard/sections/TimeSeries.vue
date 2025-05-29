@@ -18,7 +18,7 @@
 
     import {Bar} from "vue-chartjs";
 
-    import {customBarLegend} from "../useDashboard";
+    import {customBarLegend} from "../composables/useDashboard.ts";
     import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../utils/charts.js";
 
     import {useStore} from "vuex";

@@ -19,7 +19,7 @@
 
     import moment from "moment";
 
-    import {customBarLegend} from "../useDashboard";
+    import {customBarLegend} from "../composables/useDashboard.js";
     import {useTheme} from "../../../utils/utils.js";
     import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../utils/charts.js";
 

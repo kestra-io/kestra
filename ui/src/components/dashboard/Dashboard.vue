@@ -24,7 +24,7 @@
         />
     </section>
 
-    <ChartsSection :charts :show-default="dashboard.id === 'default'" />
+    <Sections :charts :show-default="dashboard.id === 'default'" />
 </template>
 
 <script setup>
@@ -35,7 +35,7 @@
 
     import Header from "./components/Header.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
-    import ChartsSection from "./components/ChartsSection.vue";
+    import Sections from "./sections/Sections.vue";
 
     import DashboardFilterLanguage from "../../composables/monaco/languages/filters/impl/dashboardFilterLanguage.js";
     import NamespaceDashboardFilterLanguage from "../../composables/monaco/languages/filters/impl/namespaceDashboardFilterLanguage.js";
@@ -101,8 +101,8 @@
 
     const templateYamlFlow = () => {
         let yamlFlow = YAML_FLOW;
-        yamlFlow = yamlFlow.replace(/{{namespace}}/g, route.params.namespace);
-        yamlFlow = yamlFlow.replace(/{{flowId}}/g, route.params.id);
+        yamlFlow = yamlFlow.replace(/--NAMESPACE--/g, route.params.namespace);
+        yamlFlow = yamlFlow.replace(/--FLOW--/g, route.params.id);
 
         return yamlFlow;
     }

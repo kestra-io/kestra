@@ -15,7 +15,7 @@
 <script setup lang="ts">
     import {onMounted, computed, ref, watch} from "vue";
 
-    import NoData from "../../../../layout/NoData.vue";
+    import NoData from "../../layout/NoData.vue";
 
     import {useRoute} from "vue-router";
     const route = useRoute();
@@ -26,7 +26,7 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
+    import {decodeSearchParams} from "../../filter/utils/helpers.ts";
 
     const props = defineProps({
         chart: {type: Object, required: true},

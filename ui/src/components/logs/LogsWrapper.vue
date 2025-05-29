@@ -15,7 +15,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <ChartsSection
+                    <Sections
                         :charts="charts"
                         :show-default="true"
                         :full-size="true"
@@ -59,7 +59,7 @@
     import {decodeSearchParams} from "../filter/utils/helpers";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../../assets/dashboard/logs_timeseries_chart.yaml?raw";
-    import ChartsSection from "../dashboard/components/ChartsSection.vue";
+    import Sections from "../dashboard/sections/Sections.vue";
 
 
 
@@ -67,7 +67,7 @@
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             KestraFilter,
-            DataTable, LogLine, TopNavBar, ChartsSection
+            DataTable, LogLine, TopNavBar, Sections
         },
         props: {
             logLevel: {

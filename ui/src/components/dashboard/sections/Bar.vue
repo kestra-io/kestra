@@ -13,21 +13,21 @@
 <script lang="ts" setup>
     import {computed, onMounted, ref, watch} from "vue";
 
-    import NoData from "../../../../layout/NoData.vue";
+    import NoData from "../../layout/NoData.vue";
 
     import {Bar} from "vue-chartjs";
 
     import moment from "moment";
 
-    import {customBarLegend} from "../legend.js";
-    import {useTheme} from "../../../../../utils/utils.js";
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../../../utils/charts.js";
+    import {customBarLegend} from "../components/charts/legend.js";
+    import {useTheme} from "../../../utils/utils.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../utils/charts.js";
 
     import {useStore} from "vuex";
 
     import {useRoute, useRouter} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
-    import {decodeSearchParams} from "../../../../filter/utils/helpers";
+    import {decodeSearchParams} from "../../filter/utils/helpers";
 
     const store = useStore();
     const router = useRouter();

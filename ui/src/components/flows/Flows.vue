@@ -75,7 +75,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <ChartsSection
+                    <Sections
                         :charts="charts"
                         :show-default="true"
                         :full-size="true"
@@ -300,7 +300,7 @@
     import KestraFilter from "../filter/KestraFilter.vue";
     import FlowFilterLanguage from "../../composables/monaco/languages/filters/impl/flowFilterLanguage.ts";
     import YAML_CHART from "../../assets/dashboard/executions_timeseries_chart.yaml?raw";
-    import ChartsSection from "../dashboard/components/ChartsSection.vue";
+    import Sections from "../dashboard/sections/Sections.vue";
 
     const file = ref(null);
 </script>

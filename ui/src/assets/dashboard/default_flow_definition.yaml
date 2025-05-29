@@ -86,8 +86,8 @@ charts:
       width: 6
     source:
       type: FlowDescription
-      flowId: { { flowId } }
-      namespace: { { namespace } }
+      namespace: --NAMESPACE--
+      flowId: --FLOW--
 
   - id: total_executions_pie
     type: io.kestra.plugin.core.dashboard.chart.Pie

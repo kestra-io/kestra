@@ -24,19 +24,20 @@
 <script lang="ts" setup>
     import {computed, onMounted, ref, watch} from "vue";
 
-    import NoData from "../../../../layout/NoData.vue";
-    import Utils, {useTheme} from "../../../../../utils/utils";
+    import NoData from "../../layout/NoData.vue";
+    import Utils, {useTheme} from "../../../utils/utils";
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../../../utils/charts.js";
-    import {totalsDurationLegend, totalsLegend} from "../legend.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../utils/charts.js";
+    import {totalsDurationLegend, totalsLegend} from "../components/charts/legend.js";
+
 
     import moment from "moment";
 
     import {useRoute, useRouter} from "vue-router";
     import {useStore} from "vuex";
-    import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
+    import {decodeSearchParams} from "../../filter/utils/helpers.ts";
 
     const route = useRoute();
     const router = useRouter();

@@ -68,8 +68,8 @@
 
 <script setup lang="ts">
     import MonacoEditor, {ThemeBase} from "../inputs/MonacoEditor.vue";
-    import {computed, getCurrentInstance, ref, watch} from "vue";
-    import Utils from "../../utils/utils";
+    import {computed, getCurrentInstance, ref, Ref, watch} from "vue";
+    import Utils, {useTheme} from "../../utils/utils";
     import {Buttons, Property, Shown} from "./utils/types";
     import {editor} from "monaco-editor/esm/vs/editor/editor.api";
     import Items from "./segments/Items.vue";
@@ -330,7 +330,8 @@
         }
     };
 
-    const themeComputed: Omit<Partial<editor.IStandaloneThemeData>, "base"> & { base: ThemeBase } = {
+    const theme = useTheme();
+    const themeComputed: Ref<Omit<Partial<editor.IStandaloneThemeData>, "base"> & { base: ThemeBase }> = ref({
         base: Utils.getTheme()!,
         colors: {
             "editor.background": cssVariable("--ks-background-input")!
@@ -338,7 +339,20 @@
         rules: [
             {token: "variable.value", foreground: cssVariable("--ks-badge-content")}
         ]
-    };
+    });
+    watch(theme, () => {
+        themeComputed.value = {
+            base: Utils.getTheme()!,
+            colors: {
+                "editor.background": cssVariable("--ks-background-input")!
+            },
+            rules: [
+                {token: "variable.value", foreground: cssVariable("--ks-badge-content")}
+            ]
+        };
+    
+    }, {immediate: true});
+
     const options: editor.IStandaloneEditorConstructionOptions = {
         lineNumbers: "off",
         folding: false,

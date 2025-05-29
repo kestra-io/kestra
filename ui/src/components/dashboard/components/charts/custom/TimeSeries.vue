@@ -213,7 +213,19 @@
         };
 
         const yDataset = reducer(rawData, aggregator[0][0], "y");
-        const yDatasetData = Object.values(getData(aggregator[0][0], yDataset));
+
+        // Sorts the dataset array by the descending sum of 'data' values.
+        // If two datasets have the same sum, it sorts them alphabetically by 'label'.
+        const yDatasetData = Object.values(getData(aggregator[0][0], yDataset)).sort((a, b) => {
+            const sumA = a.data.reduce((sum, val) => sum + val, 0);
+            const sumB = b.data.reduce((sum, val) => sum + val, 0);
+
+            if (sumB !== sumA) {
+                return sumB - sumA; // Descending by sum
+            }
+
+            return a.label.localeCompare(b.label); // Ascending alphabetically by label
+        });
 
         const label =
             aggregator?.[1]?.[1]?.displayName ?? aggregator?.[1]?.[1]?.field;
@@ -225,7 +237,7 @@
                     {
                         yAxisID: "yB",
                         type: "line",
-                        data: rawData.map((v) => v[aggregator[1][0]]),
+                        data: rawData.map((v) => v[aggregator[1][0]]).sort(),
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,

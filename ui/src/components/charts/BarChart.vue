@@ -39,9 +39,9 @@
     const router = useRouter();
     const route = useRoute();
 
-    import Utils, {useTheme} from "../../../../../utils/utils";
-    import {useScheme} from "../../../../../utils/scheme";
-    import {defaultConfig, tooltip, getFormat, chartClick} from "../../../../../utils/charts";
+    import Utils, {useTheme} from "../../utils/utils";
+    import {useScheme} from "../../utils/scheme";
+    import {defaultConfig, tooltip, getFormat, chartClick} from "../../utils/charts";
 
     import {State} from "@kestra-io/ui-libs";
     const ORDER = State.arrayAllStates().map((state) => state.name);

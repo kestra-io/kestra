@@ -1,0 +1,19 @@
+id: webhook-wait
+namespace: io.kestra.tests
+
+triggers:
+  - id: webhook
+    type: io.kestra.plugin.core.trigger.Webhook
+    key: webhook
+    wait: true
+
+outputs:
+  - id: output
+    type: STRING
+    value: "{{outputs.hello.values.some}}"
+
+tasks:
+  - id: hello
+    type: io.kestra.plugin.core.output.OutputValues
+    values:
+      some: output

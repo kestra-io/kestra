@@ -815,6 +815,26 @@ class ExecutionControllerRunnerTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/webhook-wait.yaml"})
+    void shouldWaitForWebhookAndReturnOutput() {
+        Flow webhook = flowRepositoryInterface.findById(TENANT_ID, TESTS_FLOW_NS, "webhook-wait").orElseThrow();
+        String key = ((Webhook) webhook.getTriggers().getFirst()).getKey();
+
+        var execution = client.toBlocking().retrieve(
+            HttpRequest
+                .GET(
+                    "/api/v1/main/executions/webhook/" + TESTS_FLOW_NS + "/webhook-wait/" + key
+                ),
+            ExecutionController.WebhookResponse.class
+        );
+
+        assertThat(execution.state().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(execution.url().toString()).isEqualTo("http://localhost:8081/ui/main/executions/io.kestra.tests/webhook-wait/" + execution.id());
+        assertThat(execution.outputs()).hasSize(1);
+        assertThat(execution.outputs()).containsEntry("output", "output");
+    }
+
+    @Test
     @LoadFlows({"flows/valids/pause.yaml"})
     @SuppressWarnings("unchecked")
     void resumeExecutionPaused() throws TimeoutException, InterruptedException, QueueException, InternalException {

@@ -183,6 +183,8 @@ public class ExecutionController {
 
     @Inject
     private Optional<OpenTelemetry> openTelemetry;
+    @Inject
+    private ExecutionStreamingService executionStreamingService;
 
     @Inject
     private LocalPathFactory localPathFactory;
@@ -471,7 +473,8 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by POST webhook trigger")
-    public HttpResponse<Execution> triggerExecutionByPostWebhook(
+    @SingleResult
+    public Publisher<HttpResponse<WebhookResponse>> triggerExecutionByPostWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -483,7 +486,8 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Get(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by GET webhook trigger")
-    public HttpResponse<Execution> triggerExecutionByGetWebhook(
+    @SingleResult
+    public Publisher<HttpResponse<WebhookResponse>> triggerExecutionByGetWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -495,7 +499,8 @@ public class ExecutionController {
     @ExecuteOn(TaskExecutors.IO)
     @Put(uri = "/webhook/{namespace}/{id}/{key}")
     @Operation(tags = {"Executions"}, summary = "Trigger a new execution by PUT webhook trigger")
-    public HttpResponse<Execution> triggerExecutionByPutWebhook(
+    @SingleResult
+    public Publisher<HttpResponse<WebhookResponse>> triggerExecutionByPutWebhook(
         @Parameter(description = "The flow namespace") @PathVariable String namespace,
         @Parameter(description = "The flow id") @PathVariable String id,
         @Parameter(description = "The webhook trigger uid") @PathVariable String key,
@@ -504,7 +509,7 @@ public class ExecutionController {
         return this.webhook(namespace, id, key, request);
     }
 
-    private HttpResponse<Execution> webhook(
+    private Publisher<HttpResponse<WebhookResponse>> webhook(
         String namespace,
         String id,
         String key,
@@ -514,7 +519,7 @@ public class ExecutionController {
         return webhook(find, key, request);
     }
 
-    protected HttpResponse<Execution> webhook(
+    protected Publisher<HttpResponse<WebhookResponse>> webhook(
         Optional<Flow> maybeFlow,
         String key,
         HttpRequest<String> request
@@ -568,7 +573,7 @@ public class ExecutionController {
         // we check conditions here as it's easier as the execution is created we have the body and headers available for the runContext
         var conditionContext = conditionService.conditionContext(runContextFactory.of(flow, result), flow, result);
         if (!conditionService.isValid(flow, webhook.get(), conditionContext)) {
-            return HttpResponse.noContent();
+            return Mono.just(HttpResponse.noContent());
         }
 
         try {
@@ -583,12 +588,34 @@ public class ExecutionController {
 
             executionQueue.emit(result);
             eventPublisher.publishEvent(new CrudEvent<>(result, CrudEventType.CREATE));
-            return HttpResponse.ok(result);
+
+            if (webhook.get().getWait()) {
+                var subscriberId = UUID.randomUUID().toString();
+                var executionId = result.getId();
+                return Flux.<Event<Execution>>create(emitter -> {
+                        streamingService.registerSubscriber(
+                            executionId,
+                            subscriberId,
+                            emitter,
+                            flow
+                        );
+                    })
+                    .last()
+                    .map(event -> (HttpResponse<WebhookResponse>) HttpResponse.ok(WebhookResponse.fromExecution(event.getData(), executionUrl(event.getData()))))
+                    .doFinally(signalType -> streamingService.unregisterSubscriber(executionId, subscriberId));
+            } else {
+                return Mono.just(HttpResponse.ok(WebhookResponse.fromExecution(result, executionUrl(result))));
+            }
         } catch (QueueException e) {
             log.error(e.getMessage(), e);
-            return HttpResponse.serverError();
+            return Mono.just(HttpResponse.serverError());
         }
+    }
 
+    public record WebhookResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, ExecutionTrigger trigger, Map<String, Object> outputs, List<Label> labels, State state, URI url) {
+        public static WebhookResponse fromExecution(Execution execution, URI url) {
+            return new WebhookResponse(execution.getTenantId(), execution.getId(), execution.getNamespace(), execution.getFlowId(), execution.getFlowRevision(), execution.getTrigger(), execution.getOutputs(), execution.getLabels(), execution.getState(), url);
+        }
     }
 
     @ExecuteOn(TaskExecutors.IO)

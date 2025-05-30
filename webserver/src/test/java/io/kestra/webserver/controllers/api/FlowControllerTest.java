@@ -13,6 +13,7 @@ import io.kestra.core.models.hierarchies.FlowGraph;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.repositories.ExecutionRepositoryInterface;
 import io.kestra.core.repositories.LocalFlowRepositoryLoader;
 import io.kestra.core.serializers.JacksonMapper;
 import io.kestra.core.serializers.YamlParser;
@@ -25,6 +26,7 @@ import io.kestra.plugin.core.flow.Sequential;
 import io.kestra.webserver.controllers.domain.IdWithNamespace;
 import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
+import io.kestra.webserver.utils.RequestUtils;
 import io.micronaut.core.type.Argument;
 import io.micronaut.http.*;
 import io.micronaut.http.client.annotation.Client;
@@ -39,6 +41,7 @@ import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.event.Level;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +52,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.zip.ZipFile;
 
@@ -163,6 +168,18 @@ class FlowControllerTest {
 
         PagedResults<Flow> flows_oldParameters = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?q=*"), Argument.of(PagedResults.class, Flow.class));
         assertThat(flows_oldParameters.getTotal()).isEqualTo(Helpers.FLOWS_COUNT);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchFlowsByNamespacePrefix() {
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[namespace][STARTS_WITH_NAMESPACE_PREFIX]=io.kestra.tests2"), Argument.of(PagedResults.class, Flow.class))
+            .getTotal())
+            .isEqualTo(1L);
+
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[namespace][STARTS_WITH_NAMESPACE_PREFIX]=io.kestra.tests"), Argument.of(PagedResults.class, Flow.class))
+            .getTotal())
+            .isEqualTo(Helpers.FLOWS_COUNT - 1);
     }
 
     @Test
@@ -548,16 +565,21 @@ class FlowControllerTest {
         assertThat(jsonError).contains("flow.namespace");
     }
 
+    /**
+     * this is testing legacy > new filters /by-query endpoints, related file is {@link RequestUtils#mapLegacyParamsToFilters(String, String, String, String, Level, ZonedDateTime, ZonedDateTime, List, List, Duration, ExecutionRepositoryInterface.ChildFilter, List, String, String)}
+     */
     @Test
-    void exportFlowsByQuery() throws IOException {
+    void exportFlowsByQueryForANamespace() throws IOException {
         byte[] zip = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/export/by-query?namespace=io.kestra.tests"),
             Argument.of(byte[].class));
         File file = File.createTempFile("flows", ".zip");
         Files.write(file.toPath(), zip);
 
         try (ZipFile zipFile = new ZipFile(file)) {
-//            assertThat(zipFile.stream().count()).isEqualTo(Helpers.FLOWS_COUNT - 1); TODO fix this is temporary, waiting for new NAMESPACE_PREFIX operator
-            assertThat(zipFile.stream().count()).isEqualTo(Helpers.FLOWS_COUNT);
+            assertThat(zipFile.stream().count())
+                .describedAs("by default /by-query endpoints should use specific NAMESPACE_PREFIX in legacy filter mapping, " +
+                    "in this test, we should get all Flow when querying with namespace=io.kestra.tests, io.kestra.tests.subnamespace are accepted, but not io.kestra.tests2")
+                .isEqualTo(Helpers.FLOWS_COUNT - 1);
         }
 
         file.delete();

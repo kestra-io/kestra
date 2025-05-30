@@ -317,6 +317,10 @@ public abstract class AbstractJdbcRepository {
             case ENDS_WITH -> select = select.and(DSL.field(columnName).like("%" + value));
             case CONTAINS -> select = select.and(DSL.field(columnName).like("%" + value + "%"));
             case REGEX -> select = select.and(DSL.field(columnName).likeRegex((String) value));
+            case STARTS_WITH_NAMESPACE_PREFIX -> select = select.and(
+                    DSL.field(columnName).like(value + ".%")
+                    .or(DSL.field(columnName).eq(value))
+                );
             default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
         }
         return select;

@@ -43,7 +43,8 @@ public record QueryFilter(
         STARTS_WITH,
         ENDS_WITH,
         CONTAINS,
-        REGEX;
+        REGEX,
+        STARTS_WITH_NAMESPACE_PREFIX
     }
 
 
@@ -95,7 +96,7 @@ public record QueryFilter(
         NAMESPACE("namespace") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.STARTS_WITH_NAMESPACE_PREFIX);
             }
         },
         LABELS("labels") {

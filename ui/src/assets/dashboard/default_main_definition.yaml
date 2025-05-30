@@ -150,6 +150,17 @@ charts:
         state:
           displayName: State
           field: STATE
+      where:
+        - type: IN
+          field: STATE
+          values:
+            - CREATED
+            - RESTARTED
+            - QUEUED
+            - RUNNING
+            - PAUSED
+            - RETRYING
+            - KILLING
 
   - id: next_executions
     type: io.kestra.plugin.core.dashboard.chart.Table

@@ -671,7 +671,7 @@
             let queryHasChanged = false;
 
             const queryKeys = Object.keys(query);
-            if (defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
+            if (this?.namespace === undefined && defaultNamespace && !queryKeys.some(key => key.startsWith("filters[namespace]"))) {
                 query["filters[namespace][EQUALS]"] = defaultNamespace;
                 queryHasChanged = true;
             }
@@ -740,24 +740,15 @@
             onStatusChange() {
                 this.load(this.onDataLoaded);
             },
-            loadQuery(base, stats) {
+            loadQuery(base) {
                 let queryFilter = this.queryWithFilter();
 
-                if (stats) {
-                    delete queryFilter["timeRange"];
-                    delete queryFilter["startDate"];
-                    delete queryFilter["endDate"];
-                } else if (queryFilter.timeRange) {
-                    delete queryFilter["startDate"];
-                    delete queryFilter["endDate"];
-                }
-
                 if (this.namespace) {
-                    queryFilter["namespace"] = this.namespace;
+                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
                 }
 
                 if (this.flowId) {
-                    queryFilter["flowId"] = this.flowId;
+                    queryFilter["filters[flowId][EQUALS]"] = this.flowId;
                 }
 
                 return _merge(base, queryFilter)
@@ -770,7 +761,7 @@
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                }, false)).finally(callback);
+                })).finally(callback);
             },
             durationFrom(item) {
                 return (+new Date() - new Date(item.state.startDate).getTime()) / 1000
@@ -787,7 +778,7 @@
                     const query = this.loadQuery({
                         sort: this.$route.query.sort || "state.startDate:desc",
                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses,
-                    }, false);
+                    });
                     let options = {...query, ...this.actionOptions};
                     if (params) {
                         options = {...options, ...params}
@@ -971,7 +962,7 @@
                                     params: this.loadQuery({
                                         sort: this.$route.query.sort || "state.startDate:desc",
                                         state: this.$route.query.state ? [this.$route.query.state] : this.statuses
-                                    }, false),
+                                    }),
                                     data: filtered.labels
                                 })
                                 .then(r => {
@@ -1013,7 +1004,7 @@
                     page: parseInt(this.$route.query.page || this.internalPageNumber),
                     sort: this.$route.query.sort || "state.startDate:desc",
                     state: states
-                }, false)).then(() => {
+                })).then(() => {
                     this.$emit("state-count", this.total);
                 });
             }

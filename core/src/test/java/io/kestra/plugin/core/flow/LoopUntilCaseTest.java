@@ -6,13 +6,14 @@ import io.kestra.core.queues.QueueException;
 import io.kestra.core.runners.RunnerUtils;
 import jakarta.inject.Inject;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class WaitForCaseTest {
+public class LoopUntilCaseTest {
 
     @Inject
     protected RunnerUtils runnerUtils;

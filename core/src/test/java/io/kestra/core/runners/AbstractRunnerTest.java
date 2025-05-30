@@ -16,7 +16,7 @@ import io.kestra.plugin.core.flow.EachSequentialTest;
 import io.kestra.plugin.core.flow.FlowCaseTest;
 import io.kestra.plugin.core.flow.ForEachItemCaseTest;
 import io.kestra.plugin.core.flow.PauseTest;
-import io.kestra.plugin.core.flow.WaitForCaseTest;
+import io.kestra.plugin.core.flow.LoopUntilCaseTest;
 import io.kestra.plugin.core.flow.WorkingDirectoryTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
@@ -67,7 +67,7 @@ public abstract class AbstractRunnerTest {
     protected ForEachItemCaseTest forEachItemCaseTest;
 
     @Inject
-    protected WaitForCaseTest waitForTestCaseTest;
+    protected LoopUntilCaseTest loopUntilTestCaseTest;
 
     @Inject
     private FlowConcurrencyCaseTest flowConcurrencyCaseTest;
@@ -423,37 +423,37 @@ public abstract class AbstractRunnerTest {
     @Test
     @LoadFlows({"flows/valids/waitfor.yaml"})
     void waitFor() throws Exception {
-        waitForTestCaseTest.waitfor();
+        loopUntilTestCaseTest.waitfor();
     }
 
     @Test
     @LoadFlows({"flows/valids/waitfor-max-iterations.yaml"})
     void waitforMaxIterations() throws Exception {
-        waitForTestCaseTest.waitforMaxIterations();
+        loopUntilTestCaseTest.waitforMaxIterations();
     }
 
     @Test
     @LoadFlows({"flows/valids/waitfor-max-duration.yaml"})
     void waitforMaxDuration() throws Exception {
-        waitForTestCaseTest.waitforMaxDuration();
+        loopUntilTestCaseTest.waitforMaxDuration();
     }
 
     @Test
     @LoadFlows({"flows/valids/waitfor-no-success.yaml"})
     void waitforNoSuccess() throws Exception {
-        waitForTestCaseTest.waitforNoSuccess();
+        loopUntilTestCaseTest.waitforNoSuccess();
     }
 
     @Test
     @LoadFlows({"flows/valids/waitfor-multiple-tasks.yaml"})
     void waitforMultipleTasks() throws Exception {
-        waitForTestCaseTest.waitforMultipleTasks();
+        loopUntilTestCaseTest.waitforMultipleTasks();
     }
 
     @Test
     @LoadFlows({"flows/valids/waitfor-multiple-tasks-failed.yaml"})
     void waitforMultipleTasksFailed() throws Exception {
-        waitForTestCaseTest.waitforMultipleTasksFailed();
+        loopUntilTestCaseTest.waitforMultipleTasksFailed();
     }
 
     @Test

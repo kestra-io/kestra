@@ -350,7 +350,7 @@
                 {token: "variable.value", foreground: cssVariable("--ks-badge-content")}
             ]
         };
-    
+
     }, {immediate: true});
 
     const options: editor.IStandaloneEditorConstructionOptions = {
@@ -451,8 +451,20 @@
 
         .mtk25 {
             background-color: var(--ks-badge-background);
-            border-radius: var(--el-border-radius-base);
             padding: 2px 6px;
+            border-radius: var(--el-border-radius-base);
+
+            &:has(+ .mtk25) {
+                padding-right: 0;
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+
+            + .mtk25 {
+                padding-left: 0;
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+            }
         }
 
         .monaco-editor {

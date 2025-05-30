@@ -7,6 +7,7 @@
         lang="yaml"
         :placeholder="`Your ${root || 'value'} here...`"
         @update:model-value="editorInput"
+        no-code
     />
 </template>
 <script>

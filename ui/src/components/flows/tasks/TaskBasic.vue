@@ -56,7 +56,6 @@
     import Information from "vue-material-design-icons/InformationOutline.vue";
     import Help from "vue-material-design-icons/HelpBox.vue";
     import Kicon from "../../Kicon.vue";
-    import Editor from "../../inputs/Editor.vue";
     import Markdown from "../../layout/Markdown.vue";
 
     export default {
@@ -66,7 +65,6 @@
             Information,
             Help,
             Kicon,
-            Editor,
             Markdown,
         },
         emits: ["update:modelValue"],

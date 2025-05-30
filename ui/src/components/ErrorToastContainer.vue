@@ -60,9 +60,9 @@
 
 <style lang="scss" scoped>
     ul {
-        margin-top: 1rem;
-        margin-bottom: 0;
-        margin-left: -3rem;
+        margin: 1rem 0 0;
+        padding: 0;
+        list-style-type: none;
     }
 
     li {

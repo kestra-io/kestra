@@ -460,10 +460,6 @@
             swio!.disconnect();
             suggestWidgetResizeObserver.value = undefined;
         }
-        if (swio !== undefined) {
-            swio!.disconnect();
-            suggestWidgetResizeObserver.value = undefined;
-        }
         suggestWidget.value = undefined;
     }
 

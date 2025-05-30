@@ -135,12 +135,12 @@
         return field === "DURATION";
     }
 
-    const parsedData = computed(() => {
-        const parseValue = (value) => {
-            const date = moment(value, moment.ISO_8601, true);
-            return date.isValid() ? date.format(KestraUtils.getDateFormat(route.query.startDate, route.query.endDate)) : value;
-        };
+    const parseValue = (value) => {
+        const date = moment(value, moment.ISO_8601, true);
+        return date.isValid() ? date.format(KestraUtils.getDateFormat(route.query.startDate, route.query.endDate)) : value;
+    };
 
+    const parsedData = computed(() => {
         const rawData = generated.value.results;
         const xAxis = (() => {
             const values = rawData.map((v) => {
@@ -227,8 +227,22 @@
             return a.label.localeCompare(b.label); // Ascending alphabetically by label
         });
 
-        const label =
-            aggregator?.[1]?.[1]?.displayName ?? aggregator?.[1]?.[1]?.field;
+        const label = aggregator?.[1]?.[1]?.displayName ?? aggregator?.[1]?.[1]?.field;
+
+        let duration: number[] = [];
+        if(yBShown){
+            const helper = Array.from(new Set(rawData.map((v) => parseValue(v.date)))).sort();
+
+            // Step 1: Group durations by formatted date
+            const groupedDurations = {};
+            rawData.forEach(item => {
+                const formattedDate = parseValue(item.date);
+                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item.duration;
+            });
+
+            // Step 2: Map to target dates
+            duration = helper.map(date => groupedDurations[date] || 0);
+        }
 
         return {
             labels: xAxis,
@@ -237,7 +251,7 @@
                     {
                         yAxisID: "yB",
                         type: "line",
-                        data: rawData.map((v) => v[aggregator[1][0]]).sort(),
+                        data: duration,
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,

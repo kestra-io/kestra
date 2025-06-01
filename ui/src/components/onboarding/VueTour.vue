@@ -473,6 +473,10 @@ $flow-image-size-container: 36px;
 #app .v-step {
     max-width: $step-max-width;
     padding: 2rem;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
 
     &.last {
         position: fixed;

@@ -61,4 +61,13 @@ public class QueryFilterUtils {
 
         return updatedFilters;
     }
+
+    public static List<QueryFilter> replaceTimeRangeWithComputedStartDateFilter(List<QueryFilter> filters) {
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+        DateUtils.validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
+        ZonedDateTime resolvedStartDate = timeLineSearch.getStartDate();
+        var updateFilters = updateFilters(filters, resolvedStartDate);
+        validateTimeline(updateFilters);
+        return updateFilters;
+    }
 }

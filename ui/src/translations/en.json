@@ -838,8 +838,9 @@
       },
       "tests": {
         "label": "Tests",
-        "title": "Built-in testing framework for validating workflow behavior",
-        "message": "As workflows grow in complexity, so does the need to test them reliably. Kestra support native unit tests in YAML, allowing you to validate your flows and detect regressions early."
+        "header": "Unit Tests for Flows",
+        "title": "Ensure Reliability with Every Change",
+        "message": "Verify the logic of your flows in isolation, detect regressions early, and maintain confidence in your automations as they change and grow."
       },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",

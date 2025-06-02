@@ -39,6 +39,7 @@ public class TimeLineSearch {
         }
 
         if (startDate == null) {
+            // this default startDate filter is there to avoid flooding the database in case of failure on our side
             startDate = ZonedDateTime.now().minusDays(8);
         }
 

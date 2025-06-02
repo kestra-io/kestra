@@ -8,9 +8,7 @@ import io.kestra.core.tenant.TenantService;
 import io.kestra.webserver.converters.QueryFilterFormat;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
-import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
-import io.kestra.webserver.utils.TimeLineSearch;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.core.convert.format.Format;
@@ -29,8 +27,6 @@ import jakarta.validation.constraints.Min;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
-
-import static io.kestra.core.utils.DateUtils.validateTimeline;
 
 @Controller("/api/v1/main/taskruns")
 @Requires(property = "kestra.repository.type", value = "elasticsearch")
@@ -66,33 +62,22 @@ public class TaskRunController {
 
     ) throws HttpStatusException {
 
-        // If filters is empty, map old params to QueryFilter
-        if (filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                startDate,
-                endDate,
-                null,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId);
-        }
-        final ZonedDateTime now = ZonedDateTime.now();
-
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
-        validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
-
-        ZonedDateTime resolvedStartDate = timeLineSearch.getStartDate();
-
-        // Update filters with the resolved startDate
-        filters = QueryFilterUtils.updateFilters(filters, resolvedStartDate);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            startDate,
+            endDate,
+            null,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId);
 
         return PagedResults.of(executionRepository.findTaskRun(
             PageableUtils.from(page, size, sort),

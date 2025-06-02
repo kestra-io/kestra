@@ -836,12 +836,10 @@ public class FlowController {
     }
 
     protected static List<QueryFilter> mapLegacyQueryParamsToNewFilters(List<QueryFilter> filters, String query, List<FlowScope> scope, String namespace, List<String> labels) {
-        if (filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
+            filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+                filters,
                 query,
                 namespace,
-                null,
-                null,
                 null,
                 null,
                 null,
@@ -850,9 +848,8 @@ public class FlowController {
                 null,
                 null,
                 null,
-                null,
                 null);
-        }
+
         return filters;
     }
 

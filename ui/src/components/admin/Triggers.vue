@@ -149,11 +149,6 @@
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column :label="$t('cron')">
-                            <template #default="scope">
-                                <Cron v-if="scope.row.cron" :cron-expression="scope.row?.cron" />
-                            </template>
-                        </el-table-column>
                         <el-table-column :label="$t('details')">
                             <template #default="scope">
                                 <TriggerAvatar
@@ -262,7 +257,6 @@
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
-    import Cron from "../layout/Cron.vue";
     import TriggerAvatar from "../flows/TriggerAvatar.vue";
     import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
     import TriggerFilterLanguage from "../../composables/monaco/languages/filters/impl/triggerFilterLanguage.ts";

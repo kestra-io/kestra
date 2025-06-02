@@ -29,34 +29,35 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display a chart with Executions over the last week.",
             full = true,
-            code = {
-                "charts:\n" +
-                  "- id: executions_timeseries\n" +
-                    "type: io.kestra.plugin.core.dashboard.chart.TimeSeries\n" +
-                    "chartOptions:\n" +
-                        "displayName: Total Executions\n" +
-                        "description: Executions last week\n" +
-                        "legend:\n" +
-                            "enabled: true\n" +
-                        "column: date\n" +
-                        "colorByColumn: state\n" +
-                    "data:\n" +
-                        "type: io.kestra.plugin.core.dashboard.data.Executions\n" +
-                        "columns:\n" +
-                            "date:\n" +
-                                "field: START_DATE\n" +
-                                "displayName: Date\n" +
-                            "state:\n" +
-                                "field: STATE\n" +
-                            "total:\n" +
-                                "displayName: Executions\n" +
-                                "agg: COUNT\n" +
-                                "graphStyle: BARS\n" +
-                            "duration:\n" +
-                                "displayName: Duration\n" +
-                                "field: DURATION\n" +
-                                "agg: SUM\n" +
-                                "graphStyle: LINES\n"
+            code = { """    
+                charts:
+                  - id: executions_timeseries
+                    type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+                    chartOptions:
+                        displayName: Total Executions
+                        description: Executions last week
+                        legend:
+                            enabled: true
+                        column: date
+                        colorByColumn: state
+                    data:
+                        type: io.kestra.plugin.core.dashboard.data.Executions
+                        columns:
+                            date:
+                                field: START_DATE
+                                displayName: Date
+                            state:
+                                field: STATE
+                            total:
+                                displayName: Executions
+                                agg: COUNT
+                                graphStyle: BARS
+                            duration:
+                                displayName: Duration
+                                field: DURATION
+                                agg: SUM
+                                graphStyle: LINES
+                    """
             }
         )
     }

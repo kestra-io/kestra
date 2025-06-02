@@ -91,13 +91,7 @@ public class LogController {
                 null,
                 null);
         }
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
-        validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
 
-        ZonedDateTime resolvedStartDate = timeLineSearch.getStartDate();
-
-        // Update filters with the resolved startDate
-        filters = QueryFilterUtils.updateFilters(filters, resolvedStartDate);
         return PagedResults.of(logRepository.find(
             PageableUtils.from(page, size, sort),
             tenantService.resolveTenant(),

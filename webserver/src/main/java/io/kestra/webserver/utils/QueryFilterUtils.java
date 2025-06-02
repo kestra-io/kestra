@@ -12,22 +12,6 @@ import java.util.List;
 @Builder
 public class QueryFilterUtils {
 
-    public static List<QueryFilter> updateFilters(List<QueryFilter> filters, ZonedDateTime resolvedStartDate) {
-        boolean hasDateFilter = filters.stream().anyMatch(filter -> isStartDateFilter(filter) || isTimeRangeFilter(filter));
-
-        List<QueryFilter> updatedFilters = new java.util.ArrayList<>(filters.stream()
-            .map(filter -> isStartDateFilter(filter) || isTimeRangeFilter(filter)
-                ? createUpdatedStartDateFilter(filter, resolvedStartDate)
-                : filter)
-            .toList());
-
-        if (!hasDateFilter && resolvedStartDate != null) {
-            updatedFilters.add(createUpdatedStartDateFilter(null, resolvedStartDate));
-        }
-
-        return updatedFilters;
-    }
-
     public static void validateTimeline(List<QueryFilter> filters) {
         DateUtils.validateTimeline(filters);
     }
@@ -61,5 +45,20 @@ public class QueryFilterUtils {
                 QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO)
             .value(resolvedStartDate.toString())
             .build();
+    }
+    protected static List<QueryFilter> updateFilters(List<QueryFilter> filters, ZonedDateTime resolvedStartDate) {
+        boolean hasDateFilter = filters.stream().anyMatch(filter -> isStartDateFilter(filter) || isTimeRangeFilter(filter));
+
+        List<QueryFilter> updatedFilters = new java.util.ArrayList<>(filters.stream()
+            .map(filter -> isStartDateFilter(filter) || isTimeRangeFilter(filter)
+                ? createUpdatedStartDateFilter(filter, resolvedStartDate)
+                : filter)
+            .toList());
+
+        if (!hasDateFilter && resolvedStartDate != null) {
+            updatedFilters.add(createUpdatedStartDateFilter(null, resolvedStartDate));
+        }
+
+        return updatedFilters;
     }
 }

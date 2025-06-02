@@ -223,13 +223,6 @@ public class ExecutionController {
                 null,
                 triggerExecutionId);
         }
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
-        validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
-
-        ZonedDateTime resolvedStartDate = timeLineSearch.getStartDate();
-
-        // Update filters with the resolved startDate
-        filters = QueryFilterUtils.updateFilters(filters, resolvedStartDate);
 
         return PagedResults.of(executionRepository.find(
 

@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static io.kestra.core.utils.DateUtils.validateTimeline;
+
 public class RequestUtils {
     public static Map<String, String> toMap(List<String> queryString) {
         return queryString == null ? null : queryString
@@ -159,6 +161,12 @@ public class RequestUtils {
                 .value(triggerExecutionId)
                 .build());
         }
+
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+        validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
+        ZonedDateTime resolvedStartDate = timeLineSearch.getStartDate();
+        // Update filters with the resolved startDate
+        filters = QueryFilterUtils.updateFilters(filters, resolvedStartDate);
 
         return filters;
     }

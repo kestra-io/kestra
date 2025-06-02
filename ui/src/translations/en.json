@@ -838,8 +838,8 @@
       },
       "tests": {
         "label": "Tests",
-        "title": "Test your Flows directly in Kestra",
-        "message": "Validate your flows with comprehensive test suites"
+        "title": "Built-in testing framework for validating workflow behavior",
+        "message": "As workflows grow in complexity, so does the need to test them reliably. Kestra support native unit tests in YAML, allowing you to validate your flows and detect regressions early."
       },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",

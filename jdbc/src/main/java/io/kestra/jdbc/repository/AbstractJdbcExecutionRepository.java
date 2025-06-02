@@ -300,7 +300,11 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                 QueryFilter.Op operation = filter.operation();
                 Object value = filter.value();
                 if (field.equals(QueryFilter.Field.QUERY)) {
-                    select = select.and(this.findCondition(filter.value().toString(), null));
+                    select = switch (operation) {
+                        case EQUALS -> select.and(this.findCondition(filter.value().toString(), Map.of()));
+                        case NOT_EQUALS -> select.andNot(this.findCondition(filter.value().toString(), Map.of()));
+                        default -> throw new UnsupportedOperationException("Unsupported operation for QUERY field: " + operation);
+                    };
                 } else if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
                     select = select.and(findCondition(labels, operation));
                 else

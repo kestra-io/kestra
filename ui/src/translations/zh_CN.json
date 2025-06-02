@@ -325,6 +325,12 @@
       "tenants": {
         "message": "Kestra 企业版支持多租户，为不同的团队或项目提供完全隔离的环境，每个环境都有自己的资源，如专用的worker组、密钥和内部存储后端。",
         "title": "在独立的tenant中管理工作流"
+      },
+      "tests": {
+        "header": "Flows的单元测试",
+        "label": "测试",
+        "message": "验证您的flow逻辑是否独立，及早检测回归，并在自动化变更和增长时保持信心。",
+        "title": "确保每次更改的可靠性"
       }
     },
     "dependencies": "依赖关系",

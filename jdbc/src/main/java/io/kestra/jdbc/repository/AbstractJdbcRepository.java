@@ -254,12 +254,18 @@ public abstract class AbstractJdbcRepository {
         return select;
     }
 
+    /**
+     *
+     * @param dateColumn the JDBC column name of the logical date to filter on,
+     *                   if your entity has no logical date you should pass null, then all date filter will be ignored
+     */
     protected <T extends Record> SelectConditionStep<T> getConditionOnField(
         SelectConditionStep<T> select,
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation,
-        String dateColumn) {
+        @Nullable String dateColumn
+    ) {
         if (field.equals(QueryFilter.Field.QUERY)) {
             return select;
         }
@@ -279,6 +285,9 @@ public abstract class AbstractJdbcRepository {
 
         // Special handling for START_DATE and END_DATE
         if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE) {
+            if(dateColumn == null){
+                return select;// ignore the date filter
+            }
             OffsetDateTime dateTime = (value instanceof ZonedDateTime)
                 ? ((ZonedDateTime) value).toOffsetDateTime()
                 : ZonedDateTime.parse(value.toString()).toOffsetDateTime();

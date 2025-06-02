@@ -1,43 +1,36 @@
 <template>
     <TaskWrapper>
         <template #tasks>
-            <span class="label">{{ props.label }}</span>
-            <div class="mt-1 mb-2 wrapper">
-                <TaskAnyOf
-                    :model-value="value"
-                    :schema
-                    :definitions
-                    @update:model-value="emits('update:modelValue', [$event])"
-                    @any-of-type="changeType"
-                />
-            </div>
+            <TaskObjectField
+                :field-key="label"
+                :schema
+                :definitions
+                :task="{SLA: value}"
+                :model-value="value"
+                @update:model-value="(val) => emit('update:modelValue', val)"
+            />
         </template>
     </TaskWrapper>
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
 
-    import TaskAnyOf from "./tasks/TaskAnyOf.vue";
+    import TaskWrapper from "./tasks/TaskWrapper.vue";
+    import TaskObjectField from "./tasks/TaskObjectField.vue";
 
-    const emits = defineEmits(["update:modelValue"]);
 
-    const props = defineProps({
-        modelValue: {type: Array, default: () => []},
-        label: {type: String, required: true},
+    const value = defineModel({
+        type: Object,
+        default: () => ({}),
     });
 
-    const changeType = (v: any) => {
-        if (!v) return;
+    const emit = defineEmits<{
+        (e: "update:modelValue", value: any): void;
+    }>();
 
-        const type = definitions[v].properties.type.enum[0];
-        value.value = type ? {type} : {};
-    };
-
-    const value = computed({
-        get: () => (props.modelValue.length > 0 ? props.modelValue[0] : {}),
-        set: (v) => emits("update:modelValue", [v]),
-    });
+    defineProps<{
+        label: string
+    }>();
 
     // FIXME: Properly fetch and parse the schema and definitions
     const schema = {

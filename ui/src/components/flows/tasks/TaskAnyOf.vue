@@ -46,12 +46,13 @@
         },
         inheritAttrs: false,
         mixins: [Task],
-        emits: ["update:modelValue", "any-of-type"],
+        emits: ["update:modelValue"],
         data() {
             return {
                 isOpen: false,
                 schemas: [],
                 selectedSchema: undefined,
+                finishedMounting: false,
             };
         },
         created() {
@@ -63,10 +64,19 @@
                 (this.modelValue === "number" && item.value === "integer") ||
                 (Array.isArray(this.modelValue) && item.value === "array"),
             );
+
             this.onSelectType(schema?.value || this.schemaOptions[0]?.value);
+        },
+        mounted() {
+            this.$nextTick(() => {
+                this.finishedMounting = true
+            })
         },
         watch: {
             constantType(val) {
+                if(!this.finishedMounting) {
+                    return;
+                }
                 if(!val) {
                     this.onInput(undefined);
                     return;
@@ -85,7 +95,6 @@
 
         methods: {
             onSelectType(value) {
-                if(this.selectedSchema) this.$emit("any-of-type", value);
                 this.selectedSchema = value;
                 // Set up default values
                 if (
@@ -102,7 +111,6 @@
                                 this.currentSchema.properties[prop].default;
                         }
                     }
-
                     this.onInput(defaultValues)
                 }
             },

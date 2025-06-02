@@ -129,7 +129,7 @@
     })
 
     const simpleType = computed(() => {
-        return type.value.name;
+        return type.value.ksTaskName;
     })
 
     const type = computed(() => {

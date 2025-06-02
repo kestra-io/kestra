@@ -1,5 +1,5 @@
 <template>
-    <el-table stripe table-layout="auto" fixed :data="variables">
+    <el-table stripe table-layout="auto" fixed :data="Object.entries(data).map(([key, value]) => ({key, value}))">
         <el-table-column prop="key" rowspan="3" :label="$t('name')">
             <template #default="scope">
                 <code>{{ scope.row.key }}</code>
@@ -29,7 +29,6 @@
 </template>
 
 <script>
-    import Utils from "../../utils/utils";
     import VarValue from "../executions/VarValue.vue";
     import Markdown from "../layout/Markdown.vue";
     import Cron from "../layout/Cron.vue";
@@ -51,11 +50,6 @@
                 required: false,
                 default: undefined
             }
-        },
-        computed: {
-            variables() {
-                return Utils.executionVars(this.data);
-            },
         },
         methods: {
             emit(type, event) {

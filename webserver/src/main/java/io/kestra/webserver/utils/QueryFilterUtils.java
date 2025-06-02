@@ -1,6 +1,7 @@
 package io.kestra.webserver.utils;
 
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.utils.DateUtils;
 import lombok.Builder;
 import lombok.Data;
 
@@ -25,6 +26,10 @@ public class QueryFilterUtils {
         }
 
         return updatedFilters;
+    }
+
+    public static void validateTimeline(List<QueryFilter> filters) {
+        DateUtils.validateTimeline(filters);
     }
 
     private static boolean isStartDateFilter(QueryFilter filter) {

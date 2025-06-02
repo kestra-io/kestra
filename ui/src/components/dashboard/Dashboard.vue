@@ -2,6 +2,7 @@
     <section id="header" v-if="!embed">
         <Header
             :title="dashboard.title ?? t('overview')"
+            :description="dashboard.description"
             :breadcrumb="[{label: t('dashboard_label'), link: {}}]"
             :id="dashboard.id"
         />
@@ -21,10 +22,6 @@
             :dashboards="{shown: route.name === 'home'}"
             @dashboard="(value) => load(value)"
         />
-    </section>
-
-    <section id="description" v-if="dashboard.description">
-        <small>{{ dashboard.description }}</small>
     </section>
 
     <ChartsSection :charts :show-default="dashboard.id === 'default'" />
@@ -102,16 +99,8 @@
         loadCharts(dashboard.value.charts);
     };
 
-    const templateYamlFlow = () => {
-        let yamlFlow = YAML_FLOW;
-        yamlFlow = yamlFlow.replace(/{{namespace}}/g, route.params.namespace);
-        yamlFlow = yamlFlow.replace(/{{flowId}}/g, route.params.id);
-
-        return yamlFlow;
-    }
-
     onBeforeMount(() => {
-        if (props.isFlow) load("default", templateYamlFlow());
+        if (props.isFlow) load("default", YAML_FLOW.replace(/--NAMESPACE--/g, route.params.namespace).replace(/--FLOW--/g, route.params.id));
         else if (props.isNamespace) load("default", YAML_NAMESPACE);
     });
 </script>
@@ -122,11 +111,5 @@
     section#filter {
         margin: 2rem 0.25rem 0;
         padding: 0 2rem;
-    }
-
-    section#description {
-        margin: 0 0.25rem;
-        padding: 0 2rem 1rem;
-        color: var(--ks-content-secondary);
     }
 </style>

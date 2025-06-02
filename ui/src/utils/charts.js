@@ -32,8 +32,7 @@ export function tooltip(tooltipModel) {
 
 export function defaultConfig(override, theme) {
     const protectedTheme = theme ?? Utils.getTheme();
-    const color =
-        protectedTheme === "dark" ? "#FFFFFF" : cssVariable("--bs-gray-700");
+    const color = protectedTheme === "dark" ? "#FFFFFF" : cssVariable("--bs-gray-700");
 
     return _merge(
         {
@@ -50,11 +49,13 @@ export function defaultConfig(override, theme) {
                     display: false,
                     title: {color},
                     ticks: {color},
+                    border: {color: cssVariable("--ks-border-primary")},
                 },
                 y: {
                     display: false,
                     title: {color},
                     ticks: {color},
+                    border: {color: cssVariable("--ks-border-primary")},
                 },
                 yB: {
                     display: false,

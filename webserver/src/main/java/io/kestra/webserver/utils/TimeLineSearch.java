@@ -36,7 +36,10 @@ public class TimeLineSearch {
 
         if (timeRange != null) {
             startDate = ZonedDateTime.now().minus(timeRange);
-            endDate = ZonedDateTime.now();
+        }
+
+        if (startDate == null) {
+            startDate = ZonedDateTime.now().minusDays(8);
         }
 
         return new TimeLineSearch(startDate, endDate, timeRange);

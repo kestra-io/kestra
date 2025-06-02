@@ -288,9 +288,6 @@ public abstract class AbstractJdbcRepository {
         if (field == QueryFilter.Field.SCOPE) {
             return applyScopeCondition(select, value, operation);
         }
-        if (field == QueryFilter.Field.NAMESPACE) {
-            return applyNamespaceCondition(select, value, operation);
-        }
 
         // Convert the field name to lowercase and quote it
         Name columnName = DSL.quotedName(field.name().toLowerCase());
@@ -320,37 +317,11 @@ public abstract class AbstractJdbcRepository {
             case ENDS_WITH -> select = select.and(DSL.field(columnName).like("%" + value));
             case CONTAINS -> select = select.and(DSL.field(columnName).like("%" + value + "%"));
             case REGEX -> select = select.and(DSL.field(columnName).likeRegex((String) value));
+            case STARTS_WITH_NAMESPACE_PREFIX -> select = select.and(
+                    DSL.field(columnName).like(value + ".%")
+                    .or(DSL.field(columnName).eq(value))
+                );
             default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
-        }
-        return select;
-    }
-
-    private <T extends Record> SelectConditionStep<T> applyNamespaceCondition(SelectConditionStep<T> select, Object value, QueryFilter.Op operation) {
-        switch (operation) {
-            case EQUALS -> select = select.and(DSL.lower(NAMESPACE_FIELD).eq(DSL.lower((String) value)));
-            case NOT_EQUALS -> select = select.and(NAMESPACE_FIELD.ne((String) value));
-            case CONTAINS -> select = select.and(NAMESPACE_FIELD.eq((String) value)
-                .or(NAMESPACE_FIELD.like("%" + value + "%")));
-            case STARTS_WITH -> select = select.and(NAMESPACE_FIELD.like(value + ".%")
-                .or(NAMESPACE_FIELD.eq((String) value)));
-            case ENDS_WITH -> select = select.and(NAMESPACE_FIELD.like("%." + value));
-            case IN -> {
-                if (value instanceof Collection<?> values) {
-                    select = select.and(NAMESPACE_FIELD.in(values.stream()
-                        .map(String.class::cast)
-                        .toList()));
-                }
-            }
-            case NOT_IN -> {
-                if (value instanceof Collection<?> values) {
-                    select = select.and(NAMESPACE_FIELD.notIn(values.stream()
-                        .map(String.class::cast)
-                        .toList()));
-                }
-            }
-            case REGEX -> select = select.and(NAMESPACE_FIELD.likeRegex((String) value));
-            default ->
-                throw new UnsupportedOperationException("Unsupported operation '%s' for field 'namespace'.".formatted(operation));
         }
         return select;
     }
@@ -487,7 +458,7 @@ public abstract class AbstractJdbcRepository {
         return descriptors.getColumns().entrySet().stream()
             .filter(entry -> entry.getValue().getAgg() == null && dateFields.contains(entry.getValue().getField()))
             .map(entry -> {
-                Duration duration = Duration.between(startDate, endDate);
+                Duration duration = Duration.between(startDate, endDate == null ? ZonedDateTime.now() : endDate);
                 return formatDateField(fieldsMapping.get(entry.getValue().getField()), DateUtils.groupByType(duration)).as(entry.getKey());
             })
             .toList();

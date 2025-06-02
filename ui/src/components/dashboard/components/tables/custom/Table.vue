@@ -7,29 +7,65 @@
             size="small"
         >
             <el-table-column
-                v-for="key in Object.keys(props.chart.data.columns)"
-                :label="key"
+                v-for="[key, value] in Object.entries(props.chart.data.columns)"
+                :label="value.displayName || key"
                 :key
             >
                 <template #default="scope">
-                    <template v-if="key === 'id'">
+                    <template v-if="value.field === 'ID'">
                         <RouterLink
-                            v-if="scope.row.namespace && scope.row.flowId"
+                            v-if="linkData(scope.row)"
                             :to="{
                                 name: 'executions/update',
                                 params: {
-                                    namespace: scope.row.namespace,
-                                    flowId: scope.row.flowId,
-                                    id: scope.row.id,
+                                    namespace: linkData(scope.row)?.NAMESPACE,
+                                    flowId: linkData(scope.row)?.FLOW_ID,
+                                    id: scope.row[key],
                                 },
                             }"
                         >
-                            <code>{{ scope.row.id.slice(0, 8) }}</code>
+                            <code>{{ scope.row[key].slice(0, 8) }}</code>
                         </RouterLink>
-                        <code v-else>{{ scope.row.id }}</code>
+                        <code v-else>{{ scope.row[key] }}</code>
                     </template>
-                    <Status v-else-if="key === 'state'" size="small" :status="scope.row[key]" />
-                    <span v-else-if="key === 'duration'">{{ Utils.humanDuration(scope.row[key]) }}</span>
+                    <template v-else-if="value.field === 'FLOW_ID'">
+                        <RouterLink
+                            v-if="linkData(scope.row)"
+                            :to="{
+                                name: 'flows/update',
+                                params: {
+                                    namespace: linkData(scope.row)?.NAMESPACE,
+                                    id: linkData(scope.row)?.FLOW_ID,
+                                },
+                            }"
+                        >
+                            <code>{{ scope.row[key] }}</code>
+                        </RouterLink>
+                        <code v-else>{{ scope.row[key] }}</code>
+                    </template>
+                    <template v-else-if="value.field === 'NAMESPACE'">
+                        <RouterLink
+                            :to="{
+                                name: 'namespaces/update',
+                                params: {
+                                    id: scope.row[key],
+                                },
+                            }"
+                        >
+                            <code>{{ scope.row[key] }}</code>
+                        </RouterLink>
+                    </template>
+                    <Status
+                        v-else-if="value.field === 'STATE'"
+                        size="small"
+                        :status="scope.row[key]"
+                    />
+                    <span v-else-if="value.field === 'DURATION'">{{
+                        Utils.humanDuration(scope.row[key])
+                    }}</span>
+                    <span v-else-if="value.field.toLowerCase().includes('date')">
+                        {{ moment(scope.row[key])?.format(dateFormat) ?? scope.row[key] }}
+                    </span>
                     <span v-else>{{ scope.row[key] }}</span>
                 </template>
             </el-table-column>
@@ -48,6 +84,7 @@
 
 <script lang="ts" setup>
     import {onMounted, ref, watch} from "vue";
+    import moment from "moment";
 
     import {useI18n} from "vue-i18n";
     import Status from "../../../../Status.vue";
@@ -62,6 +99,8 @@
 
     const {t} = useI18n({useScope: "global"});
 
+    const dateFormat = localStorage.getItem("dateFormat") ?? "llll"
+
     const store = useStore();
 
     const route = useRoute();
@@ -70,9 +109,29 @@
     const props = defineProps({
         chart: {type: Object, required: true},
         showDefault: {type: Boolean, default: false},
+        defaultFilters: {type: Array, default: () => []},
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
+
+    const linkData = (row: Record<string, any>) => {
+        const fields: Record<string, { field: string; displayName: string }> = props.chart.data.columns;
+
+        function getField(args: Record<string, any>) {
+            const result: Partial<Record<"FLOW_ID" | "NAMESPACE", any>> = {};
+
+            for (const key in args) {
+                const config = fields[key];
+                if (config && (config.field === "FLOW_ID" || config.field === "NAMESPACE")) {
+                    result[config.field] = args[key];
+                }
+            }
+
+            return result.FLOW_ID && result.NAMESPACE ? result : undefined;
+        }
+
+        return getField(row);
+    };
 
     const currentPage = ref(1);
     const pageSize = ref(10);
@@ -90,8 +149,8 @@
             let params = {
                 id,
                 chartId: props.chart.id,
+                filters: props.defaultFilters.concat(decodedParams?? [])
             };
-
             if (props.chart.chartOptions?.pagination?.enabled) {
                 params.pageNumber = currentPage.value;
                 params.pageSize = pageSize.value;
@@ -101,9 +160,16 @@
             }
             data.value = await store.dispatch("dashboard/generate", params);
         } else {
+            const params = {filters: {...decodedParams}};
+
+            if (props.chart.chartOptions?.pagination?.enabled) {
+                params.pageNumber = currentPage.value;
+                params.pageSize = pageSize.value;
+            }
+
             data.value = await store.dispatch("dashboard/chartPreview", {
                 chart: props.chart.content,
-                globalFilter: {filter: decodedParams},
+                globalFilter: {filters: props.defaultFilters.concat(decodedParams?? [])},
             });
         }
     };

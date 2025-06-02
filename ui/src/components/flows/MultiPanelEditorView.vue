@@ -25,6 +25,7 @@
     import {useStorage} from "@vueuse/core";
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
+    import {useRoute} from "vue-router";
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
@@ -41,6 +42,7 @@
     }
 
     const store = useStore()
+    const route = useRoute();
     const flow = computed(() => store.state.flow.flow)
 
     onMounted(() => {
@@ -142,9 +144,12 @@
 
     const {setupInitialCodeTab} = useInitialCodeTabs()
 
+    const isTourRunning = computed(() => store.state.core.guidedProperties?.tourStarted)
+    const DEAFULT_TABS = route.name === "flows/create" && isTourRunning.value ? ["code", "topology"] : DEFAULT_ACTIVE_TABS
+
     const panels: Ref<Panel[]> = useStorage<any>(
         `panel-${flow.value.namespace}-${flow.value.id}`,
-        DEFAULT_ACTIVE_TABS
+        DEAFULT_TABS
             .map((t):Panel => getPanelFromValue(t).panel),
         undefined,
         {

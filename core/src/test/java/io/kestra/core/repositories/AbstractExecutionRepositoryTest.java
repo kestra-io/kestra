@@ -161,10 +161,10 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(executions.size()).isEqualTo(10);
 
         List<QueryFilter> filters = List.of(QueryFilter.builder()
-                .field(QueryFilter.Field.STATE)
-                .operation(QueryFilter.Op.EQUALS)
-                .value( List.of(State.Type.RUNNING, State.Type.FAILED))
-                .build());
+            .field(QueryFilter.Field.STATE)
+            .operation(QueryFilter.Op.EQUALS)
+            .value( List.of(State.Type.RUNNING, State.Type.FAILED))
+            .build());
         executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(8L);
 
@@ -185,10 +185,10 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(executions.getTotal()).isEqualTo(0L);
 
         filters = List.of(QueryFilter.builder()
-                .field(QueryFilter.Field.LABELS)
-                .operation(QueryFilter.Op.EQUALS)
-                .value(Map.of("key", "value", "keyTest", "valueTest"))
-                .build()
+            .field(QueryFilter.Field.LABELS)
+            .operation(QueryFilter.Op.EQUALS)
+            .value(Map.of("key", "value", "keyTest", "valueTest"))
+            .build()
         );
         executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(0L);
@@ -202,16 +202,16 @@ public abstract class AbstractExecutionRepositoryTest {
         assertThat(executions.getTotal()).isEqualTo(13L);
 
         filters = List.of(QueryFilter.builder()
-            .field(QueryFilter.Field.FLOW_ID)
-            .operation(QueryFilter.Op.EQUALS)
-            .value("second")
-            .build(),
+                .field(QueryFilter.Field.FLOW_ID)
+                .operation(QueryFilter.Op.EQUALS)
+                .value("second")
+                .build(),
             QueryFilter.builder()
                 .field(QueryFilter.Field.NAMESPACE)
                 .operation(QueryFilter.Op.EQUALS)
                 .value(NAMESPACE)
                 .build()
-            );
+        );
         executions = executionRepository.find(Pageable.from(1, 10),  MAIN_TENANT, filters);
         assertThat(executions.getTotal()).isEqualTo(13L);
 
@@ -491,14 +491,14 @@ public abstract class AbstractExecutionRepositoryTest {
 
         List<Execution> result = executionRepository.lastExecutions(
             MAIN_TENANT,
-                List.of(
-                    ExecutionRepositoryInterface.FlowFilter.builder()
-                        .id(FLOW)
-                        .namespace(NAMESPACE).build(),
-                    ExecutionRepositoryInterface.FlowFilter.builder()
-                        .id(FLOW)
-                        .namespace(anotherNamespace).build()
-                )
+            List.of(
+                ExecutionRepositoryInterface.FlowFilter.builder()
+                    .id(FLOW)
+                    .namespace(NAMESPACE).build(),
+                ExecutionRepositoryInterface.FlowFilter.builder()
+                    .id(FLOW)
+                    .namespace(anotherNamespace).build()
+            )
         );
 
         assertThat(result.size()).isEqualTo(2);

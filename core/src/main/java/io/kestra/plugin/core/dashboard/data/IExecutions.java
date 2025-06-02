@@ -31,6 +31,25 @@ public interface IExecutions extends IData<IExecutions.Fields> {
                     updatedWhere.add(Contains.<Fields>builder().field(Fields.LABELS).value(f.value()).build());
                 });
             }
+
+            List<QueryFilter> flowFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.FLOW_ID)).toList();
+            if (!flowFilters.isEmpty()) {
+                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.FLOW_ID));
+                flowFilters.forEach(f -> {
+                    updatedWhere.add(f.toDashboardFilterBuilder(Fields.FLOW_ID, f.value()));
+                });
+            }
+
+            List<QueryFilter
+                > stateFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.STATE)).toList();
+            if (!stateFilters.isEmpty()) {
+                updatedWhere.removeIf(filter -> filter.getField().equals(Fields.STATE));
+                stateFilters.forEach(f -> {
+                    updatedWhere.add(f.toDashboardFilterBuilder(Fields.STATE, f.value()));
+                });
+            }
+
+
         }
 
 

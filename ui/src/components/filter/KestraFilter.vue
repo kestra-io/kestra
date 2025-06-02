@@ -6,7 +6,7 @@
             <MonacoEditor
                 ref="monacoEditor"
                 class="border flex-grow-1 position-relative"
-                :language="`${legacyQuery ? 'legacy-' : ''}filter`"
+                :language="`${domain === undefined ? '' : (domain + '-')}${legacyQuery ? 'legacy-' : ''}filter`"
                 :schema-type="domain"
                 :value="filter"
                 @change="filter = $event"
@@ -68,8 +68,8 @@
 
 <script setup lang="ts">
     import MonacoEditor, {ThemeBase} from "../inputs/MonacoEditor.vue";
-    import {computed, getCurrentInstance, ref, watch} from "vue";
-    import Utils from "../../utils/utils";
+    import {computed, getCurrentInstance, ref, Ref, watch} from "vue";
+    import Utils, {useTheme} from "../../utils/utils";
     import {Buttons, Property, Shown} from "./utils/types";
     import {editor} from "monaco-editor/esm/vs/editor/editor.api";
     import Items from "./segments/Items.vue";
@@ -159,7 +159,14 @@
             .map(([key, value]) => [value, key])
     );
 
-    watch(() => route.query, (newVal) => {
+    const EXCLUDED_QUERY_FIELDS = ["sort", "size", "page"];
+
+    const filteredRouteQuery = computed(() => route.query === undefined
+        ? undefined
+        : Object.fromEntries(Object.entries(route.query).filter(([key]) => !EXCLUDED_QUERY_FIELDS.includes(key))) as LocationQuery
+    );
+
+    watch(filteredRouteQuery, (newVal) => {
         if (skipRouteWatcherOnce.value) {
             skipRouteWatcherOnce.value = false;
             return;
@@ -169,16 +176,12 @@
             return;
         }
 
-        let query = newVal as LocationQuery;
+        let query = newVal;
         if (props.queryNamespace !== undefined) {
             query = Object.fromEntries(
                 Object.entries(newVal)
                     .filter(([key]) => {
-                        if (key.startsWith(props.queryNamespace + "[")) {
-                            return true;
-                        }
-
-                        return false;
+                        return key.startsWith(props.queryNamespace + "[");
                     })
                     .map(([key, value]) =>
                         // We trim the queryNamespace from the key
@@ -186,11 +189,6 @@
                     )
             );
         }
-
-        query = Object.fromEntries(
-            Object.entries(query)
-                .map(([key, value]) => ([queryRemapper?.[key] ?? key, value]))
-        );
 
         if (props.legacyQuery) {
             /*
@@ -203,7 +201,7 @@
                         values = [values];
                     }
 
-                    return values.map(value => key + Comparators.EQUALS + value);
+                    return values.map(value => (queryRemapper?.[key] ?? key) + Comparators.EQUALS + value);
                 }).join(" ");
         } else {
             filter.value = Object.entries(query)
@@ -221,10 +219,12 @@
                         values = [values];
                     }
 
-                    return values.map(value => filterKey + maybeSubKeyString + getComparator(comparator as Parameters<typeof getComparator>[0]) + value);
+                    return values.map(value => (queryRemapper?.[filterKey] ?? filterKey) + maybeSubKeyString + getComparator(comparator as Parameters<typeof getComparator>[0]) + value);
                 })
                 .join(" ");
         }
+
+        filter.value = filter.value.length > 0 ? (filter.value + " ") : filter.value; // Add a trailing space to allow for autocompletion to work properly
     }, {immediate: true, deep: true});
 
     const COMPARATOR_LABEL_BY_VALUE: Record<Comparators, keyof typeof Comparators> = Object.fromEntries(
@@ -242,17 +242,28 @@
             return {};
         }
 
-        const KEY_MATCHER = "(\\S+?)";
+        const KEY_MATCHER = "((?:(?<!" + COMPARATORS_REGEX + ")\\S)+?)";
         const COMPARATOR_MATCHER = "(" + COMPARATORS_REGEX + ")";
         const MAYBE_PREVIOUS_VALUE = "(?:(?<=\\S),)?";
         const VALUE_MATCHER = "((?:" + MAYBE_PREVIOUS_VALUE + "(?:(?:\"[^\\n,]+\")|(?:[^\\s,]+)))+)";
-        const filterMatcher = new RegExp("\\s*" + KEY_MATCHER + COMPARATOR_MATCHER + VALUE_MATCHER + "\\s*", "g");
+        const filterMatcher = new RegExp("\\s*(?<!\\S)((?:" + KEY_MATCHER + COMPARATOR_MATCHER + VALUE_MATCHER + ")|(?:(?!" + COMPARATORS_REGEX + ")\\S(?!" + COMPARATORS_REGEX + "))+)(?!\\S)\\s*", "g");
         let matches: RegExpExecArray | null;
         const filters: Filter[] = [];
         while ((matches = filterMatcher.exec(filter.value)) !== null) {
-            const key = matches[1];
-            const comparator = matches[2] as Comparators;
-            const values = [...new Set(matches[3].split(",").filter(value => value !== "").map(value => value.replaceAll("\"", "")))];
+            const key = matches[2];
+
+            // If we're not in a {key}{comparator}{value} format, we assume it's a text search
+            if (key === undefined) {
+                filters.push({
+                    key: "text",
+                    comparator: "EQUALS",
+                    value: matches[1]
+                });
+                continue;
+            }
+
+            const comparator = matches[3] as Comparators;
+            const values = [...new Set(matches[4].split(",").filter(value => value !== "").map(value => value.replaceAll("\"", "")))];
 
             let comparatorLabel: keyof typeof Comparators | "IN" | "NOT_IN" = COMPARATOR_LABEL_BY_VALUE[comparator];
             if (values.length > 1) {
@@ -275,7 +286,6 @@
             });
         }
 
-        // TODO REGEX NOT WORKING
         let queryEntries = filters.flatMap(({key: key, comparator: comparator, value: value}) => {
             let queryKey = reversedQueryRemapper?.[key] ?? key;
 
@@ -311,7 +321,7 @@
             }
 
             return acc;
-        }, {} as LocationQuery)
+        }, {} as LocationQuery);
     });
 
     const handleClickedItems = (value: string | undefined) => {
@@ -320,7 +330,8 @@
         }
     };
 
-    const themeComputed: Omit<Partial<editor.IStandaloneThemeData>, "base"> & { base: ThemeBase } = {
+    const theme = useTheme();
+    const themeComputed: Ref<Omit<Partial<editor.IStandaloneThemeData>, "base"> & { base: ThemeBase }> = ref({
         base: Utils.getTheme()!,
         colors: {
             "editor.background": cssVariable("--ks-background-input")!
@@ -328,7 +339,20 @@
         rules: [
             {token: "variable.value", foreground: cssVariable("--ks-badge-content")}
         ]
-    };
+    });
+    watch(theme, () => {
+        themeComputed.value = {
+            base: Utils.getTheme()!,
+            colors: {
+                "editor.background": cssVariable("--ks-background-input")!
+            },
+            rules: [
+                {token: "variable.value", foreground: cssVariable("--ks-badge-content")}
+            ]
+        };
+
+    }, {immediate: true});
+
     const options: editor.IStandaloneEditorConstructionOptions = {
         lineNumbers: "off",
         folding: false,
@@ -427,8 +451,20 @@
 
         .mtk25 {
             background-color: var(--ks-badge-background);
-            border-radius: var(--el-border-radius-base);
             padding: 2px 6px;
+            border-radius: var(--el-border-radius-base);
+
+            &:has(+ .mtk25) {
+                padding-right: 0;
+                border-top-right-radius: 0;
+                border-bottom-right-radius: 0;
+            }
+
+            + .mtk25 {
+                padding-left: 0;
+                border-top-left-radius: 0;
+                border-bottom-left-radius: 0;
+            }
         }
 
         .monaco-editor {

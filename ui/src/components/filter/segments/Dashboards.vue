@@ -130,7 +130,10 @@
             .dispatch("dashboard/list", {})
             .then((response: { results: { id: string; title: string }[] }) => {
                 dashboards.value = response.results;
-                const lastSelected =  fetchLastDashboard() ?? route.params?.id;
+
+                const creation = Boolean(route.query.created);
+                const lastSelected = creation ? route.params?.id : (fetchLastDashboard() ?? route.params?.id);
+
                 if (lastSelected) {
                     const dashboard = dashboards.value.find(d => d.id === lastSelected);
                     if (dashboard) {

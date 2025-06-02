@@ -104,15 +104,26 @@ export default {
                 this.load(this.onDataLoaded);
             }
         },
-        queryWithFilter(namespace) {
+        queryWithFilter(namespace, excludedKeys = []) {
+            let query = this.$route.query;
+
+            if (namespace !== undefined) {
+                query = Object.fromEntries(
+                    Object.entries(query)
+                        .filter(([key]) => key.startsWith(`${namespace}[`))
+                        .map(([key, value]) => [key.substring(namespace.length + 2, key.length - 1), value])
+                );
+            }
+
+            if (excludedKeys.length > 0) {
+                const filterKeyMatcher = new RegExp(`^(?:filters\\[)?(?:${excludedKeys.join(")|(?:")})`);
+                query = Object.fromEntries(
+                    Object.entries(query).filter(([key]) => filterKeyMatcher.exec(key) === null)
+                );
+            }
+
             return _merge(_cloneDeep(
-                namespace === undefined
-                    ? this.$route.query
-                    : Object.fromEntries(
-                        Object.entries(this.$route.query)
-                            .filter(([key]) => key.startsWith(`${namespace}[`))
-                            .map(([key, value]) => [key.substring(namespace.length + 2, key.length - 1), value])
-                    ),
+                query,
                 this.filters || {}
             ));
         },

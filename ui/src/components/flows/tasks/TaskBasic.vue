@@ -20,7 +20,7 @@
                     }}
                 </span>
                 <el-tag disable-transitions size="small" class="ms-2 type-tag">
-                    {{ getTaskComponent(schema, key, properties) }}
+                    {{ getTaskComponent(schema, key, properties).ksTaskName }}
                 </el-tag>
                 <el-tooltip
                     v-if="hasTooltip(schema)"

@@ -20,7 +20,7 @@
                     }}
                 </span>
                 <el-tag disable-transitions size="small" class="ms-2 type-tag">
-                    {{ getType(schema, key) }}
+                    {{ getTaskComponent(schema, key, properties) }}
                 </el-tag>
                 <el-tooltip
                     v-if="hasTooltip(schema)"
@@ -38,7 +38,7 @@
                 </el-tooltip>
             </template>
             <component
-                :is="`task-${getType(schema)}`"
+                :is="getTaskComponent(schema, key, properties)"
                 :model-value="getPropertiesValue(key)"
                 @update:model-value="onObjectInput(key, $event)"
                 :root="getKey(key)"

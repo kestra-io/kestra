@@ -24,7 +24,7 @@
     </el-form-item>
     <el-form label-position="top" v-if="selectedSchema">
         <component
-            :is="`task-${currentSchemaType}`"
+            :is="currentSchemaType"
             v-if="currentSchema"
             :model-value="modelValue"
             :schema="currentSchema"
@@ -39,6 +39,7 @@
     import {mapState} from "vuex";
     import Task from "./Task";
     import {TaskIcon} from "@kestra-io/ui-libs";
+    import getTaskComponent from "./getTaskComponent";
 
     export default {
         components: {
@@ -156,7 +157,7 @@
                 }, {});
             },
             currentSchemaType() {
-                return this.selectedSchema ? this.getType(this.currentSchema) : undefined;
+                return this.selectedSchema ? getTaskComponent(this.currentSchema, this.key, this.schema) : undefined;
             },
             isSelectingPlugins() {
                 return this.schemaOptions.some((schema) => schema.label.startsWith("io.kestra"));

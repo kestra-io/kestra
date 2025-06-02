@@ -41,14 +41,12 @@ import createUnsavedChanged from "./unsavedChange";
 import createEventsRouter from "./eventsRouter";
 import "./global"
 
-const TasksComponentsRaw = import.meta.glob("../components/flows/tasks/Task*.vue", {eager: true});
 
 import LeftMenuLink from "../components/LeftMenuLink.vue";
 import RouterMd from "../components/utils/RouterMd.vue";
 import Utils from "./utils";
 
-const TasksComponents = Object.entries(TasksComponentsRaw)
-    .map(([path, component]) => [path.replace(/^.*\/(.*)\.vue$/, "$1"), component.default]);
+
 
 export default async (app, routes, stores, translations, additionalTranslations = {}) => {
     // charts
@@ -164,10 +162,6 @@ export default async (app, routes, stores, translations, additionalTranslations 
     createUnsavedChanged(app, store, router);
     createEventsRouter(app, store, router);
 
-    // Task have some recursion and need to be register globally
-    for(const [name, comp] of TasksComponents){
-        app.component(name, comp)
-    }
     app.component("LeftMenuLink", LeftMenuLink);
     app.component("RouterMd", RouterMd);
     const components = {

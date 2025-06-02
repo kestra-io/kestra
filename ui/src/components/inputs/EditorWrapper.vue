@@ -1,5 +1,6 @@
 <template>
     <editor
+        id="editorWrapper"
         ref="editorDomElement"
         :model-value="source"
         :schema-type="isCurrentTabFlow ? 'flow': undefined"

@@ -335,8 +335,8 @@
         {
             ...properties(3),
             icon: ArrowRight,
-            target: ".combined-right-view.topology-display",
-            highlightElement: ".combined-right-view.topology-display",
+            target: "#topologyWrapper",
+            highlightElement: "#topologyWrapper",
             params: {...STEP_OPTIONS, placement: "left"},
             before: () => {
                 store.commit("editor/changeView", editorViewTypes.SOURCE_TOPOLOGY);

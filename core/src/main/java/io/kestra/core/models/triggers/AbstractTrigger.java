@@ -38,12 +38,12 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     private String description;
 
-    @Valid
     @PluginProperty
     @Schema(
         title = "List of conditions in order to limit the flow trigger."
     )
-    protected List<Condition> conditions;
+    @Valid
+    protected List<@Valid @NotNull Condition> conditions;
 
     @NotNull
     @Builder.Default

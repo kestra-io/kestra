@@ -1,13 +1,13 @@
 <template>
-    <div :class="{'schema-wrapper': true, bordered: !merge}">
+    <div class="schema-wrapper" :class="{bordered: !merge}">
         <slot name="tasks" />
     </div>
 </template>
 
-<script setup>
+<script lang="ts" setup>
     defineOptions({name: "TaskWrapper"});
 
-    defineProps({merge: {type: Boolean, default: false}});
+    defineProps<{merge?: boolean}>();
 </script>
 
 <style lang="scss" scoped>

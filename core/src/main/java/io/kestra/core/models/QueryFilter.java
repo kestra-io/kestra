@@ -43,7 +43,8 @@ public record QueryFilter(
         STARTS_WITH,
         ENDS_WITH,
         CONTAINS,
-        REGEX;
+        REGEX,
+        STARTS_WITH_NAMESPACE_PREFIX
     }
 
 
@@ -74,6 +75,8 @@ public record QueryFilter(
                 return Contains.<T>builder().field(field).value(value.toString()).build();
             case REGEX:
                 return Regex.<T>builder().field(field).value(value.toString()).build();
+            case STARTS_WITH_NAMESPACE_PREFIX:
+                return Regex.<T>builder().field(field).value("^" + value.toString().replace(".", "\\.") + "(?:\\..+)?$").build();
             default:
                 throw new IllegalArgumentException("Unsupported operation: " + this.operation);
         }
@@ -95,7 +98,7 @@ public record QueryFilter(
         NAMESPACE("namespace") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.STARTS_WITH_NAMESPACE_PREFIX);
             }
         },
         LABELS("labels") {

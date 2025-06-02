@@ -150,6 +150,17 @@ charts:
         state:
           displayName: State
           field: STATE
+      where:
+        - type: IN
+          field: STATE
+          values:
+            - CREATED
+            - RESTARTED
+            - QUEUED
+            - RUNNING
+            - PAUSED
+            - RETRYING
+            - KILLING
 
   - id: next_executions
     type: io.kestra.plugin.core.dashboard.chart.Table
@@ -161,9 +172,12 @@ charts:
     data:
       type: io.kestra.plugin.core.dashboard.data.Triggers
       columns:
+        namespace:
+          field: NAMESPACE
+          displayName: Namespace
         flowId:
           field: FLOW_ID
-          displayName: Flow ID
+          displayName: Flow
         nextExec:
           field: NEXT_EXECUTION_DATE
           displayName: Next Execution Date

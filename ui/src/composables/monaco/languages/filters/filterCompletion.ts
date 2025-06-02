@@ -12,7 +12,8 @@ export enum Comparators {
     STARTS_WITH = "^=",
     ENDS_WITH = "$=",
     CONTAINS = "*=",
-    REGEX = "~="
+    REGEX = "~=",
+    STARTS_WITH_NAMESPACE_PREFIX = "^.=",
 }
 
 export function getComparator(comparatorKey: keyof typeof Comparators | "IN" | "NOT_IN"): Comparators {

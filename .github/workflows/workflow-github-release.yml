@@ -38,17 +38,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SLACK_RELEASES_WEBHOOK_URL: ${{ secrets.SLACK_RELEASES_WEBHOOK_URL }}
 
-      # Trigger gha workflow to bump helm chart version
-      - name: GitHub - Trigger the Helm chart version bump
-        uses: peter-evans/repository-dispatch@v3
-        if: steps.create_github_release.conclusion == 'success'
-        with:
-          token: ${{ secrets.GH_PERSONAL_TOKEN }}
-          repository: kestra-io/helm-charts
-          event-type: update-helm-chart-version
-          client-payload: |-
-            {
-              "new_version": "${{ github.ref_name }}",
-              "github_repository": "${{ github.repository }}",
-              "github_actor": "${{ github.actor }}"
-            }

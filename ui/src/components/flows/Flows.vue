@@ -548,17 +548,7 @@
                             return this.$store
                                 .dispatch(
                                     "flow/exportFlowByQuery",
-                                    this.loadQuery(
-                                        {
-                                            namespace: this.$route.query.namespace
-                                                ? [this.$route.query.namespace]
-                                                : undefined,
-                                            q: this.$route.query.q
-                                                ? [this.$route.query.q]
-                                                : undefined,
-                                        },
-                                        false,
-                                    ),
+                                    this.loadQuery(),
                                 )
                                 .then((_) => {
                                     this.$toast().success(
@@ -592,17 +582,7 @@
                             return this.$store
                                 .dispatch(
                                     "flow/disableFlowByQuery",
-                                    this.loadQuery(
-                                        {
-                                            namespace: this.$route.query.namespace
-                                                ? [this.$route.query.namespace]
-                                                : undefined,
-                                            q: this.$route.query.q
-                                                ? [this.$route.query.q]
-                                                : undefined,
-                                        },
-                                        false,
-                                    ),
+                                    this.loadQuery(),
                                 )
                                 .then((r) => {
                                     this.$toast().success(
@@ -648,17 +628,7 @@
                             return this.$store
                                 .dispatch(
                                     "flow/enableFlowByQuery",
-                                    this.loadQuery(
-                                        {
-                                            namespace: this.$route.query.namespace
-                                                ? [this.$route.query.namespace]
-                                                : undefined,
-                                            q: this.$route.query.q
-                                                ? [this.$route.query.q]
-                                                : undefined,
-                                        },
-                                        false,
-                                    ),
+                                    this.loadQuery(),
                                 )
                                 .then((r) => {
                                     this.$toast().success(
@@ -698,17 +668,7 @@
                             return this.$store
                                 .dispatch(
                                     "flow/deleteFlowByQuery",
-                                    this.loadQuery(
-                                        {
-                                            namespace: this.$route.query.namespace
-                                                ? [this.$route.query.namespace]
-                                                : undefined,
-                                            q: this.$route.query.q
-                                                ? [this.$route.query.q]
-                                                : undefined,
-                                        },
-                                        false,
-                                    ),
+                                    this.loadQuery(),
                                 )
                                 .then((r) => {
                                     this.$toast().success(
@@ -772,11 +732,14 @@
                     return noState;
                 }
             },
-            loadQuery(base) {
-                let queryFilter = this.queryWithFilter();
+            loadQuery(base, ignoreDateFilters = true) {
+                let queryFilter = this.queryWithFilter(
+                    undefined,
+                    ignoreDateFilters ? ["startDate", "endDate", "timeRange"] : []
+                );
 
                 if (this.namespace) {
-                    queryFilter.namespace = this.namespace;
+                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
                 }
 
                 return _merge(base, queryFilter);

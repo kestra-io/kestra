@@ -1,27 +1,31 @@
 <template>
-    <el-form-item v-if="fieldKey" :required="isRequired(fieldKey)">
+    <el-form-item v-if="fieldKey" :required>
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
                     <TaskLabelWithBoolean
-                        :type="getType(schema)"
-                        :is-boolean="isBoolean(schema)"
-                        :component-props="componentProps(fieldKey, schema)"
+                        :type="simpleType"
+                        :is-boolean="isBoolean"
+                        :component-props="componentProps"
                     />
-                    <span v-if="getKey(fieldKey)" class="label">
-                        {{ getKey(fieldKey) }}
+                    <span v-if="realKey" class="label">
+                        {{ realKey }}
                     </span>
+                    <ClearButton
+                        v-if="isAnyOf && !required"
+                        @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
+                    />
                 </div>
                 <el-tag
-                    v-if="!isAnyOf(schema)"
+                    v-if="!isAnyOf"
                     disable-transitions
                     size="small"
                     class="type-tag"
                 >
-                    {{ getType(schema) }}
+                    {{ simpleType }}
                 </el-tag>
                 <el-tooltip
-                    v-if="!isAnyOf(schema) && hasTooltip(schema)"
+                    v-if="!isAnyOf && hasTooltip"
                     :persistent="false"
                     :hide-after="0"
                     effect="light"
@@ -32,7 +36,7 @@
                     <template #content>
                         <Markdown
                             class="markdown-tooltip"
-                            :source="helpText(schema)"
+                            :source="helpText"
                         />
                     </template>
                     <help />
@@ -40,9 +44,10 @@
             </div>
         </template>
         <component
-            v-if="!isBoolean(schema)"
-            :is="`task-${getType(schema, fieldKey, props.definitions)}`"
-            v-bind="{...componentProps(fieldKey, schema)}"
+            v-if="!isBoolean"
+            ref="taskComponent"
+            :is="`task-${type}`"
+            v-bind="{...componentProps}"
             class="mt-1 mb-2 wrapper"
         />
     </el-form-item>
@@ -53,6 +58,9 @@
     import Markdown from "../../layout/Markdown.vue";
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
     import {getType} from "./Task";
+    import {computed} from "vue";
+    import {templateRef} from "@vueuse/core";
+    import ClearButton from "./ClearButton.vue";
 
     const props = defineProps<{
         schema: any;
@@ -64,56 +72,69 @@
     }>()
 
     const emit = defineEmits<{
-        (e: "update:modelValue", value: Record<string, any> | string | number | boolean | Array<any>): void;
+        (e: "update:modelValue", value?: Record<string, any> | string | number | boolean | Array<any>): void;
     }>();
 
-    function isRequired(fieldKey: string) {
-        return props.required?.includes(fieldKey);
-    }
+    const taskComponent = templateRef<{resetSelectType?: () => void}>("taskComponent");
 
-    function componentProps(key: string, schema: any){
+    const required = computed(() => {
+        return props.required?.includes(props.fieldKey);
+    })
+
+    const componentProps = computed(() => {
         return {
             modelValue: props.modelValue,
             "onUpdate:modelValue": (value: Record<string, any> | string | number | boolean | Array<any>) => {
                 emit("update:modelValue", value);
             },
             task: props.task,
-            root: getKey(key),
-            schema: schema,
-            required: isRequired(key),
+            root: realKey.value,
+            schema: props.schema,
+            required: required.value,
             definitions: props.definitions
         }
-    }
+    })
 
-    function hasTooltip(schema:any) {
-        return schema.title || schema.description;
-    }
-    function helpText(schema: any) {
+    const hasTooltip = computed(() => {
+        return props.schema.title || props.schema.description;
+    })
+
+    const helpText = computed(() => {
+        const schema = props.schema;
         return (
             (schema.title ? "**" + schema.title + "**" : "") +
             (schema.title && schema.description ? "\n" : "") +
             (schema.description ? schema.description : "")
         );
-    }
-    function isAnyOf(schema: any) {
-        return !!schema?.anyOf;
-    }
+    })
 
-    function isBoolean(schema: any) {
-        return getType(schema) === "boolean";
-    }
+    const isAnyOf = computed(() => {
+        return Boolean(props.schema?.anyOf);
+    })
+
+    const isBoolean = computed(() => {
+        return type.value === "boolean";
+    })
 
     function isNestedProperty(key: string) {
         return key.includes(".") ||
             ["interval", "maxInterval", "minInterval", "type"].includes(key);
     }
 
-    function getKey(key: string) {
-        if (isNestedProperty(key) || key === "id") {
-            return key;
+    const realKey = computed(() => {
+        if (isNestedProperty(props.fieldKey) || props.fieldKey === "id") {
+            return props.fieldKey;
         }
-        return key.charAt(0).toUpperCase() + key.slice(1);
-    }
+        return props.fieldKey.charAt(0).toUpperCase() + props.fieldKey.slice(1);
+    })
+
+    const simpleType = computed(() => {
+        return getType(props.schema);
+    })
+
+    const type = computed(() => {
+        return getType(props.schema, props.fieldKey, props.definitions)
+    })
 </script>
 
 <style lang="scss" scoped>
@@ -150,6 +171,10 @@
         overflow: hidden;
         text-overflow: ellipsis;
         font-weight: 600;
+    }
+
+    .label-anyof{
+        background-color: red;
     }
 
     .type-tag {

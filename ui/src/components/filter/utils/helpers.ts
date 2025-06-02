@@ -158,7 +158,7 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
                 return {field: field, value: `${subKey}:${decodeURIComponent(value)}`, operation};
             }
 
-            const label = field === "q" ? "text" : OPTIONS.find(o => o.key === field)?.value.label || field;
+            const label = OPTIONS.find(o => o.key === field)?.value.label || field;
             const comparator = OPTIONS.find(o => o.key === field)?.comparators?.find(c => c.value === operation) || {value: operation};
 
             return {field: label, value: decodeURIComponent(value), operation: comparator.value};

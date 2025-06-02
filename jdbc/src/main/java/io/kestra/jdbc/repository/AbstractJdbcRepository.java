@@ -256,8 +256,7 @@ public abstract class AbstractJdbcRepository {
 
     /**
      *
-     * @param dateColumn the JDBC column name of the logical date to filter on,
-     *                   if your entity has no logical date you should pass null, then all date filter will be ignored
+     * @param dateColumn the JDBC column name of the logical date to filter on with {@link io.kestra.core.models.QueryFilter.Field#START_DATE} and/or {@link QueryFilter.Field#END_DATE}
      */
     protected <T extends Record> SelectConditionStep<T> getConditionOnField(
         SelectConditionStep<T> select,
@@ -286,7 +285,7 @@ public abstract class AbstractJdbcRepository {
         // Special handling for START_DATE and END_DATE
         if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE) {
             if(dateColumn == null){
-                return select;// ignore the date filter
+                throw new IllegalArgumentException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
             OffsetDateTime dateTime = (value instanceof ZonedDateTime)
                 ? ((ZonedDateTime) value).toOffsetDateTime()

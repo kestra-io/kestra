@@ -12,35 +12,37 @@
         </template>
 
         <template v-else-if="!creatingTask && refPath === undefined">
-            <component
-                v-for="(v, k) in mainFields"
-                :key="k"
-                :is="v.component"
-                v-model="v.value"
-                v-bind="trimmed(v)"
-                @update:model-value="emits('updateMetadata', k, v.value)"
-            />
+            <el-form label-position="top">
+                <component
+                    v-for="(v, k) in mainFields"
+                    :key="k"
+                    :is="v.component"
+                    v-model="v.value"
+                    v-bind="trimmed(v)"
+                    @update:model-value="emits('updateMetadata', k, v.value)"
+                />
 
-            <hr class="my-4">
+                <hr class="my-4">
 
-            <Collapse
-                v-for="(section, index) in sections"
-                :key="index"
-                v-bind="section"
-                @remove="(yaml) => emits('updateTask', yaml)"
-                @reorder="(yaml) => emits('reorder', yaml)"
-            />
+                <Collapse
+                    v-for="(section, index) in sections"
+                    :key="index"
+                    v-bind="section"
+                    @remove="(yaml) => emits('updateTask', yaml)"
+                    @reorder="(yaml) => emits('reorder', yaml)"
+                />
 
-            <hr class="my-4">
+                <hr class="my-4">
 
-            <component
-                v-for="(v, k) in otherFields"
-                :key="k"
-                :is="v.component"
-                v-model="v.value"
-                v-bind="trimmed(v)"
-                @update:model-value="emits('updateMetadata', k, v.value)"
-            />
+                <component
+                    v-for="(v, k) in otherFields"
+                    :key="k"
+                    :is="v.component"
+                    v-model="v.value"
+                    v-bind="trimmed(v)"
+                    @update:model-value="emits('updateMetadata', k, v.value)"
+                />
+            </el-form>
         </template>
 
         <Task

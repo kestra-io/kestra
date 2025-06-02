@@ -74,6 +74,8 @@
         },
         watch: {
             constantType(val) {
+                // avoid setting values
+                // before user acts on the component
                 if(!this.finishedMounting) {
                     return;
                 }

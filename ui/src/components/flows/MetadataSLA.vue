@@ -2,35 +2,33 @@
     <TaskWrapper>
         <template #tasks>
             <TaskObjectField
+                v-model="value[0]"
                 :field-key="label"
                 :schema
                 :definitions
-                :task="{SLA: value}"
-                :model-value="value"
-                @update:model-value="(val) => emit('update:modelValue', val)"
+                :task="{[label]: value}"
+                @update:model-value="(val) => emit('update:modelValue', val? [val] : undefined)"
             />
         </template>
     </TaskWrapper>
 </template>
 
 <script setup lang="ts">
-
     import TaskWrapper from "./tasks/TaskWrapper.vue";
     import TaskObjectField from "./tasks/TaskObjectField.vue";
 
-
-    const value = defineModel({
-        type: Object,
-        default: () => ({}),
+    const value = defineModel<any[]>({
+        type: Array,
+        default: () => ([]),
     });
 
     const emit = defineEmits<{
         (e: "update:modelValue", value: any): void;
     }>();
 
-    defineProps<{
-        label: string
-    }>();
+    defineProps({
+        label: {type: String, required: true},
+    });
 
     // FIXME: Properly fetch and parse the schema and definitions
     const schema = {
@@ -87,7 +85,7 @@
                 },
                 type: {
                     type: "constant",
-                    const: ["MAX_DURATION"],
+                    const: "MAX_DURATION",
                 },
                 behavior: {
                     type: "string",

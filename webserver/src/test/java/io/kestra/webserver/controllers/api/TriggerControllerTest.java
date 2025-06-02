@@ -366,7 +366,7 @@ class TriggerControllerTest {
 
         BulkResponse bulkResponse = client.toBlocking().retrieve(HttpRequest.POST("/api/v1/main/triggers/set-disabled/by-query?namespace=io.kestra.unittest&disabled=true", null), BulkResponse.class);
 
-//        assertThat(bulkResponse.getCount(), is(2));
+        assertThat(bulkResponse.getCount()).isEqualTo(2);
         assertThat(jdbcTriggerRepository.findLast(triggerNotDisabled).get().getDisabled()).isTrue();
     }
 

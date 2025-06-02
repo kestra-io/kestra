@@ -10,7 +10,7 @@
                 <template #navbar>
                     <KestraFilter
                         prefix="triggers"
-                        :domain="TriggerFilterLanguage.domain"
+                        :language="TriggerFilterLanguage"
                         :buttons="{
                             refresh: {shown: true, callback: () => load()},
                             settings: {shown: false}

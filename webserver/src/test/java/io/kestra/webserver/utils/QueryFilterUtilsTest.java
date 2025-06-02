@@ -14,14 +14,12 @@ public class QueryFilterUtilsTest {
 
     @Test
     void validateTimeline_ok() {
-        var filters = getFiltersWithStartAndEndDate(date, date.plus(10, ChronoUnit.DAYS));
-        assertThatCode(() -> QueryFilterUtils.validateTimeline(filters)).doesNotThrowAnyException();
+        assertThatCode(() -> getFiltersWithStartAndEndDate(date, date.plus(10, ChronoUnit.DAYS))).doesNotThrowAnyException();
     }
 
     @Test
     void validateTimeline_invalid_forEndBeforeStart() {
-        var filters = getFiltersWithStartAndEndDate(date, date.minus(10, ChronoUnit.DAYS));
-        assertThatCode(() -> QueryFilterUtils.validateTimeline(filters))
+        assertThatCode(() -> getFiltersWithStartAndEndDate(date, date.minus(10, ChronoUnit.DAYS)))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining(
                 "Start date must be before End Date"
@@ -29,7 +27,8 @@ public class QueryFilterUtilsTest {
     }
 
     private List<QueryFilter> getFiltersWithStartAndEndDate(ZonedDateTime start, ZonedDateTime end) {
-        return RequestUtils.mapLegacyParamsToFilters(
+        return RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            null,
             null,
             null,
             null,

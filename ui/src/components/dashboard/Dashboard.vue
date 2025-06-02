@@ -11,7 +11,7 @@
     <section id="filter">
         <KestraFilter
             prefix="dashboard"
-            :domain="filterDomain"
+            :language="filterLanguage"
             :buttons="{
                 refresh: {
                     shown: true,
@@ -59,16 +59,16 @@
         isNamespace: {type: Boolean, default: false},
     });
 
-    const filterDomain = computed(() => {
+    const filterLanguage = computed(() => {
         if (props.isNamespace) {
-            return NamespaceDashboardFilterLanguage.domain;
+            return NamespaceDashboardFilterLanguage;
         }
 
         if (props.isFlow) {
-            return FlowDashboardFilterLanguage.domain;
+            return FlowDashboardFilterLanguage;
         }
 
-        return DashboardFilterLanguage.domain;
+        return DashboardFilterLanguage;
     })
 
     const initial = (dashboard) => ({id: "default", ...YAML_UTILS.parse(dashboard)});

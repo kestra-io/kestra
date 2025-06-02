@@ -41,7 +41,7 @@
             <template #navbar v-if="isDisplayedTop">
                 <KestraFilter
                     prefix="executions"
-                    :domain="namespace === undefined || flowId === undefined ? ExecutionFilterLanguage.domain : FlowExecutionFilterLanguage.domain"
+                    :language="namespace === undefined || flowId === undefined ? ExecutionFilterLanguage : FlowExecutionFilterLanguage"
                     :buttons="{
                         refresh: {shown: true, callback: refresh},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}

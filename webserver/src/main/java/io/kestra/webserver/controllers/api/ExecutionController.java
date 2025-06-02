@@ -38,9 +38,7 @@ import io.kestra.webserver.responses.BulkResponse;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.services.ExecutionStreamingService;
 import io.kestra.webserver.utils.PageableUtils;
-import io.kestra.webserver.utils.QueryFilterUtils;
 import io.kestra.webserver.utils.RequestUtils;
-import io.kestra.webserver.utils.TimeLineSearch;
 import io.kestra.webserver.utils.filepreview.FileRender;
 import io.kestra.webserver.utils.filepreview.FileRenderBuilder;
 import io.micronaut.context.annotation.Value;
@@ -204,32 +202,22 @@ public class ExecutionController {
         @Parameter(description = "A execution child filter", deprecated = true) @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
 
     ) {
-
-        // If filters is empty, map old params to QueryFilter
-        if (filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                startDate,
-                endDate,
-                scope,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId);
-        }
-        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
-        validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
-
-        ZonedDateTime resolvedStartDate = timeLineSearch.getStartDate();
-
-        // Update filters with the resolved startDate
-        filters = QueryFilterUtils.updateFilters(filters, resolvedStartDate);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            startDate,
+            endDate,
+            scope,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId);
 
         return PagedResults.of(executionRepository.find(
 
@@ -436,25 +424,23 @@ public class ExecutionController {
         @Parameter(description = "Whether to delete execution metrics") @QueryValue(defaultValue = "true") Boolean deleteMetrics,
         @Parameter(description = "Whether to delete execution files in the internal storage") @QueryValue(defaultValue = "true") Boolean deleteStorage
     ) throws IOException {
-        if(filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-                endDate,
-                scope,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId
-            );
-        }
-        validateTimeline(filters);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+            endDate,
+            scope,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId
+        );
 
         var ids = getExecutionIds(filters);
 
@@ -936,25 +922,23 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws Exception {
-        if(filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-                endDate,
-                scope,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId
-            );
-        }
-        validateTimeline(filters);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+            endDate,
+            scope,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId
+        );
 
         var ids = getExecutionIds(filters);
         return restartExecutionsByIds(ids);
@@ -1154,25 +1138,23 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter,
         @Parameter(description = "The new state of the executions") @NotNull @QueryValue State.Type newStatus
     ) throws QueueException {
-        if(filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-                endDate,
-                scope,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId
-            );
-        }
-        validateTimeline(filters);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+            endDate,
+            scope,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId
+        );
 
         var ids = getExecutionIds(filters);
 
@@ -1390,25 +1372,23 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws Exception {
-        if(filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-                endDate,
-                scope,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId
-            );
-        }
-        validateTimeline(filters);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+            endDate,
+            scope,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId
+        );
 
         var ids = getExecutionIds(filters);
 
@@ -1501,25 +1481,23 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws Exception {
-        if(filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-                endDate,
-                scope,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId
-            );
-        }
-        validateTimeline(filters);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+            endDate,
+            scope,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId
+        );
 
         var ids = getExecutionIds(filters);
 
@@ -1547,25 +1525,23 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws QueueException {
-        if(filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-                endDate,
-                scope,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId
-            );
-        }
-        validateTimeline(filters);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+            endDate,
+            scope,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId
+        );
 
         var ids = getExecutionIds(filters);
 
@@ -1595,25 +1571,23 @@ public class ExecutionController {
 
         @Parameter(description = "If latest revision should be used") @Nullable @QueryValue(defaultValue = "false") Boolean latestRevision
     ) throws Exception {
-        if(filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-                endDate,
-                scope,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId
-            );
-        }
-        validateTimeline(filters);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+            endDate,
+            scope,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId
+        );
 
         var ids = getExecutionIds(filters);
 
@@ -1872,25 +1846,23 @@ public class ExecutionController {
 
         @RequestBody(description = "The labels to add to the execution") @Body @NotNull @Valid List<Label> setLabels
     ) {
-        if(filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-                endDate,
-                scope,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId
-            );
-        }
-        validateTimeline(filters);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+            endDate,
+            scope,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId
+        );
 
         var ids = getExecutionIds(filters);
 
@@ -1987,25 +1959,23 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws Exception {
-        if(filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-                endDate,
-                scope,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId
-            );
-        }
-        validateTimeline(filters);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+            endDate,
+            scope,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId
+        );
 
         var ids = getExecutionIds(filters);
 
@@ -2102,25 +2072,23 @@ public class ExecutionController {
         @Deprecated @Parameter(description = "The trigger execution id") @Nullable @QueryValue String triggerExecutionId,
         @Deprecated @Parameter(description = "A execution child filter") @Nullable @QueryValue ExecutionRepositoryInterface.ChildFilter childFilter
     ) throws Exception {
-        if(filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
-                endDate,
-                scope,
-                labels,
-                timeRange,
-                childFilter,
-                state,
-                null,
-                triggerExecutionId
-            );
-        }
-        validateTimeline(filters);
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            resolveAbsoluteDateTime(startDate, timeRange, ZonedDateTime.now()),
+            endDate,
+            scope,
+            labels,
+            timeRange,
+            childFilter,
+            state,
+            null,
+            triggerExecutionId
+        );
 
         var ids = getExecutionIds(filters);
 

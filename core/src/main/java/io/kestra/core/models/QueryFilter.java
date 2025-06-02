@@ -47,6 +47,9 @@ public record QueryFilter(
         STARTS_WITH_NAMESPACE_PREFIX
     }
 
+    private List<Object> asValues(Object value) {
+        return value instanceof String valueStr ? Arrays.asList(valueStr.split(",")) : (List<Object>) value;
+    }
 
     @SuppressWarnings("unchecked")
     public <T extends Enum<T>> AbstractFilter<T> toDashboardFilterBuilder(T field, Object value) {
@@ -64,9 +67,9 @@ public record QueryFilter(
             case LESS_THAN_OR_EQUAL_TO:
                 return LessThanOrEqualTo.<T>builder().field(field).value(value).build();
             case IN:
-                return In.<T>builder().field(field).values((List<Object>) value).build();
+                return In.<T>builder().field(field).values(asValues(value)).build();
             case NOT_IN:
-                return NotIn.<T>builder().field(field).values((List<Object>) value).build();
+                return NotIn.<T>builder().field(field).values(asValues(value)).build();
             case STARTS_WITH:
                 return StartsWith.<T>builder().field(field).value(value.toString()).build();
             case ENDS_WITH:

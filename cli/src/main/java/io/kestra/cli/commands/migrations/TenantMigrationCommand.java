@@ -9,7 +9,7 @@ import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
 @CommandLine.Command(
-    name = "tenant",
+    name = "defaultTenant",
     description = "migrate every elements from no tenant to the main tenant"
 )
 @Slf4j

@@ -6,7 +6,7 @@
                 <template #navbar v-if="!embed || showFilters">
                     <KestraFilter
                         prefix="logs"
-                        :domain="LogFilterLanguage.domain"
+                        :language="LogFilterLanguage"
                         :buttons="{
                             refresh: {shown: true, callback: refresh},
                             settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}

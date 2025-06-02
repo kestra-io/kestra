@@ -12,6 +12,7 @@
                 @keydown.esc.prevent="editorResolved.focus()"
                 @keydown.enter.prevent="datePickerCallback"
                 :clearable="false"
+                class="z-3"
             />
         </div>
     </div>
@@ -641,6 +642,13 @@
                         localEditor!.trigger("refreshSuggestionsAfterUndoRedo", "editor.action.triggerSuggest", {});
                     }
                 });
+
+                localEditor.onDidChangeCursorPosition(() => {
+                    if (suggestController.model.state !== 0) {
+                        suggestController.cancelSuggestWidget();
+                        localEditor!.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {});
+                    }
+                })
             }
 
             if (!props.input) {

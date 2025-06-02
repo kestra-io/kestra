@@ -7,7 +7,7 @@
     >
         <template #navbar>
             <KestraFilter
-                :domain="MetricFilterLanguage.domain"
+                :language="MetricFilterLanguage"
                 :placeholder="`${$t('display metric for specific task')}...`"
                 legacy-query
             />

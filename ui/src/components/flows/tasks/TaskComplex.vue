@@ -13,7 +13,6 @@
     import Task from "./Task";
     import TaskObject from "./TaskObject.vue";
 
-
     import {
         BREADCRUMB_INJECTION_KEY,
         PANEL_INJECTION_KEY,

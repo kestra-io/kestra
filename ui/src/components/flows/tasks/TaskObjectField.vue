@@ -8,8 +8,8 @@
                         :is-boolean="isBoolean"
                         :component-props="componentProps"
                     />
-                    <span v-if="realKey" class="label">
-                        {{ realKey }}
+                    <span v-if="props.fieldKey" class="label">
+                        {{ props.fieldKey }}
                     </span>
                     <ClearButton
                         v-if="isAnyOf && !required"
@@ -88,7 +88,7 @@
                 emit("update:modelValue", value);
             },
             task: props.task,
-            root: realKey.value,
+            root: props.fieldKey,
             schema: props.schema,
             required: required.value,
             definitions: props.definitions
@@ -114,18 +114,6 @@
 
     const isBoolean = computed(() => {
         return type.value === "boolean";
-    })
-
-    function isNestedProperty(key: string) {
-        return key.includes(".") ||
-            ["interval", "maxInterval", "minInterval", "type"].includes(key);
-    }
-
-    const realKey = computed(() => {
-        if (isNestedProperty(props.fieldKey) || props.fieldKey === "id") {
-            return props.fieldKey;
-        }
-        return props.fieldKey.charAt(0).toUpperCase() + props.fieldKey.slice(1);
     })
 
     const simpleType = computed(() => {
@@ -165,6 +153,7 @@
     }
 
     .label {
+        font-family: var(--bs-font-monospace);
         color: var(--ks-content-primary);
         min-width: 0;
         flex: 1;

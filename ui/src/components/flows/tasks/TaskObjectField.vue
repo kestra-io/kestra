@@ -11,14 +11,10 @@
                     <span v-if="realKey" class="label">
                         {{ realKey }}
                     </span>
-                    <button
+                    <ClearButton
                         v-if="isAnyOf && !required"
-                        class="clear-button"
-                        type="button"
                         @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
-                    >
-                        <CloseIcon class="clear-icon" />{{ $t("no_code.clearSelection") }}
-                    </button>
+                    />
                 </div>
                 <el-tag
                     v-if="!isAnyOf"
@@ -63,8 +59,8 @@
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
     import {getType} from "./Task";
     import {computed} from "vue";
-    import CloseIcon from "vue-material-design-icons/Close.vue";
     import {templateRef} from "@vueuse/core";
+    import ClearButton from "./ClearButton.vue";
 
     const props = defineProps<{
         schema: any;
@@ -195,22 +191,6 @@
     .information-icon {
         color: var(--ks-content-secondary);
         cursor: pointer;
-    }
-
-    .clear-button{
-        border: none;
-        background: transparent;
-        color: var(--ks-content-link);
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-    }
-
-    .clear-icon * {
-        font-size: 20px;
-    }
-    .clear-icon {
-        height: 20px;
     }
 }
 </style>

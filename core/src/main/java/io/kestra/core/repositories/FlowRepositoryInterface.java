@@ -137,6 +137,8 @@ public interface FlowRepositoryInterface {
 
     List<FlowWithSource> findByNamespaceWithSource(String tenantId, String namespace);
 
+    List<FlowWithSource> findByNamespacePrefixWithSource(String tenantId, String namespace);
+
     ArrayListTotal<Flow> find(
         Pageable pageable,
         @Nullable String tenantId,

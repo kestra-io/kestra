@@ -229,6 +229,12 @@ public abstract class AbstractFlowRepositoryTest {
     }
 
     @Test
+    void findByNamespacePrefixWithSource() {
+        List<FlowWithSource> save = flowRepository.findByNamespacePrefixWithSource(MAIN_TENANT, "io.kestra.tests");
+        assertThat((long) save.size()).isEqualTo(Helpers.FLOWS_COUNT - 1);
+    }
+
+    @Test
     void find_paginationPartial() {
         assertThat(flowRepository.find(Pageable.from(1, (int) Helpers.FLOWS_COUNT - 1, Sort.UNSORTED), MAIN_TENANT, null)
             .size())

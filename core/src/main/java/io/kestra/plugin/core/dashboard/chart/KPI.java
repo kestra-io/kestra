@@ -35,7 +35,7 @@ import lombok.experimental.SuperBuilder;
                     chartOptions:
                       displayName: Success Ratio
                       numberType: PERCENTAGE
-                      width: 12
+                      width: 3
                     data:
                       type: io.kestra.plugin.core.dashboard.data.ExecutionsKPI # io.kestra.plugin.core.dashboard.data.ExecutionsTrends
                       columns:

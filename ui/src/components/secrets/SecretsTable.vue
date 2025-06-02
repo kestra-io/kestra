@@ -125,7 +125,6 @@
                             <el-button
                                 :icon="Delete"
                                 @click="removeSecretTag(index)"
-                                :disabled="secret.tags.length === 1"
                             />
                         </el-button-group>
                     </el-row>

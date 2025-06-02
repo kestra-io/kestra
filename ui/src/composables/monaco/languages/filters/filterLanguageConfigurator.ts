@@ -11,10 +11,13 @@ import IWordAtPosition = editor.IWordAtPosition;
 
 const legacyFilterRegex = /.*((?<=.)-)?legacy-filter/;
 export const languages = [/.*((?<=.)-)?filter/, legacyFilterRegex];
-export const COMPARATOR_CHARS = [...new Set(Object.values(Comparators).flatMap(c => c.split("")))];
-export const COMPARATORS_REGEX = "(?:" + Object.values(Comparators).map(c =>
-    c.replaceAll(/[$.*^]/g, (match) => `\\${match}`)
-).join("|") + ")";
+export const PER_COMPARATOR_REGEX = Object.entries(Comparators).reduce((acc, [key, value]) => {
+    acc[key] = new RegExp(value.replaceAll(/[$.*^]/g, (match) => `\\${match}`));
+    return acc;
+}, {} as Record<string, RegExp>);
+export const COMPARATORS_REGEX = "(?:" + Object.values(PER_COMPARATOR_REGEX)
+    .sort((r1, r2) => r2.source.length - r1.source.length)
+    .map(r => r.source).join("|") + ")";
 
 let filterLanguages: FilterLanguage[];
 
@@ -22,7 +25,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
     private _filterLanguage: FilterLanguage | undefined;
     private readonly _domain: string | undefined;
     private keyCompletions: Completion[] | undefined;
-    private keyCompletionsRegex: RegExp | undefined;
+    private allKeyCompletionsRegex: RegExp | undefined;
 
     constructor(language: string, domain: string | undefined) {
         super(language);
@@ -39,7 +42,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
 
         this._filterLanguage = filterLanguages.find(filterLanguage => filterLanguage.domain === this._domain);
         this.keyCompletions = await this._filterLanguage?.keyCompletion();
-        this.keyCompletionsRegex = new RegExp(this.keyCompletions === undefined
+        this.allKeyCompletionsRegex = new RegExp(this.keyCompletions === undefined
             ? ""
             : (
                 "(?:" + this.keyCompletions
@@ -53,31 +56,64 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
     }
 
     async configureLanguage(_: Store<Record<string, any>>): Promise<void> {
+        const keyLabelToRegex = (keyLabel: string) => {
+            return new RegExp(keyLabel
+                .replaceAll(".", "\\.")
+                .replaceAll(/\{[^}]*}/g, "(?:\"[^,\"]*\"|[^\\s,\"]*?(?=" + COMPARATORS_REGEX + "|\\s|$))"));
+        };
+
         if (this._filterLanguage && monaco.languages.getLanguages().find(l => l.id === this.language) === undefined) {
             monaco.languages.register({id: this.language});
+
+            const keysTokenizerCases = this.keyCompletions === undefined
+                ? {}
+                : this.keyCompletions!.reduce((acc, key) => {
+                    acc[keyLabelToRegex(key.label).source] = {
+                        token: "variable.name",
+                        next: `@${key.label}-comparator`
+                    };
+
+                    return acc;
+                }, {} as Record<string, monaco.languages.IMonarchLanguageAction>);
+
+            const keysToValueTokenizer = this.keyCompletions === undefined
+                ? {} as Record<string, monaco.languages.IMonarchLanguageRule[]>
+                : await this.keyCompletions!.reduce(async (accPromise, completion) => {
+                    return accPromise.then(async (acc) => ({
+                        ...acc,
+                        [`${completion.label}-comparator`]: [
+                            [
+                                new RegExp(
+                                    (await this._filterLanguage!.comparatorCompletion(completion.value + (completion.value.endsWith(".") ? "placeholder" : "")))
+                                        .map(comparator => PER_COMPARATOR_REGEX[comparator.label].source).join("|")
+                                ),
+                                {
+                                    token: "operators",
+                                    next: "@value"
+                                }
+                            ],
+                            [
+                                /[^\\s]*/,
+                                {token: "@rematch", next: "@whitespace"}
+                            ]
+                        ]
+                    } as Record<string, monaco.languages.IMonarchLanguageRule[]>));
+                }, Promise.resolve({} as Record<string, monaco.languages.IMonarchLanguageRule[]>));
+
             monaco.languages.setMonarchTokensProvider(this.language, {
                 operators: Object.values(Comparators),
                 symbols: new RegExp(COMPARATORS_REGEX),
+                defaultToken: "invalid",
                 includeLF: true,
                 tokenizer: {
                     root: [
                         [/[\w\\.]+/, {
                             cases: {
-                                [this.keyCompletionsRegex!.source]: {
-                                    token: "variable.name",
-                                    next: "@comparator"
-                                },
+                                ...keysTokenizerCases,
                                 "@default": {token: "@rematch", next: "@rawText"}
                             }
                         }],
                         [/[^\w\\.]/, {token: "invalid", next: "@whitespace"}]
-                    ],
-                    comparator: [
-                        [/@symbols/, {
-                            cases: {
-                                "@operators": {token: "operators", next: "@value"}
-                            }
-                        }]
                     ],
                     rawText: [
                         [/\S+/, {
@@ -109,7 +145,8 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                         {include: "@whitespace"},
                         [",", {token: "comma", next: "@value"}],
                         [/\S+/, {token: "invalid"}]
-                    ]
+                    ],
+                    ...keysToValueTokenizer
                 }
             });
         }
@@ -224,7 +261,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                         );
                     }
 
-                    if (wordAtPosition.word.match(new RegExp("^" + filterLanguageConfiguratorInstance.keyCompletionsRegex!.source + "$")) && position.column === wordAtPosition.endColumn) {
+                    if (wordAtPosition.word.match(new RegExp("^" + filterLanguageConfiguratorInstance.allKeyCompletionsRegex!.source + "$")) && position.column === wordAtPosition.endColumn) {
                         if (previousChar === ".") {
                             return TO_SUGGESTIONS(
                                 position,
@@ -234,7 +271,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                                     endColumn: wordAtPosition.endColumn
                                 },
                                 []
-                            )
+                            );
                         }
                         const comparatorCompletions = await filterLanguage.comparatorCompletion(wordAtPosition.word);
                         return TO_SUGGESTIONS(
@@ -250,7 +287,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                         : undefined;
 
                     const currentFilterMatch = model.findPreviousMatch(
-                        "(" + filterLanguageConfiguratorInstance.keyCompletionsRegex?.source + ")" +
+                        "(" + filterLanguageConfiguratorInstance.allKeyCompletionsRegex?.source + ")" +
                         "(" + COMPARATORS_REGEX + ")" +
                         "(\"[^\"]*\"?|[^\\s\"]*)$",
                         beforeWordPosition ?? position.with(undefined, wordAtPosition.startColumn),

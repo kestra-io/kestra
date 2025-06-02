@@ -90,4 +90,10 @@ export default [
         files: [components("filter"), components("code")],
         rules: {"vue/component-api-style": ["error", ["script-setup"]]},
     },
+    {
+        files: ["src/translations/check.js", "**/tests/**"],
+        rules: {
+            "no-console": ["off"]
+        }
+    }
 ];

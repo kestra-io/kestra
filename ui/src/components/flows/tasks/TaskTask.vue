@@ -29,21 +29,21 @@
 </template>
 
 <script setup>
-    import {YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
+    import {SECTIONS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import TextSearch from "vue-material-design-icons/TextSearch.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
+    import TaskEditor from "../TaskEditor.vue"
+    import Drawer from "../../Drawer.vue"
 </script>
 
 <script>
     import Task from "./Task"
-    import TaskEditor from "../TaskEditor.vue"
-    import Drawer from "../../Drawer.vue"
 
     export default {
         inheritAttrs: false,
         mixins: [Task],
-        components: {TaskEditor, Drawer},
         emits: ["update:modelValue"],
         props: {
             section: {

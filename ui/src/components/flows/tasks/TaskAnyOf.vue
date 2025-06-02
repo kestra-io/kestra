@@ -157,7 +157,7 @@
                 }, {});
             },
             currentSchemaType() {
-                return this.selectedSchema ? getTaskComponent(this.currentSchema, this.key, this.schema) : undefined;
+                return this.selectedSchema ? getTaskComponent(this.currentSchema) : undefined;
             },
             isSelectingPlugins() {
                 return this.schemaOptions.some((schema) => schema.label.startsWith("io.kestra"));

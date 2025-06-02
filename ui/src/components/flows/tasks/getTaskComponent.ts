@@ -21,22 +21,27 @@ const TasksComponentsRaw = import.meta.glob<{default: any}>("./Task*.vue", {eage
 
 export default function getTaskComponent(property: any, key?: string, schema?: any) {
     if (property.enum !== undefined) {
+        TaskEnum.name = "enum"
         return TaskEnum;
     }
 
     if (Object.prototype.hasOwnProperty.call(property, "$ref")) {
         if (property.$ref.includes("tasks.Task")) {
+            TaskTask.name = "task"
             return TaskTask
         }
 
         if (property.$ref.includes(".conditions.")) {
+            TaskCondition.name = "condition"
             return TaskCondition
         }
 
         if (property.$ref.includes("tasks.runners.TaskRunner")) {
+            TaskTaskRunner.name = "task-runner"
             return TaskTaskRunner
         }
 
+        TaskComplex.name = "complex"
         return TaskComplex
     }
 
@@ -45,42 +50,57 @@ export default function getTaskComponent(property: any, key?: string, schema?: a
     }
 
     if (Object.prototype.hasOwnProperty.call(property, "additionalProperties")) {
+        TaskDict.name = "dict"
         return TaskDict
     }
 
     if (property.type === "integer") {
+        TaskNumber.name = "number"
         return TaskNumber
     }
 
     if (key === "namespace") {
+        TaskSubflowNamespace.name = "namespace"
         return TaskSubflowNamespace
     }
 
     const properties = Object.keys(schema?.properties ?? {});
     const hasNamespaceProperty = properties.includes("namespace");
     if (key === "flowId" && hasNamespaceProperty) {
+        TaskSubflowId.name = "subflow-id"
         return TaskSubflowId
     }
 
     if (key === "inputs" && hasNamespaceProperty && properties.includes("flowId")) {
+        TaskSubflowInputs.name = "subflow-inputs"
         return TaskSubflowInputs
     }
 
     if( property.type === "array") {
         if (property.items?.$ref?.includes("tasks.Task")) {
+            TaskTasks.name = "tasks"
             return TaskTasks
         }
 
         if (property.items?.$ref?.includes("conditions.Condition")) {
+            TaskConditions.name = "conditions"
             return TaskConditions
         }
 
+        TaskArray.name = "array"
         return TaskArray;
     }
 
     if (property.const) {
+        TaskConstant.name = "constant"
         return TaskConstant
     }
 
-    return TasksComponentsRaw[`Task${pascalCase(property.type)}`].default || TaskExpression;
+    const Comp = TasksComponentsRaw[`./Task${pascalCase(property.type)}.vue`]?.default
+    if (Comp) {
+        Comp.name = property.type;
+        return Comp;
+    }
+
+    return TaskExpression;
 }

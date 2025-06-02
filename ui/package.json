@@ -100,6 +100,7 @@
     "@vue/eslint-config-prettier": "^10.2.0",
     "@vue/test-utils": "^2.4.6",
     "@vueuse/router": "^13.2.0",
+    "change-case": "4.1.2",
     "cross-env": "^7.0.3",
     "decompress": "^4.2.1",
     "eslint": "^9.27.0",

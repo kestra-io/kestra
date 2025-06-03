@@ -65,7 +65,7 @@
                 (Array.isArray(this.modelValue) && item.value === "array"),
             );
 
-            this.onSelectType(schema?.value || this.schemaOptions[0]?.value);
+            this.selectedSchema = schema?.value || this.schemaOptions[0]?.value;
         },
         mounted() {
             this.$nextTick(() => {

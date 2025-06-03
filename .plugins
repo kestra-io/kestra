@@ -62,7 +62,7 @@
 #plugin-jira:io.kestra.plugin:plugin-jira:LATEST
 #plugin-kafka:io.kestra.plugin:plugin-kafka:LATEST
 #plugin-kubernetes:io.kestra.plugin:plugin-kubernetes:LATEST
-#plugin-ldap:io.kestra.plugin:plugin-langchain4j:LATEST
+#plugin-langchain4j:io.kestra.plugin:plugin-langchain4j:LATEST
 #plugin-ldap:io.kestra.plugin:plugin-ldap:LATEST
 #plugin-linear:io.kestra.plugin:plugin-linear:LATEST
 #plugin-malloy:io.kestra.plugin:plugin-malloy:LATEST

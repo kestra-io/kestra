@@ -21,7 +21,7 @@
                     </el-button>
                 </template>
                 <template v-else>
-                    <var-value :value="scope.row.value" :execution="execution" />
+                    <var-value :value="scope.row.value" :execution="execution" :restrict-uri="true" />
                 </template>
             </template>
         </el-table-column>

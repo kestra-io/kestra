@@ -51,7 +51,8 @@
             },
             isURI(value) {
                 try {
-                    new URL(value);
+                    const url = new URL(value);
+                    if (this.restrictUri) { return ["http:", "https:"].includes(url.protocol); }
                     return true;
                 } catch {
                     return false;
@@ -86,6 +87,11 @@
                 type: Object,
                 required: false,
                 default: undefined
+            },
+            restrictUri: {
+                type: Boolean,
+                required: false,
+                default: false
             }
         }
     };

@@ -134,6 +134,7 @@
                             v-model="isOpenLabelsModal"
                             destroy-on-close
                             :append-to-body="true"
+                            align-center
                         >
                             <template #header>
                                 <h5>{{ $t("Set labels") }}</h5>
@@ -326,7 +327,7 @@
         </data-table>
     </section>
 
-    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="uuid" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="changeStatusDialogVisible" v-model="changeStatusDialogVisible" :id="uuid" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>
@@ -365,7 +366,7 @@
         </template>
     </el-dialog>
 
-    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="uuid" destroy-on-close :append-to-body="true">
+    <el-dialog v-if="isOpenReplayModal" v-model="isOpenReplayModal" :id="uuid" destroy-on-close :append-to-body="true" align-center>
         <template #header>
             <h5>{{ $t("confirmation") }}</h5>
         </template>

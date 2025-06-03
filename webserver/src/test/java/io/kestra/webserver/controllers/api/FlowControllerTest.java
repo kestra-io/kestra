@@ -172,6 +172,27 @@ class FlowControllerTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void searchFlowsMatch() {
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[q][EQUALS]=io.kestra.tests2"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal()).isEqualTo(1L);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchFlowsNotEqualsQuery() {
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[q][NOT_EQUALS]=io.kestra.tests2"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal()).isEqualTo(Helpers.FLOWS_COUNT - 1);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void searchFlows_shouldReturnNothingForOppositeQuery() {
+        PagedResults<Flow> flows = client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[q][EQUALS]=io.kestra.tests2&filters[q][NOT_EQUALS]=io.kestra.tests2"), Argument.of(PagedResults.class, Flow.class));
+        assertThat(flows.getTotal()).isEqualTo(0L);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void searchFlowsByNamespacePrefix() {
         assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[namespace][STARTS_WITH_NAMESPACE_PREFIX]=io.kestra.tests2"), Argument.of(PagedResults.class, Flow.class))
             .getTotal())

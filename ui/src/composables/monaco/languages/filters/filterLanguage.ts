@@ -37,7 +37,7 @@ export abstract class FilterLanguage {
     }
 
     static withNestedKeyPlaceholder(keyLabel: string) {
-        return keyLabel.replaceAll(/\$\{[^}]*}|(?<=\\.)[\s\S]*/g, FilterLanguage.NESTED_KEY_PLACEHOLDER);
+        return keyLabel.replaceAll(/\$\{[^}]*}|(?<=\.)[\s\S]*/g, FilterLanguage.NESTED_KEY_PLACEHOLDER);
     }
 
     private completionForKey(inputKey: string): FilterKeyCompletions | undefined {

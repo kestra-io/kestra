@@ -42,7 +42,7 @@
             :icon="ContentSave"
             @click="forwardEvent('save', $event)"
             :type="buttonType"
-            :disabled="hasErrors || !haveChange && !isCreating"
+            :disabled="hasErrors || !canSave"
             class="edit-flow-save-button"
         >
             {{ $t("save") }}
@@ -57,6 +57,9 @@
     import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import Download from "vue-material-design-icons/Download.vue";
+    import {useStore} from "vuex";
+
+    const store = useStore();
 
     const props = defineProps<{
         isCreating: boolean;
@@ -86,5 +89,12 @@
         return props.warnings
             ? "warning"
             : "primary";
-    })
+    });
+
+    const canSave = computed(() => {
+        if (props.isNamespace) {
+            return store.state.editor.current?.dirty || false;
+        }
+        return props.haveChange || props.isCreating;
+    });
 </script>

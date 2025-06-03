@@ -31,7 +31,7 @@ export abstract class FilterLanguage {
                     key: "text",
                     regex: /^text$/
                 },
-                new FilterKeyCompletions([Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.REGEX])
+                new FilterKeyCompletions([Comparators.EQUALS, Comparators.NOT_EQUALS])
             ]
         ];
     }

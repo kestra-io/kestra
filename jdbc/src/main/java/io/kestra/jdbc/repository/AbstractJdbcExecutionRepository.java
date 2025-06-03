@@ -7,9 +7,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
-import io.kestra.core.models.dashboards.filters.AbstractFilter;
-import io.kestra.core.models.dashboards.filters.Contains;
-import io.kestra.core.models.dashboards.filters.In;
+import io.kestra.core.models.dashboards.filters.*;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.executions.TaskRun;
 import io.kestra.core.models.executions.statistics.*;
@@ -200,6 +198,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     }
 
     abstract protected Condition findCondition(String query, Map<String, String> labels);
+
     abstract protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation);
 
     protected Condition statesFilter(List<State.Type> state) {
@@ -367,7 +366,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
                     .from(this.jdbcRepository.getTable())
                     .where(this.defaultFilter(tenantId));
 
-                try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()){
+                try (Stream<Record1<Object>> stream = select.fetchSize(FETCH_SIZE).stream()) {
                     stream.map((Record record) -> jdbcRepository.map(record))
                         .forEach(emitter::next);
                 } finally {
@@ -1261,8 +1260,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             return NAMESPACE_FIELD;
         } else if (field.getName().equals(START_DATE_FIELD.getName())) {
             return START_DATE_FIELD;
-        }
-        else if (field.getName().equals(fieldsMapping.get(Executions.Fields.DURATION))) {
+        } else if (field.getName().equals(fieldsMapping.get(Executions.Fields.DURATION))) {
             return DSL.field("{0} / 1000", Long.class, field);
         }
         return field;
@@ -1273,19 +1271,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
     protected <F extends Enum<F>> SelectConditionStep<Record> where(SelectConditionStep<Record> selectConditionStep, JdbcFilterService jdbcFilterService, List<AbstractFilter<F>> filters, Map<F, String> fieldsMapping) {
         if (!ListUtils.isEmpty(filters)) {
             // Check if descriptors contain a filter of type Executions.Fields.STATE and apply the custom filter "statesFilter" if present
-            List<In<Executions.Fields>> stateFilters = filters.stream()
-                .filter(descriptor -> descriptor.getField().equals(Executions.Fields.STATE) && descriptor instanceof In)
-                .map(descriptor -> (In<Executions.Fields>) descriptor)
-                .toList();
-
-            if (!stateFilters.isEmpty()) {
-                selectConditionStep = selectConditionStep.and(
-                    statesFilter(stateFilters.stream()
-                        .flatMap(stateFilter -> stateFilter.getValues().stream())
-                        .map(value -> State.Type.valueOf(value.toString()))
-                        .toList())
-                );
-            }
+            selectConditionStep = applyStateFilters(filters, selectConditionStep);
 
             // Check if descriptors contain a filter of type EXECUTIONS.Fields.LABELS and apply the findCondition() method if present
             List<Contains<Executions.Fields>> labelFilters = filters.stream()
@@ -1309,17 +1295,64 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
             // Remove the state filters from descriptors
             List<AbstractFilter<F>> remainingFilters = filters.stream()
-                .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.STATE) || !(descriptor instanceof In)) // Filter state
+                .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.STATE)) // Filter state
                 .filter(descriptor -> !descriptor.getField().equals(Executions.Fields.LABELS) || !(descriptor instanceof Contains<F>)) // Filter labels
                 .toList();
-
-
 
             // Use the generic method addFilters with the remaining filters
             return filterService.addFilters(selectConditionStep, fieldsMapping, remainingFilters);
         } else {
             return selectConditionStep;
         }
+    }
+
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    private <F extends Enum<F>> SelectConditionStep<Record>  applyStateFilters(
+        List<AbstractFilter<F>> filters,
+        SelectConditionStep<Record>  selectConditionStep) {
+
+        List<String> stateFilters = filters.stream()
+            .flatMap(descriptor -> {
+                if (descriptor.getField().equals(Executions.Fields.STATE)) {
+                    if (descriptor instanceof In inFilter) {
+                        return inFilter.getValues().stream();
+                    } else if (descriptor instanceof EqualTo equalToFilter) {
+                        return Stream.of(equalToFilter.getValue());
+                    }
+                }
+                return Stream.empty();
+            })
+            .toList();
+
+        if (!stateFilters.isEmpty()) {
+            selectConditionStep = selectConditionStep.and(
+                statesFilter(stateFilters.stream()
+                    .map(State.Type::valueOf)
+                    .toList())
+            );
+        }
+
+        List<String> stateNotFilters = filters.stream()
+            .flatMap(descriptor -> {
+                if (descriptor.getField().equals(Executions.Fields.STATE)) {
+                    if (descriptor instanceof NotIn notInFilter) {
+                        return notInFilter.getValues().stream();
+                    } else if (descriptor instanceof NotEqualTo notEqualToFilter) {
+                        return Stream.of(notEqualToFilter.getValue());
+                    }
+                }
+                return Stream.empty();
+            })
+            .toList();
+
+        if (!stateNotFilters.isEmpty()) {
+            selectConditionStep = selectConditionStep.and(
+                DSL.not(statesFilter(stateNotFilters.stream()
+                    .map(State.Type::valueOf)
+                    .toList()))
+            );
+        }
+        return selectConditionStep;
     }
 
     abstract protected Field<Date> formatDateField(String dateField, DateUtils.GroupType groupType);

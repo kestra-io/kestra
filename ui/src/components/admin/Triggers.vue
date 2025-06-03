@@ -549,4 +549,10 @@
             }
         }
     }
+
+    .el-table {
+        a {
+            color: var(--ks-content-link);
+        }
+    }
 </style>

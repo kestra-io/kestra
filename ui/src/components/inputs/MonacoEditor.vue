@@ -135,7 +135,7 @@
         creating?: boolean,
         suggestionsOnFocus?: boolean,
         readonly?: boolean,
-        noCode?: boolean,
+        largeSuggestions?: boolean,
         placeholder?: string,
     }>(), {
         path: "",
@@ -149,7 +149,7 @@
         options: undefined,
         schemaType: undefined,
         suggestionsOnFocus: false,
-        noCode: false,
+        largeSuggestions: true,
         placeholder: undefined,
     })
 
@@ -488,8 +488,8 @@
             addedNodes
         }]) => {
             const simulateResizeOnSashAndDisconnect = (resizer: HTMLElement) => {
-                // If component is created from No Code editor, we don't want to resize the suggest widget
-                if(props.noCode) return;
+                // If the prop is false, we don't want to resize the suggest widget
+                if(!props.largeSuggestions) return;
 
                 suggestWidgetResizeObserver.value?.disconnect();
                 suggestWidgetResizeObserver.value = undefined;

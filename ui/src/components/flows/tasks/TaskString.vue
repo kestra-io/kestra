@@ -19,7 +19,7 @@
             input
             :placeholder="`Your ${root || 'value'} here...`"
             @update:model-value="onInput"
-            no-code
+            :large-suggestions="false"
         />
     </template>
 </template>

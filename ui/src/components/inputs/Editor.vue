@@ -57,7 +57,7 @@
                     :schema-type="schemaType"
                     :input="input"
                     :creating="creating"
-                    :no-code="noCode"
+                    :large-suggestions="largeSuggestions"
                 />
                 <div
                     v-show="showPlaceholder"
@@ -99,7 +99,7 @@
             navbar: {type: Boolean, default: true},
             input: {type: Boolean, default: false},
             keepFocused: {type: Boolean, default: undefined},
-            noCode: {type: Boolean, default: false},
+            largeSuggestions: {type: Boolean, required: false},
             fullHeight: {type: Boolean, default: true},
             customHeight: {type: Number, default: 7},
             theme: {type: String, default: undefined},

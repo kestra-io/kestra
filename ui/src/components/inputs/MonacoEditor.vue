@@ -488,7 +488,7 @@
             addedNodes
         }]) => {
             const simulateResizeOnSashAndDisconnect = (resizer: HTMLElement) => {
-                // If the prop is false, we don't want to resize the suggest widget
+                // If the prop value is passed as false, we don't want to resize the suggest widget
                 if(!props.largeSuggestions) return;
 
                 suggestWidgetResizeObserver.value?.disconnect();

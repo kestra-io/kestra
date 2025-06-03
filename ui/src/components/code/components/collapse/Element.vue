@@ -14,7 +14,7 @@
             size="small"
             class="border-0"
         />
-        <div class="d-flex flex-column">
+        <div v-if="blockType !== 'pluginDefaults'" class="d-flex flex-column">
             <ChevronUp @click.prevent.stop="emits('moveElement', 'up')" />
             <ChevronDown @click.prevent.stop="emits('moveElement', 'down')" />
         </div>

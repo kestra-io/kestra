@@ -43,9 +43,13 @@ public record QueryFilter(
         STARTS_WITH,
         ENDS_WITH,
         CONTAINS,
-        REGEX;
+        REGEX,
+        STARTS_WITH_NAMESPACE_PREFIX
     }
 
+    private List<Object> asValues(Object value) {
+        return value instanceof String valueStr ? Arrays.asList(valueStr.split(",")) : (List<Object>) value;
+    }
 
     @SuppressWarnings("unchecked")
     public <T extends Enum<T>> AbstractFilter<T> toDashboardFilterBuilder(T field, Object value) {
@@ -63,9 +67,9 @@ public record QueryFilter(
             case LESS_THAN_OR_EQUAL_TO:
                 return LessThanOrEqualTo.<T>builder().field(field).value(value).build();
             case IN:
-                return In.<T>builder().field(field).values((List<Object>) value).build();
+                return In.<T>builder().field(field).values(asValues(value)).build();
             case NOT_IN:
-                return NotIn.<T>builder().field(field).values((List<Object>) value).build();
+                return NotIn.<T>builder().field(field).values(asValues(value)).build();
             case STARTS_WITH:
                 return StartsWith.<T>builder().field(field).value(value.toString()).build();
             case ENDS_WITH:
@@ -74,6 +78,8 @@ public record QueryFilter(
                 return Contains.<T>builder().field(field).value(value.toString()).build();
             case REGEX:
                 return Regex.<T>builder().field(field).value(value.toString()).build();
+            case STARTS_WITH_NAMESPACE_PREFIX:
+                return Regex.<T>builder().field(field).value("^" + value.toString().replace(".", "\\.") + "(?:\\..+)?$").build();
             default:
                 throw new IllegalArgumentException("Unsupported operation: " + this.operation);
         }
@@ -95,7 +101,7 @@ public record QueryFilter(
         NAMESPACE("namespace") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.STARTS_WITH_NAMESPACE_PREFIX);
             }
         },
         LABELS("labels") {

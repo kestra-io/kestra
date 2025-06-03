@@ -86,24 +86,20 @@ public class TriggerController {
 
 
     ) throws HttpStatusException {
-        // If filters is empty, map old params to QueryFilter
-        if (filters == null || filters.isEmpty()) {
-            filters = RequestUtils.mapLegacyParamsToFilters(
-                query,
-                namespace,
-                flowId,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null,
-                workerId,
-                null);
-        }
+        filters = RequestUtils.getFiltersOrDefaultToLegacyMapping(
+            filters,
+            query,
+            namespace,
+            flowId,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null,
+            workerId,
+            null);
+
         ArrayListTotal<Trigger> triggerContexts = triggerRepository.find(
             PageableUtils.from(page, size, sort, triggerRepository.sortMapping()),
             tenantService.resolveTenant(),

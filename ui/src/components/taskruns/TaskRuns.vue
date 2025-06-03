@@ -5,7 +5,7 @@
             <template #navbar>
                 <KestraFilter
                     prefix="taskruns"
-                    :domain="TaskRunFilterLanguage.domain"
+                    :language="TaskRunFilterLanguage"
                     :buttons="{
                         refresh: {shown: true, callback: () => load()},
                         settings: {shown: true, charts: {shown: true, value: showChart, callback: onShowChartChange}}

@@ -11,8 +11,14 @@ import IWordAtPosition = editor.IWordAtPosition;
 
 const legacyFilterRegex = /.*((?<=.)-)?legacy-filter/;
 export const languages = [/.*((?<=.)-)?filter/, legacyFilterRegex];
-export const COMPARATOR_CHARS = [...new Set(Object.values(Comparators).flatMap(c => c.split("")))];
-export const COMPARATORS_REGEX = "(?:(?:" + Object.values(Comparators).map(c => c.replaceAll(/./g, (match) => `\\${match}`)).join(")|(?:") + "))";
+const PER_COMPARATOR_REGEX = Object.entries(Comparators).reduce((acc, [key, value]) => {
+    acc[key] = new RegExp(value.replaceAll(/[$.*^]/g, (match) => `\\${match}`));
+    return acc;
+}, {} as Record<string, RegExp>);
+export const COMPARATORS_REGEX = "(?:" + Object.values(PER_COMPARATOR_REGEX)
+    .sort((r1, r2) => r2.source.length - r1.source.length)
+    .map(r => r.source).join("|") + ")";
+const COMPARATORS_CHARS_REGEX = "[" + [...new Set(Object.values(Comparators).join("").replaceAll("-", "\\-").split(""))].join("") + "]";
 
 let filterLanguages: FilterLanguage[];
 
@@ -20,7 +26,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
     private _filterLanguage: FilterLanguage | undefined;
     private readonly _domain: string | undefined;
     private keyCompletions: Completion[] | undefined;
-    private keyCompletionsRegex: RegExp | undefined;
+    private allKeyCompletionsRegex: RegExp | undefined;
 
     constructor(language: string, domain: string | undefined) {
         super(language);
@@ -37,51 +43,81 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
 
         this._filterLanguage = filterLanguages.find(filterLanguage => filterLanguage.domain === this._domain);
         this.keyCompletions = await this._filterLanguage?.keyCompletion();
-        this.keyCompletionsRegex = new RegExp(this.keyCompletions === undefined
+        this.allKeyCompletionsRegex = new RegExp(this.keyCompletions === undefined
             ? ""
             : (
                 "(?:" + this.keyCompletions
                     ?.map(k => k.label
                         .replaceAll(".", "\\.")
-                        .replaceAll(/\{[^}]*}/g, "(?:(?:\"[^,\"" + COMPARATOR_CHARS.join("") + "]*\")|(?:[^\\s,\"" + COMPARATOR_CHARS.join("") + "]*))"))
-                    ?.join(")|(?:") + ")"
+                        .replaceAll(/\{[^}]*}/g, "(?:\"[^,\"]*\"|[^\\s,\"]*?(?=" + COMPARATORS_REGEX + "|\\s|$))"))
+                    ?.join("|") + ")"
             ));
 
         return super.configure(store, t, editorInstance);
     }
 
     async configureLanguage(_: Store<Record<string, any>>): Promise<void> {
+        const keyLabelToRegex = (keyLabel: string) => {
+            return new RegExp(keyLabel
+                .replaceAll(".", "\\.")
+                .replaceAll(/\{[^}]*}/g, "(?:\"[^,\"]*\"|[^\\s,\"]*?(?=" + COMPARATORS_REGEX + "|\\s|$))"));
+        };
+
         if (this._filterLanguage && monaco.languages.getLanguages().find(l => l.id === this.language) === undefined) {
             monaco.languages.register({id: this.language});
+
+            const keysTokenizerCases = this.keyCompletions === undefined
+                ? {}
+                : this.keyCompletions!.reduce((acc, key) => {
+                    acc[keyLabelToRegex(key.label).source] = {
+                        token: "variable.name",
+                        next: `@${FilterLanguage.withNestedKeyPlaceholder(key.label)}-comparator`
+                    };
+
+                    return acc;
+                }, {} as Record<string, monaco.languages.IMonarchLanguageAction>);
+
+            const keysToValueTokenizer = this.keyCompletions === undefined
+                ? {} as Record<string, monaco.languages.IMonarchLanguageRule[]>
+                : Object.entries(this._filterLanguage?.comparatorsPerKey()).reduce((acc, [key, comparatorKeys]) => ({
+                        ...acc,
+                        [`${key}-comparator`]: [
+                            [
+                                new RegExp(
+                                    comparatorKeys.map(comparator => PER_COMPARATOR_REGEX[comparator].source).join("|")
+                                ),
+                                {token: "operators", next: "@value"}
+                            ],
+                            [
+                                /\S*/,
+                                {token: "@rematch", next: "@whitespace"}
+                            ]
+                        ]
+                    } as Record<string, monaco.languages.IMonarchLanguageRule[]>),
+                    {} as Record<string, monaco.languages.IMonarchLanguageRule[]>
+                );
+
             monaco.languages.setMonarchTokensProvider(this.language, {
-                operators: Object.values(Comparators),
-                symbols: new RegExp(COMPARATORS_REGEX),
+                defaultToken: "invalid",
                 includeLF: true,
                 tokenizer: {
                     root: [
-                        [/[\w\\.]+/, {
+                        [/[\w."]+/, {
                             cases: {
-                                [this.keyCompletionsRegex!.source]: {
-                                    token: "variable.name",
-                                    next: "@comparator"
-                                },
+                                ...keysTokenizerCases,
                                 "@default": {token: "@rematch", next: "@rawText"}
                             }
                         }],
-                        [/[^\w\\.]/, {token: "invalid", next: "@whitespace"}]
-                    ],
-                    comparator: [
-                        [/@symbols/, {
-                            cases: {
-                                "@operators": {token: "operators", next: "@value"}
-                            }
-                        }]
+                        [/[^\w."]/, {token: "invalid", next: "@whitespace"}]
                     ],
                     rawText: [
-                        [/\S+/, {
+                        [/"[^"]*"|\S+/, {
                             cases: {
-                                [`(?:(?!${COMPARATORS_REGEX})\\S(?!${COMPARATORS_REGEX}))*`]: {token: "variable.value", next: "@whitespace"},
-                                "@default": {token: "invalid", next: "@whitespace"}
+                                [`\\S*${COMPARATORS_REGEX}\\S*`]: {
+                                    token: "invalid",
+                                    next: "@whitespace"
+                                },
+                                "@default": {token: "variable.value", next: "@whitespace"}
                             }
                         }]
                     ],
@@ -101,10 +137,10 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                         [/\S+/, {token: "invalid"}]
                     ],
                     separator: [
-                        {include: "@whitespace"},
                         [",", {token: "comma", next: "@value"}],
-                        [/\S+/, {token: "invalid"}]
-                    ]
+                        {include: "@whitespace"},
+                    ],
+                    ...keysToValueTokenizer
                 }
             });
         }
@@ -161,52 +197,71 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
             }, {
                 triggerCharacters: [" ", "\n", ","],
                 async provideCompletionItems(model, position) {
-                    const wordAfterPosition = model.findNextMatch(
-                        "([^,\\s" + COMPARATOR_CHARS.join("") + "]*)",
-                        position,
-                        true,
-                        false,
-                        null,
-                        true
-                    );
-                    const wordAtPositionMatch = model.findPreviousMatch(
-                        "([^,\\s" + COMPARATOR_CHARS.join("") + "]*)$",
-                        position.with(undefined, wordAfterPosition?.range.endColumn),
-                        true,
-                        false,
-                        null,
-                        true
-                    );
-
-                    let wordAtPosition: IWordAtPosition & Partial<IRange> = {
-                        word: wordAtPositionMatch?.matches?.[1] ?? "",
-                        startColumn: wordAtPositionMatch?.range?.startColumn ?? position.column,
-                        endColumn: wordAtPositionMatch?.range?.endColumn ?? position.column
-                    };
-
                     const modelValue = model.getValue();
                     const offset = model.getOffsetAt(position);
-                    const previousChar = modelValue.charAt(offset - 1);
                     const inQuotedString = modelValue.substring(0, offset).split("\"").length % 2 === 0;
 
-                    if (inQuotedString) {
-                        const previousQuote = model.findPreviousMatch("\"", position, false, false, null, true)?.range;
-                        wordAtPosition = {
-                            ...wordAtPosition,
-                            startLineNumber: previousQuote?.startLineNumber ?? wordAtPosition.startLineNumber,
-                            startColumn: previousQuote?.startColumn ?? wordAtPosition.startColumn
-                        };
-                    }
-
-                    if (offset === 0 || (SEPARATOR_CHARS.includes(previousChar) && !inQuotedString)) {
-                        const comparatorsAfterCurrentWord = model.findNextMatch(
-                            "(" + COMPARATORS_REGEX + ")",
-                            position.with(undefined, wordAtPosition.endColumn),
+                    const wordAfterPositionMatcher = (partialComparatorMatch: boolean) => {
+                        return model.findNextMatch(
+                            (inQuotedString ? "[^\"]*\"?" : `(?:(?!${COMPARATORS_REGEX})[^,\\s])+?(?=${COMPARATORS_REGEX})${partialComparatorMatch ? `|${COMPARATORS_CHARS_REGEX}+` : ""}|[^,\\s]*`),
+                            position,
                             true,
                             false,
                             null,
                             true
                         );
+                    };
+
+                    let wordAfterPositionMatch = wordAfterPositionMatcher(true);
+
+                    const wordAtPositionMatcher = (position: IPosition) => {
+                        return model.findPreviousMatch(
+                            "(?:" + (inQuotedString
+                                ? "(\"[^\"]*\"?)"
+                                : `[^,\\s]*?(${COMPARATORS_REGEX})([^,\\s]*)|([^,\\s]*)`)
+                            + ")$",
+                            position,
+                            true,
+                            false,
+                            null,
+                            true
+                        )!;
+                    };
+
+                    let wordAtPositionMatch = wordAtPositionMatcher(position.with(undefined, wordAfterPositionMatch?.range.endColumn));
+                    const lastWordIsComparator = inQuotedString ? false : ((wordAtPositionMatch?.matches?.[2]?.length ?? 0) == 0 && (wordAtPositionMatch?.matches?.[3]?.length ?? 0) == 0);
+                    if (lastWordIsComparator) {
+                        if ((wordAfterPositionMatch?.matches?.[0]?.length ?? 0) > 0) {
+                            wordAtPositionMatch = wordAtPositionMatcher(position.with(undefined, wordAtPositionMatch.range.endColumn - (wordAtPositionMatch.matches?.[1]?.length ?? 0)));
+                        } else {
+                            wordAtPositionMatch = wordAfterPositionMatch!;
+                        }
+                    } else {
+                        wordAfterPositionMatch = wordAfterPositionMatcher(false);
+                        wordAtPositionMatch = wordAtPositionMatcher(position.with(undefined, wordAfterPositionMatch?.range.endColumn));
+                    }
+
+                    const endColumn = wordAtPositionMatch?.range?.endColumn ?? position.column;
+                    const wordMatch = wordAtPositionMatch?.matches?.[3] ?? (wordAtPositionMatch?.matches?.[2]?.length === 0 ? wordAtPositionMatch?.matches?.[1] : wordAtPositionMatch?.matches?.[2]) ?? "";
+                    const wordAtPosition: IWordAtPosition & Partial<IRange> = {
+                        word: wordMatch,
+                        startColumn: endColumn - wordMatch.length,
+                        endColumn: endColumn
+                    };
+
+                    const previousChar = modelValue.charAt(offset - 1);
+
+                    const comparatorsAfterCurrentWord = model.findNextMatch(
+                        "(" + COMPARATORS_REGEX + ")?[\\s\\S]*$",
+                        position.column === wordAtPosition.startColumn ? position : position.with(undefined, wordAtPosition.endColumn),
+                        true,
+                        false,
+                        null,
+                        true
+                    );
+                    if (offset === 0
+                        || (SEPARATOR_CHARS.includes(previousChar) && !inQuotedString)
+                        || (!lastWordIsComparator && comparatorsAfterCurrentWord?.matches?.[1] !== undefined)) {
                         return TO_SUGGESTIONS(
                             position,
                             {
@@ -217,8 +272,8 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                         );
                     }
 
-                    if (wordAtPosition.word.match(filterLanguageConfiguratorInstance.keyCompletionsRegex!) && position.column === wordAtPosition.endColumn) {
-                        if (previousChar === ".") {
+                    if (wordAtPosition.word.match(new RegExp("^" + filterLanguageConfiguratorInstance.allKeyCompletionsRegex!.source + "$"))) {
+                        if (previousChar === "." && !lastWordIsComparator) {
                             return TO_SUGGESTIONS(
                                 position,
                                 {
@@ -233,75 +288,60 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                         const comparatorCompletions = await filterLanguage.comparatorCompletion(wordAtPosition.word);
                         return TO_SUGGESTIONS(
                             position,
-                            {word: "", startColumn: wordAtPosition.endColumn, endColumn: wordAtPosition.endColumn},
+                            {
+                                word: "",
+                                startColumn: wordAtPosition.endColumn,
+                                endColumn: lastWordIsComparator ? wordAfterPositionMatch!.range.endColumn : wordAtPosition.endColumn
+                            },
                             filterLanguageConfiguratorInstance.isLegacy() ? [comparatorCompletions[0]] : comparatorCompletions
                         );
                     }
 
-                    const previousColumn = wordAtPosition.startColumn;
-                    const beforeWordPosition = previousColumn > 0
-                        ? position.with(undefined, previousColumn)
-                        : undefined;
-                    const charBeforeCurrentWord = beforeWordPosition === undefined ? "" : modelValue.charAt(model.getOffsetAt(beforeWordPosition) - 1);
+                    const currentFilterMatch = model.findPreviousMatch(
+                        "(" + filterLanguageConfiguratorInstance.allKeyCompletionsRegex?.source + ")" +
+                        "(" + COMPARATORS_REGEX + ")?" +
+                        "(\"[^\"]*\"?|[^\\s\"]*)$",
+                        position.with(undefined, wordAtPosition.endColumn),
+                        true,
+                        false,
+                        null,
+                        true
+                    );
 
-                    if (
-                        COMPARATOR_CHARS.includes(previousChar)
-                        || (
-                            charBeforeCurrentWord !== undefined && (
-                                COMPARATOR_CHARS.includes(charBeforeCurrentWord)
-                                || charBeforeCurrentWord === ","
-                            )
-                        ) || inQuotedString
-                    ) {
-                        const currentFilterMatch = model.findPreviousMatch(
-                            "(" + filterLanguageConfiguratorInstance.keyCompletionsRegex?.source + ")" +
-                            "([" + COMPARATOR_CHARS.join("") + "]+)" +
-                            "((?:\"[^\"]*\"?)|(?:[^\\s\"]*))$",
-                            beforeWordPosition ?? position.with(undefined, wordAtPosition.startColumn),
-                            true,
-                            false,
-                            null,
-                            true
-                        );
+                    if (currentFilterMatch === null) {
+                        return TO_SUGGESTIONS(position, wordAtPosition, await KEY_COMPLETIONS);
+                    } else {
+                        const [, key, comparator, commaSeparatedValues] = currentFilterMatch?.matches ?? [];
 
-                        if (currentFilterMatch !== null) {
-                            const [, key, comparator, commaSeparatedValues] = currentFilterMatch?.matches ?? [];
-
-                            if (key !== undefined) {
-                                const valueCompletions = await filterLanguage.valueCompletion(
-                                    store,
-                                    hardcodedValues,
-                                    key
-                                );
-                                if (Array.isArray(valueCompletions)) {
-                                    const filledValues = commaSeparatedValues === undefined ? [] : commaSeparatedValues.split(",");
-                                    const remainingCompletions = valueCompletions
-                                        .filter(completion => !filledValues.includes(completion.value) && !filledValues.includes("\"" + completion.value + "\""));
-                                    const completions = remainingCompletions
-                                        .map(({label, value}) => new Completion(
-                                            label,
-                                            value +
-                                            (
-                                                ([Comparators.EQUALS, Comparators.NOT_EQUALS] as string[]).includes(comparator)
-                                                && remainingCompletions.length > 1
-                                                && filterLanguage.multipleValuesAllowed(key)
-                                                    ? ","
-                                                    : value.includes("${1") ? "" : " "
-                                            ))
-                                        );
-                                    return TO_SUGGESTIONS(position, wordAtPosition, completions);
-                                } else if (valueCompletions === PICK_DATE_VALUE) {
-                                    return TO_SUGGESTIONS(position, wordAtPosition, [new Completion("_DATE_PICKER_", "_DATE_PICKER_")]);
-                                }
+                        if (key !== undefined) {
+                            const valueCompletions = await filterLanguage.valueCompletion(
+                                store,
+                                hardcodedValues,
+                                key
+                            );
+                            if (Array.isArray(valueCompletions)) {
+                                const filledValues = commaSeparatedValues === undefined ? [] : commaSeparatedValues.split(",");
+                                const remainingCompletions = valueCompletions
+                                    .filter(completion => !filledValues.includes(completion.value) && !filledValues.includes("\"" + completion.value + "\""));
+                                const completions = remainingCompletions
+                                    .map(({label, value}) => new Completion(
+                                        label,
+                                        value +
+                                        (
+                                            ([Comparators.EQUALS, Comparators.NOT_EQUALS] as string[]).includes(comparator)
+                                            && remainingCompletions.length > 1
+                                            && filterLanguage.multipleValuesAllowed(key)
+                                                ? ","
+                                                : value.includes("${1") ? "" : " "
+                                        ))
+                                    );
+                                return TO_SUGGESTIONS(position, wordAtPosition, completions);
+                            } else if (valueCompletions === PICK_DATE_VALUE) {
+                                return TO_SUGGESTIONS(position, wordAtPosition, [new Completion("_DATE_PICKER_", "_DATE_PICKER_")]);
                             }
                         }
-                    } else {
-                        return TO_SUGGESTIONS(position, wordAtPosition, await KEY_COMPLETIONS);
                     }
-
-                    return TO_SUGGESTIONS(position, wordAtPosition, await KEY_COMPLETIONS);
                 }
-            })
-        ];
+            })];
     }
 }

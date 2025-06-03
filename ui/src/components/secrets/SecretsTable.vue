@@ -91,7 +91,7 @@
                     />
                 </el-form-item>
                 <el-form-item :label="$t('secret.key')" prop="key">
-                    <el-input v-model="secret.key" :readonly="secret.update" required />
+                    <el-input v-model="secret.key" :disabled="secret.update" required />
                 </el-form-item>
                 <el-form-item v-if="!secret.update" :label="$t('secret.name')" prop="value">
                     <MultilineSecret v-model="secret.value" :placeholder="secretModalTitle" />
@@ -125,7 +125,6 @@
                             <el-button
                                 :icon="Delete"
                                 @click="removeSecretTag(index)"
-                                :disabled="secret.tags.length === 1"
                             />
                         </el-button-group>
                     </el-row>

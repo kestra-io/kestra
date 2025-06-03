@@ -115,10 +115,12 @@ public class DateUtils {
     }
 
     private static boolean isEndDateFilter(QueryFilter filter) {
-        return filter.operation().equals(QueryFilter.Op.LESS_THAN) && filter.field().equals(QueryFilter.Field.END_DATE);
+        return (filter.operation().equals(QueryFilter.Op.LESS_THAN) && filter.field().equals(QueryFilter.Field.END_DATE))
+            || (filter.operation().equals(QueryFilter.Op.LESS_THAN_OR_EQUAL_TO) && filter.field().equals(QueryFilter.Field.END_DATE));
     }
 
     private static boolean isStartDateFilter(QueryFilter filter) {
-        return filter.operation().equals(QueryFilter.Op.GREATER_THAN) && filter.field().equals(QueryFilter.Field.START_DATE);
+        return (filter.operation().equals(QueryFilter.Op.GREATER_THAN) && filter.field().equals(QueryFilter.Field.START_DATE))
+            || (filter.operation().equals(QueryFilter.Op.GREATER_THAN_OR_EQUAL_TO) && filter.field().equals(QueryFilter.Field.START_DATE));
     }
 }

@@ -124,7 +124,14 @@
                 this.newInputs.push({type: "STRING"});
             },
             onChangeType(type) {
-                this.newInputs[this.selectedIndex].type = type;
+                // Resetting the selected input if the type changes, but keeping the ID if it exists
+                const id = this.selectedInput?.id || undefined;
+
+                this.selectedInput = {...(id ? {id} : {}), type};
+                this.newInputs[this.selectedIndex] = {...(id ? {id} : {}), type};
+
+                this.$emit("update:modelValue", [...this.newInputs]);
+
                 this.loadSchema(type);
             },
         },

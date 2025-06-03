@@ -254,12 +254,17 @@ public abstract class AbstractJdbcRepository {
         return select;
     }
 
+    /**
+     *
+     * @param dateColumn the JDBC column name of the logical date to filter on with {@link io.kestra.core.models.QueryFilter.Field#START_DATE} and/or {@link QueryFilter.Field#END_DATE}
+     */
     protected <T extends Record> SelectConditionStep<T> getConditionOnField(
         SelectConditionStep<T> select,
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation,
-        String dateColumn) {
+        @Nullable String dateColumn
+    ) {
         if (field.equals(QueryFilter.Field.QUERY)) {
             return select;
         }
@@ -279,6 +284,9 @@ public abstract class AbstractJdbcRepository {
 
         // Special handling for START_DATE and END_DATE
         if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE) {
+            if(dateColumn == null){
+                throw new IllegalArgumentException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
+            }
             OffsetDateTime dateTime = (value instanceof ZonedDateTime)
                 ? ((ZonedDateTime) value).toOffsetDateTime()
                 : ZonedDateTime.parse(value.toString()).toOffsetDateTime();
@@ -287,9 +295,6 @@ public abstract class AbstractJdbcRepository {
 
         if (field == QueryFilter.Field.SCOPE) {
             return applyScopeCondition(select, value, operation);
-        }
-        if (field == QueryFilter.Field.NAMESPACE) {
-            return applyNamespaceCondition(select, value, operation);
         }
 
         // Convert the field name to lowercase and quote it
@@ -320,37 +325,11 @@ public abstract class AbstractJdbcRepository {
             case ENDS_WITH -> select = select.and(DSL.field(columnName).like("%" + value));
             case CONTAINS -> select = select.and(DSL.field(columnName).like("%" + value + "%"));
             case REGEX -> select = select.and(DSL.field(columnName).likeRegex((String) value));
+            case STARTS_WITH_NAMESPACE_PREFIX -> select = select.and(
+                    DSL.field(columnName).like(value + ".%")
+                    .or(DSL.field(columnName).eq(value))
+                );
             default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
-        }
-        return select;
-    }
-
-    private <T extends Record> SelectConditionStep<T> applyNamespaceCondition(SelectConditionStep<T> select, Object value, QueryFilter.Op operation) {
-        switch (operation) {
-            case EQUALS -> select = select.and(DSL.lower(NAMESPACE_FIELD).eq(DSL.lower((String) value)));
-            case NOT_EQUALS -> select = select.and(NAMESPACE_FIELD.ne((String) value));
-            case CONTAINS -> select = select.and(NAMESPACE_FIELD.eq((String) value)
-                .or(NAMESPACE_FIELD.like("%" + value + "%")));
-            case STARTS_WITH -> select = select.and(NAMESPACE_FIELD.like(value + ".%")
-                .or(NAMESPACE_FIELD.eq((String) value)));
-            case ENDS_WITH -> select = select.and(NAMESPACE_FIELD.like("%." + value));
-            case IN -> {
-                if (value instanceof Collection<?> values) {
-                    select = select.and(NAMESPACE_FIELD.in(values.stream()
-                        .map(String.class::cast)
-                        .toList()));
-                }
-            }
-            case NOT_IN -> {
-                if (value instanceof Collection<?> values) {
-                    select = select.and(NAMESPACE_FIELD.notIn(values.stream()
-                        .map(String.class::cast)
-                        .toList()));
-                }
-            }
-            case REGEX -> select = select.and(NAMESPACE_FIELD.likeRegex((String) value));
-            default ->
-                throw new UnsupportedOperationException("Unsupported operation '%s' for field 'namespace'.".formatted(operation));
         }
         return select;
     }

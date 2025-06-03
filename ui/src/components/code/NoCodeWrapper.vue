@@ -12,7 +12,7 @@
             @reorder="(yaml) => handleReorder(yaml)"
             @create-task="(blockType, parentPath, refPath) => emit('createTask', blockType, parentPath, refPath, 'after')"
             @close-task="() => emit('closeTask')"
-            @edit-task="(blockType, parentPath, refPath, position) => emit('editTask', blockType, parentPath, refPath, position)"
+            @edit-task="(blockType, parentPath, refPath) => emit('editTask', blockType, parentPath, refPath)"
         />
     </div>
 </template>

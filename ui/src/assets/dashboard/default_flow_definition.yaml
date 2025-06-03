@@ -182,9 +182,12 @@ charts:
     data:
       type: io.kestra.plugin.core.dashboard.data.Triggers
       columns:
+        namespace:
+          field: NAMESPACE
+          displayName: Namespace
         flowId:
           field: FLOW_ID
-          displayName: Flow ID
+          displayName: Flow
         nextExec:
           field: NEXT_EXECUTION_DATE
           displayName: Next Execution Date

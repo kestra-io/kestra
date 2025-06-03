@@ -23,7 +23,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onActivated, onMounted, ref, provide} from "vue";
+    import {computed, onActivated, onMounted, ref, provide, onBeforeUnmount} from "vue";
     import {useStore} from "vuex";
     import Editor from "./Editor.vue";
     import KeyShortcuts from "./KeyShortcuts.vue";
@@ -76,11 +76,16 @@
     }
 
     onMounted(() => {
-        loadFile()
+        loadFile();
+        window.addEventListener("keydown", handleGlobalSave);
     });
 
     onActivated(() => {
-        loadFile()
+        loadFile();
+    });
+
+    onBeforeUnmount(() => {
+        window.removeEventListener("keydown", handleGlobalSave);
     });
 
     const editorDomElement = ref<any>(null);
@@ -153,6 +158,17 @@
             dirty: false
         });
     }
+
+    const handleGlobalSave = (event: KeyboardEvent) => {
+        if ((event.ctrlKey || event.metaKey) && event.key === "s") {
+            event.preventDefault();
+            if (isCurrentTabFlow.value) {
+                save();
+            } else {
+                saveFileContent();
+            }
+        }
+    };
 
     const execute = () => {
         store.commit("flow/executeFlow", true);

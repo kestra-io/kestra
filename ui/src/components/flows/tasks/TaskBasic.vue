@@ -20,7 +20,7 @@
                     }}
                 </span>
                 <el-tag disable-transitions size="small" class="ms-2 type-tag">
-                    {{ getType(schema, key) }}
+                    {{ getTaskComponent(schema, key, properties).ksTaskName }}
                 </el-tag>
                 <el-tooltip
                     v-if="hasTooltip(schema)"
@@ -38,7 +38,7 @@
                 </el-tooltip>
             </template>
             <component
-                :is="`task-${getType(schema)}`"
+                :is="getTaskComponent(schema, key, properties)"
                 :model-value="getPropertiesValue(key)"
                 @update:model-value="onObjectInput(key, $event)"
                 :root="getKey(key)"
@@ -50,23 +50,18 @@
         </el-form-item>
     </el-form>
 </template>
-
-<script>
-    import Task from "./Task";
-    import Information from "vue-material-design-icons/InformationOutline.vue";
+<script setup>
+    import getTaskComponent from "./getTaskComponent";
     import Help from "vue-material-design-icons/HelpBox.vue";
     import Kicon from "../../Kicon.vue";
     import Markdown from "../../layout/Markdown.vue";
+</script>
+<script>
+    import Task from "./Task";
 
     export default {
         name: "TaskBasic",
         mixins: [Task],
-        components: {
-            Information,
-            Help,
-            Kicon,
-            Markdown,
-        },
         emits: ["update:modelValue"],
         computed: {
             properties() {

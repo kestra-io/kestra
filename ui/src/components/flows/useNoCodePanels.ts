@@ -1,11 +1,14 @@
-import {h, markRaw, Ref} from "vue"
+import {defineAsyncComponent, h, markRaw, Ref, Suspense} from "vue"
+import {useStore} from "vuex";
 import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import type {Panel, Tab} from "../MultiPanelTabs.vue";
-import NoCodeWrapper, {NoCodeProps} from "../code/NoCodeWrapper.vue";
 import {BlockType} from "../code/utils/types";
-import {useStore} from "vuex";
+
+import type {NoCodeProps} from "../code/NoCodeWrapper.vue";
+
+const NoCodeWrapper = markRaw(defineAsyncComponent(() => import("../code/NoCodeWrapper.vue")))
 
 
 const NOCODE_PREFIX = "nocode"
@@ -95,13 +98,15 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
         component: markRaw({
             name: "NoCodeTab",
             props: ["panelIndex", "tabIndex"],
-            setup: (props: Opener) => () => h(NoCodeWrapper, {
-                ...restOfTab,
-                creatingTask: tab.action === "create",
-                onCloseTask: onCloseTask?.bind({}, props),
-                onCreateTask: onCreateTask?.bind({}, props) as any,
-                onEditTask: onEditTask?.bind({}, props) as any,
-            })
+            setup: (props: Opener) => () => h(Suspense, {},
+                [h(NoCodeWrapper, {
+                    ...restOfTab,
+                    creatingTask: tab.action === "create",
+                    onCloseTask: onCloseTask?.bind({}, props),
+                    onCreateTask: onCreateTask?.bind({}, props) as any,
+                    onEditTask: onEditTask?.bind({}, props) as any,
+                })]
+            )
         }),
     }
 }

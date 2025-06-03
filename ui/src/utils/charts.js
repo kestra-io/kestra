@@ -1,7 +1,7 @@
 import _merge from "lodash/merge";
 import Utils from "./utils";
 import {cssVariable, State} from "@kestra-io/ui-libs";
-import {getScheme} from "./scheme";
+import {getSchemeValue} from "./scheme";
 
 export function tooltip(tooltipModel) {
     const titleLines = tooltipModel.title || [];
@@ -191,12 +191,12 @@ export function getConsistentHEXColor(theme, value) {
 
     let hex;
 
-    hex = getScheme(theme, value, "executions");
+    hex = getSchemeValue(value, "executions");
     if (hex) {
         return hex;
     }
 
-    hex = getScheme(theme, value, "logs");
+    hex = getSchemeValue(value, "logs");
     if (hex) {
         return hex;
     }

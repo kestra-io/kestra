@@ -54,11 +54,14 @@
     </el-form>
 </template>
 
-<script>
-    import Task from "./Task";
+<script setup>
     import TaskDict from "./TaskDict.vue";
     import TaskWrapper from "./TaskWrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
+</script>
+
+<script>
+    import Task from "./Task";
 
     function sortProperties(properties, required) {
         if (!properties) {
@@ -103,11 +106,6 @@
         inheritAttrs: false,
         name: "TaskObject",
         mixins: [Task],
-        components: {
-            TaskDict,
-            TaskWrapper,
-            TaskObjectField,
-        },
         props: {
             properties: {
                 type: Object,

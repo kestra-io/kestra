@@ -9,9 +9,12 @@
     />
 </template>
 
+<script setup>
+    import TaskObject from "./TaskObject.vue";
+</script>
+
 <script>
     import Task from "./Task";
-    import TaskObject from "./TaskObject.vue";
 
     import {
         BREADCRUMB_INJECTION_KEY,
@@ -24,7 +27,6 @@
             panel: {from: PANEL_INJECTION_KEY},
             breadcrumbs: {from: BREADCRUMB_INJECTION_KEY},
         },
-        components: {TaskObject},
         computed: {
             computedProperties() {
                 const type = this.schema.$ref.split("/").pop();

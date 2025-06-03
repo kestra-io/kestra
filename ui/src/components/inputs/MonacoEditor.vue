@@ -56,6 +56,7 @@
     import {Moment} from "moment";
     import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget.ts";
     import ICodeEditor = editor.ICodeEditor;
+    import {hashCode} from "../../utils/global.ts";
 
     const store = useStore();
     const currentInstance = getCurrentInstance()!;
@@ -162,7 +163,7 @@
             return props.theme;
         }
 
-        return JSON.stringify(props.theme).hashCode();
+        return hashCode(JSON.stringify(props.theme));
     });
 
     if (typeof props.theme === "object") {

@@ -46,7 +46,7 @@
         <component
             v-if="!isBoolean"
             ref="taskComponent"
-            :is="`task-${type}`"
+            :is="type"
             v-bind="{...componentProps}"
             class="mt-1 mb-2 wrapper"
         />
@@ -57,10 +57,10 @@
     import Help from "vue-material-design-icons/Information.vue";
     import Markdown from "../../layout/Markdown.vue";
     import TaskLabelWithBoolean from "./TaskLabelWithBoolean.vue";
-    import {getType} from "./Task";
     import {computed} from "vue";
     import {templateRef} from "@vueuse/core";
     import ClearButton from "./ClearButton.vue";
+    import getTaskComponent from "./getTaskComponent";
 
     const props = defineProps<{
         schema: any;
@@ -117,11 +117,11 @@
     })
 
     const simpleType = computed(() => {
-        return getType(props.schema);
+        return type.value.ksTaskName;
     })
 
     const type = computed(() => {
-        return getType(props.schema, props.fieldKey, props.definitions)
+        return getTaskComponent(props.schema, props.fieldKey, props.definitions)
     })
 </script>
 

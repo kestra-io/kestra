@@ -77,12 +77,18 @@
         const updatedProperties = schemaProp.value?.properties;
         if(isPluginDefaults.value){
             updatedProperties["id"] = undefined
-            updatedProperties["forced"] = {type: "boolean", $required: true};
+            updatedProperties["forced"] = {
+                type: "boolean",
+                $required: true
+            };
 
             return updatedProperties;
         }
         if(!updatedProperties?.id && ["triggers", "tasks"].includes(blockType ?? "")){
-            updatedProperties["id"] = {type: "string", $required: true};
+            updatedProperties["id"] = {
+                type: "string",
+                $required: true
+            };
         }
         return updatedProperties
     });

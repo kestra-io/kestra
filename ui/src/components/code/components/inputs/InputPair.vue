@@ -1,6 +1,6 @@
 <template>
     <span v-if="required" class="me-1 text-danger">*</span>
-    <span class="label">{{ label }}</span>
+    <span v-if="label" class="label">{{ label }}</span>
     <div class="mt-1 mb-2 w-100 wrapper">
         <el-row
             v-for="(value, key, index) in props.modelValue"
@@ -42,13 +42,18 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
+    defineOptions({
+        name: "InputPair",
+        inheritAttrs: false,
+    });
+
     const emits = defineEmits(["update:modelValue"]);
     const props = defineProps({
         modelValue: {
-            type: Object as PropType<PairField["value"][]>,
+            type: Object as PropType<PairField["value"]>,
             default: undefined,
         },
-        label: {type: String, required: true},
+        label: {type: String, default: undefined},
         property: {type: String, default: undefined},
         required: {type: Boolean, default: false},
     });

@@ -97,16 +97,18 @@ class JsonSchemaGeneratorTest {
             assertThat(items.containsKey("anyOf"), is(true));
             assertThat(items.containsKey("oneOf"), is(false));
 
-            var bash = definitions.get(Log.class.getName());
-            assertThat((List<String>) bash.get("required"), not(contains("level")));
-            assertThat((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("level").get("markdownDescription"), containsString("Default value is : `INFO`"));
-            assertThat(((String) ((Map<String, Map<String, Object>>) bash.get("properties")).get("message").get("markdownDescription")).contains("can be a string"), is(true));
-            assertThat(((Map<String, Map<String, Object>>) bash.get("properties")).get("type").containsKey("pattern"), is(false));
-            assertThat((String) bash.get("markdownDescription"), containsString("##### Examples"));
-            assertThat((String) bash.get("markdownDescription"), containsString("level: DEBUG"));
+            var log = definitions.get(Log.class.getName());
+            assertThat((List<String>) log.get("required"), not(contains("level")));
+            assertThat((String) ((Map<String, Map<String, Object>>) log.get("properties")).get("level").get("markdownDescription"), containsString("Default value is : `INFO`"));
+            assertThat(((String) ((Map<String, Map<String, Object>>) log.get("properties")).get("message").get("markdownDescription")).contains("can be a string"), is(true));
+            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("type").containsKey("pattern"), is(false));
+            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("description").get("$group"), is(PluginProperty.CORE_GROUP));
+            assertThat(((Map<String, Map<String, Object>>) log.get("properties")).get("level").containsKey("$group"), is(false));
+            assertThat((String) log.get("markdownDescription"), containsString("##### Examples"));
+            assertThat((String) log.get("markdownDescription"), containsString("level: DEBUG"));
 
-            var bashType = definitions.get(Log.class.getName());
-            assertThat(bashType, is(notNullValue()));
+            var logType = definitions.get(Log.class.getName());
+            assertThat(logType, is(notNullValue()));
 
             var requiredWithDefault = definitions.get("io.kestra.core.docs.JsonSchemaGeneratorTest-RequiredWithDefault");
             assertThat(requiredWithDefault, is(notNullValue()));

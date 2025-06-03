@@ -40,8 +40,7 @@ public interface IExecutions extends IData<IExecutions.Fields> {
                 });
             }
 
-            List<QueryFilter
-                > stateFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.STATE)).toList();
+            List<QueryFilter> stateFilters = filters.stream().filter(f -> f.field().equals(QueryFilter.Field.STATE)).toList();
             if (!stateFilters.isEmpty()) {
                 updatedWhere.removeIf(filter -> filter.getField().equals(Fields.STATE));
                 stateFilters.forEach(f -> {

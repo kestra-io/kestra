@@ -321,7 +321,7 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
                     .where(this.defaultFilter(tenantId))
                     .and(this.fullTextCondition(query));
 
-                filter(select, filters, "next_execution_date");
+                select = filter(select, filters, "next_execution_date");
                 // Return paginated results
                 return this.jdbcRepository.fetchPage(context, select, pageable);
             });
@@ -360,26 +360,24 @@ public abstract class AbstractJdbcTriggerRepository extends AbstractJdbcReposito
 
     /** {@inheritDoc} */
     @Override
-    public Flux<Trigger> find(String query, String tenantId, String namespace) {
+    public Flux<Trigger> find(String tenantId, List<QueryFilter> filters) {
         return Flux.create(
             emitter -> this.jdbcRepository
                 .getDslContextWrapper()
                 .transaction(configuration -> {
                     DSLContext context = DSL.using(configuration);
+                    // extract Query field from the filters list
+                    String query = getQuery(filters);
 
-                    var select = context
-                        .select(
-                            field("value")
-                        )
+                    // Base query with table and DSL fields
+                    SelectConditionStep<?> select = context
+                        .select(field("value"))
                         .hint(context.configuration().dialect().supports(SQLDialect.MYSQL) ? "SQL_CALC_FOUND_ROWS" : null)
                         .from(this.jdbcRepository.getTable())
-                        .where(this.defaultFilter(tenantId));
-                    if (namespace != null) {
-                        select =  select.and(DSL.or(NAMESPACE_FIELD.eq(namespace), NAMESPACE_FIELD.likeIgnoreCase(namespace + ".%")));
-                    }
-                    if (query != null) {
-                        select = select.and(this.fullTextCondition(query));
-                    }
+                        .where(this.defaultFilter(tenantId))
+                        .and(this.fullTextCondition(query));
+
+                    select = filter(select, filters, "next_execution_date");
 
                     select.fetch()
                     .map(this.jdbcRepository::map)

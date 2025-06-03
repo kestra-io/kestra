@@ -169,7 +169,7 @@
 
             data.value = await store.dispatch("dashboard/chartPreview", {
                 chart: props.chart.content,
-                globalFilter: {filters: props.defaultFilters.concat(decodedParams?? [])},
+                globalFilter: {...params, filters: props.defaultFilters.concat(decodedParams?? [])},
             });
         }
     };

@@ -103,23 +103,23 @@ export default {
             const currentTab = rootState.editor.current;
 
             if (currentIsFlow) {
-                if (
-                    flowParsed &&
-                    !state.isCreating &&
-                    (getters.id !== flowParsed.id ||
-                        getters.namespace !== flowParsed.namespace)
-                ) {
-                    dispatch("core/showMessage", {
-                        variant: "error",
-                        title: this.$i18n.t("readonly property"),
-                        message: this.$i18n.t("namespace and id readonly"),
-                    }, {root: true});
-                    commit("setFlowYaml", YAML_UTILS.replaceIdAndNamespace(
-                        source,
-                        getters.id,
-                        getters.namespace
-                    ));
-                    return;
+                if (!state.isCreating){
+                    if(!source.trim()?.length ||
+                        (flowParsed &&
+                        (getters.id !== flowParsed.id ||
+                            getters.namespace !== flowParsed.namespace)))
+                        {
+                        dispatch("core/showMessage", {
+                            variant: "error",
+                            title: this.$i18n.t("readonly property"),
+                            message: this.$i18n.t("namespace and id readonly"),
+                        }, {root: true});
+                        commit("setFlowYaml", YAML_UTILS.replaceIdAndNamespace(
+                            source,
+                            getters.id,
+                            getters.namespace
+                        ));
+                    }
                 }
             }
 
@@ -737,16 +737,11 @@ export default {
                 const createOrUpdateKey = state.isCreating ? "create" : "update";
                 return "outdated revision save confirmation." + createOrUpdateKey;
         },
-        outdatedMessage(_, getters){
-            return `${this.$i18n.t(getters.baseOutdatedTranslationKey + ".description")} ${this.$i18n.t(
-                getters.baseOutdatedTranslationKey + ".details"
-            )}`;
-        },
         flowErrors(state, getters){
             if (getters.isFlow) {
                 const flowExistsError =
                     state.flowValidation?.outdated && state.isCreating
-                        ? [getters.outdatedMessage]
+                        ? [`>>>>${getters.baseOutdatedTranslationKey}`] // because translating is impossible here
                         : [];
 
                 const constraintsError =

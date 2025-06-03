@@ -51,6 +51,10 @@
                 type: Boolean,
                 default: false,
             },
+            all: {
+                type: Boolean,
+                default: false,
+            }
         },
         emits: ["update:modelValue"],
         created() {
@@ -61,20 +65,7 @@
                     action.READ,
                 )
             ) {
-                this.$store
-                    .dispatch("namespace/loadNamespacesForDatatype", {
-                        dataType: this.dataType,
-                    })
-                    .then(() => {
-                        this.groupedNamespaces = this.groupNamespaces(
-                            this.datatypeNamespaces,
-                        ).filter(
-                            (namespace) =>
-                                this.includeSystemNamespace ||
-                                namespace.code !==
-                                (this.configs?.systemNamespace || "system"),
-                        );
-                    });
+                this.load();
             }
         },
         computed: {
@@ -85,11 +76,14 @@
         data() {
             return {
                 groupedNamespaces: [],
+                localNamespaceInput: "",
             };
         },
         methods: {
             onInput(value) {
                 this.$emit("update:modelValue", value);
+                this.localNamespaceInput = value;
+                this.load();
             },
             groupNamespaces(namespaces) {
                 let res = [];
@@ -122,6 +116,39 @@
                     (ns) => namespaces.includes(ns.code) || this.isFilter,
                 );
             },
+            load() {
+                this.$store
+                    .dispatch("namespace/loadNamespacesForDatatype", {
+                        dataType: this.dataType
+                    })
+                    .then(() => {
+                        this.groupedNamespaces = this.groupNamespaces(
+                            this.datatypeNamespaces
+                        ).filter(
+                            (namespace) =>
+                                this.includeSystemNamespace ||
+                                namespace.code !==
+                                (this.configs?.systemNamespace || "system")
+                        );
+                    });
+                if (this.all) {
+                    // Then include datatype namespaces + all from namespaces tables
+                    this.$store.dispatch("namespace/autocomplete" + (this.value ? "?q=" + this.value : "")).then(namespaces => {
+                        const concatNamespaces = this.groupedNamespaces.concat(this.groupNamespaces(
+                            namespaces
+                        ).filter(
+                            (namespace) =>
+                                this.includeSystemNamespace ||
+                                namespace.code !==
+                                (this.configs?.systemNamespace || "system")
+                        ));
+                        // Remove duplicates after merge
+                        this.groupedNamespaces = _uniqBy(concatNamespaces, "code").filter(
+                            (ns) => namespaces.includes(ns.code) || this.isFilter,
+                        ).sort((a,b) => a.code > b.code)
+                    })
+                }
+            }
         },
     };
 </script>

@@ -42,6 +42,7 @@
     import ValidationError from "../flows/ValidationError.vue";
 
     import localUtils from "../../utils/utils";
+    import {useFlowOutdatedErrors} from "./flowOutdatedErrors";
 
     const {t} = useI18n();
 
@@ -55,11 +56,13 @@
     const route = useRoute()
     const routeParams = computed(() => route.params)
 
+    const {translateError, translateErrorWithKey} = useFlowOutdatedErrors();
+
     const isCreating = computed(() => store.state.flow.isCreating === true)
     const isReadOnly = computed(() => store.getters["flow/isReadOnly"])
     const isAllowedEdit = computed(() => store.getters["flow/isAllowedEdit"])
     const flowHaveTasks = computed(() => store.getters["flow/flowHaveTasks"])
-    const flowErrors = computed(() => store.getters["flow/flowErrors"])
+    const flowErrors = computed(() => store.getters["flow/flowErrors"]?.map(translateError));
     const flowInfos = computed(() => store.getters["flow/flowInfos"])
     const flowParsed = computed(() => store.getters["flow/flow"])
     const tabs = computed<{dirty:boolean}[]>(() => store.state.editor.tabs)
@@ -69,7 +72,7 @@
 
         const outdatedWarning =
             store.state.flow.flowValidation?.outdated && !store.state.flow.isCreating
-                ? [store.getters["flow/outdatedMessage"]]
+                ? [translateErrorWithKey(store.getters["flow/baseOutdatedTranslationKey"])]
                 : [];
 
         const deprecationWarnings =

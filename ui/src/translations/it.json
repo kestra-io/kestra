@@ -325,6 +325,12 @@
       "tenants": {
         "message": "L'edizione Enterprise di Kestra supporta il multi-tenancy, offrendo ambienti completamente isolati per diversi team o progetti, ciascuno con le proprie risorse come gruppi di worker dedicati o segreti e backend di archiviazione interna.",
         "title": "Gestisci i flussi di lavoro in tenant isolati"
+      },
+      "tests": {
+        "header": "Test unitari per i flow",
+        "label": "Test",
+        "message": "Verifica la logica dei tuoi flow in isolamento, rileva le regressioni in anticipo e mantieni la fiducia nelle tue automazioni mentre cambiano e crescono.",
+        "title": "Garantisci l'affidabilità con ogni modifica"
       }
     },
     "dependencies": "Dipendenze",

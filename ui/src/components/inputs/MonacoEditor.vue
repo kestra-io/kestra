@@ -12,6 +12,7 @@
                 @keydown.esc.prevent="editorResolved.focus()"
                 @keydown.enter.prevent="datePickerCallback"
                 :clearable="false"
+                class="z-3"
             />
         </div>
     </div>
@@ -135,6 +136,7 @@
         creating?: boolean,
         suggestionsOnFocus?: boolean,
         readonly?: boolean,
+        largeSuggestions?: boolean,
         placeholder?: string,
     }>(), {
         path: "",
@@ -148,6 +150,7 @@
         options: undefined,
         schemaType: undefined,
         suggestionsOnFocus: false,
+        largeSuggestions: true,
         placeholder: undefined,
     })
 
@@ -461,10 +464,6 @@
             swio!.disconnect();
             suggestWidgetResizeObserver.value = undefined;
         }
-        if (swio !== undefined) {
-            swio!.disconnect();
-            suggestWidgetResizeObserver.value = undefined;
-        }
         suggestWidget.value = undefined;
     }
 
@@ -490,6 +489,9 @@
             addedNodes
         }]) => {
             const simulateResizeOnSashAndDisconnect = (resizer: HTMLElement) => {
+                // If the prop value is passed as false, we don't want to resize the suggest widget
+                if(!props.largeSuggestions) return;
+
                 suggestWidgetResizeObserver.value?.disconnect();
                 suggestWidgetResizeObserver.value = undefined;
 
@@ -642,6 +644,13 @@
                         localEditor!.trigger("refreshSuggestionsAfterUndoRedo", "editor.action.triggerSuggest", {});
                     }
                 });
+
+                localEditor.onDidChangeCursorPosition(() => {
+                    if (suggestController.model.state !== 0) {
+                        suggestController.cancelSuggestWidget();
+                        localEditor!.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {});
+                    }
+                })
             }
 
             if (!props.input) {

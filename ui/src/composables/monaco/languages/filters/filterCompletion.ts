@@ -16,6 +16,10 @@ export enum Comparators {
     STARTS_WITH_NAMESPACE_PREFIX = "^.=",
 }
 
+export function keyOfComparator(comparator: Comparators): keyof typeof Comparators {
+    return Object.entries(Comparators).find(([_, value]) => value === comparator)![0] as keyof typeof Comparators;
+}
+
 export function getComparator(comparatorKey: keyof typeof Comparators | "IN" | "NOT_IN"): Comparators {
     switch(comparatorKey) {
         case "IN": {

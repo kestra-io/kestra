@@ -11,16 +11,17 @@
     <section id="filter">
         <KestraFilter
             prefix="dashboard"
-            :domain="filterDomain"
+            :language="filterLanguage"
             :buttons="{
                 refresh: {
                     shown: true,
-                    callback: () => load(),
+                    callback: () => refresh(),
                 },
                 settings: {shown: false},
             }"
             :dashboards="{shown: route.name === 'home'}"
             @dashboard="(value) => load(value)"
+            :key="chartSectionKey"
         />
     </section>
 
@@ -47,6 +48,7 @@
     import YAML_MAIN from "../../assets/dashboard/default_main_definition.yaml?raw";
     import YAML_FLOW from "../../assets/dashboard/default_flow_definition.yaml?raw";
     import YAML_NAMESPACE from "../../assets/dashboard/default_namespace_definition.yaml?raw";
+    import Utils from "../../utils/utils.js";
 
     const router = useRouter();
     const route = useRoute();
@@ -59,30 +61,36 @@
         isNamespace: {type: Boolean, default: false},
     });
 
-    const filterDomain = computed(() => {
+    const filterLanguage = computed(() => {
         if (props.isNamespace) {
-            return NamespaceDashboardFilterLanguage.domain;
+            return NamespaceDashboardFilterLanguage;
         }
 
         if (props.isFlow) {
-            return FlowDashboardFilterLanguage.domain;
+            return FlowDashboardFilterLanguage;
         }
 
-        return DashboardFilterLanguage.domain;
+        return DashboardFilterLanguage;
     })
 
     const initial = (dashboard) => ({id: "default", ...YAML_UTILS.parse(dashboard)});
 
     const dashboard = ref({});
     const charts = ref([]);
+    // We use a key to force re-rendering of the ChartsSection when the refresh button is clicked
+    const chartSectionKey = ref(Utils.uid());
 
     const loadCharts = async (allCharts) => {
         charts.value = [];
-
         for (const chart of allCharts) {
             charts.value.push({...chart, content: yaml.stringify(chart), raw: chart});
         }
     };
+
+    const refresh = () => {
+        chartSectionKey.value = Utils.uid();
+        loadCharts();
+    }
 
     const load = async (id = "default", defaultYAML = YAML_MAIN) => {
         if (!["home", "flows/update", "namespaces/update"].includes(route.name)) return;
@@ -95,7 +103,6 @@
         }
 
         dashboard.value = id === "default" ? initial(defaultYAML) : await store.dispatch("dashboard/load", id);
-
         loadCharts(dashboard.value.charts);
     };
 

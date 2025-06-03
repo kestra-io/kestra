@@ -254,12 +254,17 @@ public abstract class AbstractJdbcRepository {
         return select;
     }
 
+    /**
+     *
+     * @param dateColumn the JDBC column name of the logical date to filter on with {@link io.kestra.core.models.QueryFilter.Field#START_DATE} and/or {@link QueryFilter.Field#END_DATE}
+     */
     protected <T extends Record> SelectConditionStep<T> getConditionOnField(
         SelectConditionStep<T> select,
         QueryFilter.Field field,
         Object value,
         QueryFilter.Op operation,
-        String dateColumn) {
+        @Nullable String dateColumn
+    ) {
         if (field.equals(QueryFilter.Field.QUERY)) {
             return select;
         }
@@ -279,6 +284,9 @@ public abstract class AbstractJdbcRepository {
 
         // Special handling for START_DATE and END_DATE
         if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE) {
+            if(dateColumn == null){
+                throw new IllegalArgumentException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
+            }
             OffsetDateTime dateTime = (value instanceof ZonedDateTime)
                 ? ((ZonedDateTime) value).toOffsetDateTime()
                 : ZonedDateTime.parse(value.toString()).toOffsetDateTime();

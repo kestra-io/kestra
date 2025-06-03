@@ -10,7 +10,6 @@
 
 <script lang="ts" setup>
     import CloseIcon from "vue-material-design-icons/Close.vue";
-    import {defineEmits} from "vue";
     import {useI18n} from "vue-i18n";
     const {t} = useI18n();
     const emit = defineEmits(["click"]);

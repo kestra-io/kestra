@@ -53,6 +53,7 @@
 <script setup>
     import getTaskComponent from "./getTaskComponent";
     import Help from "vue-material-design-icons/HelpBox.vue";
+    import Kicon from "../../Kicon.vue";
     import Markdown from "../../layout/Markdown.vue";
 </script>
 <script>

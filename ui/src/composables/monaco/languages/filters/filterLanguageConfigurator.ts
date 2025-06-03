@@ -11,13 +11,14 @@ import IWordAtPosition = editor.IWordAtPosition;
 
 const legacyFilterRegex = /.*((?<=.)-)?legacy-filter/;
 export const languages = [/.*((?<=.)-)?filter/, legacyFilterRegex];
-export const PER_COMPARATOR_REGEX = Object.entries(Comparators).reduce((acc, [key, value]) => {
+const PER_COMPARATOR_REGEX = Object.entries(Comparators).reduce((acc, [key, value]) => {
     acc[key] = new RegExp(value.replaceAll(/[$.*^]/g, (match) => `\\${match}`));
     return acc;
 }, {} as Record<string, RegExp>);
 export const COMPARATORS_REGEX = "(?:" + Object.values(PER_COMPARATOR_REGEX)
     .sort((r1, r2) => r2.source.length - r1.source.length)
     .map(r => r.source).join("|") + ")";
+const COMPARATORS_CHARS_REGEX = "[" + [...new Set(Object.values(Comparators).join("").replaceAll("-", "\\-").split(""))].join("") + "]";
 
 let filterLanguages: FilterLanguage[];
 
@@ -70,7 +71,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                 : this.keyCompletions!.reduce((acc, key) => {
                     acc[keyLabelToRegex(key.label).source] = {
                         token: "variable.name",
-                        next: `@${key.label}-comparator`
+                        next: `@${FilterLanguage.withNestedKeyPlaceholder(key.label)}-comparator`
                     };
 
                     return acc;
@@ -78,51 +79,45 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
 
             const keysToValueTokenizer = this.keyCompletions === undefined
                 ? {} as Record<string, monaco.languages.IMonarchLanguageRule[]>
-                : await this.keyCompletions!.reduce(async (accPromise, completion) => {
-                    return accPromise.then(async (acc) => ({
+                : Object.entries(this._filterLanguage?.comparatorsPerKey()).reduce((acc, [key, comparatorKeys]) => ({
                         ...acc,
-                        [`${completion.label}-comparator`]: [
+                        [`${key}-comparator`]: [
                             [
                                 new RegExp(
-                                    (await this._filterLanguage!.comparatorCompletion(completion.value + (completion.value.endsWith(".") ? "placeholder" : "")))
-                                        .map(comparator => PER_COMPARATOR_REGEX[comparator.label].source).join("|")
+                                    comparatorKeys.map(comparator => PER_COMPARATOR_REGEX[comparator].source).join("|")
                                 ),
-                                {
-                                    token: "operators",
-                                    next: "@value"
-                                }
+                                {token: "operators", next: "@value"}
                             ],
                             [
-                                /[^\\s]*/,
+                                /\S*/,
                                 {token: "@rematch", next: "@whitespace"}
                             ]
                         ]
-                    } as Record<string, monaco.languages.IMonarchLanguageRule[]>));
-                }, Promise.resolve({} as Record<string, monaco.languages.IMonarchLanguageRule[]>));
+                    } as Record<string, monaco.languages.IMonarchLanguageRule[]>),
+                    {} as Record<string, monaco.languages.IMonarchLanguageRule[]>
+                );
 
             monaco.languages.setMonarchTokensProvider(this.language, {
-                operators: Object.values(Comparators),
-                symbols: new RegExp(COMPARATORS_REGEX),
                 defaultToken: "invalid",
                 includeLF: true,
                 tokenizer: {
                     root: [
-                        [/[\w\\.]+/, {
+                        [/[\w."]+/, {
                             cases: {
                                 ...keysTokenizerCases,
                                 "@default": {token: "@rematch", next: "@rawText"}
                             }
                         }],
-                        [/[^\w\\.]/, {token: "invalid", next: "@whitespace"}]
+                        [/[^\w."]/, {token: "invalid", next: "@whitespace"}]
                     ],
                     rawText: [
-                        [/\S+/, {
+                        [/"[^"]*"|\S+/, {
                             cases: {
-                                [`(?:(?!${COMPARATORS_REGEX})\\S(?!${COMPARATORS_REGEX}))*`]: {
-                                    token: "variable.value",
+                                [`\\S*${COMPARATORS_REGEX}\\S*`]: {
+                                    token: "invalid",
                                     next: "@whitespace"
                                 },
-                                "@default": {token: "invalid", next: "@whitespace"}
+                                "@default": {token: "variable.value", next: "@whitespace"}
                             }
                         }]
                     ],
@@ -142,9 +137,8 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                         [/\S+/, {token: "invalid"}]
                     ],
                     separator: [
-                        {include: "@whitespace"},
                         [",", {token: "comma", next: "@value"}],
-                        [/\S+/, {token: "invalid"}]
+                        {include: "@whitespace"},
                     ],
                     ...keysToValueTokenizer
                 }
@@ -203,54 +197,71 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
             }, {
                 triggerCharacters: [" ", "\n", ","],
                 async provideCompletionItems(model, position) {
-                    const wordAfterPosition = model.findNextMatch(
-                        `([^,\\s]*)(?:${COMPARATORS_REGEX}[^,\\s]*)?`,
-                        position,
-                        true,
-                        false,
-                        null,
-                        true
-                    );
-                    const wordAtPositionMatch = model.findPreviousMatch(
-                        `(?:^|\\s)(?:[^,\\s]*${COMPARATORS_REGEX})?([^,\\s]*)$`,
-                        position.with(undefined, wordAfterPosition?.range.endColumn),
-                        true,
-                        false,
-                        null,
-                        true
-                    );
-
-                    const endColumn = wordAtPositionMatch?.range?.endColumn ?? position.column;
-                    const wordMatch = wordAtPositionMatch?.matches?.[1] ?? "";
-                    let wordAtPosition: IWordAtPosition & Partial<IRange> = {
-                        word: wordMatch,
-                        startColumn: endColumn - wordMatch.length,
-                        endColumn: endColumn
-                    };
-
                     const modelValue = model.getValue();
                     const offset = model.getOffsetAt(position);
-                    const previousChar = modelValue.charAt(offset - 1);
                     const inQuotedString = modelValue.substring(0, offset).split("\"").length % 2 === 0;
 
-                    if (inQuotedString) {
-                        const previousQuote = model.findPreviousMatch("\"", position, false, false, null, true)?.range;
-                        wordAtPosition = {
-                            ...wordAtPosition,
-                            startLineNumber: previousQuote?.startLineNumber ?? wordAtPosition.startLineNumber,
-                            startColumn: previousQuote?.startColumn ?? wordAtPosition.startColumn
-                        };
-                    }
-
-                    if (offset === 0 || (SEPARATOR_CHARS.includes(previousChar) && !inQuotedString)) {
-                        const comparatorsAfterCurrentWord = model.findNextMatch(
-                            "(" + COMPARATORS_REGEX + ")",
-                            position.with(undefined, wordAtPosition.endColumn),
+                    const wordAfterPositionMatcher = (partialComparatorMatch: boolean) => {
+                        return model.findNextMatch(
+                            (inQuotedString ? "[^\"]*\"?" : `(?:(?!${COMPARATORS_REGEX})[^,\\s])+?(?=${COMPARATORS_REGEX})${partialComparatorMatch ? `|${COMPARATORS_CHARS_REGEX}+` : ""}|[^,\\s]*`),
+                            position,
                             true,
                             false,
                             null,
                             true
                         );
+                    };
+
+                    let wordAfterPositionMatch = wordAfterPositionMatcher(true);
+
+                    const wordAtPositionMatcher = (position: IPosition) => {
+                        return model.findPreviousMatch(
+                            "(?:" + (inQuotedString
+                                ? "(\"[^\"]*\"?)"
+                                : `[^,\\s]*?(${COMPARATORS_REGEX})([^,\\s]*)|([^,\\s]*)`)
+                            + ")$",
+                            position,
+                            true,
+                            false,
+                            null,
+                            true
+                        )!;
+                    };
+
+                    let wordAtPositionMatch = wordAtPositionMatcher(position.with(undefined, wordAfterPositionMatch?.range.endColumn));
+                    const lastWordIsComparator = inQuotedString ? false : ((wordAtPositionMatch?.matches?.[2]?.length ?? 0) == 0 && (wordAtPositionMatch?.matches?.[3]?.length ?? 0) == 0);
+                    if (lastWordIsComparator) {
+                        if ((wordAfterPositionMatch?.matches?.[0]?.length ?? 0) > 0) {
+                            wordAtPositionMatch = wordAtPositionMatcher(position.with(undefined, wordAtPositionMatch.range.endColumn - (wordAtPositionMatch.matches?.[1]?.length ?? 0)));
+                        } else {
+                            wordAtPositionMatch = wordAfterPositionMatch!;
+                        }
+                    } else {
+                        wordAfterPositionMatch = wordAfterPositionMatcher(false);
+                        wordAtPositionMatch = wordAtPositionMatcher(position.with(undefined, wordAfterPositionMatch?.range.endColumn));
+                    }
+
+                    const endColumn = wordAtPositionMatch?.range?.endColumn ?? position.column;
+                    const wordMatch = wordAtPositionMatch?.matches?.[3] ?? (wordAtPositionMatch?.matches?.[2]?.length === 0 ? wordAtPositionMatch?.matches?.[1] : wordAtPositionMatch?.matches?.[2]) ?? "";
+                    const wordAtPosition: IWordAtPosition & Partial<IRange> = {
+                        word: wordMatch,
+                        startColumn: endColumn - wordMatch.length,
+                        endColumn: endColumn
+                    };
+
+                    const previousChar = modelValue.charAt(offset - 1);
+
+                    const comparatorsAfterCurrentWord = model.findNextMatch(
+                        "(" + COMPARATORS_REGEX + ")?[\\s\\S]*$",
+                        position.column === wordAtPosition.startColumn ? position : position.with(undefined, wordAtPosition.endColumn),
+                        true,
+                        false,
+                        null,
+                        true
+                    );
+                    if (offset === 0
+                        || (SEPARATOR_CHARS.includes(previousChar) && !inQuotedString)
+                        || (!lastWordIsComparator && comparatorsAfterCurrentWord?.matches?.[1] !== undefined)) {
                         return TO_SUGGESTIONS(
                             position,
                             {
@@ -261,8 +272,8 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                         );
                     }
 
-                    if (wordAtPosition.word.match(new RegExp("^" + filterLanguageConfiguratorInstance.allKeyCompletionsRegex!.source + "$")) && position.column === wordAtPosition.endColumn) {
-                        if (previousChar === ".") {
+                    if (wordAtPosition.word.match(new RegExp("^" + filterLanguageConfiguratorInstance.allKeyCompletionsRegex!.source + "$"))) {
+                        if (previousChar === "." && !lastWordIsComparator) {
                             return TO_SUGGESTIONS(
                                 position,
                                 {
@@ -273,24 +284,24 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                                 []
                             );
                         }
+
                         const comparatorCompletions = await filterLanguage.comparatorCompletion(wordAtPosition.word);
                         return TO_SUGGESTIONS(
                             position,
-                            {word: "", startColumn: wordAtPosition.endColumn, endColumn: wordAtPosition.endColumn},
+                            {
+                                word: "",
+                                startColumn: wordAtPosition.endColumn,
+                                endColumn: lastWordIsComparator ? wordAfterPositionMatch!.range.endColumn : wordAtPosition.endColumn
+                            },
                             filterLanguageConfiguratorInstance.isLegacy() ? [comparatorCompletions[0]] : comparatorCompletions
                         );
                     }
 
-                    const previousColumn = wordAtPosition.startColumn;
-                    const beforeWordPosition = previousColumn > 0
-                        ? position.with(undefined, previousColumn)
-                        : undefined;
-
                     const currentFilterMatch = model.findPreviousMatch(
                         "(" + filterLanguageConfiguratorInstance.allKeyCompletionsRegex?.source + ")" +
-                        "(" + COMPARATORS_REGEX + ")" +
+                        "(" + COMPARATORS_REGEX + ")?" +
                         "(\"[^\"]*\"?|[^\\s\"]*)$",
-                        beforeWordPosition ?? position.with(undefined, wordAtPosition.startColumn),
+                        position.with(undefined, wordAtPosition.endColumn),
                         true,
                         false,
                         null,

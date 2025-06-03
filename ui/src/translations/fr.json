@@ -325,6 +325,12 @@
       "tenants": {
         "message": "L'édition Kestra Enterprise prend en charge la multi-tenance, vous offrant des environnements entièrement isolés pour différentes équipes ou projets, chacun avec ses propres ressources telles que des groupes de workers dédiés ou des secrets et des backends de stockage internes.",
         "title": "Gérer les flux de travail dans des tenants isolés"
+      },
+      "tests": {
+        "header": "Tests unitaires pour les flows",
+        "label": "Tests",
+        "message": "Vérifiez la logique de vos flows de manière isolée, détectez les régressions tôt et maintenez la confiance dans vos automatisations à mesure qu'elles évoluent et se développent.",
+        "title": "Assurez la fiabilité à chaque changement"
       }
     },
     "dependencies": "Dépendances",

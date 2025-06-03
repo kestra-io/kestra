@@ -325,6 +325,12 @@
       "tenants": {
         "message": "Kestra Enterprise Edition은 멀티-tenancy를 지원하여, 각기 다른 팀이나 프로젝트를 위한 완전히 분리된 환경을 제공합니다. 각 환경은 전용 worker 그룹, 비밀 정보 및 내부 저장소 백엔드와 같은 자체 리소스를 갖추고 있습니다.",
         "title": "격리된 Tenant에서 Workflow 관리"
+      },
+      "tests": {
+        "header": "플로우에 대한 단위 테스트",
+        "label": "테스트",
+        "message": "플로우의 로직을 개별적으로 검증하고, 회귀를 조기에 감지하며, 자동화가 변화하고 성장함에 따라 신뢰를 유지하세요.",
+        "title": "모든 변경 사항에 대한 신뢰성 보장"
       }
     },
     "dependencies": "종속성",

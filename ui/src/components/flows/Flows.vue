@@ -52,7 +52,7 @@
                 <template #navbar>
                     <KestraFilter
                         prefix="flows"
-                        :domain="FlowFilterLanguage.domain"
+                        :language="FlowFilterLanguage"
                         :buttons="{
                             refresh: {shown: false},
                             settings: {

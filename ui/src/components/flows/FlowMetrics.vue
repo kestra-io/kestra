@@ -1,7 +1,7 @@
 <template>
     <KestraFilter
         prefix="flow_metrics"
-        :domain="FlowMetricFilterLanguage.domain"
+        :language="FlowMetricFilterLanguage"
         :buttons="{
             refresh: {shown: true, callback: load},
             settings: {shown: false},

@@ -6,8 +6,8 @@
             <MonacoEditor
                 ref="monacoEditor"
                 class="border flex-grow-1 position-relative"
-                :language="`${domain === undefined ? '' : (domain + '-')}${legacyQuery ? 'legacy-' : ''}filter`"
-                :schema-type="domain"
+                :language="`${language?.domain === undefined ? '' : (language.domain + '-')}${legacyQuery ? 'legacy-' : ''}filter`"
+                :schema-type="language?.domain"
                 :value="filter"
                 @change="filter = $event"
                 :theme="themeComputed"
@@ -83,6 +83,7 @@
     import {COMPARATORS_REGEX} from "../../composables/monaco/languages/filters/filterLanguageConfigurator.ts";
     import {Comparators, getComparator} from "../../composables/monaco/languages/filters/filterCompletion.ts";
     import {watchDebounced} from "@vueuse/core";
+    import {FilterLanguage} from "../../composables/monaco/languages/filters/filterLanguage.ts";
 
     const router = useRouter();
     const route = useRoute();
@@ -90,7 +91,7 @@
 
     const props = withDefaults(defineProps<{
         prefix?: string | undefined;
-        domain?: string | undefined,
+        language?: FilterLanguage | undefined,
         propertiesWidth?: number,
         buttons?: (Omit<Buttons, "settings"> & {
             settings: Omit<Buttons["settings"], "charts"> & { charts?: Buttons["settings"]["charts"] }
@@ -103,7 +104,7 @@
         legacyQuery?: boolean,
     }>(), {
         prefix: undefined,
-        domain: undefined,
+        language: undefined,
         propertiesWidth: 144,
         buttons: () => ({
             refresh: {
@@ -242,30 +243,44 @@
             return {};
         }
 
-        const KEY_MATCHER = "((?:(?<!" + COMPARATORS_REGEX + ")\\S)+?)";
+        const KEY_MATCHER = "((?:(?!" + COMPARATORS_REGEX + ")\\S)+?)";
         const COMPARATOR_MATCHER = "(" + COMPARATORS_REGEX + ")";
         const MAYBE_PREVIOUS_VALUE = "(?:(?<=\\S),)?";
-        const VALUE_MATCHER = "((?:" + MAYBE_PREVIOUS_VALUE + "(?:(?:\"[^\\n,]+\")|(?:[^\\s,]+)))+)";
-        const filterMatcher = new RegExp("\\s*(?<!\\S)((?:" + KEY_MATCHER + COMPARATOR_MATCHER + VALUE_MATCHER + ")|(?:(?!" + COMPARATORS_REGEX + ")\\S(?!" + COMPARATORS_REGEX + "))+)(?!\\S)\\s*", "g");
+        const VALUE_MATCHER = "((?:" + MAYBE_PREVIOUS_VALUE + "(?:(?:\"[^\\n,]*\")|(?:[^\\s,]*)))+)";
+        const filterMatcher = new RegExp("\\s*(?<!\\S)" +
+            "((?:" + KEY_MATCHER + COMPARATOR_MATCHER + VALUE_MATCHER + ")" +
+            "|\"([^\"]*)\"" +
+            "|((?:(?!" + COMPARATORS_REGEX + ")\\S(?!" + COMPARATORS_REGEX + "))+))" +
+            "(?!\\S)\\s*", "g");
         let matches: RegExpExecArray | null;
         const filters: Filter[] = [];
         while ((matches = filterMatcher.exec(filter.value)) !== null) {
-            const key = matches[2];
+            const [_, __, key, comparator, commaSeparatedValues, quotedText, text] = matches as unknown as [string, string, string | undefined, Comparators | undefined, string | undefined, string | undefined, string | undefined];
 
             // If we're not in a {key}{comparator}{value} format, we assume it's a text search
             if (key === undefined) {
                 filters.push({
                     key: "text",
                     comparator: "EQUALS",
-                    value: matches[1]
+                    value: quotedText ?? text!
                 });
                 continue;
             }
 
-            const comparator = matches[3] as Comparators;
-            const values = [...new Set(matches[4].split(",").filter(value => value !== "").map(value => value.replaceAll("\"", "")))];
+            if (!props.language?.keyMatchers()?.some(keyMatcher => keyMatcher.test(key))) {
+                continue; // Skip keys that don't match the language key matchers
+            }
 
-            let comparatorLabel: keyof typeof Comparators | "IN" | "NOT_IN" = COMPARATOR_LABEL_BY_VALUE[comparator];
+            if (!props.language?.comparatorsPerKey()[FilterLanguage.withNestedKeyPlaceholder(key)].some(c => Comparators[c] === comparator)) {
+                continue; // Skip comparators that are not valid for the key
+            }
+
+            const values = [...new Set(commaSeparatedValues?.split(",")?.filter(value => value !== "")?.map(value => value.replaceAll("\"", "")) ?? [])];
+            if (values.length === 0) {
+                continue; // Skip empty values
+            }
+
+            let comparatorLabel: keyof typeof Comparators | "IN" | "NOT_IN" = COMPARATOR_LABEL_BY_VALUE[comparator as Comparators];
             if (values.length > 1) {
                 switch (comparator) {
                 case "=": {

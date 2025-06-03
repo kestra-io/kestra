@@ -1,5 +1,5 @@
 <template>
-    <div v-loading="isLoading" class="vue-flow">
+    <div id="topologyWrapper" v-loading="isLoading" class="vue-flow">
         <LowCodeEditor
             v-if="flowGraph"
             :flow-graph="flowGraph"

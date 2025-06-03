@@ -146,7 +146,6 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
 
     @Override
     public List<NextTaskRun> resolveNexts(RunContext runContext, Execution execution, TaskRun parentTaskRun) throws IllegalVariableEvaluationException {
-
         return FlowableUtils.resolveWaitForNext(
             execution,
             this.childTasks(runContext, parentTaskRun),
@@ -179,7 +178,7 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
             .orElse(0);
 
         Optional<Integer> maxIterations = runContext.render(this.getCheckFrequency().getMaxIterations()).as(Integer.class);
-        if (maxIterations.isPresent() && iterationCount != null && iterationCount > maxIterations.get()) {
+        if (maxIterations.isPresent() && iterationCount > maxIterations.get()) {
             if (printLog) {logger.warn("Max iterations reached");}
             return true;
         }
@@ -272,21 +271,22 @@ public class LoopUntil extends Task implements FlowableTask<LoopUntil.Output> {
     @NoArgsConstructor
     public static class CheckFrequency {
         @Schema(
-            title = "Maximum count of iterations."
+            title = "Maximum count of iterations.",
+            description = "If not set, defines an unlimited number of iterations."
         )
-        @Builder.Default
-        private Property<Integer> maxIterations = Property.ofValue(100);
+        private Property<Integer> maxIterations;
 
         @Schema(
-            title = "Maximum duration of the task."
+            title = "Maximum duration of the task.",
+            description = "If not set, defines an unlimited maximum duration of iterations."
         )
-        @Builder.Default
-        private Property<Duration> maxDuration = Property.ofValue(Duration.ofHours(1));
+        private Property<Duration> maxDuration;
 
         @Schema(
             title = "Interval between each iteration."
         )
+        @NotNull
         @Builder.Default
-        private Property<Duration> interval = Property.ofValue(Duration.ofSeconds(1));
+        private Property<Duration> interval = Property.ofValue(Duration.ofMinutes(1));
     }
 }

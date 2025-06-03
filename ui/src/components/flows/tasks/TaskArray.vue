@@ -16,7 +16,21 @@
             />
         </el-col>
         <el-col :span="items.length > 1 ? 20 : 22" class="pe-2">
+            <el-select
+                v-if="$attrs?.schema?.items?.enum"
+                :model-value="element"
+                @update:model-value="(v) => handleInput(v, index)"
+                :placeholder="$t('value')"
+            >
+                <el-option
+                    v-for="item in $attrs.schema.items.enum.filter((i) => !items.includes(i))"
+                    :key="item"
+                    :label="item"
+                    :value="item"
+                />
+            </el-select>
             <InputText
+                v-else
                 :model-value="element"
                 @update:model-value="(v) => handleInput(v, index)"
                 :placeholder="$t('value')"

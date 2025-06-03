@@ -124,11 +124,26 @@
         emits("updateTask", yaml)
     }
 
-    const schema = ref({})
+    const schema = ref<{
+        definitions?: any,
+        $ref?: string,
+    }>({})
     onMounted(async () => {
         await store.dispatch("plugin/loadSchemaType").then((response) => {
             schema.value = response;
         })
+    });
+
+    const definitions = computed(() => {
+        return schema.value?.definitions ?? {};
+    });
+    function removeRefPrefix(ref?: string): string {
+        return ref?.replace(/^#\/definitions\//, "") ?? "";
+    }
+
+    const flowSchema = computed(() => {
+        const ref = removeRefPrefix(schema.value?.$ref);
+        return definitions.value?.[ref]?.properties ?? {};
     });
 
     const fields = computed<Fields>(() => {
@@ -155,6 +170,8 @@
             retry: {
                 component: MetadataRetry,
                 value: props.metadata.retry,
+                schema: flowSchema.value.retry,
+                definitions: definitions.value,
                 label: t("no_code.fields.general.retry")
             },
             labels: {
@@ -190,12 +207,14 @@
                 component: TaskBasic,
                 value: props.metadata.concurrency,
                 label: t("no_code.fields.general.concurrency"),
-                schema: schema.value?.definitions?.["io.kestra.core.models.flows.Concurrency"] ?? {},
+                schema: definitions.value?.[removeRefPrefix(flowSchema.value.concurrency?.$ref)] ?? {},
                 root: "concurrency",
             },
             sla: {
                 component: MetadataSLA,
                 value: props.metadata.sla ?? [],
+                schema: flowSchema.value.sla,
+                definitions: definitions.value,
                 label: t("no_code.fields.general.sla")
             },
             disabled: {

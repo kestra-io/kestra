@@ -41,6 +41,52 @@
     import {TaskIcon} from "@kestra-io/ui-libs";
     import getTaskComponent from "./getTaskComponent";
 
+    /**
+     * merge allOf schemas if they exist
+     * @param schema
+     */
+    function consolidateAllOfSchemas(schema, definitions) {
+        if(schema?.allOf?.length) {
+            return {
+                ...schema,
+                type: "object",
+                ...schema.allOf.reduce((acc, item) => {
+                    if(item.$ref) {
+                        const refSchema = definitions[item.$ref.split("/").pop()];
+                        if(refSchema) {
+                            return {
+                                required: [
+                                    ...acc.required,
+                                    ...(refSchema.required ?? [])
+                                ],
+                                properties: {
+                                    ...acc.properties,
+                                    ...refSchema.properties,
+                                }
+                            };
+                        }
+                    } else {
+                        return {
+                            required: [
+                                ...acc.required,
+                                ...(item.required ?? [])
+                            ],
+                            properties: {
+                                ...acc.properties,
+                                ...item.properties,
+                            }
+                        };
+                    }
+                    return acc;
+                }, {
+                    properties: {},
+                    required: [],
+                })
+            }
+        }
+        return schema;
+    }
+
     export default {
         components: {
             TaskIcon,
@@ -145,10 +191,8 @@
                 }) : [];
             },
             currentSchema() {
-                return (
-                    this.definitions[this.selectedSchema] ??
-                    this.schemaByType[this.selectedSchema]
-                );
+                const rawSchema = this.definitions[this.selectedSchema] ?? this.schemaByType[this.selectedSchema]
+                return consolidateAllOfSchemas(rawSchema, this.definitions);
             },
             schemaByType() {
                 return this.schemas.reduce((acc, schema) => {

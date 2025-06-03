@@ -356,6 +356,9 @@ public class JsonSchemaGenerator {
                 if (pluginPropertyAnnotation.internalStorageURI()) {
                     memberAttributes.put("$internalStorageURI", true);
                 }
+                if (!pluginPropertyAnnotation.group().isEmpty()) {
+                    memberAttributes.put("$group", pluginPropertyAnnotation.group());
+                }
             }
 
             Schema schema = member.getAnnotationConsideringFieldAndGetter(Schema.class);
@@ -741,10 +744,13 @@ public class JsonSchemaGenerator {
 
         this.build(builder, false);
 
-        // we don't return base properties unless specified with @PluginProperty
+        // we don't return base properties unless specified with @PluginProperty and hidden is false
         builder
             .forFields()
-            .withIgnoreCheck(fieldScope -> base != null && fieldScope.getAnnotation(PluginProperty.class) == null && fieldScope.getDeclaringType().getTypeName().equals(base.getName()));
+            .withIgnoreCheck(fieldScope -> base != null &&
+                (fieldScope.getAnnotation(PluginProperty.class) == null || fieldScope.getAnnotation(PluginProperty.class).hidden()) &&
+                fieldScope.getDeclaringType().getTypeName().equals(base.getName())
+            );
 
         SchemaGeneratorConfig schemaGeneratorConfig = builder.build();
 

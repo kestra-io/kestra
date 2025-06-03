@@ -34,11 +34,13 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     protected String type;
 
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     protected String version;
 
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private String description;
 
-    @PluginProperty
+    @PluginProperty(group = PluginProperty.CORE_GROUP)
     @Schema(
         title = "List of conditions in order to limit the flow trigger."
     )
@@ -47,11 +49,14 @@ abstract public class AbstractTrigger implements TriggerInterface {
 
     @NotNull
     @Builder.Default
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private boolean disabled = false;
 
     @Valid
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private WorkerGroup workerGroup;
 
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private Level logLevel;
 
     @Schema(
@@ -60,15 +65,17 @@ abstract public class AbstractTrigger implements TriggerInterface {
     )
     @JsonSerialize(using = ListOrMapOfLabelSerializer.class)
     @JsonDeserialize(using = ListOrMapOfLabelDeserializer.class)
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private List<@NoSystemLabelValidation Label> labels;
 
-    @PluginProperty
+    @PluginProperty(group = PluginProperty.CORE_GROUP)
     @Schema(
         title = "List of execution states after which a trigger should be stopped (a.k.a. disabled)."
     )
     private List<State.Type> stopAfter;
 
     @Builder.Default
+    @PluginProperty(hidden = true, group = PluginProperty.CORE_GROUP)
     private boolean logToFile = false;
 
     /**

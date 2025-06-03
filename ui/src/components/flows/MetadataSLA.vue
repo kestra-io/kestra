@@ -63,15 +63,7 @@
                     enum: ["FAIL", "CANCEL", "NONE"],
                 },
                 labels: {
-                    anyOf: [
-                        {
-                            type: "array",
-                            items: {},
-                        },
-                        {
-                            type: "object",
-                        },
-                    ],
+                    type: "object",
                 },
             },
             required: ["type", "id", "assert", "behavior"],
@@ -96,15 +88,7 @@
                     format: "duration",
                 },
                 labels: {
-                    anyOf: [
-                        {
-                            type: "array",
-                            items: {},
-                        },
-                        {
-                            type: "object",
-                        },
-                    ],
+                    type: "object",
                 },
             },
             required: ["type", "id", "behavior", "duration"],

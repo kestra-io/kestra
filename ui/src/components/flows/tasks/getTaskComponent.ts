@@ -1,4 +1,5 @@
 import {pascalCase} from  "change-case";
+import InputPair from "../../code/components/inputs/InputPair.vue";
 
 const TasksComponents = import.meta.glob<{default: any}>("./Task*.vue", {eager: true});
 
@@ -65,11 +66,18 @@ function getType(property: any, key?: string, schema?: any): string {
         return "constant"
     }
 
+    if( property.type === "object" && !property.properties) {
+        return "input-pair";
+    }
+
     return property.type || "expression";
 }
 
 export default function getTaskComponent(property: any, key?: string, schema?: any) {
     const typeString = getType(property, key, schema);
+    if( typeString === "input-pair") {
+        return InputPair;
+    }
     const type = pascalCase(typeString);
     const component = TasksComponents[`./Task${type}.vue`]?.default;
     if (component) {

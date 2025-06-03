@@ -36,7 +36,7 @@ public abstract class JdbcRunnerTest extends AbstractRunnerTest {
     @Test
     @LoadFlows({"flows/valids/waitfor-child-task-warning.yaml"})
     void waitForChildTaskWarning() throws Exception {
-        waitForTestCaseTest.waitForChildTaskWarning();
+        loopUntilTestCaseTest.waitForChildTaskWarning();
     }
 
     @Test

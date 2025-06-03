@@ -1,5 +1,5 @@
-export const encodeParams = (route, filters, OPTIONS, isDefaultDashboard) => {
-    if(isSearchPath(route) && !isDefaultDashboard) { return encodeSearchParams(filters, OPTIONS); }
+export const encodeParams = (route, filters, OPTIONS) => {
+    if(isSearchPath(route)) { return encodeSearchParams(filters, OPTIONS); }
 
     const encode = (values, key) => {
         return values
@@ -44,9 +44,8 @@ export const encodeParams = (route, filters, OPTIONS, isDefaultDashboard) => {
     }, {});
 };
 
-export const decodeParams = (route, query, include, OPTIONS, isDefaultDashboard) => {
-    if(isSearchPath(route) && !isDefaultDashboard) {return decodeSearchParams(query, include, OPTIONS); }
-
+export const decodeParams = (route, query, include, OPTIONS) => {
+    if(isSearchPath(route)) {return decodeSearchParams(query, include, OPTIONS); }
 
     let params = Object.entries(query)
         .filter(
@@ -122,12 +121,13 @@ export const encodeSearchParams = (filters, OPTIONS) => {
 
     return filters.reduce((query, filter) => {
         if(filter.operation) {
-            Object.assign(query, encode(filter.value, filter.field, filter.operation));
+            const match = OPTIONS.find((o) => o.value.label === filter.field);
+            const key = match ? match.key : filter.field === "text" ? "q" : filter.field;
+            Object.assign(query, encode(filter.value, key, filter.operation));
         } else {
             const match = OPTIONS.find((o) => o.value.label === filter.label);
             const key = match ? match.key : filter.label === "text" ? "q" : null;
             const operation = filter.comparator?.value || match?.comparators?.find(c => c.value === filter.operation)?.value || "EQUALS";
-
             if (key) {
                 if (key !== "date") {
                     Object.assign(query, encode(filter.value, key, operation));
@@ -148,7 +148,7 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
     const params = Object.entries(query)
         .filter(([key]) => (key.startsWith("filters[") || key === "q"))
         .map(([key, value]) => {
-            const match = key.match(/filters\[(.*?)\]\[(.*?)\](?:\[(.*?)\])?/);
+            const match = key.match(/filters\[(.*?)]\[(.*?)](?:\[(.*?)])?/);
 
             if (!match) return null;
 
@@ -158,13 +158,12 @@ export const decodeSearchParams = (query, include, OPTIONS) => {
                 return {field: field, value: `${subKey}:${decodeURIComponent(value)}`, operation};
             }
 
-            const label = field === "q" ? "text" : OPTIONS.find(o => o.key === field)?.value.label || field;
+            const label = OPTIONS.find(o => o.key === field)?.value.label || field;
             const comparator = OPTIONS.find(o => o.key === field)?.comparators?.find(c => c.value === operation) || {value: operation};
 
             return {field: label, value: decodeURIComponent(value), operation: comparator.value};
         })
         .filter(Boolean);
-
     return params;
 };
 export const isSearchPath = (name: string) => ["home", "flows/list", "executions/list", "logs/list", "admin/triggers"].includes(name);

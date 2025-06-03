@@ -33,7 +33,11 @@
                     </nav>
                 </template>
                 <template #top>
-                    <KestraFilter :prefix="`blueprintsBrowser${blueprintType}`" :placeholder="$t('search')" :decode="false" />
+                    <KestraFilter
+                        :prefix="`blueprintsBrowser${blueprintType}`"
+                        :placeholder="$t('search')"
+                        legacy-query
+                    />
                 </template>
                 <template #table>
                     <el-alert type="info" v-if="ready && (!blueprints || blueprints.length === 0)" :closable="false">
@@ -53,8 +57,8 @@
                         >
                             <div class="left">
                                 <div class="blueprint">
-                                    <div 
-                                        class="ps-0 title" 
+                                    <div
+                                        class="ps-0 title"
                                         :class="{'embed-title': embed, 'text-truncate': embed}"
                                     >
                                         {{ blueprint.title ?? blueprint.id }}
@@ -440,7 +444,7 @@
                         white-space: nowrap;
                         overflow: hidden;
                         text-overflow: ellipsis;
-                        
+                        font-weight: 400;
                     }
 
                     .tags {

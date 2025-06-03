@@ -53,7 +53,7 @@ public class NamespaceControllerTest {
     void get() {
         flow("my.ns");
         Namespace namespace = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/namespaces/my.ns"),
+            HttpRequest.GET("/api/v1/main/namespaces/my.ns"),
             Namespace.class
         );
 
@@ -69,7 +69,7 @@ public class NamespaceControllerTest {
         flow("another.ns");
 
         PagedResults<NamespaceWithDisabled> list = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/namespaces/search"),
+            HttpRequest.GET("/api/v1/main/namespaces/search"),
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
         assertThat(list.getTotal()).isEqualTo(6L);
@@ -79,7 +79,7 @@ public class NamespaceControllerTest {
 
 
         list = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/namespaces/search?size=2&sort=id:desc"),
+            HttpRequest.GET("/api/v1/main/namespaces/search?size=2&sort=id:desc"),
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
         assertThat(list.getTotal()).isEqualTo(6L);
@@ -88,7 +88,7 @@ public class NamespaceControllerTest {
         assertThat(list.getResults().get(1).getId()).isEqualTo("my.ns.flow");
 
         list = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/namespaces/search?page=2&size=2&sort=id:desc"),
+            HttpRequest.GET("/api/v1/main/namespaces/search?page=2&size=2&sort=id:desc"),
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
         assertThat(list.getTotal()).isEqualTo(6L);
@@ -97,14 +97,14 @@ public class NamespaceControllerTest {
         assertThat(list.getResults().get(1).getId()).isEqualTo("my");
 
         list = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/namespaces/search?q=ns"),
+            HttpRequest.GET("/api/v1/main/namespaces/search?q=ns"),
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
         assertThat(list.getTotal()).isEqualTo(3L);
         assertThat(list.getResults().size()).isEqualTo(3);
 
         list = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/namespaces/search?page=4&size=2&sort=id:desc"),
+            HttpRequest.GET("/api/v1/main/namespaces/search?page=4&size=2&sort=id:desc"),
             Argument.of(PagedResults.class, NamespaceWithDisabled.class)
         );
         assertThat(list.getTotal()).isEqualTo(0L);
@@ -117,7 +117,7 @@ public class NamespaceControllerTest {
         flowTopologyRepository.save(createSimpleFlowTopology("flow-a", "flow-c"));
 
         FlowTopologyGraph retrieve = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/namespaces/topology.namespace/dependencies"),
+            HttpRequest.GET("/api/v1/main/namespaces/topology.namespace/dependencies"),
             Argument.of(FlowTopologyGraph.class)
         );
 
@@ -128,7 +128,7 @@ public class NamespaceControllerTest {
     @Test
     void secrets() {
         ApiSecretListResponse secrets = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/namespaces/any.ns/secrets?page=1&size=2"),
+            HttpRequest.GET("/api/v1/main/namespaces/any.ns/secrets?page=1&size=2"),
             ApiSecretListResponse.class
         );
         assertThat(secrets.readOnly()).isTrue();
@@ -139,7 +139,7 @@ public class NamespaceControllerTest {
         ));
 
         secrets = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/namespaces/any.ns/secrets?page=2&size=2"),
+            HttpRequest.GET("/api/v1/main/namespaces/any.ns/secrets?page=2&size=2"),
             ApiSecretListResponse.class
         );
         assertThat(secrets.results()).isEqualTo(List.of(
@@ -151,7 +151,7 @@ public class NamespaceControllerTest {
     @Test
     void inheritedSecrets() {
         Map<String, Set<String>> parentInheritedSecrets = client.toBlocking().retrieve(
-            HttpRequest.GET("/api/v1/namespaces/any.ns/inherited-secrets"),
+            HttpRequest.GET("/api/v1/main/namespaces/any.ns/inherited-secrets"),
             Argument.mapOf(Argument.of(String.class), Argument.setOf(String.class))
         );
         assertThat(parentInheritedSecrets.size()).isEqualTo(1);
@@ -162,6 +162,7 @@ public class NamespaceControllerTest {
         Flow flow = Flow.builder()
             .id("flow-" + FriendlyId.createFriendlyId())
             .namespace(namespace)
+            .tenantId("main")
             .tasks(List.of(
                 Log.builder()
                     .id("log")
@@ -179,12 +180,14 @@ public class NamespaceControllerTest {
             .source(FlowNode.builder()
                 .id(flowA)
                 .namespace("topology.namespace")
+                .tenantId("main")
                 .uid(flowA)
                 .build()
             )
             .destination(FlowNode.builder()
                 .id(flowB)
                 .namespace("topology.namespace")
+                .tenantId("main")
                 .uid(flowB)
                 .build()
             )

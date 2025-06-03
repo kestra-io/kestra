@@ -218,7 +218,7 @@ public class FlowableUtils {
 
     /**
      * resolveConcurrentNexts will resolve concurrent values
-     * For both concurrent vales and subtasks, see resolveParallelNexts()
+     * For both concurrent values and subtasks, see resolveParallelNexts()
      */
     public static List<NextTaskRun> resolveConcurrentNexts(
         Execution execution,
@@ -265,26 +265,26 @@ public class FlowableUtils {
             return Collections.emptyList();
         }
 
-        long concurrencySlots = concurrency == 0 ? Integer.MAX_VALUE : concurrency - nonTerminatedCount;
-
-        // first one
-        if (taskRuns.isEmpty()) {
-            Map<String, List<ResolvedTask>> collect = allTasks
-                .stream()
-                .collect(Collectors.groupingBy(ResolvedTask::getValue, LinkedHashMap::new, Collectors.toList()));
-
-            return collect.values().stream()
-                .limit(concurrencySlots)
-                .map(resolvedTasks -> resolvedTasks.getFirst().toNextTaskRun(execution))
-                .toList()
-                .reversed();
-        }
-
-        // start as many tasks as we have concurrency slots
         Map<String, List<ResolvedTask>> collect = allTasks
             .stream()
             .collect(Collectors.groupingBy(ResolvedTask::getValue, LinkedHashMap::new, Collectors.toList()));
 
+        long resolvedConcurrency = concurrency == 0 ? Integer.MAX_VALUE : concurrency;
+        // if concurrencyLimit > values.size() we limit concurrency to values.size()
+        if (resolvedConcurrency > collect.size()) {
+            resolvedConcurrency = collect.size();
+        }
+        long concurrencySlots = resolvedConcurrency - nonTerminatedCount;
+
+        // first one
+        if (taskRuns.isEmpty()) {
+            return collect.values().stream()
+                .limit(concurrencySlots)
+                .map(resolvedTasks -> resolvedTasks.getFirst().toNextTaskRun(execution))
+                .toList();
+        }
+
+        // start as many tasks as we have concurrency slots
         return collect.values().stream()
             .map(resolvedTasks -> filterCreated(resolvedTasks, taskRuns, parentTaskRun))
             .filter(resolvedTasks -> !resolvedTasks.isEmpty())

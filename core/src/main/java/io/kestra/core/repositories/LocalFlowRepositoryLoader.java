@@ -32,6 +32,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 
 @Singleton
@@ -48,7 +49,7 @@ public class LocalFlowRepositoryLoader {
     private PluginDefaultService pluginDefaultService;
 
     public void load(URL basePath) throws IOException, URISyntaxException {
-        load(null, basePath);
+        load(MAIN_TENANT, basePath);
     }
 
     public void load(String tenantId, URL basePath) throws IOException, URISyntaxException {
@@ -78,7 +79,7 @@ public class LocalFlowRepositoryLoader {
     }
 
     public void load(File basePath) throws IOException {
-        load(null, basePath);
+        load(MAIN_TENANT, basePath);
     }
 
     public void load(String tenantId, File basePath) throws IOException {

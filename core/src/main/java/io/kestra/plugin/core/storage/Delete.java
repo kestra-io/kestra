@@ -47,7 +47,7 @@ public class Delete extends Task implements RunnableTask<Delete.Output> {
         title = "Raise an error if the file is not found."
     )
     @Builder.Default
-    private final Property<Boolean> errorOnMissing = Property.of(false);
+    private final Property<Boolean> errorOnMissing = Property.ofValue(false);
 
     @Override
     public Delete.Output run(RunContext runContext) throws Exception {

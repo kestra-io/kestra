@@ -233,10 +233,10 @@ export default class Utils {
         localStorage.setItem("theme", theme);
     }
 
-    static getTheme() {
-        let theme = localStorage.getItem("theme") || "light";
+    static getTheme():  "light" | "dark" | undefined {
+        let theme = (localStorage.getItem("theme") as "syncWithSystem" | "dark" | "light" | null) ?? "light";
 
-        if(theme === "syncWithSystem") {
+        if (theme === "syncWithSystem") {
             theme = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         }
 

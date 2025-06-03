@@ -4,7 +4,6 @@ import io.kestra.core.http.client.configurations.HttpConfiguration;
 import io.kestra.core.http.client.configurations.SslOptions;
 import io.kestra.core.models.annotations.Example;
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.property.Property;
@@ -104,20 +103,20 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
     )
     @Builder.Default
     @NotNull
-    private Property<String> responseCondition = new Property<>("{{ response.statusCode < 400 }}");
+    private Property<String> responseCondition = Property.ofExpression("{{ response.statusCode < 400 }}");
 
     @NotNull
     private Property<String> uri;
 
     @Builder.Default
-    private Property<String> method = Property.of("GET");
+    private Property<String> method = Property.ofValue("GET");
 
     private Property<String> body;
 
     private Property<Map<String, Object>> formData;
 
     @Builder.Default
-    private Property<String> contentType = Property.of(MediaType.APPLICATION_JSON);
+    private Property<String> contentType = Property.ofValue(MediaType.APPLICATION_JSON);
 
     private Property<Map<CharSequence, CharSequence>> headers;
 
@@ -128,7 +127,7 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
         title = "If true, the HTTP response body will be automatically encrypted and decrypted in the outputs if encryption is configured",
         description = "When true, the `encryptedBody` output will be filled, otherwise the `body` output will be filled"
     )
-    private Property<Boolean> encryptBody = Property.of(false);
+    private Property<Boolean> encryptBody = Property.ofValue(false);
 
     @Override
     public Optional<Execution> evaluate(ConditionContext conditionContext, TriggerContext context) throws Exception {
@@ -139,7 +138,7 @@ public class Trigger extends AbstractTrigger implements PollingTriggerInterface,
             this.options = HttpConfiguration.builder().build();
         }
         // we allow failed status code as it is the condition that must determine whether we trigger the flow
-        options.setAllowFailed(Property.of(true));
+        options.setAllowFailed(Property.ofValue(true));
         options.setSsl(this.options.getSsl() != null ? this.options.getSsl() : this.sslOptions);
 
         var request = Request.builder()

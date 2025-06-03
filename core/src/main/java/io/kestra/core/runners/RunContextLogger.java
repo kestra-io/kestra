@@ -17,6 +17,7 @@ import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.queues.QueueException;
 import io.kestra.core.queues.QueueInterface;
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
@@ -87,6 +88,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                 .flowId(logEntry.getFlowId())
                 .taskId(logEntry.getTaskId())
                 .executionId(logEntry.getExecutionId())
+                .executionKind(logEntry.getExecutionKind())
                 .taskRunId(logEntry.getTaskRunId())
                 .attemptNumber(logEntry.getAttemptNumber())
                 .triggerId(logEntry.getTriggerId())
@@ -241,7 +243,7 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
             return data;
         }
 
-        private Object recursive(Object object) {
+        private Object recursive(@Nullable Object object) {
             if (object instanceof Map<?, ?> value) {
                 return value
                     .entrySet()
@@ -258,6 +260,8 @@ public class RunContextLogger implements Supplier<org.slf4j.Logger> {
                     .toList();
             } else if (object instanceof String string) {
                 return replaceSecret(string);
+            } else if (object == null) {
+                return null;
             } else {
                 // toString will be called anyway at some point so better to all it now
                 return replaceSecret(object.toString());

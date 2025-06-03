@@ -4,9 +4,9 @@
         v-if="generated !== undefined"
         :data="parsedData"
         :options
-        :plugins="chartOptions.legend.enabled ? [customBarLegend] : []"
+        :plugins="chartOptions?.legend?.enabled ? [customBarLegend] : []"
         class="chart"
-        :class="chartOptions.legend.enabled ? 'with-legend' : ''"
+        :class="chartOptions?.legend?.enabled ? 'with-legend' : ''"
     />
     <NoData v-else />
 </template>
@@ -25,22 +25,20 @@
     import moment from "moment";
 
     import {useRoute, useRouter} from "vue-router";
-    import {Utils} from "@kestra-io/ui-libs";
+    import {cssVariable, Utils} from "@kestra-io/ui-libs";
     import KestraUtils, {useTheme} from "../../../../../utils/utils"
     import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
 
     const store = useStore();
-
-    const dashboard = computed(() => store.state.dashboard.dashboard);
 
     const route = useRoute();
     const router = useRouter();
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        identifier: {type: [Number, String], required: true},
         chart: {type: Object, required: true},
-        isPreview: {type: Boolean, required: false, default: false}
+        showDefault: {type: Boolean, default: false},
+        defaultFilters: {type: Array, default: () => []},
     });
 
     const containerID = `${props.chart.id}__${Math.random()}`;
@@ -68,7 +66,7 @@
             borderColor: "transparent",
             borderWidth: 2,
             plugins: {
-                ...(chartOptions.legend.enabled
+                ...(chartOptions?.legend?.enabled
                     ? {
                         customBarLegend: {
                             containerID,
@@ -137,12 +135,12 @@
         return field === "DURATION";
     }
 
-    const parsedData = computed(() => {
-        const parseValue = (value) => {
-            const date = moment(value, moment.ISO_8601, true);
-            return date.isValid() ? date.format(KestraUtils.getDateFormat(route.query.startDate, route.query.endDate)) : value;
-        };
+    const parseValue = (value) => {
+        const date = moment(value, moment.ISO_8601, true);
+        return date.isValid() ? date.format(KestraUtils.getDateFormat(route.query.startDate, route.query.endDate)) : value;
+    };
 
+    const parsedData = computed(() => {
         const rawData = generated.value.results;
         const xAxis = (() => {
             const values = rawData.map((v) => {
@@ -215,10 +213,36 @@
         };
 
         const yDataset = reducer(rawData, aggregator[0][0], "y");
-        const yDatasetData = Object.values(getData(aggregator[0][0], yDataset));
 
-        const label =
-            aggregator?.[1]?.[1]?.displayName ?? aggregator?.[1]?.[1]?.field;
+        // Sorts the dataset array by the descending sum of 'data' values.
+        // If two datasets have the same sum, it sorts them alphabetically by 'label'.
+        const yDatasetData = Object.values(getData(aggregator[0][0], yDataset)).sort((a, b) => {
+            const sumA = a.data.reduce((sum, val) => sum + val, 0);
+            const sumB = b.data.reduce((sum, val) => sum + val, 0);
+
+            if (sumB !== sumA) {
+                return sumB - sumA; // Descending by sum
+            }
+
+            return a.label.localeCompare(b.label); // Ascending alphabetically by label
+        });
+
+        const label = aggregator?.[1]?.[1]?.displayName ?? aggregator?.[1]?.[1]?.field;
+
+        let duration: number[] = [];
+        if(yBShown){
+            const helper = Array.from(new Set(rawData.map((v) => parseValue(v.date)))).sort();
+
+            // Step 1: Group durations by formatted date
+            const groupedDurations = {};
+            rawData.forEach(item => {
+                const formattedDate = parseValue(item.date);
+                groupedDurations[formattedDate] = (groupedDurations[formattedDate] || 0) + item.duration;
+            });
+
+            // Step 2: Map to target dates
+            duration = helper.map(date => groupedDurations[date] || 0);
+        }
 
         return {
             labels: xAxis,
@@ -227,12 +251,12 @@
                     {
                         yAxisID: "yB",
                         type: "line",
-                        data: rawData.map((v) => v[aggregator[1][0]]),
+                        data: duration,
                         fill: false,
                         pointRadius: 0,
                         borderWidth: 0.75,
                         label: label,
-                        borderColor: getConsistentHEXColor(theme.value, label),
+                        borderColor: cssVariable("--ks-border-running")
                     },
                     ...yDatasetData,
                 ]
@@ -241,34 +265,22 @@
     });
 
     const generated = ref();
-    const generate = async () => {
-        if (!props.isPreview) {
+    const generate = async (id) => {
+        let decodedParams = decodeSearchParams(route.query, undefined, []);
+        if (!props.showDefault) {
             let params = {
-                id: dashboard.value.id,
-                chartId: props.chart.id
+                id,
+                chartId: props.chart.id,
+                filters: props.defaultFilters.concat(decodedParams?? [])
             };
-            if (route.query.namespace) {
-                params.namespace = route.query.namespace;
-            }
-            if (route.query.labels) {
-                params.labels = Object.fromEntries(route.query.labels.map(l => l.split(":")));
-            }
-            let decodedParams = decodeSearchParams(route.query, undefined, []);
-            if (decodedParams) {
-                params = {...params, filters: decodedParams}
-            }
             generated.value = await store.dispatch("dashboard/generate", params);
         } else {
-            generated.value = await store.dispatch("dashboard/chartPreview", props.chart.content)
+            generated.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filters: props.defaultFilters.concat(decodedParams?? [])}})
         }
     };
 
-    watch(route, async () => await generate());
-    watch(
-        () => props.identifier,
-        () => generate(),
-    );
-    onMounted(() => generate());
+    watch(route, async (route) => await generate(route.params?.id));
+    onMounted(() => generate(route.params.id));
 </script>
 
 <style lang="scss" scoped>

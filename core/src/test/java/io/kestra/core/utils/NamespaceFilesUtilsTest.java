@@ -23,9 +23,9 @@ import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @KestraTest
@@ -54,7 +54,7 @@ class NamespaceFilesUtilsTest {
 
         ByteArrayInputStream data = new ByteArrayInputStream("a".repeat(1024).getBytes(StandardCharsets.UTF_8));
         for (int i = 0; i < 100; i++) {
-            storageInterface.put(null, namespace, toNamespacedStorageUri(namespace, URI.create("/" + i + ".txt")), data);
+            storageInterface.put(MAIN_TENANT, namespace, toNamespacedStorageUri(namespace, URI.create("/" + i + ".txt")), data);
         }
 
         namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().build());
@@ -78,10 +78,10 @@ class NamespaceFilesUtilsTest {
 
         ByteArrayInputStream data = new ByteArrayInputStream("a".repeat(1024).getBytes(StandardCharsets.UTF_8));
         for (int i = 0; i < 100; i++) {
-            storageInterface.put(null, namespace, toNamespacedStorageUri(namespace, URI.create("/" + i + ".txt")), data);
+            storageInterface.put(MAIN_TENANT, namespace, toNamespacedStorageUri(namespace, URI.create("/" + i + ".txt")), data);
         }
 
-        namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().namespaces(Property.of(List.of(namespace))).build());
+        namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().namespaces(Property.ofValue(List.of(namespace))).build());
 
         List<LogEntry> logEntry = TestsUtils.awaitLogs(logs, 1);
         receive.blockLast();
@@ -101,11 +101,11 @@ class NamespaceFilesUtilsTest {
         String namespace = IdUtils.create();
 
         ByteArrayInputStream data = new ByteArrayInputStream("a".repeat(1024).getBytes(StandardCharsets.UTF_8));
-        storageInterface.put(null, namespace, toNamespacedStorageUri(namespace, URI.create("/folder1/test.txt")), data);
-        storageInterface.put(null, namespace, toNamespacedStorageUri(namespace, URI.create("/folder2/test.txt")), data);
-        storageInterface.put(null, namespace, toNamespacedStorageUri(namespace, URI.create("/test.txt")), data);
+        storageInterface.put(MAIN_TENANT, namespace, toNamespacedStorageUri(namespace, URI.create("/folder1/test.txt")), data);
+        storageInterface.put(MAIN_TENANT, namespace, toNamespacedStorageUri(namespace, URI.create("/folder2/test.txt")), data);
+        storageInterface.put(MAIN_TENANT, namespace, toNamespacedStorageUri(namespace, URI.create("/test.txt")), data);
 
-        namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().namespaces(Property.of(List.of(namespace))).build());
+        namespaceFilesUtils.loadNamespaceFiles(runContext, NamespaceFiles.builder().namespaces(Property.ofValue(List.of(namespace))).build());
 
         List<LogEntry> logEntry = TestsUtils.awaitLogs(logs, 1);
         receive.blockLast();

@@ -77,10 +77,12 @@ export default [
                 {
                     // args prefixed with '_' are ignored
                     argsIgnorePattern: "^_",
+                    varsIgnorePattern: "^_",
                 },
             ],
             "@typescript-eslint/no-this-alias": "off",
             "@typescript-eslint/no-explicit-any": "off",
+            "no-console": ["error", {allow: ["warn", "error"]}]
         },
     },
     {
@@ -88,4 +90,10 @@ export default [
         files: [components("filter"), components("code")],
         rules: {"vue/component-api-style": ["error", ["script-setup"]]},
     },
+    {
+        files: ["src/translations/check.js", "**/tests/**"],
+        rules: {
+            "no-console": ["off"]
+        }
+    }
 ];

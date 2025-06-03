@@ -97,7 +97,7 @@
     import Utils from "../../utils/utils";
     import Markdown from "../layout/Markdown.vue";
     import ValidationError from "./ValidationError.vue";
-    import {SECTIONS} from "../../utils/constants";
+    import {SECTIONS} from "@kestra-io/ui-libs";
 
     export default {
         components: {Editor, TaskEditor, Drawer, Markdown, ValidationError},
@@ -222,7 +222,7 @@
             onInput(value) {
                 clearTimeout(this.timer);
                 this.taskYaml = value;
-                
+
                 this.timer = setTimeout(() => {
                     if (this.lastValidatedValue !== value) {
                         this.lastValidatedValue = value;

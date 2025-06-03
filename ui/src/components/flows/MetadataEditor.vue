@@ -123,19 +123,6 @@
         </el-form-item>
         <el-form-item>
             <template #label>
-                <code>{{ $t("plugin defaults") }}</code>
-            </template>
-            <editor
-                :model-value="newMetadata.pluginDefaults"
-                :navbar="false"
-                :full-height="false"
-                :input="true"
-                lang="yaml"
-                @update:model-value="(value) => newMetadata.pluginDefaults = value"
-            />
-        </el-form-item>
-        <el-form-item>
-            <template #label>
                 <code>{{ $t("disabled") }}</code>
             </template>
             <div>
@@ -204,7 +191,6 @@
                     inputs: [],
                     variables: [["", undefined]],
                     concurrency: {},
-                    pluginDefaults: "",
                     outputs: "",
                     disabled: false
                 },
@@ -231,7 +217,6 @@
                 this.newMetadata.inputs = this.metadata.inputs || []
                 this.newMetadata.variables = this.metadata.variables ? Object.entries(toRaw(this.metadata.variables)) : [["", undefined]]
                 this.newMetadata.concurrency = this.metadata.concurrency || {}
-                this.newMetadata.pluginDefaults = YAML_UTILS.stringify(this.metadata.pluginDefaults) || ""
                 this.newMetadata.outputs = YAML_UTILS.stringify(this.metadata.outputs) || ""
                 this.newMetadata.disabled = this.metadata.disabled || false
                 this.newMetadata.retry = YAML_UTILS.stringify(this.metadata.retry) || ""
@@ -289,7 +274,6 @@
         computed: {
             ...mapState("plugin", ["inputSchema", "inputsType"]),
             cleanMetadata() {
-                const pluginDefaults = YAML_UTILS.parse(this.newMetadata.pluginDefaults);
                 const outputs = YAML_UTILS.parse(this.newMetadata.outputs);
                 const retry = YAML_UTILS.parse(this.newMetadata.retry);
                 const metadata = {
@@ -301,7 +285,6 @@
                     inputs: this.newMetadata.inputs.filter(e => e.id && e.type),
                     variables: this.arrayToObject(this.newMetadata.variables),
                     concurrency: this.cleanConcurrency(this.newMetadata.concurrency),
-                    pluginDefaults: pluginDefaults,
                     outputs: outputs,
                     disabled: this.newMetadata.disabled
                 }

@@ -136,6 +136,9 @@ public abstract class AbstractServiceLivenessCoordinator extends AbstractService
         // ...all services that have transitioned to TERMINATED_FORCED.
         uncleanShutdownServices.addAll(instances.stream()
             .filter(nonRunning -> nonRunning.is(Service.ServiceState.TERMINATED_FORCED))
+            // Only select workers that have been terminated for at least the grace period, to ensure that all in-flight
+            // task runs had enough time to be fully handled by the executors.
+            .filter(terminated -> terminated.isTerminationGracePeriodElapsed(now))
             .toList()
         );
         return uncleanShutdownServices;

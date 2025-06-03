@@ -6,7 +6,7 @@
         </el-alert>
 
         <el-form label-position="top" :model="inputs" ref="form" @submit.prevent="false">
-            <inputs-form :initial-inputs="flow.inputs" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
+            <inputs-form :initial-inputs="flow.inputs" :selected-trigger="selectedTrigger" :flow="flow" v-model="inputs" :execute-clicked="executeClicked" @confirm="onSubmit($refs.form)" />
 
             <el-collapse v-model="collapseName">
                 <el-collapse-item :title="$t('advanced configuration')" name="advanced">
@@ -90,6 +90,10 @@
             embed: {
                 type: Boolean,
                 default: false
+            },
+            selectedTrigger:{
+                type: Object,
+                default: undefined
             }
         },
         data() {

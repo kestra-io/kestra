@@ -106,7 +106,7 @@
 
 <script setup>
     // Core
-    import {getCurrentInstance, nextTick, onMounted, ref, watch} from "vue";
+    import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
     import {useStore} from "vuex";
     import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
@@ -123,8 +123,7 @@
     import {Topology} from "@kestra-io/ui-libs";
 
     // Utils
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-    import {SECTIONS} from "../../utils/constants";
+    import {YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
     import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
 
@@ -132,6 +131,9 @@
 
     const vueflowId = ref(Math.random().toString());
     const {fitView} = useVueFlow(vueflowId.value);
+
+    import {TOPOLOGY_CLICK_INJECTION_KEY} from "../code/injectionKeys";
+    const topologyClick = inject(TOPOLOGY_CLICK_INJECTION_KEY);
 
     // props
     const props = defineProps({
@@ -185,7 +187,6 @@
         "loading",
         "expand-subflow",
         "swapped-task",
-        "openNoCode",
     ]);
 
     // Vue instance variables
@@ -277,23 +278,25 @@
         );
     };
 
-    const onCreateNewTask = (details) => {
-        emit("openNoCode", {
-            section: SECTIONS.TASKS.toLowerCase(),
-            identifier: "new",
-            target: details[0],
-            position: details[1],
-        });
+    const onCreateNewTask = (event) => {
+        topologyClick.value = {
+            action: "create",
+            params: {
+                section: SECTIONS.TASKS.toLowerCase(),
+                position: event[1],
+                id: event[0],
+            }
+        };
     };
 
     const onEditTask = (event) => {
-        emit("openNoCode", {
-            section: event.section
-                ? event.section.toLowerCase()
-                : SECTIONS.TASKS.toLowerCase(),
-            identifier: event.task.id,
-            type: event.task.type,
-        });
+        topologyClick.value = {
+            action: "edit",
+            params: {
+                section: (event.section ?? SECTIONS.TASKS).toLowerCase(),
+                id: event.task.id,
+            }
+        };
     };
 
     const onAddFlowableError = (event) => {

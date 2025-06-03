@@ -77,7 +77,7 @@ public final class RunVariables {
     static Map<String, Object> of(final FlowInterface flow) {
         ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
         builder.put("id", flow.getId())
-               .put("namespace", flow.getNamespace());
+            .put("namespace", flow.getNamespace());
 
         Optional.ofNullable(flow.getRevision())
             .ifPresent(revision ->  builder.put("revision", revision));
@@ -170,6 +170,7 @@ public final class RunVariables {
             this.secretKey = secretKey;
         }
 
+        // Note: for performance reason, cloning maps should be avoided as much as possible.
         @Override
         public Map<String, Object> build(final RunContextLogger logger) {
             ImmutableMap.Builder<String, Object> builder = ImmutableMap.builder();
@@ -228,7 +229,7 @@ public final class RunVariables {
                 builder.put("execution", executionMap.build());
 
                 if (execution.getTaskRunList() != null) {
-                    Map<String, Object> outputs = new HashMap<>(execution.outputs());
+                    Map<String, Object> outputs = execution.outputs();
                     if (decryptVariables) {
                         final Secret secret = new Secret(secretKey, logger);
                         outputs = secret.decrypt(outputs);
@@ -244,11 +245,13 @@ public final class RunVariables {
                             } else {
                                 if (tasksMap.containsKey(taskRun.getTaskId())) {
                                     @SuppressWarnings("unchecked")
-                                    Map<String, Object> taskRunMap = new HashMap<>((Map<String, Object>) tasksMap.get(taskRun.getTaskId()));
+                                    Map<String, Object> taskRunMap = (Map<String, Object>) tasksMap.get(taskRun.getTaskId());
                                     taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
                                     tasksMap.put(taskRun.getTaskId(), taskRunMap);
                                 } else {
-                                    tasksMap.put(taskRun.getTaskId(), Map.of(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent())));
+                                    Map<String, Object> taskRunMap = new HashMap<>();
+                                    taskRunMap.put(taskRun.getValue(), Map.of("state", taskRun.getState().getCurrent()));
+                                    tasksMap.put(taskRun.getTaskId(), taskRunMap);
                                 }
                             }
                         }
@@ -318,7 +321,7 @@ public final class RunVariables {
 
             // Kestra configuration
             if (kestraConfiguration != null) {
-                Map<String, String> kestra = new HashMap<>();
+                Map<String, String> kestra = HashMap.newHashMap(2);
                 if (kestraConfiguration.environment() != null) {
                     kestra.put("environment", kestraConfiguration.environment());
                 }

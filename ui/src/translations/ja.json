@@ -39,6 +39,7 @@
     "add flow": "Flowを追加",
     "add task": "taskを追加",
     "add-trigger-in-editor": "最初にFlowにTriggerを追加してください",
+    "add_new_item": "新しいアイテムを追加",
     "administration": "管理",
     "advanced configuration": "他のプロパティ",
     "after": "後",
@@ -56,6 +57,8 @@
     "back_to_dashboard": "ダッシュボードに戻る",
     "backfill": "Backfill",
     "backfill executions": "backfill実行",
+    "backfill paused": "バックフィル PAUSED",
+    "backfill running": "バックフィル実行中",
     "before": "前",
     "behavior": "動作",
     "blueprints": {
@@ -322,6 +325,12 @@
       "tenants": {
         "message": "Kestra Enterprise Editionはマルチテナンシーをサポートしており、異なるチームやプロジェクトごとに完全に分離された環境を提供します。それぞれの環境には、専用のworkerグループやシークレット、内部ストレージバックエンドなどのリソースが含まれます。",
         "title": "隔離されたTenantでWorkflowを管理する"
+      },
+      "tests": {
+        "header": "フローの単体テスト",
+        "label": "テスト",
+        "message": "フローのロジックを個別に検証し、リグレッションを早期に検出し、変更や成長に伴う自動化に自信を持ち続けましょう。",
+        "title": "すべての変更で信頼性を確保"
       }
     },
     "dependencies": "依存関係",
@@ -402,6 +411,10 @@
       "plugins": {
         "content": "詳細については、<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>に関するドキュメントをご覧ください。",
         "title": "このNamespaceにはプラグインのデフォルトが設定されていません。"
+      },
+      "testSuites": {
+        "content": "テストスイートを作成して、flowをテストし始めましょう。",
+        "title": "テストスイートがまだありません！"
       },
       "triggers": {
         "content": "<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> についての詳細は、ドキュメントをご覧ください。",
@@ -500,7 +513,6 @@
     "export": "エクスポート",
     "export all flows": "すべてのflowをエクスポート",
     "export all templates": "すべてのテンプレートをエクスポート",
-    "export_to_file": "ファイルにエクスポート",
     "exports": "エクスポート",
     "failed to render pdf": "PDFプレビューのレンダリングに失敗しました",
     "false": "False",
@@ -586,6 +598,7 @@
     "flow source not found": "フローソースが見つかりません",
     "flow-dependencies": "依存関係",
     "flow-no-dependencies": "あなたのflowには依存関係がありません",
+    "flow_export": "フローをエクスポート",
     "flow_only": "Flowタブでのみ利用可能です。",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code>件のflowが削除されました",
@@ -652,7 +665,9 @@
     "item": "アイテム",
     "items": "アイテム",
     "join community": "コミュニティに参加",
+    "join_slack": "Slackに参加",
     "jump to...": "ジャンプ先...",
+    "kestra": "Kestra",
     "key": "Key",
     "kill": "キル",
     "kill only parents": "親のみをキル",
@@ -737,6 +752,7 @@
         "parent_folder": "親フォルダー:"
       },
       "export": "namespaceファイルをエクスポート",
+      "export_single": "ファイルをエクスポート",
       "filter": "フィルター",
       "import": {
         "error": "ファイルのインポート中にエラーが発生しました",
@@ -803,19 +819,23 @@
     "no_code": {
       "adding": "+ {what}を追加",
       "adding_default": "+ 新しいvalueを追加",
+      "clearSelection": "選択をクリア",
       "close": {
-        "after execution": "タスクを閉じる",
-        "error handlers": "エラーハンドラーを閉じる",
+        "afterExecution": "実行後にタスクを閉じる",
+        "conditions": "クローズ条件",
+        "errors": "エラーハンドラーを閉じる",
         "finally": "タスクを閉じる",
         "input": "入力を閉じる",
+        "pluginDefaults": "プラグインのデフォルトを閉じる",
         "tasks": "タスクを閉じる",
         "triggers": "トリガーを閉じる"
       },
       "creation": {
-        "after execution": "実行後ブロックを追加",
-        "error handlers": "エラーハンドラーを追加",
+        "afterExecution": "実行後ブロックを追加",
+        "conditions": "条件を追加",
+        "errors": "エラーハンドラーを追加",
         "finally": "finally ブロックを追加",
-        "select": "{section}を選択してください",
+        "pluginDefaults": "プラグインのデフォルトを追加",
         "tasks": "タスクを追加",
         "triggers": "トリガーを追加"
       },
@@ -826,8 +846,8 @@
           "inputs": "入力",
           "labels": "ラベル",
           "outputs": "出力",
-          "plugin_defaults": "プラグインデフォルト",
           "retry": "リトライ",
+          "sla": "SLA",
           "variables": "変数"
         },
         "main": {
@@ -842,29 +862,41 @@
         "variable": "変数",
         "yaml": "YAMLエディター"
       },
-      "save": {
-        "after execution": "タスクを保存",
-        "error handlers": "エラーハンドラーを保存",
-        "finally": "タスクを保存",
-        "input": "入力を保存",
-        "tasks": "タスクを保存",
-        "triggers": "トリガーを保存"
-      },
       "sections": {
-        "after_execution": "実行後",
-        "error_handlers": "エラーハンドラー",
+        "afterExecution": "実行後",
+        "deprecated": "非推奨プロパティ",
+        "errors": "エラーハンドラー",
         "finally": "最後に",
         "general": "一般プロパティ",
         "main": "メインプロパティ",
         "optional": "オプションのプロパティ",
+        "pluginDefaults": "プラグインデフォルト",
         "tasks": "タスク",
         "triggers": "トリガー"
-      }
+      },
+      "select": {
+        "afterExecution": "タスクを選択",
+        "conditions": "条件を選択",
+        "errors": "タスクを選択",
+        "finally": "タスクを選択",
+        "pluginDefaults": "プラグインを選択",
+        "tasks": "タスクを選択",
+        "triggers": "トリガーを選択"
+      },
+      "unnamed": "名前なし"
     },
     "no_data": "ここにはまだ何もないようです…<br/>フィルターを調整するか、もう一度試してみてください！",
     "no_logs_data": "データなし",
     "no_logs_data_description": "フローが実行中でないか、フィルターを調整する必要があるかもしれません。",
     "no_namespaces": "検索条件に一致するnamespaceはゼロです。",
+    "no_results": {
+      "executions": "実行が見つかりません",
+      "flows": "フローが見つかりません",
+      "kv_pairs": "キー-バリュー ペアが見つかりません",
+      "secrets": "シークレットが見つかりません",
+      "templates": "テンプレートが見つかりません",
+      "triggers": "トリガーが見つかりません"
+    },
     "no_results_found": "結果が見つかりません",
     "no_tasks_running": "タスクはまだ実行されていません。",
     "now": "現在",
@@ -954,8 +986,9 @@
     "pause confirm": "実行 <code>{id}</code> を一時停止してもよろしいですか？",
     "pause done": "実行がPAUSEDされています",
     "pause title": "実行を一時停止 <code>{id}</code>。<br/>現在実行中のタスクは引き続き処理されることに注意してください。実行は手動で再開する必要があります。",
-    "plugin defaults": "プラグインのデフォルト設定",
+    "pluginDefaults": "プラグインのデフォルト",
     "pluginPage": {
+      "alt": "プラグインアイコン",
       "search": "{count}+ プラグインを検索",
       "title1": "プラグインはワークフローの構成要素です。",
       "title2": "taskやtriggerを検索してflowを構築します。"
@@ -1076,6 +1109,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "自動更新間隔",
             "default_namespace": "デフォルトNamespace",
             "editor_type": "デフォルトエディタータイプ",
             "execute_default_tab": "デフォルト実行タブ",
@@ -1191,6 +1225,8 @@
       "name": "テナント",
       "names": "テナント"
     },
+    "test-badge-text": "テスト",
+    "test-badge-tooltip": "この実行はテストによって作成されました",
     "theme": "テーマ",
     "this_task_has": "このtaskは",
     "timezone": "タイムゾーン",
@@ -1199,7 +1235,7 @@
     "toggle fullscreen": "フルスクリーンを切り替え",
     "toggle output": "出力を切り替え",
     "toggle output display": "出力表示を切り替え",
-    "toggle periodic refresh each 10 seconds": "10秒ごとに定期的に更新を切り替え",
+    "toggle periodic refresh each x seconds": "{interval}秒ごとに定期的な更新を切り替える",
     "toggle_word_wrap": "ワードラップを切り替え",
     "topology": "トポロジー",
     "topology-graph": {
@@ -1296,6 +1332,7 @@
     "worker group": "Workerグループ",
     "worker group fallback": "ワーカーグループフォールバック",
     "worker group key": "ワーカーグループキー",
+    "worker information": "ワーカー情報",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "ラベルには空のkeyまたはvalueを設定できません",

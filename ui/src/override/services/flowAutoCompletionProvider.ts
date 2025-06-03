@@ -1,14 +1,14 @@
 import type {Store} from "vuex";
 import type {JSONSchema} from "@kestra-io/ui-libs";
 import {YamlElement, YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
-import {QUOTE, YamlNoAutoCompletion} from "../../services/autoCompletionProvider";
+import {QUOTE, YamlAutoCompletion} from "../../services/autoCompletionProvider";
 import RegexProvider from "../../utils/regex";
 
 function distinct<T>(val: T[] | undefined): T[] {
     return Array.from(new Set(val ?? []));
 }
 
-export class FlowAutoCompletion extends YamlNoAutoCompletion {
+export class FlowAutoCompletion extends YamlAutoCompletion {
     store: Store<Record<string, any>>;
     flowsInputsCache: Record<string, string[]> = {};
 

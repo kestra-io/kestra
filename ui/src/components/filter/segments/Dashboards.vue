@@ -28,7 +28,7 @@
                 />
 
                 <el-dropdown-item
-                    @click="selectDashboard(null)"
+                    @click="selectDashboard({id: 'default'})"
                     :class="{'mt-3': filtered.length < 10}"
                 >
                     <small>{{ t("default_dashboard") }}</small>
@@ -109,14 +109,16 @@
 
     const selectedDashboard = ref(null)
 
+    const DASHBOARD_KEY = storageKeys.DASHBORD_SELECTED + (routeTenant.value ? `_${routeTenant.value}` : "")
+
     const selectDashboard = (dashboard: any) => {
         selectedDashboard.value = dashboard?.title;
         if (dashboard?.id) {
-            localStorage.setItem(storageKeys.DASHBORD_SELECTED + "_" + routeTenant.value, dashboard.id);
+            localStorage.setItem(DASHBOARD_KEY, dashboard.id);
         } else {
-            localStorage.removeItem(storageKeys.DASHBORD_SELECTED + "_" + routeTenant.value);
+            localStorage.removeItem(DASHBOARD_KEY);
         }
-        emits("dashboard", dashboard)
+        emits("dashboard", dashboard.id)
     }
 
     const editDashboard = (dashboard: any) => {
@@ -128,20 +130,24 @@
             .dispatch("dashboard/list", {})
             .then((response: { results: { id: string; title: string }[] }) => {
                 dashboards.value = response.results;
-                const lastSelected =  fetchLastDashboard() ?? route.params?.id;
+
+                const creation = Boolean(route.query.created);
+                const lastSelected = creation ? route.params?.id : (fetchLastDashboard() ?? route.params?.id);
+
                 if (lastSelected) {
                     const dashboard = dashboards.value.find(d => d.id === lastSelected);
                     if (dashboard) {
                         selectDashboard(dashboard);
                     } else {
                         selectedDashboard.value = null;
+                        emits("dashboard", "default")
                     }
                 }
             });
     }
 
     const fetchLastDashboard = () => {
-        return localStorage.getItem(storageKeys.DASHBORD_SELECTED + "_" + routeTenant.value)
+        return localStorage.getItem(DASHBOARD_KEY)
     }
 
     onBeforeMount(() => {

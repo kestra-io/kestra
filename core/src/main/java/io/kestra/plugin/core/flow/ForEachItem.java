@@ -465,7 +465,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
         @Override
         public List<SubflowExecution<?>> createSubflowExecutions(
             RunContext runContext,
-            FlowExecutorInterface flowExecutorInterface,
+            FlowMetaStoreInterface flowExecutorInterface,
             Flow currentFlow,
             Execution currentExecution,
             TaskRun currentTaskRun
@@ -650,10 +650,10 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
         private Property<Integer> partitions;
 
         @Builder.Default
-        private Property<Integer> rows = Property.of(1);
+        private Property<Integer> rows = Property.ofValue(1);
 
         @Builder.Default
-        private Property<String> separator = Property.of("\n");
+        private Property<String> separator = Property.ofValue("\n");
     }
 
     @Builder

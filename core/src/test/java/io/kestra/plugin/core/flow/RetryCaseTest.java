@@ -21,6 +21,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @Slf4j
@@ -86,7 +87,7 @@ public class RetryCaseTest {
         });
 
         runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "retry-new-execution-task-duration",
             null,
@@ -113,7 +114,7 @@ public class RetryCaseTest {
         });
 
         runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "retry-new-execution-task-attempts",
             null,
@@ -140,7 +141,7 @@ public class RetryCaseTest {
         });
 
         runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "retry-new-execution-flow-duration",
             null,
@@ -167,7 +168,7 @@ public class RetryCaseTest {
         });
 
         runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "retry-new-execution-flow-attempts",
             null,

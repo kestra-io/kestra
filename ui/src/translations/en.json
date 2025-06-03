@@ -261,7 +261,7 @@
     "parent execution": "Parent execution",
     "original execution": "Original execution",
     "automatic refresh": "Automatic refresh",
-    "toggle periodic refresh each 10 seconds": "Toggle periodic refresh every 10 seconds",
+    "toggle periodic refresh each x seconds": "Toggle periodic refresh every {interval} seconds",
     "trigger refresh": "Trigger refresh",
     "add-trigger-in-editor": "Add a Trigger to your Flow first",
     "refresh": "Refresh",
@@ -470,6 +470,7 @@
     "template export": "Are you sure you want to export <code>{templateCount}</code> template(s)?",
     "templates exported": "Templates exported",
     "export all templates": "Export all templates",
+    "flow_export": "Export flow",
     "flow export": "Are you sure you want to export <code>{flowCount}</code> flow(s)?",
     "flows exported": "Flows exported",
     "export all flows": "Export all flows",
@@ -514,7 +515,6 @@
     "focus task": "Click on any element to see its documentation.",
     "validate": "Validate",
     "add error handler": "Add an error handler",
-    "export_to_file": "Export to file",
     "taskDefaults": "Task Defaults",
     "disabled": "Disabled",
     "before": "before",
@@ -571,6 +571,8 @@
     "environment color setting": "Environment color",
     "slack support": "Ask any question via Slack",
     "join community": "Join the Community",
+    "join_slack": "Join Slack",
+    "kestra": "Kestra",
     "reach us": "Talk to us",
     "new version": "New version {version} available!",
     "error detected": "Error(s) detected",
@@ -680,6 +682,7 @@
         "error": "Error(s) occurred while importing the file(s)"
       },
       "export": "Export namespace files",
+      "export_single": "Export file",
       "dialog": {
         "name": {
           "file": "Name with extension:",
@@ -706,6 +709,8 @@
     "pause backfills": "Pause backfills",
     "backfill executions": "Backfill executions",
     "execute backfill": "Execute backfill",
+    "backfill paused": "Backfill paused",
+    "backfill running": "Backfill running",
     "relative": "Relative",
     "relative start date": "Relative start date",
     "relative end date": "Relative end date",
@@ -749,7 +754,8 @@
     "pluginPage": {
       "title1": "Plugins are building blocks for your workflows.",
       "title2": "Search for tasks and triggers to build your flow.",
-      "search": "Search across {count}+ plugins"
+      "search": "Search across {count}+ plugins",
+      "alt": "Plugins Icon"
     },
     "no inputs": "This flow has no inputs.",
     "settings": {
@@ -766,7 +772,8 @@
             "execute_flow": "Execute the Flow",
             "execute_default_tab": "Default Execution Tab",
             "multi_panel_editor": "Multi Panel Editor",
-            "flow_default_tab": "Default Flow Tab"
+            "flow_default_tab": "Default Flow Tab",
+            "auto_refresh_interval": "Auto Refresh Interval"
           }
         },
         "theme": {
@@ -828,6 +835,12 @@
       "apps": {
         "title": "Build custom Apps with Kestra",
         "message": "Apps in Kestra Enterprise Edition allow you to build custom UIs that interact with Kestra workflows from outside the platform. This feature lets you use your workflows as a backend for custom applications, enabling non-technical users to submit data through forms or resume paused workflows awaiting approval."
+      },
+      "tests": {
+        "label": "Tests",
+        "header": "Unit Tests for Flows",
+        "title": "Ensure Reliability with Every Change",
+        "message": "Verify the logic of your flows in isolation, detect regressions early, and maintain confidence in your automations as they change and grow."
       },
       "IAM": {
         "title": "Manage Users through IAM with SSO, SCIM and RBAC",
@@ -950,7 +963,7 @@
     "no_namespaces": "Zero namespaces match the search criteria.",
     "system_namespace": "Keep your platform in check with system flows.",
     "system_namespace_description": "Automate maintenance tasks, from failure alerts to automated cleanups.",
-    "plugin defaults": "Plugin defaults",
+    "pluginDefaults": "Plugin defaults",
     "secret": {
       "add": "New secret",
       "update": "Update secret '{name}'",
@@ -1157,8 +1170,10 @@
     "chart": "Chart",
     "chart preview": "Chart preview",
     "no_code": {
+      "unnamed": "No Name",
       "adding": "+ Add a {what}",
       "adding_default": "+ Add a new value",
+      "clearSelection" : "Clear selection",
       "labels": {
         "yaml": "YAML Editor",
         "no_code": "No Code Editor",
@@ -1169,11 +1184,13 @@
         "main": "Main properties",
         "general": "General properties",
         "optional": "Optional properties",
+        "deprecated": "Deprecated properties",
         "tasks": "Tasks",
         "triggers": "Triggers",
-        "error_handlers": "Error Handlers",
+        "errors": "Error Handlers",
+        "afterExecution": "After Execution",
         "finally": "Finally",
-        "after_execution": "After Execution"
+        "pluginDefaults": "Plugin Defaults"
       },
       "fields": {
         "main": {
@@ -1183,38 +1200,42 @@
         },
         "general": {
           "retry": "Retry",
+          "sla": "SLA",
           "labels": "Labels",
           "inputs": "Inputs",
           "outputs": "Outputs",
           "variables": "Variables",
           "concurrency": "Concurrency",
-          "plugin_defaults": "Plugin Defaults",
           "disabled": "Disabled"
         }
       },
+      "select": {
+        "tasks": "Select a task",
+        "triggers": "Select a trigger",
+        "errors": "Select a task",
+        "finally": "Select a task",
+        "pluginDefaults": "Select a plugin",
+        "afterExecution": "Select a task",
+        "conditions": "Select a condition"
+      },
       "creation": {
-        "select": "Select a {section}",
         "tasks": "Add a task",
         "triggers": "Add a trigger",
-        "error handlers": "Add an error handler",
+        "errors": "Add an error handler",
         "finally": "Add a finally block",
-        "after execution": "Add an after execution block"
-      },
-      "save": {
-        "tasks": "Save task",
-        "triggers": "Save trigger",
-        "error handlers": "Save error handler",
-        "finally": "Save task",
-        "after execution": "Save task",
-        "input": "Save input"
+        "pluginDefaults": "Add a plugin default",
+        "afterExecution": "Add an after execution block",
+        "conditions": "Add a condition"
       },
       "close": {
         "tasks": "Close task",
         "triggers": "Close trigger",
-        "error handlers": "Close error handler",
-        "finally": "Close task",
-        "after execution": "Close task",
-        "input": "Close input"
+        "errors": "Close error handler",
+        "finally": "Close finally task",
+        "afterExecution": "Close after execution task",
+        "input": "Close input",
+        "pluginDefaults": "Close plugin default",
+        "conditions": "Close condition"
       }
     },
     "properties": {
@@ -1286,6 +1307,10 @@
         "title": "You have no apps yet!",
         "content": "Start building Apps to interact with Kestra from the outside world."
       },
+      "testSuites": {
+        "title": "You have no Tests yet!",
+        "content": "Add tests to validate quality and avoid regressions in your flows."
+      },
       "concurrency_executions": {
         "title": "No ongoing Executions for this Flow.",
         "content": "Read more about <strong><a href=\"https://kestra.io/docs/workflow-components/execution\" target=\"_blank\">Executions</a></strong> in our documentation."
@@ -1316,6 +1341,17 @@
     },
     "search_docs": "Search",
     "no_results_found": "No results found",
-    "searching": "Searching..."
+    "searching": "Searching...",
+    "worker information": "Worker Information",
+    "test-badge-text": "Test",
+    "test-badge-tooltip": "This execution was created by a Test",
+    "no_results": {
+      "executions": "No Executions Found",
+      "triggers": "No Triggers Found",
+      "flows": "No Flows Found",
+      "kv_pairs": "No Key-Value pairs Found",
+      "secrets": "No Secrets Found",
+      "templates": "No Templates Found"
+    }
   }
 }

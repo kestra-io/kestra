@@ -10,9 +10,9 @@
                 <template #navbar>
                     <KestraFilter
                         prefix="triggers"
-                        :include="['namespace', 'trigger_state']"
+                        :language="TriggerFilterLanguage"
                         :buttons="{
-                            refresh: {shown: true, callback: load},
+                            refresh: {shown: true, callback: () => load()},
                             settings: {shown: false}
                         }"
                     />
@@ -28,11 +28,12 @@
                         @selection-change="onSelectionChange"
                         expandable
                         :row-class-name="getClasses"
+                        :no-data-text="$t('no_results.triggers')"
                     >
                         <template #expand>
                             <el-table-column type="expand">
                                 <template #default="props">
-                                    <LogsWrapper class="m-3" :filters="props.row" v-if="hasLogsContent(props.row)" :charts="false" embed />
+                                    <LogsWrapper class="m-3" :filters="props.row" v-if="hasLogsContent(props.row)" :with-charts="false" embed />
                                 </template>
                             </el-table-column>
                         </template>
@@ -148,11 +149,6 @@
                                 <date-ago :inverted="true" :date="scope.row.nextExecutionDate" />
                             </template>
                         </el-table-column>
-                        <el-table-column :label="$t('cron')">
-                            <template #default="scope">
-                                <Cron v-if="scope.row.cron" :cron-expression="scope.row?.cron" />
-                            </template>
-                        </el-table-column>
                         <el-table-column :label="$t('details')">
                             <template #default="scope">
                                 <TriggerAvatar
@@ -196,13 +192,13 @@
                                     </span>
 
                                     <el-button
+                                        :icon="CalendarCollapseHorizontalOutline"
                                         v-if="user.hasAnyAction(permission.EXECUTION, action.UPDATE)"
                                         @click="restart(scope.row)"
-                                        class="restartTrigger"
+                                        size="small"
+                                        type="primary"
                                     >
-                                        <kicon :tooltip="$t(`restart trigger.tooltip`)" placement="left">
-                                            <Restart />
-                                        </kicon>
+                                        {{ $t("backfill executions") }}
                                     </el-button>
                                 </div>
                             </template>
@@ -261,9 +257,9 @@
     import AlertCircle from "vue-material-design-icons/AlertCircle.vue";
     import SelectTable from "../layout/SelectTable.vue";
     import BulkSelect from "../layout/BulkSelect.vue";
-    import Restart from "vue-material-design-icons/Restart.vue";
-    import Cron from "../layout/Cron.vue"
-    import TriggerAvatar from "../flows/TriggerAvatar.vue"
+    import TriggerAvatar from "../flows/TriggerAvatar.vue";
+    import CalendarCollapseHorizontalOutline from "vue-material-design-icons/CalendarCollapseHorizontalOutline.vue";
+    import TriggerFilterLanguage from "../../composables/monaco/languages/filters/impl/triggerFilterLanguage.ts";
 </script>
 <script>
     import RouteContext from "../../mixins/routeContext";
@@ -294,7 +290,6 @@
                 triggers: undefined,
                 total: undefined,
                 triggerToUnlock: undefined,
-                state: undefined,
                 states: [
                     {label: this.$t("triggers_state.options.enabled"), value: "ENABLED"},
                     {label: this.$t("triggers_state.options.disabled"), value: "DISABLED"}
@@ -517,7 +512,7 @@
         margin-left: 0 !important;
         padding-left: 0 !important;
     }
-    
+
     .backfillContainer{
         display: flex;
         align-items: center;
@@ -525,17 +520,17 @@
     .statusIcon{
         font-size: large;
     }
-    
+
     .trigger-issue-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;
     }
-    
+
     .alert-circle-icon {
         color: var(--ks-content-warning);
         font-size: 1.4em;
     }
-    
+
     :deep(.el-table__expand-icon) {
         pointer-events: none;
         .el-icon {
@@ -547,7 +542,7 @@
             padding: 0 3px;
             color: inherit;
         }
-        
+
         &.is-checked {
             .is-text {
                 color: #ffffff;

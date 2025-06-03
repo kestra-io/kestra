@@ -347,6 +347,26 @@ public class PluginDefaultService {
     }
 
     /**
+     * Parses and injects plugin default versions into the given flow.
+     *
+     * @param tenantId  the Tenant ID.
+     * @param source    the flow source.
+     * @param strictParsing specifies if the source must meet strict validation requirements
+     * @return  a new {@link FlowWithSource}.
+     *
+     * @throws FlowProcessingException when parsing flow.
+     */
+    public FlowWithSource parseFlowWithVersionDefaults(@Nullable final String tenantId, final String source, final boolean strictParsing) throws FlowProcessingException {
+        try {
+            return parseFlowWithAllDefaults(tenantId, null, null, false, source, true, strictParsing);
+        } catch (ConstraintViolationException e) {
+            throw new FlowProcessingException(e);
+        } catch (JsonProcessingException e) {
+            throw new FlowProcessingException(YamlParser.toConstraintViolationException(source, "Flow", e));
+        }
+    }
+
+    /**
      * Parses and injects defaults into the given flow.
      *
      * @param tenant  the tenant identifier.

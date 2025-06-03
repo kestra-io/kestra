@@ -161,6 +161,7 @@ public class Extension extends AbstractExtension {
         functions.put("randomPort", new RandomPortFunction());
         functions.put("fileExists", fileExistsFunction);
         functions.put("isFileEmpty", isFileEmptyFunction);
+        functions.put("tasksWithState", new TasksWithState());
         return functions;
     }
 

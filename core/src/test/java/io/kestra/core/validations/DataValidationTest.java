@@ -33,7 +33,7 @@ public class DataValidationTest {
     @Test
     void invalid() throws Exception {
         Data<?> data = Data.builder()
-            .fromURI(Property.of(URI.create("kestra:///uri")))
+            .fromURI(Property.ofValue(URI.create("kestra:///uri")))
             .fromList(new Property<>())
             .build();
 

@@ -1,6 +1,7 @@
 package io.kestra.jdbc.runner;
 
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.conditions.ConditionContext;
 import io.kestra.core.models.executions.Execution;
@@ -63,7 +64,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
     private JdbcTestUtils jdbcTestUtils;
 
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
@@ -311,7 +312,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
-            .duration(io.kestra.core.models.property.Property.of(sleep))
+            .duration(io.kestra.core.models.property.Property.ofValue(sleep))
             .workerGroup(workerGroupKey != null ? new WorkerGroup(workerGroupKey, null) : null)
             .build();
 
@@ -351,7 +352,7 @@ public abstract class JdbcServiceLivenessCoordinatorTest {
         Sleep bash = Sleep.builder()
             .type(Sleep.class.getName())
             .id("unit-test")
-            .duration(io.kestra.core.models.property.Property.of(sleep))
+            .duration(io.kestra.core.models.property.Property.ofValue(sleep))
             .build();
 
         SleepTrigger trigger = SleepTrigger.builder()

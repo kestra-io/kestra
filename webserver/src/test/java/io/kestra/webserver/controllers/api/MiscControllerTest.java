@@ -49,7 +49,7 @@ class MiscControllerTest {
         String uid = "someUid";
         String username = "my.email@kestra.io";
         String password = "myPassword";
-        client.toBlocking().exchange(HttpRequest.POST("/api/v1/basicAuth", new MiscController.BasicAuthCredentials(uid, username, password)));
+        client.toBlocking().exchange(HttpRequest.POST("/api/v1/main/basicAuth", new MiscController.BasicAuthCredentials(uid, username, password)));
         try {
             Assertions.assertThrows(
                 HttpClientResponseException.class,

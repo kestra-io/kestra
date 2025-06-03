@@ -1,6 +1,9 @@
 <template>
     <template v-if="ready">
-        <FlowRootTopBar :route-info="routeInfo" :deleted="deleted" :is-allowed-edit="isAllowedEdit" :active-tab-name="activeTabName()" />
+        <FlowRootTopBar
+            :route-info="routeInfo"
+            :active-tab-name="activeTabName()"
+        />
         <Tabs
             route-name="flows/update"
             ref="currentTab"
@@ -76,6 +79,8 @@
             // Specifically, it would be a problem when saving a new flow
             // and moving to edit mode.
             // NOTE: Flow creation component is ./FlowCreate.vue
+            this.$store.commit("flow/setIsCreating", false);
+
             this.$store.commit("flow/setIsCreating", false);
 
             this.load();
@@ -182,7 +187,6 @@
                         props: {
                             expandedSubflows: this.expandedSubflows,
                             isReadOnly: this.deleted || !this.isAllowedEdit || this.readOnlySystemLabel,
-                            beta: localStorage.getItem("multiPanelEditor") === "true",
                         },
                     });
                 }

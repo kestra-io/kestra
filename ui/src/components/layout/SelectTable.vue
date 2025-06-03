@@ -4,32 +4,27 @@
             <slot name="select-actions" />
         </div>
 
-        <NoData v-if="data.length === 0 && infiniteScrollLoad === undefined" />
-
-        <template v-else>
-            <el-table
-                ref="table"
-                v-bind="$attrs"
-                :data="data"
-                @selection-change="selectionChanged"
-                v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
-                :infinite-scroll-disabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
-                :infinite-scroll-delay="0"
-                :height="tableHeight"
-            >
-                <el-table-column type="selection" v-if="selectable" />
-                <slot name="default" />
-            </el-table>
-        </template>
+        <el-table
+            ref="table"
+            v-bind="$attrs"
+            :data="data"
+            :empty-text="data.length === 0 && infiniteScrollLoad === undefined ? noDataText : ''"
+            @selection-change="selectionChanged"
+            v-el-table-infinite-scroll="infiniteScrollLoadWithDisableHandling"
+            :infinite-scroll-disabled="infiniteScrollLoad === undefined ? true : infiniteScrollDisabled"
+            :infinite-scroll-delay="0"
+            :height="data.length === 0 && infiniteScrollLoad === undefined ? '100px' : tableHeight"
+        >
+            <el-table-column type="selection" v-if="selectable" />
+            <slot name="default" />
+        </el-table>
     </div>
 </template>
 
 <script>
-    import NoData from "./NoData.vue";
     import elTableInfiniteScroll from "el-table-infinite-scroll";
 
     export default {
-        components: {NoData},
         data() {
             return {
                 hasSelection: false,
@@ -37,7 +32,7 @@
                 tableHeight: this.infiniteScrollLoad === undefined ? "auto" : "100%"
             }
         },
-        expose: ["resetInfiniteScroll"],
+        expose: ["resetInfiniteScroll", "toggleRowExpansion"],
         computed: {
             scrollWrapper() {
                 if (this.data) {
@@ -55,7 +50,7 @@
             },
             stillHaveDataToFetch() {
                 return this.infiniteScrollDisabled === false;
-            }
+            },
         },
         directives: {
             elTableInfiniteScroll
@@ -64,6 +59,10 @@
             async resetInfiniteScroll() {
                 this.infiniteScrollDisabled = false;
                 this.tableHeight = await this.computeTableHeight();
+            },
+            async toggleRowExpansion(row, expand){
+                this.$refs.table.toggleRowExpansion(row, expand)
+                // this.$refs.table.clearSelection()
             },
             async waitTableRender() {
                 if (this.tableView === undefined) {
@@ -133,6 +132,10 @@
             data: {
                 type: Array,
                 default: () => []
+            },
+            noDataText: {
+                type: String,
+                default: undefined
             },
             infiniteScrollLoad: {
                 type: Function,

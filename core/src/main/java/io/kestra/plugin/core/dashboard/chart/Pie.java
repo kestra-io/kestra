@@ -27,23 +27,24 @@ import lombok.experimental.SuperBuilder;
         @Example(
             title = "Display a pie chart with with Executions per State.",
             full = true,
-            code = {
-                "charts:\n" +
-                    "- id: executions_pie\n" +
-                    "type: io.kestra.plugin.core.dashboard.chart.Pie\n" +
-                    "chartOptions:\n" +
-                        "displayName: Total Executions\n" +
-                        "description: Total executions per state\n" +
-                        "legend:\n" +
-                            "enabled: true\n" +
-                        "colorByColumn: state\n" +
-                    "data:\n" +
-                        "type: io.kestra.plugin.core.dashboard.data.Executions\n" +
-                        "columns:\n" +
-                            "state:\n" +
-                                "field: STATE\n" +
-                            "total:\n" +
-                                "agg: COUNT\n"
+            code = { """
+                charts:
+                    - id: executions_pie
+                      type: io.kestra.plugin.core.dashboard.chart.Pie
+                      chartOptions:
+                        displayName: Total Executions
+                        description: Total executions per state
+                      legend:
+                        enabled: true
+                        colorByColumn: state
+                      data:
+                        type: io.kestra.plugin.core.dashboard.data.Executions
+                        columns:
+                            state:
+                                field: STATE
+                            total:
+                                agg: COUNT
+                """
             }
         )
     }

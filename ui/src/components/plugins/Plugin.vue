@@ -112,6 +112,10 @@
         watch: {
             $route: {
                 handler(newValue, _oldValue) {
+                    if (newValue.name === "plugins/list") {
+                        this.pluginType = undefined;
+                        this.version = undefined;
+                    } 
                     if (newValue.name.startsWith("plugins/")) {
                         this.onRouterChange();
                     }

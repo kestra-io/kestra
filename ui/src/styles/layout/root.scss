@@ -42,7 +42,7 @@
     --bs-code-color: $base-purple-600;
 
     #{--card-bg}: var(--ks-background-card);
-    #{--input-bg}: $input-bg;
+    #{--input-bg}: var(--ks-background-input);
 
     #{--bs-border-color}: var(--ks-border-primary);
     #{--bs-border-secondary-color}: var(--ks-border-secondary);

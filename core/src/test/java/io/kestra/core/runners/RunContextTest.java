@@ -60,9 +60,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.within;
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @KestraTest(startRunner = true)
@@ -110,7 +110,7 @@ class RunContextTest {
         LogEntry matchingLog;
         Flux<LogEntry> receive = TestsUtils.receive(workerTaskLogQueue, either -> logs.add(either.getLeft()));
 
-        Execution execution = runnerUtils.runOne(null, "io.kestra.tests", "logs");
+        Execution execution = runnerUtils.runOne(MAIN_TENANT, "io.kestra.tests", "logs");
 
         assertThat(execution.getTaskRunList()).hasSize(5);
 
@@ -147,7 +147,7 @@ class RunContextTest {
         inputs.put("string", new String(chars));
 
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "inputs-large",
             null,
@@ -179,7 +179,7 @@ class RunContextTest {
 
     @Test
     void taskDefaults() throws TimeoutException, QueueException, IOException, URISyntaxException {
-        repositoryLoader.load(null, Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/plugin-defaults.yaml")));
+        repositoryLoader.load(Objects.requireNonNull(ListenersTest.class.getClassLoader().getResource("flows/tests/plugin-defaults.yaml")));
         pluginDefaultsCaseTest.taskDefaults();
     }
 
@@ -195,7 +195,7 @@ class RunContextTest {
         p.destroy();
 
         URI uri = runContext.storage().putFile(path.toFile());
-        assertThat(storageInterface.getAttributes(null, null, uri).getSize()).isEqualTo(size + 1);
+        assertThat(storageInterface.getAttributes(MAIN_TENANT, null, uri).getSize()).isEqualTo(size + 1);
     }
 
     @Test
@@ -292,7 +292,6 @@ class RunContextTest {
         assertThat(rendered.get("key")).isEqualTo("value");
     }
 
-
     @Test
     @EnabledIfEnvironmentVariable(named = "SECRET_PASSWORD", matches = ".*")
     void secretTrigger() throws IllegalVariableEvaluationException {
@@ -336,6 +335,21 @@ class RunContextTest {
         TestBean testBean = new TestBean(null);
 
         assertThrows(ConstraintViolationException.class, () -> runContext.validate(testBean));
+    }
+
+    @Test
+    @ExecuteFlow("flows/invalids/foreach-switch-failed.yaml")
+    void failedTasksVariable(Execution execution) throws Exception {
+
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.FAILED);
+
+        TaskRun taskRun = execution.getTaskRunList().stream()
+            .filter(tr -> tr.getTaskId().equals("errorforeach"))
+            .findFirst()
+            .orElseThrow(() -> new Exception("TaskRun not found"));
+
+        assertThat(taskRun.getOutputs().get("value").toString().contains("{\"state\":\"FAILED\",\"value\":\"2\",\"taskId\":\"switch\"}")).isEqualTo(true);
+
     }
 
     @SuperBuilder

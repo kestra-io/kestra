@@ -31,4 +31,28 @@ public class ListUtils {
         newList.addAll(list2);
         return newList;
     }
+
+    /**
+     * Concat multiple lists into a single list.
+     */
+    @SafeVarargs
+    public static <T> List<T> concat(List<T> list1, List<T> list2, List<T>... lists) {
+        List<T> newList = new ArrayList<>();
+        if (!isEmpty(list1)) {
+            newList.addAll(list1);
+        }
+        if (!isEmpty(list2)) {
+            newList.addAll(list2);
+        }
+
+        if (lists != null) {
+            for (List<T> list : lists) {
+                if (!isEmpty(list)) {
+                    newList.addAll(list);
+                }
+            }
+        }
+
+        return newList;
+    }
 }

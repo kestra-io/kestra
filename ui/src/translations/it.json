@@ -39,6 +39,7 @@
     "add flow": "Aggiungi flow",
     "add task": "Aggiungi un task",
     "add-trigger-in-editor": "Aggiungi un Trigger al tuo Flow prima",
+    "add_new_item": "Aggiungi nuovo elemento",
     "administration": "Amministrazione",
     "advanced configuration": "Altre proprietà",
     "after": "dopo",
@@ -56,6 +57,8 @@
     "back_to_dashboard": "Torna alla dashboard",
     "backfill": "Backfill",
     "backfill executions": "Esecuzioni di backfill",
+    "backfill paused": "Backfill PAUSED",
+    "backfill running": "Esecuzione del backfill",
     "before": "prima",
     "behavior": "Comportamento",
     "blueprints": {
@@ -322,6 +325,12 @@
       "tenants": {
         "message": "L'edizione Enterprise di Kestra supporta il multi-tenancy, offrendo ambienti completamente isolati per diversi team o progetti, ciascuno con le proprie risorse come gruppi di worker dedicati o segreti e backend di archiviazione interna.",
         "title": "Gestisci i flussi di lavoro in tenant isolati"
+      },
+      "tests": {
+        "header": "Test unitari per i flow",
+        "label": "Test",
+        "message": "Verifica la logica dei tuoi flow in isolamento, rileva le regressioni in anticipo e mantieni la fiducia nelle tue automazioni mentre cambiano e crescono.",
+        "title": "Garantisci l'affidabilità con ogni modifica"
       }
     },
     "dependencies": "Dipendenze",
@@ -402,6 +411,10 @@
       "plugins": {
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">limiti di Concurrency</a></strong> nella nostra documentazione.",
         "title": "Nessun valore predefinito del plugin è impostato per questo Namespace."
+      },
+      "testSuites": {
+        "content": "Inizia a creare suite di test per testare i tuoi flow.",
+        "title": "Non hai ancora Test suite!"
       },
       "triggers": {
         "content": "Leggi di più sui <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Trigger</a></strong> nella nostra documentazione.",
@@ -500,7 +513,6 @@
     "export": "Esporta",
     "export all flows": "Esporta tutti i flows",
     "export all templates": "Esporta tutti i template",
-    "export_to_file": "Esporta su file",
     "exports": "Esportazioni",
     "failed to render pdf": "Impossibile visualizzare l'anteprima PDF",
     "false": "Falso",
@@ -586,6 +598,7 @@
     "flow source not found": "Sorgente del flow non trovata",
     "flow-dependencies": "dipendenze",
     "flow-no-dependencies": "Il tuo flow non ha dipendenze",
+    "flow_export": "Esporta flow",
     "flow_only": "Disponibile solo nella scheda Flow.",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow eliminati",
@@ -652,7 +665,9 @@
     "item": "elemento",
     "items": "elementi",
     "join community": "Unisciti alla Community",
+    "join_slack": "Unisciti a Slack",
     "jump to...": "Vai a...",
+    "kestra": "Kestra",
     "key": "Key",
     "kill": "Termina",
     "kill only parents": "Termina solo genitori",
@@ -737,6 +752,7 @@
         "parent_folder": "Cartella genitore:"
       },
       "export": "Esporta file del namespace",
+      "export_single": "Esporta file",
       "filter": "Filtro",
       "import": {
         "error": "Si sono verificati errori durante l'importazione dei file",
@@ -803,19 +819,23 @@
     "no_code": {
       "adding": "+ Aggiungi un {what}",
       "adding_default": "+ Aggiungi un nuovo value",
+      "clearSelection": "Cancella selezione",
       "close": {
-        "after execution": "Chiudi task",
-        "error handlers": "Chiudi gestore errori",
+        "afterExecution": "Chiudi dopo l'esecuzione del task",
+        "conditions": "Condizione di chiusura",
+        "errors": "Chiudi error handler",
         "finally": "Chiudi task",
         "input": "Chiudi input",
+        "pluginDefaults": "Chiudi plugin predefinito",
         "tasks": "Chiudi task",
         "triggers": "Chiudi trigger"
       },
       "creation": {
-        "after execution": "Aggiungi un blocco after execution",
-        "error handlers": "Aggiungi un gestore degli errori",
+        "afterExecution": "Aggiungi un blocco after execution",
+        "conditions": "Aggiungi una condizione",
+        "errors": "Aggiungi un gestore degli errori",
         "finally": "Aggiungi un blocco finally",
-        "select": "Seleziona una {section}",
+        "pluginDefaults": "Aggiungi un plugin predefinito",
         "tasks": "Aggiungi un task",
         "triggers": "Aggiungi un trigger"
       },
@@ -826,8 +846,8 @@
           "inputs": "Ingressi",
           "labels": "Etichette",
           "outputs": "Output",
-          "plugin_defaults": "Impostazioni Predefinite del Plugin",
           "retry": "Riprova",
+          "sla": "SLA",
           "variables": "Variabili"
         },
         "main": {
@@ -842,29 +862,41 @@
         "variable": "Variabile",
         "yaml": "Editor YAML"
       },
-      "save": {
-        "after execution": "Salva task",
-        "error handlers": "Salva gestore errori",
-        "finally": "Salva task",
-        "input": "Salva input",
-        "tasks": "Salva task",
-        "triggers": "Salva trigger"
-      },
       "sections": {
-        "after_execution": "Dopo l'Esecuzione",
-        "error_handlers": "Gestori degli Errori",
+        "afterExecution": "Dopo l'Esecuzione",
+        "deprecated": "Proprietà deprecate",
+        "errors": "Gestori degli Errori",
         "finally": "Infine",
         "general": "Proprietà generali",
         "main": "Proprietà principali",
         "optional": "Proprietà opzionali",
+        "pluginDefaults": "Predefiniti del Plugin",
         "tasks": "Attività",
         "triggers": "Trigger"
-      }
+      },
+      "select": {
+        "afterExecution": "Seleziona un task",
+        "conditions": "Seleziona una condizione",
+        "errors": "Seleziona un task",
+        "finally": "Seleziona un task",
+        "pluginDefaults": "Seleziona un plugin",
+        "tasks": "Seleziona un task",
+        "triggers": "Seleziona un trigger"
+      },
+      "unnamed": "Nessun Nome"
     },
     "no_data": "Sembra che non ci sia ancora nulla qui… per ora!<br/>Modifica i tuoi filtri o riprova!",
     "no_logs_data": "Nessun dato",
     "no_logs_data_description": "O non ci sono flow in esecuzione, oppure potrebbe essere necessario modificare i filtri.",
     "no_namespaces": "Nessun namespace corrisponde ai criteri di ricerca.",
+    "no_results": {
+      "executions": "Nessuna Esecuzione Trovata",
+      "flows": "Nessun Flow Trovato",
+      "kv_pairs": "Nessuna coppia Key-Value trovata",
+      "secrets": "Nessun Secret Trovato",
+      "templates": "Nessun Template Trovato",
+      "triggers": "Nessun Trigger Trovato"
+    },
     "no_results_found": "Nessun risultato trovato",
     "no_tasks_running": "Nessun task è ancora in esecuzione.",
     "now": "Ora",
@@ -954,8 +986,9 @@
     "pause confirm": "Sei sicuro di mettere in pausa l'esecuzione <code>{id}</code>?",
     "pause done": "L'esecuzione è PAUSED",
     "pause title": "Metti in pausa l'esecuzione <code>{id}</code>.<br/>Nota che i task attualmente in esecuzione verranno comunque elaborati e l'esecuzione dovrà essere ripresa manualmente.",
-    "plugin defaults": "Plugin predefiniti",
+    "pluginDefaults": "Plugin predefiniti",
     "pluginPage": {
+      "alt": "Icona Plugin",
       "search": "Cerca tra oltre {count} plugin",
       "title1": "I plugin sono i blocchi di costruzione per i tuoi flussi di lavoro.",
       "title2": "Cerca tasks e triggers per costruire il tuo flow."
@@ -1076,6 +1109,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "Intervallo di Aggiornamento Automatico",
             "default_namespace": "Namespace predefinito",
             "editor_type": "Tipo Editor Predefinito",
             "execute_default_tab": "Scheda di Esecuzione Predefinita",
@@ -1191,6 +1225,8 @@
       "name": "Mandante",
       "names": "Mandanti"
     },
+    "test-badge-text": "Test",
+    "test-badge-tooltip": "Questa esecuzione è stata creata da un Test",
     "theme": "Tema",
     "this_task_has": "Questo task ha",
     "timezone": "Fuso orario",
@@ -1199,7 +1235,7 @@
     "toggle fullscreen": "Attiva/disattiva schermo intero",
     "toggle output": "Attiva/disattiva outputs",
     "toggle output display": "Attiva/disattiva visualizzazione output",
-    "toggle periodic refresh each 10 seconds": "Attiva/disattiva aggiornamento periodico ogni 10 secondi",
+    "toggle periodic refresh each x seconds": "Attiva/disattiva l'aggiornamento periodico ogni {interval} secondi",
     "toggle_word_wrap": "Attiva/disattiva Word Wrap",
     "topology": "Topologia",
     "topology-graph": {
@@ -1296,6 +1332,7 @@
     "worker group": "Gruppo di Workers",
     "worker group fallback": "Gruppo di Worker di riserva",
     "worker group key": "Chiave del gruppo Worker",
+    "worker information": "Informazioni sul Worker",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Chiave o valore vuoto non sono ammessi nelle etichette",

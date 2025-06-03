@@ -155,6 +155,14 @@ public class HttpClient implements Closeable {
             builder.addResponseInterceptorLast(new FailedResponseInterceptor());
         }
 
+        if (this.configuration.getAllowedResponseCodes() != null) {
+            List<Integer> list = runContext.render(this.configuration.getAllowedResponseCodes()).asList(Integer.class);
+
+            if (!list.isEmpty()) {
+                builder.addResponseInterceptorLast(new FailedResponseInterceptor(list));
+            }
+        }
+
         builder.addResponseInterceptorLast(new RunContextResponseInterceptor(this.runContext));
 
         // builder object

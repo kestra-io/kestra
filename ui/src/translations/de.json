@@ -39,6 +39,7 @@
     "add flow": "Flow hinzufügen",
     "add task": "Einen Task hinzufügen",
     "add-trigger-in-editor": "Fügen Sie zuerst einen Trigger zu Ihrem Flow hinzu",
+    "add_new_item": "Neues Element hinzufügen",
     "administration": "Administration",
     "advanced configuration": "Andere Eigenschaften",
     "after": "nach",
@@ -56,6 +57,8 @@
     "back_to_dashboard": "Zurück zum Dashboard",
     "backfill": "Backfill",
     "backfill executions": "Backfill-Ausführungen",
+    "backfill paused": "Backfill PAUSED",
+    "backfill running": "Backfill läuft",
     "before": "vor",
     "behavior": "Verhalten",
     "blueprints": {
@@ -322,6 +325,12 @@
       "tenants": {
         "message": "Die Kestra Enterprise Edition unterstützt Multi-Tenancy und bietet vollständig isolierte Umgebungen für verschiedene Teams oder Projekte, jeweils mit eigenen Ressourcen wie dedizierten Worker-Gruppen oder Secrets und internen Speicher-Backends.",
         "title": "Verwalten Sie Workflows in isolierten Tenants"
+      },
+      "tests": {
+        "header": "Unittests für Flows",
+        "label": "Tests",
+        "message": "Überprüfen Sie die Logik Ihrer flows isoliert, erkennen Sie frühzeitig Regressionen und bewahren Sie das Vertrauen in Ihre Automatisierungen, während sie sich ändern und wachsen.",
+        "title": "Sicherstellen der Zuverlässigkeit bei jeder Änderung"
       }
     },
     "dependencies": "Abhängigkeiten",
@@ -402,6 +411,10 @@
       "plugins": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Nebenläufigkeitsgrenzen</a></strong> in unserer Dokumentation.",
         "title": "Für diesen Namespace sind keine Plugin-Standardeinstellungen festgelegt."
+      },
+      "testSuites": {
+        "content": "Beginnen Sie mit der Erstellung von Testsuiten, um Ihre Flows zu testen.",
+        "title": "Sie haben noch keine Test-Suites!"
       },
       "triggers": {
         "content": "Lesen Sie mehr über <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> in unserer Dokumentation.",
@@ -500,7 +513,6 @@
     "export": "Exportieren",
     "export all flows": "Alle Flows exportieren",
     "export all templates": "Alle Vorlagen exportieren",
-    "export_to_file": "In Datei exportieren",
     "exports": "Exporte",
     "failed to render pdf": "PDF-Vorschau konnte nicht gerendert werden",
     "false": "Falsch",
@@ -586,6 +598,7 @@
     "flow source not found": "Flow-Quelle nicht gefunden",
     "flow-dependencies": "Abhängigkeiten",
     "flow-no-dependencies": "Ihr Flow hat keine Abhängigkeiten.",
+    "flow_export": "Flow exportieren",
     "flow_only": "Nur auf der Flow-Registerkarte verfügbar.",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) gelöscht",
@@ -652,7 +665,9 @@
     "item": "Element",
     "items": "Elemente",
     "join community": "Community beitreten",
+    "join_slack": "Slack beitreten",
     "jump to...": "Springe zu...",
+    "kestra": "Kestra",
     "key": "Key",
     "kill": "Beenden",
     "kill only parents": "Nur Eltern beenden",
@@ -737,6 +752,7 @@
         "parent_folder": "Übergeordneter Ordner:"
       },
       "export": "Namespace-Dateien exportieren",
+      "export_single": "Datei exportieren",
       "filter": "Filter",
       "import": {
         "error": "Fehler beim Importieren der Datei(en)",
@@ -803,19 +819,23 @@
     "no_code": {
       "adding": "+ {what} hinzufügen",
       "adding_default": "+ Neuen Wert hinzufügen",
+      "clearSelection": "Auswahl aufheben",
       "close": {
-        "after execution": "Task schließen",
-        "error handlers": "Fehlerbehandler schließen",
+        "afterExecution": "Nach Ausführung Task schließen",
+        "conditions": "Bedingung schließen",
+        "errors": "Fehlerbehandler schließen",
         "finally": "Task schließen",
         "input": "Eingabe schließen",
+        "pluginDefaults": "Plugin-Standard schließen",
         "tasks": "Task schließen",
         "triggers": "Trigger schließen"
       },
       "creation": {
-        "after execution": "Fügen Sie einen Block nach der Ausführung hinzu",
-        "error handlers": "Fügen Sie einen Fehlerhandler hinzu",
+        "afterExecution": "Fügen Sie einen Block nach der Ausführung hinzu",
+        "conditions": "Bedingung hinzufügen",
+        "errors": "Einen Fehler-Handler hinzufügen",
         "finally": "Fügen Sie einen Finally-Block hinzu",
-        "select": "Wählen Sie einen {section} aus",
+        "pluginDefaults": "Fügen Sie ein Plugin-Default hinzu",
         "tasks": "Aufgabe hinzufügen",
         "triggers": "Füge einen Trigger hinzu"
       },
@@ -826,8 +846,8 @@
           "inputs": "Eingaben",
           "labels": "Labels",
           "outputs": "Ausgaben",
-          "plugin_defaults": "Plugin-Standardeinstellungen",
           "retry": "Wiederholen",
+          "sla": "SLA",
           "variables": "Variablen"
         },
         "main": {
@@ -842,29 +862,41 @@
         "variable": "Variable",
         "yaml": "YAML-Editor"
       },
-      "save": {
-        "after execution": "Task speichern",
-        "error handlers": "Fehlerbehandlungsroutine speichern",
-        "finally": "Aufgabe speichern",
-        "input": "Eingabe speichern",
-        "tasks": "Aufgabe speichern",
-        "triggers": "Speicher Trigger"
-      },
       "sections": {
-        "after_execution": "Nach Ausführung",
-        "error_handlers": "Fehlerbehandler",
+        "afterExecution": "Nach Ausführung",
+        "deprecated": "Veraltete Eigenschaften",
+        "errors": "Fehlerbehandler",
         "finally": "Schließlich",
         "general": "Allgemeine Eigenschaften",
         "main": "Haupteigenschaften",
         "optional": "Optionale Eigenschaften",
+        "pluginDefaults": "Plugin-Standardeinstellungen",
         "tasks": "Aufgaben",
         "triggers": "Trigger"
-      }
+      },
+      "select": {
+        "afterExecution": "Wählen Sie eine Task aus",
+        "conditions": "Wählen Sie eine Bedingung aus",
+        "errors": "Wählen Sie eine Task aus",
+        "finally": "Wählen Sie eine Task aus",
+        "pluginDefaults": "Wählen Sie ein Plugin aus",
+        "tasks": "Wählen Sie eine Task aus",
+        "triggers": "Wählen Sie einen Trigger aus"
+      },
+      "unnamed": "Kein Name"
     },
     "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
     "no_logs_data": "Keine Daten",
     "no_logs_data_description": "Entweder laufen keine Flows, oder Sie müssen Ihre Filter anpassen.",
     "no_namespaces": "Keine Namespaces entsprechen den Suchkriterien.",
+    "no_results": {
+      "executions": "Keine Ausführungen gefunden",
+      "flows": "Keine Flows gefunden",
+      "kv_pairs": "Keine Key-Value-Paare gefunden",
+      "secrets": "Keine Secrets gefunden",
+      "templates": "Keine Vorlagen gefunden",
+      "triggers": "Keine Trigger gefunden"
+    },
     "no_results_found": "Keine Ergebnisse gefunden",
     "no_tasks_running": "Noch keine Tasks laufen.",
     "now": "Jetzt",
@@ -954,8 +986,9 @@
     "pause confirm": "Sind Sie sicher, dass Sie die Ausführung <code>{id}</code> pausieren möchten?",
     "pause done": "Die Ausführung ist PAUSED.",
     "pause title": "Ausführung <code>{id}</code> pausieren.<br/>Bitte beachten Sie, dass derzeit laufende Tasks weiterhin verarbeitet werden und die Ausführung manuell fortgesetzt werden muss.",
-    "plugin defaults": "Plugin-Standardeinstellungen",
+    "pluginDefaults": "Plugin-Standardeinstellungen",
     "pluginPage": {
+      "alt": "Plugins-Symbol",
       "search": "Suche in {count}+ Plugins",
       "title1": "Plugins sind Bausteine für Ihre Workflows.",
       "title2": "Suchen Sie nach Tasks und Triggern, um Ihren Flow zu erstellen."
@@ -1076,6 +1109,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "Automatisches Aktualisierungsintervall",
             "default_namespace": "Standard-Namespace",
             "editor_type": "Standard-Editor-Typ",
             "execute_default_tab": "Standard-Ausführungs-Registerkarte",
@@ -1191,6 +1225,8 @@
       "name": "Mandant",
       "names": "Mandanten"
     },
+    "test-badge-text": "Test",
+    "test-badge-tooltip": "Diese Ausführung wurde durch einen Test erstellt",
     "theme": "Modus",
     "this_task_has": "Diese Task hat",
     "timezone": "Zeitzone",
@@ -1199,7 +1235,7 @@
     "toggle fullscreen": "Vollbild umschalten",
     "toggle output": "Outputs umschalten",
     "toggle output display": "Outputanzeige umschalten",
-    "toggle periodic refresh each 10 seconds": "Periodische Aktualisierung alle 10 Sekunden umschalten",
+    "toggle periodic refresh each x seconds": "Periodische Aktualisierung alle {interval} Sekunden umschalten",
     "toggle_word_wrap": "Zeilenumbruch umschalten",
     "topology": "Topologie",
     "topology-graph": {
@@ -1296,6 +1332,7 @@
     "worker group": "Worker-Gruppe",
     "worker group fallback": "Arbeitsgruppe Fallback",
     "worker group key": "Worker-Gruppe Schlüssel",
+    "worker information": "Worker-Informationen",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "Leerer Key oder Value ist in Labels nicht erlaubt",

@@ -26,11 +26,11 @@ micronaut:
     netty:
       max-chunk-size: 10MB
       max-header-size: 32768 # increased from the default of 8k
-      responses:
-        file:
-          cache-seconds: 86400
-          cache-control:
-            public: true
+    responses:
+      file:
+        cache-seconds: 86400
+        cache-control:
+          public: true
 
       # Access log configuration, see https://docs.micronaut.io/latest/guide/index.html#accessLogger
       access-logger:
@@ -138,8 +138,8 @@ kestra:
   jdbc:
     queues:
       min-poll-interval: 25ms
-      max-poll-interval: 1000ms
-      poll-switch-interval: 5s
+      max-poll-interval: 500ms
+      poll-switch-interval: 60s
 
     cleaner:
       initial-delay: 1h
@@ -202,6 +202,11 @@ kestra:
       initialDelay: 1m
       # The expected time between service heartbeats.
       heartbeatInterval: 3s
+    service:
+      purge:
+        initial-delay: 1h
+        fixed-delay: 1d
+        retention: 30d
   anonymous-usage-report:
     enabled: true
     uri: https://api.kestra.io/v1/reports/usages

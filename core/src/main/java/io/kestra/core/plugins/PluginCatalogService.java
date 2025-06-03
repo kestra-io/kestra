@@ -15,7 +15,6 @@ import java.util.Base64;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -46,14 +45,14 @@ public class PluginCatalogService {
      *
      * @param httpClient    the HTTP Client to connect to Kestra API.
      * @param icons         specifies whether icons must be loaded for plugins.
-     * @param oss         specifies whether only OSS plugins must be returned.
+     * @param communityOnly specifies whether only OSS plugins must be returned.
      */
     public PluginCatalogService(final HttpClient httpClient,
                                 final boolean icons,
-                                final boolean oss) {
+                                final boolean communityOnly) {
         this.httpClient = httpClient;
         this.icons = icons;
-        this.oss = oss;
+        this.oss = communityOnly;
 
         // Immediately trigger an async load of plugin artifacts.
         this.isLoaded.set(true);

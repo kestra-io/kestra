@@ -229,6 +229,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 return;
             }
 
+            metricRegistry
+                .counter(MetricRegistry.METRIC_WORKER_KILLED_COUNT, MetricRegistry.METRIC_WORKER_KILLED_COUNT_DESCRIPTION, metricRegistry.tags(executionKilled.getLeft()))
+                .increment();
+
             synchronized (this) {
                 if (executionKilled.getLeft() instanceof ExecutionKilledExecution executionKilledExecution) {
                     killedExecution.add(executionKilledExecution.getExecutionId());
@@ -389,7 +393,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                             workerTaskResult = this.run(currentWorkerTask, false);
                         }
                     } catch (IllegalVariableEvaluationException e) {
-                        RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask.getTaskRun(), currentWorkerTask.getTask());
+                        RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
                         contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
                     } catch (QueueException e) {
                         log.error("Unable to emit the worker task result for task {} taskrun {}", currentWorkerTask.getTask().getId(), currentWorkerTask.getTaskRun().getId(), e);
@@ -692,7 +696,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 failed = failed.withOutputs(Variables.empty());
             }
             WorkerTaskResult workerTaskResult = new WorkerTaskResult(failed);
-            RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask.getTaskRun(), workerTask.getTask());
+            RunContextLogger contextLogger = runContextLoggerFactory.create(workerTask);
             contextLogger.logger().error("Unable to emit the worker task result to the queue: {}", e.getMessage(), e);
             try {
                 this.workerTaskResultQueue.emit(workerTaskResult);
@@ -773,7 +777,10 @@ public class Worker implements Service, Runnable, AutoCloseable {
         if (!(workerTask.getTask() instanceof RunnableTask<?> task)) {
             // This should never happen but better to deal with it than crashing the Worker
             var state = workerTask.getTask().isAllowFailure() ? workerTask.getTask().isAllowWarning() ? SUCCESS : WARNING : FAILED;
-            TaskRunAttempt attempt = TaskRunAttempt.builder().state(new io.kestra.core.models.flows.State().withState(state)).build();
+            TaskRunAttempt attempt = TaskRunAttempt.builder()
+                .state(new io.kestra.core.models.flows.State().withState(state))
+                .workerId(this.id)
+                .build();
             List<TaskRunAttempt> attempts = this.addAttempt(workerTask, attempt);
             TaskRun taskRun = workerTask.getTaskRun().withAttempts(attempts);
             logger.error("Unable to execute the task '" + workerTask.getTask().getId() +
@@ -782,7 +789,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
 
         TaskRunAttempt.TaskRunAttemptBuilder builder = TaskRunAttempt.builder()
-            .state(new io.kestra.core.models.flows.State().withState(RUNNING));
+            .state(new io.kestra.core.models.flows.State().withState(RUNNING))
+            .workerId(this.id);
 
         // emit the attempt so the execution knows that the task is in RUNNING
         this.workerTaskResultQueue.emit(new WorkerTaskResult(
@@ -809,7 +817,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         // metrics
         runContext.metrics().forEach(metric -> {
             try {
-                this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric));
+                this.metricEntryQueue.emit(MetricEntry.of(workerTask.getTaskRun(), metric, workerTask.getExecutionKind()));
             } catch (QueueException e) {
                 // fail silently
             }

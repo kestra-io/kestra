@@ -69,7 +69,7 @@ class ScheduleTest {
             .tasks(Collections.singletonList(Return.builder()
                 .id("test")
                 .type(Return.class.getName())
-                .format(Property.of("test"))
+                .format(Property.ofValue("test"))
                 .build()))
             .build();
 
@@ -320,8 +320,8 @@ class ScheduleTest {
             .conditions(List.of(
                 DayWeekInMonth.builder()
                     .type(DayWeekInMonth.class.getName())
-                    .dayOfWeek(Property.of(DayOfWeek.MONDAY))
-                    .dayInMonth(Property.of(DayWeekInMonth.DayInMonth.FIRST))
+                    .dayOfWeek(Property.ofValue(DayOfWeek.MONDAY))
+                    .dayInMonth(Property.ofValue(DayWeekInMonth.DayInMonth.FIRST))
                     .date("{{ trigger.date }}")
                     .build()
             ))
@@ -355,7 +355,7 @@ class ScheduleTest {
             .conditions(List.of(
                 DateTimeBetween.builder()
                     .type(DateTimeBetween.class.getName())
-                    .before(Property.of(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
+                    .before(Property.ofValue(ZonedDateTime.parse("2021-08-03T12:00:00+02:00")))
                     .date("{{ trigger.date }}")
                     .build()
             ))

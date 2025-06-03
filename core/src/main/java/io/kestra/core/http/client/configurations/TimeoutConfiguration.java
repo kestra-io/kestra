@@ -15,5 +15,5 @@ public class TimeoutConfiguration {
 
     @Schema(title = "The time allowed for a read connection to remain idle before closing it.")
     @Builder.Default
-    Property<Duration> readIdleTimeout = Property.of(Duration.ofMinutes(5));
+    Property<Duration> readIdleTimeout = Property.ofValue(Duration.ofMinutes(5));
 }

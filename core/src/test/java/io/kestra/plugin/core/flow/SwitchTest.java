@@ -1,5 +1,6 @@
 package io.kestra.plugin.core.flow;
 
+import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.google.common.collect.ImmutableMap;
@@ -23,7 +24,7 @@ class SwitchTest {
     @LoadFlows({"flows/valids/switch.yaml"})
     void switchFirst() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "switch",
             null,
@@ -39,7 +40,7 @@ class SwitchTest {
     @LoadFlows({"flows/valids/switch.yaml"})
     void switchSecond() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "switch",
             null,
@@ -56,7 +57,7 @@ class SwitchTest {
     @LoadFlows({"flows/valids/switch.yaml"})
     void switchThird() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "switch",
             null,
@@ -74,7 +75,7 @@ class SwitchTest {
     @LoadFlows({"flows/valids/switch.yaml"})
     void switchDefault() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "switch",
             null,
@@ -90,7 +91,7 @@ class SwitchTest {
     @LoadFlows({"flows/valids/switch-impossible.yaml"})
     void switchImpossible() throws TimeoutException, QueueException {
         Execution execution = runnerUtils.runOne(
-            null,
+            MAIN_TENANT,
             "io.kestra.tests",
             "switch-impossible",
             null,

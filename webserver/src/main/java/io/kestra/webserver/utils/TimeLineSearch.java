@@ -20,6 +20,9 @@ public class TimeLineSearch {
         Duration timeRange = null;
 
         for (QueryFilter filter : filters) {
+            if (filter.field() == null) {
+                continue;
+            }
             switch (filter.field()) {
                 case START_DATE -> startDate = ZonedDateTime.parse(filter.value().toString());
                 case END_DATE -> endDate = ZonedDateTime.parse(filter.value().toString());
@@ -33,7 +36,11 @@ public class TimeLineSearch {
 
         if (timeRange != null) {
             startDate = ZonedDateTime.now().minus(timeRange);
-            endDate = ZonedDateTime.now();
+        }
+
+        if (startDate == null) {
+            // this default startDate filter is there to avoid flooding the database in case of failure on our side
+            startDate = ZonedDateTime.now().minusDays(8);
         }
 
         return new TimeLineSearch(startDate, endDate, timeRange);

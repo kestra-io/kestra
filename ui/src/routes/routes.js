@@ -5,6 +5,7 @@ import DemoTenants from "../components/demo/Tenants.vue"
 import DemoAuditLogs from "../components/demo/AuditLogs.vue"
 import DemoInstance from "../components/demo/Instance.vue"
 import DemoApps from "../components/demo/Apps.vue"
+import DemoTests from "../components/demo/Tests.vue"
 
 export default [
     //Initial
@@ -12,7 +13,25 @@ export default [
     {name: "welcome", path: "/:tenant?/welcome", component: () => import("../components/onboarding/Welcome.vue")},
 
     //Dashboards
-    {name: "home", path: "/:tenant?/dashboards/:id?", component: () => import("../components/dashboard/Dashboard.vue")},
+    {
+        name: "home",
+        path: "/:tenant?/dashboards/:id?",
+        component: () => import("../components/dashboard/Dashboard.vue"),
+        beforeEnter: (to, from, next) => {
+            if (!to.params.id) {
+                next({
+                    name: "home",
+                    params: {
+                        ...to.params,
+                        id: "default",
+                    },
+                    query: to.query,
+                });
+            } else {
+                next();
+            }
+        },
+    },
     {name: "dashboards/create", path: "/:tenant?/dashboards/new", component: () => import("../components/dashboard/components/DashboardCreate.vue")},
     {name: "dashboards/update", path: "/:tenant?/dashboards/:id/edit", component: () => import("override/components/dashboard/components/DashboardEdit.vue")},
 
@@ -71,6 +90,7 @@ export default [
 
     //Demo Pages
     {name: "apps/list", path: "/:tenant?/apps", component: DemoApps},
+    {name: "tests/list", path: "/:tenant?/tests", component: DemoTests},
     {name: "admin/iam", path: "/:tenant?/admin/iam", component: DemoIAM},
     {name: "admin/tenants/list", path: "/:tenant?/admin/tenants", component: DemoTenants},
     {name: "admin/auditlogs/list", path: "/:tenant?/admin/auditlogs", component: DemoAuditLogs},

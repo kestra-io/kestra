@@ -178,6 +178,9 @@
                             <el-dropdown-item @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </el-dropdown-item>
+                            <el-dropdown-item v-if="data.leaf" @click="exportFile(node, data)">
+                                {{ $t("namespace files.export_single") }}
+                            </el-dropdown-item>
                             <el-dropdown-item
                                 @click="
                                     toggleRenameDialog(
@@ -419,6 +422,9 @@
                 explorerVisible: (state) => state.editor.explorerVisible,
                 treeRefresh: (state) => state.editor.treeRefresh,
             }),
+            namespaceId() {
+                return this.currentNS ?? this.$route.params.namespace;
+            },
             folders() {
                 function extractPaths(basePath = "", array) {
                     const paths = [];
@@ -501,7 +507,7 @@
             async loadNodes(node, resolve) {
                 if (node.level === 0) {
                     const payload = {
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.namespaceId,
                     };
                     const items = await this.readDirectory(payload);
 
@@ -511,7 +517,7 @@
                     resolve(this.items);
                 } else if (node.level >= 1) {
                     const payload = {
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.namespaceId,
                         path: this.getPath(node),
                     };
 
@@ -550,7 +556,7 @@
                 if (!value) return;
 
                 const results = await this.searchFiles({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
+                    namespace: this.namespaceId,
                     query: value,
                 });
                 this.searchResults = results.map((result) =>
@@ -623,7 +629,7 @@
                 const start = path.substring(0, path.lastIndexOf("/") + 1);
 
                 this.renameFileDirectory({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
+                    namespace: this.namespaceId,
                     old: `${start}${this.renameDialog.old}`,
                     new: `${start}${this.renameDialog.name}`,
                     type: this.renameDialog.type,
@@ -636,7 +642,7 @@
             async nodeMoved(draggedNode) {
                 try {
                     await this.moveFileDirectory({
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.namespaceId,
                         old: this.nodeBeforeDrag.path,
                         new: this.getPath(draggedNode.data.id),
                         type: draggedNode.data.type,
@@ -718,7 +724,7 @@
 
                             this.importFileDirectory({
                                 namespace:
-                                    this.currentNS ?? this.$route.params.namespace,
+                                    this.namespaceId,
                                 content,
                                 path: `${folderPath}/${fileName}`,
                             });
@@ -741,7 +747,7 @@
 
                             this.importFileDirectory({
                                 namespace:
-                                    this.currentNS ?? this.$route.params.namespace,
+                                    this.namespaceId,
                                 content,
                                 path: file.name,
                             });
@@ -771,7 +777,7 @@
             },
             exportFiles() {
                 this.exportFileDirectory({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
+                    namespace: this.namespaceId,
                 });
             },
             async addFile({file, creation, shouldReset = true}) {
@@ -807,7 +813,7 @@
                         return;
                     }
                     await this.createFile({
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.namespaceId,
                         path,
                         content,
                         name: NAME,
@@ -898,7 +904,7 @@
                 } = this.confirmation;
 
                 await this.deleteFileDirectory({
-                    namespace: this.currentNS ?? this.$route.params.namespace,
+                    namespace: this.namespaceId,
                     path: this.getPath(node),
                     name: data.fileName,
                     type: data.type,
@@ -936,7 +942,7 @@
                     }${fileName}`;
 
                     await this.createDirectory({
-                        namespace: this.currentNS ?? this.$route.params.namespace,
+                        namespace: this.namespaceId,
                         path,
                         name: fileName,
                     });
@@ -1029,6 +1035,15 @@
                     this.$toast().error(this.$t("namespace files.path.error"));
                 }
             },
+            async exportFile(node, data){
+                const content = await  this.$store.dispatch("namespace/readFile", {
+                    path: this.getPath(node),
+                    namespace: this.namespaceId,
+                })
+
+                const blob = new Blob([content], {type: "text/plain"});
+                Utils.downloadUrl(window.URL.createObjectURL(blob), data.fileName);
+            },
             onTabContextMenu(event) {
                 this.tabContextMenu = {
                     visible: true,
@@ -1063,7 +1078,7 @@
                     if (this.$refs.tree) {
                         this.items = undefined;
                         const items = await this.readDirectory({
-                            namespace: this.currentNS ?? this.$route.params.namespace
+                            namespace: this.namespaceId
                         });
                         this.renderNodes(items);
                         this.items = this.sorted(this.items);
@@ -1079,7 +1094,7 @@
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 .sidebar {
-    background: var(--ks-background-card);
+    background: var(--ks-background-panel);
     border-right: 1px solid var(--ks-border-primary);
     overflow-x: hidden;
     min-width: calc(20% - 11px);
@@ -1159,6 +1174,7 @@
     :deep(.el-tree) {
         height: calc(100% - 64px);
         overflow: auto;
+        background: var(--ks-background-panel);
 
         .el-tree__empty-block {
             height: auto;

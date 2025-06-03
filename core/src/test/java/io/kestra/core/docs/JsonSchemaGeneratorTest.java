@@ -14,6 +14,7 @@ import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.tasks.VoidOutput;
 import io.kestra.core.models.tasks.logs.LogExporter;
 import io.kestra.core.models.tasks.logs.LogRecord;
+import io.kestra.core.models.tasks.retrys.Constant;
 import io.kestra.core.models.tasks.runners.TaskRunner;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.plugins.PluginRegistry;
@@ -65,7 +66,7 @@ class JsonSchemaGeneratorTest {
         Class<? extends Task> cls = scan.getFirst().getTasks().getFirst();
 
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, cls);
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(5));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
 
         Map<String, Object> format = properties(generate).get("format");
         assertThat(format.get("default"), is("{}"));
@@ -106,6 +107,10 @@ class JsonSchemaGeneratorTest {
 
             var bashType = definitions.get(Log.class.getName());
             assertThat(bashType, is(notNullValue()));
+
+            var requiredWithDefault = definitions.get("io.kestra.core.docs.JsonSchemaGeneratorTest-RequiredWithDefault");
+            assertThat(requiredWithDefault, is(notNullValue()));
+            assertThat((List<String>) requiredWithDefault.get("required"), not(contains("requiredWithDefault")));
 
             var properties = (Map<String, Map<String, Object>>) flow.get("properties");
             var listeners = properties.get("listeners");
@@ -163,9 +168,10 @@ class JsonSchemaGeneratorTest {
 
             Map<String, Object> jsonSchema = jsonSchemaGenerator.generate(AbstractTrigger.class, AbstractTrigger.class);
             assertThat((Map<String, Object>) jsonSchema.get("properties"), allOf(
-                Matchers.aMapWithSize(2),
+                Matchers.aMapWithSize(3),
                 hasKey("conditions"),
-                hasKey("stopAfter")
+                hasKey("stopAfter"),
+                hasKey("type")
             ));
         });
     }
@@ -225,7 +231,7 @@ class JsonSchemaGeneratorTest {
     void testEnum() {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, TaskWithEnum.class);
         assertThat(generate, is(not(nullValue())));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(5));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(6));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("stringWithDefault").get("default"), is("default"));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("uri").get("$internalStorageURI"), is(true));
     }
@@ -236,7 +242,7 @@ class JsonSchemaGeneratorTest {
         Map<String, Object> generate = jsonSchemaGenerator.properties(Task.class, BetaTask.class);
         assertThat(generate, is(not(nullValue())));
         assertThat(generate.get("$beta"), is(true));
-        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(1));
+        assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).size(), is(2));
         assertThat(((Map<String, Map<String, Object>>) generate.get("properties")).get("beta").get("$beta"), is(true));
     }
 
@@ -281,17 +287,17 @@ class JsonSchemaGeneratorTest {
 
             var definitions = (Map<String, Map<String, Object>>) generate.get("definitions");
 
-            String executionTimeSeriesColumnDescriptorExecutionFieldsKey = "io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.Executions-Fields__";
+            String executionTimeSeriesColumnDescriptorExecutionFieldsKey = "io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields__";
             assertThat(
-                properties(definitions.get("io.kestra.plugin.core.dashboard.chart.TimeSeries_io.kestra.plugin.core.dashboard.data.Executions-Fields.io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.Executions-Fields___"))
+                properties(definitions.get("io.kestra.plugin.core.dashboard.chart.TimeSeries_io.kestra.plugin.core.dashboard.data.IExecutions-Fields.io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields___"))
                     .get("data")
                     .get("$ref"),
                 Matchers.is("#/definitions/" + executionTimeSeriesColumnDescriptorExecutionFieldsKey)
             );
 
-            String timeseriesColumnDescriptorExecutionFields = "io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.Executions-Fields_";
+            String timeseriesColumnDescriptorExecutionFields = "io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields_";
             assertThat(
-                ((Map<String, String>) properties(definitions.get("io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.Executions-Fields__"))
+                ((Map<String, String>) properties(definitions.get("io.kestra.plugin.core.dashboard.data.Executions_io.kestra.plugin.core.dashboard.chart.timeseries.TimeSeriesColumnDescriptor_io.kestra.plugin.core.dashboard.data.IExecutions-Fields__"))
                     .get("columns")
                     .get("additionalProperties")
                 ).get("$ref"),
@@ -314,6 +320,30 @@ class JsonSchemaGeneratorTest {
                 Matchers.arrayContainingInAnyOrder(Arrays.stream(Executions.Fields.values()).map(Object::toString).toArray())
             );
         });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void subtypesTypePropertyAsConst() {
+        List<RegisteredPlugin> scan = pluginRegistry.externalPlugins();
+        Class<? extends Task> cls = scan.getFirst().getTasks().getFirst();
+
+        // Assert that properties that are part of type resolution are set as const from their default value
+        Map<String, Object> generate = jsonSchemaGenerator.properties(null, cls);
+        assertThat(((Map<String, Map<String, Object>>) ((Map<String, Map<String, Object>>) generate.get("$defs"))
+            .get("io.kestra.core.models.tasks.retrys.Constant")
+            .get("properties"))
+            .get("type")
+            .get("const"),
+            is(new Constant().getType()));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void pluginSchemaShouldNotResolveTaskAndTriggerSubtypes() throws URISyntaxException {
+        Map<String, Object> generate = jsonSchemaGenerator.properties(null, TaskWithSubTaskAndSubTrigger.class);
+        var definitions = (Map<String, Map<String, Object>>) generate.get("$defs");
+        assertThat(definitions.size(), is(26));
     }
 
     @SuppressWarnings("unchecked")
@@ -375,9 +405,30 @@ class JsonSchemaGeneratorTest {
     @EqualsAndHashCode
     @Getter
     @NoArgsConstructor
+    public static class TaskWithSubTaskAndSubTrigger extends Task implements RunnableTask<VoidOutput>  {
+
+        @PluginProperty
+        @Schema(title = "Subtask")
+        private Task subTask;
+
+        @PluginProperty
+        @Schema(title = "Subtrigger")
+        private AbstractTrigger subTrigger;
+
+        @Override
+        public VoidOutput run(RunContext runContext) throws Exception {
+            return null;
+        }
+    }
+
+    @SuperBuilder
+    @ToString
+    @EqualsAndHashCode
+    @Getter
+    @NoArgsConstructor
     private static abstract class ParentClass extends Task {
         @Builder.Default
-        private Property<String> stringWithDefault = Property.of("default");
+        private Property<String> stringWithDefault = Property.ofValue("default");
     }
 
     @SuperBuilder
@@ -411,7 +462,7 @@ class JsonSchemaGeneratorTest {
         @PluginProperty
         @NotNull
         @Builder.Default
-        private Property<TaskWithEnum.TestClass> requiredWithDefault = Property.of(TaskWithEnum.TestClass.builder().testProperty("test").build());
+        private Property<TaskWithEnum.TestClass> requiredWithDefault = Property.ofValue(TaskWithEnum.TestClass.builder().testProperty("test").build());
 
         @PluginProperty
         @NotNull
@@ -431,7 +482,7 @@ class JsonSchemaGeneratorTest {
             description = "integerPropertyWithDefault description"
         )
         @Builder.Default
-        protected Property<Integer> integerPropertyWithDefault = Property.of(10000);
+        protected Property<Integer> integerPropertyWithDefault = Property.ofValue(10000);
 
         @Deprecated(since="deprecation_version_1", forRemoval=true)
         @Schema(
@@ -439,7 +490,7 @@ class JsonSchemaGeneratorTest {
             description = "stringPropertyWithDefault description"
         )
         @Builder.Default
-        protected Property<String> stringPropertyWithDefault = Property.of("my string");
+        protected Property<String> stringPropertyWithDefault = Property.ofValue("my string");
 
 
         @Deprecated(since="deprecation_version_1", forRemoval=true)

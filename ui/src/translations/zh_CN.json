@@ -39,6 +39,7 @@
     "add flow": "添加流程",
     "add task": "添加任务",
     "add-trigger-in-editor": "首先为您的Flow添加一个Trigger",
+    "add_new_item": "添加新项目",
     "administration": "管理",
     "advanced configuration": "其他属性",
     "after": "之后",
@@ -56,6 +57,8 @@
     "back_to_dashboard": "返回仪表板",
     "backfill": "回填",
     "backfill executions": "回填执行",
+    "backfill paused": "补数据已暂停",
+    "backfill running": "正在运行Backfill",
     "before": "之前",
     "behavior": "行为",
     "blueprints": {
@@ -322,6 +325,12 @@
       "tenants": {
         "message": "Kestra 企业版支持多租户，为不同的团队或项目提供完全隔离的环境，每个环境都有自己的资源，如专用的worker组、密钥和内部存储后端。",
         "title": "在独立的tenant中管理工作流"
+      },
+      "tests": {
+        "header": "Flows的单元测试",
+        "label": "测试",
+        "message": "验证您的flow逻辑是否独立，及早检测回归，并在自动化变更和增长时保持信心。",
+        "title": "确保每次更改的可靠性"
       }
     },
     "dependencies": "依赖关系",
@@ -402,6 +411,10 @@
       "plugins": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong>的信息。",
         "title": "此Namespace未设置插件默认值。"
+      },
+      "testSuites": {
+        "content": "开始创建测试套件以测试您的Flows。",
+        "title": "您还没有测试套件！"
       },
       "triggers": {
         "content": "在我们的文档中阅读更多关于<strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong>的信息。",
@@ -500,7 +513,6 @@
     "export": "导出",
     "export all flows": "导出所有流程",
     "export all templates": "导出所有模板",
-    "export_to_file": "导出到文件",
     "exports": "导出",
     "failed to render pdf": "渲染PDF预览失败",
     "false": "假",
@@ -586,6 +598,7 @@
     "flow source not found": "未找到flow源",
     "flow-dependencies": "依赖项",
     "flow-no-dependencies": "您的flow没有任何依赖项",
+    "flow_export": "导出flow",
     "flow_only": "仅在流程标签中可用。",
     "flows": "流程",
     "flows deleted": "<code>{count}</code> 个流程已删除",
@@ -652,7 +665,9 @@
     "item": "项目",
     "items": "项目",
     "join community": "加入社区",
+    "join_slack": "加入 Slack",
     "jump to...": "跳转到...",
+    "kestra": "Kestra",
     "key": "键",
     "kill": "终止",
     "kill only parents": "仅终止父流程",
@@ -737,6 +752,7 @@
         "parent_folder": "父文件夹："
       },
       "export": "导出命名空间文件",
+      "export_single": "导出文件",
       "filter": "过滤",
       "import": {
         "error": "导入文件时出错",
@@ -803,19 +819,23 @@
     "no_code": {
       "adding": "+ 添加{what}",
       "adding_default": "+ 添加新value",
+      "clearSelection": "清除选择",
       "close": {
-        "after execution": "关闭task",
-        "error handlers": "关闭错误处理程序",
+        "afterExecution": "执行任务后关闭",
+        "conditions": "关闭条件",
+        "errors": "关闭错误处理程序",
         "finally": "关闭 task",
         "input": "关闭输入",
+        "pluginDefaults": "关闭插件默认",
         "tasks": "关闭task",
         "triggers": "关闭 trigger"
       },
       "creation": {
-        "after execution": "添加执行后块",
-        "error handlers": "添加错误处理程序",
+        "afterExecution": "添加执行后块",
+        "conditions": "添加条件",
+        "errors": "添加错误处理程序",
         "finally": "添加一个finally块",
-        "select": "选择一个{section}",
+        "pluginDefaults": "添加插件默认值",
         "tasks": "添加任务",
         "triggers": "添加一个trigger"
       },
@@ -826,8 +846,8 @@
           "inputs": "输入",
           "labels": "标签",
           "outputs": "输出",
-          "plugin_defaults": "插件默认值",
           "retry": "重试",
+          "sla": "SLA",
           "variables": "变量"
         },
         "main": {
@@ -842,29 +862,41 @@
         "variable": "变量",
         "yaml": "YAML编辑器"
       },
-      "save": {
-        "after execution": "保存task",
-        "error handlers": "保存错误处理程序",
-        "finally": "保存任务",
-        "input": "保存输入",
-        "tasks": "保存任务",
-        "triggers": "保存 trigger"
-      },
       "sections": {
-        "after_execution": "执行后",
-        "error_handlers": "错误处理程序",
+        "afterExecution": "执行后",
+        "deprecated": "不推荐使用的属性",
+        "errors": "错误处理程序",
         "finally": "最后",
         "general": "常规属性",
         "main": "主要属性",
         "optional": "可选属性",
+        "pluginDefaults": "插件默认值",
         "tasks": "任务",
         "triggers": "触发器"
-      }
+      },
+      "select": {
+        "afterExecution": "选择一个task",
+        "conditions": "选择条件",
+        "errors": "选择一个task",
+        "finally": "选择一个task",
+        "pluginDefaults": "选择插件",
+        "tasks": "选择一个task",
+        "triggers": "选择一个trigger"
+      },
+      "unnamed": "无名称"
     },
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "no_logs_data": "无数据",
     "no_logs_data_description": "要么没有正在运行的flows，要么您可能需要调整您的筛选器。",
     "no_namespaces": "没有符合搜索条件的命名空间。",
+    "no_results": {
+      "executions": "未找到执行",
+      "flows": "未找到Flows",
+      "kv_pairs": "未找到Key-Value对",
+      "secrets": "未找到Secrets",
+      "templates": "未找到模板",
+      "triggers": "未找到Triggers"
+    },
     "no_results_found": "未找到结果",
     "no_tasks_running": "尚无任务正在运行。",
     "now": "现在",
@@ -954,8 +986,9 @@
     "pause confirm": "您确定要暂停执行<code>{id}</code>吗？",
     "pause done": "执行已PAUSED",
     "pause title": "暂停执行<code>{id}</code>。<br/>请注意，当前正在运行的task仍将被处理，并且执行需要手动恢复。",
-    "plugin defaults": "插件默认值",
+    "pluginDefaults": "插件默认值",
     "pluginPage": {
+      "alt": "插件图标",
       "search": "在{count}+个插件中搜索",
       "title1": "插件是你的工作流构建块。",
       "title2": "搜索任务和触发器以构建你的流程。"
@@ -1076,6 +1109,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "自动刷新间隔",
             "default_namespace": "默认命名空间",
             "editor_type": "默认编辑器类型",
             "execute_default_tab": "默认执行选项卡",
@@ -1191,6 +1225,8 @@
       "name": "租户",
       "names": "租户"
     },
+    "test-badge-text": "测试",
+    "test-badge-tooltip": "此执行由测试创建",
     "theme": "主题",
     "this_task_has": "此task已",
     "timezone": "时区",
@@ -1199,7 +1235,7 @@
     "toggle fullscreen": "切换全屏",
     "toggle output": "切换输出",
     "toggle output display": "切换输出显示",
-    "toggle periodic refresh each 10 seconds": "切换每10秒周期刷新",
+    "toggle periodic refresh each x seconds": "切换每隔 {interval} 秒的定期刷新",
     "toggle_word_wrap": "切换自动换行",
     "topology": "拓扑",
     "topology-graph": {
@@ -1296,6 +1332,7 @@
     "worker group": "工作组",
     "worker group fallback": "工作组回退",
     "worker group key": "工作组 key",
+    "worker information": "工作者信息",
     "workerId": "工作者ID",
     "workers": "工作者",
     "wrong labels": "标签中不允许空键或值",

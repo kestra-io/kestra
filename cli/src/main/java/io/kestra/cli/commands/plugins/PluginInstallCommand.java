@@ -1,6 +1,7 @@
 package io.kestra.cli.commands.plugins;
 
 import io.kestra.core.contexts.MavenPluginRepositoryConfig;
+import io.kestra.core.exceptions.KestraRuntimeException;
 import io.kestra.core.plugins.LocalPluginManager;
 import io.kestra.core.plugins.MavenPluginDownloader;
 import io.kestra.core.plugins.PluginArtifact;
@@ -51,7 +52,7 @@ public class PluginInstallCommand extends AbstractCommand {
     Provider<MavenPluginDownloader> mavenPluginRepositoryProvider;
 
     @Inject
-    @Client("api") HttpClient httpClient;
+    Provider<PluginCatalogService> pluginCatalogService;
 
     @Override
     public Integer call() throws Exception {
@@ -85,7 +86,7 @@ public class PluginInstallCommand extends AbstractCommand {
         }
 
         if (all) {
-            PluginCatalogService service = new PluginCatalogService(httpClient, false, true);
+            PluginCatalogService service = pluginCatalogService.get();
             dependencies = service.get().stream().map(Objects::toString).toList();
         }
 
@@ -103,12 +104,21 @@ public class PluginInstallCommand extends AbstractCommand {
         }
 
         try (final PluginManager pluginManager = getPluginManager()) {
-            List<PluginArtifact> installed = pluginManager.install(
-                pluginArtifacts,
-                repositoryConfigs,
-                false,
-                pluginsPath
-            );
+
+            List<PluginArtifact> installed;
+            if (all) {
+                installed = new ArrayList<>(pluginArtifacts.size());
+                for (PluginArtifact pluginArtifact : pluginArtifacts) {
+                    try {
+                        installed.add(pluginManager.install(pluginArtifact, repositoryConfigs, false, pluginsPath));
+                    } catch (KestraRuntimeException e) {
+                        String cause = e.getCause() != null ? e.getCause().getMessage() : e.getMessage();
+                        stdErr("Failed to install plugin {0}. Cause: {1}", pluginArtifact, cause);
+                    }
+                }
+            } else {
+                installed = pluginManager.install(pluginArtifacts, repositoryConfigs, false, pluginsPath);
+            }
 
             List<URI> uris = installed.stream().map(PluginArtifact::uri).toList();
             stdOut("Successfully installed plugins {0} into {1}", dependencies, uris);

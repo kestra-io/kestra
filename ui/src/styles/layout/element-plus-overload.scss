@@ -404,7 +404,7 @@ form.ks-horizontal {
     }
 
     .el-table__empty-text {
-        color: var(--bs-gray-600);
+        color: var(--ks-content-tertiary) !important;
     }
 
     th {
@@ -600,8 +600,9 @@ form.ks-horizontal {
     }
 
     &.el-tabs--card{
+        margin-top: 32px;
         .el-tabs__nav-wrap{
-            margin-bottom: 1px; // fix tabs overflowing over the bottom line
+            margin-bottom: 1px;
         }
         & > .el-tabs__header .el-tabs__nav{
             background-color: var(--ks-background-card);

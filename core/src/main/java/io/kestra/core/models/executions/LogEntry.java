@@ -6,8 +6,8 @@ import io.kestra.core.models.TenantInterface;
 import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerContext;
-import io.micronaut.core.annotation.Nullable;
 import io.swagger.v3.oas.annotations.Hidden;
+import jakarta.annotation.Nullable;
 import lombok.Builder;
 import lombok.Value;
 import org.slf4j.event.Level;
@@ -60,6 +60,9 @@ public class LogEntry implements DeletedInterface, TenantInterface {
     @Builder.Default
     boolean deleted = false;
 
+    @Nullable
+    ExecutionKind executionKind;
+
     public static List<Level> findLevelsByMin(Level minLevel) {
         if (minLevel == null) {
             return Arrays.asList(Level.values());
@@ -76,10 +79,11 @@ public class LogEntry implements DeletedInterface, TenantInterface {
             .namespace(execution.getNamespace())
             .flowId(execution.getFlowId())
             .executionId(execution.getId())
+            .executionKind(execution.getKind())
             .build();
     }
 
-    public static LogEntry of(TaskRun taskRun) {
+    public static LogEntry of(TaskRun taskRun, ExecutionKind executionKind) {
         return LogEntry.builder()
             .tenantId(taskRun.getTenantId())
             .namespace(taskRun.getNamespace())
@@ -88,24 +92,27 @@ public class LogEntry implements DeletedInterface, TenantInterface {
             .executionId(taskRun.getExecutionId())
             .taskRunId(taskRun.getId())
             .attemptNumber(taskRun.attemptNumber())
+            .executionKind(executionKind)
             .build();
     }
 
-    public static LogEntry of(Flow flow, AbstractTrigger abstractTrigger) {
+    public static LogEntry of(Flow flow, AbstractTrigger abstractTrigger, ExecutionKind executionKind) {
         return LogEntry.builder()
             .tenantId(flow.getTenantId())
             .namespace(flow.getNamespace())
             .flowId(flow.getId())
             .triggerId(abstractTrigger.getId())
+            .executionId(abstractTrigger.getId())
             .build();
     }
 
-    public static LogEntry of(TriggerContext triggerContext, AbstractTrigger abstractTrigger) {
+    public static LogEntry of(TriggerContext triggerContext, AbstractTrigger abstractTrigger, ExecutionKind executionKind) {
         return LogEntry.builder()
             .tenantId(triggerContext.getTenantId())
             .namespace(triggerContext.getNamespace())
             .flowId(triggerContext.getFlowId())
             .triggerId(abstractTrigger.getId())
+            .executionId(abstractTrigger.getId())
             .build();
     }
 
@@ -122,7 +129,8 @@ public class LogEntry implements DeletedInterface, TenantInterface {
                 new AbstractMap.SimpleEntry<>("taskId", this.taskId),
                 new AbstractMap.SimpleEntry<>("executionId", this.executionId),
                 new AbstractMap.SimpleEntry<>("taskRunId", this.taskRunId),
-                new AbstractMap.SimpleEntry<>("triggerId", this.triggerId)
+                new AbstractMap.SimpleEntry<>("triggerId", this.triggerId),
+                new AbstractMap.SimpleEntry<>("executionKind", Optional.ofNullable(this.executionKind).map(executionKind -> executionKind.name()).orElse(null)  )
             )
             .filter(e -> e.getValue() != null)
             .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));

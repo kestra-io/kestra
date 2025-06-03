@@ -22,14 +22,13 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.time.*;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Validated
-@Controller("/api/v1/namespaces/{namespace}/kv")
+@Controller("/api/v1/main/namespaces/{namespace}/kv")
 public class KVController {
     @Inject
     private StorageInterface storageInterface;
@@ -41,7 +40,7 @@ public class KVController {
     @Operation(tags = {"KV"}, summary = "List all keys for a namespace")
     public List<KVEntry> listKeys(
         @Parameter(description = "The namespace id") @PathVariable String namespace
-    ) throws IOException, URISyntaxException {
+    ) throws IOException {
         return kvStore(namespace).list();
     }
 
@@ -51,7 +50,7 @@ public class KVController {
     public TypedValue getKeyValue(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key
-    ) throws IOException, URISyntaxException, ResourceExpiredException {
+    ) throws IOException, ResourceExpiredException {
         KVValue wrapper = kvStore(namespace)
             .getValue(key)
             .orElseThrow(() -> new NoSuchElementException("No value found for key '" + key + "' in namespace '" + namespace + "'"));
@@ -70,7 +69,7 @@ public class KVController {
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key,
         @RequestBody(description = "The value of the key") @Body String value
-    ) throws IOException, URISyntaxException, ResourceExpiredException {
+    ) throws IOException {
         String ttl = httpHeaders.get("ttl");
         KVMetadata metadata = new KVMetadata(ttl == null ? null : Duration.parse(ttl));
         try {
@@ -88,7 +87,7 @@ public class KVController {
     public boolean deleteKeyValue(
         @Parameter(description = "The namespace id") @PathVariable String namespace,
         @Parameter(description = "The key") @PathVariable String key
-    ) throws IOException, URISyntaxException, ResourceExpiredException {
+    ) throws IOException {
         return kvStore(namespace).delete(key);
     }
 

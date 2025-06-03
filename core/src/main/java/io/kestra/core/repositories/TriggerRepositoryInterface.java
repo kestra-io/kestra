@@ -4,6 +4,7 @@ import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.models.triggers.TriggerContext;
+import io.kestra.plugin.core.dashboard.data.Triggers;
 import io.micronaut.data.model.Pageable;
 import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
@@ -12,7 +13,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-public interface TriggerRepositoryInterface {
+public interface TriggerRepositoryInterface extends QueryBuilderInterface<Triggers.Fields> {
     Optional<Trigger> findLast(TriggerContext trigger);
 
     Optional<Trigger> findByExecution(Execution execution);

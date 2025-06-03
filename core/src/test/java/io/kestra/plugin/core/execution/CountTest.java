@@ -66,7 +66,7 @@ class CountTest {
                 new Flow(AbstractExecutionRepositoryTest.NAMESPACE, "second"),
                 new Flow(AbstractExecutionRepositoryTest.NAMESPACE, "third")
             ))
-            .states(Property.of(List.of(State.Type.RUNNING)))
+            .states(Property.ofValue(List.of(State.Type.RUNNING)))
             .expression("{{ count >= 5 }}")
             .build()
             .run(runContext);

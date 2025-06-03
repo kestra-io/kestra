@@ -1,25 +1,31 @@
 <template>
     <el-collapse v-model="expanded" class="collapse">
         <el-collapse-item
-            v-for="(item, index) in props.items"
-            :key="index"
-            :name="item.title"
-            :title="`${item.title}${item.elements ? ` (${item.elements.length})` : ''}`"
+            :name="title"
+            :title="`${title}${elements ? ` (${elements.length})` : ''}`"
         >
             <template #icon>
-                <Creation :section="item.title" />
+                <Creation
+                    v-if="blockType"
+                    :block-type="blockType"
+                    :parent-path-complete="parentPathComplete"
+                    :ref-path="elements?.length ? elements.length - 1 : undefined"
+                />
             </template>
 
             <Element
-                v-for="(element, elementIndex) in item.elements"
+                v-for="(element, elementIndex) in filteredElements"
                 :key="elementIndex"
-                :section="item.title"
+                :section="section"
+                :block-type="blockType"
+                :parent-path-complete="parentPathComplete"
                 :element
-                @remove-element="removeElement(item.title, elementIndex)"
+                :element-index
+                @remove-element="removeElement(elementIndex)"
                 @move-element="
                     (direction: 'up' | 'down') =>
                         moveElement(
-                            item.elements,
+                            elements,
                             element.id,
                             elementIndex,
                             direction,
@@ -31,51 +37,54 @@
 </template>
 
 <script setup lang="ts">
-    import {inject, nextTick, PropType, ref} from "vue";
+    import {computed, inject, ref} from "vue";
 
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
     import {CollapseItem} from "../../utils/types";
 
     import Creation from "./buttons/Creation.vue";
     import Element from "./Element.vue";
-    import {FLOW_INJECTION_KEY} from "../../injectionKeys";
+    import {
+        CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
+        PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY
+    } from "../../injectionKeys";
+    import {SECTIONS_MAP} from "../../../../utils/constants";
 
     const emits = defineEmits(["remove", "reorder"]);
 
     const flow = inject(FLOW_INJECTION_KEY, ref(""));
 
-    const props = defineProps({
-        items: {
-            type: Array as PropType<CollapseItem[]>,
-            required: true,
-        }
+    const props = defineProps<CollapseItem>();
+    const filteredElements = computed(() => props.elements?.filter(Boolean) ?? []);
+    const expanded = ref<CollapseItem["title"]>(props.title);
+
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, ref(false));
+
+    const parentPathComplete = computed(() => {
+        return `${[
+            [
+                parentPath,
+                creatingTask.value && refPath !== undefined
+                    ? `[${refPath + 1}]`
+                    : refPath !== undefined
+                        ? `[${refPath}]`
+                        : undefined,
+            ].filter(Boolean).join(""),
+            props.section
+        ].filter(p => p.length).join(".")}`;
     });
-    const expanded = ref<CollapseItem["title"][]>([]);
 
-
-    props.items.forEach((item) => {
-        if (item.elements?.length) expanded.value.push(item.title);
-    });
-
-
-    const removeElement = (title: string, index: number) => {
-        props.items.forEach((item) => {
-            if (item.title === title) {
-                nextTick(() => {
-                    const ID = item.elements?.[index].id;
-
-                    item.elements?.splice(index, 1);
-                    if(ID){
-                        emits(
-                            "remove",
-                            YAML_UTILS.deleteTask(flow.value, ID, title.toUpperCase()),
-                        );
-                    }
-                    expanded.value = expanded.value.filter((v) => v !== title);
-                });
-            }
-        });
+    const removeElement = (index: number) => {
+        emits(
+            "remove",
+            YAML_UTILS.deleteBlockWithPath({
+                source: flow.value,
+                path: `${parentPathComplete.value}[${index}]`,
+            }),
+        );
     };
 
     const moveElement = (
@@ -84,6 +93,7 @@
         index: number,
         direction: "up" | "down",
     ) => {
+        const keyName = props.title === "Plugin Defaults" ? "type" : "id";
         if (!items || !flow) return;
         if (
             (direction === "up" && index === 0) ||
@@ -92,9 +102,16 @@
             return;
 
         const newIndex = direction === "up" ? index - 1 : index + 1;
+
         emits(
             "reorder",
-            YAML_UTILS.swapTasks(flow.value, elementID, items[newIndex].id),
+            YAML_UTILS.swapBlocks({
+                source:flow.value,
+                section: SECTIONS_MAP[props.title.toLowerCase() as keyof typeof SECTIONS_MAP],
+                key1:elementID,
+                key2:items[newIndex][keyName],
+                keyName,
+            }),
         );
     };
 </script>

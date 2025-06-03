@@ -13,18 +13,28 @@ export default {
     },
     actions: {
         list(_, options) {
-            const sortString = options.sort ? `?sort=${options.sort}` : ""
+            const sortString = options.sort ? `&sort=${options.sort}` : ""
             delete options.sort
-            return this.$http.get(`${apiUrl(this)}/dashboards${sortString}`, {
+            return this.$http.get(`${apiUrl(this)}/dashboards?size=100${sortString}`, {
                 params: options
             }).then(response => response.data);
         },
         load({commit}, id) {
-            return this.$http.get(`${apiUrl(this)}/dashboards/${id}`).then(response => {
-                const dashboard = response.data;
-                commit("setDashboard", dashboard);
-                return dashboard;
-            });
+            return this.$http
+                .get(`${apiUrl(this)}/dashboards/${id}`, {
+                    validateStatus: (status) => {
+                        return status === 200 || status === 404;
+                    },
+                })
+                .then((response) => {
+                    let dashboard;
+
+                    if (response.status === 200) dashboard = response.data;
+                    else if (response.status === 404) dashboard = {title: "Default", id};
+
+                    commit("setDashboard", dashboard);
+                    return dashboard;
+                });
         },
         create(_, source) {
             return this.$http.post(`${apiUrl(this)}/dashboards`, source, yamlContentHeader).then(response => response.data);
@@ -35,9 +45,19 @@ export default {
         delete(_, id) {
             return this.$http.delete(`${apiUrl(this)}/dashboards/${id}`).then(response => response.data);
         },
-        generate(_, {id, chartId, ...filters}) {
+       generate(_, {id, chartId, ...filters}) {
             const filtersObj = Object.keys(filters).length > 0 ? filters : null;
-            return this.$http.post(`${apiUrl(this)}/dashboards/${id}/charts/${chartId}`, filtersObj).then(response => response.data);
+            return this.$http
+                .post(
+                    `${apiUrl(this)}/dashboards/${id}/charts/${chartId}`,
+                    filtersObj,
+                    {
+                        validateStatus: (status) => {
+                            return status === 200 || status === 404;
+                        },
+                    },
+                )
+                .then((response) => response.data);
         },
         validate(_, source) {
             return this.$http.post(`${apiUrl(this)}/dashboards/validate`, source, yamlContentHeader).then(response => {
@@ -54,7 +74,7 @@ export default {
             });
         },
         chartPreview(_, chart) {
-            return this.$http.post(`${apiUrl(this)}/dashboards/charts/preview`, chart, yamlContentHeader)
+            return this.$http.post(`${apiUrl(this)}/dashboards/charts/preview`, chart)
                 .then(response => response.data);
         }
     },

@@ -39,6 +39,7 @@
     "add flow": "Flow जोड़ें",
     "add task": "एक Task जोड़ें",
     "add-trigger-in-editor": "अपने Flow में पहले एक Trigger जोड़ें",
+    "add_new_item": "नया आइटम जोड़ें",
     "administration": "प्रशासन",
     "advanced configuration": "अन्य गुण",
     "after": "बाद में",
@@ -56,6 +57,8 @@
     "back_to_dashboard": "डैशबोर्ड पर वापस जाएं",
     "backfill": "Backfill",
     "backfill executions": "Backfill निष्पादन",
+    "backfill paused": "Backfill PAUSED",
+    "backfill running": "Backfill चल रहा है",
     "before": "पहले",
     "behavior": "व्यवहार",
     "blueprints": {
@@ -322,6 +325,12 @@
       "tenants": {
         "message": "Kestra एंटरप्राइज एडिशन मल्टी-टेनेंसी का समर्थन करता है, जो आपको विभिन्न टीमों या परियोजनाओं के लिए पूरी तरह से अलग वातावरण प्रदान करता है, जिनमें से प्रत्येक के पास अपने स्वयं के संसाधन होते हैं जैसे कि समर्पित worker समूह या secrets और आंतरिक storage backends।",
         "title": "अलग-अलग Tenants में Workflows प्रबंधित करें"
+      },
+      "tests": {
+        "header": "फ्लो के लिए यूनिट टेस्ट्स",
+        "label": "टेस्ट्स",
+        "message": "अपने flows की लॉजिक को अलग-अलग सत्यापित करें, जल्दी से रिग्रेशन का पता लगाएं, और जैसे-जैसे आपके ऑटोमेशन बदलते और बढ़ते हैं, उन पर विश्वास बनाए रखें।",
+        "title": "हर परिवर्तन के साथ विश्वसनीयता सुनिश्चित करें"
       }
     },
     "dependencies": "निर्भरताएँ",
@@ -402,6 +411,10 @@
       "plugins": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/plugin-defaults\" target=\"_blank\">Concurrency Limits</a></strong> के बारे में अधिक पढ़ें।",
         "title": "इस Namespace के लिए कोई प्लगइन डिफॉल्ट सेट नहीं हैं।"
+      },
+      "testSuites": {
+        "content": "अपने Flows का परीक्षण करने के लिए Test suites बनाना शुरू करें।",
+        "title": "आपके पास अभी तक कोई Test suites नहीं हैं!"
       },
       "triggers": {
         "content": "हमारे दस्तावेज़ में <strong><a href=\"https://kestra.io/docs/workflow-components/triggers\" target=\"_blank\">Triggers</a></strong> के बारे में और पढ़ें।",
@@ -500,7 +513,6 @@
     "export": "निर्यात करें",
     "export all flows": "सभी Flows निर्यात करें",
     "export all templates": "सभी templates निर्यात करें",
-    "export_to_file": "फ़ाइल में निर्यात करें",
     "exports": "निर्यात",
     "failed to render pdf": "PDF प्रस्तुत करने में विफल",
     "false": "असत्य",
@@ -586,6 +598,7 @@
     "flow source not found": "Flow source नहीं मिला",
     "flow-dependencies": "निर्भरता",
     "flow-no-dependencies": "आपके flow की कोई dependencies नहीं हैं।",
+    "flow_export": "flow निर्यात करें",
     "flow_only": "केवल Flow टैब पर उपलब्ध है।",
     "flows": "Flows",
     "flows deleted": "<code>{count}</code> Flow(s) हटाए गए",
@@ -652,7 +665,9 @@
     "item": "आइटम",
     "items": "आइटम्स",
     "join community": "समुदाय में शामिल हों",
+    "join_slack": "Slack से जुड़ें",
     "jump to...": "कूदें...",
+    "kestra": "केस्ट्रा",
     "key": "Key",
     "kill": "समाप्त करें",
     "kill only parents": "केवल parents समाप्त करें",
@@ -737,6 +752,7 @@
         "parent_folder": "मूल फ़ोल्डर:"
       },
       "export": "Namespace फ़ाइलें निर्यात करें",
+      "export_single": "फ़ाइल निर्यात करें",
       "filter": "फ़िल्टर",
       "import": {
         "error": "फ़ाइलें आयात करते समय त्रुटि हुई",
@@ -803,19 +819,23 @@
     "no_code": {
       "adding": "+ एक {what} जोड़ें",
       "adding_default": "+ एक नया value जोड़ें",
+      "clearSelection": "चयन साफ़ करें",
       "close": {
-        "after execution": "टास्क बंद करें",
-        "error handlers": "त्रुटि हैंडलर बंद करें",
+        "afterExecution": "कार्य पूरा होने के बाद बंद करें",
+        "conditions": "बंद करने की शर्त",
+        "errors": "त्रुटि हैंडलर बंद करें",
         "finally": "टास्क बंद करें",
         "input": "इनपुट बंद करें",
+        "pluginDefaults": "प्लगइन डिफ़ॉल्ट बंद करें",
         "tasks": "टास्क बंद करें",
         "triggers": "ट्रिगर बंद करें"
       },
       "creation": {
-        "after execution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
-        "error handlers": "त्रुटि हैंडलर जोड़ें",
+        "afterExecution": "एक निष्पादन के बाद ब्लॉक जोड़ें",
+        "conditions": "एक शर्त जोड़ें",
+        "errors": "त्रुटि हैंडलर जोड़ें",
         "finally": "अंत में एक finally ब्लॉक जोड़ें",
-        "select": "किसी {section} का चयन करें",
+        "pluginDefaults": "प्लगइन डिफ़ॉल्ट जोड़ें",
         "tasks": "कार्य जोड़ें",
         "triggers": "ट्रिगर जोड़ें"
       },
@@ -826,8 +846,8 @@
           "inputs": "इनपुट्स",
           "labels": "लेबल्स",
           "outputs": "आउटपुट्स",
-          "plugin_defaults": "प्लगइन डिफॉल्ट्स",
           "retry": "पुनः प्रयास करें",
+          "sla": "SLA",
           "variables": "वेरिएबल्स"
         },
         "main": {
@@ -842,29 +862,41 @@
         "variable": "वेरिएबल",
         "yaml": "YAML संपादक"
       },
-      "save": {
-        "after execution": "टास्क सहेजें",
-        "error handlers": "त्रुटि हैंडलर सहेजें",
-        "finally": "कार्य सहेजें",
-        "input": "इनपुट सहेजें",
-        "tasks": "कार्य सहेजें",
-        "triggers": "ट्रिगर सहेजें"
-      },
       "sections": {
-        "after_execution": "Execution के बाद",
-        "error_handlers": "त्रुटि हैंडलर",
+        "afterExecution": "Execution के बाद",
+        "deprecated": "अप्रचलित गुण",
+        "errors": "त्रुटि हैंडलर्स",
         "finally": "अंत में",
         "general": "सामान्य गुणधर्म",
         "main": "मुख्य गुणधर्म",
         "optional": "वैकल्पिक गुण",
+        "pluginDefaults": "डिफ़ॉल्ट प्लगइन",
         "tasks": "कार्य",
         "triggers": "ट्रिगर्स"
-      }
+      },
+      "select": {
+        "afterExecution": "एक task चुनें",
+        "conditions": "कंडीशन चुनें",
+        "errors": "एक task चुनें",
+        "finally": "एक task चुनें",
+        "pluginDefaults": "एक प्लगइन चुनें",
+        "tasks": "कार्य चुनें",
+        "triggers": "ट्रिगर चुनें"
+      },
+      "unnamed": "कोई नाम नहीं"
     },
     "no_data": "ऐसा लगता है कि यहाँ कुछ नहीं है... अभी तक!<br/>अपने फ़िल्टर समायोजित करें, या इसे फिर से आज़माएँ!",
     "no_logs_data": "कोई डेटा नहीं",
     "no_logs_data_description": "या तो कोई flows नहीं चल रहे हैं, या आपको अपने फ़िल्टर समायोजित करने की आवश्यकता हो सकती है।",
     "no_namespaces": "कोई भी namespaces खोज मानदंड से मेल नहीं खाते।",
+    "no_results": {
+      "executions": "कोई Executions नहीं मिला",
+      "flows": "कोई Flows नहीं मिला",
+      "kv_pairs": "कोई Key-Value जोड़े नहीं मिले",
+      "secrets": "कोई Secrets नहीं मिले",
+      "templates": "कोई टेम्पलेट नहीं मिला",
+      "triggers": "कोई Triggers नहीं मिले"
+    },
     "no_results_found": "कोई परिणाम नहीं मिला",
     "no_tasks_running": "अभी कोई task नहीं चल रहा है।",
     "now": "अब",
@@ -954,8 +986,9 @@
     "pause confirm": "क्या आप वाकई <code>{id}</code> की execution को PAUSE करना चाहते हैं?",
     "pause done": "निष्पादन PAUSED है",
     "pause title": "प्रक्रिया को PAUSED करें <code>{id}</code>।<br/>ध्यान दें कि वर्तमान में चल रहे tasks अभी भी प्रक्रिया में होंगे, और प्रक्रिया को मैन्युअल रूप से पुनः शुरू करना होगा।",
-    "plugin defaults": "Plugin का पूर्व-निर्धारित मूल्य",
+    "pluginDefaults": "प्लगइन डिफॉल्ट्स",
     "pluginPage": {
+      "alt": "प्लगइन्स आइकन",
       "search": "{count}+ प्लगइन्स में खोजें",
       "title1": "प्लगइन्स आपके वर्कफ़्लोज़ के लिए बिल्डिंग ब्लॉक्स हैं।",
       "title2": "अपने flow को बनाने के लिए Tasks और Triggers खोजें।"
@@ -1076,6 +1109,7 @@
       "blocks": {
         "configuration": {
           "fields": {
+            "auto_refresh_interval": "ऑटो रिफ्रेश अंतराल",
             "default_namespace": "पूर्व-निर्धारित Namespace",
             "editor_type": "डिफ़ॉल्ट एडिटर प्रकार",
             "execute_default_tab": "डिफ़ॉल्ट Execution टैब",
@@ -1191,6 +1225,8 @@
       "name": "मंडल",
       "names": "मंडल"
     },
+    "test-badge-text": "परीक्षण",
+    "test-badge-tooltip": "यह execution एक Test द्वारा बनाया गया था",
     "theme": "थीम",
     "this_task_has": "यह task है",
     "timezone": "समय क्षेत्र",
@@ -1199,7 +1235,7 @@
     "toggle fullscreen": "पूर्ण स्क्रीन टॉगल करें",
     "toggle output": "आउटपुट टॉगल करें",
     "toggle output display": "आउटपुट प्रदर्शन टॉगल करें",
-    "toggle periodic refresh each 10 seconds": "हर 10 सेकंड में आवधिक ताज़ा टॉगल करें",
+    "toggle periodic refresh each x seconds": "हर {interval} सेकंड में आवधिक रिफ्रेश टॉगल करें",
     "toggle_word_wrap": "शब्द रैप टॉगल करें",
     "topology": "टोपोलॉजी",
     "topology-graph": {
@@ -1296,6 +1332,7 @@
     "worker group": "Worker समूह",
     "worker group fallback": "वर्कर ग्रुप फॉलबैक",
     "worker group key": "वर्कर ग्रुप key",
+    "worker information": "वर्कर जानकारी",
     "workerId": "Worker Id",
     "workers": "Workers",
     "wrong labels": "labels में खाली key या value की अनुमति नहीं है",

@@ -2,17 +2,17 @@ import Utils from "../../../../utils/utils";
 import {cssVariable} from "@kestra-io/ui-libs";
 import {getConsistentHEXColor} from "../../../../utils/charts.js";
 
-const getOrCreateLegendList = (chart, id, direction = "row") => {
+const getOrCreateLegendList = (chart, id, direction = "row", width = "100%") => {
     const legendContainer = document.getElementById(id);
 
-    legendContainer.style.width = "100%";
+    legendContainer.style.width = width;
     legendContainer.style.justifyItems = "end";
 
     let listContainer = legendContainer?.querySelector("ul");
 
     if (!listContainer) {
         listContainer = document.createElement("ul");
-        listContainer.classList.add("w-100", "fw-light", "legend", direction === "row" ? "small" : "tall");
+        listContainer.classList.add("mb-3", "fw-light", "legend", direction === "row" ? "small" : "tall");
         listContainer.style.display = "flex";
         listContainer.style.flexDirection = direction;
         listContainer.style.margin = 0;
@@ -88,7 +88,6 @@ export const barLegend = {
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
                 : "";
-            textContainer.style.textTransform = "capitalize";
 
             if (!options.uppercase) item.text = item.text.toLowerCase();
 
@@ -142,7 +141,7 @@ export const customBarLegend = {
             };
 
             const boxSpan = document.createElement("span");
-            const color = getConsistentHEXColor(Utils.getTheme(), item.text);
+            const color = item.strokeStyle === "transparent" ? getConsistentHEXColor(Utils.getTheme(), item.text) : item.strokeStyle;
             boxSpan.style.background = color;
             boxSpan.style.borderColor = "transparent";
             boxSpan.style.height = "5px";
@@ -160,7 +159,6 @@ export const customBarLegend = {
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
                 : "";
-            textContainer.style.textTransform = "capitalize";
 
             const text = document.createTextNode(item.text);
             textContainer.appendChild(text);
@@ -175,7 +173,7 @@ export const customBarLegend = {
 const generateTotalsLegend = (isDuration) => ({
     id: "totalsLegend",
     afterUpdate(chart, args, options) {
-        const ul = getOrCreateLegendList(chart, options.containerID, "column");
+        const ul = getOrCreateLegendList(chart, options.containerID, "column", "auto");
 
         while (ul.firstChild) {
             ul.firstChild.remove();
@@ -236,7 +234,6 @@ const generateTotalsLegend = (isDuration) => ({
             textContainer.style.textDecoration = item.hidden
                 ? "line-through"
                 : "";
-            textContainer.style.textTransform = "capitalize";
             textContainer.style.textAlign = "left";
 
             const executionsText = document.createElement("p");

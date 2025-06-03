@@ -1,5 +1,6 @@
 package io.kestra.core.test;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.HasSource;
@@ -7,6 +8,7 @@ import io.kestra.core.models.HasUID;
 import io.kestra.core.models.TenantInterface;
 import io.kestra.core.test.flow.UnitTest;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.core.validations.TestSuiteValidation;
 import io.micronaut.core.annotation.Introspected;
 import io.swagger.v3.oas.annotations.Hidden;
 import jakarta.validation.constraints.*;
@@ -22,6 +24,7 @@ import java.util.List;
 @Introspected
 @ToString
 @EqualsAndHashCode
+@TestSuiteValidation
 public class TestSuite implements HasUID, TenantInterface, DeletedInterface, HasSource {
 
     @NotNull
@@ -58,6 +61,7 @@ public class TestSuite implements HasUID, TenantInterface, DeletedInterface, Has
     private Boolean disabled = Boolean.FALSE;
 
     @Override
+    @JsonIgnore
     public String uid() {
         return IdUtils.fromParts(
             tenantId,

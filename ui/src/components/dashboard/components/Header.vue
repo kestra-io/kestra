@@ -1,8 +1,8 @@
 <template>
-    <TopNavBar :title="routeInfo.title" :breadcrumb="props.breadcrumb">
+    <TopNavBar :title="routeInfo.title" :breadcrumb="props.breadcrumb" :description="props.description">
         <template #additional-right v-if="canCreate">
             <ul>
-                <li v-if="props.id">
+                <li v-if="props.id && props.id !== 'default'">
                     <router-link
                         :to="{
                             name: 'dashboards/update',
@@ -61,6 +61,7 @@
 
     const props = defineProps({
         title: {type: String, default: undefined},
+        description: {type: String, default: undefined},
         breadcrumb: {type: Array, default: () => []},
         id: {type: String, default: undefined},
     });

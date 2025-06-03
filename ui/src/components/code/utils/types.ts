@@ -4,6 +4,9 @@ import type {RouteRecordName, RouteParams} from "vue-router";
 export type Schemas = {
     $ref?: string;
     $schema?: string;
+    properties?: {
+        [key: string]: any;
+    };
     definitions?: {
         [key: string]: object;
     };
@@ -45,13 +48,13 @@ export type Fields = {
     id: Field;
     namespace: Field;
     description: Field;
-    retry: EditorField;
+    retry: Field;
     labels: PairField;
     inputs: InputField;
     outputs: EditorField;
     variables: PairField;
     concurrency: ConcurrencyField;
-    pluginDefaults: EditorField;
+    sla: Field;
     disabled: Field;
 };
 
@@ -63,12 +66,14 @@ export interface NoCodeElement {
 
 export type CollapseItem = {
     title: string;
+    blockType: BlockType | "pluginDefaults";
+    section: string;
     elements?: NoCodeElement[];
 };
 
 export type Breadcrumb = {
     label: string;
-    to: {
+    to?: {
         name?: RouteRecordName;
         params?: RouteParams;
     };
@@ -77,3 +82,21 @@ export type Breadcrumb = {
 };
 
 export type Component = ReturnType<typeof defineComponent>;
+
+type BasicParams = {
+    id: string;
+    section: BlockType;
+}
+
+type CreationParams = BasicParams & {
+    position: "before" | "after";
+}
+
+export type TopologyClickParams =
+  | { action: "edit"; params: BasicParams }
+  | { action: "create"; params: CreationParams };
+
+export type BlockType = "tasks"
+    |    "triggers"
+    |    "conditions"
+    |    "taskRunners"

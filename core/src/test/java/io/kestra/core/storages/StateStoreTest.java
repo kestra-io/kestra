@@ -1,5 +1,6 @@
 package io.kestra.core.storages;
 
+import io.kestra.core.context.TestRunContextFactory;
 import io.kestra.core.exceptions.MigrationRequiredException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.kestra.core.runners.RunContext;
@@ -23,7 +24,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @MicronautTest
 public class StateStoreTest {
     @Inject
-    private RunContextFactory runContextFactory;
+    private TestRunContextFactory runContextFactory;
 
     @Test
     void all() throws IOException, ResourceExpiredException {

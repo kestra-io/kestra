@@ -1,22 +1,28 @@
 package io.kestra.webserver.controllers.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import io.kestra.core.exceptions.IllegalVariableEvaluationException;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.dashboards.Dashboard;
+import io.kestra.core.models.dashboards.DataFilter;
+import io.kestra.core.models.dashboards.DataFilterKPI;
 import io.kestra.core.models.dashboards.charts.Chart;
 import io.kestra.core.models.dashboards.charts.DataChart;
+import io.kestra.core.models.dashboards.charts.DataChartKPI;
+import io.kestra.core.models.flows.Flow;
 import io.kestra.core.models.validations.ModelValidator;
 import io.kestra.core.models.validations.ValidateConstraintViolation;
+import io.kestra.core.repositories.ArrayListTotal;
 import io.kestra.core.repositories.DashboardRepositoryInterface;
-import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.repositories.FlowRepositoryInterface;
 import io.kestra.core.serializers.YamlParser;
 import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.IdUtils;
+import io.kestra.plugin.core.dashboard.chart.Markdown;
+import io.kestra.plugin.core.dashboard.chart.mardown.sources.FlowDescription;
 import io.kestra.webserver.models.GlobalFilter;
 import io.kestra.webserver.responses.PagedResults;
 import io.kestra.webserver.utils.PageableUtils;
 import io.kestra.webserver.utils.TimeLineSearch;
+import io.micronaut.core.annotation.Introspected;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.http.HttpResponse;
 import io.micronaut.http.HttpStatus;
@@ -30,6 +36,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import jakarta.inject.Inject;
 import jakarta.validation.ConstraintViolationException;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,12 +50,16 @@ import java.util.Optional;
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
 @Validated
-@Controller("/api/v1/dashboards")
+@Controller("/api/v1/main/dashboards")
 @Slf4j
 public class DashboardController {
+    protected static final YamlParser YAML_PARSER = new YamlParser();
 
     @Inject
     private DashboardRepositoryInterface dashboardRepository;
+
+    @Inject
+    private FlowRepositoryInterface flowRepository;
 
     @Inject
     protected TenantService tenantService;
@@ -64,7 +75,7 @@ public class DashboardController {
         @Parameter(description = "The current page size") @QueryValue(defaultValue = "10") @Min(1) int size,
         @Parameter(description = "The filter query") @Nullable @QueryValue String q,
         @Parameter(description = "The sort of current page") @Nullable @QueryValue List<String> sort
-    ) throws ConstraintViolationException, IllegalVariableEvaluationException {
+    ) throws ConstraintViolationException {
         return PagedResults.of(dashboardRepository.list(PageableUtils.from(page, size, sort), tenantService.resolveTenant(), q));
     }
 
@@ -73,7 +84,7 @@ public class DashboardController {
     @Operation(tags = {"Dashboards"}, summary = "Get a dashboard")
     public Dashboard getDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id
-    ) throws ConstraintViolationException, IllegalVariableEvaluationException {
+    ) throws ConstraintViolationException {
         return dashboardRepository.get(tenantService.resolveTenant(), id).orElse(null);
     }
 
@@ -82,8 +93,8 @@ public class DashboardController {
     @Operation(tags = {"Dashboards"}, summary = "Create a dashboard from yaml source")
     public HttpResponse<Dashboard> createDashboard(
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
-    ) throws ConstraintViolationException, JsonProcessingException {
-        Dashboard dashboardParsed = YamlParser.parse(dashboard, Dashboard.class).toBuilder().deleted(false).build();
+    ) throws ConstraintViolationException {
+        Dashboard dashboardParsed = parseDashboard(dashboard);
         modelValidator.validate(dashboardParsed);
 
         if (dashboardParsed.getId() != null) {
@@ -98,7 +109,7 @@ public class DashboardController {
     @Operation(tags = {"Dashboards"}, summary = "Validate dashboard from yaml source")
     public ValidateConstraintViolation validateDashboard(
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
-    ) throws ConstraintViolationException, JsonProcessingException {
+    ) throws ConstraintViolationException {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
         validateConstraintViolationBuilder.index(0);
 
@@ -125,15 +136,21 @@ public class DashboardController {
     public HttpResponse<Dashboard> updateDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @RequestBody(description = "The dashboard definition as YAML") @Body String dashboard
-    ) throws ConstraintViolationException, JsonProcessingException {
+    ) throws ConstraintViolationException {
         Optional<Dashboard> existingDashboard = dashboardRepository.get(tenantService.resolveTenant(), id);
         if (existingDashboard.isEmpty()) {
             return HttpResponse.status(HttpStatus.NOT_FOUND);
         }
-        Dashboard dashboardToSave = JacksonMapper.ofYaml().readValue(dashboard, Dashboard.class).toBuilder().deleted(false).build();
+        Dashboard dashboardToSave = parseDashboard(dashboard);
         modelValidator.validate(dashboardToSave);
 
         return HttpResponse.ok(this.save(existingDashboard.get(), dashboardToSave, dashboard));
+    }
+
+    private Dashboard parseDashboard(String dashboard) {
+        return YamlParser.parse(dashboard, Dashboard.class).toBuilder()
+            .tenantId(tenantService.resolveTenant())
+            .deleted(false).build();
     }
 
     protected Dashboard save(Dashboard previousDashboard, Dashboard dashboard, String source) {
@@ -145,7 +162,7 @@ public class DashboardController {
     @Operation(tags = {"Dashboards"}, summary = "Delete a dashboard")
     public HttpResponse<Void> deleteDashboard(
         @Parameter(description = "The dashboard id") @PathVariable String id
-    ) throws ConstraintViolationException, JsonProcessingException {
+    ) throws ConstraintViolationException {
         if (dashboardRepository.delete(tenantService.resolveTenant(), id) != null) {
             return HttpResponse.status(HttpStatus.NO_CONTENT);
         } else {
@@ -160,7 +177,7 @@ public class DashboardController {
     public PagedResults<Map<String, Object>> getDashboardChartData(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The chart id") @PathVariable String chartId,
-        @RequestBody(description = "The filters to apply, some can override chart definition like labels & namespace") @Body @Nullable GlobalFilter globalFilter
+        @RequestBody(description = "The filters to apply, some can override chart definition like labels & namespace") @Body GlobalFilter globalFilter
     ) throws IOException {
         String tenantId = tenantService.resolveTenant();
         List<QueryFilter> filters = globalFilter.getFilters();
@@ -193,31 +210,98 @@ public class DashboardController {
             return null;
         }
 
+        Integer pageNumber = globalFilter.getPageNumber();
+        Integer pageSize = globalFilter.getPageSize();
 
         if (chart instanceof DataChart dataChart) {
-            Integer pageNumber = globalFilter.getPageNumber();
-            Integer pageSize = globalFilter.getPageSize();
-
-            dataChart.getData().setGlobalFilter(filters, startDate, endDate);
+            DataFilter<?, ?> dataChartDatas = dataChart.getData();
+            dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
 
             // StartDate & EndDate are only set in the globalFilter for JDBC
             // TODO: Check if we can remove them from generate() for ElasticSearch as they are already set in the where property
             return PagedResults.of(this.dashboardRepository.generate(tenantId, dataChart, startDate, endDate, pageNumber != null && pageSize != null ? PageableUtils.from(pageNumber, pageSize) : null));
+        } else if (chart instanceof DataChartKPI dataChartKPI) {
+            DataFilterKPI<?, ?> dataChartDatas = dataChartKPI.getData();
+            dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
+
+            return PagedResults.of(new ArrayListTotal<>(this.dashboardRepository.generateKPI(tenantId, dataChartKPI, startDate, endDate), 1));
+        } else if (chart instanceof Markdown markdownChart) {
+            if (markdownChart.getSource() != null && markdownChart.getSource() instanceof FlowDescription flowDescription) {
+                Optional<Flow> optionalFlow = flowRepository.findById(this.tenantService.resolveTenant(), flowDescription.getNamespace(), flowDescription.getFlowId());
+                if (optionalFlow.isPresent()) {
+                    Flow flow = optionalFlow.get();
+                    Map<String, Object> descriptionMap = Map.of(
+                        "description", flow.getDescription() != null ? flow.getDescription() : ""
+                    );
+
+                    return PagedResults.of(new ArrayListTotal<>(List.of(descriptionMap), 1));
+                } else {
+                    throw new IllegalArgumentException("Flow not found");
+                }
+            }
         }
 
         throw new IllegalArgumentException("Only data charts can be generated.");
     }
 
     @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "charts/preview", consumes = MediaType.APPLICATION_YAML)
+    @Post(uri = "charts/preview")
     @Operation(tags = {"Dashboards"}, summary = "Preview a chart data")
     @SuppressWarnings({"rawtypes", "unchecked"})
-    public PagedResults<Map<String, Object>> previewChartData(
-        @RequestBody(description = "The chart definition as YAML") @Body String chart
+    public PagedResults<Map<String, Object>> previewChart(
+        @Parameter(description = "The chart") @Body @Valid PreviewRequest previewRequest
     ) throws IOException {
-        Chart<?> parsed = YamlParser.parse(chart, Chart.class);
+        Chart<?> chart = YAML_PARSER.parse(previewRequest.chart(), Chart.class);
+        GlobalFilter globalFilter = previewRequest.globalFilter();
 
-        return PagedResults.of(this.dashboardRepository.generate(tenantService.resolveTenant(), (DataChart) parsed, ZonedDateTime.now().minusDays(8), ZonedDateTime.now(), null));
+        List<QueryFilter> filters =
+            globalFilter != null ? globalFilter.getFilters() : null;
+
+        ZonedDateTime endDate = null;
+        ZonedDateTime startDate = null;
+        if (filters != null) {
+            TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+            validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
+
+            endDate = timeLineSearch.getEndDate();
+            startDate = timeLineSearch.getStartDate();
+        } else {
+            startDate = ZonedDateTime.now().minusDays(8);
+        }
+
+        if (endDate != null && endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("`endDate` must be after `startDate`.");
+        }
+
+        if (chart instanceof DataChart dataChart) {
+            DataFilter<?, ?> dataChartDatas = dataChart.getData();
+            dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
+
+            // StartDate & EndDate are only set in the globalFilter for JDBC
+            // TODO: Check if we can remove them from generate() for ElasticSearch as they are already set in the where property
+            return PagedResults.of(this.dashboardRepository.generate(this.tenantService.resolveTenant(), dataChart, startDate, endDate, null));
+        } else if (chart instanceof DataChartKPI dataChartKPI) {
+            DataFilterKPI<?, ?> dataChartDatas = dataChartKPI.getData();
+            dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
+
+            return PagedResults.of(new ArrayListTotal<>(this.dashboardRepository.generateKPI(this.tenantService.resolveTenant(), dataChartKPI, startDate, endDate),1));
+        } else if (chart instanceof Markdown markdownChart) {
+            if (markdownChart.getSource() != null && markdownChart.getSource() instanceof FlowDescription flowDescription) {
+                Optional<Flow> optionalFlow = flowRepository.findById(this.tenantService.resolveTenant(), flowDescription.getNamespace(), flowDescription.getFlowId());
+                if (optionalFlow.isPresent()) {
+                    Flow flow = optionalFlow.get();
+                    Map<String, Object> descriptionMap = Map.of(
+                        "description", flow.getDescription() != null ? flow.getDescription() : ""
+                    );
+
+                    return PagedResults.of(new ArrayListTotal<>(List.of(descriptionMap), 1));
+                } else {
+                    throw new IllegalArgumentException("Flow not found");
+                }
+            }
+        }
+
+        throw new IllegalArgumentException("Chart is not an instance of DataChart.");
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -246,5 +330,9 @@ public class DashboardController {
         return validateConstraintViolationBuilder.build();
     }
 
+    @Introspected
+    public record PreviewRequest(
+        @Parameter(description = "The chart") String chart,
+        @Parameter(description = "The filters to apply, some can override chart definition like labels & namespace") @Nullable GlobalFilter globalFilter) {}
 
 }

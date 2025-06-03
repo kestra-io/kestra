@@ -45,7 +45,8 @@ public interface HttpInterface {
     HttpConfiguration getOptions();
 
     @Schema(
-        title = "The SSL request options"
+        title = "The SSL request options.",
+        description = "This property is deprecated. Instead use the `options.ssl` property."
     )
     SslOptions getSslOptions();
 }

@@ -25,7 +25,7 @@ class FlowDashboardFilterLanguage extends FilterLanguage {
     static readonly INSTANCE = new FlowDashboardFilterLanguage();
 
     private constructor() {
-        super("flow-dashboards", flowDashboardFilterKeys);
+        super("flow-dashboards", flowDashboardFilterKeys, false);
     }
 }
 

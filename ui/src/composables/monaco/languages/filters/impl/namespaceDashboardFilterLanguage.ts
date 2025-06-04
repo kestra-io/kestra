@@ -42,7 +42,7 @@ class NamespaceDashboardFilterLanguage extends FilterLanguage {
     static readonly INSTANCE = new NamespaceDashboardFilterLanguage();
 
     private constructor() {
-        super("namespace-dashboards", namespaceDashboardFilterKeys);
+        super("namespace-dashboards", namespaceDashboardFilterKeys, false);
     }
 }
 

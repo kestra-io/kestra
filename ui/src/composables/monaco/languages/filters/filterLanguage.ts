@@ -10,13 +10,18 @@ type FilterKeyCompletionEntries = [
 export abstract class FilterLanguage {
     private readonly _domain: string | undefined;
     private readonly _filterKeyCompletions: FilterKeyCompletionEntries;
+    private readonly _textFilterSupported: boolean;
     private static readonly NESTED_KEY_PLACEHOLDER = "NESTED_KEY";
 
     get domain(): string | undefined {
         return this._domain;
     }
 
-    protected constructor(domain: string | undefined, filterKeyCompletions: Record<string, FilterKeyCompletions>) {
+    get textFilterSupported(): boolean {
+        return this._textFilterSupported;
+    }
+
+    protected constructor(domain: string | undefined, filterKeyCompletions: Record<string, FilterKeyCompletions>, textFilterSupported: boolean = true) {
         this._domain = domain;
         this._filterKeyCompletions = [
             ...(Object.entries(filterKeyCompletions).map(([key, filterKeyCompletion]) => [
@@ -25,15 +30,19 @@ export abstract class FilterLanguage {
                     regex: new RegExp("^" + key.replaceAll(".", "\\.").replaceAll(/\$?\{([^}]*)}/g, ".*") + "$")
                 },
                 filterKeyCompletion
-            ]) as FilterKeyCompletionEntries),
-            [
+            ]) as FilterKeyCompletionEntries)
+        ];
+        this._textFilterSupported = textFilterSupported;
+
+        if (textFilterSupported) {
+            this._filterKeyCompletions.push([
                 {
                     key: "text",
                     regex: /^text$/
                 },
                 new FilterKeyCompletions([Comparators.EQUALS, Comparators.NOT_EQUALS])
-            ]
-        ];
+            ])
+        }
     }
 
     static withNestedKeyPlaceholder(keyLabel: string) {

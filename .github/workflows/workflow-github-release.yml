@@ -6,6 +6,9 @@ on:
       GH_PERSONAL_TOKEN:
         description: "The Github personal token."
         required: true
+  push:
+    tags:
+      - '*'
 
 jobs:
   publish:
@@ -19,6 +22,13 @@ jobs:
         with:
           name: exe
           path: build/executable
+
+      # Check out
+      - name: Checkout - Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          submodules: true
 
       # Checkout GitHub Actions
       - name: Checkout - Actions
@@ -35,6 +45,6 @@ jobs:
         uses: ./actions/.github/actions/github-release
         if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_PERSONAL_TOKEN }}
           SLACK_RELEASES_WEBHOOK_URL: ${{ secrets.SLACK_RELEASES_WEBHOOK_URL }}
 

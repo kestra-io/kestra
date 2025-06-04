@@ -6,7 +6,7 @@ import {Me} from "../../../../../stores/auth.ts";
 
 const dashboardFilterKeys: Record<string, FilterKeyCompletions> = {
     namespace: new FilterKeyCompletions(
-        [Comparators.STARTS_WITH_NAMESPACE_PREFIX, Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH, Comparators.REGEX],
+        [Comparators.PREFIX, Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.CONTAINS, Comparators.STARTS_WITH, Comparators.ENDS_WITH, Comparators.REGEX],
         async (store) => {
             const user = store.getters["auth/user"] as Me;
             if (user && user.hasAnyActionOnAnyNamespace(permission.NAMESPACE, action.READ)) {
@@ -46,7 +46,7 @@ class DashboardFilterLanguage extends FilterLanguage {
     static readonly INSTANCE = new DashboardFilterLanguage();
 
     private constructor() {
-        super("dashboards", dashboardFilterKeys);
+        super("dashboards", dashboardFilterKeys, false);
     }
 }
 

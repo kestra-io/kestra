@@ -19,18 +19,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {
-        computed,
-        getCurrentInstance,
-        h,
-        inject,
-        onBeforeUnmount,
-        onMounted,
-        ref,
-        render,
-        VNode,
-        watch
-    } from "vue";
+    import {computed, getCurrentInstance, h, inject, onBeforeUnmount, onMounted, ref, render, VNode, watch} from "vue";
     import {useStore} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
@@ -55,8 +44,9 @@
     import {ElDatePicker} from "element-plus";
     import {Moment} from "moment";
     import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget.ts";
-    import ICodeEditor = editor.ICodeEditor;
     import {hashCode} from "../../utils/global.ts";
+    import ICodeEditor = editor.ICodeEditor;
+    import debounce from "lodash/debounce";
 
     const store = useStore();
     const currentInstance = getCurrentInstance()!;
@@ -158,31 +148,35 @@
         monaco.editor.defineTheme(themeKey, themeData);
     });
 
-    const themeKey = computed(() => {
-        if (typeof props.theme === "string") {
-            return props.theme;
-        }
-
-        return hashCode(JSON.stringify(props.theme));
-    });
-
-    if (typeof props.theme === "object") {
-        const kestraBaseTheme = themes[props.theme.base];
+    function defineCustomTheme(theme: Omit<Partial<editor.IStandaloneThemeData>, "base"> & { base: ThemeBase }) {
+        const kestraBaseTheme = themes[theme.base];
         const base: Partial<editor.IStandaloneThemeData> & { base: editor.BuiltinTheme } = kestraBaseTheme
             ? {
                 ...kestraBaseTheme,
-                ...props.theme,
-                rules: [...(kestraBaseTheme.rules ?? []), ...(props.theme.rules ?? [])],
+                ...theme,
+                rules: [...(kestraBaseTheme.rules ?? []), ...(theme.rules ?? [])],
                 base: kestraBaseTheme.base
             }
-            : props.theme as Partial<editor.IStandaloneThemeData> & { base: editor.BuiltinTheme };
-        monaco.editor.defineTheme(themeKey.value, {
+            : theme as Partial<editor.IStandaloneThemeData> & { base: editor.BuiltinTheme };
+        
+        const themeId = hashCode(JSON.stringify(theme)).toString();
+        monaco.editor.defineTheme(themeId, {
             inherit: true,
             rules: [],
             colors: {},
             ...base
         });
+        
+        return themeId;
     }
+
+    const themeKey = computed(() => {
+        if (typeof props.theme === "string") {
+            return props.theme;
+        }
+
+        return defineCustomTheme(props.theme);
+    });
 
     let localEditor: monaco.editor.IStandaloneCodeEditor | null = null;
     let localDiffEditor: monaco.editor.IStandaloneDiffEditor | null = null;
@@ -237,11 +231,19 @@
         }
     });
 
-    watch(themeKey, (newVal) => {
-        if (editorResolved.value) {
-            monaco.editor.setTheme(newVal);
+    watch(() => props.theme, (newTheme) => {
+        if (typeof newTheme === "object") {
+            const themeId = defineCustomTheme(newTheme);
+            
+            if (editorResolved.value) {
+                monaco.editor.setTheme(themeId);
+            }
+        } else if (typeof newTheme === "string") {
+            if (editorResolved.value) {
+                monaco.editor.setTheme(newTheme);
+            }
         }
-    });
+    }, {deep: true});
 
     const nowMoment: Moment = currentInstance.appContext.config.globalProperties.$moment().startOf("day");
 
@@ -645,12 +647,12 @@
                     }
                 });
 
-                localEditor.onDidChangeCursorPosition(() => {
+                localEditor.onDidChangeCursorPosition(debounce(() => {
                     if (suggestController.model.state !== 0) {
                         suggestController.cancelSuggestWidget();
                         localEditor!.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {});
                     }
-                })
+                }, 300))
             }
 
             if (!props.input) {

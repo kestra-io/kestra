@@ -259,7 +259,7 @@
 
             // If we're not in a {key}{comparator}{value} format, we assume it's a text search
             if (key === undefined) {
-                if (text === undefined || !props.language?.keyMatchers()?.some(keyMatcher => keyMatcher.test(text))) {
+                if (props.language?.textFilterSupported && (text === undefined || !props.language?.keyMatchers()?.some(keyMatcher => keyMatcher.test(text)))) {
                     filters.push({
                         key: "text",
                         comparator: "EQUALS",

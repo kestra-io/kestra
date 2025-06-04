@@ -214,7 +214,7 @@ do
     git push;
     # Update the upper bound version of kestra
     PLUGIN_KESTRA_VERSION="[${BASE_VERSION},)"
-    git checkout "$RELEASE_BRANCH" && git pull;
+    git checkout "$PUSH_RELEASE_BRANCH" && git pull;
     sed -i "s/^kestraVersion=.*/kestraVersion=${PLUGIN_KESTRA_VERSION}/" ./gradle.properties
     git add ./gradle.properties
     git commit -m"chore(deps): update kestraVersion to ${PLUGIN_KESTRA_VERSION}."

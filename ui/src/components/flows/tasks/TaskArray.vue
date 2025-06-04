@@ -19,6 +19,7 @@
             <TaskWrapper :merge="!needWrapper">
                 <template #tasks>
                     <component
+                        :key="'array-' + index"
                         :is="componentType"
                         :model-value="element"
                         :task="modelValue"

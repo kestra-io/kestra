@@ -13,13 +13,11 @@
 
         <template v-else-if="!creatingTask && refPath === undefined">
             <el-form label-position="top">
-                <component
-                    v-for="(v, k) in mainFields"
-                    :key="k"
-                    :is="v.component"
-                    v-model="v.value"
+                <TaskObjectField
+                    v-for="(v) in fieldsFromSchema.slice(0, 4)"
+                    :key="v.root"
                     v-bind="trimmed(v)"
-                    @update:model-value="emits('updateMetadata', k, v.value)"
+                    @update:model-value="emits('updateMetadata', v.root, $event)"
                 />
 
                 <hr class="my-4">
@@ -34,13 +32,11 @@
 
                 <hr class="my-4">
 
-                <component
-                    v-for="(v, k) in otherFields"
-                    :key="k"
-                    :is="v.component"
-                    v-model="v.value"
+                <TaskObjectField
+                    v-for="(v) in fieldsFromSchema.slice(4)"
+                    :key="v.root"
                     v-bind="trimmed(v)"
-                    @update:model-value="emits('updateMetadata', k, v.value)"
+                    @update:model-value="emits('updateMetadata', v.root, $event)"
                 />
             </el-form>
         </template>
@@ -56,18 +52,12 @@
     import {onMounted, computed, inject, ref} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
-    import {Field, Fields, CollapseItem, NoCodeElement, BlockType} from "../utils/types";
+    import {CollapseItem, NoCodeElement, BlockType} from "../utils/types";
 
     import Collapse from "../components/collapse/Collapse.vue";
-    import InputText from "../components/inputs/InputText.vue";
-    import InputSwitch from "../components/inputs/InputSwitch.vue";
-    import InputPair from "../components/inputs/InputPair.vue";
 
-    import Editor from "../../inputs/Editor.vue";
-    import MetadataInputs from "../../flows/MetadataInputs.vue";
-    import MetadataRetry from "../../flows/MetadataRetry.vue";
-    import MetadataSLA from "../../flows/MetadataSLA.vue";
-    import TaskBasic from "../../flows/tasks/TaskBasic.vue";
+    import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
+
 
     import {
         CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
@@ -113,9 +103,9 @@
         metadata: {type: Object, required: true},
     });
 
-    const trimmed = (field: Field) => {
+    const trimmed = (field: any) => {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {component, value, ...rest} = field;
+        const {component, label, ...rest} = field;
 
         return rest;
     };
@@ -128,6 +118,7 @@
         definitions?: any,
         $ref?: string,
     }>({})
+
     onMounted(async () => {
         await store.dispatch("plugin/loadSchemaType").then((response) => {
             schema.value = response;
@@ -143,100 +134,72 @@
 
     const flowSchema = computed(() => {
         const ref = removeRefPrefix(schema.value?.$ref);
-        return definitions.value?.[ref]?.properties ?? {};
+        return definitions.value?.[ref];
     });
 
-    const fields = computed<Fields>(() => {
-        return {
-            id: {
-                component: InputText,
-                value: props.metadata.id,
+    const flowSchemaProperties = computed(() => {
+        return flowSchema.value?.properties ?? {};
+    });
+
+    const rawFields = computed(() => {
+        return [
+            {
+                root: "id",
                 label: t("no_code.fields.main.flow_id"),
-                required: true,
                 disabled: !creatingFlow.value,
             },
-            namespace: {
-                component: InputText,
-                value: props.metadata.namespace,
+            {
+                root: "namespace",
                 label: t("no_code.fields.main.namespace"),
-                required: true,
                 disabled: !creatingFlow.value,
             },
-            description: {
-                component: InputText,
-                value: props.metadata.description,
+            {
+                root: "description",
                 label: t("no_code.fields.main.description"),
             },
-            retry: {
-                component: MetadataRetry,
-                value: props.metadata.retry,
-                schema: flowSchema.value.retry,
-                definitions: definitions.value,
-                label: t("no_code.fields.general.retry")
+            {
+                root: "inputs",
             },
-            labels: {
-                component: InputPair,
-                value: props.metadata.labels,
-                label: t("no_code.fields.general.labels"),
-                property: t("no_code.labels.label"),
+            {
+                root: "retry",
             },
-            inputs: {
-                component: MetadataInputs,
-                value: props.metadata.inputs,
-                label: t("no_code.fields.general.inputs"),
-                inputs: props.metadata.inputs ?? [],
+            {
+                root: "labels",
             },
-            outputs: {
-                component: Editor,
-                value: props.metadata.outputs,
-                label: t("no_code.fields.general.outputs"),
-                navbar: false,
-                input: true,
-                lang: "yaml",
-                shouldFocus: false,
-                showScroll: true,
-                style: {height: "100px"},
+            {
+                root: "outputs",
             },
-            variables: {
-                component: InputPair,
-                value: props.metadata.variables,
-                label: t("no_code.fields.general.variables"),
-                property: t("no_code.labels.variable"),
+            {
+                root: "variables",
             },
-            concurrency: {
-                component: TaskBasic,
-                value: props.metadata.concurrency,
-                label: t("no_code.fields.general.concurrency"),
-                schema: definitions.value?.[removeRefPrefix(flowSchema.value.concurrency?.$ref)] ?? {},
+            {
                 root: "concurrency",
             },
-            sla: {
-                component: MetadataSLA,
-                value: props.metadata.sla ?? [],
-                schema: flowSchema.value.sla,
-                definitions: definitions.value,
-                label: t("no_code.fields.general.sla")
+            {
+                root: "sla",
             },
-            disabled: {
-                component: InputSwitch,
-                value: props.metadata.disabled,
-                label: t("no_code.fields.general.disabled"),
-            },
-        }
+            {
+                root: "disabled",
+            }
+        ]
     });
 
-    const mainFields = computed(() => {
-        const {id, namespace, description, inputs} = fields.value;
-
-        return {id, namespace, description, inputs};
-    })
-
-    const otherFields = computed(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {id, namespace, description, inputs, ...rest} = fields.value;
-
-        return rest;
-    })
+    const fieldsFromSchema = computed(() => {
+        if( !flowSchema.value || !flowSchemaProperties.value) {
+            return [];
+        }
+        return rawFields.value.map(f => ({
+            modelValue: props.metadata[f.root],
+            required: flowSchema.value?.required ?? [],
+            disabled: f.disabled ?? false,
+            schema: flowSchemaProperties.value[f.root],
+            definitions: definitions.value,
+            label: f.label ?? t(`no_code.fields.general.${f.root}`),
+            fieldKey: f.root,
+            task: props.metadata,
+            ...f,
+        }));
+    });
 
     const SECTIONS_IDS = [
         "tasks",

@@ -1160,16 +1160,13 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             Executor result = executionRepository.lock(executionDelay.getExecutionId(), pair -> {
                 Executor executor = new Executor(pair.getLeft(), null);
 
-                if (pair.getLeft().getState() != null && pair.getLeft().getState().isTerminated()){
-                    return Pair.of(executor, pair.getRight());
-                }
                 metricRegistry
                     .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
                     .increment();
 
                 try {
                     // Handle paused tasks
-                    if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)) {
+                    if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW) && !pair.getLeft().getState().isTerminated()) {
                         FlowInterface flow = flowMetaStore.findByExecution(pair.getLeft()).orElseThrow();
                         if (executionDelay.getTaskRunId() == null) {
                             // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)

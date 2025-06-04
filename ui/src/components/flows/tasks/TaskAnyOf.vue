@@ -97,14 +97,11 @@
         data() {
             return {
                 isOpen: false,
-                schemas: [],
                 selectedSchema: undefined,
                 finishedMounting: false,
             };
         },
         created() {
-            this.schemas = this.schema?.anyOf ?? [];
-
             const schema = this.schemaOptions.find((item) =>
                 typeof item.value === this.modelValue?.type ||
                 (this.modelValue === "string" && item.value === "string") ||
@@ -176,12 +173,16 @@
                 });
             },
         },
+
         expose: [
             "resetSelectType",
         ],
 
         computed: {
             ...mapState("plugin", ["icons"]),
+            schemas() {
+                return this.schema?.anyOf ?? [];
+            },
             constantType() {
                 return this.currentSchema?.properties?.type?.const;
             },
@@ -207,16 +208,20 @@
                 return this.schemaOptions.some((schema) => schema.label.startsWith("io.kestra"));
             },
             schemaOptions() {
+                if (!this.schemas || !this.definitions) {
+                    return [];
+                }
+
                 // find the part of the prefix to schema references that is common to all schemas
                 const schemaRefsArray = this.schemas
-                    .map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
+                    ?.map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
                     .filter((schemaRef) => schemaRef)
                     .map((schemaRef) => this.definitions[schemaRef]?.type?.const ?? schemaRef)
                     .map((schemaRef) => schemaRef.split("."))
 
                 let mismatch = false
                 const commonPart = schemaRefsArray[0]
-                    .filter((schemaRef, index) => {
+                    ?.filter((schemaRef, index) => {
                         if(!mismatch && schemaRefsArray.every((item) => item[index] === schemaRef)){
                             return true;
                         } else {
@@ -232,6 +237,10 @@
                         ? schema.$ref.split("/").pop()
                         : schema.type;
 
+                    if (!schemaRef) {
+                        return [];
+                    }
+
                     const cleanSchemaRef = schemaRef.replace(/-\d+$/, "");
 
                     const lastPartOfValue = cleanSchemaRef.slice(
@@ -243,6 +252,8 @@
                         value: schemaRef,
                         id: cleanSchemaRef,
                     };
+                }).filter((schema) => {
+                    return schema.value
                 });
             },
         },

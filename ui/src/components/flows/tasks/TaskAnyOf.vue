@@ -186,9 +186,6 @@
                     return [];
                 }
                 return this.schema.anyOf.map((schema) => {
-                    if (schema.$ref) {
-                        return schema;
-                    }
 
                     if(schema.allOf && Array.isArray(schema.allOf)) {
                         if(schema.allOf.length === 2 && schema.allOf[0].$ref && !schema.allOf[1].$ref) {
@@ -199,7 +196,7 @@
                         }
                     }
 
-                    return {};
+                    return schema;
                 });
             },
             constantType() {
@@ -227,7 +224,7 @@
                 return this.schemaOptions.some((schema) => schema.label.startsWith("io.kestra")) || this.schemas.length > 3;
             },
             schemaOptions() {
-                if (!this.schemas || !this.definitions) {
+                if (!this.schemas?.length || !this.definitions) {
                     return [];
                 }
 
@@ -257,7 +254,11 @@
                         : schema.type;
 
                     if (!schemaRef) {
-                        return [];
+                        return {
+                            label: "Unknown Schema",
+                            value: "",
+                            id: "",
+                        };
                     }
 
                     const cleanSchemaRef = schemaRef.replace(/-\d+$/, "");

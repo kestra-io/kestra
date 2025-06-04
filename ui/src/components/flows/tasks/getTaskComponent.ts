@@ -25,6 +25,10 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
+        if( key === "labels" && property.anyOf.length === 2
+                && property.anyOf[0].type === "array" && property.anyOf[1].type === "object") {
+            return "input-pair";
+        }
         return "any-of";
     }
 

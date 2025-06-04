@@ -39,6 +39,7 @@
     import Task from "./Task";
 
     export default {
+        inheritAttrs: false,
         mixins: [Task],
         components: {Editor},
         props:{

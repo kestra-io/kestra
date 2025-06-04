@@ -12,12 +12,22 @@
         </template>
 
         <template v-else-if="!creatingTask && refPath === undefined">
-            <el-form label-position="top">
-                <TaskObjectField
-                    v-for="(v) in fieldsFromSchema.slice(0, 4)"
-                    :key="v.root"
-                    v-bind="v"
-                    @update:model-value="emits('updateMetadata', v.root, $event)"
+            <el-form label-position="top" v-if="fieldsFromSchema.length">
+                <TaskWrapper :key="v.root" v-for="(v) in fieldsFromSchema.slice(0, 3)" :merge="shouldMerge(v.schema)">
+                    <template #tasks>
+                        <TaskObjectField
+                            v-bind="v"
+                            @update:model-value="emits('updateMetadata', v.root, $event)"
+                        />
+                    </template>
+                </TaskWrapper>
+
+                <MetadataInputs
+                    v-if="flowSchemaProperties.inputs"
+                    :label="t('no_code.fields.general.inputs')"
+                    :model-value="metadata.inputs"
+                    :required="flowSchema.required?.includes('inputs')"
+                    @update:model-value="emits('updateMetadata', 'inputs', $event)"
                 />
 
                 <hr class="my-4">
@@ -32,13 +42,16 @@
 
                 <hr class="my-4">
 
-                <TaskObjectField
-                    v-for="(v) in fieldsFromSchema.slice(4)"
-                    :key="v.root"
-                    v-bind="v"
-                    @update:model-value="emits('updateMetadata', v.root, $event)"
-                />
+                <TaskWrapper :key="v.root" v-for="(v) in fieldsFromSchema.slice(4)" :merge="shouldMerge(v.schema)">
+                    <template #tasks>
+                        <TaskObjectField
+                            v-bind="v"
+                            @update:model-value="emits('updateMetadata', v.root, $event)"
+                        />
+                    </template>
+                </TaskWrapper>
             </el-form>
+            <el-skeleton v-else :rows="6" />
         </template>
 
         <Task
@@ -56,6 +69,7 @@
 
     import Collapse from "../components/collapse/Collapse.vue";
 
+    import MetadataInputs from "../../flows/MetadataInputs.vue";
     import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
 
 
@@ -74,6 +88,7 @@
     const {t} = useI18n({useScope: "global"});
 
     import {useStore} from "vuex";
+    import TaskWrapper from "../../flows/tasks/TaskWrapper.vue";
     const store = useStore();
 
     const emits = defineEmits([
@@ -89,6 +104,11 @@
             emits("save");
         }
     };
+
+    function shouldMerge(schema: any): boolean {
+        const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
+        return !complexObject
+    }
 
     document.addEventListener("keydown", saveEvent);
 

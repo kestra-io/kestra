@@ -33,7 +33,6 @@
                 embed
             />
         </div>
-        {{ console.log("activeTab--",activeTab) }}
         <blueprint-detail
             v-if="selectedBlueprintId"
             :blueprint-id="selectedBlueprintId"

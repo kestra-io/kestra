@@ -31,6 +31,7 @@
             :properties="Object.fromEntries(filteredProperties)"
             :definitions="definitions"
             @update:model-value="onAnyOfInput"
+            merge
         />
     </el-form>
 </template>
@@ -181,7 +182,25 @@
         computed: {
             ...mapState("plugin", ["icons"]),
             schemas() {
-                return this.schema?.anyOf ?? [];
+                if(!this.schema?.anyOf || !Array.isArray(this.schema.anyOf)) {
+                    return [];
+                }
+                return this.schema.anyOf.map((schema) => {
+                    if (schema.$ref) {
+                        return schema;
+                    }
+
+                    if(schema.allOf && Array.isArray(schema.allOf)) {
+                        if(schema.allOf.length === 2 && schema.allOf[0].$ref && !schema.allOf[1].$ref) {
+                            return {
+                                ...schema.allOf[1],
+                                $ref: schema.allOf[0].$ref,
+                            };
+                        }
+                    }
+
+                    return {};
+                });
             },
             constantType() {
                 return this.currentSchema?.properties?.type?.const;

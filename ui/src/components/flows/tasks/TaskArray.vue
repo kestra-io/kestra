@@ -16,12 +16,20 @@
             />
         </el-col>
         <el-col :span="items.length > 1 ? 20 : 22" class="pe-2">
-            <InputText
-                :model-value="element"
-                @update:model-value="(v) => handleInput(v, index)"
-                :placeholder="$t('value')"
-                class="w-100"
-            />
+            <TaskWrapper :merge="!needWrapper">
+                <template #tasks>
+                    <component
+                        :is="componentType"
+                        :model-value="element"
+                        :task="modelValue"
+                        root="array"
+                        :properties="{}"
+                        :schema="props.schema.items"
+                        :definitions="props.definitions"
+                        @update:model-value="handleInput($event, index)"
+                    />
+                </template>
+            </TaskWrapper>
         </el-col>
         <el-col :span="2" class="d-flex align-items-center justify-content-center delete">
             <DeleteOutline @click="removeItem(index)" />
@@ -31,20 +39,36 @@
 </template>
 
 <script setup lang="ts">
-    import {ref} from "vue";
+    import {computed, ref} from "vue";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../code/utils/icons";
 
-    import InputText from "../../code/components/inputs/InputText.vue";
     import Add from "../../code/components/Add.vue";
+    import getTaskComponent from "./getTaskComponent";
+    import TaskWrapper from "./TaskWrapper.vue";
 
     defineOptions({inheritAttrs: false});
 
     const emits = defineEmits(["update:modelValue"]);
     const props = withDefaults(defineProps<{
+        schema: any;
+        definitions: any;
         modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
     }>(), {
-        modelValue: undefined
+        modelValue: undefined,
+        schema: () => ({}),
+        definitions: () => ({}),
+    });
+
+    const componentType = computed(() => {
+        return getTaskComponent(props.schema.items, "", props.definitions);
+    });
+
+    const needWrapper = computed(() => {
+        return componentType.value.ksTaskName !== "string" &&
+            componentType.value.ksTaskName !== "number" &&
+            componentType.value.ksTaskName !== "boolean" &&
+            componentType.value.ksTaskName !== "expression";
     });
 
     const items = ref(
@@ -64,6 +88,7 @@
         items.value.splice(index, 1);
         emits("update:modelValue", items.value);
     };
+
     const moveItem = (index: number, direction: "up" | "down") => {
         if (direction === "up" && index > 0) {
             [items.value[index - 1], items.value[index]] = [

@@ -48,6 +48,7 @@
             ref="taskComponent"
             :is="type"
             v-bind="{...componentProps}"
+            :disabled
             class="mt-1 mb-2 wrapper"
         />
     </el-form-item>
@@ -69,6 +70,7 @@
         task: any;
         modelValue?: Record<string, any> | string | number | boolean | Array<any>,
         required?: string[];
+        disabled?: boolean;
     }>()
 
     const emit = defineEmits<{

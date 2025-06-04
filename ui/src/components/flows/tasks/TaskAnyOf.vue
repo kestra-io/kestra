@@ -224,7 +224,7 @@
                 return this.selectedSchema ? getTaskComponent(this.currentSchema) : undefined;
             },
             isSelectingPlugins() {
-                return this.schemaOptions.some((schema) => schema.label.startsWith("io.kestra"));
+                return this.schemaOptions.some((schema) => schema.label.startsWith("io.kestra")) || this.schemas.length > 3;
             },
             schemaOptions() {
                 if (!this.schemas || !this.definitions) {

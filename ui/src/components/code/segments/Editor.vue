@@ -16,7 +16,7 @@
                 <TaskObjectField
                     v-for="(v) in fieldsFromSchema.slice(0, 4)"
                     :key="v.root"
-                    v-bind="trimmed(v)"
+                    v-bind="v"
                     @update:model-value="emits('updateMetadata', v.root, $event)"
                 />
 
@@ -35,7 +35,7 @@
                 <TaskObjectField
                     v-for="(v) in fieldsFromSchema.slice(4)"
                     :key="v.root"
-                    v-bind="trimmed(v)"
+                    v-bind="v"
                     @update:model-value="emits('updateMetadata', v.root, $event)"
                 />
             </el-form>
@@ -103,13 +103,6 @@
         metadata: {type: Object, required: true},
     });
 
-    const trimmed = (field: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {component, label, ...rest} = field;
-
-        return rest;
-    };
-
     function onTaskUpdate(yaml: string) {
         emits("updateTask", yaml)
     }
@@ -141,63 +134,43 @@
         return flowSchema.value?.properties ?? {};
     });
 
-    const rawFields = computed(() => {
-        return [
-            {
-                root: "id",
-                label: t("no_code.fields.main.flow_id"),
-                disabled: !creatingFlow.value,
-            },
-            {
-                root: "namespace",
-                label: t("no_code.fields.main.namespace"),
-                disabled: !creatingFlow.value,
-            },
-            {
-                root: "description",
-                label: t("no_code.fields.main.description"),
-            },
-            {
-                root: "inputs",
-            },
-            {
-                root: "retry",
-            },
-            {
-                root: "labels",
-            },
-            {
-                root: "outputs",
-            },
-            {
-                root: "variables",
-            },
-            {
-                root: "concurrency",
-            },
-            {
-                root: "sla",
-            },
-            {
-                root: "disabled",
-            }
-        ]
-    });
+    const METADATA_KEYS = [
+        "id",
+        "namespace",
+        "description",
+        "inputs",
+        "retry",
+        "labels",
+        "outputs",
+        "variables",
+        "concurrency",
+        "sla",
+        "disabled"
+    ] as const;
+
 
     const fieldsFromSchema = computed(() => {
         if( !flowSchema.value || !flowSchemaProperties.value) {
             return [];
         }
-        return rawFields.value.map(f => ({
-            modelValue: props.metadata[f.root],
+
+        // FIXME: some labels are not where you would expect them to be
+        const mainLabels: Record<string, string> = {
+            id: t("no_code.fields.main.flow_id"),
+            namespace: t("no_code.fields.main.namespace"),
+            description: t("no_code.fields.main.description"),
+        }
+
+        return METADATA_KEYS.map(f => ({
+            modelValue: props.metadata[f],
             required: flowSchema.value?.required ?? [],
-            disabled: f.disabled ?? false,
-            schema: flowSchemaProperties.value[f.root],
+            disabled: !creatingFlow.value && (f === "id" || f === "namespace"),
+            schema: flowSchemaProperties.value[f],
             definitions: definitions.value,
-            label: f.label ?? t(`no_code.fields.general.${f.root}`),
-            fieldKey: f.root,
+            label: mainLabels[f] ?? t(`no_code.fields.general.${f}`),
+            fieldKey: f,
             task: props.metadata,
-            ...f,
+            root: f,
         }));
     });
 

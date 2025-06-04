@@ -51,7 +51,25 @@
                     </template>
                 </TaskWrapper>
             </el-form>
-            <el-skeleton v-else :rows="6" />
+            <template v-else>
+                <el-skeleton
+                    animated
+                    :rows="4"
+                    :throttle="{leading: 500, initVal: true}"
+                />
+                <hr class="my-4">
+                <el-skeleton
+                    animated
+                    :rows="6"
+                    :throttle="{leading: 500, initVal: true}"
+                />
+                <hr class="my-4">
+                <el-skeleton
+                    animated
+                    :rows="5"
+                    :throttle="{leading: 500, initVal: true}"
+                />
+            </template>
         </template>
 
         <Task

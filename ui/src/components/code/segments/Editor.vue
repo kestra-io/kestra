@@ -17,7 +17,7 @@
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
-                            @update:model-value="emits('updateMetadata', v.root, $event)"
+                            @update:model-value="updateMetadata(v.root, $event)"
                         />
                     </template>
                 </TaskWrapper>
@@ -27,7 +27,7 @@
                     :label="t('no_code.fields.general.inputs')"
                     :model-value="metadata.inputs"
                     :required="flowSchema.required?.includes('inputs')"
-                    @update:model-value="emits('updateMetadata', 'inputs', $event)"
+                    @update:model-value="updateMetadata('inputs', $event)"
                 />
 
                 <hr class="my-4">
@@ -46,7 +46,7 @@
                     <template #tasks>
                         <TaskObjectField
                             v-bind="v"
-                            @update:model-value="emits('updateMetadata', v.root, $event)"
+                            @update:model-value="updateMetadata(v.root, $event)"
                         />
                     </template>
                 </TaskWrapper>
@@ -126,6 +126,11 @@
     function shouldMerge(schema: any): boolean {
         const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
         return !complexObject
+    }
+
+    function updateMetadata(key: string, val: any) {
+        const realValue = val === null || val === undefined || (typeof val === "object" && Object.keys(val).length === 0) ? undefined : val; // Handle null values
+        emits("updateMetadata", key, realValue);
     }
 
     document.addEventListener("keydown", saveEvent);

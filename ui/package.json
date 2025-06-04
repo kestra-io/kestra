@@ -87,7 +87,7 @@
     "@storybook/experimental-addon-test": "^8.6.14",
     "@storybook/test": "^8.6.14",
     "@storybook/test-runner": "^0.22.0",
-    "@storybook/vue3": "^8.6.14",
+    "@storybook/vue3": "^9.0.4",
     "@storybook/vue3-vite": "^8.6.14",
     "@types/humanize-duration": "^3.27.4",
     "@types/js-yaml": "^4.0.9",

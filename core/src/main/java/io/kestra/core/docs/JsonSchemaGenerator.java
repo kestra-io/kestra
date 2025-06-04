@@ -666,6 +666,7 @@ public class JsonSchemaGenerator {
                 .flatMap(registeredPlugin -> registeredPlugin.getAdditionalPlugins().stream())
                 // for additional plugins, we have one subtype by type of additional plugins (for ex: embedding store for Langchain4J), so we need to filter on the correct subtype
                 .filter(cls -> declaredType.getErasedType().isAssignableFrom(cls))
+                .filter(cls -> cls != declaredType.getErasedType())
                 .filter(Predicate.not(io.kestra.core.models.Plugin::isInternal))
                 .map(typeContext::resolve)
                 .toList();

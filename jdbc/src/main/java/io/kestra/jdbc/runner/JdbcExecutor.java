@@ -1160,6 +1160,9 @@ public class JdbcExecutor implements ExecutorInterface, Service {
             Executor result = executionRepository.lock(executionDelay.getExecutionId(), pair -> {
                 Executor executor = new Executor(pair.getLeft(), null);
 
+                if (pair.getLeft().getState() != null && pair.getLeft().getState().isTerminated()){
+                    return Pair.of(executor, pair.getRight());
+                }
                 metricRegistry
                     .counter(MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_EXECUTION_DELAY_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(executor.getExecution()))
                     .increment();

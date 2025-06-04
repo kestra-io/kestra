@@ -163,7 +163,7 @@
             return props.theme;
         }
 
-        return hashCode(JSON.stringify(props.theme));
+        return hashCode(JSON.stringify(props.theme)).toString();
     });
 
     if (typeof props.theme === "object") {

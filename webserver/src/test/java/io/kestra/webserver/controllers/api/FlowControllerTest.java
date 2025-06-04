@@ -194,11 +194,11 @@ class FlowControllerTest {
     @SuppressWarnings("unchecked")
     @Test
     void searchFlowsByNamespacePrefix() {
-        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[namespace][STARTS_WITH_NAMESPACE_PREFIX]=io.kestra.tests2"), Argument.of(PagedResults.class, Flow.class))
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[namespace][NAMESPACE_PREFIX]=io.kestra.tests2"), Argument.of(PagedResults.class, Flow.class))
             .getTotal())
             .isEqualTo(1L);
 
-        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[namespace][STARTS_WITH_NAMESPACE_PREFIX]=io.kestra.tests"), Argument.of(PagedResults.class, Flow.class))
+        assertThat(client.toBlocking().retrieve(HttpRequest.GET("/api/v1/main/flows/search?filters[namespace][NAMESPACE_PREFIX]=io.kestra.tests"), Argument.of(PagedResults.class, Flow.class))
             .getTotal())
             .isEqualTo(Helpers.FLOWS_COUNT - 1);
     }

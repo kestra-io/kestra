@@ -13,7 +13,7 @@ export enum Comparators {
     ENDS_WITH = "$=",
     CONTAINS = "*=",
     REGEX = "~=",
-    STARTS_WITH_NAMESPACE_PREFIX = "^.=",
+    NAMESPACE_PREFIX = "^.=",
 }
 
 export function keyOfComparator(comparator: Comparators): keyof typeof Comparators {

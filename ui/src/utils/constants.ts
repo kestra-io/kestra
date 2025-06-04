@@ -33,7 +33,8 @@ export const storageKeys = {
     IMPERSONATE: "impersonate",
     EDITOR_VIEW_TYPE: "editorViewType",
     DASHBORD_SELECTED: "dashboardSelected",
-    AUTO_REFRESH_INTERVAL: "autoRefreshInterval"
+    AUTO_REFRESH_INTERVAL: "autoRefreshInterval",
+    MAINTENANCE_MODE: "maintenanceMode",
 }
 
 export const executeFlowBehaviours = {

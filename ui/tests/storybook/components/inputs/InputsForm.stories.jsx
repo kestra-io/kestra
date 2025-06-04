@@ -1,5 +1,5 @@
 import {defineComponent, ref} from "vue";
-import {expect, userEvent, waitFor, within} from "@storybook/test";
+import {expect, userEvent, waitFor, within} from "storybook/test";
 import InputsForm from "../../../../src/components/inputs/InputsForm.vue";
 
 const meta = {
@@ -26,7 +26,7 @@ const Sut = defineComponent((props) => {
 });
 
 /**
- * @type {import("@storybook/vue3").StoryObj<typeof InputsForm>}
+ * @type {import("@storybook/vue3-vite").StoryObj<typeof InputsForm>}
  */
 export const InputTypes = {
     async play({canvasElement}) {

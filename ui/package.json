@@ -81,14 +81,11 @@
     "@eslint/js": "^9.27.0",
     "@rushstack/eslint-patch": "^1.11.0",
     "@shikijs/markdown-it": "^3.4.2",
-    "@storybook/addon-essentials": "^8.6.14",
-    "@storybook/addon-themes": "^8.6.14",
-    "@storybook/blocks": "^8.6.14",
-    "@storybook/experimental-addon-test": "^8.6.14",
-    "@storybook/test": "^8.6.14",
+    "@storybook/addon-docs": "^9.0.4",
+    "@storybook/addon-themes": "^9.0.4",
+    "@storybook/addon-vitest": "^9.0.4",
     "@storybook/test-runner": "^0.22.0",
-    "@storybook/vue3": "^8.6.14",
-    "@storybook/vue3-vite": "^8.6.14",
+    "@storybook/vue3-vite": "^9.0.4",
     "@types/humanize-duration": "^3.27.4",
     "@types/js-yaml": "^4.0.9",
     "@types/path-browserify": "^1.0.3",
@@ -104,7 +101,7 @@
     "cross-env": "^7.0.3",
     "decompress": "^4.2.1",
     "eslint": "^9.27.0",
-    "eslint-plugin-storybook": "^0.12.0",
+    "eslint-plugin-storybook": "^9.0.4",
     "eslint-plugin-vue": "^9.33.0",
     "globals": "^16.1.0",
     "husky": "^9.1.7",
@@ -117,7 +114,7 @@
     "prettier": "^3.5.3",
     "rollup-plugin-copy": "^3.5.0",
     "sass": "^1.89.0",
-    "storybook": "^8.6.14",
+    "storybook": "^9.0.4",
     "storybook-vue3-router": "^5.0.0",
     "typescript": "^5.8.3",
     "typescript-eslint": "^8.32.1",
@@ -141,7 +138,8 @@
     },
     "el-table-infinite-scroll": {
       "vue": "$vue"
-    }
+    },
+    "storybook": "$storybook"
   },
   "lint-staged": {
     "**/*.{js,mjs,cjs,ts,vue}": "eslint --fix"

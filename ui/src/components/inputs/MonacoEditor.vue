@@ -293,7 +293,7 @@
             node.querySelector(`.${KESTRA_ICON_WRAPPER_CLASS}`)?.remove();
 
             if (completionValue.includes(".") && !completionValue.includes("{")) {
-                if (store.state.plugin?.icons && store.state.plugin.icons[completionValue] !== undefined) {
+                if (store.state.plugin?.icons?.[completionValue] !== undefined) {
                     replaceRowIcon(vsCodeIcon, h(TaskIcon, {
                         cls: completionValue,
                         "only-icon": true,

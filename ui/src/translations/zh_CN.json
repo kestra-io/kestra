@@ -372,6 +372,7 @@
       "comment_uncomment": "注释/取消注释",
       "decrease_fontsize": "减少字体大小",
       "duplicate_cursor": "复制光标",
+      "execute_flow": "执行 flow",
       "fold_unfold": "折叠/展开代码",
       "increase_fontsize": "增加字体大小",
       "label": "键盘快捷键",

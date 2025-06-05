@@ -372,6 +372,7 @@
       "comment_uncomment": "Commenter/Décommenter",
       "decrease_fontsize": "Diminuer la taille de la police",
       "duplicate_cursor": "Dupliquer le curseur",
+      "execute_flow": "Exécuter le flow",
       "fold_unfold": "Plier/Déplier le code",
       "increase_fontsize": "Augmenter la taille de la police",
       "label": "Raccourcis clavier",

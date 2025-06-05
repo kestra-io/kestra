@@ -313,7 +313,6 @@
     },
     "blueprints": {
       "community": "Community",
-      "custom": "Custom blueprints",
       "create": "Create a blueprint",
       "edit": "Edit a blueprint",
       "title": "Blueprints",
@@ -325,6 +324,7 @@
         },
         "alt": "Blueprints Icon"
       },
+      "custom": "Custom Blueprints",
       "flows": "Flow Blueprints",
       "apps": "App Blueprints",
       "dashboards": "Dashboard Blueprints"

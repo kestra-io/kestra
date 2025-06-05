@@ -31,7 +31,6 @@
     import {computed} from "vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import Monitor from "vue-material-design-icons/Monitor.vue";
-    // @ts-expect-error - Vue component without types
     import Slack from "./components/SlackLogo.vue";
     import PlayBox from "vue-material-design-icons/PlayBoxMultiple.vue";
     import Markdown from "../layout/Markdown.vue";

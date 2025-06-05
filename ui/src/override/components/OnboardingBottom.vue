@@ -15,7 +15,6 @@
     import {computed, getCurrentInstance} from "vue";
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
-    // @ts-expect-error - Vue component without declaration file
     import OnboardingCard from "../../components/onboarding/OnboardingCard.vue";
 
     const {t} = useI18n();

@@ -55,59 +55,49 @@
 </template>
 
 
-<script setup>
+<script setup lang="ts">
+    import {computed, getCurrentInstance} from "vue";
+    import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
     import Plus from "vue-material-design-icons/Plus.vue";
     import Play from "vue-material-design-icons/Play.vue";
-</script>
-
-<script>
-    import {mapGetters, mapState} from "vuex";
-    import OnboardingBottom from "./OnboardingBottom.vue";
+    import OnboardingBottom from "override/components/OnboardingBottom.vue";
     import kestraWelcome from "../../assets/onboarding/kestra_welcome.svg";
+    // @ts-expect-error - Component not typed
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import RouteContext from "../../mixins/routeContext";
-    import RestoreUrl from "../../mixins/restoreUrl";
+    import useRouteContext from "../../mixins/useRouteContext";
+    import useRestoreUrl from "../../composables/useRestoreUrl";
     import permission from "../../models/permission";
     import action from "../../models/action";
 
+    const {topbar = true} = defineProps<{topbar?: boolean}>();
 
-    export default {
-        name: "CreateFlow",
-        mixins: [RouteContext, RestoreUrl],
-        components: {
-            OnboardingBottom,
-            TopNavBar
-        },
-        props: {
-            topbar: {
-                type: Boolean,
-                default: true
-            }
-        },
-        computed: {
-            ...mapGetters("core", ["guidedProperties"]),
-            ...mapState("auth", ["user"]),
-            logo() {
-                // get theme
-                return (localStorage.getItem("theme") || "light") === "light" ? kestraWelcome : kestraWelcome;
-            },
-            routeInfo() {
-                return {
-                    title: this.$t("homeDashboard.welcome")
-                };
-            },
-            canCreate() {
-                return this.user && this.user.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
-            }
-        },
-        methods: {
-            startTour() {
-                localStorage.setItem("tourDoneOrSkip", undefined);
-                this.$store.commit("core/setGuidedProperties", {tourStarted: true});
-                this.$tours["guidedTour"]?.start();
-            },
-        }
-    }
+    const store = useStore();
+    const {t} = useI18n();
+    const instance = getCurrentInstance();
+
+    const user = computed(() => store.state.auth.user);
+
+    const logo = computed(() => {
+        return (localStorage.getItem("theme") || "light") === "light" ? kestraWelcome : kestraWelcome;
+    });
+
+    const routeInfo = computed(() => ({
+        title: t("homeDashboard.welcome")
+    }));
+
+    const canCreate = computed(() => {
+        return user.value && user.value.hasAnyActionOnAnyNamespace(permission.FLOW, action.CREATE);
+    });
+
+    useRouteContext(routeInfo);
+    useRestoreUrl();
+
+    const startTour = () => {
+        localStorage.setItem("tourDoneOrSkip", "undefined");
+        store.commit("core/setGuidedProperties", {tourStarted: true});
+        (instance?.proxy as any)?.$tours["guidedTour"]?.start();
+    };
 </script>
 
 <style scoped lang="scss">

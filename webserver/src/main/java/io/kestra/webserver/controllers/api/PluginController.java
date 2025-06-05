@@ -125,7 +125,8 @@ public class PluginController {
                     plugin.getTaskRunners().stream(),
                     plugin.getLogExporters().stream(),
                     plugin.getApps().stream(),
-                    plugin.getAppBlocks().stream()
+                    plugin.getAppBlocks().stream(),
+                    plugin.getAdditionalPlugins().stream()
                 )
                 .flatMap(i -> i)
                 .map(e -> new AbstractMap.SimpleEntry<>(

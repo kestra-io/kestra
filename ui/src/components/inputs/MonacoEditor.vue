@@ -19,18 +19,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {
-        computed,
-        getCurrentInstance,
-        h,
-        inject,
-        onBeforeUnmount,
-        onMounted,
-        ref,
-        render,
-        VNode,
-        watch
-    } from "vue";
+    import {computed, getCurrentInstance, h, inject, onBeforeUnmount, onMounted, ref, render, VNode, watch} from "vue";
     import {useStore} from "vuex";
 
     import "monaco-editor/esm/vs/editor/editor.all.js";
@@ -55,8 +44,9 @@
     import {ElDatePicker} from "element-plus";
     import {Moment} from "moment";
     import PlaceholderContentWidget from "../../composables/monaco/PlaceholderContentWidget.ts";
-    import ICodeEditor = editor.ICodeEditor;
     import {hashCode} from "../../utils/global.ts";
+    import ICodeEditor = editor.ICodeEditor;
+    import debounce from "lodash/debounce";
 
     const store = useStore();
     const currentInstance = getCurrentInstance()!;
@@ -657,12 +647,12 @@
                     }
                 });
 
-                localEditor.onDidChangeCursorPosition(() => {
+                localEditor.onDidChangeCursorPosition(debounce(() => {
                     if (suggestController.model.state !== 0) {
                         suggestController.cancelSuggestWidget();
                         localEditor!.trigger("refreshSuggestionsOnCursorMove", "editor.action.triggerSuggest", {});
                     }
-                })
+                }, 300))
             }
 
             if (!props.input) {

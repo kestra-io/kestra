@@ -102,7 +102,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                 includeLF: true,
                 tokenizer: {
                     root: [
-                        [/[\w."]+/, {
+                        [/[\w.]*(?:"[^"]*")?[\w.]*/, {
                             cases: {
                                 ...keysTokenizerCases,
                                 "@default": {token: "@rematch", next: "@rawText"}

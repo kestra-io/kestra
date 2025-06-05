@@ -372,6 +372,7 @@
       "comment_uncomment": "コメント/コメント解除",
       "decrease_fontsize": "フォントサイズを縮小",
       "duplicate_cursor": "カーソルを複製",
+      "execute_flow": "フローを実行",
       "fold_unfold": "コードを折りたたむ/展開する",
       "increase_fontsize": "フォントサイズを大きくする",
       "label": "キーボードショートカット",

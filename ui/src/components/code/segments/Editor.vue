@@ -154,7 +154,7 @@
             },
             retry: {
                 component: MetadataRetry,
-                value: props.metadata.retry,
+                value: props.metadata.retry || {},
                 label: t("no_code.fields.general.retry")
             },
             labels: {

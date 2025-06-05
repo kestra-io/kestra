@@ -57,19 +57,49 @@ export class YamlLanguageConfigurator extends AbstractLanguageConfigurator {
             (defaultCompletion.suggestions as {
                 label: string,
                 filterText: string,
-                insertText: string
+                insertText: string,
+                sortText?: string
             }[]).forEach(suggestion => {
                 if (suggestion.label.endsWith("...") && suggestion.insertText.includes(suggestion.label.substring(0, suggestion.label.length - 3))) {
                     suggestion.label = suggestion.insertText;
                 }
 
-                if (suggestion.label.includes(".")) {
-                    const dotSplit = suggestion.label.split(/\.(?=\w)/);
-                    const taskName = dotSplit.pop();
-                    suggestion.filterText = [taskName, ...dotSplit, taskName].join(".");
-                }
-            });
+                const wordAtPosition = model.getWordAtPosition(position)?.word?.toLowerCase();
+                if (wordAtPosition !== undefined) {
+                    const sortBumperText = "a1".repeat(10);
+                    if (suggestion.label.includes(".")) {
+                        const dotSplit = suggestion.label.toLowerCase().split(/\.(?=\w)/);
+                        if (dotSplit[dotSplit.length - 1].startsWith(wordAtPosition)) {
+                            suggestion.sortText = sortBumperText.repeat(5) + suggestion.label;
+                        } else if (dotSplit[dotSplit.length - 1].includes(wordAtPosition)) {
+                            suggestion.sortText = sortBumperText.repeat(4) + suggestion.label;
+                        } else {
+                            suggestion.sortText = dotSplit.splice(dotSplit.length - 1, 1).reduceRight((prefix, part) => {
+                                let sortBumperPrefixForPart;
+                                if (part.startsWith(wordAtPosition)) {
+                                    sortBumperPrefixForPart = sortBumperText.repeat(3)
+                                } else if (part.includes(wordAtPosition)) {
+                                    sortBumperPrefixForPart = sortBumperText.repeat(2);
+                                }
 
+                                if (sortBumperPrefixForPart === undefined || prefix.length >= sortBumperPrefixForPart.length) {
+                                    return prefix;
+                                }
+
+                                return sortBumperPrefixForPart;
+                            }, "") + suggestion.label;
+                        }
+
+                        suggestion.filterText = (suggestion.label.includes(wordAtPosition) ? wordAtPosition + " " : "") + suggestion.label.toLowerCase();
+                    }
+
+                    if (suggestion.sortText === undefined && suggestion.label.includes(wordAtPosition)) {
+                        suggestion.sortText = sortBumperText + suggestion.label;
+                    }
+                }
+
+                suggestion.sortText = suggestion.sortText?.toLowerCase();
+            });
 
             return defaultCompletion;
         };

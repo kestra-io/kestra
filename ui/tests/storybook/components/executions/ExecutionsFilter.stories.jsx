@@ -195,6 +195,7 @@ FilterExecutions.play = async ({canvasElement, step}) => {
 // Helpers and constants
 const spaceBarKey = "{ }";
 const triggerRefreshButton = "trigger-refresh-button";
+const monacoFilter = "monaco-filter";
 
 function expectColorRedDominant(element) {
     return function expectColorRedDominantCheck(){
@@ -208,7 +209,7 @@ function expectColorRedDominant(element) {
 }
 
 function getMonacoFilter(canvas) {
-    return canvas.getByTestId("monaco-filter");
+    return canvas.getByTestId(monacoFilter);
 }
 
 function getMonacoFilterInput(canvas) {

@@ -86,7 +86,7 @@
 
                 <template #table>
                     <select-table
-                        v-if="flows.length"
+                        v-if="flows?.length"
                         ref="selectTable"
                         :data="flows"
                         :default-sort="{prop: 'id', order: 'ascending'}"

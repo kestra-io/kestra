@@ -16,9 +16,11 @@
                 <chevron-left v-else />
             </el-button>
             <div class="logo">
-                <router-link :to="{name: 'home'}">
-                    <span class="img" />
-                </router-link>
+                <slot name="img">
+                    <router-link :to="{name: 'home'}">
+                        <span class="img" />
+                    </router-link>
+                </slot>
             </div>
             <Environment />
         </template>

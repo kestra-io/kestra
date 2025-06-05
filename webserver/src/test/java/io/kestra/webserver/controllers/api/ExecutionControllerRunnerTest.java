@@ -23,6 +23,7 @@ import io.kestra.core.runners.FlowInputOutput;
 import io.kestra.core.runners.InputsTest;
 import io.kestra.core.runners.RunnerUtils;
 import io.kestra.core.serializers.JacksonMapper;
+import io.kestra.core.tenant.TenantService;
 import io.kestra.core.utils.Await;
 import io.kestra.core.utils.IdUtils;
 import io.kestra.core.utils.TestsUtils;
@@ -1579,9 +1580,13 @@ class ExecutionControllerRunnerTest {
 
 
     private Execution triggerExecutionExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait) {
+        return triggerExecutionExecution(namespace, flowId, requestBody, wait, null);
+    }
+
+    private Execution triggerExecutionExecution(String namespace, String flowId, MultipartBody requestBody, Boolean wait, String breakpoint) {
         return client.toBlocking().retrieve(
             HttpRequest
-                .POST("/api/v1/main/executions/" + namespace + "/" + flowId + "?labels=a:label-1&labels=b:label-2&labels=url:" + ENCODED_URL_LABEL_VALUE + (wait ? "&wait=true" : ""), requestBody)
+                .POST("/api/v1/main/executions/" + namespace + "/" + flowId + "?labels=a:label-1&labels=b:label-2&labels=url:" + ENCODED_URL_LABEL_VALUE + (wait ? "&wait=true" : "") + (breakpoint != null ? "&breakpoints=" + breakpoint : ""), requestBody)
                 .contentType(MediaType.MULTIPART_FORM_DATA_TYPE),
             Execution.class
         );
@@ -1686,6 +1691,39 @@ class ExecutionControllerRunnerTest {
 
         assertThat(e.getStatus().getCode()).isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY.getCode());
         assertThat(e.getMessage()).contains("System labels can only be set by Kestra itself");
+    }
+
+    @Test
+    @LoadFlows({"flows/valids/minimal.yaml"})
+    void shouldSuspendAtBreakpointThenResume() throws QueueException, TimeoutException, InterruptedException {
+        Execution execution = triggerExecutionExecution(TESTS_FLOW_NS, "minimal", null, false, "date");
+        assertThat(execution).isNotNull();
+        assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.CREATED);
+
+        // check that the execution is suspended
+        Thread.sleep(250);
+        Execution suspended = client.toBlocking().retrieve(
+            GET("/api/v1/main/executions/" + execution.getId()),
+            Execution.class);
+        assertThat(suspended.getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
+        assertThat(suspended.getTaskRunList()).hasSize(1);
+        assertThat(suspended.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.BREAKPOINT);
+
+        // resume the suspended execution
+        HttpResponse<Void> resume = client.toBlocking().exchange(
+            HttpRequest.POST("/api/v1/main/executions/" + suspended.getId() + "/resume-from-breakpoint", null),
+            Void.class
+        );
+        assertThat(resume.getStatus().getCode()).isEqualTo(HttpStatus.OK.getCode());
+
+        // wait for the exec to be terminated
+        Execution terminated = runnerUtils.awaitExecution(
+            it -> execution.getId().equals(it.getId()) && it.getState().isTerminated(),
+            () -> {},
+            Duration.ofSeconds(10));
+        assertThat(terminated.getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
+        assertThat(terminated.getTaskRunList()).hasSize(1);
+        assertThat(terminated.getTaskRunList().getFirst().getState().getCurrent()).isEqualTo(State.Type.SUCCESS);
     }
 
     private List<Label> getExecutionNonSystemLabels(List<Label> labels) {

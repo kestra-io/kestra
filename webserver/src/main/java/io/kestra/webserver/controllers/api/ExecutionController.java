@@ -1,6 +1,7 @@
 package io.kestra.webserver.controllers.api;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
@@ -100,12 +101,9 @@ import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static io.kestra.core.models.Label.CORRELATION_ID;
@@ -603,7 +601,7 @@ public class ExecutionController {
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision
     ) throws IOException {
-        return this.createExecution(namespace, id, inputs, labels, wait, revision, Optional.empty());
+        return this.createExecution(namespace, id, inputs, labels, wait, revision, Optional.empty(), Optional.empty(), Optional.empty());
     }
 
     @ExecuteOn(TaskExecutors.IO)
@@ -638,11 +636,17 @@ public class ExecutionController {
         @Parameter(description = "The labels as a list of 'key:value'") @Nullable @QueryValue @Format("MULTI") List<String> labels,
         @Parameter(description = "If the server will wait the end of the execution") @QueryValue(defaultValue = "false") Boolean wait,
         @Parameter(description = "The flow revision or latest if null") @QueryValue Optional<Integer> revision,
-        @Parameter(description = "Schedule the flow on a specific date") @QueryValue Optional<ZonedDateTime> scheduleDate
-    ) throws IOException {
+        @Parameter(description = "Schedule the flow on a specific date") @QueryValue Optional<ZonedDateTime> scheduleDate,
+        @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints,
+        @Parameter(description = "Specific execution kind") @QueryValue Optional<ExecutionKind> kind
+    ) {
         Flow flow = flowService.getFlowIfExecutableOrThrow(tenantService.resolveTenant(), namespace, id, revision);
         List<Label> parsedLabels = parseLabels(labels);
-        Execution current = Execution.newExecution(flow, null, parsedLabels, scheduleDate);
+        final Execution current = Execution.newExecution(flow, null, parsedLabels, scheduleDate).toBuilder()
+            .kind(kind.orElse(null))
+            .breakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null))
+            .build();
+
         return flowInputOutput.readExecutionInputs(flow, current, inputs)
             .flatMap(executionInputs -> {
                 Execution executionWithInputs = current.withInputs(executionInputs);
@@ -701,8 +705,8 @@ public class ExecutionController {
         private final URI url;
 
         // This is not nice, but we cannot use @AllArgsConstructor as it would open a bunch of necessary changes on the Execution class.
-        ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata, Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, URI url) {
-            super(tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate, traceParent, fixtures, kind);
+        ExecutionResponse(String tenantId, String id, String namespace, String flowId, Integer flowRevision, List<TaskRun> taskRunList, Map<String, Object> inputs, Map<String, Object> outputs, List<Label> labels, Map<String, Object> variables, State state, String parentId, String originalId, ExecutionTrigger trigger, boolean deleted, ExecutionMetadata metadata, Instant scheduleDate, String traceParent, List<TaskFixture> fixtures, ExecutionKind kind, List<Breakpoint> breakpoints, URI url) {
+            super(tenantId, id, namespace, flowId, flowRevision, taskRunList, inputs, outputs, labels, variables, state, parentId, originalId, trigger, deleted, metadata, scheduleDate, traceParent, fixtures,kind, breakpoints);
 
             this.url = url;
         }
@@ -729,6 +733,7 @@ public class ExecutionController {
                 execution.getTraceParent(),
                 execution.getFixtures(),
                 execution.getKind(),
+                execution.getBreakpoints(),
                 url
             );
         }
@@ -954,7 +959,8 @@ public class ExecutionController {
     public Execution replayExecution(
         @Parameter(description = "the original execution id to clone") @PathVariable String executionId,
         @Parameter(description = "The taskrun id") @Nullable @QueryValue String taskRunId,
-        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision
+        @Parameter(description = "The flow revision to use for new execution") @Nullable @QueryValue Integer revision,
+        @Parameter(description = "Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints
     ) throws Exception {
         Optional<Execution> execution = executionRepository.findById(tenantService.resolveTenant(), executionId);
         if (execution.isEmpty()) {
@@ -963,11 +969,12 @@ public class ExecutionController {
 
         this.controlRevision(execution.get(), revision);
 
-        return innerReplay(execution.get(), taskRunId, revision);
+        return innerReplay(execution.get(), taskRunId, revision, breakpoints);
     }
 
-    private Execution innerReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision) throws Exception {
-        Execution replay = executionService.replay(execution, taskRunId, revision);
+    private Execution innerReplay(Execution execution, @Nullable String taskRunId, @Nullable Integer revision, Optional<String> breakpoints) throws Exception {
+        Execution replay = executionService.replay(execution, taskRunId, revision)
+            .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
         executionQueue.emit(replay);
         eventPublisher.publishEvent(new CrudEvent<>(replay, execution, CrudEventType.CREATE));
 
@@ -1307,6 +1314,39 @@ public class ExecutionController {
     }
 
     @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "/{executionId}/resume-from-breakpoint")
+    @Operation(tags = {"Executions"}, summary = "Resume an execution from a breakpoint (in the 'BREAKPOINT' state).")
+    @ApiResponse(responseCode = "204", description = "On success")
+    @ApiResponse(responseCode = "409", description = "If the executions is not in the 'BREAKPOINT' state or has no breakpoint")
+    public void resumeExecutionFromBreakpoint(
+        @Parameter(description = "The execution id") @PathVariable String executionId,
+        @Parameter(description = "\"Set a list of breakpoints at specific tasks 'id.value', separated by a coma.") @QueryValue Optional<String> breakpoints
+    ) throws Exception {
+        Execution execution = executionService.getExecution(tenantService.resolveTenant(), executionId, true);
+        if (!execution.getState().isBreakpoint()) {
+            throw new IllegalStateException("Execution is not suspended");
+        }
+        if (ListUtils.isEmpty(execution.getBreakpoints())) {
+            throw new IllegalStateException("Execution has no breakpoint");
+        }
+
+        // continue the execution: SUSPENDED taskrun will go back to CREATED, so the executor will send them to the WORKER
+        List<TaskRun> newTaskRuns = execution.getTaskRunList().stream().map(
+            taskRun -> {
+                if (taskRun.getState().isBreakpoint()) {
+                    return taskRun.withState(State.Type.CREATED);
+                }
+                return taskRun;
+            }
+        ).toList();
+        Execution newExecution = execution.withState(State.Type.RUNNING)
+            .withTaskRunList(newTaskRuns)
+            .withBreakpoints(breakpoints.map(s -> Arrays.stream(s.split(",")).map(Breakpoint::of).toList()).orElse(null));
+
+        executionQueue.emit(newExecution);
+    }
+
+    @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "/resume/by-ids")
     @Operation(tags = {"Executions"}, summary = "Resume a list of paused executions")
     @ApiResponse(responseCode = "200", description = "On success", content = {@Content(schema = @Schema(implementation = BulkResponse.class))})
@@ -1642,9 +1682,9 @@ public class ExecutionController {
         for (Execution execution : executions) {
             if (latestRevision) {
                 Flow flow = flowRepository.findById(execution.getTenantId(), execution.getNamespace(), execution.getFlowId(), Optional.empty()).orElseThrow();
-                innerReplay(execution, null, flow.getRevision());
+                innerReplay(execution, null, flow.getRevision(), Optional.empty());
             } else {
-                innerReplay(execution, null, null);
+                innerReplay(execution, null, null, Optional.empty());
             }
         }
         return HttpResponse.ok(BulkResponse.builder().count(executions.size()).build());

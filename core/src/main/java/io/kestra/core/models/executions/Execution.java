@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Streams;
+import io.kestra.core.debug.Breakpoint;
 import io.kestra.core.exceptions.InternalException;
 import io.kestra.core.models.DeletedInterface;
 import io.kestra.core.models.Label;
@@ -120,6 +121,9 @@ public class Execution implements DeletedInterface, TenantInterface {
     @Nullable
     ExecutionKind kind;
 
+    @Nullable
+    List<Breakpoint> breakpoints;
+
     /**
      * Factory method for constructing a new {@link Execution} object for the given {@link Flow}.
      *
@@ -221,7 +225,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.scheduleDate,
             this.traceParent,
             this.fixtures,
-            this.kind
+            this.kind,
+            this.breakpoints
         );
     }
 
@@ -247,7 +252,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.scheduleDate,
             this.traceParent,
             this.fixtures,
-            this.kind
+            this.kind,
+            this.breakpoints
         );
     }
 
@@ -286,7 +292,34 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.scheduleDate,
             this.traceParent,
             this.fixtures,
-            this.kind
+            this.kind,
+            this.breakpoints
+        );
+    }
+
+    public Execution withBreakpoints(List<Breakpoint> newBreakpoints) {
+        return new Execution(
+            this.tenantId,
+            this.id,
+            this.namespace,
+            this.flowId,
+            this.flowRevision,
+            this.taskRunList,
+            this.inputs,
+            this.outputs,
+            this.labels,
+            this.variables,
+            this.state,
+            this.parentId,
+            this.originalId,
+            this.trigger,
+            this.deleted,
+            this.metadata,
+            this.scheduleDate,
+            this.traceParent,
+            this.fixtures,
+            this.kind,
+            newBreakpoints
         );
     }
 
@@ -312,7 +345,8 @@ public class Execution implements DeletedInterface, TenantInterface {
             this.scheduleDate,
             this.traceParent,
             this.fixtures,
-            this.kind
+            this.kind,
+            this.breakpoints
         );
     }
 

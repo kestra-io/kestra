@@ -4,7 +4,7 @@
             <component :is="autoRefresh ? 'auto-renew' : 'auto-renew-off'" class="auto-refresh-icon" />
         </kicon>
     </el-button>
-    <el-button @click="triggerRefresh" data-test-id="trigger-refresh-button">
+    <el-button @click="triggerRefresh" data-test-id="trigger-refresh-button" data-testid="trigger-refresh-button">
         <kicon :tooltip="$t('trigger refresh')" placement="bottom">
             <refresh />
         </kicon>

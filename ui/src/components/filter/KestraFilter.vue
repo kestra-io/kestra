@@ -15,6 +15,7 @@
                 @editor-did-mount="editorDidMount"
                 suggestions-on-focus
                 :placeholder="placeholder ?? t('filters.label')"
+                data-testid="monaco-filter"
             />
             <el-button-group
                 class="d-inline-flex"

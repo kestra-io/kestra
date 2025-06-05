@@ -134,6 +134,16 @@
     }, {immediate: true});
 
     function load() {
+        if (store.state.plugin.schemaType[selectedTaskType.value ?? ""]) {
+            plugin.value = {
+                schema: {
+                    properties: store.state.plugin.schemaType[selectedTaskType.value ?? ""],
+                    definitions: store.state.plugin.schemaType,
+                }
+            };
+            return;
+        }
+
         isLoading.value = true;
         store
             .dispatch("plugin/load", {

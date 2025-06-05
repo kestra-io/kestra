@@ -73,7 +73,7 @@
         </template>
 
         <Task
-            v-else
+            v-else-if="schema"
             @update-task="onTaskUpdate"
         />
     </div>
@@ -150,20 +150,25 @@
         emits("updateTask", yaml)
     }
 
-    const schema = ref<{
+    const schema = computed<{
         definitions?: any,
         $ref?: string,
-    }>({})
+    }>(() => {
+        return store.state.plugin.schemaType.flow ?? {};
+    });
 
     onMounted(async () => {
-        await store.dispatch("plugin/loadSchemaType").then((response) => {
-            schema.value = response;
-        })
+        if(schema.value?.$ref) {
+            return; // Schema already loaded
+        }
+
+        await store.dispatch("plugin/loadSchemaType")
     });
 
     const definitions = computed(() => {
         return schema.value?.definitions ?? {};
     });
+
     function removeRefPrefix(ref?: string): string {
         return ref?.replace(/^#\/definitions\//, "") ?? "";
     }

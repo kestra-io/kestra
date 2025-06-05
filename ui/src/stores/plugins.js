@@ -14,7 +14,8 @@ export default {
         pluginsDocumentation: {},
         editorPlugin: undefined,
         inputSchema: undefined,
-        inputsType: undefined
+        inputsType: undefined,
+        schemaType: {},
     },
     actions: {
         list({commit}) {
@@ -139,8 +140,12 @@ export default {
                 return response.data;
             });
         },
-        loadSchemaType(_, options = {type: "flow"}) {
+        loadSchemaType({commit}, options = {type: "flow"}) {
             return this.$http.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
+                commit("setSchemaType", {
+                    type: options.type,
+                    data: response.data
+                });
                 return response.data;
             });
         },
@@ -211,6 +216,9 @@ export default {
         },
         setInputSchema(state, schema) {
             state.inputSchema = schema;
+        },
+        setSchemaType(state, payload) {
+            state.schemaType[payload.type] = payload.data;
         }
     },
     getters: {

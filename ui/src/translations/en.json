@@ -1249,6 +1249,7 @@
       "trigger_autocompletion": "Trigger autocompletion",
       "command_palette": "Show command palette",
       "save_flow": "Save flow",
+      "execute_flow": "Execute flow",
       "move_line": "Move line",
       "duplicate_cursor": "Duplicate cursor",
       "fold_unfold": "Fold/Unfold code",

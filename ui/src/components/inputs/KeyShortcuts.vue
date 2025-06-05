@@ -64,6 +64,10 @@
             description: "editor_shortcuts.save_flow",
         },
         {
+            keys: ["⌘ Cmd/Ctrl", "e"],
+            description: "editor_shortcuts.execute_flow",
+        },
+        {
             keys: ["⌥ Option/Alt", "↑", "↓"],
             description: "editor_shortcuts.move_line",
         },

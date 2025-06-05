@@ -56,7 +56,7 @@ services:
     environment:
       MICRONAUT_CONFIG_FILES: /app/confs/application.yml
     ports:
-      - 8080:8080
+      - "9011:8080"
     links:
       - postgres
     depends_on:

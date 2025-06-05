@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="ks-monaco-editor" ref="editorRef" />
+        <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
         <div ref="datePickerWrapper" v-show="datePickerShown">
             <el-date-picker
                 ref="datePicker"
@@ -15,6 +15,14 @@
                 class="z-3"
             />
         </div>
+        <!-- eslint-disable vue/no-textarea-mustache -->
+        <textarea data-testid="monaco-editor-hidden-synced-textarea" style="height: 0; width: 0; opacity: 0;" type="text" @input="(val) => emit('change', val.target?.value)">
+            {{
+                // this is a copy of the monaco value, we only use it in E2E tests
+                value
+            }}
+        </textarea>
+        <!--eslint-enable-->
     </div>
 </template>
 

@@ -27,6 +27,21 @@ on:
       GOOGLE_SERVICE_ACCOUNT:
         description: "The Google Service Account."
         required: false
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Tags used for filtering tests to include for QA.'
+        required: false
+        type: string
+        default: "oss,ee"
+      backend:
+        description: 'The Kestra backend type to be used for E2E tests.'
+        type: choice
+        required: true
+        default: 'postgres'
+        options:
+          - "postgres"
+          - "kafka"
 jobs:
   check:
     timeout-minutes: 60

@@ -5,6 +5,7 @@ import com.amazon.ion.IonSystem;
 import com.amazon.ion.system.*;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.StreamReadConstraints;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -36,12 +37,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
 
+import static com.fasterxml.jackson.core.StreamReadConstraints.DEFAULT_MAX_STRING_LEN;
+
 public final class JacksonMapper {
     public static final TypeReference<Map<String, Object>> MAP_TYPE_REFERENCE = new TypeReference<>() {};
     public static final TypeReference<List<Object>> LIST_TYPE_REFERENCE = new TypeReference<>() {};
     public static final TypeReference<Object> OBJECT_TYPE_REFERENCE = new TypeReference<>() {};
 
     private JacksonMapper() {}
+
+    static {
+        StreamReadConstraints.overrideDefaultStreamReadConstraints(
+            StreamReadConstraints.builder().maxNameLength(DEFAULT_MAX_STRING_LEN).build()
+        );
+    }
 
     private static final ObjectMapper MAPPER = JacksonMapper.configure(
         new ObjectMapper()

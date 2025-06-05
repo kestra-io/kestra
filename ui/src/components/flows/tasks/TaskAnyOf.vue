@@ -31,6 +31,7 @@
             :properties="Object.fromEntries(filteredProperties)"
             :definitions="definitions"
             @update:model-value="onAnyOfInput"
+            merge
         />
     </el-form>
 </template>
@@ -40,6 +41,52 @@
     import Task from "./Task";
     import {TaskIcon} from "@kestra-io/ui-libs";
     import getTaskComponent from "./getTaskComponent";
+
+    /**
+     * merge allOf schemas if they exist
+     * @param schema
+     */
+    function consolidateAllOfSchemas(schema, definitions) {
+        if(schema?.allOf?.length) {
+            return {
+                ...schema,
+                type: "object",
+                ...schema.allOf.reduce((acc, item) => {
+                    if(item.$ref) {
+                        const refSchema = definitions[item.$ref.split("/").pop()];
+                        if(refSchema) {
+                            return {
+                                required: [
+                                    ...acc.required,
+                                    ...(refSchema.required ?? [])
+                                ],
+                                properties: {
+                                    ...acc.properties,
+                                    ...refSchema.properties,
+                                }
+                            };
+                        }
+                    } else {
+                        return {
+                            required: [
+                                ...acc.required,
+                                ...(item.required ?? [])
+                            ],
+                            properties: {
+                                ...acc.properties,
+                                ...item.properties,
+                            }
+                        };
+                    }
+                    return acc;
+                }, {
+                    properties: {},
+                    required: [],
+                })
+            }
+        }
+        return schema;
+    }
 
     export default {
         components: {
@@ -51,14 +98,11 @@
         data() {
             return {
                 isOpen: false,
-                schemas: [],
                 selectedSchema: undefined,
                 finishedMounting: false,
             };
         },
         created() {
-            this.schemas = this.schema?.anyOf ?? [];
-
             const schema = this.schemaOptions.find((item) =>
                 typeof item.value === this.modelValue?.type ||
                 (typeof this.modelValue === "string" && item.value === "string") ||
@@ -139,12 +183,31 @@
                 });
             },
         },
+
         expose: [
             "resetSelectType",
         ],
 
         computed: {
             ...mapState("plugin", ["icons"]),
+            schemas() {
+                if(!this.schema?.anyOf || !Array.isArray(this.schema.anyOf)) {
+                    return [];
+                }
+                return this.schema.anyOf.map((schema) => {
+
+                    if(schema.allOf && Array.isArray(schema.allOf)) {
+                        if(schema.allOf.length === 2 && schema.allOf[0].$ref && !schema.allOf[1].$ref) {
+                            return {
+                                ...schema.allOf[1],
+                                $ref: schema.allOf[0].$ref,
+                            };
+                        }
+                    }
+
+                    return schema;
+                });
+            },
             constantType() {
                 return this.currentSchema?.properties?.type?.const;
             },
@@ -154,10 +217,8 @@
                 }) : [];
             },
             currentSchema() {
-                return (
-                    this.definitions[this.selectedSchema] ??
-                    this.schemaByType[this.selectedSchema]
-                );
+                const rawSchema = this.definitions[this.selectedSchema] ?? this.schemaByType[this.selectedSchema]
+                return consolidateAllOfSchemas(rawSchema, this.definitions);
             },
             schemaByType() {
                 return this.schemas.reduce((acc, schema) => {
@@ -169,19 +230,23 @@
                 return this.selectedSchema ? getTaskComponent(this.currentSchema) : undefined;
             },
             isSelectingPlugins() {
-                return this.schemaOptions.some((schema) => schema.label.startsWith("io.kestra"));
+                return this.schemaOptions.some((schema) => schema.label.startsWith("io.kestra")) || this.schemas.length > 3;
             },
             schemaOptions() {
+                if (!this.schemas?.length || !this.definitions) {
+                    return [];
+                }
+
                 // find the part of the prefix to schema references that is common to all schemas
                 const schemaRefsArray = this.schemas
-                    .map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
+                    ?.map((schema) => schema.$ref?.split("/").pop() ?? schema.type)
                     .filter((schemaRef) => schemaRef)
                     .map((schemaRef) => this.definitions[schemaRef]?.type?.const ?? schemaRef)
                     .map((schemaRef) => schemaRef.split("."))
 
                 let mismatch = false
                 const commonPart = schemaRefsArray[0]
-                    .filter((schemaRef, index) => {
+                    ?.filter((schemaRef, index) => {
                         if(!mismatch && schemaRefsArray.every((item) => item[index] === schemaRef)){
                             return true;
                         } else {
@@ -197,6 +262,14 @@
                         ? schema.$ref.split("/").pop()
                         : schema.type;
 
+                    if (!schemaRef) {
+                        return {
+                            label: "Unknown Schema",
+                            value: "",
+                            id: "",
+                        };
+                    }
+
                     const cleanSchemaRef = schemaRef.replace(/-\d+$/, "");
 
                     const lastPartOfValue = cleanSchemaRef.slice(
@@ -208,6 +281,8 @@
                         value: schemaRef,
                         id: cleanSchemaRef,
                     };
+                }).filter((schema) => {
+                    return schema.value
                 });
             },
         },

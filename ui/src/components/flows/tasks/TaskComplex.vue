@@ -17,11 +17,24 @@
     import Task from "./Task";
 
     export default {
+        inheritAttrs: false,
         mixins: [Task],
         computed: {
             computedProperties() {
-                const type = this.schema.$ref.split("/").pop();
-                return this.definitions[type]?.properties;
+                if(!this.schema?.allOf && !this.schema?.$ref) {
+                    return this.schema?.properties || {};
+                }
+                const schemas = this.schema.allOf ?? [this.schema];
+                return schemas.reduce((acc, item) => {
+                    if (item.$ref) {
+                        const type = item.$ref.split("/").pop();
+                        return {
+                            ...acc,
+                            ...this.definitions[type]?.properties
+                        };
+                    }
+                    return {...acc, ...item.properties};
+                }, {});
             },
         },
     };

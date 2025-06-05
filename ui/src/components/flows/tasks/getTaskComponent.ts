@@ -24,7 +24,18 @@ function getType(property: any, key?: string, schema?: any): string {
         return "complex";
     }
 
+    if( Object.prototype.hasOwnProperty.call(property, "allOf")) {
+        if (property.allOf.length === 2
+                && property.allOf[0].$ref && !property.allOf[1].properties) {
+            return "complex";
+        }
+    }
+
     if (Object.prototype.hasOwnProperty.call(property, "anyOf")) {
+        if( key === "labels" && property.anyOf.length === 2
+                && property.anyOf[0].type === "array" && property.anyOf[1].type === "object") {
+            return "input-pair";
+        }
         return "any-of";
     }
 

@@ -372,6 +372,7 @@
       "comment_uncomment": "Комментарий/Раскомментировать",
       "decrease_fontsize": "Уменьшить размер шрифта",
       "duplicate_cursor": "Дублировать курсор",
+      "execute_flow": "Запустить flow",
       "fold_unfold": "Свернуть/Развернуть код",
       "increase_fontsize": "Увеличить размер шрифта",
       "label": "Горячие клавиши",

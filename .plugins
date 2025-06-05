@@ -94,6 +94,7 @@
 #plugin-scripts:io.kestra.plugin:plugin-script-shell:LATEST
 #plugin-serdes:io.kestra.plugin:plugin-serdes:LATEST
 #plugin-servicenow:io.kestra.plugin:plugin-servicenow:LATEST
+#plugin-sifflet:io.kestra.plugin:plugin-sifflet:LATEST
 #plugin-singer:io.kestra.plugin:plugin-singer:LATEST
 #plugin-soda:io.kestra.plugin:plugin-soda:LATEST
 #plugin-solace:io.kestra.plugin:plugin-solace:LATEST

@@ -1166,7 +1166,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
 
                 try {
                     // Handle paused tasks
-                    if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW)) {
+                    if (executionDelay.getDelayType().equals(ExecutionDelay.DelayType.RESUME_FLOW) && !pair.getLeft().getState().isTerminated()) {
                         FlowInterface flow = flowMetaStore.findByExecution(pair.getLeft()).orElseThrow();
                         if (executionDelay.getTaskRunId() == null) {
                             // if taskRunId is null, this means we restart a flow that was delayed at startup (scheduled on)

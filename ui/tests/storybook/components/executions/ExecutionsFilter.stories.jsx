@@ -1,8 +1,8 @@
-import { useStore } from "vuex";
-import { vueRouter } from "storybook-vue3-router";
+import {useStore} from "vuex";
+import {vueRouter} from "storybook-vue3-router";
 import Executions from "../../../../src/components/executions/Executions.vue";
 import fixtureS from "./Executions-s.fixture.json";
-import { expect, userEvent, waitFor, within } from "@storybook/test";
+import {expect, userEvent, waitFor, within} from "@storybook/test";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
 
 function getDecorators(executionsSearchData) {
@@ -23,7 +23,7 @@ function getDecorators(executionsSearchData) {
                         hiddenLabelsPrefixes: ["system_"],
                     });
                     store.$http = {
-                        get: async (uri, params) => {
+                        get: async (uri, _params) => {
                             if (uri.endsWith("executions/search")) {
                                 console.log("uri", uri);
                                 // query params are available here if we want to make tests with them
@@ -32,7 +32,7 @@ function getDecorators(executionsSearchData) {
                                     data: executionsSearchData,
                                 });
                             }
-                            return Promise.resolve({ data: [] });
+                            return Promise.resolve({data: []});
                         },
                         post: async (uri) => {
                             console.log("post request", uri);
@@ -54,22 +54,22 @@ function getDecorators(executionsSearchData) {
                 {
                     path: "/",
                     name: "home",
-                    component: { template: "<div>home</div>" },
+                    component: {template: "<div>home</div>"},
                 },
                 {
                     path: "/flows/update/:namespace/:id?/:flowId?",
                     name: "flows/update",
-                    component: { template: "<div>updateflows</div>" },
+                    component: {template: "<div>updateflows</div>"},
                 },
                 {
                     path: "/executions/update/:namespace/:id?/:flowId?",
                     name: "executions/update",
-                    component: { template: "<div>executions</div>" },
+                    component: {template: "<div>executions</div>"},
                 },
                 {
                     path: "/executions/:id?/:flowId?",
                     name: "executions/list",
-                    component: { template: "<div>executions</div>" },
+                    component: {template: "<div>executions</div>"},
                 },
             ],
             {
@@ -97,28 +97,31 @@ export const FilterExecutions = {
     },
 };
 
-FilterExecutions.play = async ({ args, canvasElement, step }) => {
+FilterExecutions.play = async ({canvasElement, step}) => {
     const canvas = within(canvasElement);
     const user = userEvent.setup();
 
-    await step('filter should contains "timeRange" by default', async () => {
+    await step("filter should contains \"timeRange\" by default", async () => {
         await waitFor(() =>
             expect(getMonacoFilter(canvas)).toHaveTextContent("timeRange="),
         );
     });
 
-    await step("clearing and adding a namespace filter with keyboard", async () => {
-        await user.click(getMonacoFilterInput(canvas));
-        await clearMonacoInput();
-        await userEvent.keyboard("namespace=io.kestra");
-        await refreshMonacoFilter(canvas);
+    await step(
+        "clearing and adding a namespace filter with keyboard",
+        async () => {
+            await user.click(getMonacoFilterInput(canvas));
+            await clearMonacoInput();
+            await userEvent.keyboard("namespace=io.kestra");
+            await refreshMonacoFilter(canvas);
 
-        await waitFor(() =>
-            expect(getMonacoFilter(canvas)).toHaveTextContent(
-                "namespace=io.kestra",
-            ),
-        );
-    });
+            await waitFor(() =>
+                expect(getMonacoFilter(canvas)).toHaveTextContent(
+                    "namespace=io.kestra",
+                ),
+            );
+        },
+    );
 
     await step("adding an additional flowId filter with keyboard", async () => {
         await waitFor(() =>
@@ -128,7 +131,7 @@ FilterExecutions.play = async ({ args, canvasElement, step }) => {
         );
 
         await user.click(getMonacoFilterInput(canvas));
-        await userEvent.keyboard('{End}');
+        await userEvent.keyboard("{End}");
         await userEvent.keyboard(spaceBarKey);
         await userEvent.keyboard("flowId=123");
         await refreshMonacoFilter(canvas);
@@ -139,9 +142,7 @@ FilterExecutions.play = async ({ args, canvasElement, step }) => {
             ),
         );
         await waitFor(() =>
-            expect(getMonacoFilter(canvas)).toHaveTextContent(
-                "flowId=123",
-            ),
+            expect(getMonacoFilter(canvas)).toHaveTextContent("flowId=123"),
         );
     });
 
@@ -157,35 +158,43 @@ FilterExecutions.play = async ({ args, canvasElement, step }) => {
             ),
         );
         await waitFor(() =>
-            expect(within(getMonacoFilter(canvas)).getByText(
-                "an-unknown-field=q2132",
-            )).toHaveClass(monacoInvalidFieldRedColorClass)
+            expect(
+                within(getMonacoFilter(canvas)).getByText(
+                    "an-unknown-field=q2132",
+                ),
+            ).toHaveClass(monacoInvalidFieldRedColorClass),
         );
     });
 
-    await step("unknown field should be marked as invalid internally by Monaco", async () => {
-        await user.click(getMonacoFilterInput(canvas));
-        await clearMonacoInput();
-        await userEvent.keyboard("an-unknown-field=q2222222222");
-        await refreshMonacoFilter(canvas);
+    await step(
+        "unknown field should be marked as invalid internally by Monaco",
+        async () => {
+            await user.click(getMonacoFilterInput(canvas));
+            await clearMonacoInput();
+            await userEvent.keyboard("an-unknown-field=q2222222222");
+            await refreshMonacoFilter(canvas);
 
-        await waitFor(() =>
-            expect(getMonacoFilter(canvas)).toHaveTextContent(
-                "an-unknown-field=q2222222222",
-            ),
-        );
-        const model = monaco.editor.getModels()[0];
-        const tokens = monaco.editor.tokenize(model.getValue(), 'executions-filter');
-        await expect(tokens).toBeDefined();
-        await expect(tokens[0][0].type).toContain('executions-filter');
-        await expect(tokens[0][0].type).toContain('invalid');
-    });
+            await waitFor(() =>
+                expect(getMonacoFilter(canvas)).toHaveTextContent(
+                    "an-unknown-field=q2222222222",
+                ),
+            );
+            const model = monaco.editor.getModels()[0];
+            const tokens = monaco.editor.tokenize(
+                model.getValue(),
+                "executions-filter",
+            );
+            await expect(tokens).toBeDefined();
+            await expect(tokens[0][0].type).toContain("executions-filter");
+            await expect(tokens[0][0].type).toContain("invalid");
+        },
+    );
 };
 // TODO test from query route !!!!
 
 // Helpers and constants
 const spaceBarKey = "{ }";
-const monacoInvalidFieldRedColorClass = 'mtk12';
+const monacoInvalidFieldRedColorClass = "mtk12";
 const triggerRefreshButton = "trigger-refresh-button";
 
 function getMonacoFilter(canvas) {

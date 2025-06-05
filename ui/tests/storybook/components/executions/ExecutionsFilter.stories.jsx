@@ -157,12 +157,12 @@ FilterExecutions.play = async ({canvasElement, step}) => {
                 "an-unknown-field=q2132",
             ),
         );
-        await waitFor(() =>
-            expect(
+        await waitFor(
+            expectColorRedDominant(
                 within(getMonacoFilter(canvas)).getByText(
                     "an-unknown-field=q2132",
                 ),
-            ).toHaveClass(monacoInvalidFieldRedColorClass),
+            ),
         );
     });
 
@@ -194,8 +194,18 @@ FilterExecutions.play = async ({canvasElement, step}) => {
 
 // Helpers and constants
 const spaceBarKey = "{ }";
-const monacoInvalidFieldRedColorClass = "mtk12";
 const triggerRefreshButton = "trigger-refresh-button";
+
+function expectColorRedDominant(element) {
+    return function expectColorRedDominantCheck(){
+        const style = window.getComputedStyle(element);
+        const rgb = style.color.match(/\d+/g).map(Number);
+        // Assert red is dominant (e.g., red > 200, green & blue < 100)
+        expect(rgb[0]).toBeGreaterThan(150);
+        expect(rgb[1]).toBeLessThan(60);
+        expect(rgb[2]).toBeLessThan(60);
+    }
+}
 
 function getMonacoFilter(canvas) {
     return canvas.getByTestId("monaco-filter");

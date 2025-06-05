@@ -28,7 +28,7 @@
     const breadcrumbs = inject(BREADCRUMB_INJECTION_KEY, ref([]));
     const flowYaml = inject(FLOW_INJECTION_KEY, ref(""));
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
-    const taskCreation = inject(CREATING_TASK_INJECTION_KEY, ref(false));
+    const taskCreation = inject(CREATING_TASK_INJECTION_KEY, false);
     const blockType = inject(BLOCKTYPE_INJECT_KEY, undefined);
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
 
@@ -49,11 +49,11 @@
                 label: parentPath,
             }
         }
-        if(taskCreation.value || (refPath?.length && refPath.length > 0)){
+        if(taskCreation || (refPath !== undefined && refPath >= 0)) {
             breadcrumbs.value[index] = {
-                label: taskCreation.value
+                label: taskCreation
                     ? t(`no_code.creation.${blockType}`)
-                    : refPath ?? ""
+                    : refPath?.toString() ?? ""
             }
         }
     });

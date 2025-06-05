@@ -1,71 +1,57 @@
 <template>
-    <el-input :model-value="JSON.stringify(values)">
-        <template #append>
-            <el-button :icon="TextSearch" @click="isOpen = true" />
-        </template>
-    </el-input>
-
-    <drawer
-        v-if="isOpen"
-        v-model="isOpen"
-    >
-        <template #header>
-            <code>{{ root }}</code>
-        </template>
-        <el-form label-position="top">
-            <task-editor
-                ref="editor"
-                :model-value="taskYaml"
-                :section="section"
-                @update:model-value="onInput"
-            />
-        </el-form>
-        <template #footer>
-            <el-button :icon="ContentSave" @click="isOpen = false" type="primary">
-                {{ $t('save') }}
-            </el-button>
-        </template>
-    </drawer>
+    <div class="w-100">
+        <Element
+            :section="root"
+            block-type="tasks"
+            :parent-path-complete="parentPathComplete"
+            :element="{
+                id: model?.id ?? 'Set a task',
+                type: model?.type,
+            }"
+            @remove-element="removeElement()"
+        />
+    </div>
 </template>
 
-<script setup>
-    import {SECTIONS} from "@kestra-io/ui-libs";
-    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+<script setup lang="ts">
+    import {computed, inject} from "vue";
+    import {PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY, CREATING_TASK_INJECTION_KEY} from "../../code/injectionKeys";
+    import Element from "../../code/components/collapse/Element.vue";
 
-    import TextSearch from "vue-material-design-icons/TextSearch.vue";
-    import ContentSave from "vue-material-design-icons/ContentSave.vue";
-    import TaskEditor from "../TaskEditor.vue"
-    import Drawer from "../../Drawer.vue"
+    const model = defineModel({
+        type: Object,
+        default: () => ({})
+    });
+
+    const props = defineProps({
+
+        root: {
+            type: String,
+            required: true
+        },
+    });
+
+    const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
+    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false);
+
+    const parentPathComplete = computed(() => {
+        return `${[
+            [
+                parentPath,
+                creatingTask && refPath !== undefined
+                    ? `[${refPath + 1}]`
+                    : refPath !== undefined
+                        ? `[${refPath}]`
+                        : undefined,
+            ].filter(Boolean).join(""),
+            props.root,
+        ].filter(p => p.length).join(".")}`;
+    });
+
+    function removeElement() {
+        model.value = undefined;
+    }
 </script>
 
-<script>
-    import Task from "./Task"
-
-    export default {
-        inheritAttrs: false,
-        mixins: [Task],
-        emits: ["update:modelValue"],
-        props: {
-            section: {
-                type: String,
-                default: SECTIONS.TASKS
-            },
-        },
-        data() {
-            return {
-                isOpen: false,
-            };
-        },
-        computed: {
-            taskYaml() {
-                return YAML_UTILS.stringify(this.modelValue);
-            }
-        },
-        methods: {
-            onInput(value) {
-                this.$emit("update:modelValue", YAML_UTILS.parse(value));
-            },
-        }
-    };
-</script>
 

@@ -269,9 +269,7 @@ public class DashboardController {
             startDate = ZonedDateTime.now().minusDays(8);
         }
 
-        if (endDate == null) {
-            endDate = ZonedDateTime.now();
-        } else if (endDate.isBefore(startDate)) {
+        if (endDate != null && endDate.isBefore(startDate)) {
             throw new IllegalArgumentException("`endDate` must be after `startDate`.");
         }
 

@@ -372,6 +372,7 @@
       "comment_uncomment": "Kommentar/Kommentar entfernen",
       "decrease_fontsize": "Schriftgröße verkleinern",
       "duplicate_cursor": "Kursor duplizieren",
+      "execute_flow": "Flow ausführen",
       "fold_unfold": "Code ein-/ausklappen",
       "increase_fontsize": "Schriftgröße erhöhen",
       "label": "Tastenkombinationen",

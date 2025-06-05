@@ -372,6 +372,7 @@
       "comment_uncomment": "Comentar/Descomentar",
       "decrease_fontsize": "Diminuir tamanho da fonte",
       "duplicate_cursor": "Duplicar cursor",
+      "execute_flow": "Executar flow",
       "fold_unfold": "Dobra/Desdobra código",
       "increase_fontsize": "Aumentar tamanho da fonte",
       "label": "Atalhos de teclado",

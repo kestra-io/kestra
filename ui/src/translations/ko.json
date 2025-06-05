@@ -372,6 +372,7 @@
       "comment_uncomment": "주석 처리/주석 해제",
       "decrease_fontsize": "글꼴 크기 줄이기",
       "duplicate_cursor": "커서 복제",
+      "execute_flow": "flow 실행",
       "fold_unfold": "코드 접기/펼치기",
       "increase_fontsize": "글꼴 크기 증가",
       "label": "키보드 단축키",

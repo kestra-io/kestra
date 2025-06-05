@@ -1,27 +1,32 @@
 <template>
-    <template v-if="schema.format === 'duration'">
-        <el-time-picker
-            :model-value="durationValue"
-            type="time"
-            :default-value="defaultDuration"
-            :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'duration'}`"
-            @update:model-value="onInputDuration"
-        />
-    </template>
-    <template v-else>
-        <editor
-            :model-value="editorValue"
-            :navbar="false"
-            :full-height="false"
-            :should-focus="false"
-            schema-type="flow"
-            lang="plaintext"
-            input
-            :placeholder="`Your ${root || 'value'} here...`"
-            @update:model-value="onInput"
-            :large-suggestions="false"
-        />
-    </template>
+    <el-time-picker
+        v-if="schema.format === 'duration'"
+        :model-value="durationValue"
+        type="time"
+        :default-value="defaultDuration"
+        :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'duration'}`"
+        @update:model-value="onInputDuration"
+    />
+    <el-date-picker
+        v-else-if="schema.format === 'date-time'"
+        :model-value="modelValue"
+        type="date"
+        :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
+        @update:model-value="onInput($event.toISOString())"
+    />
+    <editor
+        v-else
+        :model-value="editorValue"
+        :navbar="false"
+        :full-height="false"
+        :should-focus="false"
+        schema-type="flow"
+        lang="plaintext"
+        input
+        :placeholder="`Your ${root || 'value'} here...`"
+        @update:model-value="onInput"
+        :large-suggestions="false"
+    />
 </template>
 <script>
     import Task from "./Task";

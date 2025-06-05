@@ -158,7 +158,7 @@
                 base: kestraBaseTheme.base
             }
             : theme as Partial<editor.IStandaloneThemeData> & { base: editor.BuiltinTheme };
-        
+
         const themeId = hashCode(JSON.stringify(theme)).toString();
         monaco.editor.defineTheme(themeId, {
             inherit: true,
@@ -166,7 +166,7 @@
             colors: {},
             ...base
         });
-        
+
         return themeId;
     }
 
@@ -234,7 +234,7 @@
     watch(() => props.theme, (newTheme) => {
         if (typeof newTheme === "object") {
             const themeId = defineCustomTheme(newTheme);
-            
+
             if (editorResolved.value) {
                 monaco.editor.setTheme(themeId);
             }
@@ -293,7 +293,7 @@
             node.querySelector(`.${KESTRA_ICON_WRAPPER_CLASS}`)?.remove();
 
             if (completionValue.includes(".") && !completionValue.includes("{")) {
-                if (store.state.plugin.icons[completionValue] !== undefined) {
+                if (store.state.plugin?.icons?.[completionValue] !== undefined) {
                     replaceRowIcon(vsCodeIcon, h(TaskIcon, {
                         cls: completionValue,
                         "only-icon": true,

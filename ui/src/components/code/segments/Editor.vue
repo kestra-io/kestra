@@ -12,14 +12,22 @@
         </template>
 
         <template v-else-if="!creatingTask && refPath === undefined">
-            <el-form label-position="top">
-                <component
-                    v-for="(v, k) in mainFields"
-                    :key="k"
-                    :is="v.component"
-                    v-model="v.value"
-                    v-bind="trimmed(v)"
-                    @update:model-value="emits('updateMetadata', k, v.value)"
+            <el-form label-position="top" v-if="fieldsFromSchema.length">
+                <TaskWrapper :key="v.root" v-for="(v) in fieldsFromSchema.slice(0, 3)" :merge="shouldMerge(v.schema)">
+                    <template #tasks>
+                        <TaskObjectField
+                            v-bind="v"
+                            @update:model-value="updateMetadata(v.root, $event)"
+                        />
+                    </template>
+                </TaskWrapper>
+
+                <MetadataInputs
+                    v-if="flowSchemaProperties.inputs"
+                    :label="t('no_code.fields.general.inputs')"
+                    :model-value="metadata.inputs"
+                    :required="flowSchema.required?.includes('inputs')"
+                    @update:model-value="updateMetadata('inputs', $event)"
                 />
 
                 <hr class="my-4">
@@ -34,15 +42,34 @@
 
                 <hr class="my-4">
 
-                <component
-                    v-for="(v, k) in otherFields"
-                    :key="k"
-                    :is="v.component"
-                    v-model="v.value"
-                    v-bind="trimmed(v)"
-                    @update:model-value="emits('updateMetadata', k, v.value)"
-                />
+                <TaskWrapper :key="v.root" v-for="(v) in fieldsFromSchema.slice(4)" :merge="shouldMerge(v.schema)">
+                    <template #tasks>
+                        <TaskObjectField
+                            v-bind="v"
+                            @update:model-value="updateMetadata(v.root, $event)"
+                        />
+                    </template>
+                </TaskWrapper>
             </el-form>
+            <template v-else>
+                <el-skeleton
+                    animated
+                    :rows="4"
+                    :throttle="{leading: 500, initVal: true}"
+                />
+                <hr class="my-4">
+                <el-skeleton
+                    animated
+                    :rows="6"
+                    :throttle="{leading: 500, initVal: true}"
+                />
+                <hr class="my-4">
+                <el-skeleton
+                    animated
+                    :rows="5"
+                    :throttle="{leading: 500, initVal: true}"
+                />
+            </template>
         </template>
 
         <Task
@@ -56,18 +83,13 @@
     import {onMounted, computed, inject, ref} from "vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 
-    import {Field, Fields, CollapseItem, NoCodeElement, BlockType} from "../utils/types";
+    import {CollapseItem, NoCodeElement, BlockType} from "../utils/types";
 
     import Collapse from "../components/collapse/Collapse.vue";
-    import InputText from "../components/inputs/InputText.vue";
-    import InputSwitch from "../components/inputs/InputSwitch.vue";
-    import InputPair from "../components/inputs/InputPair.vue";
 
-    import Editor from "../../inputs/Editor.vue";
     import MetadataInputs from "../../flows/MetadataInputs.vue";
-    import MetadataRetry from "../../flows/MetadataRetry.vue";
-    import MetadataSLA from "../../flows/MetadataSLA.vue";
-    import TaskBasic from "../../flows/tasks/TaskBasic.vue";
+    import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
+
 
     import {
         CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
@@ -84,6 +106,7 @@
     const {t} = useI18n({useScope: "global"});
 
     import {useStore} from "vuex";
+    import TaskWrapper from "../../flows/tasks/TaskWrapper.vue";
     const store = useStore();
 
     const emits = defineEmits([
@@ -100,6 +123,16 @@
         }
     };
 
+    function shouldMerge(schema: any): boolean {
+        const complexObject = ["object", "array"].includes(schema?.type) || schema?.$ref || schema?.oneOf || schema?.anyOf || schema?.allOf;
+        return !complexObject
+    }
+
+    function updateMetadata(key: string, val: any) {
+        const realValue = val === null || val === undefined || (typeof val === "object" && Object.keys(val).length === 0) ? undefined : val; // Handle null values
+        emits("updateMetadata", key, realValue);
+    }
+
     document.addEventListener("keydown", saveEvent);
 
     const creatingFlow = computed(() => {
@@ -113,111 +146,76 @@
         metadata: {type: Object, required: true},
     });
 
-    const trimmed = (field: Field) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {component, value, ...rest} = field;
-
-        return rest;
-    };
-
     function onTaskUpdate(yaml: string) {
         emits("updateTask", yaml)
     }
 
-    const schema = ref({})
+    const schema = ref<{
+        definitions?: any,
+        $ref?: string,
+    }>({})
+
     onMounted(async () => {
         await store.dispatch("plugin/loadSchemaType").then((response) => {
             schema.value = response;
         })
     });
 
-    const fields = computed<Fields>(() => {
-        return {
-            id: {
-                component: InputText,
-                value: props.metadata.id,
-                label: t("no_code.fields.main.flow_id"),
-                required: true,
-                disabled: !creatingFlow.value,
-            },
-            namespace: {
-                component: InputText,
-                value: props.metadata.namespace,
-                label: t("no_code.fields.main.namespace"),
-                required: true,
-                disabled: !creatingFlow.value,
-            },
-            description: {
-                component: InputText,
-                value: props.metadata.description,
-                label: t("no_code.fields.main.description"),
-            },
-            retry: {
-                component: MetadataRetry,
-                value: props.metadata.retry || {},
-                label: t("no_code.fields.general.retry")
-            },
-            labels: {
-                component: InputPair,
-                value: props.metadata.labels,
-                label: t("no_code.fields.general.labels"),
-                property: t("no_code.labels.label"),
-            },
-            inputs: {
-                component: MetadataInputs,
-                value: props.metadata.inputs,
-                label: t("no_code.fields.general.inputs"),
-                inputs: props.metadata.inputs ?? [],
-            },
-            outputs: {
-                component: Editor,
-                value: props.metadata.outputs,
-                label: t("no_code.fields.general.outputs"),
-                navbar: false,
-                input: true,
-                lang: "yaml",
-                shouldFocus: false,
-                showScroll: true,
-                style: {height: "100px"},
-            },
-            variables: {
-                component: InputPair,
-                value: props.metadata.variables,
-                label: t("no_code.fields.general.variables"),
-                property: t("no_code.labels.variable"),
-            },
-            concurrency: {
-                component: TaskBasic,
-                value: props.metadata.concurrency,
-                label: t("no_code.fields.general.concurrency"),
-                schema: schema.value?.definitions?.["io.kestra.core.models.flows.Concurrency"] ?? {},
-                root: "concurrency",
-            },
-            sla: {
-                component: MetadataSLA,
-                value: props.metadata.sla ?? [],
-                label: t("no_code.fields.general.sla")
-            },
-            disabled: {
-                component: InputSwitch,
-                value: props.metadata.disabled,
-                label: t("no_code.fields.general.disabled"),
-            },
-        }
+    const definitions = computed(() => {
+        return schema.value?.definitions ?? {};
+    });
+    function removeRefPrefix(ref?: string): string {
+        return ref?.replace(/^#\/definitions\//, "") ?? "";
+    }
+
+    const flowSchema = computed(() => {
+        const ref = removeRefPrefix(schema.value?.$ref);
+        return definitions.value?.[ref];
     });
 
-    const mainFields = computed(() => {
-        const {id, namespace, description, inputs} = fields.value;
+    const flowSchemaProperties = computed(() => {
+        return flowSchema.value?.properties ?? {};
+    });
 
-        return {id, namespace, description, inputs};
-    })
+    const METADATA_KEYS = [
+        "id",
+        "namespace",
+        "description",
+        "inputs",
+        "retry",
+        "labels",
+        "outputs",
+        "variables",
+        "concurrency",
+        "sla",
+        "disabled"
+    ] as const;
 
-    const otherFields = computed(() => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const {id, namespace, description, inputs, ...rest} = fields.value;
 
-        return rest;
-    })
+    const fieldsFromSchema = computed(() => {
+        if( !flowSchema.value || !flowSchemaProperties.value) {
+            return [];
+        }
+
+        // FIXME: some labels are not where you would expect them to be
+        const mainLabels: Record<string, string> = {
+            id: t("no_code.fields.main.flow_id"),
+            namespace: t("no_code.fields.main.namespace"),
+            description: t("no_code.fields.main.description"),
+        }
+
+        return METADATA_KEYS.map(f => ({
+            modelValue: props.metadata[f],
+            required: flowSchema.value?.required ?? [],
+            disabled: !creatingFlow.value && (f === "id" || f === "namespace"),
+            schema: flowSchemaProperties.value[f],
+            definitions: definitions.value,
+            label: mainLabels[f] ?? t(`no_code.fields.general.${f}`),
+            fieldKey: f,
+            task: props.metadata,
+            root: f,
+        }));
+    });
 
     const SECTIONS_IDS = [
         "tasks",

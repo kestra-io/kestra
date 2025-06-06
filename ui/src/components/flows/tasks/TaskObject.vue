@@ -58,6 +58,8 @@
     import TaskDict from "./TaskDict.vue";
     import TaskWrapper from "./TaskWrapper.vue";
     import TaskObjectField from "./TaskObjectField.vue";
+
+    defineEmits(["update:modelValue"]);
 </script>
 
 <script>
@@ -114,7 +116,6 @@
             merge: {type: Boolean, default: false},
             metadataInputs: {type: Boolean, default: false}
         },
-        emits: ["update:modelValue"],
         data() {
             return {
                 activeNames: [],

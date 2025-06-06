@@ -6,8 +6,8 @@
             <MonacoEditor
                 ref="monacoEditor"
                 class="border flex-grow-1 position-relative"
-                :language="`${language?.domain === undefined ? '' : (language.domain + '-')}${legacyQuery ? 'legacy-' : ''}filter`"
-                :schema-type="language?.domain"
+                :language="`${language.domain === undefined ? '' : (language.domain + '-')}${legacyQuery ? 'legacy-' : ''}filter`"
+                :schema-type="language.domain"
                 :value="filter"
                 @change="filter = $event"
                 :theme="themeComputed"
@@ -85,6 +85,7 @@
     import {Comparators, getComparator} from "../../composables/monaco/languages/filters/filterCompletion.ts";
     import {watchDebounced} from "@vueuse/core";
     import {FilterLanguage} from "../../composables/monaco/languages/filters/filterLanguage.ts";
+    import DefaultFilterLanguage from "../../composables/monaco/languages/filters/impl/defaultFilterLanguage.ts";
 
     const router = useRouter();
     const route = useRoute();
@@ -92,7 +93,7 @@
 
     const props = withDefaults(defineProps<{
         prefix?: string | undefined;
-        language?: FilterLanguage | undefined,
+        language?: FilterLanguage,
         propertiesWidth?: number,
         buttons?: (Omit<Buttons, "settings"> & {
             settings: Omit<Buttons["settings"], "charts"> & { charts?: Buttons["settings"]["charts"] }
@@ -105,7 +106,7 @@
         legacyQuery?: boolean,
     }>(), {
         prefix: undefined,
-        language: undefined,
+        language: () => DefaultFilterLanguage,
         propertiesWidth: 144,
         buttons: () => ({
             refresh: {
@@ -260,7 +261,7 @@
 
             // If we're not in a {key}{comparator}{value} format, we assume it's a text search
             if (key === undefined) {
-                if (props.language?.textFilterSupported && (text === undefined || !props.language?.keyMatchers()?.some(keyMatcher => keyMatcher.test(text)))) {
+                if (props.language.textFilterSupported && (text === undefined || !props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(text)))) {
                     filters.push({
                         key: "text",
                         comparator: "EQUALS",
@@ -270,11 +271,11 @@
                 continue;
             }
 
-            if (!props.language?.keyMatchers()?.some(keyMatcher => keyMatcher.test(key))) {
+            if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(key))) {
                 continue; // Skip keys that don't match the language key matchers
             }
 
-            if (!props.language?.comparatorsPerKey()[FilterLanguage.withNestedKeyPlaceholder(key)].some(c => Comparators[c] === comparator)) {
+            if (!props.language.comparatorsPerKey()[FilterLanguage.withNestedKeyPlaceholder(key)].some(c => Comparators[c] === comparator)) {
                 continue; // Skip comparators that are not valid for the key
             }
 

@@ -21,7 +21,6 @@
             </template>
         </el-tab-pane>
     </el-tabs>
-
     <section v-if="isEditorActiveTab || activeTab.component" data-component="FILENAME_PLACEHOLDER#container" ref="container" v-bind="$attrs" :class="{...containerClass, 'd-flex flex-row': isEditorActiveTab, 'maximized': activeTab.maximized}">
         <EditorSidebar v-if="isEditorActiveTab" ref="sidebar" :style="`flex: 0 0 calc(${explorerWidth}% - 11px);`" :current-n-s="namespace" v-show="explorerVisible" />
         <div v-if="isEditorActiveTab && explorerVisible" @mousedown.prevent.stop="dragSidebar" class="slider" />
@@ -34,12 +33,22 @@
                 embed
             />
         </div>
-        <component
+        <blueprint-detail
+            v-if="selectedBlueprintId"
+            :blueprint-id="selectedBlueprintId"
+            blueprint-type="community"
+            @back="selectedBlueprintId = undefined"
+            combined-view="true"
+            :kind="activeTab.props.blueprintKind"
+            :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
+        />
+        <component  
             v-else
             v-bind="{...activeTab.props, ...attrsWithoutClass}"
             v-on="activeTab['v-on'] ?? {}"
             ref="tabContent"
             :is="activeTab.component"
+            @go-to-detail="blueprintId => selectedBlueprintId = blueprintId"
             :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
         />
     </section>
@@ -50,9 +59,10 @@
 
     import EditorSidebar from "./inputs/EditorSidebar.vue";
     import EnterpriseBadge from "./EnterpriseBadge.vue";
+    import BlueprintDetail from "./flows/blueprints/BlueprintDetail.vue";
 
     export default {
-        components: {EditorSidebar, EnterpriseBadge},
+        components: {EditorSidebar, EnterpriseBadge,BlueprintDetail},
         props: {
             tabs: {
                 type: Array,
@@ -93,6 +103,7 @@
         data() {
             return {
                 activeName: undefined,
+                selectedBlueprintId : undefined
             }
         },
         watch: {

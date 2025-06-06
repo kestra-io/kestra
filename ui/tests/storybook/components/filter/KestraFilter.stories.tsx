@@ -84,6 +84,17 @@ KestraFilterDefault.play = async ({canvasElement, step}) => {
             .toHaveTextContent(/^Choose filters$/)
     });
 
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    await step(
+        "autocompletion pops upon clicking and show only text because no language is set",
+        async () => {
+            await waitFor(async () => {
+                await user.click(await getMonacoFilterInput(canvas));
+                await assertSuggestions(canvas, ["text"]);
+            }, {timeout: 5000});
+        },
+    );
+
     await step(
         "autocompletion pops upon clicking and show only text because no language is set",
         async () => {
@@ -200,6 +211,7 @@ export const KestraFilterWithLanguage: Story = {
     const canvas = within(canvasElement);
     const user = userEvent.setup();
 
+    await new Promise(resolve => setTimeout(resolve, 1000));
     await step(
         "autocompletion pops upon clicking and show available keys",
         async () => {
@@ -258,6 +270,7 @@ export const KestraFilterWithLanguage_MultiValueAnotherComparator: Story = {
     const canvas = within(canvasElement);
     const user = userEvent.setup();
 
+    await new Promise(resolve => setTimeout(resolve, 1000));
     await step(
         "autocompletion pops upon clicking and show available keys",
         async () => {

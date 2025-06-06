@@ -34,7 +34,7 @@
             />
         </div>
         <blueprint-detail
-            v-if="selectedBlueprintId"
+            v-else-if="selectedBlueprintId"
             :blueprint-id="selectedBlueprintId"
             blueprint-type="community"
             @back="selectedBlueprintId = undefined"
@@ -42,7 +42,7 @@
             :kind="activeTab.props.blueprintKind"
             :embed="activeTab.props && activeTab.props.embed !== undefined ? activeTab.props.embed : true"
         />
-        <component  
+        <component
             v-else
             v-bind="{...activeTab.props, ...attrsWithoutClass}"
             v-on="activeTab['v-on'] ?? {}"

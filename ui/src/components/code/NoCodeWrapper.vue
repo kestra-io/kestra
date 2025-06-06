@@ -6,27 +6,28 @@
             :ref-path="refPath"
             :block-type="blockType"
             :creating-task="creatingTask"
+            :editing-task="editingTask"
             :position
             @update-metadata="(e) => onUpdateMetadata(e)"
             @update-task="(e) => editorUpdate(e)"
             @reorder="(yaml) => handleReorder(yaml)"
-            @create-task="(blockType, parentPath, refPath) => emit('createTask', blockType, parentPath, refPath, 'after')"
             @close-task="() => emit('closeTask')"
-            @edit-task="(blockType, parentPath, refPath) => emit('editTask', blockType, parentPath, refPath)"
         />
     </div>
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
+    import {computed, provide, ref} from "vue";
     import debounce from "lodash/debounce";
     import {useStore} from "vuex";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import NoCode from "./NoCode.vue";
     import {BlockType} from "./utils/types";
+    import {CREATE_TASK_FUNCTION_INJECTION_KEY, EDIT_TASK_FUNCTION_INJECTION_KEY} from "./injectionKeys";
 
     export interface NoCodeProps {
         creatingTask?: boolean;
+        editingTask?: boolean;
         blockType?: BlockType | "pluginDefaults";
         parentPath?: string;
         refPath?: number;
@@ -37,9 +38,16 @@
 
     const emit = defineEmits<{
         (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined, position: "after" | "before"): boolean | void;
-        (e: "editTask", blockType: string, parentPath: string, refPath: number): boolean | void;
+        (e: "editTask", blockType: string, parentPath: string, refPath?: number): boolean | void;
         (e: "closeTask"): boolean | void;
     }>();
+
+    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
+        emit("createTask", blockType, parentPath, refPath, "after")
+    });
+    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
+        emit("editTask", blockType, parentPath, refPath)
+    });
 
     const store = useStore();
     const flowYaml = computed<string>(() => store.getters["flow/flowYaml"]);

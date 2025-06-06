@@ -20,7 +20,7 @@ interface Opener {
 
 interface Handlers {
     onCreateTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number, position?: "before" | "after") => boolean,
-    onEditTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath: number) => boolean
+    onEditTask: (opener: Opener, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number) => boolean
     onCloseTask: (opener: Opener) => boolean
 }
 
@@ -67,10 +67,15 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
                 },
             }
         } else if (tab.action === "edit") {
+            const path = tab.refPath !== undefined
+                ? `${tab.parentPath}[${tab.refPath}]`
+                : tab.parentPath ?? ""
+
             const currentBlock: any = tab.parentPath ? YAML_UTILS.parse(YAML_UTILS.extractBlockWithPath({
                 source: flow,
-                path: `${tab.parentPath}[${tab.refPath}]`,
+                path,
             })) : {}
+
             return {
                 value: getEditTabKey(tab, keepAliveCacheBuster++),
                 button: {
@@ -102,6 +107,7 @@ export function getTabFromNoCodeTab(tab: NoCodeTabWithAction, t: (key: string) =
                 [h(NoCodeWrapper, {
                     ...restOfTab,
                     creatingTask: tab.action === "create",
+                    editingTask: tab.action === "edit",
                     onCloseTask: onCloseTask?.bind({}, props),
                     onCreateTask: onCreateTask?.bind({}, props) as any,
                     onEditTask: onEditTask?.bind({}, props) as any,

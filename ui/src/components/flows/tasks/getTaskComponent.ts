@@ -66,7 +66,8 @@ function getType(property: any, key?: string, schema?: any): string {
             return "tasks";
         }
 
-        if (property.items?.$ref?.includes("conditions.Condition")) {
+        if (property.items?.$ref?.includes("conditions.Condition")
+            || property.items.anyOf?.every((item: any) => item.$ref?.includes("io.kestra.plugin.core.condition"))) {
             return "conditions";
         }
 

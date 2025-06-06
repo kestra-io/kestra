@@ -32,10 +32,10 @@ public abstract class AbstractDashboardRepositoryTest {
     @Inject
     protected RunContextFactory runContextFactory;
 
-    public static Dashboard dashBoardEntry(String id, String description) {
+    public static Dashboard dashboardEntry(String id, String description) {
         return Dashboard.builder()
             .id(id)
-            .description(StringUtils.defaultString(description, "Default overview dashboard"))
+            .description(description)
             .tenantId(TENANT_ID)
             .title("Test Dashboard")
             .sourceCode("postGres")
@@ -53,7 +53,7 @@ public abstract class AbstractDashboardRepositoryTest {
 
     @Test
     void save() {
-        final Dashboard dashboard = dashBoardEntry("1", DASHBOARD_DESCRIPTION);
+        final Dashboard dashboard = dashboardEntry("1", DASHBOARD_DESCRIPTION);
         dashboardRepositoryInterface.save(dashboard, TENANT_ID);
 
         final List<Dashboard> full = dashboardRepositoryInterface.findAll(TENANT_ID);
@@ -63,14 +63,14 @@ public abstract class AbstractDashboardRepositoryTest {
 
     @Test
     void save_givenUpdatedAndPreviousDashboard_shouldSaveUpdated() {
-        final Dashboard dashboard = dashBoardEntry("1", DASHBOARD_DESCRIPTION);
+        final Dashboard dashboard = dashboardEntry("1", DASHBOARD_DESCRIPTION);
         dashboardRepositoryInterface.save(dashboard, TENANT_ID);
 
         final Optional<Dashboard> previousDashbordOptional = dashboardRepositoryInterface.get(TENANT_ID, dashboard.getId());
 
         assertFalse(previousDashbordOptional.isEmpty());
         final Dashboard previousDashBoard = previousDashbordOptional.get();
-        final Dashboard updatedDashBoard = dashBoardEntry("1", "updatedEntry");
+        final Dashboard updatedDashBoard = dashboardEntry("1", "updatedEntry");
         dashboardRepositoryInterface.save(previousDashBoard, updatedDashBoard, TENANT_ID);
 
         final Optional<Dashboard> updatedDashbordOptional = dashboardRepositoryInterface.get(TENANT_ID, dashboard.getId());
@@ -81,7 +81,7 @@ public abstract class AbstractDashboardRepositoryTest {
 
     @Test
     void findAll() {
-        final Dashboard dashboard = dashBoardEntry("1", DASHBOARD_DESCRIPTION);
+        final Dashboard dashboard = dashboardEntry("1", DASHBOARD_DESCRIPTION);
         dashboardRepositoryInterface.save(dashboard, TENANT_ID);
 
         final List<Dashboard> full = dashboardRepositoryInterface.findAll(TENANT_ID);
@@ -92,9 +92,9 @@ public abstract class AbstractDashboardRepositoryTest {
 
     @Test
     void list() {
-        dashboardRepositoryInterface.save(dashBoardEntry("1", DASHBOARD_DESCRIPTION), TENANT_ID);
-        dashboardRepositoryInterface.save(dashBoardEntry("2", DASHBOARD_DESCRIPTION), TENANT_ID);
-        dashboardRepositoryInterface.save(dashBoardEntry("3", DASHBOARD_DESCRIPTION), TENANT_ID);
+        dashboardRepositoryInterface.save(dashboardEntry("1", DASHBOARD_DESCRIPTION), TENANT_ID);
+        dashboardRepositoryInterface.save(dashboardEntry("2", DASHBOARD_DESCRIPTION), TENANT_ID);
+        dashboardRepositoryInterface.save(dashboardEntry("3", DASHBOARD_DESCRIPTION), TENANT_ID);
 
         ArrayListTotal<Dashboard> listOfDashboards = dashboardRepositoryInterface.list(Pageable.from(1, 10), TENANT_ID, null);
         assertFalse(listOfDashboards.isEmpty());
@@ -108,8 +108,8 @@ public abstract class AbstractDashboardRepositoryTest {
     @Test
     void get() {
 
-        final Dashboard expectedDashboard = dashBoardEntry("1", DASHBOARD_DESCRIPTION);
-        dashboardRepositoryInterface.save(dashBoardEntry("1", DASHBOARD_DESCRIPTION), TENANT_ID);
+        final Dashboard expectedDashboard = dashboardEntry("1", DASHBOARD_DESCRIPTION);
+        dashboardRepositoryInterface.save(dashboardEntry("1", DASHBOARD_DESCRIPTION), TENANT_ID);
 
         Optional<Dashboard> optionalDashboard = dashboardRepositoryInterface.get(TENANT_ID, "1");
         assertTrue(optionalDashboard.isPresent());
@@ -123,8 +123,8 @@ public abstract class AbstractDashboardRepositoryTest {
 
     @Test
     void delete() {
-        dashboardRepositoryInterface.save(dashBoardEntry("11", DASHBOARD_DESCRIPTION), TENANT_ID);
-        dashboardRepositoryInterface.save(dashBoardEntry("12", DASHBOARD_DESCRIPTION), TENANT_ID);
+        dashboardRepositoryInterface.save(dashboardEntry("11", DASHBOARD_DESCRIPTION), TENANT_ID);
+        dashboardRepositoryInterface.save(dashboardEntry("12", DASHBOARD_DESCRIPTION), TENANT_ID);
 
         final Dashboard deletedDashboard = dashboardRepositoryInterface.delete(TENANT_ID, "12");
         assertEquals("12", deletedDashboard.getId());

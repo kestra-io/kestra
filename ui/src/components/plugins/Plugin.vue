@@ -39,6 +39,15 @@
                     <h4 class="mb-0">
                         {{ pluginName }}
                     </h4>
+                    <el-button
+                        v-if="releaseNotesUrl"
+                        size="small"
+                        class="release-notes-btn"
+                        :icon="GitHub"
+                        @click="openReleaseNotes"
+                    >
+                        {{ $t('plugins.release') }}
+                    </el-button>
                 </div>
                 <Suspense v-loading="isLoading">
                     <schema-to-html
@@ -66,11 +75,13 @@
     import Markdown from "../layout/Markdown.vue"
     import Toc from "./Toc.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import GitHub from "vue-material-design-icons/GitHub.vue";
 </script>
 
 <script>
     import RouteContext from "../../mixins/routeContext";
     import {mapState, mapGetters} from "vuex";
+    import {getPluginReleaseUrl} from "../../utils/pluginUtils";
 
     export default {
         mixins: [RouteContext],
@@ -93,6 +104,9 @@
             pluginName() {
                 const split = this.pluginType?.split(".");
                 return split[split.length - 1];
+            },
+            releaseNotesUrl() {
+                return getPluginReleaseUrl(this.pluginType);
             },
             pluginIsSelected() {
                 return this.pluginType !== undefined && this.plugin !== undefined
@@ -164,6 +178,11 @@
                     behavior: "smooth"
                 })
                 this.loadPlugin();
+            },
+            openReleaseNotes() {
+                if (this.releaseNotesUrl) {
+                    window.open(this.releaseNotesUrl, "_blank");
+                }
             }
         }
     };

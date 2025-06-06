@@ -333,7 +333,8 @@
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
-      "please": "Please choose a task on the right to see its documentation"
+      "please": "Please choose a task on the right to see its documentation",
+      "release": "Release notes"
     },
     "last execution date": "Last execution date",
     "last execution state": "Last state",

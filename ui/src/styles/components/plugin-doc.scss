@@ -102,4 +102,16 @@
 
         p { color: var(--ks-content-info); }
     }
+
+    :deep(.release-notes-btn) {
+        background-color: var(--ks-background-info);
+        color: var(--ks-content-info);
+        border: 1px solid var(--ks-border-info);
+        font-family: 'Courier New', Courier, monospace;
+        
+        .material-design-icon {
+            position: absolute;
+            bottom: 0;
+        }
+    }
 }

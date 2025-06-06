@@ -11,6 +11,15 @@
                 <h4 class="mb-0">
                     {{ pluginName }}
                 </h4>
+                <el-button
+                    v-if="releaseNotesUrl"
+                    size="small"
+                    class="release-notes-btn"
+                    :icon="GitHub"
+                    @click="openReleaseNotes"
+                >
+                    {{ $t('plugins.release') }}
+                </el-button>
             </div>
             <Suspense>
                 <schema-to-html class="plugin-schema" :dark-mode="theme === 'dark'" :schema="editorPlugin.schema" :plugin-type="editorPlugin.cls">
@@ -27,11 +36,13 @@
 <script setup>
     import Markdown from "../layout/Markdown.vue";
     import {SchemaToHtml, TaskIcon} from "@kestra-io/ui-libs";
+    import GitHub from "vue-material-design-icons/GitHub.vue";
 </script>
 
 <script>
     import {mapState, mapGetters} from "vuex";
-    import intro from "../../assets/docs/basic.md?raw"
+    import intro from "../../assets/docs/basic.md?raw";
+    import {getPluginReleaseUrl} from "../../utils/pluginUtils";
 
     export default {
         props: {
@@ -53,10 +64,20 @@
             pluginName() {
                 const split = this.editorPlugin.cls.split(".");
                 return split[split.length - 1];
+            },
+            releaseNotesUrl() {
+                return getPluginReleaseUrl(this.editorPlugin.cls);
             }
         },
         created() {
             this.$store.dispatch("plugin/list");
+        },
+        methods: {
+            openReleaseNotes() {
+                if (this.releaseNotesUrl) {
+                    window.open(this.releaseNotesUrl, "_blank");
+                }
+            }
         }
     }
 </script>

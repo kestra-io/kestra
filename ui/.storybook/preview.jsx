@@ -1,4 +1,4 @@
-import {setup} from "@storybook/vue3";
+import {setup} from "@storybook/vue3-vite";
 import {withThemeByClassName} from "@storybook/addon-themes";
 import initApp from "../src/utils/init";
 import stores from "../src/stores/store";
@@ -11,7 +11,7 @@ window.KESTRA_BASE_PATH = "/ui";
 window.KESTRA_UI_PATH = "./";
 
 /**
- * @type {import('@storybook/vue3').Preview}
+ * @type {import('@storybook/vue3-vite').Preview}
  */
 const preview = {
   parameters: {

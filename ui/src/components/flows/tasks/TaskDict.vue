@@ -10,14 +10,14 @@
         </el-col>
         <el-col :span="16">
             <component
-
-                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties, key, properties) : TaskExpression"
+                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties) : TaskExpression"
                 :model-value="item[1]"
                 @update:model-value="onValueChange(index, $event)"
                 :root="getKey(item[0])"
                 :schema="schema.additionalProperties"
                 :required="isRequired(item[0])"
                 :definitions="definitions"
+                :disabled
             />
         </el-col>
         <el-col :span="2" class="col align-self-center delete">
@@ -55,6 +55,10 @@
             class: {
                 type: String,
                 default: undefined
+            },
+            disabled: {
+                type: Boolean,
+                default: false
             },
         },
         data() {

@@ -19,11 +19,11 @@
 
     import {
         BREADCRUMB_INJECTION_KEY, CLOSE_TASK_FUNCTION_INJECTION_KEY,
-        CREATE_TASK_FUNCTION_INJECTION_KEY, CREATING_TASK_INJECTION_KEY,
-        EDIT_TASK_FUNCTION_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
+        CREATING_TASK_INJECTION_KEY, BLOCKTYPE_INJECT_KEY,
         PANEL_INJECTION_KEY, POSITION_INJECTION_KEY,
         REF_PATH_INJECTION_KEY, PARENT_PATH_INJECTION_KEY,
         FLOW_INJECTION_KEY,
+        EDITING_TASK_INJECTION_KEY,
     } from "./injectionKeys";
     import Breadcrumbs from "./components/Breadcrumbs.vue";
     import Editor from "./segments/Editor.vue";
@@ -34,7 +34,7 @@
         (e: "updateMetadata", value: {[key: string]: any}): void
         (e: "reorder", yaml: string): void
         (e: "createTask", blockType: string, parentPath: string, refPath: number | undefined, position?: "before" | "after"): boolean | void
-        (e: "editTask", blockType: string, parentPath: string, refPath: number): boolean | void
+        (e: "editTask", blockType: string, parentPath: string, refPath?: number): boolean | void
         (e: "closeTask"): boolean | void
     }>()
 
@@ -55,9 +55,11 @@
              */
             refPath?: number;
             creatingTask?: boolean;
+            editingTask?: boolean;
             position?: "before" | "after";
         }>(), {
             creatingTask: false,
+            editingTask: false,
             position: "after",
             refPath: undefined,
             blockType: undefined,
@@ -66,7 +68,6 @@
 
     const metadata = computed(() => YAML_UTILS.getMetadata(props.flow));
 
-    const creatingTaskRef = ref(props.creatingTask)
     const breadcrumbs = ref<Breadcrumb[]>([])
     const panel = ref()
 
@@ -77,13 +78,9 @@
     provide(BREADCRUMB_INJECTION_KEY, breadcrumbs);
     provide(BLOCKTYPE_INJECT_KEY, props.blockType);
     provide(POSITION_INJECTION_KEY, props.position);
-    provide(CREATING_TASK_INJECTION_KEY, computed(() => creatingTaskRef.value));
-    provide(CREATE_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
-        emit("createTask", blockType, parentPath, refPath)
-    });
-    provide(EDIT_TASK_FUNCTION_INJECTION_KEY, (blockType, parentPath, refPath) => {
-        emit("editTask", blockType, parentPath, refPath)
-    });
+    provide(CREATING_TASK_INJECTION_KEY, props.creatingTask);
+    provide(EDITING_TASK_INJECTION_KEY, props.editingTask);
+
     provide(CLOSE_TASK_FUNCTION_INJECTION_KEY, () => {
         if (breadcrumbs.value[breadcrumbs.value.length - 1].component) {
             breadcrumbs.value.pop();

@@ -98,7 +98,7 @@ const Template = (args) => ({
         provide(BLOCKTYPE_INJECT_KEY, "tasks");
         provide(REF_PATH_INJECTION_KEY, "");
         provide(POSITION_INJECTION_KEY, args.position);
-        provide(CREATING_TASK_INJECTION_KEY, ref(args.creating));
+        provide(CREATING_TASK_INJECTION_KEY, args.creating);
 
         store.$http = {
             get(url) {

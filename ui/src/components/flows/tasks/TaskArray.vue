@@ -55,10 +55,12 @@
         schema: any;
         definitions: any;
         modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
+        required?: boolean;
     }>(), {
         modelValue: undefined,
         schema: () => ({}),
         definitions: () => ({}),
+        required: false,
     });
 
     const componentType = computed(() => {
@@ -73,7 +75,11 @@
     });
 
     const items = ref(
-        !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
+        props.modelValue === undefined && !props.required
+            // we want to avoid displaying an item completely empty when modelValue is undefined
+            // except if the field is required
+            ? []
+            : !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
 
     const handleInput = (value: string, index: number) => {

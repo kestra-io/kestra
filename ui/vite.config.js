@@ -36,7 +36,7 @@ export default defineConfig({
             output: {
                 manualChunks
             }
-        },
+        }
     },
     resolve: {
         alias: {
@@ -47,6 +47,7 @@ export default defineConfig({
             "#mdc-configs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
             "shiki": path.resolve(__dirname, "node_modules/shiki/dist"),
             "vuex": path.resolve(__dirname, "node_modules/vuex/dist/vuex.esm-bundler.js"),
+            "@storybook/addon-actions": "storybook/actions",
         },
     },
     plugins: [

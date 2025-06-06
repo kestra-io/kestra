@@ -454,6 +454,12 @@
         (window as any).clearEditor = () => {
             localEditor?.getModel()?.setValue("")
         };
+        (window as any).acceptSuggestion = () => {
+            localEditor?.trigger("acceptSelectedSuggestion", "acceptSelectedSuggestion", {});
+        };
+        (window as any).nextSuggestion = () => {
+            localEditor?.trigger("selectNextSuggestion", "selectNextSuggestion", {});
+        };
     })
 
     onBeforeUnmount(function () {

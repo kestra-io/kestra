@@ -100,7 +100,7 @@
     "change-case": "4.1.2",
     "cross-env": "^7.0.3",
     "decompress": "^4.2.1",
-    "eslint": "^9.27.0",
+    "eslint": "^9.28.0",
     "eslint-plugin-storybook": "^9.0.5",
     "eslint-plugin-vue": "^9.33.0",
     "globals": "^16.1.0",

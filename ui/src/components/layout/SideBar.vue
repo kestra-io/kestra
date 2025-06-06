@@ -16,11 +16,12 @@
                 <chevron-left v-else />
             </el-button>
             <div class="logo">
-                <slot name="img">
-                    <router-link :to="{name: 'home'}">
-                        <span class="img" />
-                    </router-link>
-                </slot>
+                <router-link v-if="showLink" :to="{name: 'home'}">
+                    <span class="img" />
+                </router-link>
+                <div v-else class="logo-img">
+                    <span class="img" />
+                </div>
             </div>
             <Environment />
         </template>
@@ -58,6 +59,10 @@
         generateMenu: {
             type: Function,
             required: true
+        },
+        showLink: {
+            type: Boolean,
+            default: true
         }
     })
 
@@ -206,7 +211,7 @@
             height: 112px;
             position: relative;
 
-            a {
+            a, .logo-img {
                 transition: 0.2s all;
                 position: absolute;
                 left: 37px;
@@ -372,7 +377,7 @@
 
         &.vsm_collapsed {
             .logo {
-                a {
+                a, .logo-img {
                     left: 8px;
 
                     span.img {

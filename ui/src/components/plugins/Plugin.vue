@@ -75,7 +75,7 @@
     import Markdown from "../layout/Markdown.vue"
     import Toc from "./Toc.vue"
     import TopNavBar from "../../components/layout/TopNavBar.vue";
-    import GitHub from "vue-material-design-icons/GitHub.vue";
+    import GitHub from "../icons/GitHub.vue";
 </script>
 
 <script>

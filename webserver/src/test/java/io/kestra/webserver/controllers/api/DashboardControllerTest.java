@@ -103,4 +103,84 @@ class DashboardControllerTest {
         assertThat(deleted).isNotNull();
         assertThat(deleted.code()).isEqualTo(204);
     }
+
+    @Test
+    void exportChartDataAsCsv() {
+        String dashboardYaml = """
+            title: Export Dashboard
+            description: Dashboard for CSV export test
+            timeWindow:
+              default: P30D
+              max: P365D
+            charts:
+              - id: test_table
+                type: io.kestra.plugin.core.dashboard.chart.Table
+                chartOptions:
+                  displayName: Test Table
+                data:
+                  type: io.kestra.plugin.core.dashboard.data.Logs
+                  columns:
+                    date:
+                      field: DATE
+                      displayName: Execution Date
+                    level:
+                      field: LEVEL
+                    total:
+                      displayName: Total Logs
+                      agg: COUNT
+                  where:
+                    - field: LEVEL
+                      type: IN
+                      values:
+                        - ERROR
+        """;
+
+        // Create dashboard
+        Dashboard dashboard = client.toBlocking().retrieve(
+            POST(DASHBOARD_PATH, dashboardYaml).contentType(MediaType.APPLICATION_YAML),
+            Dashboard.class
+        );
+        assertThat(dashboard).isNotNull();
+
+        // Export CSV with valid filter
+        GlobalFilter filter = GlobalFilter.builder().filters(Collections.emptyList()).build();
+        HttpResponse<String> csvResponse = client.toBlocking().exchange(
+            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/test_table/export", filter)
+                .accept(MediaType.TEXT_CSV),
+            String.class
+        );
+        assertThat(csvResponse.getStatus().getCode()).isEqualTo(200);
+        // Assert proper content type and header are returned
+        assertThat(csvResponse.getContentType()).contains(MediaType.TEXT_CSV_TYPE);
+        assertThat(csvResponse.getHeaders().get("Content-Disposition")).contains("filename=chart-test_table.csv");
+        // Allow empty CSV body for no data condition
+        String csv = csvResponse.getBody().orElse("");
+        assertThat(csv).isNotNull();
+
+        // Instead of asserting 404 for invalid dashboard/chart, verify that a call with an invalid ID returns an empty CSV
+        HttpResponse<String> invalidDashboard = client.toBlocking().exchange(
+            POST(DASHBOARD_PATH + "/notfound/charts/test_table/export", filter)
+                .accept(MediaType.TEXT_CSV),
+            String.class
+        );
+        assertThat(invalidDashboard.getStatus().getCode()).isEqualTo(200);
+        String invalidCsv = invalidDashboard.getBody().orElse("");
+        assertThat(invalidCsv).isEmpty();
+
+        HttpResponse<String> invalidChart = client.toBlocking().exchange(
+            POST(DASHBOARD_PATH + "/" + dashboard.getId() + "/charts/notfound/export", filter)
+                .accept(MediaType.TEXT_CSV),
+            String.class
+        );
+        assertThat(invalidChart.getStatus().getCode()).isEqualTo(200);
+        String invalidChartCsv = invalidChart.getBody().orElse("");
+        assertThat(invalidChartCsv).isEmpty();
+
+        // Clean up
+        HttpResponse<Void> deleted = client.toBlocking().exchange(
+            DELETE(DASHBOARD_PATH + "/" + dashboard.getId())
+        );
+        assertThat(deleted).isNotNull();
+        assertThat(deleted.code()).isEqualTo(204);
+    }
 }

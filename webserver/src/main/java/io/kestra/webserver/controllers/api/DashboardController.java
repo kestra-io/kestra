@@ -399,6 +399,40 @@ public class DashboardController {
             .header("Content-Disposition", "attachment; filename=export.csv");
     }
 
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "{id}/charts/{chartId}/export", produces = MediaType.TEXT_CSV)
+    @Operation(tags = {"Dashboards"}, summary = "Export dashboard chart data as CSV")
+    public HttpResponse<?> exportDashboardChartDataAsCsv(
+        @Parameter(description = "The dashboard id") @PathVariable String id,
+        @Parameter(description = "The chart id") @PathVariable String chartId,
+        @RequestBody(description = "The filters to apply, some can override chart definition like labels & namespace") @Body GlobalFilter globalFilter
+    ) throws IOException {
+        PagedResults<Map<String, Object>> results = getDashboardChartData(id, chartId, globalFilter);
+        List<Map<String, Object>> data = (results == null || results.getResults() == null) ? List.of() : results.getResults();
+        if (data.isEmpty()) {
+            return HttpResponse.ok("")
+                .contentType(MediaType.TEXT_CSV_TYPE)
+                .header("Content-Disposition", "attachment; filename=chart-" + chartId + ".csv");
+        }
+        // Build CSV header
+        StringBuilder csv = new StringBuilder();
+        List<String> headers = new java.util.ArrayList<>(data.get(0).keySet());
+        csv.append(String.join(",", headers)).append("\n");
+        // Build CSV rows
+        for (Map<String, Object> row : data) {
+            List<String> values = new java.util.ArrayList<>();
+            for (String header : headers) {
+                Object value = row.get(header);
+                values.add(value != null ? value.toString().replace("\n", " ").replace(",", " ") : "");
+            }
+            csv.append(String.join(",", values)).append("\n");
+        }
+        return HttpResponse.ok()
+            .contentType(MediaType.TEXT_CSV_TYPE)
+            .header("Content-Disposition", "attachment; filename=chart-" + chartId + ".csv")
+            .body(csv.toString());
+    }
+
     @Introspected
     public record PreviewRequest(
         @Parameter(description = "The chart") String chart,

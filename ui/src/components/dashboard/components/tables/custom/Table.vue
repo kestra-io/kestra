@@ -1,5 +1,10 @@
 <template>
     <template v-if="data !== undefined">
+        <div class="table-actions" style="margin-bottom: 8px; display: flex; justify-content: flex-end;">
+            <el-button size="small" type="primary" @click="exportCsv">
+                Export to CSV
+            </el-button>
+        </div>
         <el-table
             :id="containerID"
             :data="data.results"
@@ -172,6 +177,41 @@
                 globalFilter: {...params, filters: props.defaultFilters.concat(decodedParams?? [])},
             });
         }
+    };
+
+    const exportCsv = async () => {
+        const dashboardId = route.params.id;
+        const chartId = props.chart.id;
+        // Prepare filters as in generate()
+        let decodedParams = decodeSearchParams(route.query, undefined, []);
+        let filters = props.defaultFilters.concat(decodedParams ?? []);
+        const globalFilter = {
+            filters,
+            pageNumber: currentPage.value,
+            pageSize: pageSize.value
+        };
+        // Call backend CSV export endpoint
+        const response = await fetch(`/api/v1/main/dashboards/${dashboardId}/charts/${chartId}/export`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Accept": "text/csv",
+            },
+            body: JSON.stringify(globalFilter)
+        });
+        if (!response.ok) {
+            // Optionally show error to user
+            return;
+        }
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `chart-${chartId}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
     };
 
     watch(route, async (route) => await generate(route.params?.id));

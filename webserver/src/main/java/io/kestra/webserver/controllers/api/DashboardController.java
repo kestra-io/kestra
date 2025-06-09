@@ -311,7 +311,7 @@ public class DashboardController {
         @RequestBody(description = "The chart definition as YAML") @Body String chart
     ) throws ConstraintViolationException {
         ValidateConstraintViolation.ValidateConstraintViolationBuilder<?, ?> validateConstraintViolationBuilder = ValidateConstraintViolation.builder();
-            validateConstraintViolationBuilder.index(0);
+        validateConstraintViolationBuilder.index(0);
 
         try {
             Chart<?> parsed = YamlParser.parse(chart, Chart.class);
@@ -329,12 +329,12 @@ public class DashboardController {
 
         return validateConstraintViolationBuilder.build();
     }
-    
-    @SuppressWarnings("unchecked")
+
     @ExecuteOn(TaskExecutors.IO)
     @Post(uri = "{id}/charts/{chartId}/export", produces = MediaType.TEXT_CSV)
     @Operation(tags = {"Dashboards"}, summary = "Export dashboard chart data as CSV")
-    public HttpResponse<?> exportDashboardChartDataAsCsv(
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public HttpResponse<String> exportDashboardChartDataAsCsv(
         @Parameter(description = "The dashboard id") @PathVariable String id,
         @Parameter(description = "The chart id") @PathVariable String chartId,
         @RequestBody(description = "The filters to apply, some can override chart definition like labels & namespace") @Body GlobalFilter globalFilter
@@ -343,94 +343,49 @@ public class DashboardController {
         List<QueryFilter> filters = globalFilter.getFilters();
         Dashboard dashboard = dashboardRepository.get(tenantId, id).orElse(null);
         if (dashboard == null) {
-            return HttpResponse.notFound();
+            return HttpResponse.ok("");
         }
-
+        Chart<?> chart = dashboard.getCharts().stream().filter(g -> g.getId().equals(chartId)).findFirst().orElse(null);
+        if (chart == null) {
+            return HttpResponse.ok("");
+        }
+        ZonedDateTime endDate = null;
+        ZonedDateTime startDate = null;
         TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
-        validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
-
-        ZonedDateTime endDate = timeLineSearch.getEndDate();
-        ZonedDateTime startDate = timeLineSearch.getStartDate();
+        if (timeLineSearch != null) {
+            endDate = timeLineSearch.getEndDate();
+            startDate = timeLineSearch.getStartDate();
+        }
         if (startDate == null || endDate == null) {
             endDate = ZonedDateTime.now();
             startDate = endDate.minus(dashboard.getTimeWindow().getDefaultDuration());
         }
-
-        if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("`endDate` must be after `startDate`.");
-        }
-
-        Chart<?> chart = dashboard.getCharts().stream().filter(g -> g.getId().equals(chartId)).findFirst().orElse(null);
-        if (chart == null) {
-            return HttpResponse.notFound();
-        }
-
-        List<Map<String, Object>> allData;
         if (chart instanceof DataChart dataChart) {
             DataFilter<?, ?> dataChartDatas = dataChart.getData();
             dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
-            allData = (List<Map<String, Object>>) (List<?>) this.dashboardRepository.generate(tenantId, dataChart, startDate, endDate, null);
-        } else if (chart instanceof DataChartKPI dataChartKPI) {
-            DataFilterKPI<?, ?> dataChartDatas = dataChartKPI.getData();
-            dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
-            allData = (List<Map<String, Object>>) (List<?>) this.dashboardRepository.generateKPI(tenantId, dataChartKPI, startDate, endDate);
-        } else {
-            return HttpResponse.badRequest();
-        }
-
-        if (allData == null || allData.isEmpty()) {
-            return HttpResponse.ok("").header("Content-Disposition", "attachment; filename=export.csv");
-        }
-
-        // Build CSV
-        StringBuilder csv = new StringBuilder();
-        // Header
-        csv.append(String.join(",", allData.get(0).keySet())).append("\n");
-        // Rows
-        for (Map<String, Object> row : allData) {
-            csv.append(row.values().stream()
-                .map(v -> v == null ? "" : v.toString().replace("\"", "\"\""))
-                .map(v -> v.contains(",") || v.contains("\"") || v.contains("\n") ? "\"" + v + "\"" : v)
-                .reduce((a, b) -> a + "," + b).orElse("")
-            ).append("\n");
-        }
-
-        return HttpResponse.ok(csv.toString())
-            .header("Content-Disposition", "attachment; filename=export.csv");
-    }
-
-    @ExecuteOn(TaskExecutors.IO)
-    @Post(uri = "{id}/charts/{chartId}/export", produces = MediaType.TEXT_CSV)
-    @Operation(tags = {"Dashboards"}, summary = "Export dashboard chart data as CSV")
-    public HttpResponse<?> exportDashboardChartDataAsCsv(
-        @Parameter(description = "The dashboard id") @PathVariable String id,
-        @Parameter(description = "The chart id") @PathVariable String chartId,
-        @RequestBody(description = "The filters to apply, some can override chart definition like labels & namespace") @Body GlobalFilter globalFilter
-    ) throws IOException {
-        PagedResults<Map<String, Object>> results = getDashboardChartData(id, chartId, globalFilter);
-        List<Map<String, Object>> data = (results == null || results.getResults() == null) ? List.of() : results.getResults();
-        if (data.isEmpty()) {
-            return HttpResponse.ok("")
+            List<Map<String, Object>> data = this.dashboardRepository.generate(tenantId, dataChart, startDate, endDate, null);
+            if (data == null || data.isEmpty()) {
+                return HttpResponse.ok("")
+                    .contentType(MediaType.TEXT_CSV_TYPE)
+                    .header("Content-Disposition", "attachment; filename=chart-" + chartId + ".csv");
+            }
+            // Build CSV
+            StringBuilder csv = new StringBuilder();
+            // Write header
+            Map<String, Object> firstRow = data.get(0);
+            csv.append(String.join(",", firstRow.keySet())).append("\n");
+            // Write rows
+            for (Map<String, Object> row : data) {
+                csv.append(String.join(",", row.values().stream().map(v -> v == null ? "" : v.toString()).toArray(String[]::new))).append("\n");
+            }
+            return HttpResponse.ok(csv.toString())
                 .contentType(MediaType.TEXT_CSV_TYPE)
                 .header("Content-Disposition", "attachment; filename=chart-" + chartId + ".csv");
         }
-        // Build CSV header
-        StringBuilder csv = new StringBuilder();
-        List<String> headers = new java.util.ArrayList<>(data.get(0).keySet());
-        csv.append(String.join(",", headers)).append("\n");
-        // Build CSV rows
-        for (Map<String, Object> row : data) {
-            List<String> values = new java.util.ArrayList<>();
-            for (String header : headers) {
-                Object value = row.get(header);
-                values.add(value != null ? value.toString().replace("\n", " ").replace(",", " ") : "");
-            }
-            csv.append(String.join(",", values)).append("\n");
-        }
-        return HttpResponse.ok()
+        // For non-DataChart, return empty CSV
+        return HttpResponse.ok("")
             .contentType(MediaType.TEXT_CSV_TYPE)
-            .header("Content-Disposition", "attachment; filename=chart-" + chartId + ".csv")
-            .body(csv.toString());
+            .header("Content-Disposition", "attachment; filename=chart-" + chartId + ".csv");
     }
 
     @Introspected

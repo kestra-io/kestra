@@ -150,7 +150,7 @@ class DashboardControllerTest {
             String.class
         );
         assertThat(csvResponse.getStatus().getCode()).isEqualTo(200);
-        // Assert proper content type and header are returned
+        // Instead of using .orElse(""), we check that the optional contains the expected MediaType.
         assertThat(csvResponse.getContentType()).contains(MediaType.TEXT_CSV_TYPE);
         assertThat(csvResponse.getHeaders().get("Content-Disposition")).contains("filename=chart-test_table.csv");
         // Allow empty CSV body for no data condition

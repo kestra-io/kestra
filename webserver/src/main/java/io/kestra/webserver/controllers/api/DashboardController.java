@@ -329,6 +329,75 @@ public class DashboardController {
 
         return validateConstraintViolationBuilder.build();
     }
+    
+    @SuppressWarnings("unchecked")
+    @ExecuteOn(TaskExecutors.IO)
+    @Post(uri = "{id}/charts/{chartId}/export", produces = MediaType.TEXT_CSV)
+    @Operation(tags = {"Dashboards"}, summary = "Export dashboard chart data as CSV")
+    public HttpResponse<?> exportDashboardChartDataAsCsv(
+        @Parameter(description = "The dashboard id") @PathVariable String id,
+        @Parameter(description = "The chart id") @PathVariable String chartId,
+        @RequestBody(description = "The filters to apply, some can override chart definition like labels & namespace") @Body GlobalFilter globalFilter
+    ) throws IOException {
+        String tenantId = tenantService.resolveTenant();
+        List<QueryFilter> filters = globalFilter.getFilters();
+        Dashboard dashboard = dashboardRepository.get(tenantId, id).orElse(null);
+        if (dashboard == null) {
+            return HttpResponse.notFound();
+        }
+
+        TimeLineSearch timeLineSearch = TimeLineSearch.extractFrom(filters);
+        validateTimeline(timeLineSearch.getStartDate(), timeLineSearch.getEndDate());
+
+        ZonedDateTime endDate = timeLineSearch.getEndDate();
+        ZonedDateTime startDate = timeLineSearch.getStartDate();
+        if (startDate == null || endDate == null) {
+            endDate = ZonedDateTime.now();
+            startDate = endDate.minus(dashboard.getTimeWindow().getDefaultDuration());
+        }
+
+        if (endDate.isBefore(startDate)) {
+            throw new IllegalArgumentException("`endDate` must be after `startDate`.");
+        }
+
+        Chart<?> chart = dashboard.getCharts().stream().filter(g -> g.getId().equals(chartId)).findFirst().orElse(null);
+        if (chart == null) {
+            return HttpResponse.notFound();
+        }
+
+        List<Map<String, Object>> allData;
+        if (chart instanceof DataChart dataChart) {
+            DataFilter<?, ?> dataChartDatas = dataChart.getData();
+            dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
+            allData = (List<Map<String, Object>>) (List<?>) this.dashboardRepository.generate(tenantId, dataChart, startDate, endDate, null);
+        } else if (chart instanceof DataChartKPI dataChartKPI) {
+            DataFilterKPI<?, ?> dataChartDatas = dataChartKPI.getData();
+            dataChartDatas.updateWhereWithGlobalFilters(filters, startDate, endDate);
+            allData = (List<Map<String, Object>>) (List<?>) this.dashboardRepository.generateKPI(tenantId, dataChartKPI, startDate, endDate);
+        } else {
+            return HttpResponse.badRequest();
+        }
+
+        if (allData == null || allData.isEmpty()) {
+            return HttpResponse.ok("").header("Content-Disposition", "attachment; filename=export.csv");
+        }
+
+        // Build CSV
+        StringBuilder csv = new StringBuilder();
+        // Header
+        csv.append(String.join(",", allData.get(0).keySet())).append("\n");
+        // Rows
+        for (Map<String, Object> row : allData) {
+            csv.append(row.values().stream()
+                .map(v -> v == null ? "" : v.toString().replace("\"", "\"\""))
+                .map(v -> v.contains(",") || v.contains("\"") || v.contains("\n") ? "\"" + v + "\"" : v)
+                .reduce((a, b) -> a + "," + b).orElse("")
+            ).append("\n");
+        }
+
+        return HttpResponse.ok(csv.toString())
+            .header("Content-Disposition", "attachment; filename=export.csv");
+    }
 
     @Introspected
     public record PreviewRequest(

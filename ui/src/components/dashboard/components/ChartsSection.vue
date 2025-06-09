@@ -18,6 +18,15 @@
                             </small>
                         </template>
                     </p>
+                    <el-button
+                        v-if="canExport(chart.type)"
+                        size="small"
+                        class="mb-2"
+                        @click="exportCsv(chart.id)"
+                        icon="el-icon-download"
+                    >
+                        Export CSV
+                    </el-button>
 
                     <div class="flex-grow-1">
                         <component
@@ -37,6 +46,7 @@
 
 <script setup>
     import {useRoute, useRouter} from "vue-router";
+    import axios from "axios";
     const route = useRoute();
     const router = useRouter();
 
@@ -70,12 +80,36 @@
         description: chart?.chartOptions?.description,
     });
 
+    // Only allow export for data charts and tables
+    const canExport = (type) => [
+        "io.kestra.plugin.core.dashboard.chart.TimeSeries",
+        "io.kestra.plugin.core.dashboard.chart.Bar",
+        "io.kestra.plugin.core.dashboard.chart.Table",
+        "io.kestra.plugin.core.dashboard.chart.Pie"
+    ].includes(type);
+
+    async function exportCsv(chartId) {
+        const dashboardId = route.params.id;
+        // Compose filters as needed for your backend
+        const filters = defaultFilters.value; // Add more if needed from route.query
+
+        const response = await axios.post(
+            `/api/v1/main/dashboards/${dashboardId}/charts/${chartId}/export`,
+            {filters},
+            {responseType: "blob"}
+        );
+        const url = window.URL.createObjectURL(new Blob([response.data], {type: "text/csv"}));
+        const link = document.createElement("a");
+        link.href = url;
+        link.setAttribute("download", "export.csv");
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+    }
+
     onMounted(() => {
         const dateTimeKeys = ["startDate", "endDate", "timeRange"];
-
-        // If no date filtering is set, we add one
         if (!Object.keys(route.query).some(key => dateTimeKeys.some(dateTimeKey => key.includes(dateTimeKey)))) {
-            // query last 7 days
             router.push({
                 query: {...route.query, "filters[timeRange][EQUALS]":"PT168H"}
             })

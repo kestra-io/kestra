@@ -1,4 +1,4 @@
-import {Component} from "vue";
+import {Component, computed, Ref} from "vue";
 import {useRoute} from "vue-router";
 import {useI18n} from "vue-i18n";
 
@@ -45,30 +45,30 @@ export function useHelpers() {
     const route = useRoute();
     const {t} = useI18n({useScope: "global"});
 
-    const namespace = route.params?.id as string;
+    const namespace = computed(() => route.params?.id) as Ref<string>;
 
-    const parts = namespace?.split(".") ?? [];
-    const details: Details = {
-        title: parts.at(-1) || t("namespaces"),
+    const parts = computed(() => namespace.value?.split(".") ?? []);
+    const details: Ref<Details> = computed(() => ({
+        title: parts.value.at(-1) || t("namespaces"),
         breadcrumb: [
             {label: t("namespaces"), link: {name: "namespaces/list"}},
-            ...parts.map((_: string, index: number) => ({
-                label: parts[index],
+            ...parts.value.map((_: string, index: number) => ({
+                label: parts.value[index],
                 link: {
                     name: "namespaces/update",
                     params: {
-                        id: parts.slice(0, index + 1).join("."),
+                        id: parts.value.slice(0, index + 1).join("."),
                         tab: "overview",
                     },
                 },
-                disabled: index === parts.length - 1,
+                disabled: index === parts.value.length - 1,
             })),
         ],
-    };
+    }));
 
     const tabs: Tab[] = [
         // If it's a system namespace, include the blueprints tab
-        ...(namespace === "system"
+        ...(namespace.value === "system"
             ? [
                   {
                       name: "blueprints",
@@ -88,26 +88,34 @@ export function useHelpers() {
             name: "flows",
             title: t("flows"),
             component: Flows,
-            props: {namespace, topbar: false},
+            props: {namespace: namespace.value, topbar: false},
         },
         {
             name: "executions",
             title: t("executions"),
             component: Executions,
-            props: {namespace, topbar: false, visibleCharts: true},
+            props: {
+                namespace: namespace.value,
+                topbar: false,
+                visibleCharts: true,
+            },
         },
         {
             name: "dependencies",
             title: t("dependencies"),
             component: Dependencies,
-            props: {namespace, type: "dependencies"},
+            props: {namespace: namespace.value, type: "dependencies"},
         },
         {
             maximized: true,
             name: "files",
             title: t("files"),
             component: EditorView,
-            props: {namespace, isNamespace: true, isReadOnly: false},
+            props: {
+                namespace: namespace.value,
+                isNamespace: true,
+                isReadOnly: false,
+            },
         },
     ];
 

@@ -36,7 +36,7 @@
 <script setup>
     import Markdown from "../layout/Markdown.vue";
     import {SchemaToHtml, TaskIcon} from "@kestra-io/ui-libs";
-    import GitHub from "../icons/GitHub.vue";
+    import GitHub from "vue-material-design-icons/Github.vue";
 </script>
 
 <script>

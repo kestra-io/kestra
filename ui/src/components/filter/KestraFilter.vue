@@ -148,7 +148,7 @@
         }
     }));
 
-    const itemsPrefix = computed(() => props.prefix ?? route.name?.toString());
+    const itemsPrefix = computed(() => props.prefix ?? route.name?.toString() ?? "fallback-filters");
 
     const emits = defineEmits(["dashboard", "updateProperties"]);
 
@@ -162,14 +162,9 @@
             .map(([key, value]) => [value, key])
     );
 
-    const EXCLUDED_QUERY_FIELDS = ["sort", "size", "page"];
+    const queryParamsToKeep = ref<string[]>([]);
 
-    const filteredRouteQuery = computed(() => route.query === undefined
-        ? undefined
-        : Object.fromEntries(Object.entries(route.query).filter(([key]) => !EXCLUDED_QUERY_FIELDS.includes(key))) as LocationQuery
-    );
-
-    watch(filteredRouteQuery, (newVal) => {
+    watch(() => route.query, (newVal) => {
         if (skipRouteWatcherOnce.value) {
             skipRouteWatcherOnce.value = false;
             return;
@@ -179,12 +174,19 @@
             return;
         }
 
+        queryParamsToKeep.value = [];
+
         let query = newVal;
         if (props.queryNamespace !== undefined) {
             query = Object.fromEntries(
                 Object.entries(newVal)
                     .filter(([key]) => {
-                        return key.startsWith(props.queryNamespace + "[");
+                        if (key.startsWith(props.queryNamespace + "[")) {
+                            return true;
+                        }
+
+                        queryParamsToKeep.value.push(key);
+                        return false;
                     })
                     .map(([key, value]) =>
                         // We trim the queryNamespace from the key
@@ -200,17 +202,28 @@
              */
             filter.value = Object.entries(query)
                 .flatMap(([key, values]) => {
+                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(queryRemapper[key] ?? key))) {
+                        queryParamsToKeep.value.push(key);
+                        return [];
+                    }
+
                     if (!Array.isArray(values)) {
                         values = [values];
                     }
 
-                    return values.map(value => (queryRemapper?.[key] ?? key) + Comparators.EQUALS + value);
+                    return values.map(value => (queryRemapper[key] ?? key) + Comparators.EQUALS + value);
                 }).join(" ");
         } else {
             filter.value = Object.entries(query)
                 .filter(([key]) => key.startsWith("filters["))
                 .flatMap(([key, values]) => {
                     const [_, filterKey, comparator, subKey] = key.match(/filters\[([^\]]+)]\[([^\]]+)](?:\[([^\]]+)])?/) ?? [];
+
+                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(queryRemapper[filterKey] ?? filterKey))) {
+                        queryParamsToKeep.value.push(key);
+                        return [];
+                    }
+
                     let maybeSubKeyString;
                     if (subKey === undefined) {
                         maybeSubKeyString = "";
@@ -448,9 +461,12 @@
         skipRouteWatcherOnce.value = true;
         router.push({
             query: {
-                sort: route.query.sort,
-                size: route.query.size,
-                page: route.query.page,
+                ...Object.fromEntries(queryParamsToKeep.value.map(key => {
+                    return [
+                        key,
+                        route.query[key]
+                    ];
+                })),
                 ...filterQueryString.value
             }
         });

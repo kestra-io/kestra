@@ -997,7 +997,8 @@
     "plugins": {
       "name": "플러그인",
       "names": "플러그인들",
-      "please": "오른쪽에서 task를 선택하여 해당 문서를 확인하세요."
+      "please": "오른쪽에서 task를 선택하여 해당 문서를 확인하세요.",
+      "release": "릴리스 노트"
     },
     "port": "포트",
     "prefill inputs": "미리 채우기",

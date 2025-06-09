@@ -24,7 +24,7 @@ import java.util.Optional;
 @NoArgsConstructor
 @Schema(
     title = "Return a value for debugging purposes.",
-    description = "This task is mostly useful for troubleshooting.\n\n" +
+    description = "This task is for debugging purpose, not for production usage.\n\n" +
         "It allows you to return some templated functions, inputs or outputs. In some cases you might want to trim all white spaces from the rendered values so downstream tasks can use them properly"
 )
 @Plugin(

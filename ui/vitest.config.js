@@ -9,7 +9,15 @@ export default defineConfig({
     ],
     resolve: {
         alias: {
+            "override/services/filterLanguagesProvider": path.resolve(__dirname, "tests/storybook/mocks/services/filterLanguagesProvider.mock.ts"),
             "override": path.resolve(__dirname, "src/override/"),
+            "#imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
+            "#build/mdc-image-component.mjs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
+            "#mdc-imports": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
+            "#mdc-configs": path.resolve(__dirname, "node_modules/@kestra-io/ui-libs/stub-mdc-imports.js"),
+            "shiki": path.resolve(__dirname, "node_modules/shiki/dist"),
+            "vuex": path.resolve(__dirname, "node_modules/vuex/dist/vuex.esm-bundler.js"),
+            "@storybook/addon-actions": "storybook/actions"
         },
     },
     test: {
@@ -33,7 +41,8 @@ export default defineConfig({
                 "**/*.stories.*",
                 "**/*.d.ts",
             ]
-        }
+        },
+        projects: [".storybook/vitest.config.js"]
     },
     define: {
         "window.KESTRA_BASE_PATH": "/ui/",

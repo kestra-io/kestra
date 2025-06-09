@@ -207,11 +207,10 @@ export const KestraFilterWithLanguage: Story = {
     }
 };
 
-/*KestraFilterWithLanguage.play = async ({canvasElement, step}) => { TODO repair, the assertSuggestions is not working yet in CLI
+KestraFilterWithLanguage.play = async ({canvasElement, step}) => {
     const canvas = within(canvasElement);
     const user = userEvent.setup();
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
     await step(
         "autocompletion pops upon clicking and show available keys",
         async () => {
@@ -253,11 +252,10 @@ export const KestraFilterWithLanguage: Story = {
             // Back to the initial suggestions as a space is automatically added after the value
             await expect(await assertMonacoFilterContentToBe(canvas, "singleValue=value2 "));
 
-            // For some reasons in the CI the suggestions is not popping up after adding a space...
-            //await waitFor(() => assertSuggestions(canvas, ["singleValue", "multiValue", "text"]), {timeout: 5000});
+            await waitFor(() => assertSuggestions(canvas, ["singleValue", "multiValue", "text"]), {timeout: 5000});
         },
     );
-};*/
+};
 
 export const KestraFilterWithLanguage_MultiValueAnotherComparator: Story = {
     decorators: getDecorators(),
@@ -266,7 +264,7 @@ export const KestraFilterWithLanguage_MultiValueAnotherComparator: Story = {
     }
 };
 
-/*KestraFilterWithLanguage_MultiValueAnotherComparator.play = async ({canvasElement, step}) => {
+KestraFilterWithLanguage_MultiValueAnotherComparator.play = async ({canvasElement, step}) => {
     const canvas = within(canvasElement);
     const user = userEvent.setup();
 
@@ -315,15 +313,14 @@ export const KestraFilterWithLanguage_MultiValueAnotherComparator: Story = {
             await waitFor(async () => expect(await assertMonacoFilterContentToBe(canvas, "multiValue!=anotherValue1,anotherValue2 ")));
             // Back to the initial suggestions
 
-            // For some reasons in the CI the suggestions is not popping up after adding a space...
-            //await waitFor(() => assertSuggestions(canvas, ["singleValue", "multiValue", "text"]), {timeout: 5000});
+            await waitFor(() => assertSuggestions(canvas, ["singleValue", "multiValue", "text"]), {timeout: 5000});
 
             await assertRouteQuery(canvas, {"filters[multiValue][NOT_IN]": "anotherValue1,anotherValue2"});
 
 
         },
     );
-};*/
+};
 
 export const KestraFilterWithLanguage_PopulateValueFromQuery: Story = {
     name: "Keys from query that are not compliant with language should not be added to filter",

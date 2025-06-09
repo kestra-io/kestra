@@ -11,6 +11,7 @@ import {
 } from "../../../../src/composables/monaco/languages/filters/filterCompletion.ts";
 import loadFilterLanguages from "../../mocks/services/filterLanguagesProvider.mock.ts";
 import DefaultFilterLanguage from "../../../../src/composables/monaco/languages/filters/impl/defaultFilterLanguage.ts";
+import {isColoredAsError} from "../../utils/monacoUtils.ts";
 
 const meta = {
     title: "Components/KestraFilter",
@@ -32,8 +33,10 @@ let suggestionWidgetController: {
     accept: () => void,
     next: () => void
 } = {
-    accept() {},
-    next() {}
+    accept() {
+    },
+    next() {
+    }
 };
 
 function getDecorators(routeQuery?: LocationQuery) {
@@ -165,26 +168,30 @@ KestraFilterLegacyQuery.play = async ({canvasElement, step}) => {
 
 
 class TestFilterLanguage extends FilterLanguage {
+    static readonly FILTER_KEYS = {
+        singleValue: new FilterKeyCompletions(
+            [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.STARTS_WITH],
+            async () => [
+                new Completion("First value", "value1"),
+                new Completion("Second value", "value2")
+            ]
+        ),
+        multiValue: new FilterKeyCompletions(
+            [Comparators.NOT_EQUALS, Comparators.EQUALS, Comparators.STARTS_WITH],
+            async () => [
+                new Completion("Another first value", "anotherValue1"),
+                new Completion("Another second value", "anotherValue2")
+            ],
+            true
+        ),
+        "nested.{key}": new FilterKeyCompletions(
+            [Comparators.EQUALS]
+        )
+    };
     static readonly INSTANCE = new TestFilterLanguage();
 
     private constructor() {
-        super("test", {
-            singleValue: new FilterKeyCompletions(
-                [Comparators.EQUALS, Comparators.NOT_EQUALS, Comparators.STARTS_WITH],
-                async () => [
-                    new Completion("First value", "value1"),
-                    new Completion("Second value", "value2")
-                ]
-            ),
-            multiValue: new FilterKeyCompletions(
-                [Comparators.NOT_EQUALS, Comparators.EQUALS, Comparators.STARTS_WITH],
-                async () => [
-                    new Completion("Another first value", "anotherValue1"),
-                    new Completion("Another second value", "anotherValue2")
-                ],
-                true
-            )
-        });
+        super("test", TestFilterLanguage.FILTER_KEYS);
     }
 }
 
@@ -216,7 +223,7 @@ KestraFilterWithLanguage.play = async ({canvasElement, step}) => {
         async () => {
             await waitFor(async () => {
                 await user.click(await getMonacoFilterInput(canvas));
-                await assertSuggestions(canvas, ["singleValue", "multiValue", "text"]);
+                await assertSuggestions(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]);
             }, {timeout: 5000});
         },
     );
@@ -252,7 +259,7 @@ KestraFilterWithLanguage.play = async ({canvasElement, step}) => {
             // Back to the initial suggestions as a space is automatically added after the value
             await expect(await assertMonacoFilterContentToBe(canvas, "singleValue=value2 "));
 
-            await waitFor(() => assertSuggestions(canvas, ["singleValue", "multiValue", "text"]), {timeout: 5000});
+            await waitFor(() => assertSuggestions(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]), {timeout: 5000});
         },
     );
 };
@@ -274,7 +281,7 @@ KestraFilterWithLanguage_MultiValueAnotherComparator.play = async ({canvasElemen
         async () => {
             await waitFor(async () => {
                 await user.click(await getMonacoFilterInput(canvas));
-                await assertSuggestions(canvas, ["singleValue", "multiValue", "text"]);
+                await assertSuggestions(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]);
             }, {timeout: 5000});
         },
     );
@@ -313,7 +320,7 @@ KestraFilterWithLanguage_MultiValueAnotherComparator.play = async ({canvasElemen
             await waitFor(async () => expect(await assertMonacoFilterContentToBe(canvas, "multiValue!=anotherValue1,anotherValue2 ")));
             // Back to the initial suggestions
 
-            await waitFor(() => assertSuggestions(canvas, ["singleValue", "multiValue", "text"]), {timeout: 5000});
+            await waitFor(() => assertSuggestions(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]), {timeout: 5000});
 
             await assertRouteQuery(canvas, {"filters[multiValue][NOT_IN]": "anotherValue1,anotherValue2"});
 
@@ -350,6 +357,72 @@ KestraFilterWithLanguage_PopulateValueFromQuery.play = async ({canvasElement, st
                 "filters[singleValue][EQUALS]": "unknownValue StillShouldBeAdded"
             });
         }
+    );
+};
+
+export const KestraFilterWithLanguage_NestedKey: Story = {
+    decorators: getDecorators(),
+    args: {
+        language: TestFilterLanguage.INSTANCE as FilterLanguage
+    }
+};
+
+KestraFilterWithLanguage_NestedKey.play = async ({canvasElement, step}) => {
+    const canvas = within(canvasElement);
+    const user = userEvent.setup();
+
+    await step(
+        "nested key autocompletion should output `nested.`",
+        async () => {
+            await waitFor(async () => {
+                await user.click(await getMonacoFilterInput(canvas));
+                await assertSuggestions(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]);
+            }, {timeout: 5000});
+
+            suggestionWidgetController = {
+                accept: window.acceptSuggestion,
+                next: window.nextSuggestion
+            }
+            suggestionWidgetController.next();
+            suggestionWidgetController.next();
+            const highlightedSuggest = getMonacoFilter(canvas).querySelector(".monaco-list-row.focused");
+            await expect(highlightedSuggest).toHaveTextContent(/^nested\.\{key}$/);
+            suggestionWidgetController.accept();
+
+            await waitFor(async () => expect(await assertMonacoFilterContentToBe(canvas, "nested.")));
+            await assertRouteQuery(canvas, {});
+        }
+    );
+
+    await step(
+        "adding a nested key with a value should add not be colored as error and add the nested key as an extra [...] in the query",
+        async () => {
+            await userEvent.keyboard("deep.key=\"[[And Value],[[With Spaces]\"");
+
+            await waitFor(() => expect(
+                ([...getMonacoFilter(canvas).querySelectorAll(".view-lines .view-line span")] as HTMLElement[])
+                    .map(el => isColoredAsError(el))
+            ).toSatisfy<boolean[]>(areErrors => areErrors.every(isError => !isError)), {timeout: 5000});
+            await assertRouteQuery(canvas, {
+                "filters[nested][EQUALS][deep.key]": "[And Value],[With Spaces]"
+            });
+        },
+    );
+
+    // NOTE We can see a bug here as we have no way to distinguish between multiple values and a single value with a comma (because allowed when having quoted value) as of now
+    await step(
+        "adding a comma and another value should switch the comparator to IN and add the value to the query",
+        async () => {
+            await userEvent.keyboard(",anotherValue");
+
+            await waitFor(() => expect(
+                ([...getMonacoFilter(canvas).querySelectorAll(".view-lines .view-line span")] as HTMLElement[])
+                    .map(el => isColoredAsError(el))
+            ).toSatisfy<boolean[]>(areErrors => areErrors.every(isError => !isError)), {timeout: 5000});
+            await assertRouteQuery(canvas, {
+                "filters[nested][IN][deep.key]": "[And Value],[With Spaces],anotherValue"
+            });
+        },
     );
 };
 

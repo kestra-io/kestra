@@ -14,7 +14,7 @@ dependencies {
     // versions for libraries with multiple module but no BOM
     def slf4jVersion = "2.0.17"
     def protobufVersion = "3.25.5" // Orc still uses 3.25.5 see https://github.com/apache/orc/blob/main/java/pom.xml
-    def bouncycastleVersion = "1.80"
+    def bouncycastleVersion = "1.81"
     def mavenResolverVersion = "1.9.22"
     def jollydayVersion = "0.32.0"
     def jsonschemaVersion = "4.37.0"

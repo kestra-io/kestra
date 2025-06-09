@@ -997,7 +997,8 @@
     "plugins": {
       "name": "プラグイン",
       "names": "プラグイン",
-      "please": "ドキュメントを見るには右側のTaskを選択してください"
+      "please": "ドキュメントを見るには右側のTaskを選択してください",
+      "release": "リリースノート"
     },
     "port": "ポート",
     "prefill inputs": "自動入力",

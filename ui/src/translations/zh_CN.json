@@ -997,7 +997,8 @@
     "plugins": {
       "name": "插件",
       "names": "插件",
-      "please": "请选择右侧的一个任务以查看其文档"
+      "please": "请选择右侧的一个任务以查看其文档",
+      "release": "发行说明"
     },
     "port": "端口",
     "prefill inputs": "预填",

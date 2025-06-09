@@ -997,7 +997,8 @@
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
-      "please": "Bitte wählen Sie rechts einen Task aus, um dessen Dokumentation zu sehen"
+      "please": "Bitte wählen Sie rechts einen Task aus, um dessen Dokumentation zu sehen",
+      "release": "Versionshinweise"
     },
     "port": "Port",
     "prefill inputs": "Vorausfüllen",

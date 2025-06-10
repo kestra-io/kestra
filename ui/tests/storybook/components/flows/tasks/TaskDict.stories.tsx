@@ -18,7 +18,7 @@ const render: Story["render"] = (args) => ({
         const model = ref(args.modelValue || {});
         return () => <>
             <TaskDict modelValue={model.value} schema={{}} onUpdate:modelValue={val => model.value = val}/>
-            <pre>
+            <pre data-testid="sb-meta-data-result">
                 {JSON.stringify(model.value, null, 2)}
             </pre>
         </>
@@ -70,8 +70,8 @@ export const TestDoubleKey: Story = {
         userEvent.clear(newKeyField);
         userEvent.type(newKeyField, "newKey");
 
-        await waitFor(() => {
-            expect(canvas.getByText("\"newKey\": \"newValue\"", {exact: false})).toBeInTheDocument();
+        await waitFor(function valueUpdated() {
+            expect(canvas.getByTestId("sb-meta-data-result")?.innerText).toContain("\"newKey\": \"newValue\"");
         });
     }
 }

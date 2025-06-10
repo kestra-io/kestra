@@ -124,7 +124,7 @@
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
-    import Sections from "./sections/Sections.vue";
+    import Sections from "../sections/Sections.vue";
     import ValidationErrors from "../../flows/ValidationError.vue"
     import BookOpenVariant from "vue-material-design-icons/BookOpenVariant.vue";
     import ChartBar from "vue-material-design-icons/ChartBar.vue";
@@ -142,12 +142,12 @@
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
-    import Markdown from "./MarkdownPanel.vue";
-    import TimeSeries from "./charts/custom/TimeSeries.vue";
-    import Bar from "./charts/custom/Bar.vue";
-    import Pie from "./charts/custom/Pie.vue";
-    import Table from "./tables/custom/Table.vue";
-    import KPI from "./charts/custom/KPI.vue";
+    import Markdown from "../sections/Markdown.vue";
+    import TimeSeries from "../sections/TimeSeries.vue";
+    import Bar from "../sections/Bar.vue";
+    import Pie from "../sections/Pie.vue";
+    import Table from "../sections/Table.vue";
+    import KPI from "../sections/KPI.vue";
 
     export default {
         computed: {

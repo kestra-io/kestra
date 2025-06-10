@@ -442,7 +442,7 @@
       "errorLogs": "Errors logs",
       "no executions": "Ready to see your flow in action?"
     },
-    "dashboards": "Dashboards",
+    "dashboards_label": "Dashboards",
     "executions replayed": "<code>{executionCount}</code> executions(s) replayed",
     "executions state changed": "The state of <code>{executionCount}</code> execution(s) has been changed",
     "executions resumed": "<code>{executionCount}</code> executions(s) resumed",
@@ -1101,9 +1101,13 @@
     "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> is created.",
     "create_dashboard": "Create Dashboard",
     "edit_custom_dashboard": "Edit Dashboard",
-    "custom_dashboard_validate_editing": "Changes in dashboard <code>{title}</code> are saved.",
     "custom_dashboard_confirm_deletion": "Are you sure you want to delete <code>{title}</code> dashboard?",
     "custom_dashboard_empty": "There are no results to be shown.",
+    "dashboards": {
+      "create": "Create Dashboard",
+      "edit": "Edit Dashboard",
+      "confirm": "Changes in dashboard <code>{title}</code> are saved."
+    },
     "filters": {
       "label": "Choose filters",
       "empty": "No data.",

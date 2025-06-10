@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="{title: $t('dashboards')}" />
+    <TopNavBar :title="{title: $t('dashboards_label')}" />
     <section class="full-container">
         <dashboard-editor
             v-if="initialSource"
@@ -63,7 +63,7 @@
         computed: {
             routeInfo() {
                 return {
-                    title: this.$t("dashboards"),
+                    title: this.$t("dashboards_label"),
                 };
             },
         },

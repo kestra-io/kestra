@@ -1,27 +1,35 @@
 <template>
     <span v-if="required" class="me-1 text-danger">*</span>
     <span v-if="label" class="label">{{ label }}</span>
+    <el-alert
+        v-if="alertState.visible"
+        :title="alertState.message"
+        type="error"
+        show-icon
+        :closable="false"
+        class="mb-2"
+    />
     <div class="mt-1 mb-2 w-100 wrapper">
         <el-row
-            v-for="(value, key, index) in props.modelValue"
-            :key="index"
+            v-for="pair in internalPairs"
+            :key="pair.id"
             :gutter="10"
         >
             <el-col :span="8">
                 <InputText
-                    :model-value="key"
+                    :model-value="pair.currentKey"
                     :placeholder="t('key')"
-                    @update:model-value="(changed) => updateKey(key, changed)"
+                    @update:model-value="(changed) => handleKeyInput(pair.id, changed)"
                 />
             </el-col>
             <el-col :span="16" class="d-flex">
                 <InputText
-                    :model-value="value"
+                    :model-value="pair.value"
                     :placeholder="t('value')"
-                    @update:model-value="(changed) => updateValue(key, changed)"
+                    @update:model-value="(changed) => updateValue(pair.id, changed)"
                     class="w-100 me-2"
                 />
-                <DeleteOutline @click="removePair(key)" class="delete" />
+                <DeleteOutline @click="removePair(pair.id)" class="delete" />
             </el-col>
         </el-row>
 
@@ -30,7 +38,8 @@
 </template>
 
 <script setup lang="ts">
-    import {PropType} from "vue";
+    import {ref, watch, reactive, PropType} from "vue";
+    import {debounce} from "lodash";
 
     import {PairField} from "../../utils/types";
 
@@ -58,45 +67,113 @@
         required: {type: Boolean, default: false},
     });
 
-    const addPair = () => {
-        emits("update:modelValue", {...props.modelValue, "": ""});
+    interface InternalPair {
+        id: string;
+        originalKey: string;
+        currentKey: string;
+        value: string;
+    }
+
+    const internalPairs = ref<InternalPair[]>([]);
+
+    const alertState = reactive({
+        visible: false,
+        message: ""
+    });
+
+    const processAndEmitPairs = () => {
+        const emittedValue: PairField["value"] = {};
+        let hasDuplicate = false;
+        let duplicateKeyMessage = "";
+
+        const emittedKeys = new Set<string>();
+
+        for (const pair of internalPairs.value) {
+            if (pair.currentKey && !emittedKeys.has(pair.currentKey)) {
+                emittedValue[pair.currentKey] = pair.value;
+                emittedKeys.add(pair.currentKey);
+            } else if (pair.currentKey) {
+                hasDuplicate = true;
+                duplicateKeyMessage = t("duplicate-pair", {label:props.label ?? t("key"), key: pair.currentKey});
+            }
+        }
+
+        alertState.visible = hasDuplicate;
+        alertState.message = duplicateKeyMessage;
+
+        emits("update:modelValue", emittedValue);
     };
-    const removePair = (key: any) => {
-        const values = {...props.modelValue};
-        delete values[key];
 
-        emits("update:modelValue", values);
-    };
-    const updateKey = (old, changed) => {
-        const values = {...props.modelValue};
+    watch(() => props.modelValue, (newModelValue) => {
+        const newModelValueKeys = Object.keys(newModelValue || {});
+        const existingModelValueMap = new Map(Object.entries(newModelValue || {}));
 
-        // Create an array of key-value pairs and preserve order
-        const entries = Object.entries(values);
+        let currentPairsList = internalPairs.value;
 
-        // Find the index of the old key
-        const index = entries.findIndex(([key]) => key === old);
+        // Add new/updated keys to our local pairs
+        for (const key of newModelValueKeys) {
+            const value = existingModelValueMap.get(key) || "";
+            const existingPair = currentPairsList.find(p => p.currentKey === key);
 
-        if (index !== -1) {
-            // Get the value of the old key
-            const [, value] = entries[index];
+            if (existingPair) {
+                if (value === existingPair.value) continue;
+                currentPairsList = currentPairsList.filter(p => p.id !== existingPair.id);
+            }
+            currentPairsList.push({
+                id: existingPair?.id || crypto.randomUUID(),
+                originalKey: existingPair?.currentKey || key,
+                currentKey: existingPair?.currentKey || key,
+                value: value,
+            });
+        }
 
-            // Remove the old key from the entries
-            entries.splice(index, 1);
+        // Removed keys from our local pairs
+        for (const key of currentPairsList.map(p => p.currentKey)) {
+            if (key != "" && !Object.prototype.hasOwnProperty.call(newModelValue, key)) {
+                currentPairsList = currentPairsList.filter(p => p.currentKey !== key);
+            }
+        }
 
-            // Add the new key with the same value
-            entries.splice(index, 0, [changed, value]);
+        internalPairs.value = currentPairsList;
+    }, {immediate: true, deep: true});
 
-            // Rebuild the object while keeping the order
-            const updatedValues = Object.fromEntries(entries);
+    const debouncedSetKey = debounce((pairId: string, newKeyCandidate: string) => {
+        const pair = internalPairs.value.find(p => p.id === pairId);
+        if (pair) {
+            pair.currentKey = newKeyCandidate;
+            processAndEmitPairs();
+        }
+    }, 500);
 
-            // Emit the updated object
-            emits("update:modelValue", updatedValues);
+    const handleKeyInput = (pairId: string, newValue: string) => {
+        const pair = internalPairs.value.find(p => p.id === pairId);
+        if (pair) {
+            pair.currentKey = newValue;
+            debouncedSetKey(pairId, newValue);
         }
     };
-    const updateValue = (key, value) => {
-        const values = {...props.modelValue};
-        values[key] = value;
-        emits("update:modelValue", values);
+
+    const addPair = () => {
+        internalPairs.value.push({
+            id: crypto.randomUUID(),
+            originalKey: "",
+            currentKey: "",
+            value: "",
+        });
+        processAndEmitPairs();
+    };
+
+    const removePair = (pairId: string) => {
+        internalPairs.value = internalPairs.value.filter(p => p.id !== pairId);
+        processAndEmitPairs();
+    };
+
+    const updateValue = (pairId: string, newValue: string) => {
+        const pairToUpdate = internalPairs.value.find(p => p.id === pairId);
+        if (pairToUpdate) {
+            pairToUpdate.value = newValue;
+            processAndEmitPairs();
+        }
     };
 </script>
 

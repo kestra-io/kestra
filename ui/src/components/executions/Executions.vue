@@ -58,7 +58,7 @@
             </template>
 
             <template v-if="showStatChart()" #top>
-                <ChartsSection
+                <Sections
                     :charts="charts"
                     :show-default="true"
                     :full-size="true"
@@ -411,7 +411,7 @@
     import RunFast from "vue-material-design-icons/RunFast.vue";
     import ExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/executionFilterLanguage.ts";
     import FlowExecutionFilterLanguage from "../../composables/monaco/languages/filters/impl/flowExecutionFilterLanguage.js";
-    import ChartsSection from "../dashboard/components/ChartsSection.vue";
+    import Sections from "../dashboard/sections/Sections.vue";
 </script>
 
 <script>
@@ -438,7 +438,7 @@
     import {h, ref} from "vue";
     import DateAgo from "../layout/DateAgo.vue";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
-    import YAML_CHART from "../../assets/dashboard/executions_timeseries_chart.yaml?raw";
+    import YAML_CHART from "../dashboard/assets/executions_timeseries_chart.yaml?raw";
 
     import {filterLabels} from "./utils"
 

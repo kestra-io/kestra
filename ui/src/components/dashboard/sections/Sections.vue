@@ -36,17 +36,18 @@
 </template>
 
 <script setup>
+    import {onMounted, ref} from "vue";
+
     import {useRoute, useRouter} from "vue-router";
     const route = useRoute();
     const router = useRouter();
 
-    import TimeSeries from "./charts/custom/TimeSeries.vue";
-    import Bar from "./charts/custom/Bar.vue";
-    import Markdown from "./MarkdownPanel.vue";
-    import Table from "./tables/custom/Table.vue";
-    import Pie from "./charts/custom/Pie.vue";
-    import KPI from "./charts/custom/KPI.vue";
-    import {onMounted, ref} from "vue";
+    import TimeSeries from "./TimeSeries.vue";
+    import Bar from "./Bar.vue";
+    import Markdown from "./Markdown.vue";
+    import Table from "./Table.vue";
+    import Pie from "./Pie.vue";
+    import KPI from "./KPI.vue";
 
     const TYPES = {
         "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,

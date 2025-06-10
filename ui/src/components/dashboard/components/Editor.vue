@@ -47,7 +47,7 @@
         </el-button>
     </div>
     <div class="w-100 p-4" v-if="currentView === views.DASHBOARD">
-        <ChartsSection :charts="charts.map(chart => chart.data)" />
+        <Sections :charts="charts.map(chart => chart.data)" />
     </div>
     <div class="main-editor" v-else>
         <div
@@ -124,7 +124,7 @@
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
-    import ChartsSection from "./ChartsSection.vue";
+    import Sections from "./sections/Sections.vue";
     import ValidationErrors from "../../flows/ValidationError.vue"
     import BookOpenVariant from "vue-material-design-icons/BookOpenVariant.vue";
     import ChartBar from "vue-material-design-icons/ChartBar.vue";

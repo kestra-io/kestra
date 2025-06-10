@@ -14,20 +14,20 @@
 <script lang="ts" setup>
     import {computed, onMounted, ref, watch} from "vue";
 
-    import NoData from "../../../../layout/NoData.vue";
+    import NoData from "../../layout/NoData.vue";
 
     import {Bar} from "vue-chartjs";
 
-    import {customBarLegend} from "../legend.js";
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../../../utils/charts.js";
+    import {customBarLegend} from "../composables/useLegend";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../utils/charts.js";
 
     import {useStore} from "vuex";
     import moment from "moment";
 
     import {useRoute, useRouter} from "vue-router";
     import {cssVariable, Utils} from "@kestra-io/ui-libs";
-    import KestraUtils, {useTheme} from "../../../../../utils/utils"
-    import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
+    import KestraUtils, {useTheme} from "../../../utils/utils"
+    import {decodeSearchParams} from "../../filter/utils/helpers.ts";
 
     const store = useStore();
 

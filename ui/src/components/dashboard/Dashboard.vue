@@ -25,7 +25,7 @@
         />
     </section>
 
-    <ChartsSection :charts :show-default="dashboard.id === 'default'" />
+    <Sections :charts :show-default="dashboard.id === 'default'" />
 </template>
 
 <script setup>
@@ -36,7 +36,7 @@
 
     import Header from "./components/Header.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
-    import ChartsSection from "./components/ChartsSection.vue";
+    import Sections from "./sections/Sections.vue";
 
     import DashboardFilterLanguage from "../../composables/monaco/languages/filters/impl/dashboardFilterLanguage.js";
     import NamespaceDashboardFilterLanguage from "../../composables/monaco/languages/filters/impl/namespaceDashboardFilterLanguage.js";
@@ -45,9 +45,9 @@
     import yaml from "yaml";
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
 
-    import YAML_MAIN from "../../assets/dashboard/default_main_definition.yaml?raw";
-    import YAML_FLOW from "../../assets/dashboard/default_flow_definition.yaml?raw";
-    import YAML_NAMESPACE from "../../assets/dashboard/default_namespace_definition.yaml?raw";
+    import YAML_MAIN from "./assets/default_main_definition.yaml?raw";
+    import YAML_FLOW from "./assets/default_flow_definition.yaml?raw";
+    import YAML_NAMESPACE from "./assets/default_namespace_definition.yaml?raw";
     import Utils from "../../utils/utils.js";
 
     const router = useRouter();

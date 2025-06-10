@@ -87,15 +87,15 @@
     import moment from "moment";
 
     import {useI18n} from "vue-i18n";
-    import Status from "../../../../Status.vue";
-    import NoData from "../../../../layout/NoData.vue";
-    import Pagination from "../../../../layout/Pagination.vue";
+    import Status from "../../Status.vue";
+    import NoData from "../../layout/NoData.vue";
+    import Pagination from "../../layout/Pagination.vue";
 
     import {useStore} from "vuex";
 
     import {useRoute} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
-    import {decodeSearchParams} from "../../../../filter/utils/helpers.ts";
+    import {decodeSearchParams} from "../../filter/utils/helpers.ts";
 
     const {t} = useI18n({useScope: "global"});
 

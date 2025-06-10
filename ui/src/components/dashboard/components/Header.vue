@@ -7,15 +7,10 @@
         <template v-if="isAllowed" #additional-right>
             <ul>
                 <li
-                    v-if="
-                        props.dashboard?.id && props.dashboard?.id !== 'default'
-                    "
+                    v-if="props.dashboard?.id && props.dashboard?.id !== 'default'"
                 >
                     <router-link
-                        :to="{
-                            name: 'dashboards/update',
-                            params: {id: props.dashboard?.id},
-                        }"
+                        :to="{name: 'dashboards/update', params: {id: props.dashboard?.id}}"
                     >
                         <el-button :icon="Pencil">
                             {{ $t("dashboards.edition.label") }}
@@ -70,6 +65,6 @@
         title: props.dashboard?.title ?? t("overview"),
     }));
 
-    import useRouteContext from "../../../mixins/useRouteContext.js";
+    import useRouteContext from "../../../mixins/useRouteContext";
     useRouteContext(route);
 </script>

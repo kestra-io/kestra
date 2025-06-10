@@ -15,11 +15,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <Sections
-                        :charts="charts"
-                        :show-default="true"
-                        :full-size="true"
-                    />
+                    <Sections :charts />
                 </template>
 
                 <template #table v-if="logs !== undefined && logs.length > 0">
@@ -43,6 +39,7 @@
 
 <script setup lang="ts">
     import LogFilterLanguage from "../../composables/monaco/languages/filters/impl/logFilterLanguage";
+    import Sections from "../dashboard/sections/Sections.vue";
 </script>
 
 <script lang="ts">
@@ -59,13 +56,12 @@
     import {decodeSearchParams} from "../filter/utils/helpers";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
-    import Sections from "../dashboard/sections/Sections.vue";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
         components: {
             KestraFilter,
-            DataTable, LogLine, TopNavBar, Sections
+            DataTable, LogLine, TopNavBar
         },
         props: {
             logLevel: {

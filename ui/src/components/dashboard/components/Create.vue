@@ -1,72 +1,62 @@
 <template>
-    <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
+    <TopNavBar :title="header.title" :breadcrumb="header.breadcrumb" />
     <section class="full-container">
-        <dashboard-editor
-            v-if="initialSource"
+        <Editor
+            v-if="dashboard.sourceCode"
+            :initial-source="dashboard.sourceCode"
             allow-save-unchanged
             @save="save"
-            :initial-source
         />
     </section>
 </template>
 
-<script>
-    import RouteContext from "../../../mixins/routeContext";
+<script setup lang="ts">
+    import {onMounted, computed, ref} from "vue";
+
+    import {useRoute, useRouter} from "vue-router";
+    const route = useRoute();
+    const router = useRouter();
+
+    import {useStore} from "vuex";
+    const store = useStore();
+
+    import {useI18n} from "vue-i18n";
+    const {t} = useI18n({useScope: "global"});
+
+    import {useToast} from "../../../utils/toast";
+    const toast = useToast();
+
     import TopNavBar from "../../../components/layout/TopNavBar.vue";
-    import DashboardEditor from "./Editor.vue";
+    import Editor from "../../../components/dashboard/components/Editor.vue";
+
+    import type {Dashboard} from "../../../components/dashboard/composables/useDashboards";
+
+    const dashboard = ref<Dashboard>({id: ""});
+    const save = async (source: string) => {
+        const response = await store.dispatch("dashboard/create", source);
+
+        toast.success(t("dashboards.creation.confirmation", {title: response.title}));
+        store.dispatch("core/isUnsaved", false);
+
+        router.push({name: "home", params: {id: response.id}, query: {created: String(true)}});
+    };
 
     import YAML_MAIN from "../assets/default_main_definition.yaml?raw";
+    onMounted(async () => {
+        const blueprintID = route.query.blueprintId;
 
-    export default {
-        mixins: [RouteContext],
-        components: {
-            DashboardEditor,
-            TopNavBar,
-        },
-        data() {
-            return {
-                initialSource: undefined,
-            };
-        },
-        async beforeMount() {
-            const blueprintId = this.$route.query.blueprintId;
+        dashboard.value = blueprintID
+            ? await store.dispatch("blueprints/getBlueprintSource", {type: "community", kind: "dashboard", id: blueprintID})
+            : YAML_MAIN;
+    });
 
-            this.initialSource = blueprintId
-                ? await this.$store.dispatch("blueprints/getBlueprintSource", {
-                    type: "community",
-                    kind: "dashboard",
-                    id: blueprintId,
-                })
-                : YAML_MAIN;
-        },
-        methods: {
-            async save(input) {
-                const dashboard = await this.$store.dispatch(
-                    "dashboard/create",
-                    input,
-                );
+    const header = computed(() => ({
+        title: dashboard.value?.title || route.params.id,
+        breadcrumb: [{label: t("dashboards.edition.label"), link: {}}],
+    }));
 
-                this.$toast().success(
-                    this.$t("dashboards.creation.confirmation", {
-                        title: dashboard.title,
-                    }),
-                );
+    const context = ref({title: t("dashboards.creation.label")});
 
-                this.$store.dispatch("core/isUnsaved", false);
-                this.$router.push({
-                    name: "home",
-                    params: {id: dashboard.id},
-                    query: {created: true},
-                });
-            },
-        },
-        computed: {
-            routeInfo() {
-                return {
-                    title: this.$t("dashboards.labels.singular"),
-                    breadcrumb: [{label: this.$t("dashboards.creation.label"), link: {}}],
-                };
-            },
-        },
-    };
+    import useRouteContext from "../../../mixins/useRouteContext";
+    useRouteContext(context);
 </script>

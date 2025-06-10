@@ -75,7 +75,7 @@
                 </template>
 
                 <template v-if="showStatChart()" #top>
-                    <Sections :charts />
+                    <Sections :charts show-default />
                 </template>
 
                 <template #table>

@@ -36,7 +36,7 @@
     </TopNavBar>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed} from "vue";
 
     import {useStore} from "vuex";
@@ -57,13 +57,9 @@
     const props = defineProps({dashboard: {type: Object, default: undefined}});
 
     const user = computed(() => store.state.auth.user);
-    const isAllowed = computed(() =>
-        user.value.isAllowedGlobal(permission.FLOW, action.CREATE),
-    );
+    const isAllowed = computed(() => user.value.isAllowedGlobal(permission.FLOW, action.CREATE));
 
-    const route = computed(() => ({
-        title: props.dashboard?.title ?? t("overview"),
-    }));
+    const route = computed(() => ({title: props.dashboard?.title ?? t("overview")}));
 
     import useRouteContext from "../../../mixins/useRouteContext";
     useRouteContext(route);

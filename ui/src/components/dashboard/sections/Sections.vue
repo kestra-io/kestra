@@ -9,12 +9,7 @@
                 :md="(chart.chartOptions?.width || 6) * 2"
             >
                 <div class="d-flex flex-column">
-                    <p
-                        v-if="
-                            chart.type !==
-                                'io.kestra.plugin.core.dashboard.chart.KPI'
-                        "
-                    >
+                    <p v-if="!isKPIChart(chart.type)">
                         <span class="fs-6 fw-bold">{{
                             labels(chart).title
                         }}</span>
@@ -42,28 +37,30 @@
     </section>
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {onMounted, ref} from "vue";
 
     import {useRoute, useRouter} from "vue-router";
     const route = useRoute();
     const router = useRouter();
 
-    import TimeSeries from "./TimeSeries.vue";
     import Bar from "./Bar.vue";
-    import Markdown from "./Markdown.vue";
-    import Table from "./Table.vue";
-    import Pie from "./Pie.vue";
     import KPI from "./KPI.vue";
+    import Markdown from "./Markdown.vue";
+    import Pie from "./Pie.vue";
+    import Table from "./Table.vue";
+    import TimeSeries from "./TimeSeries.vue";
 
     const TYPES = {
-        "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
         "io.kestra.plugin.core.dashboard.chart.Bar": Bar,
-        "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
-        "io.kestra.plugin.core.dashboard.chart.Table": Table,
-        "io.kestra.plugin.core.dashboard.chart.Pie": Pie,
         "io.kestra.plugin.core.dashboard.chart.KPI": KPI,
+        "io.kestra.plugin.core.dashboard.chart.Markdown": Markdown,
+        "io.kestra.plugin.core.dashboard.chart.Pie": Pie,
+        "io.kestra.plugin.core.dashboard.chart.Table": Table,
+        "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
     };
+
+    const isKPIChart = (type: string) => type === "io.kestra.plugin.core.dashboard.chart.KPI";
 
     const defaultFilters = ref([]);
 

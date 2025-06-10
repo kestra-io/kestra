@@ -35,7 +35,7 @@
 
         dashboard.value.sourceCode = source;
 
-        toast.success(t("dashboards.confirm", {title: response.title}));
+        toast.success(t("dashboards.edition.confirmation", {title: response.title}));
         store.dispatch("core/isUnsaved", false);
     };
 
@@ -47,10 +47,10 @@
 
     const header = computed(() => ({
         title: dashboard.value?.title || route.params.id,
-        breadcrumb: [{label: t("dashboards.edit"), link: {}}],
+        breadcrumb: [{label: t("dashboards.edition.label"), link: {}}],
     }));
 
-    const context = ref({title: t("dashboards.edit")});
+    const context = ref({title: t("dashboards.edition.label")});
 
     import useRouteContext from "../../../mixins/useRouteContext";
     useRouteContext(context);

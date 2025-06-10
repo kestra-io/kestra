@@ -79,7 +79,7 @@
         />
     </template>
 
-    <NoData v-else :text="t('custom_dashboard_empty')" />
+    <NoData v-else :text="t('dashboards.empty')" />
 </template>
 
 <script lang="ts" setup>

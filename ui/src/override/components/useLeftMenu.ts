@@ -46,7 +46,7 @@ export function useLeftMenu() {
         return [
             {
                 href: {name: "home"},
-                title: t("homeDashboard.title"),
+                title: t("dashboards.label.plural"),
                 icon: {
                     element: shallowRef(ViewDashboardVariantOutline),
                     class: "menu-icon",

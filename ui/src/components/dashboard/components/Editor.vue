@@ -22,7 +22,7 @@
                     @click="setView(views.CHART)"
                 />
             </el-tooltip>
-            <el-tooltip :content="$t('dashboard.preview')">
+            <el-tooltip :content="$t('dashboards.preview')">
                 <el-button
                     :type="buttonType(views.DASHBOARD)"
                     :icon="ViewDashboard"
@@ -111,7 +111,7 @@
                     <el-empty :image="EmptyVisualDashboard" :image-size="200">
                         <template #description>
                             <h5>
-                                {{ $t("dashboard.click_chart_preview") }}
+                                {{ $t("dashboards.chart_preview") }}
                             </h5>
                         </template>
                     </el-empty>

@@ -1,5 +1,5 @@
 <template>
-    <TopNavBar :title="{title: $t('dashboards_label')}" />
+    <TopNavBar :title="routeInfo.title" :breadcrumb="routeInfo.breadcrumb" />
     <section class="full-container">
         <dashboard-editor
             v-if="initialSource"
@@ -47,7 +47,7 @@
                 );
 
                 this.$toast().success(
-                    this.$t("custom_dashboard_validate_creation", {
+                    this.$t("dashboards.creation.confirmation", {
                         title: dashboard.title,
                     }),
                 );
@@ -63,7 +63,8 @@
         computed: {
             routeInfo() {
                 return {
-                    title: this.$t("dashboards_label"),
+                    title: this.$t("dashboards.labels.singular"),
+                    breadcrumb: [{label: this.$t("dashboards.creation.label"), link: {}}],
                 };
             },
         },

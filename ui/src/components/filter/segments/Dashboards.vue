@@ -2,7 +2,7 @@
     <el-dropdown trigger="click" placement="bottom-end">
         <KestraIcon placement="bottom">
             <el-button :icon="Menu" class="main-button">
-                <span class="text-truncate">{{ selectedDashboard ?? $t('default_dashboard') }}</span>
+                <span class="text-truncate">{{ selectedDashboard ?? $t('dashboards.default') }}</span>
             </el-button>
         </KestraIcon>
 
@@ -15,7 +15,7 @@
                     :to="{name: 'dashboards/create'}"
                     class="w-100"
                 >
-                    <small>{{ t("create_custom_dashboard") }}</small>
+                    <small>{{ t("dashboards.creation.label") }}</small>
                 </el-button>
 
                 <el-input
@@ -31,7 +31,7 @@
                     @click="selectDashboard({id: 'default'})"
                     :class="{'mt-3': filtered.length < 10}"
                 >
-                    <small>{{ t("default_dashboard") }}</small>
+                    <small>{{ t("dashboards.default") }}</small>
                 </el-dropdown-item>
 
                 <hr class="my-2">
@@ -62,7 +62,7 @@
                         v-if="!filtered.length"
                         class="px-3 text-center empty"
                     >
-                        {{ t("custom_dashboard_empty") }}
+                        {{ t("dashboards.empty") }}
                     </span>
                 </div>
             </el-dropdown-menu>
@@ -88,7 +88,7 @@
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
 
     const remove = (dashboard: any) => {
-        toast.confirm(t("custom_dashboard_confirm_deletion", {title: dashboard.title}), () => {
+        toast.confirm(t("dashboards.deleteion.confirmation", {title: dashboard.title}), () => {
             store.dispatch("dashboard/delete", dashboard.id).then(() => {
                 dashboards.value = dashboards.value.filter((d) => d.id !== dashboard.id);
                 toast.deleted(dashboard.title);

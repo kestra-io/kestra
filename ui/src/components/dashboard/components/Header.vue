@@ -1,7 +1,7 @@
 <template>
     <TopNavBar
         :title="route.title"
-        :breadcrumb="[{label: t('dashboard_label'), link: {}}]"
+        :breadcrumb="[{label: t('dashboards.labels.singular'), link: {}}]"
         :description="props.dashboard?.description"
     >
         <template v-if="isAllowed" #additional-right>
@@ -18,14 +18,14 @@
                         }"
                     >
                         <el-button :icon="Pencil">
-                            {{ $t("edit_custom_dashboard") }}
+                            {{ $t("dashboards.edition.label") }}
                         </el-button>
                     </router-link>
                 </li>
                 <li v-if="!props.dashboard?.id">
                     <router-link :to="{name: 'dashboards/create'}">
                         <el-button :icon="ViewDashboardEdit">
-                            {{ $t("create_dashboard") }}
+                            {{ $t("dashboards.creation.label") }}
                         </el-button>
                     </router-link>
                 </li>

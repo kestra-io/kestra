@@ -3,7 +3,7 @@
         <Header
             :title="dashboard.title ?? t('overview')"
             :description="dashboard.description"
-            :breadcrumb="[{label: t('dashboard_label'), link: {}}]"
+            :breadcrumb="[{label: t('dashboards.labels.singular'), link: {}}]"
             :id="dashboard.id"
         />
     </section>

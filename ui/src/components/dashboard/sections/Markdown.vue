@@ -5,7 +5,7 @@
         </section>
     </template>
 
-    <NoData v-else :text="t('custom_dashboard_empty')" />
+    <NoData v-else :text="t('dashboards.empty')" />
 </template>
 
 <script setup lang="ts">
@@ -46,7 +46,7 @@
             const result = await store.dispatch("dashboard/generate", params);
             const description = result.results?.[0]?.description;
 
-            source.value = description ? description : t("dashboard.no_flow_description");
+            source.value = description ? description : t("dashboards.empty");
         } else {
             const result = await store.dispatch("dashboard/chartPreview", {
                 chart: props.chart.content,

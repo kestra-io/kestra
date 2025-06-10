@@ -20,12 +20,11 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, onMounted, h, inject} from "vue";
+    import {ref, onMounted, inject} from "vue";
     import {useI18n} from "vue-i18n";
     import InputText from "../code/components/inputs/InputText.vue";
     import Add from "../code/components/Add.vue";
     import {DeleteOutline} from "../code/utils/icons";
-    import MetadataInputsContent from "./MetadataInputsContent.vue";
     import {BREADCRUMB_INJECTION_KEY, PANEL_INJECTION_KEY} from "../code/injectionKeys";
 
     interface InputType {
@@ -38,13 +37,11 @@
 
     const props = withDefaults(defineProps<{
         modelValue: InputType[];
-        inputs: InputType[];
         label: string;
         required?: boolean;
         disabled?: boolean;
     }>(), {
         modelValue: () => [],
-        inputs: () => [],
         required: false,
         disabled: false
     });
@@ -62,7 +59,7 @@
     const loading = ref(false);
 
     onMounted(() => {
-        newInputs.value = props.inputs;
+        newInputs.value = props.modelValue;
     });
 
     const selectInput = async (input: InputType, index: number) => {
@@ -70,21 +67,15 @@
         selectedInput.value = input;
         selectedIndex.value = index;
 
-        panel.value = h(MetadataInputsContent, {
-            modelValue: input,
-            inputs: props.inputs,
-            label: t("inputs"),
-            selectedIndex: index,
-            "onUpdate:modelValue": updateSelected,
-        });
+        panel.value = {
+            props: {
+                selectedIndex: index,
+            }
+        };
 
         breadcrumbs.value.push({
             label: t("inputs".toLowerCase()),
         });
-    };
-
-    const updateSelected = (value: InputType[]) => {
-        newInputs.value = value;
     };
 
     const deleteInput = (index: number) => {

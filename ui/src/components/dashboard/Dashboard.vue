@@ -9,7 +9,7 @@
                 refresh: {shown: true, callback: () => refresh()},
                 settings: {shown: false},
             }"
-            :dashboards="{shown: route.name === 'home'}"
+            :dashboards="{shown: ALLOWED_CREATION_ROUTES.includes(String(route.name))}"
             @dashboard="(value) => load(value)"
             :key
         />
@@ -42,6 +42,8 @@
     import YAML_MAIN from "./assets/default_main_definition.yaml?raw";
     import YAML_FLOW from "./assets/default_flow_definition.yaml?raw";
     import YAML_NAMESPACE from "./assets/default_namespace_definition.yaml?raw";
+
+    const ALLOWED_CREATION_ROUTES = ["home", "flows/update", "namespaces/update"];
 
     import UTILS from "../../utils/utils.js";
 
@@ -77,8 +79,7 @@
     };
 
     const load = async (id = "default", defaultYAML = YAML_MAIN) => {
-        // Only load if the route is one of the ones below
-        if (!["home", "flows/update", "namespaces/update"].includes(String(route.name))) {
+        if (!ALLOWED_CREATION_ROUTES.includes(String(route.name))) {
             return;
         }
 

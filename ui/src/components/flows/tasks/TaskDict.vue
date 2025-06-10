@@ -27,7 +27,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {ref, watch} from "vue";
+    import {computed, ref, watch} from "vue";
     import {DeleteOutline} from "../../code/utils/icons";
 
     import InputText from "../../code/components/inputs/InputText.vue";
@@ -53,10 +53,6 @@
         definitions: {
             type: Object,
             default: () => ({}),
-        },
-        disabledAdding: {
-            type: Boolean,
-            default: false,
         },
         root: {
             type: String,
@@ -119,6 +115,10 @@
         currentValue.value.push(["", undefined]);
         emitUpdate()
     }
+
+    const disabledAdding = computed(() => {
+        return currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
+    });
 </script>
 
 <style scoped lang="scss">

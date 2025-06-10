@@ -739,7 +739,7 @@
                 );
 
                 if (this.namespace) {
-                    queryFilter["filters[namespace][EQUALS]"] = this.namespace;
+                    queryFilter["filters[namespace][EQUALS]"] = this.$route.params.id || this.namespace;
                 }
 
                 return _merge(base, queryFilter);

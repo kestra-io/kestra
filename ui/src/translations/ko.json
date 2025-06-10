@@ -372,6 +372,7 @@
       "comment_uncomment": "주석 처리/주석 해제",
       "decrease_fontsize": "글꼴 크기 줄이기",
       "duplicate_cursor": "커서 복제",
+      "execute_flow": "flow 실행",
       "fold_unfold": "코드 접기/펼치기",
       "increase_fontsize": "글꼴 크기 증가",
       "label": "키보드 단축키",
@@ -996,7 +997,8 @@
     "plugins": {
       "name": "플러그인",
       "names": "플러그인들",
-      "please": "오른쪽에서 task를 선택하여 해당 문서를 확인하세요."
+      "please": "오른쪽에서 task를 선택하여 해당 문서를 확인하세요.",
+      "release": "릴리스 노트"
     },
     "port": "포트",
     "prefill inputs": "미리 채우기",

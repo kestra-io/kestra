@@ -372,6 +372,7 @@
       "comment_uncomment": "Komentarz/Odkomentuj",
       "decrease_fontsize": "Zmniejsz rozmiar czcionki",
       "duplicate_cursor": "Duplikuj kursor",
+      "execute_flow": "Uruchom flow",
       "fold_unfold": "Zwiń/Rozwiń kod",
       "increase_fontsize": "Zwiększ rozmiar czcionki",
       "label": "Skróty klawiaturowe",
@@ -996,7 +997,8 @@
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
-      "please": "Proszę wybrać task po prawej, aby zobaczyć jego dokumentację"
+      "please": "Proszę wybrać task po prawej, aby zobaczyć jego dokumentację",
+      "release": "Informacje o wydaniu"
     },
     "port": "Port",
     "prefill inputs": "Wypełnij",

@@ -60,7 +60,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
         const keyLabelToRegex = (keyLabel: string) => {
             return new RegExp(keyLabel
                 .replaceAll(".", "\\.")
-                .replaceAll(/\{[^}]*}/g, "(?:\"[^,\"]*\"|[^\\s,\"]*?(?=" + COMPARATORS_REGEX + "|\\s|$))"));
+                .replaceAll(/\{[^}]*}/g, "(?:\"[^\"]*\"|[^\\s,\"]*?(?=" + COMPARATORS_REGEX + "|\\s|$))"));
         };
 
         if (this._filterLanguage && monaco.languages.getLanguages().find(l => l.id === this.language) === undefined) {
@@ -123,7 +123,7 @@ export default class FilterLanguageConfigurator extends AbstractLanguageConfigur
                     ],
                     value: [
                         [/"[^"]+(?![^"]*")/, "invalid"],
-                        [new RegExp("\"[^\\n,\"]*\""), {
+                        [new RegExp("\"[^\\n\"]*\""), {
                             token: "variable.value",
                             next: "@separator"
                         }],

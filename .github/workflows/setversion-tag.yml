@@ -22,11 +22,11 @@ jobs:
             echo "Invalid release version. Must match regex: ^[0-9]+(\.[0-9]+)(\.[0-9]+)-(rc[0-9])?(-SNAPSHOT)?$"
             exit 1
           fi
-          
+
           # Extract the major and minor versions
           BASE_VERSION=$(echo "$RELEASE_VERSION" | sed -E 's/^([0-9]+\.[0-9]+)\..*/\1/')
           RELEASE_BRANCH="refs/heads/releases/v${BASE_VERSION}.x"
-          
+
           CURRENT_BRANCH="$GITHUB_REF"
           if ! [[ "$CURRENT_BRANCH" == "$RELEASE_BRANCH" ]]; then
             echo "Invalid release branch. Expected $RELEASE_BRANCH, was $CURRENT_BRANCH"
@@ -54,4 +54,4 @@ jobs:
           git commit -m"chore(version): update to version '$RELEASE_VERSION'"
           git push
           git tag -a "v$RELEASE_VERSION" -m"v$RELEASE_VERSION"
-          git push origin "v$RELEASE_VERSION"
+          git push --tags

@@ -372,6 +372,7 @@
       "comment_uncomment": "コメント/コメント解除",
       "decrease_fontsize": "フォントサイズを縮小",
       "duplicate_cursor": "カーソルを複製",
+      "execute_flow": "フローを実行",
       "fold_unfold": "コードを折りたたむ/展開する",
       "increase_fontsize": "フォントサイズを大きくする",
       "label": "キーボードショートカット",
@@ -996,7 +997,8 @@
     "plugins": {
       "name": "プラグイン",
       "names": "プラグイン",
-      "please": "ドキュメントを見るには右側のTaskを選択してください"
+      "please": "ドキュメントを見るには右側のTaskを選択してください",
+      "release": "リリースノート"
     },
     "port": "ポート",
     "prefill inputs": "自動入力",

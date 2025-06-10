@@ -55,7 +55,7 @@
     const position = inject(POSITION_INJECTION_KEY, "after");
     const creatingTask = inject(
         CREATING_TASK_INJECTION_KEY,
-        ref(false),
+        false,
     );
     const exitTaskElement = inject(
         CLOSE_TASK_FUNCTION_INJECTION_KEY,
@@ -90,11 +90,16 @@
 
     const yaml = ref("");
 
+    function getPath(parentPath: string, refPath: number | undefined): string {
+        return refPath !== undefined && refPath !== null ? `${parentPath}[${refPath}]` : parentPath;
+    }
+
     watch(flow, (source) => {
-        if(!creatingTask.value){
+        if(!creatingTask){
+            const path = getPath(parentPath, refPath);
             const taskYaml = YAML_UTILS.extractBlockWithPath({
                 source,
-                path: `${parentPath}[${refPath}]`,
+                path,
             }) ?? ""
 
             if(taskYaml === yaml.value){
@@ -157,15 +162,16 @@
     const saveTask = () => {
         let result: string = flow.value;
 
-        if (!creatingTask.value) {
+        if (!creatingTask) {
             if(yaml.value){
+                const path = getPath(parentPath, refPath);
                 result = YAML_UTILS.replaceBlockWithPath({
                     source: result,
-                    path: `${parentPath}[${refPath}]`,
+                    path,
                     newContent: yaml.value,
                 });
             }
-        }else if(!hasMovedToEdit.value && blockType){
+        } else if(!hasMovedToEdit.value && blockType){
             const currentSection = section.value as keyof typeof SECTIONS_MAP;
 
             if(!currentSection) {

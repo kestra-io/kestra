@@ -1,5 +1,5 @@
 import {markRaw} from "vue";
-import type {Meta, StoryObj} from "@storybook/vue3";
+import type {Meta, StoryObj} from "@storybook/vue3-vite";
 import {vueRouter} from "storybook-vue3-router";
 import Card from "../../../../../src/components/dashboard/components/Card.vue";
 import AccountMultiple from "vue-material-design-icons/AccountMultiple.vue";

@@ -61,6 +61,7 @@
 #plugin-jenkins:io.kestra.plugin:plugin-jenkins:LATEST
 #plugin-jira:io.kestra.plugin:plugin-jira:LATEST
 #plugin-kafka:io.kestra.plugin:plugin-kafka:LATEST
+#plugin-kestra:io.kestra.plugin:plugin-kestra:LATEST
 #plugin-kubernetes:io.kestra.plugin:plugin-kubernetes:LATEST
 #plugin-langchain4j:io.kestra.plugin:plugin-langchain4j:LATEST
 #plugin-ldap:io.kestra.plugin:plugin-ldap:LATEST
@@ -94,6 +95,7 @@
 #plugin-scripts:io.kestra.plugin:plugin-script-shell:LATEST
 #plugin-serdes:io.kestra.plugin:plugin-serdes:LATEST
 #plugin-servicenow:io.kestra.plugin:plugin-servicenow:LATEST
+#plugin-sifflet:io.kestra.plugin:plugin-sifflet:LATEST
 #plugin-singer:io.kestra.plugin:plugin-singer:LATEST
 #plugin-soda:io.kestra.plugin:plugin-soda:LATEST
 #plugin-solace:io.kestra.plugin:plugin-solace:LATEST

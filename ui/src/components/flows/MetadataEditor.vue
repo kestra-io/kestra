@@ -280,7 +280,7 @@
                     id: this.newMetadata.id,
                     namespace: this.newMetadata.namespace,
                     description: this.newMetadata.description,
-                    retry: retry,
+                    retry: retry && Object.keys(retry).length > 0 ? retry : undefined,
                     labels: this.arrayToObject(this.newMetadata.labels),
                     inputs: this.newMetadata.inputs.filter(e => e.id && e.type),
                     variables: this.arrayToObject(this.newMetadata.variables),

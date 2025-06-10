@@ -12,7 +12,7 @@
                         {{ props.fieldKey }}
                     </span>
                     <ClearButton
-                        v-if="isAnyOf && !required"
+                        v-if="isAnyOf && !required && modelValue && Object.keys(modelValue).length > 0"
                         @click="$emit('update:modelValue', undefined); taskComponent?.resetSelectType?.();"
                     />
                 </div>
@@ -48,6 +48,7 @@
             ref="taskComponent"
             :is="type"
             v-bind="{...componentProps}"
+            :disabled
             class="mt-1 mb-2 wrapper"
         />
     </el-form-item>
@@ -69,6 +70,7 @@
         task: any;
         modelValue?: Record<string, any> | string | number | boolean | Array<any>,
         required?: string[];
+        disabled?: boolean;
     }>()
 
     const emit = defineEmits<{

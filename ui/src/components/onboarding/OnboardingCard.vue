@@ -27,55 +27,33 @@
     </el-card>
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {computed} from "vue";
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue";
     import Monitor from "vue-material-design-icons/Monitor.vue";
     import Slack from "./components/SlackLogo.vue";
     import PlayBox from "vue-material-design-icons/PlayBoxMultiple.vue";
-</script>
-<script>
     import Markdown from "../layout/Markdown.vue";
 
-    export default {
-        name: "OnboardingCard",
-        components: {Markdown},
-        props: {
-            title: {
-                type: String,
-                required: true,
-            },
-            category: {
-                type: String,
-                required: true,
-            },
-        },
+    interface Props {
+        title: string;
+        category: string;
+    }
 
-        methods: {
-            getIcon() {
-                switch (this.category) {
-                case "help":
-                    return Slack;
-                case "tutorial":
-                    return PlayBox;
-                case "tour":
-                    return Monitor;
-                default:
-                    return Monitor;
-                }
-            },
-            getLink() {
-                const links = {
-                    help: "https://kestra.io/slack",
-                };
-                return links[this.category] || "#";
-            },
-        },
-        computed: {
-            isOpenInNewCategory() {
-                return this.category === "help";
-            },
-        },
+    const props = defineProps<Props>();
+
+    const getIcon = () => ({help: Slack, tutorial: PlayBox, tour: Monitor}[props.category] || Monitor);
+
+    const getLink = () => {
+        const links = {
+            help: "https://kestra.io/slack",
+        };
+        return links[props.category as keyof typeof links] || "#";
     };
+
+    const isOpenInNewCategory = computed(() => {
+        return props.category === "help";
+    });
 </script>
 
 <style scoped lang="scss">

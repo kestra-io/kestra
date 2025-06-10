@@ -72,7 +72,8 @@ public class Worker implements Service, Runnable, AutoCloseable {
     private static final String SERVICE_PROPS_WORKER_GROUP = "worker.group";
 
     @Inject
-    private WorkerJobQueueInterface workerJobQueue;
+    @Named(QueueFactoryInterface.WORKERJOB_NAMED)
+    private QueueInterface<WorkerJob> workerJobQueue;
 
     @Inject
     @Named(QueueFactoryInterface.WORKERTASKRESULT_NAMED)

@@ -14,6 +14,12 @@
         :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
         @update:model-value="onInput($event.toISOString())"
     />
+    <InputText
+        v-else-if="disabled"
+        :model-value="modelValue"
+        disabled
+        class="w-100"
+    />
     <editor
         v-else
         :model-value="editorValue"
@@ -28,13 +34,24 @@
         :large-suggestions="false"
     />
 </template>
+<script setup>
+    import Editor from "../../../components/inputs/Editor.vue";
+    import InputText from "../../code/components/inputs/InputText.vue";
+
+</script>
 <script>
     import Task from "./Task";
-    import Editor from "../../../components/inputs/Editor.vue";
 
     export default {
+        inheritAttrs: false,
         mixins: [Task],
         components: {Editor},
+        props:{
+            disabled: {
+                type: Boolean,
+                default: false,
+            },
+        },
         emits: ["update:modelValue"],
         computed: {
             isValid() {

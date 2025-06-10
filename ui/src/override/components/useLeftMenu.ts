@@ -163,6 +163,17 @@ export function useLeftMenu() {
                 },
                 child: [
                     {
+                        title: t("blueprints.custom"),
+                        routes: routeStartWith("blueprints/flow"),
+                        attributes: {
+                            locked: true,
+                        },
+                        href: {
+                            name: "blueprints",
+                            params: {kind: "flow", tab: "custom"},
+                        },
+                    },
+                    {
                         title: t("blueprints.flows"),
                         routes: routeStartWith("blueprints/flow"),
                         href: {

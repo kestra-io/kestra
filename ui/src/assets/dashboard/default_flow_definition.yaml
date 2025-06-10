@@ -40,7 +40,7 @@ charts:
           values:
             - FAILED
 
-  - id: kpi_in_progress_ration
+  - id: kpi_in_progress_ratio
     type: io.kestra.plugin.core.dashboard.chart.KPI
     chartOptions:
       displayName: Running Ratio
@@ -61,7 +61,7 @@ charts:
             - RETRYING
             - RESTARTED
 
-  - id: kpi_pending_ration
+  - id: kpi_pending_ratio
     type: io.kestra.plugin.core.dashboard.chart.KPI
     chartOptions:
       displayName: Pending Ratio
@@ -104,8 +104,8 @@ charts:
           displayName: Execution Id
           agg: COUNT
         state:
-          displayName: State
           field: STATE
+          displayName: State
 
   - id: total_executions_timeseries
     type: io.kestra.plugin.core.dashboard.chart.TimeSeries
@@ -130,8 +130,8 @@ charts:
           agg: COUNT
           graphStyle: BARS
         duration:
-          displayName: Duration
           field: DURATION
+          displayName: Duration
           agg: SUM
           graphStyle: LINES
 

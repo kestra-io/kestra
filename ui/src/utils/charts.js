@@ -185,14 +185,10 @@ export function backgroundFromState(state, alpha = 1) {
 }
 
 export function getConsistentHEXColor(theme, value) {
-    // if (!value) {
-    //     return "#ffffff";
-    // }
-
     let hex;
 
     hex = getSchemeValue(value, "executions");
-    if (hex) {
+    if (hex && hex !== "transparent") {
         return hex;
     }
 

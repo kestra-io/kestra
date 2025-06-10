@@ -48,11 +48,30 @@ export const TestDoubleKey: Story = {
     play: async ({canvasElement}) => {
         const canvas = within(canvasElement);
         userEvent.click(await canvas.findByText("+ Add a new value"));
-        const keys = await waitFor(async () => {
-            const keysIn = await canvas.findAllByPlaceholderText("Key")
-            expect(keysIn.length).toBe(4);
-            return keysIn;
+        const newLine = within(await canvas.findByTestId("task-dict-item--3"));
+
+        const newKeyField = await newLine.getByPlaceholderText("Key")
+
+        // first test with a duplicated value and make sure there is no error
+        await userEvent.type(newKeyField, "key2");
+
+        // find the monaco editor and type in the value
+        const monacoEditor = await waitFor(async function monacoInit() {
+            const mon = (await canvas.findByTestId("task-dict-item-key2-3"))?.querySelector(".ks-monaco-editor") as any;
+            if (!mon?.__setValueInTests) {
+                throw new Error("Monaco editor not found");
+            }
+            return mon;
         });
-        userEvent.type(keys[keys.length - 1], "key4");
+        monacoEditor?.__setValueInTests("newValue");
+
+        // if the field disappears because of duplication,
+        // this line will error and the test fail
+        userEvent.clear(newKeyField);
+        userEvent.type(newKeyField, "newKey");
+
+        await waitFor(() => {
+            expect(canvas.getByText("\"newKey\": \"newValue\"", {exact: false})).toBeInTheDocument();
+        });
     }
 }

@@ -1,5 +1,5 @@
 <template>
-    <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100">
+    <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
         <el-col :span="6">
             <InputText
                 :model-value="item[0]"

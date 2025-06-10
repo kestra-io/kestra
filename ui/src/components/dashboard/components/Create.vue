@@ -45,14 +45,14 @@
     onMounted(async () => {
         const blueprintID = route.query.blueprintId;
 
-        dashboard.value = blueprintID
+        dashboard.value.sourceCode = blueprintID
             ? await store.dispatch("blueprints/getBlueprintSource", {type: "community", kind: "dashboard", id: blueprintID})
             : YAML_MAIN;
     });
 
     const header = computed(() => ({
-        title: dashboard.value?.title || route.params.id,
-        breadcrumb: [{label: t("dashboards.edition.label"), link: {}}],
+        title: t("dashboards.labels.singular"),
+        breadcrumb: [{label: t("dashboards.creation.label"), link: {}}],
     }));
 
     const context = ref({title: t("dashboards.creation.label")});

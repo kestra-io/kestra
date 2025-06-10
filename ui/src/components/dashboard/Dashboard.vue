@@ -18,12 +18,14 @@
     <Sections :charts :show-default="dashboard.id === 'default'" padding />
 </template>
 
-<script setup>
+<script setup lang="ts">
     import {computed, onBeforeMount, ref} from "vue";
 
     import Header from "./components/Header.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import Sections from "./sections/Sections.vue";
+
+    import type {Dashboard, Chart} from "../composables/useDashboards";
 
     import FILTER_LANGUAGE_MAIN from "../../composables/monaco/languages/filters/impl/dashboardFilterLanguage.js";
     import FILTER_LANGUAGE_NAMESPACE from "../../composables/monaco/languages/filters/impl/namespaceDashboardFilterLanguage.js";
@@ -56,13 +58,13 @@
         isNamespace: {type: Boolean, default: false},
     });
 
-    const dashboard = ref({});
-    const charts = ref([]);
+    const dashboard = ref<Dashboard>({id: ""});
+    const charts = ref<Chart[]>([]);
 
     // We use a key to force re-rendering of the Sections component when the refresh button is clicked
     const key = ref(UTILS.uid());
 
-    const loadCharts = async (allCharts) => {
+    const loadCharts = async (allCharts: Chart[] = []) => {
         charts.value = [];
         for (const chart of allCharts) {
             charts.value.push({...chart, content: stringify(chart)});
@@ -76,7 +78,7 @@
 
     const load = async (id = "default", defaultYAML = YAML_MAIN) => {
         // Only load if the route is one of the ones below
-        if (!["home", "flows/update", "namespaces/update"].includes(route.name)) {
+        if (!["home", "flows/update", "namespaces/update"].includes(String(route.name))) {
             return;
         }
 
@@ -92,7 +94,7 @@
     };
 
     onBeforeMount(() => {
-        if (props.isFlow) load("default", YAML_FLOW.replace(/--NAMESPACE--/g, route.params.namespace).replace(/--FLOW--/g, route.params.id));
+        if (props.isFlow) load("default", YAML_FLOW.replace(/--NAMESPACE--/g, String(route.params.namespace)).replace(/--FLOW--/g, String(route.params.id)));
         else if (props.isNamespace) load("default", YAML_NAMESPACE);
     });
 </script>

@@ -4,3 +4,8 @@ export type Dashboard = {
     sourceCode?: string;
     [key: string]: unknown;
 };
+
+export type Chart = {
+    id: string;
+    [key: string]: unknown;
+};

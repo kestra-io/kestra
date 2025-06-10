@@ -154,7 +154,7 @@
                     task: this.modelValue,
                     schema: schema,
                     definitions: this.definitions,
-                    required: this.schema?.required,
+                    required: this.requiredProperties.map(([p]) => p),
                 };
             },
         },

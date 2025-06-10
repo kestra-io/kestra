@@ -71,6 +71,10 @@
     };
 
     onMounted(() => {
+        loading.value = true;
+        store.dispatch("plugin/loadInputsType")
+            .then(() => loading.value = false);
+
         if(selectedInput.value.type) {
             loadSchema(selectedInput.value.type);
         } else {

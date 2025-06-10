@@ -20,7 +20,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, onMounted, inject} from "vue";
+    import {ref, watch, inject} from "vue";
     import {useI18n} from "vue-i18n";
     import InputText from "../code/components/inputs/InputText.vue";
     import Add from "../code/components/Add.vue";
@@ -58,9 +58,9 @@
     const selectedIndex = ref<number | undefined>();
     const loading = ref(false);
 
-    onMounted(() => {
-        newInputs.value = props.modelValue;
-    });
+    watch(() => props.modelValue, (newValue) => {
+        newInputs.value = newValue;
+    }, {deep: true, immediate: true});
 
     const selectInput = async (input: InputType, index: number) => {
         loading.value = true;

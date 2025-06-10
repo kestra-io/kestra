@@ -96,7 +96,7 @@
                     <div :style="`position: relative; width:calc(${100}% - 10px)`">
                         <component
                             :key="selectedChart.id"
-                            :is="types[selectedChart.type]"
+                            :is="TYPES[selectedChart.type]"
                             :source="selectedChart.content"
                             :chart="selectedChart"
                             :identifier="selectedChart.id"
@@ -122,6 +122,8 @@
 </template>
 <script setup>
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    
+    import {TYPES} from "../composables/useDashboards";
 
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
     import Sections from "../sections/Sections.vue";
@@ -136,18 +138,11 @@
     defineEmits(["save"])
 </script>
 <script>
-    import {shallowRef} from "vue";
 
     import Editor from "../../inputs/Editor.vue";
     import yaml from "yaml";
     import ContentSave from "vue-material-design-icons/ContentSave.vue";
     import intro from "../../../assets/docs/dashboard_home.md?raw";
-    import Markdown from "../sections/Markdown.vue";
-    import TimeSeries from "../sections/TimeSeries.vue";
-    import Bar from "../sections/Bar.vue";
-    import Pie from "../sections/Pie.vue";
-    import Table from "../sections/Table.vue";
-    import KPI from "../sections/KPI.vue";
 
     export default {
         computed: {
@@ -278,15 +273,7 @@
                 currentView: "documentation",
                 selectedChart: null,
                 charts: [],
-                chartError: null,
-                types: {
-                    "io.kestra.plugin.core.dashboard.chart.TimeSeries": shallowRef(TimeSeries),
-                    "io.kestra.plugin.core.dashboard.chart.Bar": shallowRef(Bar),
-                    "io.kestra.plugin.core.dashboard.chart.Markdown": shallowRef(Markdown),
-                    "io.kestra.plugin.core.dashboard.chart.Table": shallowRef(Table),
-                    "io.kestra.plugin.core.dashboard.chart.Pie": shallowRef(Pie),
-                    "io.kestra.plugin.core.dashboard.chart.KPI": shallowRef(KPI)
-                }
+                chartError: null
             }
         },
         watch: {

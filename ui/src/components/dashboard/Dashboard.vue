@@ -21,11 +21,11 @@
 <script setup lang="ts">
     import {computed, onBeforeMount, ref} from "vue";
 
+    import type {Dashboard, Chart} from "../composables/useDashboards";
+
     import Header from "./components/Header.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
     import Sections from "./sections/Sections.vue";
-
-    import type {Dashboard, Chart} from "../composables/useDashboards";
 
     import FILTER_LANGUAGE_MAIN from "../../composables/monaco/languages/filters/impl/dashboardFilterLanguage.js";
     import FILTER_LANGUAGE_NAMESPACE from "../../composables/monaco/languages/filters/impl/namespaceDashboardFilterLanguage.js";

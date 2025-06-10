@@ -11,6 +11,8 @@
     import {computed, onMounted, ref} from "vue";
     import {useStore} from "vuex";
 
+    defineOptions({inheritAttrs: false});
+
     import Dashboard from "../dashboard/Dashboard.vue";
     import NoExecutions from "../flows/NoExecutions.vue";
 

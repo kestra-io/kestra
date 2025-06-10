@@ -1,5 +1,5 @@
 <template>
-    <section id="charts" :class="fullSize ? '' : 'charts-padding'">
+    <section id="charts" :class="{padding}">
         <el-row :gutter="16">
             <el-col
                 v-for="(chart, index) in props.charts"
@@ -9,8 +9,15 @@
                 :md="(chart.chartOptions?.width || 6) * 2"
             >
                 <div class="d-flex flex-column">
-                    <p v-if="chart.type !== 'io.kestra.plugin.core.dashboard.chart.KPI'">
-                        <span class="fs-6 fw-bold">{{ labels(chart).title }}</span>
+                    <p
+                        v-if="
+                            chart.type !==
+                                'io.kestra.plugin.core.dashboard.chart.KPI'
+                        "
+                    >
+                        <span class="fs-6 fw-bold">{{
+                            labels(chart).title
+                        }}</span>
                         <template v-if="labels(chart)?.description">
                             <br>
                             <small class="fw-light">
@@ -58,12 +65,12 @@
         "io.kestra.plugin.core.dashboard.chart.KPI": KPI,
     };
 
-    const defaultFilters = ref([])
+    const defaultFilters = ref([]);
 
     const props = defineProps({
         charts: {type: Array, required: true, default: () => []},
         showDefault: {type: Boolean, default: false},
-        fullSize: {type: Boolean, default: false},
+        padding: {type: Boolean, default: false},
     });
 
     const labels = (chart) => ({
@@ -75,40 +82,49 @@
         const dateTimeKeys = ["startDate", "endDate", "timeRange"];
 
         // If no date filtering is set, we add one
-        if (!Object.keys(route.query).some(key => dateTimeKeys.some(dateTimeKey => key.includes(dateTimeKey)))) {
+        if (
+            !Object.keys(route.query).some((key) =>
+                dateTimeKeys.some((dateTimeKey) => key.includes(dateTimeKey)),
+            )
+        ) {
             // query last 7 days
             router.push({
-                query: {...route.query, "filters[timeRange][EQUALS]":"PT168H"}
-            })
+                query: {...route.query, "filters[timeRange][EQUALS]": "PT168H"},
+            });
         }
         const filters = [];
         if (route.name === "flows/update") {
-            filters.push({
-                             field: "namespace",
-                             operation: "EQUALS",
-                             value: route.params.namespace
-                         },
-                         {
-                             field: "flowId",
-                             operation: "EQUALS",
-                             value: route.params.id
-                         })
+            filters.push(
+                {
+                    field: "namespace",
+                    operation: "EQUALS",
+                    value: route.params.namespace,
+                },
+                {
+                    field: "flowId",
+                    operation: "EQUALS",
+                    value: route.params.id,
+                },
+            );
         }
         if (route.name === "namespaces/update") {
             filters.push({
                 field: "namespace",
                 operation: "EQUALS",
-                value: route.params.id
-            })
+                value: route.params.id,
+            });
         }
         defaultFilters.value = filters;
-    })
+    });
 </script>
 
 <style lang="scss" scoped>
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 section#charts {
+    &.padding {
+        padding: 0 2rem 1rem;
+    }
 
     & .el-row .el-col {
         margin-bottom: 1rem;
@@ -122,9 +138,5 @@ section#charts {
             box-shadow: 0px 2px 4px 0px var(--ks-card-shadow);
         }
     }
-}
-
-.charts-padding {
-    padding: 0 2rem 1rem;
 }
 </style>

@@ -43,7 +43,6 @@
 
     const generated = ref();
     const generate = async (id) => {
-        // TODO: Tweak once the API is wrapped up
         let decodedParams = decodeSearchParams(route.query, undefined, []);
         if (!props.showDefault) {
             let params = {

@@ -201,6 +201,7 @@
     import Markdown from "../../components/layout/Markdown.vue";
 
     export default {
+        inheritAttrs: false,
         components: {
             ChangeExecutionStatus,
             Duration,

@@ -59,6 +59,10 @@
             type: String,
             default: undefined,
         },
+        disabled: {
+            type: Boolean,
+            default: false,
+        },
     });
 
     const currentValue = ref<[string, any][]>([])
@@ -118,7 +122,7 @@
     }
 
     const disabledAdding = computed(() => {
-        return currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
+        return props.disabled || currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
     });
 </script>
 

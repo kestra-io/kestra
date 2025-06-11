@@ -12,7 +12,7 @@
                     type="primary"
                     :icon="Plus"
                     tag="router-link"
-                    :to="{name: 'dashboards/create'}"
+                    :to="{name: 'dashboards/create', query: {from: route.name}}"
                     class="w-100"
                 >
                     <small>{{ t("dashboards.creation.label") }}</small>

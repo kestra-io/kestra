@@ -21,7 +21,7 @@
 <script setup lang="ts">
     import {computed, onBeforeMount, ref} from "vue";
 
-    import type {Dashboard, Chart} from "../composables/useDashboards";
+    import type {Dashboard, Chart} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
     import KestraFilter from "../filter/KestraFilter.vue";

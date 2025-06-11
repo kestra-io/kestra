@@ -42,12 +42,17 @@
     };
 
     import YAML_MAIN from "../assets/default_main_definition.yaml?raw";
-    onMounted(async () => {
-        const blueprintID = route.query.blueprintId;
+    import YAML_FLOW from "../assets/default_flow_definition.yaml?raw";
+    import YAML_NAMESPACE from "../assets/default_namespace_definition.yaml?raw";
 
-        dashboard.value.sourceCode = blueprintID
-            ? await store.dispatch("blueprints/getBlueprintSource", {type: "community", kind: "dashboard", id: blueprintID})
-            : YAML_MAIN;
+    onMounted(async () => {
+        const {blueprintId, from} = route.query;
+
+        if (blueprintId) {
+            dashboard.value.sourceCode = await store.dispatch("blueprints/getBlueprintSource", {type: "community", kind: "dashboard", id: blueprintId});
+        } else {
+            dashboard.value.sourceCode = from === "flows/update" ? YAML_FLOW : from === "namespaces/update" ? YAML_NAMESPACE : YAML_MAIN;
+        }
     });
 
     const header = computed(() => ({

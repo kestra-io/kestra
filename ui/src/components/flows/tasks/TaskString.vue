@@ -22,7 +22,7 @@
             v-else-if="disabled"
             :model-value="modelValue"
             disabled
-            class="w-100"
+            class="w-100 disabled-field"
         />
         <editor
             v-else
@@ -143,6 +143,11 @@
     border-radius: 0.25rem;
     border: 1px solid var(--ks-border-primary);
     width: 100%;
+
+    :deep(.disabled-field) {
+        margin: 0!important;
+        border-radius: 4px;;
+    }
 
     :deep(.el-input__wrapper),
     :deep(.editor-container) {

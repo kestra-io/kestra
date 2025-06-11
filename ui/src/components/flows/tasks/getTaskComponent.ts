@@ -47,6 +47,10 @@ function getType(property: any, key?: string, schema?: any): string {
         return "number";
     }
 
+    if( key === "version" && property.type === "string") {
+        return "version";
+    }
+
     if (key === "namespace") {
         return "subflow-namespace";
     }

@@ -103,6 +103,10 @@ export default {
             const currentTab = rootState.editor.current;
 
             if (currentIsFlow) {
+                if (!source.trim()?.length) {
+                    commit("setFlowValidation", {constraints: "No data"})
+                    return
+                }
                 if (!state.isCreating){
                     if(!source.trim()?.length ||
                         (flowParsed &&

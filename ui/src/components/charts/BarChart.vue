@@ -41,7 +41,7 @@
 
     import Utils, {useTheme} from "../../utils/utils";
     import {useScheme} from "../../utils/scheme";
-    import {defaultConfig, tooltip, getFormat, chartClick} from "../../utils/charts";
+    import {defaultConfig, tooltip, getFormat, chartClick} from "../dashboard/composables/charts";
 
     import {State} from "@kestra-io/ui-libs";
     const ORDER = State.arrayAllStates().map((state) => state.name);

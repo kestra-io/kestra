@@ -33,7 +33,7 @@
 
     import {Doughnut, Pie} from "vue-chartjs";
 
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../utils/charts.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts.js";
     import {totalsDurationLegend, totalsLegend} from "../composables/useLegend";
 
     import moment from "moment";

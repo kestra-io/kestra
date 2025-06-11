@@ -22,7 +22,7 @@
     import {Bar} from "vue-chartjs";
     import Utils, {useTheme} from "../../utils/utils";
     import {useScheme} from "../../utils/scheme";
-    import {defaultConfig, tooltip, chartClick, getFormat} from "../../utils/charts.js";
+    import {defaultConfig, tooltip, chartClick, getFormat} from "../dashboard/composables/charts.js";
     import {useI18n} from "vue-i18n";
 
     export default defineComponent({

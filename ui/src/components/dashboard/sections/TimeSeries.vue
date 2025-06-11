@@ -23,7 +23,7 @@
 
     
     import {customBarLegend} from "../composables/useLegend";
-    import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../utils/charts.js";
+    import {defaultConfig, getConsistentHEXColor, chartClick} from "../composables/charts.js";
 
     import moment from "moment";
 

@@ -1,6 +1,6 @@
 import Utils from "../../../utils/utils";
 import {cssVariable} from "@kestra-io/ui-libs";
-import {getConsistentHEXColor} from "../../../utils/charts.js";
+import {getConsistentHEXColor} from "./charts.js";
 
 const getOrCreateLegendList = (chart, id, direction = "row", width = "100%") => {
     const legendContainer = document.getElementById(id);

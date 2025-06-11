@@ -34,6 +34,10 @@ public class TenantAliasingRooter extends DefaultRouter {
     @Override
     public <T, R> UriRouteMatch<T, R> findClosest(HttpRequest<?> request) {
         String path = request.getUri().getPath();
+        UriRouteMatch<T, R> closest = super.findClosest(request);
+        if (closest != null){
+            return closest;
+        }
 
         boolean excluded = EXCLUDED_ROUTES.stream().anyMatch(route -> route.matcher(path).matches());
         if (path.startsWith("/api/v1/") && !excluded){
@@ -49,6 +53,6 @@ public class TenantAliasingRooter extends DefaultRouter {
             );
             return super.findClosest(request.toMutableRequest().uri(updatedUri));
         }
-        return super.findClosest(request);
+        return null;
     }
 }

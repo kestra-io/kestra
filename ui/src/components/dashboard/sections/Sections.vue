@@ -38,7 +38,8 @@
 <script setup lang="ts">
     import {onMounted, ref} from "vue";
 
-    import {Chart, TYPES, isKPIChart, getChartTitle} from "../composables/useDashboards";
+    import type {Chart} from "../composables/useDashboards";
+    import {TYPES, isKPIChart, getChartTitle} from "../composables/useDashboards";
 
     import {useRoute, useRouter} from "vue-router";
     const route = useRoute();

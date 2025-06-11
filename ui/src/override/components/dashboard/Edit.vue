@@ -29,7 +29,7 @@
 
     import type {Dashboard} from "../../../components/dashboard/composables/useDashboards";
 
-    const dashboard = ref<Dashboard>({id: ""});
+    const dashboard = ref<Dashboard>({id: "", charts: []});
     const save = async (source: string) => {
         const response = await store.dispatch("dashboard/update", {id: route.params.id, source,});
 

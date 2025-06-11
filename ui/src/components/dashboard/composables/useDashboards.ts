@@ -46,6 +46,8 @@ export const isKPIChart = (type: string) => type === "io.kestra.plugin.core.dash
 
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id;
 
+export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property];
+
 export function useChartGenerator(props: {chart: Chart; filters: string[]; showDefault: boolean;}) {
     const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE");
 

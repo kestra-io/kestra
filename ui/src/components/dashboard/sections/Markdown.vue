@@ -15,6 +15,7 @@
     import NoData from "../../layout/NoData.vue";
 
     import {useRoute} from "vue-router";
+    import {getPropertyValue} from "../composables/useDashboards";
 
     const route = useRoute();
 
@@ -44,7 +45,7 @@
                 filters: props.filters.concat(decodedParams?? [])
             };
             const result = await store.dispatch("dashboard/generate", params);
-            const description = result.results?.[0]?.description;
+            const description = getPropertyValue(result, "description") // result.results?.[0]?.description;
 
             source.value = description ? description : t("dashboards.empty");
         } else {
@@ -52,7 +53,7 @@
                 chart: props.chart.content,
                 globalFilter: {filters: props.filters.concat(decodedParams?? [])},
             })
-            source.value = result.results[0]?.description;
+            source.value = getPropertyValue(result, "description")
         }
     };
 

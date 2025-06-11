@@ -3,7 +3,7 @@
         <section id="kpi">
             <span class="pb-2">{{ getChartTitle(props.chart!) }}</span>
             <p class="m-0 fs-2 fw-bold">
-                {{ data?.results[0]?.value }}{{ percentageShown ? "%" : "" }}
+                {{ getPropertyValue(data, 'value') }}{{ percentageShown ? "%" : "" }}
             </p>
         </section>
     </template>
@@ -15,7 +15,7 @@
     import {PropType} from "vue";
 
     import type {Chart} from "../composables/useDashboards";
-    import {getChartTitle, useChartGenerator} from "../composables/useDashboards";
+    import {getChartTitle, getPropertyValue, useChartGenerator} from "../composables/useDashboards";
 
     import NoData from "../../layout/NoData.vue";
 

@@ -24,11 +24,9 @@
                     <div class="flex-grow-1">
                         <component
                             :is="TYPES[chart.type as keyof typeof TYPES]"
-                            :default="route.params.id === 'default'"
-                            :source="chart.content"
-                            :show-default="props.showDefault"
-                            :default-filters="filters"
                             :chart
+                            :filters
+                            :show-default="props.showDefault"
                         />
                     </div>
                 </div>

@@ -16,7 +16,7 @@
     import {onMounted, computed, ref, watch} from "vue";
 
     import NoData from "../../layout/NoData.vue";
-    import {getChartTitle} from "../composables/useDashboards";
+    import {sectionProps, getChartTitle} from "../composables/useDashboards";
 
     import {useRoute} from "vue-router";
     const route = useRoute();
@@ -29,11 +29,7 @@
 
     import {decodeSearchParams} from "../../filter/utils/helpers.ts";
 
-    const props = defineProps({
-        chart: {type: Object, required: true},
-        showDefault: {type: Boolean, default: false},
-        defaultFilters: {type: Array, default: () => []},
-    });
+    const props = defineProps(sectionProps);
 
     const percentage = computed(
         () => props.chart?.chartOptions?.numberType === "PERCENTAGE"
@@ -46,13 +42,13 @@
             let params = {
                 id,
                 chartId: props.chart.id,
-                filters: props.defaultFilters.concat(decodedParams?? [])
+                filters: props.filters.concat(decodedParams?? [])
             };
             generated.value = await store.dispatch("dashboard/generate", params);
         } else {
             generated.value = await store.dispatch("dashboard/chartPreview", {
                 chart: props.chart.content,
-                globalFilter: {filters: props.defaultFilters.concat(decodedParams?? [])},
+                globalFilter: {filters: props.filters.concat(decodedParams?? [])},
             });
         }
     };

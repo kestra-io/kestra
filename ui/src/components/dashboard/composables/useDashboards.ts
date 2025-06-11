@@ -1,5 +1,8 @@
+import type {PropType} from "vue";
+
 export type Dashboard = {
     id: string;
+    charts: Chart[];
     title?: string;
     sourceCode?: string;
     [key: string]: unknown;
@@ -16,6 +19,15 @@ export type Chart = {
         [key: string]: unknown;
     };
     [key: string]: unknown;
+};
+
+export const sectionProps = {
+    chart: {
+        type: Object as PropType<Chart>,
+        required: true,
+    },
+    filters: {type: Array, default: () => []},
+    showDefault: {type: Boolean, default: false},
 };
 
 import Bar from "../sections/Bar.vue";

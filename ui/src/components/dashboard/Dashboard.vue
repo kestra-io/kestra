@@ -60,7 +60,7 @@
         isNamespace: {type: Boolean, default: false},
     });
 
-    const dashboard = ref<Dashboard>({id: ""});
+    const dashboard = ref<Dashboard>({id: "", charts: []});
     const charts = ref<Chart[]>([]);
 
     // We use a key to force re-rendering of the Sections component when the refresh button is clicked
@@ -68,6 +68,7 @@
 
     const loadCharts = async (allCharts: Chart[] = []) => {
         charts.value = [];
+
         for (const chart of allCharts) {
             charts.value.push({...chart, content: stringify(chart)});
         }

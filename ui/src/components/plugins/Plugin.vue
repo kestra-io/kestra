@@ -196,4 +196,10 @@
         display: inline-grid;
         float: right;
     }
+
+    :deep(.main-container) {
+        background: var(--ks-background-panel);
+        margin: 0;
+        padding: 1rem;
+    }
 </style>

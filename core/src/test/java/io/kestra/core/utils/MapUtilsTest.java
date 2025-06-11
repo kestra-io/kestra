@@ -47,6 +47,40 @@ class MapUtilsTest {
 
     @SuppressWarnings("unchecked")
     @Test
+    void deepMerge() {
+        Map<String, Object> a = Map.of(
+            "map", Map.of(
+                "map_a", "a",
+                "map_b", "b",
+                "map_c", "c"
+            ),
+            "string", "a",
+            "int", 1,
+            "lists", Collections.singletonList(1)
+        );
+
+        Map<String, Object> b = Map.of(
+            "map", Map.of(
+                "map_c", "e",
+                "map_d", "d"
+            ),
+            "string", "b",
+            "float", 1F,
+            "lists", Collections.singletonList(2)
+        );
+
+        Map<String, Object> merge = MapUtils.deepMerge(a, b);
+
+        assertThat(((Map<String, Object>) merge.get("map")).size()).isEqualTo(4);
+        assertThat(((Map<String, Object>) merge.get("map")).get("map_c")).isEqualTo("e");
+        assertThat(merge.get("string")).isEqualTo("b");
+        assertThat(merge.get("int")).isEqualTo(1);
+        assertThat(merge.get("float")).isEqualTo(1F);
+        assertThat((List<?>) merge.get("lists")).hasSize(2);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
     void mergeWithNull() {
         var mapWithNull = new HashMap<String, String>();
         mapWithNull.put("null", null);
@@ -66,6 +100,33 @@ class MapUtilsTest {
         );
 
         Map<String, Object> merge = MapUtils.merge(a, b);
+
+        assertThat(((Map<String, Object>) merge.get("map")).size()).isEqualTo(3);
+        assertThat(((Map<String, Object>) merge.get("map")).get("map_c")).isEqualTo("e");
+        assertThat(((Map<String, Object>) ((Map<String, Object>) ((Map<String, Object>) merge.get("map")).get("map_a")).get("sub")).get("null")).isNull();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void deepMergeWithNull() {
+        var mapWithNull = new HashMap<String, String>();
+        mapWithNull.put("null", null);
+
+        Map<String, Object> a = Map.of(
+            "map", Map.of(
+                "map_a", Map.of("sub", mapWithNull),
+                "map_c", "c"
+            )
+        );
+
+        Map<String, Object> b = Map.of(
+            "map", Map.of(
+                "map_c", "e",
+                "map_d", "d"
+            )
+        );
+
+        Map<String, Object> merge = MapUtils.deepMerge(a, b);
 
         assertThat(((Map<String, Object>) merge.get("map")).size()).isEqualTo(3);
         assertThat(((Map<String, Object>) merge.get("map")).get("map_c")).isEqualTo("e");

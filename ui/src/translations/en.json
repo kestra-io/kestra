@@ -1171,6 +1171,7 @@
     "chart": "Chart",
     "chart preview": "Chart preview",
     "no_code": {
+      "toggle_pebble": "Toggle Pebble editor",
       "unnamed": "No Name",
       "adding": "+ Add a {what}",
       "adding_default": "+ Add a new value",

@@ -1,16 +1,31 @@
 <template>
-    <template v-if="schema.format === 'duration'">
+    <div class="wrapper">
+        <el-checkbox-button v-if="['duration', 'date-time'].includes(schema.format)" v-model="pebble" :label="$t('no_code.toggle_pebble')" :title="$t('no_code.togglePebble')" class="ks-pebble">
+            <IconCodeBracesBox />
+        </el-checkbox-button>
         <el-time-picker
+            v-if="!pebble && schema.format === 'duration'"
             :model-value="durationValue"
             type="time"
             :default-value="defaultDuration"
             :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'duration'}`"
             @update:model-value="onInputDuration"
         />
-    </template>
-    <template v-else>
+        <el-date-picker
+            v-else-if="!pebble && schema.format === 'date-time'"
+            :model-value="modelValue"
+            type="date"
+            :placeholder="`Choose a${/^[aeiou]/i.test(root || '') ? 'n' : ''} ${root || 'date'}`"
+            @update:model-value="onInput($event.toISOString())"
+        />
+        <InputText
+            v-else-if="disabled"
+            :model-value="modelValue"
+            disabled
+            class="w-100"
+        />
         <editor
-            v-if="!disabled"
+            v-else
             :model-value="editorValue"
             :navbar="false"
             :full-height="false"
@@ -22,18 +37,12 @@
             @update:model-value="onInput"
             :large-suggestions="false"
         />
-        <InputText
-            v-else
-            :model-value="modelValue"
-            disabled
-            class="w-100"
-        />
-    </template>
+    </div>
 </template>
 <script setup>
     import Editor from "../../../components/inputs/Editor.vue";
     import InputText from "../../code/components/inputs/InputText.vue";
-
+    import IconCodeBracesBox from "vue-material-design-icons/CodeBracesBox.vue";
 </script>
 <script>
     import Task from "./Task";
@@ -48,7 +57,21 @@
                 default: false,
             },
         },
+        data() {
+            return {
+                pebble: false,
+            };
+        },
         emits: ["update:modelValue"],
+        mounted(){
+            if(!["duration", "date-time"].includes(this.schema.format) || !this.modelValue){
+                this.pebble = false;
+            } else if( this.schema.format === "duration" && this.values) {
+                this.pebble = !this.$moment.duration(this.modelValue).isValid();
+            } else if (this.schema.format === "date-time" && this.values) {
+                this.pebble = isNaN(Date.parse(this.modelValue));
+            }
+        },
         computed: {
             isValid() {
                 if (this.required && !this.modelValue) {
@@ -112,4 +135,33 @@
 :deep(.placeholder) {
     top: -7px !important;
 }
+
+.wrapper {
+    display: flex;
+    align-items: stretch;
+    justify-content: stretch;
+    border-radius: 0.25rem;
+    border: 1px solid var(--ks-border-primary);
+    width: 100%;
+
+    :deep(.el-input__wrapper),
+    :deep(.editor-container) {
+        box-shadow: none;
+    }
+
+    :deep(.el-checkbox-button__inner) {
+        padding: 4px;
+        border: none;
+    }
+
+    .ks-pebble:deep(span:hover){
+        color: var(--ks-content-link-hover) ;
+    }
+
+    .ks-pebble * {
+        font-size: 24px;
+        vertical-align: top;
+    }
+}
+
 </style>

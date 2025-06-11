@@ -69,7 +69,7 @@ public abstract class AbstractState extends Task {
             current = Map.of();
         }
 
-        Map<String, Object> merge = MapUtils.merge(current, runContext.render(map));
+        Map<String, Object> merge = MapUtils.deepMerge(current, runContext.render(map));
 
         String key = runContext.stateStore().putState(
             !runContext.render(this.namespace).as(Boolean.class).orElseThrow(),

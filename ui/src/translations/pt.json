@@ -884,6 +884,7 @@
         "tasks": "Selecione uma task",
         "triggers": "Selecione um trigger"
       },
+      "toggle_pebble": "Alternar editor Pebble",
       "unnamed": "Sem Nome"
     },
     "no_data": "Parece que não há nada aqui... ainda!<br/>Ajuste seus filtros ou tente novamente!",

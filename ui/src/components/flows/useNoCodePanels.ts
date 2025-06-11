@@ -184,7 +184,7 @@ export function useNoCodePanels(panels: Ref<Panel[]>, handlers: Handlers) {
         openerPanel.activeTab = tab
     }
 
-    function openEditTaskTab(opener: { panelIndex: number, tabIndex: number }, blockType: BlockType | "pluginDefaults", parentPath: string, refPath: number, dirty: boolean = false) {
+    function openEditTaskTab(opener: { panelIndex: number, tabIndex: number }, blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number, dirty: boolean = false) {
         const tab = getTabFromNoCodeTab({
             action: "edit",
             blockType,

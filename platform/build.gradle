@@ -67,7 +67,7 @@ dependencies {
         api 'software.amazon.awssdk.crt:aws-crt:0.38.5'
 
         // we need at least 0.14, it could be removed when Micronaut contains a recent only version in their BOM
-        api "io.micrometer:micrometer-core:1.15.0"
+        api "io.micrometer:micrometer-core:1.15.1"
 
         // Other libs
         api("org.projectlombok:lombok:1.18.38")

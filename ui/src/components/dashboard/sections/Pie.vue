@@ -22,8 +22,12 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref, watch} from "vue";
+    import {computed,PropType} from "vue";
 
+    import type {Chart} from "../composables/useDashboards";
+    import {useChartGenerator} from "../composables/useDashboards";
+
+    
     import NoData from "../../layout/NoData.vue";
     import Utils, {useTheme} from "../../../utils/utils";
 
@@ -35,20 +39,17 @@
     import moment from "moment";
 
     import {useRoute, useRouter} from "vue-router";
-    import {useStore} from "vuex";
-    import {decodeSearchParams} from "../../filter/utils/helpers.ts";
 
     const route = useRoute();
     const router = useRouter();
 
-    const store = useStore();
-
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        chart: {type: Object, required: true},
+        chart: {type: Object as PropType<Chart>, required: true},
+        filters: {type: Array as PropType<string[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
-        filters: {type: Array, default: () => []},
     });
+
 
     const containerID = `${props.chart.id}__${Math.random()}`;
 
@@ -182,24 +183,7 @@
         };
     });
 
-    const generated = ref();
-    const generate = async (id) => {
-        let decodedParams = decodeSearchParams(route.query, undefined, []);
-
-        if (!props.showDefault) {
-            let params = {
-                id,
-                chartId: props.chart.id,
-                filters: props.filters.concat(decodedParams?? [])
-            };
-            generated.value = await store.dispatch("dashboard/generate", params);
-        } else {
-            generated.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filters: props.filters.concat(decodedParams?? [])}})
-        }
-    };
-
-    watch(route, async (route) => await generate(route.params?.id));
-    onMounted(() => generate(route.params.id));
+    const {data: generated} = useChartGenerator(props);
 </script>
 
 <style lang="scss" scoped>

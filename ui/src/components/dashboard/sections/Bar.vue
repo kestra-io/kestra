@@ -11,9 +11,11 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, onMounted, ref, watch} from "vue";
+    import {PropType, computed} from "vue";
 
     import NoData from "../../layout/NoData.vue";
+    import type {Chart} from "../composables/useDashboards";
+    import {useChartGenerator} from "../composables/useDashboards";
 
     import {Bar} from "vue-chartjs";
 
@@ -23,22 +25,19 @@
     import {useTheme} from "../../../utils/utils.js";
     import {defaultConfig, getConsistentHEXColor, chartClick} from "../../../utils/charts.js";
 
-    import {useStore} from "vuex";
 
     import {useRoute, useRouter} from "vue-router";
     import {Utils} from "@kestra-io/ui-libs";
-    import {decodeSearchParams} from "../../filter/utils/helpers";
 
-    const store = useStore();
     const router = useRouter();
 
     const route = useRoute();
 
     defineOptions({inheritAttrs: false});
     const props = defineProps({
-        chart: {type: Object, required: true},
+        chart: {type: Object as PropType<Chart>, required: true},
+        filters: {type: Array as PropType<string[]>, default: () => []},
         showDefault: {type: Boolean, default: false},
-        filters: {type: Array, default: () => []},
     });
 
     const {data, chartOptions} = props.chart;
@@ -157,24 +156,7 @@
         return {labels, datasets};
     });
 
-    const generated = ref();
-    const generate = async (id) => {
-        let decodedParams = decodeSearchParams(route.query, undefined, []);
-        if (!props.showDefault) {
-            let params = {
-                id,
-                chartId: props.chart.id,
-                filters: props.filters.concat(decodedParams?? [])
-            };
-            generated.value = await store.dispatch("dashboard/generate", params);
-        }
-        else {
-            generated.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filters: props.filters.concat(decodedParams?? [])}})
-        }
-    };
-
-    watch(route, async (route) => await generate(route.params?.id));
-    onMounted(() => generate(route.params.id));
+    const {data: generated} = useChartGenerator(props);
 </script>
 
 <style lang="scss" scoped>

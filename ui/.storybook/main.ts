@@ -1,3 +1,4 @@
+import {mergeConfig} from "vite";
 import type {StorybookConfig} from "@storybook/vue3-vite";
 import path from "path";
 
@@ -27,7 +28,9 @@ const config: StorybookConfig = {
             };
         }
 
-        return config;
+        return mergeConfig(config, {
+            define: {"process.env": {}},
+        });
     },
 };
 export default config;

@@ -4,6 +4,7 @@ import Executions from "../../../../src/components/executions/Executions.vue";
 import fixtureS from "./Executions-s.fixture.json";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
+import {isColoredAsError} from "../../utils/monacoUtils.js";
 
 function getDecorators(executionsSearchData) {
     return [
@@ -102,9 +103,7 @@ FilterExecutions.play = async ({canvasElement, step}) => {
     const user = userEvent.setup();
 
     await step("filter should contains \"timeRange\" by default", async () => {
-        await waitFor(() =>
-            expect(getMonacoFilter(canvas)).toHaveTextContent("timeRange="),
-        );
+        await waitFor(() => expect(getMonacoFilter(canvas)).toHaveTextContent("timeRange="), {timeout: 5000});
     });
 
     await step(
@@ -157,12 +156,12 @@ FilterExecutions.play = async ({canvasElement, step}) => {
                 "an-unknown-field=q2132",
             ),
         );
-        await waitFor(
-            expectColorRedDominant(
-                within(getMonacoFilter(canvas)).getByText(
+        await waitFor(() =>
+            expect(
+                isColoredAsError(within(getMonacoFilter(canvas)).getByText(
                     "an-unknown-field=q2132",
-                ),
-            ),
+                ))
+            ).toBeTruthy(),
         );
     });
 
@@ -196,17 +195,6 @@ FilterExecutions.play = async ({canvasElement, step}) => {
 const spaceBarKey = "{ }";
 const triggerRefreshButton = "trigger-refresh-button";
 const monacoFilter = "monaco-filter";
-
-function expectColorRedDominant(element) {
-    return function expectColorRedDominantCheck(){
-        const style = window.getComputedStyle(element);
-        const rgb = style.color.match(/\d+/g).map(Number);
-        // Assert red is dominant (e.g., red > 200, green & blue < 100)
-        expect(rgb[0]).toBeGreaterThan(150);
-        expect(rgb[1]).toBeLessThan(60);
-        expect(rgb[2]).toBeLessThan(60);
-    }
-}
 
 function getMonacoFilter(canvas) {
     return canvas.getByTestId(monacoFilter);

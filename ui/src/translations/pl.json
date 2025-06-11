@@ -884,6 +884,7 @@
         "tasks": "Wybierz task",
         "triggers": "Wybierz trigger"
       },
+      "toggle_pebble": "Przełącz edytor Pebble",
       "unnamed": "Brak Nazwy"
     },
     "no_data": "Wygląda na to, że nic tu nie ma... jeszcze!<br/>Dostosuj swoje filtry lub spróbuj ponownie!",
@@ -997,7 +998,8 @@
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
-      "please": "Proszę wybrać task po prawej, aby zobaczyć jego dokumentację"
+      "please": "Proszę wybrać task po prawej, aby zobaczyć jego dokumentację",
+      "release": "Informacje o wydaniu"
     },
     "port": "Port",
     "prefill inputs": "Wypełnij",

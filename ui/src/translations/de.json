@@ -884,6 +884,7 @@
         "tasks": "Wählen Sie eine Task aus",
         "triggers": "Wählen Sie einen Trigger aus"
       },
+      "toggle_pebble": "Pebble-Editor umschalten",
       "unnamed": "Kein Name"
     },
     "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
@@ -997,7 +998,8 @@
     "plugins": {
       "name": "Plugin",
       "names": "Plugins",
-      "please": "Bitte wählen Sie rechts einen Task aus, um dessen Dokumentation zu sehen"
+      "please": "Bitte wählen Sie rechts einen Task aus, um dessen Dokumentation zu sehen",
+      "release": "Versionshinweise"
     },
     "port": "Port",
     "prefill inputs": "Vorausfüllen",

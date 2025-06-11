@@ -5,13 +5,10 @@ import io.kestra.core.models.executions.ExecutionKilled;
 import io.kestra.core.models.executions.LogEntry;
 import io.kestra.core.models.executions.MetricEntry;
 import io.kestra.core.models.flows.FlowInterface;
-import io.kestra.core.models.flows.FlowWithSource;
 import io.kestra.core.models.templates.Template;
 import io.kestra.core.models.triggers.Trigger;
 import io.kestra.core.queues.QueueFactoryInterface;
 import io.kestra.core.queues.QueueInterface;
-import io.kestra.core.queues.WorkerJobQueueInterface;
-import io.kestra.core.queues.WorkerTriggerResultQueueInterface;
 import io.kestra.core.runners.*;
 import io.micronaut.context.ApplicationContext;
 import io.micronaut.context.annotation.Bean;
@@ -45,11 +42,11 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     }
 
     @Override
-    @Singleton
+    @Prototype // must be prototype so we can create two Worker in the same application context for testing purpose.
     @Named(QueueFactoryInterface.WORKERJOB_NAMED)
     @Bean(preDestroy = "close")
     public QueueInterface<WorkerJob> workerJob() {
-        return new MysqlQueue<>(WorkerJob.class, applicationContext);
+        return new MysqlWorkerJobQueue(applicationContext);
     }
 
     @Override
@@ -65,7 +62,7 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     @Named(QueueFactoryInterface.WORKERTRIGGERRESULT_NAMED)
     @Bean(preDestroy = "close")
     public QueueInterface<WorkerTriggerResult> workerTriggerResult() {
-        return new MysqlQueue<>(WorkerTriggerResult.class, applicationContext);
+        return new MysqlWorkerTriggerResultQueue(applicationContext);
     }
 
     @Override
@@ -130,20 +127,6 @@ public class MysqlQueueFactory implements QueueFactoryInterface {
     @Bean(preDestroy = "close")
     public QueueInterface<Trigger> trigger() {
         return new MysqlQueue<>(Trigger.class, applicationContext);
-    }
-
-    @Override
-    @Prototype // must be prototype so we can create two Worker in the same application context for testing purpose.
-    @Bean(preDestroy = "close")
-    public WorkerJobQueueInterface workerJobQueue() {
-        return new MysqlWorkerJobQueue(applicationContext);
-    }
-
-    @Override
-    @Singleton
-    @Bean(preDestroy = "close")
-    public WorkerTriggerResultQueueInterface workerTriggerResultQueue() {
-        return new MysqlWorkerTriggerResultQueue(applicationContext);
     }
 
     @Override

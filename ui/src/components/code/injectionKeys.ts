@@ -26,7 +26,8 @@ export const POSITION_INJECTION_KEY = Symbol("position-injection-key") as Inject
  * Tells if the task is being created or edited. Used to discriminate when a section is specified
  * NOTE: different from the `isCreating` flag coming from the store. `isCreating` refers to the Complete flow being in creation
  */
-export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as InjectionKey<ComputedRef<boolean>>
+export const CREATING_TASK_INJECTION_KEY = Symbol("creating-injection-key") as InjectionKey<boolean>
+export const EDITING_TASK_INJECTION_KEY = Symbol("editing-injection-key") as InjectionKey<boolean>
 /**
  * Call this when starting to create a new task, when the user clicks on the add button
  * to start the addition process
@@ -36,7 +37,7 @@ export const CREATE_TASK_FUNCTION_INJECTION_KEY = Symbol("creating-function-inje
  * Call this when starting to edit a task, when the user clicks on the task line
  * to start the edition process
  */
-export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string, refPath: number) => void>
+export const EDIT_TASK_FUNCTION_INJECTION_KEY = Symbol("edit-function-injection-key") as InjectionKey<(blockType: BlockType | "pluginDefaults", parentPath: string, refPath?: number) => void>
 /**
  * Call this when closing a task, when the user clicks on the close button
  */

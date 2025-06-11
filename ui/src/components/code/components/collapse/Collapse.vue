@@ -61,13 +61,13 @@
 
     const parentPath = inject(PARENT_PATH_INJECTION_KEY, "");
     const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
-    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, ref(false));
+    const creatingTask = inject(CREATING_TASK_INJECTION_KEY, false);
 
     const parentPathComplete = computed(() => {
         return `${[
             [
                 parentPath,
-                creatingTask.value && refPath !== undefined
+                creatingTask && refPath !== undefined
                     ? `[${refPath + 1}]`
                     : refPath !== undefined
                         ? `[${refPath}]`

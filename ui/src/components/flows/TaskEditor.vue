@@ -117,8 +117,6 @@
             taskObject.value = parsed;
         }
         selectedTaskType.value = taskObject.value?.type;
-
-
     }
 
     // when tab is clicked, load the documentation

@@ -11,7 +11,7 @@
             />
         </template>
 
-        <template v-else-if="!creatingTask && refPath === undefined">
+        <template v-else-if="!creatingTask && !editingTask">
             <el-form label-position="top" v-if="fieldsFromSchema.length">
                 <TaskWrapper :key="v.root" v-for="(v) in fieldsFromSchema.slice(0, 3)" :merge="shouldMerge(v.schema)">
                     <template #tasks>
@@ -92,14 +92,15 @@
 
 
     import {
-        CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
-        PANEL_INJECTION_KEY, REF_PATH_INJECTION_KEY,
+        CREATING_TASK_INJECTION_KEY, EDITING_TASK_INJECTION_KEY,
+        FLOW_INJECTION_KEY, PANEL_INJECTION_KEY,
     } from "../injectionKeys";
 
     import Task from "./Task.vue";
 
     const panel = inject(PANEL_INJECTION_KEY, ref());
-    const refPath = inject(REF_PATH_INJECTION_KEY, undefined);
+
+    const editingTask = inject(EDITING_TASK_INJECTION_KEY, false);
 
 
     import {useI18n} from "vue-i18n";

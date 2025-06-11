@@ -10,36 +10,50 @@
         :large-suggestions="false"
     />
 </template>
-<script>
-    import Task from "./Task";
+<script lang="ts" setup>
+    import {collapseEmptyValues} from "./Task";
     import Editor from "../../../components/inputs/Editor.vue";
-    import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
+    import {computed, ref} from "vue";
 
-    export default {
-        mixins: [Task],
-        components: {Editor},
-        data() {
-            return {
-                localEditorValue: undefined
-            }
+    const props = defineProps({
+        modelValue: {
+            type: [String, Object],
+            default: undefined
         },
-        created() {
-            this.localEditorValue = this.editorValue;
-        },
-        methods: {
-            editorInput(value) {
-                this.localEditorValue = value;
-                this.onInput(this.parseValue(value));
-            },
-            parseValue(value) {
-                if(value.match(/^\s*{{/)) {
-                    return value;
-                }
-
-                return YAML_UTILS.parse(value);
-            }
+        root: {
+            type: String,
+            default: undefined
         }
-    };
+    });
+
+    function editorInput(value: string) {
+        localEditorValue.value = value;
+        onInput(parseValue(value));
+    }
+    const emit = defineEmits(["update:modelValue"]);
+
+    function onInput(value: any) {
+        emit("update:modelValue", collapseEmptyValues(value));
+    }
+
+    const editorValue = computed(() => {
+        if (typeof props.modelValue === "string") {
+            return props.modelValue;
+        }
+
+        return YAML_UTILS.stringify(props.modelValue);
+    })
+
+    const localEditorValue = ref(editorValue.value)
+
+    function parseValue(value: string) {
+        if(value.match(/^\s*{{/)) {
+            return value;
+        }
+
+        return YAML_UTILS.parse(value);
+    }
 </script>
 
 <style lang="scss" scoped>

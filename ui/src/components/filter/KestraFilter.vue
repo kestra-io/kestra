@@ -86,6 +86,7 @@
     import {watchDebounced} from "@vueuse/core";
     import {FilterLanguage} from "../../composables/monaco/languages/filters/filterLanguage.ts";
     import DefaultFilterLanguage from "../../composables/monaco/languages/filters/impl/defaultFilterLanguage.ts";
+    import _isEqual from "lodash/isEqual";
 
     const router = useRouter();
     const route = useRoute();
@@ -148,7 +149,7 @@
         }
     }));
 
-    const itemsPrefix = computed(() => props.prefix ?? route.name?.toString());
+    const itemsPrefix = computed(() => props.prefix ?? route.name?.toString() ?? "fallback-filters");
 
     const emits = defineEmits(["dashboard", "updateProperties"]);
 
@@ -162,14 +163,9 @@
             .map(([key, value]) => [value, key])
     );
 
-    const EXCLUDED_QUERY_FIELDS = ["sort", "size", "page"];
+    const queryParamsToKeep = ref<string[]>([]);
 
-    const filteredRouteQuery = computed(() => route.query === undefined
-        ? undefined
-        : Object.fromEntries(Object.entries(route.query).filter(([key]) => !EXCLUDED_QUERY_FIELDS.includes(key))) as LocationQuery
-    );
-
-    watch(filteredRouteQuery, (newVal) => {
+    watch(() => route.query, (newVal) => {
         if (skipRouteWatcherOnce.value) {
             skipRouteWatcherOnce.value = false;
             return;
@@ -179,12 +175,19 @@
             return;
         }
 
+        queryParamsToKeep.value = [];
+
         let query = newVal;
         if (props.queryNamespace !== undefined) {
             query = Object.fromEntries(
                 Object.entries(newVal)
                     .filter(([key]) => {
-                        return key.startsWith(props.queryNamespace + "[");
+                        if (key.startsWith(props.queryNamespace + "[")) {
+                            return true;
+                        }
+
+                        queryParamsToKeep.value.push(key);
+                        return false;
                     })
                     .map(([key, value]) =>
                         // We trim the queryNamespace from the key
@@ -200,17 +203,26 @@
              */
             filter.value = Object.entries(query)
                 .flatMap(([key, values]) => {
+                    const remappedFilterKey = queryRemapper[key] ?? key;
+
+                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(FilterLanguage.withNestedKeyPlaceholder(remappedFilterKey)))) {
+                        queryParamsToKeep.value.push(key);
+                        return [];
+                    }
+
                     if (!Array.isArray(values)) {
                         values = [values];
                     }
 
-                    return values.map(value => (queryRemapper?.[key] ?? key) + Comparators.EQUALS + value);
+                    return values.map(value => remappedFilterKey + Comparators.EQUALS + value);
                 }).join(" ");
         } else {
             filter.value = Object.entries(query)
                 .filter(([key]) => key.startsWith("filters["))
                 .flatMap(([key, values]) => {
                     const [_, filterKey, comparator, subKey] = key.match(/filters\[([^\]]+)]\[([^\]]+)](?:\[([^\]]+)])?/) ?? [];
+                    const remappedFilterKey = queryRemapper[filterKey] ?? filterKey;
+
                     let maybeSubKeyString;
                     if (subKey === undefined) {
                         maybeSubKeyString = "";
@@ -218,11 +230,16 @@
                         maybeSubKeyString = "." + (subKey.includes(" ") ? `"${subKey}"` : subKey);
                     }
 
+                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(FilterLanguage.withNestedKeyPlaceholder(remappedFilterKey + maybeSubKeyString)))) {
+                        queryParamsToKeep.value.push(key);
+                        return [];
+                    }
+
                     if (!Array.isArray(values)) {
                         values = [values];
                     }
 
-                    return values.map(value => (queryRemapper?.[filterKey] ?? filterKey) + maybeSubKeyString + getComparator(comparator as Parameters<typeof getComparator>[0]) + (value!.includes(" ") ? `"${value}"` : value));
+                    return values.map(value => remappedFilterKey + maybeSubKeyString + getComparator(comparator as Parameters<typeof getComparator>[0]) + (value!.includes(" ") ? `"${value}"` : value));
                 })
                 .join(" ");
         }
@@ -279,7 +296,9 @@
                 continue; // Skip comparators that are not valid for the key
             }
 
-            const values = [...new Set(commaSeparatedValues?.split(",")?.filter(value => value !== "")?.map(value => value.replaceAll("\"", "")) ?? [])];
+            const values = [...new Set(
+                [...commaSeparatedValues?.matchAll(/,?(?:"([^"]*)"|([^",]+))/g) ?? []].map(([_, quotedValue, rawValue]) => quotedValue ?? rawValue) ?? [])
+            ];
             if (values.length === 0) {
                 continue; // Skip empty values
             }
@@ -310,7 +329,7 @@
 
             if (!props.legacyQuery) {
                 if (key.includes(".")) {
-                    const keyAndSubKeyMatch = queryKey.match(/([^.]+)\.([^.]+)/);
+                    const keyAndSubKeyMatch = queryKey.match(/([^.]+)\.(\S+)/);
                     const rootKey = keyAndSubKeyMatch?.[1];
                     const subKey = keyAndSubKeyMatch?.[2].replace(/^"([^"]*)"$/, "$1");
                     if (rootKey === undefined || subKey === undefined) {
@@ -445,14 +464,21 @@
     };
 
     watchDebounced(filterQueryString, () => {
+        const newQuery = {
+            ...Object.fromEntries(queryParamsToKeep.value.map(key => {
+                return [
+                    key,
+                    route.query[key]
+                ];
+            })),
+            ...filterQueryString.value
+        };
+        if (_isEqual(route.query, newQuery)) {
+            return; // Skip if the query hasn't changed
+        }
         skipRouteWatcherOnce.value = true;
         router.push({
-            query: {
-                sort: route.query.sort,
-                size: route.query.size,
-                page: route.query.page,
-                ...filterQueryString.value
-            }
+            query: newQuery
         });
     }, {immediate: true, debounce: 1000});
 </script>

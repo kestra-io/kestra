@@ -7,6 +7,7 @@
     "lib": ["ES2020", "DOM", "DOM.Iterable", "ES2021.String"],
     "skipLibCheck": true,
     "incremental": true,
+    "types": ["vitest/globals"],
 
     /* Bundler mode */
     "moduleResolution": "bundler",
@@ -26,7 +27,7 @@
     "baseUrl": "./",
     "paths": {
       "override/*": ["src/override/*"]
-    },
+    }
   },
   "include": [
     ".storybook/preview.*",

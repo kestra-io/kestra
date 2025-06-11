@@ -884,6 +884,7 @@
         "tasks": "작업 선택",
         "triggers": "트리거 선택"
       },
+      "toggle_pebble": "Pebble 편집기 전환",
       "unnamed": "이름 없음"
     },
     "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
@@ -997,7 +998,8 @@
     "plugins": {
       "name": "플러그인",
       "names": "플러그인들",
-      "please": "오른쪽에서 task를 선택하여 해당 문서를 확인하세요."
+      "please": "오른쪽에서 task를 선택하여 해당 문서를 확인하세요.",
+      "release": "릴리스 노트"
     },
     "port": "포트",
     "prefill inputs": "미리 채우기",

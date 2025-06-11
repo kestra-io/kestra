@@ -61,6 +61,7 @@
 #plugin-jenkins:io.kestra.plugin:plugin-jenkins:LATEST
 #plugin-jira:io.kestra.plugin:plugin-jira:LATEST
 #plugin-kafka:io.kestra.plugin:plugin-kafka:LATEST
+#plugin-kestra:io.kestra.plugin:plugin-kestra:LATEST
 #plugin-kubernetes:io.kestra.plugin:plugin-kubernetes:LATEST
 #plugin-langchain4j:io.kestra.plugin:plugin-langchain4j:LATEST
 #plugin-ldap:io.kestra.plugin:plugin-ldap:LATEST

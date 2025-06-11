@@ -796,7 +796,7 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                         // This is important to avoid races such as RUNNING that arrives after the first SUCCESS/FAILED.
                         RunContext runContext = runContextFactory.of(flow, task, current.getExecution(), message.getParentTaskRun());
                         taskRun = execution.findTaskRunByTaskRunId(message.getParentTaskRun().getId()).withState(message.getState());
-                        Map<String, Object> outputs = MapUtils.merge(taskRun.getOutputs(), message.getParentTaskRun().getOutputs());
+                        Map<String, Object> outputs = MapUtils.deepMerge(taskRun.getOutputs(), message.getParentTaskRun().getOutputs());
                         Variables variables = variablesService.of(StorageContext.forTask(taskRun), outputs);
                         taskRun = taskRun.withOutputs(variables);
                         taskRun = ExecutableUtils.manageIterations(

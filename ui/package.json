@@ -37,7 +37,7 @@
     "dagre": "^0.8.5",
     "el-table-infinite-scroll": "^3.0.6",
     "element-plus": "^2.9.10",
-    "humanize-duration": "^3.32.2",
+    "humanize-duration": "^3.33.0",
     "js-yaml": "^4.1.0",
     "lodash": "^4.17.21",
     "markdown-it": "^14.1.0",

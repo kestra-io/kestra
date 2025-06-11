@@ -699,19 +699,20 @@
             importFlows() {
                 const formData = new FormData();
                 formData.append("fileUpload", this.$refs.file.files[0]);
-                this.$store.dispatch("flow/importFlows", formData).then((res) => {
-                    if (res.data.length > 0) {
-                        this.$toast().warning(
-                            this.$t("flows not imported") +
-                                ": " +
-                                res.data.join(", "),
-                        );
-                    } else {
-                        this.$toast().success(this.$t("flows imported"));
-                    }
-                    this.$refs.importForm.reset();
-                    this.loadData(() => {});
-                });
+                this.$store.dispatch("flow/importFlows", formData)
+                    .then((res) => {
+                        if (res.data.length > 0) {
+                            this.$toast().warning(
+                                this.$t("flows not imported") +
+                                    ": " +
+                                    res.data.join(", "),
+                            );
+                        } else {
+                            this.$toast().success(this.$t("flows imported"));
+                        }
+                        this.$refs.file.value = "";
+                        this.loadData(() => {});
+                    });
             },
             getLastExecution(row) {
                 let noState = {state: null, startDate: null};

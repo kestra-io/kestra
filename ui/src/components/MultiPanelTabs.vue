@@ -47,6 +47,7 @@
                             @dragleave.prevent
                             :data-tab-id="tab.value"
                             @click="panel.activeTab = tab"
+                            @mouseup="middleMouseClose($event, panelIndex, tab)"
                         >
                             <component :is="tab.button.icon" class="tab-icon" />
                             {{ tab.button.label }}
@@ -462,6 +463,14 @@
         const [movedPanel] = panelsCopy.splice(panelIndex, 1);
         panelsCopy.splice(newIndex, 0, movedPanel);
         panels.value = panelsCopy;
+    }
+
+    function middleMouseClose(event:MouseEvent, panelIndex:number, tab: Tab) {
+        // Middle mouse button
+        if (event.button === 1) {
+            event.preventDefault();
+            destroyTab(panelIndex, tab);
+        }
     }
 </script>
 

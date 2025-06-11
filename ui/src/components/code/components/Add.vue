@@ -1,11 +1,11 @@
 <template>
-    <div @click="emits('add', props.what)" class="py-2 adding">
+    <button @click="emits('add', props.what)" class="py-2 adding">
         {{
             props.what
                 ? t("no_code.adding", {what: props.what})
                 : t("no_code.adding_default")
         }}
-    </div>
+    </button>
 </template>
 
 <script setup lang="ts">
@@ -18,6 +18,11 @@
 
 <style scoped lang="scss">
 @import "../styles/code.scss";
+
+button {
+    background: transparent;
+    border: none;
+}
 
 .adding {
     cursor: pointer;

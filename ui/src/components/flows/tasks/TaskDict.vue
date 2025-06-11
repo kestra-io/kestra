@@ -1,17 +1,16 @@
 <template>
-    <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100">
+    <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
         <el-col :span="6">
             <InputText
                 :model-value="item[0]"
                 @update:model-value="onKey(index, $event)"
-                @change="onKeyChange(index, $event)"
                 margin="m-0"
+                placeholder="Key"
             />
         </el-col>
         <el-col :span="16">
             <component
-
-                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties, key, properties) : TaskExpression"
+                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties) : TaskExpression"
                 :model-value="item[1]"
                 @update:model-value="onValueChange(index, $event)"
                 :root="getKey(item[0])"
@@ -27,107 +26,99 @@
     <Add v-if="!disabledAdding" @add="addItem()" />
 </template>
 
-<script setup>
+<script lang="ts" setup>
+    import {computed, ref, watch} from "vue";
     import {DeleteOutline} from "../../code/utils/icons";
 
     import InputText from "../../code/components/inputs/InputText.vue";
     import TaskExpression from "./TaskExpression.vue";
     import Add from "../../code/components/Add.vue";
-</script>
-
-<script>
-    import {toRaw} from "vue";
-    import Task from "./Task";
     import getTaskComponent from "./getTaskComponent";
+    import debounce from "lodash/debounce";
 
-    function emptyValueObjectProvider() {
-        return {"": undefined};
-    }
+    defineOptions({
+        name: "TaskDict",
+        inheritAttrs: false,
+    });
 
-    function emptyValueEntriesProvider() {
-        return ["", undefined];
-    }
-
-    export default {
-        mixins: [Task],
-        emits: ["update:modelValue"],
-        props: {
-            class: {
-                type: String,
-                default: undefined
-            },
+    const props = defineProps({
+        modelValue: {
+            type: Object,
+            default: () => ({}),
         },
-        data() {
-            return {
-                currentValue: undefined,
+        schema: {
+            type: Object,
+            required: true,
+        },
+        definitions: {
+            type: Object,
+            default: () => ({}),
+        },
+        root: {
+            type: String,
+            default: undefined,
+        },
+    });
+
+    const currentValue = ref<[string, any][]>([])
+
+    watch(
+        () => props.modelValue,
+        (newValue) => {
+            currentValue.value = Object.entries(newValue ?? {});
+        },
+        {
+            immediate: true,
+            deep: true
+        },
+    );
+
+    const emitUpdate = debounce(function () {
+        const uniqueKeys = new Set<string>();
+        for (const [key, _] of currentValue.value) {
+            // if two keys are the same, we want to avoid loosing data
+            if(uniqueKeys.has(key)){
+                // so we don't update the model value
+                return
             };
-        },
-        created() {
-            this.currentValue = Object.entries(toRaw(this.values));
-        },
-        computed: {
-            disabledAdding() {
-                return !this.currentValue.at(-1)[0] || !this.currentValue.at(-1)[1];
-            },
-            values() {
-                if (this.modelValue === undefined) {
-                    return emptyValueObjectProvider();
-                }
+            uniqueKeys.add(key);
+        }
+        emit("update:modelValue", Object.fromEntries(currentValue.value));
+    }, 200);
 
-                return this.modelValue;
-            },
-        },
-        watch: {
-            modelValue() {
-                this.currentValue = Object.entries(toRaw(this.values));
-            },
-        },
-        methods: {
-            emitLocal(index, value) {
-                const local = this.currentValue.reduce(function (acc, cur, i) {
-                    acc[i === index ? value : cur[0]] = cur[1];
-                    return acc;
-                }, {});
+    const emit = defineEmits(["update:modelValue"]);
 
-                this.$emit("update:modelValue", local);
-            },
-            onValueChange(key, value) {
-                const local = this.currentValue || [];
-                local[key][1] = value;
-                this.currentValue = local;
+    function getKey(key: string) {
+        return props.root ? `${props.root}.${key}` : key;
+    }
 
-                this.emitLocal();
-            },
-            onKey(key, value) {
-                const local = this.currentValue || [];
-                local[key][0] = value;
-                this.currentValue = local;
-            },
-            onKeyChange(index, value) {
-                this.emitLocal(index, value);
-            },
-            addItem() {
-                const local = this.currentValue || [];
-                local.push(["", undefined]);
+    function isRequired(key: string) {
+        return props.schema?.required?.includes(key);
+    }
 
-                this.currentValue = local;
+    function onKey(key: number, val: string) {
+        currentValue.value[key][0] = val;
+        emitUpdate()
+    }
 
-                this.emitLocal();
-            },
-            removeItem(x) {
-                let local = this.currentValue || [];
-                if (local.length === 1) {
-                    local = [emptyValueEntriesProvider()];
-                } else {
-                    local.splice(x, 1);
-                }
+    function onValueChange(key: number, val: any) {
+        currentValue.value[key][1] = val;
+        emitUpdate()
+    }
 
-                this.currentValue = local;
+    function removeItem(index: number) {
+        currentValue.value.splice(index, 1);
+        emitUpdate()
+    }
 
-                this.emitLocal();
-            },
-        },
-    };
+    function addItem() {
+        currentValue.value.push(["", undefined]);
+        emitUpdate()
+    }
+
+    const disabledAdding = computed(() => {
+        return currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
+    });
 </script>
 
 <style scoped lang="scss">

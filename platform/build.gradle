@@ -30,9 +30,9 @@ dependencies {
     api platform("io.micronaut.platform:micronaut-platform:4.8.2")
     api platform("io.qameta.allure:allure-bom:2.29.1")
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
-    api platform('com.google.cloud:libraries-bom:26.61.0')
+    api platform('com.google.cloud:libraries-bom:26.62.0')
     api platform("com.azure:azure-sdk-bom:1.2.35")
-    api platform('software.amazon.awssdk:bom:2.31.59')
+    api platform('software.amazon.awssdk:bom:2.31.61')
 
 
     constraints {
@@ -64,7 +64,7 @@ dependencies {
         api "org.apache.kafka:kafka-clients:$kafkaVersion"
         api "org.apache.kafka:kafka-streams:$kafkaVersion"
         // AWS CRT is not included in the AWS BOM but needed for the S3 Transfer manager
-        api 'software.amazon.awssdk.crt:aws-crt:0.38.4'
+        api 'software.amazon.awssdk.crt:aws-crt:0.38.5'
 
         // we need at least 0.14, it could be removed when Micronaut contains a recent only version in their BOM
         api "io.micrometer:micrometer-core:1.15.0"

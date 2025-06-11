@@ -1,8 +1,9 @@
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
 import FlowEditor from "../../../../src/components/flows/FlowEditor.vue";
-import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import allowFailureDemo from "../../../fixtures/flowgraphs/allow-failure-demo.json";
+import flowSchema from "./flow-schema.json";
 
 
 export default {
@@ -18,7 +19,7 @@ export default {
         {
             path: "/flows/edit/:namespace/",
             name: "flows/edit",
-            component: {template: "<div>updateflows</div>"}
+            component: {template: "<div>update flows</div>"}
         }
     ])
   ]
@@ -31,6 +32,12 @@ const Template = (args) => ({
         get: async (uri) => {
             if(uri.endsWith("/plugins")) {
                 return {data: []}
+            }
+            if(uri.endsWith("/flow")) {
+                return {data: flowSchema}
+            }
+            if(uri.endsWith("/distinct-namespaces")) {
+                return {data: ["sanitychecks.flows.blueprints", "tutorial"]}
             }
             console.log("get request", uri)
             return {data: {}}
@@ -49,6 +56,7 @@ const Template = (args) => ({
     const flow = YAML_UTILS.parse(args.flow)
     flow.source = args.flow
     store.commit("flow/setFlow", flow)
+    store.commit("flow/setFlowYaml", args.flow)
     store.dispatch("editor/openTab", {
         flow: true,
         name: "Flow",

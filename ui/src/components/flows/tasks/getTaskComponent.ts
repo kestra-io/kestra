@@ -48,7 +48,7 @@ function getType(property: any, key?: string, schema?: any): string {
     }
 
     if (key === "namespace") {
-        return "subflow-namespace";
+        return "namespace";
     }
 
     const properties = Object.keys(schema?.properties ?? {});

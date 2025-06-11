@@ -11,26 +11,26 @@
     />
     <div class="mt-1 mb-2 w-100 wrapper">
         <el-row
-            v-for="pair in internalPairs"
-            :key="pair.id"
+            v-for="(pair, index) in internalPairs"
+            :key="index"
             :gutter="10"
         >
             <el-col :span="8">
                 <InputText
-                    :model-value="pair.currentKey"
+                    :model-value="pair[0]"
                     :placeholder="t('key')"
-                    @update:model-value="(changed) => handleKeyInput(pair.id, changed)"
-                    :have-error="keyIsDuplicated(pair.currentKey)"
+                    @update:model-value="(changed) => handleKeyInput(index, changed)"
+                    :have-error="duplicatedPairs.includes(pair[0])"
                 />
             </el-col>
             <el-col :span="16" class="d-flex">
                 <InputText
-                    :model-value="pair.value"
+                    :model-value="pair[1]"
                     :placeholder="t('value')"
-                    @update:model-value="(changed) => updateValue(pair.id, changed)"
+                    @update:model-value="(changed) => updateValue(index, changed)"
                     class="w-100 me-2"
                 />
-                <DeleteOutline @click="removePair(pair.id)" class="delete" />
+                <DeleteOutline @click="removePair(index)" class="delete" />
             </el-col>
         </el-row>
 
@@ -39,9 +39,7 @@
 </template>
 
 <script setup lang="ts">
-    import {ref, watch, reactive, PropType} from "vue";
-    import {debounce} from "lodash";
-
+    import {watch, computed, ref} from "vue";
     import {PairField} from "../../utils/types";
 
     import {DeleteOutline} from "../../utils/icons";
@@ -57,128 +55,68 @@
         inheritAttrs: false,
     });
 
-    const emits = defineEmits(["update:modelValue"]);
-    const props = defineProps({
-        modelValue: {
-            type: Object as PropType<PairField["value"]>,
-            default: undefined,
-        },
-        label: {type: String, default: undefined},
-        property: {type: String, default: undefined},
-        required: {type: Boolean, default: false},
+    const emit = defineEmits(["update:modelValue"]);
+    const props = defineProps<{
+        modelValue?: PairField["value"],
+        label?: string,
+        property?: string,
+        required?: boolean
+    }>();
+
+    const internalPairs = ref<[string, string][]>([])
+
+    watch(() => props.modelValue, (newValue) => {
+        // If the alert is visible, we don't want to update the pairs
+        // because it would delete problem line silently.
+        if(alertState.value.visible){
+            return
+        }
+        internalPairs.value = Object.entries(newValue || {});
+    }, {
+        deep: true,
+        immediate: true
     });
 
-    interface InternalPair {
-        id: string;
-        originalKey: string;
-        currentKey: string;
-        value: string;
+    const duplicatedPairs = computed(() => {
+        return internalPairs.value.map(pair => pair[0])
+            .filter((pair, index, self) =>
+                self.findIndex(p => p[0] === pair[0]) !== index
+            );
+    });
+
+    const alertState = computed(() => {
+        return {
+            visible: Object.keys(props.modelValue || {}).length === 0,
+            message: t("code.inputPair.empty"),
+        };
+    });
+
+    const modelValueToUpdate = computed(() => {
+        return Object.fromEntries(internalPairs.value);
+    });
+
+    function updateModel() {
+        emit("update:modelValue", modelValueToUpdate.value);
     }
 
-    const internalPairs = ref<InternalPair[]>([]);
-
-    const alertState = reactive({
-        visible: false,
-        message: ""
-    });
-
-    const processAndEmitPairs = () => {
-        const emittedValue: PairField["value"] = {};
-        let hasDuplicate = false;
-        let duplicateKeyMessage = "";
-
-        const emittedKeys = new Set<string>();
-
-        for (const pair of internalPairs.value) {
-            if (pair.currentKey && !emittedKeys.has(pair.currentKey)) {
-                emittedValue[pair.currentKey] = pair.value;
-                emittedKeys.add(pair.currentKey);
-            } else if (pair.currentKey) {
-                hasDuplicate = true;
-                duplicateKeyMessage = t("duplicate-pair", {label:props.label ?? t("key"), key: pair.currentKey});
-            }
-        }
-
-        alertState.visible = hasDuplicate;
-        alertState.message = duplicateKeyMessage;
-
-        emits("update:modelValue", emittedValue);
+    function handleKeyInput(pairId: number, newValue: string) {
+        internalPairs.value[pairId][0] = newValue;
+        updateModel()
     };
 
-    watch(() => props.modelValue, (newModelValue) => {
-        const newModelValueKeys = Object.keys(newModelValue || {});
-        const existingModelValueMap = new Map(Object.entries(newModelValue || {}));
-
-        let currentPairsList = internalPairs.value;
-
-        // Add new/updated keys to our local pairs
-        for (const key of newModelValueKeys) {
-            const value = existingModelValueMap.get(key) || "";
-            const existingPair = currentPairsList.find(p => p.currentKey === key);
-
-            if (existingPair) {
-                if (value === existingPair.value) continue;
-                currentPairsList = currentPairsList.filter(p => p.id !== existingPair.id);
-            }
-            currentPairsList.push({
-                id: existingPair?.id || crypto.randomUUID(),
-                originalKey: existingPair?.currentKey || key,
-                currentKey: existingPair?.currentKey || key,
-                value: value,
-            });
-        }
-
-        // Removed keys from our local pairs
-        for (const key of currentPairsList.map(p => p.currentKey)) {
-            if (key != "" && !Object.prototype.hasOwnProperty.call(newModelValue, key)) {
-                currentPairsList = currentPairsList.filter(p => p.currentKey !== key);
-            }
-        }
-
-        internalPairs.value = currentPairsList;
-    }, {immediate: true, deep: true});
-
-    const debouncedSetKey = debounce((pairId: string, newKeyCandidate: string) => {
-        const pair = internalPairs.value.find(p => p.id === pairId);
-        if (pair) {
-            pair.currentKey = newKeyCandidate;
-            processAndEmitPairs();
-        }
-    }, 500);
-
-    const handleKeyInput = (pairId: string, newValue: string) => {
-        const pair = internalPairs.value.find(p => p.id === pairId);
-        if (pair) {
-            pair.currentKey = newValue;
-            debouncedSetKey(pairId, newValue);
-        }
+    function addPair() {
+        internalPairs.value.push(["", ""])
+        updateModel()
     };
 
-    const addPair = () => {
-        internalPairs.value.push({
-            id: crypto.randomUUID(),
-            originalKey: "",
-            currentKey: "",
-            value: "",
-        });
-        processAndEmitPairs();
+    function removePair (pairId: number) {
+        internalPairs.value.splice(pairId, 1);
+        updateModel()
     };
 
-    const removePair = (pairId: string) => {
-        internalPairs.value = internalPairs.value.filter(p => p.id !== pairId);
-        processAndEmitPairs();
-    };
-
-    const updateValue = (pairId: string, newValue: string) => {
-        const pairToUpdate = internalPairs.value.find(p => p.id === pairId);
-        if (pairToUpdate) {
-            pairToUpdate.value = newValue;
-            processAndEmitPairs();
-        }
-    };
-
-    const keyIsDuplicated = (key: string): boolean => {
-        return internalPairs.value.filter(p => p.currentKey === key).length > 1;
+    function updateValue (pairId: number, newValue: string){
+        internalPairs.value[pairId][1] = newValue;
+        updateModel()
     };
 </script>
 

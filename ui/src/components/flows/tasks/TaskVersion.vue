@@ -2,13 +2,17 @@
     <InputText
         :model-value="modelValue"
         :disabled
+        :placeholder="disabled ? t('no_code.version_oss_placeholder') : undefined"
         class="w-100"
     />
 </template>
 
 <script setup lang="ts">
-    import {computed} from "vue";
+    import {computed, getCurrentInstance} from "vue";
+    import {useI18n} from "vue-i18n";
     import InputText from "../../code/components/inputs/InputText.vue";
+
+    const {t} = useI18n()
 
     const modelValue = defineModel<string>({default: ""})
 
@@ -18,6 +22,6 @@
     })
 
     const disabled = computed(() => {
-        return true
+        return Boolean(getCurrentInstance()?.appContext.config.globalProperties.$isOss)
     })
 </script>

@@ -1,7 +1,7 @@
 <template>
     <template v-if="generated">
         <section id="kpi">
-            <span class="pb-2">{{ getChartTitle(props.chart) }}</span>
+            <span class="pb-2">{{ getChartTitle(props.chart!) }}</span>
             <p class="m-0 fs-2 fw-bold">
                 <span>{{ generated?.results[0]?.value }}</span>
                 <span v-if="percentage">%</span>

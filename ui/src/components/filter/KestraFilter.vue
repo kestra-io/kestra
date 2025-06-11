@@ -497,7 +497,7 @@
                 border-bottom-right-radius: 0;
             }
 
-            + .mtk26, + .mtk28 {
+            + .mtk25, + .mtk28 {
                 padding-left: 0;
                 border-top-left-radius: 0;
                 border-bottom-left-radius: 0;

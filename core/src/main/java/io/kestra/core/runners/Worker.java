@@ -349,7 +349,7 @@ public class Worker implements Service, Runnable, AutoCloseable {
         }
     }
 
-    private void handleTask(final WorkerTask workerTask) {
+    private void handleTask(WorkerTask workerTask) {
         if (workerTask.getTask() instanceof RunnableTask) {
             this.run(workerTask, true);
         } else if (workerTask.getTask() instanceof WorkingDirectory workingDirectory) {
@@ -360,6 +360,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
             try {
                 // preExecuteTasks
                 try {
+                    workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(RUNNING));
+                    this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun()));
+
                     workingDirectory.preExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
                 } catch (Exception e) {
                     workingDirectoryRunContext.logger().error("Failed preExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
@@ -411,6 +414,9 @@ public class Worker implements Service, Runnable, AutoCloseable {
                 // postExecuteTasks
                 try {
                     workingDirectory.postExecuteTasks(workingDirectoryRunContext, workerTask.getTaskRun());
+
+                    workerTask = workerTask.withTaskRun(workerTask.getTaskRun().withState(SUCCESS));
+                    this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.getTaskRun()));
                 } catch (Exception e) {
                     workingDirectoryRunContext.logger().error("Failed postExecuteTasks on WorkingDirectory: {}", e.getMessage(), e);
                     try {

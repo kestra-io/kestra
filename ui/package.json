@@ -57,7 +57,7 @@
     "posthog-js": "^1.245.1",
     "rapidoc": "^9.3.8",
     "semver": "^7.7.2",
-    "shiki": "^3.4.2",
+    "shiki": "^3.6.0",
     "splitpanes": "^3.2.0",
     "throttle-debounce": "^5.0.2",
     "vue": "^3.5.13",

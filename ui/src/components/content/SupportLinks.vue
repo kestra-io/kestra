@@ -12,7 +12,7 @@
 </template>
 
 <script setup lang="ts">
-    import GithubIcon from "../icons/GitHub.vue";
+    import GithubIcon from "vue-material-design-icons/Github.vue";
     import SlackIcon from "vue-material-design-icons/Slack.vue";
     import LifebuoyIcon from "vue-material-design-icons/Lifebuoy.vue";
 

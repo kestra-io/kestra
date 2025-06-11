@@ -55,10 +55,6 @@ public interface QueueFactoryInterface {
 
     QueueInterface<Trigger> trigger();
 
-    WorkerJobQueueInterface workerJobQueue();
-
-    WorkerTriggerResultQueueInterface workerTriggerResultQueue();
-
     QueueInterface<SubflowExecutionResult> subflowExecutionResult();
 
     QueueInterface<SubflowExecutionEnd> subflowExecutionEnd();

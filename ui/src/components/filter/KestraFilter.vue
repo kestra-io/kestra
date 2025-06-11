@@ -292,7 +292,9 @@
                 continue; // Skip comparators that are not valid for the key
             }
 
-            const values = [...new Set(commaSeparatedValues?.split(",")?.filter(value => value !== "")?.map(value => value.replaceAll("\"", "")) ?? [])];
+            const values = [...new Set(
+                [...commaSeparatedValues?.matchAll(/,?(?:"([^"]*)"|([^",]+))/g) ?? []].map(([_, quotedValue, rawValue]) => quotedValue ?? rawValue) ?? [])
+            ];
             if (values.length === 0) {
                 continue; // Skip empty values
             }
@@ -323,7 +325,7 @@
 
             if (!props.legacyQuery) {
                 if (key.includes(".")) {
-                    const keyAndSubKeyMatch = queryKey.match(/([^.]+)\.([^.]+)/);
+                    const keyAndSubKeyMatch = queryKey.match(/([^.]+)\.(\S+)/);
                     const rootKey = keyAndSubKeyMatch?.[1];
                     const subKey = keyAndSubKeyMatch?.[2].replace(/^"([^"]*)"$/, "$1");
                     if (rootKey === undefined || subKey === undefined) {

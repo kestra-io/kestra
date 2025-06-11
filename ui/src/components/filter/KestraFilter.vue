@@ -203,7 +203,9 @@
              */
             filter.value = Object.entries(query)
                 .flatMap(([key, values]) => {
-                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(queryRemapper[key] ?? key))) {
+                    const remappedFilterKey = queryRemapper[key] ?? key;
+
+                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(FilterLanguage.withNestedKeyPlaceholder(remappedFilterKey)))) {
                         queryParamsToKeep.value.push(key);
                         return [];
                     }
@@ -212,18 +214,14 @@
                         values = [values];
                     }
 
-                    return values.map(value => (queryRemapper[key] ?? key) + Comparators.EQUALS + value);
+                    return values.map(value => remappedFilterKey + Comparators.EQUALS + value);
                 }).join(" ");
         } else {
             filter.value = Object.entries(query)
                 .filter(([key]) => key.startsWith("filters["))
                 .flatMap(([key, values]) => {
                     const [_, filterKey, comparator, subKey] = key.match(/filters\[([^\]]+)]\[([^\]]+)](?:\[([^\]]+)])?/) ?? [];
-
-                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(queryRemapper[filterKey] ?? filterKey))) {
-                        queryParamsToKeep.value.push(key);
-                        return [];
-                    }
+                    const remappedFilterKey = queryRemapper[filterKey] ?? filterKey;
 
                     let maybeSubKeyString;
                     if (subKey === undefined) {
@@ -232,11 +230,16 @@
                         maybeSubKeyString = "." + (subKey.includes(" ") ? `"${subKey}"` : subKey);
                     }
 
+                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(FilterLanguage.withNestedKeyPlaceholder(remappedFilterKey + maybeSubKeyString)))) {
+                        queryParamsToKeep.value.push(key);
+                        return [];
+                    }
+
                     if (!Array.isArray(values)) {
                         values = [values];
                     }
 
-                    return values.map(value => (queryRemapper?.[filterKey] ?? filterKey) + maybeSubKeyString + getComparator(comparator as Parameters<typeof getComparator>[0]) + (value!.includes(" ") ? `"${value}"` : value));
+                    return values.map(value => remappedFilterKey + maybeSubKeyString + getComparator(comparator as Parameters<typeof getComparator>[0]) + (value!.includes(" ") ? `"${value}"` : value));
                 })
                 .join(" ");
         }

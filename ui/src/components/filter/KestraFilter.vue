@@ -86,6 +86,7 @@
     import {watchDebounced} from "@vueuse/core";
     import {FilterLanguage} from "../../composables/monaco/languages/filters/filterLanguage.ts";
     import DefaultFilterLanguage from "../../composables/monaco/languages/filters/impl/defaultFilterLanguage.ts";
+    import _isEqual from "lodash/isEqual";
 
     const router = useRouter();
     const route = useRoute();
@@ -460,17 +461,21 @@
     };
 
     watchDebounced(filterQueryString, () => {
+        const newQuery = {
+            ...Object.fromEntries(queryParamsToKeep.value.map(key => {
+                return [
+                    key,
+                    route.query[key]
+                ];
+            })),
+            ...filterQueryString.value
+        };
+        if (_isEqual(route.query, newQuery)) {
+            return; // Skip if the query hasn't changed
+        }
         skipRouteWatcherOnce.value = true;
         router.push({
-            query: {
-                ...Object.fromEntries(queryParamsToKeep.value.map(key => {
-                    return [
-                        key,
-                        route.query[key]
-                    ];
-                })),
-                ...filterQueryString.value
-            }
+            query: newQuery
         });
     }, {immediate: true, debounce: 1000});
 </script>

@@ -558,6 +558,8 @@
     const isCurrentTabFlow = computed(() => currentTab?.value?.extension === undefined)
     const isFlow = computed(() => currentTab?.value?.flow || props.isCreating);
 
+    const namespaceID = computed(() => props.namespace ?? route.params.namespace ?? route.params.id);
+
     const baseOutdatedTranslationKey = computed(() => store.getters["flow/baseOutdatedTranslationKey"]);
     const flowErrors = computed(() => store.getters["flow/flowErrors"]);
     const flowWarnings = computed(() => {
@@ -962,7 +964,7 @@
     const save = async () => {
         const result = await store.dispatch("flow/save", {
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
-            namespace: props.namespace ?? route.params.namespace,
+            namespace: namespaceID.value,
         })
         if(result === "redirect_to_update"){
             await router.push({
@@ -1102,7 +1104,7 @@
     async function loadFileAtPath(path){
         const content = await store.dispatch("namespace/readFile", {
             path,
-            namespace: props.namespace ?? route.params.namespace ?? route.params.id,
+            namespace: namespaceID.value
         })
         store.commit("flow/setFlowYaml", content);
     }
@@ -1250,13 +1252,13 @@
 
             if (dialog.value.type === "file") {
                 await store.dispatch("namespace/createFile", {
-                    namespace: props.namespace ?? route.params.namespace,
+                    namespace: namespaceID.value,
                     path,
                     content: "",
                 });
             } else {
                 await store.dispatch("namespace/createDirectory", {
-                    namespace: props.namespace ?? route.params.namespace,
+                    namespace: namespaceID.value,
                     path,
                 });
             }
@@ -1285,7 +1287,7 @@
             const path = file.webkitRelativePath || file.name;
 
             await store.dispatch("namespace/importFileDirectory", {
-                namespace: props.namespace ?? route.params.namespace,
+                namespace: namespaceID.value,
                 content,
                 path
             });

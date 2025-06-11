@@ -20,6 +20,7 @@
                     :model-value="pair.currentKey"
                     :placeholder="t('key')"
                     @update:model-value="(changed) => handleKeyInput(pair.id, changed)"
+                    :have-error="keyIsDuplicated(pair.currentKey)"
                 />
             </el-col>
             <el-col :span="16" class="d-flex">
@@ -174,6 +175,10 @@
             pairToUpdate.value = newValue;
             processAndEmitPairs();
         }
+    };
+
+    const keyIsDuplicated = (key: string): boolean => {
+        return internalPairs.value.filter(p => p.currentKey === key).length > 1;
     };
 </script>
 

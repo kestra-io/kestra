@@ -1,4 +1,9 @@
-import type {PropType} from "vue";
+import {onMounted, watch, computed, ref} from "vue";
+import {useRoute} from "vue-router";
+import {useStore} from "vuex";
+import {useI18n} from "vue-i18n";
+
+import {decodeSearchParams} from "../../filter/utils/helpers.ts";
 
 export type Dashboard = {
     id: string;
@@ -21,15 +26,6 @@ export type Chart = {
     [key: string]: unknown;
 };
 
-export const sectionProps = {
-    chart: {
-        type: Object as PropType<Chart>,
-        required: true,
-    },
-    filters: {type: Array, default: () => []},
-    showDefault: {type: Boolean, default: false},
-};
-
 import Bar from "../sections/Bar.vue";
 import KPI from "../sections/KPI.vue";
 import Markdown from "../sections/Markdown.vue";
@@ -49,3 +45,31 @@ export const TYPES: Record<string, any> = {
 export const isKPIChart = (type: string) => type === "io.kestra.plugin.core.dashboard.chart.KPI";
 
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id;
+
+export function useChartGenerator(props: {chart: Chart; filters: string[]; showDefault: boolean;}) {
+    const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE");
+
+    const route = useRoute();
+
+    const store = useStore();
+
+    const {t} = useI18n({useScope: "global"});
+    const EMPTY_TEXT = t("dashboards.empty");
+
+    const data = ref();
+    const generate = async (id: string) => {
+        const filters = props.filters.concat(decodeSearchParams(route.query, undefined, []) ?? []);
+        
+        if (!props.showDefault) {
+            data.value = await store.dispatch("dashboard/generate", {id, chartId: props.chart.id, filters});
+        } else {
+            data.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filters}});
+        }
+    };
+
+    onMounted(() => generate(route.params.id as string));
+
+    watch(route, async (changed) => generate(changed.params.id as string));
+
+    return {percentageShown, EMPTY_TEXT, data};
+}

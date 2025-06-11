@@ -85,7 +85,7 @@
             >
                 <div v-if="selectedChart" class="w-100">
                     <p class="fs-6 fw-bold">
-                        {{ selectedChart.chartOptions?.displayName ?? selectedChart.id }}
+                        {{ getChartTitle(selectedChart) }}
                     </p>
                     <p
                         v-if="selectedChart.chartOptions?.description"
@@ -123,7 +123,7 @@
 <script setup>
     import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
     
-    import {TYPES} from "../composables/useDashboards";
+    import {TYPES, getChartTitle} from "../composables/useDashboards";
 
     import PluginDocumentation from "../../plugins/PluginDocumentation.vue";
     import Sections from "../sections/Sections.vue";

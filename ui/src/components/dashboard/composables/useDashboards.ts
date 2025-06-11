@@ -35,3 +35,5 @@ export const TYPES: Record<string, any> = {
 };
 
 export const isKPIChart = (type: string) => type === "io.kestra.plugin.core.dashboard.chart.KPI";
+
+export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id;

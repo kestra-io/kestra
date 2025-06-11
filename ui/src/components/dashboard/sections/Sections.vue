@@ -40,7 +40,7 @@
 <script setup lang="ts">
     import {onMounted, ref} from "vue";
 
-    import {Chart, TYPES, isKPIChart} from "../composables/useDashboards";
+    import {Chart, TYPES, isKPIChart, getChartTitle} from "../composables/useDashboards";
 
     import {useRoute, useRouter} from "vue-router";
     const route = useRoute();
@@ -53,7 +53,7 @@
     }>();
 
     const labels = (chart: Chart) => ({
-        title: chart?.chartOptions?.displayName ?? chart?.id,
+        title: getChartTitle(chart),
         description: chart?.chartOptions?.description,
     });
 

@@ -84,7 +84,7 @@
     "@storybook/addon-essentials": "^8.6.14",
     "@storybook/addon-themes": "^9.0.5",
     "@storybook/addon-vitest": "^9.0.5",
-    "@storybook/test-runner": "^0.22.0",
+    "@storybook/test-runner": "^0.22.1",
     "@storybook/types": "^8.6.14",
     "@storybook/vue3-vite": "^9.0.5",
     "@types/humanize-duration": "^3.27.4",

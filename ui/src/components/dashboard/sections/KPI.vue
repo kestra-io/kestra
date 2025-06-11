@@ -1,7 +1,7 @@
 <template>
     <template v-if="generated">
         <section id="kpi">
-            <span class="pb-2">{{ label }}</span>
+            <span class="pb-2">{{ getChartTitle(props.chart) }}</span>
             <p class="m-0 fs-2 fw-bold">
                 <span>{{ generated?.results[0]?.value }}</span>
                 <span v-if="percentage">%</span>
@@ -16,6 +16,7 @@
     import {onMounted, computed, ref, watch} from "vue";
 
     import NoData from "../../layout/NoData.vue";
+    import {getChartTitle} from "../composables/useDashboards";
 
     import {useRoute} from "vue-router";
     const route = useRoute();
@@ -34,9 +35,6 @@
         defaultFilters: {type: Array, default: () => []},
     });
 
-    const label = computed(
-        () => props.chart?.chartOptions?.displayName || props.chart?.id,
-    );
     const percentage = computed(
         () => props.chart?.chartOptions?.numberType === "PERCENTAGE"
     );

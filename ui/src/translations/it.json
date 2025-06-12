@@ -885,7 +885,8 @@
         "triggers": "Seleziona un trigger"
       },
       "toggle_pebble": "Attiva/disattiva editor Pebble",
-      "unnamed": "Nessun Nome"
+      "unnamed": "Nessun Nome",
+      "version_oss_placeholder": "Sblocca il Versioning dei Plugin con l'Enterprise Edition"
     },
     "no_data": "Sembra che non ci sia ancora nulla qui… per ora!<br/>Modifica i tuoi filtri o riprova!",
     "no_logs_data": "Nessun dato",

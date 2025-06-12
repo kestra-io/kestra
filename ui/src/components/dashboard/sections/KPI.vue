@@ -1,12 +1,10 @@
 <template>
-    <template v-if="data">
-        <section id="kpi">
-            <span class="pb-2">{{ getChartTitle(props.chart!) }}</span>
-            <p class="m-0 fs-2 fw-bold">
-                {{ getPropertyValue(data, 'value') }}{{ percentageShown ? "%" : "" }}
-            </p>
-        </section>
-    </template>
+    <section v-if="data" id="kpi">
+        <span class="pb-2">{{ getChartTitle(props.chart!) }}</span>
+        <p class="m-0 fs-2 fw-bold">
+            {{ getPropertyValue(data, "value") }}{{ percentageShown ? "%" : "" }}
+        </p>
+    </section>
 
     <NoData v-else :text="EMPTY_TEXT" />
 </template>

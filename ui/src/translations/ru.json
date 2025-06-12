@@ -885,8 +885,7 @@
         "triggers": "Выберите trigger"
       },
       "toggle_pebble": "Переключить редактор Pebble",
-      "unnamed": "Без имени",
-      "version_oss_placeholder": "Разблокировать редактируемую версию в Enterprise Edition"
+      "unnamed": "Без имени"
     },
     "no_data": "Похоже, здесь пока ничего нет…<br/>Измените фильтры или попробуйте снова!",
     "no_logs_data": "Нет данных",

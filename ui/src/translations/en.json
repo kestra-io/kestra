@@ -1172,7 +1172,7 @@
     "chart preview": "Chart preview",
     "no_code": {
       "toggle_pebble": "Toggle Pebble editor",
-      "version_oss_placeholder": "Unlock editable version in Enterprise Edition",
+      "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "unnamed": "No Name",
       "adding": "+ Add a {what}",
       "adding_default": "+ Add a new value",

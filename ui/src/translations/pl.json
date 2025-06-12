@@ -885,8 +885,7 @@
         "triggers": "Wybierz trigger"
       },
       "toggle_pebble": "Przełącz edytor Pebble",
-      "unnamed": "Brak Nazwy",
-      "version_oss_placeholder": "Odblokuj edytowalną wersję w Enterprise Edition"
+      "unnamed": "Brak Nazwy"
     },
     "no_data": "Wygląda na to, że nic tu nie ma... jeszcze!<br/>Dostosuj swoje filtry lub spróbuj ponownie!",
     "no_logs_data": "Brak danych",

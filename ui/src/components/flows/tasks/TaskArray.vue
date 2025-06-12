@@ -68,7 +68,7 @@
     });
 
     const needWrapper = computed(() => {
-        return [
+        return ![
             "string",
             "number",
             "boolean",

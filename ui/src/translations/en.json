@@ -131,7 +131,8 @@
       "docs": "Docs",
       "help": "Help",
       "issue": "Open an Issue",
-      "demo": "Get a demo"
+      "demo": "Get a demo",
+      "star": "Star the repo"
     },
     "source": "Source",
     "source only": "Source only",

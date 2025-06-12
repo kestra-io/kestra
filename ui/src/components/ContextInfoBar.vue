@@ -65,6 +65,7 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import WeatherSunny from "vue-material-design-icons/WeatherSunny.vue"
     import WeatherNight from "vue-material-design-icons/WeatherNight.vue"
+    import Star from "vue-material-design-icons/Star.vue"
 
     import {useStorage} from "@vueuse/core"
     import {useStore} from "vuex";
@@ -120,6 +121,11 @@
             title: t("contextBar.demo"),
             icon: Calendar,
             url: "https://kestra.io/demo"
+        },
+        star: {
+            title: t("contextBar.star"),
+            icon: Star,
+            url: "https://github.com/kestra-io/kestra"
         }
     }
 

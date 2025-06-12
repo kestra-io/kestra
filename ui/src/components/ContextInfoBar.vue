@@ -207,6 +207,7 @@
         align-items: center;
         gap: 0.5rem;
         font-size: var(--font-size-sm);
+        overflow-y: auto;
 
         &.opened {
             border-right: 1px solid var(--ks-border-primary);

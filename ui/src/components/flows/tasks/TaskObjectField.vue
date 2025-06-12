@@ -80,7 +80,7 @@
     const taskComponent = templateRef<{resetSelectType?: () => void}>("taskComponent");
 
     const required = computed(() => {
-        return props.required?.includes(props.fieldKey);
+        return props.required?.includes(props.fieldKey) && props.schema.$required;
     })
 
     const componentProps = computed(() => {

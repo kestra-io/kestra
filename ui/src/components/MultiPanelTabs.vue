@@ -242,10 +242,10 @@
         !draggingPanel.value
     );
 
-    function onResize(e: {size:number}[]) {
+    function onResize({panes}: {panes:{size:number}[]}) {
         let i = 0;
         for(const p of panels.value){
-            p.size = e[i++].size
+            p.size = panes[i++].size
         }
     }
 

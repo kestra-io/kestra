@@ -68,16 +68,18 @@
     });
 
     const needWrapper = computed(() => {
-        return componentType.value.ksTaskName !== "string" &&
-            componentType.value.ksTaskName !== "number" &&
-            componentType.value.ksTaskName !== "boolean" &&
-            componentType.value.ksTaskName !== "expression";
+        return [
+            "string",
+            "number",
+            "boolean",
+            "expression",
+        ].includes(componentType.value.ksTaskName)
     });
 
     const items = computed(() =>
         props.modelValue === undefined && !props.required
-            // we want to avoid displaying an item completely empty when modelValue is undefined
-            // except if the field is required
+            // we want to avoid displaying an item completely empty when
+            // modelValue is undefined except if the field is required
             ? []
             : !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
@@ -86,10 +88,22 @@
         emits("update:modelValue", items.value.toSpliced(index, 1, value));
     };
 
+    const newEmptyValue = computed(() => {
+        if (props.schema.items?.type === "string") {
+            return "";
+        }
+        return props.schema.items?.default ?? undefined;
+    })
+
     const addItem = () => {
-        emits("update:modelValue", [...items.value, undefined]);
+        emits("update:modelValue", [...items.value, newEmptyValue.value]);
     };
+
     const removeItem = (index: number) => {
+        if (items.value.length <= 1) {
+            emits("update:modelValue", undefined);
+            return;
+        }
         emits("update:modelValue", items.value.toSpliced(index, 1));
     };
 

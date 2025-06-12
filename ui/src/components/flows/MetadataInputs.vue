@@ -19,127 +19,73 @@
     </div>
 </template>
 
-<script setup>
-
+<script setup lang="ts">
+    import {ref, watch, inject} from "vue";
+    import {useI18n} from "vue-i18n";
     import InputText from "../code/components/inputs/InputText.vue";
     import Add from "../code/components/Add.vue";
-
     import {DeleteOutline} from "../code/utils/icons";
-</script>
-
-<script>
-    import {h} from "vue";
-    import MetadataInputsContent from "./MetadataInputsContent.vue";
-
-    import {mapState} from "vuex";
     import {BREADCRUMB_INJECTION_KEY, PANEL_INJECTION_KEY} from "../code/injectionKeys";
 
-    export default {
-        emits: ["update:modelValue"],
-        props: {
-            modelValue: {
-                type: Array,
-                default: () => [],
-            },
-            inputs: {
-                type: Array,
-                default: () => [],
-            },
-            label: {type: String, required: true},
-            required: {type: Boolean, default: false},
-            disabled: {type: Boolean, default: false},
-        },
-        computed: {
-            ...mapState("plugin", ["inputSchema", "inputsType"]),
-        },
-        mounted() {
-            this.newInputs = this.inputs;
+    interface InputType {
+        type: string;
+        id?: string;
+        cls?: string;
+    }
 
-            this.$store
-                .dispatch("plugin/loadInputsType")
-                .then((_) => (this.loading = false));
-        },
-        data() {
-            return {
-                newInputs: [],
-                selectedInput: undefined,
-                selectedIndex: undefined,
-                isEditOpen: false,
-                loading: false,
-            };
-        },
-        inject:{
-            panel: {from: PANEL_INJECTION_KEY},
-            breadcrumbs: {from: BREADCRUMB_INJECTION_KEY}
-        },
-        methods: {
-            selectInput(input, index) {
-                this.loading = true;
-                this.selectedInput = input;
-                this.selectedIndex = index;
+    const {t} = useI18n();
 
-                this.loadSchema(input.type);
+    const props = withDefaults(defineProps<{
+        modelValue: InputType[];
+        label: string;
+        required?: boolean;
+        disabled?: boolean;
+    }>(), {
+        modelValue: () => [],
+        required: false,
+        disabled: false
+    });
 
-                this.panel = h(MetadataInputsContent, {
-                    modelValue: input,
-                    inputs: this.inputs,
-                    label: this.$t("inputs"),
-                    selectedIndex: index,
-                    "onUpdate:modelValue": this.updateSelected,
-                })
+    const emit = defineEmits<{
+        (e: "update:modelValue", value: InputType[]): void
+    }>();
 
-                this.breadcrumbs.push(
-                    {
-                        label: this.$t("inputs").toLowerCase(),
-                    });
-            },
-            getCls(type) {
-                return this.inputsType.find((e) => e.type === type).cls;
-            },
-            getType(cls) {
-                return this.inputsType.find((e) => e.cls === cls).type;
-            },
-            loadSchema(type) {
-                this.$store
-                    .dispatch("plugin/loadInputSchema", {type: type})
-                    .then((_) => (this.loading = false));
-            },
-            update() {
-                if (
-                    this.newInputs.map((e) => e.id).length !==
-                    new Set(this.newInputs.map((e) => e.id)).size
-                ) {
-                    this.$store.dispatch("core/showMessage", {
-                        variant: "error",
-                        title: this.$t("error"),
-                        message: this.$t("duplicate input id"),
-                    });
-                } else {
-                    this.isEditOpen = false;
-                    this.$emit("update:modelValue", this.newInputs);
-                }
-            },
-            updateSelected(value) {
-                this.newInputs = value;
-            },
-            deleteInput(index) {
-                this.newInputs.splice(index, 1);
-                this.$emit("update:modelValue", this.newInputs);
-            },
-            addInput() {
-                this.newInputs.push({type: "STRING"});
-                this.selectInput(this.newInputs.at(-1), this.newInputs.length - 1);
-            },
-            onChangeType(value) {
-                this.loading = true;
-                this.selectedInput = {
-                    type: value,
-                    id: this.newInputs[this.selectedIndex].id,
-                };
-                this.newInputs[this.selectedIndex] = this.selectedInput;
-                this.loadSchema(value);
-            },
-        },
+    const panel = inject(PANEL_INJECTION_KEY, ref());
+    const breadcrumbs = inject(BREADCRUMB_INJECTION_KEY, ref([]));
+
+    const newInputs = ref<InputType[]>([]);
+    const selectedInput = ref<InputType | undefined>();
+    const selectedIndex = ref<number | undefined>();
+    const loading = ref(false);
+
+    watch(() => props.modelValue, (newValue) => {
+        newInputs.value = newValue;
+    }, {deep: true, immediate: true});
+
+    const selectInput = async (input: InputType, index: number) => {
+        loading.value = true;
+        selectedInput.value = input;
+        selectedIndex.value = index;
+
+        panel.value = {
+            props: {
+                selectedIndex: index,
+            }
+        };
+
+        breadcrumbs.value.push({
+            label: t("inputs".toLowerCase()),
+        });
+    };
+
+    const deleteInput = (index: number) => {
+        newInputs.value.splice(index, 1);
+        emit("update:modelValue", newInputs.value);
+    };
+
+    const addInput = () => {
+        newInputs.value.push({type: "STRING"});
+        selectInput(newInputs.value[newInputs.value.length - 1], newInputs.value.length - 1);
     };
 </script>
 

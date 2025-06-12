@@ -12,3 +12,9 @@
         },
     });
 </script>
+
+<style scoped lang="scss">
+code.link {
+    color: var(--ks-content-id);
+}
+</style>

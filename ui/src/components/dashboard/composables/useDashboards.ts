@@ -21,6 +21,10 @@ export type Chart = {
         displayName?: string;
         description?: string;
         width?: number;
+        pagination?: {
+            enabled?: boolean;
+            [key: string]: unknown;
+        };
         [key: string]: unknown;
     };
     source?: {

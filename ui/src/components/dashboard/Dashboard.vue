@@ -10,7 +10,7 @@
                 settings: {shown: false},
             }"
             :dashboards="{shown: ALLOWED_CREATION_ROUTES.includes(String(route.name))}"
-            @dashboard="(value) => load(value)"
+            @dashboard="(value: Dashboard) => load(value)"
             :key
         />
     </section>
@@ -101,7 +101,7 @@
     });
 </script>
 
-<style lang="scss" scoped>
+<style scoped lang="scss">
 @import "@kestra-io/ui-libs/src/scss/variables";
 
 section#filter {

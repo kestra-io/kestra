@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 
 @Validated
-@Controller("/api/v1/main/stats")
+@Controller("/api/v1/{tenant}/stats")
 @Deprecated(forRemoval = true)
 @Hidden
 public class StatsController {

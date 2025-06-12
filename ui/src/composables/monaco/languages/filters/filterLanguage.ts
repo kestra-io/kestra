@@ -58,9 +58,11 @@ export abstract class FilterLanguage {
         return this._filterKeyCompletions.map(([{regex}]) => regex);
     }
 
-    async keyCompletion(): Promise<Completion[]> {
+    async keyCompletion(usedKeys: string[] = []): Promise<Completion[]> {
         return this._filterKeyCompletions
-            .map(([{key}, {comparators}]) => {
+            .filter(([_, {forbiddenConcurrentKeys}]) => {
+                return !usedKeys.some(usedKey => forbiddenConcurrentKeys.includes(usedKey));
+            }).map(([{key}, {comparators}]) => {
                 return new Completion(
                     key.replaceAll(/\$(\{[^}]*})/g, "$1"),
                     key.replaceAll(/\$?\{([^}]*)}/g, "") + (key.includes("{") ? "" : comparators[0])

@@ -1,6 +1,12 @@
 <template>
     <div class="wrapper">
-        <el-checkbox-button v-if="['duration', 'date-time'].includes(schema.format)" v-model="pebble" :label="$t('no_code.toggle_pebble')" :title="$t('no_code.toggle_pebble')" class="ks-pebble">
+        <el-checkbox-button
+            v-if="['duration', 'date-time'].includes(schema.format)"
+            v-model="pebble"
+            :label="$t('no_code.toggle_pebble')"
+            :title="$t('no_code.toggle_pebble')"
+            class="ks-pebble"
+        >
             <IconCodeBracesBox />
         </el-checkbox-button>
         <el-time-picker
@@ -146,7 +152,7 @@
 
     :deep(.disabled-field) {
         margin: 0!important;
-        border-radius: 4px;;
+        border-radius: 4px;
     }
 
     :deep(.el-input__wrapper),

@@ -16,16 +16,18 @@
         </el-form-item>
     </el-form>
 
-    <TaskObject
-        v-loading="isLoading"
-        v-if="selectedTaskType && schema"
-        name="root"
-        :model-value="taskObject"
-        @update:model-value="onTaskInput"
-        :schema="schemaProp"
-        :properties="properties"
-        :definitions="schema.definitions"
-    />
+    <div @click="store.dispatch('plugin/updateDocumentation', {task: selectedTaskType});">
+        <TaskObject
+            v-loading="isLoading"
+            v-if="selectedTaskType && schema"
+            name="root"
+            :model-value="taskObject"
+            @update:model-value="onTaskInput"
+            :schema="schemaProp"
+            :properties="properties"
+            :definitions="schema.definitions"
+        />
+    </div>
 </template>
 
 <script lang="ts" setup>

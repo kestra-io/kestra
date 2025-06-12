@@ -28,7 +28,7 @@ import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.List;
 
-@Controller("/api/v1/main/taskruns")
+@Controller("/api/v1/{tenant}/taskruns")
 @Requires(property = "kestra.repository.type", value = "elasticsearch")
 public class TaskRunController {
     @Inject

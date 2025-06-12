@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static io.kestra.core.utils.Rethrow.throwConsumer;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
-@Controller("/api/v1/main/triggers")
+@Controller("/api/v1/{tenant}/triggers")
 @Slf4j
 public class TriggerController {
     @Inject

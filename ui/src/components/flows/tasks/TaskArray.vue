@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
+    import {computed} from "vue";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../code/utils/icons";
 
@@ -74,7 +74,7 @@
             componentType.value.ksTaskName !== "expression";
     });
 
-    const items = ref(
+    const items = computed(() =>
         props.modelValue === undefined && !props.required
             // we want to avoid displaying an item completely empty when modelValue is undefined
             // except if the field is required
@@ -83,32 +83,30 @@
     );
 
     const handleInput = (value: string, index: number) => {
-        items.value[index] = value;
-        emits("update:modelValue", items.value);
+        emits("update:modelValue", items.value.toSpliced(index, 1, value));
     };
 
     const addItem = () => {
-        items.value.push(undefined);
-        emits("update:modelValue", items.value);
+        emits("update:modelValue", [...items.value, undefined]);
     };
     const removeItem = (index: number) => {
-        items.value.splice(index, 1);
-        emits("update:modelValue", items.value);
+        emits("update:modelValue", items.value.toSpliced(index, 1));
     };
 
     const moveItem = (index: number, direction: "up" | "down") => {
+        const tempValue = items.value
         if (direction === "up" && index > 0) {
-            [items.value[index - 1], items.value[index]] = [
-                items.value[index],
-                items.value[index - 1],
+            [tempValue[index - 1], tempValue[index]] = [
+                tempValue[index],
+                tempValue[index - 1],
             ];
-        } else if (direction === "down" && index < items.value.length - 1) {
-            [items.value[index + 1], items.value[index]] = [
-                items.value[index],
-                items.value[index + 1],
+        } else if (direction === "down" && index < tempValue.length - 1) {
+            [tempValue[index + 1], tempValue[index]] = [
+                tempValue[index],
+                tempValue[index + 1],
             ];
         }
-        emits("update:modelValue", items.value);
+        emits("update:modelValue", tempValue);
     };
 </script>
 

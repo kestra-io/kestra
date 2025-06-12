@@ -10,7 +10,7 @@
                 settings: {shown: false},
             }"
             :dashboards="{shown: ALLOWED_CREATION_ROUTES.includes(String(route.name))}"
-            @dashboard="(value: Dashboard) => load(value)"
+            @dashboard="(value: Dashboard['id']) => load(value)"
             :key
         />
     </section>

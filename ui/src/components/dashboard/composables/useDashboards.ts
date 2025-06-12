@@ -16,7 +16,6 @@ export type Dashboard = {
 export type Chart = {
     id: string;
     type: string;
-    content?: string;
     chartOptions?: {
         displayName?: string;
         description?: string;
@@ -27,6 +26,13 @@ export type Chart = {
         };
         [key: string]: unknown;
     };
+    data?: {      
+        columns?: {
+            [key: string]: Record<string, any>;
+        };
+        [key: string]: unknown;
+    };
+    content?: string;
     source?: {
         type?: string;
         content?: string;
@@ -51,11 +57,13 @@ export const TYPES: Record<string, any> = {
     "io.kestra.plugin.core.dashboard.chart.TimeSeries": TimeSeries,
 };
 
-export const isKPIChart = (type: string) => type === "io.kestra.plugin.core.dashboard.chart.KPI";
+export const isKPIChart = (type: string): boolean => type === "io.kestra.plugin.core.dashboard.chart.KPI";
 
 export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displayName ?? chart.id;
 
 export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property];
+
+export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false;
 
 export function useChartGenerator(props: {chart: Chart; filters: string[]; showDefault: boolean;}) {
     const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE");
@@ -68,13 +76,23 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
     const EMPTY_TEXT = t("dashboards.empty");
 
     const data = ref();
-    const generate = async (id: string) => {
+    const generate = async (id: string, pagination?: { pageNumber: number; pageSize: number }) => {
         const filters = props.filters.concat(decodeSearchParams(route.query, undefined, []) ?? []);
-        
+
         if (!props.showDefault) {
-            data.value = await store.dispatch("dashboard/generate", {id, chartId: props.chart.id, filters});
+            let params = {id, chartId: props.chart.id, filters};
+
+            if (pagination) params = {...params, ...pagination};
+
+            if (filters) params.filters = filters;
+
+            data.value = await store.dispatch("dashboard/generate", params);
         } else {
-            data.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filters}});
+            const params = {chart: props.chart.content, globalFilter: {filters}};
+
+            if (pagination) params.globalFilter = {...params.globalFilter, ...pagination};
+
+            data.value = await store.dispatch("dashboard/chartPreview", params);
         }
 
         return data.value;

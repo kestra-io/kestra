@@ -23,7 +23,7 @@
                         :is="componentType"
                         :model-value="element"
                         :task="modelValue"
-                        root="array"
+                        :root="componentType.ksTaskName"
                         :properties="{}"
                         :schema="props.schema.items"
                         :definitions="props.definitions"

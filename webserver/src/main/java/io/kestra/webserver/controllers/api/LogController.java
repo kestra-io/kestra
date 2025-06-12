@@ -37,7 +37,7 @@ import java.util.UUID;
 
 
 @Validated
-@Controller("/api/v1/main/logs")
+@Controller("/api/v1/{tenant}/logs")
 @Requires(beans = LogRepositoryInterface.class)
 public class LogController {
     @Inject

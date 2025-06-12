@@ -1,6 +1,12 @@
 <template>
     <div class="wrapper">
-        <el-checkbox-button v-if="['duration', 'date-time'].includes(schema.format)" v-model="pebble" :label="$t('no_code.toggle_pebble')" :title="$t('no_code.togglePebble')" class="ks-pebble">
+        <el-checkbox-button
+            v-if="['duration', 'date-time'].includes(schema.format)"
+            v-model="pebble"
+            :label="$t('no_code.toggle_pebble')"
+            :title="$t('no_code.toggle_pebble')"
+            class="ks-pebble"
+        >
             <IconCodeBracesBox />
         </el-checkbox-button>
         <el-time-picker
@@ -22,7 +28,7 @@
             v-else-if="disabled"
             :model-value="modelValue"
             disabled
-            class="w-100"
+            class="w-100 disabled-field"
         />
         <editor
             v-else
@@ -143,6 +149,11 @@
     border-radius: 0.25rem;
     border: 1px solid var(--ks-border-primary);
     width: 100%;
+
+    :deep(.disabled-field) {
+        margin: 0!important;
+        border-radius: 4px;
+    }
 
     :deep(.el-input__wrapper),
     :deep(.editor-container) {

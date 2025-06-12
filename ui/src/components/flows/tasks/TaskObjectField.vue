@@ -1,5 +1,5 @@
 <template>
-    <el-form-item v-if="fieldKey" :required>
+    <el-form-item v-if="fieldKey" :required="isRequired">
         <template #label>
             <div class="inline-wrapper">
                 <div class="inline-start">
@@ -79,8 +79,8 @@
 
     const taskComponent = templateRef<{resetSelectType?: () => void}>("taskComponent");
 
-    const required = computed(() => {
-        return props.required?.includes(props.fieldKey);
+    const isRequired = computed(() => {
+        return !props.disabled && props.required?.includes(props.fieldKey);
     })
 
     const componentProps = computed(() => {
@@ -92,7 +92,7 @@
             task: props.task,
             root: props.fieldKey,
             schema: props.schema,
-            required: required.value,
+            required: isRequired.value,
             definitions: props.definitions
         }
     })

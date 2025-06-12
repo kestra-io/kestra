@@ -1,6 +1,6 @@
 <template>
     <el-select
-        :model-value="selectedInput.type"
+        :model-value="selectedInput?.type"
         @update:model-value="onChangeType"
         class="mb-3"
     >
@@ -25,116 +25,101 @@
     <Save @click="update" what="input" class="w-100 mt-3" />
 </template>
 
-<script setup>
+<script setup lang="ts">
+    import {ref, computed, watch, onMounted, inject} from "vue";
+    import {useStore} from "vuex";
     import TaskObject from "./tasks/TaskObject.vue";
     import Save from "../code/components/Save.vue";
-</script>
-
-<script>
-    import {mapState, mapGetters} from "vuex";
     import {BREADCRUMB_INJECTION_KEY, PANEL_INJECTION_KEY} from "../code/injectionKeys";
 
-    export default {
-        emits: ["update:modelValue"],
-        props: {
-            modelValue: {
-                type: Object,
-                default: () => {},
-            },
-            inputs: {
-                type: Array,
-                default: () => [],
-            },
-            label: {type: String, required: true},
-            selectedIndex: {type: Number, required: true},
-            required: {type: Boolean, default: false},
-            disabled: {type: Boolean, default: false},
-        },
-        computed: {
-            ...mapState("plugin", ["inputSchema", "inputsType"]),
-            ...mapGetters("flow", ["flowYamlMetadata"]),
-        },
-        created() {
-            if (this.inputs && this.inputs.length > 0) {
-                this.newInputs = this.inputs;
+    interface InputType {
+        type: string;
+        id?: string;
+    }
+
+    const props = withDefaults(defineProps<{
+        inputs: InputType[];
+        label: string;
+        selectedIndex: number;
+        required?: boolean;
+        disabled?: boolean;
+    }>(), {
+        inputs: () => [],
+        required: false,
+        disabled: false
+    });
+
+    const store = useStore();
+
+    const inputSchema = computed(() => store.state.plugin.inputSchema);
+    const inputsType = computed(() => store.state.plugin.inputsType);
+
+    const emit = defineEmits<{
+        (e: "update:inputs", value?: InputType[]): void
+    }>();
+
+    const panel = inject(PANEL_INJECTION_KEY, ref());
+    const breadcrumbs = inject(BREADCRUMB_INJECTION_KEY, ref([]));
+
+    const newInputs = ref<InputType[]>([{type: "STRING"}]);
+    const loading = ref(false);
+
+    const loadSchema = async (type: string) => {
+        loading.value = true;
+        await store.dispatch("plugin/loadInputSchema", {type});
+        loading.value = false;
+    };
+
+    onMounted(() => {
+        loading.value = true;
+        store.dispatch("plugin/loadInputsType")
+            .then(() => loading.value = false);
+
+        if(selectedInput.value.type) {
+            loadSchema(selectedInput.value.type);
+        } else {
+            loadSchema("STRING");
+        }
+    });
+
+    watch(() => props.inputs, (val) => {
+        if (val?.length) {
+            newInputs.value = props.inputs;
+        }
+    }, {
+        immediate: true,
+        deep: true
+    });
+
+    const selectedInput = computed(() => {
+        return props.inputs[props.selectedIndex] ?? {type: "STRING"};
+    });
+
+    const update = () => {
+        panel.value = undefined;
+        breadcrumbs.value.pop();
+        const value = newInputs.value.filter(input => input?.id);
+        emit("update:inputs", value.length ? value : undefined);
+    };
+
+    const updateSelected = (value: InputType, index: number) => {
+        if (index >= 0) {
+            if (index >= 0) {
+                newInputs.value[index] = value;
+                emit("update:inputs", [...newInputs.value]);
             }
+        }
+    };
 
-            this.selectedInput = this.modelValue ?? {type: "STRING"};
+    const onChangeType = (type: string) => {
+        // Resetting the selected input if the type changes, but keeping the ID if it exists
+        const id = selectedInput.value?.id;
+        const newInput = {...(id ? {id} : {}), type};
 
-            this.$store
-                .dispatch("plugin/loadInputsType")
-                .then((_) => (this.loading = false));
-        },
-        data() {
-            return {
-                newInputs: [{type: "STRING"}],
-                selectedInput: undefined,
-                loading: false,
-            };
-        },
-        inject:{
-            panel: {from: PANEL_INJECTION_KEY},
-            breadcrumbs: {from: BREADCRUMB_INJECTION_KEY}
-        },
-        methods: {
-            selectInput(input) {
-                this.selectedInput = input;
-                this.loadSchema(input.type);
-            },
-            getCls(type) {
-                return this.inputsType.find((e) => e.type === type).cls;
-            },
-            getType(cls) {
-                return this.inputsType.find((e) => e.cls === cls).type;
-            },
-            loadSchema(type) {
-                this.loading = true;
+        newInputs.value[props.selectedIndex] = newInput;
 
-                this.$store
-                    .dispatch("plugin/loadInputSchema", {type: type})
-                    .then((_) => (this.loading = false));
-            },
-            update() {
-                if (
-                    this.newInputs.map((e) => e?.id).length !==
-                    new Set(this.newInputs.map((e) => e?.id)).size
-                ) {
-                    this.$store.dispatch("core/showMessage", {
-                        variant: "error",
-                        title: this.$t("error"),
-                        message: this.$t("duplicate input id"),
-                    });
-                } else {
-                    this.panel = undefined;
-                    this.breadcrumbs.pop();
-                    const value = this.newInputs.filter(input => input?.id);
-                    this.$emit("update:modelValue", value.length ? value : undefined);
-                }
-            },
-            updateSelected(value) {
-                if (this.selectedIndex >= 0) {
-                    this.newInputs[this.selectedIndex] = value;
-                    this.$emit("update:modelValue", [...this.newInputs]);
-                }
-            },
-            deleteInput(index) {
-                this.newInputs.splice(index, 1);
-            },
-            addInput() {
-                this.newInputs.push({type: "STRING"});
-            },
-            onChangeType(type) {
-                // Resetting the selected input if the type changes, but keeping the ID if it exists
-                const id = this.selectedInput?.id || undefined;
-
-                this.selectedInput = {...(id ? {id} : {}), type};
-                this.newInputs[this.selectedIndex] = {...(id ? {id} : {}), type};
-
-                this.$emit("update:modelValue", [...this.newInputs]);
-
-                this.loadSchema(type);
-            },
-        },
+        emit("update:inputs", [...newInputs.value]);
+        loadSchema(type);
     };
 </script>
 

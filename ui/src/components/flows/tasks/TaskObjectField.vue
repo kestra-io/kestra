@@ -66,6 +66,7 @@
     const props = defineProps<{
         schema: any;
         definitions: any;
+        root?: string;
         fieldKey: string;
         task: any;
         modelValue?: Record<string, any> | string | number | boolean | Array<any>,
@@ -90,7 +91,7 @@
                 emit("update:modelValue", value);
             },
             task: props.task,
-            root: props.fieldKey,
+            root: props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey,
             schema: props.schema,
             required: required.value,
             definitions: props.definitions

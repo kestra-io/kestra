@@ -23,7 +23,7 @@
                         :is="componentType"
                         :model-value="element"
                         :task="modelValue"
-                        :root="componentType.ksTaskName"
+                        :root="`${root}[${index}]`"
                         :properties="{}"
                         :schema="props.schema.items"
                         :definitions="props.definitions"
@@ -56,11 +56,13 @@
         definitions: any;
         modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
         required?: boolean;
+        root?: string;
     }>(), {
         modelValue: undefined,
         schema: () => ({}),
         definitions: () => ({}),
         required: false,
+        root: undefined,
     });
 
     const componentType = computed(() => {

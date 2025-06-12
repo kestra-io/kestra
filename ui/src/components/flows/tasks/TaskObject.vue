@@ -151,6 +151,7 @@
                     "onUpdate:modelValue": (value) => {
                         this.onObjectInput(key, value);
                     },
+                    root: this.root,
                     fieldKey: key,
                     task: this.modelValue,
                     schema: schema,

@@ -885,7 +885,8 @@
         "triggers": "选择一个trigger"
       },
       "toggle_pebble": "切换Pebble编辑器",
-      "unnamed": "无名称"
+      "unnamed": "无名称",
+      "version_oss_placeholder": "解锁企业版插件版本管理"
     },
     "no_data": "看起来这里还没有内容……<br/>调整您的过滤器，或者再试一次！",
     "no_logs_data": "无数据",

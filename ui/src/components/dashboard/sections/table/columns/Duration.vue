@@ -7,7 +7,7 @@
 
     const props = defineProps({
         field: {
-            type: String,
+            type: Number,
             default: undefined,
         },
     });

@@ -28,7 +28,7 @@
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
-    import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
+    import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
     import {useTopologyPanels} from "./useTopologyPanels";
 

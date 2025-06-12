@@ -3,7 +3,7 @@
         <el-row :gutter="16">
             <el-col
                 v-for="chart in props.charts"
-                :key="`chart__$${chart.id}`"
+                :key="`chart__${chart.id}`"
                 :xs="24"
                 :sm="(chart.chartOptions?.width || 6) * 4"
                 :md="(chart.chartOptions?.width || 6) * 2"

@@ -1,5 +1,5 @@
 <template>
-    <template v-if="data !== undefined">
+    <section v-if="data" id="table">
         <el-table
             :id="containerID"
             :data="data.results"
@@ -7,7 +7,9 @@
             size="small"
         >
             <el-table-column
-                v-for="[key, value] in Object.entries(props.chart.data.columns)"
+                v-for="[key, value] in Object.entries(
+                    props.chart.data?.columns ?? {},
+                )"
                 :label="value.displayName || key"
                 :key
             >
@@ -24,10 +26,13 @@
                                 },
                             }"
                         >
-                            <code>{{ scope.row[key].slice(0, 8) }}</code>
+                            <code class="link">
+                                {{ scope.row[key].slice(0, 8) }}
+                            </code>
                         </RouterLink>
-                        <code v-else>{{ scope.row[key] }}</code>
+                        <code v-else class="link"> {{ scope.row[key] }}</code>
                     </template>
+
                     <template v-else-if="value.field === 'FLOW_ID'">
                         <RouterLink
                             v-if="linkData(scope.row)"
@@ -39,90 +44,117 @@
                                 },
                             }"
                         >
-                            <code>{{ scope.row[key] }}</code>
+                            <code class="link">{{ scope.row[key] }}</code>
                         </RouterLink>
-                        <code v-else>{{ scope.row[key] }}</code>
+                        <code v-else class="link">{{ scope.row[key] }}</code>
                     </template>
-                    <template v-else-if="value.field === 'NAMESPACE'">
-                        <RouterLink
-                            :to="{
-                                name: 'namespaces/update',
-                                params: {
-                                    id: scope.row[key],
-                                },
-                            }"
-                        >
-                            <code>{{ scope.row[key] }}</code>
-                        </RouterLink>
-                    </template>
+
+                    <Namespace
+                        v-else-if="value.field === 'NAMESPACE'"
+                        :field="scope.row[key]"
+                    />
                     <Status
                         v-else-if="value.field === 'STATE'"
                         size="small"
                         :status="scope.row[key]"
                     />
-                    <span v-else-if="value.field === 'DURATION'">{{
-                        Utils.humanDuration(scope.row[key])
-                    }}</span>
-                    <span v-else-if="value.field.toLowerCase().includes('date')">
-                        {{ moment(scope.row[key])?.format(dateFormat) ?? scope.row[key] }}
-                    </span>
+                    <Duration
+                        v-else-if="value.field === 'DURATION'"
+                        :field="scope.row[key]"
+                    />
+                    <Date
+                        v-else-if="value.field.toLowerCase().includes('date')"
+                        :field="scope.row[key]"
+                    />
+
                     <span v-else>{{ scope.row[key] }}</span>
                 </template>
             </el-table-column>
         </el-table>
+
         <Pagination
-            v-if="props.chart.chartOptions?.pagination?.enabled"
+            v-if="isPaginationEnabled(props.chart)"
             :total="data.total"
-            :size="pageSize"
             :page="currentPage"
+            :size="pageSize"
             @page-changed="handlePageChange"
         />
-    </template>
+    </section>
 
-    <NoData v-else :text="t('dashboards.empty')" />
+    <NoData v-else :text="EMPTY_TEXT" />
 </template>
 
 <script lang="ts" setup>
-    import {onMounted, ref, watch} from "vue";
-    import moment from "moment";
+    import {PropType, onMounted, watch, ref, computed} from "vue";
 
-    import {useI18n} from "vue-i18n";
+    import type {Chart} from "../composables/useDashboards";
+    import {
+        isPaginationEnabled,
+        useChartGenerator,
+    } from "../composables/useDashboards";
+
+    import Date from "./table/columns/Date.vue";
+    import Duration from "./table/columns/Duration.vue";
+    import Namespace from "./table/columns/Namespace.vue";
     import Status from "../../Status.vue";
-    import NoData from "../../layout/NoData.vue";
+
     import Pagination from "../../layout/Pagination.vue";
 
-    import {useStore} from "vuex";
+    import NoData from "../../layout/NoData.vue";
+
+    const props = defineProps({
+        chart: {type: Object as PropType<Chart>, required: true},
+        filters: {type: Array as PropType<string[]>, default: () => []},
+        showDefault: {type: Boolean, default: false},
+    });
+
+    const data = ref();
+    const {EMPTY_TEXT, generate} = useChartGenerator(props);
 
     import {useRoute} from "vue-router";
-    import {Utils} from "@kestra-io/ui-libs";
-    import {decodeSearchParams} from "../../filter/utils/helpers.ts";
-
-    const {t} = useI18n({useScope: "global"});
-
-    const dateFormat = localStorage.getItem("dateFormat") ?? "llll"
-
-    const store = useStore();
-
     const route = useRoute();
 
-    defineOptions({inheritAttrs: false});
-    const props = defineProps({
-        chart: {type: Object, required: true},
-        showDefault: {type: Boolean, default: false},
-        filters: {type: Array, default: () => []},
+    const getData = async (ID: string) => {
+        data.value = await generate(ID, pagination.value);
+    };
+
+    const currentPage = ref(1);
+    const pageSize = ref(10);
+
+    const pagination = computed(() => {
+        return isPaginationEnabled(props.chart)
+            ? {pageNumber: currentPage.value, pageSize: pageSize.value}
+            : undefined;
     });
+
+    const handlePageChange = async (options: { page: number; size: number }) => {
+        currentPage.value = options.page;
+        pageSize.value = options.size;
+
+        getData(route.params?.id as string);
+    };
+
+    watch(route, async (changed) => getData(changed.params?.id as string));
+
+    onMounted(async () => getData(route.params?.id as string));
 
     const containerID = `${props.chart.id}__${Math.random()}`;
 
     const linkData = (row: Record<string, any>) => {
-        const fields: Record<string, { field: string; displayName: string }> = props.chart.data.columns;
+        const fields = props.chart.data?.columns as Record<
+            string,
+            { field: string; displayName: string }
+        >;
 
         function getField(args: Record<string, any>) {
             const result: Partial<Record<"FLOW_ID" | "NAMESPACE", any>> = {};
 
             for (const key in args) {
                 const config = fields[key];
-                if (config && (config.field === "FLOW_ID" || config.field === "NAMESPACE")) {
+                if (
+                    config &&
+                    (config.field === "FLOW_ID" || config.field === "NAMESPACE")
+                ) {
                     result[config.field] = args[key];
                 }
             }
@@ -132,54 +164,10 @@
 
         return getField(row);
     };
-
-    const currentPage = ref(1);
-    const pageSize = ref(10);
-
-    const handlePageChange = (options) => {
-        currentPage.value = options.page;
-        pageSize.value = options.size;
-        generate(route.params.id);
-    };
-
-    const data = ref();
-    const generate = async (id) => {
-        let decodedParams = decodeSearchParams(route.query, undefined, []);
-        if (!props.showDefault) {
-            let params = {
-                id,
-                chartId: props.chart.id,
-                filters: props.filters.concat(decodedParams?? [])
-            };
-            if (props.chart.chartOptions?.pagination?.enabled) {
-                params.pageNumber = currentPage.value;
-                params.pageSize = pageSize.value;
-            }
-            if (decodedParams) {
-                params = {...params, filters: decodedParams};
-            }
-            data.value = await store.dispatch("dashboard/generate", params);
-        } else {
-            const params = {filters: {...decodedParams}};
-
-            if (props.chart.chartOptions?.pagination?.enabled) {
-                params.pageNumber = currentPage.value;
-                params.pageSize = pageSize.value;
-            }
-
-            data.value = await store.dispatch("dashboard/chartPreview", {
-                chart: props.chart.content,
-                globalFilter: {...params, filters: props.filters.concat(decodedParams?? [])},
-            });
-        }
-    };
-
-    watch(route, async (route) => await generate(route.params?.id));
-    onMounted(() => generate(route.params.id));
 </script>
 
-<style lang="scss" scoped>
-code {
+<style scoped lang="scss">
+code.link {
     color: var(--ks-content-id);
 }
 </style>

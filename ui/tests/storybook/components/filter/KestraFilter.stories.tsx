@@ -72,6 +72,13 @@ async function parseRouteQuery(canvas: any): Promise<LocationQuery> {
     return JSON.parse(canvas.getByTestId("routeQuery").textContent);
 }
 
+function waitForFilterToBeReady(user: ReturnType<typeof userEvent.setup>, canvas: ReturnType<typeof within>): Promise<void> {
+    return waitFor(async () => {
+        await user.click(await getMonacoFilterInput(canvas));
+        await assertSuggestions(canvas, (assertion) => assertion.not.toHaveLength(0));
+    }, {timeout: 5000});
+}
+
 // Stories
 export const KestraFilterDefault: Story = {
     decorators: getDecorators()
@@ -93,17 +100,7 @@ KestraFilterDefault.play = async ({canvasElement, step}) => {
         async () => {
             await waitFor(async () => {
                 await user.click(await getMonacoFilterInput(canvas));
-                await assertSuggestions(canvas, ["text"]);
-            }, {timeout: 5000});
-        },
-    );
-
-    await step(
-        "autocompletion pops upon clicking and show only text because no language is set",
-        async () => {
-            await waitFor(async () => {
-                await user.click(await getMonacoFilterInput(canvas));
-                await assertSuggestions(canvas, ["text"]);
+                await assertSuggestionsValues(canvas, ["text"]);
             }, {timeout: 5000});
         },
     );
@@ -113,7 +110,7 @@ KestraFilterDefault.play = async ({canvasElement, step}) => {
         async () => {
             await user.click(await getMonacoFilterInput(canvas));
             await userEvent.keyboard("test");
-            await expect(await assertMonacoFilterContentToBe(canvas, "test"));
+            await waitFor(() => assertMonacoFilterContentToBe(canvas, "test"));
 
             await assertRouteQuery(canvas, {"filters[q][EQUALS]": "test"});
         },
@@ -160,7 +157,7 @@ KestraFilterLegacyQuery.play = async ({canvasElement, step}) => {
         async () => {
             await user.click(await getMonacoFilterInput(canvas));
             await userEvent.keyboard("test");
-            await expect(await assertMonacoFilterContentToBe(canvas, "test"));
+            await waitFor(() => assertMonacoFilterContentToBe(canvas, "test"));
             await assertRouteQuery(canvas, {q: "test"});
         },
     );
@@ -174,7 +171,9 @@ class TestFilterLanguage extends FilterLanguage {
             async () => [
                 new Completion("First value", "value1"),
                 new Completion("Second value", "value2")
-            ]
+            ],
+            false,
+            ["notCompatibleWithSingleAndNestedAndSelf"]
         ),
         multiValue: new FilterKeyCompletions(
             [Comparators.NOT_EQUALS, Comparators.EQUALS, Comparators.STARTS_WITH],
@@ -185,7 +184,16 @@ class TestFilterLanguage extends FilterLanguage {
             true
         ),
         "nested.{key}": new FilterKeyCompletions(
-            [Comparators.EQUALS]
+            [Comparators.EQUALS],
+            undefined,
+            false,
+            ["notCompatibleWithSingleAndNestedAndSelf"]
+        ),
+        notCompatibleWithSingleAndNestedAndSelf: new FilterKeyCompletions(
+            [Comparators.EQUALS],
+            undefined,
+            false,
+            ["singleValue", FilterLanguage.withNestedKeyPlaceholder("nested.{key}"), "notCompatibleWithSingleAndNestedAndSelf", "text"]
         )
     };
     static readonly INSTANCE = new TestFilterLanguage();
@@ -195,7 +203,7 @@ class TestFilterLanguage extends FilterLanguage {
     }
 }
 
-async function assertSuggestions(canvas: ReturnType<typeof within>, expectedSuggestions: string[]) {
+async function assertSuggestions(canvas: ReturnType<typeof within>, assertion: (assertion: ReturnType<typeof expect<string[]>>) => Promise<void>): Promise<void> {
     const suggestWidget = getMonacoFilter(canvas).querySelector(".suggest-widget");
     if (suggestWidget === null) {
         throw new Error("Waiting for suggest widget to be shown");
@@ -204,7 +212,11 @@ async function assertSuggestions(canvas: ReturnType<typeof within>, expectedSugg
     await expect(suggestWidget).toBeVisible();
 
     const suggestions = [...getMonacoFilter(canvas).querySelectorAll(".monaco-list-row")].map(({textContent}) => textContent);
-    await expect(suggestions).toEqual(expectedSuggestions);
+    return assertion(expect(suggestions));
+}
+
+async function assertSuggestionsValues(canvas: ReturnType<typeof within>, expectedSuggestions: string[]) {
+    return assertSuggestions(canvas, (assertion) => assertion.toEqual(expectedSuggestions));
 }
 
 export const KestraFilterWithLanguage: Story = {
@@ -223,7 +235,7 @@ KestraFilterWithLanguage.play = async ({canvasElement, step}) => {
         async () => {
             await waitFor(async () => {
                 await user.click(await getMonacoFilterInput(canvas));
-                await assertSuggestions(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]);
+                await assertSuggestionsValues(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]);
             }, {timeout: 5000});
         },
     );
@@ -240,11 +252,11 @@ KestraFilterWithLanguage.play = async ({canvasElement, step}) => {
             await expect(highlightedSuggest).toHaveTextContent(/^singleValue$/);
             suggestionWidgetController.accept();
 
-            await waitFor(async () => expect(await assertMonacoFilterContentToBe(canvas, "singleValue=")));
+            await waitFor(() => assertMonacoFilterContentToBe(canvas, "singleValue="));
             await assertRouteQuery(canvas, {});
 
             await waitFor(async () => {
-                await assertSuggestions(canvas, ["First value", "Second value"]);
+                await assertSuggestionsValues(canvas, ["First value", "Second value"]);
             }, {timeout: 5000});
             highlightedSuggest = getMonacoFilter(canvas).querySelector(".monaco-list-row.focused");
             await expect(highlightedSuggest).toHaveTextContent(/^First value$/)
@@ -257,9 +269,9 @@ KestraFilterWithLanguage.play = async ({canvasElement, step}) => {
             await assertRouteQuery(canvas, {"filters[singleValue][EQUALS]": "value2"});
 
             // Back to the initial suggestions as a space is automatically added after the value
-            await expect(await assertMonacoFilterContentToBe(canvas, "singleValue=value2 "));
+            await waitFor(() => assertMonacoFilterContentToBe(canvas, "singleValue=value2 "));
 
-            await waitFor(() => assertSuggestions(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]), {timeout: 5000});
+            await waitFor(() => assertSuggestionsValues(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS).filter(k => k !== "notCompatibleWithSingleAndNestedAndSelf"), "text"]), {timeout: 5000});
         },
     );
 };
@@ -275,16 +287,7 @@ KestraFilterWithLanguage_MultiValueAnotherComparator.play = async ({canvasElemen
     const canvas = within(canvasElement);
     const user = userEvent.setup();
 
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    await step(
-        "autocompletion pops upon clicking and show available keys",
-        async () => {
-            await waitFor(async () => {
-                await user.click(await getMonacoFilterInput(canvas));
-                await assertSuggestions(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]);
-            }, {timeout: 5000});
-        },
-    );
+    await waitForFilterToBeReady(user, canvas);
 
     suggestionWidgetController = {
         accept: window.acceptSuggestion,
@@ -299,17 +302,17 @@ KestraFilterWithLanguage_MultiValueAnotherComparator.play = async ({canvasElemen
             await expect(highlightedSuggest).toHaveTextContent(/^multiValue$/);
             suggestionWidgetController.accept();
 
-            await waitFor(async () => expect(await assertMonacoFilterContentToBe(canvas, "multiValue!=")));
+            await waitFor(() => assertMonacoFilterContentToBe(canvas, "multiValue!="));
             await assertRouteQuery(canvas, {});
 
             await waitFor(async () => {
-                await assertSuggestions(canvas, ["Another first value", "Another second value"]);
+                await assertSuggestionsValues(canvas, ["Another first value", "Another second value"]);
             }, {timeout: 5000});
             highlightedSuggest = getMonacoFilter(canvas).querySelector(".monaco-list-row.focused");
             await expect(highlightedSuggest).toHaveTextContent(/^Another first value$/)
 
             suggestionWidgetController.accept();
-            await waitFor(async () => expect(await assertMonacoFilterContentToBe(canvas, "multiValue!=anotherValue1,")));
+            await waitFor(() => assertMonacoFilterContentToBe(canvas, "multiValue!=anotherValue1,"));
             await assertRouteQuery(canvas, {"filters[multiValue][NOT_EQUALS]": "anotherValue1"});
 
             highlightedSuggest = getMonacoFilter(canvas).querySelector(".monaco-list-row.focused");
@@ -317,10 +320,10 @@ KestraFilterWithLanguage_MultiValueAnotherComparator.play = async ({canvasElemen
             suggestionWidgetController.accept();
 
             // No more suggestions as all the values are taken so we add a space
-            await waitFor(async () => expect(await assertMonacoFilterContentToBe(canvas, "multiValue!=anotherValue1,anotherValue2 ")));
+            await waitFor(() => assertMonacoFilterContentToBe(canvas, "multiValue!=anotherValue1,anotherValue2 "));
             // Back to the initial suggestions
 
-            await waitFor(() => assertSuggestions(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]), {timeout: 5000});
+            await waitFor(() => assertSuggestionsValues(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]), {timeout: 5000});
 
             await assertRouteQuery(canvas, {"filters[multiValue][NOT_IN]": "anotherValue1,anotherValue2"});
 
@@ -334,6 +337,7 @@ export const KestraFilterWithLanguage_PopulateValueFromQuery: Story = {
     decorators: getDecorators({
         "filters[unknownKey][EQUALS]": "whatever",
         "filters[singleValue][EQUALS]": "unknownValue StillShouldBeAdded",
+        "filters[nested][EQUALS][specialKey]": "someValue",
     }),
     args: {
         language: TestFilterLanguage.INSTANCE as FilterLanguage
@@ -346,7 +350,7 @@ KestraFilterWithLanguage_PopulateValueFromQuery.play = async ({canvasElement, st
     await step(
         "value should be populated from query at initialization",
         async () => {
-            await waitFor(async () => expect(await assertMonacoFilterContentToBe(canvas, "singleValue=\"unknownValue StillShouldBeAdded\" ")))
+            await waitFor(() => assertMonacoFilterContentToBe(canvas, "singleValue=\"unknownValue StillShouldBeAdded\" nested.specialKey=someValue "));
             // verify we kept the unknown value in the query parameters even though we didn't add it to the filter
             await new Promise(resolve => {
                 setInterval(resolve, 1100);
@@ -354,7 +358,8 @@ KestraFilterWithLanguage_PopulateValueFromQuery.play = async ({canvasElement, st
 
             assertRouteQuery(canvas, {
                 "filters[unknownKey][EQUALS]": "whatever",
-                "filters[singleValue][EQUALS]": "unknownValue StillShouldBeAdded"
+                "filters[singleValue][EQUALS]": "unknownValue StillShouldBeAdded",
+                "filters[nested][EQUALS][specialKey]": "someValue"
             });
         }
     );
@@ -374,10 +379,7 @@ KestraFilterWithLanguage_NestedKey.play = async ({canvasElement, step}) => {
     await step(
         "nested key autocompletion should output `nested.`",
         async () => {
-            await waitFor(async () => {
-                await user.click(await getMonacoFilterInput(canvas));
-                await assertSuggestions(canvas, [...Object.keys(TestFilterLanguage.FILTER_KEYS), "text"]);
-            }, {timeout: 5000});
+            await waitForFilterToBeReady(user, canvas);
 
             suggestionWidgetController = {
                 accept: window.acceptSuggestion,
@@ -389,7 +391,7 @@ KestraFilterWithLanguage_NestedKey.play = async ({canvasElement, step}) => {
             await expect(highlightedSuggest).toHaveTextContent(/^nested\.\{key}$/);
             suggestionWidgetController.accept();
 
-            await waitFor(async () => expect(await assertMonacoFilterContentToBe(canvas, "nested.")));
+            await waitFor(() => assertMonacoFilterContentToBe(canvas, "nested."));
             await assertRouteQuery(canvas, {});
         }
     );
@@ -426,15 +428,100 @@ KestraFilterWithLanguage_NestedKey.play = async ({canvasElement, step}) => {
     );
 };
 
+export const KestraFilterWithLanguage_ForbiddenConcurrentKeys: Story = {
+    decorators: getDecorators(),
+    args: {
+        language: TestFilterLanguage.INSTANCE as FilterLanguage
+    }
+};
+
+function assertNoErrorsInFilter(canvas: ReturnType<typeof within>, expectedFilterContent: string): Promise<void> {
+    return waitFor(async () => {
+        await assertMonacoFilterContentToBe(canvas, expectedFilterContent);
+        return expect(
+            ([...getMonacoFilter(canvas).querySelectorAll(".view-lines .view-line span")] as HTMLElement[])
+                .map(el => isColoredAsError(el))
+        ).toSatisfy<boolean[]>(areErrors => areErrors.every(isError => !isError))
+    }, {timeout: 5000});
+}
+
+KestraFilterWithLanguage_ForbiddenConcurrentKeys.play = async ({canvasElement, step}) => {
+    const canvas = within(canvasElement);
+    const user = userEvent.setup();
+
+    await step(
+        "adding singleValue filter",
+        async () => {
+            await waitForFilterToBeReady(user, canvas);
+
+            const filterValue = "singleValue=\"some value\" ";
+            await userEvent.keyboard(filterValue);
+
+            await assertNoErrorsInFilter(canvas, filterValue);
+        },
+    );
+
+    await step(
+        "notCompatibleWithSingleAndNestedAndSelf should not show up in autocompletion",
+        async () => {
+            await waitFor(() => assertSuggestions(canvas, (assertion) => assertion.not.toContain("notCompatibleWithSingleAndNestedAndSelf")));
+        },
+    );
+
+    await step(
+        "cleaning and adding nested.{key} to filter",
+        async () => {
+            await clearMonacoInput(user, canvas);
+
+            const filterValue = "nested.some.key=\"some value\" ";
+            await userEvent.keyboard(filterValue);
+
+            await assertNoErrorsInFilter(canvas, filterValue);
+        },
+    );
+
+    await step(
+        "notCompatibleWithSingleAndNestedAndSelf should not show up in autocompletion",
+        async () => {
+            await waitFor(() => assertSuggestions(canvas, (assertion) => assertion.not.toContain("notCompatibleWithSingleAndNestedAndSelf")));
+        },
+    );
+
+    await step(
+        "cleaning and asserting that notCompatibleWithSingleAndNestedAndSelf is in autocompletion",
+        async () => {
+            await waitFor(async () => {
+                await clearMonacoInput(user, canvas);
+                await user.click(await getMonacoFilterInput(canvas));
+                return assertSuggestions(canvas, (assertion) => assertion.toContain("notCompatibleWithSingleAndNestedAndSelf"));
+            }, {timeout: 5000})
+        },
+    );
+
+    await step(
+        "adding notCompatibleWithSingleAndNestedAndSelf and assert it's no longer showing in autocompletion",
+        async () => {
+            const filterValue = "notCompatibleWithSingleAndNestedAndSelf=\"some value\" ";
+            await userEvent.keyboard(filterValue);
+
+            await waitFor(() => assertSuggestions(canvas, (assertion) => assertion.not.toContain("notCompatibleWithSingleAndNestedAndSelf")));
+        },
+    );
+};
+
 const monacoFilter = "monaco-filter";
 
 function getMonacoFilter(canvas: ReturnType<typeof within>) {
     return canvas.getByTestId(monacoFilter);
 }
 
-async function assertMonacoFilterContentToBe(canvas: ReturnType<typeof within>, expectedText: string): Promise<void> {
+async function clearMonacoInput(user: ReturnType<typeof userEvent.setup>, canvas: ReturnType<typeof within>): Promise<void> {
+    return user.clear(await getMonacoFilterInput(canvas))
+}
+
+function assertMonacoFilterContentToBe(canvas: ReturnType<typeof within>, expectedText: string): Promise<void> {
     // We need to replace non-breaking spaces with regular spaces because Monaco editor uses non-breaking spaces
-    await waitFor(() => expect(getMonacoFilter(canvas)).toHaveTextContent(expectedText, {normalizeWhitespace: true}));
+    return expect(getMonacoFilter(canvas)).toHaveTextContent(expectedText, {normalizeWhitespace: true});
 }
 
 function getMonacoFilterInput(canvas: ReturnType<typeof within>): Promise<HTMLElement> {

@@ -3,6 +3,7 @@ import NProgress from "nprogress"
 import {storageKeys} from "./constants";
 
 // nprogress
+let pendingRoute = false
 let requestsTotal = 0
 let requestsCompleted = 0
 let latencyThreshold = 0
@@ -10,17 +11,22 @@ let latencyThreshold = 0
 const JWT_REFRESHED_QUERY = "__jwt_refreshed__";
 
 const progressComplete = () => {
+    pendingRoute = false
     requestsTotal = 0
     requestsCompleted = 0
     NProgress.done()
 }
 
 const initProgress = () => {
+    requestsTotal++;
     if (0 === requestsTotal) {
-        setTimeout(() => NProgress.start(), latencyThreshold)
+        setTimeout(() => {
+            NProgress.start();
+            NProgress.set(requestsCompleted / requestsTotal);
+        }, latencyThreshold);
+    } else {
+        NProgress.set(requestsCompleted / requestsTotal);
     }
-    requestsTotal++
-    NProgress.set(requestsCompleted / requestsTotal)
 }
 
 const increaseProgress = () => {
@@ -114,7 +120,7 @@ export default (callback, store, router) => {
             if (errorResponse.response.status === 401 &&
                 store.getters["auth/isLogged"] &&
                 !document.cookie.split("; ").map(cookie => cookie.split("=")[0]).includes("JWT")
-            && !impersonate) {
+                && !impersonate) {
                 // Keep original request
                 const originalRequest = errorResponse.config
 
@@ -125,7 +131,7 @@ export default (callback, store, router) => {
 
                     // if we already tried refreshing the token,
                     // the user simply does not have access to this feature
-                    if(originalRequestData[JWT_REFRESHED_QUERY] === 1) {
+                    if (originalRequestData[JWT_REFRESHED_QUERY] === 1) {
                         return Promise.reject(errorResponse)
                     }
 
@@ -133,7 +139,11 @@ export default (callback, store, router) => {
                     try {
                         await instance.post("/oauth/access_token?grant_type=refresh_token", null, {headers: {"Content-Type": "application/json"}});
                         toRefreshQueue.forEach(({config, resolve, reject}) => {
-                            instance.request(config).then(response => { resolve(response) }).catch(error => { reject(error) })
+                            instance.request(config).then(response => {
+                                resolve(response)
+                            }).catch(error => {
+                                reject(error)
+                            })
                         })
                         toRefreshQueue = [];
                         refreshing = false;
@@ -184,13 +194,20 @@ export default (callback, store, router) => {
     }
 
     router.beforeEach((to, from, next) => {
+        if (pendingRoute) {
+            requestsTotal--;
+        }
+        pendingRoute = true;
         initProgress();
 
         next()
     })
 
     router.afterEach(() => {
-        increaseProgress();
+        if (pendingRoute) {
+            increaseProgress();
+            pendingRoute = false;
+        }
     })
 
     callback(instance);

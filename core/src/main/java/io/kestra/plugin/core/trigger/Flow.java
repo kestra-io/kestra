@@ -35,7 +35,6 @@ import io.kestra.core.models.executions.ExecutionTrigger;
 import io.kestra.core.models.flows.State;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.models.triggers.TriggerOutput;
-import io.kestra.core.runners.RunContext;
 import io.kestra.core.utils.IdUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.stream.Streams;
@@ -255,7 +254,7 @@ public class Flow extends AbstractTrigger implements TriggerOutput<Flow.Output> 
             for (String id : multipleConditionIds) {
                 Optional<MultipleConditionWindow> multipleConditionWindow = multipleConditionStorage.get().get(flow, id);
                 if (multipleConditionWindow.isPresent()) {
-                    outputs = MapUtils.merge(outputs, multipleConditionWindow.get().getOutputs());
+                    outputs = MapUtils.deepMerge(outputs, multipleConditionWindow.get().getOutputs());
                 }
             }
         }

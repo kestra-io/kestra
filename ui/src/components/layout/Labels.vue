@@ -64,6 +64,7 @@
 
 <style scoped lang="scss">
 .label {
+    background-color: var(--ks-tag-background-active);
     font-weight: normal;
 
     &:hover {

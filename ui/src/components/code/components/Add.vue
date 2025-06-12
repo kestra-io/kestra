@@ -1,8 +1,8 @@
 <template>
-    <button @click="emits('add', props.what)" class="py-2 adding">
+    <button @click="emit('add', what)" class="py-2 adding" type="button">
         {{
-            props.what
-                ? t("no_code.adding", {what: props.what})
+            what
+                ? t("no_code.adding", {what})
                 : t("no_code.adding_default")
         }}
     </button>
@@ -12,8 +12,13 @@
     import {useI18n} from "vue-i18n";
     const {t} = useI18n({useScope: "global"});
 
-    const emits = defineEmits(["add"]);
-    const props = defineProps({what: {type: String, default: undefined}});
+    const emit = defineEmits<{
+        (e: "add", what: string | undefined): void;
+    }>();
+
+    defineProps<{
+        what?: string;
+    }>();
 </script>
 
 <style scoped lang="scss">

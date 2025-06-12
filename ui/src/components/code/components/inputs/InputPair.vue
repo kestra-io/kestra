@@ -65,11 +65,18 @@
 
     const internalPairs = ref<[string, string][]>([])
 
+    const alertState = computed(() => {
+        return {
+            visible: Object.keys(props.modelValue || {}).length === 0,
+            message: t("code.inputPair.empty"),
+        };
+    });
+
     watch(() => props.modelValue, (newValue) => {
         // If the alert is visible, we don't want to update the pairs
         // because it would delete problem line silently.
-        if(alertState.value.visible){
-            return
+        if (alertState.value.visible) {
+            return;
         }
         internalPairs.value = Object.entries(newValue || {});
     }, {
@@ -82,13 +89,6 @@
             .filter((pair, index, self) =>
                 self.findIndex(p => p[0] === pair[0]) !== index
             );
-    });
-
-    const alertState = computed(() => {
-        return {
-            visible: Object.keys(props.modelValue || {}).length === 0,
-            message: t("code.inputPair.empty"),
-        };
     });
 
     const modelValueToUpdate = computed(() => {

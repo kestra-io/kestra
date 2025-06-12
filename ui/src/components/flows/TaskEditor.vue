@@ -178,7 +178,6 @@
 <style lang="scss" scoped>
     .type-div {
         display: flex;
-        justify-content: space-between;
         text-transform: lowercase;
         align-items: center;
         gap: 0.25rem;

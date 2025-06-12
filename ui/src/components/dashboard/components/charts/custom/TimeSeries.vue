@@ -55,7 +55,13 @@
     const DEFAULTS = {
         display: true,
         stacked: true,
-        ticks: {maxTicksLimit: 8},
+        ticks: {
+            maxTicksLimit: 8 , 
+            callback: function(value) {
+                return Number.isInteger(value) ? value : null;
+            },
+            stepSize: 1
+        },
         grid: {display: false},
     };
     const options = computed(() => {

@@ -67,11 +67,13 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
         } else {
             data.value = await store.dispatch("dashboard/chartPreview", {chart: props.chart.content, globalFilter: {filters}});
         }
+
+        return data.value;
     };
 
     onMounted(() => generate(route.params.id as string));
 
-    watch(route, async (changed) => generate(changed.params.id as string));
+    watch(route, (changed) => generate(changed.params.id as string));
 
-    return {percentageShown, EMPTY_TEXT, data};
+    return {percentageShown, EMPTY_TEXT, data, generate};
 }

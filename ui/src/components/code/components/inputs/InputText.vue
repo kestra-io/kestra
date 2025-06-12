@@ -8,8 +8,9 @@
             :placeholder
             :disabled
             :type="disabled ? '' : 'textarea'"
-            :suffix-icon="Lock"
             :autosize="{minRows: 1}"
+            :input-style="haveError ? {boxShadow: '0 0 6px #ab0009'} : {}"
+            :suffix-icon="disabled ? Lock : undefined"
         />
     </div>
 </template>
@@ -31,18 +32,20 @@
         disabled: {type: Boolean, default: false},
         margin: {type: String, default: "mt-1 mb-2"},
         class: {type: String, default: undefined},
+        haveError: {type: Boolean, default: false}
     });
 
     const input = computed({
         get: () => props.modelValue,
         set: (value) => {
             emits("update:modelValue", value);
-        },
+        }
     });
 </script>
 
 <style scoped lang="scss">
 @import "../../styles/code.scss";
+
 :deep(.el-input__icon) {
     .lock-icon {
         color: var(--ks-content-inactive);

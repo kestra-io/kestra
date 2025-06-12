@@ -885,7 +885,8 @@
         "triggers": "트리거 선택"
       },
       "toggle_pebble": "Pebble 편집기 전환",
-      "unnamed": "이름 없음"
+      "unnamed": "이름 없음",
+      "version_oss_placeholder": "엔터프라이즈 에디션으로 플러그인 버전 관리 활성화"
     },
     "no_data": "여기에는 아직 아무것도 없는 것 같아요…<br/>필터를 조정하거나 다시 시도해 보세요!",
     "no_logs_data": "데이터 없음",

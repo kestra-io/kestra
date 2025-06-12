@@ -20,6 +20,8 @@ initApp(app, routes, stores, en).then(({store, router}) => {
         store.axios = app.axios;
     }, store, router);
 
+    app.config.globalProperties.$isOss = true; // Set to true for OSS version
+
     // mount
     app.mount("#app")
 });

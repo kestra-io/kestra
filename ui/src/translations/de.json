@@ -885,7 +885,8 @@
         "triggers": "Wählen Sie einen Trigger aus"
       },
       "toggle_pebble": "Pebble-Editor umschalten",
-      "unnamed": "Kein Name"
+      "unnamed": "Kein Name",
+      "version_oss_placeholder": "Aktivieren Sie die Plugin-Versionierung mit der Enterprise Edition"
     },
     "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",
     "no_logs_data": "Keine Daten",

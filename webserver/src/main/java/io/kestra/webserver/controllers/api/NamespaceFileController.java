@@ -38,7 +38,7 @@ import java.util.zip.ZipOutputStream;
 
 @Slf4j
 @Validated
-@Controller("/api/v1/main/namespaces")
+@Controller("/api/v1/{tenant}/namespaces")
 public class NamespaceFileController {
     public static final String FLOWS_FOLDER = "_flows";
     @Inject

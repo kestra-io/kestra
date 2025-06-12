@@ -884,6 +884,7 @@
         "tasks": "Wählen Sie eine Task aus",
         "triggers": "Wählen Sie einen Trigger aus"
       },
+      "toggle_pebble": "Pebble-Editor umschalten",
       "unnamed": "Kein Name"
     },
     "no_data": "Es sieht so aus, als wäre hier noch nichts... bisher!<br/>Passen Sie Ihre Filter an oder versuchen Sie es erneut!",

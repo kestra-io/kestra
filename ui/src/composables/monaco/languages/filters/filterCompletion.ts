@@ -60,11 +60,18 @@ export class FilterKeyCompletions {
     private readonly _comparators: Comparators[];
     private readonly _valuesFetcher: (store: Store<Record<string, any>>, hardcodedValues: ReturnType<typeof useValues>["VALUES"]) => Promise<ValueCompletions>;
     private readonly _allowMultipleValues: boolean;
+    private readonly _forbiddenConcurrentKeys: string[];
 
-    constructor(comparators: Comparators[], valuesFetcher: (store: Store<Record<string, any>>, hardcodedValues: ReturnType<typeof useValues>["VALUES"]) => Promise<ValueCompletions> = async () => [], allowMultipleValues?: boolean) {
+    constructor(
+        comparators: Comparators[],
+        valuesFetcher: (store: Store<Record<string, any>>, hardcodedValues: ReturnType<typeof useValues>["VALUES"]) => Promise<ValueCompletions> = async () => [],
+        allowMultipleValues?: boolean,
+        forbiddenConcurrentKeys: string[] = []
+    ) {
         this._comparators = comparators;
         this._valuesFetcher = valuesFetcher;
         this._allowMultipleValues = allowMultipleValues ?? false;
+        this._forbiddenConcurrentKeys = forbiddenConcurrentKeys;
     }
 
     get comparators(): Comparators[] {
@@ -77,5 +84,9 @@ export class FilterKeyCompletions {
 
     get allowMultipleValues(): boolean {
         return this._allowMultipleValues;
+    }
+
+    get forbiddenConcurrentKeys(): string[] {
+        return this._forbiddenConcurrentKeys;
     }
 }

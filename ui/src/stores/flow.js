@@ -514,7 +514,11 @@ export default {
                 });
         },
         importFlows(_, options) {
-            return this.$http.post(`${apiUrl(this)}/flows/import`, Utils.toFormData(options), {headers: {"Content-Type": "multipart/form-data"}})
+            return this.$http.post(`${apiUrl(this)}/flows/import`, Utils.toFormData(options), {
+                headers: {"Content-Type": "multipart/form-data"}
+            }).then(response => {
+                return response;
+            });
         },
         disableFlowByIds(_, options) {
             return this.$http.post(`${apiUrl(this)}/flows/disable/by-ids`, options.ids)

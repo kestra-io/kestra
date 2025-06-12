@@ -86,6 +86,7 @@
     import {watchDebounced} from "@vueuse/core";
     import {FilterLanguage} from "../../composables/monaco/languages/filters/filterLanguage.ts";
     import DefaultFilterLanguage from "../../composables/monaco/languages/filters/impl/defaultFilterLanguage.ts";
+    import _isEqual from "lodash/isEqual";
 
     const router = useRouter();
     const route = useRoute();
@@ -202,7 +203,9 @@
              */
             filter.value = Object.entries(query)
                 .flatMap(([key, values]) => {
-                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(queryRemapper[key] ?? key))) {
+                    const remappedFilterKey = queryRemapper[key] ?? key;
+
+                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(FilterLanguage.withNestedKeyPlaceholder(remappedFilterKey)))) {
                         queryParamsToKeep.value.push(key);
                         return [];
                     }
@@ -211,18 +214,14 @@
                         values = [values];
                     }
 
-                    return values.map(value => (queryRemapper[key] ?? key) + Comparators.EQUALS + value);
+                    return values.map(value => remappedFilterKey + Comparators.EQUALS + value);
                 }).join(" ");
         } else {
             filter.value = Object.entries(query)
                 .filter(([key]) => key.startsWith("filters["))
                 .flatMap(([key, values]) => {
                     const [_, filterKey, comparator, subKey] = key.match(/filters\[([^\]]+)]\[([^\]]+)](?:\[([^\]]+)])?/) ?? [];
-
-                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(queryRemapper[filterKey] ?? filterKey))) {
-                        queryParamsToKeep.value.push(key);
-                        return [];
-                    }
+                    const remappedFilterKey = queryRemapper[filterKey] ?? filterKey;
 
                     let maybeSubKeyString;
                     if (subKey === undefined) {
@@ -231,11 +230,16 @@
                         maybeSubKeyString = "." + (subKey.includes(" ") ? `"${subKey}"` : subKey);
                     }
 
+                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(FilterLanguage.withNestedKeyPlaceholder(remappedFilterKey + maybeSubKeyString)))) {
+                        queryParamsToKeep.value.push(key);
+                        return [];
+                    }
+
                     if (!Array.isArray(values)) {
                         values = [values];
                     }
 
-                    return values.map(value => (queryRemapper?.[filterKey] ?? filterKey) + maybeSubKeyString + getComparator(comparator as Parameters<typeof getComparator>[0]) + (value!.includes(" ") ? `"${value}"` : value));
+                    return values.map(value => remappedFilterKey + maybeSubKeyString + getComparator(comparator as Parameters<typeof getComparator>[0]) + (value!.includes(" ") ? `"${value}"` : value));
                 })
                 .join(" ");
         }
@@ -460,17 +464,21 @@
     };
 
     watchDebounced(filterQueryString, () => {
+        const newQuery = {
+            ...Object.fromEntries(queryParamsToKeep.value.map(key => {
+                return [
+                    key,
+                    route.query[key]
+                ];
+            })),
+            ...filterQueryString.value
+        };
+        if (_isEqual(route.query, newQuery)) {
+            return; // Skip if the query hasn't changed
+        }
         skipRouteWatcherOnce.value = true;
         router.push({
-            query: {
-                ...Object.fromEntries(queryParamsToKeep.value.map(key => {
-                    return [
-                        key,
-                        route.query[key]
-                    ];
-                })),
-                ...filterQueryString.value
-            }
+            query: newQuery
         });
     }, {immediate: true, debounce: 1000});
 </script>
@@ -486,18 +494,18 @@
         border-bottom-right-radius: var(--el-border-radius-base);
         min-width: 0;
 
-        .mtk25 {
+        .mtk25, .mtk28{
             background-color: var(--ks-badge-background);
             padding: 2px 6px;
             border-radius: var(--el-border-radius-base);
 
-            &:has(+ .mtk25) {
+            &:has(+ .mtk25), &:has(+ .mtk28) {
                 padding-right: 0;
                 border-top-right-radius: 0;
                 border-bottom-right-radius: 0;
             }
 
-            + .mtk25 {
+            + .mtk25, + .mtk28 {
                 padding-left: 0;
                 border-top-left-radius: 0;
                 border-bottom-left-radius: 0;

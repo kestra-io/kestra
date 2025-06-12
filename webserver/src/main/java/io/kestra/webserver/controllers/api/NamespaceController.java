@@ -32,7 +32,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 @Validated
-@Controller("/api/v1/main/namespaces")
+@Controller("/api/v1/{tenant}/namespaces")
 public class NamespaceController implements NamespaceControllerInterface<Namespace, NamespaceWithDisabled> {
     @Inject
     private TenantService tenantService;

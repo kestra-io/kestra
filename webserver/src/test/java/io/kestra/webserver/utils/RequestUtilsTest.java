@@ -107,7 +107,7 @@ class RequestUtilsTest {
 
     @Test
     void testToFlowScopesValid() {
-        List<FlowScope> result = RequestUtils.toFlowScopes(List.of("USER,SYSTEM"));
+        List<FlowScope> result = RequestUtils.toFlowScopes("USER,SYSTEM");
 
         assertEquals(2, result.size());
         assertTrue(result.contains(FlowScope.USER));
@@ -117,7 +117,7 @@ class RequestUtilsTest {
     @Test
     void testToFlowScopesInvalidValue() {
         Exception exception = assertThrows(IllegalArgumentException.class, () ->
-            RequestUtils.toFlowScopes(List.of("INVALID_SCOPE"))
+            RequestUtils.toFlowScopes("INVALID_SCOPE")
         );
 
         assertTrue(exception.getMessage().contains("Invalid FlowScope value"));

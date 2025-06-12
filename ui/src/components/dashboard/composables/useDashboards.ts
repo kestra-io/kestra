@@ -23,6 +23,11 @@ export type Chart = {
         width?: number;
         [key: string]: unknown;
     };
+    source?: {
+        type?: string;
+        content?: string;
+        [key: string]: unknown;
+    };
     [key: string]: unknown;
 };
 

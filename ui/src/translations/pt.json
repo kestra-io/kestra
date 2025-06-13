@@ -350,6 +350,7 @@
     "download": "Baixar",
     "download logs": "Baixar logs",
     "download_logos": "Baixar Pacote de Logos",
+    "duplicate-pair": "O {label} \"{key}\" está duplicado, a primeira chave foi ignorada.",
     "duration": "Duração",
     "dynamic": "Dinâmico",
     "each value": "Valor da iteração",

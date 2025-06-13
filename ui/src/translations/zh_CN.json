@@ -350,6 +350,7 @@
     "download": "下载",
     "download logs": "下载日志",
     "download_logos": "下载 Logo 包",
+    "duplicate-pair": "{label} \"{key}\" 是重复的，第一个 key 被忽略。",
     "duration": "持续时间",
     "dynamic": "动态",
     "each value": "迭代值",

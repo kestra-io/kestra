@@ -350,6 +350,7 @@
     "download": "डाउनलोड करें",
     "download logs": "Logs डाउनलोड करें",
     "download_logos": "लोगो पैक डाउनलोड करें",
+    "duplicate-pair": "{label} \"{key}\" दोहराया गया है, पहला key अनदेखा किया गया।",
     "duration": "अवधि",
     "dynamic": "डायनामिक",
     "each value": "पुनरावृत्ति मूल्य",

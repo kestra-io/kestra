@@ -56,7 +56,7 @@
     const DEFAULTS = {
         display: true,
         stacked: true,
-        ticks: {maxTicksLimit: 8},
+        ticks: {maxTicksLimit: 8, stepSize:1},
         grid: {display: false},
     };
     const options = computed(() => {

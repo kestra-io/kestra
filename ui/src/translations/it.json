@@ -350,6 +350,7 @@
     "download": "Scarica",
     "download logs": "Scarica logs",
     "download_logos": "Scarica il Pacchetto Logo",
+    "duplicate-pair": "Il {label} \"{key}\" è duplicato, il primo key è ignorato.",
     "duration": "Durata",
     "dynamic": "Dinamico",
     "each value": "Valore di iterazione",

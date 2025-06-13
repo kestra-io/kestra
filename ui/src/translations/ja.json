@@ -350,6 +350,7 @@
     "download": "ダウンロード",
     "download logs": "Logsをダウンロード",
     "download_logos": "ロゴパックをダウンロード",
+    "duplicate-pair": "{label} \"{key}\" は重複しています。最初のキーは無視されます。",
     "duration": "期間",
     "dynamic": "動的",
     "each value": "繰り返し値",

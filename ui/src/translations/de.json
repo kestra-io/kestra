@@ -350,6 +350,7 @@
     "download": "Herunterladen",
     "download logs": "Logs herunterladen",
     "download_logos": "Logo-Paket herunterladen",
+    "duplicate-pair": "{label} \"{key}\" ist dupliziert, erster Schlüssel ignoriert.",
     "duration": "Dauer",
     "dynamic": "Dynamisch",
     "each value": "Iterationswert",

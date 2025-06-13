@@ -350,6 +350,7 @@
     "download": "다운로드",
     "download logs": "Logs 다운로드",
     "download_logos": "로고 팩 다운로드",
+    "duplicate-pair": "{label} \"{key}\"가 중복되었습니다. 첫 번째 key는 무시됩니다.",
     "duration": "지속 시간",
     "dynamic": "동적",
     "each value": "반복 값",

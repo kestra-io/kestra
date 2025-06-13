@@ -10,7 +10,7 @@
     import {PropType, onMounted, watch, ref} from "vue";
 
     import type {Chart} from "../composables/useDashboards";
-    import {getDashboardID, getPropertyValue, useChartGenerator} from "../composables/useDashboards";
+    import {getDashboard, getPropertyValue, useChartGenerator} from "../composables/useDashboards";
 
     import Markdown from "../../layout/Markdown.vue";
     import NoData from "../../layout/NoData.vue";
@@ -32,7 +32,7 @@
         else data.value = props.chart.content ?? props.chart.source?.content;
     };
 
-    const dashboardID = (route) => getDashboardID(route)
+    const dashboardID = (route) => getDashboard(route, "id")
 
     watch(route, async (changed) => await getData(dashboardID(changed)));
 

@@ -31,6 +31,7 @@ const dashboard: Module<DashboardState, unknown> = {
         list(_, options) {
             const {sort, ...params} = options;
 
+            // TODO: Make sure that all dashboards are loaded, do it gradually if needed
             return axios
                 .get(`${apiUrl(this)}/dashboards?size=100${sort ? `&sort=${sort}` : ""}`, {params})
                 .then((response) => response.data);

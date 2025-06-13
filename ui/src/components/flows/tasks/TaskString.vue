@@ -39,7 +39,6 @@
             schema-type="flow"
             lang="plaintext"
             input
-            :placeholder="`Your ${root || 'value'} here...`"
             @update:model-value="onInput"
             :large-suggestions="false"
         />

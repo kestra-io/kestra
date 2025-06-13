@@ -147,6 +147,25 @@
 
     }
 
+    function removeNullAndUndefined(obj: any): any {
+        if (Array.isArray(obj)) {
+            return obj.filter(item => item !== null && item !== undefined)
+                .map(item => removeNullAndUndefined(item));
+        }
+        if (typeof obj === "object") {
+            const newObj: any = {};
+            for (const key in obj) {
+                const rawValue = obj[key]
+                if(rawValue === null || rawValue === undefined) {
+                    continue;
+                }
+                newObj[key] = removeNullAndUndefined(rawValue);
+            }
+            return newObj;
+        }
+        return obj;
+    }
+
     function onTaskInput(val: PartialCodeElement | undefined) {
         taskObject.value = val;
         if (isPluginDefaults.value) {
@@ -165,7 +184,7 @@
                 };
             }
         }
-        modelValue.value = YAML_UTILS.stringify(toRaw(val));
+        modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val)));
     }
 
     function onTaskTypeSelect() {

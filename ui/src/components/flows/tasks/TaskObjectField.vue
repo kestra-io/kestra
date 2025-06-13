@@ -66,6 +66,7 @@
     const props = defineProps<{
         schema: any;
         definitions: any;
+        root?: string;
         fieldKey: string;
         task: any;
         modelValue?: Record<string, any> | string | number | boolean | Array<any>,
@@ -80,7 +81,7 @@
     const taskComponent = templateRef<{resetSelectType?: () => void}>("taskComponent");
 
     const isRequired = computed(() => {
-        return !props.disabled && props.required?.includes(props.fieldKey);
+        return !props.disabled && props.required?.includes(props.fieldKey) && props.schema.$required;
     })
 
     const componentProps = computed(() => {
@@ -90,7 +91,7 @@
                 emit("update:modelValue", value);
             },
             task: props.task,
-            root: props.fieldKey,
+            root: props.root ? `${props.root}.${props.fieldKey}` : props.fieldKey,
             schema: props.schema,
             required: isRequired.value,
             definitions: props.definitions

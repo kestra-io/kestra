@@ -1,19 +1,17 @@
 <template>
-    <div>
-        <NoCode
-            :flow="lastValidFlowYaml"
-            :parent-path="parentPath"
-            :ref-path="refPath"
-            :block-type="blockType"
-            :creating-task="creatingTask"
-            :editing-task="editingTask"
-            :position
-            @update-metadata="(e) => onUpdateMetadata(e)"
-            @update-task="(e) => editorUpdate(e)"
-            @reorder="(yaml) => handleReorder(yaml)"
-            @close-task="() => emit('closeTask')"
-        />
-    </div>
+    <NoCode
+        :flow="lastValidFlowYaml"
+        :parent-path="parentPath"
+        :ref-path="refPath"
+        :block-type="blockType"
+        :creating-task="creatingTask"
+        :editing-task="editingTask"
+        :position
+        @update-metadata="(e) => onUpdateMetadata(e)"
+        @update-task="(e) => editorUpdate(e)"
+        @reorder="(yaml) => handleReorder(yaml)"
+        @close-task="() => emit('closeTask')"
+    />
 </template>
 
 <script setup lang="ts">

@@ -80,8 +80,9 @@
 
     const items = computed(() =>
         props.modelValue === undefined && !props.required
-            // we want to avoid displaying an item completely empty when
-            // modelValue is undefined except if the field is required
+            // we want to avoid displaying an item when
+            // modelValue is undefined
+            // if field is required though it invites users to fill it in
             ? []
             : !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );

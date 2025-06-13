@@ -66,9 +66,15 @@
     const internalPairs = ref<[string, string][]>([])
 
     const alertState = computed(() => {
+        if(duplicatedPairs.value.length > 0){
+            return {
+                visible: true,
+                message: t("duplicate-pair"),
+            }
+        }
         return {
-            visible: Object.keys(props.modelValue || {}).length === 0,
-            message: t("code.inputPair.empty"),
+            visible: false,
+            message: "",
         };
     });
 

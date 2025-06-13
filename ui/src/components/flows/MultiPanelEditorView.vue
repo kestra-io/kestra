@@ -225,7 +225,8 @@
     }
 
     .editor-wrapper{
-        flex: 1;
+        // FIXME: we need a no magic dimension way to size the editor properly
+        max-height: calc(100vh - 190px);
         position: relative;
     }
 

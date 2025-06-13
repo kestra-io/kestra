@@ -1318,6 +1318,27 @@
       "secrets": "No Secrets Found",
       "templates": "No Templates Found"
     },
-    "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored."
+    "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored.",
+    "dashboards": {
+      "labels": {
+        "singular": "Dashboard",
+        "plural": "Dashboards"
+      },
+      "default": "Default Dashboard",
+      "preview": "Preview Dashboard",
+      "empty": "There are no results to be shown.",
+      "creation": {
+        "label": "Create Dashboard",
+        "confirmation": "Dashboard <code>{title}</code> is created."
+      },
+      "edition": {
+        "label": "Edit Dashboard",
+        "confirmation": "Changes in dashboard <code>{title}</code> are saved."
+      },
+      "deletion": {
+        "confirmation": "Are you sure you want to delete <code>{title}</code> dashboard?"
+      },
+      "chart_preview": "Click on a chart source code to see its preview"
+    }
   }
 }

@@ -147,21 +147,33 @@
 
     }
 
+    function isNullOrUndefined(value: any): boolean {
+        return value === null || value === undefined;
+    }
+
     function removeNullAndUndefined(obj: any): any {
         if (Array.isArray(obj)) {
-            return obj.filter(item => item !== null && item !== undefined)
-                .map(item => removeNullAndUndefined(item));
+            return obj
+                .map(item => removeNullAndUndefined(item))
+                .filter(item => isNullOrUndefined(item) === false);
+
         }
         if (typeof obj === "object") {
             const newObj: any = {};
+            let hasValue = false;
             for (const key in obj) {
                 const rawValue = obj[key]
-                if(rawValue === null || rawValue === undefined) {
+                if(isNullOrUndefined(rawValue)) {
                     continue;
                 }
-                newObj[key] = removeNullAndUndefined(rawValue);
+                const newVal = removeNullAndUndefined(rawValue);
+                if(isNullOrUndefined(newVal)) {
+                    continue;
+                }
+                hasValue = true;
+                newObj[key] = newVal;
             }
-            return newObj;
+            return hasValue ? newObj : undefined;
         }
         return obj;
     }

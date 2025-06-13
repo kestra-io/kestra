@@ -19,7 +19,7 @@
         </el-col>
         <el-col :span="16">
             <component
-                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties) : TaskExpression"
+                :is="componentType"
                 :model-value="item[1]"
                 @update:model-value="onValueChange(index, $event)"
                 :root="getKey(item[0])"
@@ -105,6 +105,13 @@
     }, 200);
 
     const emit = defineEmits(["update:modelValue"]);
+
+    const componentType = computed(() => {
+        return props.schema.additionalProperties
+            ? getTaskComponent(props.schema.additionalProperties, "", props.definitions)
+            : TaskExpression;
+    });
+
 
     function getKey(key: string) {
         return props.root ? `${props.root}.${key}` : key;

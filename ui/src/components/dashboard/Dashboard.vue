@@ -21,7 +21,7 @@
     import {computed, onBeforeMount, ref} from "vue";
 
     import type {Dashboard, Chart} from "./composables/useDashboards";
-    import {ALLOWED_CREATION_ROUTES, getDashboardID} from "./composables/useDashboards";
+    import {ALLOWED_CREATION_ROUTES, getDashboard, processFlowYaml} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
@@ -97,9 +97,9 @@
     };
 
     onBeforeMount(() => {
-        const ID = getDashboardID(route);
+        const ID = getDashboard(route, "id");
 
-        if (props.isFlow && ID === "default") load("default", YAML_FLOW.replace(/--NAMESPACE--/g, String(route.params.namespace)).replace(/--FLOW--/g, String(route.params.id)));
+        if (props.isFlow && ID === "default") load("default", processFlowYaml(YAML_FLOW, route.params.namespace, route.params.id));
         else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
     });
 </script>

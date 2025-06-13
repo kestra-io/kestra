@@ -81,7 +81,7 @@
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
     import {useRouter, useRoute} from "vue-router";
-    import {STORAGE_KEYS} from "../../dashboard/composables/useDashboards";
+    import {getDashboard} from "../../dashboard/composables/useDashboards";
 
     const {t} = useI18n({useScope: "global"});
     const store = useStore();
@@ -129,9 +129,9 @@
     const selectDashboard = (dashboard: any) => {
         selectedDashboard.value = dashboard?.title;
         if (dashboard?.id) {
-            localStorage.setItem(getDashboardKey.value, dashboard.id);
+            localStorage.setItem(ID, dashboard.id);
         } else {
-            localStorage.removeItem(getDashboardKey.value);
+            localStorage.removeItem(ID);
         }
         emits("dashboard", dashboard.id);
     };
@@ -148,7 +148,7 @@
 
                 const creation = Boolean(route.query.created);
                 const lastSelected = creation
-                    ? route.params?.dashboard
+                    ? (route.params?.dashboard ?? fetchLastDashboard())
                     : (fetchLastDashboard() ?? route.params?.dashboard);
 
                 if (lastSelected) {
@@ -165,18 +165,10 @@
             });
     };
 
-    const getDashboardKey = computed(() => {
-        const {name} = route;
-        const dashboard = STORAGE_KEYS(route.params);
-
-        if (name === "flows/update") return dashboard.DASHBOARD_FLOW;
-        else if (name === "namespaces/update") return dashboard.DASHBOARD_NAMESPACE;
-
-        return dashboard.DASHBOARD_MAIN;
-    });
+    const ID = getDashboard(route, "id");
 
     const fetchLastDashboard = () => {
-        return localStorage.getItem(getDashboardKey.value);
+        return localStorage.getItem(ID);
     };
 
     onBeforeMount(() => {

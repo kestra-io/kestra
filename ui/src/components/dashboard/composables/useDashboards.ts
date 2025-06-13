@@ -49,8 +49,8 @@ export const STORAGE_KEYS = (params: RouteParams) => {
 
     return {
         DASHBOARD_MAIN: `dashboard_main${suffix}`,
-        DASHBOARD_NAMESPACE: `dashboard_namespace${suffix}`,
         DASHBOARD_FLOW: `dashboard_flow${suffix}`,
+        DASHBOARD_NAMESPACE: `dashboard_namespace${suffix}`,
     };
 };
 

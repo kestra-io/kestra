@@ -2,7 +2,8 @@
     <el-dropdown trigger="click" placement="bottom-end">
         <KestraIcon placement="bottom">
             <el-button :icon="Menu" class="main-button">
-                <span class="text-truncate">{{ selectedDashboard ?? $t('dashboards.default') }}</span>
+                <span class="text-truncate">
+                    {{ selectedDashboard ?? $t("dashboards.default") }}</span>
             </el-button>
         </KestraIcon>
 
@@ -12,7 +13,10 @@
                     type="primary"
                     :icon="Plus"
                     tag="router-link"
-                    :to="{name: 'dashboards/create', query: {from: route.name}}"
+                    :to="{
+                        name: 'dashboards/create',
+                        query: {from: route.name},
+                    }"
                     class="w-100"
                 >
                     <small>{{ t("dashboards.creation.label") }}</small>
@@ -88,13 +92,18 @@
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
 
     const remove = (dashboard: any) => {
-        toast.confirm(t("dashboards.deletion.confirmation", {title: dashboard.title}), () => {
-            store.dispatch("dashboard/delete", dashboard.id).then(() => {
-                dashboards.value = dashboards.value.filter((d) => d.id !== dashboard.id);
-                toast.deleted(dashboard.title);
-                router.push({name: "home"});
-            });
-        });
+        toast.confirm(
+            t("dashboards.deletion.confirmation", {title: dashboard.title}),
+            () => {
+                store.dispatch("dashboard/delete", dashboard.id).then(() => {
+                    dashboards.value = dashboards.value.filter(
+                        (d) => d.id !== dashboard.id,
+                    );
+                    toast.deleted(dashboard.title);
+                    router.push({name: "home"});
+                });
+            },
+        );
     };
 
     const search = ref("");
@@ -107,21 +116,21 @@
         );
     });
 
-    const selectedDashboard = ref(null)
+    const selectedDashboard = ref(null);
 
     const selectDashboard = (dashboard: any) => {
         selectedDashboard.value = dashboard?.title;
         if (dashboard?.id) {
-            localStorage.setItem(STORAGE_KEYS(route.params).DASHBOARD_MAIN, dashboard.id);
+            localStorage.setItem(getDashboardKey.value, dashboard.id);
         } else {
-            localStorage.removeItem(STORAGE_KEYS(route.params).DASHBOARD_MAIN);
+            localStorage.removeItem(getDashboardKey.value);
         }
-        emits("dashboard", dashboard.id)
-    }
+        emits("dashboard", dashboard.id);
+    };
 
     const editDashboard = (dashboard: any) => {
         router.push({name: "dashboards/update", params: {id: dashboard.id}});
-    }
+    };
 
     const fetchDashboards = () => {
         store
@@ -130,26 +139,40 @@
                 dashboards.value = response.results;
 
                 const creation = Boolean(route.query.created);
-                const lastSelected = creation ? route.params?.id : (fetchLastDashboard() ?? route.params?.id);
+                const lastSelected = creation
+                    ? route.params?.id
+                    : (fetchLastDashboard() ?? route.params?.id);
 
                 if (lastSelected) {
-                    const dashboard = dashboards.value.find(d => d.id === lastSelected);
+                    const dashboard = dashboards.value.find(
+                        (d) => d.id === lastSelected,
+                    );
                     if (dashboard) {
                         selectDashboard(dashboard);
                     } else {
                         selectedDashboard.value = null;
-                        emits("dashboard", "default")
+                        emits("dashboard", "default");
                     }
                 }
             });
-    }
+    };
+
+    const getDashboardKey = computed(() => {
+        const {name} = route;
+        const dashboard = STORAGE_KEYS(route.params);
+
+        if (name === "flows/update") return dashboard.DASHBOARD_FLOW;
+        else if (name === "namespaces/update") return dashboard.DASHBOARD_NAMESPACE;
+
+        return dashboard.DASHBOARD_MAIN;
+    });
 
     const fetchLastDashboard = () => {
-        return localStorage.getItem(STORAGE_KEYS(route.params).DASHBOARD_MAIN)
-    }
+        return localStorage.getItem(getDashboardKey.value);
+    };
 
     onBeforeMount(() => {
-        fetchDashboards()
+        fetchDashboards();
     });
 
     watch(
@@ -159,7 +182,9 @@
                 fetchDashboards();
                 routeTenant.value = newRoute.params.tenant;
             }
-        }, {deep: true});
+        },
+        {deep: true},
+    );
 </script>
 
 <style scoped lang="scss">

@@ -10,7 +10,7 @@
             >
                 <div class="d-flex flex-column">
                     <p v-if="chart.type !== 'io.kestra.plugin.core.dashboard.chart.KPI'">
-                        <span class="fs-6 fw-bold">{{ labels(chart).title }}</span>
+                        <span class="fs-6 fw-bold chart-title">{{ labels(chart).title }}</span>
                         <template v-if="labels(chart)?.description">
                             <br>
                             <small class="fw-light">
@@ -125,5 +125,12 @@ section#charts {
 
 .charts-padding {
     padding: 0 2rem 1rem;
+}
+
+.chart-title {
+    word-break: break-word;
+    white-space: normal;
+    max-width: 100%;
+    display: inline-block;
 }
 </style>

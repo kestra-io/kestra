@@ -593,6 +593,15 @@
 .md-label {
     height: 20px;
 }
+* ✅ Fix for overlapping input text */
+:deep(.el-input__inner),
+:deep(.el-textarea__inner) {
+    padding-right: 2.5rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-sizing: border-box;
+}
 
 .hint {
     font-size: var(--font-size-xs);

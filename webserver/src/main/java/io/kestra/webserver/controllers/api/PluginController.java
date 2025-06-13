@@ -30,7 +30,7 @@ import java.util.stream.Stream;
 import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Validated
-@Controller("/api/v1/main/plugins/")
+@Controller("/api/v1/{tenant}/plugins/")
 public class PluginController {
     private static final String CACHE_DIRECTIVE = "public, max-age=3600";
 

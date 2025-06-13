@@ -885,7 +885,8 @@
         "triggers": "Seleccione un trigger"
       },
       "toggle_pebble": "Alternar editor de Pebble",
-      "unnamed": "Sin Nombre"
+      "unnamed": "Sin Nombre",
+      "version_oss_placeholder": "Desbloquea la Versionado de Plugins con la Enterprise Edition"
     },
     "no_data": "Parece que no hay nada aquí... ¡todavía!<br/>Ajusta tus filtros o inténtalo de nuevo.",
     "no_logs_data": "Sin datos",

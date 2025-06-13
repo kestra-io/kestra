@@ -1,5 +1,5 @@
 <template>
-    <namespace-select
+    <NamespaceSelect
         data-type="flow"
         :value="modelValue"
         allow-create

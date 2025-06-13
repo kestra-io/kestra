@@ -17,6 +17,7 @@
                 :schema="schema.additionalProperties"
                 :required="isRequired(item[0])"
                 :definitions="definitions"
+                :disabled
             />
         </el-col>
         <el-col :span="2" class="col align-self-center delete">
@@ -57,6 +58,10 @@
         root: {
             type: String,
             default: undefined,
+        },
+        disabled: {
+            type: Boolean,
+            default: false,
         },
     });
 
@@ -117,7 +122,7 @@
     }
 
     const disabledAdding = computed(() => {
-        return currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
+        return props.disabled || currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
     });
 </script>
 

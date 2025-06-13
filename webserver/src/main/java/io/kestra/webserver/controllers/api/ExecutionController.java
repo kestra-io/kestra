@@ -110,7 +110,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Slf4j
 @Validated
-@Controller("/api/v1/main/executions")
+@Controller("/api/v1/{tenant}/executions")
 public class ExecutionController {
     private static final Pattern SECRET_FUNCTION = Pattern.compile("(.*)(secret\\([^)]+\\))(.*)");
 

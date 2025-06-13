@@ -885,7 +885,8 @@
         "triggers": "Sélectionner un trigger"
       },
       "toggle_pebble": "Basculer l'éditeur Pebble",
-      "unnamed": "Aucun Nom"
+      "unnamed": "Aucun Nom",
+      "version_oss_placeholder": "Kestra Enterprise permet de versionner les plugins"
     },
     "no_data": "On dirait qu'il n'y a rien ici… pour l'instant !<br/>Ajustez vos filtres, ou réessayez !",
     "no_logs_data": "Pas de données",

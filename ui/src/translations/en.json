@@ -1172,6 +1172,7 @@
     "chart preview": "Chart preview",
     "no_code": {
       "toggle_pebble": "Toggle Pebble editor",
+      "version_oss_placeholder": "Unlock Plugin Versioning with Enterprise Edition",
       "unnamed": "No Name",
       "adding": "+ Add a {what}",
       "adding_default": "+ Add a new value",
@@ -1355,6 +1356,7 @@
       "kv_pairs": "No Key-Value pairs Found",
       "secrets": "No Secrets Found",
       "templates": "No Templates Found"
-    }
+    },
+    "duplicate-pair": "{label} {key} is duplicated, second key ignored."
   }
 }

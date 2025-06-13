@@ -16,16 +16,18 @@
         </el-form-item>
     </el-form>
 
-    <TaskObject
-        v-loading="isLoading"
-        v-if="selectedTaskType && schema"
-        name="root"
-        :model-value="taskObject"
-        @update:model-value="onTaskInput"
-        :schema="schemaProp"
-        :properties="properties"
-        :definitions="schema.definitions"
-    />
+    <div @click="store.dispatch('plugin/updateDocumentation', {task: selectedTaskType});">
+        <TaskObject
+            v-loading="isLoading"
+            v-if="selectedTaskType && schema"
+            name="root"
+            :model-value="taskObject"
+            @update:model-value="onTaskInput"
+            :schema="schemaProp"
+            :properties="properties"
+            :definitions="schema.definitions"
+        />
+    </div>
 </template>
 
 <script lang="ts" setup>
@@ -145,6 +147,25 @@
 
     }
 
+    function removeNullAndUndefined(obj: any): any {
+        if (Array.isArray(obj)) {
+            return obj.filter(item => item !== null && item !== undefined)
+                .map(item => removeNullAndUndefined(item));
+        }
+        if (typeof obj === "object") {
+            const newObj: any = {};
+            for (const key in obj) {
+                const rawValue = obj[key]
+                if(rawValue === null || rawValue === undefined) {
+                    continue;
+                }
+                newObj[key] = removeNullAndUndefined(rawValue);
+            }
+            return newObj;
+        }
+        return obj;
+    }
+
     function onTaskInput(val: PartialCodeElement | undefined) {
         taskObject.value = val;
         if (isPluginDefaults.value) {
@@ -163,7 +184,7 @@
                 };
             }
         }
-        modelValue.value = YAML_UTILS.stringify(toRaw(val));
+        modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val)));
     }
 
     function onTaskTypeSelect() {
@@ -178,7 +199,6 @@
 <style lang="scss" scoped>
     .type-div {
         display: flex;
-        justify-content: space-between;
         text-transform: lowercase;
         align-items: center;
         gap: 0.25rem;

@@ -28,7 +28,7 @@
 
     import MultiPanelTabs, {Panel, Tab} from "../MultiPanelTabs.vue";
     import EditorButtonsWrapper from "../inputs/EditorButtonsWrapper.vue";
-    import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "./panelDefinition";
+    import {DEFAULT_ACTIVE_TABS, EDITOR_ELEMENTS} from "override/components/flows/panelDefinition";
     import {useCodePanels, useInitialCodeTabs} from "./useCodePanels";
     import {useTopologyPanels} from "./useTopologyPanels";
 
@@ -143,11 +143,14 @@
     const {setupInitialCodeTab} = useInitialCodeTabs()
 
     const isTourRunning = computed(() => store.state.core.guidedProperties?.tourStarted)
-    const DEAFULT_TABS = isTourRunning.value ? ["code", "topology"] : DEFAULT_ACTIVE_TABS
+    const DEFAULT_TOUR_TABS = [
+        {tabs: ["code"], activeTab: "code", size: 1},
+        {tabs: ["topology"], activeTab: "topology", size: 1}
+    ];
 
     const panels: Ref<Panel[]> = useStorage<any>(
         `panel-${flow.value.namespace}-${flow.value.id}`,
-        DEAFULT_TABS
+        DEFAULT_ACTIVE_TABS
             .map((t):Panel => getPanelFromValue(t).panel),
         undefined,
         {
@@ -161,7 +164,7 @@
                 },
                 read(v?: string) {
                     if(v){
-                        const panels: {tabs: string[], activeTab: string, size: number}[] = JSON.parse(v)
+                        const panels: {tabs: string[], activeTab: string, size: number}[] = isTourRunning.value ? DEFAULT_TOUR_TABS : JSON.parse(v)
                         return panels
                             .filter((p) => p.tabs.length)
                             .map((p):Panel => {

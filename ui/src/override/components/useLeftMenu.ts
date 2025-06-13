@@ -1,7 +1,9 @@
 import {computed, shallowRef} from "vue";
 import {useStore} from "vuex";
-import {useRouter} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import {useI18n} from "vue-i18n";
+
+import {getDashboardID} from "../../components/dashboard/composables/useDashboards";
 
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
 import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
@@ -20,6 +22,7 @@ import FlaskOutline from "vue-material-design-icons/FlaskOutline.vue";
 
 export function useLeftMenu() {
     const {t} = useI18n({useScope: "global"});
+    const $route = useRoute();
     const $router = useRouter();
     const store = useStore();
 
@@ -45,8 +48,11 @@ export function useLeftMenu() {
     const generateMenu = () => {
         return [
             {
-                href: {name: "home"},
-                title: t("homeDashboard.title"),
+                href: {
+                    name: "home",
+                    params: {id: getDashboardID($route)},
+                },
+                title: t("dashboards.labels.plural"),
                 icon: {
                     element: shallowRef(ViewDashboardVariantOutline),
                     class: "menu-icon",

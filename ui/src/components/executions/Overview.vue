@@ -23,7 +23,7 @@
                     <div class="text-end" v-if="errorLogsMore">
                         <router-link :to="{name: 'executions/update', params: {tenantId: execution.tenantId, id: execution.id, namespace: execution.namespace, flowId: execution.flowId, tab: 'logs'}, query: {level: 'ERROR'}}">
                             <el-button class="mt-3">
-                                {{ $t('homeDashboard.errorLogs') }}
+                                {{ $t('errorLogs') }}
                             </el-button>
                         </router-link>
                     </div>
@@ -201,6 +201,7 @@
     import Markdown from "../../components/layout/Markdown.vue";
 
     export default {
+        inheritAttrs: false,
         components: {
             ChangeExecutionStatus,
             Duration,

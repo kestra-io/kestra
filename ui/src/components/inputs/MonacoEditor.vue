@@ -9,7 +9,7 @@
                 :teleported="false"
                 :default-value="nowMoment.toDate()"
                 @change="datePickerCallback"
-                @keydown.esc.prevent="editorResolved.focus()"
+                @keydown.esc.prevent="editorResolved?.focus()"
                 @keydown.enter.prevent="datePickerCallback"
                 :clearable="false"
                 class="z-3"

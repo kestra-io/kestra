@@ -2,7 +2,7 @@
     <el-dropdown trigger="click" placement="bottom-end">
         <KestraIcon placement="bottom">
             <el-button :icon="Menu" class="main-button">
-                <span class="text-truncate">{{ selectedDashboard ?? $t('default_dashboard') }}</span>
+                <span class="text-truncate">{{ selectedDashboard ?? $t('dashboards.default') }}</span>
             </el-button>
         </KestraIcon>
 
@@ -12,10 +12,10 @@
                     type="primary"
                     :icon="Plus"
                     tag="router-link"
-                    :to="{name: 'dashboards/create'}"
+                    :to="{name: 'dashboards/create', query: {from: route.name}}"
                     class="w-100"
                 >
-                    <small>{{ t("create_custom_dashboard") }}</small>
+                    <small>{{ t("dashboards.creation.label") }}</small>
                 </el-button>
 
                 <el-input
@@ -31,7 +31,7 @@
                     @click="selectDashboard({id: 'default'})"
                     :class="{'mt-3': filtered.length < 10}"
                 >
-                    <small>{{ t("default_dashboard") }}</small>
+                    <small>{{ t("dashboards.default") }}</small>
                 </el-dropdown-item>
 
                 <hr class="my-2">
@@ -62,7 +62,7 @@
                         v-if="!filtered.length"
                         class="px-3 text-center empty"
                     >
-                        {{ t("custom_dashboard_empty") }}
+                        {{ t("dashboards.empty") }}
                     </span>
                 </div>
             </el-dropdown-menu>
@@ -77,7 +77,7 @@
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
     import {useRouter, useRoute} from "vue-router";
-    import {storageKeys} from "../../../utils/constants";
+    import {STORAGE_KEYS} from "../../dashboard/composables/useDashboards";
 
     const {t} = useI18n({useScope: "global"});
     const store = useStore();
@@ -88,7 +88,7 @@
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
 
     const remove = (dashboard: any) => {
-        toast.confirm(t("custom_dashboard_confirm_deletion", {title: dashboard.title}), () => {
+        toast.confirm(t("dashboards.deletion.confirmation", {title: dashboard.title}), () => {
             store.dispatch("dashboard/delete", dashboard.id).then(() => {
                 dashboards.value = dashboards.value.filter((d) => d.id !== dashboard.id);
                 toast.deleted(dashboard.title);
@@ -109,14 +109,12 @@
 
     const selectedDashboard = ref(null)
 
-    const DASHBOARD_KEY = storageKeys.DASHBORD_SELECTED + (routeTenant.value ? `_${routeTenant.value}` : "")
-
     const selectDashboard = (dashboard: any) => {
         selectedDashboard.value = dashboard?.title;
         if (dashboard?.id) {
-            localStorage.setItem(DASHBOARD_KEY, dashboard.id);
+            localStorage.setItem(STORAGE_KEYS(route.params).DASHBOARD_MAIN, dashboard.id);
         } else {
-            localStorage.removeItem(DASHBOARD_KEY);
+            localStorage.removeItem(STORAGE_KEYS(route.params).DASHBOARD_MAIN);
         }
         emits("dashboard", dashboard.id)
     }
@@ -147,7 +145,7 @@
     }
 
     const fetchLastDashboard = () => {
-        return localStorage.getItem(DASHBOARD_KEY)
+        return localStorage.getItem(STORAGE_KEYS(route.params).DASHBOARD_MAIN)
     }
 
     onBeforeMount(() => {

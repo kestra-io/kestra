@@ -16,16 +16,18 @@
         </el-form-item>
     </el-form>
 
-    <TaskObject
-        v-loading="isLoading"
-        v-if="selectedTaskType && schema"
-        name="root"
-        :model-value="taskObject"
-        @update:model-value="onTaskInput"
-        :schema="schemaProp"
-        :properties="properties"
-        :definitions="schema.definitions"
-    />
+    <div @click="store.dispatch('plugin/updateDocumentation', {task: selectedTaskType});">
+        <TaskObject
+            v-loading="isLoading"
+            v-if="selectedTaskType && schema"
+            name="root"
+            :model-value="taskObject"
+            @update:model-value="onTaskInput"
+            :schema="schemaProp"
+            :properties="properties"
+            :definitions="schema.definitions"
+        />
+    </div>
 </template>
 
 <script lang="ts" setup>
@@ -145,6 +147,37 @@
 
     }
 
+    function isNullOrUndefined(value: any): boolean {
+        return value === null || value === undefined;
+    }
+
+    function removeNullAndUndefined(obj: any): any {
+        if (Array.isArray(obj)) {
+            return obj
+                .map(item => removeNullAndUndefined(item))
+                .filter(item => isNullOrUndefined(item) === false);
+
+        }
+        if (typeof obj === "object") {
+            const newObj: any = {};
+            let hasValue = false;
+            for (const key in obj) {
+                const rawValue = obj[key]
+                if(isNullOrUndefined(rawValue)) {
+                    continue;
+                }
+                const newVal = removeNullAndUndefined(rawValue);
+                if(isNullOrUndefined(newVal)) {
+                    continue;
+                }
+                hasValue = true;
+                newObj[key] = newVal;
+            }
+            return hasValue ? newObj : undefined;
+        }
+        return obj;
+    }
+
     function onTaskInput(val: PartialCodeElement | undefined) {
         taskObject.value = val;
         if (isPluginDefaults.value) {
@@ -163,7 +196,7 @@
                 };
             }
         }
-        modelValue.value = YAML_UTILS.stringify(toRaw(val));
+        modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val)));
     }
 
     function onTaskTypeSelect() {
@@ -178,7 +211,6 @@
 <style lang="scss" scoped>
     .type-div {
         display: flex;
-        justify-content: space-between;
         text-transform: lowercase;
         align-items: center;
         gap: 0.25rem;

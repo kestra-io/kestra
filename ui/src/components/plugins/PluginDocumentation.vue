@@ -1,6 +1,6 @@
 <template>
     <div class="plugin-doc">
-        <template v-if="editorPlugin">
+        <template v-if="fetchPluginDocumentation && editorPlugin">
             <div class="d-flex gap-3 mb-3 align-items-center">
                 <task-icon
                     class="plugin-icon"
@@ -53,6 +53,10 @@
             absolute: {
                 type: Boolean,
                 default: false
+            },
+            fetchPluginDocumentation: {
+                type: Boolean,
+                default: true
             }
         },
         computed: {

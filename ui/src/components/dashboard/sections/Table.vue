@@ -1,0 +1,125 @@
+<template>
+    <section v-if="data" id="table">
+        <el-table
+            :id="containerID"
+            :data="data.results"
+            :height="240"
+            size="small"
+        >
+            <el-table-column
+                v-for="[key, value] in Object.entries( props.chart.data?.columns ?? {} )"
+                :label="value.displayName || key"
+                :key
+            >
+                <template #default="scope">
+                    <component :is="resolvedComponent(value.field)" v-bind="resolvedProps(value.field, key, scope.row)">
+                        <template v-if="!resolvedComponent(value.field)">
+                            {{ scope.row[key] }}
+                        </template>
+                    </component>
+                </template>
+            </el-table-column>
+        </el-table>
+
+        <Pagination
+            v-if="isPaginationEnabled(props.chart)"
+            :total="data.total"
+            :page="pageNumber"
+            :size="pageSize"
+            @page-changed="handlePageChange"
+        />
+    </section>
+
+    <NoData v-else :text="EMPTY_TEXT" />
+</template>
+
+<script lang="ts" setup>
+    import {PropType, onMounted, watch, ref, computed} from "vue";
+
+    import type {Chart} from "../composables/useDashboards";
+    import {isPaginationEnabled,        useChartGenerator} from "../composables/useDashboards";
+
+    import Date from "./table/columns/Date.vue";
+    import Duration from "./table/columns/Duration.vue";
+    import Link from "./table/columns/Link.vue";
+    import Namespace from "./table/columns/Namespace.vue";
+    import Status from "../../Status.vue";
+
+    import Pagination from "../../layout/Pagination.vue";
+    import NoData from "../../layout/NoData.vue";
+
+    const props = defineProps({
+        chart: {type: Object as PropType<Chart>, required: true},
+        filters: {type: Array as PropType<string[]>, default: () => []},
+        showDefault: {type: Boolean, default: false},
+    });
+
+    const containerID = `${props.chart.id}__${Math.random()}`;
+
+    const resolvedComponent = (field: string) => {
+        switch (field) {
+        case "ID":
+        case "FLOW_ID":
+            return Link;
+        case "NAMESPACE":
+            return Namespace;
+        case "STATE":
+            return Status;
+        case "DURATION":
+            return Duration;
+        default:
+            if (field.toLowerCase().includes("date")) return Date;
+            return undefined;
+        }
+    };
+
+    const resolvedProps = (field: string, key: string, row: Record<string, any>) => {
+        const baseProps = {field: key, row, columns: props.chart.data?.columns ?? {}};
+
+        switch (field) {
+        case "ID":
+            return {...baseProps, execution: true};
+        case "FLOW_ID":
+            return {...baseProps, flow: true};
+        case "NAMESPACE":
+            return {field: row[key]};
+        case "STATE":
+            return {size: "small", status: row[key]};
+        case "DURATION":
+            return {field: row[key]};
+        default:
+            if (field.toLowerCase().includes("date")) {
+                return {field: row[key]};
+            }
+            return {};
+        }
+    };
+
+    const data = ref();
+    const {EMPTY_TEXT, generate} = useChartGenerator(props);
+
+    import {useRoute} from "vue-router";
+    const route = useRoute();
+
+    const getData = async (ID: string) => (data.value = await generate(ID, pagination.value));
+
+    const pageNumber = ref(1);
+    const pageSize = ref(10);
+
+    const pagination = computed(() => {
+        return isPaginationEnabled(props.chart)
+            ? {pageNumber: pageNumber.value, pageSize: pageSize.value}
+            : undefined;
+    });
+
+    const handlePageChange = async (options: { page: number; size: number }) => {
+        pageNumber.value = options.page;
+        pageSize.value = options.size;
+
+        getData(route.params?.id as string);
+    };
+
+    watch(route, async (changed) => getData(changed.params?.id as string));
+
+    onMounted(async () => getData(route.params?.id as string));
+</script>

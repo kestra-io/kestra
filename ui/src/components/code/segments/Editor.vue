@@ -1,11 +1,11 @@
 <template>
     <div class="p-4">
         <template v-if="panel">
-            <component
-                :is="panel.type"
-                :model-value="panel.props.modelValue"
-                v-bind="panel.props"
-                @update:model-value="
+            <MetadataInputsContent
+                :inputs="metadata.inputs"
+                :label="t('inputs')"
+                :selected-index="panel.props.selectedIndex"
+                @update:inputs="
                     (value: any) => emits('updateMetadata', 'inputs', value)
                 "
             />
@@ -88,6 +88,7 @@
     import Collapse from "../components/collapse/Collapse.vue";
 
     import MetadataInputs from "../../flows/MetadataInputs.vue";
+    import MetadataInputsContent from "../../flows/MetadataInputsContent.vue";
     import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
 
 

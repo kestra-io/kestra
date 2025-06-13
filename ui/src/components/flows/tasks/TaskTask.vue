@@ -15,7 +15,11 @@
 
 <script setup lang="ts">
     import {computed, inject} from "vue";
-    import {PARENT_PATH_INJECTION_KEY, REF_PATH_INJECTION_KEY, CREATING_TASK_INJECTION_KEY} from "../../code/injectionKeys";
+    import {
+        PARENT_PATH_INJECTION_KEY,
+        REF_PATH_INJECTION_KEY,
+        CREATING_TASK_INJECTION_KEY
+    } from "../../code/injectionKeys";
     import Element from "../../code/components/collapse/Element.vue";
 
     const model = defineModel({
@@ -24,7 +28,6 @@
     });
 
     const props = defineProps({
-
         root: {
             type: String,
             required: true

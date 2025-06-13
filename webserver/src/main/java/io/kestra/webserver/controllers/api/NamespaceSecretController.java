@@ -28,7 +28,7 @@ import java.util.Set;
 import java.util.function.Function;
 
 @Validated
-@Controller("/api/v1/main/namespaces")
+@Controller("/api/v1/{tenant}/namespaces")
 public class NamespaceSecretController {
     @Inject
     protected TenantService tenantService;

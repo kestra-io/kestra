@@ -1,4 +1,4 @@
-import Bar from "../../../../../../src/components/charts/Bar.vue";
+import Bar from "../../../../src/components/charts/Bar.vue";
 import {vueRouter} from "storybook-vue3-router";
 
 export default {

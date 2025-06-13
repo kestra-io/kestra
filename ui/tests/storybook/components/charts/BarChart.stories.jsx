@@ -1,5 +1,5 @@
 import {ref} from "vue";
-import BarChart from "../../../../../../src/components/charts/BarChart.vue";
+import BarChart from "../../../../src/components/charts/BarChart.vue";
 import {vueRouter} from "storybook-vue3-router";
 import {within, expect, fireEvent, waitFor} from "storybook/test";
 

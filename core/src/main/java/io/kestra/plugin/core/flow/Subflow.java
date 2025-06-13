@@ -170,16 +170,19 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
     private RestartBehavior restartBehavior = RestartBehavior.RETRY_FAILED;
 
     @Override
-    public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext,
-                                                             FlowMetaStoreInterface flowExecutorInterface,
-                                                             io.kestra.core.models.flows.Flow currentFlow,
-                                                             Execution currentExecution,
-                                                             TaskRun currentTaskRun) throws InternalException {
+    public List<SubflowExecution<?>> createSubflowExecutions(
+        RunContext runContext,
+        FlowMetaStoreInterface flowExecutorInterface,
+        io.kestra.core.models.flows.Flow currentFlow,
+        Execution currentExecution,
+        TaskRun currentTaskRun
+    ) throws InternalException {
         Map<String, Object> inputs = new HashMap<>();
         if (this.inputs != null) {
             inputs.putAll(runContext.render(this.inputs));
         }
 
+        // No change needed here for Subflow, but this method is overridden in ForEachItemExecutable
         return ExecutableUtils.subflowExecution(
             runContext,
             flowExecutorInterface,

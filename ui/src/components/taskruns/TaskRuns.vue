@@ -122,7 +122,7 @@
     import Id from "../Id.vue";
     import _merge from "lodash/merge";
     import {stateGlobalChartTypes, storageKeys} from "../../utils/constants";
-    import ExecutionsBar from "../../components/dashboard/components/charts/executions/Bar.vue"
+    import ExecutionsBar from "../../components/charts/Bar.vue"
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],

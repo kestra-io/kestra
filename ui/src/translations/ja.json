@@ -159,8 +159,6 @@
     "copy_to_clipboard": "クリップボードにコピー",
     "create": "作成",
     "create first task": "最初のtaskを作成",
-    "create_custom_dashboard": "新しいダッシュボードを作成",
-    "create_dashboard": "ダッシュボードを作成",
     "create_flow": "フローを作成",
     "created date": "作成日",
     "creation": "作成",
@@ -172,34 +170,28 @@
     "current": "現在",
     "current execution": "現在の実行",
     "custom value": "カスタム value",
-    "custom_dashboard": "カスタムダッシュボード",
-    "custom_dashboard_confirm_deletion": "<code>{title}</code> ダッシュボードを削除してもよろしいですか？",
-    "custom_dashboard_empty": "表示する結果がありません。",
-    "custom_dashboard_validate_creation": "ダッシュボード <code>{title}</code> が作成されました。",
-    "custom_dashboard_validate_editing": "ダッシュボード<code>{title}</code>の変更が保存されました。",
     "dark_version": "ダークバージョン",
-    "dashboard": {
-      "click_chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
-      "description": "説明",
-      "executions_in_progress": "進行中のExecutions",
-      "failure_ratio": "失敗率",
-      "failure_ratio_tooltip": "失敗率は、FAILED、KILLED、および RETRIED の実行の合計を、終了状態にある実行の総数で割ったものです。",
-      "id": "ID",
-      "next_execution_date": "次回実行日",
-      "next_scheduled_executions": "次回予定実行",
-      "no_flow_description": "このflowには説明がありません。",
-      "not_auth": "必要な権限がないため、このウィジェットを表示できません。",
-      "per_day": "（日ごと）",
-      "per_namespace": "（namespaceごと）",
-      "preview": "ダッシュボードプレビュー",
-      "see_all": "すべて表示",
-      "success_ratio": "成功率",
-      "success_ratio_tooltip": "成功率は、SUCCESS、CANCELLED、WARNINGの実行の合計を、終了状態にある実行の総数で割ったものです。",
-      "total_executions": "総実行数",
-      "trigger_disabled": "このTriggerはコードを通じてのみ有効にできます。"
+    "dashboards": {
+      "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
+      "creation": {
+        "confirmation": "ダッシュボード <code>{title}</code> が作成されました。",
+        "label": "ダッシュボードを作成"
+      },
+      "default": "デフォルトダッシュボード",
+      "deletion": {
+        "confirmation": "<code>{title}</code> ダッシュボードを削除してもよろしいですか？"
+      },
+      "edition": {
+        "confirmation": "ダッシュボード<code>{title}</code>の変更が保存されました。",
+        "label": "ダッシュボードを編集"
+      },
+      "empty": "表示する結果がありません。",
+      "labels": {
+        "plural": "ダッシュボード",
+        "singular": "ダッシュボード"
+      },
+      "preview": "プレビュー ダッシュボード"
     },
-    "dashboard_label": "ダッシュボード",
-    "dashboards": "ダッシュボード",
     "data": "データ",
     "data_not_protected": "あなたのデータは保護されていません。失わないようにしてください。<b>無料のセキュリティ機能を有効にするか、有料オプションをお試しください。</b>",
     "date": "日付",
@@ -247,7 +239,6 @@
     "days": "日数",
     "debug": "デバッグ",
     "default": "デフォルト",
-    "default_dashboard": "デフォルトダッシュボード",
     "delete": "削除",
     "delete backfill": "backfillを削除",
     "delete backfills": "backfillを削除",
@@ -364,7 +355,6 @@
     "each value": "繰り返し値",
     "edit": "編集",
     "edit flow": "Flowを編集",
-    "edit_custom_dashboard": "ダッシュボードを編集",
     "editor": "エディタ",
     "editor_shortcuts": {
       "command_palette": "コマンドパレットを表示",
@@ -434,6 +424,7 @@
     "error": "エラー",
     "error detected": "エラーが検出されました",
     "error in editor": "エディタにエラーが見つかりました",
+    "errorLogs": "エラーログ",
     "errors": {
       "401": {
         "content": "このページにアクセスするには認証が必要です。",
@@ -622,22 +613,6 @@
     "healthcheck date": "HealthCheck日",
     "hide task documentation": "taskのドキュメントを非表示",
     "home": "ホーム",
-    "homeDashboard": {
-      "errorLogs": "エラーログ",
-      "failedExecutions": "FAILED実行",
-      "guide": "最初のflowを実行するためのガイダンスが必要ですか？",
-      "last28Days": "過去28日間",
-      "lastXdays": "過去{days}日間",
-      "namespacesErrorExecutions": "namespaceごとの実行エラー",
-      "namespacesExecutions": "namespaceごとの実行",
-      "no executions": "flowを実行してみませんか？",
-      "start": "最初のworkflowを立ち上げて実行しましょう。",
-      "title": "ダッシュボード",
-      "today": "今日",
-      "wel_text": "ようこそ！",
-      "welcome": "Kestraへようこそ",
-      "yesterday": "昨日"
-    },
     "hostname": "ホスト名",
     "hours": "営業時間",
     "iam": "IAM",
@@ -1249,6 +1224,7 @@
       "zoom-out": "ズームアウト",
       "zoom-reset": "ズームリセット"
     },
+    "total_executions": "実行の合計",
     "trigger": "Trigger",
     "trigger details": "Triggerの詳細",
     "trigger disabled": "Flowソース内でTriggerが無効になっています",
@@ -1332,6 +1308,12 @@
     "welcome aboard content": "ガイド付きツアーを利用して最初のflowを作成し、Blueprintsでさらに多くの例を見つけてください。",
     "welcome button create": "最初のflowを作成",
     "welcome display require": "<strong>最初のflow</strong>を実行して始めましょう",
+    "welcome_page": {
+      "guide": "最初のflowを実行するためのガイダンスが必要ですか？",
+      "start": "最初のworkflowを立ち上げましょう。",
+      "wel_text": "ようこそ！",
+      "welcome": "Kestraへようこそ"
+    },
     "wordmark_colors": "ワードマークの色は背景に応じて変化し、アイコンは暗い背景に配置された場合、背景なしで表示されます。",
     "worker group": "Workerグループ",
     "worker group fallback": "ワーカーグループフォールバック",

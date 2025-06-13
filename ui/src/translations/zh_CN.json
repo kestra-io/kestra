@@ -159,8 +159,6 @@
     "copy_to_clipboard": "复制到剪贴板",
     "create": "创建",
     "create first task": "创建你的第一个任务",
-    "create_custom_dashboard": "创建新仪表板",
-    "create_dashboard": "创建仪表板",
     "create_flow": "创建Flow",
     "created date": "创建日期",
     "creation": "创建",
@@ -172,34 +170,28 @@
     "current": "当前",
     "current execution": "当前执行",
     "custom value": "自定义值",
-    "custom_dashboard": "自定义仪表板",
-    "custom_dashboard_confirm_deletion": "您确定要删除<code>{title}</code>仪表板吗？",
-    "custom_dashboard_empty": "没有结果显示。",
-    "custom_dashboard_validate_creation": "仪表板 <code>{title}</code> 已创建。",
-    "custom_dashboard_validate_editing": "仪表板<code>{title}</code>中的更改已保存。",
     "dark_version": "深色版本",
-    "dashboard": {
-      "click_chart_preview": "单击图表源代码以查看预览",
-      "description": "描述",
-      "executions_in_progress": "执行中",
-      "failure_ratio": "失败率",
-      "failure_ratio_tooltip": "失败率是FAILED、KILLED和RETRIED执行次数之和除以终止状态下执行总次数的结果。",
-      "id": "ID",
-      "next_execution_date": "下次执行日期",
-      "next_scheduled_executions": "下一次计划执行",
-      "no_flow_description": "此flow没有描述。",
-      "not_auth": "您没有查看此小部件的必要权限。",
-      "per_day": "（每天）",
-      "per_namespace": "（每个namespace）",
-      "preview": "仪表板预览",
-      "see_all": "查看全部",
-      "success_ratio": "成功率",
-      "success_ratio_tooltip": "成功率是SUCCESS、CANCELLED和WARNING执行次数之和除以终止状态下执行总次数的结果。",
-      "total_executions": "总执行次数",
-      "trigger_disabled": "此trigger只能通过代码启用。"
+    "dashboards": {
+      "chart_preview": "单击图表源代码以查看其预览",
+      "creation": {
+        "confirmation": "仪表板 <code>{title}</code> 已创建。",
+        "label": "创建仪表板"
+      },
+      "default": "默认仪表板",
+      "deletion": {
+        "confirmation": "您确定要删除<code>{title}</code>仪表板吗？"
+      },
+      "edition": {
+        "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
+        "label": "编辑仪表板"
+      },
+      "empty": "没有结果显示。",
+      "labels": {
+        "plural": "仪表板",
+        "singular": "仪表板"
+      },
+      "preview": "预览仪表板"
     },
-    "dashboard_label": "仪表板",
-    "dashboards": "仪表板",
     "data": "数据",
     "data_not_protected": "您的数据未受保护。不要丢失它。<b>启用我们的免费安全功能或试用我们的付费服务。</b>",
     "date": "日期",
@@ -247,7 +239,6 @@
     "days": "天数",
     "debug": "调试",
     "default": "默认值",
-    "default_dashboard": "默认仪表板",
     "delete": "删除",
     "delete backfill": "删除回填",
     "delete backfills": "删除回填",
@@ -364,7 +355,6 @@
     "each value": "迭代值",
     "edit": "编辑",
     "edit flow": "编辑流程",
-    "edit_custom_dashboard": "编辑仪表板",
     "editor": "编辑器",
     "editor_shortcuts": {
       "command_palette": "显示命令面板",
@@ -434,6 +424,7 @@
     "error": "错误",
     "error detected": "检测到错误",
     "error in editor": "在编辑器中发现错误",
+    "errorLogs": "错误日志",
     "errors": {
       "401": {
         "content": "你需要认证才能访问此页面。",
@@ -622,22 +613,6 @@
     "healthcheck date": "健康检查日期",
     "hide task documentation": "隐藏任务文档",
     "home": "首页",
-    "homeDashboard": {
-      "errorLogs": "错误日志",
-      "failedExecutions": "失败的执行",
-      "guide": "需要指导来执行您的第一个flow吗？",
-      "last28Days": "最近28天",
-      "lastXdays": "最近{days}天",
-      "namespacesErrorExecutions": "每个命名空间的执行错误",
-      "namespacesExecutions": "每个命名空间的执行",
-      "no executions": "准备好看到你的流程在行动了吗？",
-      "start": "让我们启动并运行您的第一个workflow。",
-      "title": "仪表板",
-      "today": "今天",
-      "wel_text": "欢迎！",
-      "welcome": "欢迎使用 Kestra",
-      "yesterday": "昨天"
-    },
     "hostname": "主机名",
     "hours": "小时",
     "iam": "IAM",
@@ -1249,6 +1224,7 @@
       "zoom-out": "缩小",
       "zoom-reset": "重置缩放"
     },
+    "total_executions": "总执行次数",
     "trigger": "触发器",
     "trigger details": "触发器详情",
     "trigger disabled": "在Flow源中触发器已禁用",
@@ -1332,6 +1308,12 @@
     "welcome aboard content": "使用我们的引导游览来创建你的第一个流程，并查看蓝图以找到更多示例。",
     "welcome button create": "创建我的第一个流程",
     "welcome display require": "运行你的 <strong>第一个流程</strong> 以开始",
+    "welcome_page": {
+      "guide": "需要指导来执行您的第一个flow吗？",
+      "start": "让我们启动并运行您的第一个workflow。",
+      "wel_text": "欢迎！",
+      "welcome": "欢迎使用 Kestra"
+    },
     "wordmark_colors": "字标的颜色会根据背景进行调整，而图标在深色背景上时则保持无背景。",
     "worker group": "工作组",
     "worker group fallback": "工作组回退",

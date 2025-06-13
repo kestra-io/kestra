@@ -159,8 +159,6 @@
     "copy_to_clipboard": "Copiar para a área de transferência",
     "create": "Criar",
     "create first task": "Crie sua primeira task",
-    "create_custom_dashboard": "Criar novo dashboard",
-    "create_dashboard": "Criar Dashboard",
     "create_flow": "Criar Flow",
     "created date": "Data de criação",
     "creation": "Criação",
@@ -172,34 +170,28 @@
     "current": "atual",
     "current execution": "Execução atual",
     "custom value": "Valor personalizado",
-    "custom_dashboard": "Painéis Personalizados",
-    "custom_dashboard_confirm_deletion": "Tem certeza de que deseja excluir o dashboard <code>{title}</code>?",
-    "custom_dashboard_empty": "Não há resultados para serem exibidos.",
-    "custom_dashboard_validate_creation": "Painel <code>{title}</code> foi criado.",
-    "custom_dashboard_validate_editing": "Alterações no dashboard <code>{title}</code> foram salvas.",
     "dark_version": "Versão escura",
-    "dashboard": {
-      "click_chart_preview": "Clique no código-fonte do gráfico para ver a pré-visualização",
-      "description": "Descrição",
-      "executions_in_progress": "Execuções em Progresso",
-      "failure_ratio": "Taxa de Falhas",
-      "failure_ratio_tooltip": "A proporção de falhas é a soma das execuções FAILED, KILLED e RETRIED dividida pelo número total de execuções em um estado terminado.",
-      "id": "ID",
-      "next_execution_date": "Próxima Data de Execução",
-      "next_scheduled_executions": "Próximas Execuções Agendadas",
-      "no_flow_description": "Este flow não tem descrição.",
-      "not_auth": "Você não tem as permissões necessárias para visualizar este widget.",
-      "per_day": "(por dia)",
-      "per_namespace": "(per namespace)",
-      "preview": "Pré-visualização do Dashboard",
-      "see_all": "Ver todos",
-      "success_ratio": "Taxa de Sucesso",
-      "success_ratio_tooltip": "A Taxa de Sucesso é a soma das execuções em estados SUCCESS, CANCELLED e WARNING dividida pelo número total de execuções em um estado terminado.",
-      "total_executions": "Total de Execuções",
-      "trigger_disabled": "Este trigger só pode ser habilitado através de código."
+    "dashboards": {
+      "chart_preview": "Clique no código-fonte de um gráfico para ver sua pré-visualização",
+      "creation": {
+        "confirmation": "O Dashboard <code>{title}</code> foi criado.",
+        "label": "Criar Dashboard"
+      },
+      "default": "Dashboard Padrão",
+      "deletion": {
+        "confirmation": "Tem certeza de que deseja excluir o dashboard <code>{title}</code>?"
+      },
+      "edition": {
+        "confirmation": "As alterações no dashboard <code>{title}</code> foram salvas.",
+        "label": "Editar Dashboard"
+      },
+      "empty": "Não há resultados para serem exibidos.",
+      "labels": {
+        "plural": "Dashboards",
+        "singular": "Dashboard"
+      },
+      "preview": "Visualizar Dashboard"
     },
-    "dashboard_label": "Painel de Controle",
-    "dashboards": "Dashboards",
     "data": "Dados",
     "data_not_protected": "Seus dados não estão protegidos. Não os perca. <b>Ative nossos recursos de segurança gratuitos ou experimente nossa oferta paga.</b>",
     "date": "Data",
@@ -247,7 +239,6 @@
     "days": "Dias",
     "debug": "Depurar",
     "default": "Padrão",
-    "default_dashboard": "Painel Padrão",
     "delete": "Deletar",
     "delete backfill": "Deletar o backfill",
     "delete backfills": "Deletar backfills",
@@ -364,7 +355,6 @@
     "each value": "Valor da iteração",
     "edit": "Editar",
     "edit flow": "Editar flow",
-    "edit_custom_dashboard": "Editar Dashboard",
     "editor": "Editor",
     "editor_shortcuts": {
       "command_palette": "Mostrar paleta de comandos",
@@ -434,6 +424,7 @@
     "error": "Erro",
     "error detected": "Erro(s) detectado(s)",
     "error in editor": "Um erro foi encontrado no editor",
+    "errorLogs": "Logs de erros",
     "errors": {
       "401": {
         "content": "Você precisa estar autenticado para acessar esta página.",
@@ -622,22 +613,6 @@
     "healthcheck date": "Data do HealthCheck",
     "hide task documentation": "Ocultar documentação da task",
     "home": "Início",
-    "homeDashboard": {
-      "errorLogs": "Logs de erros",
-      "failedExecutions": "Execuções FAILED",
-      "guide": "Precisa de orientação para executar seu primeiro flow?",
-      "last28Days": "Últimos 28 dias",
-      "lastXdays": "Últimos {days} dias",
-      "namespacesErrorExecutions": "Erros de execuções por namespace",
-      "namespacesExecutions": "Execuções por namespace",
-      "no executions": "Pronto para ver seu flow em ação?",
-      "start": "Vamos colocar seu primeiro fluxo de trabalho em execução.",
-      "title": "Dashboards",
-      "today": "Hoje",
-      "wel_text": "Bem-vindo!",
-      "welcome": "Bem-vindo ao Kestra",
-      "yesterday": "Ontem"
-    },
     "hostname": "Nome do host",
     "hours": "Horas",
     "iam": "IAM",
@@ -1249,6 +1224,7 @@
       "zoom-out": "Diminuir zoom",
       "zoom-reset": "Redefinir zoom"
     },
+    "total_executions": "Total de Execuções",
     "trigger": "Trigger",
     "trigger details": "Detalhes do trigger",
     "trigger disabled": "O Trigger está desativado na fonte do Flow",
@@ -1332,6 +1308,12 @@
     "welcome aboard content": "Use nosso Tour Guiado para criar seu primeiro flow e confira os Blueprints para encontrar mais exemplos.",
     "welcome button create": "Criar meu primeiro flow",
     "welcome display require": "Execute seu <strong>primeiro flow</strong> para começar",
+    "welcome_page": {
+      "guide": "Precisa de orientação para executar seu primeiro flow?",
+      "start": "Vamos colocar seu primeiro workflow em execução.",
+      "wel_text": "Bem-vindo!",
+      "welcome": "Bem-vindo ao Kestra"
+    },
     "wordmark_colors": "As cores da marca adaptam-se com base no fundo, enquanto o ícone permanece sem fundo quando colocado em um fundo escuro.",
     "worker group": "Grupo de Workers",
     "worker group fallback": "Grupo de Worker de reserva",

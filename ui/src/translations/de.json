@@ -159,8 +159,6 @@
     "copy_to_clipboard": "In die Zwischenablage kopieren",
     "create": "Erstellen",
     "create first task": "Erstellen Sie Ihren ersten Task",
-    "create_custom_dashboard": "Neues Dashboard erstellen",
-    "create_dashboard": "Dashboard erstellen",
     "create_flow": "Flow erstellen",
     "created date": "Erstellungsdatum",
     "creation": "Erstellung",
@@ -172,34 +170,28 @@
     "current": "aktuell",
     "current execution": "Aktuelle Ausführung",
     "custom value": "Benutzerdefinierter Wert",
-    "custom_dashboard": "Benutzerdefinierte Dashboards",
-    "custom_dashboard_confirm_deletion": "Möchten Sie das Dashboard <code>{title}</code> wirklich löschen?",
-    "custom_dashboard_empty": "Es gibt keine Ergebnisse anzuzeigen.",
-    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> wurde erstellt.",
-    "custom_dashboard_validate_editing": "Änderungen im Dashboard <code>{title}</code> sind gespeichert.",
     "dark_version": "Dunkler Modus",
-    "dashboard": {
-      "click_chart_preview": "Klicken Sie auf einen Diagramm-Quellcode, um die Vorschau anzuzeigen.",
-      "description": "Beschreibung",
-      "executions_in_progress": "Ausführungen in Bearbeitung",
-      "failure_ratio": "Fehlerrate",
-      "failure_ratio_tooltip": "Der Fehlerrate ist die Summe der FAILED, KILLED und RETRIED Ausführungen, geteilt durch die Gesamtanzahl der Ausführungen in einem beendeten Zustand.",
-      "id": "ID",
-      "next_execution_date": "Nächstes Ausführungsdatum",
-      "next_scheduled_executions": "Nächste geplante Ausführungen",
-      "no_flow_description": "Dieser Flow hat keine Beschreibung.",
-      "not_auth": "Sie haben nicht die erforderlichen Berechtigungen, um dieses Widget anzuzeigen.",
-      "per_day": "(pro Tag)",
-      "per_namespace": "(pro Namespace)",
-      "preview": "Dashboard-Vorschau",
-      "see_all": "Alle anzeigen",
-      "success_ratio": "Erfolgsquote",
-      "success_ratio_tooltip": "Erfolgsquote ist die Summe der SUCCESS, CANCELLED und WARNING Ausführungen, geteilt durch die Gesamtanzahl der Ausführungen in einem beendeten Zustand.",
-      "total_executions": "Gesamte Ausführungen",
-      "trigger_disabled": "Dieser Trigger kann nur durch Code aktiviert werden."
+    "dashboards": {
+      "chart_preview": "Klicken Sie auf einen Chart-Quellcode, um die Vorschau anzuzeigen.",
+      "creation": {
+        "confirmation": "Das Dashboard <code>{title}</code> wurde erstellt.",
+        "label": "Dashboard erstellen"
+      },
+      "default": "Standard-Dashboard",
+      "deletion": {
+        "confirmation": "Möchten Sie das Dashboard <code>{title}</code> wirklich löschen?"
+      },
+      "edition": {
+        "confirmation": "Änderungen im Dashboard <code>{title}</code> werden gespeichert.",
+        "label": "Dashboard bearbeiten"
+      },
+      "empty": "Es gibt keine Ergebnisse anzuzeigen.",
+      "labels": {
+        "plural": "Dashboards",
+        "singular": "Dashboard"
+      },
+      "preview": "Vorschau-Dashboard"
     },
-    "dashboard_label": "Dashboard",
-    "dashboards": "Dashboards",
     "data": "Daten",
     "data_not_protected": "Ihre Daten sind nicht geschützt. Verlieren Sie sie nicht. <b>Aktivieren Sie unsere kostenlosen Sicherheitsfunktionen oder probieren Sie unser kostenpflichtiges Angebot aus.</b>",
     "date": "Datum",
@@ -247,7 +239,6 @@
     "days": "Tage",
     "debug": "Debuggen",
     "default": "Standard",
-    "default_dashboard": "Standard-Dashboard",
     "delete": "Löschen",
     "delete backfill": "Backfill löschen",
     "delete backfills": "Backfills löschen",
@@ -364,7 +355,6 @@
     "each value": "Iterationswert",
     "edit": "Bearbeiten",
     "edit flow": "Flow bearbeiten",
-    "edit_custom_dashboard": "Dashboard bearbeiten",
     "editor": "Editor",
     "editor_shortcuts": {
       "command_palette": "Befehlsübersicht anzeigen",
@@ -434,6 +424,7 @@
     "error": "Fehler",
     "error detected": "Fehler erkannt",
     "error in editor": "Ein Fehler wurde im Editor gefunden",
+    "errorLogs": "Fehlerprotokolle",
     "errors": {
       "401": {
         "content": "Sie müssen authentifiziert sein, um auf diese Seite zuzugreifen.",
@@ -622,22 +613,6 @@
     "healthcheck date": "HealthCheck-Datum",
     "hide task documentation": "Task-Dokumentation ausblenden",
     "home": "Startseite",
-    "homeDashboard": {
-      "errorLogs": "Fehler-Logs",
-      "failedExecutions": "Fehlgeschlagene Ausführungen",
-      "guide": "Benötigen Sie Hilfe, um Ihren ersten Flow auszuführen?",
-      "last28Days": "Letzte 28 Tage",
-      "lastXdays": "Letzte {days} Tage",
-      "namespacesErrorExecutions": "Ausführungsfehler pro Namespace",
-      "namespacesExecutions": "Ausführungen pro Namespace",
-      "no executions": "Bereit, Ihren Flow in Aktion zu sehen?",
-      "start": "Lassen Sie uns Ihren ersten Workflow zum Laufen bringen.",
-      "title": "Dashboards",
-      "today": "Heute",
-      "wel_text": "Willkommen!",
-      "welcome": "Willkommen bei Kestra",
-      "yesterday": "Gestern"
-    },
     "hostname": "Hostname",
     "hours": "Stunden",
     "iam": "IAM",
@@ -1249,6 +1224,7 @@
       "zoom-out": "Verkleinern",
       "zoom-reset": "Zoom zurücksetzen"
     },
+    "total_executions": "Gesamte Ausführungen",
     "trigger": "Trigger",
     "trigger details": "Trigger-Details",
     "trigger disabled": "Trigger ist in der Flow-Quelle deaktiviert",
@@ -1332,6 +1308,12 @@
     "welcome aboard content": "Nutzen Sie unsere geführte Tour, um Ihren ersten Flow zu erstellen, und schauen Sie sich Blueprints an, um weitere Beispiele zu finden.",
     "welcome button create": "Meinen ersten Flow erstellen",
     "welcome display require": "Führen Sie Ihren <strong>ersten Flow</strong> aus, um loszulegen",
+    "welcome_page": {
+      "guide": "Benötigen Sie Unterstützung, um Ihren ersten flow auszuführen?",
+      "start": "Lassen Sie uns Ihren ersten Workflow zum Laufen bringen.",
+      "wel_text": "Willkommen!",
+      "welcome": "Willkommen bei Kestra"
+    },
     "wordmark_colors": "Die Farben des Wortzeichens passen sich dem Hintergrund an, während das Icon auf einem dunklen Hintergrund ohne Hintergrund bleibt.",
     "worker group": "Worker-Gruppe",
     "worker group fallback": "Arbeitsgruppe Fallback",

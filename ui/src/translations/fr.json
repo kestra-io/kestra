@@ -159,8 +159,6 @@
     "copy_to_clipboard": "Copier dans le presse-papiers",
     "create": "Créer",
     "create first task": "Créer votre première tâche",
-    "create_custom_dashboard": "Créer un nouveau tableau de bord",
-    "create_dashboard": "Créer un tableau de bord",
     "create_flow": "Créer Flow",
     "created date": "Date de création",
     "creation": "Création",
@@ -172,34 +170,28 @@
     "current": "actuel",
     "current execution": "Exécution en cours",
     "custom value": "Valeur personnalisée",
-    "custom_dashboard": "Tableaux de bord personnalisés",
-    "custom_dashboard_confirm_deletion": "Êtes-vous sûr de vouloir supprimer le tableau de bord <code>{title}</code> ?",
-    "custom_dashboard_empty": "Il n'y a aucun résultat à afficher.",
-    "custom_dashboard_validate_creation": "Tableau de bord <code>{title}</code> est créé.",
-    "custom_dashboard_validate_editing": "Les modifications dans le tableau de bord <code>{title}</code> sont enregistrées.",
     "dark_version": "Version sombre",
-    "dashboard": {
-      "click_chart_preview": "Cliquez sur un code source de graphique pour voir l'aperçu",
-      "description": "Description",
-      "executions_in_progress": "Exécutions en cours",
-      "failure_ratio": "Ratio d'échec",
-      "failure_ratio_tooltip": "Le ratio d'échec est la somme des exécutions en état FAILED, KILLED et RETRIED divisée par le nombre total d'exécutions dans un état terminé.",
-      "id": "ID",
-      "next_execution_date": "Prochaine Date d'Exécution",
-      "next_scheduled_executions": "Prochaines Exécutions Planifiées",
-      "no_flow_description": "Ce flow n'a pas de description.",
-      "not_auth": "Vous n'avez pas les autorisations nécessaires pour afficher ce widget.",
-      "per_day": "(par jour)",
-      "per_namespace": "(par namespace)",
-      "preview": "Aperçu du tableau de bord",
-      "see_all": "Voir tout",
-      "success_ratio": "Ratio de succès",
-      "success_ratio_tooltip": "Le ratio de succès est la somme des exécutions en état SUCCESS, CANCELLED et WARNING divisée par le nombre total d'exécutions dans un état terminé.",
-      "total_executions": "Total des exécutions",
-      "trigger_disabled": "Ce trigger ne peut être activé que par le code."
+    "dashboards": {
+      "chart_preview": "Cliquez sur un code source de graphique pour voir son aperçu",
+      "creation": {
+        "confirmation": "Le tableau de bord <code>{title}</code> est créé.",
+        "label": "Créer un tableau de bord"
+      },
+      "default": "Tableau de bord par défaut",
+      "deletion": {
+        "confirmation": "Êtes-vous sûr de vouloir supprimer le tableau de bord <code>{title}</code> ?"
+      },
+      "edition": {
+        "confirmation": "Les modifications dans le tableau de bord <code>{title}</code> sont enregistrées.",
+        "label": "Modifier le tableau de bord"
+      },
+      "empty": "Il n'y a aucun résultat à afficher.",
+      "labels": {
+        "plural": "Tableaux de bord",
+        "singular": "Tableau de bord"
+      },
+      "preview": "Aperçu du Dashboard"
     },
-    "dashboard_label": "Tableau de bord",
-    "dashboards": "Tableaux de bord",
     "data": "Données",
     "data_not_protected": "Vos données ne sont pas protégées. Ne les perdez pas. <b>Activez nos fonctionnalités de sécurité gratuites ou essayez notre offre payante.</b>",
     "date": "Date",
@@ -247,7 +239,6 @@
     "days": "Jours",
     "debug": "Déboguer",
     "default": "Par défaut",
-    "default_dashboard": "Tableau de bord par défaut",
     "delete": "Effacer",
     "delete backfill": "Supprimer le backfill",
     "delete backfills": "Supprimer les backfills",
@@ -364,7 +355,6 @@
     "each value": "Valeur d'itération",
     "edit": "Modifier",
     "edit flow": "Modifier le flow",
-    "edit_custom_dashboard": "Modifier le tableau de bord",
     "editor": "Éditeur",
     "editor_shortcuts": {
       "command_palette": "Afficher la palette de commandes",
@@ -434,6 +424,7 @@
     "error": "Erreur",
     "error detected": "Erreur(s) détectée(s)",
     "error in editor": "Une erreur a été trouvé dans l'éditeur",
+    "errorLogs": "Logs des erreurs",
     "errors": {
       "401": {
         "content": "Vous devez être authentifié pour accéder à cette page.",
@@ -622,22 +613,6 @@
     "healthcheck date": "Dernier Healthcheck",
     "hide task documentation": "Cacher la documentation des tâches",
     "home": "Accueil",
-    "homeDashboard": {
-      "errorLogs": "Journaux d'erreurs",
-      "failedExecutions": "Exécutions en échec",
-      "guide": "Besoin d'aide pour exécuter votre premier flow ?",
-      "last28Days": "Dernier 28 jours",
-      "lastXdays": "Dernier {days} jours",
-      "namespacesErrorExecutions": "Exécutions en erreur par espace de nom",
-      "namespacesExecutions": "Exécutions par espace de nom",
-      "no executions": "Prêt à voir votre flow Kestra en action ?",
-      "start": "Mettons votre premier workflow en marche.",
-      "title": "Tableaux de bord",
-      "today": "Aujourd'hui",
-      "wel_text": "Bienvenue !",
-      "welcome": "Bienvenue sur Kestra",
-      "yesterday": "Hier"
-    },
     "hostname": "Nom d'hôte",
     "hours": "Heures",
     "iam": "IAM",
@@ -1249,6 +1224,7 @@
       "zoom-out": "Dézoomer",
       "zoom-reset": "Zoom par défaut"
     },
+    "total_executions": "Total des exécutions",
     "trigger": "Déclencheur",
     "trigger details": "Détails du déclencheur",
     "trigger disabled": "Le trigger est désactivé dans la source du flow",
@@ -1332,6 +1308,12 @@
     "welcome aboard content": "Tout est prêt pour Kestra, commencez la création de votre flow et admirez la magie !",
     "welcome button create": "Créer mon premier flow",
     "welcome display require": "Prêt à commencer à utiliser Kestra ? Créons ensemble <strong>votre premier flow</strong> !",
+    "welcome_page": {
+      "guide": "Besoin d'aide pour exécuter votre premier flow ?",
+      "start": "Mettons votre premier workflow en marche.",
+      "wel_text": "Bienvenue !",
+      "welcome": "Bienvenue sur Kestra"
+    },
     "wordmark_colors": "Les couleurs du logotype s'adaptent en fonction de l'arrière-plan, tandis que l'icône reste sans arrière-plan lorsqu'elle est placée sur un fond sombre.",
     "worker group": "Worker Group",
     "worker group fallback": "Groupe de Worker de secours",

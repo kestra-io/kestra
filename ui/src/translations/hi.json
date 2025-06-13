@@ -159,8 +159,6 @@
     "copy_to_clipboard": "क्लिपबोर्ड पर कॉपी करें",
     "create": "बनाएँ",
     "create first task": "अपना पहला Task बनाएं",
-    "create_custom_dashboard": "नया डैशबोर्ड बनाएं",
-    "create_dashboard": "डैशबोर्ड बनाएं",
     "create_flow": "फ़्लो बनाएं",
     "created date": "निर्माण तिथि",
     "creation": "निर्माण",
@@ -172,34 +170,28 @@
     "current": "वर्तमान",
     "current execution": "वर्तमान निष्पादन",
     "custom value": "कस्टम value",
-    "custom_dashboard": "कस्टम डैशबोर्ड्स",
-    "custom_dashboard_confirm_deletion": "क्या आप वाकई <code>{title}</code> डैशबोर्ड को हटाना चाहते हैं?",
-    "custom_dashboard_empty": "कोई परिणाम दिखाने के लिए नहीं हैं।",
-    "custom_dashboard_validate_creation": "डैशबोर्ड <code>{title}</code> बनाया गया है।",
-    "custom_dashboard_validate_editing": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
     "dark_version": "डार्क संस्करण",
-    "dashboard": {
-      "click_chart_preview": "चार्ट स्रोत कोड पर क्लिक करें ताकि पूर्वावलोकन देखा जा सके।",
-      "description": "विवरण",
-      "executions_in_progress": "प्रगति में Executions",
-      "failure_ratio": "विफलता अनुपात",
-      "failure_ratio_tooltip": "असफल अनुपात, FAILED, KILLED और RETRIED निष्पादन का योग है, जिसे समाप्त स्थिति में कुल निष्पादन की संख्या से विभाजित किया जाता है।",
-      "id": "आईडी",
-      "next_execution_date": "अगली Execution Date",
-      "next_scheduled_executions": "अगली निर्धारित Executions",
-      "no_flow_description": "इस flow का कोई विवरण नहीं है।",
-      "not_auth": "आपके पास इस विजेट को देखने की आवश्यक अनुमतियाँ नहीं हैं।",
-      "per_day": "(प्रति दिन)",
-      "per_namespace": "(प्रति namespace)",
-      "preview": "डैशबोर्ड पूर्वावलोकन",
-      "see_all": "सभी देखें",
-      "success_ratio": "सफलता अनुपात",
-      "success_ratio_tooltip": "सफलता अनुपात SUCCESS, CANCELLED और WARNING निष्पादन का योग है, जिसे समाप्त स्थिति में कुल निष्पादन की संख्या से विभाजित किया जाता है।",
-      "total_executions": "कुल Executions",
-      "trigger_disabled": "इस trigger को केवल कोड के माध्यम से सक्षम किया जा सकता है।"
+    "dashboards": {
+      "chart_preview": "किसी चार्ट के स्रोत कोड पर क्लिक करें ताकि उसका पूर्वावलोकन देखा जा सके।",
+      "creation": {
+        "confirmation": "डैशबोर्ड <code>{title}</code> बनाया गया है।",
+        "label": "डैशबोर्ड बनाएं"
+      },
+      "default": "डिफ़ॉल्ट डैशबोर्ड",
+      "deletion": {
+        "confirmation": "क्या आप वाकई <code>{title}</code> डैशबोर्ड को हटाना चाहते हैं?"
+      },
+      "edition": {
+        "confirmation": "डैशबोर्ड <code>{title}</code> में परिवर्तन सहेजे गए हैं।",
+        "label": "डैशबोर्ड संपादित करें"
+      },
+      "empty": "कोई परिणाम नहीं दिखाया जा सकता।",
+      "labels": {
+        "plural": "डैशबोर्ड्स",
+        "singular": "डैशबोर्ड"
+      },
+      "preview": "पूर्वावलोकन डैशबोर्ड"
     },
-    "dashboard_label": "डैशबोर्ड",
-    "dashboards": "डैशबोर्ड्स",
     "data": "डेटा",
     "data_not_protected": "आपका डेटा सुरक्षित नहीं है। इसे न खोएं। <b>हमारी मुफ्त सुरक्षा सुविधाओं को सक्षम करें या हमारे भुगतान वाले ऑफर को आज़माएं।</b>",
     "date": "दिनांक",
@@ -247,7 +239,6 @@
     "days": "दिन",
     "debug": "डिबग",
     "default": "डिफ़ॉल्ट",
-    "default_dashboard": "डिफ़ॉल्ट डैशबोर्ड",
     "delete": "हटाएं",
     "delete backfill": "Backfill हटाएं",
     "delete backfills": "Backfills हटाएं",
@@ -364,7 +355,6 @@
     "each value": "पुनरावृत्ति मूल्य",
     "edit": "संपादित करें",
     "edit flow": "Flow संपादित करें",
-    "edit_custom_dashboard": "डैशबोर्ड संपादित करें",
     "editor": "संपादक",
     "editor_shortcuts": {
       "command_palette": "कमांड पैलेट दिखाएं",
@@ -434,6 +424,7 @@
     "error": "त्रुटि",
     "error detected": "त्रुटि का पता चला",
     "error in editor": "संपादक में एक त्रुटि पाई गई है",
+    "errorLogs": "त्रुटियाँ logs",
     "errors": {
       "401": {
         "content": "इस पृष्ठ तक पहुँचने के लिए आपको प्रमाणित होना आवश्यक है।",
@@ -622,22 +613,6 @@
     "healthcheck date": "HealthCheck तिथि",
     "hide task documentation": "Task दस्तावेज़ छिपाएं",
     "home": "होम",
-    "homeDashboard": {
-      "errorLogs": "त्रुटि Logs",
-      "failedExecutions": "असफल निष्पादन",
-      "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?",
-      "last28Days": "पिछले 28 दिन",
-      "lastXdays": "पिछले {days} दिन",
-      "namespacesErrorExecutions": "प्रति namespace निष्पादन त्रुटियाँ",
-      "namespacesExecutions": "प्रति namespace निष्पादन",
-      "no executions": "क्या आप अपने flow को क्रियान्वित होते देखना चाहते हैं?",
-      "start": "चलिए आपका पहला workflow शुरू करते हैं और RUNNING स्थिति में लाते हैं।",
-      "title": "डैशबोर्ड्स",
-      "today": "आज",
-      "wel_text": "स्वागत है!",
-      "welcome": "केस्ट्रा में आपका स्वागत है",
-      "yesterday": "कल"
-    },
     "hostname": "होस्टनाम",
     "hours": "घंटे",
     "iam": "IAM",
@@ -1249,6 +1224,7 @@
       "zoom-out": "ज़ूम आउट करें",
       "zoom-reset": "ज़ूम रीसेट करें"
     },
+    "total_executions": "कुल Executions",
     "trigger": "Trigger",
     "trigger details": "Trigger विवरण",
     "trigger disabled": "Flow स्रोत के भीतर Trigger अक्षम है",
@@ -1332,6 +1308,12 @@
     "welcome aboard content": "अपना पहला flow बनाने के लिए हमारे Guided Tour का उपयोग करें और अधिक उदाहरण खोजने के लिए Blueprints देखें।",
     "welcome button create": "मेरा पहला flow बनाएं",
     "welcome display require": "शुरू करने के लिए अपना <strong>पहला flow</strong> चलाएँ",
+    "welcome_page": {
+      "guide": "क्या आपको अपना पहला flow निष्पादित करने के लिए मार्गदर्शन चाहिए?",
+      "start": "आइए आपका पहला workflow शुरू करें और चलाएं।",
+      "wel_text": "स्वागत है!",
+      "welcome": "Kestra में आपका स्वागत है"
+    },
     "wordmark_colors": "शब्दचिह्न के रंग पृष्ठभूमि के आधार पर अनुकूलित होते हैं, जबकि आइकन एक गहरे पृष्ठभूमि पर रखे जाने पर बिना पृष्ठभूमि के रहता है।",
     "worker group": "Worker समूह",
     "worker group fallback": "वर्कर ग्रुप फॉलबैक",

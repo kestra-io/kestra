@@ -159,8 +159,6 @@
     "copy_to_clipboard": "Копировать в буфер обмена",
     "create": "Создать",
     "create first task": "Создайте свою первую задачу",
-    "create_custom_dashboard": "Создать новую панель управления",
-    "create_dashboard": "Создать Dashboard",
     "create_flow": "Создать Flow",
     "created date": "Дата создания",
     "creation": "Создание",
@@ -172,34 +170,28 @@
     "current": "текущий",
     "current execution": "Текущее выполнение",
     "custom value": "Пользовательское значение",
-    "custom_dashboard": "Пользовательские панели мониторинга",
-    "custom_dashboard_confirm_deletion": "Вы уверены, что хотите удалить панель <code>{title}</code>?",
-    "custom_dashboard_empty": "Нет результатов для отображения.",
-    "custom_dashboard_validate_creation": "Панель управления <code>{title}</code> создана.",
-    "custom_dashboard_validate_editing": "Изменения в панели <code>{title}</code> сохранены.",
     "dark_version": "Темная версия",
-    "dashboard": {
-      "click_chart_preview": "Нажмите на исходный код диаграммы, чтобы увидеть предварительный просмотр.",
-      "description": "Описание",
-      "executions_in_progress": "Выполняемые задачи",
-      "failure_ratio": "Коэффициент отказов",
-      "failure_ratio_tooltip": "Отношение Failed — это сумма выполнений в состояниях FAILED, KILLED и RETRIED, деленная на общее количество выполнений в завершенном состоянии.",
-      "id": "ID",
-      "next_execution_date": "Следующая дата выполнения",
-      "next_scheduled_executions": "Следующие запланированные выполнения",
-      "no_flow_description": "Этот flow не имеет описания.",
-      "not_auth": "У вас нет необходимых разрешений для просмотра этого виджета.",
-      "per_day": "(в день)",
-      "per_namespace": "(на namespace)",
-      "preview": "Предварительный просмотр Dashboard",
-      "see_all": "Посмотреть все",
-      "success_ratio": "Коэффициент Успеха",
-      "success_ratio_tooltip": "Коэффициент успеха — это сумма выполнений в состояниях SUCCESS, CANCELLED и WARNING, деленная на общее количество выполнений в завершенном состоянии.",
-      "total_executions": "Общее количество выполнений",
-      "trigger_disabled": "Этот trigger может быть включен только через код."
+    "dashboards": {
+      "chart_preview": "Нажмите на исходный код диаграммы, чтобы увидеть его предварительный просмотр",
+      "creation": {
+        "confirmation": "Панель <code>{title}</code> создана.",
+        "label": "Создать Dashboard"
+      },
+      "default": "Панель по умолчанию",
+      "deletion": {
+        "confirmation": "Вы уверены, что хотите удалить панель <code>{title}</code>?"
+      },
+      "edition": {
+        "confirmation": "Изменения в панели <code>{title}</code> сохранены.",
+        "label": "Редактировать Dashboard"
+      },
+      "empty": "Нет результатов для отображения.",
+      "labels": {
+        "plural": "Панели управления",
+        "singular": "Панель управления"
+      },
+      "preview": "Предварительный просмотр Dashboard"
     },
-    "dashboard_label": "Панель управления",
-    "dashboards": "Панели мониторинга",
     "data": "Данные",
     "data_not_protected": "Ваши данные не защищены. Не потеряйте их. <b>Включите наши бесплатные функции безопасности или попробуйте платную версию.</b>",
     "date": "Дата",
@@ -247,7 +239,6 @@
     "days": "Дни",
     "debug": "Отладка",
     "default": "По умолчанию",
-    "default_dashboard": "Панель по умолчанию",
     "delete": "Удалить",
     "delete backfill": "Удалить backfill",
     "delete backfills": "Удалить заполнения",
@@ -364,7 +355,6 @@
     "each value": "Значение итерации",
     "edit": "Редактировать",
     "edit flow": "Редактировать flow",
-    "edit_custom_dashboard": "Редактировать Dashboard",
     "editor": "Редактор",
     "editor_shortcuts": {
       "command_palette": "Показать палитру команд",
@@ -434,6 +424,7 @@
     "error": "Ошибка",
     "error detected": "Обнаружены ошибки",
     "error in editor": "В редакторе найдена ошибка",
+    "errorLogs": "Логи ошибок",
     "errors": {
       "401": {
         "content": "Вам нужно пройти аутентификацию для доступа к этой странице.",
@@ -622,22 +613,6 @@
     "healthcheck date": "HealthCheck Дата",
     "hide task documentation": "Скрыть документацию задачи",
     "home": "Домой",
-    "homeDashboard": {
-      "errorLogs": "Логи ошибок",
-      "failedExecutions": "Неудачные выполнения",
-      "guide": "Нужна помощь в выполнении вашего первого flow?",
-      "last28Days": "Последние 28 дней",
-      "lastXdays": "Последние {days} дней",
-      "namespacesErrorExecutions": "Ошибки выполнения по namespace",
-      "namespacesExecutions": "Выполнения по namespace",
-      "no executions": "Готовы увидеть ваш flow в действии?",
-      "start": "Давайте запустим ваш первый workflow.",
-      "title": "Панели мониторинга",
-      "today": "Сегодня",
-      "wel_text": "Добро пожаловать!",
-      "welcome": "Добро пожаловать в Kestra",
-      "yesterday": "Вчера"
-    },
     "hostname": "Имя хоста",
     "hours": "Часы",
     "iam": "IAM",
@@ -1249,6 +1224,7 @@
       "zoom-out": "Уменьшить",
       "zoom-reset": "Сбросить масштаб"
     },
+    "total_executions": "Общее количество выполнений",
     "trigger": "Trigger",
     "trigger details": "Подробности trigger",
     "trigger disabled": "Триггер отключен в источнике Flow",
@@ -1332,6 +1308,12 @@
     "welcome aboard content": "Используйте наше Руководство, чтобы создать ваш первый flow и ознакомьтесь с Blueprints для поиска дополнительных примеров.",
     "welcome button create": "Создать мой первый flow",
     "welcome display require": "Запустите ваш <strong>первый flow</strong>, чтобы начать",
+    "welcome_page": {
+      "guide": "Нужна помощь в выполнении вашего первого flow?",
+      "start": "Давайте запустим ваш первый workflow.",
+      "wel_text": "Добро пожаловать!",
+      "welcome": "Добро пожаловать в Kestra"
+    },
     "wordmark_colors": "Цвета логотипа адаптируются в зависимости от фона, в то время как иконка остается без фона, когда размещена на темном фоне.",
     "worker group": "Группа workers",
     "worker group fallback": "Группа Worker резервный вариант",

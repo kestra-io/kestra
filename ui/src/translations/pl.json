@@ -159,8 +159,6 @@
     "copy_to_clipboard": "Kopiuj do schowka",
     "create": "Utwórz",
     "create first task": "Stwórz swój pierwszy task",
-    "create_custom_dashboard": "Utwórz nowy dashboard",
-    "create_dashboard": "Utwórz Dashboard",
     "create_flow": "Utwórz Flow",
     "created date": "Data utworzenia",
     "creation": "Utworzenie",
@@ -172,34 +170,28 @@
     "current": "bieżący",
     "current execution": "Bieżące wykonanie",
     "custom value": "Wartość niestandardowa",
-    "custom_dashboard": "Niestandardowe Pulpity nawigacyjne",
-    "custom_dashboard_confirm_deletion": "Czy na pewno chcesz usunąć dashboard <code>{title}</code>?",
-    "custom_dashboard_empty": "Nie ma wyników do wyświetlenia.",
-    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> został utworzony.",
-    "custom_dashboard_validate_editing": "Zmiany w dashboardzie <code>{title}</code> zostały zapisane.",
     "dark_version": "Ciemna wersja",
-    "dashboard": {
-      "click_chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć podgląd",
-      "description": "Opis",
-      "executions_in_progress": "Wykonania w toku",
-      "failure_ratio": "Wskaźnik Niepowodzeń",
-      "failure_ratio_tooltip": "Stosunek niepowodzeń to suma wykonań w stanach FAILED, KILLED i RETRIED podzielona przez całkowitą liczbę wykonań w stanie zakończonym.",
-      "id": "ID",
-      "next_execution_date": "Następna Data Wykonania",
-      "next_scheduled_executions": "Następne Zaplanowane Wykonania",
-      "no_flow_description": "Ten flow nie ma opisu.",
-      "not_auth": "Nie masz niezbędnych uprawnień, aby wyświetlić ten widget.",
-      "per_day": "(dziennie)",
-      "per_namespace": "(per namespace)",
-      "preview": "Podgląd Dashboardu",
-      "see_all": "Zobacz wszystkie",
-      "success_ratio": "Wskaźnik Sukcesu",
-      "success_ratio_tooltip": "Wskaźnik Sukcesu to suma wykonań w stanach SUCCESS, CANCELLED i WARNING podzielona przez całkowitą liczbę wykonań w stanie zakończonym.",
-      "total_executions": "Całkowita liczba wykonań",
-      "trigger_disabled": "Ten trigger może być włączony tylko za pomocą kodu."
+    "dashboards": {
+      "chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć jego podgląd",
+      "creation": {
+        "confirmation": "Dashboard <code>{title}</code> został utworzony.",
+        "label": "Utwórz Dashboard"
+      },
+      "default": "Domyślny Dashboard",
+      "deletion": {
+        "confirmation": "Czy na pewno chcesz usunąć dashboard <code>{title}</code>?"
+      },
+      "edition": {
+        "confirmation": "Zmiany w dashboardzie <code>{title}</code> zostały zapisane.",
+        "label": "Edytuj Dashboard"
+      },
+      "empty": "Brak wyników do wyświetlenia.",
+      "labels": {
+        "plural": "Dashboardy",
+        "singular": "Dashboard"
+      },
+      "preview": "Podgląd Dashboardu"
     },
-    "dashboard_label": "Dashboard",
-    "dashboards": "Panele sterowania",
     "data": "Dane",
     "data_not_protected": "Twoje dane nie są chronione. Nie trać ich. <b>Włącz nasze darmowe funkcje zabezpieczeń lub wypróbuj naszą płatną ofertę.</b>",
     "date": "Data",
@@ -247,7 +239,6 @@
     "days": "Dni",
     "debug": "Debugowanie",
     "default": "Domyślny",
-    "default_dashboard": "Domyślny Dashboard",
     "delete": "Usuń",
     "delete backfill": "Usuń backfill",
     "delete backfills": "Usuń backfills",
@@ -364,7 +355,6 @@
     "each value": "Wartość iteracji",
     "edit": "Edytuj",
     "edit flow": "Edytuj flow",
-    "edit_custom_dashboard": "Edytuj Dashboard",
     "editor": "Edytor",
     "editor_shortcuts": {
       "command_palette": "Pokaż paletę poleceń",
@@ -434,6 +424,7 @@
     "error": "Błąd",
     "error detected": "Wykryto błąd(y)",
     "error in editor": "Znaleziono błąd w edytorze",
+    "errorLogs": "Logi błędów",
     "errors": {
       "401": {
         "content": "Musisz być uwierzytelniony, aby uzyskać dostęp do tej strony.",
@@ -622,22 +613,6 @@
     "healthcheck date": "Data HealthCheck",
     "hide task documentation": "Ukryj dokumentację task",
     "home": "Strona główna",
-    "homeDashboard": {
-      "errorLogs": "Logi błędów",
-      "failedExecutions": "Nieudane wykonania",
-      "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",
-      "last28Days": "Ostatnie 28 dni",
-      "lastXdays": "Ostatnie {days} dni",
-      "namespacesErrorExecutions": "Błędy wykonania na namespace",
-      "namespacesExecutions": "Wykonania na namespace",
-      "no executions": "Gotowy, aby zobaczyć swój flow w akcji?",
-      "start": "Zacznijmy uruchamiać Twój pierwszy workflow.",
-      "title": "Panele sterowania",
-      "today": "Dzisiaj",
-      "wel_text": "Witamy!",
-      "welcome": "Witamy w Kestra",
-      "yesterday": "Wczoraj"
-    },
     "hostname": "Nazwa hosta",
     "hours": "Godziny",
     "iam": "IAM",
@@ -1249,6 +1224,7 @@
       "zoom-out": "Pomniejsz",
       "zoom-reset": "Zresetuj powiększenie"
     },
+    "total_executions": "Całkowita liczba wykonanych",
     "trigger": "Trigger",
     "trigger details": "Szczegóły trigger",
     "trigger disabled": "Trigger jest wyłączony w źródle Flow",
@@ -1332,6 +1308,12 @@
     "welcome aboard content": "Skorzystaj z naszego Przewodnika, aby stworzyć swój pierwszy flow i sprawdź Blueprints, aby znaleźć więcej przykładów.",
     "welcome button create": "Stwórz mój pierwszy flow",
     "welcome display require": "Uruchom swój <strong>pierwszy flow</strong>, aby rozpocząć",
+    "welcome_page": {
+      "guide": "Potrzebujesz wskazówek, jak uruchomić swój pierwszy flow?",
+      "start": "Uruchommy Twój pierwszy workflow.",
+      "wel_text": "Witamy!",
+      "welcome": "Witamy w Kestra"
+    },
     "wordmark_colors": "Kolory znaku słownego dostosowują się w zależności od tła, podczas gdy ikona pozostaje bez tła, gdy jest umieszczona na ciemnym tle.",
     "worker group": "Grupa Worker",
     "worker group fallback": "Grupa Workerów awaryjna",

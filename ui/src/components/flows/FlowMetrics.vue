@@ -49,7 +49,7 @@
     import {Bar} from "vue-chartjs";
     import {mapState, mapGetters} from "vuex";
     import moment from "moment";
-    import {defaultConfig, getFormat, tooltip} from "../../utils/charts";
+    import {defaultConfig, getFormat, tooltip} from "../dashboard/composables/charts.js";
     import {cssVariable} from "@kestra-io/ui-libs";
     import KestraFilter from "../filter/KestraFilter.vue";
 

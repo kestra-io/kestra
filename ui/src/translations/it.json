@@ -159,8 +159,6 @@
     "copy_to_clipboard": "Copia negli appunti",
     "create": "Crea",
     "create first task": "Crea il tuo primo task",
-    "create_custom_dashboard": "Crea nuovo dashboard",
-    "create_dashboard": "Crea Dashboard",
     "create_flow": "Crea Flow",
     "created date": "Data di creazione",
     "creation": "Creazione",
@@ -172,34 +170,28 @@
     "current": "corrente",
     "current execution": "Esecuzione corrente",
     "custom value": "Valore personalizzato",
-    "custom_dashboard": "Dashboard Personalizzati",
-    "custom_dashboard_confirm_deletion": "Sei sicuro di voler eliminare la dashboard <code>{title}</code>?",
-    "custom_dashboard_empty": "Non ci sono risultati da mostrare.",
-    "custom_dashboard_validate_creation": "Dashboard <code>{title}</code> è stato creato.",
-    "custom_dashboard_validate_editing": "Le modifiche nel dashboard <code>{title}</code> sono state salvate.",
     "dark_version": "Versione scura",
-    "dashboard": {
-      "click_chart_preview": "Fai clic sul codice sorgente di un grafico per vedere l'anteprima",
-      "description": "Descrizione",
-      "executions_in_progress": "Esecuzioni In Corso",
-      "failure_ratio": "Rapporto di Failure",
-      "failure_ratio_tooltip": "Il rapporto di errore è la somma delle esecuzioni FAILED, KILLED e RETRIED divisa per il numero totale di esecuzioni in uno stato terminato.",
-      "id": "ID",
-      "next_execution_date": "Prossima Data di Esecuzione",
-      "next_scheduled_executions": "Prossime Esecuzioni Pianificate",
-      "no_flow_description": "Questo flow non ha descrizione.",
-      "not_auth": "Non hai le autorizzazioni necessarie per visualizzare questo widget.",
-      "per_day": "(al giorno)",
-      "per_namespace": "(per namespace)",
-      "preview": "Anteprima dashboard",
-      "see_all": "Vedi tutto",
-      "success_ratio": "Rapporto di Successo",
-      "success_ratio_tooltip": "Il Rapporto di Successo è la somma delle esecuzioni in stato SUCCESS, CANCELLED e WARNING divisa per il numero totale di esecuzioni in uno stato terminato.",
-      "total_executions": "Esecuzioni Totali",
-      "trigger_disabled": "Questo trigger può essere abilitato solo tramite codice."
+    "dashboards": {
+      "chart_preview": "Fai clic sul codice sorgente di un grafico per vedere l'anteprima",
+      "creation": {
+        "confirmation": "Il dashboard <code>{title}</code> è stato creato.",
+        "label": "Crea Dashboard"
+      },
+      "default": "Dashboard predefinito",
+      "deletion": {
+        "confirmation": "Sei sicuro di voler eliminare la dashboard <code>{title}</code>?"
+      },
+      "edition": {
+        "confirmation": "Le modifiche nel dashboard <code>{title}</code> sono state salvate.",
+        "label": "Modifica Dashboard"
+      },
+      "empty": "Non ci sono risultati da mostrare.",
+      "labels": {
+        "plural": "Dashboard",
+        "singular": "Dashboard"
+      },
+      "preview": "Anteprima Dashboard"
     },
-    "dashboard_label": "Dashboard",
-    "dashboards": "Dashboard",
     "data": "Dati",
     "data_not_protected": "I tuoi dati non sono protetti. Non perderli. <b>Abilita le nostre funzionalità di sicurezza gratuite o prova la nostra offerta a pagamento.</b>",
     "date": "Data",
@@ -247,7 +239,6 @@
     "days": "Giorni",
     "debug": "Debug",
     "default": "Predefinito",
-    "default_dashboard": "Dashboard Predefinito",
     "delete": "Elimina",
     "delete backfill": "Elimina il backfill",
     "delete backfills": "Elimina i backfills",
@@ -364,7 +355,6 @@
     "each value": "Valore di iterazione",
     "edit": "Modifica",
     "edit flow": "Modifica flow",
-    "edit_custom_dashboard": "Modifica Dashboard",
     "editor": "Editor",
     "editor_shortcuts": {
       "command_palette": "Mostra la palette dei comandi",
@@ -434,6 +424,7 @@
     "error": "Errore",
     "error detected": "Errori rilevati",
     "error in editor": "È stato trovato un errore nell'editor",
+    "errorLogs": "Log degli errori",
     "errors": {
       "401": {
         "content": "Devi essere autenticato per accedere a questa pagina.",
@@ -622,22 +613,6 @@
     "healthcheck date": "Data di HealthCheck",
     "hide task documentation": "Nascondi la documentazione del task",
     "home": "Home",
-    "homeDashboard": {
-      "errorLogs": "Error logs",
-      "failedExecutions": "Esecuzioni FAILED",
-      "guide": "Hai bisogno di assistenza per eseguire il tuo primo flow?",
-      "last28Days": "Ultimi 28 giorni",
-      "lastXdays": "Ultimi {days} giorni",
-      "namespacesErrorExecutions": "Errori di esecuzione per namespace",
-      "namespacesExecutions": "Esecuzioni per namespace",
-      "no executions": "Pronto a vedere il tuo flow in azione?",
-      "start": "Iniziamo a far funzionare il tuo primo workflow.",
-      "title": "Dashboard",
-      "today": "Oggi",
-      "wel_text": "Benvenuto!",
-      "welcome": "Benvenuto in Kestra",
-      "yesterday": "Ieri"
-    },
     "hostname": "Nome host",
     "hours": "Ore",
     "iam": "IAM",
@@ -1249,6 +1224,7 @@
       "zoom-out": "Zoom indietro",
       "zoom-reset": "Reimposta zoom"
     },
+    "total_executions": "Esecuzioni Totali",
     "trigger": "Trigger",
     "trigger details": "Dettagli del trigger",
     "trigger disabled": "Il trigger è disabilitato all'interno della sorgente del flow",
@@ -1332,6 +1308,12 @@
     "welcome aboard content": "Usa il nostro Tour Guidato per creare il tuo primo flow e controlla i Blueprints per trovare altri esempi.",
     "welcome button create": "Crea il mio primo flow",
     "welcome display require": "Esegui il tuo <strong>primo flow</strong> per iniziare",
+    "welcome_page": {
+      "guide": "Hai bisogno di assistenza per eseguire il tuo primo flow?",
+      "start": "Mettiamo in esecuzione il tuo primo workflow.",
+      "wel_text": "Benvenuto!",
+      "welcome": "Benvenuto in Kestra"
+    },
     "wordmark_colors": "I colori del marchio si adattano in base allo sfondo, mentre l'icona rimane senza sfondo quando posizionata su uno sfondo scuro.",
     "worker group": "Gruppo di Workers",
     "worker group fallback": "Gruppo di Worker di riserva",

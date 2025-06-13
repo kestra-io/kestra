@@ -65,11 +65,18 @@
 
     const internalPairs = ref<[string, string][]>([])
 
+    const duplicatedPairs = computed(() => {
+        return internalPairs.value.map(pair => pair[0])
+            .filter((pair, index, self) =>
+                self.findIndex(p => p[0] === pair[0]) !== index
+            );
+    });
+
     const alertState = computed(() => {
         if(duplicatedPairs.value.length > 0){
             return {
                 visible: true,
-                message: t("duplicate-pair"),
+                message: t("duplicate-pair", {label: props.label ?? t("key"), key: duplicatedPairs.value[0]}),
             }
         }
         return {
@@ -90,19 +97,10 @@
         immediate: true
     });
 
-    const duplicatedPairs = computed(() => {
-        return internalPairs.value.map(pair => pair[0])
-            .filter((pair, index, self) =>
-                self.findIndex(p => p[0] === pair[0]) !== index
-            );
-    });
 
-    const modelValueToUpdate = computed(() => {
-        return Object.fromEntries(internalPairs.value);
-    });
 
     function updateModel() {
-        emit("update:modelValue", modelValueToUpdate.value);
+        emit("update:modelValue", Object.fromEntries(internalPairs.value));
     }
 
     function handleKeyInput(pairId: number, newValue: string) {

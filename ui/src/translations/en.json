@@ -1357,6 +1357,6 @@
       "secrets": "No Secrets Found",
       "templates": "No Templates Found"
     },
-    "duplicate-pair": "{label} {key} is duplicated, second key ignored."
+    "duplicate-pair": "{label} \"{key}\" is duplicated, first key ignored."
   }
 }

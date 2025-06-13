@@ -1,4 +1,12 @@
 <template>
+    <el-alert
+        v-if="duplicatedKeys?.length"
+        :title="t('duplicate-pair', {label: t('key'), key: duplicatedKeys[0]})"
+        type="error"
+        show-icon
+        :closable="false"
+        class="mb-2"
+    />
     <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
         <el-col :span="6">
             <InputText
@@ -30,6 +38,7 @@
 
 <script lang="ts" setup>
     import {computed, ref, watch} from "vue";
+    import {useI18n} from "vue-i18n";
     import {DeleteOutline} from "../../code/utils/icons";
 
     import InputText from "../../code/components/inputs/InputText.vue";
@@ -37,6 +46,8 @@
     import Add from "../../code/components/Add.vue";
     import getTaskComponent from "./getTaskComponent";
     import debounce from "lodash/debounce";
+
+    const {t} = useI18n();
 
     defineOptions({
         name: "TaskDict",

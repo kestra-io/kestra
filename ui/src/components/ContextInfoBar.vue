@@ -207,6 +207,9 @@
         align-items: center;
         gap: 0.5rem;
         font-size: var(--font-size-sm);
+        overflow-y: auto;
+        &::-webkit-scrollbar { width: 0; }
+        scrollbar-width: none;
 
         &.opened {
             border-right: 1px solid var(--ks-border-primary);
@@ -228,6 +231,7 @@
             color: var(--ks-content-tertiary);
             opacity: .4;
             margin-top: 1rem;
+            white-space: nowrap;
         }
 
         .theme-switcher {
@@ -269,6 +273,8 @@
         width: 0;
         position: relative;
         overflow-y: auto;
+        &::-webkit-scrollbar { width: 0px; }
+        scrollbar-width: none;
 
         .closeButton {
             position: fixed;

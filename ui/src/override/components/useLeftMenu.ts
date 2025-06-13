@@ -50,7 +50,7 @@ export function useLeftMenu() {
             {
                 href: {
                     name: "home",
-                    params: {id: getDashboardID($route)},
+                    params: {dashboard: getDashboardID($route)},
                 },
                 title: t("dashboards.labels.plural"),
                 icon: {

@@ -37,7 +37,7 @@
     import {PropType, onMounted, watch, ref, computed} from "vue";
 
     import type {Chart} from "../composables/useDashboards";
-    import {isPaginationEnabled,        useChartGenerator} from "../composables/useDashboards";
+    import {getDashboardID, isPaginationEnabled, useChartGenerator} from "../composables/useDashboards";
 
     import Date from "./table/columns/Date.vue";
     import Duration from "./table/columns/Duration.vue";
@@ -112,14 +112,16 @@
             : undefined;
     });
 
+    const dashboardID = (route) => getDashboardID(route)
+
     const handlePageChange = async (options: { page: number; size: number }) => {
         pageNumber.value = options.page;
         pageSize.value = options.size;
 
-        getData(route.params?.id as string);
+        getData(dashboardID(route));
     };
 
-    watch(route, async (changed) => getData(changed.params?.id as string));
+    watch(route, async (changed) => getData(dashboardID(changed)));
 
-    onMounted(async () => getData(route.params?.id as string));
+    onMounted(async () => getData(dashboardID(route)));
 </script>

@@ -15,7 +15,7 @@
                     tag="router-link"
                     :to="{
                         name: 'dashboards/create',
-                        query: {from: route.name},
+                        query,
                     }"
                     class="w-100"
                 >
@@ -100,11 +100,19 @@
                         (d) => d.id !== dashboard.id,
                     );
                     toast.deleted(dashboard.title);
-                    router.push({name: "home"});
                 });
             },
         );
     };
+
+    const query = computed(() => {
+        const generated = {
+            name: ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home",
+            params: JSON.stringify(route.params),
+        };
+
+        return generated;
+    });
 
     const search = ref("");
     const dashboards = ref<{ id: string; title: string }[]>([]);
@@ -129,7 +137,7 @@
     };
 
     const editDashboard = (dashboard: any) => {
-        router.push({name: "dashboards/update", params: {id: dashboard.id}});
+        router.push({name: "dashboards/update", params: {dashboard: dashboard.id}});
     };
 
     const fetchDashboards = () => {
@@ -140,8 +148,8 @@
 
                 const creation = Boolean(route.query.created);
                 const lastSelected = creation
-                    ? route.params?.id
-                    : (fetchLastDashboard() ?? route.params?.id);
+                    ? route.params?.dashboard
+                    : (fetchLastDashboard() ?? route.params?.dashboard);
 
                 if (lastSelected) {
                     const dashboard = dashboards.value.find(

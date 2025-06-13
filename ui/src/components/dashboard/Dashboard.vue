@@ -6,23 +6,22 @@
             :prefix="`dashboard__${dashboard.id}`"
             :language
             :buttons="{
-                refresh: {shown: true, callback: () => refresh()},
+                refresh: {shown: true, callback: () => refreshCharts()},
                 settings: {shown: false},
             }"
             :dashboards="{shown: ALLOWED_CREATION_ROUTES.includes(String(route.name))}"
             @dashboard="(value: Dashboard['id']) => load(value)"
-            :key
         />
     </section>
 
-    <Sections :charts :show-default="dashboard.id === 'default'" padding />
+    <Sections :key :charts :show-default="dashboard.id === 'default'" padding />
 </template>
 
 <script setup lang="ts">
     import {computed, onBeforeMount, ref} from "vue";
 
     import type {Dashboard, Chart} from "./composables/useDashboards";
-    import {ALLOWED_CREATION_ROUTES} from "./composables/useDashboards";
+    import {ALLOWED_CREATION_ROUTES, getDashboardID} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
@@ -47,11 +46,13 @@
     import UTILS from "../../utils/utils.js";
 
     import {useRoute, useRouter} from "vue-router";
-    const router = useRouter();
     const route = useRoute();
+    const router = useRouter();
 
     import {useStore} from "vuex";
     const store = useStore();
+
+    defineOptions({inheritAttrs: false});
 
     const props = defineProps({
         header: {type: Boolean, default: true},
@@ -62,8 +63,8 @@
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const charts = ref<Chart[]>([]);
 
-    // We use a key to force re-rendering of the Sections component when the refresh button is clicked
-    const key = ref(UTILS.uid());
+    // We use a key to force re-rendering of the Sections component
+    let key = ref(UTILS.uid());
 
     const loadCharts = async (allCharts: Chart[] = []) => {
         charts.value = [];
@@ -71,11 +72,12 @@
         for (const chart of allCharts) {
             charts.value.push({...chart, content: stringify(chart)});
         }
+
+        refreshCharts()
     };
 
-    const refresh = () => {
+    const refreshCharts = () => {
         key.value = UTILS.uid();
-        loadCharts();
     };
 
     const load = async (id = "default", defaultYAML = YAML_MAIN) => {
@@ -85,8 +87,8 @@
 
         if (!props.isFlow && !props.isNamespace) {
             router.replace({
-                params: {...route.params, id},
-                query: route.params.id !== id ? {} : {...route.query},
+                params: {...route.params, dashboard: id},
+                query: route.params.dashboard !== id ? {} : {...route.query},
             });
         }
 
@@ -95,8 +97,10 @@
     };
 
     onBeforeMount(() => {
-        if (props.isFlow) load("default", YAML_FLOW.replace(/--NAMESPACE--/g, String(route.params.namespace)).replace(/--FLOW--/g, String(route.params.id)));
-        else if (props.isNamespace) load("default", YAML_NAMESPACE);
+        const ID = getDashboardID(route);
+
+        if (props.isFlow && ID === "default") load("default", YAML_FLOW.replace(/--NAMESPACE--/g, String(route.params.namespace)).replace(/--FLOW--/g, String(route.params.id)));
+        else if (props.isNamespace && ID === "default") load("default", YAML_NAMESPACE);
     });
 </script>
 

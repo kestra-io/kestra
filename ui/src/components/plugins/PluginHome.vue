@@ -145,11 +145,11 @@
                         ));
                     })
                     .filter(plugin => {
-                        return plugin.title.toLowerCase().includes(this.searchInput) ||
-                            plugin.tasks.some(task => task.toLowerCase().includes(this.searchInput)) ||
-                            plugin.triggers.some(trigger => trigger.toLowerCase().includes(this.searchInput)) ||
-                            plugin.conditions.some(condition => condition.toLowerCase().includes(this.searchInput)) ||
-                            plugin.taskRunners.some(taskRunner => taskRunner.toLowerCase().includes(this.searchInput))
+                        if (!this.searchInput || this.searchInput.trim() === "") {
+                            return true;
+                        }
+
+                        return plugin.title.toLowerCase().includes(this.searchInput);
                     })
                     .filter(plugin => this.isVisible(plugin))
                     .sort((a, b) => {

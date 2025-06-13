@@ -63,7 +63,7 @@
         required?: boolean
     }>();
 
-    const internalPairs = ref<[string, string][]>([])
+    const internalPairs = ref<[string, string | undefined][]>([])
 
     const duplicatedKeys = computed(() => {
         return internalPairs.value.map(pair => pair[0])
@@ -103,13 +103,13 @@
         emit("update:modelValue", Object.fromEntries(internalPairs.value));
     }
 
-    function handleKeyInput(pairId: number, newValue: string) {
-        internalPairs.value[pairId][0] = newValue;
+    function handleKeyInput(index: number, newValue: string) {
+        internalPairs.value[index][0] = newValue.toString();
         updateModel()
     };
 
     function addPair() {
-        internalPairs.value.push(["", ""])
+        internalPairs.value.push(["", undefined])
         updateModel()
     };
 

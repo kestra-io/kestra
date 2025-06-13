@@ -6,6 +6,7 @@
                 @update:model-value="onKey(index, $event)"
                 margin="m-0"
                 placeholder="Key"
+                :have-error="duplicatedKeys.includes(item[0])"
             />
         </el-col>
         <el-col :span="16">
@@ -78,15 +79,16 @@
         },
     );
 
+    const duplicatedKeys = computed(() => {
+        return currentValue.value.map(pair => pair[0])
+            .filter((key, index, self) =>
+                self.indexOf(key) !== index
+            );
+    });
+
     const emitUpdate = debounce(function () {
-        const uniqueKeys = new Set<string>();
-        for (const [key, _] of currentValue.value) {
-            // if two keys are the same, we want to avoid loosing data
-            if(uniqueKeys.has(key)){
-                // so we don't update the model value
-                return
-            };
-            uniqueKeys.add(key);
+        if(duplicatedKeys.value?.length > 0) {
+            return;
         }
         emit("update:modelValue", Object.fromEntries(currentValue.value));
     }, 200);

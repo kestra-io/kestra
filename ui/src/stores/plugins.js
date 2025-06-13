@@ -145,7 +145,7 @@ export default {
             });
         },
         updateDocumentation({commit, dispatch, getters}, options) {
-            const taskType = options.task !== undefined ? options.task : YamlUtils.getTaskType(
+            const taskType = options.task !== undefined ? options.task : YamlUtils.getTypeAtPosition(
                 options.event.model.getValue(),
                 options.event.position,
                 getters["getPluginSingleList"]

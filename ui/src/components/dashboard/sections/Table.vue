@@ -37,7 +37,7 @@
     import {PropType, onMounted, watch, ref, computed} from "vue";
 
     import type {Chart} from "../composables/useDashboards";
-    import {getDashboardID, isPaginationEnabled, useChartGenerator} from "../composables/useDashboards";
+    import {getDashboard, isPaginationEnabled, useChartGenerator} from "../composables/useDashboards";
 
     import Date from "./table/columns/Date.vue";
     import Duration from "./table/columns/Duration.vue";
@@ -112,7 +112,7 @@
             : undefined;
     });
 
-    const dashboardID = (route) => getDashboardID(route)
+    const dashboardID = (route) => getDashboard(route, "id")
 
     const handlePageChange = async (options: { page: number; size: number }) => {
         pageNumber.value = options.page;

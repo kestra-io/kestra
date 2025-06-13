@@ -23,7 +23,7 @@
                         :is="componentType"
                         :model-value="element"
                         :task="modelValue"
-                        root="array"
+                        :root="`${root}[${index}]`"
                         :properties="{}"
                         :schema="props.schema.items"
                         :definitions="props.definitions"
@@ -40,7 +40,7 @@
 </template>
 
 <script setup lang="ts">
-    import {computed, ref} from "vue";
+    import {computed} from "vue";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../code/utils/icons";
 
@@ -56,11 +56,13 @@
         definitions: any;
         modelValue?: (string | number | boolean | undefined)[] | string | number | boolean;
         required?: boolean;
+        root?: string;
     }>(), {
         modelValue: undefined,
         schema: () => ({}),
         definitions: () => ({}),
         required: false,
+        root: undefined,
     });
 
     const componentType = computed(() => {
@@ -68,47 +70,59 @@
     });
 
     const needWrapper = computed(() => {
-        return componentType.value.ksTaskName !== "string" &&
-            componentType.value.ksTaskName !== "number" &&
-            componentType.value.ksTaskName !== "boolean" &&
-            componentType.value.ksTaskName !== "expression";
+        return ![
+            "string",
+            "number",
+            "boolean",
+            "expression",
+        ].includes(componentType.value.ksTaskName)
     });
 
-    const items = ref(
+    const items = computed(() =>
         props.modelValue === undefined && !props.required
-            // we want to avoid displaying an item completely empty when modelValue is undefined
-            // except if the field is required
+            // we want to avoid displaying an item completely empty when
+            // modelValue is undefined except if the field is required
             ? []
             : !Array.isArray(props.modelValue) ? [props.modelValue] : props.modelValue,
     );
 
     const handleInput = (value: string, index: number) => {
-        items.value[index] = value;
-        emits("update:modelValue", items.value);
+        emits("update:modelValue", items.value.toSpliced(index, 1, value));
     };
 
+    const newEmptyValue = computed(() => {
+        if (props.schema.items?.type === "string") {
+            return "";
+        }
+        return props.schema.items?.default ?? undefined;
+    })
+
     const addItem = () => {
-        items.value.push(undefined);
-        emits("update:modelValue", items.value);
+        emits("update:modelValue", [...items.value, newEmptyValue.value]);
     };
+
     const removeItem = (index: number) => {
-        items.value.splice(index, 1);
-        emits("update:modelValue", items.value);
+        if (items.value.length <= 1) {
+            emits("update:modelValue", undefined);
+            return;
+        }
+        emits("update:modelValue", items.value.toSpliced(index, 1));
     };
 
     const moveItem = (index: number, direction: "up" | "down") => {
+        const tempValue = items.value
         if (direction === "up" && index > 0) {
-            [items.value[index - 1], items.value[index]] = [
-                items.value[index],
-                items.value[index - 1],
+            [tempValue[index - 1], tempValue[index]] = [
+                tempValue[index],
+                tempValue[index - 1],
             ];
-        } else if (direction === "down" && index < items.value.length - 1) {
-            [items.value[index + 1], items.value[index]] = [
-                items.value[index],
-                items.value[index + 1],
+        } else if (direction === "down" && index < tempValue.length - 1) {
+            [tempValue[index + 1], tempValue[index]] = [
+                tempValue[index],
+                tempValue[index + 1],
             ];
         }
-        emits("update:modelValue", items.value);
+        emits("update:modelValue", tempValue);
     };
 </script>
 

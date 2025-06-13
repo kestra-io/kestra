@@ -7,12 +7,12 @@ import FileDocumentIcon from "vue-material-design-icons/FileDocument.vue";
 import DotsSquareIcon from "vue-material-design-icons/DotsSquare.vue";
 import BallotOutlineIcon from "vue-material-design-icons/BallotOutline.vue";
 
-import EditorSidebarWrapper from "../inputs/EditorSidebarWrapper.vue";
-import EditorWrapper from "../inputs/EditorWrapper.vue";
-import NoCodeWrapper from "../code/NoCodeWrapper.vue";
-import LowCodeEditorWrapper from "../inputs/LowCodeEditorWrapper.vue";
-import PluginDocumentationWrapper from "../plugins/PluginDocumentationWrapper.vue";
-import BlueprintsWrapper from "../flows/blueprints/BlueprintsWrapper.vue";
+import EditorSidebarWrapper from "../../../components/inputs/EditorSidebarWrapper.vue";
+import EditorWrapper from "../../../components/inputs/EditorWrapper.vue";
+import NoCodeWrapper from "../../../components/code/NoCodeWrapper.vue";
+import LowCodeEditorWrapper from "../../../components/inputs/LowCodeEditorWrapper.vue";
+import PluginDocumentationWrapper from "../../../components/plugins/PluginDocumentationWrapper.vue";
+import BlueprintsWrapper from "../../../components/flows/blueprints/BlueprintsWrapper.vue";
 
 export const DEFAULT_ACTIVE_TABS = ["code", "doc"]
 

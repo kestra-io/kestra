@@ -20,7 +20,7 @@
                     :model-value="pair[0]"
                     :placeholder="t('key')"
                     @update:model-value="(changed) => handleKeyInput(index, changed)"
-                    :have-error="duplicatedPairs.includes(pair[0])"
+                    :have-error="duplicatedKeys.includes(pair[0])"
                 />
             </el-col>
             <el-col :span="16" class="d-flex">

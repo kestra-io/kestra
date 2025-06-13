@@ -158,7 +158,7 @@
 <script lang="ts" setup>
     import {nextTick, ref, watch, provide, computed} from "vue";
     import {useI18n} from "vue-i18n";
-
+    import {onMounted, onBeforeUnmount} from "vue";
     import "splitpanes/dist/splitpanes.css"
     import {Splitpanes, Pane} from "splitpanes"
 
@@ -173,6 +173,15 @@
     import Close from "vue-material-design-icons/Close.vue";
 
     const {t} = useI18n({useScope: "global"});
+
+    onMounted(() => {
+        document.addEventListener("dragend", cleanUp);
+    });
+
+    onBeforeUnmount(() => {
+        document.removeEventListener("dragend", cleanUp);
+    });
+
 
     function throttle(callback: () => void, limit: number): () => void {
         let waiting = false;
@@ -251,6 +260,7 @@
 
     function dragstart(panelIndex: number, tabId: string) {
         dragging.value = true;
+        document.body.style.cursor = "grabbing";
         const tabIndex = panels.value[panelIndex].tabs.findIndex((tab) => tab.value === tabId);
         movedTabInfo.value = {panelIndex, tabId, tabIndex, tab: panels.value[panelIndex].tabs[tabIndex]}
     }
@@ -261,6 +271,7 @@
         mouseXRef.value = -1;
         leftPanelDragover.value = false;
         rightPanelDragover.value = false;
+        document.body.style.cursor = "";
         nextTick(() => {
             movedTabInfo.value = null
             for(const panel of panels.value) {
@@ -522,10 +533,12 @@
 
         panels.value.forEach(panel => panel.dragover = false);
         panels.value[panelIndex].dragover = true;
+        document.body.style.cursor = "";
     }
 
     function panelDragLeave() {
         panels.value.forEach(panel => panel.dragover = false);
+        document.body.style.cursor = "not-allowed";
     }
 
     function panelDrop(e: DragEvent, targetPanelIndex: number) {

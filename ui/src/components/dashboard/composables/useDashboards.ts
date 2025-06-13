@@ -1,4 +1,5 @@
 import {onMounted, watch, computed, ref} from "vue";
+import type {RouteParams, RouteLocation} from "vue-router";
 import {useRoute} from "vue-router";
 import {useStore} from "vuex";
 import {useI18n} from "vue-i18n";
@@ -40,6 +41,31 @@ export type Chart = {
     };
     [key: string]: unknown;
 };
+
+export const ALLOWED_CREATION_ROUTES = ["home", "flows/update", "namespaces/update"];
+
+export const STORAGE_KEYS = (params: RouteParams) => {
+    const suffix = params.tenant ? `_${params.tenant}` : "";
+
+    return {
+        DASHBOARD_MAIN: `dashboard_main${suffix}`,
+        DASHBOARD_NAMESPACE: `dashboard_namespace${suffix}`,
+        DASHBOARD_FLOW: `dashboard_flow${suffix}`,
+    };
+};
+
+export const getDashboardID = (route: RouteLocation): string | undefined => {
+     if (!ALLOWED_CREATION_ROUTES.includes(route.name as string)) return;
+
+        const map: Record<string, keyof ReturnType<typeof STORAGE_KEYS>> = {
+            home: "DASHBOARD_MAIN",
+            "flows/update": "DASHBOARD_FLOW",
+            "namespaces/update": "DASHBOARD_NAMESPACE"
+        };
+
+        const key = map[route.name as string];
+        return key ? localStorage.getItem(STORAGE_KEYS(route.params)[key]) || "default" : undefined;
+}
 
 import Bar from "../sections/Bar.vue";
 import KPI from "../sections/KPI.vue";

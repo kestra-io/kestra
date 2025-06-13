@@ -22,6 +22,7 @@
     import {computed, onBeforeMount, ref} from "vue";
 
     import type {Dashboard, Chart} from "./composables/useDashboards";
+    import {ALLOWED_CREATION_ROUTES} from "./composables/useDashboards";
 
     import Header from "./components/Header.vue";
     import KestraFilter from "../filter/KestraFilter.vue";
@@ -42,8 +43,6 @@
     import YAML_MAIN from "./assets/default_main_definition.yaml?raw";
     import YAML_FLOW from "./assets/default_flow_definition.yaml?raw";
     import YAML_NAMESPACE from "./assets/default_namespace_definition.yaml?raw";
-
-    const ALLOWED_CREATION_ROUTES = ["home", "flows/update", "namespaces/update"];
 
     import UTILS from "../../utils/utils.js";
 

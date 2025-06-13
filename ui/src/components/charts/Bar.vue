@@ -51,7 +51,7 @@
 
     import {useMediaQuery} from "@vueuse/core";
 
-    import {barLegend} from "../dashboard/composables/useLegend.js";
+    import {barLegend} from "../dashboard/composables/useLegend";
 
     import NoData from "../layout/NoData.vue";
 

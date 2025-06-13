@@ -718,22 +718,6 @@ public class JdbcExecutor implements ExecutorInterface, Service {
                 try {
                     // process worker task result
                     executorService.addWorkerTaskResult(current, () -> findFlow(execution), message);
-
-                    // send metrics on terminated
-                    TaskRun taskRun = message.getTaskRun();
-                    if (taskRun.getState().isTerminated()) {
-                        metricRegistry
-                            .counter(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_COUNT_DESCRIPTION, metricRegistry.tags(message))
-                            .increment();
-
-                        metricRegistry
-                            .timer(MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION, MetricRegistry.METRIC_EXECUTOR_TASKRUN_ENDED_DURATION_DESCRIPTION, metricRegistry.tags(message))
-                            .record(taskRun.getState().getDuration());
-
-                        log.trace("TaskRun terminated: {}", taskRun);
-                        workerJobRunningRepository.deleteByKey(taskRun.getId());
-                    }
-
                     // join worker result
                     return Pair.of(
                         current,

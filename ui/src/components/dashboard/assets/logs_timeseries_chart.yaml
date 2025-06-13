@@ -1,0 +1,22 @@
+id: logs_timeseries
+type: io.kestra.plugin.core.dashboard.chart.TimeSeries
+chartOptions:
+  displayName: Logs
+  description: Logs count per date grouped by level
+  legend:
+    enabled: true
+  column: date
+  colorByColumn: level
+  width: 12
+data:
+  type: io.kestra.plugin.core.dashboard.data.Logs
+  columns:
+    date:
+      field: DATE
+      displayName: Execution Date
+    level:
+      field: LEVEL
+    total:
+      displayName: Total Executions
+      agg: COUNT
+      graphStyle: BARS

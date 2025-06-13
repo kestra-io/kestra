@@ -38,6 +38,7 @@
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../code/utils/types";
     import {BLOCKTYPE_INJECT_KEY, PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
+    import {removeNullAndUndefined} from "../code/utils/cleanUp";
 
     defineOptions({
         name: "TaskEditor",
@@ -145,25 +146,6 @@
                 isLoading.value = false;
             })
 
-    }
-
-    function removeNullAndUndefined(obj: any): any {
-        if (Array.isArray(obj)) {
-            return obj.filter(item => item !== null && item !== undefined)
-                .map(item => removeNullAndUndefined(item));
-        }
-        if (typeof obj === "object") {
-            const newObj: any = {};
-            for (const key in obj) {
-                const rawValue = obj[key]
-                if(rawValue === null || rawValue === undefined) {
-                    continue;
-                }
-                newObj[key] = removeNullAndUndefined(rawValue);
-            }
-            return newObj;
-        }
-        return obj;
     }
 
     function onTaskInput(val: PartialCodeElement | undefined) {

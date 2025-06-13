@@ -3,6 +3,7 @@ package io.kestra.jdbc.repository;
 import com.google.common.annotations.VisibleForTesting;
 import io.kestra.core.repositories.WorkerJobRunningRepositoryInterface;
 import io.kestra.core.runners.WorkerJobRunning;
+import io.kestra.core.runners.WorkerJobRunningStateStore;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.jooq.Record1;
@@ -13,7 +14,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Slf4j
-public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdbcRepository implements WorkerJobRunningRepositoryInterface {
+public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdbcRepository implements WorkerJobRunningRepositoryInterface, WorkerJobRunningStateStore {
     protected io.kestra.jdbc.AbstractJdbcRepository<WorkerJobRunning> jdbcRepository;
 
     public AbstractJdbcWorkerJobRunningRepository(io.kestra.jdbc.AbstractJdbcRepository<WorkerJobRunning> jdbcRepository) {
@@ -26,9 +27,15 @@ public abstract class AbstractJdbcWorkerJobRunningRepository extends AbstractJdb
     }
 
     @Override
-    public void deleteByKey(String uid) {
-        Optional<WorkerJobRunning> workerJobRunning = this.findByKey(uid);
-        workerJobRunning.ifPresent(jobRunning -> this.jdbcRepository.delete(jobRunning));
+    public void deleteByKey(String key) {
+        this.jdbcRepository.getDslContextWrapper()
+            .transaction(configuration ->
+                DSL
+                    .using(configuration)
+                    .deleteFrom(this.jdbcRepository.getTable())
+                    .where(field("key").eq(key))
+                    .execute()
+            );
     }
 
     @Override

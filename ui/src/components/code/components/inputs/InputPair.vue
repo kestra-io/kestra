@@ -65,18 +65,18 @@
 
     const internalPairs = ref<[string, string][]>([])
 
-    const duplicatedPairs = computed(() => {
+    const duplicatedKeys = computed(() => {
         return internalPairs.value.map(pair => pair[0])
-            .filter((pair, index, self) =>
-                self.findIndex(p => p[0] === pair[0]) !== index
+            .filter((key, index, self) =>
+                self.indexOf(key) !== index
             );
     });
 
     const alertState = computed(() => {
-        if(duplicatedPairs.value.length > 0){
+        if(duplicatedKeys.value.length > 0){
             return {
                 visible: true,
-                message: t("duplicate-pair", {label: props.label ?? t("key"), key: duplicatedPairs.value[0]}),
+                message: t("duplicate-pair", {label: props.label ?? t("key"), key: duplicatedKeys.value[0]}),
             }
         }
         return {

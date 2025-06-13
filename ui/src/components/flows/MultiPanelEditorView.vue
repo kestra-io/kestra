@@ -230,12 +230,10 @@
     }
 
     .editor-wrapper{
-        // FIXME: we need a no magic dimension way to size the editor properly
-        max-height: calc(100vh - 190px);
         position: relative;
     }
 
-    .editor-panels{
+    :deep(.editor-panels){
         position: absolute;
     }
 

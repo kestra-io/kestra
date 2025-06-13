@@ -28,7 +28,7 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 
 @Validated
-@Controller("/api/v1/main/namespaces/{namespace}/kv")
+@Controller("/api/v1/{tenant}/namespaces/{namespace}/kv")
 public class KVController {
     @Inject
     private StorageInterface storageInterface;

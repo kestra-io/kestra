@@ -1,5 +1,5 @@
 <template>
-    <Splitpanes class="default-theme" :class="props.class" @resize="onResize">
+    <Splitpanes class="default-theme" v-bind="$attrs" @resize="onResize">
         <Pane
             v-for="(panel, panelIndex) in panels"
             min-size="10"
@@ -186,10 +186,6 @@
             }
         }
     }
-
-    const props = defineProps<{
-        "class"?: string,
-    }>()
 
     export interface Tab {
         button: {

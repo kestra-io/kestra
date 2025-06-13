@@ -494,18 +494,18 @@
         border-bottom-right-radius: var(--el-border-radius-base);
         min-width: 0;
 
-        .mtk25 {
+        .mtk25, .mtk28{
             background-color: var(--ks-badge-background);
             padding: 2px 6px;
             border-radius: var(--el-border-radius-base);
 
-            &:has(+ .mtk25) {
+            &:has(+ .mtk25), &:has(+ .mtk28) {
                 padding-right: 0;
                 border-top-right-radius: 0;
                 border-bottom-right-radius: 0;
             }
 
-            + .mtk25 {
+            + .mtk25, + .mtk28 {
                 padding-left: 0;
                 border-top-left-radius: 0;
                 border-bottom-left-radius: 0;

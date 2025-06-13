@@ -144,7 +144,7 @@ export const encodeSearchParams = (filters, OPTIONS) => {
     }, {});
 };
 
-export const decodeSearchParams = (query, include, OPTIONS) => {
+export const decodeSearchParams = (query, include, OPTIONS): any[] => {
     const params = Object.entries(query)
         .filter(([key]) => (key.startsWith("filters[") || key === "q"))
         .map(([key, value]) => {

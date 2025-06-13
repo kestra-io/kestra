@@ -1,5 +1,5 @@
-import {apiUrl, apiUrlWithoutTenants} from "override/utils/route";
-import {YamlUtils} from "@kestra-io/ui-libs";
+import {apiUrl} from "override/utils/route";
+import * as YamlUtils from "@kestra-io/ui-libs/flow-yaml-utils";
 import semver from "semver";
 
 export default {
@@ -140,7 +140,7 @@ export default {
             });
         },
         loadSchemaType(_, options = {type: "flow"}) {
-            return this.$http.get(`${apiUrlWithoutTenants()}/plugins/schemas/${options.type}`, {}).then(response => {
+            return this.$http.get(`${apiUrl(this)}/plugins/schemas/${options.type}`, {}).then(response => {
                 return response.data;
             });
         },

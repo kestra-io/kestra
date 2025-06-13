@@ -171,27 +171,6 @@
     "current execution": "当前执行",
     "custom value": "自定义值",
     "dark_version": "深色版本",
-    "dashboards": {
-      "chart_preview": "单击图表源代码以查看其预览",
-      "creation": {
-        "confirmation": "仪表板 <code>{title}</code> 已创建。",
-        "label": "创建仪表板"
-      },
-      "default": "默认仪表板",
-      "deletion": {
-        "confirmation": "您确定要删除<code>{title}</code>仪表板吗？"
-      },
-      "edition": {
-        "confirmation": "仪表板<code>{title}</code>中的更改已保存。",
-        "label": "编辑仪表板"
-      },
-      "empty": "没有结果显示。",
-      "labels": {
-        "plural": "仪表板",
-        "singular": "仪表板"
-      },
-      "preview": "预览仪表板"
-    },
     "data": "数据",
     "data_not_protected": "您的数据未受保护。不要丢失它。<b>启用我们的免费安全功能或试用我们的付费服务。</b>",
     "date": "日期",

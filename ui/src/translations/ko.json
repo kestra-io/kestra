@@ -171,27 +171,6 @@
     "current execution": "현재 실행",
     "custom value": "사용자 정의 value",
     "dark_version": "다크 버전",
-    "dashboards": {
-      "chart_preview": "차트 소스 코드를 클릭하여 미리보기를 확인하세요.",
-      "creation": {
-        "confirmation": "대시보드 <code>{title}</code>이(가) 생성되었습니다.",
-        "label": "대시보드 생성"
-      },
-      "default": "기본 대시보드",
-      "deletion": {
-        "confirmation": "<code>{title}</code> 대시보드를 삭제하시겠습니까?"
-      },
-      "edition": {
-        "confirmation": "대시보드 <code>{title}</code>의 변경 사항이 저장되었습니다.",
-        "label": "대시보드 편집"
-      },
-      "empty": "결과가 표시되지 않습니다.",
-      "labels": {
-        "plural": "대시보드",
-        "singular": "대시보드"
-      },
-      "preview": "미리보기 대시보드"
-    },
     "data": "데이터",
     "data_not_protected": "귀하의 데이터는 보호되지 않습니다. 잃어버리지 마세요. <b>무료 보안 기능을 활성화하거나 유료 서비스를 시도해 보세요.</b>",
     "date": "날짜",

@@ -171,27 +171,6 @@
     "current execution": "Exécution en cours",
     "custom value": "Valeur personnalisée",
     "dark_version": "Version sombre",
-    "dashboards": {
-      "chart_preview": "Cliquez sur un code source de graphique pour voir son aperçu",
-      "creation": {
-        "confirmation": "Le tableau de bord <code>{title}</code> est créé.",
-        "label": "Créer un tableau de bord"
-      },
-      "default": "Tableau de bord par défaut",
-      "deletion": {
-        "confirmation": "Êtes-vous sûr de vouloir supprimer le tableau de bord <code>{title}</code> ?"
-      },
-      "edition": {
-        "confirmation": "Les modifications dans le tableau de bord <code>{title}</code> sont enregistrées.",
-        "label": "Modifier le tableau de bord"
-      },
-      "empty": "Il n'y a aucun résultat à afficher.",
-      "labels": {
-        "plural": "Tableaux de bord",
-        "singular": "Tableau de bord"
-      },
-      "preview": "Aperçu du Dashboard"
-    },
     "data": "Données",
     "data_not_protected": "Vos données ne sont pas protégées. Ne les perdez pas. <b>Activez nos fonctionnalités de sécurité gratuites ou essayez notre offre payante.</b>",
     "date": "Date",

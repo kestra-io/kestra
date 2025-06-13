@@ -171,27 +171,6 @@
     "current execution": "現在の実行",
     "custom value": "カスタム value",
     "dark_version": "ダークバージョン",
-    "dashboards": {
-      "chart_preview": "チャートのソースコードをクリックしてプレビューを表示",
-      "creation": {
-        "confirmation": "ダッシュボード <code>{title}</code> が作成されました。",
-        "label": "ダッシュボードを作成"
-      },
-      "default": "デフォルトダッシュボード",
-      "deletion": {
-        "confirmation": "<code>{title}</code> ダッシュボードを削除してもよろしいですか？"
-      },
-      "edition": {
-        "confirmation": "ダッシュボード<code>{title}</code>の変更が保存されました。",
-        "label": "ダッシュボードを編集"
-      },
-      "empty": "表示する結果がありません。",
-      "labels": {
-        "plural": "ダッシュボード",
-        "singular": "ダッシュボード"
-      },
-      "preview": "プレビュー ダッシュボード"
-    },
     "data": "データ",
     "data_not_protected": "あなたのデータは保護されていません。失わないようにしてください。<b>無料のセキュリティ機能を有効にするか、有料オプションをお試しください。</b>",
     "date": "日付",

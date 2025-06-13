@@ -171,27 +171,6 @@
     "current execution": "Execução atual",
     "custom value": "Valor personalizado",
     "dark_version": "Versão escura",
-    "dashboards": {
-      "chart_preview": "Clique no código-fonte de um gráfico para ver sua pré-visualização",
-      "creation": {
-        "confirmation": "O Dashboard <code>{title}</code> foi criado.",
-        "label": "Criar Dashboard"
-      },
-      "default": "Dashboard Padrão",
-      "deletion": {
-        "confirmation": "Tem certeza de que deseja excluir o dashboard <code>{title}</code>?"
-      },
-      "edition": {
-        "confirmation": "As alterações no dashboard <code>{title}</code> foram salvas.",
-        "label": "Editar Dashboard"
-      },
-      "empty": "Não há resultados para serem exibidos.",
-      "labels": {
-        "plural": "Dashboards",
-        "singular": "Dashboard"
-      },
-      "preview": "Visualizar Dashboard"
-    },
     "data": "Dados",
     "data_not_protected": "Seus dados não estão protegidos. Não os perca. <b>Ative nossos recursos de segurança gratuitos ou experimente nossa oferta paga.</b>",
     "date": "Data",

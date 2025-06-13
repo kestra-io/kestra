@@ -171,27 +171,6 @@
     "current execution": "Bieżące wykonanie",
     "custom value": "Wartość niestandardowa",
     "dark_version": "Ciemna wersja",
-    "dashboards": {
-      "chart_preview": "Kliknij kod źródłowy wykresu, aby zobaczyć jego podgląd",
-      "creation": {
-        "confirmation": "Dashboard <code>{title}</code> został utworzony.",
-        "label": "Utwórz Dashboard"
-      },
-      "default": "Domyślny Dashboard",
-      "deletion": {
-        "confirmation": "Czy na pewno chcesz usunąć dashboard <code>{title}</code>?"
-      },
-      "edition": {
-        "confirmation": "Zmiany w dashboardzie <code>{title}</code> zostały zapisane.",
-        "label": "Edytuj Dashboard"
-      },
-      "empty": "Brak wyników do wyświetlenia.",
-      "labels": {
-        "plural": "Dashboardy",
-        "singular": "Dashboard"
-      },
-      "preview": "Podgląd Dashboardu"
-    },
     "data": "Dane",
     "data_not_protected": "Twoje dane nie są chronione. Nie trać ich. <b>Włącz nasze darmowe funkcje zabezpieczeń lub wypróbuj naszą płatną ofertę.</b>",
     "date": "Data",

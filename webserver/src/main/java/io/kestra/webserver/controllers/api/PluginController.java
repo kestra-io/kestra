@@ -104,10 +104,11 @@ public class PluginController {
 
     @Get
     @ExecuteOn(TaskExecutors.IO)
-    @Operation(tags = {"Plugins"}, summary = "Get list of plugins")
-    public List<Plugin> listPlugins() {
+    @Operation(tags = {"Plugins"}, summary = "Get list of plugins (with optional search filter)")
+    public List<Plugin> listPlugins(@QueryValue("q") @Nullable String query) {
         return pluginRegistry.plugins()
             .stream()
+            .filter(p -> query == null || p.identifier().toLowerCase().contains(query.toLowerCase()) || p.title().toLowerCase().contains(query.toLowerCase()))
             .map(p -> Plugin.of(p, null))
             .toList();
     }

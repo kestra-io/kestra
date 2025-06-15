@@ -142,6 +142,7 @@
                 plugin: undefined,
                 taskType: undefined,
                 themeComputed: Utils.getTheme(),
+                preventCursorChange: false,
             };
         },
         mounted() {
@@ -153,6 +154,13 @@
                     this.themeComputed = Utils.getTheme();
                 },
                 immediate: true,
+            },
+            modelValue(value) {
+                if (this.editor?.getValue() !== value) {
+                    this.preventCursorChange = true;
+                } else {
+                    this.preventCursorChange = false;
+                }
             },
         },
         computed: {
@@ -427,9 +435,13 @@
                     });
 
                     this.editor.onDidChangeCursorPosition?.(() => {
+                        clearTimeout(this.lastTimeout);
+                        if(this.preventCursorChange) {
+                            this.preventCursorChange = false;
+                            return;
+                        }
                         let position = this.editor.getPosition();
                         let model = this.editor.getModel();
-                        clearTimeout(this.lastTimeout);
                         this.lastTimeout = setTimeout(() => {
                             this.$emit("cursor", {
                                 position: position,
@@ -555,7 +567,7 @@
             padding-top: 7px;
 
             &.custom-dark-vs-theme {
-                background-color: var(--ks-background-input);           
+                background-color: var(--ks-background-input);
             }
 
             &.theme-light {

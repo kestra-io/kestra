@@ -245,8 +245,8 @@ public class RequestUtils {
         return filters;
     }
 
-    public static List<FlowScope> toFlowScopes(List<String> values) {
-        return Arrays.stream(values.getFirst().split(","))
+    public static List<FlowScope> toFlowScopes(String value) {
+        return Arrays.stream(value.split(","))
             .map(valueStr -> {
                 try {
                     return FlowScope.valueOf(valueStr.toUpperCase());

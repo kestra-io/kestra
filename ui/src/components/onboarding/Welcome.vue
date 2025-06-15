@@ -21,10 +21,10 @@
                         width="180px"
                     >
                     <h2 class="section-1-title">
-                        {{ $t("homeDashboard.wel_text") }}
+                        {{ $t("welcome_page.wel_text") }}
                     </h2>
                     <p class="section-1-desc">
-                        {{ $t("homeDashboard.start") }}
+                        {{ $t("welcome_page.start") }}
                     </p>
                     <el-button
                         @click="startTour"
@@ -46,7 +46,7 @@
                     </el-button>
                 </div>
                 <el-divider>
-                    {{ $t("homeDashboard.guide") }}
+                    {{ $t("welcome_page.guide") }}
                 </el-divider>
                 <onboarding-bottom />
             </div>
@@ -83,7 +83,7 @@
     });
 
     const routeInfo = computed(() => ({
-        title: t("homeDashboard.welcome")
+        title: t("welcome_page.welcome")
     }));
 
     const canCreate = computed(() => {

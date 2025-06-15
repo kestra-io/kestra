@@ -1,23 +1,32 @@
 <template>
-    <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100">
+    <el-alert
+        v-if="duplicatedKeys?.length"
+        :title="t('duplicate-pair', {label: t('key'), key: duplicatedKeys[0]})"
+        type="error"
+        show-icon
+        :closable="false"
+        class="mb-2"
+    />
+    <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
         <el-col :span="6">
             <InputText
                 :model-value="item[0]"
                 @update:model-value="onKey(index, $event)"
-                @change="onKeyChange(index, $event)"
                 margin="m-0"
+                placeholder="Key"
+                :have-error="duplicatedKeys.includes(item[0])"
             />
         </el-col>
         <el-col :span="16">
             <component
-
-                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties, key, properties) : TaskExpression"
+                :is="schema.additionalProperties ? getTaskComponent(schema.additionalProperties) : TaskExpression"
                 :model-value="item[1]"
                 @update:model-value="onValueChange(index, $event)"
                 :root="getKey(item[0])"
                 :schema="schema.additionalProperties"
                 :required="isRequired(item[0])"
                 :definitions="definitions"
+                :disabled
             />
         </el-col>
         <el-col :span="2" class="col align-self-center delete">
@@ -27,107 +36,107 @@
     <Add v-if="!disabledAdding" @add="addItem()" />
 </template>
 
-<script setup>
+<script lang="ts" setup>
+    import {computed, ref, watch} from "vue";
+    import {useI18n} from "vue-i18n";
     import {DeleteOutline} from "../../code/utils/icons";
 
     import InputText from "../../code/components/inputs/InputText.vue";
     import TaskExpression from "./TaskExpression.vue";
     import Add from "../../code/components/Add.vue";
-</script>
-
-<script>
-    import {toRaw} from "vue";
-    import Task from "./Task";
     import getTaskComponent from "./getTaskComponent";
+    import debounce from "lodash/debounce";
 
-    function emptyValueObjectProvider() {
-        return {"": undefined};
+    const {t} = useI18n();
+
+    defineOptions({
+        name: "TaskDict",
+        inheritAttrs: false,
+    });
+
+    const props = defineProps({
+        modelValue: {
+            type: Object,
+            default: () => ({}),
+        },
+        schema: {
+            type: Object,
+            required: true,
+        },
+        definitions: {
+            type: Object,
+            default: () => ({}),
+        },
+        root: {
+            type: String,
+            default: undefined,
+        },
+        disabled: {
+            type: Boolean,
+            default: false,
+        },
+    });
+
+    const currentValue = ref<[string, any][]>([])
+
+    watch(
+        () => props.modelValue,
+        (newValue) => {
+            currentValue.value = Object.entries(newValue ?? {});
+        },
+        {
+            immediate: true,
+            deep: true
+        },
+    );
+
+    const duplicatedKeys = computed(() => {
+        return currentValue.value.map(pair => pair[0])
+            .filter((key, index, self) =>
+                self.indexOf(key) !== index
+            );
+    });
+
+    const emitUpdate = debounce(function () {
+        if(duplicatedKeys.value?.length > 0) {
+            return;
+        }
+        emit("update:modelValue", Object.fromEntries(currentValue.value));
+    }, 200);
+
+    const emit = defineEmits(["update:modelValue"]);
+
+    function getKey(key: string) {
+        return props.root ? `${props.root}.${key}` : key;
     }
 
-    function emptyValueEntriesProvider() {
-        return ["", undefined];
+    function isRequired(key: string) {
+        return props.schema?.required?.includes(key);
     }
 
-    export default {
-        mixins: [Task],
-        emits: ["update:modelValue"],
-        props: {
-            class: {
-                type: String,
-                default: undefined
-            },
-        },
-        data() {
-            return {
-                currentValue: undefined,
-            };
-        },
-        created() {
-            this.currentValue = Object.entries(toRaw(this.values));
-        },
-        computed: {
-            disabledAdding() {
-                return !this.currentValue.at(-1)[0] || !this.currentValue.at(-1)[1];
-            },
-            values() {
-                if (this.modelValue === undefined) {
-                    return emptyValueObjectProvider();
-                }
+    function onKey(key: number, val: string) {
+        currentValue.value[key][0] = val;
+        emitUpdate()
+    }
 
-                return this.modelValue;
-            },
-        },
-        watch: {
-            modelValue() {
-                this.currentValue = Object.entries(toRaw(this.values));
-            },
-        },
-        methods: {
-            emitLocal(index, value) {
-                const local = this.currentValue.reduce(function (acc, cur, i) {
-                    acc[i === index ? value : cur[0]] = cur[1];
-                    return acc;
-                }, {});
+    function onValueChange(key: number, val: any) {
+        currentValue.value[key][1] = val;
+        emitUpdate()
+    }
 
-                this.$emit("update:modelValue", local);
-            },
-            onValueChange(key, value) {
-                const local = this.currentValue || [];
-                local[key][1] = value;
-                this.currentValue = local;
+    function removeItem(index: number) {
+        currentValue.value.splice(index, 1);
+        emitUpdate()
+    }
 
-                this.emitLocal();
-            },
-            onKey(key, value) {
-                const local = this.currentValue || [];
-                local[key][0] = value;
-                this.currentValue = local;
-            },
-            onKeyChange(index, value) {
-                this.emitLocal(index, value);
-            },
-            addItem() {
-                const local = this.currentValue || [];
-                local.push(["", undefined]);
+    function addItem() {
+        currentValue.value.push(["", undefined]);
+        emitUpdate()
+    }
 
-                this.currentValue = local;
-
-                this.emitLocal();
-            },
-            removeItem(x) {
-                let local = this.currentValue || [];
-                if (local.length === 1) {
-                    local = [emptyValueEntriesProvider()];
-                } else {
-                    local.splice(x, 1);
-                }
-
-                this.currentValue = local;
-
-                this.emitLocal();
-            },
-        },
-    };
+    const disabledAdding = computed(() => {
+        return props.disabled || currentValue.value.at(-1)?.[0] === "" && currentValue.value.at(-1)?.[1] === undefined;
+    });
 </script>
 
 <style scoped lang="scss">

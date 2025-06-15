@@ -4,7 +4,7 @@
     "target": "ES2020",
     "useDefineForClassFields": true,
     "module": "ESNext",
-    "lib": ["ES2020", "DOM", "DOM.Iterable", "ES2021.String"],
+    "lib": ["ES2023.Array", "ES2020", "DOM", "DOM.Iterable", "ES2021.String"],
     "skipLibCheck": true,
     "incremental": true,
     "types": ["vitest/globals"],

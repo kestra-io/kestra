@@ -16,16 +16,18 @@
         </el-form-item>
     </el-form>
 
-    <TaskObject
-        v-loading="isLoading"
-        v-if="selectedTaskType && schema"
-        name="root"
-        :model-value="taskObject"
-        @update:model-value="onTaskInput"
-        :schema="schemaProp"
-        :properties="properties"
-        :definitions="schema.definitions"
-    />
+    <div @click="store.dispatch('plugin/updateDocumentation', {task: selectedTaskType});">
+        <TaskObject
+            v-loading="isLoading"
+            v-if="selectedTaskType && schema"
+            name="root"
+            :model-value="taskObject"
+            @update:model-value="onTaskInput"
+            :schema="schemaProp"
+            :properties="properties"
+            :definitions="schema.definitions"
+        />
+    </div>
 </template>
 
 <script lang="ts" setup>
@@ -36,6 +38,7 @@
     import PluginSelect from "../../components/plugins/PluginSelect.vue";
     import {NoCodeElement, Schemas} from "../code/utils/types";
     import {BLOCKTYPE_INJECT_KEY, PARENT_PATH_INJECTION_KEY} from "../code/injectionKeys";
+    import {removeNullAndUndefined} from "../code/utils/cleanUp";
 
     defineOptions({
         name: "TaskEditor",
@@ -163,7 +166,7 @@
                 };
             }
         }
-        modelValue.value = YAML_UTILS.stringify(toRaw(val));
+        modelValue.value = YAML_UTILS.stringify(removeNullAndUndefined(toRaw(val)));
     }
 
     function onTaskTypeSelect() {
@@ -178,7 +181,6 @@
 <style lang="scss" scoped>
     .type-div {
         display: flex;
-        justify-content: space-between;
         text-transform: lowercase;
         align-items: center;
         gap: 0.25rem;

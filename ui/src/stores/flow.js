@@ -104,7 +104,7 @@ export default {
 
             if (currentIsFlow) {
                 if (!source.trim()?.length) {
-                    commit("setFlowValidation", {constraints: "No data"})
+                    commit("setFlowValidation", {constraints: this.$i18n.t("flow must not be empty")})
                     return
                 }
                 if (!state.isCreating){

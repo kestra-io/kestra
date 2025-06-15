@@ -62,16 +62,15 @@ public class App implements Callable<Integer> {
         SLF4JBridgeHandler.removeHandlersForRootLogger();
         SLF4JBridgeHandler.install();
 
+        int exitCode = 0;
+
         // Init ApplicationContext
-        ApplicationContext applicationContext = App.applicationContext(cls, args);
-
-        // Call Picocli command
-        int exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
-
-        applicationContext.close();
-
+        try (ApplicationContext applicationContext = App.applicationContext(cls, args)) {
+            // Call Picocli command
+            exitCode = new CommandLine(cls, new MicronautFactory(applicationContext)).execute(args);
+        }
         // exit code
-        System.exit(Objects.requireNonNullElse(exitCode, 0));
+        System.exit(exitCode);
     }
 
     /**

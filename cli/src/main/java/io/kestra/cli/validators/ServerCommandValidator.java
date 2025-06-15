@@ -1,4 +1,4 @@
-package io.kestra.cli;
+package io.kestra.cli.validators;
 
 import io.micronaut.context.annotation.Context;
 import io.micronaut.context.annotation.Requires;
@@ -31,7 +31,7 @@ public class ServerCommandValidator {
     @PostConstruct
     void validate() {
         final List<Map.Entry<String, String>> missingProperties = VALIDATED_PROPERTIES.entrySet().stream()
-            .filter((property) -> !environment.containsProperty(property.getKey()))
+            .filter(property -> !environment.containsProperty(property.getKey()))
             .toList();
 
         missingProperties.forEach(property -> log.error("""

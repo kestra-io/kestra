@@ -4,6 +4,7 @@ import ch.qos.logback.classic.LoggerContext;
 import com.google.common.collect.ImmutableMap;
 import io.kestra.cli.commands.servers.ServerCommandInterface;
 import io.kestra.cli.services.StartupHookInterface;
+import io.kestra.cli.validators.AppConfigValidator;
 import io.kestra.core.plugins.PluginManager;
 import io.kestra.core.plugins.PluginRegistry;
 import io.kestra.webserver.services.FlowAutoLoaderService;
@@ -58,6 +59,9 @@ abstract public class AbstractCommand implements Callable<Integer> {
 
     @Inject
     protected Provider<PluginManager> pluginManagerProvider;
+
+    @Inject
+    protected AppConfigValidator appConfigValidator;
 
     private PluginRegistry pluginRegistry;
 

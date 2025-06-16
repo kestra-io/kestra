@@ -109,6 +109,7 @@
 
     import {useStore} from "vuex";
     import TaskWrapper from "../../flows/tasks/TaskWrapper.vue";
+    import {removeNullAndUndefined} from "../utils/cleanUp";
     const store = useStore();
 
     const emits = defineEmits([
@@ -131,7 +132,9 @@
     }
 
     function updateMetadata(key: string, val: any) {
-        const realValue = val === null || val === undefined || (typeof val === "object" && Object.keys(val).length === 0) ? undefined : val; // Handle null values
+        const realValue = val === null ? undefined :
+            typeof val === "object" ? removeNullAndUndefined(val) :
+            val; // Handle null values
         emits("updateMetadata", key, realValue);
     }
 

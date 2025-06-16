@@ -3,7 +3,7 @@ import {useStore} from "vuex";
 import {useRoute, useRouter} from "vue-router";
 import {useI18n} from "vue-i18n";
 
-import {getDashboardID} from "../../components/dashboard/composables/useDashboards";
+import {getDashboard} from "../../components/dashboard/composables/useDashboards";
 
 import FileTreeOutline from "vue-material-design-icons/FileTreeOutline.vue";
 import ContentCopy from "vue-material-design-icons/ContentCopy.vue";
@@ -50,7 +50,7 @@ export function useLeftMenu() {
             {
                 href: {
                     name: "home",
-                    params: {dashboard: getDashboardID($route)},
+                    params: {dashboard: getDashboard($route, "id")},
                 },
                 title: t("dashboards.labels.plural"),
                 icon: {

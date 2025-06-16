@@ -54,18 +54,23 @@ export const STORAGE_KEYS = (params: RouteParams) => {
     };
 };
 
-export const getDashboardID = (route: RouteLocation): string | undefined => {
-     if (!ALLOWED_CREATION_ROUTES.includes(route.name as string)) return;
+const KEY_MAP: Record<string, keyof ReturnType<typeof STORAGE_KEYS>> = {
+    home: "DASHBOARD_MAIN",
+    "flows/update": "DASHBOARD_FLOW",
+    "namespaces/update": "DASHBOARD_NAMESPACE"
+};
 
-        const map: Record<string, keyof ReturnType<typeof STORAGE_KEYS>> = {
-            home: "DASHBOARD_MAIN",
-            "flows/update": "DASHBOARD_FLOW",
-            "namespaces/update": "DASHBOARD_NAMESPACE"
-        };
+export const getDashboard = (route: RouteLocation, type: "key" | "id"): string | undefined => {
+    if (!ALLOWED_CREATION_ROUTES.includes(route.name as string)) return;
 
-        const key = map[route.name as string];
-        return key ? localStorage.getItem(STORAGE_KEYS(route.params)[key]) || "default" : undefined;
-}
+    const key = KEY_MAP[route.name as string];
+
+    if (!key) return;
+
+    const storageKey = STORAGE_KEYS(route.params)[key];
+
+    return type === "key" ? storageKey : localStorage.getItem(storageKey) || "default";
+};
 
 import Bar from "../sections/Bar.vue";
 import KPI from "../sections/KPI.vue";
@@ -90,6 +95,8 @@ export const getChartTitle = (chart: Chart): string => chart.chartOptions?.displ
 export const getPropertyValue = (data: Record<string, any>, property: "value" | "description"): string => data.results?.[0]?.[property];
 
 export const isPaginationEnabled = (chart: Chart): boolean => chart.chartOptions?.pagination?.enabled ?? false;
+
+export const processFlowYaml = (yaml: string, namespace: string, flow: string): string => yaml.replace(/--NAMESPACE--/g, namespace).replace(/--FLOW--/g, flow)
 
 export function useChartGenerator(props: {chart: Chart; filters: string[]; showDefault: boolean;}) {
     const percentageShown = computed(() => props.chart?.chartOptions?.numberType === "PERCENTAGE");
@@ -124,9 +131,9 @@ export function useChartGenerator(props: {chart: Chart; filters: string[]; showD
         return data.value;
     };
 
-    onMounted(() => generate(getDashboardID(route) as string));
+    onMounted(() => generate(getDashboard(route, "id") as string));
 
-    watch(route, (changed) => generate(getDashboardID(changed) as string), {deep: true});
+    watch(route, (changed) => generate(getDashboard(changed, "id") as string), {deep: true});
 
     return {percentageShown, EMPTY_TEXT, data, generate};
 }

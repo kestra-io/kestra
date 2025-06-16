@@ -147,7 +147,8 @@
       "docs": "Documentos",
       "help": "Ayuda",
       "issue": "Abrir un Issue",
-      "news": "Noticias"
+      "news": "Noticias",
+      "star": "Marca el repositorio"
     },
     "continue backfill": "Continuar el backfill",
     "continue backfills": "Continuar backfills",

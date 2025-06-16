@@ -147,7 +147,8 @@
       "docs": "Dokumentation",
       "help": "Hilfe",
       "issue": "Ein Issue öffnen",
-      "news": "Nachrichten"
+      "news": "Nachrichten",
+      "star": "Markiere das Repository mit einem Stern"
     },
     "continue backfill": "Backfill fortsetzen",
     "continue backfills": "Backfills fortsetzen",

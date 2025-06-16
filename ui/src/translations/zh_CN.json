@@ -587,6 +587,7 @@
     "flow enable": "确定要启用 <code>{flowCount}</code> 个流程吗？",
     "flow export": "确定要导出 <code>{flowCount}</code> 个流程吗？",
     "flow must have id and namespace": "流程必须有ID和命名空间。",
+    "flow must not be empty": "flow不能为空",
     "flow not imported": "某些flow无法导入",
     "flow source not found": "未找到flow源",
     "flow-dependencies": "依赖项",

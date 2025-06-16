@@ -587,6 +587,7 @@
     "flow enable": "Tem certeza de que deseja ativar <code>{flowCount}</code> flow(s)?",
     "flow export": "Tem certeza de que deseja exportar <code>{flowCount}</code> flow(s)?",
     "flow must have id and namespace": "Flow deve ter um id e um namespace.",
+    "flow must not be empty": "O flow não deve estar vazio",
     "flow not imported": "Algum flow não pôde ser importado",
     "flow source not found": "Fonte do flow não encontrada",
     "flow-dependencies": "dependências",

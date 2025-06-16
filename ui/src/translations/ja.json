@@ -587,6 +587,7 @@
     "flow enable": "<code>{flowCount}</code>件のflowを有効化してもよろしいですか？",
     "flow export": "<code>{flowCount}</code>件のflowをエクスポートしてもよろしいですか？",
     "flow must have id and namespace": "Flowにはidとnamespaceが必要です。",
+    "flow must not be empty": "フローは空であってはなりません",
     "flow not imported": "一部のflowをインポートできませんでした",
     "flow source not found": "フローソースが見つかりません",
     "flow-dependencies": "依存関係",

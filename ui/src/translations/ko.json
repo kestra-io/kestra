@@ -147,7 +147,8 @@
       "docs": "문서",
       "help": "도움말",
       "issue": "이슈 열기",
-      "news": "뉴스"
+      "news": "뉴스",
+      "star": "레포에 별표 추가"
     },
     "continue backfill": "backfill 계속",
     "continue backfills": "backfill 계속",

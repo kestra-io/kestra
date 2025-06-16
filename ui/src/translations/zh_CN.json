@@ -147,7 +147,8 @@
       "docs": "文档",
       "help": "帮助",
       "issue": "打开问题",
-      "news": "新闻"
+      "news": "新闻",
+      "star": "为仓库加星"
     },
     "continue backfill": "继续回填",
     "continue backfills": "继续回填",

@@ -147,7 +147,8 @@
       "docs": "ドキュメント",
       "help": "ヘルプ",
       "issue": "問題を開く",
-      "news": "ニュース"
+      "news": "ニュース",
+      "star": "リポジトリをスターする"
     },
     "continue backfill": "backfillを続行",
     "continue backfills": "backfillを続行",

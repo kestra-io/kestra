@@ -147,7 +147,8 @@
       "docs": "Docs",
       "help": "Aide",
       "issue": "Ouvrir un Issue",
-      "news": "Nouvelles"
+      "news": "Nouvelles",
+      "star": "Ajoutez une étoile au repo"
     },
     "continue backfill": "Continuer le backfill",
     "continue backfills": "Continuer les backfills",

@@ -90,6 +90,7 @@
     import MetadataInputs from "../../flows/MetadataInputs.vue";
     import MetadataInputsContent from "../../flows/MetadataInputsContent.vue";
     import TaskObjectField from "../../flows/tasks/TaskObjectField.vue";
+    import InitialSchema from "./flow-schema.json"
 
 
     import {
@@ -162,7 +163,7 @@
     const schema = ref<{
         definitions?: any,
         $ref?: string,
-    }>({})
+    }>(InitialSchema)
 
     onMounted(async () => {
         await store.dispatch("plugin/loadSchemaType").then((response) => {

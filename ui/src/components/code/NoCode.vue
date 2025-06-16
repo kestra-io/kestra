@@ -1,5 +1,5 @@
 <template>
-    <div class="h-100 overflow-y-auto no-code">
+    <div class="no-code">
         <Breadcrumbs />
 
         <hr class="m-0">
@@ -92,4 +92,13 @@
     })
 </script>
 
-<style scoped lang="scss" src="./styles/code.scss" />
+<style lang="scss" scoped>
+    .no-code {
+        height: 100%;
+        overflow-y: auto;
+
+        hr {
+            margin: 0;
+        }
+    }
+</style>

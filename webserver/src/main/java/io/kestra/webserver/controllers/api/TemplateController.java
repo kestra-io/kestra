@@ -43,7 +43,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 
 @Validated
-@Controller("/api/v1/main/templates")
+@Controller("/api/v1/{tenant}/templates")
 @TemplateEnabled
 @Deprecated(forRemoval = true)
 @Hidden

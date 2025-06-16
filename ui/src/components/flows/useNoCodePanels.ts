@@ -1,14 +1,14 @@
-import {defineAsyncComponent, h, markRaw, Ref, Suspense} from "vue"
+import {h, markRaw, Ref, Suspense} from "vue"
 import {useStore} from "vuex";
 import {useI18n} from "vue-i18n";
 import MouseRightClickIcon from "vue-material-design-icons/MouseRightClick.vue";
 import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import type {Panel, Tab} from "../MultiPanelTabs.vue";
 import {BlockType} from "../code/utils/types";
+import NoCodeWrapper from "../code/NoCodeWrapper.vue"
 
 import type {NoCodeProps} from "../code/NoCodeWrapper.vue";
 
-const NoCodeWrapper = markRaw(defineAsyncComponent(() => import("../code/NoCodeWrapper.vue")))
 
 
 const NOCODE_PREFIX = "nocode"

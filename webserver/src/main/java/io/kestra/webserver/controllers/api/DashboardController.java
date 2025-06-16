@@ -50,7 +50,7 @@ import java.util.Optional;
 import static io.kestra.core.utils.DateUtils.validateTimeline;
 
 @Validated
-@Controller("/api/v1/main/dashboards")
+@Controller("/api/v1/{tenant}/dashboards")
 @Slf4j
 public class DashboardController {
     protected static final YamlParser YAML_PARSER = new YamlParser();

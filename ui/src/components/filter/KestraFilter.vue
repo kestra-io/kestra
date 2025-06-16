@@ -217,6 +217,12 @@
                     return values.map(value => remappedFilterKey + Comparators.EQUALS + value);
                 }).join(" ");
         } else {
+            Object.keys(query).filter((key) => {
+                return !key.startsWith("filters[");
+            }).forEach((key) => {
+                queryParamsToKeep.value.push(key);
+            });
+
             filter.value = Object.entries(query)
                 .filter(([key]) => key.startsWith("filters["))
                 .flatMap(([key, values]) => {
@@ -228,11 +234,6 @@
                         maybeSubKeyString = "";
                     } else {
                         maybeSubKeyString = "." + (subKey.includes(" ") ? `"${subKey}"` : subKey);
-                    }
-
-                    if (!props.language.keyMatchers()?.some(keyMatcher => keyMatcher.test(FilterLanguage.withNestedKeyPlaceholder(remappedFilterKey + maybeSubKeyString)))) {
-                        queryParamsToKeep.value.push(key);
-                        return [];
                     }
 
                     if (!Array.isArray(values)) {
@@ -494,18 +495,18 @@
         border-bottom-right-radius: var(--el-border-radius-base);
         min-width: 0;
 
-        .mtk25 {
+        .mtk25, .mtk28{
             background-color: var(--ks-badge-background);
             padding: 2px 6px;
             border-radius: var(--el-border-radius-base);
 
-            &:has(+ .mtk25) {
+            &:has(+ .mtk25), &:has(+ .mtk28) {
                 padding-right: 0;
                 border-top-right-radius: 0;
                 border-bottom-right-radius: 0;
             }
 
-            + .mtk25 {
+            + .mtk25, + .mtk28 {
                 padding-left: 0;
                 border-top-left-radius: 0;
                 border-bottom-left-radius: 0;

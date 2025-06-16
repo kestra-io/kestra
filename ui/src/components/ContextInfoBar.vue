@@ -208,7 +208,9 @@
         gap: 0.5rem;
         font-size: var(--font-size-sm);
         overflow-y: auto;
-        &::-webkit-scrollbar { width: 0; }
+        &::-webkit-scrollbar {
+            width: 0; 
+        }
         scrollbar-width: none;
 
         &.opened {
@@ -273,7 +275,9 @@
         width: 0;
         position: relative;
         overflow-y: auto;
-        &::-webkit-scrollbar { width: 0px; }
+        &::-webkit-scrollbar {
+            width: 0px; 
+        }
         scrollbar-width: none;
 
         .closeButton {

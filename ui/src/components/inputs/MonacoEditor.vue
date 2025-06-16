@@ -15,14 +15,13 @@
                 class="z-3"
             />
         </div>
-        <!-- eslint-disable vue/no-textarea-mustache -->
-        <textarea data-testid="monaco-editor-hidden-synced-textarea" style="height: 0; width: 0; opacity: 0;" type="text" @input="(val) => emit('change', val.target?.value)">
-            {{
-                // this is a copy of the monaco value, we only use it in E2E tests
-                value
-            }}
-        </textarea>
-        <!--eslint-enable-->
+
+        <textarea
+            data-testid="monaco-editor-hidden-synced-textarea"
+            style="height: 0; width: 0; opacity: 0;"
+            type="text"
+            v-model="textAreaValue"
+        />
     </div>
 </template>
 
@@ -76,6 +75,15 @@
             }
         },
     };
+
+    const textAreaValue = computed({
+        get() {
+            return props.value;
+        },
+        set(value) {
+            emit("change", value);
+        }
+    });
 
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
     watch(highlight, (line) => {

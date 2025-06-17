@@ -16,18 +16,7 @@ public class InvalidQueryFiltersException extends KestraRuntimeException {
     /**
      * Creates a new {@link InvalidQueryFiltersException} instance.
      *
-     * @param invalids the invalid entity.
-     * @param message the error message.
-     */
-    public InvalidQueryFiltersException(final List<String> invalids, final String message) {
-        super(message);
-        this.invalids = invalids;
-    }
-
-    /**
-     * Creates a new {@link InvalidQueryFiltersException} instance.
-     *
-     * @param invalids the invalid entity.
+     * @param invalids the invalid filters.
      */
     public InvalidQueryFiltersException(final List<String> invalids) {
         super(INVALID_QUERY_FILTER_MESSAGE);
@@ -35,11 +24,20 @@ public class InvalidQueryFiltersException extends KestraRuntimeException {
     }
 
     /**
-     * Gets the invalid objects.
+     * Creates a new {@link InvalidQueryFiltersException} instance.
      *
-     * @return the invalid objects.
+     * @param invalid the invalid filter.
      */
-    public List<String> invalidObjects() {
-        return invalids;
+    public InvalidQueryFiltersException(final String invalid) {
+        super(INVALID_QUERY_FILTER_MESSAGE);
+        this.invalids = List.of(invalid);
+    }
+
+
+    public String formatedInvalidObjects(){
+        if (invalids == null || invalids.isEmpty()){
+            return INVALID_QUERY_FILTER_MESSAGE;
+        }
+        return String.join(", ", invalids);
     }
 }

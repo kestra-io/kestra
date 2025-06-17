@@ -3,6 +3,7 @@ package io.kestra.core.repositories;
 import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
@@ -13,6 +14,7 @@ import io.kestra.core.models.flows.*;
 import io.kestra.core.models.flows.input.StringInput;
 import io.kestra.core.models.property.Property;
 import io.kestra.core.queues.QueueException;
+import io.kestra.core.repositories.ExecutionRepositoryInterface.ChildFilter;
 import io.kestra.core.schedulers.AbstractSchedulerTest;
 import io.kestra.core.services.FlowService;
 import io.kestra.plugin.core.debug.Return;
@@ -25,6 +27,7 @@ import io.micronaut.data.model.Sort;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.time.ZonedDateTime;
 import java.util.stream.Stream;
 import lombok.Getter;
 import org.junit.jupiter.api.Assertions;
@@ -40,6 +43,7 @@ import java.util.concurrent.TimeoutException;
 import jakarta.validation.ConstraintViolationException;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.event.Level;
 
 import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
@@ -126,19 +130,40 @@ public abstract class AbstractFlowRepositoryTest {
             QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.NAMESPACE).value(SYSTEM_FLOWS_DEFAULT_NAMESPACE).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build()
+        );
+    }
 
+    @ParameterizedTest
+    @MethodSource("errorFilterCombinations")
+    void should_fail_to_find_all(QueryFilter filter){
+        assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> flowRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter)));
 
-//            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("sleep").operation(Op.EQUALS).build(), 15),
-//            Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 28),
-//            Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 28),
-//            Arguments.of(QueryFilter.builder().field(Field.STATE).value(State.Type.RUNNING).operation(Op.EQUALS).build(), 5),
-//            Arguments.of(QueryFilter.builder().field(Field.TIME_RANGE).value("test").operation(Op.EQUALS).build(), 28),
-//            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 28),
-//            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_ID).value("test").operation(Op.EQUALS).build(), 28),
-//            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 28),
-//            Arguments.of(QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(), 28),
-//            Arguments.of(QueryFilter.builder().field(Field.EXISTING_ONLY).value("test").operation(Op.EQUALS).build(), 28)
-//            Arguments.of(QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.DEBUG).operation(Op.EQUALS).build(), 28)
+    }
+
+    @ParameterizedTest
+    @MethodSource("errorFilterCombinations")
+    void should_fail_to_find_all_with_source(QueryFilter filter){
+        assertThrows(
+            InvalidQueryFiltersException.class,
+            () -> flowRepository.findWithSource(Pageable.UNPAGED, MAIN_TENANT, List.of(filter)));
+
+    }
+
+    static Stream<QueryFilter> errorFilterCombinations() {
+        return Stream.of(
+            QueryFilter.builder().field(Field.FLOW_ID).value("sleep").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(),
+            QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(),
+            QueryFilter.builder().field(Field.STATE).value(State.Type.RUNNING).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.TIME_RANGE).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.TRIGGER_ID).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.EXISTING_ONLY).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.DEBUG).operation(Op.EQUALS).build()
         );
     }
 

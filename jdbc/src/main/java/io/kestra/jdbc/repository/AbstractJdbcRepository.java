@@ -289,7 +289,7 @@ public abstract class AbstractJdbcRepository {
         // Special handling for START_DATE and END_DATE
         if (field == QueryFilter.Field.START_DATE || field == QueryFilter.Field.END_DATE) {
             if(dateColumn == null){
-                throw new IllegalArgumentException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
+                throw new InvalidQueryFiltersException("When creating filtering on START_DATE and/or END_DATE, dateColumn is required but was null");
             }
             OffsetDateTime dateTime = (value instanceof ZonedDateTime)
                 ? ((ZonedDateTime) value).toOffsetDateTime()
@@ -305,7 +305,7 @@ public abstract class AbstractJdbcRepository {
             if (value instanceof Map<?, ?> map){
                 return select.and(findLabelCondition(map, operation));
             } else {
-                throw new InvalidQueryFiltersException(List.of("Label field value must but instance of Map"), "Label field value must but instance of Map");
+                throw new InvalidQueryFiltersException("Label field value must but instance of Map");
             }
         }
 
@@ -322,14 +322,14 @@ public abstract class AbstractJdbcRepository {
                 if (value instanceof Collection<?>) {
                     select = select.and(DSL.field(columnName).in((Collection<?>) value));
                 } else {
-                    throw new IllegalArgumentException("IN operation requires a collection as value");
+                    throw new InvalidQueryFiltersException("IN operation requires a collection as value");
                 }
             }
             case NOT_IN -> {
                 if (value instanceof Collection<?>) {
                     select = select.and(DSL.field(columnName).notIn((Collection<?>) value));
                 } else {
-                    throw new IllegalArgumentException("NOT_IN operation requires a collection as value");
+                    throw new InvalidQueryFiltersException("NOT_IN operation requires a collection as value");
                 }
             }
             case STARTS_WITH -> select = select.and(DSL.field(columnName).like(value + "%"));
@@ -341,19 +341,17 @@ public abstract class AbstractJdbcRepository {
                     DSL.field(columnName).like(value + ".%")
                     .or(DSL.field(columnName).eq(value))
                 );
-            default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            default -> throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
         }
         return select;
     }
 
     protected Condition findQueryCondition(String query) {
-        //todo use a real exception
-        throw new UnsupportedOperationException("Unsupported operation: ");
+        throw new InvalidQueryFiltersException("Unsupported operation: ");
     }
 
     protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
-        //todo use a real exception
-        throw new UnsupportedOperationException("Unsupported operation: " + operation);
+        throw new InvalidQueryFiltersException("Unsupported operation: " + operation);
     }
 
     // Generate the condition for Field.STATE
@@ -365,13 +363,13 @@ public abstract class AbstractJdbcRepository {
             case State.Type state -> List.of(state);
             case String state -> List.of(State.Type.valueOf(state));
             default ->
-                throw new IllegalArgumentException("Field 'state' requires a State.Type or List<State.Type> value");
+                throw new InvalidQueryFiltersException("Field 'state' requires a State.Type or List<State.Type> value");
         };
 
         return switch (operation) {
             case IN, EQUALS -> statesFilter(stateList);
             case NOT_IN, NOT_EQUALS -> DSL.not(statesFilter(stateList));
-            default -> throw new IllegalArgumentException("Unsupported operation for State.Type: " + operation);
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for State.Type: " + operation);
         };
     }
 
@@ -388,8 +386,7 @@ public abstract class AbstractJdbcRepository {
         return switch (operation) {
             case EQUALS -> select.and(condition);
             case NOT_EQUALS -> select.andNot(condition);
-            //todo use a real exception
-            default -> throw new UnsupportedOperationException("Unsupported operation for QUERY field: " + operation);
+            default -> throw new InvalidQueryFiltersException("Unsupported operation for QUERY field: " + operation);
         };
     }
 
@@ -413,7 +410,7 @@ public abstract class AbstractJdbcRepository {
         switch (operation) {
             case EQUALS -> select = select.and(minLevelCondition(minLevel));
             case NOT_EQUALS -> select = select.and(minLevelCondition(minLevel).not());
-            default -> throw new UnsupportedOperationException(
+            default -> throw new InvalidQueryFiltersException(
                 "Unsupported operation for MIN_LEVEL: " + operation
             );
         }
@@ -439,7 +436,7 @@ public abstract class AbstractJdbcRepository {
             case EQUALS -> select = select.and(field(fieldName).eq(dateTime));
             case NOT_EQUALS -> select = select.and(field(fieldName).ne(dateTime));
             default ->
-                throw new UnsupportedOperationException("Unsupported operation for date condition: " + operation);
+                throw new InvalidQueryFiltersException("Unsupported operation for date condition: " + operation);
         }
         return select;
     }
@@ -448,15 +445,15 @@ public abstract class AbstractJdbcRepository {
         SelectConditionStep<T> select, Object value, QueryFilter.Op operation) {
 
         if (!(value instanceof List<?> scopeValues)) {
-            throw new IllegalArgumentException("Invalid value for SCOPE filtering");
+            throw new InvalidQueryFiltersException("Invalid value for SCOPE filtering");
         }
 
         List<FlowScope> validScopes = Arrays.stream(FlowScope.values()).toList();
         if (!validScopes.containsAll(scopeValues)) {
-            throw new IllegalArgumentException("Scope values must be a subset of FlowScope");
+            throw new InvalidQueryFiltersException("Scope values must be a subset of FlowScope");
         }
         if (operation != QueryFilter.Op.EQUALS && operation != QueryFilter.Op.NOT_EQUALS) {
-            throw new UnsupportedOperationException("Unsupported operation for SCOPE: " + operation);
+            throw new InvalidQueryFiltersException("Unsupported operation for SCOPE: " + operation);
         }
 
         boolean isEqualsOperation = (operation == QueryFilter.Op.EQUALS);

@@ -91,7 +91,7 @@ public record QueryFilter(
         QUERY("q") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.REGEX);
             }
         },
         SCOPE("scope") {
@@ -183,7 +183,6 @@ public record QueryFilter(
         private static final Map<String, Field> BY_VALUE = Arrays.stream(values())
             .collect(Collectors.toMap(Field::value, Function.identity()));
 
-        //TODO this is never used
         public abstract List<Op> supportedOp();
 
         private final String value;

@@ -145,8 +145,7 @@ public class ErrorController {
 
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidQueryFiltersException e) {
-        String errors = Optional.ofNullable(e.invalidObjects()).map(errorMessages -> String.join(", ", errorMessages)).orElse(e.getMessage());
-        return jsonError(request, e, HttpStatus.BAD_REQUEST, errors);
+        return jsonError(request, e, HttpStatus.BAD_REQUEST, e.formatedInvalidObjects());
     }
 
     @Error(global = true)

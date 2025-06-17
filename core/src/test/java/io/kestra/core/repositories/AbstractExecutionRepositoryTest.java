@@ -2,6 +2,7 @@ package io.kestra.core.repositories;
 
 import com.devskiller.friendly_id.FriendlyId;
 import com.google.common.collect.ImmutableMap;
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
@@ -43,11 +44,13 @@ import java.util.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.slf4j.event.Level;
 
 import static io.kestra.core.models.flows.FlowScope.USER;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.groups.Tuple.tuple;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -181,13 +184,24 @@ public abstract class AbstractExecutionRepositoryTest {
             Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 28),
             Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 28),
             Arguments.of(QueryFilter.builder().field(Field.STATE).value(Type.RUNNING).operation(Op.EQUALS).build(), 5),
-//            Arguments.of(QueryFilter.builder().field(Field.TIME_RANGE).value("test").operation(Op.EQUALS).build(), 28),
             Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 28),
-//            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_ID).value("test").operation(Op.EQUALS).build(), 28),
             Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 28)
-//            Arguments.of(QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(), 28),
-//            Arguments.of(QueryFilter.builder().field(Field.EXISTING_ONLY).value("test").operation(Op.EQUALS).build(), 28),
-//            Arguments.of(QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.DEBUG).operation(Op.EQUALS).build(), 28)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("errorFilterCombinations")
+    void should_fail_to_find_all(QueryFilter filter){
+        assertThrows(InvalidQueryFiltersException.class, () -> executionRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter)));
+    }
+
+    static Stream<QueryFilter> errorFilterCombinations() {
+        return Stream.of(
+            QueryFilter.builder().field(Field.TIME_RANGE).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.TRIGGER_ID).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.EXISTING_ONLY).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.DEBUG).operation(Op.EQUALS).build()
         );
     }
 

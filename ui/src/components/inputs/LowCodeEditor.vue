@@ -24,7 +24,7 @@
             @swapped-task="onSwappedTask"
             @message="message"
             @expand-subflow="expandSubflow"
-            :icons="icons"
+            :icons="pluginsStore.icons"
         />
 
         <!-- Drawer to create/add task -->
@@ -106,7 +106,7 @@
 
 <script setup>
     // Core
-    import {getCurrentInstance, nextTick, onMounted, ref, inject, watch, computed} from "vue";
+    import {getCurrentInstance, nextTick, onMounted, ref, inject, watch} from "vue";
     import {useStore} from "vuex";
     import {useStorage} from "@vueuse/core";
     import {useRouter} from "vue-router";
@@ -123,7 +123,8 @@
     import {Topology} from "@kestra-io/ui-libs";
 
     // Utils
-    import {YamlUtils as YAML_UTILS, SECTIONS} from "@kestra-io/ui-libs";
+    import {SECTIONS} from "@kestra-io/ui-libs";
+    import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import Markdown from "../layout/Markdown.vue";
     import Editor from "./Editor.vue";
 
@@ -203,7 +204,6 @@
     const isHorizontal = ref(props.horizontalDefault ?? (isHorizontalLS.value === "true"));
     const vueFlow = ref(null);
     const timer = ref(null);
-    const icons = computed(() => pluginsStore.icons);
     const taskObject = ref(null);
     const taskEditData = ref(null);
     const taskEditDomElement = ref(null);
@@ -269,7 +269,11 @@
                     });
                     return;
                 }
-                const updatedYmlSource = YAML_UTILS.deleteTask(props.source, event.id, section)
+                const updatedYmlSource = YAML_UTILS.deleteBlock({
+                    source:props.source,
+                    section,
+                    key: event.id,
+                })
                 emit(
                     "on-edit",
                     updatedYmlSource,

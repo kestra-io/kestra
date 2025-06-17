@@ -137,6 +137,7 @@
 
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
     const save = async () => {
+        clearTimeout(timeout.value);
         const result = await store.dispatch("flow/save", {content: editorDomElement.value.$refs.monacoEditor.value})
         if(result === "redirect_to_update"){
             await router.push({
@@ -152,6 +153,7 @@
     };
 
     const saveFileContent =  async ()=>{
+        clearTimeout(timeout.value);
         await store.dispatch("namespace/createFile", {
             namespace: namespace.value,
             path: props.path,

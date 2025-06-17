@@ -147,7 +147,8 @@
       "docs": "Dokumentacja",
       "help": "Pomoc",
       "issue": "Otwórz Issue",
-      "news": "Wiadomości"
+      "news": "Wiadomości",
+      "star": "Dodaj gwiazdkę repozytorium"
     },
     "continue backfill": "Kontynuuj backfill",
     "continue backfills": "Kontynuuj backfills",

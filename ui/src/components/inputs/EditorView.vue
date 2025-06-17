@@ -932,6 +932,7 @@
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);
 
     const saveWithoutRevisionGuard = async () => {
+        clearTimeout(timer.value);
         const result = await store.dispatch("flow/saveWithoutRevisionGuard");
         if(result === "redirect_to_update"){
             await router.push({
@@ -954,6 +955,7 @@
     };
 
     const save = async () => {
+        clearTimeout(timer.value);
         const result = await store.dispatch("flow/save", {
             content: editorDomElement.value?.$refs.monacoEditor.value ?? flowYaml.value,
             namespace: props.namespace ?? route.params.namespace,

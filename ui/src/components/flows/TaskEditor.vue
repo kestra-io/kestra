@@ -16,7 +16,7 @@
         </el-form-item>
     </el-form>
 
-    <div @click="store.dispatch('plugin/updateDocumentation', {task: selectedTaskType});">
+    <div @click="pluginsStore.updateDocumentation({task: selectedTaskType});">
         <TaskObject
             v-loading="isLoading"
             v-if="selectedTaskType && schema"

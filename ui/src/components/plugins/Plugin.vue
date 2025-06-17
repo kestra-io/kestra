@@ -1,20 +1,20 @@
 <template>
     <top-nav-bar :title="routeInfo.title" :breadcrumb="routeInfo?.breadcrumb" />
     <template v-if="!pluginIsSelected">
-        <plugin-home v-if="plugins" :plugins="plugins" />
+        <plugin-home v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins" />
     </template>
     <docs-layout v-else>
         <template #menu>
-            <Toc @router-change="onRouterChange" v-if="plugins" :plugins="plugins.filter(p => !p.subGroup)" />
+            <Toc @router-change="onRouterChange" v-if="pluginsStore.plugins" :plugins="pluginsStore.plugins.filter(p => !p.subGroup)" />
         </template>
         <template #content>
             <div class="plugin-doc">
-                <div class="versions" v-if="versions?.length > 0">
+                <div class="versions" v-if="pluginsStore.versions?.length > 0">
                     <el-select
                         v-model="version"
                         placeholder="Version"
                         size="small"
-                        :disabled="versions?.length === 1"
+                        :disabled="pluginsStore.versions?.length === 1"
                         @change="selectVersion(version)"
                     >
                         <template #label="{value}">
@@ -22,7 +22,7 @@
                             <span style="font-weight: bold">{{ value }}</span>
                         </template>
                         <el-option
-                            v-for="item in versions"
+                            v-for="item in pluginsStore.versions"
                             :key="item"
                             :label="item"
                             :value="item"
@@ -34,7 +34,7 @@
                         class="plugin-icon"
                         :cls="pluginType"
                         only-icon
-                        :icons="icons"
+                        :icons="pluginsStore.icons"
                     />
                     <h4 class="mb-0">
                         {{ pluginName }}
@@ -80,7 +80,7 @@
 
 <script>
     import RouteContext from "../../mixins/routeContext";
-    import {mapState, mapGetters} from "vuex";
+    import {mapGetters} from "vuex";
     import {getPluginReleaseUrl} from "../../utils/pluginUtils";
     import {mapStores} from "pinia";
     import {usePluginsStore} from "../../stores/plugins";
@@ -88,7 +88,6 @@
     export default {
         mixins: [RouteContext],
         computed: {
-            ...mapState("plugin", ["plugin", "plugins", "icons", "versions"]),
             ...mapGetters("misc", ["theme"]),
             ...mapStores(usePluginsStore),
             routeInfo() {
@@ -112,7 +111,7 @@
                 return getPluginReleaseUrl(this.pluginType);
             },
             pluginIsSelected() {
-                return this.pluginType !== undefined && this.plugin !== undefined
+                return this.pluginType !== undefined && this.pluginsStore.plugin !== undefined
             }
         },
         data() {

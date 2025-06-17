@@ -56,7 +56,7 @@
     })
 
     const taskModels = computed(() => {
-        const models = new Set<string>();
+        const models = new Set<any>();
         const pluginKeySection: BlockType[] =
             props.blockType === "pluginDefaults"
                 ? ["tasks", "conditions", "triggers", "taskRunners"]

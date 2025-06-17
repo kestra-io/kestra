@@ -11,8 +11,8 @@ import permission from "../models/permission";
 import {pageFromRoute} from "../utils/eventsRouter";
 import {apiUrl} from "override/utils/route";
 import {mapStores} from "pinia";
-import {useApiStore} from "../../stores/api";
-import {usePluginsStore} from "../../stores/plugins";
+import {useApiStore} from "../stores/api";
+import {usePluginsStore} from "../stores/plugins";
 
 export default {
     mixins: [RouteContext],

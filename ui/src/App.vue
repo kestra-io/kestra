@@ -131,7 +131,7 @@
 
                 this.pluginsStore.setVuexStore(this.$store);
 
-                this.pluginsStore.icons()
+                this.pluginsStore.fetchIcons()
                 const config = await this.$store.dispatch("misc/loadConfigs");
                 await this.$store.dispatch("doc/initResourceUrlTemplate", config.version);
 

@@ -142,7 +142,7 @@
         },
         methods: {
             loadToc() {
-                this.listWithSubgroup({
+                this.pluginsStore.listWithSubgroup({
                     includeDeprecated: false
                 })
             },

@@ -778,7 +778,7 @@ export default {
             } else return false;
         },
         nextRevision(_state, getters){
-            return getters.flow.revision + 1;
+            return (getters.flow?.revision ?? 0) + 1;
         },
         yamlWithNextRevision(_state, getters){
             return `revision: ${getters.nextRevision}\n${getters.flowYaml}`;

@@ -4,7 +4,6 @@ import execution from "./executions"
 import flow from "./flow"
 import graph from "./graph"
 import layout from "./layout"
-import log from "./logs"
 import namespace from "./namespaces"
 import misc from "./miscs"
 import stat from "./stat"
@@ -24,7 +23,6 @@ export default {
         flow,
         template,
         execution,
-        log,
         stat,
         namespace,
         misc,

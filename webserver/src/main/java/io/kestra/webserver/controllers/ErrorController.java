@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InvalidException;
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
@@ -140,6 +141,12 @@ public class ErrorController {
     public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidException e) {
         String entity = Optional.ofNullable(e.invalidObject()).map(Object::getClass).map(Class::getSimpleName).orElse("entity");
         return jsonError(request, e, HttpStatus.UNPROCESSABLE_ENTITY, "Invalid " + entity);
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidQueryFiltersException e) {
+        String errors = Optional.ofNullable(e.invalidObjects()).map(errorMessages -> String.join(", ", errorMessages)).orElse(e.getMessage());
+        return jsonError(request, e, HttpStatus.BAD_REQUEST, errors);
     }
 
     @Error(global = true)

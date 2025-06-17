@@ -3,7 +3,10 @@ package io.kestra.core.repositories;
 import io.kestra.core.Helpers;
 import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
+import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.SearchResult;
 import io.kestra.core.models.executions.Execution;
 import io.kestra.core.models.flows.*;
@@ -22,6 +25,7 @@ import io.micronaut.data.model.Sort;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import java.util.stream.Stream;
 import lombok.Getter;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -34,8 +38,12 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import jakarta.validation.ConstraintViolationException;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
+import static io.kestra.core.models.flows.FlowScope.SYSTEM;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
+import static io.kestra.core.utils.NamespaceUtils.SYSTEM_FLOWS_DEFAULT_NAMESPACE;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -70,6 +78,68 @@ public abstract class AbstractFlowRepositoryTest {
             .id(flowId)
             .namespace(TEST_NAMESPACE)
             .tasks(Collections.singletonList(Return.builder().id(taskId).type(Return.class.getName()).format(Property.ofValue(TEST_FLOW_ID)).build()));
+    }
+
+    @ParameterizedTest
+    @MethodSource("filterCombinations")
+    void should_find_all(QueryFilter filter){
+
+        FlowWithSource flow = FlowWithSource.builder()
+            .id("filter_flow_id")
+            .namespace(SYSTEM_FLOWS_DEFAULT_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .labels(Label.from(Map.of("key", "value")))
+            .build();
+        flow = flowRepository.create(GenericFlow.of(flow));
+        try {
+            ArrayListTotal<Flow> entries = flowRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter));
+
+            assertThat(entries).hasSize(1);
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    @ParameterizedTest
+    @MethodSource("filterCombinations")
+    void should_find_all_with_source(QueryFilter filter){
+
+        FlowWithSource flow = FlowWithSource.builder()
+            .id("filter_flow_id")
+            .namespace(SYSTEM_FLOWS_DEFAULT_NAMESPACE)
+            .tenantId(MAIN_TENANT)
+            .labels(Label.from(Map.of("key", "value")))
+            .build();
+        flow = flowRepository.create(GenericFlow.of(flow));
+        try {
+            ArrayListTotal<FlowWithSource> entries = flowRepository.findWithSource(Pageable.UNPAGED, MAIN_TENANT, List.of(filter));
+
+            assertThat(entries).hasSize(1);
+        } finally {
+            deleteFlow(flow);
+        }
+    }
+
+    static Stream<QueryFilter> filterCombinations() {
+        return Stream.of(
+            QueryFilter.builder().field(Field.QUERY).value("filter_flow_id").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value(SYSTEM_FLOWS_DEFAULT_NAMESPACE).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build()
+
+
+//            Arguments.of(QueryFilter.builder().field(Field.FLOW_ID).value("sleep").operation(Op.EQUALS).build(), 15),
+//            Arguments.of(QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(), 28),
+//            Arguments.of(QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(), 28),
+//            Arguments.of(QueryFilter.builder().field(Field.STATE).value(State.Type.RUNNING).operation(Op.EQUALS).build(), 5),
+//            Arguments.of(QueryFilter.builder().field(Field.TIME_RANGE).value("test").operation(Op.EQUALS).build(), 28),
+//            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("executionTriggerId").operation(Op.EQUALS).build(), 28),
+//            Arguments.of(QueryFilter.builder().field(Field.TRIGGER_ID).value("test").operation(Op.EQUALS).build(), 28),
+//            Arguments.of(QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(), 28),
+//            Arguments.of(QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(), 28),
+//            Arguments.of(QueryFilter.builder().field(Field.EXISTING_ONLY).value("test").operation(Op.EQUALS).build(), 28)
+//            Arguments.of(QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.DEBUG).operation(Op.EQUALS).build(), 28)
+        );
     }
 
     @Test

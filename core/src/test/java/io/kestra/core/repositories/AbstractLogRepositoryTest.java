@@ -3,6 +3,7 @@ package io.kestra.core.repositories;
 import io.kestra.core.junit.annotations.KestraTest;
 import io.kestra.core.models.QueryFilter;
 import io.kestra.core.models.QueryFilter.Field;
+import io.kestra.core.models.QueryFilter.Op;
 import io.kestra.core.models.dashboards.AggregationType;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.executions.Execution;
@@ -13,7 +14,10 @@ import io.kestra.core.utils.IdUtils;
 import io.kestra.plugin.core.dashboard.data.Logs;
 import io.micronaut.data.model.Pageable;
 import jakarta.inject.Inject;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
 
@@ -24,6 +28,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
+import static io.kestra.core.models.flows.FlowScope.USER;
 import static io.kestra.core.tenant.TenantService.MAIN_TENANT;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -44,7 +49,38 @@ public abstract class AbstractLogRepositoryTest {
             .level(level)
             .thread("")
             .tenantId(MAIN_TENANT)
+            .triggerId("triggerId")
             .message("john doe");
+    }
+
+    @ParameterizedTest
+    @MethodSource("filterCombinations")
+    void should_find_all(QueryFilter filter){
+        logRepository.save(logEntry(Level.INFO).build());
+
+        ArrayListTotal<LogEntry> entries = logRepository.find(Pageable.UNPAGED, MAIN_TENANT, List.of(filter));
+
+        assertThat(entries).hasSize(1);
+    }
+
+    static Stream<QueryFilter> filterCombinations() {
+        return Stream.of(
+            QueryFilter.builder().field(Field.QUERY).value("flowId").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.SCOPE).value(List.of(USER)).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.NAMESPACE).value("io.kestra.unittest").operation(Op.EQUALS).build(),
+//            QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.FLOW_ID).value("flowId").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.START_DATE).value(ZonedDateTime.now().minusMinutes(1)).operation(Op.GREATER_THAN).build(),
+            QueryFilter.builder().field(Field.END_DATE).value(ZonedDateTime.now().plusMinutes(1)).operation(Op.LESS_THAN).build(),
+//            QueryFilter.builder().field(Field.STATE).value(State.Type.RUNNING).operation(Op.EQUALS).build(),
+//            QueryFilter.builder().field(Field.TIME_RANGE).value("test").operation(Op.EQUALS).build(),
+//            QueryFilter.builder().field(Field.TRIGGER_EXECUTION_ID).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.TRIGGER_ID).value("triggerId").operation(Op.EQUALS).build(),
+//            QueryFilter.builder().field(Field.CHILD_FILTER).value(ChildFilter.CHILD).operation(Op.EQUALS).build(),
+//            QueryFilter.builder().field(Field.WORKER_ID).value("test").operation(Op.EQUALS).build(),
+//            QueryFilter.builder().field(Field.EXISTING_ONLY).value("test").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.MIN_LEVEL).value(Level.DEBUG).operation(Op.EQUALS).build()
+        );
     }
 
     @Test

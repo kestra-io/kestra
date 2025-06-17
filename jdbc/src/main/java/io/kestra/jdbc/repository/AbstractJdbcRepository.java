@@ -1,6 +1,8 @@
 package io.kestra.jdbc.repository;
 
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.Order;
@@ -241,9 +243,11 @@ public abstract class AbstractJdbcRepository {
     protected <T extends Record> SelectConditionStep<T> filter(
         SelectConditionStep<T> select,
         List<QueryFilter> filters,
-        String dateColumn
+        String dateColumn,
+        Resource resource
     ) {
         if (filters != null) {
+            QueryFilter.validateQueryFilters(filters, resource);
             for (QueryFilter filter : filters) {
                 QueryFilter.Field field = filter.field();
                 QueryFilter.Op operation = filter.operation();
@@ -266,7 +270,7 @@ public abstract class AbstractJdbcRepository {
         @Nullable String dateColumn
     ) {
         if (field.equals(QueryFilter.Field.QUERY)) {
-            return select;
+            return handleQuery(select, value, operation);
         }
         // Handling for Field.STATE
         if (field.equals(QueryFilter.Field.STATE)) {
@@ -295,6 +299,14 @@ public abstract class AbstractJdbcRepository {
 
         if (field == QueryFilter.Field.SCOPE) {
             return applyScopeCondition(select, value, operation);
+        }
+
+        if (field.equals(QueryFilter.Field.LABELS)) {
+            if (value instanceof Map<?, ?> map){
+                return select.and(findLabelCondition(map, operation));
+            } else {
+                throw new InvalidQueryFiltersException(List.of("Label field value must but instance of Map"), "Label field value must but instance of Map");
+            }
         }
 
         // Convert the field name to lowercase and quote it
@@ -334,6 +346,16 @@ public abstract class AbstractJdbcRepository {
         return select;
     }
 
+    protected Condition findQueryCondition(String query) {
+        //todo use a real exception
+        throw new UnsupportedOperationException("Unsupported operation: ");
+    }
+
+    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
+        //todo use a real exception
+        throw new UnsupportedOperationException("Unsupported operation: " + operation);
+    }
+
     // Generate the condition for Field.STATE
     @SuppressWarnings("unchecked")
     private Condition generateStateCondition(Object value, QueryFilter.Op operation) {
@@ -356,6 +378,19 @@ public abstract class AbstractJdbcRepository {
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
             .in(state.stream().map(Enum::name).toList());
+    }
+
+    private <T extends Record> SelectConditionStep<T> handleQuery(SelectConditionStep<T> select,
+            Object value,
+            QueryFilter.Op operation) {
+        Condition condition = findQueryCondition(value.toString());
+
+        return switch (operation) {
+            case EQUALS -> select.and(condition);
+            case NOT_EQUALS -> select.andNot(condition);
+            //todo use a real exception
+            default -> throw new UnsupportedOperationException("Unsupported operation for QUERY field: " + operation);
+        };
     }
 
     // Handle CHILD_FILTER field logic
@@ -407,15 +442,6 @@ public abstract class AbstractJdbcRepository {
                 throw new UnsupportedOperationException("Unsupported operation for date condition: " + operation);
         }
         return select;
-    }
-
-    protected static String getQuery(List<QueryFilter> filters) {
-        if (filters == null || filters.isEmpty()) return null;
-        return filters.stream()
-            .filter(filter -> filter.field() == QueryFilter.Field.QUERY)
-            .map(filter -> filter.value().toString())
-            .findFirst()
-            .orElse(null);
     }
 
     private <T extends Record> SelectConditionStep<T> applyScopeCondition(

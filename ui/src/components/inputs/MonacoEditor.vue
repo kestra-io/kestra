@@ -1,6 +1,12 @@
 <template>
     <div>
         <div class="ks-monaco-editor" ref="editorRef" />
+        <div v-if="errorMarkers.length" class="error-panel">
+            <div v-for="err in errorMarkers" :key="err.startLineNumber + '-' + err.startColumn + '-' + err.message" class="error-item" @click="goToError(err)">
+                <span>Line {{ err.startLineNumber }}, Col {{ err.startColumn }}: </span>
+                <span>{{ err.message }}</span>
+            </div>
+        </div>
         <div ref="datePickerWrapper" v-show="datePickerShown">
             <el-date-picker
                 ref="datePicker"
@@ -436,6 +442,24 @@
 
     const disposeCompletions = ref<() => void>();
 
+    const errorMarkers = ref<any[]>([]);
+
+    function updateErrorMarkers() {
+        const model = localEditor?.getModel();
+        if (model) {
+            errorMarkers.value = monaco.editor.getModelMarkers({resource: model.uri});
+        } else {
+            errorMarkers.value = [];
+        }
+    }
+
+    function goToError(err: any) {
+        if (localEditor) {
+            localEditor.setPosition({lineNumber: err.startLineNumber, column: err.startColumn});
+            localEditor.focus();
+        }
+    }
+
     onMounted(async function () {
         await document.fonts.ready;
         await initMonaco();
@@ -460,6 +484,11 @@
         (window as any).nextSuggestion = () => {
             localEditor?.trigger("selectNextSuggestion", "selectNextSuggestion", {});
         };
+
+        if (localEditor) {
+            updateErrorMarkers();
+            monaco.editor.onDidChangeMarkers(updateErrorMarkers);
+        }
     })
 
     onBeforeUnmount(function () {
@@ -767,6 +796,26 @@
 
     .main-editor > #editorWrapper .monaco-editor {
         padding: 1rem 0 0 1rem;
+    }
+
+    .error-panel {
+        background: #fff3f3;
+        color: #b71c1c;
+        border: 1px solid #ffcdd2;
+        padding: 0.5rem;
+        margin-top: 0.5rem;
+        font-size: 0.95em;
+        max-height: 120px;
+        overflow-y: auto;
+    }
+
+    .error-item {
+        cursor: pointer;
+        padding: 2px 0;
+    }
+
+    .error-item:hover {
+        background: #ffcdd2;
     }
 </style>
 

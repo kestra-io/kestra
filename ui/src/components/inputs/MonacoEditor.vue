@@ -294,11 +294,11 @@
             node.querySelector(`.${KESTRA_ICON_WRAPPER_CLASS}`)?.remove();
 
             if (completionValue.includes(".") && !completionValue.includes("{")) {
-                if (store.state.plugin?.icons?.[completionValue] !== undefined) {
+                if (pluginsStore?.icons?.[completionValue] !== undefined) {
                     replaceRowIcon(vsCodeIcon, h(TaskIcon, {
                         cls: completionValue,
                         "only-icon": true,
-                        icons: store.state.plugin.icons,
+                        icons: pluginsStore.icons,
                     }));
                 }
             } else if (STATES[completionValue] !== undefined) {

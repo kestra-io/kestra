@@ -236,6 +236,7 @@
 
     import TimelineTextOutline from "vue-material-design-icons/TimelineTextOutline.vue";
     import TextBoxSearchOutline from "vue-material-design-icons/TextBoxSearchOutline.vue";
+    import {usePluginsStore} from "../../../stores/plugins";
 
     const cascader = ref<InstanceType<typeof ElTree> | null>(null);
     const scrollRight = () =>
@@ -386,7 +387,11 @@
         return tasks;
     });
 
-    const allIcons = computed(() => store.state.plugin.icons);
+    const pluginsStore = usePluginsStore();
+
+    pluginsStore.setVuexStore(store);
+
+    const allIcons = computed(() => pluginsStore.icons);
     const icons = computed(() => {
         // TODO: https://github.com/kestra-io/kestra/issues/5643
         const getTaskIcons = (tasks, mapped) => {

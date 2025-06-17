@@ -743,7 +743,7 @@
     onBeforeUnmount(() => {
         window.removeEventListener("resize", onResize);
 
-        pluginsStore.setEditorPlugin(undefined);
+        pluginsStore.editorPlugin = undefined;
         document.removeEventListener("keydown", saveUsingKeyboard);
         document.removeEventListener("popstate", () => {
             stopTour();

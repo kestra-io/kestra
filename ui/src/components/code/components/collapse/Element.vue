@@ -24,6 +24,8 @@
 <script setup lang="ts">
     import {computed, inject} from "vue";
     import {useI18n} from "vue-i18n";
+    import {useStore} from "vuex";
+    import {usePluginsStore} from "../../../../stores/plugins";
 
     import {DeleteOutline, ChevronUp, ChevronDown} from "../../utils/icons";
     import {BlockType} from "../../utils/types";
@@ -46,11 +48,15 @@
         elementIndex?: number;
     }>();
 
-    import {useStore} from "vuex";
+
 
     const store = useStore();
 
-    const icons = computed(() => store.state.plugin.icons);
+    const pluginsStore = usePluginsStore();
+
+    pluginsStore.setVuexStore(store);
+
+    const icons = computed(() => pluginsStore.icons);
 
     const editTask = inject(
         EDIT_TASK_FUNCTION_INJECTION_KEY,

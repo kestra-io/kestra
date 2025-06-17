@@ -49,10 +49,10 @@
     })
 
     const plugins = computed(() => {
-        return store.state.plugin.plugins;
+        return pluginsStore.plugins;
     })
     const icons = computed(() => {
-        return store.state.plugin.icons;
+        return pluginsStore.icons;
     })
 
     const taskModels = computed(() => {

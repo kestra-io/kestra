@@ -28,8 +28,8 @@
                             v-if="currentStep(tour).title"
                             class="title"
                             :class="{
-                                dark: currentStep(tour).keepDark, 
-                                empty: !flows.length, 
+                                dark: currentStep(tour).keepDark,
+                                empty: !flows.length,
                                 fixed: tour.currentStep === 1
                             }"
                         >
@@ -160,13 +160,16 @@
 
     import {editorViewTypes} from "../../utils/constants";
     import {useApiStore} from "../../stores/api";
+    import {usePluginsStore} from "../../stores/plugins";
 
     const router = useRouter();
     const store = useStore();
 
     const apiStore = useApiStore();
+    const pluginsStore = usePluginsStore();
+    pluginsStore.setVuexStore(store);
 
-    const icons = computed(() => store.state.plugin.icons);
+    const icons = computed(() => pluginsStore.icons);
 
     const {t} = useI18n({useScope: "global"});
 

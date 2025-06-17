@@ -69,7 +69,7 @@
                                     >
                                         <TaskIcon
                                             :cls="task"
-                                            :icons="icons"
+                                            :icons="pluginsStore.icons"
                                             :variable="ICON_COLOR"
                                             only-icon
                                         />
@@ -168,8 +168,6 @@
     const apiStore = useApiStore();
     const pluginsStore = usePluginsStore();
     pluginsStore.setVuexStore(store);
-
-    const icons = computed(() => pluginsStore.icons);
 
     const {t} = useI18n({useScope: "global"});
 

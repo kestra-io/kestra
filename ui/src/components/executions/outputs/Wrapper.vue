@@ -30,7 +30,7 @@
                         <div class="pe-5 d-flex task">
                             <TaskIcon
                                 v-if="data.icon"
-                                :icons="allIcons"
+                                :icons="pluginsStore.icons"
                                 :cls="icons[data.taskId]"
                                 only-icon
                             />
@@ -391,7 +391,6 @@
 
     pluginsStore.setVuexStore(store);
 
-    const allIcons = computed(() => pluginsStore.icons);
     const icons = computed(() => {
         // TODO: https://github.com/kestra-io/kestra/issues/5643
         const getTaskIcons = (tasks, mapped) => {

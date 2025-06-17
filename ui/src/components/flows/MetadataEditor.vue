@@ -132,8 +132,6 @@
     </el-form>
 </template>
 <script setup>
-
-
     import TaskBasic from "./tasks/TaskBasic.vue";
 
     import Pencil from "vue-material-design-icons/Pencil.vue";

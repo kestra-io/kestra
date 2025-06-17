@@ -162,6 +162,7 @@ public class Extension extends AbstractExtension {
         functions.put("fileExists", fileExistsFunction);
         functions.put("isFileEmpty", isFileEmptyFunction);
         functions.put("tasksWithState", new TasksWithState());
+        functions.put(DataFakerFunction.NAME, new DataFakerFunction());
         return functions;
     }
 

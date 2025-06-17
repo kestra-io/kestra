@@ -82,12 +82,12 @@ import java.util.stream.Stream;
             code = """
                 id: daily_flow
                 namespace: company.team
-                
+
                 tasks:
                   - id: log
                     type: io.kestra.plugin.core.log.Log
                     message: It's {{ trigger.date ?? taskrun.startDate | date("HH:mm") }}
-                
+
                 triggers:
                   - id: schedule
                     type: io.kestra.plugin.core.trigger.Schedule
@@ -436,13 +436,6 @@ public class Schedule extends AbstractTrigger implements Schedulable, TriggerOut
             variables,
             Optional.empty()
         );
-
-       execution = execution.toBuilder()
-            // keep to avoid breaking compatibility
-            .variables(ImmutableMap.of(
-                "schedule", execution.getTrigger().getVariables()
-            ))
-            .build();
 
        return Optional.of(execution);
     }

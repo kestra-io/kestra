@@ -15,6 +15,9 @@ micronaut:
       static:
         paths: classpath:static
         mapping: /static/**
+      root:
+        paths: classpath:root
+        mapping: /**
   server:
     max-request-size: 10GB
     multipart:

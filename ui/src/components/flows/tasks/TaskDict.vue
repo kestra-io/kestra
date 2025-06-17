@@ -1,4 +1,12 @@
 <template>
+    <el-alert
+        v-if="duplicatedKeys?.length"
+        :title="t('duplicate-pair', {label: t('key'), key: duplicatedKeys[0]})"
+        type="error"
+        show-icon
+        :closable="false"
+        class="mb-2"
+    />
     <el-row v-for="(item, index) in currentValue" :key="index" :gutter="10" class="w-100" :data-testid="`task-dict-item-${item[0]}-${index}`">
         <el-col :span="6">
             <InputText
@@ -6,6 +14,7 @@
                 @update:model-value="onKey(index, $event)"
                 margin="m-0"
                 placeholder="Key"
+                :have-error="duplicatedKeys.includes(item[0])"
             />
         </el-col>
         <el-col :span="16">
@@ -29,6 +38,7 @@
 
 <script lang="ts" setup>
     import {computed, ref, watch} from "vue";
+    import {useI18n} from "vue-i18n";
     import {DeleteOutline} from "../../code/utils/icons";
 
     import InputText from "../../code/components/inputs/InputText.vue";
@@ -36,6 +46,8 @@
     import Add from "../../code/components/Add.vue";
     import getTaskComponent from "./getTaskComponent";
     import debounce from "lodash/debounce";
+
+    const {t} = useI18n();
 
     defineOptions({
         name: "TaskDict",
@@ -67,9 +79,21 @@
 
     const currentValue = ref<[string, any][]>([])
 
+    // this flag will avoid updating the modelValue when the
+    // change was initiated in the component itself
+    const localEdit = ref(false);
+
     watch(
         () => props.modelValue,
         (newValue) => {
+            if(localEdit.value) {
+                return;
+            }
+            localEdit.value = false;
+            if(newValue === undefined || newValue === null) {
+                currentValue.value = [];
+                return;
+            }
             currentValue.value = Object.entries(newValue ?? {});
         },
         {
@@ -78,17 +102,19 @@
         },
     );
 
+    const duplicatedKeys = computed(() => {
+        return currentValue.value.map(pair => pair[0])
+            .filter((key, index, self) =>
+                self.indexOf(key) !== index
+            );
+    });
+
     const emitUpdate = debounce(function () {
-        const uniqueKeys = new Set<string>();
-        for (const [key, _] of currentValue.value) {
-            // if two keys are the same, we want to avoid loosing data
-            if(uniqueKeys.has(key)){
-                // so we don't update the model value
-                return
-            };
-            uniqueKeys.add(key);
+        if(duplicatedKeys.value?.length > 0) {
+            return;
         }
-        emit("update:modelValue", Object.fromEntries(currentValue.value));
+        localEdit.value = true;
+        emit("update:modelValue", Object.fromEntries(currentValue.value.filter(pair => pair[0] !== "" && pair[1] !== undefined)));
     }, 200);
 
     const emit = defineEmits(["update:modelValue"]);

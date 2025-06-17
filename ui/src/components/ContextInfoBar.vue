@@ -65,6 +65,7 @@
     import OpenInNew from "vue-material-design-icons/OpenInNew.vue"
     import WeatherSunny from "vue-material-design-icons/WeatherSunny.vue"
     import WeatherNight from "vue-material-design-icons/WeatherNight.vue"
+    import Star from "vue-material-design-icons/Star.vue"
 
     import {useStorage} from "@vueuse/core"
     import {useStore} from "vuex";
@@ -120,6 +121,11 @@
             title: t("contextBar.demo"),
             icon: Calendar,
             url: "https://kestra.io/demo"
+        },
+        star: {
+            title: t("contextBar.star"),
+            icon: Star,
+            url: "https://github.com/kestra-io/kestra"
         }
     }
 
@@ -207,6 +213,11 @@
         align-items: center;
         gap: 0.5rem;
         font-size: var(--font-size-sm);
+        overflow-y: auto;
+        &::-webkit-scrollbar {
+            width: 0; 
+        }
+        scrollbar-width: none;
 
         &.opened {
             border-right: 1px solid var(--ks-border-primary);
@@ -228,6 +239,7 @@
             color: var(--ks-content-tertiary);
             opacity: .4;
             margin-top: 1rem;
+            white-space: nowrap;
         }
 
         .theme-switcher {
@@ -269,6 +281,10 @@
         width: 0;
         position: relative;
         overflow-y: auto;
+        &::-webkit-scrollbar {
+            width: 0px; 
+        }
+        scrollbar-width: none;
 
         .closeButton {
             position: fixed;

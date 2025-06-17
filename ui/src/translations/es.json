@@ -147,7 +147,8 @@
       "docs": "Documentos",
       "help": "Ayuda",
       "issue": "Abrir un Issue",
-      "news": "Noticias"
+      "news": "Noticias",
+      "star": "Marca el repositorio"
     },
     "continue backfill": "Continuar el backfill",
     "continue backfills": "Continuar backfills",
@@ -350,6 +351,7 @@
     "download": "Descargar",
     "download logs": "Descargar logs",
     "download_logos": "Descargar Paquete de Logos",
+    "duplicate-pair": "{label} \"{key}\" está duplicado, se ignora la primera clave.",
     "duration": "Duración",
     "dynamic": "Dinámico",
     "each value": "Valor de iteración",
@@ -586,6 +588,7 @@
     "flow enable": "¿Estás seguro de que quieres habilitar <code>{flowCount}</code> flow(s)?",
     "flow export": "¿Estás seguro de que quieres exportar <code>{flowCount}</code> flow(s)?",
     "flow must have id and namespace": "El flow debe tener un id y un namespace.",
+    "flow must not be empty": "El flow no debe estar vacío",
     "flow not imported": "Algunos flow no pudieron ser importados",
     "flow source not found": "Fuente de flow no encontrada",
     "flow-dependencies": "dependencias",

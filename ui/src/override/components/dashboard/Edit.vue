@@ -31,7 +31,7 @@
 
     const dashboard = ref<Dashboard>({id: "", charts: []});
     const save = async (source: string) => {
-        const response = await store.dispatch("dashboard/update", {id: route.params.id, source,});
+        const response = await store.dispatch("dashboard/update", {id: route.params.dashboard, source,});
 
         dashboard.value.sourceCode = source;
 
@@ -40,13 +40,13 @@
     };
 
     onMounted(() => {
-        store.dispatch("dashboard/load", route.params.id).then((response) => {
+        store.dispatch("dashboard/load", route.params.dashboard).then((response) => {
             dashboard.value = response;
         });
     });
 
     const header = computed(() => ({
-        title: dashboard.value?.title || route.params.id,
+        title: dashboard.value?.title || route.params.dashboard,
         breadcrumb: [{label: t("dashboards.edition.label"), link: {}}],
     }));
 

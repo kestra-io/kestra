@@ -2,7 +2,8 @@
     <el-dropdown trigger="click" placement="bottom-end">
         <KestraIcon placement="bottom">
             <el-button :icon="Menu" class="main-button">
-                <span class="text-truncate">{{ selectedDashboard ?? $t('dashboards.default') }}</span>
+                <span class="text-truncate">
+                    {{ selectedDashboard ?? $t("dashboards.default") }}</span>
             </el-button>
         </KestraIcon>
 
@@ -12,7 +13,10 @@
                     type="primary"
                     :icon="Plus"
                     tag="router-link"
-                    :to="{name: 'dashboards/create', query: {from: route.name}}"
+                    :to="{
+                        name: 'dashboards/create',
+                        query,
+                    }"
                     class="w-100"
                 >
                     <small>{{ t("dashboards.creation.label") }}</small>
@@ -77,7 +81,7 @@
     import {useI18n} from "vue-i18n";
     import {useStore} from "vuex";
     import {useRouter, useRoute} from "vue-router";
-    import {STORAGE_KEYS} from "../../dashboard/composables/useDashboards";
+    import {getDashboard} from "../../dashboard/composables/useDashboards";
 
     const {t} = useI18n({useScope: "global"});
     const store = useStore();
@@ -88,14 +92,27 @@
     const toast = getCurrentInstance().appContext.config.globalProperties.$toast();
 
     const remove = (dashboard: any) => {
-        toast.confirm(t("dashboards.deletion.confirmation", {title: dashboard.title}), () => {
-            store.dispatch("dashboard/delete", dashboard.id).then(() => {
-                dashboards.value = dashboards.value.filter((d) => d.id !== dashboard.id);
-                toast.deleted(dashboard.title);
-                router.push({name: "home"});
-            });
-        });
+        toast.confirm(
+            t("dashboards.deletion.confirmation", {title: dashboard.title}),
+            () => {
+                store.dispatch("dashboard/delete", dashboard.id).then(() => {
+                    dashboards.value = dashboards.value.filter(
+                        (d) => d.id !== dashboard.id,
+                    );
+                    toast.deleted(dashboard.title);
+                });
+            },
+        );
     };
+
+    const query = computed(() => {
+        const generated = {
+            name: ["flows/update", "namespaces/update"].includes(route.name as string) ? route.name : "home",
+            params: JSON.stringify(route.params),
+        };
+
+        return generated;
+    });
 
     const search = ref("");
     const dashboards = ref<{ id: string; title: string }[]>([]);
@@ -107,21 +124,21 @@
         );
     });
 
-    const selectedDashboard = ref(null)
+    const selectedDashboard = ref(null);
 
     const selectDashboard = (dashboard: any) => {
         selectedDashboard.value = dashboard?.title;
         if (dashboard?.id) {
-            localStorage.setItem(STORAGE_KEYS(route.params).DASHBOARD_MAIN, dashboard.id);
+            localStorage.setItem(ID, dashboard.id);
         } else {
-            localStorage.removeItem(STORAGE_KEYS(route.params).DASHBOARD_MAIN);
+            localStorage.removeItem(ID);
         }
-        emits("dashboard", dashboard.id)
-    }
+        emits("dashboard", dashboard.id);
+    };
 
     const editDashboard = (dashboard: any) => {
-        router.push({name: "dashboards/update", params: {id: dashboard.id}});
-    }
+        router.push({name: "dashboards/update", params: {dashboard: dashboard.id}});
+    };
 
     const fetchDashboards = () => {
         store
@@ -130,26 +147,32 @@
                 dashboards.value = response.results;
 
                 const creation = Boolean(route.query.created);
-                const lastSelected = creation ? route.params?.id : (fetchLastDashboard() ?? route.params?.id);
+                const lastSelected = creation
+                    ? (route.params?.dashboard ?? fetchLastDashboard())
+                    : (fetchLastDashboard() ?? route.params?.dashboard);
 
                 if (lastSelected) {
-                    const dashboard = dashboards.value.find(d => d.id === lastSelected);
+                    const dashboard = dashboards.value.find(
+                        (d) => d.id === lastSelected,
+                    );
                     if (dashboard) {
                         selectDashboard(dashboard);
                     } else {
                         selectedDashboard.value = null;
-                        emits("dashboard", "default")
+                        emits("dashboard", "default");
                     }
                 }
             });
-    }
+    };
+
+    const ID = getDashboard(route, "id");
 
     const fetchLastDashboard = () => {
-        return localStorage.getItem(STORAGE_KEYS(route.params).DASHBOARD_MAIN)
-    }
+        return localStorage.getItem(ID);
+    };
 
     onBeforeMount(() => {
-        fetchDashboards()
+        fetchDashboards();
     });
 
     watch(
@@ -159,7 +182,9 @@
                 fetchDashboards();
                 routeTenant.value = newRoute.params.tenant;
             }
-        }, {deep: true});
+        },
+        {deep: true},
+    );
 </script>
 
 <style scoped lang="scss">

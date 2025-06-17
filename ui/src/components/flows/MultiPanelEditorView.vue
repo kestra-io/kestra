@@ -148,6 +148,11 @@
         {tabs: ["topology"], activeTab: "topology", size: 1}
     ];
 
+    function cleanupNoCodeTabKey(key: string): string {
+        // remove the number for "nocode-1234-" prefix from the key
+        return /^nocode-\d{4}/.test(key) ? key.slice(0, 6) + key.slice(11) : key
+    }
+
     const panels: Ref<Panel[]> = useStorage<any>(
         `panel-${flow.value.namespace}-${flow.value.id}`,
         DEFAULT_ACTIVE_TABS
@@ -158,7 +163,7 @@
                 write(v: Panel[]){
                     return JSON.stringify(v.map(p => ({
                         tabs: p.tabs.map(t => t.value),
-                        activeTab: p.activeTab?.value,
+                        activeTab: cleanupNoCodeTabKey(p.activeTab?.value),
                         size: p.size,
                     })))
                 },
@@ -175,7 +180,7 @@
                                 )
                                     // filter out any tab that may have disappeared
                                     .filter(Boolean)
-                                const activeTab = tabs.find(t => t.value === p.activeTab) ?? tabs[0]
+                                const activeTab = tabs.find(t => cleanupNoCodeTabKey(t.value) === p.activeTab) ?? tabs[0]
                                 return {
                                     activeTab,
                                     tabs,
@@ -225,11 +230,10 @@
     }
 
     .editor-wrapper{
-        flex: 1;
         position: relative;
     }
 
-    .editor-panels{
+    :deep(.editor-panels){
         position: absolute;
     }
 

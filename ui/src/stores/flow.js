@@ -46,8 +46,11 @@ export default {
             commit("setMetadata", null);
             commit("setHaveChange", true)
         },
-        async saveAll({dispatch, state, commit, getters}){
-            if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
+        async saveAll({dispatch, state, commit, getters, rootState}){
+            const hasAnyDirtyTabs = rootState.editor.tabs.some(t => t.dirty === true);
+            const hasChanges = state.haveChange || hasAnyDirtyTabs;
+            
+            if (getters.flowErrors?.length || !hasChanges && !state.isCreating) {
                 return;
             }
 
@@ -56,7 +59,10 @@ export default {
             return dispatch("saveWithoutRevisionGuard");
         },
         async save({getters, dispatch, commit, state, rootState}, {content, namespace}){
-            if (getters.flowErrors?.length || !state.haveChange && !state.isCreating) {
+            const hasAnyDirtyTabs = rootState.editor.tabs.some(t => t.dirty === true);
+            const hasChanges = state.haveChange || hasAnyDirtyTabs;
+            
+            if (getters.flowErrors?.length || !hasChanges && !state.isCreating) {
                 return;
             }
 
@@ -207,6 +213,7 @@ export default {
                         this.$toast.bind({$t: this.$i18n.t})().saved(response.id);
                         dispatch("core/isUnsaved", false, {root: true});
                         commit("setIsCreating", false);
+                        commit("setHaveChange", false);
                     });
             } else {
                 await dispatch("saveFlow", {flow: flowYaml})

@@ -4,7 +4,13 @@ import Executions from "../../../../src/components/executions/Executions.vue";
 import fixtureS from "./Executions-s.fixture.json";
 import {expect, userEvent, waitFor, within} from "storybook/test";
 import * as monaco from "monaco-editor/esm/vs/editor/editor.api";
-import {isColoredAsError} from "../../utils/monacoUtils.js";
+import {
+    clearMonacoInput,
+    getMonacoFilter,
+    getMonacoFilterInput,
+    isColoredAsError,
+    refreshMonacoFilter
+} from "../../utils/monacoUtils.js";
 
 function getDecorators(executionsSearchData) {
     return [
@@ -109,8 +115,7 @@ FilterExecutions.play = async ({canvasElement, step}) => {
     await step(
         "clearing and adding a namespace filter with keyboard",
         async () => {
-            await user.click(getMonacoFilterInput(canvas));
-            await clearMonacoInput();
+            await clearMonacoInput(user, canvas);
             await userEvent.keyboard("namespace=io.kestra");
             await refreshMonacoFilter(canvas);
 
@@ -129,7 +134,7 @@ FilterExecutions.play = async ({canvasElement, step}) => {
             ),
         );
 
-        await user.click(getMonacoFilterInput(canvas));
+        await user.click(await getMonacoFilterInput(canvas));
         await userEvent.keyboard("{End}");
         await userEvent.keyboard(spaceBarKey);
         await userEvent.keyboard("flowId=123");
@@ -146,8 +151,7 @@ FilterExecutions.play = async ({canvasElement, step}) => {
     });
 
     await step("unknown field should be displayed red", async () => {
-        await user.click(getMonacoFilterInput(canvas));
-        await clearMonacoInput();
+        await clearMonacoInput(user, canvas);
         await userEvent.keyboard("an-unknown-field=q2132");
         await refreshMonacoFilter(canvas);
 
@@ -168,8 +172,7 @@ FilterExecutions.play = async ({canvasElement, step}) => {
     await step(
         "unknown field should be marked as invalid internally by Monaco",
         async () => {
-            await user.click(getMonacoFilterInput(canvas));
-            await clearMonacoInput();
+            await clearMonacoInput(user, canvas);
             await userEvent.keyboard("an-unknown-field=q2222222222");
             await refreshMonacoFilter(canvas);
 
@@ -189,26 +192,6 @@ FilterExecutions.play = async ({canvasElement, step}) => {
         },
     );
 };
-// TODO test from query route !!!!
 
 // Helpers and constants
 const spaceBarKey = "{ }";
-const triggerRefreshButton = "trigger-refresh-button";
-const monacoFilter = "monaco-filter";
-
-function getMonacoFilter(canvas) {
-    return canvas.getByTestId(monacoFilter);
-}
-
-function getMonacoFilterInput(canvas) {
-    const monacoFilter = getMonacoFilter(canvas);
-    return within(monacoFilter).getByRole("textbox");
-}
-
-async function clearMonacoInput() {
-    await userEvent.keyboard("{Control>}a{/Control}{Delete}");
-}
-
-async function refreshMonacoFilter(canvas) {
-    await userEvent.click(canvas.getByTestId(triggerRefreshButton));
-}

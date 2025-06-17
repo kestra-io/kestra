@@ -1,6 +1,6 @@
 <template>
     <div>
-        <div class="ks-monaco-editor" ref="editorRef" />
+        <div data-testid="monaco-editor" class="ks-monaco-editor" ref="editorRef" />
         <div ref="datePickerWrapper" v-show="datePickerShown">
             <el-date-picker
                 ref="datePicker"
@@ -15,6 +15,13 @@
                 class="z-3"
             />
         </div>
+
+        <textarea
+            data-testid="monaco-editor-hidden-synced-textarea"
+            style="height: 0; width: 0; opacity: 0;"
+            type="text"
+            v-model="textAreaValue"
+        />
     </div>
 </template>
 
@@ -68,6 +75,15 @@
             }
         },
     };
+
+    const textAreaValue = computed({
+        get() {
+            return props.value;
+        },
+        set(value) {
+            emit("change", value);
+        }
+    });
 
     const highlight = inject(EDITOR_HIGHLIGHT_INJECTION_KEY, ref());
     watch(highlight, (line) => {

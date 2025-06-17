@@ -12,6 +12,7 @@ import io.kestra.core.models.flows.input.SecretInput;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.models.triggers.AbstractTrigger;
 import io.kestra.core.utils.ListUtils;
+import io.kestra.plugin.core.trigger.Schedule;
 import lombok.AllArgsConstructor;
 import lombok.With;
 
@@ -181,9 +182,6 @@ public final class RunVariables {
             // Flow
             if (flow != null) {
                 builder.put("flow", RunVariables.of(flow));
-                if (flow.getVariables() != null) {
-                    builder.put("vars", flow.getVariables());
-                }
             }
 
             // Task
@@ -298,14 +296,17 @@ public final class RunVariables {
 
                 if (execution.getTrigger() != null && execution.getTrigger().getVariables() != null) {
                     builder.put("trigger", execution.getTrigger().getVariables());
+
+                    // temporal hack to add back the `schedule`variables
+                    // will be removed in 2.0
+                    if (trigger.getType().equals(Schedule.class.getName())) {
+                        // add back its variables inside the `schedule` variables
+                        builder.put("schedule", execution.getTrigger().getVariables());
+                    }
                 }
 
                 if (execution.getLabels() != null) {
                     builder.put("labels", Label.toNestedMap(execution.getLabels()));
-                }
-
-                if (execution.getVariables() != null) {
-                    builder.putAll(execution.getVariables());
                 }
 
                 if (flow == null) {
@@ -317,6 +318,15 @@ public final class RunVariables {
                         .build();
                     builder.put("flow", RunVariables.of(flowFromExecution));
                 }
+            }
+
+            // variables
+            if (execution != null &&  execution.getVariables() != null) {
+                builder.put("vars", execution.getVariables());
+            }
+            else if (execution == null && flow != null && flow.getVariables() != null) {
+                // flow variables are added to the execution variables at execution creation time so they must only be added if the execution is null
+                builder.put("vars", flow.getVariables());
             }
 
             // Kestra configuration

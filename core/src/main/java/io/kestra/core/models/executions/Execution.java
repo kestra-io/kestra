@@ -156,6 +156,7 @@ public class Execution implements DeletedInterface, TenantInterface {
             .flowRevision(flow.getRevision())
             .state(new State())
             .scheduleDate(scheduleDate.map(ChronoZonedDateTime::toInstant).orElse(null))
+            .variables(flow.getVariables())
             .build();
 
         List<Label> executionLabels = new ArrayList<>(LabelService.labelsExcludingSystem(flow));

@@ -2,7 +2,7 @@
     <top-nav-bar v-if="!embed" :title="routeInfo.title" />
     <section v-bind="$attrs" :class="{'container': !embed}" class="log-panel">
         <div class="log-content">
-            <data-table @page-changed="onPageChanged" ref="dataTable" :total="total" :size="pageSize" :page="pageNumber" :embed="embed">
+            <data-table @page-changed="onPageChanged" ref="dataTable" :total="logsStore.total" :size="pageSize" :page="pageNumber" :embed="embed">
                 <template #navbar v-if="!embed || showFilters">
                     <KestraFilter
                         prefix="logs"
@@ -18,11 +18,11 @@
                     <Sections :charts />
                 </template>
 
-                <template #table v-if="logs !== undefined && logs.length > 0">
+                <template #table v-if="logsStore.logs !== undefined && logsStore.logs.length > 0">
                     <div v-loading="isLoading">
                         <div class="logs-wrapper">
                             <log-line
-                                v-for="(log, i) in logs"
+                                v-for="(log, i) in logsStore.logs"
                                 :key="`${log.taskRunId}-${i}`"
                                 level="TRACE"
                                 filter=""
@@ -40,28 +40,29 @@
 <script setup lang="ts">
     import LogFilterLanguage from "../../composables/monaco/languages/filters/impl/logFilterLanguage";
     import Sections from "../dashboard/sections/Sections.vue";
+    import DataTable from "../../components/layout/DataTable.vue";
+    import KestraFilter from "../filter/KestraFilter.vue"
+    import TopNavBar from "../../components/layout/TopNavBar.vue";
+    import LogLine from "../logs/LogLine.vue";
 </script>
 
 <script lang="ts">
-    import LogLine from "../logs/LogLine.vue";
     import {mapState} from "vuex";
+    import {mapStores} from "pinia";
     import RouteContext from "../../mixins/routeContext";
-    import TopNavBar from "../../components/layout/TopNavBar.vue";
     import RestoreUrl from "../../mixins/restoreUrl";
     import DataTableActions from "../../mixins/dataTableActions";
-    import DataTable from "../../components/layout/DataTable.vue";
     import _merge from "lodash/merge";
     import {storageKeys} from "../../utils/constants";
-    import KestraFilter from "../filter/KestraFilter.vue"
     import {decodeSearchParams} from "../filter/utils/helpers";
     import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
     import YAML_CHART from "../dashboard/assets/logs_timeseries_chart.yaml?raw";
+    import {useLogsStore} from "../../stores/logs";
 
     export default {
         mixins: [RouteContext, RestoreUrl, DataTableActions],
-        components: {
-            KestraFilter,
-            DataTable, LogLine, TopNavBar
+        created() {
+            this.logsStore.setVuexStore(this.$store);
         },
         props: {
             logLevel: {
@@ -99,8 +100,8 @@
             storageKeys() {
                 return storageKeys
             },
-            ...mapState("log", ["logs", "total", "level"]),
             ...mapState("stat", ["logDaily"]),
+            ...mapStores(useLogsStore),
             routeInfo() {
                 return {
                     title: this.$t("logs"),
@@ -222,12 +223,11 @@
                     size: this.filters ? this.internalPageSize : this.$route.query.size || this.internalPageSize,
                     ...this.filters
                 };
-                this.$store
-                    .dispatch("log/findLogs", this.loadQuery({
-                        ...data,
-                        minLevel: this.filters ? null : this.selectedLogLevel,
-                        sort: "timestamp:desc"
-                    }))
+                this.logsStore.findLogs(this.loadQuery({
+                    ...data,
+                    minLevel: this.filters ? null : this.selectedLogLevel,
+                    sort: "timestamp:desc"
+                }))
                     .finally(() => {
                         this.isLoading = false
                         this.saveRestoreUrl();

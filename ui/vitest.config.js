@@ -24,6 +24,9 @@ export default defineConfig({
         outputFile: {
             junit: "./test-report.junit.xml",
         },
+        exclude: [
+            "tests/e2e/**",
+        ],
         coverage: {
             include: [
                 "src/**/*.{js,ts,vue}",

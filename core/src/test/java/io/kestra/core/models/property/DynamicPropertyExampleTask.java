@@ -1,7 +1,6 @@
 package io.kestra.core.models.property;
 
 import io.kestra.core.models.annotations.Plugin;
-import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.models.tasks.RunnableTask;
 import io.kestra.core.models.tasks.Task;
 import io.kestra.core.runners.RunContext;
@@ -14,9 +13,6 @@ import org.slf4j.event.Level;
 import java.time.Duration;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
-
-import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @SuperBuilder
 @ToString
@@ -24,7 +20,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 @Getter
 @NoArgsConstructor
 @Plugin
-public class DynamicPropertyExampleTask extends Task implements RunnableTask<DynamicPropertyExampleTask.Output> {
+public class DynamicPropertyExampleTask extends Task implements RunnableTask<DynamicPropertyExampleTask.Output>, Data.From {
     @NotNull
     private Property<@Min(0) Integer> number;
 
@@ -49,10 +45,7 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
     private Property<Map<String, String>> properties;
 
     @NotNull
-    private Data<Message> data;
-
-    @PluginProperty(internalStorageURI = true)
-    private Property<String> uri;
+    private Object from;
 
 
     @Override
@@ -71,9 +64,10 @@ public class DynamicPropertyExampleTask extends Task implements RunnableTask<Dyn
 
         Map<String, String> map = runContext.render(properties).asMap(String.class, String.class);
 
-        List<Message> outputMessages = Optional.ofNullable(data).map(throwFunction(d -> d.flux(runContext, Message.class, message -> Message.fromMap(message))
+        List<Message> outputMessages = Data.from(from)
+            .readAs(runContext, Message.class, message -> Message.fromMap(message))
             .collectList()
-            .block())).orElse(null);
+            .block();
 
         return Output.builder()
             .value(value)

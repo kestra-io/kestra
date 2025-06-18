@@ -89,7 +89,7 @@ public abstract class AbstractFlowRepositoryTest {
     void should_find_all(QueryFilter filter){
 
         FlowWithSource flow = FlowWithSource.builder()
-            .id("filter_flow_id")
+            .id("filterFlowId")
             .namespace(SYSTEM_FLOWS_DEFAULT_NAMESPACE)
             .tenantId(MAIN_TENANT)
             .labels(Label.from(Map.of("key", "value")))
@@ -109,7 +109,7 @@ public abstract class AbstractFlowRepositoryTest {
     void should_find_all_with_source(QueryFilter filter){
 
         FlowWithSource flow = FlowWithSource.builder()
-            .id("filter_flow_id")
+            .id("filterFlowId")
             .namespace(SYSTEM_FLOWS_DEFAULT_NAMESPACE)
             .tenantId(MAIN_TENANT)
             .labels(Label.from(Map.of("key", "value")))
@@ -126,7 +126,7 @@ public abstract class AbstractFlowRepositoryTest {
 
     static Stream<QueryFilter> filterCombinations() {
         return Stream.of(
-            QueryFilter.builder().field(Field.QUERY).value("filter_flow_id").operation(Op.EQUALS).build(),
+            QueryFilter.builder().field(Field.QUERY).value("filterFlowId").operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.SCOPE).value(List.of(SYSTEM)).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.NAMESPACE).value(SYSTEM_FLOWS_DEFAULT_NAMESPACE).operation(Op.EQUALS).build(),
             QueryFilter.builder().field(Field.LABELS).value(Map.of("key", "value")).operation(Op.EQUALS).build()

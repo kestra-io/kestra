@@ -91,7 +91,7 @@ public record QueryFilter(
         QUERY("q") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.REGEX);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS);
             }
         },
         SCOPE("scope") {
@@ -103,7 +103,7 @@ public record QueryFilter(
         NAMESPACE("namespace") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.PREFIX);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX, Op.IN, Op.NOT_IN, Op.PREFIX);
             }
         },
         LABELS("labels") {
@@ -115,7 +115,7 @@ public record QueryFilter(
         FLOW_ID("flowId") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.IN, Op.NOT_IN);
+                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH, Op.ENDS_WITH, Op.REGEX);
             }
         },
         START_DATE("startDate") {
@@ -139,8 +139,7 @@ public record QueryFilter(
         TIME_RANGE("timeRange") {
             @Override
             public List<Op> supportedOp() {
-                return List.of(Op.EQUALS, Op.NOT_EQUALS, Op.CONTAINS, Op.STARTS_WITH,
-                    Op.ENDS_WITH, Op.IN, Op.NOT_IN, Op.REGEX);
+                return List.of(Op.EQUALS);
             }
         },
         TRIGGER_EXECUTION_ID("triggerExecutionId") {

@@ -305,12 +305,12 @@ public record QueryFilter(
         List<String> errors = new ArrayList<>();
         filters.forEach(filter -> {
             if (!filter.field().supportedOp().contains(filter.operation())) {
-                errors.add(String.format("Operation %s is not supported for field %s. Supported operations are %s",
+                errors.add("Operation %s is not supported for field %s. Supported operations are %s".formatted(
                     filter.operation(), filter.field().name(),
                     filter.field().supportedOp().stream().map(Op::name).collect(Collectors.joining(", "))));
             }
             if (!resource.supportedField().contains(filter.field())){
-                errors.add(String.format("Field %s is not supported for resource %s. Supported fields are %s",
+                errors.add("Field %s is not supported for resource %s. Supported fields are %s".formatted(
                     filter.field().name(), resource.name(),
                     resource.supportedField().stream().map(Field::name).collect(Collectors.joining(", "))));
             }

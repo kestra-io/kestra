@@ -398,7 +398,7 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 String remotePath = windowsToUnixPath(taskCommands.getWorkingDirectory().toString());
 
                 // first, create an archive
-                Path fileArchive = runContext.workingDir().createFile("inputFiles.tart");
+                Path fileArchive = runContext.workingDir().createFile("inputFiles.tar");
                 try (FileOutputStream fos = new FileOutputStream(fileArchive.toString());
                      TarArchiveOutputStream out = new TarArchiveOutputStream(fos)) {
                     out.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX); // allow long file name
@@ -827,8 +827,23 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             .longValue();
     }
 
+    private String getImageNameWithoutTag(String fullImageName) {
+        if (fullImageName == null || fullImageName.isEmpty()) {
+            return fullImageName;
+        }
+
+        int lastColonIndex = fullImageName.lastIndexOf(':');
+        int firstSlashIndex = fullImageName.indexOf('/');
+        if (lastColonIndex > -1 && (firstSlashIndex == -1 || lastColonIndex > firstSlashIndex)) {
+            return fullImageName.substring(0, lastColonIndex);
+        } else {
+            return fullImageName; // No tag found or the colon is part of the registry host
+        }
+    }
+
     private void pullImage(DockerClient dockerClient, String image, PullPolicy policy, Logger logger) {
-        NameParser.ReposTag imageParse = NameParser.parseRepositoryTag(image);
+        var imageNameWithoutTag = getImageNameWithoutTag(image);
+        var parsedTagFromImage = NameParser.parseRepositoryTag(image);
 
         if (policy.equals(PullPolicy.IF_NOT_PRESENT)) {
             try {
@@ -839,7 +854,9 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
             }
         }
 
-        try (PullImageCmd pull = dockerClient.pullImageCmd(image)) {
+        // pullImageCmd without the tag (= repository) to avoid being redundant with withTag below
+        // and prevent errors with Podman trying to pull "image:tag:tag"
+        try (var pull = dockerClient.pullImageCmd(imageNameWithoutTag)) {
             new RetryUtils().<Boolean, InternalServerErrorException>of(
                 Exponential.builder()
                     .delayFactor(2.0)
@@ -851,8 +868,8 @@ public class Docker extends TaskRunner<Docker.DockerTaskRunnerDetailResult> {
                 (bool, throwable) -> throwable instanceof InternalServerErrorException ||
                     throwable.getCause() instanceof ConnectionClosedException,
                 () -> {
-                    String tag = !imageParse.tag.isEmpty() ? imageParse.tag : "latest";
-                    String repository = pull.getRepository().contains(":") ? pull.getRepository().split(":")[0] : pull.getRepository();
+                    var tag = !parsedTagFromImage.tag.isEmpty() ? parsedTagFromImage.tag : "latest";
+                    var repository = pull.getRepository().contains(":") ? pull.getRepository().split(":")[0] : pull.getRepository();
                     pull
                         .withTag(tag)
                         .exec(new PullImageResultCallback())

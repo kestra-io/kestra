@@ -67,17 +67,17 @@
     import {computed, onMounted, Ref, ref, watch} from "vue";
 
     import {useRoute} from "vue-router";
-    import useRouteContext from "../../mixins/useRouteContext.ts";
+    import useRouteContext from "../../../mixins/useRouteContext.ts";
     import {useStore} from "vuex";
-    import useNamespaces, {Namespace} from "../../composables/useNamespaces";
+    import useNamespaces, {Namespace} from "../../../composables/useNamespaces.ts";
     import {useI18n} from "vue-i18n";
 
-    import Navbar from "../layout/TopNavBar.vue";
-    import Action from "./components/buttons/Action.vue";
-    import KestraFilter from "../filter/KestraFilter.vue";
+    import Navbar from "../../../components/layout/TopNavBar.vue";
+    import Action from "../../../components/namespaces/components/buttons/Action.vue";
+    import KestraFilter from "../../../components/filter/KestraFilter.vue";
 
-    import permission from "../../models/permission";
-    import action from "../../models/action";
+    import permission from "../../../models/permission.ts";
+    import action from "../../../models/action.ts";
 
     import DotsSquare from "vue-material-design-icons/DotsSquare.vue";
     import TextSearch from "vue-material-design-icons/TextSearch.vue";

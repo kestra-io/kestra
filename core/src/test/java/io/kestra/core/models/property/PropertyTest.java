@@ -49,13 +49,11 @@ class PropertyTest {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromMap(new Property<>("""
-                    {
-                      "key": "{{mapKey}}",
-                      "value": "{{mapValue}}"
-                    }"""))
-                .build()
+            .from("""
+                {
+                  "key": "{{mapKey}}",
+                  "value": "{{mapValue}}"
+                }"""
             )
             .build();
         var runContext = runContextFactory.of(Map.ofEntries(
@@ -100,19 +98,17 @@ class PropertyTest {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromList(new Property<>("""
-                    [
-                      {
-                         "key": "{{mapKey1}}",
-                         "value": "{{mapValue1}}"
-                      },
-                      {
-                         "key": "{{mapKey2}}",
-                         "value": "{{mapValue2}}"
-                       }
-                    ]"""))
-                .build()
+            .from("""
+                [
+                  {
+                     "key": "{{mapKey1}}",
+                     "value": "{{mapValue1}}"
+                  },
+                  {
+                     "key": "{{mapKey2}}",
+                     "value": "{{mapValue2}}"
+                   }
+                ]"""
             )
             .build();
         var runContext = runContextFactory.of(Map.ofEntries(
@@ -172,7 +168,7 @@ class PropertyTest {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder().fromURI(new Property<>("{{uri}}")).build())
+            .from("{{uri}}")
             .build();
         var runContext = runContextFactory.of(Map.ofEntries(
             entry("numberValue", 9),
@@ -213,13 +209,7 @@ class PropertyTest {
             .withDefault(new Property<>("{{defaultValue}}"))
             .items(new Property<>("""
                 ["{{item1}}", "{{item2}}"]"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromMap(new Property<>("""
-                    {
-                      "key": "{{mapValue}}"
-                    }"""))
-                .build()
-            )
+            .from(Map.of("key", "{{mapValue}}"))
             .build();
         var runContext = runContextFactory.of();
 
@@ -242,14 +232,7 @@ class PropertyTest {
                   "key1": "{{value1}}",
                   "key2": "{{value2}}"
                 }"""))
-            .data(Data.<DynamicPropertyExampleTask.Message>builder()
-                .fromMap(new Property<>("""
-                    {
-                      "key": "{{mapKey}}",
-                      "value": "{{mapValue}}"
-                    }"""))
-                .build()
-            )
+            .from(Map.of("key", "{{mapKey}}", "value", "{{mapValue}}"))
             .build();
         var runContext = runContextFactory.of(task, Map.ofEntries(
             entry("numberValue", -2),

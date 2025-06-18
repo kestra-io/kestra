@@ -1,12 +1,16 @@
 package io.kestra.core.models.property;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.type.CollectionType;
 import io.kestra.core.exceptions.IllegalVariableEvaluationException;
+import io.kestra.core.models.annotations.PluginProperty;
 import io.kestra.core.runners.RunContext;
 import io.kestra.core.serializers.FileSerde;
-import io.kestra.core.validations.DataValidation;
+import io.kestra.core.serializers.JacksonMapper;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
+import jakarta.annotation.Nullable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
@@ -15,140 +19,123 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UncheckedIOException;
-import java.net.URI;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
-@Getter
-@Builder
-@DataValidation
-@Schema(
-    title = "A carrier for some data that can comes from either an internal storage URI, an object or an array of objects."
-)
-public class Data<T> {
-    @Schema(title = "A Kestra internal storage URI")
-    private Property<URI> fromURI;
+import static io.kestra.core.utils.Rethrow.throwFunction;
 
-    @Schema(title = "An object (which is equivalent to a map)")
-    private Property<Map<String, Object>> fromMap;
+/**
+ * A carrier for structured data items.
+ */
+public class Data {
+    @SuppressWarnings("unchecked")
+    private static final Class<Map<String, Object>> MAP_OF_STRING_OBJECT = (Class<Map<String, Object>>) Map.of().getClass();
 
-    @Schema(title = "An array of objects (which is equivalent to a list of maps)")
-    private Property<List<Map<String, Object>>> fromList;
+    // this would be used in case 'from' is a String but not a URI to read it as a single item or a list of items
+    private static final ObjectMapper JSON_MAPPER = JacksonMapper.ofJson()
+        .copy()
+        .configure(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY, true);
 
-    /**
-     * Convenient factory method to create a Data object from a URI, mainly for testing purpose.
-     *
-     * @see #ofMap(Map)
-     * @see #ofList(List)
-     */
-    public static Data<?> ofURI(URI uri) {
-        return Data.builder().fromURI(Property.ofValue(uri)).build();
+    @Nullable
+    private final Object from;
+
+    public Data(@Nullable Object from) {
+        this.from = from;
     }
 
     /**
-     * Convenient factory method to create a Data object from a Map, mainly for testing purpose.
-     *
-     * @see #ofURI(URI)
-     * @see #ofList(List)
+     * Build a carrier Data object for structured data items.
+     * The `from` parameter can be either a map, a list of maps, or a String.
      */
-    public static Data<?> ofMap(Map<String, Object> map) {
-        return Data.builder().fromMap(Property.ofValue(map)).build();
+    public static Data from(@Nullable Object from) {
+        return new Data(from);
     }
 
     /**
-     * Convenient factory method to create a Data object from a List, mainly for testing purpose.
+     * Generates a <code>Flux</code> of maps for the data items.
+     * If you want to work with objects, use {@link #readAs(RunContext, Class, Function)} instead.
      *
-     * @see #ofURI(URI)
-     * @see #ofMap(Map)
+     * @see #readAs(RunContext, Class, Function)
      */
-    public static Data<?> ofList(List<Map<String, Object>> list) {
-        return Data.builder().fromList(Property.ofValue(list)).build();
+    public Flux<Map<String, Object>> read(RunContext runContext) throws IllegalVariableEvaluationException {
+        return readAs(runContext, MAP_OF_STRING_OBJECT, it -> it);
     }
 
     /**
-     * Generates a flux of objects for the data property, using either of its three properties.
-     * The mapper passed to this method will be used to map the map to the desired type when using 'fromMap' or 'fromList',
-     * it can be omitted when using 'fromURI'.
+     * Generates a <code>Flux</code> of objects for the data items.
+     * The mapper passed to this method will be used to map to the desired type when the `from` attribute is a Map or a List of Maps.
+     * If you want to work with maps, use {@link #read(RunContext)} instead.
+     *
+     * @see #read(RunContext)
      */
-    public Flux<T> flux(RunContext runContext, Class<T> clazz, Function<Map<String, Object>, T> mapper) throws IllegalVariableEvaluationException {
-        if (isFromURI()) {
-            URI uri = runContext.render(fromURI).as(URI.class).orElseThrow();
-            try {
-                var reader = new BufferedReader(new InputStreamReader(runContext.storage().getFile(uri)));
-                return FileSerde.readAll(reader, clazz)
-                    .publishOn(Schedulers.boundedElastic())
-                    .doFinally(signalType -> {
-                        try {
-                            reader.close();
-                        } catch (IOException e) {
-                            throw new UncheckedIOException(e);
-                        }
-                    });
-            } catch (IOException e) {
-                throw new UncheckedIOException(e);
-            }
+    @SuppressWarnings("unchecked")
+    public <T> Flux<T> readAs(RunContext runContext, Class<T> clazz, Function<Map<String, Object>, T> mapper) throws IllegalVariableEvaluationException {
+        Objects.requireNonNull(mapper); // as mapper is not used everywhere, we assert it's not null to cover dev issues
+
+        if (from == null) {
+            return Flux.empty();
         }
 
-        if (isFromMap()) {
-            Map<String, Object> map = runContext.render(fromMap).asMap(String.class, Object.class);
+        if (from instanceof Map<?, ?> fromMap) {
+            Map<String, Object> map = runContext.render((Map<String, Object>) fromMap);
             return Mono.just(map).flux().map(mapper);
         }
 
-        if (isFromList()) {
-            List<Map<String, Object>> list = runContext.render(fromList).asList(Map.class);
-            return Flux.fromIterable(list).map(mapper);
+        if (from instanceof List<?> fromList) {
+            Stream<Map<String, Object>> stream = fromList.stream().map(throwFunction(it -> runContext.render((Map<String, Object>) it)));
+            return Flux.fromStream(stream).map(mapper);
         }
 
-        return Flux.empty();
-    }
-
-    /**
-     * @return true if fromURI is set
-     */
-    public boolean isFromURI() {
-        return fromURI != null;
-    }
-
-    /**
-     * If a fromURI is present, performs the given action with the URI, otherwise does nothing.
-     */
-    public void ifFromURI(RunContext runContext, Consumer<URI> consumer) throws IllegalVariableEvaluationException {
-        runContext.render(fromURI).as(URI.class).ifPresent(uri -> consumer.accept(uri));
-    }
-
-    /**
-     * @return true if fromMap is set
-     */
-    public boolean isFromMap() {
-        return fromMap != null;
-    }
-
-    /**
-     * If a fromMap is present, performs the given action with the mat, otherwise does nothing.
-     */
-    public void ifFromMap(RunContext runContext, Consumer<Map<String, Object>> consumer) throws IllegalVariableEvaluationException {
-        if (isFromMap()) {
-            Map<String, Object> map = runContext.render(fromMap).asMap(String.class, Object.class);
-            consumer.accept(map);
+        if (from instanceof String str) {
+            var renderedString = runContext.render(str);
+            if (URIFetcher.supports(renderedString)) {
+                var uri = URIFetcher.of(runContext.render(str));
+                try {
+                    var reader = new BufferedReader(new InputStreamReader(uri.fetch(runContext)), FileSerde.BUFFER_SIZE);
+                    return FileSerde.readAll(reader, clazz)
+                        .publishOn(Schedulers.boundedElastic())
+                        .doFinally(signalType -> {
+                            try {
+                                reader.close();
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                        });
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            } else {
+                // Try to parse it as a list of JSON items.
+                // A single value instead of a list is also supported as we configure the JSON mapper for it.
+                try {
+                    CollectionType collectionType = JSON_MAPPER.getTypeFactory().constructCollectionType(List.class, clazz);
+                    List<T> list = JSON_MAPPER.readValue(renderedString, collectionType);
+                    return Flux.fromIterable(list);
+                } catch (JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
+
+        throw new IllegalArgumentException("Cannot handle structured data of type: " + from.getClass());
     }
 
-    /**
-     * @return true if fromList is set
-     */
-    public boolean isFromList() {
-        return fromList != null;
-    }
+    public interface From {
+        String TITLE = "Structured data items, either as a map, a list of map, a URI, or a JSON string.";
+        String DESCRIPTION = """
+                Structured data items can be defined in the following ways:
+                - A single item as a map (a document).
+                - A list of items as a list of maps (a list of documents).
+                - A URI, supported schemes are `kestra` for internal storage files, and `file` for host local files.
+                - A JSON String that will then be serialized either as a single item or a list of items.""";
 
-    /**
-     * If a fromList is present, performs the given action with the list of maps, otherwise does nothing.
-     */
-    public void ifFromList(RunContext runContext, Consumer<List<Map<String, Object>>> consumer) throws IllegalVariableEvaluationException {
-        if (isFromList()) {
-            List<Map<String, Object>> list = runContext.render(fromList).asList(Map.class);
-            consumer.accept(list);
-        }
+        @Schema(
+            title = TITLE,
+            description = DESCRIPTION,
+            anyOf = {String.class, List.class, Map.class}
+        )
+        @PluginProperty(dynamic = true)
+        Object getFrom();
     }
 }

@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.FileSystemNotFoundException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -169,16 +170,16 @@ public class PluginScanner {
                     case DataFilter<?, ?> dataFilter -> {
                         log.debug("Loading DataFilter plugin: '{}'", plugin.getClass());
                         //noinspection unchecked
-                        dataFilters.add((Class<? extends DataFilter<?, ?>>)  dataFilter.getClass());
+                        dataFilters.add((Class<? extends DataFilter<?, ?>>) dataFilter.getClass());
                     }
                     case DataFilterKPI<?, ?> dataFilterKPI -> {
                         log.debug("Loading DataFilterKPI plugin: '{}'", plugin.getClass());
                         //noinspection unchecked
-                        dataFiltersKPI.add((Class<? extends DataFilterKPI<?, ?>>)  dataFilterKPI.getClass());
+                        dataFiltersKPI.add((Class<? extends DataFilterKPI<?, ?>>) dataFilterKPI.getClass());
                     }
                     case LogExporter<?> shipper -> {
                         log.debug("Loading LogExporter plugin: '{}'", plugin.getClass());
-                        logExporter.add((Class<? extends LogExporter<?>>)  shipper.getClass());
+                        logExporter.add((Class<? extends LogExporter<?>>) shipper.getClass());
                     }
                     case AdditionalPlugin additionalPlugin -> {
                         log.debug("Loading additional plugin: '{}'", plugin.getClass());
@@ -202,8 +203,14 @@ public class PluginScanner {
 
         var guidesDirectory = classLoader.getResource("doc/guides");
         if (guidesDirectory != null) {
-            try (var fileSystem = FileSystems.newFileSystem(guidesDirectory.toURI(), Collections.emptyMap())) {
-                var root = fileSystem.getPath("/doc/guides");
+            try {
+                Path root;
+                var uri = guidesDirectory.toURI();
+                try {
+                    root = Path.of(uri);
+                } catch (FileSystemNotFoundException e) {
+                    root = FileSystems.newFileSystem(uri, java.util.Collections.emptyMap()).getPath("doc/guides");
+                }
                 try (var stream = Files.walk(root, 1)) {
                     stream
                         .skip(1) // first element is the root element

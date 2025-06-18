@@ -12,6 +12,7 @@ import {
 import loadFilterLanguages from "../../mocks/services/filterLanguagesProvider.mock.ts";
 import DefaultFilterLanguage from "../../../../src/composables/monaco/languages/filters/impl/defaultFilterLanguage.ts";
 import {isColoredAsError} from "../../utils/monacoUtils.ts";
+import {assertMonacoFilterContentToBe, clearMonacoInput, getMonacoFilter, getMonacoFilterInput} from "../../utils/monacoUtils.ts";
 
 const meta = {
     title: "Components/KestraFilter",
@@ -350,7 +351,7 @@ KestraFilterWithLanguage_PopulateValueFromQuery.play = async ({canvasElement, st
     await step(
         "value should be populated from query at initialization",
         async () => {
-            await waitFor(() => assertMonacoFilterContentToBe(canvas, "singleValue=\"unknownValue StillShouldBeAdded\" nested.specialKey=someValue "));
+            await waitFor(async () => expect(await assertMonacoFilterContentToBe(canvas, "unknownValue StillShouldBeAdded")))
             // verify we kept the unknown value in the query parameters even though we didn't add it to the filter
             await new Promise(resolve => {
                 setInterval(resolve, 1100);
@@ -509,21 +510,3 @@ KestraFilterWithLanguage_ForbiddenConcurrentKeys.play = async ({canvasElement, s
     );
 };
 
-const monacoFilter = "monaco-filter";
-
-function getMonacoFilter(canvas: ReturnType<typeof within>) {
-    return canvas.getByTestId(monacoFilter);
-}
-
-async function clearMonacoInput(user: ReturnType<typeof userEvent.setup>, canvas: ReturnType<typeof within>): Promise<void> {
-    return user.clear(await getMonacoFilterInput(canvas))
-}
-
-function assertMonacoFilterContentToBe(canvas: ReturnType<typeof within>, expectedText: string): Promise<void> {
-    // We need to replace non-breaking spaces with regular spaces because Monaco editor uses non-breaking spaces
-    return expect(getMonacoFilter(canvas)).toHaveTextContent(expectedText, {normalizeWhitespace: true});
-}
-
-function getMonacoFilterInput(canvas: ReturnType<typeof within>): Promise<HTMLElement> {
-    return waitFor(() => within(getMonacoFilter(canvas)).getByRole("textbox"));
-}

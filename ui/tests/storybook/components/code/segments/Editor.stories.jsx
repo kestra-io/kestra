@@ -1,12 +1,14 @@
 import Editor from "../../../../../src/components/code/segments/Editor.vue";
+import InitialSchema from "../../../../../src/components/code/segments/flow-schema.json";
 import {
     CREATING_TASK_INJECTION_KEY, FLOW_INJECTION_KEY,
     POSITION_INJECTION_KEY,
     BLOCKTYPE_INJECT_KEY, REF_PATH_INJECTION_KEY
 } from "../../../../../src/components/code/injectionKeys";
-import {provide, ref, computed} from "vue";
+import {provide, ref} from "vue";
 import {useStore} from "vuex";
 import {vueRouter} from "storybook-vue3-router";
+
 
 export default {
     decorators: [vueRouter([
@@ -115,15 +117,19 @@ const Template = (args) => ({
                         data: TASK_RESPONSE
                     })
                 }
+                if (url.endsWith("/flow")) {
+                    return Promise.resolve({
+                        data: InitialSchema
+                    })
+                }
                 return Promise.resolve({
                     data: []
                 })
             },
-            post(url, body, opts){
+            post(url){
                 if(url.endsWith("flows/validate/task")){
                     return Promise.resolve({data: {}})
                 }
-                console.error("POST", url, body, opts)
                 return Promise.resolve({
                     data: []
                 })

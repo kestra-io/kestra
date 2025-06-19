@@ -151,7 +151,7 @@ public class LocalPluginManager implements PluginManager {
      * {@inheritDoc}
      **/
     @Override
-    public PluginArtifact install(File file, boolean installForRegistration, @Nullable Path localRepositoryPath) {
+    public PluginArtifact install(File file, boolean installForRegistration, @Nullable Path localRepositoryPath, boolean forceInstallOnExistingVersions) {
         try {
             PluginArtifact artifact = PluginArtifact.fromFile(file);
             log.info("Installing managed plugin artifact '{}'", artifact);

@@ -1,4 +1,5 @@
 import OnlyLeftMenuLayout from "../components/layout/OnlyLeftMenuLayout.vue"
+import FullScreenLayout from "../components/layout/FullScreenLayout.vue"
 import Errors from "../components/errors/Errors.vue"
 import DemoIAM from "../components/demo/IAM.vue"
 import DemoTenants from "../components/demo/Tenants.vue"
@@ -84,6 +85,12 @@ export default [
     //Admin
     {name: "admin/triggers", path: "/:tenant?/admin/triggers", component: () => import("../components/admin/Triggers.vue")},
     {name: "admin/stats", path: "/:tenant?/admin/stats", component: () => import("override/components/admin/stats/Stats.vue")},
+
+    //Setup
+    {name: "setup", path: "/setup", component: () => import("../components/setup/BasicAuthSetup.vue"), meta: {layout: FullScreenLayout}},
+
+    //Login
+    {name: "login", path: "/login", component: () => import("../components/auth/BasicAuthLogin.vue"), meta: {layout: FullScreenLayout}},
 
     //Errors
     {name: "errors/404-wildcard", path: "/:pathMatch(.*)", component: Errors, props: {code: 404}},

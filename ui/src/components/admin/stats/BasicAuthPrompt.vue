@@ -47,87 +47,92 @@
         </el-dialog>
     </div>
 </template>
-<script>
-    import {mapGetters} from "vuex";
+<script setup lang="ts">
+    import {ref, computed} from "vue";
+    import {useStore} from "vuex";
+    import {useI18n} from "vue-i18n";
+    import type {FormInstance, FormRules} from "element-plus";
 
-    export default {
-        data() {
-            return {
-                form: {
-                    email: undefined,
-                    password: undefined,
-                    confirmPassword: undefined
-                },
-                rules: {
-                    email: [
-                        {
-                            message: "Please input correct email address",
-                            trigger: ["blur"],
-                            pattern: "^$|^[a-zA-Z0-9_!#$%&’*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$"
-                        },
-                        {
-                            validator: (rule, value, callback) => {
-                                if (value && value.length > 256) {
-                                    callback(new Error(this.$t("email length constraint")));
-                                } else {
-                                    callback();
-                                }
-                            },
-                            trigger: ["blur", "change"]
-                        }
-                    ],
-                    password: [
-                        {
-                            validator: (rule, value, callback) => {
-                                if (value && value.length > 256) {
-                                    callback(new Error(this.$t("password length constraint")));
-                                } else if (value && value.trim() === "") {
-                                    callback(new Error(this.$t("password empty constraint")));
-                                } else {
-                                    callback();
-                                }
-                            },
-                            trigger: ["blur", "change"]
-                        }
-                    ],
-                    confirmPassword: [
-                        {
-                            validator: (rule, value, callback) => {
-                                if (value !== this.form.password) {
-                                    callback(new Error(this.$t("passwords do not match")));
-                                } else {
-                                    callback();
-                                }
-                            },
-                            trigger: "blur"
-                        }
-                    ]
-                },
-                promptOAuthCredentials: false
-            }
-        },
-        computed: {
-            ...mapGetters("misc", ["configs"])
-        },
-        methods: {
-            onSubmit(formRef) {
-                return formRef.validate(async (valid) => {
-                    if (!valid) {
-                        return false;
-                    }
+    interface AuthForm {
+        email: string;
+        password: string;
+        confirmPassword: string;
+    }
 
-                    await this.$store.dispatch("misc/addBasicAuth", {
-                        username: this.form.email,
-                        password: this.form.password
-                    });
+    const store = useStore();
+    const {t} = useI18n();
 
-                    location.reload();
-                });
+    const form = ref<AuthForm>({
+        email: "",
+        password: "",
+        confirmPassword: ""
+    });
+
+    const promptOAuthCredentials = ref(false);
+
+    const configs = computed(() => store.getters["misc/configs"]);
+
+    const rules: FormRules<AuthForm> = {
+        email: [
+            {
+                message: "Please input correct email address",
+                trigger: ["blur"],
+                pattern: /^$|^[a-zA-Z0-9_!#$%&'*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$/
             },
-            promptForCredentials() {
-                this.promptOAuthCredentials = true;
+            {
+                validator: (rule, value, callback) => {
+                    if (value && value.length > 256) {
+                        callback(new Error(t("email length constraint")));
+                    } else {
+                        callback();
+                    }
+                },
+                trigger: ["blur", "change"]
             }
-        }
+        ],
+        password: [
+            {
+                validator: (rule, value, callback) => {
+                    if (value && value.length > 256) {
+                        callback(new Error(t("password length constraint")));
+                    } else if (value && value.trim() === "") {
+                        callback(new Error(t("password empty constraint")));
+                    } else {
+                        callback();
+                    }
+                },
+                trigger: ["blur", "change"]
+            }
+        ],
+        confirmPassword: [
+            {
+                validator: (rule, value, callback) => {
+                    if (value !== form.value.password) {
+                        callback(new Error(t("passwords do not match")));
+                    } else {
+                        callback();
+                    }
+                },
+                trigger: "blur"
+            }
+        ]
+    };
+
+    const onSubmit = (formRef: FormInstance) => {
+        return formRef.validate(async (valid: boolean) => {
+            if (!valid) return false;
+
+            await store.dispatch("misc/addBasicAuth", {
+                username: form.value.email,
+                password: form.value.password
+            });
+
+            location.reload();
+        });
+    };
+
+    const promptForCredentials = () => {
+        promptOAuthCredentials.value = true;
     };
 </script>
 

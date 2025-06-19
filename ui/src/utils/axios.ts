@@ -42,6 +42,11 @@ const increaseProgress = () => {
     }, latencyThreshold + 50);
 }
 
+const requestInterceptor = config => {
+    initProgress();
+    return config
+}
+
 const responseInterceptor = (response: AxiosResponse): AxiosResponse => {
     increaseProgress();
     return response;
@@ -79,10 +84,14 @@ export default (
         onUploadProgress: progressInterceptor
     });
 
-    instance.interceptors.request.use((config) => {
-        initProgress();
-        return config;
+    instance.interceptors.request.use(config => {
+        const basicAuth = localStorage.getItem("basicAuthCredentials");
+        if (basicAuth && !config.headers.Authorization) {
+            config.headers.Authorization = `Basic ${basicAuth}`;
+        }
+        return requestInterceptor(config);
     });
+
     instance.interceptors.response.use(responseInterceptor, errorResponseInterceptor);
 
     let toRefreshQueue: QueueItem[] = [];
@@ -116,7 +125,7 @@ export default (
                 && !store.getters["auth/isLogged"]) {
                 const base_path = window.KESTRA_BASE_PATH.endsWith("/") ? window.KESTRA_BASE_PATH.slice(0, -1) : window.KESTRA_BASE_PATH;
 
-                if (window.location.pathname.startsWith(base_path + "/ui/login")) {
+                if (window.location.pathname.includes("/login")) {
                     return Promise.reject(errorResponse);
                 }
 
@@ -169,11 +178,17 @@ export default (
                         document.body.classList.add("login");
                         store.dispatch("core/isUnsaved", false);
                         store.commit("layout/setTopNavbar", undefined);
+                        
+                        localStorage.removeItem("basicAuthCredentials");
+                        delete instance.defaults.headers.common["Authorization"];
+                        
+                        const currentPath = window.location.pathname;
+                        const isLoginPath = currentPath.includes("/login");
+                        
                         router.push({
                             name: "login",
                             query: {
-                                expired: 1,
-                                from: window.location.pathname + (window.location.search ?? "")
+                                ...(isLoginPath ? {} : {from: currentPath})
                             }
                         })
                         refreshing = false;
@@ -226,3 +241,4 @@ export default (
 
     callback(instance);
 };
+

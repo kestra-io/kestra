@@ -2,7 +2,7 @@
     <doc-id-display />
     <el-config-provider>
         <error-toast v-if="message" :no-auto-hide="true" :message="message" />
-        <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded">
+        <component :is="$route.meta.layout ?? DefaultLayout" v-if="loaded && shouldRenderApp">
             <router-view />
         </component>
         <VueTour />
@@ -10,12 +10,11 @@
 </template>
 
 <script>
-    import {ElMessageBox, ElSwitch} from "element-plus";
-    import {h, ref, shallowRef} from "vue";
     import ErrorToast from "./components/ErrorToast.vue";
     import {mapGetters, mapState} from "vuex";
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
+    import {shallowRef} from "vue";
     import VueTour from "./components/onboarding/VueTour.vue";
     import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
@@ -55,58 +54,44 @@
             isOSS(){
                 return true;
             },
+            shouldRenderApp() {
+                return !this.configs || this.isSetupRoute() || this.configs.isBasicAuthEnabled || localStorage.getItem("basicAuthSetupCompleted") === "true";
+            }
         },
         async created() {
-            if (this.created === false) {
-                await this.loadGeneralResources();
-                this.displayApp();
-            }
+            const {name: currentRoute} = this.$route;
+            const isAuthRoute = currentRoute === "login" || currentRoute === "setup";
+            const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null;
+            
             this.setTitleEnvSuffix();
-
-            if (this.configs) {
-                // save uptime before showing security advice.
-                if (localStorage.getItem("security.advice.uptime") === null) {
-                    localStorage.setItem("security.advice.uptime", `${new Date().getTime()}`);
+            
+            if (!isAuthRoute && !hasCredentials) {
+                this.$router.push({name: "login"});
+                this.displayApp();
+                return;
+            }
+            
+            if (!this.created && !isAuthRoute) {
+                try {
+                    const config = await this.loadGeneralResources();
+                    // If loadGeneralResources returned null, it means credentials were missing
+                    if (config === null) {
+                        this.displayApp();
+                        return;
+                    }
+                } catch (error) {
+                    if (error?.response?.status === 401) {
+                        localStorage.removeItem("basicAuthCredentials");
+                        this.$router.push({name: "login"});
+                        return;
+                    }
                 }
-                // use local-storage for ease testing
-                if (localStorage.getItem("security.advice.expired") === null) {
-                    localStorage.setItem("security.advice.expired", "604800000");  // 7 days.
-                }
-
-                // only show security advice after expiration
-                const uptime = parseInt(localStorage.getItem("security.advice.uptime"));
-                const expired = parseInt(localStorage.getItem("security.advice.expired"));
-                const isSecurityAdviceShow = (localStorage.getItem("security.advice.show") || "true") === "true";
-
-                const isSecurityAdviceEnable = new Date().getTime() - uptime >= expired
-                if (!this.configs.isBasicAuthEnabled
-                    && isSecurityAdviceShow
-                    && isSecurityAdviceEnable) {
-                    const checked = ref(false);
-                    ElMessageBox({
-                        title: this.$t("security_advice.title"),
-                        message: () => {
-                            return h("div", null, [
-                                h("p", null, this.$t("security_advice.content")),
-                                h(ElSwitch, {
-                                    modelValue: checked.value,
-                                    "onUpdate:modelValue": (val) => {
-                                        checked.value = val
-                                        localStorage.setItem("security.advice.show", `${!val}`)
-                                    },
-                                    activeText: this.$t("security_advice.switch_text")
-                                }),
-                            ])
-                        },
-                        showCancelButton: true,
-                        confirmButtonText: this.$t("security_advice.enable"),
-                        cancelButtonText: this.$t("cancel"),
-                        center: false,
-                        showClose: false,
-                    }).then(() => {
-                        this.$router.push({path: "admin/stats"});
-                    });
-                }
+            }
+            
+            this.displayApp();
+            
+            if (this.configs && !this.configs.isBasicAuthEnabled && !this.isSetupRoute() && localStorage.getItem("basicAuthSetupCompleted") !== "true") {
+                this.$router.push({name: "setup"});
             }
         },
         methods: {
@@ -123,15 +108,23 @@
                 document.title = document.title.replace(/( - .+)?$/, envSuffix);
             },
             async loadGeneralResources() {
-                let uid = localStorage.getItem("uid");
-                if (uid === null) {
-                    uid = Utils.uid();
-                    localStorage.setItem("uid", uid);
+                const uid = localStorage.getItem("uid") || (() => {
+                    const newUid = Utils.uid();
+                    localStorage.setItem("uid", newUid);
+                    return newUid;
+                })();
+                
+                if (!localStorage.getItem("basicAuthCredentials")) {
+                    this.$router.push({name: "login"});
+                    return null;
                 }
-
+                
                 this.pluginsStore.fetchIcons()
                 const config = await this.$store.dispatch("misc/loadConfigs");
+                
+                this.$store.dispatch("plugin/icons");
                 await this.$store.dispatch("doc/initResourceUrlTemplate", config.version);
+                this.$store.dispatch("api/loadFeeds", {version: config.version, iid: config.uuid, uid});
 
                 this.apiStore.loadFeeds({
                     version: config.version,
@@ -150,24 +143,24 @@
                 }
 
                 // only run posthog in production
-                if (import.meta.env.MODE === "production") {
-                    posthog.init(
-                        apiConfig.posthog.token,
-                        {
-                            api_host: apiConfig.posthog.apiHost,
-                            ui_host: "https://eu.posthog.com",
-                            capture_pageview: false,
-                            capture_pageleave: true,
-                            autocapture: false,
-                        }
-                    )
-
-                    posthog.register_once(this.statsGlobalData(config, uid));
-
-                    if (!posthog.get_property("__alias")) {
-                        posthog.alias(apiConfig.id);
+                // if (import.meta.env.MODE === "production") {
+                posthog.init(
+                    apiConfig.posthog.token,
+                    {
+                        api_host: apiConfig.posthog.apiHost,
+                        ui_host: "https://eu.posthog.com",
+                        capture_pageview: false,
+                        capture_pageleave: true,
+                        autocapture: false,
                     }
+                )
+
+                posthog.register_once(this.statsGlobalData(config, uid));
+
+                if (!posthog.get_property("__alias")) {
+                    posthog.alias(apiConfig.id);
                 }
+                // }
 
 
                 // close survey on page change
@@ -197,6 +190,12 @@
                         type: "OSS"
                     }
                 }
+            },
+            isLoginRoute() {
+                return this.$route?.name?.startsWith("login");
+            },
+            isSetupRoute() {
+                return this.$route?.name === "setup";
             },
         },
         watch: {

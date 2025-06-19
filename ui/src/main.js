@@ -11,11 +11,55 @@ import stores from "./stores/store";
 const app = createApp(App)
 
 initApp(app, routes, stores, en).then(({store, router, piniaStore}) => {
-    // axios
+    
+    router.beforeEach(async (to, from, next) => {
+        if (["login", "setup"].includes(to.name)) {
+            return next();
+        }
+        
+        const hasCredentials = localStorage.getItem("basicAuthCredentials") !== null;
+        const isSetupInProgress = localStorage.getItem("basicAuthSetupInProgress") === "true";
+        
+        if (!hasCredentials && !isSetupInProgress) {
+            return next({name: "login", query: {from: to.fullPath}});
+        }
+        
+        try {
+            if (!store.getters["misc/configs"]) {
+                await store.dispatch("misc/loadConfigs");
+            }
+            
+            const configs = store.getters["misc/configs"];
+            const hasCompletedSetup = localStorage.getItem("basicAuthSetupCompleted") === "true";
+            
+            if (configs) {
+                if (!configs.isBasicAuthEnabled && !hasCompletedSetup) {
+                    return next({name: "setup"});
+                }
+                
+                if (configs.isBasicAuthEnabled) {
+                    if (hasCompletedSetup) {
+                        localStorage.removeItem("basicAuthSetupCompleted");
+                    }
+                    
+                    if (isSetupInProgress) {
+                        localStorage.removeItem("basicAuthSetupInProgress");
+                    }
+                }
+            }
+            
+            return next();
+            
+        } catch (error) {
+            console.error("Router guard error:", error);
+            localStorage.removeItem("basicAuthCredentials");
+            return next({name: "login"});
+        }
+    });
+
     configureAxios((instance) => {
         app.use(VueAxios, instance);
         app.provide("axios", instance);
-
         store.$http = app.$http;
         store.axios = app.axios;
         piniaStore.$http = app.$http;

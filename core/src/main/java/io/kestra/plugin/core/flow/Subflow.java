@@ -238,7 +238,7 @@ public class Subflow extends Task implements ExecutableTask<Subflow.Output>, Chi
                 builder.outputs(outputs);
             } catch (Exception e) {
                 runContext.logger().warn("Failed to extract outputs with the error: '{}'", e.getLocalizedMessage(), e);
-                var state = this.isAllowFailure() ? this.isAllowWarning() ? State.Type.SUCCESS : State.Type.WARNING : State.Type.FAILED;
+                var state = State.Type.fail(this);
                 Variables variables = variablesService.of(StorageContext.forTask(taskRun), builder.build());
                 taskRun = taskRun
                     .withState(state)

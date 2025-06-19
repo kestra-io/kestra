@@ -70,7 +70,12 @@ function getDecorators(routeQuery?: LocationQuery) {
 }
 
 async function parseRouteQuery(canvas: any): Promise<LocationQuery> {
-    return JSON.parse(canvas.getByTestId("routeQuery").textContent);
+    const queryBox = await waitFor(() => {
+        const routeQueryElement = canvas.getByTestId("routeQuery");
+        expect(routeQueryElement).toBeVisible();
+        return routeQueryElement;
+    }, {timeout: 5000});
+    return JSON.parse(queryBox.textContent);
 }
 
 function waitForFilterToBeReady(user: ReturnType<typeof userEvent.setup>, canvas: ReturnType<typeof within>): Promise<void> {

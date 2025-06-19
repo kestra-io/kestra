@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.exc.InvalidTypeIdException;
 import io.kestra.core.exceptions.DeserializationException;
 import io.kestra.core.exceptions.InvalidException;
 import io.kestra.core.exceptions.NotFoundException;
+import io.kestra.core.exceptions.InvalidQueryFiltersException;
 import io.kestra.core.exceptions.ResourceExpiredException;
 import io.micronaut.core.convert.exceptions.ConversionErrorException;
 import io.micronaut.http.HttpRequest;
@@ -146,6 +147,11 @@ public class ErrorController {
     @Error(global = true)
     public HttpResponse<JsonError> error(HttpRequest<?> request, NotFoundException e) {
         return jsonError(request, e, HttpStatus.NOT_FOUND, Optional.ofNullable(e.getMessage()).orElse("Not Found"));
+    }
+
+    @Error(global = true)
+    public HttpResponse<JsonError> error(HttpRequest<?> request, InvalidQueryFiltersException e) {
+        return jsonError(request, e, HttpStatus.BAD_REQUEST, e.formatedInvalidObjects());
     }
 
     @Error(global = true)

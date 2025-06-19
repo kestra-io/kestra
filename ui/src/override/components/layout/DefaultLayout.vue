@@ -9,8 +9,8 @@
 
 <script setup>
     import LeftMenu from "override/components/LeftMenu.vue";
-    import Errors from "../errors/Errors.vue";
-    import ContextInfoBar from "../ContextInfoBar.vue";
+    import Errors from "../../../components/errors/Errors.vue";
+    import ContextInfoBar from "../../../components/ContextInfoBar.vue";
     import {useStore} from "vuex";
     import {computed, onMounted} from "vue";
 

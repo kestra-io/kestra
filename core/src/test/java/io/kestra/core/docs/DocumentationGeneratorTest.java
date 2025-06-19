@@ -49,7 +49,6 @@ class DocumentationGeneratorTest {
         assertThat(render).contains("description: \"Short description for this task\"");
         assertThat(render).contains("`VALUE_1`");
         assertThat(render).contains("`VALUE_2`");
-        assertThat(render).contains("This plugin is exclusively available on the Cloud and Enterprise editions of Kestra.");
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

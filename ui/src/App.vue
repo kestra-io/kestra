@@ -17,7 +17,7 @@
     import {mapStores} from "pinia";
     import Utils from "./utils/utils";
     import VueTour from "./components/onboarding/VueTour.vue";
-    import DefaultLayout from "./components/layout/DefaultLayout.vue";
+    import DefaultLayout from "override/components/layout/DefaultLayout.vue";
     import DocIdDisplay from "./components/DocIdDisplay.vue";
     import posthog from "posthog-js";
     import "@kestra-io/ui-libs/style.css";

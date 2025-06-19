@@ -21,8 +21,8 @@ dependencies {
     def kafkaVersion = "4.0.0"
     def opensearchVersion = "3.1.0"
     def opensearchRestVersion = "3.0.0"
-    def flyingSaucerVersion = "9.12.0"
-    def jacksonVersion = "2.19.0"
+    def flyingSaucerVersion = "9.12.1"
+    def jacksonVersion = "2.19.1"
 
     // as Jackson is in the Micronaut BOM, to force its version we need to use enforcedPlatform but it didn't really work, see later :(
     api enforcedPlatform("com.fasterxml.jackson:jackson-bom:$jacksonVersion")
@@ -32,7 +32,7 @@ dependencies {
     // we define cloud bom here for GCP, Azure and AWS so they are aligned for all plugins that use them (secret, storage, oss and ee plugins)
     api platform('com.google.cloud:libraries-bom:26.62.0')
     api platform("com.azure:azure-sdk-bom:1.2.35")
-    api platform('software.amazon.awssdk:bom:2.31.61')
+    api platform('software.amazon.awssdk:bom:2.31.65')
 
 
     constraints {
@@ -72,7 +72,7 @@ dependencies {
         // Other libs
         api("org.projectlombok:lombok:1.18.38")
         api("org.codehaus.janino:janino:3.1.12")
-        api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.24.3'
+        api group: 'org.apache.logging.log4j', name: 'log4j-to-slf4j', version: '2.25.0'
         api group: 'org.slf4j', name: 'jul-to-slf4j', version: slf4jVersion
         api group: 'org.slf4j', name: 'jcl-over-slf4j', version: slf4jVersion
         api group: 'org.fusesource.jansi', name: 'jansi', version: '2.4.2'
@@ -93,7 +93,7 @@ dependencies {
         api group: 'co.elastic.logging', name: 'logback-ecs-encoder', version: '1.7.0'
         api group: 'de.focus-shift', name: 'jollyday-core', version: jollydayVersion
         api group: 'de.focus-shift', name: 'jollyday-jaxb', version: jollydayVersion
-        api 'nl.basjes.gitignore:gitignore-reader:1.11.3'
+        api 'nl.basjes.gitignore:gitignore-reader:1.12.0'
         api group: 'dev.failsafe', name: 'failsafe', version: '3.3.2'
         api group: 'com.cronutils', name: 'cron-utils', version: '9.2.1'
         api group: 'com.github.victools', name: 'jsonschema-generator', version: jsonschemaVersion
@@ -121,14 +121,14 @@ dependencies {
         api 'org.codehaus.plexus:plexus-utils:3.0.24' // https://nvd.nist.gov/vuln/detail/CVE-2022-4244
 
         // for jOOQ to the same version as we use in EE
-        api ("org.jooq:jooq:3.20.4")
+        api ("org.jooq:jooq:3.20.5")
 
         // Tests
         api "org.junit-pioneer:junit-pioneer:2.3.0"
         api 'org.hamcrest:hamcrest:3.0'
         api 'org.hamcrest:hamcrest-library:3.0'
         api group: 'org.exparity', name: 'hamcrest-date', version: '2.0.8'
-        api "org.wiremock:wiremock-jetty12:3.13.0"
+        api "org.wiremock:wiremock-jetty12:3.13.1"
         api "org.apache.kafka:kafka-streams-test-utils:$kafkaVersion"
         api "com.microsoft.playwright:playwright:1.52.0"
 

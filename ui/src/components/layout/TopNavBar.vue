@@ -30,7 +30,7 @@
                 <global-search class="trigger-flow-guided-step" />
             </div>
             <div class="d-flex side gap-2 flex-shrink-0 align-items-center">
-                <el-button v-if="shouldDisplayDeleteButton && logs !== undefined && logs.length > 0" @click="deleteLogs()">
+                <el-button v-if="shouldDisplayDeleteButton && logsStore.logs !== undefined && logsStore.logs.length > 0" @click="deleteLogs()">
                     <TrashCan class="me-2" />
                     <span>{{ $t("delete logs") }}</span>
                 </el-button>
@@ -45,6 +45,8 @@
 
 <script>
     import {mapState, mapGetters} from "vuex";
+    import {mapStores} from "pinia";
+    import {useLogsStore} from "../../stores/logs";
     import Impersonating from "override/components/auth/Impersonating.vue";
     import GlobalSearch from "./GlobalSearch.vue";
     import TrashCan from "vue-material-design-icons/TrashCan.vue";
@@ -79,13 +81,15 @@
                 required: false
             },
         },
+        created() {
+            this.logsStore.setVuexStore(this.$store);
+        },
         computed: {
-            ...mapState("api", ["version"]),
             ...mapState("core", ["tutorialFlows"]),
-            ...mapState("log", ["logs"]),
             ...mapState("bookmarks", ["pages"]),
             ...mapGetters("core", ["guidedProperties"]),
             ...mapGetters("auth", ["user"]),
+            ...mapStores(useLogsStore),
             tourEnabled(){
                 // Temporary solution to not showing the tour menu item for EE
                 return this.tutorialFlows?.length && !Object.keys(this.user).length
@@ -124,7 +128,7 @@
             deleteLogs() {
                 this.$toast().confirm(
                     this.$t("delete_all_logs"),
-                    () => this.$store.dispatch("log/deleteLogs", {namespace: this.namespace, flowId: this.flowId}),
+                    () => this.logsStore.deleteLogs({namespace: this.namespace, flowId: this.flowId}),
                     () => {}
                 )
             },

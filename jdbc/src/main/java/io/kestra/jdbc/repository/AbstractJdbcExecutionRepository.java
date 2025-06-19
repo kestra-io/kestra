@@ -4,6 +4,7 @@ import io.kestra.core.events.CrudEvent;
 import io.kestra.core.events.CrudEventType;
 import io.kestra.core.models.Label;
 import io.kestra.core.models.QueryFilter;
+import io.kestra.core.models.QueryFilter.Resource;
 import io.kestra.core.models.dashboards.ColumnDescriptor;
 import io.kestra.core.models.dashboards.DataFilter;
 import io.kestra.core.models.dashboards.DataFilterKPI;
@@ -199,7 +200,16 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
 
     abstract protected Condition findCondition(String query, Map<String, String> labels);
 
+    protected Condition findQueryCondition(String query) {
+        return findCondition(query, Map.of());
+    }
+
     abstract protected Condition findCondition(Map<?, ?> value, QueryFilter.Op operation);
+
+    @Override
+    protected Condition findLabelCondition(Map<?, ?> value, QueryFilter.Op operation) {
+        return findCondition(value, operation);
+    }
 
     protected Condition statesFilter(List<State.Type> state) {
         return field("state_current")
@@ -293,22 +303,7 @@ public abstract class AbstractJdbcExecutionRepository extends AbstractJdbcReposi
             .where(this.defaultFilter(tenantId, false))
             .and(NORMAL_KIND_CONDITION);
 
-        if (filters != null)
-            for (QueryFilter filter : filters) {
-                QueryFilter.Field field = filter.field();
-                QueryFilter.Op operation = filter.operation();
-                Object value = filter.value();
-                if (field.equals(QueryFilter.Field.QUERY)) {
-                    select = switch (operation) {
-                        case EQUALS -> select.and(this.findCondition(filter.value().toString(), Map.of()));
-                        case NOT_EQUALS -> select.andNot(this.findCondition(filter.value().toString(), Map.of()));
-                        default -> throw new UnsupportedOperationException("Unsupported operation for QUERY field: " + operation);
-                    };
-                } else if (field.equals(QueryFilter.Field.LABELS) && value instanceof Map<?, ?> labels)
-                    select = select.and(findCondition(labels, operation));
-                else
-                    select = getConditionOnField(select, field, value, operation, "start_date");
-            }
+        select = this.filter(select, filters, "start_date", Resource.EXECUTION);
 
         return select;
     }

@@ -28,8 +28,8 @@
                             v-if="currentStep(tour).title"
                             class="title"
                             :class="{
-                                dark: currentStep(tour).keepDark, 
-                                empty: !flows.length, 
+                                dark: currentStep(tour).keepDark,
+                                empty: !flows.length,
                                 fixed: tour.currentStep === 1
                             }"
                         >
@@ -69,7 +69,7 @@
                                     >
                                         <TaskIcon
                                             :cls="task"
-                                            :icons="icons"
+                                            :icons="pluginsStore.icons"
                                             :variable="ICON_COLOR"
                                             only-icon
                                         />
@@ -159,17 +159,21 @@
     import ArrowRight from "../../assets/onboarding/icons/arrow-right.svg";
 
     import {editorViewTypes} from "../../utils/constants";
+    import {useApiStore} from "../../stores/api";
+    import {usePluginsStore} from "../../stores/plugins";
 
     const router = useRouter();
     const store = useStore();
 
-    const icons = computed(() => store.state.plugin.icons);
+    const apiStore = useApiStore();
+    const pluginsStore = usePluginsStore();
+    pluginsStore.setVuexStore(store);
 
     const {t} = useI18n({useScope: "global"});
 
     const updateStatus = () => localStorage.setItem("tourDoneOrSkip", "true");
     const dispatchEvent = (step, action) =>
-        store.dispatch("api/events", {
+        apiStore.events({
             type: "ONBOARDING",
             onboarding: {
                 step,

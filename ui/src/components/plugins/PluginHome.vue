@@ -83,6 +83,8 @@
     import headerImage from "../../assets/icons/plugin.svg";
     import headerImageDark from "../../assets/icons/plugin-dark.svg";
     import KestraFilter from "../filter/KestraFilter.vue";
+    import {mapStores} from "pinia";
+    import {usePluginsStore} from "../../stores/plugins";
 
     export default {
         props: {
@@ -108,13 +110,15 @@
             }
         },
         created() {
-            this.$store.dispatch("plugin/groupIcons").then(
+            this.pluginsStore.setVuexStore(this.$store);
+            this.pluginsStore.groupIcons().then(
                 res => {
                     this.icons = res
                 }
             )
         },
         computed: {
+            ...mapStores(usePluginsStore),
             searchInput() {
                 return this.$route.query?.q?.toLowerCase() ?? "";
             },

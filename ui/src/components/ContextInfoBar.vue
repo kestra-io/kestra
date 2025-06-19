@@ -3,12 +3,12 @@
         <button v-if="activeTab.length" class="barResizer" ref="resizeHandle" @mousedown="startResizing" />
 
         <el-button
-            v-for="(button, key) of buttonsList"
+            v-for="(button, key) of {...buttonsList, ...props.additionalButtons}"
             :key="key"
             :type="activeTab === key ? 'primary' : 'default'"
             :tag="button.url ? 'a' : 'button'"
             :href="button.url"
-            @click="() => {if(!button.url){ setActiveTab(key)}}"
+            @click="() => {if(!button.url){ setActiveTab(key as string)}}"
             :target="button.url ? '_blank' : undefined"
         >
             <component :is="button.icon" class="context-button-icon" />{{ button.title }}
@@ -50,7 +50,7 @@
 </template>
 
 <script lang="ts" setup>
-    import {computed, ref, watch, type Ref, type Component} from "vue";
+    import {computed, ref, watch, type Ref, type Component, PropType} from "vue";
     import {useMouse, watchThrottled} from "@vueuse/core"
     import ContextDocs from "./docs/ContextDocs.vue"
     import ContextNews from "./layout/ContextNews.vue"
@@ -71,10 +71,12 @@
     import {useStore} from "vuex";
     import {useI18n} from "vue-i18n";
     import Utils from "../utils/utils";
+    import {useApiStore} from "../stores/api";
 
     const {t} = useI18n({useScope: "global"});
 
     const store = useStore();
+    const apiStore = useApiStore();
 
     const configs = computed(() => store.getters["misc/configs"]);
     const activeTab = computed(() => store.getters["misc/contextInfoBarOpenTab"])
@@ -82,12 +84,25 @@
     const lastNewsReadDate = useStorage<string | null>("feeds", null)
 
     const hasUnread = computed(() => {
-        const feeds = store.state.misc.feeds
+        const feeds = apiStore.feeds
         return (
             lastNewsReadDate.value === null ||
             (feeds?.[0] && (new Date(lastNewsReadDate.value) < new Date(feeds[0].publicationDate)))
         )
     })
+
+    const props = defineProps({
+        additionalButtons: {
+            type: Object as PropType<Record<string, {
+                title: string;
+                icon?: Component;
+                url: string;
+                hasUnreadMarker: false;
+            }>>,
+            default: () => ({})
+        }
+    });
+
 
     const buttonsList: Record<string, {
         title:string,

@@ -62,6 +62,15 @@ jobs:
           ref: master
           token: ${{ secrets.GH_PERSONAL_TOKEN }}
 
+      - name: Trigger EE Workflow
+        uses: peter-evans/repository-dispatch@v3
+        if: github.ref == 'refs/heads/develop' && needs.docker.result == 'success'
+        with:
+          token: ${{ secrets.GH_PERSONAL_TOKEN }}
+          repository: kestra-io/kestra-ee
+          event-type: "oss-updated"
+
+
       # Slack
       - name: Slack - Notification
         uses: Gamesight/slack-workflow-status@master

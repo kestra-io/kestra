@@ -20,7 +20,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 class PluginListCommandTest {
 
-    private static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.18.0-SNAPSHOT.jar";
+    private static final String PLUGIN_TEMPLATE_TEST = "plugin-template-test-0.24.0-SNAPSHOT.jar";
 
     @Test
     void shouldListPluginsInstalledLocally() throws IOException, URISyntaxException {

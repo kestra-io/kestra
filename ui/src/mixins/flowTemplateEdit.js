@@ -5,11 +5,14 @@ import ContentSave from "vue-material-design-icons/ContentSave.vue";
 import Delete from "vue-material-design-icons/Delete.vue";
 import Editor from "../components/inputs/Editor.vue";
 import RouteContext from "./routeContext";
-import {YamlUtils as YAML_UTILS} from "@kestra-io/ui-libs";
+import * as YAML_UTILS from "@kestra-io/ui-libs/flow-yaml-utils";
 import action from "../models/action";
 import permission from "../models/permission";
 import {pageFromRoute} from "../utils/eventsRouter";
 import {apiUrl} from "override/utils/route";
+import {mapStores} from "pinia";
+import {useApiStore} from "../stores/api";
+import {usePluginsStore} from "../stores/plugins";
 
 export default {
     mixins: [RouteContext],
@@ -34,6 +37,7 @@ export default {
         ...mapGetters("core", ["isUnsaved"]),
         ...mapState("core", ["guidedProperties"]),
         ...mapState("plugin", ["pluginSingleList","pluginsDocumentation"]),
+        ...mapStores(useApiStore, usePluginsStore),
         isEdit() {
             return (
                 this.$route.name === `${this.dataType}s/update` &&
@@ -183,7 +187,7 @@ export default {
         },
         save() {
             if (this.$tours["guidedTour"]?.isRunning?.value && !this.guidedProperties.saveFlow) {
-                this.$store.dispatch("api/events", {
+                this.apiStore.events({
                     type: "ONBOARDING",
                     onboarding: {
                         step: this.$tours["guidedTour"]?.currentStep?._value,
@@ -265,14 +269,17 @@ export default {
             if (taskType) {
                 const taskElement = YAML_UTILS.localizeElementAtIndex(event.model.getValue(), event.position);
                 const version = taskElement?.parents?.[taskElement.parents.length - 1]?.version;
-                
-                this.$store.dispatch("plugin/load", {cls: taskType, version})
+
+                this.pluginsStore.load({cls: taskType, version})
                     .then(plugin => {
-                        this.$store.commit("plugin/setEditorPlugin", {cls: taskType, ...plugin});
+                        this.pluginsStore.editorPlugin = {cls: taskType, ...plugin};
                     });
             } else {
-                this.$store.commit("plugin/setEditorPlugin", undefined);
+                this.pluginsStore.editorPlugin = undefined;
             }
         },
+    },
+    created() {
+        this.pluginsStore.setVuexStore(this.$store);
     }
 };

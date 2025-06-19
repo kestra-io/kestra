@@ -35,6 +35,7 @@
     const router = useRouter()
 
     import {EDITOR_CURSOR_INJECTION_KEY} from "../code/injectionKeys";
+    import {usePluginsStore} from "../../stores/plugins";
 
     const store = useStore();
     const cursor = ref();
@@ -98,6 +99,9 @@
 
     const timeout = ref<any>(null);
 
+    const pluginsStore = usePluginsStore();
+    pluginsStore.setVuexStore(store);
+
     function editorUpdate(newValue: string){
         if(store.state.editor.tabs.find((t:any) => t.path === props.path)?.content === newValue){
             return;
@@ -127,8 +131,8 @@
     }
 
 
-    function updatePluginDocumentation(event: string | undefined, task: any){
-        store.dispatch("plugin/updateDocumentation", {event,task});
+    function updatePluginDocumentation(event: any, task: string | undefined) {
+        pluginsStore.updateDocumentation({event, task});
     };
 
     const flowParsed = computed(() => store.getters["flow/flowParsed"]);

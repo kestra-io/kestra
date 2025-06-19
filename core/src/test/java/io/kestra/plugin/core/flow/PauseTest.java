@@ -80,6 +80,12 @@ public class PauseTest {
     }
 
     @Test
+    @LoadFlows({"flows/valids/pause-timeout-allow-failure.yaml"})
+    void timeoutAllowFailure() throws Exception {
+        suite.runTimeoutAllowFailure(runnerUtils);
+    }
+
+    @Test
     @LoadFlows({"flows/valids/pause_no_tasks.yaml"})
     void runEmptyTasks() throws Exception {
         suite.runEmptyTasks(runnerUtils);
@@ -233,6 +239,25 @@ public class PauseTest {
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(1L);
             assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.FAILED).count()).isEqualTo(1L);
             assertThat(execution.getTaskRunList()).hasSize(1);
+        }
+
+        public void runTimeoutAllowFailure(RunnerUtils runnerUtils) throws Exception {
+            Execution execution = runnerUtils.runOneUntilPaused(MAIN_TENANT, "io.kestra.tests", "pause-timeout-allow-failure", null, null, Duration.ofSeconds(30));
+            String executionId = execution.getId();
+
+            assertThat(execution.getState().getCurrent()).isEqualTo(State.Type.PAUSED);
+            assertThat(execution.getTaskRunList()).hasSize(1);
+
+            execution = runnerUtils.awaitExecution(
+                e -> e.getId().equals(executionId) && e.getState().getCurrent() == State.Type.WARNING,
+                () -> {},
+                Duration.ofSeconds(5)
+            );
+
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.PAUSED).count()).as("Task runs were: " + execution.getTaskRunList().toString()).isEqualTo(1L);
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.RUNNING).count()).isEqualTo(1L);
+            assertThat(execution.getTaskRunList().getFirst().getState().getHistories().stream().filter(history -> history.getState() == State.Type.WARNING).count()).isEqualTo(1L);
+            assertThat(execution.getTaskRunList()).hasSize(2);
         }
 
         public void runEmptyTasks(RunnerUtils runnerUtils) throws Exception {

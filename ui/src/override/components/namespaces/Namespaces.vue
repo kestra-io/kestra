@@ -48,11 +48,11 @@
                             <span class="pe-3">
                                 {{ namespaceLabel(data.label) }}
                             </span>
+                            <slot name="description" :namespace="data" />
                             <span v-if="data.system" class="system">
                                 {{ t("system_namespace") }}
                             </span>
                         </div>
-
                         <el-button size="small">
                             <TextSearch />
                         </el-button>
@@ -85,6 +85,7 @@
     interface Node {
         id: string;
         label: string;
+        description?: string;
         disabled: boolean;
         children?: Node[];
         system?: boolean;
@@ -138,12 +139,14 @@
 
             parts.forEach((part, index) => {
                 const label = parts.slice(0, index + 1).join(".");
+                const isLeaf = index === parts.length - 1;
 
                 if (!currentLevel[label])
                     currentLevel[label] = {
                         id: label,
                         label,
                         disabled: item.disabled,
+                        description: isLeaf ? item.description : undefined,
                         children: [],
                     };
                 currentLevel = currentLevel[label].children;
@@ -156,6 +159,7 @@
                     id: node.id,
                     label: node.label,
                     disabled: node.disabled,
+                    description: node.description,
                     children: node.children ? build(node.children) : undefined,
                 };
                 return result;

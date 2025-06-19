@@ -82,7 +82,16 @@ public class Data {
             return Mono.just(map).flux().map(mapper);
         }
 
+        if (clazz.isAssignableFrom(from.getClass())) {
+            // it could be the case in tests so we handle it for dev experience
+            return Mono.just((T) from).flux();
+        }
+
         if (from instanceof List<?> fromList) {
+            if (!fromList.isEmpty() && clazz.isAssignableFrom(fromList.getFirst().getClass())){
+                // it could be the case in tests so we handle it for dev experience
+                return Flux.fromIterable((List<T>) fromList);
+            }
             Stream<Map<String, Object>> stream = fromList.stream().map(throwFunction(it -> runContext.render((Map<String, Object>) it)));
             return Flux.fromStream(stream).map(mapper);
         }

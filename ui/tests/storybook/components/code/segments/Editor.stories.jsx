@@ -92,9 +92,8 @@ It allows you to return templated values, inputs or outputs.`.trim(),
 const Template = (args) => ({
     setup() {
         const store = useStore()
-        const modelValue = ref(args.flow)
 
-        provide(FLOW_INJECTION_KEY, computed(() => args.flow));
+        provide(FLOW_INJECTION_KEY, ref(args.flow));
         provide(BLOCKTYPE_INJECT_KEY, "tasks");
         provide(REF_PATH_INJECTION_KEY, "");
         provide(POSITION_INJECTION_KEY, args.position);
@@ -132,7 +131,7 @@ const Template = (args) => ({
         }
         return () =>
             <div style="margin: 1rem; width: 400px;border: 1px solid lightgray; padding: .5rem;">
-                <Editor {...args.props} flow={modelValue.value} on />
+                <Editor {...args.props}/>
             </div>
     }
 });
@@ -152,18 +151,9 @@ tasks:
       - three
     `.trim(),
     props:{
-        creation: false,
         metadata: {
             id: "example-id",
             namespace: "example-namespace",
-            description: "Example description",
-            retry: "",
-            labels: {},
-            inputs: [],
-            outputs: "",
-            variables: {},
-            concurrency: {},
-            disabled: false,
         },
     },
 };
@@ -197,18 +187,9 @@ tasks:
       - three
     `.trim(),
     props:{
-        creation: false,
         metadata: {
             id: "example-id",
             namespace: "example-namespace",
-            description: "Example description",
-            retry: "",
-            labels: {},
-            inputs: [],
-            outputs: "",
-            variables: {},
-            concurrency: {},
-            disabled: false,
         },
     },
 };

@@ -232,3 +232,4 @@ abstract public class TestsUtils {
         return Property.ofExpression(JacksonMapper.ofJson().writeValueAsString(list));
     }
 }
+

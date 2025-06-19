@@ -1,3 +1,4 @@
+
 package io.kestra.plugin.core.flow;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -458,7 +459,7 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             this.subflowId = subflowId;
             this.restartBehavior = restartBehavior;
 
-            this.id = parentId + SUFFIX;
+            this.id = parentId + SUFFIX; 
             this.type = ForEachItemExecutable.class.getName();
         }
 
@@ -689,5 +690,11 @@ public class ForEachItem extends Task implements FlowableTask<VoidOutput>, Child
             }
         }
         return splitTaskOutput;
+    }
+
+    public List<SubflowExecution<?>> createSubflowExecutions(RunContext runContext, FlowMetaStoreInterface metaStore,
+            Flow currentFlow, Execution execution, TaskRun taskRun) {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'createSubflowExecutions'");
     }
 }

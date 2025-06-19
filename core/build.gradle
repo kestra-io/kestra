@@ -1,7 +1,30 @@
+plugins {
+    id 'java'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+    testImplementation 'org.mockito:mockito-core:5.2.0'
+}
+
+test {
+    useJUnitPlatform()
+}
 configurations {
     tests
     implementation.extendsFrom(micronaut)
 }
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
 
 tasks.register('copyGradleProperties', Copy) {
     group = "build"
@@ -45,6 +68,8 @@ dependencies {
     implementation 'org.apache.maven.resolver:maven-resolver-connector-basic'
     implementation 'org.apache.maven.resolver:maven-resolver-transport-file'
     implementation 'org.apache.maven.resolver:maven-resolver-transport-http'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.9.2'
+    testImplementation 'org.mockito:mockito-core:5.2.0'
 
     // scheduler
     implementation group: 'com.cronutils', name: 'cron-utils'

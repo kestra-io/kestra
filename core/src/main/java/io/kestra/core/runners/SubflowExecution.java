@@ -20,4 +20,14 @@ public class SubflowExecution<T extends Task & ExecutableTask<?>> {
 
     @NotNull
     private Execution execution;
+
+    public Object getNamespace() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getNamespace'");
+    }
+
+    public Object getFlowId() {
+        // TODO Auto-generated method stub
+        throw new UnsupportedOperationException("Unimplemented method 'getFlowId'");
+    }
 }

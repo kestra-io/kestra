@@ -843,6 +843,7 @@
       },
       "sections": {
         "afterExecution": "実行後",
+        "connection": "接続プロパティ",
         "deprecated": "非推奨プロパティ",
         "errors": "エラーハンドラー",
         "finally": "最後に",

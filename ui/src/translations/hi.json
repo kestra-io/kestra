@@ -843,6 +843,7 @@
       },
       "sections": {
         "afterExecution": "Execution के बाद",
+        "connection": "कनेक्शन गुणधर्म",
         "deprecated": "अप्रचलित गुण",
         "errors": "त्रुटि हैंडलर्स",
         "finally": "अंत में",

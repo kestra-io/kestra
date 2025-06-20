@@ -843,6 +843,7 @@
       },
       "sections": {
         "afterExecution": "Dopo l'Esecuzione",
+        "connection": "Proprietà di connessione",
         "deprecated": "Proprietà deprecate",
         "errors": "Gestori degli Errori",
         "finally": "Infine",

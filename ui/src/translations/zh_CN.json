@@ -715,7 +715,9 @@
       },
       "delete": {
         "file": "删除文件",
+        "files": "删除 {count} 个已选择的文件",
         "folder": "删除文件夹",
+        "folders": "删除 {count} 个已选择的文件夹",
         "label": "删除"
       },
       "dialog": {

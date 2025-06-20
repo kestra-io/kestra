@@ -665,7 +665,9 @@
       "delete": {
         "label": "Delete",
         "file": "Delete file",
-        "folder": "Delete folder"
+        "folder": "Delete folder",
+        "files": "Delete {count} selected files",
+        "folders": "Delete {count} selected folders"
       },
       "import": {
         "import": "Import",
@@ -684,7 +686,7 @@
         "parent_folder": "Parent folder:",
         "file_deletion": "Confirm file deletion",
         "folder_deletion": "Confirm folder deletion",
-        "file_deletion_description": "Are you sure you want to delete this file?",
+        "file_deletion_description": "Are you sure you want to delete the selected file(s)?",
         "folder_deletion_description": "Are you sure you want to delete this folder and all of its contents?",
         "confirm": "Confirm"
       },

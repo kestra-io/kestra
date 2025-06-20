@@ -665,7 +665,9 @@
       "delete": {
         "label": "Delete",
         "file": "Delete file",
-        "folder": "Delete folder"
+        "folder": "Delete folder",
+        "files": "Delete {count} selected files",
+        "folders": "Delete {count} selected folders"
       },
       "import": {
         "import": "Import",

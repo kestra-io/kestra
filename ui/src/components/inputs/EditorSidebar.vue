@@ -160,24 +160,25 @@
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item
-                                v-if="!data.leaf"
+                                v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'file', node)"
                             >
                                 {{ $t("namespace files.create.file") }}
                             </el-dropdown-item>
                             <el-dropdown-item
-                                v-if="!data.leaf"
+                                v-if="!data.leaf && !multiSelected"
                                 @click="toggleDialog(true, 'folder', node)"
                             >
                                 {{ $t("namespace files.create.folder") }}
                             </el-dropdown-item>
-                            <el-dropdown-item @click="copyPath(data)">
+                            <el-dropdown-item v-if="!multiSelected" @click="copyPath(data)">
                                 {{ $t("namespace files.path.copy") }}
                             </el-dropdown-item>
-                            <el-dropdown-item v-if="data.leaf" @click="exportFile(node, data)">
+                            <el-dropdown-item v-if="data.leaf && !multiSelected" @click="exportFile(node, data)">
                                 {{ $t("namespace files.export_single") }}
                             </el-dropdown-item>
                             <el-dropdown-item
+                                v-if="data.leaf && !multiSelected"
                                 @click="
                                     toggleRenameDialog(
                                         true,
@@ -197,11 +198,15 @@
                             </el-dropdown-item>
                             <el-dropdown-item @click="removeSelectedFiles()">
                                 {{
-                                    $t(
+                                    selectedNodes.length <= 1 ? $t(
                                         `namespace files.delete.${
                                             !data.leaf ? "folder" : "file"
                                         }`,
-                                    )
+                                    ) : $t(
+                                        `namespace files.delete.${
+                                            !data.leaf ? "folders" : "files"
+                                        }`
+                                        , {count: selectedNodes.length})
                                 }}
                             </el-dropdown-item>
                         </el-dropdown-menu>
@@ -420,6 +425,9 @@
             namespaceId() {
                 return this.currentNS ?? this.$route.params.namespace;
             },
+            multiSelected() {
+                return this.selectedNodes.length > 1;
+            },
             folders() {
                 function extractPaths(basePath = "", array) {
                     const paths = [];
@@ -519,9 +527,8 @@
                     }
                 }
             },
-            
+
             async removeSelectedFiles() {
-            
                 const nodes = this.selectedFiles.map((filePath) => {
                     const node = this.findNodeByPath(filePath);
                     return node;
@@ -1308,18 +1315,11 @@
 
         .el-tree-node.is-current > .el-tree-node__content {
             min-width: fit-content;
-
-            html.dark &{
-                background-color: $primary;
-            }
+            border: 1px solid var(--ks-border-active)
         }
-        .selected-node {
-            background-color: var(--el-color-primary-light-9);
-            html.dark & {
-                background-color: $primary;
-            }
+        .el-tree-node:has(.selected-node) > .el-tree-node__content {
+            background-color: var(--ks-button-background-primary);
             min-width: fit-content;
-            
         }
     }
 }

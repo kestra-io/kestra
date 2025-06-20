@@ -15,7 +15,7 @@
                 </template>
             </template>
 
-            <el-collapse v-model="activeNames" v-if="optionalProperties?.length || deprecatedProperties?.length" class="collapse">
+            <el-collapse v-model="activeNames" v-if="optionalProperties?.length || deprecatedProperties?.length || connectionProperties?.length" class="collapse">
                 <el-collapse-item name="optional" v-if="optionalProperties?.length" :title="$t('no_code.sections.optional')">
                     <template v-for="[fieldKey, fieldSchema] in optionalProperties" :key="fieldKey">
                         <TaskWrapper>
@@ -28,6 +28,16 @@
 
                 <el-collapse-item name="deprecated" v-if="deprecatedProperties?.length" :title="$t('no_code.sections.deprecated')">
                     <template v-for="[fieldKey, fieldSchema] in deprecatedProperties" :key="fieldKey">
+                        <TaskWrapper>
+                            <template #tasks>
+                                <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
+                            </template>
+                        </TaskWrapper>
+                    </template>
+                </el-collapse-item>
+
+                <el-collapse-item name="connection" v-if="connectionProperties?.length" :title="$t('no_code.sections.connection')">
+                    <template v-for="[fieldKey, fieldSchema] in connectionProperties" :key="fieldKey">
                         <TaskWrapper>
                             <template #tasks>
                                 <TaskObjectField v-bind="fieldProps(fieldKey, fieldSchema)" />
@@ -129,7 +139,10 @@
                 return this.merge ? this.sortedProperties : this.sortedProperties.filter(([p,v]) => v && this.isRequired(p));
             },
             optionalProperties() {
-                return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !v.$deprecated);
+                return this.merge ? [] : this.sortedProperties.filter(([p,v]) => v && !this.isRequired(p) && !v.$deprecated && v.$group !== "connection");
+            },
+            connectionProperties() {
+                return this.merge ? [] : this.sortedProperties.filter(([_,v]) => v && v.$group === "connection");
             },
             deprecatedProperties() {
                 return this.merge ? [] : this.sortedProperties.filter(([_,v]) => v && v.$deprecated);

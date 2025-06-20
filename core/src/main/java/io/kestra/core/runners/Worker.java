@@ -395,11 +395,16 @@ public class Worker implements Service, Runnable, AutoCloseable {
                     } catch (IllegalVariableEvaluationException e) {
                         RunContextLogger contextLogger = runContextLoggerFactory.create(currentWorkerTask);
                         contextLogger.logger().error("Failed evaluating runIf: {}", e.getMessage(), e);
+                        try {
+                            this.workerTaskResultQueue.emit(new WorkerTaskResult(workerTask.fail()));
+                        } catch (QueueException ex) {
+                            log.error("Unable to emit the worker task result for task {} taskrun {}", currentWorkerTask.getTask().getId(), currentWorkerTask.getTaskRun().getId(), e);
+                        }
                     } catch (QueueException e) {
                         log.error("Unable to emit the worker task result for task {} taskrun {}", currentWorkerTask.getTask().getId(), currentWorkerTask.getTaskRun().getId(), e);
                     }
 
-                    if (workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
+                    if (workerTaskResult == null || workerTaskResult.getTaskRun().getState().isFailed() && !currentWorkerTask.getTask().isAllowFailure()) {
                         break;
                     }
 

@@ -162,7 +162,7 @@
         flex: 1;
         overflow: hidden;
         text-overflow: ellipsis;
-        font-weight: 600;
+        font-size: 0.875rem;
     }
 
     .label-anyof{

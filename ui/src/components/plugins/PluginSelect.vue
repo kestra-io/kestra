@@ -11,7 +11,7 @@
             :value="item"
         >
             <span class="options">
-                <task-icon :cls="item" :only-icon="true" :icons="icons" />
+                <task-icon :cls="item" :only-icon="true" :icons="pluginsStore.icons" />
                 <span>
                     {{ item }}
                 </span>
@@ -19,7 +19,7 @@
         </el-option>
 
         <template #prefix>
-            <task-icon v-if="modelValue" :cls="modelValue" :only-icon="true" :icons="icons" />
+            <task-icon v-if="modelValue" :cls="modelValue" :only-icon="true" :icons="pluginsStore.icons" />
         </template>
     </el-select>
 </template>
@@ -45,13 +45,6 @@
         pluginsStore.listWithSubgroup({includeDeprecated: false});
     })
 
-    const plugins = computed(() => {
-        return pluginsStore.plugins;
-    })
-    const icons = computed(() => {
-        return pluginsStore.icons;
-    })
-
     const taskModels = computed(() => {
         const models = new Set<any>();
         const pluginKeySection: BlockType[] =
@@ -59,7 +52,7 @@
                 ? ["tasks", "conditions", "triggers", "taskRunners"]
                 : [props.blockType];
 
-        for (const plugin of plugins.value || []) {
+        for (const plugin of pluginsStore.plugins || []) {
             for (const curSection of pluginKeySection) {
                 const entries = plugin[curSection];
                 if (entries) {

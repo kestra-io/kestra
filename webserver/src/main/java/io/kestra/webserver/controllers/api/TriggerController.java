@@ -29,10 +29,14 @@ import io.micronaut.http.annotation.*;
 import io.micronaut.http.exceptions.HttpStatusException;
 import io.micronaut.scheduling.TaskExecutors;
 import io.micronaut.scheduling.annotation.ExecuteOn;
+import io.micronaut.validation.Validated;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.inject.Inject;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +52,7 @@ import static io.kestra.core.utils.Rethrow.throwFunction;
 
 @Controller("/api/v1/{tenant}/triggers")
 @Slf4j
+@Validated
 public class TriggerController {
     @Inject
     private TriggerRepositoryInterface triggerRepository;
@@ -528,7 +533,7 @@ public class TriggerController {
     @Post(uri = "/set-disabled/by-triggers")
     @Operation(tags = {"Triggers"}, summary = "Disable/enable given triggers")
     public MutableHttpResponse<?> disabledTriggersByIds(
-        @Parameter(description = "The triggers you want to set the disabled state") @Body SetDisabledRequest setDisabledRequest
+        @Parameter(description = "The triggers you want to set the disabled state") @Body @Valid SetDisabledRequest setDisabledRequest
     ) throws QueueException {
         setDisabledRequest.triggers.forEach(throwConsumer(trigger -> this.setDisabled(trigger, setDisabledRequest.disabled)));
 
@@ -630,7 +635,7 @@ public class TriggerController {
         return HttpResponse.ok(updatedTrigger);
     }
 
-    public record SetDisabledRequest(List<Trigger> triggers, Boolean disabled) {
+    public record SetDisabledRequest(@NotNull @NotEmpty List<Trigger> triggers, @NotNull Boolean disabled) {
     }
 
     public enum BACKFILL_ACTION {

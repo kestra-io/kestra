@@ -715,7 +715,9 @@
       },
       "delete": {
         "file": "Elimina file",
+        "files": "Elimina {count} file selezionati",
         "folder": "Elimina cartella",
+        "folders": "Elimina {count} cartelle selezionate",
         "label": "Elimina"
       },
       "dialog": {

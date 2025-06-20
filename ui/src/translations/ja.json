@@ -715,7 +715,9 @@
       },
       "delete": {
         "file": "ファイルを削除",
+        "files": "{count} 個の選択されたファイルを削除",
         "folder": "フォルダーを削除",
+        "folders": "{count} 個の選択されたフォルダーを削除",
         "label": "削除"
       },
       "dialog": {

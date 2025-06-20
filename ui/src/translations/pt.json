@@ -715,7 +715,9 @@
       },
       "delete": {
         "file": "Deletar arquivo",
+        "files": "Excluir {count} arquivos selecionados",
         "folder": "Deletar pasta",
+        "folders": "Excluir {count} pastas selecionadas",
         "label": "Deletar"
       },
       "dialog": {

@@ -59,6 +59,17 @@ export default [
                     order: ["template", "script", "style"],
                 },
             ],
+            "vue/enforce-style-attribute": [
+                "warn",
+                {"allow": ["scoped"]}
+            ],
+            "vue/component-name-in-template-casing": [
+                "error",
+                "PascalCase",
+                {
+                    "registeredComponentsOnly": true,
+                }
+            ],
             "@typescript-eslint/consistent-type-assertions": [
                 "error",
                 {

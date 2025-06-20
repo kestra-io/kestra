@@ -57,6 +57,15 @@
                     :placeholder="$t('custom value')"
                 />
             </el-radio-group>
+            <el-button
+                v-if="(input.type === 'ENUM' || input.type === 'SELECT') && input.isRadio && inputsValues[input.id] !== undefined && inputsValues[input.id] !== null"
+                @click="inputsValues[input.id] = null; onChange(input)"
+                type="text"
+                class="clear-selection-btn"
+                :data-testid="`clear-selection-${input.id}`"
+            >
+                {{ $t('clear selection') }}
+            </el-button>
             <el-select
                 :full-height="false"
                 :input="true"

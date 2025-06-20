@@ -179,8 +179,8 @@ export default (
                         refreshing = false;
                     }
                 } else {
-                    // FIXME: this seems like an error
-                    toRefreshQueue.push(originalRequest as any);
+                    // @ts-expect-error https://github.com/kestra-io/kestra-ee/issues/4157
+                    toRefreshQueue.push(originalRequest);
 
                     return;
                 }

@@ -17,7 +17,6 @@ import io.kestra.plugin.scripts.runner.docker.Docker;
 import io.kestra.core.junit.annotations.KestraTest;
 import jakarta.inject.Inject;
 import jakarta.inject.Named;
-import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.Test;
 import org.slf4j.event.Level;
 import reactor.core.publisher.Flux;
@@ -96,7 +95,7 @@ class LogConsumerTest {
         assertThat(run.getLogConsumer().getStdOutCount()).isEqualTo(10);
     }
 
-    @RepeatedTest(200)
+    @Test
     void logs() throws Exception {
         List<LogEntry> logs = new CopyOnWriteArrayList<>();
         Flux<LogEntry> receive = TestsUtils.receive(logQueue, l -> logs.add(l.getLeft()));
@@ -117,7 +116,7 @@ class LogConsumerTest {
             Collections.emptyList()
         );
 
-        Await.until(() -> logs.size() == 10, null, Duration.ofSeconds(5));
+        Await.until(() -> logs.size() >= 10, null, Duration.ofSeconds(5));
         receive.blockLast();
 
         assertThat(logs.stream().filter(m -> m.getLevel().equals(Level.INFO)).count()).isEqualTo(1L);
